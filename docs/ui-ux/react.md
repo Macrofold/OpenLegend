@@ -58,7 +58,9 @@ Keep draft identity and the backend revision it was based on. An incoming refres
 
 Effects synchronize external systems and clean up resources. Derive display data in render where appropriate; explicit handlers express mutation intent. An Effect responding to selection must not purchase/equip/save as an accidental consequence. [F15](research.md#f15)
 
-Key results by query, actor/world scope and relevant revision. Abort obsolete reads where supported and ignore stale completions even without cancellation. Clean up timers, subscriptions, observers and capture. A delayed callback from a closed panel must not update a different conversation.
+Key results by query, actor/world scope and relevant revision. Abort obsolete reads where supported and ignore stale completions even without cancellation. Reject obsolete replies before an awaited helper changes shared access, recovery storage or published caches; a check in its caller is too late. Clean up timers, subscriptions, observers and capture. A delayed callback from a closed panel must not update a different conversation.
+
+A receipt check can reuse an original request ID while an older network wait remains. Guard success, errors, `finally` and focus updates by current access scope and, where waits overlap, the particular attempt—not that ID alone. A current receipt check must not wait for an obsolete promise; keep the original request guard. Exercise that check, and any permitted later send after settlement, before releasing the older promise. Recheck focus after awaited automatic updates as well as before starting them. [OL03](research.md#ol03)
 
 For private detail panels, suppress the old body during the render in which its authority or evidence revision changes, before an asynchronous refresh begins. Keep harmless navigation or comparison slots separately, but only show a result matching the complete current request identity; an error cannot make old content current again. [World Events comparison](../perceived-world-events.md) is the concrete consumer.
 
@@ -102,6 +104,8 @@ Controller support needs its own focus movement, confirm/cancel and return behav
 ## Performance follows actual work
 
 Keep per-frame scene/position work at the PlayCanvas/presentation boundary rather than rerendering the whole HUD. Subscribe to meaningful state and measure before blanket memoization. Stable data identity helps only when it avoids real work.
+
+External-store snapshot getters return prepared, stable values without synchronous browser-storage reads, parsing or mutation during rendering. Refresh recovery facts on first use, changed ownership and the operation boundaries that change them; recheck before explicit dispatch. Verify work counts through typing and unrelated redraws as well as recovery, so cheaper rendering cannot admit a new command over an unresolved original. [OL03](research.md#ol03)
 
 Bound fetching/rendering without hiding records. Virtualization, when warranted, retains reachable options, focus and reading position; it does not replace server search or justify filtering only mounted rows. Defer expensive rich detail rather than mount thousands of tooltip bodies. Keep immediate decision facts available.
 

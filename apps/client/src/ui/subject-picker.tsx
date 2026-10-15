@@ -92,6 +92,7 @@ export function SubjectPicker({
   return (
     <>
       <SelectField
+        disabled={disabled}
         label={label}
         value={value?.id ?? ''}
         placement="bottom start"

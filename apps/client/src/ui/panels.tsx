@@ -410,7 +410,7 @@ export function Character({
             </Section>
             <details className="ol-character-record-detail">
               <summary>Actions and learned activities</summary>
-              <ActivityHistory actorId={view.player.id} owned />
+              <ActivityHistory key={view.historyEpoch} actorId={view.player.id} owned />
             </details>
           </ActionAttempts>
         </TabPanel>

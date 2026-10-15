@@ -189,6 +189,7 @@ export function SelectField({
   onInputChange,
   onLoadMore,
   loading = false,
+  disabled = false,
   toggleLabel,
   disabledKeys,
   onOpenChange,
@@ -205,6 +206,7 @@ export function SelectField({
   onInputChange?(value: string): void;
   onLoadMore?(): void;
   loading?: boolean;
+  disabled?: boolean;
   toggleLabel?: string;
   disabledKeys?: string[];
   onOpenChange?(open: boolean): void;
@@ -236,6 +238,7 @@ export function SelectField({
   return (
     <ComboBox<SelectOption>
       className="ol-select"
+      isDisabled={disabled}
       selectedKey={value}
       onSelectionChange={(key) => key !== null && onChange(String(key))}
       menuTrigger="focus"
@@ -273,7 +276,7 @@ export function SelectField({
         style={{ width: popupWidth }}
       >
         <ListBox<SelectOption>
-          className="ol-select-list"
+          className="ol-select-list ol-portal-content"
           renderEmptyState={() => (
             <p className="ol-select-empty">{loading ? 'Searching…' : 'No matches.'}</p>
           )}
@@ -703,7 +706,7 @@ export function TextTooltip({ children, text }: { children: ReactNode; text?: st
     <TooltipTrigger delay={300} closeDelay={100} isDisabled={!text}>
       {children}
       <Tooltip className="ol-text-tooltip ol-root" placement="top" offset={4}>
-        {text}
+        <span className="ol-portal-content">{text}</span>
       </Tooltip>
     </TooltipTrigger>
   );
@@ -724,18 +727,20 @@ export function Explanation({
     <TooltipTrigger delay={1000} closeDelay={150}>
       {children}
       <Tooltip className="ol-tip ol-root" placement="end" offset={8}>
-        <b>{title}</b>
-        {text && <div className="ol-prose">{text}</div>}
-        {!!facts?.length && (
-          <dl>
-            {facts.map(([key, value]) => (
-              <div className="ol-fact" key={key}>
-                <dt>{key}</dt>
-                <dd>{value}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
+        <div className="ol-portal-content">
+          <b>{title}</b>
+          {text && <div className="ol-prose">{text}</div>}
+          {!!facts?.length && (
+            <dl>
+              {facts.map(([key, value]) => (
+                <div className="ol-fact" key={key}>
+                  <dt>{key}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
       </Tooltip>
     </TooltipTrigger>
   );

@@ -47,6 +47,15 @@
   .ol-character-tabs {
   display: none;
 }
+/* Short sheets scroll Character as one reading pane so its tabs cannot squeeze
+ * the active page below the height of a complete control and focus outline. */
+.ol-hud[data-narrow='true'] .ol-character-sections,
+.ol-hud[data-narrow='true'] .ol-character-page {
+  flex: none;
+}
+.ol-hud[data-narrow='true'] .ol-character-page {
+  overflow: visible;
+}
 .ol-character-identity,
 .ol-character-statuses,
 .ol-action-subject {

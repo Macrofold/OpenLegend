@@ -112,7 +112,6 @@ describe('local HTTP boundary', () => {
       (item) => item.ownerId === PLAYER_ID && item.definitionId === 'wood',
     )!;
     expect(report.catalogue.actions.map((action: { id: string }) => action.id)).toEqual([
-      'evade:point',
       'move',
       'fire-extinguish:campfire',
       `fire-fuel:${wood.id}:campfire`,

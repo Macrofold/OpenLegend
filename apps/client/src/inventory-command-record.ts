@@ -11,9 +11,10 @@ export function inventoryCommandStorageKey(
   worldId: string,
   actorId: string,
   timeline?: string,
+  task?: 'construction',
 ) {
   return recoveryScope
-    ? `open-legend:inventory-command:${JSON.stringify([recoveryScope, worldId, actorId, timeline])}`
+    ? `open-legend:inventory-command:${JSON.stringify([recoveryScope, worldId, actorId, timeline, ...(task ? [task] : [])])}`
     : undefined;
 }
 

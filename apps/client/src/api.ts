@@ -255,6 +255,7 @@ export async function changeTabControl(
 }
 /** Operator/spectator console state. It opens no event stream and never counts as presence. */
 export async function getOperations(): Promise<OperationsView> {
+  const generation = accessGeneration;
   await tabIdentityReady;
   const response = await fetch('/api/operations', {
     credentials: 'same-origin',
@@ -264,6 +265,8 @@ export async function getOperations(): Promise<OperationsView> {
   const result = (await response.json().catch(() => ({}))) as Partial<OperationsView> & {
     message?: string;
   };
+  if (generation !== accessGeneration)
+    throw new AccessError('Your access or world changed. Refresh World operations.');
   if (response.status === 401) throw new SignInRequiredError('Sign in to continue.');
   if (response.status === 403)
     throw new AccessError(result.message ?? 'This account has no access to this world.');

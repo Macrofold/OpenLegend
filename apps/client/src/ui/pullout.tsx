@@ -232,7 +232,7 @@ export function Pullout({
         shouldFlip
       >
         <div
-          className="ol-pullout-body"
+          className="ol-pullout-body ol-portal-content"
           onKeyDown={(event) => {
             if (!event.currentTarget.contains(event.target as Node)) return;
             if (event.nativeEvent.isComposing) return;

@@ -99,9 +99,11 @@ The [save/load owner](../save-and-load.md) distinguishes background simulation p
 
 Provide enough context to choose the correct state; distinguish Load, Rename and Delete and separate destructive controls. Opening a row is inspection, not immediate load. Before replacing gameplay state, use existing confirmation/recovery; explain what is replaced and whether current progress is preserved.
 
-Validate compatibility/integrity before presenting a save as loadable. The root [development save policy](../../AGENTS.md#development-save-policy) rejects incompatible development saves without legacy migration, automatic deletion, reset or replacement. UX convenience cannot weaken it. Credentials, real spending/accounting and preferences stay separate from rewind.
+Validate current-format integrity before presenting a save as loadable. Follow the root [development save policy](../../AGENTS.md#development-save-policy) for incompatible development data; UI convenience grants no additional migration, reset or deletion permission. Credentials, real spending/accounting and preferences stay separate from rewind.
 
 If preserving the current world fails, do not imply load can safely proceed. An uncertain restore outcome stays uncertain until reconciled, rather than guessing success and resuming against inconsistent data. Reconnect/retry must establish actual world/save identity before another destructive operation.
+
+Keep a confirmed server result known when browser cleanup fails. Retain the exact-request guard until matching cleanup succeeds; a later unavailable receipt read must not erase that confirmation. Optional draft caching cannot substitute for verified retention of a consequential request. [OL03](research.md#ol03)
 
 Future cloud-conflict UI should compare meaningful identities/timestamps, offer deliberate choices and preserve versions where supported. That is a future pattern, not authorization to add cloud sync or invent its guarantees.
 

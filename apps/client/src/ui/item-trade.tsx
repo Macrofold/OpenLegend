@@ -34,8 +34,9 @@ export function ItemTrade({
     setDraft,
     setReviewed,
     setUncertain,
-    setPending,
     start,
+    isCurrent,
+    finish,
   } = useTradeDraft(draftKey, trade.offers, { key: inventoryRequestKey, scope: trade.scope });
   const [message, setMessage] = useState('');
   useEffect(() => {
@@ -88,11 +89,15 @@ export function ItemTrade({
       (receiveQuantity !== undefined &&
         (!draft.receive.whole || receiveQuantity === draft.receive.quantity)));
   async function send(action: ActionOption) {
-    if (!connected || !action.enabled || !start()) return;
+    if (!connected || !action.enabled) return;
+    const attempt = start();
+    if (!attempt) return;
     setMessage('');
-    workspace.current?.focus({ preventScroll: true });
+    const focusOwner = workspace.current;
+    focusOwner?.focus({ preventScroll: true });
     try {
       const result = await command(action);
+      if (!isCurrent(attempt)) return;
       if (alive.current) setMessage(result.message);
       if (['unconfirmed', 'expired', 'idempotency-conflict'].includes(result.code))
         setUncertain(true);
@@ -111,16 +116,25 @@ export function ItemTrade({
       }
       // Keep all draft fields after refusal. Committed status comes from the server view.
     } catch (error) {
+      if (!isCurrent(attempt)) return;
       if (alive.current) {
         setMessage(error instanceof Error ? error.message : String(error));
       }
       setUncertain(true);
     } finally {
-      setPending(false);
-      if (alive.current) {
-        requestAnimationFrame(() =>
-          workspace.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus(),
-        );
+      const current = isCurrent(attempt);
+      finish(attempt);
+      if (alive.current && current) {
+        requestAnimationFrame(() => {
+          // A later input in another task owns focus while this receipt is pending.
+          if (
+            alive.current &&
+            focusOwner?.isConnected &&
+            focusOwner.getClientRects().length &&
+            document.activeElement === focusOwner
+          )
+            focusOwner.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
+        });
       }
     }
   }

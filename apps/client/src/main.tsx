@@ -313,7 +313,8 @@ function App({
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.reduceMotion = String(reduce);
-  }, [theme, reduce]);
+    document.documentElement.style.setProperty('--ui-scale', String(scale));
+  }, [theme, reduce, scale]);
   useEffect(() => {
     document.title = view ? `Open Legend · ${view.presentation.worldName}` : 'Open Legend';
   }, [view?.presentation.worldName]);
@@ -1478,7 +1479,7 @@ function App({
         return (
           <>
             <Construction
-              key={`${view.access?.scope}:${view.saveTimeline}:${view.player.id}`}
+              key={taskScope(view)}
               view={view}
               connected={connected}
               visible={open.includes('crafting') && (!narrow || open.at(-1) === 'crafting')}
@@ -1566,6 +1567,7 @@ function App({
           <WorldAgent
             actorId={view.player.id}
             accessScope={view.access?.privateDraftScope ?? view.player.id}
+            inspectionScope={JSON.stringify([view.access?.scope, view.historyEpoch])}
             budget={view.ai.budget}
             godMode={view.godMode}
             saveTimeline={view.saveTimeline}
@@ -1659,6 +1661,7 @@ function App({
               visible={visible}
               onDirtyChange={setMindDirty}
               readScope={view.access?.scope}
+              evidenceEpoch={view.historyEpoch}
             />
           </>
         ) : null;
@@ -2289,8 +2292,8 @@ function App({
         </div>
         {targeting && (
           <div className="ol-targeting-hint" role="status">
-            Use {view?.player.inventory.find((item) => item.equipped)?.name}: click a highlighted
-            target.
+            {hover?.entity.equippedAction?.label ??
+              'Choose a highlighted target for an equipped-item action.'}
             <Button size="sm" onPress={() => setTargeting(false)}>
               Cancel · Esc
             </Button>

@@ -20,6 +20,7 @@ import { WorldAgentReview } from './world-agent-review';
 type Props = {
   worldId: string;
   accessScope: string;
+  inspectionScope: string;
   budget: GameView['ai']['budget'];
   actorId: string;
   godMode?: boolean;
@@ -49,6 +50,7 @@ function WorldAgentPanel(props: Props) {
   const {
     worldId,
     accessScope,
+    inspectionScope,
     budget,
     actorId,
     godMode,
@@ -380,7 +382,10 @@ function WorldAgentPanel(props: Props) {
       {godMode && (
         <div hidden={workspace !== 'relationships'} className="ol-creator-page">
           <div ref={inspectionTask} tabIndex={-1}>
+            {/* Read results expire independently of this same-owner writing workspace.
+                docs/memory-architecture.md#private-retrieval-fencing */}
             <WorldInspection
+              key={inspectionScope}
               actorId={actorId}
               worldId={worldId}
               sessionId={active || undefined}

@@ -19,6 +19,7 @@ export function EditorPanel({
   saving,
   error,
   saveReason,
+  closeGuard,
   scope,
   saveLabel = 'Save',
   onSave,
@@ -31,6 +32,8 @@ export function EditorPanel({
   saving: boolean;
   error?: string;
   saveReason?: string;
+  /** A separately saved section can guard Close without changing this Save action's scope. */
+  closeGuard?: { reason: string; pending: boolean; discard(): void };
   scope?: string;
   saveLabel?: string;
   onSave(): Promise<boolean>;
@@ -57,9 +60,10 @@ export function EditorPanel({
       if (Math.abs(left - bounds.left) < 0.5 && Math.abs(top - bounds.top) < 0.5) return;
       // Resize and size observation may both run before React paints. Derive one
       // absolute correction from the rendered position, rather than adding it twice.
+      const style = getComputedStyle(element);
       setPosition({
-        x: Number.parseFloat(element.style.left) + (left - bounds.left) / scale,
-        y: Number.parseFloat(element.style.top) + (top - bounds.top) / scale,
+        x: Number.parseFloat(style.left) + (left - bounds.left) / scale,
+        y: Number.parseFloat(style.top) + (top - bounds.top) / scale,
       });
     };
     clamp();
@@ -82,24 +86,31 @@ export function EditorPanel({
     if (!element) return;
     const bounds = element.getBoundingClientRect();
     const scale = bounds.width / element.offsetWidth || 1;
+    const style = getComputedStyle(element);
     setPosition({
-      x: position.x + (Math.max(8, (innerWidth - bounds.width) / 2) - bounds.left) / scale,
-      y: position.y + (Math.max(8, (innerHeight - bounds.height) / 2) - bounds.top) / scale,
+      x:
+        Number.parseFloat(style.left) +
+        (Math.max(8, (innerWidth - bounds.width) / 2) - bounds.left) / scale,
+      y:
+        Number.parseFloat(style.top) +
+        (Math.max(8, (innerHeight - bounds.height) / 2) - bounds.top) / scale,
     });
   };
   const requestClose = () => {
-    if (!saving) dirty ? setConfirmClose(true) : onClose();
+    if (!saving && !closeGuard?.pending) dirty || closeGuard ? setConfirmClose(true) : onClose();
   };
   const startDrag = (event: PointerEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest('button')) return;
-    const bounds = editor.current?.getBoundingClientRect();
-    if (!bounds) return;
+    const element = editor.current;
+    if (!element) return;
+    const bounds = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
     bringForward();
     drag.current = {
       x: event.clientX,
       y: event.clientY,
-      left: position.x,
-      top: position.y,
+      left: Number.parseFloat(style.left),
+      top: Number.parseFloat(style.top),
       boundsLeft: bounds.left,
       boundsTop: bounds.top,
     };
@@ -137,7 +148,13 @@ export function EditorPanel({
       role="dialog"
       aria-label={title}
       aria-describedby={scope ? scopeId : undefined}
-      style={{ left: position.x, top: position.y, zIndex: layer }}
+      style={{
+        // Constrain the painted window during viewport reflow, before a busy React
+        // resize callback can run. Keep the preferred desktop coordinates separately.
+        left: `clamp(calc(8px / var(--ui-scale, 1)), ${position.x}px, calc((100dvw - 8px) / var(--ui-scale, 1) - var(--editor-width)))`,
+        top: `clamp(calc(8px / var(--ui-scale, 1)), ${position.y}px, calc((100dvh - 8px) / var(--ui-scale, 1) - var(--editor-height)))`,
+        zIndex: layer,
+      }}
       onPointerDown={bringForward}
     >
       <header
@@ -161,7 +178,7 @@ export function EditorPanel({
           <IconButton
             icon="ui.close"
             label={`Close ${title}`}
-            disabled={saving}
+            disabled={saving || closeGuard?.pending}
             onPress={requestClose}
           />
         </div>
@@ -198,6 +215,8 @@ export function EditorPanel({
             'Saving changes…'
           ) : dirty ? (
             'Unsaved changes'
+          ) : closeGuard ? (
+            closeGuard.reason
           ) : (
             'No unsaved changes'
           )}
@@ -235,8 +254,8 @@ export function EditorPanel({
             >
               <h3 className="ol-heading">Keep the changes to {title.replace(/^Edit /, '')}?</h3>
               <p>
-                Your edits have not been saved. Keep editing, discard this draft, or save before
-                closing.
+                {closeGuard?.reason ??
+                  'Your edits have not been saved. Keep editing, discard this draft, or save before closing.'}
               </p>
               <div className="ol-creator-window-tools">
                 <Button variant="quiet" disabled={saving} onPress={() => setConfirmClose(false)}>
@@ -244,9 +263,10 @@ export function EditorPanel({
                 </Button>
                 <Button
                   variant="secondary"
-                  disabled={saving}
+                  disabled={saving || closeGuard?.pending}
                   onPress={() => {
                     onDiscard?.();
+                    closeGuard?.discard();
                     onClose();
                   }}
                 >
@@ -255,7 +275,7 @@ export function EditorPanel({
                 <Button
                   variant="primary"
                   busy={saving}
-                  disabled={saving || !!saveReason}
+                  disabled={saving || !!saveReason || !!closeGuard}
                   onPress={() => void onSave().then((saved) => saved && onClose())}
                 >
                   Save and Close

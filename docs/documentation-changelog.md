@@ -16,6 +16,101 @@ Mike commissioned paired designs for the nine research follow-ups. [Continuing l
 
 The design favors native follow-through, shared immutable preparation and existing private evidence before new inference or broader approximation. Hearing several retellings must not become several eyewitness accounts; a person's interpretation remains distinct from the events. The [coordination map](maintainers/intelligent-simulation.md), [constraint inventory](limits/intelligent-simulation.md) and research links preserve existing work IDs, current guarantees and unperformed acceptance. At that initial writing checkpoint, three questions still blocked dependent design: first distant-work fidelity, prospective meaning-only speech and descriptive psychology versus new meters. The resolved selections are recorded in the later entry above. These documents are design proposals, not new runtime behavior, implementation approval, paid trials or measured population capacity.
 
+## October 15, 2026 — Retain imported-interface lessons and reconcile the specification
+
+[CG30](maintainers/agent-guidance.md) adds the demonstrated rendering, asynchronous
+completion, recovery-cleanup and editor-save-scope lessons to their existing UI
+owners. Root/UI read triggers now explicitly cover planning/review and client
+request/storage helpers; selected-world examples include world-authored icons.
+Existing performance, world boundaries, privacy and draft-lifetime guidance remains
+the owner rather than gaining a duplicate checklist or skill. Four installed-agent
+read-only trials reached the sampled required chapters while a prose correction
+avoided implementation chapters; their context-efficiency and platform limits remain
+recorded under CG05.
+
+The [feature specification](projects/game-interaction-redesign-feature-spec.md)
+records its reconciliation against delivered source `3501d19c8` at
+**2026-10-15 09:14:58 UTC**: current Settings destinations, known blocked-action
+discovery, supported immediate fuel amount, conditional protected-item marking and
+named native qualification. Human-input/device/uncoached acceptance remains open.
+The technical design records consultation at that datetime without rewriting its
+architecture or inventing the original implementation-use time.
+
+Two existing statements were consolidated: editor tabs now share a draft only
+within their actual Save scope, and recovery guidance links the root development-save
+policy instead of incorrectly restating its reset permissions. The protected root
+policy is byte-for-byte unchanged. No runtime or gameplay behavior changes.
+
+## October 15, 2026 — Repair imported interface continuity and private reads
+
+The [imported-interface review](verification/ui-implementation-review.md) repairs
+existing task guarantees without starting the proposed item/building follow-on.
+Inventory and Construction now verify that the exact original command is retained
+before sending; unreadable storage, uncertain results and failed matching cleanup
+keep another command blocked. Construction preserves the same character's draft
+through renewed control while refreshing facts and checked previews. Creator
+revision Save, supplied-opening selection, Prepare, question answers and removal-review preparation/revision retain their own exact
+operation identities, while newer edits survive late Save readback and refused
+pages stay errors. These repairs replace optional retention and stale local
+completion assumptions; native execution, approval and spending owners are
+unchanged.
+
+The follow-up review preserves narration Close protection through optional reloads,
+keeps known native results visible after failed browser cleanup, and prevents an
+obsolete barter reply from changing a newer send. Task writing survives renewed
+control even when optional storage fails; private-note editing adopts an acknowledged
+saved revision without rebasing unsaved text. Barter rendering reuses its prepared
+original-request guard, while [FRL02](maintainers/performance.md#future-improvements-from-the-foundation-review)
+now bounds Operations/Diagnostics reads and rejects obsolete access before shared
+cleanup. These are repairs to existing guarantees, without new world rules,
+persisted schemas or authority. The [review report](verification/ui-implementation-review.md#follow-up-correctness-and-performance-review)
+separates controlled client evidence from native effects and larger-world capacity.
+
+Private action-history reads now reject older SQL results after committed evidence
+correction, and Character/Mind clear the affected read without erasing unrelated
+drafts. The [architecture](architecture.md#react-presentation-and-character-traits)
+links the existing recovery and private-retrieval contracts. Shared recipe detail
+now says **Makes** before manufacture, correcting the earlier **Actual output**
+label independently of the still-unstarted [IWB follow-on](maintainers/item-and-building-workflows.md).
+Its actual-product follow-through, finite crafting list and compound equip/stow
+requirements remain proposed. Native, controlled-component and full-App evidence
+retain their separate limits; this entry does not close human-input acceptance or
+required final-head checks.
+
+Dialog controls, popup/explanation text and the raw-data panel now follow the
+selected game UI scale. Their outer positioning stays in physical viewport
+coordinates, with scaled content bounded to the available space. Shared control
+disabling now reaches the actual subject combobox; stale private-read failures
+keep local-note Discard reachable. Default preferences and browser zoom are unchanged. Diagnostic rows use authored actor icons, current note/name proposals stay visibly proposed, and older refreshes cannot replace newer completed details. Required CI passes at executable source `38a8adcf6`; the first native time-test timeout and successful unchanged retry remain recorded.
+
+## October 15, 2026 — Protect exact interface request recovery
+
+The [UI completion continuation](projects/game-interaction-redesign-completion.md)
+integrates the current foundation with the redesigned Inventory and retained
+reading/drafts. Owner conversation and Current task now verify exact browser
+retention before dispatch; unreadable storage or failed matching cleanup keeps a
+new request blocked while preserving editable text and original-result reading.
+This replaces the previous treatment of unreadable task storage as no request and
+optional owner-message retention before a potentially paid send. Existing native
+receipts, authority and spending remain responsible for actual execution; there is
+no automatic retry or new task-size allowance. Ending exact companion consent
+remains independently available through its native owner.
+
+The [source-specific evidence](verification/ui-completion-2026-10-14.md#selected-continuation-at-72214abab)
+records real creation and action/checkpoint recovery, the retained Journal place,
+and six inspected completed-task results. A small completed-button scroll margin
+keeps its keyboard focus outline inside the reading area. The shared direct editor
+also constrains its displayed position during viewport reflow while retaining
+desktop position, draft and the existing drag/Center choices. Native scaled-editor
+interaction and real browser zoom/reflow retain their distinct source-specific
+evidence. Controlled owner turn records and supplied long display wording retain
+their stated limits. Narrow Character sheets now use their existing outer scroller
+for identity, tabs and content because a separate tab-page scroller could become
+shorter than a complete consent button. The tradeoff is scrolling those headings
+with the narrow content; selected drafts and desktop layout remain intact.
+Historical failures and real input/device/player criteria remain explicit; passing
+finite observations and required CI do not establish whole-project completion.
+
 ## October 15, 2026 — Turn intelligence research into owned design questions
 
 The [needs-design register](maintainers/needs-design.md#intelligent-individuals-and-efficient-simulation-research-derived-design-follow-up) now maps the focused intelligence/simulation research to existing character, agency, memory, attention, performance and scalability owners. It identifies residual questions about chosen activity boundaries, quiet personal relevance, calibrated routing, later experience, independent social activity, reusable computation, truthful distant simulation, concurrent service and whole-episode quality/cost. Already designed or delivered mechanisms remain with their existing acceptance; this creates no replacement architecture, duplicate ND backlog, adopted interval/model/fidelity policy or runtime authorization.

@@ -15,7 +15,6 @@ import { post } from '../api';
 import { playerEntity } from '../entity-view';
 import { Icon, IconButton, symbol } from '../design-system/components';
 import { ActionChoice } from './action-choice';
-import { spawnIcons } from './god-tools';
 import { Pullout, PulloutPicker } from './pullout';
 import { ActivityEntries, type ActivityEntry } from './camp-activity';
 export type PickerContext = {
@@ -680,7 +679,7 @@ export function ActionPicker({
                     icon: category === 'Actors' ? 'ui.character' : 'ui.world',
                     options: (view.godTools?.spawnOptions ?? [])
                       .filter((option) => option.category === category)
-                      .map((option) => ({ ...option, icon: spawnIcons[option.id] ?? 'ui.plus' })),
+                      .map((option) => ({ ...option, icon: option.icon ?? 'ui.plus' })),
                   })),
                 ]}
                 onSelect={(type) => {

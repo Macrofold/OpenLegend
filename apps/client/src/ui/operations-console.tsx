@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AccessCapability, OperationsView, WorldOverview } from '@open-legend/protocol';
 import { ACCESS_CAPABILITY_TEXT } from '@open-legend/protocol';
-import { AccessError, SignInRequiredError, getOperations, post } from '../api';
+import { AccessError, SignInRequiredError, getOperations, logOut } from '../api';
 import { Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
 import { Button, Section, Tag } from '../design-system/components';
 import { EntryNotice } from './entry-notice';
@@ -31,11 +31,17 @@ export function OperationsConsole() {
   const [error, setError] = useState('');
   const [entry, setEntry] = useState<'signed-out' | 'forbidden' | 'failed'>();
   const [refreshing, setRefreshing] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<number>();
   const [task, setTask] = useState('overview');
   const latest = useRef(0);
+  const inFlight = useRef<number | undefined>(undefined);
   const refresh = useCallback(async () => {
+    // Polling and explicit Refresh share one read; slow replies must not
+    // accumulate requests or keep superseding one another before adoption.
+    if (inFlight.current !== undefined) return;
     const request = ++latest.current;
+    inFlight.current = request;
     setRefreshing(true);
     try {
       const next = await getOperations();
@@ -56,6 +62,7 @@ export function OperationsConsole() {
       );
       setError(reason instanceof Error ? reason.message : String(reason));
     } finally {
+      if (inFlight.current === request) inFlight.current = undefined;
       if (request === latest.current) setRefreshing(false);
     }
   }, []);
@@ -87,11 +94,14 @@ export function OperationsConsole() {
             <Button
               size="sm"
               variant="quiet"
-              onPress={() =>
-                void post('/api/session/logout', {})
-                  .then(() => window.location.assign('/'))
-                  .catch((reason: unknown) => setError(String(reason)))
-              }
+              busy={loggingOut}
+              onPress={() => {
+                setLoggingOut(true);
+                void logOut().catch((reason: unknown) => {
+                  setLoggingOut(false);
+                  setError(reason instanceof Error ? reason.message : String(reason));
+                });
+              }}
             >
               Log Out
             </Button>

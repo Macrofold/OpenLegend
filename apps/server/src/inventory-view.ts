@@ -978,17 +978,21 @@ export function inventoryItemView(
         : 'This body cannot hold this equipment',
     });
   }
-  const equipped = equipmentConflicts(world, scope.actorId, item.id)[0];
-  const equippedDefinition = equipped && world.itemDefinitions[equipped.definitionId];
-  const counterpart = equippedDefinition
-    ? itemCharacteristics(world, equippedDefinition).map(({ key: id, ...fact }) => ({
-        id,
-        ...fact,
-      }))
-    : [];
-  const comparable = counterpart.some((other) =>
-    characteristics.some((fact) => fact.id === other.id && fact.unit === other.unit),
-  );
+  const conflicts = equipmentConflicts(world, scope.actorId, item.id).map((equipped) => {
+    const equippedDefinition = world.itemDefinitions[equipped.definitionId]!;
+    return {
+      id: equipped.id,
+      name: equippedDefinition.name,
+      nameForm: equippedDefinition.nameForm,
+      indefiniteArticle: equippedDefinition.indefiniteArticle,
+      characteristics: itemCharacteristics(world, equippedDefinition).map(
+        ({ key: id, ...fact }) => ({
+          id,
+          ...fact,
+        }),
+      ),
+    };
+  });
   return {
     id: item.id,
     revision: item.revision ?? 0,
@@ -1023,17 +1027,7 @@ export function inventoryItemView(
     ...(recipeRecord ? { recipeRecord } : {}),
     materialCondition: materialExposureView(world, item.id),
     characteristics,
-    ...(equipped && equippedDefinition && comparable
-      ? {
-          comparison: {
-            id: equipped.id,
-            name: equippedDefinition.name,
-            nameForm: equippedDefinition.nameForm,
-            indefiniteArticle: equippedDefinition.indefiniteArticle,
-            characteristics: counterpart,
-          },
-        }
-      : {}),
+    ...(definition.equipment ? { equipmentConflicts: conflicts } : {}),
     availableQuantity: availableItemQuantity(world, item.id),
     ...(!item.container || canAccessContainer(world, scope.actorId, item.id)
       ? { packingLoad: itemPackingLoad(world, item.id, 1) }

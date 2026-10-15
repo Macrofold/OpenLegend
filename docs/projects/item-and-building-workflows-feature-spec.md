@@ -1,8 +1,8 @@
 # Item and building workflows — feature specification
 
-| Status      | Current progress                                                                             | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------- | ------------ |
-| Not started | The follow-on design is prepared; implementation and its acceptance checks have not started. | 2026-10-14   |
+| Status      | Current progress                                                                                                                | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | The follow-on and its acceptance remain unstarted; the existing shared recipe wording is corrected separately in the UI review. | 2026-10-15   |
 
 **Design scope selected by Mike:** turn the inventory, crafting, equipment and construction learnings into a concrete OpenLegend follow-on with implementation tasks. This document proposes the additions; it does not authorize runtime implementation or change current world rules. Parent design needs remain [ND13 — usable action controls](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization) and [ND07 — usable buildings](../maintainers/needs-design.md#nd07--editable-buildings-that-become-usable-homes). Neither broader entry is closed by this selected slice.
 
@@ -35,7 +35,7 @@ Same-character draft continuity, current private reads and truthful transaction 
 
 The new project owns these additions, not the unfinished broad PW04/PW11/SH/UIUX qualification programs. A defect in an existing primitive is repaired in its existing owner and referenced here; it is not a second implementation of that primitive. Existing project documents retain their delivered subsets and unmet acceptance.
 
-A concrete current presentation issue illustrates the need: `apps/client/src/ui/recipe-details.tsx` labels a recipe's prospective product **Actual output** before crafting. This project uses **Makes** or **Expected result** for a recipe, reserving **Produced** for a completed outcome with real item references. The inspected component is evidence of the label, not proof of every surrounding UI defect.
+The initial design audit found that `apps/client/src/ui/recipe-details.tsx` labeled a recipe's prospective product **Actual output** before crafting. The [imported-interface review](../verification/ui-implementation-review.md) corrects that existing shared component to **Makes**, independently of this follow-on. Preserve **Makes** or **Expected result** for a recipe and reserve **Produced** for the proposed completed-outcome presentation with real item references. The wording correction does not deliver that output follow-through, a crafting list or compound equip/stow.
 
 ## 2. Player experience and non-goals
 

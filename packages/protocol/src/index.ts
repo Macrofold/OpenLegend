@@ -411,7 +411,8 @@ export interface InventoryItemView extends Named {
   packingLoad?: number;
   recipeRecord?: { method?: RecipeDetailsView; message: string };
   characteristics?: InventoryCharacteristic[];
-  comparison?: Named & { id: string; characteristics: InventoryCharacteristic[] };
+  /** Every currently equipped item this candidate would put away. */
+  equipmentConflicts?: Array<Named & { id: string; characteristics: InventoryCharacteristic[] }>;
   category: 'material' | 'food' | 'equipment' | 'ammunition';
   description: string;
   equipped: boolean;
@@ -735,7 +736,12 @@ export interface GameView {
   godTools?: {
     familyLabel: string;
     traits: Array<{ id: string; name: string; description: string }>;
-    spawnOptions: Array<{ id: string; label: string; category: 'Actors' | 'Environment' }>;
+    spawnOptions: Array<{
+      id: string;
+      label: string;
+      category: 'Actors' | 'Environment';
+      icon?: string;
+    }>;
     itemOptions: Array<{ id: string; label: string; icon?: string; description: string }>;
   };
   schemaVersion: 2;

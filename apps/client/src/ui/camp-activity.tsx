@@ -223,11 +223,11 @@ function readDraft(key: string): Record<string, string> {
   return {};
 }
 
-/** Context changes remount only this task; its private draft remains scoped to the exact object. */
+/** Renewed control refreshes reads without discarding this exact owner's local draft. */
 export function CampActivity(props: Props) {
   const { view, entry } = props;
   const key = JSON.stringify([
-    view.access?.scope,
+    view.access?.privateDraftScope,
     view.worldId,
     view.saveTimeline,
     view.player.id,
@@ -249,9 +249,13 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       return true;
     }
   });
-  const [mode, setMode] = useState<WorkMode>('enqueue');
+  const mode: WorkMode =
+    draft[':workMode'] === 'replace' || draft[':workMode'] === 'interrupt'
+      ? draft[':workMode']
+      : 'enqueue';
   const [editing, setEditing] = useState<'supply' | 'amount' | 'stop' | null>(null);
-  const [choices, setChoices] = useState<ActivityRequestsView>();
+  const [choiceRead, setChoices] = useState<ActivityRequestsView>();
+  const choices = choiceRead?.scope === view.access?.scope ? choiceRead : undefined;
   const [status, setStatus] = useState<{ value: StatusView; revision: number }>();
   const [refresh, setRefresh] = useState(0);
   const [error, setError] = useState('');
@@ -280,6 +284,8 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   const pending = useRef<string | undefined>(undefined);
   const statusTicket = useRef(0);
   const statusAbort = useRef<AbortController | undefined>(undefined);
+  const currentAccess = useRef(view.access?.scope);
+  currentAccess.current = view.access?.scope;
   const fieldId = useId();
   const unavailable = !connected || view.access?.controlling === false || !view.player.alive;
   const descriptor = choices?.requests.find((request) => request.id === entry?.familyId);
@@ -308,7 +314,9 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       );
   }
   const activity =
-    status && status.revision >= view.revision ? status.value.status : view.player.activity;
+    status && status.value.scope === view.access?.scope && status.revision >= view.revision
+      ? status.value.status
+      : view.player.activity;
   const stoppable =
     !!activity && ['active', 'blocked', 'paused', 'queued', 'waiting'].includes(activity.status);
   const working = stoppable || view.player.hasWork;
@@ -411,6 +419,16 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
     };
   }, []);
   useEffect(() => {
+    statusTicket.current++;
+    statusAbort.current?.abort();
+    focusOwner.current = null;
+    // The original request still guards dispatch, but renewed control can read
+    // its receipt without waiting for the previous connection's promise.
+    pending.current = undefined;
+    setOperation(null);
+    setRecovering(false);
+  }, [view.access?.scope]);
+  useEffect(() => {
     if (!visible || unavailable) return;
     const abort = new AbortController();
     void post<ActivityRequestsView>(
@@ -419,18 +437,18 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       abort.signal,
     )
       .then((result) => {
-        if (abort.signal.aborted) return;
+        if (abort.signal.aborted || currentAccess.current !== view.access?.scope) return;
         if (!result.ok || result.scope !== view.access?.scope)
           throw new Error('Task choices are unavailable.');
         setChoices(result);
         setStatus({ value: result, revision: view.revision });
       })
       .catch((reason: unknown) => {
-        if (!abort.signal.aborted)
+        if (!abort.signal.aborted && currentAccess.current === view.access?.scope)
           setError(reason instanceof Error ? reason.message : 'Task choices are unavailable.');
       });
     return () => abort.abort();
-  }, [visible, unavailable, refresh]);
+  }, [visible, unavailable, refresh, view.access?.scope]);
 
   const input: CommandInput = {
     type: 'activity-request',
@@ -542,13 +560,14 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       const result = await post<StatusView>('/api/activity-status', {}, abort.signal);
       if (
         alive.current &&
+        currentAccess.current === view.access?.scope &&
         ticket === statusTicket.current &&
         result.ok &&
         result.scope === view.access?.scope
       )
         setStatus({ value: result, revision: view.revision });
     } catch (reason) {
-      if (alive.current && !abort.signal.aborted)
+      if (alive.current && currentAccess.current === view.access?.scope && !abort.signal.aborted)
         setError(reason instanceof Error ? reason.message : 'Current work could not be read.');
     }
   }
@@ -588,22 +607,36 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
     setMessage('');
     try {
       const result = await command(action, request);
-      if (!alive.current || pending.current !== request.commandId) return result;
+      if (
+        !alive.current ||
+        currentAccess.current !== view.access?.scope ||
+        pending.current !== request.commandId
+      )
+        return result;
       if (result.code === 'unconfirmed')
         setError('Delivery is uncertain. Check this exact request before starting other work.');
       else acceptReceipt(result, request.commandId, action.command);
       await refreshStatus();
-      if (alive.current && pending.current === request.commandId) setRefresh((value) => value + 1);
+      if (
+        alive.current &&
+        currentAccess.current === view.access?.scope &&
+        pending.current === request.commandId
+      )
+        setRefresh((value) => value + 1);
       return result;
     } catch (reason) {
-      if (alive.current && pending.current === request.commandId) {
+      if (
+        alive.current &&
+        currentAccess.current === view.access?.scope &&
+        pending.current === request.commandId
+      ) {
         setError(
           `${reason instanceof Error ? reason.message : 'Delivery is uncertain.'} No action is repeated automatically.`,
         );
       }
       return undefined;
     } finally {
-      if (pending.current === request.commandId) {
+      if (currentAccess.current === view.access?.scope && pending.current === request.commandId) {
         pending.current = undefined;
         if (alive.current) setOperation(null);
       }
@@ -666,19 +699,33 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
         ...original.request,
         command: original.action.command,
       });
-      if (!alive.current || pending.current !== commandId) return;
+      if (
+        !alive.current ||
+        currentAccess.current !== view.access?.scope ||
+        pending.current !== commandId
+      )
+        return;
       if (receipt.scope !== view.access?.scope)
         throw new Error('Your access changed. Reopen this task.');
       if (receipt.status === 'resolved') {
         acceptReceipt(receipt.result, commandId, original.action.command);
         await refreshStatus();
-        if (alive.current && pending.current === commandId) setRefresh((value) => value + 1);
+        if (
+          alive.current &&
+          currentAccess.current === view.access?.scope &&
+          pending.current === commandId
+        )
+          setRefresh((value) => value + 1);
       } else setError(receipt.message);
     } catch (reason) {
-      if (alive.current && pending.current === commandId)
+      if (
+        alive.current &&
+        currentAccess.current === view.access?.scope &&
+        pending.current === commandId
+      )
         setError(reason instanceof Error ? reason.message : 'This request could not be checked.');
     } finally {
-      if (pending.current === commandId) {
+      if (currentAccess.current === view.access?.scope && pending.current === commandId) {
         pending.current = undefined;
         if (alive.current) setRecovering(false);
       }
@@ -772,7 +819,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           size="sm"
           variant={mode === 'enqueue' ? 'secondary' : 'quiet'}
           disabled={disabled}
-          onPress={() => setMode('enqueue')}
+          onPress={() => change(':workMode', 'enqueue')}
         >
           {modeLabels?.enqueue ?? 'After current work'}
         </Button>
@@ -780,7 +827,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           size="sm"
           variant={mode === 'replace' ? 'secondary' : 'quiet'}
           disabled={disabled}
-          onPress={() => setMode('replace')}
+          onPress={() => change(':workMode', 'replace')}
         >
           {modeLabels?.replace ?? 'Prepare replacement'}
         </Button>
@@ -788,7 +835,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           size="sm"
           variant={mode === 'interrupt' ? 'secondary' : 'quiet'}
           disabled={disabled}
-          onPress={() => setMode('interrupt')}
+          onPress={() => change(':workMode', 'interrupt')}
         >
           {modeLabels?.interrupt ?? 'Pause and resume current work'}
         </Button>

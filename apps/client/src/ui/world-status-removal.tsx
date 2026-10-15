@@ -17,6 +17,61 @@ const failureText = (failure: unknown) =>
   failure instanceof Error ? failure.message : 'This removal review is unavailable.';
 const sameSelection = (left: string[], right: string[]) =>
   left.length === right.length && left.every((id) => right.includes(id));
+type PrepareRequest = { sessionId: string; operationId: string };
+type RevisionRequest = { id: string; optionalIds: string[] };
+const isPrepareRequest = (value: unknown): value is PrepareRequest =>
+  !!value &&
+  typeof value === 'object' &&
+  'sessionId' in value &&
+  typeof value.sessionId === 'string' &&
+  'operationId' in value &&
+  typeof value.operationId === 'string';
+const isRevisionRequest = (value: unknown): value is RevisionRequest =>
+  !!value &&
+  typeof value === 'object' &&
+  'id' in value &&
+  typeof value.id === 'string' &&
+  'optionalIds' in value &&
+  Array.isArray(value.optionalIds) &&
+  value.optionalIds.every((id) => typeof id === 'string');
+// These records identify native writes; optional choices/reading-position storage
+// cannot replace them. docs/world-agent-runtime.md#durable-write-sessions
+function readOperation<T>(key: string, valid: (value: unknown) => value is T): T | null {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(key) ?? 'null');
+    if (value === null || valid(value)) return value;
+  } catch {
+    // An unreadable original is not evidence that no operation was sent.
+  }
+  throw new Error('The original removal request could not be read. Restore storage and check it.');
+}
+function restoreOperation<T>(key: string, valid: (value: unknown) => value is T) {
+  try {
+    return readOperation(key, valid);
+  } catch {
+    return 'unreadable' as const;
+  }
+}
+function writeOperation<T>(
+  key: string,
+  request: T,
+  valid: (value: unknown) => value is T,
+  clear = false,
+) {
+  const current = readOperation(key, valid);
+  if (current && JSON.stringify(current) !== JSON.stringify(request))
+    throw new Error('A different removal request remains retained. Check its original result.');
+  const text = JSON.stringify(clear ? null : request);
+  try {
+    localStorage.setItem(key, text);
+    if (localStorage.getItem(key) === text) return;
+  } catch {
+    // Retention and matching cleanup are required for these native operation IDs.
+  }
+  throw new Error(
+    'The exact removal request could not be retained or cleared. Restore storage and check its original result.',
+  );
+}
 const sections: Array<{ id: WorldStatusRemovalSection; label: string }> = [
   { id: 'definitions', label: 'Conditions to remove' },
   { id: 'optional', label: 'Optional supporting conditions' },
@@ -47,18 +102,7 @@ export function WorldStatusRemovalButton({
     sessionId ?? null,
     definitionId,
   );
-  type Request = { sessionId: string; operationId: string };
-  const retained = readLocal<Request | null>(
-    scope,
-    null,
-    (value): value is Request =>
-      !!value &&
-      typeof value === 'object' &&
-      'sessionId' in value &&
-      typeof value.sessionId === 'string' &&
-      'operationId' in value &&
-      typeof value.operationId === 'string',
-  );
+  const [retained, setRetained] = useState(() => restoreOperation(scope, isPrepareRequest));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const currentScope = useRef(scope);
@@ -76,26 +120,43 @@ export function WorldStatusRemovalButton({
     setBusy(true);
     setError('');
     const requestScope = scope;
-    const request = retained ?? {
-      sessionId: sessionId ?? crypto.randomUUID(),
-      operationId: crypto.randomUUID(),
-    };
-    writeLocal(scope, request);
     try {
+      const stored = readOperation(scope, isPrepareRequest);
+      if (retained === 'unreadable' && !stored) {
+        setRetained(null);
+        setError(
+          'Storage is readable and no original removal request is retained. Nothing was sent.',
+        );
+        return;
+      }
+      const request = (retained !== 'unreadable' && retained) ||
+        stored || {
+          sessionId: sessionId ?? crypto.randomUUID(),
+          operationId: crypto.randomUUID(),
+        };
+      writeOperation(scope, request, isPrepareRequest);
+      setRetained(request);
       const result = await post<WorldAgentWorkResult<WorldAgentPlanView>>(
         '/api/world-agent/session/removal',
         { worldId, ...request, rootIds: [definitionId] },
       );
       if (currentScope.current !== requestScope) return;
       if (result.data?.removal) {
-        writeLocal(scope, null);
+        writeOperation(scope, request, isPrepareRequest, true);
+        setRetained(null);
         onPrepared(request.sessionId, result.data);
       } else {
-        if (result.status !== 'unavailable') writeLocal(scope, null);
+        if (result.status !== 'unavailable') {
+          writeOperation(scope, request, isPrepareRequest, true);
+          setRetained(null);
+        }
         throw new Error(result.message ?? 'A complete saved removal review could not be prepared.');
       }
     } catch (failure) {
-      if (currentScope.current === requestScope) setError(failureText(failure));
+      if (currentScope.current === requestScope) {
+        setRetained((current) => current ?? restoreOperation(scope, isPrepareRequest));
+        setError(failureText(failure));
+      }
     } finally {
       pending.current = false;
       if (currentScope.current === requestScope) setBusy(false);
@@ -165,28 +226,18 @@ export function WorldStatusRemovalDetails({
     plan.id,
     removal.binding,
   );
-  type RevisionRequest = { id: string; optionalIds: string[] };
   const [pendingRevision, setPendingRevision] = useState(() =>
-    readLocal<RevisionRequest | null>(
-      operationKey,
-      null,
-      (value): value is RevisionRequest =>
-        !!value &&
-        typeof value === 'object' &&
-        'id' in value &&
-        typeof value.id === 'string' &&
-        'optionalIds' in value &&
-        Array.isArray(value.optionalIds) &&
-        value.optionalIds.every((id) => typeof id === 'string'),
-    ),
+    restoreOperation(operationKey, isRevisionRequest),
   );
-  const [selected, setSelected] = useState(() =>
-    readLocal<string[]>(
-      scope,
-      removal.optionalIds,
-      (value): value is string[] =>
-        Array.isArray(value) && value.every((id) => typeof id === 'string'),
-    ),
+  const [selected, setSelected] = useState(
+    () =>
+      (pendingRevision !== 'unreadable' && pendingRevision?.optionalIds) ||
+      readLocal<string[]>(
+        scope,
+        removal.optionalIds,
+        (value): value is string[] =>
+          Array.isArray(value) && value.every((id) => typeof id === 'string'),
+      ),
   );
   type Reading = {
     section: WorldStatusRemovalSection;
@@ -338,40 +389,65 @@ export function WorldStatusRemovalDetails({
     setSaving(true);
     setError('');
     const requestScope = scope;
-    const request = pendingRevision ?? { id: crypto.randomUUID(), optionalIds: selected };
-    const body = {
-      worldId,
-      sessionId,
-      draftId: plan.draftId,
-      expectedRevision: plan.revision,
-      rootIds: removal.rootIds,
-      optionalIds: request.optionalIds,
-    };
-    writeLocal(operationKey, request);
-    setPendingRevision(request);
+    let retainedAfter = pendingRevision;
     try {
+      const stored = readOperation(operationKey, isRevisionRequest);
+      if (pendingRevision === 'unreadable' && !stored) {
+        retainedAfter = null;
+        setPendingRevision(null);
+        setError(
+          'Storage is readable and no original removal revision is retained. Nothing was sent.',
+        );
+        return;
+      }
+      const request = (pendingRevision !== 'unreadable' && pendingRevision) ||
+        stored || {
+          id: crypto.randomUUID(),
+          optionalIds: selected,
+        };
+      writeOperation(operationKey, request, isRevisionRequest);
+      retainedAfter = request;
+      setPendingRevision(request);
+      setSelected(request.optionalIds);
       const result = await post<WorldAgentWorkResult<WorldAgentPlanView>>(
         '/api/world-agent/session/removal',
-        { ...body, operationId: request.id },
+        {
+          worldId,
+          sessionId,
+          draftId: plan.draftId,
+          expectedRevision: plan.revision,
+          rootIds: removal.rootIds,
+          optionalIds: request.optionalIds,
+          operationId: request.id,
+        },
       );
       if (currentScope.current !== requestScope) return;
       if (!result.data?.removal) {
         if (result.status !== 'unavailable') {
-          writeLocal(operationKey, null);
+          writeOperation(operationKey, request, isRevisionRequest, true);
+          retainedAfter = null;
           setPendingRevision(null);
         }
         throw new Error(result.message ?? 'The revised removal review could not be saved.');
       }
-      writeLocal(operationKey, null);
+      writeOperation(operationKey, request, isRevisionRequest, true);
+      retainedAfter = null;
       setPendingRevision(null);
       writeLocal(scope, null);
       onRevised(result.data);
     } catch (failure) {
-      if (currentScope.current === requestScope) setError(failureText(failure));
+      if (currentScope.current === requestScope) {
+        retainedAfter ??= restoreOperation(operationKey, isRevisionRequest);
+        setPendingRevision(retainedAfter);
+        setError(failureText(failure));
+      }
     } finally {
       working.current = false;
       if (currentScope.current === requestScope) {
         setSaving(false);
+        // A pre-dispatch storage failure can batch both saving updates away, so
+        // its synchronous parent guard must settle even without another Effect.
+        onCancellationBlocked(!!retainedAfter);
         restoreFocus();
       }
     }

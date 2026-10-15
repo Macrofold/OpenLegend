@@ -8,7 +8,9 @@ import type {
   GameView,
 } from '@open-legend/protocol';
 import { getScoped, post } from '../api';
+import type { CommandDispatcher } from '../command-request';
 import { Button, Section, SelectField } from '../design-system/components';
+import { useInventoryCommand } from './use-inventory-command';
 import './construction.css';
 export function Construction({
   view,
@@ -20,16 +22,33 @@ export function Construction({
   view: GameView;
   connected: boolean;
   visible: boolean;
-  command(action: ActionOption): Promise<ApiResult | undefined>;
+  command: CommandDispatcher;
   preview(shapes: readonly ConstructionShape[] | null, valid?: boolean): void;
 }) {
   const [opened, setOpened] = useState(false),
-    [data, setData] = useState<Extract<ConstructionView, { ok: true }>>(),
-    [unsupported, setUnsupported] = useState(''),
+    [read, setRead] = useState<{ key: string; value?: ConstructionView; error?: string }>(),
     [error, setError] = useState(''),
-    [readError, setReadError] = useState(''),
     [readRevision, setReadRevision] = useState(0),
-    [busy, setBusy] = useState(false);
+    [busyScope, setBusyScope] = useState<string>();
+  const available = opened && visible && connected;
+  const [availability, setAvailability] = useState({ available, revision: 0 });
+  if (availability.available !== available)
+    setAvailability({ available, revision: availability.revision + 1 });
+  const readKey = JSON.stringify([
+    view.access?.scope,
+    view.saveTimeline,
+    availability.revision,
+    readRevision,
+  ]);
+  const currentReadKey = useRef<string | null>(null);
+  // Drafts survive same-owner Resume; old material facts and checked ghosts do not.
+  // Fence completions during render, before the earlier read's Effect cleans up.
+  currentReadKey.current = available ? readKey : null;
+  const currentRead = available && read?.key === readKey ? read : undefined;
+  const data = currentRead?.value?.ok ? currentRead.value : undefined;
+  const unsupported = currentRead?.value?.ok === false ? currentRead.value.message : '';
+  const readError = currentRead?.error ?? '';
+  const busy = available && busyScope === readKey;
   const [operation, setOperation] = useState<ConstructionPlan['operation']>('build'),
     [rootId, setRootId] = useState(''),
     [arrangementId, setArrangementId] = useState(''),
@@ -51,28 +70,25 @@ export function Construction({
     ),
     root = roots.find((entity) => entity.id === rootId);
   useEffect(() => {
-    if (!opened || !visible || !connected) return;
+    if (!available) return;
     const abort = new AbortController();
     let live = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const load = async () => {
       try {
         const next = await getScoped<ConstructionView>('/api/construction', abort.signal);
-        if (live) {
-          setReadError('');
+        if (live && currentReadKey.current === readKey) {
+          setRead({ key: readKey, value: next });
           if (next.ok) {
-            setData(next);
-            setUnsupported('');
             setSite((old) => old ?? next.suggested);
           } else {
-            setData(undefined);
-            setUnsupported(next.message);
             setReview(undefined);
             preview(null);
           }
         }
       } catch (reason) {
-        if (live && !abort.signal.aborted) setReadError(String(reason));
+        if (live && !abort.signal.aborted && currentReadKey.current === readKey)
+          setRead({ key: readKey, error: String(reason) });
       } finally {
         // One read at a time. A completed write restarts this owner and aborts its
         // older read, so slow polling cannot restore outdated material choices.
@@ -85,7 +101,7 @@ export function Construction({
       abort.abort();
       clearTimeout(timer);
     };
-  }, [opened, visible, connected, view.access?.scope, view.saveTimeline, readRevision]);
+  }, [available, readKey]);
   const {
     covers,
     defaultBindings,
@@ -209,6 +225,7 @@ export function Construction({
   const key = useMemo(
     () =>
       JSON.stringify([
+        readKey,
         plan,
         data?.family,
         data?.authorized,
@@ -224,23 +241,45 @@ export function Construction({
           ? data?.lowered.find((material) => material.id === plan.outgoingId)
           : undefined,
       ]),
-    [plan, data?.family, data?.authorized, data?.lowered, materialsById],
+    [readKey, plan, data?.family, data?.authorized, data?.lowered, materialsById],
   );
   const currentKey = useRef(key);
   currentKey.current = key;
   useEffect(() => {
-    if (!visible || !opened || readError || !review || review.key !== key) preview(null);
+    if (!available || readError || !review || review.key !== key) preview(null);
     else preview(review.shapes, review.result.ok);
-  }, [visible, opened, readError, key, review]);
+  }, [available, readError, key, review]);
   useEffect(() => () => preview(null), []);
+  const operations = useInventoryCommand({
+    worldId: view.worldId,
+    actorId: view.player.id,
+    timeline: view.saveTimeline,
+    scope: view.access?.scope ?? '',
+    recoveryScope: view.access?.commandRecoveryScope,
+    epoch: view.commandEpoch,
+    connected,
+    command,
+    task: 'construction',
+    onResolved(result) {
+      setError(result.ok ? '' : result.message);
+      setReadRevision((revision) => revision + 1);
+    },
+  });
+  const canCommand = connected && !operations.pending;
   const invoke = (
     type: ActionOption['command']['type'],
     label: string,
     extra: Partial<ActionOption['command']> = {},
-  ) => command({ id: `construction-${type}`, label, enabled: true, command: { type, ...extra } });
+  ) =>
+    operations.dispatch({
+      id: `construction-${type}`,
+      label,
+      enabled: true,
+      command: { type, ...extra },
+    });
   const check = async () => {
-    if (!plan || readError) return;
-    setBusy(true);
+    if (!plan || readError || currentReadKey.current !== readKey) return;
+    setBusyScope(readKey);
     setError('');
     try {
       const result = await post<ApiResult & { shapes: ConstructionShape[] }>(
@@ -253,16 +292,24 @@ export function Construction({
     } catch (reason) {
       if (currentKey.current === key) setError(String(reason));
     } finally {
-      setBusy(false);
+      setBusyScope((current) => (current === readKey ? undefined : current));
     }
   };
   const start = async () => {
-    if (readError || !review?.result.ok || review.key !== key) return;
-    setBusy(true);
+    if (
+      !canCommand ||
+      readError ||
+      currentReadKey.current !== readKey ||
+      !review?.result.ok ||
+      review.key !== key
+    )
+      return;
+    setBusyScope(readKey);
     try {
       const result = await invoke('construction', 'Start selected construction', {
         constructionPlan: review.plan,
       });
+      if (currentKey.current !== key) return;
       if (result) {
         setError(result.ok ? '' : result.message);
         if (result.ok) {
@@ -270,9 +317,8 @@ export function Construction({
           setReview(undefined);
         }
       }
-      setReadRevision((revision) => revision + 1);
     } finally {
-      setBusy(false);
+      setBusyScope((current) => (current === readKey ? undefined : current));
     }
   };
   return (
@@ -280,6 +326,28 @@ export function Construction({
       <Button onPress={() => setOpened(!opened)}>
         {opened ? 'Close shelter controls' : 'Preview a shelter'}
       </Button>
+      {operations.pending && (
+        <div role="status">
+          <p>
+            {operations.pending.request?.label ?? 'Earlier construction action'} ·{' '}
+            {operations.pending.status === 'sending'
+              ? 'Sending'
+              : operations.pending.status === 'checking'
+                ? 'Checking the original result'
+                : 'Original request needs recovery'}
+          </p>
+          <Button
+            disabled={!connected || operations.pending.status !== 'unknown'}
+            onPress={() => void operations.check()}
+          >
+            {operations.pending.request ? 'Check result' : 'Read retained request'}
+          </Button>
+          {!operations.pending.request && (
+            <p>The original action could not be read. New construction actions remain blocked.</p>
+          )}
+        </div>
+      )}
+      {operations.message && <p role="status">{operations.message}</p>}
       {opened && (
         <div className="ol-construction">
           {!connected ? (
@@ -287,7 +355,7 @@ export function Construction({
           ) : unsupported ? (
             <p role="status">{unsupported}</p>
           ) : !data ? (
-            <p>Reading current building choices…</p>
+            !readError && <p>Reading current building choices…</p>
           ) : (
             <>
               <p>{data.family.description}</p>
@@ -333,7 +401,7 @@ export function Construction({
                       .map((part) => (
                         <Button
                           key={part.id}
-                          disabled={!connected || view.clock.paused}
+                          disabled={!canCommand || view.clock.paused}
                           onPress={() =>
                             void invoke('construction-rest', 'Rest in covered bay', {
                               targetId: root.id,
@@ -345,7 +413,7 @@ export function Construction({
                         </Button>
                       ))}
                     <Button
-                      disabled={!connected || view.clock.paused}
+                      disabled={!canCommand || view.clock.paused}
                       onPress={() =>
                         void invoke('move', 'Visit this place', { position: root.assembly!.site })
                       }
@@ -353,7 +421,7 @@ export function Construction({
                       Walk here
                     </Button>
                     <Button
-                      disabled={!connected || view.clock.paused}
+                      disabled={!canCommand || view.clock.paused}
                       onPress={() =>
                         void invoke('say', 'Invite a visitor', { text: data.family.invitationText })
                       }
@@ -561,14 +629,18 @@ export function Construction({
                       variant="primary"
                       busy={busy}
                       disabled={
-                        !!readError || !review?.result.ok || review.key !== key || view.clock.paused
+                        !canCommand ||
+                        !!readError ||
+                        !review?.result.ok ||
+                        review.key !== key ||
+                        view.clock.paused
                       }
                       onPress={() => void start()}
                     >
                       Start selected work
                     </Button>
                     <Button
-                      disabled={!connected}
+                      disabled={!canCommand}
                       onPress={() => void invoke('cancel', 'Stop current work')}
                     >
                       Stop current work

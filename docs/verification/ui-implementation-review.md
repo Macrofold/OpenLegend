@@ -1,0 +1,446 @@
+# Imported interface implementation review — October 15, 2026
+
+## Scope and source
+
+Mike requested a complete source review of the imported interface and designs,
+repairs, and completion of missing accepted UI. The review starts at
+`99cb310fbe7ac597a417664551991f074995b888` on
+`docs/game-ui-research-redesign`, including the substantial redesign already
+integrated into main. The refreshed PR base is `Macrofold/OpenLegend`
+`origin/main` at `362d3b0a20e92fc38a672730104b957b1c7c1be4`, already an ancestor.
+Local checkpoints `1985e18c7`, `5ef9c4007` and `2f8654468` preserve the review repairs.
+The first integrated source is `9d7081b0924322ab5587dd85cc0a0687e29a314f`.
+All required checks pass there. The initial review's final executable source
+`38a8adcf6571dfbfdbfbac32a7d9c09cf92bfc48` adds the final Diagnostics repairs and
+passes local static/build checks and every required CI gate below.
+
+The [completion plan](../projects/game-interaction-redesign-completion.md#complete-imported-interface-review--october-15)
+owns execution, and [UIUX](../maintainers/ui-ux.md) retains broader acceptance.
+The separate item/building follow-on requires clarification because crafting-list
+and compound equipment additions change native behavior as well as presentation.
+This review does not treat their older design-only status as either implementation
+or a waiver. The current recipe wording defect is repaired independently.
+
+Mike's subsequent correctness, structure, performance and world-boundary review
+starts at published `1dbfbfe63886cc246254b310264f701392153e94`. Its refreshed base
+is unchanged. The [follow-up plan](../projects/game-interaction-redesign-completion.md#follow-up-implementation-review--october-15)
+and the follow-up results below extend this report rather than replacing the
+earlier evidence or reopening excluded simulation work.
+
+## Source review and repairs
+
+Review covers Character, contextual actions and tasks, Inventory and its connected
+equipment/trade/quantity/read/recovery owners, Journal/places/promises and personal
+history; entry/settings/time/checkpoints, creator editors and workspaces,
+Operations; and shared controls, conversation, world-input/camera/HUD presentation
+and relevant styles. Producer/consumer review includes the affected native
+equipment projection, original command receipts, private SQL reads and current
+draft/authority owners. This is not a fresh review of every unrelated native
+simulation implementation or a claim of all-platform usability.
+
+- Equipment review previously selected only the first conflicting equipped item.
+  It now names every item that the native Equip operation will put away, retaining
+  comparison tables only for matching characteristics and units. Targeting no longer
+  names whichever equipped item happens to appear first in Inventory; its hovered
+  action label comes from the actual offered action.
+- Late trade and Speak/Act acknowledgements no longer take focus from a newer task.
+  Speak/Act clears only the submitted draft revision, and a later failed Act cannot
+  replace newer text, including a deliberately blank draft. The Speak/Act bar also
+  participates in existing caption avoidance when visible.
+- Known places returns inspection focus only while it still owns it. Each contextual
+  task now retains its chosen handling of current work alongside its other privately
+  scoped draft fields.
+- Construction keeps its same-owner draft through renewed control while refreshing
+  permitted facts, rejecting older reads/previews and removing hidden ghosts.
+  Consequential commands use a separate slot in the existing original-command
+  retention owner; recovery reads the exact receipt instead of starting work again.
+- Inventory verifies that no original request would be overwritten and checks exact
+  browser retention before sending. Restored storage can reread an unreadable
+  original. Matching cleanup must succeed before another command is admitted.
+- Forgotten/corrected action history clears from Character and Mind without erasing
+  unrelated drafts. Creator relationship/evidence inspection expires independently
+  of its same-owner writing workspace, and both Mind history readers expire after
+  correction or forgetting. Its awaited server read uses the existing private-evidence fence
+  so an older SQL result cannot disclose revoked text after correction.
+- Refused creator history pages show errors instead of being adopted as successful
+  pages and crashing. Future-narration edits survive tab changes, blank input and
+  late Save readback; Close protects its separate save scope. Optional reads remain
+  dismissible. Native draft Save and opening selection now require verified original
+  retention and matching cleanup rather than optional unsent-draft storage.
+- The selected interface scale previously enlarged the HUD while leaving dialog
+  controls and popup text at their original size. Dialog content, popup lists,
+  explanations and raw JSON now enlarge once inside their unchanged physical
+  positioning boundaries; the existing viewport bounds account for that scale.
+- Operations uses the shared logout cleanup/broadcast owner and one in-flight
+  refresh. Slow reads cannot accumulate behind the five-second cadence. Recipe
+  details say **Makes** before manufacture. Generic invention help no longer asserts
+  wilderness content as a universal rule. Creation icons now come from the selected
+  world’s existing catalogue instead of a duplicate wilderness-ID map in the client.
+  Diagnostic actor rows likewise take their authored icon through the permitted
+  projection, replacing a deer/hare client map and native human-species classification. Current knowledge-note and remembered-name proposals are rendered
+  as proposals rather than malformed operations; detail refreshes cannot adopt
+  older running-stage results after a newer completion or dismissal.
+  Handbook single-item equipment and
+  unavailable-action-toggle claims are reconciled with accepted current behavior.
+
+## Focused observations completed
+
+Local execution uses Node 24.13.0, pinned pnpm/dependencies and Chromium
+145.0.7632.6. Native checks use a task-owned PostgreSQL 16/pgvector container on
+loopback port 55446 and disposable databases, without provider credentials and with
+`AI_BUDGET_USD=0`. Mike's main checkout, saved game and the unrelated database on
+port 55432 are untouched. **Additional provider/Jev cost: $0; cumulative task
+provider/Jev cost: $0.**
+
+- **Existing person-editor browser check:** passes in 29.7 seconds, under its
+  unchanged sixty-second limit, through the production App/server/PostgreSQL. Actual
+  Discard, memory refresh and narrow window bounds pass; the narrow image is inspected.
+- **Existing private-history checks:** all nine pass. A separate native observation
+  completes in 4,796.6 ms including its selected operations: real knife/shield
+  equipment, both projected spear conflicts, atomic ordinary Equip, and a held actual
+  SQL action-history page across committed evidence correction. The old read refuses;
+  the fresh page has two entries instead of three. This is correctness evidence, not
+  a scale or latency benchmark.
+- **Inventory/trade/places/task components:** actual modules consume native equipment
+  projections and controlled transport/callbacks. Both conflicts are visible before
+  Equip at desktop and 390×480. Silent failed storage and newly unreadable storage send
+  no Equip; restored storage reads one exact original receipt without replay. Two
+  delayed trade replies exercise newer outside focus and normal owned return. A held
+  place inspection preserves newer search/focus; ordinary Recheck reaches its heading.
+  Two task targets keep independent work-mode drafts through remounts. No native
+  mutation or provider execution is inferred from these controlled callbacks.
+- **Speak/Act and HUD components:** two explicit controlled Speak requests have
+  distinct identities; editing back to the original words preserves that newer draft,
+  and outside focus stays put. An ordinary new send clears its own draft. A supplied
+  failed Act preserves a newer blank draft and outside focus. The inspected 390×480
+  bar fits; the real HUD observer includes its visible rectangle and removes it on
+  Hide. No actual spoken event, expression generation or populated-scene caption
+  qualification is claimed.
+- **Creator editor:** the actual-App/native session passes in 39.6 seconds. A
+  controlled refused page recovers through the native reader. Blank narration text
+  survives tab changes; a held real Save acknowledgement preserves later input and
+  advances the native revision once. Pending-write Close and its separate-save
+  explanation pass. The first image caught the confirmation animation and did not
+  qualify its final pixels; that invocation's temporary image was later overwritten
+  by the separately run Operations output, so only its recorded result is retained.
+- **Operations:** passes in 10.1 seconds after actual Game entry establishes its local
+  login. Controlled slow reads remain single-flight. Actual logout clears private
+  markers, broadcasts once and invalidates the prior native session. Only the mode
+  presentation exposing the OIDC logout button is controlled; genuine identity-provider
+  sign-in is not qualified.
+- **Native authoring retention:** the actual-App case passes in 38.5 seconds under
+  the original sixty-second total, five-second assertions and ten-second capture.
+  Blocked writes prevent both opening-selection and native revision-Save dispatch.
+  Failed matching cleanup retains each original; explicit retry keeps its exact
+  identity/body. Reload sends no Save, and newer text survives original recovery.
+  The inspected desktop image is a reading sample, not full workspace qualification.
+
+- **Creator parent/caller recovery:** the evolving actual-App case passes in 31.3
+  seconds. A successful original-record write followed by failed readback sends no
+  Save. Discovering that original preserves later visible fields; parent Discard
+  refuses to erase it. Explicit retry creates one native revision and keeps later
+  text. Prepare blocked writes send nothing; failed cleanup and explicit retry keep
+  the same identity/body. The permitted-host projection and named blocked Prepare
+  result are controlled: no actual host preparation/activation is qualified. The
+  painted confirmation revealed missing shared spacing. After reusing the existing
+  creator confirmation layout, the actual-App variation passes in 34.2 seconds,
+  including reachable controls at 390×480; desktop/narrow captures are inspected.
+- **Construction continuity/recovery:** the strengthened observation passes in
+  11.8 seconds. Actual Construction/retained-command modules use native HTTP and
+  PostgreSQL reads, previews, control renewal, Start and receipt inspection inside
+  a product-styled Panel. Draft choices survive renewal, Hide and disconnect;
+  old reads/previews cannot restore controls or ghosts. One native Start commits,
+  then native cancellation ends work. Its retained original still blocks another
+  Start; an unreadable-storage reload recovers the exact receipt without changing
+  the world. A fresh native review then enables another deliberate Start without
+  dispatching it. Four captures are inspected. Delivery/read timing and changed
+  private owner are controlled; this is not a complete App/account-permission case.
+- **Removal-review retention:** the actual components use native HTTP/PostgreSQL
+  condition installation, preparation, revision and paging with controlled browser
+  storage/delivery. Failed reads/silent writes send nothing; a different stored
+  original cannot be overwritten. Lost replies, reload and failed cleanup replay
+  each exact original identity/body. Optional choices survive losing their optional
+  draft cache while the mandatory original remains. The initial passing observation
+  takes 7.1 seconds. Its strengthened final case passes in 8.000 seconds, including
+  the parent cancellation guard after synchronous storage failure, unresolved
+  original and recovery. It creates exactly two native plans/revisions, changes no
+  gameplay state and sends no Apply/provider request. All three current captures
+  are inspected and all owned handles are closed.
+- **Private creator inspection:** actual WorldAgent/WorldInspection modules with a
+  native GameView and controlled read transport, availability and stream remove
+  visible old evidence when its revision changes. A held old read cannot restore
+  evidence after renewed access. The selected workspace and an unrelated typed
+  conversation draft survive. Two inspection reads, no mutation/provider requests
+  and no browser errors; the retained-draft capture is inspected.
+- **Question card:** the actual module ignores malformed pending answer elements,
+  preserves a valid unsent draft and valid original retry, and displays an accepted
+  answer without write controls. Controlled browser records/question projections
+  make no API/provider requests or browser errors. The corrected product-styled
+  capture is inspected; the earlier fixture omitted layout CSS and its white-page
+  image is not visual qualification. Mandatory answer-retention follow-through
+  passes its evolved storage observation: blocked writes send nothing; failed
+  readback preserves original A and later draft C; two explicit retries keep the
+  same answer ID/body/continuation flag. Failed cleanup cannot discard A, a newer
+  accepted answer B remains shown, and explicit correction restores C. Replies and
+  projections are controlled; no native continuation or provider execution is inferred.
+- **Private Mind snapshot/history:** actual Mind, MemoryHistory and KnowledgeEditor
+  consume native ownership with controlled private-read payloads. Loaded and held
+  old memory pages/raw summaries disappear after evidence/access changes. A refused
+  current read keeps the old body hidden; explicit Refresh restores a fresh read.
+  The same note-editor DOM node and exact unsaved text survive. A refused refresh
+  leaves its unsent notes and Discard reachable while Save and the subject picker
+  are disabled; stale saved-note comparison stays hidden. Explicit Discard works,
+  then a current Refresh restores permitted notes. Eight Mind and six memory reads,
+  no mutations/providers or browser errors; both current captures are inspected.
+- **Shared portal scale:** actual SelectField, PulloutPicker, TabResumeDialog and
+  PersonCreationModal pass the finite controlled component observation at the
+  application’s 100%/130% CSS scale. HUD/dialog buttons both grow 40→52 pixels;
+  popup and anchor widths match at 320→416. Popup/pullout text grows 18→24 pixels,
+  and keyboard-triggered TextTooltip text grows 16→20, within one physical pixel
+  of the selected scale. At 390×420 the person modal and nested Traits popup fit;
+  child Escape preserves the modal and unsent name, keyboard Cancel and its full
+  focus outline remain visible, and focus returns correctly. Two final captures
+  are inspected. Browser zoom/DPR are unchanged; no API/provider requests or errors.
+- **Raw-data reading scale:** the actual existing RawJsonPanel, exposed only by a
+  temporary export in the Vite loader, uses sample long JSON. At 130%, its Close
+  button grows from 32 to 41.59 pixels while the physical 976×776 window is unchanged.
+  At 390×480 its bounds are 366×456, Close stays reachable and the JSON scrolls.
+  The capture is inspected. No API/provider request or browser error occurs.
+- **Diagnostics current presentation and read order:** the actual detail/row
+  components display an authored contrasting icon and a generic fallback when
+  omitted. Current knowledge-note and remembered-name operations remain visibly
+  Proposed with their expected revisions. Source review separately confirms that
+  empty note wording describes clearing and blank-name wording does not invent
+  supported name clearing. A held older
+  running read cannot replace a newer completed read, and dismissal rejects its
+  pending read before reopening fresh detail. Desktop and 390×650 captures are
+  inspected. The actual list/detail projection over an authored starting world
+  passes in 77.1 ms with a read-only controlled diagnostic adapter. This is no
+  database/HTTP/provider or scaling benchmark. No provider call or browser error
+  occurs. Its first duplicate-text selector failure remains recorded.
+- **Authored creation icons:** actual permitted native projection carries all ten
+  current catalogue icons, a contrasting supplied icon and an omitted optional
+  value without changing the saved world. Actual ActionPicker then displays that
+  supplied contrasting icon and its existing generic fallback when omitted; both
+  labels/icons are inspected. No creation command or provider call is sent.
+
+## Follow-up correctness and performance review
+
+Cross-review traces the complete affected implementation and its callers, with
+different reviewers for creator recovery, player tasks and private diagnostics.
+Confirmed additional defects and repairs:
+
+- World Events' reload screen now forwards the same separately saved narration
+  Close guard as its editing screen. An acknowledged event Save followed by a held
+  or failed reread cannot discard narration. Optional initial/reload reads can be
+  dismissed; a pending narration write still protects Close.
+- An unresolved Speak/Act result retains its original identity through subsequent
+  unconfirmed, expired or conflicting replies. Only a definite outcome releases
+  it for a fresh request; later writing retains its existing revision protection.
+- Barter snapshots no longer reread and parse the retained Inventory command during
+  React rendering and typing. The existing shared store prepares the guard on first
+  use or changed ownership, receives command-owner notifications, and rereads before
+  explicit dispatch. This preserves recovery when Inventory has never mounted.
+- A definite Inventory/Construction acknowledgement stays visible when browser
+  cleanup fails or a later receipt check is unavailable. The exact original still
+  blocks another command; recovery wording no longer calls a known result unknown.
+  Explicit receipt recovery also releases the obsolete barter sending attempt;
+  its later promise cannot alter a newer offer, pending flag, message or focus.
+  Ordinary acknowledgements retain their normal counteroffer review updates.
+- Private note editing adopts the current saved revision after an acknowledged
+  Save becomes clean, even when its fresh snapshot arrived before that acknowledgement.
+  Dirty edits are still preserved against independent newer saved revisions, and
+  obsolete private reads cannot refresh the editor's baseline.
+- The current task keeps its in-memory writing and chosen handling of current work
+  through same-owner control renewal, even when optional draft writes fail. Fresh
+  authority-scoped choices, previews and status remain separate from that draft;
+  older acknowledgements cannot clear its original request or newer writing.
+- Operations rejects an obsolete reply before pruning checkpoint recovery records
+  or changing shared access. Diagnostics shares one in-flight list/activity read
+  with one coalesced explicit refresh and schedules its next poll after completion.
+  Changed page, filters, access, selection, Hide and unmount abort obsolete client
+  reads. Old list rows/counts disappear immediately when their read identity changes;
+  a definite refused activity read still withdraws the old page.
+  Open raw JSON is likewise stamped with its world/access/trace identity and hidden
+  before passive cleanup. Automatic Follow rechecks row focus after the wait;
+  explicit Refresh remains the deliberate route to adopt new records.
+
+The existing creator recovery helpers remain local because the general retained
+request helper has different storage, size, identity and cleanup contracts. Reusing
+it directly would change behavior; configuring it for every native operation would
+add a framework without reducing semantic ownership. No dependency, persisted
+schema, execution owner, world rule or admission policy is added. Selected-world
+icons/content and native equipment compatibility remain with their existing authored
+owners. No mutable or cross-observer native cache is introduced.
+
+Focused existing transport/editor checks pass **9 tests in two files** in 2.44 seconds.
+The actual World Events/editor composition and Operations API observation uses
+controlled acknowledgements: three event Saves, one narration Save, eight event
+reads and two Operations reads. It verifies Close while an optional read is held,
+unsaved/pending narration protection, later text, explicit Discard and obsolete
+Operations rejection before recovery cleanup. The settled confirmation pixels are
+inspected. An earlier image caught entry animation and is not painted-confirmation
+evidence.
+
+The actual barter/request/Speak caller observation verifies one command-record read
+on first person-view use, then **zero additional reads** for five unrelated redraws,
+a second shared caller and quantity edits. Command changes notify both callers;
+failed cleanup retains the original and matching receipt inspection releases it.
+Changed recovery ownership blocks correctly, and Speak preserves one exact ID/body
+through unresolved replies. The narrow capture is inspected. These are controlled
+component/request observations, not additional native effects or provider evidence.
+An evolved cleanup observation also retains the definite result text after refused
+cleanup and a later unavailable receipt read while both connected trade views stay
+blocked.
+The final actual ItemTrade → command-owner continuation holds send A across remount,
+recovers its exact receipt, starts B and then releases A with an unconfirmed reply.
+B remains pending with its own retained identity and later input keeps focus until
+B's own result. Ordinary counteroffer terms still advance from revision 7 to 8.
+There are three controlled dispatches and one read-only receipt, with no native
+effects or providers. The first continuation attempt wrongly compared local display
+metadata with the smaller native receipt body; that fixture failure is retained,
+and the corrected comparison keeps the exact ID, epoch and command assertions.
+
+The private-note race is first reproduced: a held acknowledgement arrives after
+the saved revision 2 snapshot, and the next edit is falsely blocked as revision 1.
+The corrected actual Mind/editor variant uses three current reads and one controlled
+Save. The next edit becomes available after acknowledgement; an independent saved
+revision 3 then preserves that unsaved edit and correctly blocks its Save as based
+on revision 2. Both final captures are inspected. No native note mutation or provider
+call is qualified by this controlled acknowledgement.
+
+The current-task variant deliberately fails optional draft writes and renews control
+without changing the private owner. The same task DOM, typed amount and handling of
+current work survive while old choices/preview withdraw. The strengthened continuation
+keeps the original dispatcher promise held, starts receipt A, renews control and
+starts receipt B for the same original ID. Releasing the obsolete command and A
+cannot clear B's busy guard or original request; only B's current-scope result clears
+it. Later fields survive and a changed private owner resets the draft. One controlled
+dispatch and two read-only receipt checks produce no native effects/providers/errors;
+the capture is inspected. The earlier narrower pass released the old acknowledgement
+before recovery and did not establish this held-promise guarantee.
+
+Diagnostics' finite controlled-HTTP observation makes **11 requests**, holding one
+for 6.6 seconds across two nominal poll intervals. At most one browser fetch is
+active; explicit Refresh coalesces, focused Follow preserves reading, refusal clears
+rows, and Hide/unmount end scheduling. Two obsolete fetches are aborted. A fresh
+access page appears before the old intercepted callback is released. The inspected
+capture shows the fresh followed page. The first counting variation counted an
+already-aborted interception callback as active until its delayed failure event;
+the final report separately records browser-fetch maximum 1 and retained callback
+maximum 2. This establishes client cancellation, not PostgreSQL/backend work
+cancellation or remote endpoint latency/capacity.
+The later raw-data/loading variant makes 12 list reads and two exact detail reads:
+a held fresh page displays Loading instead of false empty, and the first layout
+commit after access changes contains no old raw JSON, before passive cleanup. A fresh
+exact trace can reopen. The first Follow-focus variation reproduces an additional
+race: a delayed automatic full reply inserts a new row after the reader focuses the
+old row. The corrected three-request variation retains the same row DOM, focus and
+page, announces new activity, then adopts it on explicit Refresh. Its inline notice
+moves the row by 32 pixels in the bare component fixture; this is not equal-pixel
+reading-position evidence. That fixture also crops a supplementary hover preview at
+the far right, so it does not qualify tooltip fit in the production side Panel.
+Both final captures are inspected, and all owned handles are closed.
+
+Recurring storage parsing and overlapping optional requests are removed without
+adding polling, a global cache or background queues. Native equipment comparison
+still uses the existing current-equipment query per projected candidate; returning
+all conflicts adds work proportional to those actual conflicts. Complete-menu
+preparation and larger inventory/population qualification remain with
+[AC11](../maintainers/action-capabilities.md#ac11--usability-and-measured-efficiency)
+and [PF05](../maintainers/performance.md#pf05--public-view-and-browser-responsiveness),
+and [HV01](../limits/interface.md#hv01) retains the separate complete-list browser
+measurements. These focused observations establish no general scale capacity.
+No provider requests are made: additional and cumulative game-provider/Jev cost
+remain **$0**. Temporary observation code and generated output stay outside the
+repository; owned browser/server handles are closed.
+
+The integrated follow-up passes local TypeScript, the production build
+(`index-bhEQh4hA.js`), affected-file pinned formatting, whitespace, local Markdown
+links, guidance and generated-configuration checks. The existing large-bundle
+advisory remains; these checks establish no bundle-size or native capacity repair.
+
+Required automatic CI is unchanged. The [PR's current checks](https://github.com/Macrofold/OpenLegend/pull/27/checks)
+track the published follow-up source; the final handoff identifies that head and
+its results. The earlier source-specific CI below remains historical evidence.
+
+## Integrated checks and cleanup
+
+The initial review's executable source `38a8adcf6571dfbfdbfbac32a7d9c09cf92bfc48` passes
+full TypeScript and production build locally (`index-C0PuZb-3.js`), changed-file
+pinned formatting, whitespace and 2,373 relative links across 54 affected files.
+Guidance and generated-configuration checks pass. The pre-existing large-bundle
+and PlayCanvas worker-externalization advisories remain; this review claims no
+bundle-size or population/latency improvement. Temporary observations stay outside
+the repository. Every owned browser/server/database handle is closed and the
+owned PostgreSQL container is removed; the unrelated database and main save are
+untouched. Additional and cumulative game-provider/Jev cost are **$0**.
+
+The prior integrated source `9d7081b0924322ab5587dd85cc0a0687e29a314f` passes
+[PR Code](https://github.com/Macrofold/OpenLegend/actions/runs/38702934604),
+[push Code](https://github.com/Macrofold/OpenLegend/actions/runs/38702928959) and
+[Spatial/interface](https://github.com/Macrofold/OpenLegend/actions/runs/38702935192)
+without reruns. Code passes 392 tests in 43 files and its complete static/build
+gate. Spatial passes 28 native tests, its spatial browser case and all six ordinary
+interface journeys. Time takes 49.7 seconds under its unchanged sixty-second total.
+These qualify the source with all shared scale/recovery/private-reader repairs;
+the later Diagnostics changes retain their separate focused observations above.
+
+Final executable-source checks are
+[PR Code](https://github.com/Macrofold/OpenLegend/actions/runs/38703777194),
+[push Code](https://github.com/Macrofold/OpenLegend/actions/runs/38703770196) and
+[Spatial/interface](https://github.com/Macrofold/OpenLegend/actions/runs/38703777017).
+PR Code passes all 392 tests and the complete static/build gate. Push Code
+attempt 1 fails only the existing native world-presence/time test at its unchanged
+15,000 ms limit (15,207 ms recorded). That exact test passes in 6,914 ms in the
+same-source PR run. The final source difference from the already green integrated
+source changes only diagnostic presentation/read order, not simulation/time or
+this test. Its four parallel speed fixtures and PostgreSQL/native transitions are
+unchanged. One failed-job rerun was requested on identical source, assertions,
+configuration and deadlines. The first failure is retained; no host-contention
+cause or performance repair is established. Spatial/interface passes all 28 native
+checks and seven browser journeys without a rerun; Time takes 48.1 seconds under
+its unchanged sixty-second total. The unchanged [push Code attempt 2](https://github.com/Macrofold/OpenLegend/actions/runs/38703770196/attempts/2)
+passes all 392 tests and the complete gate; the earlier timed case takes 13,129 ms
+under its unchanged 15,000 ms limit. The complete executable source has every
+required check green at that initial-review checkpoint. Its final evidence commit
+updates documentation only and retains ordinary automatic CI; the subsequent
+follow-up above has its own required published-head checks.
+
+## Failures and evidence limits
+
+The sandboxed browser launch fails before UI execution; the approved outside-sandbox
+launch works. Initial native setup used plain PostgreSQL without `vector` and failed
+before assertions; only that task-owned container was replaced with the CI pgvector
+image. Temporary page-routing/JSX/ESM setup failures, the first Operations attempt
+without a login cookie, a removal checkbox attempt aimed at its deliberately hidden
+input instead of its visible label, a later Inventory-popup setup mistake and an ambiguous
+private-inspection button selector remain failed invocations. Construction’s earlier
+fixture attempts also remain failed: automatic scrolling to an off-screen picker
+caused the UI library’s close-on-scroll behavior, and missing native presence kept
+the world paused. The final pointer observation selects an already-visible field
+and establishes native presence. No shared picker repair is inferred from that
+fixture behavior. The first portal-scale fixture assumed the wrong combobox
+control name; its next invocation completed measurements but failed an incorrect
+constant-option-height assumption. At 130%, unchanged popup text wraps less as
+the anchor widens, so option height changes even before the repair. Those measured
+failures are retained and do not qualify the repaired behavior. A later measurement
+assertion expected subpixel text-height precision from integer-rounded text bounds;
+hover/field/button selector assumptions also stopped temporary invocations before
+their target measurements. Native keyboard tooltip focus and an already-visible
+explicit field toggle establish the final named paths; the earlier hover setup
+is not retrospectively qualified. The corrected observation allows one physical
+pixel and retains the exact control,
+placement, focus and deadline checks. One Mind startup timeout before its first
+expected memory was not diagnosed because that driver did not retain browser/API
+errors; unchanged production source passes after adding diagnostic capture, without
+changing the original five-second bound. Neither pass establishes a performance fix. Assertions and
+capture deadlines are not weakened.
+
+No generated logs, traces, screenshots or temporary qualification tools are committed.
+The focused observations retain their own native/component/App boundaries; CI
+does not expand them. The original redesign's real OS
+input-method, assistive-device and uncoached-player/creator/operator requirements
+remain open; controlled composition, native correctness, screenshots and a library
+choice cannot establish them. The [prior continuation](ui-completion-2026-10-14.md)
+retains its exact earlier evidence and failures.
