@@ -29,7 +29,7 @@ Dialog controls, popup/explanation text and the raw-data panel now follow the
 selected game UI scale. Their outer positioning stays in physical viewport
 coordinates, with scaled content bounded to the available space. Shared control
 disabling now reaches the actual subject combobox; stale private-read failures
-keep local-note Discard reachable. Default preferences and browser zoom are unchanged.
+keep local-note Discard reachable. Default preferences and browser zoom are unchanged. Diagnostic rows use authored actor icons, current note/name proposals stay visibly proposed, and older refreshes cannot replace newer completed details. Required CI passes at executable source `38a8adcf6`; the first native time-test timeout and successful unchanged retry remain recorded.
 
 ## October 15, 2026 — Protect exact interface request recovery
 

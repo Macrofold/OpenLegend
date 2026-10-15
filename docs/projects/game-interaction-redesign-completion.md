@@ -1,8 +1,8 @@
 # Whole-interface implementation completion
 
-| Status      | Current progress                                                                                           | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Imported-interface review repairs and focused verification are in progress; human acceptance remains open. | 2026-10-15   |
+| Status      | Current progress                                                                                              | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Imported-interface source review and repairs are verified; human input/device/player acceptance remains open. | 2026-10-15   |
 
 ## Scope and authority
 
@@ -113,6 +113,14 @@ Verification starts without providers and with `AI_BUDGET_USD=0` in disposable
 worlds/databases. Completion requires resolution of every actionable in-scope review
 finding, implementation of the agreed missing UI, current documentation and passing
 required checks; source review alone does not qualify the remaining human gates.
+
+**Review outcome:** all demonstrated imported-interface findings are repaired and
+focused observations plus required Code/Spatial/interface checks pass at executable
+source `38a8adcf6`. The [review report](../verification/ui-implementation-review.md)
+retains complete coverage, failures, the unchanged native-time-test retry and
+cleanup. UIUX18 retains broader human/input/device qualification. Inclusion of the
+separate proposed item/building follow-on remains a scope question; the current
+review did not silently implement its new native behaviors.
 
 ### Current continuation — October 14
 
@@ -374,7 +382,7 @@ Required Code and Spatial/interface checks pass at cleaned source `d3c526392`, a
 
 These are the full feature's acceptance criteria, not authorization to restart the excluded native repairs during the UI-only continuation. Source-specific progress lives in the linked verification report; a passed subset cannot close a compound criterion whose other cases remain unverified.
 
-There is no unresolved product decision blocking the implementation work described above. Physical assistive-device and uncoached-player observations require suitable real participants/devices; their absence must remain explicit rather than silently waived or used to stop independently executable implementation work.
+There is no unresolved product decision blocking the delivered interface repairs. The separately proposed native item/building follow-on still awaits the scope answer recorded in the current review plan. Physical assistive-device and uncoached-player observations require suitable real participants/devices; their absence must remain explicit rather than silently waived or used to stop independently executable implementation work.
 
 ## Integrated recovery continuation — October 14
 

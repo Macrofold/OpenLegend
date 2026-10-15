@@ -10,8 +10,9 @@ integrated into main. The refreshed PR base is `Macrofold/OpenLegend`
 `origin/main` at `362d3b0a20e92fc38a672730104b957b1c7c1be4`, already an ancestor.
 Local checkpoints `1985e18c7`, `5ef9c4007` and `2f8654468` preserve the review repairs.
 The first integrated source is `9d7081b0924322ab5587dd85cc0a0687e29a314f`.
-Final shared static/build checks pass there. Required CI is in progress; the last
-diagnostic icon projection finding is being integrated before final-head results.
+All required checks pass there. Final executable source
+`38a8adcf6571dfbfdbfbac32a7d9c09cf92bfc48` adds the final Diagnostics repairs and
+passes local static/build checks and every required CI gate below.
 
 The [completion plan](../projects/game-interaction-redesign-completion.md#complete-imported-interface-review--october-15)
 owns execution, and [UIUX](../maintainers/ui-ux.md) retains broader acceptance.
@@ -217,6 +218,48 @@ provider/Jev cost: $0.**
   supplied contrasting icon and its existing generic fallback when omitted; both
   labels/icons are inspected. No creation command or provider call is sent.
 
+## Integrated checks and cleanup
+
+The final executable source `38a8adcf6571dfbfdbfbac32a7d9c09cf92bfc48` passes
+full TypeScript and production build locally (`index-C0PuZb-3.js`), changed-file
+pinned formatting, whitespace and 2,373 relative links across 54 affected files.
+Guidance and generated-configuration checks pass. The pre-existing large-bundle
+and PlayCanvas worker-externalization advisories remain; this review claims no
+bundle-size or population/latency improvement. Temporary observations stay outside
+the repository. Every owned browser/server/database handle is closed and the
+owned PostgreSQL container is removed; the unrelated database and main save are
+untouched. Additional and cumulative game-provider/Jev cost are **$0**.
+
+The prior integrated source `9d7081b0924322ab5587dd85cc0a0687e29a314f` passes
+[PR Code](https://github.com/Macrofold/OpenLegend/actions/runs/38702934604),
+[push Code](https://github.com/Macrofold/OpenLegend/actions/runs/38702928959) and
+[Spatial/interface](https://github.com/Macrofold/OpenLegend/actions/runs/38702935192)
+without reruns. Code passes 392 tests in 43 files and its complete static/build
+gate. Spatial passes 28 native tests, its spatial browser case and all six ordinary
+interface journeys. Time takes 49.7 seconds under its unchanged sixty-second total.
+These qualify the source with all shared scale/recovery/private-reader repairs;
+the later Diagnostics changes retain their separate focused observations above.
+
+Final executable-source checks are
+[PR Code](https://github.com/Macrofold/OpenLegend/actions/runs/38703777194),
+[push Code](https://github.com/Macrofold/OpenLegend/actions/runs/38703770196) and
+[Spatial/interface](https://github.com/Macrofold/OpenLegend/actions/runs/38703777017).
+PR Code passes all 392 tests and the complete static/build gate. Push Code
+attempt 1 fails only the existing native world-presence/time test at its unchanged
+15,000 ms limit (15,207 ms recorded). That exact test passes in 6,914 ms in the
+same-source PR run. The final source difference from the already green integrated
+source changes only diagnostic presentation/read order, not simulation/time or
+this test. Its four parallel speed fixtures and PostgreSQL/native transitions are
+unchanged. One failed-job rerun was requested on identical source, assertions,
+configuration and deadlines. The first failure is retained; no host-contention
+cause or performance repair is established. Spatial/interface passes all 28 native
+checks and seven browser journeys without a rerun; Time takes 48.1 seconds under
+its unchanged sixty-second total. The unchanged [push Code attempt 2](https://github.com/Macrofold/OpenLegend/actions/runs/38703770196/attempts/2)
+passes all 392 tests and the complete gate; the earlier timed case takes 13,129 ms
+under its unchanged 15,000 ms limit. The complete executable source has every
+required check green. No further executable change follows; the final evidence
+commit updates documentation only and retains ordinary automatic CI.
+
 ## Failures and evidence limits
 
 The sandboxed browser launch fails before UI execution; the approved outside-sandbox
@@ -248,7 +291,8 @@ changing the original five-second bound. Neither pass establishes a performance 
 capture deadlines are not weakened.
 
 No generated logs, traces, screenshots or temporary qualification tools are committed.
-Focused working-tree results are not final-head CI. The original redesign's real OS
+The focused observations retain their own native/component/App boundaries; CI
+does not expand them. The original redesign's real OS
 input-method, assistive-device and uncoached-player/creator/operator requirements
 remain open; controlled composition, native correctness, screenshots and a library
 choice cannot establish them. The [prior continuation](ui-completion-2026-10-14.md)
