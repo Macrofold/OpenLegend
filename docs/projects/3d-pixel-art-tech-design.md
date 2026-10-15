@@ -1,8 +1,8 @@
 # Progressive 3D pixel art — technical design
 
-| Status      | Current progress                                                                                                                              | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Rendering/animation research and scoped mercenary work are recorded; moving style acceptance and the broader production pipeline remain open. | 2026-10-14   |
+| Status      | Current progress                                                                                                                        | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The first-scene direction and experiment plan are agreed; implementation, moving-scene acceptance and the broader pipeline remain open. | 2026-10-15   |
 
 **October 14 renderer research:** [Asset/rendering explanations](../../art-direction/research/3d-pixel-worlds/rendering-techniques.md) distinguish authored surface texels from voxel geometry and screen sampling. The [PlayCanvas feasibility inspection](../../art-direction/research/3d-pixel-worlds/openlegend-adaptation.md#what-is-already-available-and-what-is-not-established) identifies candidate facilities in the current pinned engine, without implementing effects or selecting a replacement engine.
 
@@ -16,7 +16,7 @@
 
 ## Maintained records
 
-- Work, dependencies, and acceptance: [V3D tracker](../maintainers/3d-pixel-art.md).
+- Work, dependencies, and acceptance: [V3D tracker](../maintainers/3d-pixel-art.md); the [first-scene plan](3d-pixel-art-first-scene-plan.md) sequences the next visual delivery without duplicating the broader pipeline.
 - New asset-work bounds: [A3D inventory](../limits/3d-pixel-art.md). Shared [interface](../limits/interface.md), [AI execution](../limits/ai-execution.md), [spatial](../limits/spatial.md), [objects](../limits/objects.md), and [persistence](../limits/persistence.md) inventories remain controlling.
 - Detailed mechanisms: [generation pipeline](3d-pixel-art-asset-pipeline.md), [appearance families](3d-pixel-art-appearance-families.md), [qualification](3d-pixel-art-validation.md).
 - Existing boundaries: [engine/world](../engine-and-world-boundaries.md), [spatial renderer contract](../../archive/07-technical-architecture/spatial-world-runtime.md#10-playcanvas-isolation-and-hybrid-assets), [world presentation](../world-presentation.md), and [AI providers](../ai-providers.md).
@@ -132,7 +132,27 @@ Continuous simulation, render-frame interpolation, and optionally stepped pose s
 
 ## 8. Pixel rendering profile
 
-The [October 14 follow-up](../../art-direction/research/3d-pixel-worlds/realtime-pixel-rendering.md) makes shaped animated models with designed realtime pixel shading the leading comparison candidate, retaining painted-material and articulated-sprite alternatives. Compare lighting/sampling choices on the same underlying asset. A separate [texel-splatting experiment](../../art-direction/research/3d-pixel-worlds/texel-splatting.md) investigates perspective stability; its public WebGPU implementation is not integrated with the current WebGL application. No renderer or backend is adopted by this documentation update.
+The [agreed first-scene direction](3d-pixel-art-first-scene-plan.md) uses shaped animated models and designed realtime pixel shading as the leading route, retaining painted-material and articulated-sprite alternatives. Compare lighting/sampling choices on the same underlying asset. Exact rendering settings and backend changes are not adopted by this design approval. Technique procedures and failure conditions belong in [qualification](3d-pixel-art-validation.md#first-scene-technique-experiments).
+
+### First-scene ownership and flow
+
+At the October 14 documentation snapshot `ab0de7555`, the client still uses PlayCanvas 2.22.2 and `pc.Application`. The scene's existing `WorldPresentation` already owns `CameraFrame`, ACES tone mapping, modest bloom, grading and depth/stencil-aware read-through layers. Extend this owner; another final compositor, camera controller or appearance store is unnecessary. The older research snapshot's statement that `CameraFrame` was not instantiated is historical, not the current integration premise.
+
+Start with the existing admitted scene and current pose/cloth, then controlled material/light response, scene sampling and any selective edge treatment. Add only the color/depth/normal/mask images a demonstrated effect needs. All images describing opaque surfaces must agree on camera, deformation, cutout coverage and depth conventions. Keep object identifiers discrete. Evaluate material-aware light bands and modest highlights before a specialized many-light pass; a glowing particle and a light illuminating a face are separate contributions.
+
+A separate effects target, if it wins its comparison, uses matching scene depth and camera mapping. Define alpha versus additive composition, color space, resize and compensation order explicitly; retain current authorized read-through and nearest-surface protection when composing. Selected blur/bloom and enlargement must leave the interface sharp and world labels/picking aligned. The accepted chain must work with sprites and meshes together, not only the isolated new character.
+
+Experiment controls are finite developer settings within the existing local renderer/tooling. They do not become a saved world schema, public protocol or player engine selector. The selected world's art source owns palette/material/style intent; the renderer supplies reusable mechanisms. Production settings and device quality remain distinct. No scene effect changes body dimensions, navigation, action outcomes, observation or permissions.
+
+### Preparation, motion and experiment boundaries
+
+Prepare immutable geometry/material regions and clip data once per relevant asset/style revision. A camera move updates projection, sample mapping and camera-dependent drawing, not texture art or source geometry. Material changes invalidate their own prepared results; pose changes update the affected character and dependent shadow/depth/outline passes. Target resize replaces owned buffers. Visibility loss, world replacement and disposal clear every related capture/effect through existing lifetimes. Reuse of geometry captures and shaded results must track their different dependencies; a lighting edit does not require rebuilding unchanged geometry.
+
+Keep actor travel, camera and UI continuous while testing selected held poses. Tool, cloth, shadow and edge passes use the same evaluated pose. Secondary response is bounded/reset on discontinuities and checked against the selected solver's timestep assumptions. Author garment clearance before adding collision or spring behavior. No pose or smear becomes an independent movement/hit authority. The [animation guide](../../art-direction/research/3d-pixel-worlds/animation-tools-and-techniques.md) supplies implementation evidence without imposing one cadence on every family.
+
+Grass starts with an instanced patch, coordinated ground/blade colors, shared wind inputs and relevant nearby presented interaction contributors. Submission, skinning, extra target area, transparency overlap, lights and cloth all contribute to complete-frame cost. Measure individual contributions and their combination, then the varied moving scene; low pixel resolution alone is not a performance qualification.
+
+A separate [static texel-splatting experiment](../../art-direction/research/3d-pixel-worlds/texel-splatting.md) investigates perspective stability outside the production path first. Its public WebGPU compute implementation is not integrated with the current WebGL application. Capture transitions, newly visible surfaces, animation, device support and integration cost are decision gates; a favorable static result cannot qualify skinned characters. Keep stages A–C of the camp independent of that investigation. No backend/engine migration, commercial toolkit or full deferred renderer is a prerequisite for the initial scene.
 
 A versioned world presentation profile records approved material families, source texel-density guidance, normal gameplay scale, scene sampling/upscale policy, tone mapping, shading options, outline/dither choices, and family animation presentation policy. Keep device quality preferences separate from the world's identity/style revision.
 
@@ -174,4 +194,4 @@ Provider observations and their limitations are in the [pipeline design](3d-pixe
 
 [V3D01–V3D12](../maintainers/3d-pixel-art.md) identify concrete owners and small end-to-end slices. First prove a licensed rigid asset and a same-identity swap through the real client before introducing paid generation. Prove a human equipment case and a genuinely different nonhuman assembly before broadening the family abstraction. Defer standalone services, generalized authoring languages, sophisticated crowd skinning, and arbitrary procedural topology until a measured consumer requires them.
 
-Verification uses the [scenario matrix](3d-pixel-art-validation.md), focused existing checks, actual browser interaction, disposable PostgreSQL worlds for stateful work, and separately authorized live provider trials. Documentation-only work requires content/link/diff review, not game execution. All runtime, provider, and performance acceptance remains unsatisfied in this proposal.
+Verification uses the [scenario matrix](3d-pixel-art-validation.md), focused existing checks, actual browser interaction, disposable PostgreSQL worlds for stateful work, and separately authorized live provider trials. Documentation-only work requires content/link/diff review, not game execution. The historical mercenary deliveries retain their own scoped evidence; new first-scene technique, provider and broader performance acceptance remains unsatisfied until its tracked experiments run.

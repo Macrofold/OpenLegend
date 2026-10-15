@@ -4,6 +4,8 @@ Research completed October 14, 2026. This collection answers Mike's supplied ref
 
 ## The direction
 
+The research recommendation has since become an [agreed first-scene direction and delivery plan](../../../docs/projects/3d-pixel-art-first-scene-plan.md), with [tracked experiments](../../../docs/maintainers/3d-pixel-art.md#first-scene-delivery-and-experiment-tasks). Historical research below remains evidence and rationale; exact techniques still require a moving application comparison.
+
 **Use Garbage Country for environmental form and pixel texture craft; The Last Night and REPLACED for lighting, composition, animation and fine detail; EthrA for dimensional environments and an alternative character technique.** Mike explicitly wants more detailed characters than EthrA's small world figures. Kingdom's water and silhouettes, BitGem's construction kit, and Mark Knight's illustrations contribute narrower lessons. Earlier favorites remain in the [creative brief](../../final-board/creative-brief.md).
 
 **The follow-up changes the leading candidate to renderer-driven 3D pixel art:** shaped, animated models with controlled material colors, designed realtime lighting, deliberate sampling and selective outlines/effects. Mike called t3ssel8r's character in [this animation video](https://www.youtube.com/watch?v=1FrIBkuq0ZI) perfect. Painted textures remain useful for faces and distinctive markings, but every lit pixel need not be pre-painted. [Rendering guidance](realtime-pixel-rendering.md) explains the revised approach.

@@ -1,6 +1,6 @@
 # Progressive 3D pixel art — implementation tracker
 
-**Status: Mike rejected both block trials and selected the original animated mercenary for refinement. Original artwork, direct rendering, fixed displayed size and moving-cloth corrections are implemented under MER10; scoped browser qualification passed. Both trials and their scoped technical evidence remain preserved. Creator style approval, production rights and the broader pipeline remain open.** Last reconciled October 14, 2026. Created September 27, 2026 from `main@412b5b480b4911d9977de73168c6072e2c023b83`. The original documentation task did not authorize code changes or paid provider work; the bundled art iterations have their own developer authorization.
+**Status: Mike rejected both block trials and selected the original animated mercenary for refinement. Original artwork, direct rendering, fixed displayed size and moving-cloth corrections are implemented under MER10; scoped browser qualification passed. Both trials and their scoped technical evidence remain preserved. Creator style approval, production rights and the broader pipeline remain open.** Last reconciled October 15, 2026. Created September 27, 2026 from `main@412b5b480b4911d9977de73168c6072e2c023b83`. The original documentation task did not authorize code changes or paid provider work; the bundled art iterations have their own developer authorization.
 
 ## Maintained records
 
@@ -18,6 +18,8 @@ Use these task IDs for appearance-specific deliverables and link evidence back t
 
 Start with V3D01's visual comparison. V3D02/V3D03 establish manifests and safe replacement; V3D04 adds useful rigid families. V3D05/V3D06 establish qualified actors, equipment and state composition. V3D07 adds durable image generation; V3D08 adds validated model production. V3D09 joins the existing workshop/invention flow. V3D10 expands portable reuse. V3D11 runs with each slice; V3D12 decides the release scope from evidence.
 
+The agreed next visual delivery is the [first playable art scene](../projects/3d-pixel-art-first-scene-plan.md), tracked as V3D01.1–V3D01.12 below. Establish the baseline and scene, compare lighting/sampling/outlines, then motion/vegetation/effects, followed by authored/generated coherence and integrated review. V3D01.9's standalone texel-splatting investigation does not block the ordinary renderer candidate. The early animation/prop experiments can use trusted fixtures without waiting for the general V3D02–V3D08 infrastructure; they do not qualify that infrastructure. This document request delivers the plan/tasks, not their runtime implementation.
+
 The character art experiment in V3D01 must happen early even though rigid objects are the first simpler production path. A direct authored/procedural model does not depend on 2D generation. V3D08 depends on V3D07 only for the 2D-first production route and shared job infrastructure it actually uses; do not make every model pass through an image provider.
 
 ## V3D01 — Visual comparison and style decision
@@ -26,7 +28,7 @@ The character art experiment in V3D01 must happen early even though rigid object
 
 **Owners:** client presentation and art direction. **Depends on:** existing WorldRenderer/SW18, no provider integration.
 
-The [October 14 research](../../art-direction/research/3d-pixel-worlds/README.md) is complete as documentation: 34 credited reference images, direct evidence for EthrA's articulated sprite parts, Noio's pixel-UV authoring, BitGem's textured modules, and cinematic/rendering/generation analysis. [Confirmed preferences](../../art-direction/decisions.md#dimensional-pixel-art-references--october-14-2026) emphasize Garbage Country, The Last Night, richer characters than EthrA and REPLACED. The [realtime follow-up](../../art-direction/research/3d-pixel-worlds/realtime-pixel-rendering.md) adds t3ssel8r’s endorsed animated character and revises the [proposed comparison](../../art-direction/research/3d-pixel-worlds/openlegend-adaptation.md) to prioritize designed realtime pixel shading on shaped models, retaining painted-material and articulated-sprite controls. A separate static texel-splatting experiment must establish perspective benefits before animated-character or graphics-backend integration. All supplied videos and transcripts are indexed; tool/license and animation guidance are documented. This changes the research basis, not the unchecked visual acceptance or broader pipeline status below.
+The [October 14 research](../../art-direction/research/3d-pixel-worlds/README.md) is complete as documentation: 34 credited reference images, direct evidence for EthrA's articulated sprite parts, Noio's pixel-UV authoring, BitGem's textured modules, and cinematic/rendering/generation analysis. [Confirmed preferences](../../art-direction/decisions.md#dimensional-pixel-art-references--october-14-2026) emphasize Garbage Country, The Last Night, richer characters than EthrA and REPLACED. The [realtime follow-up](../../art-direction/research/3d-pixel-worlds/realtime-pixel-rendering.md) adds t3ssel8r’s endorsed animated character and revises the [proposed comparison](../../art-direction/research/3d-pixel-worlds/openlegend-adaptation.md) to prioritize designed realtime pixel shading on shaped models, retaining painted-material and articulated-sprite controls. A separate static texel-splatting experiment must establish perspective benefits before animated-character or graphics-backend integration. All supplied videos and transcripts are indexed; tool/license and animation guidance are documented. Mike has since agreed to the artistic direction and focused scene/experiment plan. Technique settings, actual moving-art acceptance and broader pipeline qualification remain unchecked below.
 
 The owner supplied the mercenary study and authorized its earlier [default-scene integration](../projects/completed/mercenary-scene-pilot.md), with live idle/walk/cloth, fixed character images and actual-depth compositing. Its source, GLB and renderer remain preserved. [MER08](art/mercenary.md#completed-milestones) delivered permanent authored cells and [scoped source/browser evidence](../verification/mercenary-default.md#authored-voxel-iteration--october-14-2026), including hidden-character fading and interrupted/failed-load checks, but Mike explicitly rejected its box-like art. The preserved [MER09 sculpture](art/mercenary.md#rejected-first-block-figure-and-new-sculpted-iteration) uses the original evaluated anatomy and outfit during authoring, with permanent finer cells and deliberately painted regions rather than sampled texture colors. [Its own evidence](../verification/mercenary-default.md#sculpted-source-guided-iteration--october-14-2026) records source and fixed mesh/color data, inspected standing/walking-extreme coverage and scoped browser/load/lifecycle checks; the [completed iteration plan](../projects/completed/mercenary-voxel-iteration.md) owns the delivered scope. Mike later rejected the sculpted face and block-like body; its technical delivery remains historical, and creator art approval remains separate under MER05/MER07. The derived geometry retains unresolved imported-source rights. [World presentation](../world-presentation.md#animated-character-pixels) owns rendering, and [SW18.14](spatial-world.md#sw18--world-presentation-delivery) tracks the pilot handoff. This revision does not accept the broader style comparison or production pipeline.
 
@@ -37,11 +39,97 @@ The owner supplied the mercenary study and authorized its earlier [default-scene
 - [x] Deliver MER10’s original-model restoration with its own [browser evidence](../verification/mercenary-default.md#original-model-refinement--october-14-2026): tall-adult size, face/fit inspection, lighting, pause, selection/reveal, fallback and lifecycle. Preserve both block trials and the completed [refinement plan](../projects/completed/mercenary-original-refinement.md); historical pilot/trial results do not qualify this revision.
 - [ ] Run the matched moving multi-character benchmark before extending the mercenary to crowds. The sprite-only eight-fire performance evidence does not qualify any mercenary iteration. Add supported action/condition/equipment poses and accurate silhouette picking through V3D05; qualify sloped-foot placement and any simulated-cloth self-contact separately. Mike's style acceptance and applicable production-rights review remain required; the preserved imported body/rig/texture rights are still open.
 
-- [ ] Build the same small camp in sprite/proxy, mixed, and styled-model presets using properly licensed/native fixture assets. Preserve the same mechanics, identity, camera, light setup and comparable artistic effort. No broad environment conversion.
-- [ ] Prototype one recognizable 3D human with tool/backpack plus key scenery. Evaluate normal pixel scale, lighting, orbit/pitch/zoom, smooth versus stepped pose, filtering/dither/outline alternatives and contact/shadows in actual application footage.
-- [ ] Record creator art decision, authoring/correction effort, actual device/backend and initial frame/resource measurements. Preserve or revise the proposal explicitly under D24/D09/R01/R02; do not silently discard the accepted 2D-rig option.
+The earlier camp, character-treatment and creator-review checklist is expanded into the stable child tasks below. Their acceptance remains open; the delivered mercenary work above supplies a baseline rather than closing these experiments.
 
-**Exit:** a demonstrated visual direction and scoped family recommendations, or an honest decision to retain sprites where the comparison fails. A still image or compilation is insufficient.
+### First-scene delivery and experiment tasks
+
+All child tasks are **Not started**. The [feature specification](../projects/3d-pixel-art-feature-spec.md), [technical design](../projects/3d-pixel-art-tech-design.md) and [first-scene plan](../projects/3d-pixel-art-first-scene-plan.md) define scope. [Qualification E01–E08](../projects/3d-pixel-art-validation.md#first-scene-technique-experiments) owns comparison procedures and evidence; this tracker owns work/dependencies/results. Existing A3D/VP01 limits and authorization continue to apply. Record rejection/defer decisions as completed investigations with linked reasons, not as accepted production techniques.
+
+#### V3D01.1 — Character baseline and asset-use review
+
+**Owner:** art direction and character presentation. **Depends on:** available MER10 delivery, its latest qualified successor, or a suitable cleared substitute; does not reopen its completed technical checks without a relevant failure.
+
+- [ ] Review scale, intentional face features, original identity and representative Idle/Walk garment coverage at normal and close views, daylight and firelight. Record permitted asset uses/source rights and any substitute needed for production or provider input; preserve prior art revisions.
+- [ ] Fix or isolate demonstrated baseline art/fit defects before judging a new pixel treatment. Record the baseline version, footage and unresolved poses/terrain cases. **Exit:** a usable comparison subject, with creator art acceptance still distinct from technical validity.
+
+#### V3D01.2 — Playable camp and matched comparison controls
+
+**Owner:** existing client scene/developer tooling and art direction. **Depends on:** V3D01.1 for the reviewed subject; existing WorldRenderer/SW18, without new provider services.
+
+- [ ] Assemble the small admitted camp with character, supported held-tool/backpack view, shelter/occlusion, fire, tree, rocks, grass area and uneven/raised ground. Author coherent organic scenery forms, restrained material regions and quiet areas under the creative brief, identifying any remaining grayboxes. Preserve native movement, turn, selection and inspection; label staged/unsupported actions and temporary art fixtures.
+- [ ] Supply repeatable scene/camera/light cases and developer treatment controls, retaining existing sprite/proxy/painted controls with comparable scale/detail intent. A separate polished 2D-rig pipeline is not a prerequisite; preserve it as an explicitly evaluated alternative. **Exit:** a real application comparison that can reproduce one-variable changes and release its resources on exit.
+
+#### V3D01.3 — Realtime material and lighting comparison
+
+**Owner:** existing presentation/material owner and art direction. **Depends on:** V3D01.2. **Procedure:** E01.
+
+- [ ] Compare ordinary drawing with controlled regions, designed light bands/transitions, ambient fill and material-aware highlights on identical assets. Reuse current lights, grading/bloom and shadows; inspect people and scenery together.
+- [ ] Record chosen/rejected variants, fire/daylight face readability, band popping and measured contribution. **Exit:** a justified candidate or revision task; a specialized many-light/deferred pass is considered only for a demonstrated unmet need.
+
+#### V3D01.4 — Camera sampling, filtering and pixel stability
+
+**Owner:** existing camera/presentation owner. **Depends on:** V3D01.2 and a recorded material/light baseline from V3D01.3. **Procedure:** E02.
+
+- [ ] Compare adequate-resolution drawing, a compensated low-resolution path where applicable, source-detail/filtering choices and enlargement. Keep source art and pose fixed; exercise continuous supported camera movement, projections and viewport mapping.
+- [ ] Distinguish material crawl, silhouette sampling, light/shadow changes and zoom revealing existing detail; preserve face/tool readability, labels and picking. **Exit:** recorded sampling tradeoffs and remaining artifacts with no silent camera restriction, simulation snapping or universal zero-shimmer claim.
+
+#### V3D01.5 — Selective outlines and matching surface passes
+
+**Owner:** presentation/shadow/reveal integration. **Depends on:** V3D01.3–V3D01.4 candidate. **Procedure:** E03.
+
+- [ ] Compare no outlines with the smallest useful depth/normal/object-aware treatment, adding a normal target only when needed. Inspect faces, thin equipment, foliage cutouts, grazing views and cloth deformation.
+- [ ] Verify current depth/reveal/selection behavior and matching poses in all contributing passes. **Exit:** adopt a measured restrained treatment or record why outlines are omitted; no edge may reveal forbidden content.
+
+#### V3D01.6 — Pose timing, export and secondary motion
+
+**Owner:** character pose/cloth and asset preparation. **Depends on:** V3D01.2; final combined review also uses V3D01.3–V3D01.5. **Procedure:** E04. Broader rig/equipment work stays in V3D05.
+
+- [ ] Compare smooth and selected held poses through actual export/import, while travel/camera/UI remain responsive. Review idle, walk/turn and a clearly labeled sharp-action fixture where no ordinary clip/mechanic exists.
+- [ ] Compare restrained secondary motion, garment clearance and relevant interruption/pause/teleport/frame-gap resets; keep tool, shadow and outline on the same evaluated pose. **Exit:** cadence/solver choices or rejections supported by motion footage, without treating root motion or animation events as gameplay authority.
+
+#### V3D01.7 — Vegetation and selective environmental effects
+
+**Owner:** landscape/material presentation. **Depends on:** V3D01.2 and V3D01.3 light baseline. **Procedure:** E05.
+
+- [ ] Compare a manageable instanced grass/card/mesh patch, coordinated ground colors, world-anchored wind and independent phases; bound interaction work by relevant nearby presented contributors. Record transparency, shadow and rotation costs.
+- [ ] Evaluate cloud shadows, simple water/shore treatment and restrained atmospheric focus/bloom only where a specific scene benefit justifies the trial. Record omitted/deferred water, reflections and strong bokeh explicitly. **Exit:** a coherent patch and justified environmental scope, not mandatory completion of every reference effect.
+
+#### V3D01.8 — Fire, smears and effects composition
+
+**Owner:** existing presentation and visual-effect resources. **Depends on:** V3D01.2–V3D01.4; weapon effects use V3D01.6's evaluated pose when applicable. **Procedure:** E06.
+
+- [ ] Compare existing effect drawing with a separate effects image where useful; distinguish additive/emissive particles, smoke and a temporary tool smear. Inspect lighting of nearby receivers, depth, alpha/color space and camera/resize alignment.
+- [ ] Exercise interruption, replacement, pause and teardown; consequential scorch/hit cues follow permitted outcomes, while staged examples are labeled. **Exit:** a useful correctly occluded effect with measured combined cost, or a documented decision to retain the simpler drawing path.
+
+#### V3D01.9 — Standalone perspective texel-splatting investigation
+
+**Owner:** rendering research. **Depends on:** V3D01.2 comparison geometry/path; runs beside the ordinary-renderer work. **Procedure:** E07.
+
+- [ ] Run the public technique separately with permitted static assets and matched camera paths. Inspect capture boundaries, disocclusion, thin geometry, zoom, lighting, sample memory and complete capture/shade/draw cost on named hardware.
+- [ ] Report integrate, revise or defer, including WebGPU/device requirements and open animated-geometry limitations. **Exit:** a decision with concrete evidence; application integration/backend changes require a scoped design update and cannot be inferred from a static pass. Rejection does not block first-scene acceptance.
+
+#### V3D01.10 — Authored/generated asset coherence
+
+**Owner:** art production with the existing generation/rights owners. **Depends on:** V3D01.2 and a preferred V3D01.3–V3D01.5 treatment. **Procedure:** E08.
+
+- [ ] Place one rights-cleared generated rigid prop beside the reviewed authored character with the same material/render treatment. Existing approved generated output may be used; new external work follows actual account authorization and task cap. No general job/publication service is required for this offline proof.
+- [ ] Record source/runtime files, scale/material/semantic fit, rejected candidates, correction effort, actual cost/latency and reusable preparation steps. **Exit:** a useful pair or an honest production gap; this does not qualify arbitrary animated generation or V3D07/V3D08's durable service.
+
+#### V3D01.11 — Integrated scene, varied subjects and device evidence
+
+**Owner:** client presentation and performance/accessibility. **Depends on:** selected V3D01.3–V3D01.8 outcomes and V3D01.10 for the production pair; V3D01.9 is not a blocker.
+
+- [ ] Add several distinct moving people/props and inspect the accepted effects together. Run applicable existing Q scenarios for selection/reveal, load failure/staleness, resize, pause, replacement and teardown; preserve supported camera and non-canvas/reduced-motion access.
+- [ ] Record physical device/backend, viewport, workload, frame-time tails, CPU/GPU attribution where available, draws, cold/warm memory/loading and correction effort. **Exit:** a measured first-scene envelope and explicit missing-device/scale evidence. Link into V3D11; it retains full lower-end, population and accelerated-simulation qualification.
+
+#### V3D01.12 — Creator review and adopted style profile
+
+**Owner:** creator art review and maintainers. **Depends on:** V3D01.11; independent research decisions such as V3D01.9 can be deferred with reasons.
+
+- [ ] Review ordinary gameplay motion plus close inspection against the creative brief. Record preferred character/environment treatment, technique decisions, family alternatives, source-art/sample policy, workflow effort and scope of approval; preserve original and rejected comparisons.
+- [ ] Adopt only verified settings/behavior through existing presentation/asset owners, then reconcile the current specifications, art decisions and relevant parent trackers. **Exit:** an approved or explicitly revised scene direction with reproducible preparation and honest qualification limits. The general pipeline and V3D12 release decision remain open.
+
+**V3D01 exit:** a demonstrated moving first scene and scoped family recommendations, or an honest decision to retain sprites where the comparison fails. A still image, successful shader build, completed experiment or paper result alone is insufficient.
 
 ## V3D02 — Immutable appearance and artifact foundation
 
@@ -74,6 +162,8 @@ The owner supplied the mercenary study and authorized its earlier [default-scene
 **Exit:** real rigid-object reuse and a truthful modular construction representation, including incompatible fit and changed-part cases. No generated visual changes collision, capacity, navigation or weather protection.
 
 ## V3D05 — Rigged character and equipment family
+
+V3D01.6 owns the early single-character timing/secondary-motion experiment. Reuse its accepted evidence here; it does not depend on this general family implementation or close the equipment/body coverage below.
 
 The [animation research](../../art-direction/research/3d-pixel-worlds/animation-tools-and-techniques.md) supplies pose/hold timing, export, secondary-motion and smear guidance for this existing work. Installed support for held keys is not end-to-end qualification; no new animation runtime or cadence policy was delivered.
 
@@ -162,5 +252,9 @@ The feature spec owns product scenarios and non-goals; the technical design owns
 D24 retains art-production direction, D09/R01 retain device/performance selection, and R02 retains repeatable asset-production research. Open choices are the final pixel profile/scale, family-specific silhouette tolerances and animation cadence, selected provider/model/rights and useful-asset economics, and automatic-review thresholds. The recommended defaults are already in the proposal; these remaining choices need evidence, not an implementation blocker that demands a general framework first.
 
 ## Verification status for this documentation change
+
+The first-scene direction, design and tasks were revised from the current local documents and delivered MER10 evidence. This update changes zero executable logic lines and runs no rendering/animation/provider experiments. Task boxes stay unchecked. The 18 affected documents passed pinned formatting, local file/heading-link review and task-owned diff/whitespace review; twelve unique child tasks and eight experiment procedures were checked. These checks verify the design update only.
+
+### Original proposal inspection
 
 The baseline was read through the GitHub connector, including root/routed guidance, current presentation/spatial contracts, art-direction brief, runtime/procedural art, invention tracker, public entity view, renderer boundary and pinned PlayCanvas package. Public engine/glTF/provider documentation informs the proposed adapter boundaries with stated limitations. No application run, browser art comparison, paid execution, or runtime performance qualification was performed for this design-only task. Content/link/diff review of the completed documentation package is the applicable verification, not a runtime pass.

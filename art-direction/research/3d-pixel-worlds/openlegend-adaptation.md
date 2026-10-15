@@ -2,7 +2,7 @@
 
 **Recommendation to test:** preserve the free camera and begin with complete animated geometry, controlled material colors and a deliberately designed realtime pixel renderer. The t3ssel8r follow-up broadens the earlier painted-texture proposal: lighting and sampling can generate the final pixel clusters. Painted materials and EthrA-inspired articulated sprites remain comparison alternatives. No new engine or universal voxel representation is selected.
 
-This is an art/research recommendation, not approval to implement it. [V3D01](../../../docs/maintainers/3d-pixel-art.md#v3d01--visual-comparison-and-style-decision) owns the actual comparison and style decision. The [existing technical design](../../../docs/projects/3d-pixel-art-tech-design.md) owns contracts, lifecycle and integration; this document supplies research rationale rather than a second implementation specification.
+The artistic direction and [first-scene plan](../../../docs/projects/3d-pixel-art-first-scene-plan.md) are now agreed, with implementation/experiment work explicitly tracked. The current document-revision request does not run those tasks or select a production technique. [V3D01](../../../docs/maintainers/3d-pixel-art.md#v3d01--visual-comparison-and-style-decision) owns the actual comparison and style decision. The [existing technical design](../../../docs/projects/3d-pixel-art-tech-design.md) owns contracts, lifecycle and integration; this document supplies research rationale rather than a second implementation specification.
 
 ## What is already available, and what is not established
 

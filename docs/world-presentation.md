@@ -148,6 +148,10 @@ The renderer consumes authorized plain views and presentation settings. Authored
 
 Current facts are in [Architecture](architecture.md#spatial-world-foundation); current evidence is in [Recast integration](verification/recast-integration.md). The [maintainer tracker](maintainers/spatial-world.md#sw18--world-presentation-delivery) distinguishes implemented approximations from unqualified graphics behavior and future features.
 
+## Agreed next visual delivery
+
+The [first playable art scene](projects/3d-pixel-art-first-scene-plan.md) is the next planned comparison for the bundled world's shaped characters, organic surroundings and designed realtime pixel lighting. [V3D01.1–V3D01.12](maintainers/3d-pixel-art.md#first-scene-delivery-and-experiment-tasks) track material/light, camera sampling, outlines, motion, vegetation, effects and production-coherence trials. This is a target, not a change to the current rendering described above. The existing scene/presentation owns camera, depth, selection, grading/bloom and resource lifetime; any accepted experiment must preserve those contracts. Palette and motifs stay world-authored. Exact sampling, cadence, effects and backend remain unselected until comparison evidence and creator review.
+
 ## Maintained records
 
 - Implementation: [SW18](maintainers/spatial-world.md#sw18--world-presentation-delivery).

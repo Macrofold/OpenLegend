@@ -1,8 +1,8 @@
 # Progressive 3D pixel art — generation and publication pipeline
 
-| Status      | Current progress                                                                                                                              | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Rendering/animation research and scoped mercenary work are recorded; moving style acceptance and the broader production pipeline remain open. | 2026-10-14   |
+| Status      | Current progress                                                                                                                        | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The first-scene direction and experiment plan are agreed; implementation, moving-scene acceptance and the broader pipeline remain open. | 2026-10-15   |
 
 **October 14 production research:** The [generative-art assessment](../../art-direction/research/3d-pixel-worlds/generative-pipeline.md) explains how concepts, draft models, controlled material regions, rigs, targeted surface artwork and a shared realtime pixel renderer can support the new references. The renderer can supply consistent pixel shading without requiring every lit view to be painted; export and animation still require review. It is an authoring supplement to this pipeline, not a second work/publication system or evidence of provider quality. The saved reference images are not automatically licensed generation inputs.
 
@@ -113,6 +113,8 @@ A bounded trusted processor may simplify geometry, generate LODs, resize/atlas t
 Do not execute a generated script to repair a generated asset. New processing capabilities are reviewed host code. Self-hosted generation is still compute with a resource/funding owner; it is not automatically free or authorized.
 
 ### Semantic and artistic validation
+
+The agreed [first-scene production proof](3d-pixel-art-first-scene-plan.md#generated-asset-proof) compares one authored character with a reviewed generated rigid prop using the same renderer. Prepare clear material regions/normals and targeted identity detail; the realtime treatment supplies the shared pixel shading. Record manual correction and rejected outputs as well as a successful export. This offline comparison can precede the general durable service below and does not qualify it. Actual live work follows current account/cap authorization; no paid request is dispatched by this design update.
 
 Validate in layers: structural safety; geometry/anchor fit; appearance identity; material/style/readability; required state/animation/attachment coverage; and actual target-client rendering. Structural success cannot compensate for a misleading door or a missing corpse state. A model confidence score cannot grant publication or mechanical compatibility.
 

@@ -1,8 +1,8 @@
 # Progressive 3D pixel art — appearance families and composition
 
-| Status      | Current progress                                                                                                                              | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Rendering/animation research and scoped mercenary work are recorded; moving style acceptance and the broader production pipeline remain open. | 2026-10-14   |
+| Status      | Current progress                                                                                                                        | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The first-scene direction and experiment plan are agreed; implementation, moving-scene acceptance and the broader pipeline remain open. | 2026-10-15   |
 
 **October 14 composition research:** EthrA's developer describes separately oriented sprite body parts, making articulated sprites a concrete comparison reference. The [research](../../art-direction/research/3d-pixel-worlds/reference-techniques.md#ethra) and [face/cloth guidance](../../art-direction/research/3d-pixel-worlds/rendering-techniques.md#faces-eyes-and-character-identity) inform candidate art. The [realtime and animation follow-up](../../art-direction/research/3d-pixel-worlds/animation-tools-and-techniques.md) adds shaped animated models, deliberately held poses and controlled garment motion as the leading character comparison. Neither approach changes the appearance/mechanics contracts or establishes that interchangeable clothing is implemented.
 
@@ -119,6 +119,8 @@ Each representation declares a minimum state set and fallbacks. An art upgrade t
 Bound simultaneously active layers, decals, particle work, and animation channels under the family profile and [A3D limits](../limits/3d-pixel-art.md). When cosmetic capacity is exhausted, merge or simplify decorative effects while retaining the important disclosed state through an established cue or detail panel. Never interpret dropped particles as stopping damage or healing the body.
 
 ## 9. Material and style composition
+
+The agreed [first-scene direction](3d-pixel-art-first-scene-plan.md) tests shaped people with deliberate face features, continuous fitted cloth and renderer-generated pixel shading. Materials may use controlled colors, procedural regions or targeted textures. Qualify the authored character/generated-prop pair before expanding production. This does not eliminate articulated sprites or qualify general garment/body combinations; the selected world owns its palette and motifs.
 
 Use a small approved material vocabulary with explicit meaning: base color/material region, roughness or stylized response, opacity class, normal detail where useful, emission appearance, palette grouping, and applicable condition masks. Render materials do not assign mass, heat capacity, flammability, conductivity, or illumination authority.
 
