@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                         | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Representative Blender study delivered with thirty retained alternatives and working selections; broader gameplay art gates remain open. | 2026-10-15   |
+| In progress | Representative study review fixes are being verified; corrected game-camera scale exposes an open human-face readability gate. | 2026-10-15   |
 
 ## Purpose and authorization
 
@@ -102,6 +102,21 @@ Estimated impact is approximately **2,000–3,000 executable authoring/viewer li
 Completion is a useful, reviewable representative pixel-art set with multiple retained options, explained working recommendations, editable Blender assets, actual moving inspection and integrated study access. It does not require guessing Mike's final artistic feedback or solving every older mercenary/crowd/renderer gap. Any asset that still reads as plain low-poly, loses its face or pops through clothing must be revised or explicitly left unselected; successful export alone is insufficient.
 
 **Delivered October 15:** all six study steps are complete for thirty alternatives across ten families, with actual render-driven revisions, editable sources, an integrated production inspection page, retained moving/scale comparisons and scoped verification. [Study evidence and limits](../verification/representative-art-study.md) own the measured result. This completes V3D01.15; earlier mercenary, animated-art and wider-device acceptance remains open.
+
+## Requested complete study review — October 15, 2026
+
+Mike requested a thorough correctness, architecture, performance and engine/world-boundary review of the complete representative study, with fixes and accurate remaining-work records. Review `09a1e0baccca4da6a555c8701be8630278d118d5..874e488c1` and the actual callers/assets, not only the final checkpoint. Continue in the same checkout and branch, repository `origin` / `https://github.com/Macrofold/OpenLegend.git`; the previously selected explicit local base `codex/mercenary-original-refinement@1438ea13749d4acc7a852843d8677f687dbdd931` is unchanged and verified as an ancestor. No branch/worktree/history operation or unrelated main integration is needed.
+
+Scope is the finite study viewer, its three authoring recipes/catalogs, production entry and shared bundled-model cleanup owner. Independent reviews cover viewer/camera/controls, actual Blender output and packaging/world boundaries; root owns integration and affected-caller verification. Initial review fixes are expected to affect roughly **100–250 logic lines**, excluding generated assets, with moderate camera, asynchronous-lifetime and export risk. Reassess if concrete findings expand this scope. Do not build a general asset pipeline, change native world rules or turn static studies into animation/equipment features.
+
+1. Trace every changed producer/consumer and reproduce concrete issues, including camera rotations/aspect changes, failure/retry/stale completion, cancellation/replacement, resource ownership, export normals and artifact provenance. Separate confirmed defects from proposed expansion.
+2. Fix at the existing semantic owner. Remove duplicate study-specific world names/placement facts where data can own them; preserve source options, authored units, native authority and saves. Simplify only when behavior and failure reporting remain clear.
+3. Verify the actual changed downstream behavior with existing tools and a focused no-provider browser/export scenario; reuse prior evidence for unchanged behavior. Check source/export hashes and bounds after any regenerated art, and verify shared cleanup through the game caller if changed. Run targeted formatting, TypeScript/build and full resulting-diff review.
+4. Reconcile this plan, V3D01.15, current presentation/limits and the focused verification report with implemented fixes, measured limits and substantive unimplemented findings; commit progress at least every 15 minutes and all completed work before handoff.
+
+Performance answers: work grows with selected/catalog assets, material/triangle counts, viewport pixels and actual camera/turntable changes; no cost should grow with simulation population or history. Reuse immutable catalog grouping, shared parsed models/materials and offline artwork; avoid repeated whole-catalog/frame work and rendering unchanged views where the engine supports it. Invalidate framing/labels/rendering on actual selection, camera, viewport, light/material or model-load changes; destroyed/superseded owners cannot publish. Measure changed complete rendering/load behavior under matched finite inputs, distinguishing cold export/load from warm camera work and idle work. No paid calls are planned; shared external spend/reservations remain $0 of $25.
+
+Completion requires reproduced issues fixed, all selected checks passing, final affected-diff review and truthful documentation/commit. Existing accurate animation, gameplay art, device/crowd and general asset-pipeline gaps remain with their current trackers; this review does not waive them.
 
 ## Maintained records
 

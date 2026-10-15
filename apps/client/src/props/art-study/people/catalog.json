@@ -9,10 +9,10 @@
     "No imported human geometry, reference-game artwork, provider call or unresolved mercenary derivative."
   ],
   "sourceFile": "art-direction/assets/representative-study/people.blend",
-  "sourceSha256": "4e7c2ec15bd8a38ae59d030852f2f9f8b7b2773165add04cd6551ca8633c7bb9",
+  "sourceSha256": "a71de31199f0367d49d4d0185f0b7a05a45b1fe27ea883dc5b78cdb76eb12a3b",
   "authoring": {
     "art_study_common.py": "e5c172762e35dad10f6c8564fe09012d1cd190d8ae5fe1914c98807ac42cf5cb",
-    "prepare-study-people.py": "134643e518cf34ef8e575ad3919613c9666c52c4d302ac6f7ae0a94d266d8979"
+    "prepare-study-people.py": "d5e5a5cc6516b588f45d966b95400a472a36a07019eaf9f5c1e5111bf9f7adec"
   },
   "assets": [
     {
@@ -30,7 +30,7 @@
       "triangles": 1962,
       "vertices": 1060,
       "textureSizes": [[128, 128]],
-      "sha256": "479dfc6a1463dd8c6f26d18d179ac3f48ed67297f2aa9b23edeff4933b98435c",
+      "sha256": "da763ed203fdc43327e1d0572543d1fc14a5ada41e30327286230996fa64f58c",
       "source": "Original OpenLegend Blender study; AGPL-3.0-only."
     },
     {
@@ -48,7 +48,7 @@
       "triangles": 1962,
       "vertices": 1060,
       "textureSizes": [[128, 128]],
-      "sha256": "e694496cd43dd4b4dcd3197c3957b5994f93acd87e7c12b6340009473bb1afd2",
+      "sha256": "f7d859debbf7c6931656b9be1e2487e2493d756f531fea5338aae11a9b77e038",
       "source": "Original OpenLegend Blender study; AGPL-3.0-only."
     },
     {
@@ -66,7 +66,7 @@
       "triangles": 1962,
       "vertices": 1060,
       "textureSizes": [[128, 128]],
-      "sha256": "bd53e71ecb8003f683c384565c8e5840cec59f1c24747383acae85a5907a837d",
+      "sha256": "4e101fc33883a2fa7d7e4258490a199df9324d171dcd974aa21b18e1ce88c277",
       "source": "Original OpenLegend Blender study; AGPL-3.0-only."
     },
     {
@@ -84,7 +84,7 @@
       "triangles": 1842,
       "vertices": 996,
       "textureSizes": [[128, 128]],
-      "sha256": "5cd87aa82318726bf9a9bcf4792be90ca14bd0ba9a2b187849a7ff4f7dce0a27",
+      "sha256": "0a735e585f90ba43a767896890e58f59225460a7d10a6510bcffa253e9938234",
       "source": "Original OpenLegend Blender study; AGPL-3.0-only."
     },
     {
@@ -102,7 +102,7 @@
       "triangles": 1842,
       "vertices": 996,
       "textureSizes": [[128, 128]],
-      "sha256": "8a3195da1ae4d22305d2c086c7bd0f58bb9b63bea958e195ee0440439851accf",
+      "sha256": "79f2a1c8cd428f82148b809c54e9676b85c147f18fd9c91ac660ac3fa061d22f",
       "source": "Original OpenLegend Blender study; AGPL-3.0-only."
     },
     {
@@ -120,7 +120,7 @@
       "triangles": 1842,
       "vertices": 996,
       "textureSizes": [[128, 128]],
-      "sha256": "a0acaa5848f3c552651ac5959cd96ebf716aea825647937b5f7af9f7d6af0140",
+      "sha256": "5823ede265dbfb5718f84649a282527575adb2727a862327e59dc60620b5c460",
       "source": "Original OpenLegend Blender study; AGPL-3.0-only."
     },
     {
@@ -138,7 +138,7 @@
       "triangles": 1922,
       "vertices": 1040,
       "textureSizes": [[128, 128]],
-      "sha256": "ef5cf3a0119b98bde0eff6da1f0f95b7f5159776a8f31e21d08849627eb322f1",
+      "sha256": "06c10df0dc3c3f9c43baf75e5ddbd8a5edf2ec0a8a2ee0d0b2734bbc2a5ff53e",
       "source": "Original OpenLegend Blender study; AGPL-3.0-only."
     },
     {
@@ -156,7 +156,7 @@
       "triangles": 1922,
       "vertices": 1040,
       "textureSizes": [[128, 128]],
-      "sha256": "65e24647bdad6aaa680832b490e18cef8f90346846fa42241a9831e5c4e76e2b",
+      "sha256": "2e7625a4f52c0effa00ad3844273c1ce11231872e1bff4c28a09cfde1864dec8",
       "source": "Original OpenLegend Blender study; AGPL-3.0-only."
     },
     {
@@ -174,7 +174,7 @@
       "triangles": 1922,
       "vertices": 1040,
       "textureSizes": [[128, 128]],
-      "sha256": "43e20c488d33f5af32ff43443c328d5ca5ec8c74166f708f94a065b051a17ff9",
+      "sha256": "d4d475e03280d65c04ed7bfa7d8ed7340932eff672a7f66b828ae5ac31f54fc1",
       "source": "Original OpenLegend Blender study; AGPL-3.0-only."
     }
   ]

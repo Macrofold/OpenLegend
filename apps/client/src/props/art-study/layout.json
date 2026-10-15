@@ -1,0 +1,12 @@
+{
+  "rock": { "label": "Rock and loose stones", "position": [-2.4, 1.6] },
+  "broadleaf": { "label": "Broadleaf tree", "position": [-3.4, -2] },
+  "conifer": { "label": "Conifer", "position": [3.8, -2.8] },
+  "berry-bush": { "label": "Berry bush", "position": [2.8, 0.9] },
+  "chest": { "label": "Chest", "position": [0.8, 1.8] },
+  "sword": { "label": "Arming sword", "position": [-0.5, 2.2] },
+  "shield": { "label": "Wooden shield", "position": [2.1, 2] },
+  "mara": { "label": "Mara · wool coat", "position": [-0.8, 0] },
+  "tavin": { "label": "Tavin · woven vest", "position": [0.25, -0.2] },
+  "armor": { "label": "Kest · armor", "position": [1.35, -0.2] }
+}

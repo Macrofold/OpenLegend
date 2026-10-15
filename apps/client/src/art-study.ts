@@ -1,6 +1,8 @@
 import * as pc from 'playcanvas';
 import { ArtMaterials, candidateArt } from './art-treatment';
 import { BundledModels, destroyModelApplication } from './bundled-models';
+import { CAMERA_FOV_DEGREES, initialCamera } from './world-camera';
+import studyLayout from './props/art-study/layout.json';
 import './art-study.css';
 
 interface StudyAsset {
@@ -47,18 +49,7 @@ const choices: Choice[] = Object.values(catalogs).flatMap((catalog) =>
     sourceUrl: sourceUrls[`../../../${catalog.sourceFile}`],
   })),
 );
-const familyNames: Record<string, string> = {
-  rock: 'Rock and loose stones',
-  broadleaf: 'Broadleaf tree',
-  conifer: 'Conifer',
-  'berry-bush': 'Berry bush',
-  chest: 'Chest',
-  sword: 'Arming sword',
-  shield: 'Wooden shield',
-  mara: 'Mara · wool coat',
-  tavin: 'Tavin · woven vest',
-  armor: 'Kest · armor',
-};
+const layout: Record<string, { label: string; position: readonly number[] }> = studyLayout;
 function element<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
 }
@@ -66,7 +57,7 @@ const subject = element<HTMLSelectElement>('subject');
 for (const family of new Set(choices.map((choice) => choice.family))) {
   const option = document.createElement('option');
   option.value = family;
-  option.textContent = familyNames[family] ?? family;
+  option.textContent = layout[family]?.label ?? family;
   subject.append(option);
 }
 const requested = new URLSearchParams(location.hash.slice(1)).get('subject');
@@ -84,6 +75,7 @@ export class ArtStudy {
   private readonly materials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private readonly stageMaterial: pc.StandardMaterial;
   private roots: pc.Entity[] = [];
+  private readonly bounds: pc.Vec3[] = [];
   private displayed: Choice[] = [];
   private anchors: { node: pc.Entity; label: HTMLElement; height: number }[] = [];
   private epoch = 0;
@@ -100,11 +92,13 @@ export class ArtStudy {
   private labelsDirty = true;
   private dragging?: { id: number; x: number; y: number };
   private readonly reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  private readonly gameCamera = initialCamera();
   constructor(private readonly canvas: HTMLCanvasElement) {
     this.app = new pc.Application(canvas, {
       graphicsDeviceOptions: { antialias: true, alpha: false },
     });
     this.app.graphicsDevice.maxPixelRatio = 1;
+    this.app.autoRender = false;
     element('turn').setAttribute('aria-pressed', 'false');
     element('labels-toggle').setAttribute('aria-pressed', String(!element('labels').hidden));
     this.models = new BundledModels(this.app);
@@ -154,18 +148,16 @@ export class ArtStudy {
     const on = (target: EventTarget, event: string, handler: EventListener) =>
       target.addEventListener(event, handler, { signal: this.events.signal });
     for (const id of ['subject', 'versions']) on(element(id), 'change', () => void this.show());
-    on(element('framing'), 'change', () => {
-      this.zoom = 1;
-      this.placeCamera();
-    });
+    on(element('framing'), 'change', () => this.applyFraming());
     on(element('light'), 'change', () => this.light());
     on(element('projection'), 'change', () => this.placeCamera());
-    on(element('shading'), 'change', () =>
+    on(element('shading'), 'change', () => {
       this.art.update({
         ...candidateArt,
         lighting: element<HTMLSelectElement>('shading').value === 'smooth' ? 'smooth' : 'soft',
-      }),
-    );
+      });
+      this.invalidate();
+    });
     for (const [id, yaw] of [
       ['front', 0],
       ['quarter', 0.55],
@@ -179,6 +171,8 @@ export class ArtStudy {
     on(element('zoom-out'), 'click', () => this.adjustZoom(1.25));
     on(element('turn'), 'click', () => {
       this.turning = !this.turning && !this.reduce.matches;
+      this.app.autoRender = this.turning;
+      this.invalidate();
       element('turn').setAttribute('aria-pressed', String(this.turning));
     });
     on(element('labels-toggle'), 'click', () => {
@@ -188,6 +182,8 @@ export class ArtStudy {
     });
     on(this.reduce, 'change', () => {
       if (this.reduce.matches) this.turning = false;
+      this.app.autoRender = this.turning;
+      this.invalidate();
       element('turn').setAttribute('aria-pressed', String(this.turning));
     });
     on(canvas, 'pointerdown', (event) => {
@@ -211,9 +207,14 @@ export class ArtStudy {
       on(canvas, name, () => {
         this.dragging = undefined;
       });
+    on(window, 'blur', () => {
+      this.dragging = undefined;
+    });
+    on(canvas, 'webglcontextrestored', () => this.invalidate());
     canvas.addEventListener(
       'wheel',
       (event) => {
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
         event.preventDefault();
         this.adjustZoom(Math.exp(event.deltaY * 0.001));
       },
@@ -221,6 +222,7 @@ export class ArtStudy {
     );
     on(canvas, 'keydown', (event) => {
       const e = event as KeyboardEvent;
+      if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
       if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '+', '=', '-'].includes(e.key))
         return;
       e.preventDefault();
@@ -229,8 +231,8 @@ export class ArtStudy {
       if (e.key === 'ArrowUp') this.pitch = Math.min(1.2, this.pitch + 0.1);
       if (e.key === 'ArrowDown') this.pitch = Math.max(0.12, this.pitch - 0.1);
       if (e.key === '+' || e.key === '=') this.adjustZoom(0.8);
-      if (e.key === '-') this.adjustZoom(1.25);
-      this.placeCamera();
+      else if (e.key === '-') this.adjustZoom(1.25);
+      else this.placeCamera();
     });
     on(window, 'pagehide', () => this.destroy());
     this.app.on('update', (dt: number) => {
@@ -245,6 +247,7 @@ export class ArtStudy {
       }
     });
     this.light();
+    this.applyFraming();
     this.resize();
     this.app.start();
     void this.show();
@@ -273,6 +276,7 @@ export class ArtStudy {
     }
   }
   async show(): Promise<void> {
+    if (this.disposed) return;
     const epoch = ++this.epoch,
       composition = subject.value === 'composition';
     const compare = !composition && element<HTMLSelectElement>('versions').value === 'compare';
@@ -282,6 +286,13 @@ export class ArtStudy {
     if (!compare && !composition) selected = selected.filter((asset) => asset.recommended);
     if (!selected.length) {
       element('status').textContent = 'No exported assets are available for this subject yet.';
+      return;
+    }
+    if (
+      selected.length === this.displayed.length &&
+      selected.every((asset, index) => asset === this.displayed[index])
+    ) {
+      element('status').textContent = '';
       return;
     }
     element('status').textContent = 'Loading fixed artwork…';
@@ -304,6 +315,7 @@ export class ArtStudy {
       });
       for (const root of this.roots) root.destroy();
       this.roots = fresh;
+      this.bounds.length = 0;
       this.displayed = selected;
       element('labels').replaceChildren();
       this.anchors = [];
@@ -316,18 +328,6 @@ export class ArtStudy {
         ),
       );
       const spacing = Math.max(0.9, largest * 1.25);
-      const places: Record<string, [number, number]> = {
-        broadleaf: [-3.4, -2],
-        conifer: [3.8, -2.8],
-        'berry-bush': [2.8, 0.9],
-        rock: [-2.4, 1.6],
-        chest: [0.8, 1.8],
-        mara: [-0.8, 0],
-        tavin: [0.25, -0.2],
-        armor: [1.35, -0.2],
-        sword: [-0.5, 2.2],
-        shield: [2.1, 2],
-      };
       let minX = Infinity,
         maxX = -Infinity,
         minZ = Infinity,
@@ -336,7 +336,7 @@ export class ArtStudy {
       fresh.forEach((node, index) => {
         const asset = selected[index]!;
         const at = composition
-          ? (places[asset.family] ?? [index * 1.5, 0])
+          ? (layout[asset.family]?.position ?? [index * 1.5, 0])
           : [(index - (fresh.length - 1) / 2) * spacing, 0];
         node.setPosition(at[0]!, -asset.bounds.min[1]!, at[1]!);
         this.app.root.addChild(node);
@@ -344,6 +344,10 @@ export class ArtStudy {
         maxX = Math.max(maxX, at[0]! + asset.bounds.max[0]!);
         minZ = Math.min(minZ, at[1]! + asset.bounds.min[2]!);
         maxZ = Math.max(maxZ, at[1]! + asset.bounds.max[2]!);
+        for (const x of [asset.bounds.min[0]!, asset.bounds.max[0]!])
+          for (const y of [asset.bounds.min[1]!, asset.bounds.max[1]!])
+            for (const z of [asset.bounds.min[2]!, asset.bounds.max[2]!])
+              this.bounds.push(new pc.Vec3(x + at[0]!, y - asset.bounds.min[1]!, z + at[1]!));
         const height = asset.bounds.max[1]! - asset.bounds.min[1]!;
         maxY = Math.max(maxY, height);
         const label = document.createElement('span');
@@ -361,7 +365,6 @@ export class ArtStudy {
       this.center.set((minX + maxX) / 2, maxY * 0.45, (minZ + maxZ) / 2);
       this.tallest = maxY;
       this.extent.set(maxX - minX, maxY, maxZ - minZ);
-      this.fit();
       this.zoom = 1;
       this.placeCamera();
       this.cards(selected);
@@ -420,18 +423,45 @@ export class ArtStudy {
       Math.max(1, Math.round(rect.width)),
       Math.max(1, Math.round(rect.height)),
     );
-    this.fit();
     this.placeCamera();
   }
-  private fit(): void {
+  private invalidate(): void {
+    if (!this.disposed) this.app.renderNextFrame = true;
+  }
+  private applyFraming(): void {
+    this.zoom = 1;
+    if (element<HTMLSelectElement>('framing').value === 'game') {
+      this.yaw = this.gameCamera.yaw;
+      this.pitch = this.gameCamera.pitch;
+      element<HTMLSelectElement>('projection').value =
+        this.gameCamera.projection === 'orthographic' ? 'ortho' : 'perspective';
+    }
+    this.placeCamera();
+  }
+  /** Fit the installed models in the current camera axes. In perspective,
+   * nearer corners require more distance than corners on the target plane. */
+  private fit(target: pc.Vec3, perspective: boolean, tangent: number, detail: boolean): number {
     const aspect = this.canvas.clientWidth / Math.max(1, this.canvas.clientHeight);
-    this.span = Math.max(
-      this.extent.y * 0.7,
-      this.extent.x / (aspect * 1.55),
-      this.extent.z * 0.5,
-      0.55,
-    );
-    this.detailSpan = Math.max(this.span * 0.32, this.extent.x / (aspect * 1.95));
+    // Reserve space for the labels and frame edges at narrow and short sizes.
+    const horizontal = aspect * Math.max(0.25, 1 - 32 / Math.max(1, this.canvas.clientWidth));
+    const vertical = Math.max(0.25, 1 - 64 / Math.max(1, this.canvas.clientHeight));
+    const sinYaw = Math.sin(this.yaw),
+      cosYaw = Math.cos(this.yaw),
+      sinPitch = Math.sin(this.pitch),
+      cosPitch = Math.cos(this.pitch);
+    let span = detail ? 0 : 0.55;
+    for (const corner of this.bounds) {
+      const x = corner.x - target.x,
+        y = corner.y - target.y,
+        z = corner.z - target.z;
+      const across = Math.abs(x * cosYaw - z * sinYaw) / horizontal;
+      const up = Math.abs(-x * sinYaw * sinPitch + y * cosPitch - z * cosYaw * sinPitch);
+      const depth = perspective
+        ? (x * sinYaw * cosPitch + y * sinPitch + z * cosYaw * cosPitch) * tangent
+        : 0;
+      span = Math.max(span, across + depth, detail ? 0 : up / vertical + depth);
+    }
+    return span;
   }
   private adjustZoom(scale: number): void {
     this.zoom = pc.math.clamp(this.zoom * scale, 0.15, 6);
@@ -441,22 +471,35 @@ export class ArtStudy {
     this.labelsDirty = true;
     const camera = this.camera.camera!;
     const framing = element<HTMLSelectElement>('framing').value;
-    const height =
-      (framing === 'game' ? 4.5 : framing === 'detail' ? this.detailSpan : this.span) * this.zoom;
     const target = this.center.clone();
+    if (framing === 'game') target.y = 0;
     if (framing === 'detail') target.y = this.tallest * 0.85;
     camera.projection =
       element<HTMLSelectElement>('projection').value === 'perspective'
         ? pc.PROJECTION_PERSPECTIVE
         : pc.PROJECTION_ORTHOGRAPHIC;
-    camera.fov = 50;
+    camera.fov = framing === 'game' ? CAMERA_FOV_DEGREES : 50;
+    const tangent = Math.tan(camera.fov * 0.5 * pc.math.DEG_TO_RAD);
+    const perspective = camera.projection === pc.PROJECTION_PERSPECTIVE;
+    this.span = this.fit(this.center, perspective, tangent, false);
+    if (framing === 'detail')
+      this.detailSpan = Math.max(this.span * 0.32, this.fit(target, perspective, tangent, true));
+    const height =
+      (framing === 'game'
+        ? this.gameCamera.zoom
+        : framing === 'closer'
+          ? 4.5
+          : framing === 'detail'
+            ? this.detailSpan
+            : this.span) * this.zoom;
     camera.orthoHeight = height;
     // Lower orthographic rays must start above the ground, including shallow
     // views; otherwise the foreground falls behind the camera's near plane.
-    const distance =
-      camera.projection === pc.PROJECTION_ORTHOGRAPHIC
-        ? height / Math.sin(this.pitch) + 2
-        : Math.max(0.4, height / Math.tan(25 * pc.math.DEG_TO_RAD));
+    const diameter = this.extent.length();
+    const distance = perspective
+      ? Math.max(0.4, height / tangent)
+      : Math.max(height / Math.sin(this.pitch) + 2, diameter + 2);
+    camera.farClip = distance + diameter + 10;
     this.sun.light!.shadowDistance = distance + Math.max(10, this.span * 2);
     const h = Math.cos(this.pitch) * distance;
     this.camera.setPosition(
@@ -465,11 +508,12 @@ export class ArtStudy {
       target.z + Math.cos(this.yaw) * h,
     );
     this.camera.lookAt(target);
+    this.invalidate();
   }
   private labels(): void {
+    const compact = ['game', 'closer'].includes(element<HTMLSelectElement>('framing').value);
     for (const { node, label, height } of this.anchors) {
-      label.textContent =
-        label.dataset[element<HTMLSelectElement>('framing').value === 'game' ? 'short' : 'full']!;
+      label.textContent = label.dataset[compact ? 'short' : 'full']!;
       const p = node.getPosition().clone();
       p.y += height + 0.08;
       const at = this.camera.camera!.worldToScreen(p);
@@ -496,6 +540,7 @@ export class ArtStudy {
       this.sun.setEulerAngles(42, -28, 0);
       this.app.scene.ambientLight = new pc.Color(0.48, 0.51, 0.45);
     }
+    this.invalidate();
   }
   diagnostics() {
     return {
@@ -503,6 +548,10 @@ export class ArtStudy {
       yaw: this.yaw,
       pitch: this.pitch,
       zoom: this.zoom,
+      framing: element<HTMLSelectElement>('framing').value,
+      projection: element<HTMLSelectElement>('projection').value,
+      cameraHeight: this.camera.camera!.orthoHeight,
+      autoRender: this.app.autoRender,
       span: this.span,
       turning: this.turning,
       reducedMotion: this.reduce.matches,
@@ -534,7 +583,7 @@ export class ArtStudy {
   }
 }
 let study = new ArtStudy(element<HTMLCanvasElement>('study-canvas'));
-// Local read-only diagnostic hook for this developer inspection page.
+// Local diagnostic hook for this developer inspection page.
 Object.assign(window, { artStudy: study });
 window.addEventListener('pageshow', (event) => {
   if (!event.persisted) return;

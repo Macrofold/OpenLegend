@@ -222,6 +222,11 @@ def volume(name, sections, material, region, steps=12, smooth=True, bounds=None)
 
 
 def plate(name, points, thickness, material, region, bevel=0):
+    points = list(points)
+    # Front pieces face Blender -Y. Keep the extrusion outward regardless of
+    # which direction a clasp outline or a curved strap was drawn in X/Z.
+    if sum(a[0]*b[2]-b[0]*a[2] for a, b in zip(points, points[1:]+points[:1])) > 0:
+        points.reverse()
     vertices = [(x, y, z) for x, y, z in points] + [(x, y+thickness, z) for x, y, z in points]
     n = len(points)
     faces = [tuple(range(n-1, -1, -1)), tuple(range(n, n*2))]
@@ -367,6 +372,9 @@ def person(identity, style, output):
             if obj.name.startswith('Swept fringe'):
                 for vertex in obj.data.vertices:
                     vertex.co.x *= -1
+                # Reflection reverses the solid's winding along with its shape.
+                for face in obj.data.polygons:
+                    face.flip()
     top = max((obj.matrix_world@v.co).z for obj in objects for v in obj.data.vertices)
     bottom = min((obj.matrix_world@v.co).z for obj in objects for v in obj.data.vertices)
     scale = p['height']/(top-bottom)

@@ -186,7 +186,9 @@ V3D01.1–V3D01.11 are **Completed investigations, scoped implementation and tec
 - [x] Deliver a usable finite 3D inspection page with comparison and composed views, camera/light controls and existing developer entry; preserve all earlier assets and native world state.
 - [x] Complete moving/scale/coverage, controls/failure/lifetime, reduced-motion/narrow-view and complete-renderer checks; review the affected diff, synchronize current owners/evidence/limits and commit. Final creator feedback and broader game release qualification remain distinct.
 
-**Evidence:** [Representative study delivery and limits](../verification/representative-art-study.md). These checks close this finite study, not the preceding critical gameplay/mercenary acceptance gates.
+**Evidence:** [Representative study delivery and limits](../verification/representative-art-study.md). These checks close the finite study implementation, not the preceding critical gameplay/mercenary acceptance gates. The requested code review corrects camera fitting, idle rendering, source winding, shortcuts and shared loading/replacement; its final checks remain in the same report.
+
+- [ ] Qualify the selected human art at the ordinary game's actual default camera before adopting it into gameplay. The review found that the former “Game distance” preset used a much closer view; its roughly128-pixel person image was not normal-play evidence. The corrected game-camera preset projects Mara's upright body line to about31pixels at the measured680-pixel stage, where facial detail is not reliably readable. The close-study people selections are **not accepted game-distance representations**. Resolve this through the existing V3D01.12/.13 camera/subject-detail and readability work; preserve modest real dimensions and avoid silently enlarging bodies, changing world rules or accepting an unreadable face. This is an existing art-adoption gate exposed accurately, not a new general asset-pipeline prerequisite.
 
 ## V3D02 — Immutable appearance and artifact foundation
 

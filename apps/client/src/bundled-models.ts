@@ -24,6 +24,7 @@ export class BundledModels {
   constructor(private readonly app: pc.Application) {}
 
   load(name: string, url: string): Promise<BundledModel> {
+    if (this.disposed) return Promise.reject(new Error('Model owner was destroyed.'));
     const existing = this.pending.get(url);
     if (existing) return existing;
     const download = new AbortController();
@@ -58,6 +59,13 @@ export class BundledModels {
         this.app.assets.add(asset);
         this.app.assets.load(asset);
         return parsed.finally(() => this.parsing.delete(parsed));
+      })
+      .catch((error: unknown) => {
+        // Share in-flight/successful work, but a transient failure must not
+        // poison later explicit requests for this bundled asset. No retry is
+        // dispatched here; the next caller decides whether to request it again.
+        this.pending.delete(url);
+        throw error;
       });
     this.pending.set(url, promise);
     return promise;
@@ -89,11 +97,18 @@ export function destroyModelApplication(
   pc.AppBase.cancelTick(app);
   const finish = () => {
     const id = app.graphicsDevice.canvas.id;
-    const replacement = pc.AppBase.getApplication(id);
+    app.once('destroy', () => {
+      const replacement = pc.AppBase.getApplication(id);
+      if (!replacement || replacement === app) return;
+      // The engine defers destruction requested inside an update. Restore only
+      // after its actual cleanup, and never overwrite a newer/live registry entry
+      // or resurrect a replacement that has itself already been destroyed.
+      queueMicrotask(() => {
+        if (replacement.root && !pc.AppBase.getApplication(id))
+          Object.assign(pc.AppBase._applications, { [id]: replacement });
+      });
+    });
     app.destroy();
-    // PlayCanvas 2.22.2 unregisters this canvas unconditionally on destruction.
-    if (replacement && replacement !== app)
-      Object.assign(pc.AppBase._applications, { [id]: replacement });
   };
   const pending = parsing.filter((item): item is Promise<void> => item !== undefined);
   if (pending.length) void Promise.all(pending).then(finish);
