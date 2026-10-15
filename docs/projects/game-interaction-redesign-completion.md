@@ -44,6 +44,9 @@ integrated current need/health rules retain their own authored definitions.
 The existing untracked environment file is byte-identical to main's new tracked
 file and is preserved unchanged. Static/build checks and the fourteen focused
 transport/draft checks cover reconciliation; no browser run is part of the merge.
+A subsequent documentation-only target refresh uses the same repository/ref at
+`362d3b0a20e92fc38a672730104b957b1c7c1be4`, retaining its independent research
+framing and design-needs additions. It changes no tested runtime owner.
 The separate final UI continuation adapts its obsolete unavailable-action toggle
 expectation to main's accepted always-visible known blocked actions, then reuses
 unchanged native ownership/settlement evidence.
