@@ -26,7 +26,7 @@ Private NPC preview constraints are owned by [NPV01](interface.md#npv01--private
 
 ## SP04 — Source and prose envelope
 
-**Proposed; Safe.** One primary occurrence with at most two necessary supporting references; at most 8,000 UTF-8 bytes in the complete retained permitted scene projection. No ordinary personal background is added. One bounded Narrator call yields one to three sentences, at most 500 characters each and 1,200 characters total, within the existing 24,000-byte complete input and 1,800-token output allowance. No minimum prose length. Mandatory facts that do not fit cause refusal, not selective omission; invalid generated text follows NR01. These smaller envelopes contain source review and prose cost. They do not justify reducing any required actor context or prove semantic entailment.
+**Proposed; Safe.** One primary occurrence with at most two necessary supporting references; at most 8,000 UTF-8 bytes in the complete retained permitted scene projection. No ordinary personal background is added. One bounded Narrator call yields one to three sentences, at most 500 characters each and 1,200 characters total. This mode's proposed 24,000-byte complete-input ceiling includes voice and instructions; the current ordinary Narrator checks 24,000 bytes of assembled context alone under [LA159](#la159). The existing 1,800-token output allowance remains. No minimum prose length. Mandatory facts that do not fit cause refusal, not selective omission; invalid generated text follows NR01. These smaller envelopes contain source review and prose cost. They do not justify reducing any required actor context or prove semantic entailment.
 
 ## SP05 — Readable historical presentation
 

@@ -2,9 +2,7 @@
 
 | Status    | Current progress                                                                                                                                  | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The selected shared-world authority and private-view foundation was delivered on 2026-09-26; later participation and deployment work is separate. | 2026-10-14   |
-
-**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](multiplayer-authority-feature-spec.md) defines the experience. [MP01/MP04 delivery slices](../../maintainers/multiplayer.md#priority-2-implementation-slices) contain executable work; MP02/MP03, BW13/BW14, SL and D5/D6 retain their separate scope.
+| Completed | The selected shared-world authority and private-view foundation was delivered on 2026-09-26; later participation and deployment work is separate. | 2026-10-15   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](multiplayer-authority-feature-spec.md) defines the experience. [MP01/MP04 delivery slices](../../maintainers/multiplayer.md#priority-2-implementation-slices) contain executable work; MP02/MP03, BW13/BW14, SL and D5/D6 retain their separate scope.
 

@@ -58,7 +58,7 @@ Original recommendation: **Review**.
 
 **Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The background indexer processes eligible memory sources, not only speech, through the same count-and-byte-bounded embedding batcher as LA010. It takes one batch per eligible NPC turn and revisits remaining work under spending admission and recorded-attempt rules. The 32-source ceiling is a work batch, not a speech-retention limit.
+The background indexer processes eligible memory sources, not only speech, through the same count-and-byte-bounded embedding batcher as LA010. It rotates through NPCs one batch at a time, returning each successfully indexed actor to the end of that background run's queue. One run can therefore process several batches for an actor without another character decision; every batch still needs spending admission and a recorded attempt. The 32-source ceiling applies to each batch, not the complete background run or retained speech.
 
 **Reason / tradeoff:** Keep bounded, fairly scheduled indexing and preserve incomplete coverage explicitly. Additional batches still need admission; unfinished work does not authorize automatic paid retries.
 

@@ -4,7 +4,7 @@
 
 Values describe the stated baseline, not approved future targets. **Reported** means the merged implementation report (2026-09-26, `c133000` / `a90d411`); **Historical** means the original audit and needs code recheck. Ratings describe restrictiveness, not correctness or measured capacity. New rationale is an engineering assessment unless an authored decision is explicitly identified.
 
-**Deferred integration:** this inventory describes the pinned review branch. [Lifecycle and protection](../worlds/base/lifecycle-and-protection.md) identifies the newer accepted player danger/death rules and their pinned main implementation. Main’s [FT01–FT07 inventory](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/docs/limits/base-world.md#ft01--proposed-first-threat-scope-and-reward) owns their exact encounter, reincarnation and simulated-fade bounds. The older collapse/recovery values below are baseline observations, not the accepted integration target or evidence qualifying the newer rules.
+Player danger, reincarnation and simulated departure are implemented. [Lifecycle and protection](../worlds/base/lifecycle-and-protection.md) describes the current rules, and [FT01–FT07 below](#ft01--proposed-first-threat-scope-and-reward) retain their authored encounter, reincarnation and simulated-fade bounds. Former collapse/recovery values are historical, superseded policies.
 
 Implementation starting points: [items.ts](../../packages/domain/src/worlds/base/items.ts), [appraisals.ts](../../packages/domain/src/worlds/base/appraisals.ts), [participation.ts](../../packages/domain/src/worlds/base/participation.ts).
 

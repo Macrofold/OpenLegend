@@ -114,17 +114,17 @@ Sole-tab opening, reload and refocus enter automatically. Only switching between
 
 ## MP10
 
-**Current — source inspected October 6, 2026 · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
-Beginning an exit records the pending phase and operational deadline; it does not itself cancel the current action. At committed departure after the grace period, the participation owner cancels active and suspended plans/actions, releases their held work/resources and deactivates action-occupying effects without undoing spent inputs or completed effects. The inactive body then stops physical participation, hazards and survival progression; detached property remains active. Return during the grace period and return after committed departure are distinct paths.
+With the bundled world's [simulated departure rule](../worlds/base/player-danger.md#five-simulated-seconds-to-leave), beginning an exit immediately cancels active and suspended plans/actions, releases their held work/resources and deactivates action-occupying effects without undoing spent inputs or completed effects. The body remains vulnerable until its saved simulation deadline; pause and route preparation do not spend this exposure. At committed departure, the inactive body stops physical participation, hazards and survival progression; detached property remains active. A world without a simulated-exposure policy uses the supported operational-deadline fallback, which cancels work at committed departure instead. Return during a pending exit and return after committed departure are distinct paths.
 
-**Reason / tradeoff:** Protect absent humans after settled departure without pretending the disconnect instantly undoes ongoing activity. [Domain transition](../../packages/domain/src/participation.ts) · [Operational deadline and commit](../../apps/server/src/world-service.ts).
+**Reason / tradeoff:** Stop unfinished human work at the point selected by the installed participation policy, preserving spent inputs and completed effects. Vulnerability lasts until the corresponding departure boundary rather than ending at disconnect. [Domain transition](../../packages/domain/src/participation.ts) · [Operational fallback and commit](../../apps/server/src/world-service.ts).
 
 ## MP11
 
-**Current — source inspected October 6, 2026 · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
-Return **after committed inactivity** tries the saved return anchor (or current supported position when no anchor is stored), then **one authored fallback**. The first valid standing position is used and flight/falling state is cleared; no nearby-location search runs. If both candidates fail, the body remains inactive with an explicit failure. Returning from the still-pending exit instead restores active participation without relocation.
+Ordinary return **after committed inactivity** tries the saved return anchor (or current supported position when no anchor is stored), then **one authored fallback**. The first valid standing position is used and flight/falling state is cleared; no nearby-location search runs. If both candidates fail, the body remains inactive with an explicit failure. Pending player death follows the separate [Player Death continuation](../worlds/base/player-death.md), not this standing-position return. Returning from the still-pending exit instead restores active participation without relocation.
 
 **Reason / tradeoff:** Use a deterministic supported return without moving a character whose departure has not committed. Nearby search or restoring airborne inactivity need separate semantics. [Implementation](../../packages/domain/src/participation.ts).
 

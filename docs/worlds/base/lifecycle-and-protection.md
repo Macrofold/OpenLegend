@@ -1,6 +1,6 @@
 # Lifecycle and player protection
 
-These are the OpenLegend bundled world’s lifecycle policies, not universal engine laws. Departure/return, inactive protection and physical remains are implemented on this review branch. Current actor identity/revival remains in [Architecture](../../architecture.md#actor-means-any-living-being); delivery and broader acceptance remain under BW13–BW15 and MP01/MP04.
+These are the OpenLegend bundled world’s lifecycle policies, not universal engine laws. Departure/return, inactive protection and physical remains are implemented. Current actor identity/revival remains in [Architecture](../../architecture.md#actor-means-any-living-being); delivery and broader acceptance remain under BW13–BW15 and MP01/MP04.
 
 Current physical aftermath is now implemented: every actual death leaves a body, with authored rotting and removal deadlines, preserved identity and ground custody for belongings. [Survival](survival.md#death-and-remains) owns this behavior. Player death/reincarnation and the first territorial encounter are now implemented; broader PvP/indirect harm, ghost/summoning and ordinary NPC revival remain targets.
 

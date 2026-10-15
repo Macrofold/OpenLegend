@@ -2,9 +2,7 @@
 
 | Status    | Current progress                                                                                                         | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | The agreed persistent-object and custody slices were delivered; broader object and hosted qualification remain separate. | 2026-10-14   |
-
-**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](persistent-objects-feature-spec.md) owns behavior. [PO01–PO09](../../maintainers/persistent-objects.md) refines DF01/BW07; P1 owns claims, P2 current authority, P4 dependency invalidation, and SL00 consistent capture.
+| Completed | The agreed persistent-object and custody slices were delivered; broader object and hosted qualification remain separate. | 2026-10-15   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](persistent-objects-feature-spec.md) owns behavior. [PO01–PO09](../../maintainers/persistent-objects.md) refines DF01/BW07; P1 owns claims, P2 current authority, P4 dependency invalidation, and SL00 consistent capture.
 

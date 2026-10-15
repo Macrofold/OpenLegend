@@ -68,9 +68,9 @@ Original recommendation: **Review**.
 
 ## LA138
 
-**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
+**Current — source rechecked 2026-10-15 · Restrictiveness: Very safe.**
 
-A spatial map admits 1–32 walkable surfaces and 1–16 named height levels. At most 128 physical blockers are allowed **in total across rock terrain cells and explicit blocking shapes**; these are not two independent 128-entry allowances. Static decorative scenery has its separate SP07 limit and does not add physical support or blocking.
+A spatial map admits 1–32 walkable surfaces and 1–16 named height levels. At most 128 physical blockers are allowed **in total across terrain cells whose authored definitions include solid geometry and explicit blocking shapes**; these are not two independent 128-entry allowances. The terrain contribution is not limited to rock. Static decorative scenery has its separate SP07 limit and does not add physical support or blocking.
 
 **Reason / tradeoff:** Increase map-detail capacity with measured pathfinding and collision costs, preserving explicit failure if a supported map exceeds processing capacity.
 

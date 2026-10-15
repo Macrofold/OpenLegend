@@ -1,16 +1,16 @@
 # Readable promises — technical design
 
-| Status    | Current progress                                                                                                                    | Last updated |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The own-promise reading interface was delivered on 2026-09-28; negotiated amendment and cancellation remain separate proposed work. | 2026-10-14   |
+| Status      | Current progress                                                                                                                               | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Own-promise reading is delivered; required world-policy separation, bounded preparation and cross-account verification remain open under BW17. | 2026-10-15   |
 
-**Status:** approved read-only first slice of [BW17](../../maintainers/base-world.md#bw17--readable-promises-and-commitment-management). [Feature specification](readable-promises-feature-spec.md) owns behavior. Delivered under the [player clarity plan](player-clarity-ui.md).
+**Status:** approved read-only first slice of [BW17](../maintainers/base-world.md#bw17--readable-promises-and-commitment-management). [Feature specification](readable-promises-feature-spec.md) owns behavior. Delivered under the [player clarity plan](completed/player-clarity-ui.md).
 
-**Implemented 2026-09-28.** The [recorded Journal journey](../../verification/player-clarity-ui.md#bw17--read-only-promises) covers the read-only scope below. Broader BW17 amendment/negotiation is not part of this completed slice. Section 7’s future extraction of bundled promise wording remains open; the read-only implementation did not generalize the promise language.
+**Interface implemented 2026-09-28; project reopened October 15.** The [recorded Journal journey](../verification/player-clarity-ui.md#bw17--read-only-promises) supports the delivered interface, with its single-account limit preserved. Sections 3, 5, 7 and 8 retain required world-policy separation, bounded read preparation and cross-account qualification; these corrections do not wait for D64. Broader BW17 amendment/negotiation remains outside this project's scope.
 
 ## 1. Owners and existing contracts
 
-- **Obligation state:** [commitments.ts](../../../packages/domain/src/commitments.ts) records an `Obligation` inside a `MemoryRecord` of kind `commitment` (`revision`, `status`, `dueAt`, `completion {eventType, targetId?, definitionId?}`, `evidenceId`, `fulfilledBy`, `fulfilledAt`). The experience owner is the only writer. Recognition, the 16-record admission limit and completion matching are unchanged.
+- **Obligation state:** [commitments.ts](../../packages/domain/src/commitments.ts) records an `Obligation` inside a `MemoryRecord` of kind `commitment` (`revision`, `status`, `dueAt`, `completion {eventType, targetId?, definitionId?}`, `evidenceId`, `fulfilledBy`, `fulfilledAt`). The experience owner is the only writer. Recognition, the 16-record admission limit and completion matching are unchanged.
 - **Residency:** unresolved obligations always stay in `world.memories`. Resolved ones can leave resident memory after the raw-history window but remain in PostgreSQL `mind_memories` and the derived `recall_sources` index (`memory_kind='commitment'`, `required=1` while unresolved, partial index `recall_commitments`).
 - **Existing surfaces:** `POST /api/commitment` amends (unchanged, not called by this slice). God mind inspection keeps its own summary.
 
@@ -56,7 +56,7 @@ interface OwnPromisePage {
 6. Recheck scope, private access and generation after the await; a change raises the cursor error. The HTTP dispatcher already holds the mutation lane for the whole request, so no tick changes the world between the flush and the reads; past entries that are also open are dropped defensively.
 7. Project each record with `promiseView`, which writes terms/evidence from the binding and item definition names and the viewer's own observer labels.
 
-The English terms describe the bundled gathering rule in [spoken promises](../../worlds/base/social.md#spoken-promises), but currently remain hard-coded in `commitment-view.ts`; the client repeats the recognition help in `ui/promises.tsx`. Together with the parser and admission cap in `commitments.ts`, these are current engine/world boundary gaps. BW17 owns their extraction into one authored-world source without changing the obligation lifecycle, adding a second store or broadening recognition. The supported gathering rule receives specific wording; other amended rules are described generically.
+The English terms describe the bundled gathering rule in [spoken promises](../worlds/base/social.md#spoken-promises), but currently remain hard-coded in `commitment-view.ts`; the client repeats the recognition help in `ui/promises.tsx`. Together with the parser and admission cap in `commitments.ts`, these are current engine/world boundary gaps. BW17 owns their extraction into one authored-world source without changing the obligation lifecycle, adding a second store or broadening recognition. The supported gathering rule receives specific wording; other amended rules are described generically.
 
 ## 4. Privacy and authority
 
@@ -74,7 +74,7 @@ The English terms describe the bundled gathering rule in [spoken promises](../..
 - `flushMemorySources` persists only when this actor’s memory sources changed. BW17/PF08 retain shared preparation and bounded fallback work: reuse must preserve the different admission-count and visible-open predicates, actor privacy, forgotten records, immutable revisions and restore invalidation; sharing a helper alone does not remove repeated scans.
 - Client fetches on mount and on explicit Refresh; no polling.
 
-Page size (20) and the reuse of the admission limit are recorded in [BW04](../../limits/base-world.md#bw04).
+Page size (20) and the reuse of the admission limit are recorded in [BW04](../limits/base-world.md#bw04).
 
 ## 6. Client
 
@@ -88,12 +88,12 @@ Page size (20) and the reuse of the admission limit are recorded in [BW04](../..
 
 ## 8. Verification
 
-Existing [player clarity evidence](../../verification/player-clarity-ui.md#bw17--read-only-promises) covers native speech setup, the read-only list, completion, paging, stale requests, restart and narrow layout. Its single-human setup did not execute a second-account denial; do not present that as a completed cross-account test. This review adds source analysis, not new runtime evidence.
+Existing [player clarity evidence](../verification/player-clarity-ui.md#bw17--read-only-promises) covers native speech setup, the read-only list, completion, paging, stale requests, restart and narrow layout. Its single-human setup did not execute a second-account denial; do not present that as a completed cross-account test. This review adds source analysis, not new runtime evidence.
 
-Reuse valid recorded checks for unchanged behavior. For the boundary and preparation corrections, use a disposable world with `AI_BUDGET_USD=0` and select the affected promise-recognition, limit/count, paging and restore cases, plus the still-unrun cross-account denial. Native `say` setup is API evidence, not Talk-composer interaction. Record new results and their limits in [player clarity verification](../../verification/player-clarity-ui.md).
+Reuse valid recorded checks for unchanged behavior. For the boundary and preparation corrections, use a disposable world with `AI_BUDGET_USD=0` and select the affected promise-recognition, limit/count, paging and restore cases, plus the still-unrun cross-account denial. Native `say` setup is API evidence, not Talk-composer interaction. Record new results and their limits in [player clarity verification](../verification/player-clarity-ui.md).
 
 ## Maintained records
 
-- Implementation: [BW17](../../maintainers/base-world.md#bw17--readable-promises-and-commitment-management).
-- Limits and constraints: [base-world BW04](../../limits/base-world.md#bw04).
-- Related contract/design: [feature specification](readable-promises-feature-spec.md), [player clarity plan](player-clarity-ui.md).
+- Implementation: [BW17](../maintainers/base-world.md#bw17--readable-promises-and-commitment-management).
+- Limits and constraints: [base-world BW04](../limits/base-world.md#bw04).
+- Related contract/design: [feature specification](readable-promises-feature-spec.md), [player clarity plan](completed/player-clarity-ui.md).

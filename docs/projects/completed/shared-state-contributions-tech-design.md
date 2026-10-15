@@ -2,9 +2,7 @@
 
 | Status    | Current progress                                                                                                    | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The agreed state, contribution and resource-claim slices were delivered; broader composition work remains separate. | 2026-10-14   |
-
-**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](shared-state-contributions-feature-spec.md) owns behavior; [SC01–SC08](../../maintainers/state-contributions.md) owns detailed work and evidence. Parent ownership remains EWF02–03, INV-6.3, EWF07/SL00 and production data. Read [the five-project map](foundations-1-5.md) for the pinned baseline and cross-project order.
+| Completed | The agreed state, contribution and resource-claim slices were delivered; broader composition work remains separate. | 2026-10-15   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](shared-state-contributions-feature-spec.md) owns behavior; [SC01–SC08](../../maintainers/state-contributions.md) owns detailed work and evidence. Parent ownership remains EWF02–03, INV-6.3, EWF07/SL00 and production data. Read [the five-project map](foundations-1-5.md) for the pinned baseline and cross-project order.
 

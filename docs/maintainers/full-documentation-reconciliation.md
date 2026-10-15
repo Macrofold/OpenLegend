@@ -12,6 +12,10 @@ The October 14 addendum and its 538-path/84-supporting-file/45-historical-move i
 
 ## Source boundary and inventory
 
+**October 15 focused follow-up:** [Post-integration corrections](../projects/full-documentation-review.md#october-15-post-integration-corrections) repair stale claims restored by the integration and review related passages against current source. This scoped pass does not close the full-file inventory, all-task reconciliation or reverse-coverage gates below.
+
+The [further requested review](../projects/full-documentation-review.md#further-october-15-review) also corrects duplicated limit/status records, inaccurate workload descriptions and the premature completed filing of the readable-promises pair. The active promise paths already listed below now match their reopened status; other historical inventory markers remain unchanged.
+
 **Historical October 14 pins:** Repository: `Macrofold/OpenLegend`. Delivery branch: `docs/full-documentation-review-reconciled-2026-10-03`, read for this update at `931188e5d2616fc0d3435a1cb4f9d91c41ee99d0`. The selected refreshed target is GitHub `refs/heads/main` at `1cf678802d62652d8dd466776d4b95a9d0d19166`, not the stale base SHA reported by PR #28. Common base: `34233ae24365eb8911fe1995c9c232bd57f34616`. No local checkout or local-main ref was supplied. The owner has requested rebase; the earlier synchronization deferral is superseded. These are source pins, not a claim that the rebase has finished.
 
 **Preserved original inputs:** this checklist was published in `66a020ab03e24f944b4088e16e5b4677605e4b5a`, with navigation in `51fcfc0dbc62c3e49ddedfbab140757b2cef9917`. Its initial review input was `bf7366beb621e9c9c4cb03718c542c48ce2b6381`, and its main pin was `7a576214fbb9891b2e9f742db56bbeccaa3a58a1` (562 review commits and 29 main commits beyond the common base). Preserve `backup/full-doc-review-bf7366be-before-7a576214` and `backup/full-doc-review-51fcfc0d-before-1cf67880`; neither is the delivery branch.

@@ -1,10 +1,10 @@
 # Readable promises — feature specification
 
-| Status    | Current progress                                                                                                                    | Last updated |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The own-promise reading interface was delivered on 2026-09-28; negotiated amendment and cancellation remain separate proposed work. | 2026-10-14   |
+| Status      | Current progress                                                                                                                               | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Own-promise reading is delivered; required world-policy separation, bounded preparation and cross-account verification remain open under BW17. | 2026-10-15   |
 
-**Status:** approved read-only first slice of [BW17](../../maintainers/base-world.md#bw17--readable-promises-and-commitment-management), delivered under the [player clarity plan](player-clarity-ui.md). [Technical design](readable-promises-tech-design.md) defines the read contract. Current promise rules are in [base-world social behavior](../../worlds/base/social.md#spoken-promises). Amending, cancelling and negotiated agreements stay out of scope until [D64](../../../archive/05-project/open-decisions.md#social-exposure-decisions) is decided.
+**Status:** the approved read-only first slice of [BW17](../maintainers/base-world.md#bw17--readable-promises-and-commitment-management) was delivered under the [player clarity plan](completed/player-clarity-ui.md), but its required boundary/preparation corrections and cross-account qualification remain unfinished. [Technical design](readable-promises-tech-design.md) defines the read contract and those remaining corrections. Current promise rules are in [base-world social behavior](../worlds/base/social.md#spoken-promises). Amending, cancelling and negotiated agreements stay out of scope until [D64](../../archive/05-project/open-decisions.md#social-exposure-decisions) is decided.
 
 ## 1. Purpose
 
@@ -47,7 +47,7 @@ Not in scope: amending deadlines, cancelling, changing completion rules, promise
 - The kept/unsupported/limit/older-history journeys above work in the running app at desktop and narrow widths using only the keyboard.
 - No other account can read the list; no internal event types, event IDs or global names of unlearned characters appear.
 - Past-promise paging returns every retained record exactly once in a stable order for a fixed save.
-- Evidence is recorded in the [player clarity verification](../../verification/player-clarity-ui.md); automated coverage remains deferred in [TODO](../../maintainers/TODO.md#social-playable-slices--future-validation).
+- Evidence is recorded in the [player clarity verification](../verification/player-clarity-ui.md); automated coverage remains deferred in [TODO](../maintainers/TODO.md#social-playable-slices--future-validation).
 
 ## 7. Stages
 
@@ -57,6 +57,6 @@ Not in scope: amending deadlines, cancelling, changing completion rules, promise
 
 ## Maintained records
 
-- Implementation: [BW17](../../maintainers/base-world.md#bw17--readable-promises-and-commitment-management).
-- Limits and constraints: [base-world BW04](../../limits/base-world.md#bw04).
-- Related contract/design: [technical design](readable-promises-tech-design.md), [spoken promises](../../worlds/base/social.md#spoken-promises).
+- Implementation: [BW17](../maintainers/base-world.md#bw17--readable-promises-and-commitment-management).
+- Limits and constraints: [base-world BW04](../limits/base-world.md#bw04).
+- Related contract/design: [technical design](readable-promises-tech-design.md), [spoken promises](../worlds/base/social.md#spoken-promises).

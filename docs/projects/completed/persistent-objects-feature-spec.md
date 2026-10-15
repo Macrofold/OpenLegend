@@ -2,9 +2,7 @@
 
 | Status    | Current progress                                                                                                         | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | The agreed persistent-object and custody slices were delivered; broader object and hosted qualification remain separate. | 2026-10-14   |
-
-**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 3. [Technical design](persistent-objects-tech-design.md) defines storage and algorithms; [PO01–PO09](../../maintainers/persistent-objects.md) decomposes DF01/BW07 and coordinates INV-6/SL00. [Foundation package](foundations-1-5.md) applies.
+| Completed | The agreed persistent-object and custody slices were delivered; broader object and hosted qualification remain separate. | 2026-10-15   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Original foundation priority 3. [Technical design](persistent-objects-tech-design.md) defines storage and algorithms; [PO01–PO09](../../maintainers/persistent-objects.md) decomposes DF01/BW07 and coordinates INV-6/SL00. [Foundation package](foundations-1-5.md) applies.
 

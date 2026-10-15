@@ -2,9 +2,7 @@
 
 | Status    | Current progress                                                                                            | Last updated |
 | --------- | ----------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The agreed dependency and bounded-query slices were delivered; broader aggregate capacity remains separate. | 2026-10-14   |
-
-**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](dependency-invalidation-feature-spec.md) owns behavior; [DI01–DI08](../../maintainers/dependency-invalidation.md) decomposes EWF08. EPR05 remains the ActorWork/reaction owner, SW owns spatial queries and PF owns measurement. [Foundation package](foundations-1-5.md) records shared dependencies.
+| Completed | The agreed dependency and bounded-query slices were delivered; broader aggregate capacity remains separate. | 2026-10-15   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](dependency-invalidation-feature-spec.md) owns behavior; [DI01–DI08](../../maintainers/dependency-invalidation.md) decomposes EWF08. EPR05 remains the ActorWork/reaction owner, SW owns spatial queries and PF owns measurement. [Foundation package](foundations-1-5.md) records shared dependencies.
 

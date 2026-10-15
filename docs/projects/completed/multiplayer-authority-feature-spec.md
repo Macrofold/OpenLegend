@@ -2,9 +2,7 @@
 
 | Status    | Current progress                                                                                                                                  | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The selected shared-world authority and private-view foundation was delivered on 2026-09-26; later participation and deployment work is separate. | 2026-10-14   |
-
-**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 2. [Technical design](multiplayer-authority-tech-design.md) owns the implementation; [MP01/MP04 and their delivery slices](../../maintainers/multiplayer.md#priority-2-implementation-slices) own work. [Foundation package](foundations-1-5.md) defines common scope.
+| Completed | The selected shared-world authority and private-view foundation was delivered on 2026-09-26; later participation and deployment work is separate. | 2026-10-15   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Original foundation priority 2. [Technical design](multiplayer-authority-tech-design.md) owns the implementation; [MP01/MP04 and their delivery slices](../../maintainers/multiplayer.md#priority-2-implementation-slices) own work. [Foundation package](foundations-1-5.md) defines common scope.
 

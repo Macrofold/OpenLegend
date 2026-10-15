@@ -1,6 +1,6 @@
 # Body, senses and survival
 
-This document describes the pinned review branch. [Lifecycle and protection](lifecycle-and-protection.md) records Mike’s newer accepted death/reincarnation and simulated-departure choices, already implemented on its pinned main revision but not integrated here. The older collapse/recovery observations below are baseline facts, not requirements to reinstate when synchronizing.
+This document describes current bundled-world survival. [Lifecycle and protection](lifecycle-and-protection.md) records the implemented player death/reincarnation and simulated-departure rules. These replace the former collapse/recovery behavior; broader NPC revival and conflict policies remain separately tracked.
 
 ## Bodily conditions and chosen responses
 

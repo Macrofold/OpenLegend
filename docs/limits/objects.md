@@ -24,11 +24,11 @@ Implementation starting points: [objects.ts](../../packages/domain/src/objects.t
 
 ## OB04
 
-**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
+**Current — source rechecked 2026-10-15 · Restrictiveness: Very safe.**
 
-**Only item entities can be contained or attached.** Actors cannot be passengers inside this model. Parents must be actors, ground piles or container items.
+**Only item entities can be contained or attached.** Actors cannot be passengers inside this model. Ordinary inventory parents must be actors, ground piles or container items. The selected construction family also attaches admitted item parts to an assembly root through its own slot, local-position and exact-definition checks ([OB05](#ob05)); an assembly root is not a general inventory destination.
 
-**Reason / tradeoff:** Keep first inventory delivery limited to items; passengers need a separate supported containment contract.
+**Reason / tradeoff:** Keep ordinary inventory and construction attachments with their respective native owners; passengers need a separate supported containment contract. [Placement validation](../../packages/domain/src/objects.ts) · [Construction attachment](../../packages/domain/src/assemblies.ts).
 
 ## OB05
 
