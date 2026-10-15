@@ -2,96 +2,48 @@ name: UI completion verification
 on:
   push:
     branches: [docs/game-ui-research-redesign]
-    paths: [.github/workflows/ui-completion.yml, .github/scripts/ui-composed-journeys.ts]
+    paths: [.github/workflows/ui-completion.yml]
 permissions:
   contents: read
+  actions: read
 jobs:
   qualify:
     if: github.repository == 'Macrofold/OpenLegend'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_USER: openlegend
-          POSTGRES_PASSWORD: fixture
-          POSTGRES_DB: postgres
-        ports: [5432:5432]
-        options: >-
-          --health-cmd "pg_isready -U openlegend -d postgres"
-          --health-interval 5s --health-timeout 5s --health-retries 10
-    env:
-      AI_BUDGET_USD: '0'
-      OPENLEGEND_TEST_DATABASE_URL: postgresql://openlegend:fixture@localhost:5432/postgres
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-          persist-credentials: false
-          show-progress: false
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: pnpm
-      - name: Install pinned dependencies and Chromium
+      - name: Read only the saved fixture responses from the UI trace
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          pnpm install --frozen-lockfile > "$RUNNER_TEMP/install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/install.log"; exit 1; }
-          pnpm exec playwright install --with-deps chromium > "$RUNNER_TEMP/browser-install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/browser-install.log"; exit 1; }
-      - name: Observe composed screens without modifying production code
-        run: |
+          curl --fail --silent --show-error --location --max-time 120 --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/vnd.github+json' https://api.github.com/repos/Macrofold/OpenLegend/actions/artifacts/11945195031/zip --output "$RUNNER_TEMP/ui-observations.zip"
           python3 - <<'PY'
-          import json, os, shutil, subprocess
+          import hashlib, io, json, os, zipfile
           from pathlib import Path
-          report = Path(os.environ['RUNNER_TEMP']) / 'ui-composed'
-          report.mkdir()
-          probe = Path('tests/browser/ui-composed.spec.ts')
-          assert not probe.exists()
-          text = Path('.github/scripts/ui-composed-journeys.ts').read_text()
-          # A closed container's contents need not be disclosed in the world view.
-          # Select the visible object, open it through the UI, then check its contents.
-          text = text.replace('entity.storage && entity.contents?.length', 'entity.storage')
-          probe.write_text(text)
-          shutil.copyfile(probe, report / 'scenario.ts')
-          results = {}
-          def run(label, args, extra=None):
-              with (report / (label + '.log')).open('w') as output:
-                  results[label] = subprocess.run(args, env=dict(os.environ, **(extra or {})), stdout=output, stderr=subprocess.STDOUT).returncode
-              print(label + ': ' + str(results[label]), flush=True)
-              print('\n'.join((report / (label + '.log')).read_text().splitlines()[-180 if results[label] else -12:]), flush=True)
-          try:
-              run('types', ['pnpm', 'typecheck'])
-              run('build', ['pnpm', 'build'])
-              if results['types'] == 0 and results['build'] == 0:
-                  run('browser', ['pnpm', 'exec', 'playwright', 'test', str(probe), '--reporter=line,json'], {'PLAYWRIGHT_JSON_OUTPUT_NAME': str(report / 'browser.json')})
-              if (report / 'browser.json').exists():
-                  data = json.loads((report / 'browser.json').read_text())
-                  summary = {'stats': data.get('stats'), 'cases': []}
-                  def collect(suites):
-                      for suite in suites:
-                          for spec in suite.get('specs', []):
-                              for test in spec.get('tests', []):
-                                  summary['cases'].append({'title': spec['title'], 'status': test['status'], 'results': [{'status': result['status'], 'duration': result.get('duration'), 'errors': result.get('errors', [])} for result in test.get('results', [])]})
-                          collect(suite.get('suites', []))
-                  collect(data.get('suites', []))
-                  (report / 'summary.json').write_text(json.dumps(summary, indent=2))
-                  print('COMPOSED_UI_RESULTS=' + json.dumps(summary, indent=2), flush=True)
-          finally:
-              probe.unlink(missing_ok=True)
-              if Path('test-results').exists():
-                  shutil.copytree('test-results', report / 'test-results', dirs_exist_ok=True)
-              assert not subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip()
-              metadata = {'commit': os.environ['GITHUB_SHA'], 'checks': results, 'production_source_changed': False, 'temporary_probe_removed': True, 'provider_spend_usd': 0}
-              (report / 'metadata.json').write_text(json.dumps(metadata, indent=2))
-              print('COMPOSED_UI_CHECKPOINT=' + json.dumps(metadata), flush=True)
-          if not results or any(results.values()): raise SystemExit(1)
+          archive = Path(os.environ['RUNNER_TEMP']) / 'ui-observations.zip'
+          assert hashlib.sha256(archive.read_bytes()).hexdigest() == 'b309fc2aad58b4213ad927a6297adcec6abad93076f4b80ec7c799aafee1243c'
+          with zipfile.ZipFile(archive) as outer:
+              for name in outer.namelist():
+                  if not name.endswith('trace.zip'): continue
+                  print('SCENARIO=' + name, flush=True)
+                  with zipfile.ZipFile(io.BytesIO(outer.read(name))) as trace:
+                      for network in trace.namelist():
+                          if not network.endswith('.network'): continue
+                          for line in trace.read(network).decode().splitlines():
+                              record = json.loads(line).get('snapshot', {})
+                              request = record.get('request', {})
+                              response = record.get('response', {})
+                              url = request.get('url', '')
+                              if not url.endswith(('/api/inventory/destinations', '/api/inventory', '/api/command')): continue
+                              content = response.get('content', {})
+                              sha = content.get('_sha1')
+                              print('REQUEST=' + url.rsplit('/', 2)[-2] + '/' + url.rsplit('/', 1)[-1] + ' ' + request.get('postData', {}).get('text', ''), flush=True)
+                              print('STATUS=' + str(response.get('status')), flush=True)
+                              if sha and 'resources/' + sha in trace.namelist():
+                                  body = json.loads(trace.read('resources/' + sha))
+                                  # Scope tokens and credentials are not needed to diagnose a UI choice.
+                                  if isinstance(body, dict):
+                                      for key in ['scope', 'access', 'commandEpoch', 'checkpoint']: body.pop(key, None)
+                                  print('REPLY=' + json.dumps(body, ensure_ascii=False)[:24000], flush=True)
+          print('Read existing disposable UI evidence only. No game, provider or Git mutation.', flush=True)
           PY
-      - name: Retain exact UI observations
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ui-composed
-          path: ${{ runner.temp }}/ui-composed/
-          retention-days: 3
-          if-no-files-found: error
