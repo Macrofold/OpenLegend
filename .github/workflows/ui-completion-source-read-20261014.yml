@@ -36,6 +36,30 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
           show-progress: false
+      - name: Locate the native movement budget without changing source
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          from pathlib import Path
+          print('CHECKOUT=' + subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), flush=True)
+          needles = ['movement.slice.events', 'function projectileBoundary', 'function flightTracks', 'function advanceWorldSlices', 'sliceEvent']
+          for root in ['packages', 'apps/server/src']:
+              for path in sorted(Path(root).rglob('*.ts')):
+                  if 'node_modules' in path.parts or 'dist' in path.parts or path.name.endswith('.test.ts'):
+                      continue
+                  lines = path.read_text().splitlines()
+                  hits = [i for i, line in enumerate(lines) if any(needle in line for needle in needles)]
+                  if not hits:
+                      continue
+                  blob = subprocess.check_output(['git', 'rev-parse', 'HEAD:' + str(path)], text=True).strip()
+                  print('SOURCE=' + str(path) + ' BLOB=' + blob, flush=True)
+                  shown = set()
+                  for hit in hits:
+                      for i in range(max(0, hit - 18), min(len(lines), hit + 65)):
+                          if i not in shown:
+                              print(str(i + 1) + ': ' + lines[i], flush=True)
+                              shown.add(i)
+          PY
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
