@@ -633,3 +633,39 @@ Screenshots and temporary fixture data remain outside Git. Successful native
 interaction/visual observations do not retroactively pass the failed ordinary
 Playwright runs, establish renderer startup latency or close current CI and wider
 input/player acceptance. Additional/cumulative task Jev/provider cost remains **$0**.
+
+The final narrow-header correction preserves the full accessible **OPEN LEGEND**
+heading while reserving the Game/help column and allowing responsive wrapping.
+Native 390×844 and 320×568 views at 130% UI scale show the full words and reachable
+Game/help controls; the smaller view wraps the heading above the launcher strip.
+The ordinary creator input and Send remain reachable in that smallest checked
+layout, using its existing bounded scrolling. Desktop typography stays unchanged.
+These selected captures qualify visible layout, not all input/font/viewport
+combinations. Temporary unsent test text is cleared, and the fixture's UI scale is
+returned to 100% before cleanup.
+
+### Current verification and readiness
+
+On the final executable source, full TypeScript and production build pass. The
+build retains its existing PlayCanvas worker-externalization and large-bundle
+warnings; no performance improvement is claimed. Changed-file pinned formatting
+passes for all 26 changed files. Guidance and whitespace checks pass; guidance
+retains its existing advisory size warnings. All 546 local path references in the
+10 changed Markdown files resolve, including the newly linked report headings.
+The native/component evidence above verifies the named repairs. No additional
+unimplemented settled UI feature is identified by the final source pass.
+
+**The current work is not fully merge-qualified.** The selected ordinary browser
+runs have the unresolved readiness/resize failures described above, and required
+CI has not run for these new local commits. Their assertions/deadlines remain
+unchanged; neither successful component checks nor the native in-app observations
+waive those gates. Current UIUX18 retains this specific verification gap alongside
+its broader human/device requirements. No push is authorized by this assignment.
+
+All temporary browsers, servers and fixture databases have been cleaned up. The
+task-owned PostgreSQL cluster is stopped and removed; the existing shared
+PostgreSQL service remains available. The developer's game, credentials and
+configuration were not replaced. The disposable world's accounting records zero
+provider attempts, with settled and reserved amounts each
+**$0.000000000000000000000000**. Additional and cumulative task Jev/provider cost
+is **$0**; no calls were made.
