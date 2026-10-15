@@ -2,8 +2,8 @@ import * as pc from 'playcanvas';
 import mercenaryUrl from './mercenary-assets/mercenary.glb?url';
 import type { EntityView } from '@open-legend/protocol';
 import { intersectBox } from '@open-legend/spatial';
-import { WorldPresentation, type RevealBinding } from '../world-presentation';
-import { ModelSurfaceDepth } from './model-surface-depth';
+import { WorldPresentation } from '../world-presentation';
+import { PixelCharacter } from './pixel-character';
 import { CapeCloth } from './mercenary-cloth';
 import { MercenaryMaterials } from './mercenary-materials';
 
@@ -37,7 +37,7 @@ export class MercenaryModels {
     private readonly camera: pc.Entity,
     sun: pc.Light,
   ) {
-    this.materials = new MercenaryMaterials(sun, app.graphicsDevice);
+    this.materials = new MercenaryMaterials(sun);
   }
   create(parent: pc.Entity): MercenaryActor {
     return new MercenaryActor(
@@ -70,22 +70,21 @@ export class MercenaryModels {
   }
   destroy(): void {
     this.disposed = true;
-    for (const material of this.materials.values) this.presentation.releaseMaterial(material);
     this.materials.destroy();
     this.asset?.unload();
     if (this.asset) this.app.assets.remove(this.asset);
   }
 }
 
-// Tall-adult world proportions. Upright geometry foreshortens at steep camera
-// pitch; compensating for that made the body oversized at lower angles.
+// Keep physical rig and cloth dimensions fixed; the character image corrects
+// apparent height beside the camera-facing people without enlarging this body.
 const displayScale = 1.1;
 
 export class MercenaryActor {
   private node?: pc.Entity;
   private cloth?: CapeCloth;
-  private surface?: ModelSurfaceDepth;
-  private bindings: { reveal: RevealBinding; material: pc.StandardMaterial }[] = [];
+  private pixels?: PixelCharacter;
+  private strength = 0;
   private meshes: pc.MeshInstance[] = [];
   private disposed = false;
   private wanted = false;
@@ -168,19 +167,15 @@ export class MercenaryActor {
       ...this.cloth.patches.flatMap((p) => renders(p.node)),
     ];
     this.meshes = components.flatMap((r) => r.meshInstances);
-    for (const component of components) {
-      for (const mesh of component.meshInstances) {
-        const material = mesh.material as pc.StandardMaterial;
-        // Fabric outer and lining share a simulated surface but retain their own artwork.
-        this.bindings.push({
-          reveal: this.presentation.addReveal(component.entity, material, false, true, [mesh]),
-          material,
-        });
-      }
-    }
-    this.surface = new ModelSurfaceDepth(this.app, this.camera, this.meshes);
-    for (const { reveal } of this.bindings)
-      for (const mesh of [...reveal.meshes, ...(reveal.protection ?? [])]) this.surface.bind(mesh);
+    this.pixels = new PixelCharacter(
+      this.app,
+      this.camera,
+      this.presentation.layer,
+      this.presentation.foregroundLayer,
+      this.presentation.protectionLayer,
+      components,
+      node,
+    );
     this.previousFoot.copy(this.parent.getPosition());
     this.state = 'ready';
     this.setVisible(this.wanted);
@@ -198,19 +193,8 @@ export class MercenaryActor {
       mesh.castShadow = this.visible;
     }
     if (!this.visible) {
-      this.surface?.setEnabled(false);
-      for (const { reveal, material } of this.bindings)
-        this.presentation.updateReveal(
-          reveal,
-          material,
-          this.parent.getPosition(),
-          this.width,
-          this.height,
-          0,
-          0,
-          false,
-          false,
-        );
+      this.strength = 0;
+      this.pixels?.setVisible(false);
     }
   }
   update(
@@ -253,53 +237,46 @@ export class MercenaryActor {
     }
     anim.speed = paused ? 0 : 1;
     this.cloth.update(dt, !paused);
-    for (const { reveal: binding, material } of this.bindings) {
-      // An unobserved actor's ancestor can disable/recreate the source skin.
-      // All extra passes borrow its current owner before becoming visible again.
-      const skin = binding.sourceMesh?.skinInstance ?? null;
-      for (const mesh of binding.meshes) if (mesh.skinInstance !== skin) mesh.skinInstance = skin;
-      for (const mesh of binding.protection ?? [])
-        if (mesh.skinInstance !== skin) mesh.skinInstance = skin;
-      for (const mesh of binding.foreground ?? [])
-        if (mesh.skinInstance !== skin) mesh.skinInstance = skin;
-      this.presentation.updateReveal(
-        binding,
-        material,
-        foot,
-        this.width,
-        this.height,
-        reveal,
-        dt,
-        true,
-        selected,
-      );
-      for (const mesh of binding.foreground ?? []) this.surface?.bind(mesh);
-    }
-    // Keep nearest depth current through the entire read-through fade and camera orbit.
-    this.surface?.setEnabled(selected || (this.bindings[0]?.reveal.strength ?? 0) > 0.01);
+    const targetStrength = selected ? 0 : reveal;
+    this.strength += (targetStrength - this.strength) * (1 - Math.exp(-Math.min(dt, 0.1) * 12));
+    if (Math.abs(this.strength - targetStrength) < 0.001) this.strength = targetStrength;
+    this.pixels?.update(foot, this.visible, this.strength, selected);
   }
   get revealStrength(): number {
-    return this.visible ? (this.bindings[0]?.reveal.strength ?? 0) : 0;
+    return this.visible ? this.strength : 0;
   }
   get outlineMeshes(): readonly pc.MeshInstance[] {
-    return this.meshes;
+    return this.pixels?.outlineMeshes ?? [];
   }
-  hit(from: pc.Vec3, to: pc.Vec3): number | null {
-    // Conservative per-mesh bounds for this one pilot, retaining world obstruction.
-    // Exact skinned-triangle picking remains part of the broader representation work.
+  get screenAnchor(): { x: number; y: number } | undefined {
+    return this.pixels?.anchor;
+  }
+  screenPoint(point: pc.Vec3): pc.Vec3 {
+    return this.pixels?.screenPoint(point) ?? this.camera.camera!.worldToScreen(point);
+  }
+  hit(from: pc.Vec3, to: pc.Vec3): { fraction: number; point: pc.Vec3 } | null {
+    // Invert the displayed image before testing the original model. Geometry and
+    // its world-depth range remain unchanged by the apparent-height correction.
+    const ray = this.pixels?.sourceRay(from, to) ?? { from, to };
     let nearest: number | null = null;
     for (const mesh of this.meshes) {
-      const hit = intersectBox(from, to, { min: mesh.aabb.getMin(), max: mesh.aabb.getMax() });
+      const hit = intersectBox(ray.from, ray.to, {
+        min: mesh.aabb.getMin(),
+        max: mesh.aabb.getMax(),
+      });
       if (hit !== null && (nearest === null || hit < nearest)) nearest = hit;
     }
-    return nearest;
+    return nearest === null
+      ? null
+      : { fraction: nearest, point: new pc.Vec3().lerp(ray.from, ray.to, nearest) };
   }
   diagnostics() {
     return {
       state: this.state,
       visible: this.visible,
       meshes: this.meshes.length,
-      representation: 'original-textured-model',
+      representation: 'original-model-coarse-image',
+      pixels: this.pixels?.diagnostics(),
       displayScale,
       height: this.height,
       width: this.width,
@@ -309,10 +286,8 @@ export class MercenaryActor {
     };
   }
   private release(): void {
-    for (const { reveal } of this.bindings) this.presentation.removeReveal(reveal);
-    this.bindings.length = 0;
-    this.surface?.destroy();
-    this.surface = undefined;
+    this.pixels?.destroy();
+    this.pixels = undefined;
     this.cloth?.destroy();
     this.cloth = undefined;
     this.node?.destroy();

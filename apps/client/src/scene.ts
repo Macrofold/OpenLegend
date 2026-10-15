@@ -630,6 +630,10 @@ export class WildernessScene implements WorldRenderer {
   screenPosition(id: string): { x: number; y: number } | null {
     const entry = this.actors.get(id);
     if (!entry || !this.identifiable(entry)) return null;
+    if (entry.model?.visible && entry.model.screenAnchor) {
+      const anchor = entry.model.screenAnchor;
+      return { x: anchor.x, y: anchor.y - 8 };
+    }
     const point = this.camera.camera!.worldToScreen(
       entry.root
         .getPosition()
@@ -1810,7 +1814,9 @@ export class WildernessScene implements WorldRenderer {
             .clone()
             .add(new pc.Vec3(0, entry.model.height * 0.92, 0))
         : entry.sprite.getWorldTransform().transformPoint(new pc.Vec3(0, 0, -0.4));
-      const point = this.camera.camera!.worldToScreen(head);
+      const point = entry.model?.visible
+        ? entry.model.screenPoint(head)
+        : this.camera.camera!.worldToScreen(head);
       return { x: point.x, y: point.y };
     }, !!this.view?.clock.paused);
     this.updateSpeech();
@@ -1944,9 +1950,23 @@ export class WildernessScene implements WorldRenderer {
   };
   private screenRay(x: number, y: number): { from: pc.Vec3; to: pc.Vec3 } {
     const camera = this.camera.camera!;
+    // Camera commands can arrive before the engine refreshes its cached view.
+    // Use the current transform so picking agrees with the character image now.
+    const inverse = new pc.Mat4()
+      .mul2(camera.projectionMatrix, this.camera.getWorldTransform().clone().invert())
+      .invert();
+    const viewport = this.app.graphicsDevice.clientRect;
+    const rect = camera.rect;
+    const clipX = ((x - rect.x * viewport.width) / (rect.z * viewport.width)) * 2 - 1;
+    const clipY =
+      1 - ((y - (1 - rect.y - rect.w) * viewport.height) / (rect.w * viewport.height)) * 2;
+    const endpoint = (z: number): pc.Vec3 => {
+      const point = inverse.transformVec4(new pc.Vec4(clipX, clipY, z, 1));
+      return new pc.Vec3(point.x / point.w, point.y / point.w, point.z / point.w);
+    };
     return {
-      from: camera.screenToWorld(x, y, camera.nearClip),
-      to: camera.screenToWorld(x, y, camera.farClip),
+      from: endpoint(-1),
+      to: endpoint(1),
     };
   }
   private cardHit(
@@ -2038,7 +2058,9 @@ export class WildernessScene implements WorldRenderer {
           if (hit !== null && (fraction === null || hit < fraction)) fraction = hit;
         }
       } else if (entry.model?.visible) {
-        fraction = entry.model.hit(ray.from, ray.to);
+        const hit = entry.model.hit(ray.from, ray.to);
+        fraction = hit?.fraction ?? null;
+        bodyPoint = hit?.point;
       } else if (!entry.card) {
         const p = entry.root.getPosition();
         fraction = intersectBox(ray.from, ray.to, {
@@ -2069,11 +2091,13 @@ export class WildernessScene implements WorldRenderer {
           foot = entry.root.getPosition();
         const height = entry.model?.visible ? entry.model.height : entry.height;
         const width = entry.model?.visible ? entry.model.width : entry.width;
-        const q = Math.hypot(
-          (hit.x - foot.x) / Math.max(width * 0.7, 0.1),
-          (hit.y - foot.y - height / 2) / Math.max(height * 0.65, 0.1),
-          (hit.z - foot.z) / Math.max(width * 0.7, 0.1),
-        );
+        const q = entry.model?.visible
+          ? 0
+          : Math.hypot(
+              (hit.x - foot.x) / Math.max(width * 0.7, 0.1),
+              (hit.y - foot.y - height / 2) / Math.max(height * 0.65, 0.1),
+              (hit.z - foot.z) / Math.max(width * 0.7, 0.1),
+            );
         // Match the shader's feather, not the whole bounding rectangle of a hidden sprite.
         const t = Math.max(0, Math.min(1, (q - 0.65) / 0.7));
         const strength = entry.model?.visible ? entry.model.revealStrength : entry.reveal.strength;

@@ -22,9 +22,17 @@ class CharacterPass extends pc.RenderPass {
   }
 }
 
-/** A live model sampled at a fixed character resolution. Cropping changes only clip X/Y:
- * each color pixel retains the model's original world-camera depth, not a billboard depth.
- * docs/projects/completed/mercenary-scene-pilot.md#fixed-character-pixels-and-default-npc--authorized-follow-up */
+const imageWidth = 64;
+const imageHeight = 112;
+// Ordinary people occupy 86 of their 96 artwork rows. Retain their pixel size
+// while giving this tall adult 10% more visible height.
+const visibleRows = 86 * 1.1;
+const worldPixelSize = 2.1 / 96;
+
+/** Sample the whole animated character, including lighting and silhouette.
+ * Height matches neighboring camera-facing people; these image-space samples
+ * are not permanent 3D cells. Physical rig and shadows retain their own scale.
+ * docs/projects/mercenary-visible-size-and-pixels.md */
 export class PixelCharacter {
   readonly layer = new pc.Layer({ name: 'Character pixels' });
   private readonly pass: CharacterPass;
@@ -44,12 +52,29 @@ export class PixelCharacter {
   private readonly protection: pc.MeshInstance;
   private readonly protectionMaterial: pc.ShaderMaterial;
   private readonly rect = new Float32Array(4);
+  private readonly sourceRect = new Float32Array(4);
   private readonly projection = new pc.Mat4();
   private readonly crop = new pc.Mat4();
-  private readonly center = new pc.Vec3();
+  private readonly foot = new pc.Vec3();
   private readonly top = new pc.Vec3();
   private readonly screen = new pc.Vec3();
   private readonly screenTop = new pc.Vec3();
+  private readonly point = new pc.Vec3();
+  private readonly localPoint = new pc.Vec3();
+  private readonly inverseRoot = new pc.Mat4();
+  private readonly view = new pc.Mat4();
+  private readonly viewProjection = new pc.Mat4();
+  private readonly inverseViewProjection = new pc.Mat4();
+  private readonly mappedCamera = new pc.Mat4();
+  private readonly mappedProjection = new pc.Mat4();
+  private readonly mappedRoot = new pc.Mat4();
+  private readonly mappedFoot = new pc.Vec3();
+  private readonly mappedViewport = new Float64Array(6);
+  private mappingReady = false;
+  private readonly neutralPoints: pc.Vec3[] = [];
+  private neutralVertices = 0;
+  private neutralPreparationMs = 0;
+  private readonly bodyBounds = { minY: 0, maxY: 0 };
   private readonly lights = new Set<pc.LightComponent>();
   private readonly casters: pc.MeshInstance[];
   private readonly world: pc.Layer;
@@ -60,6 +85,7 @@ export class PixelCharacter {
     private readonly foregroundLayer: pc.Layer,
     private readonly protectionLayer: pc.Layer,
     components: pc.RenderComponent[],
+    private readonly bodyRoot: pc.Entity,
   ) {
     const device = app.graphicsDevice;
     this.world = app.scene.layers.getLayerById(pc.LAYERID_WORLD)!;
@@ -67,8 +93,8 @@ export class PixelCharacter {
     const texture = (name: string, format: number) =>
       new pc.Texture(device, {
         name,
-        width: 128,
-        height: 192,
+        width: imageWidth,
+        height: imageHeight,
         format,
         mipmaps: false,
         minFilter: pc.FILTER_NEAREST,
@@ -76,8 +102,8 @@ export class PixelCharacter {
         addressU: pc.ADDRESS_CLAMP_TO_EDGE,
         addressV: pc.ADDRESS_CLAMP_TO_EDGE,
       });
-    this.color = texture('Character color 128x192', pc.PIXELFORMAT_RGBA16F);
-    this.depth = texture('Character depth 128x192', pc.PIXELFORMAT_DEPTH);
+    this.color = texture('Character color 64x112', pc.PIXELFORMAT_RGBA16F);
+    this.depth = texture('Character depth 64x112', pc.PIXELFORMAT_DEPTH);
     this.target = new pc.RenderTarget({
       colorBuffer: this.color,
       depthBuffer: this.depth,
@@ -92,6 +118,7 @@ export class PixelCharacter {
           this.worldCamera.camera!.camera,
           this.layer,
         );
+        this.prepareProjection(true);
       },
     );
     this.pass.init(this.target);
@@ -101,6 +128,9 @@ export class PixelCharacter {
     // Use that same camera's shadow data instead of rendering the entire shadow map twice.
     this.worldCamera.camera!.camera.beforePasses.push(this.pass);
     this.casters = components.flatMap((c) => c.meshInstances);
+    // Displayed Y can remain on screen after its upright source passes above
+    // the ordinary camera frustum. This dedicated layer has only this actor.
+    for (const mesh of this.casters) mesh.cull = false;
     for (const component of components) component.layers = [this.layer.id];
     // Real geometry casts into the world's light passes but is absent from its color pass.
     this.world.addShadowCasters(this.casters);
@@ -169,6 +199,10 @@ export class PixelCharacter {
     revealLayer.addMeshInstances([this.reveal], true);
     foregroundLayer.addMeshInstances([this.foreground], true);
     protectionLayer.addMeshInstances([this.protection], true);
+    for (const component of this.app.root.findComponents('light'))
+      if (component instanceof pc.LightComponent) this.addLight(component.entity, component);
+    this.app.systems.light?.on('add', this.addLight, this);
+    this.app.systems.light?.on('beforeremove', this.removeLight, this);
     this.setVisible(false);
   }
   setVisible(value: boolean): void {
@@ -182,38 +216,13 @@ export class PixelCharacter {
     return this.outlineSources;
   }
   update(foot: pc.Vec3, visible: boolean, reveal: number, selected: boolean): void {
-    const camera = this.worldCamera.camera!;
-    this.center.copy(foot).y += 0.95;
+    this.foot.copy(foot);
     const distance = this.top
-      .sub2(this.center, this.worldCamera.getPosition())
+      .sub2(foot, this.worldCamera.getPosition())
       .dot(this.worldCamera.forward);
-    if (!visible || distance <= camera.nearClip) {
+    if (!visible || distance <= this.worldCamera.camera!.nearClip) {
       this.setVisible(false);
       return;
-    }
-    // A fixed world-space window gives the same character texel density at every zoom.
-    // Match the main projection exactly rather than creating a second viewing angle.
-    this.top.copy(this.worldCamera.up).mulScalar(1.4).add(this.center);
-    camera.worldToScreen(this.center, this.screen);
-    camera.worldToScreen(this.top, this.screenTop);
-    const device = this.app.graphicsDevice;
-    const height = Math.abs(this.screenTop.y - this.screen.y) * 2;
-    const width = (height * 128) / 192;
-    this.rect[0] = (this.screen.x / device.width) * 2 - 1;
-    this.rect[1] = 1 - (this.screen.y / device.height) * 2;
-    this.rect[2] = width / device.width;
-    this.rect[3] = height / device.height;
-    this.crop.setIdentity();
-    const m = this.crop.data;
-    m[0] = 1 / this.rect[2]!;
-    m[5] = 1 / this.rect[3]!;
-    m[12] = -this.rect[0]! / this.rect[2]!;
-    m[13] = -this.rect[1]! / this.rect[3]!;
-    this.projection.mul2(this.crop, camera.projectionMatrix);
-    for (const component of this.app.root.findComponents('light')) {
-      if (!(component instanceof pc.LightComponent) || this.lights.has(component)) continue;
-      component.layers = [...component.layers, this.layer.id];
-      this.lights.add(component);
     }
     this.setVisible(true);
     this.reveal.visible = !selected && reveal > 0.001;
@@ -221,6 +230,270 @@ export class PixelCharacter {
     this.foreground.visible = selected;
     this.revealMaterial.setParameter('characterOpacity', reveal);
     this.protectionMaterial.setParameter('characterOpacity', reveal);
+    this.prepareProjection();
+  }
+
+  private readonly addLight = (_entity: pc.Entity, component: pc.LightComponent): void => {
+    if (this.lights.has(component)) return;
+    component.layers = [...component.layers, this.layer.id];
+    this.lights.add(component);
+  };
+  private readonly removeLight = (_entity: pc.Entity, component: pc.LightComponent): void => {
+    this.lights.delete(component);
+  };
+
+  private prepareProjection(capture = false): void {
+    const camera = this.worldCamera.camera!;
+    if (this.neutralPoints.length === 0) {
+      // Only pass preparation runs after the engine updates CPU skin matrices.
+      if (!capture) return;
+      this.captureNeutralBounds();
+    }
+    const transform = this.bodyRoot.getWorldTransform();
+    const cameraTransform = this.worldCamera.getWorldTransform();
+    const projection = camera.projectionMatrix;
+    const viewport = this.app.graphicsDevice.clientRect;
+    const cameraRect = camera.rect;
+    if (
+      this.mappingReady &&
+      this.mappedCamera.equals(cameraTransform) &&
+      this.mappedProjection.equals(projection) &&
+      this.mappedRoot.equals(transform) &&
+      this.mappedFoot.equals(this.foot) &&
+      this.mappedViewport[0] === viewport.width &&
+      this.mappedViewport[1] === viewport.height &&
+      this.mappedViewport[2] === cameraRect.x &&
+      this.mappedViewport[3] === cameraRect.y &&
+      this.mappedViewport[4] === cameraRect.z &&
+      this.mappedViewport[5] === cameraRect.w
+    )
+      return;
+    // Labels can run after the camera moves but before the engine's prerender
+    // refreshes its cached view matrix. Derive this view from public transforms.
+    this.view.copy(cameraTransform).invert();
+    this.viewProjection.mul2(projection, this.view);
+    this.inverseViewProjection.copy(this.viewProjection).invert();
+    let minY = Infinity,
+      maxY = -Infinity;
+    for (const point of this.neutralPoints) {
+      transform.transformPoint(point, this.point);
+      this.project(this.point, this.screenTop);
+      minY = Math.min(minY, this.screenTop.y);
+      maxY = Math.max(maxY, this.screenTop.y);
+    }
+    if (!Number.isFinite(minY) || maxY - minY < 1e-5) return;
+    this.bodyBounds.minY = minY;
+    this.bodyBounds.maxY = maxY;
+    this.project(this.foot, this.screen);
+    this.top
+      .copy(this.worldCamera.up)
+      .mulScalar(worldPixelSize * visibleRows)
+      .add(this.foot);
+    this.project(this.top, this.screenTop);
+    const visibleHeight = Math.abs(this.screenTop.y - this.screen.y);
+    const height = (visibleHeight * imageHeight) / visibleRows;
+    const width = (height * imageWidth) / imageHeight;
+    const sourceHeight = ((maxY - minY) * imageHeight) / visibleRows;
+    const sourceCenterY = (minY + maxY) / 2;
+    const centerY = this.screen.y + ((sourceCenterY - this.screen.y) * height) / sourceHeight;
+    // Separate Y ranges compensate for upright-body foreshortening. X stays
+    // unchanged so steep views cannot widen him; displayed texels stay square.
+    this.rect[0] = this.sourceRect[0] = (this.screen.x / viewport.width) * 2 - 1;
+    this.rect[1] = 1 - (centerY / viewport.height) * 2;
+    this.sourceRect[1] = 1 - (sourceCenterY / viewport.height) * 2;
+    this.rect[2] = this.sourceRect[2] = width / viewport.width;
+    this.rect[3] = height / viewport.height;
+    this.sourceRect[3] = sourceHeight / viewport.height;
+    this.crop.setIdentity();
+    const m = this.crop.data;
+    m[0] = 1 / this.sourceRect[2]!;
+    m[5] = 1 / this.sourceRect[3]!;
+    m[12] = -this.sourceRect[0]! / this.sourceRect[2]!;
+    m[13] = -this.sourceRect[1]! / this.sourceRect[3]!;
+    this.projection.mul2(this.crop, camera.projectionMatrix);
+    this.mappedCamera.copy(cameraTransform);
+    this.mappedProjection.copy(projection);
+    this.mappedRoot.copy(transform);
+    this.mappedFoot.copy(this.foot);
+    this.mappedViewport[0] = viewport.width;
+    this.mappedViewport[1] = viewport.height;
+    this.mappedViewport[2] = cameraRect.x;
+    this.mappedViewport[3] = cameraRect.y;
+    this.mappedViewport[4] = cameraRect.z;
+    this.mappedViewport[5] = cameraRect.w;
+    this.mappingReady = true;
+  }
+
+  private project(point: pc.Vec3, result = new pc.Vec3()): pc.Vec3 {
+    const m = this.viewProjection.data;
+    const w = point.x * m[3]! + point.y * m[7]! + point.z * m[11]! + m[15]!;
+    this.viewProjection.transformPoint(point, result);
+    const viewport = this.app.graphicsDevice.clientRect;
+    const rect = this.worldCamera.camera!.rect;
+    result.x = ((result.x / w + 1) * 0.5 * rect.z + rect.x) * viewport.width;
+    result.y = ((1 - result.y / w) * 0.5 * rect.w + 1 - rect.y - rect.w) * viewport.height;
+    return result;
+  }
+
+  private unproject(x: number, y: number, z: number): pc.Vec3 {
+    const viewport = this.app.graphicsDevice.clientRect;
+    const rect = this.worldCamera.camera!.rect;
+    const point = new pc.Vec3(
+      ((x / viewport.width - rect.x) / rect.z) * 2 - 1,
+      ((1 - y / viewport.height - rect.y) / rect.w) * 2 - 1,
+      z,
+    );
+    const m = this.inverseViewProjection.data;
+    const w = point.x * m[3]! + point.y * m[7]! + point.z * m[11]! + m[15]!;
+    return this.inverseViewProjection.transformPoint(point).mulScalar(1 / w);
+  }
+
+  private captureNeutralBounds(): void {
+    const started = performance.now();
+    this.inverseRoot.copy(this.bodyRoot.getWorldTransform()).invert();
+    const points: number[] = [];
+    const weighted = new pc.Vec3();
+    // Evaluate the complete clothed figure once, after CPU skin updates and
+    // cloth settling. Body-only bounds miss the cape's extent in steep views;
+    // bone boxes instead overestimate the silhouette and make him too short.
+    for (const instance of this.casters) {
+      const skin = instance.skinInstance;
+      const positions: number[] = [],
+        weights: number[] = [],
+        indices: number[] = [];
+      const count = instance.mesh.getPositions(positions);
+      if (skin) {
+        instance.mesh.getVertexStream(pc.SEMANTIC_BLENDWEIGHT, weights);
+        instance.mesh.getVertexStream(pc.SEMANTIC_BLENDINDICES, indices);
+      }
+      const worldTransform = instance.node.getWorldTransform();
+      for (let vertex = 0; vertex < count; vertex++) {
+        this.point.set(
+          positions[vertex * 3]!,
+          positions[vertex * 3 + 1]!,
+          positions[vertex * 3 + 2]!,
+        );
+        if (skin) {
+          weighted.set(0, 0, 0);
+          for (let influence = 0; influence < 4; influence++) {
+            const offset = vertex * 4 + influence;
+            const weight = weights[offset]!;
+            if (weight === 0) continue;
+            const matrix: pc.Mat4 | undefined = skin.matrices[indices[offset]!];
+            if (matrix) {
+              matrix.transformPoint(this.point, this.localPoint);
+              weighted.x += this.localPoint.x * weight;
+              weighted.y += this.localPoint.y * weight;
+              weighted.z += this.localPoint.z * weight;
+            }
+          }
+        } else weighted.copy(this.point);
+        worldTransform.transformPoint(weighted, this.point);
+        this.inverseRoot.transformPoint(this.point, this.localPoint);
+        points.push(this.localPoint.x, this.localPoint.y, this.localPoint.z);
+      }
+    }
+    this.neutralVertices = points.length / 3;
+    // Retain directional extrema, not the full vertex cloud. These cover a
+    // hemisphere; minimum and maximum together include the opposite directions.
+    // The cached neutral pose keeps walking from changing the display scale.
+    const extrema = new Set<number>();
+    for (let yaw = 0; yaw < 16; yaw++) {
+      const angle = (yaw * Math.PI * 2) / 16;
+      for (let elevation = 0; elevation < 9; elevation++) {
+        const pitch = (elevation * Math.PI) / 16;
+        const x = Math.sin(angle) * Math.cos(pitch),
+          y = Math.sin(pitch),
+          z = Math.cos(angle) * Math.cos(pitch);
+        let min = Infinity,
+          max = -Infinity,
+          first = -1,
+          last = -1;
+        for (let point = 0; point < points.length; point += 3) {
+          const value = points[point]! * x + points[point + 1]! * y + points[point + 2]! * z;
+          if (value < min) {
+            min = value;
+            first = point;
+          }
+          if (value > max) {
+            max = value;
+            last = point;
+          }
+        }
+        if (first >= 0) extrema.add(first);
+        if (last >= 0) extrema.add(last);
+      }
+    }
+    for (const point of extrema)
+      this.neutralPoints.push(new pc.Vec3(points[point]!, points[point + 1]!, points[point + 2]!));
+    this.neutralPreparationMs = performance.now() - started;
+  }
+
+  /** Apply the image's display mapping to labels and projected anchors. */
+  screenPoint(worldPoint: pc.Vec3): pc.Vec3 {
+    this.prepareProjection();
+    const point = this.project(worldPoint);
+    const viewport = this.app.graphicsDevice.clientRect;
+    const y = 1 - (point.y / viewport.height) * 2;
+    if (this.sourceRect[3]! > 0)
+      point.y =
+        (1 - (this.rect[1]! + ((y - this.sourceRect[1]!) * this.rect[3]!) / this.sourceRect[3]!)) *
+        viewport.height *
+        0.5;
+    return point;
+  }
+
+  get anchor(): { x: number; y: number } {
+    this.prepareProjection();
+    const viewport = this.app.graphicsDevice.clientRect;
+    const sourceY = 1 - (this.bodyBounds.minY / viewport.height) * 2;
+    const y =
+      this.sourceRect[3]! > 0
+        ? this.rect[1]! + ((sourceY - this.sourceRect[1]!) * this.rect[3]!) / this.sourceRect[3]!
+        : this.rect[1]!;
+    return {
+      x: (this.rect[0]! + 1) * viewport.width * 0.5,
+      y: (1 - y) * viewport.height * 0.5,
+    };
+  }
+
+  /** Undo display stretching on equal camera-depth endpoint planes. Fractions
+   * along this source ray therefore agree with displayed depth and obstructions. */
+  sourceRay(from: pc.Vec3, to: pc.Vec3): { from: pc.Vec3; to: pc.Vec3 } {
+    this.prepareProjection();
+    const viewport = this.app.graphicsDevice.clientRect;
+    const screen = this.project(from);
+    const y = 1 - (screen.y / viewport.height) * 2;
+    const sourceY =
+      this.rect[3]! > 0
+        ? this.sourceRect[1]! + ((y - this.rect[1]!) * this.sourceRect[3]!) / this.rect[3]!
+        : y;
+    const screenY = (1 - sourceY) * viewport.height * 0.5;
+    const near = this.unproject(screen.x, screenY, -1);
+    const far = this.unproject(screen.x, screenY, 1);
+    const direction = far.clone().sub(near);
+    const forward = this.worldCamera.forward;
+    const length = direction.dot(forward);
+    const atDepth = (point: pc.Vec3) =>
+      direction
+        .clone()
+        .mulScalar(point.clone().sub(near).dot(forward) / length)
+        .add(near);
+    return { from: atDepth(from), to: atDepth(to) };
+  }
+
+  diagnostics() {
+    return {
+      resolution: [imageWidth, imageHeight],
+      visibleRows,
+      worldPixelSize,
+      sourceRect: [...this.sourceRect],
+      displayRect: [...this.rect],
+      bodyBounds: { ...this.bodyBounds },
+      neutralPoints: this.neutralPoints.length,
+      neutralVertices: this.neutralVertices,
+      neutralPreparationMs: this.neutralPreparationMs,
+    };
   }
   private render(): void {
     const component = this.worldCamera.camera!;
@@ -249,6 +522,8 @@ export class PixelCharacter {
     }
   }
   destroy(): void {
+    this.app.systems.light?.off('add', this.addLight, this);
+    this.app.systems.light?.off('beforeremove', this.removeLight, this);
     this.world.removeShadowCasters(this.casters);
     this.world.removeMeshInstances([this.image], true);
     this.revealLayer.removeMeshInstances([this.reveal], true);
