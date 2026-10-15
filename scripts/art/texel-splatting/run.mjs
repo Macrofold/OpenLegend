@@ -7,15 +7,19 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { createServer } from 'vite';
 import { chromium } from '@playwright/test';
+import { fixedCaptureSource } from './stable-variants.mjs';
 
 const execFile = promisify(execFileCallback);
 const source = dirname(fileURLToPath(import.meta.url));
 const geometryPath = process.argv[2],
   outputPath = process.argv[3];
 const probe = Number(process.argv[4] ?? 192);
+const stable = ['stable', 'cold'].includes(process.argv[5]);
+const cold = process.argv[5] === 'cold';
+const sampleCount = stable ? 36 : 60;
 if (!geometryPath || !outputPath || ![96, 192, 384].includes(probe))
   throw new Error(
-    'Usage: node scripts/art/texel-splatting/run.mjs geometry.json output-directory [96|192|384]',
+    'Usage: node scripts/art/texel-splatting/run.mjs geometry.json output-directory [96|192|384] [stable|cold]',
   );
 const upstreamCommit = '394d350f91842779ed4c45760bd4ea9a07ce5c4c';
 const work = await mkdtemp(join(tmpdir(), 'openlegend-texel-e07-'));
@@ -27,7 +31,8 @@ await execFile('git', [
   upstream,
 ]);
 await execFile('git', ['-C', upstream, 'checkout', '--quiet', upstreamCommit]);
-await cp(join(source, 'experiment.mjs'), join(work, 'experiment.mjs'));
+for (const path of ['experiment.mjs', 'stable-variants.mjs', 'surface-grid.mjs'])
+  await cp(join(source, path), join(work, path));
 const geometryText = await readFile(resolve(geometryPath), 'utf8');
 const geometry = JSON.parse(geometryText);
 if (!Array.isArray(geometry.meshes) || !geometry.camera)
@@ -52,11 +57,11 @@ const upstreamHashes = {};
 for (const path of ['src/splat.ts', 'src/lighting.ts', 'demo/direct.ts', 'LICENSE']) {
   const contents = await readFile(join(upstream, path), 'utf8');
   upstreamHashes[path] = createHash('sha256').update(contents).digest('hex');
-  if (path === 'src/splat.ts')
-    await writeFile(
-      join(upstream, path),
-      contents.replace('const PROBE_SIZE = 384;', `const PROBE_SIZE = ${probe};`),
-    );
+  if (path === 'src/splat.ts') {
+    const sampled = contents.replace('const PROBE_SIZE = 384;', `const PROBE_SIZE = ${probe};`);
+    await writeFile(join(upstream, path), sampled);
+    await writeFile(join(upstream, 'src/fixed-splat.ts'), fixedCaptureSource(sampled));
+  }
 }
 await writeFile(
   join(work, 'index.html'),
@@ -82,7 +87,7 @@ try {
   });
   const browserErrors = [];
   page.on('pageerror', (error) => browserErrors.push(error.message));
-  await page.goto(`http://127.0.0.1:${address.port}/?probe=${probe}`);
+  await page.goto(`http://127.0.0.1:${address.port}/?probe=${probe}${stable ? '&stable' : ''}`);
   await page.waitForFunction(() => !!window.e07, undefined, { timeout: 120000 });
   const base = geometry.camera,
     target = base.target,
@@ -121,35 +126,58 @@ try {
       target: detailTarget,
     }),
   };
+  if (stable) paths.still = () => ({ eye, target });
+  const selectedPaths = cold ? { boundary: paths.boundary } : paths;
   const runs = [];
   let visualTime = 0;
-  for (const [path, at] of Object.entries(paths))
-    for (const mode of ['direct', 'splat']) {
-      // Preserve monotonically increasing probe time and settle the preceding
-      // path's cell transition before taking measurements of a new path.
-      for (let i = 0; i < 36; i++)
-        await page.evaluate((options) => window.e07.frame(options), {
-          ...at(0),
-          mode,
-          time: (visualTime += 1 / 60),
+  for (const projection of stable ? ['perspective', 'orthographic'] : ['perspective'])
+    for (const [path, at] of Object.entries(selectedPaths))
+      for (const mode of stable ? ['direct', 'splat', 'fixed', 'surface'] : ['direct', 'splat']) {
+        const options = (t) => ({
+          ...at(t),
+          projection,
+          orthoHeight:
+            2 *
+            Math.hypot(...at(t).eye.map((v, i) => v - at(t).target[i])) *
+            Math.tan(((at(t).fov ?? 60) * Math.PI) / 360),
         });
-      const samples = [];
-      for (let i = 0; i < 60; i++) {
-        samples.push(
-          await page.evaluate((options) => window.e07.frame(options), {
-            ...at(i / 59),
+        // Preserve monotonically increasing probe time and settle the preceding
+        // path's cell transition before taking measurements of a new path.
+        let firstFrame;
+        for (let i = 0; i < (cold ? 1 : 36); i++) {
+          const result = await page.evaluate((options) => window.e07.frame(options), {
+            ...options(0),
+            captureOrigin: i === 0 ? at(0).eye : undefined,
             mode,
             time: (visualTime += 1 / 60),
-          }),
-        );
-        await page.evaluate(() => new Promise(requestAnimationFrame));
-        if ([0, 29, 59].includes(i))
-          await page
-            .locator('canvas')
-            .screenshot({ path: join(resolve(outputPath), `${probe}-${path}-${mode}-${i}.png`) });
+          });
+          if (i === 0) firstFrame = result;
+        }
+        const samples = [],
+          images = [];
+        for (let i = 0; i < (cold ? 1 : sampleCount); i++) {
+          samples.push(
+            await page.evaluate((options) => window.e07.frame(options), {
+              ...options(i / (sampleCount - 1)),
+              mode,
+              time: (visualTime += 1 / 60),
+            }),
+          );
+          await page.evaluate(() => new Promise(requestAnimationFrame));
+          if ([0, Math.floor(sampleCount / 2), sampleCount - 1].includes(i)) {
+            const filename = `${probe}-${projection}-${path}-${mode}-${i}.png`;
+            const image = await page
+              .locator('canvas')
+              .screenshot({ path: join(resolve(outputPath), filename) });
+            images.push({
+              frame: i,
+              file: filename,
+              sha256: createHash('sha256').update(image).digest('hex'),
+            });
+          }
+        }
+        runs.push({ path, mode, projection, firstFrame, samples, images });
       }
-      runs.push({ path, mode, samples });
-    }
   const details = await page.evaluate(() => ({
     geometry: window.e07.geometry,
     memory: window.e07.memory,
@@ -161,6 +189,13 @@ try {
   const destruction = await page.evaluate(() => window.e07.destroy());
   const result = {
     upstreamCommit,
+    profile: cold ? 'stable-first-capture' : stable ? 'stable-revisit' : 'original',
+    adapterSha256: createHash('sha256')
+      .update(await readFile(join(source, 'experiment.mjs')))
+      .digest('hex'),
+    fixedSourceSha256: createHash('sha256')
+      .update(await readFile(join(upstream, 'src/fixed-splat.ts')))
+      .digest('hex'),
     upstreamHashes,
     geometrySha256: createHash('sha256').update(geometryText).digest('hex'),
     work,

@@ -5,6 +5,9 @@ import { uploadTriangles } from '/upstream/src/bvh.ts';
 import { createLBVH, dispatchLBVH } from '/upstream/src/lbvh.ts';
 import { computeVertexAABB } from '/upstream/src/lighting.ts';
 import { createSplat } from '/upstream/src/splat.ts';
+import { createFixedSplat } from '/upstream/src/fixed-splat.ts';
+import { createSurfaceGrid } from '/surface-grid.mjs';
+import { orthographic } from '/stable-variants.mjs';
 import { createDirect } from '/upstream/demo/direct.ts';
 import { lookAt, multiply, perspective } from '/upstream/src/math.ts';
 import { createSky, sampleGradient, uploadSky, uploadSkyScene } from '/upstream/src/sky.ts';
@@ -66,8 +69,8 @@ const device = new Proxy(gpu, {
         return track(
           target.createTexture(descriptor),
           'texture',
-          dims[0] * (dims[1] ?? 1) * (dims[2] ?? 1) * 4,
-          { size: dims, format: descriptor.format },
+          dims[0] * (dims[1] ?? 1) * (dims[2] ?? 1) * 4 * (descriptor.sampleCount ?? 1),
+          { size: dims, format: descriptor.format, sampleCount: descriptor.sampleCount ?? 1 },
         );
       };
     if (name === 'createBuffer')
@@ -247,6 +250,13 @@ direct.resize(directWidth, directHeight, directColorView, directPosterView);
 const directMemory = memory();
 const splat = createSplat(config);
 const splatMemory = memory();
+const stable = new URLSearchParams(location.search).has('stable');
+const fixed = stable ? createFixedSplat(config) : undefined;
+const fixedMemory = memory();
+const surface = stable ? createSurfaceGrid(config, layout, group, 1280, 720) : undefined;
+const surfaceColor = stable ? texture('rgba8unorm', 1280, 720) : undefined;
+const surfaceView = surfaceColor?.createView();
+const surfaceMemory = memory();
 const canvas = document.querySelector('canvas');
 canvas.width = 1280;
 canvas.height = 720;
@@ -276,6 +286,12 @@ const directBlitGroup = device.createBindGroup({
   layout: blit.getBindGroupLayout(0),
   entries: [{ binding: 0, resource: directColorView }],
 });
+const surfaceBlitGroup = surfaceView
+  ? device.createBindGroup({
+      layout: blit.getBindGroupLayout(0),
+      entries: [{ binding: 0, resource: surfaceView }],
+    })
+  : undefined;
 await device.queue.onSubmittedWorkDone();
 const coldPreparationMs = performance.now() - started;
 async function frame({
@@ -285,13 +301,21 @@ async function frame({
   time = 0,
   elevation = 42,
   fov = 60,
+  projection = 'perspective',
+  orthoHeight = 20,
+  captureOrigin,
 } = {}) {
   const begin = performance.now();
   const forward = target.map((v, i) => v - eye[i]);
   const length = Math.hypot(...forward);
   for (let i = 0; i < 3; i++) forward[i] /= length;
   const view = lookAt(...eye, ...target, 0, 1, 0);
-  const matrix = multiply(perspective(fov, width / height, 0.1, 200), view);
+  const matrix = multiply(
+    projection === 'orthographic'
+      ? orthographic(orthoHeight, width / height)
+      : perspective(fov, width / height, 0.1, 200),
+    view,
+  );
   const angle = (elevation * Math.PI) / 180,
     sunDir = [Math.cos(angle) * 0.6, Math.sin(angle), Math.cos(angle) * 0.8];
   const lighting = sampleGradient(elevation),
@@ -337,11 +361,12 @@ async function frame({
   );
   recording = { mode, passes: [], computes: 0 };
   const encoder = device.createCommandEncoder();
-  if (mode === 'splat')
-    splat.encode(
+  if (mode === 'splat' || mode === 'fixed')
+    (mode === 'fixed' ? fixed : splat).encode(
       encoder,
       {
         cameraPos: eye,
+        captureOrigin,
         cameraFwd: forward,
         sunDir,
         sunColor,
@@ -354,6 +379,7 @@ async function frame({
       depthView,
       matrix,
     );
+  else if (mode === 'surface') surface.encode(encoder, surfaceView);
   else direct.encode(encoder, sky.encode, directColorView, directDepthView, directPosterView);
   const pass = encoder.beginRenderPass({
     colorAttachments: [
@@ -366,7 +392,10 @@ async function frame({
     ],
   });
   pass.setPipeline(blit);
-  pass.setBindGroup(0, mode === 'direct' ? directBlitGroup : blitGroup);
+  pass.setBindGroup(
+    0,
+    mode === 'direct' ? directBlitGroup : mode === 'surface' ? surfaceBlitGroup : blitGroup,
+  );
   pass.draw(3);
   pass.end();
   const passes = recording.passes;
@@ -424,7 +453,13 @@ const experiment = {
     camera: geometry.camera,
   },
   errors,
-  memory: { common: commonMemory, withDirect: directMemory, withSplat: splatMemory },
+  memory: {
+    common: commonMemory,
+    withDirect: directMemory,
+    withSplat: splatMemory,
+    withFixed: fixedMemory,
+    withSurface: surfaceMemory,
+  },
   allocations,
   coldPreparationMs,
   adapter: {
@@ -442,16 +477,22 @@ const experiment = {
     canvasWidth: canvas.width,
     canvasHeight: canvas.height,
     probeSize,
+    stable,
+    surfaceCellMeters: 0.12,
+    surfaceSamples: 4,
+    surfaceResolution: [1280, 720],
   },
   destroy() {
     direct.destroy();
     splat.destroy();
+    fixed?.destroy();
+    surface?.destroy();
     for (const item of allocations) item.live = false;
     gpu.destroy();
     return { deviceDestroyed: true };
   },
 };
-await frame();
+await frame({ captureOrigin: geometry.camera.position });
 window.e07 = experiment;
 document.querySelector('output').textContent =
   'E07 ready: neutral static geometry, not production art.';
