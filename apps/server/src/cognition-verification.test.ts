@@ -775,15 +775,16 @@ describe(
         const criteria = (routing.body['questions'] as TypedQuestionMap)['route'] as {
           criteria: Record<string, string>;
         };
-        // Known camp work and voluntary outings remain offered alongside the thinking levels.
+        // Keep both native requests and every thinking level. Availability filtering may
+        // leave gaps in request handles; their numbering is not a capability contract.
         expect(Object.keys(criteria.criteria).sort()).toEqual([
           'level1',
           'level2',
           'level3',
           'level4',
           'native',
-          'request_1',
-          'request_2',
+          expect.stringMatching(/^request_\d+$/),
+          expect.stringMatching(/^request_\d+$/),
         ]);
         const trace = await h.trace(job.id);
         expect(trace.route).toBe(route);
@@ -804,15 +805,19 @@ describe(
         (request) =>
           request.url === JEV_URL && 'route' in (request.body['questions'] as TypedQuestionMap),
       )!;
-      expect(
-        Object.keys(
-          (
-            (routing.body['questions'] as TypedQuestionMap)['route'] as {
-              criteria: Record<string, string>;
-            }
-          ).criteria,
-        ).sort(),
-      ).toEqual(['level1', 'native', 'request_1', 'request_2']);
+      const offeredRoutes = Object.keys(
+        (
+          (routing.body['questions'] as TypedQuestionMap)['route'] as {
+            criteria: Record<string, string>;
+          }
+        ).criteria,
+      );
+      expect([...offeredRoutes].sort()).toEqual([
+        'level1',
+        'native',
+        expect.stringMatching(/^request_\d+$/),
+        expect.stringMatching(/^request_\d+$/),
+      ]);
       expect(jevOnlyTransport.requests.filter((request) => request.url !== JEV_URL)).toEqual([]);
       expect(jevOnly.npcResponses()).toEqual([]);
       // Speech uses the dependent path: routing first, then one separate level-1 rating request.
@@ -846,7 +851,7 @@ describe(
       });
       const trace = await jevOnly.trace(job.id);
       expect(trace).toMatchObject({ route: 'level1', disposition: 'deferred' });
-      expect(trace.input['offeredRoutes']).toEqual(['native', 'level1', 'request_1', 'request_2']);
+      expect(trace.input['offeredRoutes']).toEqual(offeredRoutes);
       expect(trace.kinds.filter((kind) => kind.startsWith('LM ·'))).toEqual([]);
       const selection = trace.children.find((child) => child.id === `${job.id}:attempt:0:level1`)!;
       expect(selection).toMatchObject({
