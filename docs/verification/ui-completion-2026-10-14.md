@@ -101,8 +101,63 @@ After integration at `542644797`, all five artifacts above were downloaded with 
 
 No new functional defect is established by these pixels alone. The action-recovery reading position, short Journal controls and incomplete barter view retain the specific presentation limits above. The later image inspection does not change earlier failed observations or establish new runtime behavior or broader input/player acceptance. Additional provider/Jev cost for retrieval and inspection: **$0**. Cumulative task provider/Jev cost: **$0**.
 
+## October 15 continuation: integrated source and required checks
+
+The continuation uses `docs/game-ui-research-redesign` in
+`/Users/mzw/.codex/worktrees/0f80/OpenLegend`. It switched from detached HEAD at
+`4f16dc98c` to that branch. The main checkout and saved development world were
+unchanged. Merge `542644797` integrates refreshed `origin/main` at
+`0c12398e32e7c9578e18de07bbe79d39b4827208` from
+`https://github.com/Macrofold/OpenLegend.git`, preserving published history.
+
+At published source **`a367c4d1b641d73f5431ff48071076faac571394`**, the ordinary
+GitHub Actions workflows pass without workflow changes:
+
+| Check                                                                                                                                                                                           | Observed result                                                                                                        |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| [PR Code](https://github.com/Macrofold/OpenLegend/actions/runs/38679452362/job/116240412069) and [push Code](https://github.com/Macrofold/OpenLegend/actions/runs/38679445677/job/116240390626) | Pass, including 392 tests in 43 files, guidance, generated configuration, formatting, TypeScript and production build. |
+| [Spatial and interface](https://github.com/Macrofold/OpenLegend/actions/runs/38679452378/job/116240412190)                                                                                      | Pass: 28 native checks in four files, the spatial browser journey and all six ordinary interface journeys.             |
+| Time within that interface run                                                                                                                                                                  | Pass in 28.9 seconds under the unchanged 60-second total and original local allowances.                                |
+
+These are disposable Linux-runner/PostgreSQL/Chromium results. The Time fixture
+integrated from main uses the authored solo opening and current simulated
+departure deadlines; it retains normal close, abrupt loss, explicit transfer,
+re-entry, pause and logout assertions. Its smaller scene and different host prevent
+interpreting the result as a measured speedup over earlier runs. Historical Time
+failures remain recorded.
+
+Local Node 24.13.0/pnpm 10.33.0 checks also pass TypeScript, production build,
+affected formatting, configuration, guidance and 14 selected draft/transport tests.
+Local browser execution uses an owned PostgreSQL 16/pgvector container on loopback
+port 55445, disposable databases, and no live provider credentials.
+
+The first sandboxed six-file attempt aborted at Chrome launch before application
+setup. Outside the command sandbox, installed Chrome reached the application but
+the five graphics-dependent cases failed initial world readiness under their
+unchanged five- or twenty-second allowances; Time failed to see the second-tab
+pause dialog within five seconds. Pinned Chromium 145.0.7632.6 repeated the action
+readiness failure. These are failed local observations, not CI passes. In the
+inspected action trace the first world image eventually rendered after the
+assertion deadline, with one landscape build taking 409 ms and 1,250 scenery
+objects; the renderer startup block and constructor are unchanged from the
+pre-merge source. This establishes neither permanent suspension nor a precise
+graphics bottleneck or production performance repair.
+
+The recovery review corrected two actual client boundaries: obsolete inventory
+contents cannot overwrite a newer permitted read, and an owner conversation must
+verify exact request retention before sending. Unreadable storage and failed
+matching cleanup block another owner request without losing editable text; an old
+Resubmit callback cannot replace a different retained request. The ordinary owner
+conversation journey passes in CI. Additional targeted storage-failure/reload
+qualification is recorded separately as it completes; static inspection and the
+ordinary journey do not close that failure matrix.
+
+All provider execution remains disabled or intercepted fixture behavior.
+Additional provider/Jev cost: **$0**. Cumulative task provider/Jev cost: **$0**.
+Fixture accounting values in native test logs are not real provider charges.
+
 ## Remaining whole-feature qualification
 
 The original action and checkpoint reload-recovery implementation is no longer missing: the three specific interrupted-request journeys above pass. This does not close every compound UIUX12/UIUX14 requirement. Wider storage/identity/revocation combinations, complete native barter/outing continuation, completed-task rendered-result review and the alternate-world interface qualification retain their earlier explicit tracking and evidence limits.
 
-Real operating-system input-method behavior, physical assistive devices and uncoached-player observation have not been performed here. Scripted keyboard tests and automated Chromium interaction cannot substitute for that evidence. The twelve-image inspection resolves the earlier pixel-inspection blocker for that historical subset only; current post-reconciliation runtime qualification remains separate. No entire-feature completion, green repository-wide CI or merge approval follows merely from the passing UI subset. The unrelated hunting repair remains excluded at Mike's direction rather than being restarted under UI acceptance.
+Real operating-system input-method behavior, physical assistive devices and uncoached-player observation have not been performed here. Scripted keyboard tests and automated Chromium interaction cannot substitute for that evidence. The twelve-image inspection resolves the earlier pixel-inspection blocker for that historical subset only. Current required CI is green at the exact source above; it does not establish entire-feature completion or replace the remaining specific interface and human observations. The unrelated hunting repair remains excluded at Mike's direction rather than being restarted under UI acceptance.

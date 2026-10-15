@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                        | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Current-main integration and recovery safeguards are delivered; owner storage and final browser/device/player verification remain open. | 2026-10-14   |
+| In progress | Current-main integration and recovery safeguards are delivered; owner storage and final browser/device/player verification remain open. | 2026-10-15   |
 
 [Feature specification](game-interaction-redesign-feature-spec.md) · [Pinned source audit](../ui-ux/current-interface-audit.md) · [Handbook](../ui-ux/README.md)
 

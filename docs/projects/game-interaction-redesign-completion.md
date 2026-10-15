@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Action/checkpoint reload recovery and the selected UI journeys pass; full visual, device and player qualification remains open. | 2026-10-14   |
+| In progress | Action/checkpoint reload recovery and the selected UI journeys pass; full visual, device and player qualification remains open. | 2026-10-15   |
 
 ## Scope and authority
 
@@ -62,6 +62,18 @@ Reconciliation passed TypeScript, production build, generated configuration,
 guidance, affected formatting and 14 focused draft/transport tests. These are
 static/fixture results, not browser or whole-feature acceptance. New UI verification
 starts only after that merge; no browser environment ran during reconciliation.
+
+**October 15 verification execution:** ordinary Code and Spatial/interface CI pass
+at `a367c4d1b`. Local graphics startup and even an enabled ordinary pointer click
+exceed the existing waits before the intended observations. Run the remaining
+finite owner-storage, denied-container and completed-task observations on the same
+disposable Linux runner, retaining their assertions and deadlines. Temporary
+workflow/scenario files are verification tooling only; remove them before the final
+handoff. This temporarily exceeds the earlier line estimate through copied
+verification tooling, without expanding production behavior. Preserve every local
+failure, exact source and supplied-fixture limit. No provider execution or live
+credentials are permitted. Inspect the resulting images and reconcile the tracker;
+an unavailable participant or device still leaves the corresponding human gate open.
 
 ### Original action recovery — UIUX12
 
