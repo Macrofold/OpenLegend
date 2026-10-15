@@ -2,7 +2,7 @@ import { test, expect, type Page, type TestInfo } from '@playwright/test';
 import { enterGame } from '../fixtures/browser.js';
 import { testRepository, closeTestDatabases, readConfig } from '../fixtures/database.js';
 import { createGameServer } from '../../apps/server/src/http.js';
-import { NPC_ID, worldPosition } from '../../packages/domain/src/index.js';
+import { inventoryFor, worldPosition } from '../../packages/domain/src/index.js';
 import type { GameView, InventoryDestinationPage } from '../../packages/protocol/src/index.js';
 
 type Game = Awaited<ReturnType<typeof createGameServer>>;
@@ -86,15 +86,21 @@ test('Journal preserves a selected place across layout changes and focus never w
 
 test('Inventory and person share exact barter draft without transferring or moving while preparing', async ({ page }, info) => {
   await play(page, async (game, view) => {
-    const npc = view().entities.find(entity => entity.id === NPC_ID);
+    // The recorded native recipient page offers Mara at this starting position.
+    // Ada being visible does not make her reachable for this item handover.
+    const recipientId = 'mara';
+    const npc = view().entities.find(entity => entity.id === recipientId);
     expect(npc?.trade).toBeDefined();
     const labels = npc!.trade!.labels;
     const give = npc!.trade!.ownLots.find(lot => !lot.whole && lot.quantity > 1) ?? npc!.trade!.ownLots[0];
     expect(give).toBeDefined();
-    const before = { ...worldPosition(game.service.world.entities[game.service.controlledEntityId]!) };
-    const sends: unknown[] = [];
+    const actorId = game.service.controlledEntityId;
+    const before = { ...worldPosition(game.service.world.entities[actorId]!) };
+    const holdings = () => inventoryFor(game.service.world, actorId).map(item => ({ id: item.id, quantity: item.quantity }));
+    const beforeHoldings = holdings();
+    const sends: { command?: { type?: string } }[] = [];
     page.on('request', request => { if (new URL(request.url()).pathname === '/api/command') sends.push(request.postDataJSON()); });
-    const nearby = await person(page, NPC_ID);
+    const nearby = await person(page, recipientId);
     const fromPerson = nearby.locator('.ol-item-trade');
     await fromPerson.getByRole('button', { name: labels.newOffer, exact: true }).click();
     await fromPerson.locator('.ol-trade-draft select').first().selectOption(give!.id);
@@ -106,7 +112,7 @@ test('Inventory and person share exact barter draft without transferring or movi
     await detail.getByRole('button', { name: 'Offer to a person…', exact: true }).click();
     const destinations = await (await recipients).json() as InventoryDestinationPage;
     const people = destinations.destinations.filter(entry => entry.kind === 'recipient');
-    const index = people.findIndex(entry => entry.id === NPC_ID);
+    const index = people.findIndex(entry => entry.id === recipientId);
     expect(index).toBeGreaterThanOrEqual(0);
     await detail.getByRole('button', { name: /^Trade with / }).nth(index).click();
     const fromInventory = detail.locator('.ol-item-trade');
@@ -116,31 +122,32 @@ test('Inventory and person share exact barter draft without transferring or movi
     await expect(fromInventory.locator('.ol-trade-draft select').first()).toHaveValue(give!.id);
     await fit(page, '.ol-inventory-popover', info, 'inventory-trade-narrow');
     await detail.getByRole('button', { name: 'Close', exact: true }).click();
-    expect(sends).toEqual([]);
-    expect(worldPosition(game.service.world.entities[game.service.controlledEntityId]!)).toEqual(before);
+    // Opening Inventory records legitimate inspection knowledge. It must not
+    // send an offer, transfer possessions or move the character while preparing.
+    expect(sends.filter(send => /handover|trade|offer|transfer|^move$|^drop$/.test(send.command?.type ?? ''))).toEqual([]);
+    expect(holdings()).toEqual(beforeHoldings);
+    expect(worldPosition(game.service.world.entities[actorId]!)).toEqual(before);
   });
 });
 
-test('a denied container refresh removes previously rendered contents and keeps recovery reachable', async ({ page }, info) => {
+test('a denied collection refresh removes previously rendered contents and keeps recovery reachable', async ({ page }, info) => {
   await play(page, async (_game, view) => {
-    const container = view().entities.find(entity => entity.storage && entity.contents?.length);
-    expect(container, 'A visible nonempty starting container is required').toBeDefined();
-    const nearby = await person(page, container!.id);
-    await nearby.getByRole('button', { name: `Open ${container!.name}`, exact: true }).click();
-    const collection = page.locator('#inventoryPanel .ol-inventory-collection[data-side="container"]');
+    const containerId = view().player.id;
+    await page.getByRole('button', { name: 'Inventory', exact: true }).click();
+    const collection = page.locator('#inventoryPanel .ol-inventory-collection[data-side="belongings"]');
     await expect(collection.locator('.ol-inventory-cell').first()).toBeVisible();
-    const ids = await collection.locator('.ol-inventory-cell').evaluateAll(nodes => nodes.map(node => node.getAttribute('data-item-id')));
     await page.route('**/api/inventory', async route => {
-      if (route.request().postDataJSON()?.containerId !== container!.id) return route.continue();
-      // Controlled denied-read reply only: this qualifies rendering, not native grant revocation.
+      if (route.request().postDataJSON()?.containerId !== containerId) return route.continue();
+      // Reuse the real populated collection, then control only its denied reread.
+      // This qualifies shared collection rendering, not actual grant revocation.
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: false, message: 'Container access withdrawn for this interface check.' }) });
     });
     await collection.getByRole('button', { name: 'Refresh', exact: true }).click();
     await expect(collection.getByRole('alert')).toContainText('Container access withdrawn');
     await expect(collection.locator('.ol-inventory-cell')).toHaveCount(0);
-    for (const id of ids) await expect(page.locator(`.ol-inventory-popover [data-item-id="${id}"]`)).toHaveCount(0);
+    await expect(page.locator('.ol-inventory-popover')).toBeHidden();
     await expect(collection.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled();
-    await fit(page, '#inventoryPanel', info, 'container-denied-desktop');
+    await fit(page, '#inventoryPanel', info, 'collection-denied-desktop');
   });
 });
 
