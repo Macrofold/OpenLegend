@@ -1,6 +1,8 @@
-# Characters, companions and relationships — intelligent lives at sustainable cost
+# Characters, companions and relationships
 
-**Topic: NPC · Focused intelligence/simulation pass completed October 14, 2026; broader topic coverage remains open.** This guide now synthesizes selected game dossiers, primary implementation accounts, academic work and industrial evidence. It is not a claim that every source in the 35-topic matrix has been assessed, that all relationship subtopics are complete, or that any new OpenLegend implementation is approved.
+This guide covers characters, companions and relationships as a whole: personality, motivations, independent lives, memory, emotional expression, social bonds, friendship, rivalry, romance, family, care, teaching, animal bonds and the player's experience of those relationships. Intelligence and simulation efficiency are subtopics within that broader scope, not the organizing purpose of the entire guide.
+
+**Topic: NPC · Focused intelligence/simulation pass completed October 14, 2026; broader topic coverage remains open.** The intelligence/simulation research below synthesizes selected game dossiers, primary implementation accounts, academic work and industrial evidence. It is not a claim that every source in the 35-topic matrix has been assessed, that all relationship subtopics are complete, or that any new OpenLegend implementation is approved.
 
 [Topic map](README.md) · [Game coverage](coverage.csv) · [Assessment records](assessment-records.md) · [Dossier/pass inventory](../research-progress-intelligent-simulation-2026-10-14.md)
 
@@ -12,9 +14,9 @@ The ambition is a person or creature whose activity continues coherently, whose 
 
 A worthwhile ordinary encounter might be returning to someone who has finished work, remembers a shared experience and has their own idea about the afternoon. A worthwhile difficult encounter might involve competing obligations, an unexpected use of a familiar object or a changed impression of another person. Neither requires constant crises, permanent dissatisfaction or a thought printed after every action.
 
-**Our central hypothesis:** let cognition choose intentions and their acceptable bounds; let ordinary machinery carry valid intentions forward; use further cognition when the choice itself needs reconsideration. This is different from placing a conventional survival bot underneath occasional generated conversation.
+**For the intelligence/simulation subtopic, our central hypothesis is:** let cognition choose intentions and their acceptable bounds; let ordinary machinery carry valid intentions forward; use further cognition when the choice itself needs reconsideration. This is different from placing a conventional survival bot underneath occasional generated conversation.
 
-The question is not how to maximize reasoning tokens. It is how to preserve meaningful alternatives, personal continuity, competent effects and intelligible conduct while avoiding redundant work. “True cognition” here names a functional ambition; this research does not establish consciousness or human-equivalent understanding in any system.
+The question for that subtopic is not how to maximize reasoning tokens. It is how to preserve meaningful alternatives, personal continuity, competent effects and intelligible conduct while avoiding redundant work. “True cognition” here names a functional ambition; this research does not establish consciousness or human-equivalent understanding in any system.
 
 ### Ownership and adjacent topics
 
