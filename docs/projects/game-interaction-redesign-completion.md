@@ -18,6 +18,44 @@ The completion work started on `Macrofold/OpenLegend`, GitHub `refs/heads/docs/g
 
 ## Implementation plan
 
+### Follow-up implementation review — October 15
+
+Mike requested another thorough review of the published implementation at
+`1dbfbfe63886cc246254b310264f701392153e94`, including correctness, simplification,
+expansion, scaling and world/engine ownership. The refreshed PR target remains
+`Macrofold/OpenLegend` `origin/main` at
+`362d3b0a20e92fc38a672730104b957b1c7c1be4`, already an ancestor; no reconciliation
+or checkout change is needed. Keep the existing accepted scope and outstanding
+human/device requirements. The separate proposed item/building work remains outside
+this review until its scope question is answered.
+
+Cross-review the complete affected implementation and its callers in three groups:
+creator/editor/request retention; player item/construction/conversation/shared
+controls; and private history/diagnostics/native projections. Check documentation
+and the complete final diff centrally. Repair demonstrated issues through existing
+owners, removing duplication only where it has a clear shared responsibility.
+Initial additional repair estimate is 0–200 production logic lines, with medium
+risk from request loss and private-read races; reassess before wider changes.
+
+Performance review must distinguish explicit command/recovery work from recurring
+rendering and polling. Cost grows with visible readers, inventory/equipment size,
+history pages and overlapping refreshes. Share existing permitted projections,
+exact-ID lookups and immutable preparation; avoid per-row repeated scans and new
+global caches. Reuse expires with the actual access, timeline, evidence, selection
+and authored-definition dependencies. Verify changed complete callers and request
+counts with focused existing checks or a finite missing scenario, then run static
+integration and required CI on published source. Do not infer population capacity
+from small fixtures or repeat unchanged qualification. Record each concrete finding,
+repair and any justified remaining gap in the existing review report and tracker.
+
+Confirmed follow-up repairs now include preserving Future narration's Close guard
+through acknowledged event-save reloads; retaining unresolved Speak/Act originals
+after an uncertain retry; removing browser-storage reads from barter snapshot
+rendering while retaining original-request checks at recovery and dispatch; and
+finishing FRL02's operator-read fencing/scheduling through the existing API and
+Diagnostics owners. These remain within the 0–200-line additional estimate. Verify
+held responses and real caller composition, not only isolated helper results.
+
 ### Complete imported-interface review — October 15
 
 Mike requested an in-depth review of the imported interface and designs, with
