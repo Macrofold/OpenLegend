@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 15, 2026 — Turn intelligence research into owned design questions
+
+The [needs-design register](maintainers/needs-design.md#intelligent-individuals-and-efficient-simulation-research-derived-design-follow-up) now maps the focused intelligence/simulation research to existing character, agency, memory, attention, performance and scalability owners. It identifies residual questions about chosen activity boundaries, quiet personal relevance, calibrated routing, later experience, independent social activity, reusable computation, truthful distant simulation, concurrent service and whole-episode quality/cost. Already designed or delivered mechanisms remain with their existing acceptance; this creates no replacement architecture, duplicate ND backlog, adopted interval/model/fidelity policy or runtime authorization.
+
+The research branch's follow-up restores the [character guide](../archive/02-research/game-inspiration/synthesis/characters-companions-and-relationships.md) as a broader character/relationship topic, with intelligence and efficiency as subtopics. Detailed findings and their source-access/counterevidence limits remain intact. The new checklist tracks missing preparation and conditional comparisons, not completed research-to-gameplay delivery or a new priority ranking.
+
 ## October 15, 2026 — Empty action categories do not invent actions
 
 Mike replaced generic locked/fallback rows with gray categories. The catalogue now projects permitted category labels separately from concrete choices; a truly empty category is disabled without a submenu. Categories with real known but currently blocked choices stay dimmed and inspectable, preserving the earlier requirement to explain known actions. Concrete ingredient/tool/heat-blocked uses remain; generic “equip a tool,” unspecified teaching and similar family fillers are removed. [Current behavior](action-experience.md#ordinary-player-action-discovery), [PG03 tracking](maintainers/parallel-batch-03-personal-game.md#pg03--readable-action-discovery) and [focused evidence](verification/player-clarity-ui.md#empty-and-unavailable-action-categories--october-15-2026) own the contract and limits.
