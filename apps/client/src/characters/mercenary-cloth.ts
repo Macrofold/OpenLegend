@@ -45,6 +45,9 @@ export class CapeCloth {
   private readonly contactRestInverse: pc.Mat4;
   private readonly contactInverse = new pc.Mat4();
   private readonly contactPoint = new pc.Vec3();
+  private readonly previousAttachment = new pc.Mat4();
+  private readonly attachmentInverse = new pc.Mat4();
+  private readonly attachmentDelta = new pc.Mat4();
   private readonly p: pc.Vec3[] = [];
   private readonly previous: pc.Vec3[] = [];
   private readonly rest: pc.Vec3[] = [];
@@ -236,6 +239,7 @@ export class CapeCloth {
       m.transformPoint(at(this.rest, i), at(this.p, i));
       at(this.previous, i).copy(at(this.p, i));
     }
+    this.previousAttachment.copy(m);
     this.publish();
   }
   private frontDepth(p: pc.Vec3): number | null {
@@ -376,9 +380,27 @@ export class CapeCloth {
         if (!at(this.pinned, i)) this.collide(at(this.p, i), i >= at(this.patches, 2).start);
     }
     this.steps++;
+    // Initial settling also calls step directly, before the normal update path.
+    this.previousAttachment.copy(matrix);
   }
   update(dt: number, playing: boolean) {
-    if (!playing || !this.enabled) return;
+    if (!this.enabled) return;
+    const attachment = this.bone.getWorldTransform();
+    if (!playing) {
+      // Pause freezes the settled folds, but an edited position or heading must
+      // carry the whole cape with its attachment instead of leaving it behind.
+      if (!attachment.equals(this.previousAttachment)) {
+        this.attachmentInverse.copy(this.previousAttachment).invert();
+        this.attachmentDelta.mul2(attachment, this.attachmentInverse);
+        for (let i = 0; i < this.p.length; i++) {
+          this.attachmentDelta.transformPoint(at(this.p, i), at(this.p, i));
+          this.attachmentDelta.transformPoint(at(this.previous, i), at(this.previous, i));
+        }
+        this.publish();
+      }
+      this.previousAttachment.copy(attachment);
+      return;
+    }
     const start = performance.now();
     this.time += Math.min(dt, 0.05);
     let count = 0;
@@ -388,6 +410,7 @@ export class CapeCloth {
     }
     if (count) this.publish();
     this.elapsed = performance.now() - start;
+    this.previousAttachment.copy(attachment);
   }
   publish() {
     for (const p of this.patches) {

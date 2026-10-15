@@ -1,12 +1,12 @@
 # Mercenary — original-model refinement
 
-| Status      | Current progress                                                                                                       | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Restore the original animated mercenary, preserve its artwork and make him read as a tall adult in the existing world. | 2026-10-14   |
+| Status    | Current progress                                                                                                             | Last updated |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Original animated mercenary restored with preserved artwork, tall-adult scale, moving cape and scoped browser qualification. | 2026-10-14   |
 
 ## Authorized outcome
 
-Mike prefers the original model from before the block experiments and requests cleanup plus a taller, world-appropriate displayed size. Preserve the original GLB/source and both block trials. This supersedes using either block figure as the default; it does not approve a general art pipeline or require literal cubic anatomy. [MER10](../maintainers/art/mercenary.md#original-model-refinement) owns the revision; [world presentation](../world-presentation.md#animated-character-pixels) owns current behavior.
+Mike prefers the original model from before the block experiments and requests cleanup plus a taller, world-appropriate displayed size. Preserve the original GLB/source and both block trials. This supersedes using either block figure as the default; it does not approve a general art pipeline or require literal cubic anatomy. [MER10](../../maintainers/art/mercenary.md#original-model-refinement) owns the revision; [world presentation](../../world-presentation.md#animated-character-pixels) owns current behavior.
 
 Continue in `/Users/mzw/.codex/worktrees/415f/OpenLegend` on `codex/mercenary-original-refinement`, branched from the preserved `codex/mercenary-voxel-art` checkpoint `631835866`. Base: `https://github.com/Macrofold/OpenLegend.git`, verified default `origin/main@0c12398e32e7c9578e18de07bbe79d39b4827208`. Rebase applied all nine existing commits unchanged, without conflicts; `git range-diff` confirms equivalent patches. The main checkout is unaffected.
 
@@ -31,3 +31,13 @@ Choose one camera-independent uniform display scale by comparing actual visible 
 Cost grows with visible characters × original skinned geometry × light/shadow/reveal passes, plus each character's bounded 366-particle cape solver. Share GLB decoding and prepared materials once per scene; cache no camera image. Actor pose/cloth changes update only that actor; heading/zoom never regenerate or classify textures. Scene replacement invalidates its asset/material preparation; removal disposes actor effects and cloth before shared resources. Measure actual single-character frame/draw/resource counters and replacement/teardown behavior; do not infer crowd or low-end qualification.
 
 Completion means the preferred original art is visible in the game, its face/material detail survives cleanup, the mercenary reads as tall beside existing people/world objects, representative Idle/Walk cloth coverage and lifecycle checks pass, all agreed documentation/review/checks are complete and changes are locally committed. Creator style approval, imported-model production rights and general pose/device/population qualification retain their separate owners. Additional provider/Jev cost is $0; cumulative task cost is $0 at planning.
+
+## Review corrections before qualification
+
+The first browser attempt was invalid: a frozen canvas and repeated skin-texture errors prevented visual or timing conclusions. Independent review found that assigning a new root scale overwrote the GLB’s 0.01 unit conversion, and disabling the skinned root during settling destroyed skins already borrowed by effect meshes. The implementation now multiplies the authored scale, keeps the rig enabled while hiding its meshes/stopping animation, and refreshes borrowed effect/depth skins after an ancestor is re-enabled. Fresh source/browser evidence must confirm these corrections; the invalid screenshots/counters are not qualification.
+
+## Completion
+
+The fixed 1.6 scale was selected after ordinary-camera comparison: approximately 146 opaque head-to-sole pixels against 130 for the nearby blue-clothed person, about 12% taller. Source art and all three GLBs retain their bytes; the face, separate cape and original Idle/Walk remain. Paused attachment preserves the frozen cape while position/heading changes, and visibility effects follow recreated source skins.
+
+[Final evidence](../../verification/mercenary-default.md#original-model-refinement--october-14-2026) records fresh-source camera/source stability, natural walking/stop/pause, sampled coverage/lighting, resize, failed/delayed loads, ancestor re-enable and replacement/teardown; TypeScript, build, changed-file formatting, references and affected-diff review passed. No provider calls; additional and cumulative cost $0. All agreed implementation/verification work is complete. The broader moving-population/style/rights/device gates are unchanged and are not claimed complete by this revision. No open developer questions or remaining agreed work; no push/merge.

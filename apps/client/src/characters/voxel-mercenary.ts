@@ -16,7 +16,7 @@ function isContainer(value: unknown): value is pc.ContainerResource {
   );
 }
 
-/** Scene-owned immutable art. The earlier sampled model remains in mercenary.ts.
+/** Preserved sculpted trial. mercenary.ts owns the preferred original-model refinement.
  * docs/projects/completed/mercenary-voxel-iteration.md */
 export class VoxelMercenaryModels {
   private asset?: pc.Asset;

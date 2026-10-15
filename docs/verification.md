@@ -101,7 +101,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 
 [Character visibility and target feedback](verification/character-visibility.md) records scenery-only read-through, protected people, the perceived selected target in front, refused remembered-image clicks and delayed silhouette outlines, including bounded draw/timing and teardown observations.
 
-[Mercenary evidence](verification/mercenary-default.md) retains the original sampled-model integration, [rejected first block figure](verification/mercenary-default.md#authored-voxel-iteration--october-14-2026) and [sculpted source-guided replacement](verification/mercenary-default.md#sculpted-source-guided-iteration--october-14-2026), distinguishing art inspection, immutable geometry, walking fit, lighting, selection/depth, fallback and resource ownership. The larger generated-art pipeline and crowd/low-end qualification remain open.
+[Mercenary evidence](verification/mercenary-default.md) retains the original sampled-model integration, [rejected first block figure](verification/mercenary-default.md#authored-voxel-iteration--october-14-2026) and [sculpted source-guided replacement](verification/mercenary-default.md#sculpted-source-guided-iteration--october-14-2026), distinguishing art inspection, immutable geometry, walking fit, lighting, selection/depth, fallback and resource ownership. The [original-model refinement](verification/mercenary-default.md#original-model-refinement--october-14-2026) records the later restoration, material/size/cloth decisions and its own corrected browser checks. The larger generated-art pipeline and crowd/low-end qualification remain open.
 
 ## Shadow quality
 

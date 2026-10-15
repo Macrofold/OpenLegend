@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 14, 2026 — Restore and refine the original mercenary
+
+Mike rejected the sculpted face and Lego-like body and preferred the original animated model. [MER10](maintainers/art/mercenary.md#original-model-refinement) restores that source artwork with direct world rendering, disabled imported self-emission, a fixed tall-adult display enlargement and consistently scaled moving cloth with exterior/lining. This supersedes the rigid block figure as the default while preserving both trials and the original GLB/study bytes. Native body dimensions and world mechanics are unchanged.
+
+The extra low-resolution character image and runtime atlas reduction/recoloring are removed from this candidate. Skin/depth effect ownership and paused cloth attachment are corrected before qualification. [Current presentation](world-presentation.md#animated-character-pixels), [A3D18](limits/3d-pixel-art.md#a3d18--restored-original-animated-mercenary), the [refinement plan](projects/completed/mercenary-original-refinement.md) and [focused evidence](verification/mercenary-default.md#original-model-refinement--october-14-2026) retain the actual scope and verification status. The broader style comparison, final creator approval, source rights and population/device gates remain open. No provider call or spending.
+
 ## October 14, 2026 — Realtime pixel rendering and animation research
 
 Mike’s additional references explicitly endorse t3ssel8r’s animated character and question the earlier emphasis on pre-painted pixel textures. The [updated direction](../art-direction/decisions.md#realtime-pixel-rendering-and-animation--october-14-2026) now proposes a renderer-driven animated scene first, with painted-material and articulated-sprite controls. This supersedes the first research recommendation below without accepting a production renderer.

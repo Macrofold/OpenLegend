@@ -257,8 +257,7 @@ export class MercenaryActor {
       // An unobserved actor's ancestor can disable/recreate the source skin.
       // All extra passes borrow its current owner before becoming visible again.
       const skin = binding.sourceMesh?.skinInstance ?? null;
-      for (const mesh of binding.meshes)
-        if (mesh.skinInstance !== skin) mesh.skinInstance = skin;
+      for (const mesh of binding.meshes) if (mesh.skinInstance !== skin) mesh.skinInstance = skin;
       for (const mesh of binding.protection ?? [])
         if (mesh.skinInstance !== skin) mesh.skinInstance = skin;
       for (const mesh of binding.foreground ?? [])
