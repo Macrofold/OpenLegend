@@ -1,0 +1,121 @@
+{
+  "group": "source-chests",
+  "sourceFile": "art-direction/assets/source-study/source-chests.blend",
+  "sourceSha256": "c7537baa4f4325373820e93f68d537fe4dfb3ef74185d63db6a02a1dc87b579b",
+  "recipe": {
+    "path": "scripts/prepare-chest-study.py",
+    "sha256": "d2ce6b00dc4ce324950c4f724678d427c0c339e50200e6d3ac3664a0269c3cc6"
+  },
+  "sources": [
+    {
+      "path": "/Users/mzw/.codex/worktrees/415f/OpenLegend/apps/client/src/props/generated-chest.glb",
+      "sha256": "f48c364f3deb88e85e043a26801bc0754dc547ece8b47ee535bf962237c86fb2",
+      "credit": "Production Gothic reward chest created with Meshy; runtime processing by Samfa12/Codex. CC BY 4.0; OpenLegend closes, fits and repaints the source."
+    },
+    {
+      "path": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/chest.glb",
+      "sha256": "84b03023e425cc1f96c6d0b0f352608be9e8e01b112790e6b00b8651bf84379b",
+      "credit": "Kenney Survival Kit, CC0; OpenLegend fits and repaints the source."
+    },
+    {
+      "path": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/box-large.glb",
+      "sha256": "69b4052f32b7b27e5d2ee27041b091a07d4a2dd4d877168a701607a97609f0f6",
+      "credit": "Kenney Survival Kit, CC0; OpenLegend fits and repaints the source."
+    }
+  ],
+  "assets": [
+    {
+      "id": "chest-carved-lid",
+      "family": "library-chest",
+      "label": "Supply chest",
+      "variant": "carved-lid",
+      "description": "Closed carved lid from the retained generated source, with quiet oak boards and restrained iron. Ornament remains visible for comparison.",
+      "recommended": false,
+      "file": "chest-carved-lid.glb",
+      "bounds": {
+        "min": [
+          -0.5,
+          0.0,
+          -0.4
+        ],
+        "max": [
+          0.5,
+          0.8,
+          0.4
+        ]
+      },
+      "triangles": 6912,
+      "vertices": 12816,
+      "textureSizes": [
+        [
+          64,
+          64
+        ]
+      ],
+      "sha256": "9439623cc80d41f6bd4dc9fa17cddcea136f4626ae55faf7728b892f7b9da569",
+      "source": "Production Gothic reward chest created with Meshy; runtime processing by Samfa12/Codex. CC BY 4.0; OpenLegend closes, fits and repaints the source."
+    },
+    {
+      "id": "chest-banded-lid",
+      "family": "library-chest",
+      "label": "Supply chest",
+      "variant": "banded-lid",
+      "description": "Practical banded lid from the Kenney source, with clear hinges, clasp and board construction. The broad form survives a small game view.",
+      "recommended": true,
+      "file": "chest-banded-lid.glb",
+      "bounds": {
+        "min": [
+          -0.5,
+          0.0,
+          -0.4
+        ],
+        "max": [
+          0.5,
+          0.8,
+          0.4
+        ]
+      },
+      "triangles": 322,
+      "vertices": 558,
+      "textureSizes": [
+        [
+          64,
+          64
+        ]
+      ],
+      "sha256": "eec2ad6648722bd0c3dec1b382e34eec32ea4ec66108b005b4c07d8d78b9305a",
+      "source": "Kenney Survival Kit, CC0; OpenLegend fits and repaints the source."
+    },
+    {
+      "id": "chest-plank-cache",
+      "family": "library-chest",
+      "label": "Supply chest",
+      "variant": "plank-cache",
+      "description": "Low square plank cache from the Kenney source. Plain construction suits supplies and offers a less ornamental silhouette.",
+      "recommended": false,
+      "file": "chest-plank-cache.glb",
+      "bounds": {
+        "min": [
+          -0.5,
+          0.0,
+          -0.4
+        ],
+        "max": [
+          0.5,
+          0.8,
+          0.4
+        ]
+      },
+      "triangles": 124,
+      "vertices": 248,
+      "textureSizes": [
+        [
+          64,
+          64
+        ]
+      ],
+      "sha256": "d411f984c3ed6a2a24d741bbb06f38527f7a2b2f64e27542305c845ab8cb3c8e",
+      "source": "Kenney Survival Kit, CC0; OpenLegend fits and repaints the source."
+    }
+  ]
+}

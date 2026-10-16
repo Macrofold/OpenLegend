@@ -1,0 +1,31 @@
+{
+  "acquiredAt": "2026-10-16",
+  "sourceLicense": "CC0 1.0 for anatomy/core assets and selected Rehman Polanski garments; MPFB source code GPL-3.0-or-later is an external authoring tool, not bundled runtime code.",
+  "archives": [
+    {
+      "archive": "mpfb2.zip",
+      "url": "https://codeload.github.com/makehumancommunity/mpfb2/zip/refs/heads/master",
+      "bytes": 45687221,
+      "sha256": "19a58071b985c416c4a5a127b791dd52b2c159d62870cfec7d846b892bd90aab"
+    },
+    {
+      "archive": "makehuman_system_assets.zip",
+      "url": "https://files.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip",
+      "bytes": 280737770,
+      "sha256": "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107"
+    },
+    {
+      "archive": "suits02.zip",
+      "url": "https://files.makehumancommunity.org/asset_packs/suits02/suits02_cc0.zip",
+      "bytes": 192511027,
+      "sha256": "437f4d7ab92b698c1fb1047e7d62b22c11f195b2473e936118661dc8e6b7eb7a"
+    }
+  ],
+  "selectedGarments": [
+    "rehmanpolanski_viking_boots",
+    "rehmanpolanski_viking_pants",
+    "rehmanpolanski_viking_tunic"
+  ],
+  "officialLicense": "https://static.makehumancommunity.org/about/license.html",
+  "clothingLicense": "https://static.makehumancommunity.org/assets/assetpacks/suits02.html"
+}

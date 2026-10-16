@@ -20,7 +20,7 @@ from mathutils import Matrix, Vector
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from art_study_common import ROOT, export_asset
+from art_study_common import ROOT, export_asset, facial_features, pixel_material, box_uv
 
 PALETTE = ['202830', '30383e', '454d50', '616b69', '87928a', 'a5ac98',
            '322924', '49342b', '634431', '825738', 'a87447', 'c99a60', 'e4bd83',
@@ -64,6 +64,9 @@ def clean_materials():
         shader.inputs['Roughness'].default_value = .92
         shader.inputs['Specular IOR Level'].default_value = .08
         for node in material.node_tree.nodes:
+            if node.type == 'GROUP' and node.node_tree and 'glTF' in node.node_tree.name:
+                for socket in node.inputs:
+                    for link in list(socket.links): material.node_tree.links.remove(link)
             if node.type == 'TEX_IMAGE':
                 node.interpolation = 'Linear'
 
@@ -94,15 +97,18 @@ def normalize(objects, height):
     bpy.context.view_layer.update()
 
 
-def retain(group, assets, sources):
+def retain(group, assets, sources, recipe=None):
     output = ROOT/'apps/client/src/props/art-study'/group
     editable = ROOT/'art-direction/assets/source-study'
     editable.mkdir(parents=True, exist_ok=True)
     source = editable/(group+'.blend')
+    bpy.context.preferences.filepaths.save_version = 0
     bpy.ops.wm.save_as_mainfile(filepath=str(source))
+    recipe=Path(recipe or __file__)
     data = {'group':group, 'sourceFile':str(source.relative_to(ROOT)),
             'sourceSha256':hashlib.sha256(source.read_bytes()).hexdigest(),
-            'recipe': {'path':'scripts/prepare-source-study.py', 'sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()},
+            'recipe': {'path':str(recipe.relative_to(ROOT)), 'sha256':hashlib.sha256(recipe.read_bytes()).hexdigest()},
+            'helpers': {name:hashlib.sha256((ROOT/'scripts'/name).read_bytes()).hexdigest() for name in ['art_study_common.py','prepare-source-study.py','prepare-mercenary-variants.py']},
             'sources':sources, 'assets':assets}
     (output/'catalog.json').write_text(json.dumps(data,indent=2)+'\n')
 
@@ -157,6 +163,10 @@ def mercenaries(source):
                     elif variant=='restored':
                         pixel_surface(texture.image)
         clean_materials()
+        if variant != 'restored':
+            objects.append(facial_features([body],rig,'Head',
+                [Vector((x,0,1.733)) for x in [-.031,.031]],
+                'Mercenary '+variant+' fitted facial features',brow_offset=.016,mouth_offset=.063))
         normalize(objects,2.035)
         descriptions = [
             'Earlier concept-derived model and 29-color surface preparation. Unchanged face and original gold mantle; reference control.',
@@ -184,8 +194,36 @@ def nature(libraries):
         objects=list(set(bpy.data.objects)-before)
         clean_materials()
         normalize(objects,4.8)
+        palette=np.array([[int(h[i:i+2],16)/255 for i in (0,2,4)] for h in ['293e35','405741','5b7049','809056','a5ac6c']])
+        palette=np.where(palette<=.04045,palette/12.92,((palette+.055)/1.055)**2.4)
+        for obj in objects:
+            if obj.type!='MESH': continue
+            attribute=obj.data.color_attributes.active_color
+            normals=[normal.vector.copy() for normal in obj.data.corner_normals]
+            inverse_normal=obj.matrix_world.to_3x3().transposed()
+            for polygon in obj.data.polygons:
+                if 'Leaves' not in obj.data.materials[polygon.material_index].name: continue
+                center=sum((obj.matrix_world@obj.data.vertices[i].co for i in polygon.vertices),Vector())/len(polygon.vertices)
+                color=palette[min(4,max(1,int(center.z/4.8*4))) ]
+                for loop in polygon.loop_indices:
+                    vertex=obj.data.loops[loop].vertex_index
+                    if attribute:
+                        attribute.data[loop if attribute.domain=='CORNER' else vertex].color=(*color,1)
+                    point=obj.matrix_world@obj.data.vertices[vertex].co
+                    normal=Vector((point.x*.7,point.y*.7,(point.z-3.1)*.5+.8)).normalized()
+                    normals[loop]=(inverse_normal@normal).normalized()
+            obj.data.normals_split_custom_set(normals)
+            for material in obj.data.materials:
+                for node in material.node_tree.nodes:
+                    if node.type=='TEX_IMAGE' and node.image and any(socket.is_linked for socket in node.outputs):
+                        node.image.scale(256,256)
+                        if 'Leaves' in material.name:
+                            pixels=np.array(node.image.pixels[:]).reshape(-1,4)
+                            pixels[:,:3]=1
+                            node.image.pixels.foreach_set(pixels.ravel())
+                        node.image.pack()
         asset,placement=export_asset(objects,output,'broadleaf-'+variant,'library-broadleaf','Library broadleaf',variant,
-            'Actual Quaternius branching and leaf-card geometry. Crown structure comparison; source textures retained for material review.',index==1,
+            'Actual Quaternius branch structure with preserved leaf groups, olive/moss color relationships and quieter bark. Crown arrangement comparison.',index==2,
             'Quaternius Stylized Nature MegaKit Standard, CC0; normalized and source normal maps removed for controlled light.')
         placement.location.x=index*5.5
         assets.append(asset)

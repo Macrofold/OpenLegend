@@ -1,10 +1,10 @@
 {
   "group": "source-mercenary",
   "sourceFile": "art-direction/assets/source-study/source-mercenary.blend",
-  "sourceSha256": "ad35b5f33c2403e423e536d311471820544c4d764afabbf8b477386daf5fdf20",
+  "sourceSha256": "d008ea69f9d8ff22321711e697d431df5c120224a0de6a7d0e33a72583cc948c",
   "recipe": {
     "path": "scripts/prepare-source-study.py",
-    "sha256": "74e39e82f3b56cd80dba18533cfd56b42d6086f6a162465e99d652ba2189cdb0"
+    "sha256": "ec5b5fd3d1d126909981c45e9fd70e3ab39e19e6698dfe3014e690d2d167aaaa"
   },
   "sources": [
     {
@@ -22,15 +22,28 @@
       "recommended": true,
       "file": "mercenary-restored.glb",
       "bounds": {
-        "min": [-0.484672, 0.0, -0.370804],
-        "max": [0.484672, 2.035, 0.370805]
+        "min": [
+          -0.484672,
+          0.0,
+          -0.370804
+        ],
+        "max": [
+          0.484672,
+          2.035,
+          0.370805
+        ]
       },
       "triangles": 42426,
       "vertices": 46860,
       "textureSizes": [
-        [256, 256],
-        [256, 256],
-        [2048, 2048]
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ]
       ],
       "sha256": "608a78e79797457a3033b32be09cbfad2c1fd138b47435619c7d3431c938fc33",
       "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
@@ -44,17 +57,30 @@
       "recommended": false,
       "file": "mercenary-tailored.glb",
       "bounds": {
-        "min": [-0.484672, 0.0, -0.370804],
-        "max": [0.484672, 2.035, 0.370805]
+        "min": [
+          -0.484672,
+          0.0,
+          -0.370804
+        ],
+        "max": [
+          0.484672,
+          2.035,
+          0.370805
+        ]
       },
-      "triangles": 42426,
-      "vertices": 46860,
+      "triangles": 42462,
+      "vertices": 46903,
       "textureSizes": [
-        [512, 512],
-        [1024, 1536],
-        [2048, 2048]
+        [
+          512,
+          512
+        ],
+        [
+          1024,
+          1536
+        ]
       ],
-      "sha256": "5033cb2c3ab766b5301dfd999bea733970e683e57f4c978886e1ef0530df5b92",
+      "sha256": "475b758e634a50ba77e814fe810988b4513f61c23c4f83c53292200913fad1ab",
       "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
     },
     {
@@ -66,17 +92,30 @@
       "recommended": false,
       "file": "mercenary-embroidered.glb",
       "bounds": {
-        "min": [-0.484672, 0.0, -0.370804],
-        "max": [0.484672, 2.035, 0.370805]
+        "min": [
+          -0.484672,
+          0.0,
+          -0.370804
+        ],
+        "max": [
+          0.484672,
+          2.035,
+          0.370805
+        ]
       },
-      "triangles": 42426,
-      "vertices": 46860,
+      "triangles": 42462,
+      "vertices": 46903,
       "textureSizes": [
-        [512, 512],
-        [1024, 1536],
-        [2048, 2048]
+        [
+          512,
+          512
+        ],
+        [
+          1024,
+          1536
+        ]
       ],
-      "sha256": "5f17a68040748105a12bed001386749cc9546e075141d1c136d49da00b443e66",
+      "sha256": "481646a72b4abed8cb7ea1d64ae5bcd227decc0b8d4f3e4972d4d2fa3d3bee00",
       "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
     }
   ]

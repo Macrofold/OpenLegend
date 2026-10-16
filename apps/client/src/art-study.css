@@ -16,18 +16,18 @@ a {
 .study {
   max-width: 1800px;
   margin: auto;
-  padding: 24px;
+  padding: 16px;
 }
 .study-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 h1 {
-  font: 500 clamp(26px, 3vw, 42px) / 1.1 var(--font-display, Georgia, serif);
-  margin: 6px 0 12px;
+  font: 500 clamp(24px, 2.5vw, 34px) / 1.1 var(--font-display, Georgia, serif);
+  margin: 4px 0 8px;
 }
 p {
   margin: 0;
@@ -40,10 +40,10 @@ p {
 }
 .study-controls {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: end;
   flex-wrap: wrap;
-  padding: 16px;
+  padding: 10px;
   background: #20342c;
   border: 1px solid #49604b;
   border-radius: 8px 8px 0 0;
@@ -77,7 +77,7 @@ button[aria-pressed='true'] {
 }
 .study-stage {
   position: relative;
-  height: min(68vh, 850px);
+  height: clamp(360px, calc(100vh - 270px), 850px);
   min-height: 360px;
   background: #c0c3ac;
   overflow: hidden;

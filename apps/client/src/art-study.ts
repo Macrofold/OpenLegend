@@ -24,7 +24,7 @@ interface Catalog {
   sourceFile: string;
   assets: StudyAsset[];
 }
-type Choice = StudyAsset & { url: string; sourceUrl?: string };
+type Choice = StudyAsset & { url: string; sourceUrl?: string; historical: boolean };
 const catalogs = import.meta.glob<Catalog>('./props/art-study/*/catalog.json', {
   eager: true,
   import: 'default',
@@ -45,6 +45,7 @@ const sourceUrls = import.meta.glob<string>(
 const choices: Choice[] = Object.values(catalogs).flatMap((catalog) =>
   catalog.assets.map((asset) => ({
     ...asset,
+    historical: !catalog.group.startsWith('source-'),
     url: modelUrls[`./props/art-study/${catalog.group}/${asset.file}`]!,
     sourceUrl: sourceUrls[`../../../${catalog.sourceFile}`],
   })),
@@ -57,7 +58,8 @@ const subject = element<HTMLSelectElement>('subject');
 for (const family of new Set(choices.map((choice) => choice.family))) {
   const option = document.createElement('option');
   option.value = family;
-  option.textContent = layout[family]?.label ?? family;
+  const member = choices.find((choice) => choice.family === family)!;
+  option.textContent = `${member.historical ? 'Earlier study · ' : ''}${layout[family]?.label ?? member.label}`;
   subject.append(option);
 }
 const requested = new URLSearchParams(location.hash.slice(1)).get('subject');
@@ -74,6 +76,7 @@ export class ArtStudy {
   private readonly observer: ResizeObserver;
   private readonly camera: pc.Entity;
   private readonly sun: pc.Entity;
+  private readonly fill: pc.Entity;
   private readonly frame: pc.CameraFrame;
   private readonly materials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private readonly stageMaterial: pc.StandardMaterial;
@@ -106,11 +109,11 @@ export class ArtStudy {
     element('labels-toggle').setAttribute('aria-pressed', String(!element('labels').hidden));
     this.models = new BundledModels(this.app);
     this.art = new ArtMaterials(this.app.graphicsDevice);
-    this.app.scene.ambientLight = new pc.Color(0.48, 0.51, 0.45);
+    this.app.scene.ambientLight = new pc.Color(0.32, 0.35, 0.37);
     this.camera = new pc.Entity('Study inspection camera', this.app);
     this.camera.addComponent('camera', {
       projection: pc.PROJECTION_ORTHOGRAPHIC,
-      clearColor: new pc.Color(0.68, 0.72, 0.64),
+      clearColor: new pc.Color(0.12, 0.18, 0.16),
       nearClip: 0.1,
       farClip: 500,
     });
@@ -133,8 +136,17 @@ export class ArtStudy {
     });
     this.sun.setEulerAngles(42, -28, 0);
     this.app.root.addChild(this.sun);
+    this.fill = new pc.Entity('Cool sky fill', this.app);
+    this.fill.addComponent('light', {
+      type: 'directional',
+      color: new pc.Color(0.68, 0.79, 1),
+      intensity: 0.5,
+      castShadows: false,
+    });
+    this.fill.setEulerAngles(25, 140, 0);
+    this.app.root.addChild(this.fill);
     this.stageMaterial = new pc.StandardMaterial();
-    this.stageMaterial.diffuse = new pc.Color(0.48, 0.52, 0.43);
+    this.stageMaterial.diffuse = new pc.Color(0.19, 0.22, 0.18);
     this.stageMaterial.gloss = 0;
     this.stageMaterial.update();
     const floor = new pc.Entity('Neutral metre-scale study ground', this.app);
@@ -289,10 +301,16 @@ export class ArtStudy {
   async show(): Promise<void> {
     if (this.disposed) return;
     const epoch = ++this.epoch,
-      composition = subject.value === 'composition';
+      composition = ['composition', 'calibration'].includes(subject.value);
     const compare = !composition && element<HTMLSelectElement>('versions').value === 'compare';
     let selected = composition
-      ? choices.filter((asset) => asset.recommended)
+      ? choices.filter(
+          (asset) =>
+            asset.recommended &&
+            (subject.value === 'composition'
+              ? asset.historical
+              : ['mercenary', 'ada'].includes(asset.family)),
+        )
       : choices.filter((asset) => asset.family === subject.value);
     if (!compare && !composition) selected = selected.filter((asset) => asset.recommended);
     if (!selected.length) {
@@ -347,7 +365,9 @@ export class ArtStudy {
       fresh.forEach((node, index) => {
         const asset = selected[index]!;
         const at = composition
-          ? (layout[asset.family]?.position ?? [index * 1.5, 0])
+          ? subject.value === 'calibration'
+            ? [(index - (fresh.length - 1) / 2) * 1.2, 0]
+            : (layout[asset.family]?.position ?? [index * 1.5, 0])
           : [(index - (fresh.length - 1) / 2) * spacing, 0];
         node.setPosition(at[0]!, -asset.bounds.min[1]!, at[1]!);
         this.app.root.addChild(node);
@@ -400,7 +420,9 @@ export class ArtStudy {
         if (asset.recommended) {
           const p = document.createElement('p');
           p.className = 'recommendation';
-          p.textContent = 'Working selection';
+          p.textContent = asset.historical
+            ? 'Earlier selection · rejected study'
+            : 'Working selection · under review';
           card.append(p);
         }
         const description = document.createElement('p');
@@ -526,13 +548,14 @@ export class ArtStudy {
       this.app.setCanvasResolution(pc.RESOLUTION_FIXED, width, pixelsHigh);
       this.frame.update();
     }
-    const scenePass = this.camera.camera!.renderPasses.find(
+    const scenePass = this.camera.camera!.framePasses.find(
       (pass): pass is pc.FramePassCameraFrame => pass instanceof pc.FramePassCameraFrame,
     );
     if (scenePass) scenePass.renderTargetScale = density === 'native' ? 1 : 2;
     this.canvas.style.imageRendering = density === 'native' ? 'auto' : 'pixelated';
+    const effective = pixelsHigh / (2 * height);
     element('pixel-evidence').textContent =
-      `${width} × ${pixelsHigh} image · ${density === 'native' ? 'full display resolution' : `${density} samples per metre at the focus plane`} · ${framing === 'game' ? 'current game camera' : 'inspection framing'}`;
+      `${width} × ${pixelsHigh} image · ${density === 'native' ? 'full display resolution' : `${effective.toFixed(1)} samples/metre${wantedHeight > rect.height ? ' · limited by display size' : ''}`} · ${framing === 'game' ? 'current game camera' : 'inspection framing'}`;
     this.invalidate();
   }
   private labels(): void {
@@ -563,10 +586,10 @@ export class ArtStudy {
       this.sun.setEulerAngles(55, -20, 0);
       this.app.scene.ambientLight = new pc.Color(0.58, 0.61, 0.58);
     } else {
-      light.color = new pc.Color(1, 0.97, 0.88);
-      light.intensity = 1.45;
+      light.color = new pc.Color(1, 0.9, 0.76);
+      light.intensity = 1.15;
       this.sun.setEulerAngles(42, -28, 0);
-      this.app.scene.ambientLight = new pc.Color(0.48, 0.51, 0.45);
+      this.app.scene.ambientLight = new pc.Color(0.32, 0.35, 0.37);
     }
     this.invalidate();
   }

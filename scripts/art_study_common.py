@@ -11,8 +11,70 @@ import struct
 import bpy
 import numpy as np
 from mathutils import Vector
+from mathutils.bvhtree import BVHTree
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def facial_features(objects, rig, head, eyes, name, brow_offset=.028, mouth_offset=.068):
+    """Fit deliberate eye/lip shapes to this source head and attach to its rig.
+
+    These are authored surface features, not camera-facing cards. Projecting
+    against the eye meshes as well as skin keeps details over eye sockets.
+    """
+    graph = bpy.context.evaluated_depsgraph_get()
+    vertices, faces = [], []
+    for obj in objects:
+        evaluated = obj.evaluated_get(graph)
+        mesh = evaluated.to_mesh()
+        start = len(vertices)
+        vertices.extend(evaluated.matrix_world @ vertex.co for vertex in mesh.vertices)
+        faces.extend(tuple(start+i for i in polygon.vertices) for polygon in mesh.polygons)
+        evaluated.to_mesh_clear()
+    surface = BVHTree.FromPolygons(vertices, faces)
+    inverse = rig.matrix_world.inverted()
+    positions, triangles, colors = [], [], []
+    def patch(polygon, color, offset=.0018):
+        if sum(a[0]*b[1]-b[0]*a[1] for a,b in zip(polygon,polygon[1:]+polygon[:1]))<0:
+            polygon=list(reversed(polygon))
+        start = len(positions)
+        center = tuple(sum(p[i] for p in polygon)/len(polygon) for i in range(2))
+        for x,z in [center]+polygon:
+            location,_,_,_=surface.ray_cast(Vector((x,-2,z)),Vector((0,1,0)),4)
+            if location is None: raise ValueError('Facial feature missed its source surface')
+            location.y-=offset
+            positions.append(inverse@location)
+        for i in range(len(polygon)):
+            triangles.append((start,start+i+1,start+(i+1)%len(polygon)+1))
+            colors.append(color)
+    for eye in eyes:
+        x,z=eye.x,eye.z
+        patch([(x-.019,z+.007),(x-.012,z+.014),(x+.013,z+.013),(x+.021,z+.005),
+               (x+.015,z-.003),(x-.014,z-.003)],'493a31')
+        patch([(x-.007,z+.007),(x+.004,z+.007),(x+.005,z-.003),(x-.007,z-.003)],'242a2d',.0027)
+        brow=z+brow_offset
+        patch([(x-.023,brow),(x-.010,brow+.006),(x+.019,brow),(x+.020,brow-.008),(x-.012,brow-.003)],'40342d')
+    z=sum(eye.z for eye in eyes)/len(eyes)-mouth_offset
+    patch([(-.020,z+.002),(-.007,z+.005),(.007,z+.004),(.020,z),(.008,z-.005),(-.011,z-.003)],'815348')
+    mesh=bpy.data.meshes.new(name)
+    mesh.from_pydata(positions,[],triangles)
+    mesh.update()
+    attribute=mesh.color_attributes.new(name='Feature colors',type='FLOAT_COLOR',domain='CORNER')
+    for polygon,color in zip(mesh.polygons,colors):
+        rgb=[int(color[i:i+2],16)/255 for i in (0,2,4)]
+        linear=[v/12.92 if v<=.04045 else ((v+.055)/1.055)**2.4 for v in rgb]
+        for loop in polygon.loop_indices: attribute.data[loop].color=(*linear,1)
+    obj=bpy.data.objects.new(name,mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.matrix_world=rig.matrix_world.copy()
+    weights=obj.vertex_groups.new(name=head)
+    weights.add(list(range(len(positions))),1,'REPLACE')
+    modifier=obj.modifiers.new('Follow the source head','ARMATURE');modifier.object=rig
+    material=solid_material(name+' palette','ffffff')
+    node=material.node_tree.nodes.new('ShaderNodeVertexColor');node.layer_name=attribute.name
+    material.node_tree.links.new(node.outputs['Color'],material.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
+    mesh.materials.append(material)
+    return obj
 
 
 def begin(group):
@@ -104,7 +166,7 @@ def export_asset(objects, output, identity, family, label, variant, description,
         evaluated.to_mesh_clear()
         for material in obj.data.materials:
             if material and material.use_nodes:
-                images.update(node.image for node in material.node_tree.nodes if node.type == 'TEX_IMAGE' and node.image)
+                images.update(node.image for node in material.node_tree.nodes if node.type == 'TEX_IMAGE' and node.image and any(socket.is_linked for socket in node.outputs))
     # Export evaluated temporary copies joined by their shared materials. Keep
     # separately editable source parts; dozens of tailoring pieces need not
     # become dozens of runtime draws for a static study figure.
