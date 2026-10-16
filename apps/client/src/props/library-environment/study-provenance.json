@@ -4,11 +4,11 @@
   "sources": [
     {
       "catalog": "apps/client/src/props/art-study/source-nature/catalog.json",
-      "sha256": "b777df0d36fc255f4c2383f467c26c7ae750a2b2163dc9ac9cbd447e92c4a13a"
+      "sha256": "223cf58e6cd9966f61eb9c0f884d69d1a5366be9170165fdd58a656a195313d7"
     },
     {
       "catalog": "apps/client/src/props/art-study/source-vegetation/catalog.json",
-      "sha256": "01e17b537ed1500c41fed9237cf0371d5930da484defda17ee769608120b6ad4"
+      "sha256": "e10b0fe0732f9e9b6f0d258e755dd35b4391c115d0d4242eeb091db33eb77c78"
     }
   ],
   "outputs": [

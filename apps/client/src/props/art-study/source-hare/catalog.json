@@ -118,5 +118,37 @@
       "source": "Rabbit by CDmir/TinyWorlds, CC0; OpenLegend proportions and fixed coat design.",
       "sha256": "57fa452c338a06d4eaf64207b512dc0ef9b9dd8d1ed48ea3907a47be91c96df8"
     }
-  ]
+  ],
+  "controls": [
+    {
+      "id": "control-library-hare",
+      "family": "library-hare",
+      "label": "Hare",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-hare.glb",
+      "bounds": {
+        "min": [
+          -0.112594,
+          0.0,
+          -0.232423
+        ],
+        "max": [
+          0.112594,
+          0.45,
+          0.232423
+        ]
+      },
+      "triangles": 1700,
+      "vertices": 893,
+      "textureSizes": [],
+      "sha256": "c2c6ab6115df36a2f64efd6dda7ddd0922f8684981ce7ea79a6bb55d96844b7c",
+      "source": "/Users/mzw/.codex/worktrees/415f/OpenLegend/apps/client/src/props/library-animals/cdmir-rabbit-source.blend \u00b7 SHA256 bb6deef1ee91b21380355138374cae87946451ce864502b1af68eb60f4750843"
+    }
+  ],
+  "controlRecipe": {
+    "path": "scripts/prepare-study-controls.py",
+    "sha256": "5b16232aabfa4ed836a02b2cb4d10baa172f4961f8574c6eca88b60352bf7999"
+  }
 }

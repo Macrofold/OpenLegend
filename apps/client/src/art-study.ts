@@ -3,6 +3,7 @@ import { ArtMaterials, candidateArt } from './art-treatment';
 import { BundledModels, destroyModelApplication } from './bundled-models';
 import { CAMERA_FOV_DEGREES, initialCamera } from './world-camera';
 import { installLocomotion } from './model-animation';
+import { StudyCapture } from './study-capture';
 import studyLayout from './props/art-study/layout.json';
 import './art-study.css';
 
@@ -117,8 +118,10 @@ export class ArtStudy {
   private dragging?: { id: number; x: number; y: number };
   private readonly reduce = matchMedia('(prefers-reduced-motion: reduce)');
   private readonly gameCamera = initialCamera();
+  private readonly capture: StudyCapture;
   private motionAllowed = !this.reduce.matches;
   constructor(private readonly canvas: HTMLCanvasElement) {
+    this.capture = new StudyCapture(canvas);
     this.app = new pc.Application(canvas, {
       graphicsDeviceOptions: { antialias: true, alpha: false },
     });
@@ -183,6 +186,16 @@ export class ArtStudy {
     const on = (target: EventTarget, event: string, handler: EventListener) =>
       target.addEventListener(event, handler, { signal: this.events.signal });
     for (const id of ['subject', 'versions']) on(element(id), 'change', () => void this.show());
+    const captureName = () => 'openlegend-asset-' + subject.value.replace(':', '-');
+    on(element('save-image'), 'click', () => this.capture.image(captureName()));
+    on(element('record-motion'), 'click', () => {
+      const button = element<HTMLButtonElement>('record-motion');
+      button.disabled = this.capture.record(captureName(), (message) => {
+        button.disabled = false;
+        element('status').textContent = message;
+      });
+      if (button.disabled) element('status').textContent = 'Recording 8 seconds…';
+    });
     on(element('framing'), 'change', () => this.applyFraming());
     on(element('light'), 'change', () => this.light());
     on(element('projection'), 'change', () => this.placeCamera());
@@ -292,11 +305,13 @@ export class ArtStudy {
         }
         this.invalidate();
       }
-      element('motion-evidence').textContent = !this.motionAllowed
+      const motionEvidence = !this.motionAllowed
         ? 'Motion paused by your reduced-motion preference.'
         : pose === 'still'
           ? 'Pose held for comparison.'
           : `${this.animations.length} animated models · ${pose === 'Run' ? 'Movement' : 'Idle'} · ${(this.animations[0]?.baseLayer?.activeStateCurrentTime ?? 0).toFixed(1)} s`;
+      if (element('motion-evidence').textContent !== motionEvidence)
+        element('motion-evidence').textContent = motionEvidence;
       if (this.labelsDirty) {
         this.labels();
         this.labelsDirty = false;
@@ -351,7 +366,13 @@ export class ArtStudy {
     if (this.disposed) return;
     const epoch = ++this.epoch,
       composition = ['composition', 'calibration', 'cast'].includes(subject.value);
-    const version = element<HTMLSelectElement>('versions').value;
+    const versions = element<HTMLSelectElement>('versions');
+    const sourceOption = versions.querySelector<HTMLOptionElement>('option[value="source"]')!;
+    sourceOption.disabled =
+      composition ||
+      !choices.some((asset) => subjectKey(asset) === subject.value && asset.sourceControl);
+    if (versions.value === 'source' && sourceOption.disabled) versions.value = 'compare';
+    const version = versions.value;
     const compare = !composition && version === 'compare';
     let selected = composition
       ? choices.filter(
@@ -386,6 +407,7 @@ export class ArtStudy {
       return;
     }
     element('status').textContent = 'Loading fixed artwork…';
+    this.canvas.dataset.ready = 'false';
     try {
       const resources = await Promise.all(
         selected.map((asset) => this.models.load(asset.label, asset.motionUrl ?? asset.url)),
@@ -693,6 +715,7 @@ export class ArtStudy {
     this.disposed = true;
     this.epoch++;
     this.events.abort();
+    this.capture.destroy();
     this.observer.disconnect();
     for (const root of this.roots) root.destroy();
     this.roots = [];

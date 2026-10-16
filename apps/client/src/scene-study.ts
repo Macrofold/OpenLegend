@@ -1,5 +1,6 @@
 import type { GameView } from '@open-legend/protocol';
 import { WildernessScene } from './scene';
+import { StudyCapture } from './study-capture';
 import { candidateArt, type ArtTreatment } from './art-treatment';
 import recorded from './props/art-study/starting-world.json';
 import './scene-study.css';
@@ -19,8 +20,7 @@ let frame = 0;
 let prior = 0;
 let lastPublication = 0;
 let disposed = false;
-let recorder: MediaRecorder | undefined;
-let recordingTimer: ReturnType<typeof setTimeout> | undefined;
+let capture = new StudyCapture(canvas);
 let measurement: { start: number; intervals: number[] } | undefined;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const stop = () => recorded.stops.find((item) => item.id === select('place').value)!;
@@ -129,14 +129,6 @@ function mount(): void {
   setCamera();
   status.textContent = stop().label + ' · source-based art comparison';
 }
-function download(blob: Blob, name: string): void {
-  const url = URL.createObjectURL(blob),
-    link = document.createElement('a');
-  link.href = url;
-  link.download = name;
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
 function update(now: number): void {
   if (disposed) return;
   const elapsed = prior ? now - prior : 0;
@@ -210,37 +202,18 @@ button('fire').onclick = () => {
   publish();
 };
 button('capture').onclick = () =>
-  requestAnimationFrame(() =>
-    canvas.toBlob((blob) => {
-      if (blob)
-        download(blob, 'openlegend-' + stop().id + '-' + select('world-light').value + '.png');
-    }),
+  capture.image(
+    'openlegend-' + stop().id + '-' + select('world-light').value + '-' + select('route').value,
   );
 button('record').onclick = () => {
-  if (!('MediaRecorder' in window)) {
-    status.textContent = 'Video recording is unavailable in this browser.';
-    return;
-  }
-  const stream = canvas.captureStream(30),
-    chunks: Blob[] = [];
-  recorder = new MediaRecorder(stream);
-  recorder.ondataavailable = (event) => {
-    if (event.data.size) chunks.push(event.data);
-  };
-  recorder.onstop = () => {
-    stream.getTracks().forEach((track) => track.stop());
-    button('record').disabled = false;
-    if (!disposed)
-      download(new Blob(chunks, { type: recorder!.mimeType }), 'openlegend-' + stop().id + '.webm');
-    recorder = undefined;
-  };
-  recorder.start();
-  button('record').disabled = true;
-  status.textContent = 'Recording 8 seconds…';
-  recordingTimer = setTimeout(() => {
-    recorder?.stop();
-    status.textContent = 'Recording saved.';
-  }, 8000);
+  button('record').disabled = capture.record(
+    'openlegend-' + stop().id + '-' + select('world-light').value + '-' + select('route').value,
+    (message) => {
+      button('record').disabled = false;
+      status.textContent = message;
+    },
+  );
+  if (button('record').disabled) status.textContent = 'Recording 8 seconds…';
 };
 button('measure').onclick = () => {
   measurement = { start: performance.now(), intervals: [] };
@@ -265,8 +238,7 @@ function dispose(): void {
   if (disposed) return;
   disposed = true;
   cancelAnimationFrame(frame);
-  clearTimeout(recordingTimer);
-  if (recorder?.state === 'recording') recorder.stop();
+  capture.destroy();
   reducedMotion.removeEventListener('change', pauseForPreference);
   scene.destroy();
 }
@@ -274,6 +246,8 @@ window.addEventListener('pagehide', dispose);
 window.addEventListener('pageshow', (event) => {
   if (!event.persisted || !disposed) return;
   disposed = false;
+  capture = new StudyCapture(canvas);
+  button('record').disabled = false;
   prior = 0;
   measurement = undefined;
   button('measure').disabled = false;

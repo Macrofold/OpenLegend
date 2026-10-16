@@ -119,5 +119,58 @@
       "animatedFile": "bird-wing-bars-motion.glb",
       "animatedSha256": "48f6530601dbf51f80ef35c0d0e2b34b7be00ec8dd7044da01934dc426dfdd61"
     }
-  ]
+  ],
+  "controls": [
+    {
+      "id": "control-library-bird",
+      "family": "library-bird",
+      "label": "Woodland bird",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-bird.glb",
+      "bounds": {
+        "min": [
+          -0.132391,
+          0.0,
+          -0.145976
+        ],
+        "max": [
+          0.132391,
+          0.23,
+          0.145976
+        ]
+      },
+      "triangles": 996,
+      "vertices": 534,
+      "textureSizes": [
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ]
+      ],
+      "sha256": "53978e17bc20a068e2b271ffb6f78f9e89924af895ce55239320a479bfa91db1",
+      "source": "/private/tmp/openlegend-source-study/animals/shrike/bird_yellow_billed_shrike/bird_shrike1.blend \u00b7 SHA256 968bb9cc5aeb99c6da55b8dc752c4d1b6f8010e1939d4b23dcde23b1dee253cf"
+    }
+  ],
+  "controlRecipe": {
+    "path": "scripts/prepare-study-controls.py",
+    "sha256": "5b16232aabfa4ed836a02b2cb4d10baa172f4961f8574c6eca88b60352bf7999"
+  }
 }

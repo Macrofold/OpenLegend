@@ -1,14 +1,14 @@
 {
   "group": "source-mercenary",
   "sourceFile": "art-direction/assets/source-study/source-mercenary.blend",
-  "sourceSha256": "49eabb20605f987e5b6f8bbbbf720568ce4a7696b9c2ec46481c1db06826e0be",
+  "sourceSha256": "9631ea35f7a83714d66f841ee0b8a9fea64b9fa0d95ac5c3de3c612aa5d677aa",
   "recipe": {
     "path": "scripts/prepare-source-study.py",
-    "sha256": "401368a39500c381fe3b5116e845b6198f45fb4213e2efe2ec0d6302807b276f"
+    "sha256": "7cf6b8bc5ca5aff50c4b71ee3744613128a806343a963b87ca693f1942b9f5fe"
   },
   "helpers": {
-    "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
-    "prepare-source-study.py": "401368a39500c381fe3b5116e845b6198f45fb4213e2efe2ec0d6302807b276f",
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "7cf6b8bc5ca5aff50c4b71ee3744613128a806343a963b87ca693f1942b9f5fe",
     "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
   },
   "sources": [
@@ -50,7 +50,7 @@
           256
         ]
       ],
-      "sha256": "1d8c8cd67435917924eb352d1f0939099c91e088888b66d4a2c11b837f6ed1df",
+      "sha256": "9641f72d6146b85cada5073ee87b23bab39baeb0f30970b811361368be500f57",
       "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
     },
     {
@@ -73,8 +73,8 @@
           0.370805
         ]
       },
-      "triangles": 42462,
-      "vertices": 46903,
+      "triangles": 42426,
+      "vertices": 46860,
       "textureSizes": [
         [
           512,
@@ -85,7 +85,7 @@
           1536
         ]
       ],
-      "sha256": "de9d356125660bf8b383eb60c2ae90f2ad0b77dc9e16250594ed9c37cc610991",
+      "sha256": "2074e5797b1a2c5a00a7792d1dc88b6d785dec61b83898e86b4a23c166a4ba9e",
       "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
     },
     {
@@ -108,8 +108,8 @@
           0.370805
         ]
       },
-      "triangles": 42462,
-      "vertices": 46903,
+      "triangles": 42426,
+      "vertices": 46860,
       "textureSizes": [
         [
           512,
@@ -120,7 +120,7 @@
           1536
         ]
       ],
-      "sha256": "4c99b5c54ef32f5f1b0e6dcc773f08b997f79425b06a3ed739f38bba8c39adbe",
+      "sha256": "26cad0d10743410fe64def36c60e9feee801841f55667e8dde2ce4eca0010288",
       "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
     }
   ],
@@ -167,6 +167,6 @@
   ],
   "controlRecipe": {
     "path": "scripts/prepare-study-controls.py",
-    "sha256": "5c9d42061bbef41ac4a011cc6864f0a00684f531fa6e8c8d4e0ae1c16087d81a"
+    "sha256": "763eb966939e619ced879007d741b2bb42a8c0795a4daba88455f2e965c23944"
   }
 }

@@ -119,5 +119,42 @@
       "animatedFile": "bear-pale-muzzle-motion.glb",
       "animatedSha256": "0a2e094d41797a561e9fa7821523206410ea63ce8f84e6926712c8808bdb46a2"
     }
-  ]
+  ],
+  "controls": [
+    {
+      "id": "control-library-bear",
+      "family": "library-bear",
+      "label": "Bear",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-bear.glb",
+      "bounds": {
+        "min": [
+          -0.365508,
+          -0.0,
+          -1.152355
+        ],
+        "max": [
+          0.365508,
+          1.25,
+          1.152355
+        ]
+      },
+      "triangles": 946,
+      "vertices": 1876,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "3cb2d25140aed34671b1c37685816f56164aa48630a75179c3d522c6f2017e12",
+      "source": "/private/tmp/openlegend-source-study/animals/bear.glb \u00b7 SHA256 e36363e07cfc3f7b4f9e6997b860daae8ac30a90b0d41a0316ec90a84ebed09c"
+    }
+  ],
+  "controlRecipe": {
+    "path": "scripts/prepare-study-controls.py",
+    "sha256": "5b16232aabfa4ed836a02b2cb4d10baa172f4961f8574c6eca88b60352bf7999"
+  }
 }

@@ -71,8 +71,8 @@ export class MercenaryModels {
   }
 }
 
-// Keep physical rig and cloth dimensions fixed; the character image corrects
-// apparent height beside the camera-facing people without enlarging this body.
+// The visual body is ten percent taller than the 1.85 m study adults. Native
+// collision dimensions stay with the world's body definition.
 const displayScale = 1.1;
 
 export class MercenaryActor {
@@ -212,7 +212,11 @@ export class MercenaryActor {
     this.motion?.update(dt, moving, paused, art.motion, art.actionFixture);
     this.faces.preparePose(node);
     this.cloth.update(dt, !paused, art.cloth);
-    this.pixels?.setTreatment(art.sampling, art.edges);
+    this.pixels?.setTreatment(
+      art.sampling,
+      art.edges,
+      ['restored', 'tailored', 'embroidered'].includes(art.mercenaryArt),
+    );
     const targetStrength = selected ? 0 : reveal;
     this.strength += (targetStrength - this.strength) * (1 - Math.exp(-Math.min(dt, 0.1) * 12));
     if (Math.abs(this.strength - targetStrength) < 0.001) this.strength = targetStrength;

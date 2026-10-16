@@ -21,9 +21,9 @@ const designs: Record<MercenaryArt, FaceArt> = {
   faithful,
   painted,
   graphic,
-  restored: faithful,
-  tailored: faithful,
-  embroidered: painted,
+  restored: { palette: {}, regions: [] },
+  tailored: { palette: {}, regions: [] },
+  embroidered: { palette: {}, regions: [] },
 };
 
 /** Shaped features follow the original curved face. One vertex-colored mesh
@@ -62,11 +62,14 @@ export class MercenaryFaceResources {
         for (const index of region.indices) indices.push(offset + index);
       }
       const mesh = new pc.Mesh(app.graphicsDevice);
-      mesh.setPositions(positions);
-      mesh.setNormals(normals);
-      mesh.setColors(colors);
-      mesh.setIndices(indices);
+      // Keep capture/shadow membership stable when comparing old overlays with
+      // the new source-painted face. A zero-count primitive draws no overlay.
+      mesh.setPositions(positions.length ? positions : [0, 0, 0]);
+      mesh.setNormals(normals.length ? normals : [0, 1, 0]);
+      mesh.setColors(colors.length ? colors : [0, 0, 0, 0]);
+      mesh.setIndices(indices.length ? indices : [0, 0, 0]);
       mesh.update();
+      if (!indices.length) mesh.primitive[0]!.count = 0;
       // The shared scene owner retains each design across actor replacements.
       mesh.incRefCount();
       this.meshes.set(name as MercenaryArt, mesh);
@@ -95,8 +98,8 @@ export class MercenaryFaceResources {
     this.heads.delete(root);
   }
   preparePose(root: pc.Entity): void {
-    // Preserve the existing modest face proportion under coarse figure sampling.
-    this.heads.get(root)?.setLocalScale(1.08, 1.08, 1.08);
+    const scale = designs[this.variant].regions.length ? 1.08 : 1;
+    this.heads.get(root)?.setLocalScale(scale, scale, scale);
   }
   destroy(): void {
     this.attached.clear();

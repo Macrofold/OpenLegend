@@ -45,6 +45,7 @@ export class PixelCharacter {
   private readonly depth: pc.Texture;
   private readonly target: pc.RenderTarget;
   private sampling?: ArtTreatment['sampling'];
+  private preserveShape = false;
   private readonly edgeSettings = new Float32Array(4);
   private readonly screenCoverage = new Float64Array(2);
   private targetResizes = 0;
@@ -228,7 +229,15 @@ export class PixelCharacter {
     this.app.systems.light?.on('beforeremove', this.removeLight, this);
     this.setVisible(false);
   }
-  setTreatment(sampling: ArtTreatment['sampling'], edges: ArtTreatment['edges']): void {
+  setTreatment(
+    sampling: ArtTreatment['sampling'],
+    edges: ArtTreatment['edges'],
+    preserveShape = false,
+  ): void {
+    if (this.preserveShape !== preserveShape) {
+      this.preserveShape = preserveShape;
+      this.mappingReady = false;
+    }
     if (this.sampling !== sampling) {
       if (sampling !== 'screen') {
         const rows = sampling === 'native' ? 378 : Number(sampling);
@@ -370,13 +379,15 @@ export class PixelCharacter {
       .add(this.foot);
     this.project(this.top, this.screenTop);
     const visibleHeight = Math.abs(this.screenTop.y - this.screen.y);
-    const height = (visibleHeight * imageHeight) / visibleRows;
+    const sourceHeight = ((maxY - minY) * imageHeight) / visibleRows;
+    // Source-based people are upright models. The old sprite-height correction
+    // would stretch this mercenary above them despite the correct 10% scale.
+    const height = this.preserveShape ? sourceHeight : (visibleHeight * imageHeight) / visibleRows;
     // Screen capture rounding must not widen/narrow the body as allocation
     // changes. Historical fixed-row modes retain their existing aspect ratios.
     const aspect =
       this.sampling === 'screen' ? imageWidth / imageHeight : this.color.width / this.color.height;
     const width = height * aspect;
-    const sourceHeight = ((maxY - minY) * imageHeight) / visibleRows;
     const sourceCenterY = (minY + maxY) / 2;
     const centerY = this.screen.y + ((sourceCenterY - this.screen.y) * height) / sourceHeight;
     // Separate Y ranges compensate for upright-body foreshortening. X stays
@@ -586,6 +597,7 @@ export class PixelCharacter {
     return {
       resolution: [this.color.width, this.color.height],
       sampling: this.sampling,
+      preserveShape: this.preserveShape,
       screenCoverage: this.sampling === 'screen' ? [...this.screenCoverage] : undefined,
       captureScale: this.sampling === 'screen' ? screenCaptureScale : undefined,
       targetResizes: this.targetResizes,

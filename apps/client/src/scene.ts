@@ -1491,10 +1491,6 @@ export class WildernessScene implements WorldRenderer {
     };
     const preparedProp = propDimensions(view.appearance);
     if (preparedProp || (crate && this.artSettings.prop !== 'authored')) {
-      if (preparedProp) {
-        entry.width = preparedProp.width;
-        entry.height = preparedProp.height;
-      }
       entry.sceneProp = this.sceneProps.create(
         root,
         preparedProp?.width ?? width,
@@ -1516,6 +1512,11 @@ export class WildernessScene implements WorldRenderer {
     this.cards.delete(entry.sprite);
     for (const node of [...entry.root.children]) if (node !== sprite) node.destroy();
     entry.card = false;
+    const dimensions = propDimensions(entry.view.appearance);
+    if (dimensions) {
+      entry.width = dimensions.width;
+      entry.height = dimensions.height;
+    }
     entry.sprite = sprite;
     entry.meshes = this.appearanceMeshes(sprite);
     entry.meshCasters = entry.meshes.filter((mesh) => mesh.castShadow);

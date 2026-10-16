@@ -253,5 +253,10 @@
       "sha256": "4372d154560ebaff6638e42e9e99d978c73f8c09fdc8471a69df8c752e845098",
       "source": "OpenLegend authored cord/leather patterns, AGPL-3.0-only; stone-tool source Kenney Survival Kit, CC0."
     }
-  ]
+  ],
+  "controls": [],
+  "controlRecipe": {
+    "path": "scripts/prepare-study-controls.py",
+    "sha256": "5b16232aabfa4ed836a02b2cb4d10baa172f4961f8574c6eca88b60352bf7999"
+  }
 }

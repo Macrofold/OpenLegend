@@ -54,6 +54,7 @@ def main(args):
         sources['library-'+family] = (args.sources/'backpack.glb' if library=='pack' else
             args.libraries/('quaternius-standard/glTF' if library=='nature' else 'kenney_survival-kit/Models/GLB format')/(files[0]+('.gltf' if library=='nature' else '.glb')))
     sources['mercenary'] = args.mercenary/'assets/mercenary.glb'
+    sources['library-hare'] = ROOT/'apps/client/src/props/library-animals/cdmir-rabbit-source.blend'
     sources['library-bear'] = args.sources/'animals/bear.glb'
     sources['library-bird'] = args.sources/'animals/shrike/bird_yellow_billed_shrike/bird_shrike1.blend'
     for species in ['deer','stag','wolf']:
@@ -64,6 +65,8 @@ def main(args):
         catalog = json.loads(path.read_text())
         controls = []
         families = {asset['family']: asset for asset in reversed(catalog['assets'])}
+        if args.families and not set(families).intersection(args.families):
+            continue
         for family, asset in families.items():
             if args.families and family not in args.families: continue
             if family not in sources and family not in human.PEOPLE:
@@ -92,6 +95,8 @@ def main(args):
                 objects=load(source_path)
                 if family in ('library-bird','library-deer','library-stag','library-wolf'):
                     objects=[o for o in objects if o.type=='ARMATURE' or o.name.startswith(('Bird_YBShrike','Deer','Stag','Wolf'))]
+                if family=='library-hare':
+                    objects=[o for o in objects if o.name in ('Rabbit','Armature')]
                 source=str(source_path)+' · SHA256 '+hashlib.sha256(source_path.read_bytes()).hexdigest()
             helper.normalize(objects,asset['bounds']['max'][1]-asset['bounds']['min'][1])
             control,_=export_asset(objects,path.parent,'control-'+family,family,asset['label'],'source-control',

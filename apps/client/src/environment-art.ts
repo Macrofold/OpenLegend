@@ -21,14 +21,15 @@ export function environmentSurfaceArt(kind: EnvironmentSurface): HTMLCanvasEleme
       for (let row = 0; row < rows; row++) {
         const offset = row % 2 ? 8 : 0;
         for (let x = -16; x < size; x += 16) {
-          const y = row * 8, left = x + offset;
-          ctx.fillStyle = ['#858585','#929292','#7b7b7b'][(row + (x+16)/16)%3]!;
-          ctx.fillRect(left+1,y+1,15,surface === 'masonry' ? 7 : size);
+          const y = row * 8,
+            left = x + offset;
+          ctx.fillStyle = ['#858585', '#929292', '#7b7b7b'][(row + (x + 16) / 16) % 3]!;
+          ctx.fillRect(left + 1, y + 1, 15, surface === 'masonry' ? 7 : size);
           ctx.fillStyle = '#626262';
-          ctx.fillRect(left,y,1,surface === 'masonry' ? 8 : size);
-          if (surface === 'masonry') ctx.fillRect(left,y,16,1);
+          ctx.fillRect(left, y, 1, surface === 'masonry' ? 8 : size);
+          if (surface === 'masonry') ctx.fillRect(left, y, 16, 1);
           ctx.fillStyle = '#a4a4a4';
-          ctx.fillRect(left+3,y+1,9,1);
+          ctx.fillRect(left + 3, y + 1, 9, 1);
         }
       }
       return;

@@ -69,7 +69,7 @@ export class LibraryActors {
     setVisibilityStencil(material, personStencil);
     if (material.diffuseMap) {
       // Fixed UV paint remains fixed when the camera moves. Mips suppress
-      // distant texture aliasing without changing the authored 64px artwork.
+      // distant texture aliasing without repainting the authored artwork.
       material.diffuseMap.magFilter = pc.FILTER_NEAREST;
       material.diffuseMap.minFilter = pc.FILTER_LINEAR_MIPMAP_LINEAR;
       material.diffuseMap.anisotropy = 1;

@@ -99,7 +99,9 @@ export class ArtMaterials {
     this.settings[1] = style.lighting === 'smooth' ? 0 : style.lighting === 'hard' ? 1 : 2;
     this.settings[2] = 0.055;
     this.device.scope.resolve('ol_artStyle').setValue(this.settings);
-    this.device.scope.resolve('ol_surfaceEnabled').setValue(style.surfaceArt === 'painted' ? 1 : style.surfaceArt === 'rigid' ? 2 : 0);
+    this.device.scope
+      .resolve('ol_surfaceEnabled')
+      .setValue(style.surfaceArt === 'painted' ? 1 : style.surfaceArt === 'rigid' ? 2 : 0);
     this.device.scope
       .resolve('ol_surfaceEdges')
       .setValue(style.surfaceEdges === 'filtered' ? 1 : 0);
@@ -239,7 +241,7 @@ export function mountArtControls(
       'anchored3',
       'metres30',
     ],
-    surfaceArt: ['plain', 'painted'],
+    surfaceArt: ['plain', 'painted', 'rigid'],
     surfaceEdges: ['sharp', 'filtered'],
     coverage: ['none', 'msaa4'],
     subjectDetail: ['shared', 'preserve'],
@@ -316,7 +318,9 @@ export function mountArtControls(
                   ? 'World-anchored grid: 5 cm (orthographic)'
                   : value === 'anchored3'
                     ? 'World-anchored grid: 7.5 cm (orthographic)'
-                    : String(value);
+                    : value === 'metres30'
+                      ? 'Fixed world density: 30 samples/metre'
+                      : String(value);
       select.append(option);
     }
     select.onchange = () => apply({ ...current(), [key]: select.value });
