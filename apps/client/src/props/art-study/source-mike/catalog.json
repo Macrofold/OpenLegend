@@ -1,14 +1,14 @@
 {
   "group": "source-mike",
   "sourceFile": "art-direction/assets/source-study/source-mike.blend",
-  "sourceSha256": "6733379b72dc4f953227ea43ba094edca4de23b91fe48ea5c712a46d2e77f8bd",
+  "sourceSha256": "7f59286d07b7a06beeb71d5fa53ab266044e2e3c834f850bd5e494d2b043b5a2",
   "recipe": {
     "path": "scripts/prepare-human-study.py",
-    "sha256": "a0b9c8708764799fbde9b3014ac3a4014b43c13670e0de973e68dbf8d1281402"
+    "sha256": "631b84ee55c37e05671a48c897959cd6b2db7489708750dd2e41a3f11b84dd2e"
   },
   "helpers": {
-    "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
-    "prepare-source-study.py": "324ec9807b07c217cde15734d66d55d4453ea22564fe26e479d79021cdb32a70",
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "7cf6b8bc5ca5aff50c4b71ee3744613128a806343a963b87ca693f1942b9f5fe",
     "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
   },
   "sources": [
@@ -48,8 +48,8 @@
           0.284651
         ]
       },
-      "triangles": 33864,
-      "vertices": 17287,
+      "triangles": 33884,
+      "vertices": 17311,
       "textureSizes": [
         [
           256,
@@ -80,10 +80,10 @@
           512
         ]
       ],
-      "sha256": "9e4acfce088fe2cc2abb67ca6362c8478a26ea20bb58bc6be968c095386e2c78",
+      "sha256": "5120f5d87a6dee7bb4f5704f68160b25adec4612efcedaf44c71ef472c8d8159",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "mike-field-tunic-motion.glb",
-      "animatedSha256": "444f4c87fbc35f12cefa550089a1b6489e1096c4157e5018614936d25a353546"
+      "animatedSha256": "d9ebfa5170a3d995acd52368c77b39502d9b62c016a9896e8972bb177d3873af"
     },
     {
       "id": "mike-work-vest",
@@ -105,8 +105,8 @@
           0.292644
         ]
       },
-      "triangles": 34260,
-      "vertices": 17833,
+      "triangles": 33062,
+      "vertices": 17260,
       "textureSizes": [
         [
           256,
@@ -137,10 +137,10 @@
           512
         ]
       ],
-      "sha256": "895bb071d351bd4db01cedeb46c302b1b257b6a4eb94d089de056a8b31637c00",
+      "sha256": "a9bb95bb8b421206f2533b587f6e631689f94838b9f7a3a21c5b926ea241f031",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "mike-work-vest-motion.glb",
-      "animatedSha256": "6790dd4e8b40cf8e5e368b006ea81eb771b18c875f4bca642d49817bd7145c15"
+      "animatedSha256": "50d673151f6243f56e097ccd859d15fd239731fecec8d68ddcdc70ca7f5504ee"
     },
     {
       "id": "mike-travel-coat",
@@ -152,18 +152,18 @@
       "file": "mike-travel-coat.glb",
       "bounds": {
         "min": [
-          -0.361688,
+          -0.370156,
           0.0,
           -0.285942
         ],
         "max": [
-          0.361688,
+          0.370156,
           1.85,
           0.285942
         ]
       },
-      "triangles": 32442,
-      "vertices": 16543,
+      "triangles": 32462,
+      "vertices": 16567,
       "textureSizes": [
         [
           256,
@@ -194,10 +194,10 @@
           512
         ]
       ],
-      "sha256": "04b4ba019814de2558e51bbb05bcda8e0c27f7beaa9c01f6e20c8e667c512df8",
+      "sha256": "7f924d5d894ab199f96e128d35aa0952e38478d33d9f2ee029f2508a7a72f504",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "mike-travel-coat-motion.glb",
-      "animatedSha256": "fe906f7bb8c90666c3e20c90a6475c6b9fb699c91d07f7cead8276daeb6df75e"
+      "animatedSha256": "7ad51f82dcc9904022c296e2f9d826638893af088cdce89bbf7be1bb732a8442"
     }
   ]
 }

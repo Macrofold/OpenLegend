@@ -1,10 +1,10 @@
 {
   "group": "source-people",
   "sourceFile": "art-direction/assets/source-study/source-people.blend",
-  "sourceSha256": "9009e2fa958b731b396332bad63847d1a1fa0cdb76379c48d608fad9c02511c5",
+  "sourceSha256": "0f2f8a38a872508fe88f69d58a1fd97a7186d9eb5cbf5854fff7b031138f4a9f",
   "recipe": {
     "path": "scripts/prepare-human-study.py",
-    "sha256": "dfb0dc1a24cdf6218d41bd205e7aa702dacc09688df90e845fc55befdbd6c94a"
+    "sha256": "631b84ee55c37e05671a48c897959cd6b2db7489708750dd2e41a3f11b84dd2e"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
@@ -80,10 +80,10 @@
           512
         ]
       ],
-      "sha256": "b2c2ac5ec6d9e27c49d801138dd184b4770ab3772e0987613a0811e03bf6070f",
+      "sha256": "3dc70b1dd3565ede64ba96b382365cb06abe742d299a3ba5838f50201b481df0",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "ada-field-tunic-motion.glb",
-      "animatedSha256": "dc7bd009d7de7cc873f88b524c147cbe04f713fa99607a76ca93c3e4802511cc"
+      "animatedSha256": "fbaf9e5e879c323fa6a5853bc865bc2bac28b619f7d295d5767c840d7441fb73"
     },
     {
       "id": "ada-work-vest",
@@ -97,16 +97,16 @@
         "min": [
           -0.312614,
           0.0,
-          -0.233568
+          -0.23835
         ],
         "max": [
           0.312614,
           1.85,
-          0.233568
+          0.23835
         ]
       },
-      "triangles": 32976,
-      "vertices": 17353,
+      "triangles": 35692,
+      "vertices": 18792,
       "textureSizes": [
         [
           256,
@@ -137,10 +137,10 @@
           512
         ]
       ],
-      "sha256": "3e5f0a1c34c19c3427de0a6eb54318f29e1502ca51ccc4b39a6d95bdfe9cfc7e",
+      "sha256": "0f794848a9a3c46b9de53c56f1435491b247c1fd59ce79d30a63a38421a821b3",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "ada-work-vest-motion.glb",
-      "animatedSha256": "5303ad91058028f25a35d5a7740797596ad310b28a1f1092203aab927ae38a25"
+      "animatedSha256": "c5452174917afacf11c6875cf401408f5b65e9136fe6e817b75f6072a03d0948"
     },
     {
       "id": "ada-travel-coat",
@@ -152,12 +152,12 @@
       "file": "ada-travel-coat.glb",
       "bounds": {
         "min": [
-          -0.298573,
+          -0.312631,
           0.0,
           -0.254779
         ],
         "max": [
-          0.298573,
+          0.312631,
           1.85,
           0.254779
         ]
@@ -194,10 +194,10 @@
           512
         ]
       ],
-      "sha256": "a073c4cbf9d95c5980c38ac1719a265dd8eb65459217771e0e7f81e04c52442a",
+      "sha256": "03be26289c594cf0eea0c9a438d2fb46ad889a5df91c85e7d7bda21ec521313c",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "ada-travel-coat-motion.glb",
-      "animatedSha256": "f1c95f7943625c3e02d03fcdd84ac7b9302db08c558e9e5e74dec55cb09b371a"
+      "animatedSha256": "08c008e985b79795041b430369805020b23633e7593230d7e2dc56f9f9f5b124"
     }
   ]
 }

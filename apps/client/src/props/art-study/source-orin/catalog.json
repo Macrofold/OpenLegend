@@ -1,14 +1,14 @@
 {
   "group": "source-orin",
   "sourceFile": "art-direction/assets/source-study/source-orin.blend",
-  "sourceSha256": "15e703b3b69ea3178a2637b11372d916188376ca2c6170761ac1bc22631f0828",
+  "sourceSha256": "83f1e96ad0941d37add1ec4c32e66e250658741d1b172df9263ccf1fa9fa6922",
   "recipe": {
     "path": "scripts/prepare-human-study.py",
-    "sha256": "a0b9c8708764799fbde9b3014ac3a4014b43c13670e0de973e68dbf8d1281402"
+    "sha256": "631b84ee55c37e05671a48c897959cd6b2db7489708750dd2e41a3f11b84dd2e"
   },
   "helpers": {
-    "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
-    "prepare-source-study.py": "324ec9807b07c217cde15734d66d55d4453ea22564fe26e479d79021cdb32a70",
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "7cf6b8bc5ca5aff50c4b71ee3744613128a806343a963b87ca693f1942b9f5fe",
     "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
   },
   "sources": [
@@ -48,8 +48,8 @@
           0.252243
         ]
       },
-      "triangles": 33864,
-      "vertices": 17287,
+      "triangles": 33884,
+      "vertices": 17311,
       "textureSizes": [
         [
           256,
@@ -80,10 +80,10 @@
           512
         ]
       ],
-      "sha256": "dcabbf9193e612a0aee341ad732bfcda38fdaaad967d7b47f065c236b0a457ef",
+      "sha256": "c086ba71cb3a4ac2846cc9dbc08889827c688b80acfecc6af15d400cafab14b5",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "orin-field-tunic-motion.glb",
-      "animatedSha256": "9bda37c9cb67d5569329ee1c86f76143225c400da31c03a2f73d26b5b4d143d4"
+      "animatedSha256": "d0bc25da016798f6641617778b4dbe1d986e94987c596ed16955b3a2d7beffd8"
     },
     {
       "id": "orin-work-vest",
@@ -105,8 +105,8 @@
           0.256
         ]
       },
-      "triangles": 37258,
-      "vertices": 20171,
+      "triangles": 36506,
+      "vertices": 19810,
       "textureSizes": [
         [
           256,
@@ -137,10 +137,10 @@
           512
         ]
       ],
-      "sha256": "6bf6796981a980c1ed9b95d71af9edfe29ca4d3b61e1b40a473be76909695b88",
+      "sha256": "18c539fef1de64bfbd82f90d0091f86ff704e065376f507e45b2fe0821d7365c",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "orin-work-vest-motion.glb",
-      "animatedSha256": "ef6dc48c2d0f542c5770b64acfe3df36349e49782d8e92d2333e6b4d636c938d"
+      "animatedSha256": "bb04d84635d7820c365bf0790551a8ea41640c704d50abb3d6c045bb9e9ccb9a"
     },
     {
       "id": "orin-travel-coat",
@@ -152,18 +152,18 @@
       "file": "orin-travel-coat.glb",
       "bounds": {
         "min": [
-          -0.331327,
+          -0.34079,
           0.0,
           -0.266245
         ],
         "max": [
-          0.331327,
+          0.34079,
           1.85,
           0.266245
         ]
       },
-      "triangles": 35872,
-      "vertices": 19250,
+      "triangles": 35892,
+      "vertices": 19274,
       "textureSizes": [
         [
           256,
@@ -194,10 +194,10 @@
           512
         ]
       ],
-      "sha256": "0270f41c5c94c25bb3ceea6b906bb1e1568d22d67ab3d921594a7d8a01316f0f",
+      "sha256": "8d11595f8475d9a162961163d331b99e782e2f671ac8fc531631b6179d7dfa34",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "orin-travel-coat-motion.glb",
-      "animatedSha256": "cf9caac9e704e7e1c63e71d9e65d9923f20a02426ceb41c48377861143d6781c"
+      "animatedSha256": "3749ec9ac9590112ee090de5d8f58cebc3107d8116082c45f03b789b4f3c7513"
     }
   ]
 }

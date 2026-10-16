@@ -85,25 +85,27 @@ def cloth_image(obj, paint, output, variant, person, palette):
     size = 256
     position, covered = paint.rasterize_surface(obj, size)
     x,y,z = [position[:,:,i] for i in range(3)]
+    low,high=float(z[covered].min()),float(z[covered].max())
+    h=(z-low)/(high-low)
     if variant=='work-vest': palette=['756c53','95876b','b3a482','d2c39c']
     if person=='ada' and variant=='travel-coat':palette=['4a434b','62545a','81666b','9e8280']
     palette = np.array([[int(h[i:i+2],16)/255 for i in (0,2,4)] for h in palette])
     # Broad garment panels survive the final small image. A sinusoidal stripe
     # across mirrored source UVs made an accidental X across the chest.
     shade = np.ones(x.shape,dtype=np.int32)
-    shade[(np.abs(x)>.17)&(z<1.08)] = 0
+    shade[(np.abs(x)>.11)&(h<.7)] = 0
     color = palette[shade]
-    hem = (z<.58)|((z>1.19)&(np.abs(x)<.15))
+    hem = (h<.045)|((h>.92)&(np.abs(x)<.09))
     color[hem] = palette[0]
-    piping = ((z>.58)&(z<.59))|((z>1.19)&(z<1.20)&(np.abs(x)<.15))
+    piping = ((h>.045)&(h<.06))|((h>.89)&(h<.91)&(np.abs(x)<.09))
     color[piping] = palette[3]
-    seam = (np.abs(x)<.005)&(y<0)&(z>1.08)
+    seam = (np.abs(x)<.004)&(y<0)&(h>.52)
     color[seam] = palette[0]
     # Small useful fastening, not a large decorative emblem.
-    color[(np.abs(x)<.010)&(y<0)&(z>1.12)&(z<1.135)] = [.60,.43,.23]
+    color[(np.abs(x)<.007)&(y<0)&(h>.72)&(h<.75)] = [.60,.43,.23]
     if person=='mara':
         # A few purposeful repairs, kept broad enough for a small world figure.
-        patch=(x>.075)&(x<.145)&(z>.66)&(z<.75)&(y<0)
+        patch=(x>.045)&(x<.10)&(h>.27)&(h<.43)&(y<0)
         color[patch]=palette[2]
     if person=='armor':
         # Authored garment structure on the fitted source, not cube plates.
@@ -188,7 +190,8 @@ def main(source,person):
             bpy.context.collection.objects.link(vest);objects.append(vest)
             import bmesh
             mesh=bmesh.new();mesh.from_mesh(vest.data)
-            remove=[v for v in mesh.verts if v.co.z<.90 or abs(v.co.x)>.26]
+            low=min(v.co.z for v in mesh.verts);high=max(v.co.z for v in mesh.verts)
+            remove=[v for v in mesh.verts if v.co.z<low+(high-low)*.4 or abs(v.co.x)>.145]
             bmesh.ops.delete(mesh,geom=remove,context='VERTS');mesh.to_mesh(vest.data);mesh.free()
             for vertex in vest.data.vertices:
                 vertex.co.x*=1.035;vertex.co.y*=1.07
@@ -196,8 +199,11 @@ def main(source,person):
         if index==2:
             # A longer travelling hem changes the silhouette; source weights
             # and the clothed legs remain intact for the later walking check.
-            for vertex in clothes[-1].data.vertices:
-                if vertex.co.z<1.04: vertex.co.z-=min(.15,(1.04-vertex.co.z)*.6)
+            vertices=clothes[-1].data.vertices
+            low=min(v.co.z for v in vertices);high=max(v.co.z for v in vertices)
+            cutoff=low+(high-low)*.23
+            for vertex in vertices:
+                if vertex.co.z<cutoff:vertex.co.z-=.11*(cutoff-vertex.co.z)/(cutoff-low)
         for side,angle in [('L',.5),('R',-.5)]:
             bone=rig.pose.bones['upperarm01.'+side]
             rest=bone.bone.matrix_local.to_quaternion()

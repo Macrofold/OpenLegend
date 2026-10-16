@@ -1,0 +1,203 @@
+{
+  "group": "source-armor",
+  "sourceFile": "art-direction/assets/source-study/source-armor.blend",
+  "sourceSha256": "8a9749ccb1b097bfef81d98a7e749807650029db11aed5f13945198b568f2479",
+  "recipe": {
+    "path": "scripts/prepare-human-study.py",
+    "sha256": "631b84ee55c37e05671a48c897959cd6b2db7489708750dd2e41a3f11b84dd2e"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "7cf6b8bc5ca5aff50c4b71ee3744613128a806343a963b87ca693f1942b9f5fe",
+    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
+  },
+  "sources": [
+    {
+      "url": "https://github.com/makehumancommunity/mpfb2",
+      "license": "GPL-3.0-or-later code; CC0 core mesh"
+    },
+    {
+      "url": "https://static.makehumancommunity.org/assets/assetpacks/makehuman_system_assets.html",
+      "license": "CC0",
+      "archiveSha256": "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107"
+    },
+    {
+      "url": "https://static.makehumancommunity.org/assets/assetpacks/suits02.html",
+      "license": "CC0",
+      "archiveSha256": "437f4d7ab92b698c1fb1047e7d62b22c11f195b2473e936118661dc8e6b7eb7a"
+    }
+  ],
+  "assets": [
+    {
+      "id": "armor-field-tunic",
+      "family": "armor",
+      "label": "Armor study",
+      "variant": "field-tunic",
+      "description": "Fitted field tunic with a restrained collar and hem. Anatomical eyes and hands; plain wool replaces the source mail print.",
+      "recommended": true,
+      "file": "armor-field-tunic.glb",
+      "bounds": {
+        "min": [
+          -0.373346,
+          0.0,
+          -0.287272
+        ],
+        "max": [
+          0.373346,
+          1.85,
+          0.287272
+        ]
+      },
+      "triangles": 31590,
+      "vertices": 16421,
+      "textureSizes": [
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "28de95b1671cba5f2e545b24c83f67b1d97f38e2798959b993b648cfca48342c",
+      "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
+      "animatedFile": "armor-field-tunic-motion.glb",
+      "animatedSha256": "44c149a577c987b6afe5739769f9fa31904ff8dcff1d7b41f49412966c1de2ba"
+    },
+    {
+      "id": "armor-work-vest",
+      "family": "armor",
+      "label": "Armor study",
+      "variant": "work-vest",
+      "description": "Short fitted vest over linen with a clear waist. The underlayer remains complete beneath the tailored vest.",
+      "recommended": false,
+      "file": "armor-work-vest.glb",
+      "bounds": {
+        "min": [
+          -0.373346,
+          0.0,
+          -0.29283
+        ],
+        "max": [
+          0.373346,
+          1.85,
+          0.29283
+        ]
+      },
+      "triangles": 33056,
+      "vertices": 17259,
+      "textureSizes": [
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "35442c2cbb7830823e6a95e080bdcd495134cc4bce60f80902072177f2159075",
+      "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
+      "animatedFile": "armor-work-vest-motion.glb",
+      "animatedSha256": "963b25ebc9a8b14c7f9aba713479448503c6ccfe2ad9791de916f79d5991e822"
+    },
+    {
+      "id": "armor-travel-coat",
+      "family": "armor",
+      "label": "Armor study",
+      "variant": "travel-coat",
+      "description": "Longer muted travel coat with broad cloth panels and a small collar fastening.",
+      "recommended": false,
+      "file": "armor-travel-coat.glb",
+      "bounds": {
+        "min": [
+          -0.373346,
+          0.0,
+          -0.287272
+        ],
+        "max": [
+          0.373346,
+          1.85,
+          0.287272
+        ]
+      },
+      "triangles": 31590,
+      "vertices": 16421,
+      "textureSizes": [
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "97d0dcd1337b5ac0bf8fea3a59f8ba5bf6a11015e13371bb18050e64fbca8614",
+      "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
+      "animatedFile": "armor-travel-coat-motion.glb",
+      "animatedSha256": "e53f1a17cf2589a7821a6d6a734054b2b9703118ddf4d9d237f35005718f4d13"
+    }
+  ]
+}

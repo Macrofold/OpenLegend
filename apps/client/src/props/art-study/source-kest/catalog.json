@@ -1,14 +1,14 @@
 {
   "group": "source-kest",
   "sourceFile": "art-direction/assets/source-study/source-kest.blend",
-  "sourceSha256": "b4b0f24ae6369e08790eb2b5fa71ea5f0d1a96b18bdc93eaf5335831cfffe534",
+  "sourceSha256": "703ebe9a0c12410830fc09e927809ad1f452fc84ab94600e55fa96d4e697f1d5",
   "recipe": {
     "path": "scripts/prepare-human-study.py",
-    "sha256": "a0b9c8708764799fbde9b3014ac3a4014b43c13670e0de973e68dbf8d1281402"
+    "sha256": "631b84ee55c37e05671a48c897959cd6b2db7489708750dd2e41a3f11b84dd2e"
   },
   "helpers": {
-    "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
-    "prepare-source-study.py": "324ec9807b07c217cde15734d66d55d4453ea22564fe26e479d79021cdb32a70",
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "7cf6b8bc5ca5aff50c4b71ee3744613128a806343a963b87ca693f1942b9f5fe",
     "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
   },
   "sources": [
@@ -48,8 +48,8 @@
           0.288581
         ]
       },
-      "triangles": 31570,
-      "vertices": 16397,
+      "triangles": 31590,
+      "vertices": 16421,
       "textureSizes": [
         [
           256,
@@ -80,10 +80,10 @@
           512
         ]
       ],
-      "sha256": "d09f98ccd479031b30ad3ac3aa555c4cc44bd766f2141db91b70298dca5b717c",
+      "sha256": "2982549daaa3a6d2a3869cb1bb996756be8b374f3b70221f30daf46f88937b24",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "kest-field-tunic-motion.glb",
-      "animatedSha256": "2e35bd03010f7a4db5b9f029f7b9eef22a804954d5a6b042b575c9936da1439e"
+      "animatedSha256": "31a0ffe265d94026b30caf0e6ab75c5526f94330f72452cdc918aedddc679ab8"
     },
     {
       "id": "kest-work-vest",
@@ -105,8 +105,8 @@
           0.291723
         ]
       },
-      "triangles": 37578,
-      "vertices": 19226,
+      "triangles": 35148,
+      "vertices": 18044,
       "textureSizes": [
         [
           256,
@@ -137,10 +137,10 @@
           512
         ]
       ],
-      "sha256": "1b64f64e2bb57bd86b33057f5f0d4a430a6187c42bb8b706ebdca155641ef627",
+      "sha256": "54b4e5055900d78240d0612289df0095239085b7b44dc43593d0f91145fadfa9",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "kest-work-vest-motion.glb",
-      "animatedSha256": "6ea99a57e8e80e5ca8383c5291a4a502954c6fd1a8f908c3a65e67e29860af18"
+      "animatedSha256": "8ffdbc253cc20ceab695cf68f7463597753487aa4a3acd154a9f9c6d9cb33967"
     },
     {
       "id": "kest-travel-coat",
@@ -162,8 +162,8 @@
           0.287461
         ]
       },
-      "triangles": 32442,
-      "vertices": 16543,
+      "triangles": 32462,
+      "vertices": 16567,
       "textureSizes": [
         [
           256,
@@ -194,10 +194,10 @@
           512
         ]
       ],
-      "sha256": "8cb99c75d5d3dbd82a707ce4dcc9a73d51db869c9622af9416453917e1c20f0f",
+      "sha256": "d366f0f7ef0d3c2f7e3dd7ff2733c8ef9f293a0d7fe76e8d1400c1fa95e50bb0",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "kest-travel-coat-motion.glb",
-      "animatedSha256": "e64579539e3f8e245463627934d0927181e70107ab8dbe05a90a407151f0fcbf"
+      "animatedSha256": "4a81114ee3c30dc64ae7eca8b639a50a8389aba08b880cf705f9b43980bbd03e"
     }
   ]
 }
