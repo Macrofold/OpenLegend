@@ -206,6 +206,8 @@ function update(now: number): void {
           shadowQuality: select('world-shadows').value,
           stagedMotion: motion,
           cameraOrbit: orbit,
+          durationMs: now - measurement.start,
+          unrenderedTailMs: now - measurement.lastRenderAt,
           renderedFrameIntervals: distribution(measurement.intervals),
           frameCosts: Object.fromEntries(
             (['updateMs', 'renderSubmissionMs', 'gpuPassMs', 'draws'] as const).map((key) => [

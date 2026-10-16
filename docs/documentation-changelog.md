@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## October 16, 2026 — Requested source-study implementation review
+
+Recorded floor restoration and duplicate-shadow fixes, held/paused pose-work reduction, explicitly projected lit-heat state, and interrupted measurement/capture behavior in the existing presentation/specification/plan/evidence owners. Qualified the old browser-callback timing tables, retained actual measurements, and added the concrete unsupported morph-ownership gate to V3D05. The feature specification is synchronized and the technical design consultation time updated. Existing art acceptance, initial-load, rights and wider qualification gaps remain open. No guidance duplication, new art choice or world-law change.
+
 ## October 16, 2026 — Source-based starting-world study
 
 Reconciled the feature specification and A–F delivery plan with 41 source-based families, retained options, current camera/scale/pixel/quality choices and actual scene evidence. Recorded the technical design consultation datetime, source rights, animation/resource fixes, measured warm/reload limits and explicit creator/production gaps. Updated current presentation, architecture, implementation index, VP01/A3D19, art navigation and tracker status; preserved superseded profiles under clearly historical headings. No AGENTS/skill instruction duplication or policy changes.

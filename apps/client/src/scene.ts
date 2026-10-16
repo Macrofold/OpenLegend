@@ -786,6 +786,7 @@ export class WildernessScene implements WorldRenderer {
     }
     for (const entry of this.actors.values()) {
       const support = surfaceById(map, entry.view.supportSurfaceId ?? '');
+      const wasEnabled = entry.root.enabled;
       entry.root.enabled =
         !level ||
         !support ||
@@ -793,6 +794,7 @@ export class WildernessScene implements WorldRenderer {
         entry.view.id === this.view!.player.id;
       this.updateModelVisibility(entry);
       for (const mesh of entry.meshCasters) mesh.castShadow = entry.observed && entry.root.enabled;
+      if (!wasEnabled && entry.root.enabled) this.presentation.restoreShadowCasters(entry.root);
       this.applyEntityOpacity(entry, this.entityOpacity(entry));
     }
     this.canvas.dataset.projection = this.cameraSettings.projection;

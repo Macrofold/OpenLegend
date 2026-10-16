@@ -291,6 +291,10 @@ export class PixelCharacter {
       this.resizeTarget(nextWidth, nextHeight);
   }
   setVisible(value: boolean): void {
+    // RenderComponent enable can register these in the capture layer again.
+    // They already cast through the world layer; the pinned engine does not
+    // deduplicate casters shared by two lit layers.
+    if (this.layer.shadowCasters.length) this.layer.removeShadowCasters(this.casters);
     this.pass.enabled = value;
     this.image.visible = value;
     this.reveal.visible = false;

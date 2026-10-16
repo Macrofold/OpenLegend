@@ -1,10 +1,10 @@
 # Progressive 3D pixel art — visual and operational qualification
 
-| Status      | Current progress                                                                                                                                | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The replacement study has source, moving-scene, failure/lifetime and device evidence; creator acceptance and broader qualification remain open. | 2026-10-16   |
+| Status      | Current progress                                                                                                                                     | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The study and requested code review have source, moving-scene and failure/lifetime evidence; creator acceptance and wider qualification remain open. | 2026-10-16   |
 
-**Replacement study evidence — 2026-10-16 11:00 UTC.** [The source-based report](../verification/source-based-starting-study.md) records the actual 41-family collection, restored mercenary, scale/framing controls, 21 location/light captures, matched rendering/motion clips, source hashes, load/interruption/resource fixes and complete moving-scene measurements. Earlier failed/rejected captures are not reused as successful proof. Technical delivery does not close creator acceptance, guarantee zero shimmer at arbitrary viewpoints, qualify unprepared poses or erase the measured initial-load hitch. The review order and critical failure criteria below remain controlling.
+**Replacement study evidence — 2026-10-16 11:13 UTC.** [The source-based report](../verification/source-based-starting-study.md) records the actual 41-family collection, restored mercenary, scale/framing controls, 21 location/light captures, matched rendering/motion clips, source hashes, load/interruption/resource fixes and complete moving-scene measurements. Earlier failed/rejected captures are not reused as successful proof. Technical delivery does not close creator acceptance, guarantee zero shimmer at arbitrary viewpoints, qualify unprepared poses or erase the measured initial-load hitch. The review order and critical failure criteria below remain controlling.
 
 The [requested implementation review](../verification/source-based-starting-study.md#requested-implementation-review--october-16-2026) separately qualifies floor restoration, pose-work reduction, projected fire facts and measurement/recording interruption. Earlier browser-callback intervals alone do not establish completed rendering; retain draw/visual evidence and use the corrected completed-frame measurement.
 

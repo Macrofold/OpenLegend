@@ -527,8 +527,9 @@ export class WorldPresentation {
   restoreShadowCasters(node: pc.Entity): void {
     for (const render of node.findComponents('render') as pc.RenderComponent[]) {
       if (!render.enabled || !render.entity.enabled) continue;
+      const meshes = render.meshInstances.slice();
       for (const id of render.layers)
-        this.app.scene.layers.getLayerById(id)?.addShadowCasters(render.meshInstances);
+        this.app.scene.layers.getLayerById(id)?.addShadowCasters(meshes);
     }
   }
   /** A floor cutaway changes camera visibility, not shadow casting or physical geometry. */

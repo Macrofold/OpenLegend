@@ -1,8 +1,8 @@
 # Progressive 3D pixel art — technical design
 
-| Status      | Current progress                                                                                                               | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | The finite source-based study reuses existing owners; the broader asset pipeline and production qualification remain proposed. | 2026-10-16   |
+| Status      | Current progress                                                                                                                     | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | The finite study and requested code review reuse existing owners; the broader pipeline and production qualification remain proposed. | 2026-10-16   |
 
 **Last used during implementation/review: 2026-10-16 11:00 UTC.** The broader architecture below remains a proposal; the finite implementation and its deviations are recorded in the [current feature specification](3d-pixel-art-feature-spec.md) and [source-based study evidence](../verification/source-based-starting-study.md).
 
