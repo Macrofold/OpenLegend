@@ -170,10 +170,6 @@ def mercenaries(source):
                         texture.image.file_format='PNG'
                         texture.image.save()
         clean_materials()
-        if variant != 'restored':
-            objects.append(facial_features([body],rig,'Head',
-                [Vector((x,0,1.733)) for x in [-.031,.031]],
-                'Mercenary '+variant+' fitted facial features',brow_offset=.016,mouth_offset=.063))
         normalize(objects,2.035)
         descriptions = [
             'Earlier concept-derived model and 29-color surface preparation. Unchanged face and original gold mantle; reference control.',

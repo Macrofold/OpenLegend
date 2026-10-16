@@ -152,11 +152,9 @@ def main(source):
                     image.pixels.foreach_set(pixels.ravel())
                 image.pack()
             image_material(obj,image,'hair' in obj.name.lower() or hair in obj.name or 'eyebrow' in obj.name)
-        eyes=next(obj for obj in objects if 'low-poly' in obj.name)
-        features=facial_features([human,eyes],rig,'head',
-            [rig.matrix_world@rig.data.bones['eye.'+side].head_local for side in ['L','R']],
-            'Ada '+variant+' facial features')
-        objects.append(features)
+        # The anatomical source already has fitted eyes, brows and lips. A
+        # second projected feature layer made doubled brows and dark eye masks;
+        # preserve one facial design and assess it at the final sample density.
         if index==1:
             # Reuse the fitted tunic as a sleeveless short over-vest. The complete
             # linen layer remains beneath it, so the cut cannot expose the torso.

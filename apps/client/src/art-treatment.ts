@@ -102,6 +102,8 @@ export class ArtMaterials {
   prepare(material: pc.StandardMaterial, role = 0): void {
     if (this.prepared.has(material) || !material.useLighting) return;
     this.prepared.add(material);
+    // These overrides extend the installed 2.22 shader signatures.
+    material.shaderChunks.version = '2.22';
     const chunks = pc.ShaderChunks.get(this.device);
     // Directional and local PCSS use different chunks/seeds. Both otherwise
     // rotate their sample pattern as a surface crosses display coordinates.

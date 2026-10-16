@@ -43,9 +43,14 @@ def add(data,appearance,path):
                 normals/=np.linalg.norm(normals,axis=1)[:,None]
                 source=model['materials'][primitive['material']];pbr=source.get('pbrMetallicRoughness',{})
                 key='study-'+hashlib.sha256((str(path)+str(primitive['material'])).encode()).hexdigest()[:12]
-                material={'baseColor':pbr.get('baseColorFactor',[1,1,1,1]),'alphaCutoff':source.get('alphaCutoff',.5) if source.get('alphaMode')=='MASK' else 0,'doubleSided':source.get('doubleSided',False),'canopyNormals':'Leaves' in source.get('name','')}
+                material={'baseColor':pbr.get('baseColorFactor',[1,1,1,1]),'alphaCutoff':source.get('alphaCutoff',.5) if source.get('alphaMode')=='MASK' else 0,'doubleSided':source.get('doubleSided',False),'canopyNormals':any(word in source.get('name','').lower() for word in ['leav','leaf','grass','fern'])}
                 if 'baseColorTexture' in pbr:
                     pixels,digest=image(pbr['baseColorTexture']['index'])
+                    if max(pixels.size)>128:
+                        original=pixels
+                        pixels=pixels.resize((128,128),reader.Image.Resampling.BOX)
+                        alpha,_=reader.prepared_alpha(original,128,max(material['alphaCutoff'],.001))
+                        pixels.putalpha(alpha)
                     texture='study-'+digest[:12];material['texture']=texture
                     data['textures'][texture]={'width':pixels.width,'height':pixels.height,'rgba':list(pixels.tobytes())}
                 data['materials'][key]=material
@@ -70,4 +75,6 @@ if __name__=='__main__':
     data['textures']={k:v for k,v in data['textures'].items() if not k.startswith('study-')}
     data['variants']['study']=dict(data['variants']['quaternius'])
     add(data,'tree-broadleaf',ROOT/'apps/client/src/props/art-study/source-nature/broadleaf-sheltered-crown.glb')
+    for appearance,file in [('tree-conifer','conifer-tiered-boughs'),('tree-birch','birch-slender-birch'),('woodland-shrub','shrub-rounded-thicket'),('meadow-grass','grass-broad-tuft')]:
+        add(data,appearance,ROOT/'apps/client/src/props/art-study/source-vegetation'/(file+'.glb'))
     path.write_text(json.dumps(data,separators=(',',':'))+'\n')

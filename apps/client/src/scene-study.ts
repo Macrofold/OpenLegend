@@ -12,6 +12,7 @@ const button = (id: string) => document.querySelector<HTMLButtonElement>('#' + i
 let scene: WildernessScene;
 let view: GameView;
 let motion = false;
+let orbit = false;
 let fire = true;
 let phase = 0;
 let frame = 0;
@@ -90,21 +91,25 @@ function publish(): void {
   scene.setView(view);
 }
 function mount(): void {
-  scene = new WildernessScene(canvas, {
-    select(entity) {
-      status.textContent = entity ? entity.name + ' · ' + entity.kind : 'Ground';
+  scene = new WildernessScene(
+    canvas,
+    {
+      select(entity) {
+        status.textContent = entity ? entity.name + ' · ' + entity.kind : 'Ground';
+      },
+      move() {
+        status.textContent = 'This is a visual replay. Open the game to travel.';
+      },
+      target(entity) {
+        status.textContent = entity.name;
+      },
+      hover() {},
+      selectionDenied(message) {
+        status.textContent = message;
+      },
     },
-    move() {
-      status.textContent = 'This is a visual replay. Open the game to travel.';
-    },
-    target(entity) {
-      status.textContent = entity.name;
-    },
-    hover() {},
-    selectionDenied(message) {
-      status.textContent = message;
-    },
-  });
+    { rememberCamera: false },
+  );
   scene.setPerceptionOptions({ vision: false, hearing: false });
   scene.setArtTreatment(treatment());
   publish();
@@ -153,6 +158,8 @@ function update(now: number): void {
       lastPublication = now;
     }
   }
+  if (orbit && !document.hidden)
+    scene.cameraCommand({ type: 'orbit', yaw: Math.min(elapsed, 100) * 0.00012, pitch: 0 });
   frame = requestAnimationFrame(update);
 }
 select('place').onchange = () => {
@@ -174,6 +181,10 @@ button('turn-left').onclick = () =>
   scene.cameraCommand({ type: 'orbit', yaw: -Math.PI / 6, pitch: 0 });
 button('turn-right').onclick = () =>
   scene.cameraCommand({ type: 'orbit', yaw: Math.PI / 6, pitch: 0 });
+button('orbit').onclick = () => {
+  orbit = !orbit;
+  button('orbit').setAttribute('aria-pressed', String(orbit));
+};
 button('motion').onclick = () => {
   motion = !motion;
   button('motion').setAttribute('aria-pressed', String(motion));
@@ -230,6 +241,8 @@ button('remount').onclick = () => {
 const pauseForPreference = () => {
   if (reducedMotion.matches) {
     motion = false;
+    orbit = false;
+    button('orbit').setAttribute('aria-pressed', 'false');
     button('motion').setAttribute('aria-pressed', 'false');
     publish();
   }
@@ -244,6 +257,16 @@ function dispose(): void {
   reducedMotion.removeEventListener('change', pauseForPreference);
   scene.destroy();
 }
-window.addEventListener('pagehide', dispose, { once: true });
+window.addEventListener('pagehide', dispose);
+window.addEventListener('pageshow', (event) => {
+  if (!event.persisted || !disposed) return;
+  disposed = false;
+  prior = 0;
+  measurement = undefined;
+  button('measure').disabled = false;
+  reducedMotion.addEventListener('change', pauseForPreference);
+  mount();
+  frame = requestAnimationFrame(update);
+});
 mount();
 frame = requestAnimationFrame(update);

@@ -1,0 +1,706 @@
+{
+  "group": "source-vegetation",
+  "sourceFile": "art-direction/assets/source-study/source-vegetation.blend",
+  "sourceSha256": "1a41f208fd342d5d5b7e52a33bbeca5ab945bd47d5d3c915a764d059e4e15fb0",
+  "recipe": {
+    "path": "scripts/prepare-nature-study.py",
+    "sha256": "86c53c229f20968472c80ef47d3be481b7bda8c0c218abeea27032a15693d256"
+  },
+  "helpers": {
+    "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
+    "prepare-source-study.py": "324ec9807b07c217cde15734d66d55d4453ea22564fe26e479d79021cdb32a70",
+    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
+  },
+  "sources": [
+    {
+      "url": "https://quaternius.com/packs/stylizednaturemegakit.html",
+      "license": "CC0",
+      "files": [
+        {
+          "file": "Pine_1.gltf",
+          "sha256": "adc85a72e6f46f71317ca5f7630876bfb207f687427bc9e37cd97ec4af5f2cbc"
+        },
+        {
+          "file": "Pine_3.gltf",
+          "sha256": "54c72a4d614f053dd4b3d4404076a361de6085ec6a34560e42a76d7e79d89830"
+        },
+        {
+          "file": "Pine_5.gltf",
+          "sha256": "bb060ce1420af32dc996241078d36e4c991577397474aa64f4c691362c482cfa"
+        },
+        {
+          "file": "CommonTree_2.gltf",
+          "sha256": "67160975f0ac991b4a2ffb2add4ab4037b5e9c1bef9f66dac5235fcf0ba9bd52"
+        },
+        {
+          "file": "CommonTree_3.gltf",
+          "sha256": "17c6537aa8042bb7255fbb501bf7aeb2b6db87c16766f794f9c37be3ce70c976"
+        },
+        {
+          "file": "CommonTree_4.gltf",
+          "sha256": "ddf0e8837705702871d3f03de8cf7aeed61ad4bf8ee92052b6f95bdd771297b6"
+        },
+        {
+          "file": "Bush_Common.gltf",
+          "sha256": "77811fca92610cb254713d3d49d5029ab6cf13050c3afb61aa942786a7b2ca90"
+        },
+        {
+          "file": "Bush_Common_Flowers.gltf",
+          "sha256": "08768c680e3abeafd25858c9d3f369bcb7eed014661d3b6825a397f2a6a3deea"
+        },
+        {
+          "file": "Bush_Common.gltf",
+          "sha256": "77811fca92610cb254713d3d49d5029ab6cf13050c3afb61aa942786a7b2ca90"
+        },
+        {
+          "file": "Rock_Medium_1.gltf",
+          "sha256": "5d1ab1fa03218f4a908728ed0eabe6486344a7e4f510b0d3d6f837fd1d011bd8"
+        },
+        {
+          "file": "Rock_Medium_2.gltf",
+          "sha256": "fac2d05a05f2d0d2098de59c09b58f42cc875c9caca4fd4c4bd57f3d36e7b12e"
+        },
+        {
+          "file": "Rock_Medium_3.gltf",
+          "sha256": "9a575b911372cf91693aa3a56aea8137ec2251c2b99fb34a31272ee64503047f"
+        },
+        {
+          "file": "Grass_Common_Short.gltf",
+          "sha256": "6957b50622c9e26e7296c1b47ea8653bc0d957e0a547de444e2ed96f0075a21a"
+        },
+        {
+          "file": "Grass_Wispy_Short.gltf",
+          "sha256": "3c1d3bdd332420e070abde72d73611d1f13acfbe027e26b2fb943f9bcbd6b1c5"
+        },
+        {
+          "file": "Grass_Common_Tall.gltf",
+          "sha256": "783466c838163bf7da44e10675ace3851b8c9fb83322387125df7a080b05cd70"
+        },
+        {
+          "file": "Fern_1.gltf",
+          "sha256": "d41915cffe9dbbde1ae88be381eb9c60f7caa2274511436cc78fe4de627468ab"
+        },
+        {
+          "file": "Fern_1.gltf",
+          "sha256": "d41915cffe9dbbde1ae88be381eb9c60f7caa2274511436cc78fe4de627468ab"
+        },
+        {
+          "file": "Fern_1.gltf",
+          "sha256": "d41915cffe9dbbde1ae88be381eb9c60f7caa2274511436cc78fe4de627468ab"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "conifer-tiered-boughs",
+      "family": "library-conifer",
+      "label": "Conifer",
+      "variant": "tiered-boughs",
+      "description": "Source-authored Pine_1 structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. tiered boughs.",
+      "recommended": true,
+      "file": "conifer-tiered-boughs.glb",
+      "bounds": {
+        "min": [
+          -1.892211,
+          0.0,
+          -1.736733
+        ],
+        "max": [
+          1.892211,
+          5.6,
+          1.736733
+        ]
+      },
+      "triangles": 3947,
+      "vertices": 5246,
+      "textureSizes": [
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "dadc8e2e034df24043886da656a0682239af506fb6dabe2ca04596ae78a7e643",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "conifer-slender-crown",
+      "family": "library-conifer",
+      "label": "Conifer",
+      "variant": "slender-crown",
+      "description": "Source-authored Pine_3 structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. slender crown.",
+      "recommended": false,
+      "file": "conifer-slender-crown.glb",
+      "bounds": {
+        "min": [
+          -1.367916,
+          0.0,
+          -1.513521
+        ],
+        "max": [
+          1.367916,
+          5.6,
+          1.513521
+        ]
+      },
+      "triangles": 4964,
+      "vertices": 6573,
+      "textureSizes": [
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "f936542fb98ca0a9d35667229f0b1c54e5b029ae8c443b6eb1644b4ace5a4a44",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "conifer-sheltered-pine",
+      "family": "library-conifer",
+      "label": "Conifer",
+      "variant": "sheltered-pine",
+      "description": "Source-authored Pine_5 structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. sheltered pine.",
+      "recommended": false,
+      "file": "conifer-sheltered-pine.glb",
+      "bounds": {
+        "min": [
+          -2.060613,
+          0.0,
+          -1.997018
+        ],
+        "max": [
+          2.060613,
+          5.6,
+          1.997018
+        ]
+      },
+      "triangles": 1646,
+      "vertices": 2315,
+      "textureSizes": [
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "1ad9111792a34734b4171e966ca990e42c7ce7757e336ac6ffb9bb8c68272265",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "birch-forked-trunk",
+      "family": "library-birch",
+      "label": "Pale woodland tree",
+      "variant": "forked-trunk",
+      "description": "Source-authored CommonTree_2 structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. forked trunk.",
+      "recommended": true,
+      "file": "birch-forked-trunk.glb",
+      "bounds": {
+        "min": [
+          -1.401849,
+          0.0,
+          -1.342673
+        ],
+        "max": [
+          1.401849,
+          4.8,
+          1.342673
+        ]
+      },
+      "triangles": 5648,
+      "vertices": 8107,
+      "textureSizes": [
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "877360538a342747f5c115b2945fa5f64a4fb607db31399327efbc2403a32805",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "birch-slender-birch",
+      "family": "library-birch",
+      "label": "Pale woodland tree",
+      "variant": "slender-birch",
+      "description": "Source-authored CommonTree_3 structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. slender birch.",
+      "recommended": false,
+      "file": "birch-slender-birch.glb",
+      "bounds": {
+        "min": [
+          -1.03455,
+          0.0,
+          -1.079934
+        ],
+        "max": [
+          1.03455,
+          4.8,
+          1.079934
+        ]
+      },
+      "triangles": 3505,
+      "vertices": 5749,
+      "textureSizes": [
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "3305449e18c1e02bd22cc383a6c51d2b163b446c6e6bdfd7bf4ee87222f2206a",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "birch-open-branches",
+      "family": "library-birch",
+      "label": "Pale woodland tree",
+      "variant": "open-branches",
+      "description": "Source-authored CommonTree_4 structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. open branches.",
+      "recommended": false,
+      "file": "birch-open-branches.glb",
+      "bounds": {
+        "min": [
+          -0.972758,
+          0.0,
+          -0.95492
+        ],
+        "max": [
+          0.972758,
+          4.8,
+          0.95492
+        ]
+      },
+      "triangles": 4066,
+      "vertices": 5900,
+      "textureSizes": [
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "9df3a0f27545388bc6930c6edf282e06947c47dffc585d195dbeca23e86025a0",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "shrub-rounded-thicket",
+      "family": "library-shrub",
+      "label": "Woodland shrub",
+      "variant": "rounded-thicket",
+      "description": "Source-authored Bush_Common structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. rounded thicket.",
+      "recommended": true,
+      "file": "shrub-rounded-thicket.glb",
+      "bounds": {
+        "min": [
+          -0.726335,
+          0.0,
+          -0.745414
+        ],
+        "max": [
+          0.726335,
+          1.2,
+          0.745414
+        ]
+      },
+      "triangles": 900,
+      "vertices": 1800,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "c60cb0f262aa750242a76c5a62a800332ddbdd8f180ad442bce957f10c08a76a",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "shrub-open-flowering",
+      "family": "library-shrub",
+      "label": "Woodland shrub",
+      "variant": "open-flowering",
+      "description": "Source-authored Bush_Common_Flowers structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. open flowering.",
+      "recommended": false,
+      "file": "shrub-open-flowering.glb",
+      "bounds": {
+        "min": [
+          -0.726335,
+          0.0,
+          -0.745414
+        ],
+        "max": [
+          0.726335,
+          1.2,
+          0.745414
+        ]
+      },
+      "triangles": 1368,
+      "vertices": 2515,
+      "textureSizes": [
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "5fbcdf14534d7cb9fbf2e33dd089adcba646e2d9925d069aa740a915186551a6",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "shrub-low-spreading",
+      "family": "library-shrub",
+      "label": "Woodland shrub",
+      "variant": "low-spreading",
+      "description": "Source-authored Bush_Common structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. low spreading.",
+      "recommended": false,
+      "file": "shrub-low-spreading.glb",
+      "bounds": {
+        "min": [
+          -0.971539,
+          0.040951,
+          -0.878471
+        ],
+        "max": [
+          0.989566,
+          0.964951,
+          0.880705
+        ]
+      },
+      "triangles": 900,
+      "vertices": 1800,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "732d34288c8fc3eabf3ab99e5881062f72dea2629611a08334dee26d150395d3",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "rock-rounded-shoulder",
+      "family": "library-rock",
+      "label": "Weathered stone",
+      "variant": "rounded-shoulder",
+      "description": "Source-authored Rock_Medium_1 structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. rounded shoulder.",
+      "recommended": true,
+      "file": "rock-rounded-shoulder.glb",
+      "bounds": {
+        "min": [
+          -0.570874,
+          0.0,
+          -0.529098
+        ],
+        "max": [
+          0.570874,
+          0.8,
+          0.529098
+        ]
+      },
+      "triangles": 342,
+      "vertices": 351,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "b27e2a4f66d843f4ffeb856d1e8828b3e1819767a02df0dcd8097a1606740359",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "rock-split-planes",
+      "family": "library-rock",
+      "label": "Weathered stone",
+      "variant": "split-planes",
+      "description": "Source-authored Rock_Medium_2 structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. split planes.",
+      "recommended": false,
+      "file": "rock-split-planes.glb",
+      "bounds": {
+        "min": [
+          -0.642191,
+          0.0,
+          -0.522192
+        ],
+        "max": [
+          0.642191,
+          0.8,
+          0.522192
+        ]
+      },
+      "triangles": 244,
+      "vertices": 249,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "252e9ac269da82ee84bfcf06ea8ff6f2f56e84d5583bc938bbbd69fe7552095a",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "rock-low-slab",
+      "family": "library-rock",
+      "label": "Weathered stone",
+      "variant": "low-slab",
+      "description": "Source-authored Rock_Medium_3 structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. low slab.",
+      "recommended": false,
+      "file": "rock-low-slab.glb",
+      "bounds": {
+        "min": [
+          -0.590616,
+          0.0,
+          -0.600291
+        ],
+        "max": [
+          0.590616,
+          0.8,
+          0.600291
+        ]
+      },
+      "triangles": 522,
+      "vertices": 531,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "20ff77ff3110633ee6e26f410975f24a500380673e0e841704fbcb721723d86f",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "grass-broad-tuft",
+      "family": "library-grass",
+      "label": "Ground growth",
+      "variant": "broad-tuft",
+      "description": "Source-authored Grass_Common_Short structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. broad tuft.",
+      "recommended": true,
+      "file": "grass-broad-tuft.glb",
+      "bounds": {
+        "min": [
+          -0.100564,
+          0.0,
+          -0.116052
+        ],
+        "max": [
+          0.100564,
+          0.42,
+          0.116052
+        ]
+      },
+      "triangles": 155,
+      "vertices": 153,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "13a42ae6b7e9f94e782e18e0615f3a4deacb1c2a132b19ddc1fdb93fe1ff9d05",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "grass-fine-tuft",
+      "family": "library-grass",
+      "label": "Ground growth",
+      "variant": "fine-tuft",
+      "description": "Source-authored Grass_Wispy_Short structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. fine tuft.",
+      "recommended": false,
+      "file": "grass-fine-tuft.glb",
+      "bounds": {
+        "min": [
+          -0.259047,
+          0.0,
+          -0.237017
+        ],
+        "max": [
+          0.259047,
+          0.42,
+          0.237017
+        ]
+      },
+      "triangles": 494,
+      "vertices": 559,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "3e957edfbaceb53f0871f0c6e339415255a258ae27ce3e03ff0a75c1d7d55522",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "grass-open-stems",
+      "family": "library-grass",
+      "label": "Ground growth",
+      "variant": "open-stems",
+      "description": "Source-authored Grass_Common_Tall structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. open stems.",
+      "recommended": false,
+      "file": "grass-open-stems.glb",
+      "bounds": {
+        "min": [
+          -0.100373,
+          0.0,
+          -0.111365
+        ],
+        "max": [
+          0.100373,
+          0.42,
+          0.111365
+        ]
+      },
+      "triangles": 326,
+      "vertices": 303,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "0c076aefc2456270b30b61643b0cb5040d13c3156384052a954a7ef78d7d6c05",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "fern-open-fronds",
+      "family": "library-fern",
+      "label": "Woodland fern",
+      "variant": "open-fronds",
+      "description": "Source-authored Fern_1 structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. open fronds.",
+      "recommended": true,
+      "file": "fern-open-fronds.glb",
+      "bounds": {
+        "min": [
+          -1.093438,
+          0.0,
+          -1.025898
+        ],
+        "max": [
+          1.093437,
+          0.65,
+          1.025898
+        ]
+      },
+      "triangles": 288,
+      "vertices": 243,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "e5b2bb1b2e25fbdfde44a76fb0eb5e992f0d3167728970e921549ba67ed7e50a",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "fern-arching-fronds",
+      "family": "library-fern",
+      "label": "Woodland fern",
+      "variant": "arching-fronds",
+      "description": "Source-authored Fern_1 structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. arching fronds.",
+      "recommended": false,
+      "file": "fern-arching-fronds.glb",
+      "bounds": {
+        "min": [
+          -1.268388,
+          0.015,
+          -1.190042
+        ],
+        "max": [
+          1.268387,
+          0.552395,
+          1.190042
+        ]
+      },
+      "triangles": 288,
+      "vertices": 243,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "0b6a43919955a5fc6e3280a5604260e6fd0257a24fafab7b1d8012497421181e",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    },
+    {
+      "id": "fern-sheltered-fronds",
+      "family": "library-fern",
+      "label": "Woodland fern",
+      "variant": "sheltered-fronds",
+      "description": "Source-authored Fern_1 structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. sheltered fronds.",
+      "recommended": false,
+      "file": "fern-sheltered-fronds.glb",
+      "bounds": {
+        "min": [
+          -0.751515,
+          0.004786,
+          -0.828087
+        ],
+        "max": [
+          0.73556,
+          0.602786,
+          0.81335
+        ]
+      },
+      "triangles": 288,
+      "vertices": 243,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "edcb8cfb565f6d62b0890558403ecaeb2b5c96a96671d205c5b49beb96f6bdfa",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
+    }
+  ]
+}

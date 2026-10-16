@@ -170,7 +170,7 @@ export class WorldPresentation {
   private prepareCameraTarget(): void {
     const device = this.app.graphicsDevice;
     if (!(device instanceof pc.WebglGraphicsDevice)) return;
-    const pass = this.camera.camera!.renderPasses.find(
+    const pass = this.camera.camera!.framePasses.find(
       (pass): pass is pc.FramePassCameraFrame => pass instanceof pc.FramePassCameraFrame,
     );
     const scenePass = pass?.scenePass as pc.RenderPass | undefined;
@@ -218,12 +218,12 @@ export class WorldPresentation {
         : [pc.PIXELFORMAT_111110F, pc.PIXELFORMAT_RGBA16F, pc.PIXELFORMAT_RGBA32F];
     this.frame.bloom.intensity = restrained ? 0.045 : 0.025;
     this.frame.grading.saturation = restrained ? 1.02 : 1.05;
-    this.frame.grading.contrast = restrained ? 1.08 : 1;
+    this.frame.grading.contrast = 1;
     this.frame.grading.brightness = restrained ? 1.025 : 1;
     this.frame.update();
     // Compare a shared scene grid through the existing compositor. Captions
     // remain at display resolution and the camera/picking mapping stays intact.
-    const pass = this.camera.camera!.renderPasses.find(
+    const pass = this.camera.camera!.framePasses.find(
       (pass): pass is pc.FramePassCameraFrame => pass instanceof pc.FramePassCameraFrame,
     );
     if (pass) {
@@ -527,9 +527,9 @@ export class WorldPresentation {
     // motion cannot move the sun; received clock updates also handle pause/load/rewind.
     this.sun.setRotation(this.sunRotation.setFromDirections(pc.Vec3.UP, this.sunDirection));
     this.app.scene.ambientLight.set(
-      0.18 + 0.26 * daylight,
-      0.22 + 0.25 * daylight,
-      0.3 + 0.2 * daylight,
+      0.5 + 0.08 * daylight,
+      0.56 + 0.06 * daylight,
+      0.68 - 0.06 * daylight,
     );
     this.sun.light!.intensity = 1.2 * daylight;
     this.sun.enabled = daylight > 0.001;
@@ -553,7 +553,7 @@ export class WorldPresentation {
         light = new pc.Entity('Observed fire light', this.app);
         light.addComponent('light', {
           type: 'omni',
-          color: new pc.Color(1, 0.47, 0.12),
+          color: new pc.Color(1, 0.64, 0.33),
           intensity: 2.8,
           range: 8,
           // Every illuminating source needs occlusion, or secondary fires light

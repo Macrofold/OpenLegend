@@ -239,10 +239,13 @@ export class WildernessScene implements WorldRenderer {
   constructor(
     private canvas: HTMLCanvasElement,
     private callbacks: SceneCallbacks,
+    private readonly options: { rememberCamera?: boolean } = {},
   ) {
     try {
       this.cameraSettings = restoreCameraPreferences(
-        JSON.parse(localStorage.getItem('open-legend:camera-v1') ?? 'null'),
+        options.rememberCamera === false
+          ? null
+          : JSON.parse(localStorage.getItem('open-legend:camera-v1') ?? 'null'),
       );
     } catch {
       /* Camera preference storage is optional. */
@@ -668,6 +671,7 @@ export class WildernessScene implements WorldRenderer {
     this.callbacks.cameraChanged?.(this.cameraState());
   }
   private saveCameraPreferences(): void {
+    if (this.options.rememberCamera === false) return;
     try {
       localStorage.setItem(
         'open-legend:camera-v1',
