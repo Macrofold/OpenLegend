@@ -55,15 +55,17 @@ function element<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
 }
 const subject = element<HTMLSelectElement>('subject');
-for (const family of new Set(choices.map((choice) => choice.family))) {
+const subjectKey = (choice: Choice) => (choice.historical ? 'earlier:' : '') + choice.family;
+for (const family of new Set(choices.map(subjectKey))) {
   const option = document.createElement('option');
   option.value = family;
-  const member = choices.find((choice) => choice.family === family)!;
-  option.textContent = `${member.historical ? 'Earlier study · ' : ''}${layout[family]?.label ?? member.label}`;
+  const member = choices.find((choice) => subjectKey(choice) === family)!;
+  option.textContent = `${member.historical ? 'Earlier study · ' : ''}${member.historical ? (layout[member.family]?.label ?? member.label) : member.label}`;
   subject.append(option);
 }
 const requested = new URLSearchParams(location.hash.slice(1)).get('subject');
-if (requested && choices.some((choice) => choice.family === requested)) subject.value = requested;
+if (requested && choices.some((choice) => subjectKey(choice) === requested))
+  subject.value = requested;
 else if (!requested && choices.some((choice) => choice.family === 'mercenary'))
   subject.value = 'mercenary';
 
@@ -314,7 +316,7 @@ export class ArtStudy {
               ? asset.historical
               : ['mercenary', 'ada'].includes(asset.family)),
         )
-      : choices.filter((asset) => asset.family === subject.value);
+      : choices.filter((asset) => subjectKey(asset) === subject.value);
     if (!compare && !composition) selected = selected.filter((asset) => asset.recommended);
     if (!selected.length) {
       element('status').textContent = 'No exported assets are available for this subject yet.';

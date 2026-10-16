@@ -193,9 +193,16 @@
     "Omit source normal maps and metallic response for this controlled art comparison.",
     "CommonTree_3 supplies slender birch structure; pale painted bark is a named approximation."
   ],
-  "output": {
-    "path": "scenery.json",
-    "bytes": 5924136,
-    "sha256": "ee4c5a399cd87eb5eb47789e3a81d1d7ab126a7e0eab73e7161cafab6b5416a7"
-  }
+  "outputs": [
+    {
+      "path": "scenery-kenney.json",
+      "bytes": 784170,
+      "sha256": "d3343834a07aca2d90f5844f7c81330e5edad34e7a31f0f0404784a2ba37ab80"
+    },
+    {
+      "path": "scenery-quaternius.json",
+      "bytes": 5063307,
+      "sha256": "6cbbb882fc5e824efe55f5e7188029a8e4f0b759d3e43eb3d3d6a469369c8c4b"
+    }
+  ]
 }

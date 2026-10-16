@@ -4,6 +4,7 @@ The source directory contains mpfb2-master, makehuman_system_assets and suits02.
 No add-on is installed in the user's Blender profile. Saved source retains the rig.
 """
 import argparse
+import hashlib
 import importlib.util
 import sys
 import types
@@ -15,8 +16,19 @@ from mathutils import Quaternion
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from art_study_common import ROOT, export_asset, solid_material, facial_features
+from art_study_common import ROOT, export_asset, solid_material
 from study_human_motion import export_motion
+
+# Visual proposals for this authored cast, not inferred personality or equipment.
+PEOPLE={
+ 'ada':('Ada',0,.3,.45,.46,'young_caucasian_female',['ponytail01','bob02','braid01'],['354749','465c59','62756a','8b9780'],0),
+ 'mike':('Mike',1,.4,.52,.5,'middleage_caucasian_male',['short02','short04','short03'],['564832','776246','948163','b8a989'],0),
+ 'mara':('Mara Reed',0,.55,.38,.57,'middleage_asian_female',['ponytail01','bob01','long01'],['4c3e46','6d555e','8b747b','b29b94'],2),
+ 'tavin':('Tavin Vale',1,.38,.52,.5,'young_african_male',['short03','short04','afro01'],['514d31','777347','969061','beb786'],1),
+ 'kest':('Kest',1,.58,.72,.66,'middleage_caucasian_male',['short04','short02','short03'],['383e48','505966','747d86','a3a7a3'],2),
+ 'orin':('Orin',1,.32,.46,.44,'young_asian_male',['short02','long01','ponytail01'],['3f4936','5b674b','7d8965','a9b18a'],0),
+ 'armor':('Armor study',1,.4,.65,.55,'young_caucasian_male',['short04','short04','short04'],['3b3630','5c5142','88745a','b5a07c'],0),
+}
 
 
 def load_module(name, path):
@@ -68,42 +80,48 @@ def source_image(obj):
                 if node.type=='TEX_IMAGE' and node.image and 'normal' not in node.image.name.lower())
 
 
-def cloth_image(obj, paint, output, variant):
+def cloth_image(obj, paint, output, variant, person, palette):
     """Design garment panels on the fitted source, with no photographic mail."""
     size = 256
     position, covered = paint.rasterize_surface(obj, size)
     x,y,z = [position[:,:,i] for i in range(3)]
-    palettes = {
-        'field-tunic':['354749','465c59','62756a','8b9780'],
-        'work-vest':['756c53','95876b','b3a482','d2c39c'],
-        'travel-coat':['4a434b','62545a','81666b','9e8280'],
-    }
-    palette = np.array([[int(h[i:i+2],16)/255 for i in (0,2,4)] for h in palettes[variant]])
-    # Calm front panels, side seams, lighter raised folds and designed hems.
-    fold = np.cos(x*24) + .35*np.cos(z*15)
-    shade = np.where(fold > .7, 2, 1)
-    shade[(np.abs(x)>.24)&(z<1.33)] = 0
+    if variant=='work-vest': palette=['756c53','95876b','b3a482','d2c39c']
+    if person=='ada' and variant=='travel-coat':palette=['4a434b','62545a','81666b','9e8280']
+    palette = np.array([[int(h[i:i+2],16)/255 for i in (0,2,4)] for h in palette])
+    # Broad garment panels survive the final small image. A sinusoidal stripe
+    # across mirrored source UVs made an accidental X across the chest.
+    shade = np.ones(x.shape,dtype=np.int32)
+    shade[(np.abs(x)>.17)&(z<1.08)] = 0
     color = palette[shade]
-    hem = (z<.79)|((z>1.43)&(np.abs(x)<.19))
+    hem = (z<.58)|((z>1.19)&(np.abs(x)<.15))
     color[hem] = palette[0]
-    piping = ((z>.79)&(z<.805))|((z>1.43)&(z<1.444)&(np.abs(x)<.19))
+    piping = ((z>.58)&(z<.59))|((z>1.19)&(z<1.20)&(np.abs(x)<.15))
     color[piping] = palette[3]
-    seam = (np.abs(x)<.008)&(y<0)&(z>1.20)
+    seam = (np.abs(x)<.005)&(y<0)&(z>1.08)
     color[seam] = palette[0]
     # Small useful fastening, not a large decorative emblem.
-    color[(np.abs(x)<.018)&(y<0)&(z>1.31)&(z<1.34)] = [.60,.43,.23]
+    color[(np.abs(x)<.010)&(y<0)&(z>1.12)&(z<1.135)] = [.60,.43,.23]
+    if person=='mara':
+        # A few purposeful repairs, kept broad enough for a small world figure.
+        patch=(x>.075)&(x<.145)&(z>.66)&(z<.75)&(y<0)
+        color[patch]=palette[2]
+    if person=='armor':
+        # Authored garment structure on the fitted source, not cube plates.
+        seam=np.minimum(np.mod((x+z)*22,1),np.mod((x-z)*22,1))<.08
+        color[seam&covered]=palette[0]
     color[~covered] = palette[1]
-    return paint.save_image('Ada '+variant+' cloth',color,output/('ada-'+variant+'-cloth.png'))
+    return paint.save_image(person+' '+variant+' cloth',color,output/(person+'-'+variant+'-cloth.png'))
 
 
-def main(source):
+def main(source,person):
     human_service = source_services(source)
     helper = load_module('source_study',ROOT/'scripts/prepare-source-study.py')
     paint = load_module('paint_helpers',ROOT/'scripts/prepare-mercenary-variants.py')
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global=False)
     bpy.context.preferences.filepaths.save_version = 0
-    group='source-people'
+    label,gender,age,muscle,weight,skin,hairs,palette,recommendation=PEOPLE[person]
+    group='source-people' if person=='ada' else 'source-'+person
     output=ROOT/'apps/client/src/props/art-study'/group
     output.mkdir(parents=True,exist_ok=True)
     system=source/'makehuman_system_assets'
@@ -112,12 +130,12 @@ def main(source):
     for index,variant in enumerate(('field-tunic','work-vest','travel-coat')):
         before=set(bpy.data.objects)
         human=human_service.create_human(macro_detail_dict={
-            'age':.3,'cupsize':.4,'firmness':.5,'gender':0,'height':.55,'muscle':.45,
-            'proportions':.5,'race':{'african':0,'asian':0,'caucasian':1},'weight':.46})
-        human.name='Ada '+variant
+            'age':age,'cupsize':.4,'firmness':.5,'gender':gender,'height':.55,'muscle':muscle,
+            'proportions':.5,'race':{'african':int('african' in skin),'asian':int('asian' in skin),'caucasian':int('caucasian' in skin)},'weight':weight})
+        human.name=label+' '+variant
         rig=human_service.add_builtin_rig(human,'default')
-        human_service.set_character_skin(str(system/'skins/young_caucasian_female/young_caucasian_female.mhmat'),human,skin_type='GAMEENGINE')
-        hair=('ponytail01','bob02','braid01')[index]
+        human_service.set_character_skin(str(system/'skins'/skin/(skin+'.mhmat')),human,skin_type='GAMEENGINE')
+        hair=hairs[index]
         for category,name in [('Eyes','eyes/low-poly/low-poly'),('Hair',f'hair/{hair}/{hair}'),('Eyebrows','eyebrows/eyebrow001/eyebrow001')]:
             human_service.add_mhclo_asset(str(system/(name+'.mhclo')),human,asset_type=category,subdiv_levels=0,material_type='GAMEENGINE')
         clothes=[]
@@ -129,18 +147,23 @@ def main(source):
         # concealed by this complete tunic/trouser/boot set. This is not a
         # collision rule and does not affect the unclothed source anatomy.
         group_names={group.index:group.name for group in human.vertex_groups}
+        # Facial muscles are descendants of the head, not weighted directly
+        # to it. Checking only a few bone names cut holes in lips and eyelids.
+        exposed_bones={bone.name for bone in rig.data.bones
+            if any(parent.name.startswith(('head','neck','hand','finger'))
+                   for parent in [bone,*bone.parent_recursive])}
         visible=human.vertex_groups.new(name='Visible skin for this outfit')
         indices=[]
         for vertex in human.data.vertices:
             body=any(group_names.get(g.group)=='body' and g.weight>.5 for g in vertex.groups)
-            exposed=any(g.weight>.03 and group_names.get(g.group,'').startswith(('head','neck','hand','finger')) for g in vertex.groups)
+            exposed=any(g.weight>.03 and group_names.get(g.group) in exposed_bones for g in vertex.groups)
             if body and exposed: indices.append(vertex.index)
         visible.add(indices,1,'REPLACE')
         mask=human.modifiers.new('Covered body follows this outfit','MASK');mask.vertex_group=visible.name
         for obj in objects:
             if obj.type!='MESH': continue
             if obj==clothes[-1]:
-                image=cloth_image(obj,paint,output,variant)
+                image=cloth_image(obj,paint,output,variant,person,palette)
             else:
                 image=source_image(obj).copy()
                 size=512 if obj==human else 256
@@ -166,7 +189,7 @@ def main(source):
             bmesh.ops.delete(mesh,geom=remove,context='VERTS');mesh.to_mesh(vest.data);mesh.free()
             for vertex in vest.data.vertices:
                 vertex.co.x*=1.035;vertex.co.y*=1.07
-            vest.data.materials.clear();vest.data.materials.append(solid_material('Ada moss work vest','59634d'))
+            vest.data.materials.clear();vest.data.materials.append(solid_material(label+' fitted work vest',palette[1]))
         if index==2:
             # A longer travelling hem changes the silhouette; source weights
             # and the clothed legs remain intact for the later walking check.
@@ -183,11 +206,12 @@ def main(source):
             'Short moss vest over linen, cropped hair and a clear waist. The underlayer remains complete beneath the tailored vest.',
             'Longer muted travel coat and braid, with broad cloth panels and a small collar fastening.',
         ][index]
-        asset,placement=export_asset(objects,output,'ada-'+variant,'ada','Ada',variant,description,index==0,
+        asset,placement=export_asset(objects,output,person+'-'+variant,person,label,variant,description,index==recommendation,
             'MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.')
-        motion_path=output/('ada-'+variant+'-motion.glb')
+        motion_path=output/(person+'-'+variant+'-motion.glb')
         export_motion(objects,rig,placement,motion_path)
         asset['animatedFile']=motion_path.name
+        asset['animatedSha256']=hashlib.sha256(motion_path.read_bytes()).hexdigest()
         placement.location.x=index*1.25
         assets.append(asset)
     helper.retain(group,assets,[
@@ -199,5 +223,6 @@ def main(source):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--sources',type=Path,required=True)
+    parser.add_argument('--person',choices=PEOPLE,default='ada')
     args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
-    main(args.sources)
+    main(args.sources,args.person)

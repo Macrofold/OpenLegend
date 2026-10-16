@@ -239,7 +239,7 @@ export class WildernessScene implements WorldRenderer {
   constructor(
     private canvas: HTMLCanvasElement,
     private callbacks: SceneCallbacks,
-    private readonly options: { rememberCamera?: boolean } = {},
+    private readonly options: { rememberCamera?: boolean; art?: ArtTreatment } = {},
   ) {
     try {
       this.cameraSettings = restoreCameraPreferences(
@@ -344,7 +344,7 @@ export class WildernessScene implements WorldRenderer {
       this.app.on('postrender', this.recordFrame);
       this.resize();
       this.placeCamera();
-      this.setArtTreatment({ ...candidateArt });
+      this.setArtTreatment(options.art ?? { ...candidateArt });
       this.removeArtControls = mountArtControls(
         canvas,
         (style) => this.setArtTreatment(style),
@@ -368,6 +368,22 @@ export class WildernessScene implements WorldRenderer {
     this.artSettings = { ...style };
     this.artMaterials.update(style);
     this.libraryScenery?.setTreatment(style);
+    if (['kenney', 'quaternius', 'study'].includes(style.environment)) {
+      const family = style.environment as 'kenney' | 'quaternius' | 'study';
+      void this.libraryScenery
+        .load(family)
+        .then((loaded) => {
+          if (!loaded || this.destroyed || this.artSettings.environment !== family || !this.view)
+            return;
+          this.buildLandscape(this.view.map);
+          this.cutawayKey = '';
+          this.applyLevelFocus();
+        })
+        .catch((error: unknown) => {
+          if (!this.destroyed)
+            console.warn('Library scenery could not load; retaining the authored fallback.', error);
+        });
+    }
     this.mercenary?.setArtTreatment(style);
     this.presentation.setArtTreatment(style);
     for (const texture of this.textures) {

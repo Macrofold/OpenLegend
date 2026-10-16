@@ -161,6 +161,20 @@ def paint(role, size):
     return canvas.resize((size, size), Image.Resampling.NEAREST).convert("RGBA")
 
 
+def write_variants(data, output):
+    """Each optional library downloads independently; retain only its used art."""
+    paths=[]
+    for name,shapes in data['variants'].items():
+        material_ids={part['material'] for shape in shapes.values() for part in shape['parts']}
+        materials={key:data['materials'][key] for key in sorted(material_ids)}
+        texture_ids={entry[key] for entry in materials.values() for key in ['texture','paintedTexture'] if key in entry}
+        part={'shapes':shapes,'materials':materials,'textures':{key:data['textures'][key] for key in sorted(texture_ids)}}
+        path=output/('scenery-'+name+'.json')
+        path.write_text(json.dumps(part,separators=(',',':'))+'\n');paths.append(path)
+    subprocess.run(['pnpm','exec','prettier','--write',*[str(path) for path in paths]],check=True)
+    return [{'path':path.name,'bytes':path.stat().st_size,'sha256':digest(path.read_bytes())} for path in paths]
+
+
 def prepare(archives, output):
     output = output.resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -261,18 +275,13 @@ def prepare(archives, output):
             provenance["models"].append({"variant": variant, "appearance": appearance, "source": source,
                                           "path": filename, "sha256": digest(raw), "sourceBounds": {"min": minimum, "max": maximum},
                                           "triangles": sum(len(p["indices"]) // 3 for p in parts), "parts": len(parts)})
-    destination = output / "scenery.json"
-    destination.write_text(json.dumps(data, separators=(",", ":")) + "\n")
-    # Generated assets follow the repository's pinned formatter; hash the final
-    # bytes so the retained provenance also verifies the checked-in artifact.
+    # Hash formatted bytes, including the independent optional library outputs.
+    provenance['outputs'] = write_variants(data,output)
     prettier = ["pnpm", "exec", "prettier", "--config", str(Path(__file__).resolve().parents[1] / ".prettierrc.json"), "--write"]
-    subprocess.run([*prettier, str(destination)], check=True)
-    provenance["output"] = {"path": destination.name, "bytes": destination.stat().st_size,
-                             "sha256": digest(destination.read_bytes())}
     provenance_path = output / "provenance.json"
     provenance_path.write_text(json.dumps(provenance, indent=2) + "\n")
     subprocess.run([*prettier, str(provenance_path)], check=True)
-    print(json.dumps({"output": provenance["output"], "models": provenance["models"], "textures": provenance["textures"]}, indent=2))
+    print(json.dumps({"outputs": provenance["outputs"], "models": provenance["models"], "textures": provenance["textures"]}, indent=2))
 
 
 if __name__ == "__main__":

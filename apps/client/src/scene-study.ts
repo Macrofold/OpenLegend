@@ -108,10 +108,9 @@ function mount(): void {
         status.textContent = message;
       },
     },
-    { rememberCamera: false },
+    { rememberCamera: false, art: treatment() },
   );
   scene.setPerceptionOptions({ vision: false, hearing: false });
-  scene.setArtTreatment(treatment());
   publish();
   setCamera();
   status.textContent = stop().label + ' · source-based art comparison';

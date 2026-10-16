@@ -68,13 +68,21 @@ def add(data,appearance,path):
 
 
 if __name__=='__main__':
-    path=ROOT/'apps/client/src/props/library-environment/scenery.json'
-    data=json.loads(path.read_text())
-    # Rebuild only this owned finite choice; older comparison sources survive.
-    data['materials']={k:v for k,v in data['materials'].items() if not k.startswith('study-')}
-    data['textures']={k:v for k,v in data['textures'].items() if not k.startswith('study-')}
+    output=ROOT/'apps/client/src/props/library-environment'
+    data={'variants':{},'materials':{},'textures':{}}
+    for name in ['kenney','quaternius']:
+        source=json.loads((output/('scenery-'+name+'.json')).read_text())
+        data['variants'][name]=source['shapes']
+        data['materials'].update(source['materials']);data['textures'].update(source['textures'])
     data['variants']['study']=dict(data['variants']['quaternius'])
     add(data,'tree-broadleaf',ROOT/'apps/client/src/props/art-study/source-nature/broadleaf-sheltered-crown.glb')
     for appearance,file in [('tree-conifer','conifer-tiered-boughs'),('tree-birch','birch-slender-birch'),('woodland-shrub','shrub-rounded-thicket'),('meadow-grass','grass-broad-tuft')]:
         add(data,appearance,ROOT/'apps/client/src/props/art-study/source-vegetation'/(file+'.glb'))
-    path.write_text(json.dumps(data,separators=(',',':'))+'\n')
+    data['variants']={'study':data['variants']['study']}
+    outputs=reader.write_variants(data,output)
+    provenance={'recipe':str(Path(__file__).relative_to(ROOT)),
+        'recipeSha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        'sources':[{'catalog':str(path.relative_to(ROOT)),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
+                   for path in [ROOT/'apps/client/src/props/art-study/source-nature/catalog.json',ROOT/'apps/client/src/props/art-study/source-vegetation/catalog.json']],
+        'outputs':outputs}
+    (output/'study-provenance.json').write_text(json.dumps(provenance,indent=2)+'\n')

@@ -1,6 +1,5 @@
 import * as pc from 'playcanvas';
 import type { SceneryInstance } from '@open-legend/spatial';
-import source from './props/library-environment/scenery.json';
 import { ArtMaterials, type ArtTreatment } from './art-treatment';
 import { SceneryCameraOcclusion, prepareSceneryNormals } from './environment-art';
 import { ShadowMaterial } from './shadow-material';
@@ -34,15 +33,22 @@ interface PixelArt {
   rgba: number[];
 }
 interface SceneryArt {
-  variants: Record<Library, Record<string, Shape>>;
+  shapes: Record<string, Shape>;
   materials: Record<string, MaterialArt>;
   textures: Record<string, PixelArt>;
 }
-const art: SceneryArt = source;
+const sources = import.meta.glob<SceneryArt>('./props/library-environment/scenery-*.json', {
+  import: 'default',
+});
 
 /** Licensed source meshes are prepared once and instanced at the existing
  * scenery feet/envelopes. This owner has no placement or native world authority. */
 export class LibraryScenery {
+  private readonly sources = new Map<Library, SceneryArt>();
+  private readonly pending = new Map<Library, Promise<boolean>>();
+  private readonly materialArt = new Map<string, MaterialArt>();
+  private readonly pixelArt = new Map<string, PixelArt>();
+  private disposed = false;
   private readonly textures = new Map<string, pc.Texture>();
   private readonly materials = new Map<string, pc.StandardMaterial>();
   private readonly meshes = new Map<Shape, pc.Mesh[]>();
@@ -52,14 +58,34 @@ export class LibraryScenery {
     private readonly treatment: ArtMaterials,
     private readonly sun: pc.Light,
   ) {}
+  /** Import only the requested comparison. Geometry and GPU resources remain
+   * owned by this scene; a late import cannot revive a destroyed scene. */
+  load(family: Library): Promise<boolean> {
+    if (this.sources.has(family)) return Promise.resolve(false);
+    const pending = this.pending.get(family);
+    if (pending) return pending.then(() => false);
+    const request = sources[`./props/library-environment/scenery-${family}.json`]!()
+      .then((source) => {
+        if (this.disposed) return false;
+        this.sources.set(family, source);
+        for (const [key, value] of Object.entries(source.materials))
+          this.materialArt.set(key, value);
+        for (const [key, value] of Object.entries(source.textures)) this.pixelArt.set(key, value);
+        return true;
+      })
+      .finally(() => this.pending.delete(family));
+    this.pending.set(family, request);
+    return request;
+  }
   setTreatment(style: Readonly<ArtTreatment>): void {
     this.painted = style.surfaceArt === 'painted';
-    for (const [key, material] of this.materials) this.setPaint(material, art.materials[key]!);
+    for (const [key, material] of this.materials)
+      this.setPaint(material, this.materialArt.get(key)!);
   }
   private texture(id: string): pc.Texture {
     const existing = this.textures.get(id);
     if (existing) return existing;
-    const pixels = art.textures[id]!;
+    const pixels = this.pixelArt.get(id)!;
     const canvas = document.createElement('canvas');
     canvas.width = pixels.width;
     canvas.height = pixels.height;
@@ -96,7 +122,7 @@ export class LibraryScenery {
   private material(id: string): pc.StandardMaterial {
     const existing = this.materials.get(id);
     if (existing) return existing;
-    const entry = art.materials[id]!;
+    const entry = this.materialArt.get(id)!;
     const material = new ShadowMaterial(this.sun);
     material.name = 'Library scenery · ' + id;
     material.diffuse.set(entry.baseColor[0]!, entry.baseColor[1]!, entry.baseColor[2]!).gamma();
@@ -118,7 +144,7 @@ export class LibraryScenery {
     return material;
   }
   create(family: Library, appearance: string, seed: number, instances: readonly SceneryInstance[]) {
-    const shape = art.variants[family][appearance];
+    const shape = this.sources.get(family)?.shapes[appearance];
     if (!shape) return null;
     let meshes = this.meshes.get(shape);
     if (!meshes) {
@@ -178,8 +204,8 @@ export class LibraryScenery {
       return instance;
     });
     const occlusion = shape.parts.map((part) => {
-      const material = art.materials[part.material]!;
-      const pixels = material.texture ? art.textures[material.texture] : undefined;
+      const material = this.materialArt.get(part.material)!;
+      const pixels = material.texture ? this.pixelArt.get(material.texture) : undefined;
       const alpha =
         pixels && material.alphaCutoff
           ? { ...pixels, uvs: part.uvs, cutoff: material.alphaCutoff }
@@ -199,9 +225,15 @@ export class LibraryScenery {
       templates: this.meshes.size,
       materials: this.materials.size,
       textures: this.textures.size,
+      loadedChoices: [...this.sources.keys()],
+      pendingChoices: this.pending.size,
     };
   }
   destroy(): void {
+    this.disposed = true;
+    this.sources.clear();
+    this.materialArt.clear();
+    this.pixelArt.clear();
     for (const meshes of this.meshes.values())
       for (const mesh of meshes) {
         mesh.decRefCount();
