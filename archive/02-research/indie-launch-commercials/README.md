@@ -2,11 +2,20 @@
 
 | Research status | Progress | Last updated |
 |---|---|---|
-| Collection and synthesis completed | 64 dossiers: 62 games and 2 platform/service cases, with linked main learnings and explicit evidence limits. | 2026-10-16 |
+| Full collection review and execution guidance completed | All 64 dossiers reread: 62 games and 2 platform/service cases, consolidated into twelve principles, a gated execution guide and a case-by-case coverage map. | 2026-10-16 |
 
-Start with the [main learnings](learnings.md) for the cross-case comparisons, counterexamples and conditional implications for Open Legend. The dossiers below own the detailed histories and source registers. This remains separate from [game-design inspiration](../game-inspiration/); research interpretations do not change accepted gameplay or implementation specifications.
+## Start here
 
-The initial October 15 collection contained 44 games: 22 successes, 20 unsuccessful outcomes and 2 mixed cases. Mike's October 16 request added broader phase-specific comparisons and authorized synthesis. The expansion adds **18 games and 2 platforms/services**, including his supplied **The Ember Guardian** transcript. The original cohorts are preserved below; the new cases are not forced into a misleading lifetime success/failure binary.
+| Document | Purpose |
+|---|---|
+| [Main learnings and principles](learnings.md) | What the cases support, common pitfalls, conflicting examples, confidence limits and the best current recommendation. |
+| [Open Legend execution guide](execution-playbook.md) | Concrete work products, go/rework/stop gates, test and outreach proposals, hiring decisions, metrics and separate hosted-pilot, Steam and crowdfunding routes. |
+| [Complete review coverage](review-coverage.md) | All 64 reread cases, the principle each informs, important qualifications and the actual scope of external source refreshes. |
+| [Existing business plan](../../06-marketing/business-plan.md) | Current working hosted-world objective and packaging/cost hypotheses; the execution guide does not silently replace these with Steam-first assumptions. |
+
+The dossiers below own detailed histories and source registers. This remains separate from [game-design inspiration](../game-inspiration/); research interpretations do not change accepted gameplay or implementation specifications. Completed research documents are not evidence that player tests, commercial gates, billing or a release have been completed.
+
+The initial October 15 collection contained 44 games: 22 successes, 20 unsuccessful outcomes and 2 mixed cases. Mike's October 16 request added broader phase-specific comparisons and authorized synthesis. The expansion added **18 games and 2 platforms/services**, including his supplied **The Ember Guardian** transcript. The subsequent full-case review strengthened the principles and made the execution sequence operational. The original cohorts are preserved below; cases are not forced into a misleading lifetime success/failure binary.
 
 ## Scope and reading conventions
 
@@ -15,7 +24,7 @@ The initial collection meets the requested minimum of 20 successful games and 20
 Outcome labels refer to a stated period and dimension:
 
 - **Success:** documented sales, revenue, commercial rankings or an explicit successful commercial outcome. The original cohort includes modest products and major breakouts; awards and positive reviews alone are insufficient. Success does not automatically establish audited profitability.
-- **Unsuccessful outcome:** documented weak discovery, failed fundraising, poor sales, unsustainable returns or stalled/canceled funded delivery. These are different failure modes, identified in the table and dossier, not a judgment of artistic quality.
+- **Unsuccessful outcome:** documented weak discovery, failed fundraising, poor sales, unsustainable returns or stalled/canceled funded delivery. These are different failure modes, identified in the table and dossier, not a judgment of artistic quality. Sunset's later financial repair is explicitly retained.
 - **Mixed or phase-specific:** completion, reception, launch sales, later returns and sustainability point in different directions. The two original mixed cases do not count toward either minimum. An eventual recovery is not also counted as a second unsuccessful game: Among Us belongs only to the original success cohort here. A Short Hike's commissioning and recognition are documented without claiming verified profit.
 
 Dossiers distinguish **documented facts**, **attributed explanations**, **case-specific interpretation**, and **not established**. The last term means the reviewed public sources do not establish the answer; it does not mean the activity never happened. No private analytics, new developer interviews conducted for this project, purchased data or game playtesting are represented here. Mike's supplied transcript is identified as such; it is not represented as an independently watched video or audited financial statement.
@@ -26,7 +35,7 @@ Each dossier records the earliest **verified** public touchpoint, not necessaril
 
 ## Expansion: phase-specific histories — 20 cases
 
-A checked row means the available evidence was read and the dossier written, not that every requested metric is public. These are purposefully varied comparisons, not a random statistical sample. The three TrampolineTales games and three Grey Alien games are related studio histories, not independent observations of the same claimed effect.
+A checked row means the available evidence was read and the dossier written, not that every requested metric is public. All rows were additionally reread in the [full review](review-coverage.md). These are purposefully varied comparisons, not a random statistical sample. The three TrampolineTales games and three Grey Alien games are related studio histories, not independent observations of the same claimed effect.
 
 | Read and written | Case | Type | Main comparison |
 |---|---|---|---|
@@ -101,7 +110,7 @@ These are twenty distinct games, not twenty claims of permanent commercial failu
 | [x] | [Neon Climber](games/neon-climber.md) | Creator-described 2020 mobile commercial failure; acquisition and retention tests after lengthy development. |
 | [x] | [PONCHO](games/poncho.md) | Failed campaign, then publisher-assisted release; unsuccessful developer returns through January 2017. |
 | [x] | [Rock Paper SHIFT](games/rock-paper-shift.md) | Unsuccessful small commercial release, although the creator achieved the goal of shipping. |
-| [x] | [Sunset](games/sunset.md) | Commercial failure despite crowdfunding and marketing activity; artistic reception is a separate question. |
+| [x] | [Sunset](games/sunset.md) | Poor 2015 launch; later subsidy-inclusive break-even and debt repayment, without resuming the intended commercial model. |
 | [x] | [The Black Glove](games/the-black-glove.md) | Kickstarter missed its target in 2014; later publisher pursuit did not prevent shelving in 2015. |
 | [x] | [The Flock](games/the-flock.md) | Poor 2015 multiplayer commercial result; official developer statement records subsequent funding exhaustion. |
 | [x] | [Unwritten: That Which Happened](games/unwritten-that-which-happened.md) | Successful 2013 campaign followed by missed delivery and stalled production by January 2014. |
@@ -118,6 +127,6 @@ These are twenty distinct games, not twenty claims of permanent commercial failu
 
 Each game includes its outcome and evidence window; origin and team; development/public-exposure timeline; crowdfunding or other financing; channel-by-channel community evidence; launch, reception and commercial results; collaborators/publishing/marketing; bounded positive and negative observations; and unresolved evidence with a source register. Where a requested field is unavailable, the dossier identifies the gap rather than manufacturing an answer.
 
-Sources are linked beside claims and listed with author/organization, date where established, source type and purpose. Developer recollections and marketing claims are attributed. Reviewers' opinions are reception evidence, not independent financial audits. Restricted, missing and partially indexed sources are described accordingly; no claim is made that every linked old build, video or campaign update could be opened in full.
+Sources are linked beside claims and listed with author/organization, date where established, source type and purpose. Developer recollections and marketing claims are attributed. Reviewers' opinions are reception evidence, not independent financial audits. Restricted, missing and partially indexed sources are described accordingly; no claim is made that every linked old build, video or campaign update could be opened in full. The full-case reread is not a claim that every external link was independently reopened or every lifetime outcome updated.
 
-This is a deliberately selected comparison set, subject to survivorship, disclosure and retrospective-reporting bias. It is not a representative sample from which a success rate can be calculated. Historical promotion routes and platform mechanisms are not automatically current policy. The [main learnings](learnings.md) separate recurring observations, counterexamples, current platform documentation and proposed implications for Open Legend.
+This is a deliberately selected comparison set, subject to survivorship, disclosure and retrospective-reporting bias. It is not a representative sample from which a success rate can be calculated. Historical promotion routes and platform mechanisms are not automatically current policy. The [main learnings](learnings.md) separate recurring observations, counterexamples, current platform documentation and proposed implications for Open Legend; the [execution guide](execution-playbook.md) translates them into bounded next decisions.

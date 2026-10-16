@@ -19,6 +19,8 @@ The concrete example supplied by the user is a magic tree spell: cast it while p
 | Document | Contents |
 |---|---|
 | [Business plan](business-plan.md) | Paid hosted-world launch, proposed pricing, bounded operating costs, early customers, and profitability milestones for a sustainable side project |
+| [Research-backed execution guide](../02-research/indie-launch-commercials/execution-playbook.md) | Concrete validation and commercial gates, deliverables, stop/rework decisions, outreach, hiring and metrics; preserves the business plan's hosted pilot with conditional Steam/crowdfunding routes |
+| [Commercial principles and case review](../02-research/indie-launch-commercials/learnings.md) | Twelve principles and counterexamples from 64 reread cases, with a complete evidence map; research recommendations, not implemented features or an approved release calendar |
 | [Positioning and copy](positioning-and-copy.md) | Audiences, value proposition, draft homepage copy, taglines, creator experience and demo storyboard |
 | [Ideas, channels and experiments](ideas-channels-and-experiments.md) | Campaign concepts, candidate channels, sequence, lightweight message tests and measures |
 | [Open platform and private worlds](open-platform-and-private-worlds.md) | AGPL engine direction, private world content, optional mechanic libraries, creator control, and licensing boundaries |
