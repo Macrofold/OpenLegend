@@ -1,5 +1,7 @@
 # How this style fits generative art
 
+**Current art direction:** the [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
+
 **Good fit as an assisted production process; unproven as fully automatic final art.** Generation can provide concepts, variations, draft geometry and texture candidates. The desired finish depends on consistent forms, scale, garment coverage, motion and a designed pixel renderer. The realtime references show that the renderer can supply the pixel shading; a generated asset does not need a hand-painted texture for every visible pixel. A generic downsampling filter alone still does not establish the quality.
 
 This document owns the art-production implications of the research. The existing [generation/publication design](../../../docs/projects/3d-pixel-art-asset-pipeline.md) owns durable work, admission, storage, spending, failure and publication. Its general pipeline remains proposed. No provider request, tool installation, account access or quality/cost benchmark was performed for this research.

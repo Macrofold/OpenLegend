@@ -22,7 +22,7 @@ Text alone can't keep a face, costume or painting style identical across images.
 - **Style reference version** `--sv`: on V8.2 and V7 there are six; `--sv 6` is the default and `--sv 4` is the older model. Codes and `random` work only with `--sv 4` and `--sv 6` (docs).
 - **Keep the text simple.** "Avoid adding style words that might conflict with your reference image's look." "Use your text prompt to describe what you want to see, not how Midjourney should modify the reference image." A text prompt is still required (docs).
 - **Stability:** since V8.1, style references and moodboards are "super stable" (MJ). Community testers report the cleanest style-reference results on Niji 7.
-- **For Open Legend (house):** once one of our own painted concepts nails the finish, reuse it as `--sref <url> --sw 100–200` so a whole series matches. **Don't** use the pixel-art board screenshots as style references for concept art, because they'll pull the image toward pixel art. Third-party images may inspire early exploration but are never canon (house, from the 3D pixel-art style bible).
+- **For Open Legend (house):** once one of our own painted concepts nails the finish, reuse it as `--sref <url> --sw 100–200` so a whole series matches. **Don't** use the pixel-art board screenshots as style references for concept art, because they'll pull the image toward pixel art. Third-party images may inspire early exploration but are never canon (house; follow the [current visual requirements](../decisions.md#current-visual-requirements--october-16-2026) and [creative brief](../final-board/creative-brief.md)).
 
 ### Style Creator
 

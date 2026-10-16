@@ -1,5 +1,7 @@
 # Assets and rendering: how to build the look
 
+**Current art direction:** the [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
+
 This is a technical synthesis and a set of **proposed OpenLegend experiments**, not a reconstruction of any proprietary renderer. [Reference research](reference-techniques.md) owns claims about the individual games. The [realtime follow-up](realtime-pixel-rendering.md) revises the earlier emphasis: a designed renderer is now the leading candidate to compare, while painted surfaces remain useful. No technique below was implemented or benchmarked in this documentation task.
 
 ## Three different grids

@@ -1,5 +1,7 @@
 # Runtime invention art pipeline
 
+**Art direction — October 16, 2026:** beautiful dimensional pixel art must retain believable real-world proportions. Visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art is rejected under the [current visual requirements](../art-direction/decisions.md#current-visual-requirements--october-16-2026). This is the bundled world’s artistic target, not a universal engine constraint. Existing implementation descriptions below are evidence of current behavior, not claims that every asset meets the target.
+
 **Status: accepted target design.** This document owns staged runtime asset production, the presentation contract, review/publication, and compatibility with mechanical revisions. It refines the accepted [visual direction](../archive/03-design-proposals/visual-direction.md#art-generated-during-play); that document retains artistic goals and immediate-state presentation intent. [Hybrid art methods](../archive/03-design-proposals/procedural-art-and-animation.md) owns procedural composition, rigs, pixel density, and rendering choices. [Invention foundation](invention-foundation.md) owns project coordination; [INV](maintainers/inventions-and-world-evolution.md) owns implementation and acceptance.
 
 ## 1. Purpose and non-negotiable behavior

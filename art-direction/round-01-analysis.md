@@ -1,5 +1,7 @@
 # Open Legend — art direction after round one
 
+**Historical exploration:** retain the ratings and aspect-specific reactions below. New art choices follow the [current visual requirements](decisions.md#current-visual-requirements--october-16-2026): believable proportions and beautiful dimensional pixel art, explicitly excluding visibly low-poly, blocky, cutesy and big-head/small-body styles.
+
 Reviewed September 19, 2026. Source: [your saved feedback](feedback.json), saved at 06:16:56 UTC, and the [round-one catalog](references.md). You rated 47 of 48 references: **13 like, 12 maybe, 22 pass**. A07 / Modern Exteriors has no recorded response; it is not treated as rejected. A copy of the reviewed feedback is retained in [round-01-feedback-reviewed.json](round-01-feedback-reviewed.json).
 
 ## Working direction

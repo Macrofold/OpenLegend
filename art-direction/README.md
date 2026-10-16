@@ -4,6 +4,8 @@ This folder is the shared home for visual references, feedback, decisions, and f
 
 ## Start here
 
+**Required direction:** [Current visual requirements](decisions.md#current-visual-requirements--october-16-2026) — beautiful dimensional pixel art with believable real-world proportions; explicitly reject visibly low-poly 3D, blocky/Lego-like, cutesy and small-body/big-head art. Read this before sourcing assets, writing concepts or interpreting older reference ratings. [Grounded creator shortlist](research/3d-pixel-worlds/grounded-asset-creators.md) records promising sources and their untested limits.
+
 **Current study:** [Source-based starting-world review and evidence](../docs/verification/source-based-starting-study.md) — 41 families, original mercenary, actual scene/light/motion comparisons and preserved alternatives. Creator acceptance remains open.
 
 **Agreed scope:** [Starting-scene art revision and revised comprehensive study strategy](../docs/projects/3d-pixel-art-first-scene-plan.md#proposed-replacement-study--october-16-2026) · [Implementation and experiment tasks](../docs/maintainers/3d-pixel-art.md#first-scene-delivery-and-experiment-tasks). Restyle the existing starting scene and retain its broader playtesting content; add demonstration subjects only where needed for a specific art comparison. The procedural study was rejected; its technical delivery does not establish art acceptance.

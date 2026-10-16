@@ -1,5 +1,7 @@
 # Art assets
 
+Select sources against the [current visual requirements](../decisions.md#current-visual-requirements--october-16-2026): believable real-world proportions and forms for beautiful dimensional pixel art; reject visibly low-poly, blocky, cutesy and big-head/small-body designs. Existing acquired packs are preserved studies, not approved style suppliers. The [grounded creator shortlist](../research/3d-pixel-worlds/grounded-asset-creators.md) distinguishes new candidates from acquired or tested assets.
+
 Kenney/Quaternius environment sources and a CC0 animated rabbit were acquired on October 15, 2026. Exact sources, licenses, retained files and provisional use are recorded in the [library acquisition report](../../docs/verification/library-art-variants.md#actually-downloaded-sources), [environment provenance](../../apps/client/src/props/library-environment/provenance.json) and [animal attribution](../../apps/client/src/props/library-animals/ATTRIBUTION.md). Their acquisition does not establish final pixel-art acceptance. The original [representative Blender study](representative-study/README.md) is also retained, with its art now [rejected](../decisions.md#corrected-study-requirements--october-16-2026).
 
 Eight linked pack previews remain in the reference board (A01–A08), with creators, source URLs and brief licensing notes in `references.json` and `references.md`.

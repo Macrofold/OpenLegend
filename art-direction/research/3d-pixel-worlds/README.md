@@ -1,5 +1,7 @@
 # Building a dimensional pixel-art world
 
+**Current art direction:** the [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
+
 Research completed October 14, 2026. This collection answers Mike's supplied references and records a proposed technical route for OpenLegend. It updates the art brief; it does **not** select a production renderer, approve the mercenary's appearance, or implement the broader art pipeline.
 
 ## The direction
@@ -13,6 +15,8 @@ The research recommendation has since become an [agreed first-scene direction an
 That recommendation is a proposal for comparison, not a claim that every reference uses the same pipeline. Keep painted-material and articulated-sprite alternatives as controls. Evaluate [texel splatting](texel-splatting.md) separately for perspective shimmer; its public WebGPU implementation is not a drop-in repair for our current WebGL scene or a proven animated-character solution. The existing [3D appearance project](../../../docs/projects/3d-pixel-art-feature-spec.md) retains production selection and implementation scope.
 
 ## Read in this order
+
+For new source acquisition, start with [grounded asset creators](grounded-asset-creators.md), researched October 16 after the explicit style clarification. These are unadopted candidates; the earlier technique research below is not a supplier endorsement.
 
 The follow-up adds [realtime rendering and lighting](realtime-pixel-rendering.md), [texel splatting](texel-splatting.md), [animation tools and techniques](animation-tools-and-techniques.md), [tool and license notes](tool-and-license-notes.md), and a [complete video/source index](video-library.md).
 

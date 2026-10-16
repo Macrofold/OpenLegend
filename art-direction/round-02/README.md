@@ -1,5 +1,7 @@
 # Open Legend — feedback round two
 
+**Historical exploration:** retain the ratings and aspect-specific reactions below. New art choices follow the [current visual requirements](../decisions.md#current-visual-requirements--october-16-2026): believable proportions and beautiful dimensional pixel art, explicitly excluding visibly low-poly, blocky, cutesy and big-head/small-body styles.
+
 Open [index.html](index.html). Start Here contains eight focused comparisons; All contains 20 references: 16 new games, one artist study, and three favorites carried forward for comparison. Click a picture to see it larger, switch between available views, and answer the specific question. The original [round-one board](../index.html) and its feedback are preserved.
 
 The aim is to establish the minimum detail needed for ordinary people, distinguish rich color from excessive saturation, and translate cinematic pixel art into natural environments. The underlying preferences are recorded in the [round-one analysis](../round-01-analysis.md). Comparison cases deliberately include possible mismatches; they are labeled as such.

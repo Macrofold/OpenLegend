@@ -1,5 +1,7 @@
 # Art direction and study progress
 
+**Latest preference:** follow the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026): beautiful dimensional pixel art with believable proportions; reject visibly low-poly, blocky, cutesy and big-head/small-body art. Mike praised the latest study’s improvement, then explicitly narrowed source/style selection; that does not close the remaining art or motion acceptance checks.
+
 This tracker is the entry point for visual work, individual studies and Mike's art-review decisions. The [creative brief](../../art-direction/final-board/creative-brief.md), [reference boards](../../art-direction/README.md) and [recorded decisions](../../art-direction/decisions.md) remain the aesthetic owners. A working asset or passing renderer check does not establish final style approval.
 
 ## Where the work lives

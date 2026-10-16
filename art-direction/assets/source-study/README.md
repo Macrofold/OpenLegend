@@ -1,5 +1,7 @@
 # Source-based starting-world study
 
+**Current art target:** beautiful dimensional pixel art with believable proportions; visibly low-poly, blocky, cutesy and big-head/small-body designs are excluded by the [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026). Retained source assets, alternatives and their credits document the study; their presence is not style approval. This preference update does not replace assets or alter their licenses.
+
 Implemented October 16, 2026 under the [authorized replacement strategy](../../../docs/projects/3d-pixel-art-first-scene-plan.md#proposed-replacement-study--october-16-2026). The collection and runtime comparisons are delivered; working selections are provisional art, not Mike's acceptance or production qualification. [Actual evidence and review access](../../../docs/verification/source-based-starting-study.md) own captures, measurements, defects and remaining limits.
 
 There are 20 editable Blender files for 41 families, 123 static alternatives, 38 normalized source controls, 39 additional animated exports and three depleted berry exports. The catalogs beside `apps/client/src/props/art-study/source-*` record source URLs/digests, generation recipe/helper hashes, evaluated dimensions, geometry, textures and output hashes. Source/recipe hashes describe the recorded export run. The 203 runtime GLBs total 250,322,196 bytes for the complete preserved study; the game loads selected appearances, not every option.

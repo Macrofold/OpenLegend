@@ -1,5 +1,7 @@
 # Halven Rusk: Midjourney concept-art prompts
 
+**Current prompt constraint:** use believable anatomy and natural head-to-body proportions for beautiful dimensional pixel art. Reject visibly low-poly, blocky/Lego-like, cutesy, chibi and big-head/small-body designs; painted concepts follow the same [current visual requirements](../decisions.md#current-visual-requirements--october-16-2026). Stylize color, brushwork and lighting without cartoon-proportion drift.
+
 [Midjourney guide](../midjourney/README.md) · Written 2026-09-27 for Midjourney V8.2. Painted concept art, not pixel art, following the [creative brief](../final-board/creative-brief.md).
 
 This is the guide's worked example. It shows the method end to end: reading the canon, choosing an identity anchor, picking five different jobs for five images, and planning what happens after one is chosen.

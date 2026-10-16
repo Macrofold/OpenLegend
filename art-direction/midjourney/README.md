@@ -1,5 +1,7 @@
 # Midjourney prompting guide for Open Legend
 
+**Current prompt constraint:** use believable anatomy and natural head-to-body proportions for beautiful dimensional pixel art. Reject visibly low-poly, blocky/Lego-like, cutesy, chibi and big-head/small-body designs; painted concepts follow the same [current visual requirements](../decisions.md#current-visual-requirements--october-16-2026). Stylize color, brushwork and lighting without cartoon-proportion drift.
+
 **Start here.** This folder (`art-direction/midjourney/`) is the team's reference for writing Midjourney prompts. It consolidates official Midjourney documentation, Midjourney's own release announcements, community guides and Open Legend's art direction into one place. It was written on **2026-09-27**, when **V8.2** was Midjourney's default model.
 
 > **Midjourney changes roughly every month.** Before relying on anything version-specific (a parameter range, what a model supports), check the official [Version page](https://docs.midjourney.com/hc/en-us/articles/32199405667853-Version) and [Parameter List](https://docs.midjourney.com/hc/en-us/articles/32859204029709-Parameter-List). When you confirm or correct something, update the "Last verified" line below and the relevant file.
@@ -8,7 +10,7 @@
 
 ## What we use Midjourney for
 
-For now: **painted concept art** of Threewater March's people, places and props: portraits, character design sheets, story keyframes and environments. It is **not** how we make pixel art. The in-game pixel look comes from the 3D pixel-art renderer and asset pipeline, so concept art should be painted illustration with natural proportions, readable gear and purposeful light. See the [3D pixel-art feature spec](../../docs/projects/3d-pixel-art-feature-spec.md) and the 3D pixel-art style bible. The style bible is for now an Open Legend project doc (`claude/art-pipeline/style-bible-3d-pixel.md`), not a repository file.
+For now: **painted concept art** of Threewater March's people, places and props: portraits, character design sheets, story keyframes and environments. It is **not** how we make pixel art. The in-game pixel look comes from the 3D pixel-art renderer and asset pipeline, so concept art should be painted illustration with natural proportions, readable gear and purposeful light. See the [3D pixel-art feature spec](../../docs/projects/3d-pixel-art-feature-spec.md) and the [current visual requirements](../decisions.md#current-visual-requirements--october-16-2026). These repository owners replace the obsolete separate style-bible reference.
 
 ## How claims are labelled
 

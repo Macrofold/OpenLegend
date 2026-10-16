@@ -1,5 +1,7 @@
 # Representative Blender study
 
+**Current art target:** beautiful dimensional pixel art with believable proportions; visibly low-poly, blocky, cutesy and big-head/small-body designs are excluded by the [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026). Retained source assets, alternatives and their credits document the study; their presence is not style approval. This preference update does not replace assets or alter their licenses.
+
 **Artwork rejected October 16, 2026.** Retained for comparison and source history; the [comprehensive replacement strategy](../../../docs/projects/3d-pixel-art-first-scene-plan.md#proposed-replacement-study--october-16-2026) owns the next art work. The technical export and inspector observations below do not establish artistic acceptance.
 
 Thirty original static GLBs, three alternatives in each of ten families, accompany these three editable Blender files. The [study report](../../../docs/verification/representative-art-study.md) records working selections, actual visual revisions, checks and limits. Existing game assets and earlier trials remain preserved.

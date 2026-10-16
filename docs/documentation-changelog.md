@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 16, 2026 — Grounded proportions and explicit art exclusions
+
+Mike clarified that [beautiful dimensional pixel art requires believable real-world proportions](../art-direction/decisions.md#current-visual-requirements--october-16-2026), excluding visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art. This supersedes broader cartoon-style permission and the previous Bitgem/KayKit/Polytope/Synty sourcing recommendation; Quaternius remains respected for its own style without being the target. Reconciled the creative brief, reference board, concept prompts, active art specifications, acceptance rubric, acquisition notes and historical entry points. Existing artwork, provenance and measured evidence remain unchanged.
+
+Root guidance now routes asset recommendations and concept prompts to the existing art owners before choosing sources. Removed the obsolete separate style-bible references and the low-poly/chunky/six-head prompt recipe. The board builder now writes only its generated HTML, preserving the independently maintained creative brief. [Grounded creator research](../art-direction/research/3d-pixel-worlds/grounded-asset-creators.md) records actual preview inspection, free/paid distinctions and untested import/conversion limits. No game asset, renderer or world rule was changed; no new purchase or provider call was made.
+
 ## October 16, 2026 — Source-study lessons and guidance audit
 
 [CG29](maintainers/agent-guidance.md#source-study-review-follow-up--october-16-2026-1121-utc) records the narrow follow-up: completed-work measurement instead of callback cadence, borrowed-resource and render-pass restoration, duplicate shadow submissions, and explicit permitted facts for visual effects. Render measurement is now an explicit root/skill trigger. The measurement reminder is consolidated under the existing performance owner; art criteria, change-based reuse and engine/world policies remain with their existing owners. The feature specification and technical-design consultation are dated; rendered pixels are not represented as permanent cells or proven shimmer-free artwork. No runtime behavior or acceptance requirement changes.

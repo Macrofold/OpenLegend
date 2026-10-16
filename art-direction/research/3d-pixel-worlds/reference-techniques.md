@@ -1,5 +1,7 @@
 # What the reference creators actually built
 
+**Current art direction:** the [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
+
 Reviewed October 14, 2026. **Confirmed** below means supported by a creator, official documentation or the supplied transcript. **Observed** means visible in the saved media. **Proposed** means an OpenLegend recommendation. A screenshot cannot establish mesh topology, texture resolution, shader code or performance.
 
 ## Garbage Country and Noio's Blender tools
@@ -55,6 +57,8 @@ The [fan wiki](https://thelastnight.fandom.com/wiki/The_Last_Night_Wiki) provide
 **Proposed:** use broad value separation and restrained movement around detailed scenery. Do not require every leaf or ripple to be individually modeled, and do not infer a 3D production method merely because the scene has depth.
 
 ## BitGem's 3D Pixel Dungeon
+
+**Style rejected by Mike, October 16, 2026.** Retain this section as historical evidence of modular construction and texture organization; it is not an art target or acquisition recommendation.
 
 [Requested Sketchfab model](https://sketchfab.com/3d-models/3d-pixel-dungeon-10042e046a53424385a5170bf0cc8d3b) · [creator portfolio](https://bitgem.artstation.com/projects/4bXZk) · [current product description](https://shop.bitgem3d.com/products/low-poly-3d-pixel-dungeon-set) · [saved previews](gallery.md#bitgem-dungeon).
 

@@ -1,5 +1,7 @@
 # Generated supply chest
 
+**Current art target:** beautiful dimensional pixel art with believable proportions; visibly low-poly, blocky, cutesy and big-head/small-body designs are excluded by the [current visual requirements](../../../../art-direction/decisions.md#current-visual-requirements--october-16-2026). Retained source assets, alternatives and their credits document the study; their presence is not style approval. This preference update does not replace assets or alter their licenses.
+
 “Production Gothic reward chest created with Meshy; runtime processing by Samfa12/Codex.”
 
 This asset is distributed under [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/). The [upstream asset-specific declaration](https://github.com/Samfa12-tech/The-Horde-RT-demo/blob/d7e6d4018042c8b068f300aa5dbc9e1495daa448/ASSET_LICENSES.md) and [generation metadata](https://github.com/Samfa12-tech/The-Horde-RT-demo/blob/d7e6d4018042c8b068f300aa5dbc9e1495daa448/assets/models/props/meshy/production-gothic-chest-2026-08-27/METADATA.md) are pinned at `d7e6d4018042c8b068f300aa5dbc9e1495daa448`. Upstream retained uncertainty about its active Meshy account plan and chose the conservative CC BY route; that caveat remains recorded.

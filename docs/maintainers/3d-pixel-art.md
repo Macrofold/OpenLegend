@@ -1,5 +1,7 @@
 # Progressive 3D pixel art — implementation tracker
 
+**Latest preference:** follow the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026): beautiful dimensional pixel art with believable proportions; reject visibly low-poly, blocky, cutesy and big-head/small-body art. Mike praised the latest study’s improvement, then explicitly narrowed source/style selection; that does not close the remaining art or motion acceptance checks.
+
 **Status: Mike rejected both the first normal-3D scene finish and the later procedural Blender study. Technical inspection/review work is delivered; the revised strategy covers the existing starting world's people, animals, objects, environment and lighting. The source-based replacement collection and its technical review are delivered. Creator acceptance, residual visual/initial-load limits, broader pipeline, remaining source rights and crowd/device gates stay open.** Last reconciled October 16, 2026.
 
 ## Maintained records

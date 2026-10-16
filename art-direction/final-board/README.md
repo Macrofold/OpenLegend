@@ -2,7 +2,7 @@
 
 Open [index.html](index.html) for the eleven explicitly named favorites, or [creative-brief.md](creative-brief.md) for the full written rationale. This is a curated conclusion to the review rounds, not another rating form. Filters select the main contribution of each reference; images open in a larger view with arrow navigation and Escape to close.
 
-Canonical content is in references.json. The six user-supplied images are copied unchanged into images/; earlier remote references retain their source URLs. Build only this board with `python3 art-direction/final-board/build_board.py`. No feedback is loaded, edited or overwritten.
+Current art direction is in the [maintained creative brief](creative-brief.md) and [visual requirements](../decisions.md#current-visual-requirements--october-16-2026): beautiful dimensional pixel art with believable proportions; visibly low-poly, blocky, cutesy and big-head/small-body styles are rejected. Card content is in references.json. The six user-supplied images are copied unchanged into images/; earlier remote references retain their source URLs. Build only this board with `python3 art-direction/final-board/build_board.py`. The builder regenerates only index.html; it does not overwrite the maintained creative brief or any feedback.
 
 The discussion establishes creative inspiration, not an asset production pipeline, target sprite resolution or renderer choice. The board distinguishes user preferences from visual analysis and proposed application. Native browser/layout verification remains unconfirmed because local-file preview access is blocked in this environment. Static validation covers reference completeness, local image presence, source links, unique IDs, bundled script syntax and reproducible generation.
 

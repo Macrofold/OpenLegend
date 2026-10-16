@@ -1,5 +1,7 @@
 # Art direction after round two — detail before technique
 
+**Historical exploration:** retain the ratings and aspect-specific reactions below. New art choices follow the [current visual requirements](decisions.md#current-visual-requirements--october-16-2026): believable proportions and beautiful dimensional pixel art, explicitly excluding visibly low-poly, blocky, cutesy and big-head/small-body styles.
+
 Reviewed September 19, 2026. Source: [saved round-two feedback](feedback-round-02.json), saved at 23:00:19 UTC; [reviewed snapshot](round-02-feedback-reviewed.json). All 20 references received feedback. The file was saved in the parent art-direction folder, not inside round-02; it has been read in place and preserved.
 
 ## What became clearer

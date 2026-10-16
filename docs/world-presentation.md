@@ -1,5 +1,7 @@
 # World presentation
 
+**Art direction — October 16, 2026:** beautiful dimensional pixel art must retain believable real-world proportions. Visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art is rejected under the [current visual requirements](../art-direction/decisions.md#current-visual-requirements--october-16-2026). This is the bundled world’s artistic target, not a universal engine constraint. Existing implementation descriptions below are evidence of current behavior, not claims that every asset meets the target.
+
 This specification owns motion presentation, mixed sprite/mesh depth, lighting, shadows, camera controls and player-controlled local read-through. [Spatial world](spatial-world.md) owns physical location, navigation and senses; [SW](maintainers/spatial-world.md) owns implementation and remaining acceptance. Visual approximations never become collision bodies, actor knowledge or permission to act. Current presentation bounds are catalogued in [interface limits](limits/interface.md#vp01).
 
 ## Camera and settings

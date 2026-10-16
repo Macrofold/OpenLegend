@@ -1,8 +1,20 @@
 # Art-direction decisions
 
+## Current visual requirements — October 16, 2026
+
+**Owner clarification recorded 2026-10-16 23:12 UTC.** These requirements govern new art research, sourcing, concepts, modeling, pixel finishing and review for the bundled OpenLegend world. They supersede earlier broad permission for cartoon styling and recommendations to use visibly low-poly asset families. Earlier feedback, source credits and technical observations remain historical evidence.
+
+- **Desired:** beautiful dimensional pixel art with believable real-world proportions. People retain natural head-to-body relationships, anatomy and varied builds; animals, vegetation, tools, armor and buildings retain convincing form, scale and construction. Stylization comes through deliberate pixels, color grouping, material interpretation, expressive motion and lighting. The result can be an illustrated or video-game interpretation of reality without becoming a cartoon world or requiring photorealistic final rendering.
+- **Explicitly rejected:** the visible low-poly 3D aesthetic, flat polygon facets as the art style, blocky/Lego-like forms, cutesy or toy-like assets, chibi/small-body/big-head characters and exaggerated cartoon proportions. A pixel filter or coarse texture over those forms does not make them acceptable. Pair positive descriptions of beautiful pixel art with this exclusion in briefs, prompts and asset-selection guidance.
+- **Source selection:** begin with convincing anatomy, silhouettes, organic structure and material construction. Do not choose a visibly low-poly or cute source because it is free, convenient, coherent or labeled “game-ready,” and assume pixel finishing will repair its design. Efficient polygon counts, simplified hidden geometry and lower-detail runtime meshes remain valid engineering choices when they preserve the required appearance; the rejection concerns the visible style, not a minimum polygon count.
+- **Creator feedback:** Mike rejects the art styles of Bitgem, KayKit, Polytope Studio and Synty for this project. Do not recommend them again as the style direction. Quaternius is solid for its intended style, but its visibly low-poly look is also outside this target. Existing Quaternius/Kenney and other acquired studies remain available with intact provenance; keeping them does not endorse their style or select them as the future source family.
+- **Reference interpretation:** retain Garbage Country's environmental qualities, The Last Night/REPLACED's fine pixel craft and lighting, and t3ssel8r's endorsed character qualities. Earlier likes for Dave the Diver, Hades, Eastward or another game apply to the stated aspects; they do not override this explicit rejection of cute or exaggerated proportions. Preserve readable faces, the mercenary's modest tallness, clothing coverage and the critical moving-camera shimmer/artifact checks.
+
+Mike said the latest source-based study looks much better. Record that positive feedback without treating it as blanket approval of every imported asset, source creator or unresolved moving-art defect. The [creative brief](final-board/creative-brief.md) translates these requirements; [grounded source candidates](research/3d-pixel-worlds/grounded-asset-creators.md) record new research, not purchases or adopted artwork.
+
 ## Confirmed scope — September 19, 2026
 
-- Explore a broad collection of beautiful pixel-art games, particularly 2.5D, including Steam references, sprites, asset packs, and concept art.
+- Explore a broad collection of beautiful pixel-art games, particularly 2.5D, including Steam references, sprites, asset packs, and concept art. The current direction above explicitly excludes visibly low-poly, cutesy and exaggerated-proportion art.
 - Inspiration is not limited to PlayCanvas, Three.js, browser games, or a particular rendering implementation.
 - Keep references, future art decisions, and assets together in this folder.
 
@@ -33,9 +45,9 @@ The [second board](round-02/index.html) explores these remaining questions. It k
 
 ## Choices to resolve from feedback
 
-The following earlier questions remain useful, but the October 14 preferences below now narrow the visual target. They do not settle a renderer or character representation.
+The following earlier questions remain useful, but the October 14 references and October 16 requirements above now narrow the visual target. They do not settle a renderer or character representation.
 
-1. Character proportions and how much individual identity is visible at the normal camera scale.
+1. How much individual identity is visible at the normal camera scale while preserving the now-required believable proportions.
 2. Pixel density and fine texture versus broad, readable shapes.
 3. Natural, pastel, or deliberately heightened color palettes.
 4. Flat illustration, diorama depth, or another spatial presentation.
@@ -52,7 +64,7 @@ Evidence: Mike's supplied game/artist links, two attached transcripts and the re
 - **The Last Night is a leading overall finish reference.** Mike strongly endorses its pixel art, lighting, bokeh and dimensional presentation, and wants as much of that visual quality as is feasible for OpenLegend. This endorses qualities, not the city setting or a restricted side-view camera.
 - **EthrA's environments are endorsed; its character detail is not the target.** Mike explicitly wants higher-fidelity pixels on characters. Research supports articulated sprite parts for EthrA's characters; that is an option to compare, not an adopted implementation.
 - **REPLACED remains a strong pixel-art benchmark.** Its fine detail, animation and cinematic composition reinforce the existing preference for recognizable people and deliberate lighting.
-- **Kingdom, BitGem's dungeon, Mark Knight, Holland and the supplied renderer demonstrations contribute specific lessons.** Their visual qualities do not imply that all are built with the same technology or should be copied wholesale.
+- **Kingdom, Mark Knight, Holland and the supplied renderer demonstrations contribute specific lessons.** BitGem's dungeon remains historical construction-technique evidence only; Mike explicitly rejected its art style on October 16. None of these examples establishes a shared construction method or permission to copy a whole style.
 
 **Earlier proposal, superseded by the follow-up below:** painted shaped models led the first free-camera comparison recommendation because the initial Noio/BitGem evidence showed stable authored surface detail. The new realtime examples demonstrate a broader route, so mandatory painted finishing is not the current recommendation. The [creative brief](final-board/creative-brief.md#dimensional-pixel-art--october-14-direction) owns visual interpretation; project records own implementation and acceptance.
 

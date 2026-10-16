@@ -6,12 +6,15 @@ Confirmed favorites, with creative interpretation kept distinct from your stated
 
 ## Shared direction
 
-Richly detailed, dimensional worlds; expressive and recognizable people; purposeful light; and an inviting sense of life. Pixel art and illustrated approaches are both valid references. Readable silhouettes and quiet areas matter as much as fine texture. The latest endorsements of Dave the Diver and Hades make clear that stylization can be a positive rather than an automatic rejection.
+Beautiful dimensional pixel art with believable real-world proportions, expressive and recognizable people, purposeful light and an inviting sense of life. Explicitly reject the visibly low-poly 3D look, flat faceted styling, blocky/Lego-like or cutesy assets, and small-body/big-head or exaggerated cartoon characters. Stylization belongs in pixels, palette, material interpretation and lighting while anatomy, objects and the world retain convincing proportions. Readable silhouettes and quiet areas matter as much as fine texture. Painted references remain useful for concepts and composition; photorealistic final rendering is not required.
+
+**Updated 2026-10-16 23:12 UTC:** [Current visual requirements](../decisions.md#current-visual-requirements--october-16-2026) own this clarification and the rejected creator styles. Earlier endorsements of individual games do not authorize their cute or exaggerated proportions. Research [grounded source creators](../research/3d-pixel-worlds/grounded-asset-creators.md) before returning to a familiar low-poly library.
 
 ## The practical brief
 
 - Give the wilderness layered terrain, vegetation and atmospheric depth, without making permanent gloom the default.
 - Make body shape, clothing, hair, skin tone and carried equipment readable at gameplay distance. Use profiles and close views for richer face and material detail.
+- Preserve natural head/body proportions, varied believable builds, organic plants and animals, and practical object scale/construction. Improve framing and authored features to achieve readability instead of enlarging heads or shortening bodies.
 - Let campfires, water and shadows connect people to their surroundings. Compose light around an identifiable source and preserve readable values.
 - Add meaningful lived-in objects, not uniform visual noise. Use fine detail where it describes identity, material or use.
 - Keep human scale, environment scale and close-up scale explicit when evaluating artwork. A large portrait or promotional illustration is not a runtime feasibility result.
@@ -40,7 +43,7 @@ See the [local reference gallery](../research/3d-pixel-worlds/gallery.md), [crea
 
 **Creative translation:** Give the wilderness depth and breathing room; make individuals recognizable through body shape, hair, skin tone and equipment. Let closer character views reveal richer faces and material detail while world avatars stay legible.
 
-**Context:** The chef is a close-up, not evidence of facial detail at gameplay distance. Your new endorsement broadens the earlier concerns about cartoon-like proportions: appealing stylization is welcome when the finish and personality work.
+**Context:** The chef is a close-up, not evidence of facial detail at gameplay distance. Borrow personality, material detail and atmosphere. Mike's October 16 clarification explicitly excludes cute and exaggerated cartoon proportions even in otherwise liked references.
 
 ![World scale · clear silhouette, luminous water and layered terrain](images/dave-underwater.png)
 Source: User-supplied screenshot
@@ -156,7 +159,7 @@ Source: https://www.mobygames.com/game/65869/transistor/screenshots/windows/7583
 
 **Creative translation:** Use firelight, shade and daylight to change the emotional character of a place. Keep a small human gathering readable within expansive nature.
 
-**Context:** The image is Octopath Traveler II. Miniature figures and strong blur are not mandatory: earlier reservations remain useful component-level guidance.
+**Context:** The image is Octopath Traveler II. Borrow lighting and depth; miniature big-head/small-body proportions are outside the October 16 direction. Strong blur is not required.
 
 ![Gameplay reference · previously reviewed](https://gh.cdn.sewest.net/assets/ident/games/8bd47aa2/3-OPII_partyofheightaroundafirecamp-upoy5vqh9.jpg?quality=65)
 Source: https://www.square-enix-games.com/en_GB/games/octopath-traveler-ii
@@ -169,7 +172,7 @@ Source: https://www.square-enix-games.com/en_GB/games/octopath-traveler-ii
 
 **Creative translation:** Let camps accumulate meaningful objects: bundles, tools, cooking materials, wear and vegetation. Create richness through the traces of people living there.
 
-**Context:** Liking the whole direction does not require copying its simplified character proportions. Keep clothing and gear legible at our actual camera scale.
+**Context:** Borrow environmental warmth and lived-in detail. Cute or exaggerated character proportions are outside the October 16 direction; preserve natural anatomy and readable clothing at our actual camera scale.
 
 ![Gameplay reference · previously reviewed](https://cdn.mos.cms.futurecdn.net/FjCGBKPmgyXH9rxphyywqQ.jpeg)
 Source: https://www.gamesradar.com/eastward-review/

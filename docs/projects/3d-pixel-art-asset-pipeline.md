@@ -1,8 +1,10 @@
 # Progressive 3D pixel art — generation and publication pipeline
 
-| Status      | Current progress                                                                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The mercenary visible-height/pixel correction has scoped browser evidence; starting-scene art experiments, creator acceptance and the broader pipeline remain open. | 2026-10-15   |
+| Status      | Current progress                                                                                                                                      | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The finite source-based study is implemented; grounded art requirements are clarified, while creator acceptance and the broader pipeline remain open. | 2026-10-16   |
+
+**Art direction — October 16, 2026:** beautiful dimensional pixel art must retain believable real-world proportions. Visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art is rejected under the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026). This is the bundled world’s artistic target, not a universal engine constraint.
 
 **October 14 production research:** The [generative-art assessment](../../art-direction/research/3d-pixel-worlds/generative-pipeline.md) explains how concepts, draft models, controlled material regions, rigs, targeted surface artwork and a shared realtime pixel renderer can support the new references. The renderer can supply consistent pixel shading without requiring every lit view to be painted; export and animation still require review. It is an authoring supplement to this pipeline, not a second work/publication system or evidence of provider quality. The saved reference images are not automatically licensed generation inputs.
 

@@ -1,5 +1,7 @@
 # Engines, art direction, perception, and audio
 
+**Current bundled-world art direction:** the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026) supersede any broader style permission below: beautiful dimensional pixel art with believable real-world proportions; visibly low-poly, blocky, cutesy and big-head/small-body art is rejected. Preserve the historical technical comparisons without treating them as current style endorsements.
+
 Status: researched evidence supporting the **accepted PlayCanvas/custom-simulation and grounded pixel-art direction** in V02–V04. Camera, art production, engine version and editor workflow remain open; no implementation or subscription has been approved. Research checked September 18, 2026, America/New_York / September 19 UTC. Live documentation may change; version-specific limitations below describe the cited documentation.
 
 ## 1. Accepted starting direction

@@ -1,5 +1,7 @@
 # CC0 environment comparison assets
 
+**Current art target:** beautiful dimensional pixel art with believable proportions; visibly low-poly, blocky, cutesy and big-head/small-body designs are excluded by the [current visual requirements](../../../../../art-direction/decisions.md#current-visual-requirements--october-16-2026). Retained source assets, alternatives and their credits document the study; their presence is not style approval. This preference update does not replace assets or alter their licenses.
+
 These eight prepared appearance templates are alternatives for existing scenery.
 They add no world records, collision, bodies, resources or navigation. The original
 procedural scenery remains available. This is an art comparison, not creator

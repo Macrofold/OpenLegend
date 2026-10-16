@@ -1,5 +1,7 @@
 # Realtime pixel rendering, lighting and effects
 
+**Current art direction:** the [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
+
 October 14, 2026 follow-up. **The new references change the recommendation:** compare a renderer-driven, animated 3D scene first. Deliberately painted textures remain useful for faces, identity and particular materials, but do not need to supply every visible pixel. The earlier painted-texture emphasis was too narrow for the newly endorsed t3ssel8r character and scene workflow.
 
 This is research and a proposed experiment sequence, not a delivered renderer. [Video library](video-library.md) records every supplied video and the available evidence. [Texel splatting](texel-splatting.md) covers the perspective-stability experiment; [animation](animation-tools-and-techniques.md) covers motion. Existing gameplay and renderer ownership remain in the [project technical design](../../../docs/projects/3d-pixel-art-tech-design.md).

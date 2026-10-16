@@ -1,5 +1,7 @@
 # Peacock mercenary — art progress
 
+**Latest preference:** follow the [current visual requirements](../../../art-direction/decisions.md#current-visual-requirements--october-16-2026): beautiful dimensional pixel art with believable proportions; reject visibly low-poly, blocky, cutesy and big-head/small-body art. Mike praised the latest study’s improvement, then explicitly narrowed source/style selection; that does not close the remaining art or motion acceptance checks.
+
 **Status:** The October 16 source-based study restores the original mercenary identity in three preserved variants, with natural tall-person proportions and one final shared pixel resolve. The collection and bounded checks are delivered; creator acceptance, source production rights, residual visual/initial-load limits and wider qualification remain open. Last reconciled October 16, 2026. Parent: [art direction](../art-direction.md); implementation/evidence: [V3D01.15](../3d-pixel-art.md#v3d0115--representative-blender-pixel-art-study), [source-based report](../../verification/source-based-starting-study.md).
 
 ## Current source-based iteration

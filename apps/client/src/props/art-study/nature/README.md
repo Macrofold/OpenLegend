@@ -1,5 +1,7 @@
 # Nature pixel-art study
 
+**Current art target:** beautiful dimensional pixel art with believable proportions; visibly low-poly, blocky, cutesy and big-head/small-body designs are excluded by the [current visual requirements](../../../../../../art-direction/decisions.md#current-visual-requirements--october-16-2026). Retained source assets, alternatives and their credits document the study; their presence is not style approval. This preference update does not replace assets or alter their licenses.
+
 Twelve original, static Blender assets provide three retained geometry/paint
 alternatives each for rock, broadleaf, conifer and berry bush. These are authored
 study appearances, not new world objects, physical geometry or gameplay rules.
