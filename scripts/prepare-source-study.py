@@ -136,9 +136,9 @@ def mercenaries(source):
         body_node = color_texture(body.data.materials[0])
         if variant == 'restored':
             pixel_surface(body_node.image,body=True)
-            body_node.image.filepath_raw=str(output/'body-restored.png')
-            body_node.image.file_format='PNG'
-            body_node.image.save()
+            body_node.image.scale(512,512)
+            designed=paint.image_array(body_node.image)
+            position,covered=paint.rasterize_surface(body,512)
         else:
             image = body_node.image
             image.scale(512,512)
@@ -150,7 +150,21 @@ def mercenaries(source):
             # generic height paint made these delicate features waxy and flat.
             identity = (position[:,:,2] > 1.59) | ((np.abs(position[:,:,0])>.255)&(position[:,:,2]>.73)&(position[:,:,2]<1.035))
             designed[identity] = original[identity]
-            body_node.image = paint.save_image('Mercenary '+variant,designed,output/('body-'+variant+'.png'))
+        # Retain the original head, nose and beard; author broad eye/brow groups
+        # in its UV paint so they survive the 30 samples/metre comparison.
+        x,y,z=[position[:,:,i] for i in range(3)]
+        front=covered&(y<-.06)&(np.abs(x)<.075)&(z>1.66)&(z<1.79)
+        for sign in (-1,1):
+            eye=front&(np.abs(x-sign*.034)<.017)&(np.abs(z-1.734)<.011)
+            designed[eye]=paint.rgb('#343330')
+            brow=front&(np.abs(x-sign*.035)<.023)&(z>1.750)&(z<1.760)
+            designed[brow]=paint.rgb('#40332b')
+            # A small warm sclera accent, not a white cartoon disc.
+            glint=eye&(np.abs(x-sign*.044)<.006)&(z<1.735)&(z>1.729)
+            designed[glint]=paint.rgb('#c5b28b')
+        nose=front&(np.abs(x)<.010)&(z>1.697)&(z<1.744)
+        designed[nose]=paint.rgb('#d59e70')
+        body_node.image = paint.save_image('Mercenary '+variant,designed,output/('body-'+variant+'.png'))
         prepared_cape = set()
         for obj in objects:
             if obj.type!='MESH':
@@ -172,9 +186,9 @@ def mercenaries(source):
         clean_materials()
         normalize(objects,2.035)
         descriptions = [
-            'Earlier concept-derived model and 29-color surface preparation. Unchanged face and original gold mantle; reference control.',
-            'Original face and anatomy with quiet mail, broader quilt seams and wrapped linen. Original cape retained.',
-            'Original face with open mail groups, deliberate seams and paired peacock embroidery. Cloth remains a continuous lined surface.',
+            'Earlier concept-derived model and 29-color surface preparation, with readable eye/brow paint and original gold mantle.',
+            'Original face anatomy with deliberate eyes, quiet mail, broader quilt seams and wrapped linen. Original cape retained.',
+            'Original face with deliberate eyes, open mail groups, seams and paired peacock embroidery. Cloth remains a continuous lined surface.',
         ]
         asset, placement = export_asset(objects,output,'mercenary-'+variant,'mercenary','Peacock Mercenary',variant,descriptions[index],variant=='restored',
             'Owner-supplied concept → Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified.')

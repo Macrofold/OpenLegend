@@ -1,14 +1,14 @@
 {
   "group": "source-bird",
   "sourceFile": "art-direction/assets/source-study/source-bird.blend",
-  "sourceSha256": "924c425bf751f864fdb376a96d08cccf7cf431dd8a42c9b0106b59c72a51bfa3",
+  "sourceSha256": "b7f31702b528ec085eb7eb308b01bcfc52f16ed09fefaceb2ce86c4d2464b9e4",
   "recipe": {
     "path": "scripts/prepare-animal-study.py",
-    "sha256": "d4bf684eeb5086c2d6357c52bde01a5e3713911c784de68e2fea628d2c350778"
+    "sha256": "7fcc90a318a0b6c83e8acba22a80c155c15c18476de163857fecf7cf6e6e78e8"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
-    "prepare-source-study.py": "7cf6b8bc5ca5aff50c4b71ee3744613128a806343a963b87ca693f1942b9f5fe",
+    "prepare-source-study.py": "8ba81318fee15d09e5000eda0369d8fad5015bb01e56fbbe0a385ab290789550",
     "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
   },
   "sources": [
@@ -30,14 +30,14 @@
       "file": "bird-grey-wing.glb",
       "bounds": {
         "min": [
-          -0.197801,
+          -0.076544,
           0.0,
-          -0.335775
+          -0.276307
         ],
         "max": [
-          0.197801,
+          0.076502,
           0.23,
-          0.335775
+          0.276307
         ]
       },
       "triangles": 996,
@@ -48,10 +48,10 @@
           256
         ]
       ],
-      "sha256": "2e819be4a3e8aebbd9a4f92f9907d9c2856bd3091ee5e56e82cd14a521d3ca38",
+      "sha256": "4ba853506b3669731dd83c391302103e25915ce144500b8fb2dd1d77455d9efe",
       "source": "Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and idle/flight study by OpenLegend.",
       "animatedFile": "bird-grey-wing-motion.glb",
-      "animatedSha256": "915bf3213f12fc23ed0367b03cf511876682e87632796db96b0b9bb49700a9d5"
+      "animatedSha256": "ae5ec4f7a92571aeabc1e43612ff3338417d09f1c05ac93696518159feb1edfe"
     },
     {
       "id": "bird-warm-bib",
@@ -63,14 +63,14 @@
       "file": "bird-warm-bib.glb",
       "bounds": {
         "min": [
-          -0.211647,
+          -0.076101,
           0.0,
-          -0.335775
+          -0.27866
         ],
         "max": [
-          0.211647,
-          0.229696,
-          0.335775
+          0.076057,
+          0.23,
+          0.276307
         ]
       },
       "triangles": 996,
@@ -81,10 +81,10 @@
           256
         ]
       ],
-      "sha256": "dcb8b76a3a8b8480994ce3492f31e82e78fabbdfcce4a84153279c86d42f2154",
+      "sha256": "04a4b6082ff8389e5c97e6ee211587466b15bbc91cbbfe71773e292df38ee814",
       "source": "Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and idle/flight study by OpenLegend.",
       "animatedFile": "bird-warm-bib-motion.glb",
-      "animatedSha256": "fffe0a13633c72d0493328f549646d66049fbf8403a888d7ae63ebb6136a264c"
+      "animatedSha256": "610c845c370fef3432a2e148595aa1d2f02e421cac54c4e79b141ad679675783"
     },
     {
       "id": "bird-wing-bars",
@@ -96,14 +96,14 @@
       "file": "bird-wing-bars.glb",
       "bounds": {
         "min": [
-          -0.197801,
+          -0.076544,
           0.0,
-          -0.335775
+          -0.276307
         ],
         "max": [
-          0.197801,
+          0.076502,
           0.23,
-          0.335775
+          0.276307
         ]
       },
       "triangles": 996,
@@ -114,63 +114,10 @@
           256
         ]
       ],
-      "sha256": "c8e7f4d7a746dbbd1c86acc493232d6aeb0abed88b11bc615c6b98ba40e0fd34",
+      "sha256": "4a26570ee6f83c03ceed6ce57100edeb9e6afc8a0d6260ffec1a11ea856db054",
       "source": "Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and idle/flight study by OpenLegend.",
       "animatedFile": "bird-wing-bars-motion.glb",
-      "animatedSha256": "48f6530601dbf51f80ef35c0d0e2b34b7be00ec8dd7044da01934dc426dfdd61"
+      "animatedSha256": "54679f5ca7efca8e11ae7e48dc621156b6be09ca1b305c12fdee640614b83fd7"
     }
-  ],
-  "controls": [
-    {
-      "id": "control-library-bird",
-      "family": "library-bird",
-      "label": "Woodland bird",
-      "variant": "source-control",
-      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
-      "recommended": false,
-      "file": "control-library-bird.glb",
-      "bounds": {
-        "min": [
-          -0.132391,
-          0.0,
-          -0.145976
-        ],
-        "max": [
-          0.132391,
-          0.23,
-          0.145976
-        ]
-      },
-      "triangles": 996,
-      "vertices": 534,
-      "textureSizes": [
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          2048,
-          2048
-        ],
-        [
-          2048,
-          2048
-        ],
-        [
-          2048,
-          2048
-        ]
-      ],
-      "sha256": "53978e17bc20a068e2b271ffb6f78f9e89924af895ce55239320a479bfa91db1",
-      "source": "/private/tmp/openlegend-source-study/animals/shrike/bird_yellow_billed_shrike/bird_shrike1.blend \u00b7 SHA256 968bb9cc5aeb99c6da55b8dc752c4d1b6f8010e1939d4b23dcde23b1dee253cf"
-    }
-  ],
-  "controlRecipe": {
-    "path": "scripts/prepare-study-controls.py",
-    "sha256": "5b16232aabfa4ed836a02b2cb4d10baa172f4961f8574c6eca88b60352bf7999"
-  }
+  ]
 }

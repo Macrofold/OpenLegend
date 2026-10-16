@@ -21,7 +21,24 @@ let prior = 0;
 let lastPublication = 0;
 let disposed = false;
 let capture = new StudyCapture(canvas);
-let measurement: { start: number; intervals: number[] } | undefined;
+let measurement:
+  | {
+      start: number;
+      intervals: number[];
+      frames: ReturnType<WildernessScene['sampleArtFrame']>[];
+    }
+  | undefined;
+function distribution(values: number[]) {
+  if (!values.length) return null;
+  values.sort((a, b) => a - b);
+  return {
+    count: values.length,
+    median: values[Math.floor(values.length * 0.5)],
+    p95: values[Math.floor(values.length * 0.95)],
+    p99: values[Math.floor(values.length * 0.99)],
+    max: values.at(-1),
+  };
+}
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const stop = () => recorded.stops.find((item) => item.id === select('place').value)!;
 for (const item of recorded.stops) select('place').add(new Option(item.label, item.id));
@@ -34,7 +51,7 @@ function treatment(): ArtTreatment {
     sampling: route === 'shared' ? 'screen' : route === 'family' ? '60' : '96',
     sceneGrid: route === 'control' || route === 'surface' ? 'full' : 'metres30',
     subjectDetail: route === 'family' ? 'preserve' : 'shared',
-    surfaceArt: route === 'surface' ? 'rigid' : 'plain',
+    surfaceArt: route === 'control' ? 'plain' : 'rigid',
     environment: 'study',
     prop: 'banded',
     vegetation: 'still',
@@ -135,17 +152,24 @@ function update(now: number): void {
   prior = now;
   if (measurement && elapsed > 0) {
     measurement.intervals.push(elapsed);
+    measurement.frames.push(scene.sampleArtFrame());
     if (now - measurement.start >= 10000) {
-      const values = measurement.intervals.sort((a, b) => a - b);
+      const frames = measurement.frames;
       metrics.textContent = JSON.stringify(
         {
           place: stop().label,
           viewport: [canvas.clientWidth, canvas.clientHeight],
-          displayedIntervals: {
-            count: values.length,
-            median: values[Math.floor(values.length * 0.5)],
-            p95: values[Math.floor(values.length * 0.95)],
-          },
+          displayedIntervals: distribution(measurement.intervals),
+          frameCosts: Object.fromEntries(
+            (['updateMs', 'renderSubmissionMs', 'gpuPassMs', 'draws'] as const).map((key) => [
+              key,
+              distribution(
+                frames
+                  .map((sample) => sample[key])
+                  .filter((value): value is number => value !== null),
+              ),
+            ]),
+          ),
           renderer: scene.artDiagnostics(),
           camera: scene.cameraState(),
         },
@@ -153,6 +177,7 @@ function update(now: number): void {
         2,
       );
       measurement = undefined;
+      scene.setArtMeasurement(false);
       button('measure').disabled = false;
     }
   }
@@ -216,11 +241,14 @@ button('record').onclick = () => {
   if (button('record').disabled) status.textContent = 'Recording 8 seconds…';
 };
 button('measure').onclick = () => {
-  measurement = { start: performance.now(), intervals: [] };
+  scene.setArtMeasurement(true);
+  measurement = { start: performance.now(), intervals: [], frames: [] };
   button('measure').disabled = true;
   metrics.textContent = 'Measuring this view for ten seconds…';
 };
 button('remount').onclick = () => {
+  measurement = undefined;
+  button('measure').disabled = false;
   scene.destroy();
   mount();
 };

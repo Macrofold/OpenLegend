@@ -407,7 +407,23 @@ export class WildernessScene implements WorldRenderer {
     }
   }
   artDiagnostics() {
+    const stats = this.app.stats;
+    const device = this.app.graphicsDevice;
     return {
+      device: {
+        backend: device.deviceType,
+        framebuffer: [device.width, device.height],
+        displayPixelRatio: window.devicePixelRatio,
+        renderPixelRatio: device.maxPixelRatio,
+      },
+      memoryBytes: {
+        textures: stats.vram.tex,
+        vertexBuffers: stats.vram.vb,
+        indexBuffers: stats.vram.ib,
+        total: stats.vram.tex + stats.vram.vb + stats.vram.ib + stats.vram.ub + stats.vram.sb,
+      },
+      drawCalls: { ...stats.drawCalls },
+      submittedTriangles: stats.frame.triangles || null,
       settings: { ...this.artSettings },
       vegetation: this.vegetation.diagnostics(),
       effects: this.presentation.effectsDiagnostics(),
@@ -428,6 +444,22 @@ export class WildernessScene implements WorldRenderer {
           visible: entry.sceneProp!.visible,
           meshes: entry.sceneProp!.meshes.length,
         })),
+    };
+  }
+  setArtMeasurement(enabled: boolean): void {
+    if (this.app.graphicsDevice.gpuProfiler) this.app.graphicsDevice.gpuProfiler.enabled = enabled;
+  }
+  sampleArtFrame() {
+    const frame = this.app.stats.frame;
+    // Detailed CPU counters are provided by development/profiler builds only.
+    // A release build must report absence rather than a zero-cost frame.
+    return {
+      updateMs: frame.updateStart ? frame.updateTime : null,
+      renderSubmissionMs: frame.renderStart ? frame.renderTime : null,
+      gpuPassMs: this.app.stats.gpu.size
+        ? [...this.app.stats.gpu.values()].reduce((sum: number, value: number) => sum + value, 0)
+        : null,
+      draws: this.app.stats.drawCalls.total,
     };
   }
   private resetFrameRate = (): void => this.frameRateMeter.reset();
@@ -1649,18 +1681,26 @@ export class WildernessScene implements WorldRenderer {
       this.landscape.addChild(surround);
     }
     const stone = this.material('#7b8178'),
+      naturalStone = this.material('#747c70'),
       timber = this.material('#715438');
     this.prepareSurface(stone, 'masonry');
+    this.prepareSurface(naturalStone, 'stone');
     this.prepareSurface(timber, 'timber');
     setVisibilityStencil(stone, sceneryStencil);
+    setVisibilityStencil(naturalStone, sceneryStencil);
     setVisibilityStencil(timber, sceneryStencil);
+    const authoredBlockers = new Set(map.spatial.blockers.map((blocker) => blocker.id));
     for (const blocker of spatialBlockers(map)) {
       const a = blocker.bounds.min,
         b = blocker.bounds.max;
       const node = this.primitive(
         blocker.id,
         'box',
-        blocker.material === 'stone' ? stone : timber,
+        blocker.material === 'stone'
+          ? authoredBlockers.has(blocker.id)
+            ? stone
+            : naturalStone
+          : timber,
         this.landscape,
         (a.x + b.x) / 2,
         (a.y + b.y) / 2,

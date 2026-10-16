@@ -90,17 +90,35 @@ def author_motion(rig,species):
         for b in rig.pose.bones:
             for constraint in b.constraints:
                 if constraint.type=='IK' and constraint.target is None: constraint.mute=True
+        # A perched bird carries its chest upright. Rest geometry is a flight
+        # rig, so zero rotations alone leave the head pointed at the ground.
+        pelvis=rig.pose.bones['pelvis_control']
+        rest=pelvis.bone.matrix_local.to_quaternion()
+        pelvis.rotation_quaternion=rest.inverted()@Quaternion((1,0,0),-.38)@rest
+        bpy.context.view_layer.update()
+        def aim(name,direction,normal=None):
+            bpy.context.view_layer.update()
+            b=rig.pose.bones[name];head=b.head.copy()
+            if normal is None:
+                turn=(b.tail-b.head).rotation_difference(Vector(direction))
+                b.matrix=Matrix.Translation(head)@turn.to_matrix().to_4x4()@Matrix.Translation(-head)@b.matrix
+            else:
+                y=Vector(direction).normalized();z=Vector(normal)
+                z=(z-y*z.dot(y)).normalized();x=y.cross(z).normalized()
+                matrix=Matrix((x,y,z)).transposed().to_4x4();matrix.translation=head
+                b.matrix=matrix
         for side,sign in [('L',1),('R',-1)]:
             # Fold at all three real wing joints, not just the shoulder. Keeping
             # the outboard wing straight leaves long spikes behind the body.
-            for name,direction in [('shoulder',(sign*.004,.020,-.002)),
-                ('Wing',(sign*.002,-.020,-.004)),('Wing.001',(sign*.002,.023,-.002)),
-                ('Wing.002',(0,.045,-.005))]:
-                bpy.context.view_layer.update()
-                b=rig.pose.bones[name+'.'+side]
-                turn=(b.tail-b.head).rotation_difference(Vector(direction))
-                head=b.head.copy()
-                b.matrix=Matrix.Translation(head)@turn.to_matrix().to_4x4()@Matrix.Translation(-head)@b.matrix
+            for name,direction in [('shoulder',(sign*.006,.020,-.007)),
+                ('Wing',(sign*.001,-.020,-.004)),('Wing.001',(sign*.001,.023,-.007)),
+                ('Wing.002',(0,.045,-.015))]:
+                aim(name+'.'+side,direction,(-sign,0,0))
+            for name in ['w_feather','w_feather.001']:
+                aim(name+'.'+side,(0,.028,-.004),(-sign,0,0))
+            # Fold the tail fan into a narrow layered silhouette.
+            aim('t_feather.'+side,(-sign*.001,.032,-.006))
+            aim('t_feather.'+side+'.001',(0,.032,-.006))
         bpy.context.view_layer.update()
     base={b.name:(b.matrix_basis.to_quaternion(),b.location.copy()) for b in rig.pose.bones}
     for name,duration in [('Idle',60),('Walk',30)]:

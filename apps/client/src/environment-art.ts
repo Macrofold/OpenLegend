@@ -34,6 +34,74 @@ export function environmentSurfaceArt(kind: EnvironmentSurface): HTMLCanvasEleme
       }
       return;
     }
+    if (surface === 'stone') {
+      // Broad geological planes with a few connected cracks. These follow the
+      // rigid surface at a fixed scale; no camera-driven noise or fake opening.
+      for (const [color, points] of [
+        [
+          '#969696',
+          [
+            [0, 0],
+            [43, 0],
+            [35, 13],
+            [18, 18],
+            [0, 11],
+          ],
+        ],
+        [
+          '#747474',
+          [
+            [0, 26],
+            [19, 20],
+            [39, 24],
+            [64, 17],
+            [64, 46],
+            [38, 41],
+            [17, 46],
+            [0, 42],
+          ],
+        ],
+        [
+          '#8a8a8a',
+          [
+            [0, 49],
+            [22, 47],
+            [35, 52],
+            [64, 50],
+            [64, 64],
+            [0, 64],
+          ],
+        ],
+      ] as const) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        points.forEach(([x, y], index) => (index ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.strokeStyle = '#5f5f5f';
+      ctx.lineWidth = 1;
+      for (const points of [
+        [
+          [0, 27],
+          [18, 21],
+          [39, 25],
+          [64, 18],
+        ],
+        [
+          [39, 25],
+          [35, 34],
+          [37, 41],
+        ],
+      ] as const) {
+        ctx.beginPath();
+        points.forEach(([x, y], index) =>
+          index ? ctx.lineTo(x + 0.5, y + 0.5) : ctx.moveTo(x + 0.5, y + 0.5),
+        );
+        ctx.stroke();
+      }
+      return;
+    }
     // A small authored arrangement repeats at matching edges. Each mark is a
     // connected cluster several texels wide, leaving the surrounding field quiet.
     for (const dx of [-size, 0, size])
@@ -92,12 +160,12 @@ export function environmentSurfaceArt(kind: EnvironmentSurface): HTMLCanvasEleme
               py = y + dy,
               width = w,
               height = h;
-            ctx.fillStyle = surface === 'stone' ? '#737373' : '#7b7b7b';
+            ctx.fillStyle = '#7b7b7b';
             ctx.fillRect(px + 3, py + height - 2, width - 7, 3);
-            ctx.fillStyle = surface === 'stone' ? '#a2a2a2' : '#999999';
+            ctx.fillStyle = '#999999';
             ctx.fillRect(px + 3, py, width - 7, height);
             ctx.fillRect(px, py + 3, width, height - 6);
-            ctx.fillStyle = surface === 'stone' ? '#b1b1b1' : '#a3a3a3';
+            ctx.fillStyle = '#a3a3a3';
             ctx.fillRect(px + 5, py, width - 11, 2);
           }
         }

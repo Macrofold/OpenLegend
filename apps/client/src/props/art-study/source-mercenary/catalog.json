@@ -1,14 +1,14 @@
 {
   "group": "source-mercenary",
   "sourceFile": "art-direction/assets/source-study/source-mercenary.blend",
-  "sourceSha256": "9631ea35f7a83714d66f841ee0b8a9fea64b9fa0d95ac5c3de3c612aa5d677aa",
+  "sourceSha256": "d6ee7cf22826f12059eb0614331d462b64c8cbce7f5357c789a87bc073d59f5e",
   "recipe": {
     "path": "scripts/prepare-source-study.py",
-    "sha256": "7cf6b8bc5ca5aff50c4b71ee3744613128a806343a963b87ca693f1942b9f5fe"
+    "sha256": "8ba81318fee15d09e5000eda0369d8fad5015bb01e56fbbe0a385ab290789550"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
-    "prepare-source-study.py": "7cf6b8bc5ca5aff50c4b71ee3744613128a806343a963b87ca693f1942b9f5fe",
+    "prepare-source-study.py": "8ba81318fee15d09e5000eda0369d8fad5015bb01e56fbbe0a385ab290789550",
     "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
   },
   "sources": [
@@ -23,7 +23,7 @@
       "family": "mercenary",
       "label": "Peacock Mercenary",
       "variant": "restored",
-      "description": "Earlier concept-derived model and 29-color surface preparation. Unchanged face and original gold mantle; reference control.",
+      "description": "Earlier concept-derived model and 29-color surface preparation, with readable eye/brow paint and original gold mantle.",
       "recommended": true,
       "file": "mercenary-restored.glb",
       "bounds": {
@@ -46,11 +46,11 @@
           256
         ],
         [
-          256,
-          256
+          512,
+          512
         ]
       ],
-      "sha256": "9641f72d6146b85cada5073ee87b23bab39baeb0f30970b811361368be500f57",
+      "sha256": "25e7ccb7467b992c2645f3e907e8faf63a6e700cc14a8f5ba0e8c1fe703c0b5a",
       "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
     },
     {
@@ -58,7 +58,7 @@
       "family": "mercenary",
       "label": "Peacock Mercenary",
       "variant": "tailored",
-      "description": "Original face and anatomy with quiet mail, broader quilt seams and wrapped linen. Original cape retained.",
+      "description": "Original face anatomy with deliberate eyes, quiet mail, broader quilt seams and wrapped linen. Original cape retained.",
       "recommended": false,
       "file": "mercenary-tailored.glb",
       "bounds": {
@@ -85,7 +85,7 @@
           1536
         ]
       ],
-      "sha256": "2074e5797b1a2c5a00a7792d1dc88b6d785dec61b83898e86b4a23c166a4ba9e",
+      "sha256": "afe99ed2d63a278e8f2604fe21de036550eca2a2ace6802edbc33015b9e19f8c",
       "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
     },
     {
@@ -93,7 +93,7 @@
       "family": "mercenary",
       "label": "Peacock Mercenary",
       "variant": "embroidered",
-      "description": "Original face with open mail groups, deliberate seams and paired peacock embroidery. Cloth remains a continuous lined surface.",
+      "description": "Original face with deliberate eyes, open mail groups, seams and paired peacock embroidery. Cloth remains a continuous lined surface.",
       "recommended": false,
       "file": "mercenary-embroidered.glb",
       "bounds": {
@@ -120,7 +120,7 @@
           1536
         ]
       ],
-      "sha256": "26cad0d10743410fe64def36c60e9feee801841f55667e8dde2ce4eca0010288",
+      "sha256": "413467c924b3b6763b87be1b1cbae58185987230dea75bb1aecd2a734716d7f9",
       "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
     }
   ],
@@ -161,7 +161,7 @@
           2048
         ]
       ],
-      "sha256": "b3f79adc76569d496c9d75f8b53a379057a809ad932980ad44bbedf1e2ceb001",
+      "sha256": "6c93bf653c4784a968fba1798543c976c787305616e9ed639e53c66a4571a30f",
       "source": "/Users/mzw/Documents/ChatGPT/OpenLegend-art/mercenary/study/assets/mercenary.glb \u00b7 SHA256 56805f557675bc87dce8512203dcd925fa63a6b6e725706f6e985114173ea9bd"
     }
   ],

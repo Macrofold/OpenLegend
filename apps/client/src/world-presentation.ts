@@ -283,6 +283,7 @@ export class WorldPresentation {
     m.blendType = pc.BLEND_NORMAL;
     m.opacityDither = pc.DITHER_NONE;
     m.alphaTest = 0.01;
+    m.shaderChunks.version = '2.22';
     m.shaderChunks.glsl.set(
       'opacityPS',
       `

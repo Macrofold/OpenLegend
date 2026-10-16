@@ -111,14 +111,16 @@ export class ScenePixels {
     const anchored = this.mode.startsWith('anchored') || this.mode === 'metres30';
     const enabled = anchored || this.mode.startsWith('pixels');
     const scale = this.mode.endsWith('3') ? 3 : 2;
-    // A fixed orthographic surface scale enlarges the same grid when zooming.
-    this.pixelSize =
-      anchored && this.camera.projection === pc.PROJECTION_ORTHOGRAPHIC
-        ? ((this.mode === 'metres30' ? 1 / 30 : 0.025 * scale) * this.device.height) /
-          (2 * this.camera.orthoHeight)
-        : scale;
+    // The camera owner also retains its focus-plane half-height in orthoHeight
+    // for perspective. Keep density fixed there while zooming; depth still
+    // changes perspective coverage away from that plane.
+    this.pixelSize = anchored
+      ? ((this.mode === 'metres30' ? 1 / 30 : 0.025 * scale) * this.device.height) /
+        (2 * this.camera.orthoHeight)
+      : scale;
     this.grid.fill(0);
     this.grid[0] = enabled ? Math.max(1, this.pixelSize) : 0;
+    this.grid[3] = anchored ? 1 : 0;
     if (anchored && this.camera.projection === pc.PROJECTION_ORTHOGRAPHIC) {
       this.camera.worldToScreen(this.origin, this.screen);
       const rect = this.device.clientRect;
@@ -134,7 +136,12 @@ export class ScenePixels {
       mode: this.mode,
       pixelsPerCell: this.grid[0],
       phase: [this.grid[1], this.grid[2]],
-      orthographicAnchoring: this.grid[3] === 1,
+      orthographicAnchoring:
+        this.grid[3] === 1 && this.camera.projection === pc.PROJECTION_ORTHOGRAPHIC,
+      densityPlane:
+        this.camera.projection === pc.PROJECTION_ORTHOGRAPHIC
+          ? 'whole orthographic view'
+          : 'camera focus plane',
       preserveSubjects: this.preserveSubjects,
     };
   }
