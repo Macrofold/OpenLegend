@@ -15,7 +15,8 @@ export interface ArtTreatment {
     | 'anchored2'
     | 'anchored3'
     | 'metres30'
-    | 'metres40';
+    | 'metres40'
+    | 'metres64';
   surfaceArt: 'plain' | 'painted' | 'rigid';
   surfaceEdges: 'sharp' | 'filtered';
   coverage: 'none' | 'msaa4';
@@ -245,6 +246,7 @@ export function mountArtControls(
       'anchored3',
       'metres30',
       'metres40',
+      'metres64',
     ],
     surfaceArt: ['plain', 'painted', 'rigid'],
     surfaceEdges: ['sharp', 'filtered'],

@@ -169,6 +169,9 @@ function update(now: number): void {
         {
           place: stop().label,
           viewport: [canvas.clientWidth, canvas.clientHeight],
+          shadowQuality: select('world-shadows').value,
+          stagedMotion: motion,
+          cameraOrbit: orbit,
           displayedIntervals: distribution(measurement.intervals),
           frameCosts: Object.fromEntries(
             (['updateMs', 'renderSubmissionMs', 'gpuPassMs', 'draws'] as const).map((key) => [

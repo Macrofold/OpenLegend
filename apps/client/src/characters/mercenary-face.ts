@@ -3,6 +3,7 @@ import face from './mercenary-assets/mercenary-face.json';
 import faithful from './mercenary-assets/variants/face-faithful.json';
 import painted from './mercenary-assets/variants/face-painted.json';
 import graphic from './mercenary-assets/variants/face-graphic.json';
+import study from '../props/art-study/source-mercenary/face-study.json';
 import type { MercenaryMaterials } from './mercenary-materials';
 import type { MercenaryArt } from './mercenary-variants';
 
@@ -21,9 +22,9 @@ const designs: Record<MercenaryArt, FaceArt> = {
   faithful,
   painted,
   graphic,
-  restored: { palette: {}, regions: [] },
-  tailored: { palette: {}, regions: [] },
-  embroidered: { palette: {}, regions: [] },
+  restored: study,
+  tailored: study,
+  embroidered: study,
 };
 
 /** Shaped features follow the original curved face. One vertex-colored mesh
@@ -98,7 +99,7 @@ export class MercenaryFaceResources {
     this.heads.delete(root);
   }
   preparePose(root: pc.Entity): void {
-    const scale = designs[this.variant].regions.length ? 1.08 : 1;
+    const scale = ['restored', 'tailored', 'embroidered'].includes(this.variant) ? 1 : 1.08;
     this.heads.get(root)?.setLocalScale(scale, scale, scale);
   }
   destroy(): void {

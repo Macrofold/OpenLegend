@@ -90,7 +90,7 @@ def main(libraries,pack):
         for index,(file,variant) in enumerate(zip(files,variants)):
             path=pack if library=='pack' else libraries/('quaternius-standard/glTF' if library=='nature' else 'kenney_survival-kit/Models/GLB format')/(file+('.gltf' if library=='nature' else '.glb'))
             before=set(bpy.data.objects);bpy.ops.import_scene.gltf(filepath=str(path));objects=list(set(bpy.data.objects)-before)
-            helper.normalize(objects,height);recolor(objects,family)
+            helper.normalize(objects,height,max_span=.6 if family=='river-stones' else None);recolor(objects,family)
             if family in ('workbench','backpack') and index:
                 for obj in objects:
                     if not obj.parent:

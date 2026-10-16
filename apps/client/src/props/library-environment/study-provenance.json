@@ -4,7 +4,7 @@
   "sources": [
     {
       "catalog": "apps/client/src/props/art-study/source-nature/catalog.json",
-      "sha256": "223cf58e6cd9966f61eb9c0f884d69d1a5366be9170165fdd58a656a195313d7"
+      "sha256": "6975f1dac9f273b7629b351e72f846c71b199a91ce302d3ff7be61ed797e9c62"
     },
     {
       "catalog": "apps/client/src/props/art-study/source-vegetation/catalog.json",

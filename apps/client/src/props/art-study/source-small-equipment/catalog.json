@@ -1,15 +1,15 @@
 {
   "group": "source-small-equipment",
   "sourceFile": "art-direction/assets/source-study/source-small-equipment.blend",
-  "sourceSha256": "2700cea502f1c7d5436b6970db43f0555443c4d71f5707ca7ed8137190442740",
+  "sourceSha256": "93eb76a2b1f9a0e8ae5d6327044523b79a9fbff834b7c7e004335ca05f31477c",
   "recipe": {
     "path": "scripts/prepare-small-equipment-study.py",
-    "sha256": "be1f23db7b8a576c763e29f7b289c51ca78b72f12d9215f3b1eaad3c2739256c"
+    "sha256": "ddf3d8198046c2570b7ab56be860fa1249222b6a4300ede946530503342547ae"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
-    "prepare-source-study.py": "7cf6b8bc5ca5aff50c4b71ee3744613128a806343a963b87ca693f1942b9f5fe",
-    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
+    "prepare-source-study.py": "d804fccad268c9deda4b06491b70927992afc1a816d5eaad5db8ab38d9579533",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
   },
   "sources": [
     {
@@ -211,20 +211,20 @@
       "file": "stone-tool-pointed-flake.glb",
       "bounds": {
         "min": [
-          -0.179447,
+          -0.14,
           0.0,
-          -0.028046
+          -0.021881
         ],
         "max": [
-          0.179447,
-          0.18,
-          0.028046
+          0.14,
+          0.140432,
+          0.021881
         ]
       },
       "triangles": 156,
       "vertices": 258,
       "textureSizes": [],
-      "sha256": "e0ff0327676d06a0442510ddd240109d656307fe034d03f7e415ae80043e2dab",
+      "sha256": "2d3910af9c2bc979eca229a74bc7f49ae7abef24fb78cf8a44ff6e3b93be82db",
       "source": "OpenLegend authored cord/leather patterns, AGPL-3.0-only; stone-tool source Kenney Survival Kit, CC0."
     },
     {
@@ -237,26 +237,21 @@
       "file": "stone-tool-small-scraper.glb",
       "bounds": {
         "min": [
-          -0.82449,
+          -0.14,
           0.0,
-          -0.120282
+          -0.020424
         ],
         "max": [
-          0.82449,
-          0.117,
-          0.120282
+          0.14,
+          0.019867,
+          0.020424
         ]
       },
       "triangles": 274,
       "vertices": 444,
       "textureSizes": [],
-      "sha256": "4372d154560ebaff6638e42e9e99d978c73f8c09fdc8471a69df8c752e845098",
+      "sha256": "45a2550534e58dad19a3f660712cc65d8ba2687cf3c8f5ae3169a3731b40909d",
       "source": "OpenLegend authored cord/leather patterns, AGPL-3.0-only; stone-tool source Kenney Survival Kit, CC0."
     }
-  ],
-  "controls": [],
-  "controlRecipe": {
-    "path": "scripts/prepare-study-controls.py",
-    "sha256": "5b16232aabfa4ed836a02b2cb4d10baa172f4961f8574c6eca88b60352bf7999"
-  }
+  ]
 }

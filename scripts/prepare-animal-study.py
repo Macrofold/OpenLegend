@@ -219,7 +219,11 @@ def coat(objects,species,index,output,paint):
             for vertex in obj.data.vertices:
                 if index==1:vertex.co.x*=1.08 if species=='wolf' else .94
             if index==2:
+                # The source deer also has a white legacy color layer. glTF
+                # consumers use COLOR_0, so export the authored layer first.
+                for previous in list(obj.data.color_attributes):obj.data.color_attributes.remove(previous)
                 attr=obj.data.color_attributes.new(name='Authored coat regions',type='FLOAT_COLOR',domain='CORNER')
+                obj.data.color_attributes.active_color=attr
                 for poly in obj.data.polygons:
                     for loop in poly.loop_indices:
                         p=obj.matrix_world@obj.data.vertices[obj.data.loops[loop].vertex_index].co

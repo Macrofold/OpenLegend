@@ -108,7 +108,14 @@ export class ScenePixels {
     this.update();
   }
   update(): void {
-    const density = this.mode === 'metres30' ? 30 : this.mode === 'metres40' ? 40 : 0;
+    const density =
+      this.mode === 'metres30'
+        ? 30
+        : this.mode === 'metres40'
+          ? 40
+          : this.mode === 'metres64'
+            ? 64
+            : 0;
     const anchored = this.mode.startsWith('anchored') || density > 0;
     const enabled = anchored || this.mode.startsWith('pixels');
     const scale = this.mode.endsWith('3') ? 3 : 2;

@@ -1,15 +1,15 @@
 {
   "group": "source-hare",
   "sourceFile": "art-direction/assets/source-study/source-hare.blend",
-  "sourceSha256": "eafd1f6e9618502c0c3f4cbc6db3c0e4965341850cd143e518ff331c51d1acb4",
+  "sourceSha256": "87e1df4c4274a100e3be81987ff55bc86e2f0927a4701cf0335be0ab8c820ebf",
   "recipe": {
     "path": "scripts/prepare-hare-study.py",
-    "sha256": "4df485925121c9591ee9b0e48c3a2e7096ec9401c7e0e4be6c1ff0ee9706eec5"
+    "sha256": "c33f690c0f6ef1e6b2c6b475d81118b4642fa5929d0baa838d2361788c039e7c"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
-    "prepare-source-study.py": "8ba81318fee15d09e5000eda0369d8fad5015bb01e56fbbe0a385ab290789550",
-    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
+    "prepare-source-study.py": "368c118d853748631fe1f3d5f5f75f3b882b8cb6d6cefbbaecc8b861d6ba0fd8",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
   },
   "sources": [
     {
@@ -33,25 +33,25 @@
       "file": "hare-field.glb",
       "bounds": {
         "min": [
-          -0.951058,
-          -1.0,
-          -1.0
+          -0.103891,
+          0.0,
+          -0.210375
         ],
         "max": [
-          0.951058,
-          1.0,
-          1.0
+          0.103891,
+          0.45,
+          0.212324
         ]
       },
-      "triangles": 1612,
-      "vertices": 1044,
+      "triangles": 1532,
+      "vertices": 1002,
       "textureSizes": [
         [
           64,
           64
         ]
       ],
-      "sha256": "b54083dcf1bff5fb97997d64af112f914c5e35df5fba3465a4b7e9c2236f92dc",
+      "sha256": "7e0aa770679fc3f83855998d45e53211943aa2e5254f39e79af9a17506472c43",
       "source": "Rabbit by CDmir/TinyWorlds, CC0; OpenLegend proportions and fixed coat design.",
       "animatedFile": "hare-field-motion.glb",
       "animatedSha256": "754b9d73f0822af57106e85b21969b11819faa672b5f84d94cbc28de1bfa449b",
@@ -67,25 +67,25 @@
       "file": "hare-russet.glb",
       "bounds": {
         "min": [
-          -0.951058,
-          -1.0,
-          -1.0
+          -0.120141,
+          -0.0,
+          -0.221909
         ],
         "max": [
-          0.951058,
-          1.0,
-          1.0
+          0.120141,
+          0.45,
+          0.223965
         ]
       },
-      "triangles": 1612,
-      "vertices": 1044,
+      "triangles": 1532,
+      "vertices": 1002,
       "textureSizes": [
         [
           64,
           64
         ]
       ],
-      "sha256": "641a242fe1c6f4f6f4f329866041d5daae24f33d167d0d840419e4ef3d142c31",
+      "sha256": "d7a2d99ebdf0cb3f69693bb2d9215cebb9b652f638e06c4eae24510deb6d3fa7",
       "source": "Rabbit by CDmir/TinyWorlds, CC0; OpenLegend proportions and fixed coat design.",
       "animatedFile": "hare-russet-motion.glb",
       "animatedSha256": "e2b7bc50247ef2ee39ae6a184a013e18250cf5066d1e145fc8b8be88a00a947a",
@@ -101,25 +101,25 @@
       "file": "hare-winter.glb",
       "bounds": {
         "min": [
-          -0.951058,
-          -1.0,
-          -1.0
+          -0.133889,
+          0.0,
+          -0.229182
         ],
         "max": [
-          0.951058,
-          1.0,
-          1.0
+          0.133889,
+          0.45,
+          0.231306
         ]
       },
-      "triangles": 1612,
-      "vertices": 1044,
+      "triangles": 1532,
+      "vertices": 1002,
       "textureSizes": [
         [
           64,
           64
         ]
       ],
-      "sha256": "6ac7c95acb176a8e23efc210889cb5e9621f09b0da61c1ab2568ba4ce1799210",
+      "sha256": "90684bf4fa70b905a1a63c89a14fa7f559c2c202cecbe64ebf77b8ee55fbae48",
       "source": "Rabbit by CDmir/TinyWorlds, CC0; OpenLegend proportions and fixed coat design.",
       "animatedFile": "hare-winter-motion.glb",
       "animatedSha256": "57fa452c338a06d4eaf64207b512dc0ef9b9dd8d1ed48ea3907a47be91c96df8",
@@ -137,20 +137,20 @@
       "file": "control-library-hare.glb",
       "bounds": {
         "min": [
-          -0.500417,
+          -0.112594,
           0.0,
-          -1.03299
+          -0.232423
         ],
         "max": [
-          0.500417,
-          2.000001,
-          1.03299
+          0.112594,
+          0.45,
+          0.232423
         ]
       },
       "triangles": 1700,
       "vertices": 893,
       "textureSizes": [],
-      "sha256": "1f78bb61b2bef470c96b7abbbf7a66b3d2d957c37d07f5a26aea8cf36e0100a2",
+      "sha256": "c2c6ab6115df36a2f64efd6dda7ddd0922f8684981ce7ea79a6bb55d96844b7c",
       "source": "/Users/mzw/.codex/worktrees/415f/OpenLegend/apps/client/src/props/library-animals/cdmir-rabbit-source.blend \u00b7 SHA256 bb6deef1ee91b21380355138374cae87946451ce864502b1af68eb60f4750843"
     }
   ],

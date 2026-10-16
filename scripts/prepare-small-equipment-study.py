@@ -65,7 +65,7 @@ def main(libraries):
                 variants=['broad-flake','pointed-flake','small-scraper'];label='Stone tool'
                 path=libraries/'kenney_survival-kit/Models/GLB format'/(['rock-c','rock-b','rock-flat'][index]+'.glb')
                 before=set(bpy.data.objects);bpy.ops.import_scene.gltf(filepath=str(path));objects=list(set(bpy.data.objects)-before)
-                helper.normalize(objects,.18)
+                helper.normalize(objects,.18,max_span=.28)
                 for obj in objects:
                     if obj.type!='MESH':continue
                     bpy.ops.object.select_all(action='DESELECT');obj.select_set(True);bpy.context.view_layer.objects.active=obj

@@ -1,15 +1,15 @@
 {
   "group": "source-resources",
   "sourceFile": "art-direction/assets/source-study/source-resources.blend",
-  "sourceSha256": "0a1ea30c8fc4f99e4980b3624f5a33df9ba4e0f37d27b539ce85cfd4d0ef0d28",
+  "sourceSha256": "ff3ddfaa6b9a1d3d358122deccee4e3f37ef53074da85f3c810be1f60b6fbdbf",
   "recipe": {
     "path": "scripts/prepare-resource-study.py",
-    "sha256": "bd0afc6b49dd253fc15633838a22944fb1113934144744059fd556440e8aa03c"
+    "sha256": "cf0705e9e6cc2bc3a8489b1f5b8ee01878aea90d4b928c09a1e6eddfc19ebc42"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
-    "prepare-source-study.py": "8ba81318fee15d09e5000eda0369d8fad5015bb01e56fbbe0a385ab290789550",
-    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
+    "prepare-source-study.py": "d804fccad268c9deda4b06491b70927992afc1a816d5eaad5db8ab38d9579533",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
   },
   "sources": [
     {
@@ -173,7 +173,7 @@
           128
         ]
       ],
-      "sha256": "8f6ce54dcfed401a310256b4d1cf63fb729bb400d106b724820367c57a9439c2",
+      "sha256": "3eccbbc3273473cbea6fd0f5d35dae7c320101307ffb328e0731ca4711c8ea51",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details.",
       "depletedFile": "berry-bush-fruit-groups-empty.glb",
       "depletedSha256": "44c53454632de690f8debc34435b3b2ea5163be1cb089ed6de1895af29fef883"
@@ -206,7 +206,7 @@
           128
         ]
       ],
-      "sha256": "9fcdb9f12ef4b4e99dcdbdf67962510b5305936137782cc2043fd904fe449f28",
+      "sha256": "347fa2a801a8c175ce6a75e5e13425b55f6c4eb2703fab59b20d7a581a406661",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details.",
       "depletedFile": "berry-bush-open-canes-empty.glb",
       "depletedSha256": "760591b735d92ef70bd8dd0c39e515933390f1d168e0a54d1322a0f1933a680d"
@@ -239,7 +239,7 @@
           128
         ]
       ],
-      "sha256": "41eeb29e94660b3b0609a70796962a809efd24ee3227daed167df2b85d3b7695",
+      "sha256": "07e14a6663a8835cc8e2feba1457c407f71193cd14c11e4478c97fa990acebfc",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details.",
       "depletedFile": "berry-bush-low-thicket-empty.glb",
       "depletedSha256": "d9506e22e1977cd9dc12b6eea610c67cede89fd006f2bff4735b3c52e110576e"
@@ -564,14 +564,14 @@
       "file": "river-stones-flat-stone.glb",
       "bounds": {
         "min": [
-          -1.00771,
+          -0.3,
           0.0,
-          -0.81673
+          -0.243144
         ],
         "max": [
-          1.00771,
-          0.22,
-          0.81673
+          0.3,
+          0.065495,
+          0.243144
         ]
       },
       "triangles": 274,
@@ -582,7 +582,7 @@
           128
         ]
       ],
-      "sha256": "e293c5edef763088dc8dfe93bbd587b5b4530a77ea0e6e10f99370b11c5e2b22",
+      "sha256": "4327ab66c3bffe3ed4513798e63d0210d5d12db6afff9157d7f27453c029e51c",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
     {
@@ -935,7 +935,7 @@
           128
         ]
       ],
-      "sha256": "691a6be077dff6adcf0644461581b82fa008705e19362292af8c7a2aa72ddea2",
+      "sha256": "276451552155da4fa07f734f31d4e50aa59736b39702a78e4f3e9e97e469f7d9",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
     {
@@ -974,7 +974,7 @@
           128
         ]
       ],
-      "sha256": "ff7c10cbcd3862d23d089b51daf56e7d48475230b05aa5656b656f82495ee8c5",
+      "sha256": "dfa80184f6418f4e15b158098e78cdb4af6f93e6cf726d931d2274a62d9476ab",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
     {
@@ -1274,7 +1274,7 @@
           512
         ]
       ],
-      "sha256": "d0438926ca332f3c6a7e7be1facdbf880aefd8e098213e280a402dfc4e3f22ff",
+      "sha256": "78af17b29f32de331549fd248ae2992cb67b4cb1b3e468c9687b5e6760c5e382",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/workbench.glb \u00b7 SHA256 bf72d2d535fa29127e5078a6c4c2023a74fa5cd7d02d91ad550e897e088e1dc8"
     },
     {

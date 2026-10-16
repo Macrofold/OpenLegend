@@ -77,7 +77,7 @@ def color_texture(material):
     return shader.inputs['Base Color'].links[0].from_node
 
 
-def normalize(objects, height):
+def normalize(objects, height, max_span=None):
     graph = bpy.context.evaluated_depsgraph_get()
     points = []
     for obj in objects:
@@ -91,6 +91,8 @@ def normalize(objects, height):
     upper = Vector([max(p[i] for p in points) for i in range(3)])
     center = Vector(((lower.x+upper.x)/2, (lower.y+upper.y)/2, lower.z))
     scale = height/(upper.z-lower.z)
+    if max_span is not None:
+        scale=min(scale,max_span/max(upper.x-lower.x,upper.y-lower.y))
     transform = Matrix.Scale(scale,4) @ Matrix.Translation(-center)
     for obj in objects:
         if obj.parent not in objects:

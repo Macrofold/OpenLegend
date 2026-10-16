@@ -32,7 +32,9 @@ def main():
     for index,(variant,description) in enumerate(descriptions.items()):
         path=prepared/('hare-'+variant+'.glb')
         before=set(bpy.data.objects);bpy.ops.import_scene.gltf(filepath=str(path))
-        objects=list(set(bpy.data.objects)-before)
+        # Blender creates an unlinked unit Icosphere as the imported rig's
+        # display handle. It is not part of the animal or its export envelope.
+        objects=[obj for obj in set(bpy.data.objects)-before if not obj.name.startswith('Icosphere')]
         # glTF importer exposes each clip as an NLA strip. Keep the neutral
         # Idle clip active for measurement and the static comparison.
         for obj in objects:

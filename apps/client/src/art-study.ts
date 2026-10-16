@@ -4,6 +4,7 @@ import { BundledModels, destroyModelApplication } from './bundled-models';
 import { CAMERA_FOV_DEGREES, initialCamera } from './world-camera';
 import { installLocomotion } from './model-animation';
 import { StudyCapture } from './study-capture';
+import { ScenePixels } from './scene-pixels';
 import studyLayout from './props/art-study/layout.json';
 import './art-study.css';
 
@@ -96,6 +97,7 @@ export class ArtStudy {
   private readonly sun: pc.Entity;
   private readonly fill: pc.Entity;
   private readonly frame: pc.CameraFrame;
+  private readonly pixels: ScenePixels;
   private readonly materials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private readonly stageMaterial: pc.StandardMaterial;
   private roots: pc.Entity[] = [];
@@ -141,6 +143,7 @@ export class ArtStudy {
       farClip: 500,
     });
     this.app.root.addChild(this.camera);
+    this.pixels = new ScenePixels(this.app.graphicsDevice, this.camera.camera!);
     this.frame = new pc.CameraFrame(this.app, this.camera.camera!);
     this.frame.rendering.toneMapping = pc.TONEMAP_ACES;
     this.frame.rendering.samples = 4;
@@ -633,25 +636,30 @@ export class ArtStudy {
     this.camera.lookAt(target);
     const rect = this.canvas.parentElement!.getBoundingClientRect();
     const density = element<HTMLSelectElement>('pixel-treatment').value;
-    // A metre of art retains the same number of samples during inspection zoom.
-    // Resolve coverage before nearest enlargement, as the original viewer did.
-    // This is a rendering comparison, not proof of stable rotating surface cells.
-    const wantedHeight = density === 'native' ? rect.height : 2 * height * Number(density);
-    const scale = Math.max(1, rect.height / Math.max(1, wantedHeight));
-    const width = Math.max(1, Math.round(rect.width / scale));
-    const pixelsHigh = Math.max(1, Math.round(rect.height / scale));
+    // Use the game's single final resolve. Rendering this inspector directly
+    // into a tiny buffer chose coarse texture mips before the final sampling,
+    // erasing facial paint that survives in the actual full-detail scene.
+    const width = Math.max(1, Math.round(rect.width));
+    const pixelsHigh = Math.max(1, Math.round(rect.height));
     if (this.app.graphicsDevice.width !== width || this.app.graphicsDevice.height !== pixelsHigh) {
       this.app.setCanvasResolution(pc.RESOLUTION_FIXED, width, pixelsHigh);
       this.frame.update();
     }
-    const scenePass = this.camera.camera!.framePasses.find(
-      (pass): pass is pc.FramePassCameraFrame => pass instanceof pc.FramePassCameraFrame,
+    this.pixels.setTreatment(
+      density === 'native'
+        ? 'full'
+        : density === '20'
+          ? 'anchored2'
+          : density === '30'
+            ? 'metres30'
+            : density === '40'
+              ? 'metres40'
+              : 'metres64',
+      'shared',
     );
-    if (scenePass) scenePass.renderTargetScale = density === 'native' ? 1 : 2;
-    this.canvas.style.imageRendering = density === 'native' ? 'auto' : 'pixelated';
-    const effective = pixelsHigh / (2 * height);
+    const effective = Math.min(Number(density), pixelsHigh / (2 * height));
     element('pixel-evidence').textContent =
-      `${width} × ${pixelsHigh} image · ${density === 'native' ? 'full display resolution' : `${effective.toFixed(1)} samples/metre${wantedHeight > rect.height ? ' · limited by display size' : ''}`} · ${framing === 'game' ? 'current game camera' : 'inspection framing'}`;
+      `${width} × ${pixelsHigh} source · ${density === 'native' ? 'full display resolution' : `${effective.toFixed(1)} samples/metre · game resolve`} · ${framing === 'game' ? 'current game camera' : 'inspection framing'}`;
     this.invalidate();
   }
   private labels(): void {
@@ -726,6 +734,7 @@ export class ArtStudy {
     this.materials.clear();
     this.stageMaterial.destroy();
     this.frame.destroy();
+    this.pixels.destroy();
     element('labels').replaceChildren();
     destroyModelApplication(this.app, [this.models.destroy()]);
     this.canvas.dataset.ready = 'false';
