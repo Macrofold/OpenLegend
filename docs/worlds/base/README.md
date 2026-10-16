@@ -21,13 +21,15 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Recover from harm](recovery-and-care.md) — DG21's proposed short camp recovery and separately selectable field dressing/help; uses the current death/scar rules as its baseline; ordinary recovery and care remain proposed.
 - [Combat](combat.md)
 - [First optional threat encounter](first-threat-encounter.md)
+- [Ranged tools, aim and evasion](ranged-counterplay.md) and [Broken Watchpost](contested-watchpost.md) — integrated combat mechanics and finite contested content; full independent-character and combined encounter acceptance remain open under CF01–CF05.
 - [Player danger and leaving the world](player-danger.md)
 - [Player death, corpses and treatable scars](player-death.md)
 - [Lifecycle and inactive protection](lifecycle-and-protection.md)
 - [Knowledge and observer identity](knowledge.md)
 - [After you left at camp](story-perspectives.md) — proposed optional historical craft glimpse for DG15, with explicitly selected external disclosure; current cutaways remain disabled.
 - [Relationships, feelings and promises](social.md)
-- [Generations and family life](generations-and-family-life.md) — DG31's optional adult-family visit and truthful age continuity; reproduction and dependent care still require the reserved D16 audience choice.
+- [Compact personal reactions](psychological-reactions.md) — selected numerical-reaction design, with installation, runtime and behavioral qualification still open.
+- [Generations and family life](generations-and-family-life.md) — DG31's proposed adult-family visit, age continuity and childhood/care design, completed after Mike's adult-audience and non-explicit-presentation choice; mechanical adoption, technical delivery and qualification remain open.
 - [Shared equipment and institutions](shared-equipment-and-institutions.md) — DG32's optional useful bow loan, willing keeper and real return, with separate optional security; no currency or compulsory membership.
 - [Extraordinary minds and life after death](extraordinary-minds-and-afterlife.md) — DG33's separately selected willing spirit, finite ordinary revival and deliberate telepathic messages; these are proposed families, with existing identity, knowledge and human protection intact.
 - [The Ash Road campaign](shared-campaigns.md) — DG34's proposed two-site route problem, finite shared power, optional forecast operation and actual aftermath; no new harm, unattended service or mass-capacity claim.
@@ -39,6 +41,10 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Supplies worth keeping](changing-supplies.md) — DG19's independently selectable preservation and finite renewal, with actual work and stock economics; current food and resource rules remain unchanged.
 
 - [Personal message slates](text-messages.md) — proposed optional later-world correspondence with local mutual contacts, private reading, real device possession and no primitive-start addition.
+- [Optional speech and private calls](voice-and-calls.md) — proposed media and private-slate extensions, with independent consent and current hearing/privacy boundaries.
+- [Visiting camps](visiting-camps.md) — proposed worthwhile same-world visit and later compatible cross-world journey; no current transfer capability or service is implied.
+- [Missing belonging](missing-belonging.md) — delivered finite investigation with two independent witnesses, permitted evidence and a real container return.
+- [Playable openings](playable-openings.md) — authored ready-world starting choices for the delivered creation journey.
 
 ## Code boundary
 

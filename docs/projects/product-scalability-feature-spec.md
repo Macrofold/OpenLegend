@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                          | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The selected exact distant-activity design is ready; implementation and the wider scalability program remain unqualified. | 2026-10-15   |
+| In progress | The selected exact distant-activity design is ready; implementation and the wider scalability program remain unqualified. | 2026-10-16   |
 
 **Status: accepted strategic direction, proposed detailed product requirements, October 2, 2026. Documentation only; runtime delivery and capacity remain unqualified.**
 

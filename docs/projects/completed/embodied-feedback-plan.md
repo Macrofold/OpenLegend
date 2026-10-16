@@ -1,8 +1,10 @@
 # Injury, aftermath and direct world interaction
 
-| Status    | Current progress                                                                                             | Last updated |
-| --------- | ------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | All requested behavior, native/browser verification, subsequent review fixes and documentation are complete. | 2026-10-04   |
+| Status    | Current progress                                                                                                                  | Last updated |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | The original feedback delivery and reviews are complete; later death and routine-meter policies supersede parts of this baseline. | 2026-10-16   |
+
+This plan retains the October 3–4 delivery and its decisions. Later [player death work](player-death-feature-spec.md) replaced the earlier camp-collapse rule, and [quiet routine meter feedback](../../verification/embodied-feedback.md#quiet-routine-meter-changes--october-14-2026) replaced snapshot-based numeric notices with explicit permitted one-off outcomes while keeping routine drift quiet. Current behavior belongs to [the player-death world rules](../../worlds/base/player-death.md) and [character status presentation](../../world-presentation.md); those later changes do not reopen the completed original delivery.
 
 ## Scope and boundaries
 

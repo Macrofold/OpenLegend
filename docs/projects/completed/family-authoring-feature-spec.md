@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                              | Last updated |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Parentage, computed descriptions and the creator journey are implemented and qualified through native/service/browser checks. | 2026-10-03   |
+| Completed | Parentage, computed descriptions and the creator journey are implemented and qualified through native/service/browser checks. | 2026-10-16   |
 
 ## Purpose and decisions
 

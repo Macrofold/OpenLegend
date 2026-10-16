@@ -98,7 +98,7 @@ reducing finite supply. Final compound resource/object/authority scenarios, sour
 ## SC06 — Canonical persistence, activation and save integration
 
 - [x] Extend consumed record codecs/indexes, in-place extraction, reference validation and short atomic commits; retain one writable owner.
-- [x] Register contributions/holds/deadlines/carry/pins with SL00 capture and restore; rebuild indexes under fresh timeline/generation.
+- [x] Register contributions, holds, deadlines, exact pins and each supported family's actual progress/remainders with SL00 capture and restore; rebuild indexes under fresh timeline/generation. The native continuous charge family needs no separate generic fractional-carry record, as recorded in SC04.
 - [x] Supply EWF07/INV-5 exact detach and migration dependencies. Reject unsupported retirement before publication; preserve current grants, forgetting and spending outside rewind.
 
 **Dependencies:** each introducing slice above; coordinate SL00 and DF02. **Exit:** save/restart/load and failure around publication preserve stock, active effects and progress without paid replay. INV-5's broader law-change scope remains open.
@@ -113,7 +113,7 @@ reducing finite supply. Final compound resource/object/authority scenarios, sour
 
 ## SC08 — Integrated evidence and reconciliation
 
-- [x] Run disposable native/manual success and failure scenarios listed in the feature/technical pair with zero provider budget; exercise both supported database adapters and representative browser flows when implementation exists.
+- [x] Run disposable native/manual success and failure scenarios listed in the feature/technical pair with zero provider budget; exercise both then-supported database adapters and representative browser flows when implementation exists. This records the historical foundation checks; current verification uses PostgreSQL only.
 - [x] Measure matched before/after mutation latency, allocations, claim/active-instance counts, queue age and cold/warm behavior within PF's mixed workload. Preserve unresolved capacity failures.
 - [x] Record evidence in Verification, current implementation in Architecture, affected parent status/dependencies and deferred regression tasks here. Do not author/run automated suites under default delegated instructions; keep CI mandatory.
 

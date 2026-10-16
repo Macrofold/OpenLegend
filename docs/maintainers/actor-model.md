@@ -18,7 +18,7 @@ This is the sole implementation tracker for the living-actor migration. Canonica
 
 ### Recovery and useful care proposal
 
-[DG21 recovery and care](../projects/recovery-and-care-feature-spec.md) uses ACT04's existing bodily effects for one proposed human camp-recovery activity, followed by separately selected resident choice, field dressing/help and a distinct illness only when useful. [CARE01–CARE05](recovery-and-care.md) owns this consumer; it does not reopen the completed body foundation or require a body-part graph. The audit uses newer main [0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425), where zero health causes death and scar treatment exists. This branch's older runtime ancestry is not the proposal's mortality baseline. [Care limits](../limits/recovery-and-care.md) records the new world choices and growth paths.
+[DG21 recovery and care](../projects/recovery-and-care-feature-spec.md) uses ACT04's existing bodily effects for one proposed human camp-recovery activity, followed by separately selected resident choice, field dressing/help and a distinct illness only when useful. [CARE01–CARE05](recovery-and-care.md) owns this consumer; it does not reopen the completed body foundation or require a body-part graph. The original audit inspected main [0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425), where zero health causes death and scar treatment exists; both are now integrated current behavior. The earlier collapse proposal is superseded. [Care limits](../limits/recovery-and-care.md) records the new world choices and growth paths.
 
 ACT01–ACT05 are implemented; acceptance gates remain open with automated coverage deferred to [TODO](TODO.md#three-program-deferred-validation). God revival now follows the accepted [actor model](../architecture.md#actor-means-any-living-being), including harvested bodies. Current schema 10 preserves physical actor identity. The existing animal-field import is historical implementation; development compatibility follows the [root policy](../../AGENTS.md#development-save-policy). Open ACT01–ACT06 checkboxes retain broader acceptance, not a claim that their native implementation is absent.
 
@@ -30,6 +30,8 @@ ACT01–ACT05 are implemented; acceptance gates remain open with automated cover
 - [ ] **ACT06 — Verify current-format recovery, behavior and projections.** Add current-format recovery, invalid/unsupported-format rejection, restart, revival, harvesting, status-effect, cognition/privacy, action-catalogue, protocol/client projection and rollback coverage. Confirm existing wilderness animals continue wandering, fleeing, taking damage, dying and yielding finite resources through same-version restore; update architecture, extension guidance, implementation status and verification with actual evidence before marking the track complete.
 
 ## Foundation execution notes — September 26, 2026
+
+These are the original delivery observations, including the then-supported SQLite adapter and record conversions. Current storage uses PostgreSQL only; the root development policy governs incompatible data.
 
 P5 implementation is authorized by the [foundation execution plan](../projects/completed/foundations-1-5.md#approved-implementation-plan).
 The baseline audit found damage-only appraisals in `social.ts`, two cognition context
@@ -114,7 +116,7 @@ The complete source/definition retirement audit, actual two-human payload races,
 
 ## Priority 5 implementation slices
 
-**Design status:** [feature specification](../projects/completed/appraisal-social-continuity-feature-spec.md) and [technical design](../projects/completed/appraisal-social-continuity-tech-design.md) are approved for this implementation by the foundation execution plan; the evidence above records current progress. These are child items of ACT07/ACT08, not a second cognition/social backlog. Apply the [development save policy](../../AGENTS.md#development-save-policy) and default verification guidance; the completed record conversion below is historical, not a requirement to keep old readers or add migrations; completed implementation slices do not close broader deferred automated or live-quality gates. The foundation designs take precedence over inspected older branch assumptions; preserve the recorded DF02/current CR migration seams.
+**Design status:** [feature specification](../projects/completed/appraisal-social-continuity-feature-spec.md) and [technical design](../projects/completed/appraisal-social-continuity-tech-design.md) are approved for this implementation by the foundation execution plan; the evidence above records current progress. These are child items of ACT07/ACT08, not a second cognition/social backlog. Apply the [development save policy](../../AGENTS.md#development-save-policy) and default verification guidance; the completed record conversion below is historical, not a requirement to keep old readers or add migrations; completed implementation slices do not close broader deferred automated or live-quality gates. The foundation designs take precedence over inspected older branch assumptions; preserve DF02/current CR record ownership and current-format capture/recovery.
 
 ### ACT07.1 — Appraisal, source and publication baseline
 
@@ -168,7 +170,7 @@ The complete source/definition retirement audit, actual two-human payload races,
 
 - [x] Exercise all paired-spec success/failure cases with disposable native/manual scenarios and zero provider budget; compare old native damage behavior and new persistent/internal-source behavior.
 - [x] Verify stable record migration, quiet-time/read-only behavior, many retained instances, stale/duplicate/mixed reflection output and source privacy in actual context/network payloads.
-- [x] Measure owner-scoped changes, wake count, query/record cardinality, context size and save/cold-query cost. Record actual evidence in Verification, current behavior in Architecture and remaining CR/EPR/SL/hosted/behavioral-quality gaps here; keep CI and default no-suite instructions.
+- [x] Measure owner-scoped changes, wake count, query/record cardinality, context size and save/cold-query cost. Record actual evidence in Verification, current behavior in Architecture and remaining CR/EPR/SL/hosted/behavioral-quality gaps here; keep CI and the current [verification policy](../../.agents/rules/verification.md).
 
 **Dependencies:** ACT07.1–ACT07.6 and relevant ACT08 integrations. **Exit:** native continuity/privacy and permitted use are evidenced; fixtures do not certify live characterization quality or broader actor acceptance.
 

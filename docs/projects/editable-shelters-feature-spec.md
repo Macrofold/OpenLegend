@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                         | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Flat one/two-bay and the single-bay lean-to are delivered and reviewed; wider homes and scale qualification remain open. | 2026-10-14   |
+| In progress | Flat one/two-bay and the single-bay lean-to are delivered and reviewed; wider homes and scale qualification remain open. | 2026-10-16   |
 
 **Flat canopy/two-bay delivered October 6; corrected contacts and the single-bay lean-to delivered October 7, 2026. Wider behavior remains proposed.** This develops ND07 and the rain/exposure portion of ND08 under INV-6.4. Its [technical counterpart](editable-shelters-tech-design.md) and [SH01–SH06 delivery breakdown](../maintainers/editable-shelters.md) now define the selected one-builder open-shelter journey. AV04 implements finite parts, phased building, ordinary use, alteration/reclaim and local rain/moisture/drying for that profile. Existing object, spatial, state, work, authority and world-policy owners retain their responsibilities. Enclosed buildings and household behavior remain unimplemented.
 
@@ -30,7 +30,7 @@ The accepted [materials and construction direction](../../archive/03-design-prop
 
 Begin with a single ground-level modular bay that can become a lean-to: light timber supports, admitted ground anchors/bindings and one flexible roof section. Neighboring bays can extend it. The selected plan states its dimensions and usable area using the actual supported body and material sizes. Do not promise that any cloak covers any number of people.
 
-The first selected delivery remains the flat DG13 canopy. [The technical design's cloak lean-to and two-bay traces](editable-shelters-tech-design.md#7-worked-arrangements-and-contrasting-traces) qualify later arrangements using the same four-corner material/support rules, without adding slope-specific runoff or heat benefits. Sloping cover must fit its actual along-plane cloth length, lower-edge clearance and work reach; it does not grow taller posts from the starting kit.
+The original first delivery was the flat DG13 canopy; the adjacent bay and separately authorized single-bay lean-to are now delivered. [The technical design’s contrasting traces](editable-shelters-tech-design.md#7-worked-arrangements-and-contrasting-traces) preserve their shared four-corner material/support rules, without slope-specific runoff or heat benefits. Sloping cover must fit its actual along-plane cloth length, lower-edge clearance and work reach; it does not grow taller posts from the starting kit.
 
 Use a simple layout grid for bays, roof areas and edge panels, with a few supported orientations and connections. The grid is a construction aid and a bounded geometric approximation, not a universal lattice for the whole world. A player selects a place, orientation and intended size through a visible preview or ordinary-language request; they need not place every twig.
 
@@ -272,7 +272,7 @@ Repeatedly toggling a door, moving a covering or issuing equivalent plans must n
 
 Advance passive effects using actual supported simulation time and the weather/arrangement history required by those effects. A real host pause or outage does not invent an elapsed storm. Arriving after a long quiet interval should materialize the same current material state, not replay every rain observation into memory or reset every item to dry.
 
-Save and restore preserve installed parts, connections, loose salvage, current moisture, damage, committed work and remaining resources. If a newly introduced moisture rule lacks historical evidence, use an explicit authorized initialization approximation; do not fabricate exact past rainfall. Changes to a shared material law retain exact pins and follow an explicit supported live-definition conversion through its owning installation service, coherently across affected existing and unattended objects. This is not older-save migration or compatibility: [the development policy](../../AGENTS.md#development-save-policy) still requires current-format validation and explicit incompatible-save rejection without deletion/reset.
+Save and restore preserve installed parts, connections, loose salvage, current moisture, damage, committed work and remaining resources. If a newly introduced moisture rule lacks historical evidence, use an explicit authorized initialization approximation; do not fabricate exact past rainfall. Changes to a shared material law retain exact pins and follow an explicit supported live-definition conversion through its owning installation service, coherently across affected existing and unattended objects. This is not older-save migration or compatibility. [The development save policy](../../AGENTS.md#development-save-policy) owns current-format validation and handling of incompatible development state.
 
 ## 10. Concrete journeys and failure cases
 
@@ -387,7 +387,7 @@ The key tradeoff is physical expressiveness against understandable scope. Full s
 
 Another tradeoff is repairability against resource demand. Recovering an intact part reduces punishment for experimentation; consuming actual bindings, spending work and preserving damage prevents free duplication. Maintenance should have a purpose beyond producing recurring engagement. A material-efficient player can be successful without the game inventing decay to defeat them.
 
-The October 5 DG13 expansion below selects the initial material set, two arrangements, work and moisture proposals in the [base-world shelter owner](../worlds/base/editable-shelters.md). It also specifies ordinary use, permissions and failure recovery. These are proposed values to qualify through the complete scenes, not measured runtime support. Choose usable-tinder boundaries only if that later challenge is selected. Broader structure harm, protected property, heavy collapse and thermal/fire laws remain separate product decisions.
+The October 5 DG13 expansion below selects the initial material set, two arrangements, work and moisture proposals in the [base-world shelter owner](../worlds/base/editable-shelters.md). It also specifies ordinary use, permissions and failure recovery. The selected flat/two-bay and single-bay sloping values are now implemented and qualified within the recorded AV04 scope; wider home rules remain proposals, and the narrow results do not establish settlement capacity or enjoyment. Choose usable-tinder boundaries only if that later challenge is selected. Broader structure harm, protected property, heavy collapse and thermal/fire laws remain separate product decisions.
 
 ## 14. DG13 expansion — make a place, use it and change it
 
@@ -397,7 +397,7 @@ The first attraction is the player's control over a small place. After an outing
 
 The recommendation is a **flat open canopy followed by an adjacent two-bay awning**, with real detachable parts and one authorized builder. The two arrangements use the same rules and differ in actual usable space. They do not require a decorative-room score, textile industry, daily repair, hired household or new survival penalty. This explicitly narrows the earlier lean-to example for the first release: a sloping roof follows when its shape is qualified and gives the player a worthwhile choice. The accepted longer-term modular-home direction remains.
 
-The [base-world proposal](../worlds/base/editable-shelters.md) is the single owner for the initial cloak, spare cloth, posts, bindings, dimensions, work and moisture tuning. The starting kit is a deliberate finite scenario endowment. It is not an invisible free construction resource, and the current starter's supple branches are not structural timber. Current equipment does not yet support wearing a cloak. That new consumer is required for the complete cloak-to-roof-to-clothing story.
+The [base-world proposal](../worlds/base/editable-shelters.md) is the single owner for the initial cloak, spare cloth, posts, bindings, dimensions, work and moisture tuning. The starting kit is a deliberate finite scenario endowment. It is not an invisible free construction resource, and the current starter's supple branches are not structural timber. Cloak wearing was an October 5 integration requirement and is now delivered through the qualified back port, preserving the actual garment through cloak-to-roof-to-clothing use; a spare tarp remains nonwearable.
 
 The first scene does not require live invention to rediscover an already admitted canopy plan. The ordinary build route must work directly once that plan is known and supported. A genuinely new material or arrangement may use the existing invention route; it must return a supported proposal with the same physical consequences. This feature is a consumer of world authoring, not a replacement for the game's initial live invention proof.
 
@@ -521,7 +521,7 @@ If the system cannot safely admit another supported arrangement within real stor
 
 ### 14.11 Complete acceptance stories for the expansion
 
-These are product acceptance criteria for future implementation, not reports of executed tests. They add concrete first-release cases to SH-J01–SH-J13 above.
+These are product acceptance criteria, not individual test reports. They add concrete first-release cases to SH-J01–SH-J13 above; §17 and the AV04 report identify the delivered subset, while wider combinations remain open.
 
 | Story                                                 | Required observable outcome                                                                                                                                   |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -34,7 +34,7 @@ No passive auto-guard, endless held stance, stamina meter, shield wear, parry st
 
 ## Batch 06 projectile extension
 
-[CF02](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md#cf02--aim-projectiles-and-real-cover) extends this same guard to the supported stone/arrow impacts under [ranged counterplay](ranged-counterplay.md#ranged-tools-and-preparation). That extension is implemented on the Batch 06 branch, beyond AV02's original contact-only delivery; [native evidence](../../verification/rivals-and-contested-ground.md) demonstrates actual reduction and preserved recovery. Incoming direction is the reversed committed trajectory, so moving the shooter after release cannot turn an old shot into a front attack. It reuses the current shield sector, reduction, readiness, one-interception consumption and recovery; no independent projectile shield or ally protection is introduced.
+[CF02](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md#cf02--aim-projectiles-and-real-cover) extends this same guard to the supported stone/arrow impacts under [ranged counterplay](ranged-counterplay.md#ranged-tools-and-preparation). That extension is implemented and integrated in main, beyond AV02's original contact-only delivery; [native evidence](../../verification/rivals-and-contested-ground.md) demonstrates actual reduction and preserved recovery. Incoming direction is the reversed committed trajectory, so moving the shooter after release cannot turn an old shot into a front attack. It reuses the current shield sector, reduction, readiness, one-interception consumption and recovery; no independent projectile shield or ally protection is introduced.
 
 ## Maintained records
 

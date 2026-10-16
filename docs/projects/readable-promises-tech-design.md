@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                               | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Own-promise reading is delivered; required world-policy separation, bounded preparation and cross-account verification remain open under BW17. | 2026-10-15   |
+| In progress | Own-promise reading is delivered; required world-policy separation, bounded preparation and cross-account verification remain open under BW17. | 2026-10-16   |
 
 **Status:** approved read-only first slice of [BW17](../maintainers/base-world.md#bw17--readable-promises-and-commitment-management). [Feature specification](readable-promises-feature-spec.md) owns behavior. Delivered under the [player clarity plan](completed/player-clarity-ui.md).
 

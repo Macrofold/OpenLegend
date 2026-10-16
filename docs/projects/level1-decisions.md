@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                               | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Routine selection, escalation plumbing, diagnostics and limits are implemented; remaining live outcomes and cognition qualification stay open. | 2026-10-14   |
+| In progress | Routine selection, escalation plumbing, diagnostics and limits are implemented; remaining live outcomes and cognition qualification stay open. | 2026-10-16   |
 
 **Currency review — October 14, 2026.** The original native/fixture implementation was integrated in `208bc11da` on September 30. [September 29 live checks and October 2–3 reliability repairs](../verification/level1-decisions.md) extend its evidence but do not close the remaining CR01/CR02/CR12 gates listed below. The opening description of the former unconditional deferral and the branch-by-branch steps are historical. Current routing, rating consumption and spending behavior belong to the linked runtime/provider contracts; no new provider run or cost claim is introduced by this audit.
 

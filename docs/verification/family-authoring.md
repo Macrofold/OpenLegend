@@ -4,7 +4,7 @@
 
 ## Scope and environment
 
-Branch `codex/save-editor-family`, based on explicitly selected local `main` `b50ec6ce75f260d68c18ec99d767982c65b0fccb`. No branch switch or additional history rewrite in this implementation. Local `main` advanced during the task to `a489c5009f54f65c351298a4f93aafb30403d935`; this evidence covers the earlier selected base, and integration onto that newer tip remains outstanding. Disposable loopback PostgreSQL databases only; no user's running world/save was changed. Pinned workspace dependencies were installed without lockfile changes. Native/browser fixtures set `AI_BUDGET_USD=0`; no provider calls, additional Jev cost **$0**, cumulative task total **$0**.
+Branch `codex/save-editor-family`, based on explicitly selected local `main` `b50ec6ce75f260d68c18ec99d767982c65b0fccb`. No branch switch or additional history rewrite in this implementation. Local `main` advanced during the task to `a489c5009f54f65c351298a4f93aafb30403d935`; this evidence covers the earlier selected base and did not verify integration onto that newer tip. Disposable loopback PostgreSQL databases only; no user's running world/save was changed. Pinned workspace dependencies were installed without lockfile changes. Native/browser fixtures set `AI_BUDGET_USD=0`; no provider calls, additional Jev cost **$0**, cumulative task total **$0**.
 
 ## Native and service evidence
 

@@ -1,6 +1,6 @@
 # Chosen camp supplies and fire watches
 
-**Native contracts implemented; full playable qualification remains open.** Mike authorized Engineer 3's PW10 implementation, including ordinary player controls, in chat on October 2, 2026. This document owns the bundled world's material choices, tuning and language for [PW10's camp activities](../../projects/parallel-batch-01-playable-week/camp-activities.md). The native request builders use existing [fire care](survival.md#tending-the-campfire), [items](items.md), [learning](../../action-experience.md) and agency owners. Native/static and current-format restart evidence does not close ordinary UI, live voluntary choice/retention/reuse or combined integration qualification. The accepted God-only detailed work display remains separate from ordinary request/review controls.
+**Native contracts implemented; full playable qualification remains open.** Mike authorized Engineer 3's PW10 implementation, including ordinary player controls, in chat on October 2, 2026. This document owns the bundled world's material choices, tuning and language for [PW10's camp activities](../../projects/parallel-batch-01-playable-week/camp-activities.md). The native request builders use existing [fire care](survival.md#tending-the-campfire), [items](items.md), [learning](../../action-experience.md) and agency owners. Native/static, current-format restart and [scripted browser controls](../../verification/camp-life.md#scripted-browser-controls) are qualified within their recorded scope. Uncoached player use, rendered-scene interaction, live voluntary choice/retention/reuse and combined integration qualification remain open. The accepted God-only detailed work display remains separate from ordinary request/review controls.
 
 ## What a person can choose
 
@@ -56,7 +56,7 @@ Another person's named entitlement would need an explicit agreement and supporte
 
 ## Plain descriptions
 
-These are examples assembled from selected/current facts, not compulsory behavior, preset exact recipes or hidden instructions to a character. Named-clock wording remains an ordinary UI acceptance target; native requests carry its resolved numeric deadline:
+These are examples assembled from selected/current facts, not compulsory behavior, preset exact recipes or hidden instructions to a character. Scripted browser controls qualify numeric and named-clock Review/Start with a fixed deadline; native requests carry that resolved numeric value. This does not establish uncoached play or live character choice:
 
 - “Gather from these fallen branches, return to the basket beside the fire, put 2 branches inside while leaving at least 1 available for me, then add one branch to this fire.”
 - “Try my learned gathering and packing method again. It puts 2 branches into the chosen basket and adds one to the fire, leaving at least 1 available for me. The method still needs enough material and space.”

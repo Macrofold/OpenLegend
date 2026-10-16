@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                                       | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | Selected runtime, documentation, required review and focused native/service/browser verification are delivered; broader qualification remains tracked. | 2026-10-04   |
+| Completed | Selected runtime, documentation, required review and focused native/service/browser verification are delivered; broader qualification remains tracked. | 2026-10-16   |
 
 ## Scope, source and implementation plan
 

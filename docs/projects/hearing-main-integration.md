@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                          | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Hearing reconciliation is integrated and locally verified, but the recorded required CI and broader HE05 qualification are not established by this audit. | 2026-10-14   |
+| In progress | Hearing reconciliation is integrated and locally verified, but the recorded required CI and broader HE05 qualification are not established by this audit. | 2026-10-16   |
 
 **Currency review — October 14, 2026.** [September 27 integration evidence](../verification/hearing-main-integration.md#current-main-rebase) records the delivered reconciliation and its remaining gates. The branch/rebase procedure and separate-branch descriptions below are historical provenance, not a new instruction to reconstruct the integration. SQLite and conversion references describe the old implementation; [PostgreSQL-only storage](completed/postgresql-cognition-preparation.md) and the [current development-save policy](../../AGENTS.md#development-save-policy) supersede them. A later focused hearing-fixture repair does not establish every HE05 check or matching published-head CI.
 
@@ -10,7 +10,7 @@
 
 The original task integrated the complete hearing branch, including review and performance fixes, with the then-current main, reconciling code, accepted contracts, documentation and tracking before recommending merge. Source: `c4379246b8db98974de319e1f5315439ac8176bd` (`feat/hearing-speech-captions`), retained at `codex/hearing-before-main-20260926`. Base: freshly fetched `Macrofold/OpenLegend` `origin/main`, initially `f551e3d8`, refreshed to `a39311dc`. The source contributes about 5,000 added and 800 removed lines across 85 files; cross-layer privacy, immutable-state, persistence and scheduling overlap makes this high-risk work.
 
-The local `codex/hearing-main-integration` branch consolidated the source's final tree into one replay commit, preserving the original published history and backup. The final working branch is `codex/hearing-ready-for-main`; its refreshed base and follow-up reconciliation are recorded below. That replay preserved main and the published source branch; it is not an operation to perform again. Temporary transfer commits have no independent runtime behavior to carry into the final history.
+The local `codex/hearing-main-integration` branch consolidated the source's final tree into one replay commit, preserving the original published history and backup. The historical final working branch was `codex/hearing-ready-for-main`; its then-refreshed base and follow-up reconciliation are recorded below. Hearing is now integrated into main. That replay preserved main and the published source branch; it is not an operation to perform again. Temporary transfer commits have no independent runtime behavior to carry into the final history.
 
 ## Owners and invariants
 

@@ -2,9 +2,9 @@
 
 | Status    | Current progress                                                                                                                                                  | Last updated |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The barter fixes, measured work reduction, player recovery and focused action-refresh checks pass; the reviewed scope and remaining growth limits are documented. | 2026-10-06   |
+| Completed | The barter fixes, measured work reduction, player recovery and focused action-refresh checks pass; the reviewed scope and remaining growth limits are documented. | 2026-10-16   |
 
-[Delivered implementation](px02-reciprocal-barter-plan.md) · [Contract](../parallel-batch-04-expeditions-and-exchange-tech-design.md#px02--reciprocal-offer-contract) · [PX02](../../maintainers/parallel-batch-04-expeditions-and-exchange.md#px02--reciprocal-barter) · [BW20](../../maintainers/base-world.md#bw20--consent-aware-handover)
+[Delivered implementation](px02-reciprocal-barter-plan.md) · [Contract](parallel-batch-04-expeditions-and-exchange-tech-design.md#px02--reciprocal-offer-contract) · [PX02](../../maintainers/parallel-batch-04-expeditions-and-exchange.md#px02--reciprocal-barter) · [BW20](../../maintainers/base-world.md#bw20--consent-aware-handover)
 
 ## Scope, base and risks
 

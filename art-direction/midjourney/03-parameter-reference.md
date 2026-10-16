@@ -28,7 +28,7 @@ Details and workflows are in [04](04-references-and-consistency.md).
 | --- | --- | --- | --- |
 | `--sref URL` / `--sref code` / `--sref random` | Several URLs separated by spaces (docs) | V8.2, V8.1, V7, Niji 7, V6 | Copies **style** (colours, medium, textures, lighting), not subjects: "It doesn't copy objects or people." `random` turns into a code after submission (docs) |
 | `--sw N` | 0–1000, default 100 (docs) | same | Strength of the style reference. Community: 50–150 balanced, 300+ dominant |
-| `--sv N` | V8.2/V7: six versions, **default 6**; `--sv 4` is the older model. Codes and `random` work only with `--sv 4` and `--sv 6` (docs) | same | Selects the style-reference algorithm |
+| `--sv N` | V7: six versions, **default 6**; `--sv 4` is the older model. Codes and `random` work only with `--sv 4` and `--sv 6`. The official [Style Reference](https://docs.midjourney.com/hc/en-us/articles/32180011136653-Style-Reference) page does not specify the same algorithm-version contract for V8.x; do not infer it (rechecked 2026-10-15) (docs) | V7 algorithm versions documented; V8.x unspecified | Selects the style-reference algorithm |
 | `--p` / `--p ID` | Profile or moodboard ID; turns into a code on submit (docs) | V6+ (moodboards); V7 global profile works on V8.x (docs) | Personalization profile or moodboard. **Moodboards can't be combined with `--sv` or `--sw`** (docs). `--s` scales their strength |
 | Image prompt (URL at the start of the prompt) + `--iw N` | `--iw` default 1; range 0–3 for V8.1 and V7, 0–2 for Niji 7 (docs) | ✓ | Uses an image as inspiration for **content, composition and colours** (docs) |
 | `--edit URL` | Up to 4 reference images (docs) | V8.1, V8.2 | Discord entry point to the **Edit model** (on the web, attach images in the prompt bar) |
@@ -49,7 +49,7 @@ Details and workflows are in [04](04-references-and-consistency.md).
 | Parameter | Status |
 | --- | --- |
 | `--q N` (`--quality`) | V7: `--q 1` default, `2` (2× GPU), `4` (4× GPU). `--q 3` becomes `4`. Affects only the first grid, not variations or upscales. `--q 4` doesn't work with Omni Reference. **Not supported on V8.1/V8.2** (V8 alpha briefly had `--q 4`) (docs, MJ) |
-| Multi-prompts `a:: b::2` | V7 and earlier. No space before `::`, one space after. Negative weights allowed if the total stays positive. **Not supported on V8.x** (docs) |
+| Multi-prompts `a:: b::2` | V6.1 and earlier documented versions. No space before `::`, one space after. Negative weights allowed if the total stays positive. **Not supported on V7 or V8.x**; rechecked 2026-10-15 against [Multi-Prompts & Weights](https://docs.midjourney.com/hc/en-us/articles/32658968492557-Multi-Prompts-Weights) (docs) |
 | `--niji 7` | A separate model, not a flag you can add to a V8 prompt. Use `--niji 7` on its own (docs, community) |
 | `--cref` / `--cw` | Character Reference, V6 and Niji 6 only; `--cw` 0–100, default 100 (docs). Replaced by Omni Reference (V7) and the Edit model (V8.x) |
 | `--stop N` | 10–100, V6 and earlier (docs) |

@@ -2,17 +2,17 @@
 
 | Status    | Current progress                                                                                                                          | Last updated |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | All five researched product designs, review fixes and documentation checks are complete; feature delivery remains with the linked owners. | 2026-10-06   |
+| Completed | All five researched product designs, review fixes and documentation checks are complete; feature delivery remains with the linked owners. | 2026-10-16   |
 
 ## Scope and working baseline
 
 This assignment continues the design queue in [Needs design](../../maintainers/needs-design.md), one group at a time. It develops detailed product behavior, scenarios, economics, failure handling and playable delivery stages. The requested scope deliberately stops before technical designs and implementation.
 
-The branch is codex/product-design-groups-11-15-20261005, based on Macrofold/OpenLegend main at d36ec3bd66f9b317748147003cc174f58cfd5642. Earlier groups have separate, unmerged proposal branches; their designs are useful context, not delivered capabilities on this baseline.
+The original design branch was codex/product-design-groups-11-15-20261005, based on Macrofold/OpenLegend main at d36ec3bd66f9b317748147003cc174f58cfd5642. Earlier groups then had separate, unmerged proposal branches; their designs were useful context, not delivered capabilities on that historical baseline.
 
 The [gameplay priorities](../../repertoires/gameplay-priorities.md), [engine/world boundary](../../engine-and-world-boundaries.md), [feature documentation rules](../../feature-documentation.md) and current root instructions govern every proposal. A feature must lead to a worthwhile experience, reveal its actual consequences, and preserve authority, private information and real spending. The study and story perspective are optional product choices, not prerequisites for a playable adventure.
 
-## Five deliverables
+## Five original deliverables
 
 | Queue group                                         | Product behavior owner                                                     | Design state                                                                                                       |
 | --------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
@@ -25,6 +25,8 @@ The [gameplay priorities](../../repertoires/gameplay-priorities.md), [engine/wor
 The three existing feature specifications remain their behavior owners. This overview does not create competing versions or replace their unresolved implementation work. Each design records primary-source research, what the evidence actually supports, what remains an inference, concrete player journeys, graceful failure, finite work and retention choices, and criteria for deciding whether the feature deserves expansion.
 
 **Subsequent disposition, October 6:** [the shelter technical counterpart](../editable-shelters-tech-design.md) completes PX05's narrow open-shelter design, and AV04 delivers its flat canopy/two-bay construction, use, finite rain/drying and reclaim. [SH01–SH06](../../maintainers/editable-shelters.md) retains the slope and wider qualification. The table above records this product assignment’s completion boundary; it is not a current claim that PX05 remains missing. Broader construction/weather and home psychology remain open.
+
+**Current reconciliation, October 15:** the table records the original product-design assignment. [OC06](../../maintainers/parallel-batch-07-playable-world-creation.md#oc01--construct-the-selected-fresh-opening) now delivers the integrated main-world and solo openings through native construction; OC05 retains the separate generated-tool/live-model acceptance. The shelter owners retain broader construction and qualification after their scoped delivery. [Practical competence](../../maintainers/practical-competence.md) now has a technical counterpart and delivered independent practice/coaching scope; PC04 retains the later-flight observation repair and PC06 retains human appreciation. These deliveries do not complete the wider creation/reuse, shelter, stats, study or story-perspective projects.
 
 ## Delivery and review
 

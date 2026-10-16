@@ -96,11 +96,11 @@ The world doc describes personalities, histories, aims, gear and pleasures, but 
 4. **Diversity is natural here.** "Migration, marriage, apprenticeship and trade cross the map." Communities are "political communities, not fixed ethnic temperaments" (world doc). Don't map one skin tone or look to a whole place.
 5. **Keep signature items identical in wording**, for example "absurdly gaudy cloak of rose-pink and saffron silk embroidered with strutting peacocks" for Halven.
 
-## Threewater March: cast visual reference (canon only)
+## Threewater March: September 27 cast visual reference
 
-From the [Threewater March proposal](../../docs/repertoires/worlds/medieval-survival.md) as of 2026-09-27. Appearance is **not specified** unless stated. The "Visual hooks" column lists canon details that make good image material. Re-read the world doc before major work; it's a proposal and may change.
+This table preserves the September 27 concept-art inputs. The [current Threewater March proposal](../../docs/repertoires/worlds/medieval-survival.md#fifteen-people-to-meet) now expands fifteen biographies and revises some histories, encounters and equipment descriptions. Its current text owns the optional setting; earlier visual hooks below remain concept suggestions where they differ, not current canon or game requirements. Appearance is **not specified** unless stated. Re-read the current proposal before new character work.
 
-| Person | Age · role | Canon visual hooks, props and pleasures | Tensions to depict |
+| Person | Age · role | Earlier visual hooks, props and pleasures | Tensions to depict |
 | --- | --- | --- | --- |
 | **Nella Reed** | 42 · millwright | Grew up in a cheerful boat-building household; diagnoses machines by sound; keeps failed bearings on a shelf; plays a poor flute with enthusiasm; the river's shift ruined her first mill | Iron for ploughs versus the watch; Jessa's offer of protected workshop space |
 | **Oren Venn** | 29 · clerk in the Veyl Compact toll office | Parents ran an orderly inn; neat ledgers and records; secretly writes comic songs about official forms; fussy when embarrassed | The stolen toll seal makes his records evidence; truth versus his job |
@@ -117,7 +117,7 @@ From the [Threewater March proposal](../../docs/repertoires/worlds/medieval-surv
 
 **Name sounds** (world doc): Bellwold names are short and stressed on the first syllable (Nella, Oren, Tavin); downriver names are open and flowing (Sela, Iven, Neris); upland names use compact consonants (Darn, Kel, Rusk).
 
-## Threewater March: places (canon)
+## Threewater March: place references
 
 | Place | Visual material |
 | --- | --- |

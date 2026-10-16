@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                    | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The agreed state, contribution and resource-claim slices were delivered; broader composition work remains separate. | 2026-10-15   |
+| Completed | The agreed state, contribution and resource-claim slices were delivered; broader composition work remains separate. | 2026-10-16   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Original foundation priority 1 in [remaining foundational work](../../maintainers/remaining-foundational-work.md). [Technical design](shared-state-contributions-tech-design.md) owns mechanisms; [SC01–SC08](../../maintainers/state-contributions.md) decomposes existing EWF02–03 and INV-6.3 work. [Package scope and research baseline](foundations-1-5.md) applies.
 

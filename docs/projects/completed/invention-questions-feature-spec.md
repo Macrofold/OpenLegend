@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                        | Last updated |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Structured invention questions and their approved bounded acceptance were completed on 2026-09-29; wider release gates remain separate. | 2026-10-14   |
+| Completed | Structured invention questions and their approved bounded acceptance were completed on 2026-09-29; wider release gates remain separate. | 2026-10-16   |
 
 **Status: implemented; bounded acceptance complete.** The owner explicitly requested complete implementation of this feature together with the World Agent context foundation. The current implementation includes the structured OpenCode bridge and passes real question/answer/review journeys. Actual browser interaction and matched complete-request measurements pass; other harnesses retain ordinary final-text clarification. The proposal adds structured questions to the existing conversation, preserving [runtime authority, funding and continuation](../../world-agent-runtime.md).
 

@@ -1,6 +1,6 @@
 # Elapsed simulation implementation evidence
 
-[Simulation time](../simulation-time.md) owns the accepted contract. This record separates implemented intervals from verified behavior and remaining acceptance. It supersedes neither the sound branch's evidence nor earlier measurements on different revisions/hosts.
+[Simulation time](../simulation-time.md) owns the accepted contract. This record separates implemented intervals from verified behavior and remaining acceptance. It supersedes neither the sound branch's evidence nor earlier measurements on different revisions/hosts. Save-policy reconciliation below describes those historical revisions; the sole [development save policy](../../AGENTS.md#development-save-policy) governs current compatibility and handling of incompatible development data.
 
 ## Recovered scope
 

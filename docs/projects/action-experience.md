@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                      | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The initial native and typed-learning implementation is delivered; the generative action-description acceptance remains open in AE03. | 2026-10-15   |
+| In progress | The initial native and typed-learning implementation is delivered; the generative action-description acceptance remains open in AE03. | 2026-10-16   |
 
 **Status: initial delivery and September 28 qualification are retained; [AE03](../maintainers/action-experience.md#ae03--compact-english-and-remaining-work-views) is reopened for the generative action-description caller.** Mike requested a durable design for nested action descriptions, observed effects, connected experience, reflection-time learning and shared method reuse. This package supersedes the informal proposals in the embodied-survival discussion; the [current behavior owner](../action-experience.md) describes the delivered contracts, and the [evidence report](../verification/action-experience.md) records their qualification.
 

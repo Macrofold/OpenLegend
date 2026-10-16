@@ -16,7 +16,7 @@ This inventory owns newly proposed restrictions for [batch 05](../projects/paral
 
 ## Existing competence and shelter limits
 
-AV03 inherits [ST-L08–ST-L13](authored-stats.md) and the [competence world profile](../worlds/base/practical-competence.md). The six-release supporting record is not a six-memory retention limit. AV04's selected flat profile is delivered under [SH-L01–SH-L14](editable-shelters.md), its world profile and PX05's completed technical design. Two bays/parts/layers and one builder/edit are a declared first-family boundary, not settlement capacity evidence. The SH owner retains the slope and broader qualification.
+AV03 inherits [ST-L08–ST-L13](authored-stats.md) and the [competence world profile](../worlds/base/practical-competence.md). The six-release supporting record is not a six-memory retention limit. AV04's selected flat profile is delivered under [SH-L01–SH-L14](editable-shelters.md), its world profile and PX05's completed technical design. Two bays/parts/layers and one builder/edit are a declared first-family boundary, not settlement capacity evidence. The SH owner also records the later narrowly qualified axial slope and lean-to support; broader arrangements and qualification remain open.
 
 No new AI budget, rate limit, pricing policy, general validation framework or verification quota is created by this allocation. Current policy owns spending and checks. Native arithmetic/geometry do not require inference; genuine NPC choices keep their actual metering. Broader growth and value claims require evidence on their actual workloads.
 

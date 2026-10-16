@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                      | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The initial native and typed-learning implementation is delivered; the generative action-description acceptance remains open in AE03. | 2026-10-15   |
+| In progress | The initial native and typed-learning implementation is delivered; the generative action-description acceptance remains open in AE03. | 2026-10-16   |
 
 **Status: initial delivery and September 28 qualification are retained; [AE03](../maintainers/action-experience.md#ae03--compact-english-and-remaining-work-views) is reopened for the generative action-description caller.** [Project](action-experience.md) records baseline and authorization; [current behavior](../action-experience.md) owns the shipped contract. The cases below remain acceptance requirements, not promises of unsupported new physical families.
 

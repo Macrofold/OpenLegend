@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                              | Last updated |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Persistent appraisals and character-owned relationship notes were delivered on 2026-09-26; broader actor and cognition work remains separate. | 2026-10-14   |
+| Completed | Persistent appraisals and character-owned relationship notes were delivered on 2026-09-26; broader actor and cognition work remains separate. | 2026-10-16   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 5. [Technical design](appraisal-social-continuity-tech-design.md) defines mechanisms; [ACT07/ACT08 delivery slices](../../maintainers/actor-model.md#priority-5-implementation-slices) own work. CR, EPR04, EWF and SL retain their existing responsibilities. [Foundation package](foundations-1-5.md) applies.
 

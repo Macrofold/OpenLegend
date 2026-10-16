@@ -2,13 +2,15 @@
 
 | Status    | Current progress                                                                                    | Last updated |
 | --------- | --------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | All immediate foundation fixes, documentation, review and required local verification are complete. | 2026-10-14   |
+| Completed | All immediate foundation fixes, documentation, review and required local verification are complete. | 2026-10-16   |
 
 ## Authorized scope and base
 
+**Historical implementation record, reviewed October 15, 2026.** The working branches, worktree paths, base commits and merge-readiness statements below describe the October 14 delivery. That work was subsequently integrated into local `main` by `57a2977e2` (Macrofold/OpenLegend); it is not awaiting a repeat merge. The completed local checks qualify the recorded foundation scope, while broader subsystem and hosted gates retain their own owners.
+
 Mike approved all immediate recommendations from the [foundation review](../../verification/foundation-review.md), including FR01/FR02, and requested a quick review of all feature documentation. Technical designs need truthful implementation/supersession status and evidence-backed dates, rather than a rewrite to match every current detail. Conditional FRL01–FRL05 remain future work unless a concrete in-scope defect requires their smallest relevant part; this approval is not a general refactoring or comprehensive-testing project.
 
-The working branch is `codex/foundation-review` in `/Users/mzw/.codex/worktrees/e5f2/OpenLegend`. It was initially reconciled onto Macrofold/OpenLegend local `main` at `eb0376273be42695ef1f45a08a13480a589798ae`; the repository's `origin` is `https://github.com/Macrofold/OpenLegend.git`. The main checkout is unchanged. The prior review tip `d13669bce` became `e75c96b9b`; patch comparison preserved the two review commits, with both independent additions retained in the changelog and maintainer-index conflicts. No fetch, push or merge was requested. That base includes world-rule extraction and combat; findings were revalidated before implementation rather than reproducing already integrated work. The follow-up base is recorded below.
+The implementation working branch was `codex/foundation-review` in `/Users/mzw/.codex/worktrees/e5f2/OpenLegend`. It was initially reconciled onto Macrofold/OpenLegend local `main` at `eb0376273be42695ef1f45a08a13480a589798ae`; the repository's `origin` is `https://github.com/Macrofold/OpenLegend.git`. The main checkout is unchanged. The prior review tip `d13669bce` became `e75c96b9b`; patch comparison preserved the two review commits, with both independent additions retained in the changelog and maintainer-index conflicts. No fetch, push or merge was requested. That base includes world-rule extraction and combat; findings were revalidated before implementation rather than reproducing already integrated work. The follow-up base is recorded below.
 
 ## Requested follow-up review — October 14
 
@@ -131,4 +133,4 @@ All FR01–FR13 immediate work, the requested implementation review, feature/spe
 
 Completion preserves the original deadlines and accepted gameplay/privacy requirements. The clock/control fixture uses the existing authored Solo testing ground; it does not establish main-world cold-start speed. Native/injected-provider and browser checks do not establish live-model quality, hosted deployment or large-population capacity. Conditional FRL01–FRL05 and broader subsystem release gates remain with their existing owners; none is unfinished agreed scope here. Additional Jev/provider cost **$0**, cumulative task cost **$0**.
 
-The completed branch is prepared for merge into local `main` at `b72e9d9aab8072eb1b5ae9d25f620a4421509148`. No push or merge was performed, and the main checkout was not changed.
+At that completion checkpoint, the branch was prepared for merge into local `main` at `b72e9d9aab8072eb1b5ae9d25f620a4421509148`. No push or merge was performed within that implementation task, and its main checkout was not changed; the subsequent integration is recorded above.

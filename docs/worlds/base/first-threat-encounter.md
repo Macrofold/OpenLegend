@@ -24,7 +24,7 @@ At or below 18 health, the living stag permanently relinquishes the cache and wi
 
 ## Owner choices and recommended policy
 
-Mike selected the stag, signs without entry warnings, true player death, one-attempt final-blow confirmation, no new indirect combat and five fully simulated seconds of vulnerable logout. These replace the October 3 proposal's enrollment, guaranteed warning, all-possession collapse recovery and automatic retreat. [Player Death](player-death.md) and [Player Danger](player-danger.md) own the detailed current rules. No broader D07 property/PvP rule, BW15 ghost/summoning law or PS coarse/background combat was silently adopted.
+Mike selected the stag, signs without entry warnings, true player death, one-attempt final-blow confirmation, no new indirect combat and 300 game seconds of fully simulated vulnerable logout (five real seconds at normal speed). These replace the October 3 proposal's enrollment, guaranteed warning, all-possession collapse recovery and automatic retreat. [Player Death](player-death.md) and [Player Danger](player-danger.md) own the detailed current rules. No broader D07 property/PvP rule, BW15 ghost/summoning law or PS coarse/background combat was silently adopted.
 
 The credible alternatives remain a hostile speaking person (adds motive, dialogue, social context and NPC recovery design) or deferral (lower immediate risk but no dangerous reason to observe/move/invent). The stag supplies a complete optional episode with less speculative infrastructure. Tuning and adding warnings require evidence from later play, not a claim that the first values are optimal.
 
@@ -32,7 +32,7 @@ The credible alternatives remain a hostile speaking person (adds motive, dialogu
 
 Inspection exposes only currently seen signs, posture, permitted health and actual offered actions. The attack cue is “The stag lowers its antlers and braces to strike.” Withdrawal and failed return report observable behavior. Current action/results show the actual attempt, miss, range loss or injury; no enemy-intent marker, hidden position or private relationship data is projected. Dead players cannot scout from their old body. Final-blow review names the observed target, attack/tool/range/timing/ammunition and persistent death consequence. Cancellation initially has focus; Escape closes without acting. Review does not pause mechanics.
 
-Original existing deer art and a simple melee preparation motion provide the initial presentation. This is not a bespoke antler rig, roar or charge animation. Text remains sufficient without motion. Signs use ordinary resource scenery without falsely offering gathering. The general logout notice describes the installed five-second law and detects no hidden enemy.
+Original existing deer art and a simple melee preparation motion provide the initial presentation. This is not a bespoke antler rig, roar or charge animation. Text remains sufficient without motion. Signs use ordinary resource scenery without falsely offering gathering. The general logout notice describes that installed departure law and detects no hidden enemy.
 
 ## Persistence and growth
 

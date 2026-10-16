@@ -2,9 +2,9 @@
 
 | Status    | Current progress                                                                                                         | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | Save recovery, the focused editor fixes and the redesigned family-tree journey are delivered with recorded verification. | 2026-10-03   |
+| Completed | Save recovery, the focused editor fixes and the redesigned family-tree journey are delivered with recorded verification. | 2026-10-16   |
 
-Implementation plan for SL09-C, the two God-mode editor regression items, and BW16. Current base: local `main` `b50ec6ce`. Original implementation base: local `main` `add92ccb`, containing refreshed `origin/main` `0382be76`. Working branch: `codex/save-editor-family`.
+Historical implementation plan for SL09-C, the two God-mode editor regression items, and BW16. The selected implementation base was local `main` `b50ec6ce`; the earlier base was local `main` `add92ccb`, containing then-refreshed `origin/main` `0382be76`. Work used `codex/save-editor-family`; its later reconciliation onto local main is recorded below. These pins are provenance, not current startup instructions.
 
 ## Scope and owners
 

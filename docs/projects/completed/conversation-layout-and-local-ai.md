@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                 | Last updated |
 | --------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Compact conversation controls and local AI readiness are verified, including the authorized scoped World Agent workspace grants. | 2026-10-03   |
+| Completed | Compact conversation controls and local AI readiness are verified, including the authorized scoped World Agent workspace grants. | 2026-10-16   |
 
 ## Scope and decisions
 

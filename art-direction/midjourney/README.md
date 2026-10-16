@@ -2,13 +2,13 @@
 
 **Start here.** This folder (`art-direction/midjourney/`) is the team's reference for writing Midjourney prompts. It consolidates official Midjourney documentation, Midjourney's own release announcements, community guides and Open Legend's art direction into one place. It was written on **2026-09-27**, when **V8.2** was Midjourney's default model.
 
-> **Midjourney changes roughly every month.** Before relying on anything version-specific (a parameter range, what a model supports), check the official [Version page](https://docs.midjourney.com/hc/en-us/articles/32199405667853-Version) and [Parameter List](https://docs.midjourney.com/hc/en-us/articles/32859204029709-Parameter-List). When you confirm or correct something, update the "Last verified" line below and the relevant file.
+> **Midjourney changes roughly every month.** Before relying on anything version-specific (a parameter range, what a model supports), check the official [Version page](https://docs.midjourney.com/hc/en-us/articles/32199405667853-Version) and [Parameter List](https://docs.midjourney.com/hc/en-us/articles/32859204029709-Parameter-List). When you confirm or correct something, update the research/recheck dates below and the relevant file.
 
-**Last verified:** 2026-09-27 (V8.2 default; Edit model for V8 released 2026-08-27).
+**Research baseline:** 2026-09-27 (V8.2 default; Edit model for V8 released 2026-08-27). The October 15, 2026 audit rechecked the [version/feature corrections](01-versions-and-features.md) and [source ledger](09-sources.md); it did not run paid Midjourney experiments or requalify every community recommendation.
 
 ## What we use Midjourney for
 
-For now: **painted concept art** of Threewater March's people, places and props: portraits, character design sheets, story keyframes and environments. It is **not** how we make pixel art. The in-game pixel look comes from the 3D pixel-art renderer and asset pipeline, so concept art should be painted illustration with natural proportions, readable gear and purposeful light. See the [3D pixel-art feature spec](../../docs/projects/3d-pixel-art-feature-spec.md) and the 3D pixel-art style bible. The style bible is for now an Open Legend project doc (`claude/art-pipeline/style-bible-3d-pixel.md`), not a repository file.
+For now: **painted concept art** of Threewater March's people, places and props: portraits, character design sheets, story keyframes and environments. It is **not** how we make pixel art. The selected 3D pixel-art direction has a bounded character pilot; it is not a completed replacement for the game’s existing sprite art. Concept art should be painted illustration with natural proportions, readable gear and purposeful light. See the [3D pixel-art feature spec](../../docs/projects/3d-pixel-art-feature-spec.md) and the 3D pixel-art style bible. The style bible is an external project document (`claude/art-pipeline/style-bible-3d-pixel.md`), not a repository file. Its palette and artgen pipeline notes below preserve that original reference, not a verified current repository implementation; current art locations, delivery and open acceptance belong to the [art tracker](../../docs/maintainers/art-direction.md) and [3D tracker](../../docs/maintainers/3d-pixel-art.md).
 
 ## How claims are labelled
 

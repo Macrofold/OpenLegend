@@ -50,7 +50,7 @@ Only the currently worked portion is held. Completion converts that actual mater
 
 **Proposed · Restrictiveness: Safe for the selected family.** Mechanically different food lots remain distinct; merging cannot average away worse condition or use a similar appearance as equivalence. Presenting several lots together for reading does not merge their material state. The family must support ordinary splitting, exact transfer, last-portion consumption, disposal and work completion before decay is enabled.
 
-**Reason / tradeoff:** Strict differences may grow the number of retained lots and make large inventories more expensive. Prefer homogeneous cohorts and readable grouping where semantics truly match; do not fix performance by rejuvenating stock or imposing an unannounced item cap. Current OB08/OB14 stateless-operation restrictions require a real shared-owner extension for this consumer. Identity, quantity, reference and condition preservation are correctness obligations, not optional tuning.
+**Reason / tradeoff:** Strict differences may grow the number of retained lots and make large inventories more expensive. Prefer homogeneous cohorts and readable grouping where semantics truly match; do not fix performance by rejuvenating stock or imposing an unannounced item cap. OB08 already admits the selected material family’s explicit state-copying and equivalence rules; other state and OB14 retirement restrictions remain. Food condition still requires its own supported shared-owner extension, including the final portion. Identity, quantity, reference and condition preservation are correctness obligations, not optional tuning.
 
 ## CS-L08 — Complete work and notification cost
 

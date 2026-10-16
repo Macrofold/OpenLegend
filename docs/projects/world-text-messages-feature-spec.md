@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                      | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG24 product proposal complete; NC22 technical/runtime delivery and private correspondence qualification remain open. | 2026-10-14   |
+| In progress | DG24 product proposal complete; NC22 technical/runtime delivery and private correspondence qualification remain open. | 2026-10-16   |
 
 This specifies DG24 and ND14's contacts/asynchronous-text scope. The [authored world profile](../worlds/base/text-messages.md) selects a concrete later-world communicator. NC/MP/CR retain communication, private evidence, participation and delivery work. Calls and voice remain DG26. This is a product proposal, not an addition to current primitive starts or a technical architecture.
 

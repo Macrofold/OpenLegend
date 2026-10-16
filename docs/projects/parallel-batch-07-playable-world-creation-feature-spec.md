@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                              | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Main and solo starts pass native creation, reload and browser preview; generated-tool play and parent acceptance remain open. | 2026-10-14   |
+| In progress | Main and solo starts pass native creation, reload and browser preview; generated-tool play and parent acceptance remain open. | 2026-10-16   |
 
 ## Purpose and selected scope
 
@@ -12,11 +12,11 @@ Let an authorized creator describe a small world, preserve the parts they care a
 
 This allocation implements the first supported creation journey in [world creation §§2–11](world-creation-feature-spec.md#2-boundaries-inherited-from-the-project). That document remains the product behavior owner. The work covers one existing supported world family, retained proposals, meaningful clarification, concrete preview, readiness, exact start, recovery and first play. Its [technical design](parallel-batch-07-playable-world-creation-tech-design.md) selects the missing initial-world assembly and empty-target integration. OC01–OC05 are internal stages of **one assignment**, not five parallel tasks.
 
-The familiar reference contains one human-controlled character, one autonomous resident, a useful locality, reachable finite supplies and an activity with a payoff. The creator can choose a supported solitary or harsh variation; the software must not secretly add a resident or emergency resources. The reference population is a bounded release profile, not a universal world law. Broader communities retain their existing qualification.
+The original editable familiar reference contains one human-controlled character, one autonomous resident, a useful locality, reachable finite supplies and an activity with a payoff. The creator can choose a supported solitary or harsh variation; the software must not secretly add a resident or emergency resources. The reference population is a bounded release profile, not a universal world law. Broader communities retain their existing qualification.
 
 ## Why this work now
 
-The player can already manufacture admitted inventions, learn physical methods, explore, fish, barter and build the supported shelter. Those available mechanisms make it possible to create an opening with real choices rather than a scenery editor that promises future play. Existing World Agent questions, drafts and review provide the authoring foundation. The remaining gap is assembling a new initial world and making the reviewed result enterable without replacing an existing world.
+The player can already manufacture admitted inventions, learn physical methods, explore, fish, barter and build the supported shelter. Those available mechanisms make it possible to create an opening with real choices rather than a scenery editor that promises future play. Existing World Agent questions, drafts and review provide the authoring foundation. At the original allocation, the missing path was assembling a new initial world and making the reviewed result enterable without replacing an existing world. OC01–OC04 now deliver that path; OC05 retains the generated-tool first-play acceptance.
 
 The repertoire ranks the [authored first-session boundary and rehearsal](../repertoires/automation-creators.md#world-contracts-and-selected-modes) (ACR-122/ACR-135) and [a visitor's complete activity](../repertoires/automation-creators.md#creator-challenges-and-complete-experiences) (ACR-192) **1 Core**. [A personally proposed useful tool](../repertoires/actions.md#def-deliberate-invention-and-owner-authoring) (DEF-01) is also Core. These ranks support a playable creation consumer, not a universal world compiler.
 

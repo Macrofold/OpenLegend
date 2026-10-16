@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                               | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Batch 09 completes the first condition-removal consumer; general-family deletion and memory tools remain open. | 2026-10-14   |
+| In progress | Batch 09 completes the first condition-removal consumer; general-family deletion and memory tools remain open. | 2026-10-16   |
 
 ## Accepted policy
 

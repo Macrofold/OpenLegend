@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                                                                                                                                            | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG34 product proposal and twelve-source research independently reviewed: a finite campaign connecting two communities in one world, with canonical consequences and optional local participation; adoption, technical design, implementation and qualification remain open. | 2026-10-14   |
+| In progress | DG34 product proposal and twelve-source research independently reviewed: a finite campaign connecting two communities in one world, with canonical consequences and optional local participation; adoption, technical design, implementation and qualification remain open. | 2026-10-16   |
 
 ## 1. The Ash Road: something worth doing before the battle
 
@@ -174,7 +174,7 @@ For the first full qualification, use two consenting human participants and the 
 
 The second player should be able to arrive after the first has left and understand three things from permitted evidence: what changed, how it affects the current local opportunity, and what they can do now. They need not read a transcript of every prior interaction. “The western connection is severed; the Warden's control is exposed” is a useful public fact. “Nessa secretly persuaded Mike while he was hungry” is not.
 
-Leaving never withdraws completed physical work. It also does not create an automatic standing commitment to defend the road, report in, eat on behalf of a resident or attend a finale. An unfinished native action stops under its actual cancellation policy. A separately accepted loan, trade or promise retains its own meaning; campaign closure cannot waive someone else's claim. Human departure uses current multiplayer control and absence, not the future dangerous-logout programme.
+Leaving never withdraws completed physical work. It also does not create an automatic standing commitment to defend the road, report in, eat on behalf of a resident or attend a finale. An unfinished native action stops under its actual cancellation policy. A separately accepted loan, trade or promise retains its own meaning; campaign closure cannot waive someone else's claim. Human departure uses current multiplayer control, the detailed encounter's departure-exposure rules and protected absence. The broader coarse/background dangerous-logout programme remains separate PS05 work; this campaign adds no new exposure interval or harm authority.
 
 A returning player receives a concise permitted account: their last known contribution, current route/operation condition and any actual outstanding personal arrangement. They can expand into the retained history if wanted. Do not automatically replay old warnings or read an entire campaign chronicle aloud. A person who returns after resolution can use the road, meet the changed community and ask what happened without being told that their play window has expired.
 

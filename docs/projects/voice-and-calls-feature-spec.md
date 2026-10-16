@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                   | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | DG26 product proposal prepared; adoption, technical design, media delivery and gameplay qualification remain open. | 2026-10-14   |
+| In progress | DG26 product proposal prepared; adoption, technical design, media delivery and gameplay qualification remain open. | 2026-10-16   |
 
 This is DG26's product proposal for ND15, ND14's calls and a selected ND16 doorway exchange. It preserves the existing [hearing evidence](../hearing-and-speech.md), [conversation contract](../narration-and-conversations.md) and complete text play. [The optional world profile](../worlds/base/voice-and-calls.md) owns authored availability and physical meaning. No microphone, synthesis provider, media service, new starting equipment or runtime implementation is established here.
 

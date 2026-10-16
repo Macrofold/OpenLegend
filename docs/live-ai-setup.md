@@ -52,11 +52,11 @@ For the built client, use `pnpm run build` followed by `pnpm start` instead. Do 
 
 ## 5. Refresh and inspect configuration
 
-Refresh [the local game](http://localhost:3211/), using your selected port. With Auth0 or a custom host, open the exact `OPEN_LEGEND_PUBLIC_ORIGIN` configured above; `localhost` and `127.0.0.1` are different hosts, and the server refuses a different host in Auth0 mode. Then open the AI status button at the upper right. Jev and Language model should both say **Configured**, and the agent allowance should show available funds. A configured label means the server received a nonempty key; it does not prove authentication, model access or successful inference yet.
+Refresh [the local game](http://localhost:3211/), using your selected port. With Auth0 or a custom host, open the exact `OPEN_LEGEND_PUBLIC_ORIGIN` configured above; `localhost` and `127.0.0.1` are different hosts, and the server refuses a different host in Auth0 mode. Then open **Game → Intelligence & allowance**. The ordinary panel shows intelligence availability and the controlled character’s allowance. In an owner-enabled god-mode session, **Connect intelligence** lists Jev and Language model as **Configured**, and **Monthly agent allowances** shows each character’s funds. A configured label means the server received a nonempty key; it does not prove authentication, model access or successful inference yet.
 
 ## 6. Make a first live request
 
-With immediate inference configured and spending explicitly authorized, resume the world, move near Ada, select Talk, and send a short greeting. Observe the request status and actual response, then review the AI panel’s recent work and execution counts. While the world is running, autonomous NPC thinking can also use the actor’s allowance. Pause when you finish the test.
+With immediate inference configured and spending explicitly authorized, resume the world, move near Ada, select Talk, and send a short greeting. Observe the request status and the character’s actual reply, then review **Game → Intelligence & allowance**. Owner-enabled god mode additionally exposes call counts under **Execution details**. While the world is running, autonomous NPC thinking can also use the actor’s allowance. Pause when you finish the test.
 
 If a request fails, inspect its recorded reason before sending again. Missing or rejected credentials, inaccessible models, insufficient provider funds, insufficient agent allowance, timeouts and invalid output are separate problems. The application does not silently retry paid requests. Live quality remains a separate acceptance check; follow [verification](verification.md) for the full playtest.
 

@@ -172,9 +172,9 @@ A module cannot replace an existing state owner by installing a same-named field
 
 ### 4.2 Default physiology as a module
 
-Extract the current metabolism/body parameters and policies behind registered native implementations. Preserve current numerical values and stage order initially. In particular, food consumption, food seeking, work interruption, sleep eligibility, health protection, and semantic urgency use different thresholds and must not be collapsed into one generic threshold.
+Extract the current metabolism/body parameters and policies behind registered native implementations. Preserve current numerical values and stage order initially. In particular, chosen food actions, work interruption, sleep eligibility, health protection, and semantic urgency have different prerequisites and owners and must not be collapsed into one generic threshold. The original automatic food-seeking controller was subsequently removed by the accepted embodied-survival change; extraction must preserve current independently chosen actions rather than restore it.
 
-The body module owns its lifecycle policy. The runtime owns valid identities, receipts, effect admission, and installed-policy selection. Current player collapse versus NPC death is a default policy, not an immutable meaning of `controller='player'`.
+The body module owns its lifecycle policy. The runtime owns valid identities, receipts, effect admission, and installed-policy selection. The bundled world's current player death, NPC death and permitted return/revival rules are selected policies, not immutable meanings of `controller='player'`. The earlier player-collapse rule is historical; [lifecycle and protection](../../docs/worlds/base/lifecycle-and-protection.md) owns current behavior.
 
 A charge-based organism need not carry fake fullness, human fatigue, sleep state, or autobiographical text solely to satisfy generic infrastructure. Its declared capabilities determine what is initialized. Current wilderness actors still receive their actual supported defaults.
 

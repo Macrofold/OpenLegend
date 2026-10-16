@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                        | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The hosting proposal and playbook are prepared; deployment, provider qualification and capacity acceptance remain open. | 2026-10-14   |
+| In progress | The hosting proposal and playbook are prepared; deployment, provider qualification and capacity acceptance remain open. | 2026-10-16   |
 
 **Status: researched proposal, updated 2 October 2026. Auth0 is Mike's selected authentication provider; the other platform choices below are recommendations, not deployed infrastructure.** This package authorizes no runtime change, provisioning, purchase, migration, or paid execution.
 

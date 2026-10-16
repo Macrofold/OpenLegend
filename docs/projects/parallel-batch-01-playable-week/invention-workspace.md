@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                        | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Native authoring and receipt changes are delivered; composite browser, stream and broader UX qualification remain open. | 2026-10-14   |
+| In progress | Native authoring and receipt changes are delivered; composite browser, stream and broader UX qualification remain open. | 2026-10-16   |
 
 **Currency review, October 14, 2026.** The assignments, source observations and estimates below describe their original October 2 execution context. The table above and [PW tracking](../../maintainers/parallel-batch-01-playable-week.md) distinguish delivered work from remaining qualification; old branch/format references do not select the current development base or authorize compatibility work.
 
@@ -17,7 +17,7 @@ The original baseline placed drafts below the transcript and exposed exact revie
 ## Scope and decisions
 
 - The original assignment’s seven authoring kinds get a readable summary, validation/coverage display, exact-revision navigation and structural comparison. That assignment did not add an eighth kind; Batch 07 subsequently added the supported initial-world opening through the same owner.
-- Direct structured editing in this slice is **recipe-only**, across every installed family supported by PW02, including the container. Other kinds retain conversational revision and existing exact review; show this distinction explicitly.
+- Direct structured editing in the original PW11 slice is **recipe-only**, across every installed family supported by PW02, including the container. Batch 07 separately adds its supported opening editor through the shared native owner; the remaining kinds retain conversational revision and existing exact review. Show these actual capabilities explicitly.
 - Keep separate Approve and Apply. Editing creates a new immutable revision and requires fresh review; it cannot change an already approved plan or silently apply a new revision.
 - Reuse the current panel/sheet system, theme and spacing. A task-specific wider workspace is optional when room exists; narrow layouts use the same selected draft in a single pane, not an extra tiny side panel.
 - No new generated art, graph-layout engine, batch Apply, universal JSON editor, autosaved server mutation, paid retry or new creator authority.

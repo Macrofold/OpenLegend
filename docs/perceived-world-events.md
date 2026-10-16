@@ -6,7 +6,7 @@ Accepted player-facing event-history design; [Architecture](architecture.md#hear
 
 ## 1. Navigation and scope
 
-Add a **World Events** launcher immediately below **Journal** in the normal player navigation. Reuse the current panel/pullout system and narrow-screen sheet behavior. This is distinct from the god-only World Events editor: the normal panel is read-only, actor-scoped, and never has raw JSON/edit/administrative access merely because the app also supports god mode.
+Open **Journal → World Events · what you perceived** in the normal player navigation. Reuse the current panel/pullout system and narrow-screen sheet behavior. This is distinct from the god-only World Events editor: the normal panel is read-only, actor-scoped, and never has raw JSON/edit/administrative access merely because the app also supports god mode.
 
 The header has a plainly labeled **Type** filter, initially **All**, with **Speech** available immediately. Also provide meaningful event-family filters such as actions, expressions, environment and body/sensory events where those families are registered; preserve exact event type in row details. Do not invent world activity from the presence of a filter option. A flat filter or multi-select is enough; no query builder is needed.
 
@@ -36,7 +36,7 @@ The UI may initially load 50 rows per page, with a server maximum of 100. These 
 
 The browser uses the shared `getScoped` and `post` request helpers, carrying its tab identity and current authority scope. Pending requests can be aborted, and responses from an obsolete access generation are rejected before entering the panel. This matches the other private-history consumers.
 
-The actor-scoped read surface is `GET /api/world-events?type=speech&limit=50&cursor=...`. Its batched detail route, `POST /api/world-events/sources`, accepts `{ references: WorldEventSourceReference[] }` with one or two observer-bound references. The application-issued token binds the observer/world/timeline scope, source family, source ID and revision. Forged, cross-actor or stale-timeline references are refused without exposing another observer's records. A valid reference whose retained evidence is unavailable returns an explicit unavailable result. Results preserve request order, including unavailable entries. Both endpoints use the existing history and experience repositories; they are not a new event system.
+The actor-scoped read surface is `GET /api/world-events?type=speech&limit=50&cursor=...`. Its batched detail route, `POST /api/world-events/sources`, accepts `{ references: WorldEventSourceReference[] }` with one or two observer-bound references. The application-issued token binds the observer/world/timeline scope, source family and source ID. The separate revision identifies the view from which the source was selected; rereading that retained selection returns its current permitted revision and correction qualification rather than pinning obsolete text. Forged, cross-actor or stale-timeline references are refused without exposing another observer's records. A valid reference whose retained evidence is unavailable returns an explicit unavailable result. Results preserve request order, including unavailable entries. Both endpoints use the existing history and experience repositories; they are not a new event system.
 
 Both endpoints bind authenticated account/observer scope and recheck current timeline, evidence and access after asynchronous reads; they do not change Talk or grant a second event authority.
 

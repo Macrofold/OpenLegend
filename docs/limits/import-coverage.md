@@ -174,20 +174,20 @@ No new item is excluded merely because it is small, nonnumeric or probably reaso
 
 ## Save/recovery follow-up qualifications
 
-All eleven additional supplied findings were checked against the local source on 2026-09-26. No runtime qualification was rerun; limits and missing behaviors remain unchanged.
+All eleven additional supplied findings were checked against the local source on 2026-09-26. The table preserves that import history and subsequent dated dispositions; the linked inventories own current behavior and later reversals. This documentation audit adds no runtime qualification.
 
-| Finding                                                   | Disposition                                                                                                           |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Full pre-load save can block loading                      | New [SB13](persistence.md#sb13); C02 / SL09-A recovery follow-up.                                                     |
-| Retention targets are not physical disk limits            | Extend [SV02/SV03](persistence.md#sv02); SL09-B qualification.                                                        |
-| Integrity verification does not establish restore success | Correct [SB08](persistence.md#sb08), save contract and retention ledger; SL09-B.                                      |
-| Wall-clock retention ordering                             | New [SB14](persistence.md#sb14); C24 / SL09-B.                                                                        |
-| Full-directory catalog scan                               | Already [SV17](persistence.md#sv17); link from SV11, no duplicate.                                                    |
-| Two supported streamed table layouts                      | New [SB15](persistence.md#sb15); retain explicit compatibility, link SL01/DF02.                                       |
-| Snapshot held through publication                         | New [SB16](persistence.md#sb16); C23 / SL09-C, without an unmeasured growth claim.                                    |
-| Mandatory complete-slot backup, canonical source required | New [SB17](persistence.md#sb17); update operational runbook; existing C03 owns optional partial-backup consideration. |
-| Failed restore leaves copied slots                        | [SB18](persistence.md#sb18) (in-process reconciliation 2026-09-28); C22 / D1-D2 file reconciliation.                  |
-| Restart loses autosave failure status                     | [SB12](persistence.md#sb12) (durable until acknowledged, 2026-09-28); C05 / SL08-A.                                   |
-| Stress-tool ranges/defaults                               | New [SV18](observability.md#sv18); tooling-only, no change recommended.                                               |
+| Finding                                                   | Disposition                                                                                                                                |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Full pre-load save can block loading                      | New [SB13](persistence.md#sb13); C02 / SL09-A recovery follow-up.                                                                          |
+| Retention targets are not physical disk limits            | Extend [SV02/SV03](persistence.md#sv02); SL09-B qualification.                                                                             |
+| Integrity verification does not establish restore success | Correct [SB08](persistence.md#sb08), save contract and retention ledger; SL09-B.                                                           |
+| Wall-clock retention ordering                             | New [SB14](persistence.md#sb14); C24 / SL09-B.                                                                                             |
+| Full-directory catalog scan                               | Already [SV17](persistence.md#sv17); link from SV11, no duplicate.                                                                         |
+| Two supported streamed table layouts                      | Historical [SB15](persistence.md#sb15) finding; the preceding-layout reader was subsequently removed under the current-format-only policy. |
+| Snapshot held through publication                         | New [SB16](persistence.md#sb16); C23 / SL09-C, without an unmeasured growth claim.                                                         |
+| Mandatory complete-slot backup, canonical source required | New [SB17](persistence.md#sb17); update operational runbook; existing C03 owns optional partial-backup consideration.                      |
+| Failed restore leaves copied slots                        | [SB18](persistence.md#sb18) (in-process reconciliation 2026-09-28); C22 / D1-D2 file reconciliation.                                       |
+| Restart loses autosave failure status                     | [SB12](persistence.md#sb12) (durable until acknowledged, 2026-09-28); C05 / SL08-A.                                                        |
+| Stress-tool ranges/defaults                               | New [SV18](observability.md#sv18); tooling-only, no change recommended.                                                                    |
 
 The stale main-process checkpoint description in Architecture is corrected: configured server capture uses a worker; workerless operational callers still run the codec in their own process. Source inspection establishes these implementation distinctions, not restore or load-capacity certification.

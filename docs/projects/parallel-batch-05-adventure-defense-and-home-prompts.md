@@ -1,8 +1,10 @@
 # Batch 05 — Five implementation prompts
 
-| Status      | Current progress                                                                                         | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | All five assignments are merged; human appreciation and broader qualification retain their tracked gaps. | 2026-10-08   |
+| Status      | Current progress                                                                                                                                            | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | All five implementations are integrated; the coaching-result repair, final player equipment comparison and combined/genuine-play qualification remain open. | 2026-10-16   |
+
+These are retained original assignment prompts. Their prerequisite and branch directions are historical; integrated delivery is not a request to dispatch them again. The current tracker preserves the coaching-result repair, final player equipment comparison and genuine/combined-play acceptance still open.
 
 Use a branch containing this batch's committed documentation. [Allocation and sequencing](parallel-batch-05-adventure-defense-and-home-feature-spec.md#allocation-and-sequencing) explains readiness: AV03 and AV05 can start from the inspected main; AV01 can start independent content work but needs PX03/threat integration to finish; AV02 needs the incoming threat/lifecycle delivery; AV04 needs PX05 and later AV02's equipment integration. These prompts do not execute the assignments from the planning chat.
 

@@ -15,7 +15,7 @@ Implementation was approved in chat on September 26, 2026; the [foundation plan]
 
 **Delivered selected construction consumer:** [Editable shelters](../projects/editable-shelters-feature-spec.md) uses these identity, custody, finite-resource and lineage foundations for reusable coverings, staged work and salvage. [The paired technical design](../projects/editable-shelters-tech-design.md#2-existing-owners-and-missing-contracts) is complete for PX05. [SH01/SH02/SH03/SH05](editable-shelters.md) records registered assembly/back attachments, installed/lowered-part protection, exact conditioned-object reclaim, atomic hold release with attachment and narrow equal-state fiber split/merge. AV04 delivers the selected flat profile with [native/SQL/UI evidence](../verification/editable-shelters.md); no completed PO foundation gate is reopened. Broader materials, cooperative grants and lifecycle/capacity qualification remain with PO/SH owners.
 
-**DG19 consumer proposal, October 6:** [CS02](changing-supplies.md#cs02--food-condition-follows-the-real-material) requires condition-preserving creation, work, exact partial handling and last-unit consumption for the selected [changing-supplies family](../projects/changing-supplies-feature-spec.md). Current stateless split/merge/retirement limits remain current; the completed foundation checkmarks below do not qualify this new consumer. Preserve this owner and its identity, lineage, reservations, access and persistence contracts rather than adding a food-only custody path.
+**DG19 consumer proposal, October 6:** [CS02](changing-supplies.md#cs02--food-condition-follows-the-real-material) requires condition-preserving creation, work, exact partial handling and last-unit consumption for the selected [changing-supplies family](../projects/changing-supplies-feature-spec.md). Current family-supported split/merge/retirement limits remain in force: selected homogeneous material moisture state already splits and merges, while food condition and stateful consumption remain unimplemented; the completed foundation checkmarks below do not qualify this new consumer. Preserve this owner and its identity, lineage, reservations, access and persistence contracts rather than adding a food-only custody path.
 
 **DG20 consumer proposal, October 6:** [HM02–HM04](heat-and-materials.md) extends the same owner for actual heated/fired material, finite vessel output, damage and surviving salvage. The [product proposal](../projects/heat-and-materials-feature-spec.md) does not implement stateful consumption or thermal handling. Work, containment, installed parts and fuel retain one actual material history; a useful new vessel cannot be created alongside an unconsumed duplicate blank.
 
@@ -23,8 +23,8 @@ Implementation was approved in chat on September 26, 2026; the [foundation plan]
 
 ## Execution notes — September 26, 2026
 
-The approved finite object implementation and native/database/browser qualification are complete.
-The current diff promotes legacy lots to entities, moves XYZ/support into tagged placement,
+The approved finite object implementation and native/database/browser qualification are complete. The conversion and SQLite results in these dated notes describe that historical cutover; they are not supported current conversion paths or permission for new compatibility work. Current database verification uses PostgreSQL under the root development policy.
+The September 26 diff promoted legacy lots to entities, moves XYZ/support into tagged placement,
 and routes native quantities, split/merge, custody and individual equipment through the
 object owner. Finite bags use exact pinned packing metadata, net ancestor load updates and
 bounded depth. Direct children use a persistent ordered index with cached nesting height;

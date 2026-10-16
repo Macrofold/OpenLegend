@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                                                       | Last updated |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The additional mercenary and fixed-resolution depth rendering were delivered and locally qualified on 2026-09-28; broader art and crowd qualification remain separate. | 2026-10-14   |
+| Completed | The additional mercenary and fixed-resolution depth rendering were delivered and locally qualified on 2026-09-28; broader art and crowd qualification remain separate. | 2026-10-16   |
 
 Authorized September 28, 2026: put the existing mercenary study character into the game scene. This is a narrow V3D01 / SW18.14 pilot, not authorization for the proposed generated-appearance infrastructure or a world-wide art conversion.
 

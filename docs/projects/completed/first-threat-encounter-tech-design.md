@@ -2,13 +2,13 @@
 
 | Status    | Current progress                                                                                                       | Last updated |
 | --------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Runtime and PX01 integration are qualified; broader human-conflict, player-learning and capacity work remains tracked. | 2026-10-06   |
+| Completed | Runtime and PX01 integration are qualified; broader human-conflict, player-learning and capacity work remains tracked. | 2026-10-16   |
 
 [Feature specification](first-threat-encounter-feature-spec.md) · [Current authored rules](../../worlds/base/first-threat-encounter.md)
 
 ## Scope, baseline and plan
 
-October 6 integration: [PX01](../parallel-batch-04-expeditions-and-exchange-tech-design.md#px01-integrated-delivery-plan--october-6) consumed the completed runtime at `0a3ab79b7a698a7f1941dc23722f89220d1ba425`, corrected direct walking across connected ground in the shared navigation owner, and qualified the encounter without changing its authored rules. [Current evidence](../../verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) supplements the original results below.
+October 6 integration: [PX01](parallel-batch-04-expeditions-and-exchange-tech-design.md#px01-integrated-delivery-plan--october-6) consumed the completed runtime at `0a3ab79b7a698a7f1941dc23722f89220d1ba425`, corrected direct walking across connected ground in the shared navigation owner, and qualified the encounter without changing its authored rules. [Current evidence](../../verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) supplements the original results below.
 
 Initial design-only source inspection used `c4e18d91848b5b6d367dda1d7214a9f8222cf070`; the October 3 documentation delivery changed zero production logic lines and ran formatting/link/diff checks, without runtime or provider claims. Mike's October 4 revisions and chat go-ahead authorized complete runtime implementation. Four design commits were reconciled onto freshly fetched `origin/main` **d36ec3bd66f9b317748147003cc174f58cfd5642**, from `https://github.com/Macrofold/OpenLegend.git`.
 
@@ -88,7 +88,7 @@ Mike resolved the required choices and authorized all stages; the original condi
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
 | 1 — BW14 / body, custody, participation | Fatal physical life, exact half-type partition/corpse, pending Continue, scars, protected absence and current-format authority | Native conservation/interruption/placement and service persistence/replay                                                |
 | 2 — BW14 / actions, native movement     | Natural contact, interruption/recovery, one exact lethal review, finite observed controller/search/return                      | Actual ordinary attack/avoidance/death and stale/retry/failure checks                                                    |
-| 3 — authored content / MP04             | One stag/cache/signs/stone barrier/bypass/refuge plus five simulated seconds of fade                                           | Actual peaceful reward route, injury/displacement, fade/tied expiry                                                      |
+| 3 — authored content / MP04             | One stag/cache/signs/stone barrier/bypass/refuge plus 300 game seconds of fade (five real seconds at normal speed)             | Actual peaceful reward route, injury/displacement, fade/tied expiry                                                      |
 | 4 — protocol/client                     | Scoped cue/work/death/scar/fade projection, final-blow modal, Continue and treatment                                           | Browser Cancel/Escape/confirmation, death/Continue and compact/keyboard review                                           |
 | 5 — integration / maintainers           | Required review fixes, selected checks, measured costs, canonical decisions/limits/status and local commit                     | [Recorded evidence](../../verification/first-threat-encounter.md); broader human balance/capacity limits remain explicit |
 
@@ -107,7 +107,7 @@ Mike delegated routine unresolved details; these choices are implemented and ava
 3. **Scars:** three bodily penalties, category penalty once, repeated category adds treatment count; one prepared fiber plus ten normal real seconds at camp per treatment. This provides work without exponential disability. Alternatives: cumulative stronger penalties, longer treatment/material variety or unique lasting traits after play evidence.
 4. **Lethality:** one ordinary potentially lethal attack review, persistent NPC/animal death and no unconsciousness/execution-only framework. This fits existing attacks and preserves a moral pause. Alternative: a separate incapacitated final-blow system requires its own recovery/defense design.
 5. **Indirect harm:** no new damaging indirect family; independent animal perception can create incidental shared danger. Deliberate luring/property/PvP/background rules remain open D07/PS choices, not permission for new hazards.
-6. **Logout/reconnect:** five fully simulated normal seconds, expiry wins a tie, no auto-retreat or unfinished human work; genuine returned control cancels the fade and a subsequent departure starts fresh exposure. This avoids trapping a returned player under a stale deadline. Alternative: retain a previous exposure across connection churn until a separately defined stable-return interval, at the cost of more state and less predictable play.
+6. **Logout/reconnect:** 300 game seconds (five real seconds at normal speed), expiry wins a tie, no auto-retreat or unfinished human work; genuine returned control cancels the fade and a subsequent departure starts fresh exposure. This avoids trapping a returned player under a stale deadline. Alternative: retain a previous exposure across connection churn until a separately defined stable-return interval, at the cost of more state and less predictable play.
 
 ## Maintained records
 

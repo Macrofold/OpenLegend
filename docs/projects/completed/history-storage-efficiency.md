@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Indexed history access, scoped edit preparation and maintained event counts are delivered with focused PostgreSQL verification. | 2026-10-14   |
+| Completed | Indexed history access, scoped edit preparation and maintained event counts are delivered with focused PostgreSQL verification. | 2026-10-16   |
 
 **Currency review — October 14, 2026.** [September 27 evidence](../../verification/history-storage-efficiency.md) records the scoped implementation, failure checks and review. The historical branch/base and implementation steps below are retained as provenance. The measured event-count tradeoff remains in [save/load](../../save-and-load.md): ordinary startup uses maintained coverage, while capture/full recovery perform the physical audit. Current-format changes and any replacement of incompatible development data follow the [root policy](../../../AGENTS.md#development-save-policy), which supersedes this plan's earlier blanket no-reset wording. No new hosted, natural-aging or model-quality qualification is claimed.
 

@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                          | Last updated |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The six approved limit changes and their scoped native, HTTP, database and browser checks are delivered; sustained capacity remains open. | 2026-10-14   |
+| Completed | The six approved limit changes and their scoped native, HTTP, database and browser checks are delivered; sustained capacity remains open. | 2026-10-16   |
 
 **Currency review — October 14, 2026.** [September 26 evidence](../../verification/immediate-gameplay-limits.md) records delivery of C18/C17/E01/E04/R03/C19. The implementation procedure and two-adapter checks below are historical; [PostgreSQL-only storage](postgresql-cognition-preparation.md) and the [current development-save policy](../../../AGENTS.md#development-save-policy) supersede SQLite and migration instructions. The September 28 consent decision replaces unilateral giving with a recipient-accepted offer, as retained below. Sustained multiplayer, exact cold-retrieval and dense-scene acceptance remain with PF/CR rather than being inferred from these finite checks.
 

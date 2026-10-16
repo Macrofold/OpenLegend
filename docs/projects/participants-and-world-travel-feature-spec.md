@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                   | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | The participation and world-travel product proposal is prepared; technical delivery and qualification remain open. | 2026-10-14   |
+| In progress | The participation and world-travel product proposal is prepared; technical delivery and qualification remain open. | 2026-10-16   |
 
 | Field                | Value                                                                                                                                                                                            |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

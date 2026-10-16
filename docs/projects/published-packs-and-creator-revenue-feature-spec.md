@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                            | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG28 product proposal; selected grants, commercial values, technical design, runtime publication/import and paid qualification remain open. | 2026-10-14   |
+| In progress | DG28 product proposal; selected grants, commercial values, technical design, runtime publication/import and paid qualification remain open. | 2026-10-16   |
 
 ## 1. A useful invention should travel
 

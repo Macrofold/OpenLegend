@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                    | Last updated |
 | --------- | --------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Both requested reviews are complete; five demonstrated findings are fixed, verified and documented. | 2026-10-04   |
+| Completed | Both requested reviews are complete; five demonstrated findings are fixed, verified and documented. | 2026-10-16   |
 
 ## Scope and risk
 

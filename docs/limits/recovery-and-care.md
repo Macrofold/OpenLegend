@@ -1,6 +1,6 @@
 # Recovery and care limits and constraints
 
-This inventory accompanies the [DG21 feature specification](../projects/recovery-and-care-feature-spec.md), [base-world profile](../worlds/base/recovery-and-care.md) and [CARE delivery tracker](../maintainers/recovery-and-care.md). Values are product proposals, not runtime changes or measured optimal tuning. The source baseline is inspected GitHub main `0a3ab79b7a698a7f1941dc23722f89220d1ba425`; the task branch is intentionally descended from an earlier design branch. Existing [death/scar rules](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/docs/worlds/base/player-death.md) are separate from these proposed living-person recovery rules.
+This inventory accompanies the [DG21 feature specification](../projects/recovery-and-care-feature-spec.md), [base-world profile](../worlds/base/recovery-and-care.md) and [CARE delivery tracker](../maintainers/recovery-and-care.md). Values are product proposals, not runtime changes or measured optimal tuning. The original proposal inspected GitHub main `0a3ab79b7a698a7f1941dc23722f89220d1ba425` from an earlier design branch. That historical provenance is retained; the death/scar foundation is now integrated, while the care activities below remain unimplemented. Existing [death/scar rules](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/docs/worlds/base/player-death.md) are separate from these proposed living-person recovery rules.
 
 ## CARE-L01 — First supported body and activity
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                        | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The DG15 product proposal and review are complete; technical design, disclosure qualification and runtime delivery remain open in NC20. | 2026-10-15   |
+| In progress | The DG15 product proposal and review are complete; technical design, disclosure qualification and runtime delivery remain open in NC20. | 2026-10-16   |
 
 ## 1. The experience worth adding
 

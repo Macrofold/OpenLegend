@@ -2,11 +2,11 @@
 
 | Status    | Current progress                                                                                                             | Last updated |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Outings and the requested correctness/scalability review are delivered, with broader population qualification still tracked. | 2026-10-06   |
+| Completed | Outings and the requested correctness/scalability review are delivered, with broader population qualification still tracked. | 2026-10-16   |
 
 ## Scope and dependencies
 
-Implement [PX04's player journey](../parallel-batch-04-expeditions-and-exchange-feature-spec.md#px04--take-a-voluntary-outing-together) and [consent contract](../parallel-batch-04-expeditions-and-exchange-tech-design.md#px04--consenting-travel-companions). The [PX04 tracker](../../maintainers/parallel-batch-04-expeditions-and-exchange.md#px04--voluntary-shared-outings) owns acceptance. This plan does not replace that contract or close broader agency, psychological needs, promises or institutions.
+Implement [PX04's player journey](parallel-batch-04-expeditions-and-exchange-feature-spec.md#px04--take-a-voluntary-outing-together) and [consent contract](parallel-batch-04-expeditions-and-exchange-tech-design.md#px04--consenting-travel-companions). The [PX04 tracker](../../maintainers/parallel-batch-04-expeditions-and-exchange.md#px04--voluntary-shared-outings) owns acceptance. This plan does not replace that contract or close broader agency, psychological needs, promises or institutions.
 
 Starting worktree: `/Users/mzw/.codex/worktrees/b8e4/OpenLegend`, branch `codex/px04-voluntary-outings`, commit `b1357b379abfcd32c205d81a6f85153a4aabf9da`. PG02, PG03 and scoped PG04 are integrated. Refreshed `origin/main` in `https://github.com/Macrofold/OpenLegend.git` resolves to `0a3ab79b7a698a7f1941dc23722f89220d1ba425`, already an ancestor; no history rewrite was needed. PX03 is not a dependency.
 

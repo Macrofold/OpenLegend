@@ -60,7 +60,7 @@ For every image we keep, record (house):
 | Result | link to the image on midjourney.com, and the saved file name |
 | Verdict | what worked, what to change |
 
-Keep kept images and logs in `art-direction/`, with each character's prompts in [`art-direction/prompts/`](../prompts/), so they travel with the project.
+Keep prompt text and authored summaries in [`art-direction/prompts/`](../prompts/). Editable images, reference crops and generation provenance follow the stable [art-workspace owner](../../docs/maintainers/art-direction.md); deliberately prepared runtime outputs are separate. The external art workspace is not supplied by a Git checkout.
 
 ## Troubleshooting
 
@@ -84,4 +84,4 @@ Keep kept images and logs in `art-direction/`, with each character's prompts in 
 | HD image went soft after editing | Pan, Zoom or Vary Region drop HD to SD | Edit first, then Run as HD or upscale (community) |
 | Tile seam visible | Tile was upscaled | Don't upscale tiles (docs) |
 | Prompt got shortened automatically | Over the length limit | Trim setting and adjective phrases; keep subject, identity and light (MJ, house) |
-| `--q`, `::` or `--oref` rejected or ignored on V8 | Not supported on V8.x | Remove them, or use `--v 7` for those features (docs) |
+| `--q`, `::` or `--oref` rejected or ignored on V8 | Not supported on V8.x | Use V7 for `--q` or `--oref`; weighted `::` prompts require V6.1 or an earlier documented version ([official compatibility](https://docs.midjourney.com/hc/en-us/articles/32658968492557-Multi-Prompts-Weights), rechecked 2026-10-15) (docs) |

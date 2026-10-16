@@ -1,8 +1,8 @@
 # Editable shelters — AV04 implementation plan
 
-| Status    | Current progress                                                                                | Last updated |
-| --------- | ----------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The selected flat canopy/two-bay journey, integration, evidence and documentation are complete. | 2026-10-06   |
+| Status    | Current progress                                                                                             | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed | The selected flat canopy/two-bay journey is complete, and the later lean-to delivery is recorded separately. | 2026-10-16   |
 
 ## Agreed delivery
 
@@ -37,4 +37,4 @@ Existing [SH01–SH06](../../maintainers/editable-shelters.md) and [AV04](../../
 
 ## Final disposition
 
-AV04 is complete for the selected flat one/two-bay profile. The broad feature/technical pair remains In progress because its slope, enclosed homes and future consumers are outside this assignment. The SH tracker retains wider failure-injection, retained-growth, long-absence, navigation/device and human-play qualification; the report makes no claim that those ran. TypeScript, production build, generated configuration and changed-file formatting pass. No provider calls were made: additional Jev cost $0; cumulative task Jev cost $0. All implementation work is locally committed; no push or merge is part of this delivery.
+AV04 is complete for the selected flat one/two-bay profile. At this delivery, the slope, enclosed homes and future consumers were outside the assignment. The separately authorized [October 7 lean-to delivery](editable-shelters-lean-to-plan.md) subsequently completed the selected single-bay slope; the broad feature/technical pair remains In progress for its wider scope and qualification. The SH tracker retains wider failure-injection, retained-growth, long-absence, navigation/device and human-play qualification; this flat-delivery report makes no claim that those ran. TypeScript, production build, generated configuration and changed-file formatting pass. No provider calls were made: additional Jev cost $0; cumulative task Jev cost $0. All implementation work is locally committed; no push or merge is part of this delivery.

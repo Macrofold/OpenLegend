@@ -4,9 +4,9 @@
 
 This is the guide's worked example. It shows the method end to end: reading the canon, choosing an identity anchor, picking five different jobs for five images, and planning what happens after one is chosen.
 
-## 1. Read the canon
+## 1. Original proposal inputs
 
-From the [Threewater March proposal](../../docs/repertoires/worlds/medieval-survival.md#halven-rusk-33--the-captain-who-keeps-his-companys-name):
+These September 27 prompt inputs came from the earlier [Threewater March proposal](../../docs/repertoires/worlds/medieval-survival.md#halven-rusk-33--captain-of-the-ash-company):
 
 - **33**, captain of **Rusk's Ash Company**, "a small core of experienced mercenaries."
 - Nephew and former pupil of **Darn Rusk**, who taught him road fighting; years of escort work taught him "which employers actually paid."
@@ -17,15 +17,17 @@ From the [Threewater March proposal](../../docs/repertoires/worlds/medieval-surv
 - **Loyalty:** won't sell a named comrade; "a named comrade is harder to buy than his service." Distrusts Jessa's appetite for glory but would follow a sound plan.
 - Upland-sounding name (compact consonants, like Cairnward).
 
+The current linked biography expands and revises that earlier account; it owns the optional setting. Keep the original scene ideas below as concept exploration rather than silently replacing the current history. Neither version is installed game content.
+
 **Visual hook:** plain, practical, mended kit versus one absurdly gaudy prize. It says "competent, unpretentious, a little vain, lucky at dice" at a glance.
 
 ## 2. Mark what's invented
 
 Not in canon, invented for these images: his face, skin, hair and scar; the cloak's colours and peacock pattern; the mail shirt and nasal helm; all five scenes.
 
-**Identity anchor (repeated in every prompt):** "Lean and rangy, sun-weathered tan skin, dark close-cropped hair, short dark beard, pale scar through the left eyebrow, watchful amused eyes."
+**Starting identity anchor (shortened or varied for some scenes below):** "Lean and rangy, sun-weathered tan skin, dark close-cropped hair, short dark beard, pale scar through the left eyebrow, watchful amused eyes."
 
-**Signature wording (repeated):** "absurdly gaudy cloak of rose-pink and saffron silk embroidered with strutting peacocks (and gold-thread vines)."
+**Starting signature wording (scene variants follow):** "absurdly gaudy cloak of rose-pink and saffron silk embroidered with strutting peacocks (and gold-thread vines)."
 
 ## 3. Five images, five jobs
 

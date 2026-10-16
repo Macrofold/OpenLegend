@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                | Last updated |
 | --------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Shared naming and requested review fixes are delivered with scoped native, PostgreSQL and browser verification. | 2026-10-03   |
+| Completed | Shared naming and requested review fixes are delivered with scoped native, PostgreSQL and browser verification. | 2026-10-16   |
 
 ## Scope and ownership
 

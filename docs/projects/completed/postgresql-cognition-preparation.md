@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                           | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | PostgreSQL-only storage and shared per-request cognition preparation are delivered with focused persistence, race and caller measurements. | 2026-10-14   |
+| Completed | PostgreSQL-only storage and shared per-request cognition preparation are delivered with focused persistence, race and caller measurements. | 2026-10-16   |
 
 **Currency review — October 14, 2026.** [September 27 verification](../../verification/postgresql-cognition-preparation.md#postgresql-only-storage-and-shared-preparation) records completion of all five scoped steps, including current-format checkpoint/recovery and request-scoped privacy checks. The initial base, estimates and sequence remain historical. PostgreSQL remains the sole supported database; the [current development-save policy](../../../AGENTS.md#development-save-policy) controls incompatible development data, superseding this plan's earlier blanket no-reset wording. Hosted/soak/model-quality gates remain separate and are not closed by local measurements.
 

@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                         | Last updated |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | All nine selected feature/technical designs and their shared records are complete; runtime implementation and qualification remain open. | 2026-10-15   |
+| Completed | All nine selected feature/technical designs and their shared records are complete; runtime implementation and qualification remain open. | 2026-10-16   |
 
 ## Authorized scope and baseline
 

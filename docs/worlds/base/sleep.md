@@ -18,7 +18,7 @@ The definition restricts actions, locomotion, speech and perception, occupies th
 
 ## State and observable transitions
 
-The authored templates are **“{subject.name:definite} fell asleep.”** and **“{subject.name:definite} woke up.”**, rendered through the shared [name-template grammar](../../entity-names.md#authored-narration-templates) and normal witnessed-event boundary. Body death/incapacity clears the instance without misleading wake narration. Generic status-effect episodes own elapsed duration, completion and save/load behavior; there is no duplicate `actor.rest` state.
+The authored templates are **“{subject.subject:definite} fell asleep.”** and **“{subject.subject:definite} woke up.”**, rendered through the shared [name-template grammar](../../entity-names.md#authored-narration-templates) and normal witnessed-event boundary. Body death/incapacity clears the instance without misleading wake narration. Generic status-effect episodes own elapsed duration, completion and save/load behavior; there is no duplicate `actor.rest` state.
 
 ## Interaction and pending replies
 

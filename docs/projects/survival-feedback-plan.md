@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                 | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Requested behavior and the local game update pass; the software-rendered browser entry timing gate remains open. | 2026-10-14   |
+| In progress | Requested behavior and the local game update pass; the software-rendered browser entry timing gate remains open. | 2026-10-16   |
 
 ## Authorized scope
 

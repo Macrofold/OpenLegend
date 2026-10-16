@@ -2,9 +2,11 @@
 
 | Status      | Current progress                                                                                                      | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Chosen camp activities and supply selection are implemented; broader integration and learning acceptance remain open. | 2026-10-03   |
+| In progress | Chosen camp activities and supply selection are implemented; broader integration and learning acceptance remain open. | 2026-10-16   |
 
 Originally prepared as a proposed design; current delivery and remaining acceptance are recorded in the linked PW10 tracker. Historical baseline: local `main` at `6664144a`, inspected October 2, 2026. This brief expands engineer 3's assignment within the five-engineer, 400-hour proposal: 24 hours for invented containers, 40 hours for the activities below, and 16 hours for combined integration. It depends on the container and shared-family contracts; it is not another action executor.
+
+**Current delivery and retained implementation history.** Native finite work and fire watching, scripted duration/named-time controls and October 3 supply discovery are integrated; [the ordinary-control evidence](../../verification/camp-life.md#scripted-browser-controls) and [NP04 follow-through](../../verification/camp-life.md#np04--camp-supply-discovery-october-3-2026) preserve their exact scope. Uncoached player observation, actual voluntary choice/retention/reuse and the combined PW06 acceptance remain open. The original starting-point descriptions, branch directions, coordination restrictions, local service availability and check failures below record the October 2 implementation session; they are historical instructions and observations rather than current audit actions or newly established blockers. Later evidence supersedes only the particular delivered gaps it identifies.
 
 [Feature specification](../parallel-batch-01-playable-week-feature-spec.md) · [Technical design](../parallel-batch-01-playable-week-tech-design.md) · [PW10 assignment](../../maintainers/parallel-batch-01-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods) · [Authored rules and wording](../../worlds/base/camp-routines.md)
 

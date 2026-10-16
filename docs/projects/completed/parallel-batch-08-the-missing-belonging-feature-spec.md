@@ -1,10 +1,12 @@
 # Batch 08 — The missing belonging
 
-| Status    | Current progress                                                                                                                                 | Last updated |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | MY01–MY05 delivered and verified on `codex/missing-belonging`; broader parent social, memory and agency acceptance remains with parent trackers. | 2026-10-13   |
+| Status    | Current progress                                                                                                              | Last updated |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | MY01–MY05 delivered and integrated on main; broader parent social, memory and agency acceptance remains with parent trackers. | 2026-10-16   |
 
 [Technical design](parallel-batch-08-the-missing-belonging-tech-design.md) · [One implementation prompt](parallel-batch-08-the-missing-belonging-prompts.md) · [MY01–MY05 tracker](../../maintainers/parallel-batch-08-the-missing-belonging.md) · [Constraints](../../limits/parallel-batch-08-the-missing-belonging.md) · [Verification](../../verification/parallel-batch-08-the-missing-belonging.md)
+
+**Current delivery and retained plan.** The finite investigation, personal-source comparison, voluntary bag transfer and later resident conversation are implemented and integrated on local main. [The evidence](../../verification/parallel-batch-08-the-missing-belonging.md#october-14-combined-starting-world) records the October 14 integration and combined starting-world checks; earlier browser and live-character evidence retains its original scope. The planning baseline, future worker instructions and statements about what remained below describe the original allocation. They neither reopen delivered MY01–MY05 nor authorize another implementation run. Broader independent-life, character-quality, scale and uncoached enjoyment acceptance remains with the parent trackers.
 
 ## Experience and selection
 

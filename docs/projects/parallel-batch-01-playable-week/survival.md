@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                          | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | World-owned survival and meter consumers are delivered; the complete alternate-world and combined UI matrix remains open. | 2026-10-14   |
+| In progress | World-owned survival and meter consumers are delivered; the complete alternate-world and combined UI matrix remains open. | 2026-10-16   |
 
 **Currency review, October 14, 2026.** The assignments, source observations and estimates below describe their original October 2 execution context. The table above and [PW tracking](../../maintainers/parallel-batch-01-playable-week.md) distinguish delivered work from remaining qualification; old branch/format references do not select the current development base or authorize compatibility work.
 
@@ -12,7 +12,7 @@
 
 ## Outcome and complete scope
 
-The bundled people still get hungry, sleep, collapse, recover at camp and respond to food as before. Those choices and their language come from the installed world. A clockwork character can instead have integrity and charge, with no food or energy definition, hunger rule, sleep rule, food suggestion or fabricated missing value. The owner editor shows that character's actual meters and ranges. Health remains bodily integrity: changing its representation must not bypass death, collapse, action cancellation, remains, private condition notices or saved history.
+The original preservation target was for bundled people to get hungry, sleep, collapse, recover at camp and respond to food as before. The later selected [death/Continue rule](../../worlds/base/player-danger.md) supersedes collapse/camp recovery; its delivery does not undo the configured body-policy seam. Those choices and their language come from the installed world. A clockwork character can instead have integrity and charge, with no food or energy definition, hunger rule, sleep rule, food suggestion or fabricated missing value. The owner editor shows that character's actual meters and ranges. Health remains bodily integrity: changing its representation must not bypass death, collapse, action cancellation, remains, private condition notices or saved history.
 
 Complete means stage 1, stage 2a and stage 2b of the approved plan, including runtime consumers, authoring descriptions, current-format persistence and outcome comparison. A constants file beside an engine that still requires `actor.fullness`, `actor.energy` or `physiology: 'wilderness-v1'` is incomplete. This does not finish external world packaging, arbitrary anatomy, all action-family extraction, live replacement of every world rule, invented potions or poison permissions, or the separate proportional-step project.
 

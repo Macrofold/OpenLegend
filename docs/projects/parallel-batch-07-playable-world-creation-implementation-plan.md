@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                              | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Main and solo starts pass native creation, reload and browser preview; generated-tool play and parent acceptance remain open. | 2026-10-14   |
+| In progress | Main and solo starts pass native creation, reload and browser preview; generated-tool play and parent acceptance remain open. | 2026-10-16   |
 
 ## Authority, baseline and completion
 
@@ -51,7 +51,7 @@ Update the technical design's parent-reconciliation table: world-creation produc
 
 The delivered native consumer and its connected PostgreSQL/browser evidence are recorded in the [topic report](../verification/playable-world-creation.md). Review corrected actual consumed-material record coverage and historical references, authored/native identity coexistence, target early/final emptiness, structured authoring keys, exact current dispatch permission, native transport/recovery and shared waiting/ordinary presentation. Source review also corrected ephemeral readiness eviction and lost-Prepare receipt recovery; those last paths have passed connected qualification before final static checks/commit. Existing policy owners receive only demonstrated missing guidance; broader observed-dispatch qualification remains CG05.
 
-The October 11 Macrofold admission blocker is preserved as historical evidence in the topic report. On October 13 the running service accepts both required controls; a confirmed nonexistent-worktree probe returns the expected 404 without admitting a Run. Remaining real language authoring and useful generated-tool play now continue under the original authorization and spending ceiling. Native fixtures remain insufficient for that acceptance.
+The October 11 Macrofold admission blocker is preserved as historical evidence in the topic report. At the October 13 continuation preflight the running service accepted both required controls; a confirmed nonexistent-worktree probe returned the expected 404 without admitting a Run. The continuation below then delivered real language authoring and entry, but its generated-tool attempt failed. Permission for a new capped attempt remains pending; native fixtures remain insufficient for that acceptance.
 
 ## October 13 continuation plan
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                                   | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Continuation, attention, evidence and compact numerical reactions are designed through existing owners; runtime delivery and behavioral qualification remain open. | 2026-10-15   |
+| In progress | Continuation, attention, evidence and compact numerical reactions are designed through existing owners; runtime delivery and behavioral qualification remain open. | 2026-10-16   |
 
 [Feature specification](continuing-lives-feature-spec.md) · [Research design follow-up](../maintainers/needs-design.md#intelligent-individuals-and-efficient-simulation-research-derived-design-follow-up) · [Design/delivery mapping](../maintainers/intelligent-simulation.md).
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                               | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The comparison design is prepared; implementation, live behavior and player-experience qualification are open. | 2026-10-15   |
+| In progress | The comparison design is prepared; implementation, live behavior and player-experience qualification are open. | 2026-10-16   |
 
 ## Scope and guarantees
 

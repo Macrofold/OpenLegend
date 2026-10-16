@@ -2,14 +2,14 @@
 
 CF02 now consumes this release owner: handling contributes to aim steadiness, while later moving-body/cover geometry determines contact. It removes the previous extra fleeing multiplier and records practice once at committed release, without credit for aiming/cancellation or reloading an occurrence. [Batch 06 evidence](../verification/rivals-and-contested-ground.md) retains combined player/opponent qualification as open; it does not close human appreciation or all competence uses.
 
-**Selected runtime delivered, reviewed and qualified October 6, 2026; human appreciation remains open.** This tracker owns only DG14's selected sling-handling, finite practice, inert-target and coaching consumer. It does not replace EWF's typed state, AE's method learning, AC's execution, INV's definition admission or SC's shared effect ownership.
+**Selected runtime delivered, reviewed and qualified October 6, 2026; PC04's later coaching-result observation repair and human appreciation remain open.** This tracker owns only DG14's selected sling-handling, finite practice, inert-target and coaching consumer. It does not replace EWF's typed state, AE's method learning, AC's execution, INV's definition admission or SC's shared effect ownership.
 
 - Product behavior and research: [authored-stats specification, DG14](../projects/authored-stats-feature-spec.md#16-dg14-expansion--become-more-capable-at-something-worth-doing).
 - Authored content and balance: [base-world sling practice](../worlds/base/practical-competence.md).
 - Limits and expansion triggers: [ST-L08–ST-L13](../limits/authored-stats.md).
 - Design routing: [DG14](needs-design.md#dg14--useful-competence-and-practice), ND03 and ND04's practical-skill slice.
 
-**Implementation allocation:** [AV03, batch 05](parallel-batch-05-adventure-defense-and-home.md#av03--useful-competence-and-voluntary-coaching) owns PC02–PC06 as one delivery assignment. Its [technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av03--practical-skill-from-committed-experience) supplies the current handoff decisions; the [scoped counterpart](../projects/authored-stats-tech-design.md) and [qualification](../verification/practical-competence.md) supply the delivered evidence; human game-value acceptance remains open.
+**Implementation allocation:** [AV03, batch 05](parallel-batch-05-adventure-defense-and-home.md#av03--useful-competence-and-voluntary-coaching) owns PC02–PC06 as one delivery assignment. Its [technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av03--practical-skill-from-committed-experience) supplies the current handoff decisions; the [scoped counterpart](../projects/authored-stats-tech-design.md) and [qualification](../verification/practical-competence.md) supply the delivered evidence; the later coaching-result repair and human game-value acceptance remain open.
 
 ## PC01 — Product and behavior
 
@@ -33,9 +33,12 @@ Product preparation is complete. Runtime evidence is recorded separately below; 
 
 ## PC04 — Voluntary coaching
 
+The checked delivery below records the original qualified coaching consumer. Current finite projectile travel introduces the separately open observation gap below; the earlier evidence does not qualify that changed timing.
+
 - [x] Deliver actual teacher/learner choice, required observation and guided feedback, with a willing practiced coach and an independent route when no teacher is available.
 - [x] Preserve completed help after separation, actual shots after interruption, no benefit stacking and no fabricated NPC speech or model grading of prose.
 - [x] Distinguish current recipe Teach and AE method acquisition from this new consumer; qualify human and genuine NPC participation separately.
+- [ ] **Observe the delayed shot outcome before coaching feedback.** Preserve the accepted requirement that the coach witnesses the learner's actual release and its visible result. Current `ranged.ts` calls `observeCoachedRelease` immediately after `shot-released`, while the projectile still travels; `coaching.ts` sets the observed support and makes feedback available from that release alone. Neither feedback admission nor completion requires the coach's later contact/miss observation, and the installed observation message already claims a visible result. Reconcile the existing release, projectile-outcome, observer-evidence and coaching owners without delaying independent practice credit, inventing an unseen result or changing the accepted lesson. Qualify a still-flying shot, visible hit/miss or obstruction, loss of outcome observation, stale episode and current-format continuation/correction through the actual feedback consumer. This source-confirmed integration gap was identified October 15; no runtime fix or new passing gameplay evidence is claimed by this audit.
 
 ## PC05 — Continuity, authority and cost
 

@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                               | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | The 46 agreed foundation slices were delivered and qualified on 2026-09-26; wider parent projects retain their own acceptance. | 2026-10-14   |
+| Completed | The 46 agreed foundation slices were delivered and qualified on 2026-09-26; wider parent projects retain their own acceptance. | 2026-10-16   |
 
 **Historical implementation record.** The September 26 delivery below includes the then-supported dual database adapters and conversion work. PostgreSQL became the sole adapter on September 27; the current [development save policy](../../../AGENTS.md#development-save-policy) supersedes all earlier compatibility/conversion instructions. The original rationale remains history, not authorization to restore those paths.
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                         | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-14   |
+| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-16   |
 
 **General pipeline proposal; partial delivery is recorded below.** Companion to the [feature specification](3d-pixel-art-feature-spec.md). Inspected baseline: `412b5b480b4911d9977de73168c6072e2c023b83`, September 27, 2026. No runtime implementation, dependency upgrade, provider dispatch, or performance result is implied.
 

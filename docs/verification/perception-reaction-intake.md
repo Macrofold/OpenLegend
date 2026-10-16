@@ -2,7 +2,7 @@
 
 - **Date:** 2026-09-28.
 - **Branch:** `claude/perception-reactions-090227`, based on `origin/main` `be68b1e0`.
-- **Plan:** [perception-reaction intake](../projects/perception-reaction-intake.md).
+- **Plan:** [perception-reaction intake](../projects/completed/perception-reaction-intake.md).
 - **Owners:** [EPR](../maintainers/events-perception-and-reactions.md), [PF](../maintainers/performance.md), [SW08](../maintainers/spatial-world.md).
 - **Host:** Node v22.23.2 on a shared 10-CPU macOS machine running several other agents. The load average ranged from 58 to 241 during these runs.
 

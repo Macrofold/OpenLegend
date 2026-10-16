@@ -1,16 +1,18 @@
 # Parallel batch 04 — Expeditions and exchange — feature specification
 
-| Status      | Current progress                                                                                              | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PX01–PX04 are delivered and reviewed and PX05 shelter design is complete; broader qualification remains open. | 2026-10-07   |
+| Status    | Current progress                                                                                                                             | Last updated |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | All five scoped assignments and their required integration/evidence are delivered; broader parent and population qualification remains open. | 2026-10-16   |
 
-[Technical definitions](parallel-batch-04-expeditions-and-exchange-tech-design.md) · [Five prompts](parallel-batch-04-expeditions-and-exchange-prompts.md) · [Tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md) · [Batch register](parallel-batches.md)
+[Technical definitions](parallel-batch-04-expeditions-and-exchange-tech-design.md) · [Five prompts](parallel-batch-04-expeditions-and-exchange-prompts.md) · [Tracker](../../maintainers/parallel-batch-04-expeditions-and-exchange.md) · [Batch register](../parallel-batches.md)
+
+**Current disposition, October 15:** PX01–PX04 runtime delivery and requested reviews, plus PX05’s implementation-ready shelter design, complete this finite batch. The original October 3 allocation, estimates, prerequisites and worktree inspection below are historical. Later construction and combat-help deliveries are separate consumers; broader parent, combined-play and population acceptance remains with its existing owners. The retained prompts do not authorize another implementation run.
 
 ## Purpose and priority
 
-After [batch 03](parallel-batch-03-personal-game-feature-spec.md) makes invention useful, a resident coherent and actions understandable, give players worthwhile reasons to leave camp, return with something useful and involve another person. The proposed next five assignments are a readable dangerous encounter, voluntary barter, memorable discoveries, a shared outing and a technically complete design for an editable shelter.
+After [batch 03](../parallel-batch-03-personal-game-feature-spec.md) makes invention useful, a resident coherent and actions understandable, give players worthwhile reasons to leave camp, return with something useful and involve another person. The proposed next five assignments are a readable dangerous encounter, voluntary barter, memorable discoveries, a shared outing and a technically complete design for an editable shelter.
 
-These are recommendations for subsequent work, not approval to run them or claims of enjoyment. They preserve the [accepted first playable](../../archive/05-project/first-playable-mvp.md) and [game-first sequence](five-product-feature-specs.md#game-first-delivery-sequence). They select narrow personal/attended slices of DG01, DG06, DG07 and DG13; they do not advance public-world operation, unattended communities or the whole construction program ahead of that first playable. An optional shelter design can proceed beside delivery; construction must not become a prerequisite for playing.
+At the October 3 allocation, these were recommendations for subsequent work, not approval to run them or claims of enjoyment. They preserve the [accepted first playable](../../../archive/05-project/first-playable-mvp.md) and [game-first sequence](../five-product-feature-specs.md#game-first-delivery-sequence). They select narrow personal/attended slices of DG01, DG06, DG07 and DG13; they do not advance public-world operation, unattended communities or the whole construction program ahead of that first playable. An optional shelter design can proceed beside delivery; construction must not become a prerequisite for playing.
 
 ### Evidence and exclusions
 
@@ -44,7 +46,7 @@ These are uncertain one-engineer estimates, not a five-day promise or an inherit
 
 ### Scope and dependency
 
-**Delivered October 6:** the supplied PG05 implementation already contained the encounter and settled choices. [PX01 integration](../verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) adds the demonstrated escape-route correction and current-revision qualification. The original conditional allocation below remains the scope boundary. Under the approved PG05 revision, warning means physical signs and observable antler preparation; it is not consent enrollment or a guaranteed warning period.
+**Delivered October 6:** the supplied PG05 implementation already contained the encounter and settled choices. [PX01 integration](../../verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) adds the demonstrated escape-route correction and current-revision qualification. The original conditional allocation below remains the scope boundary. Under the approved PG05 revision, warning means physical signs and observable antler preparation; it is not consent enrollment or a guaranteed warning period.
 
 Implement the encounter specified by PG05 after its paired first-threat documents and consequential recovery choices are approved. Those documents are deliberately not duplicated here. The expected experience is one authored optional danger with observable warning, a viable avoidance route, a reason to approach or confront it, committed attacks and an understandable stopping/aftermath state. PG05 owns the selected creature, motives, geography, reward, escalation, pursuit ending and human recovery rules. If its approved experience differs from this expectation, reconcile this allocation before coding rather than silently substituting a generic combat demo.
 
@@ -56,7 +58,7 @@ The player can discover the danger without a compulsory fight, interpret a warni
 
 ## PX02 — Trade something useful
 
-**Delivered October 5:** the selected exact one-lot reciprocal family, revision-bound counteroffers, private disclosures and final joint custody now use the existing handover owner and integrated PG03/PG04. [Current contract](../worlds/base/social.md#offering-and-accepting-possessions), [tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md#px02--reciprocal-barter) and [actual evidence](../verification/reciprocal-barter.md) distinguish delivered/verified scope from remaining economic, reservation and general preference/scale work.
+**Delivered October 5:** the selected exact one-lot reciprocal family, revision-bound counteroffers, private disclosures and final joint custody now use the existing handover owner and integrated PG03/PG04. [Current contract](../../worlds/base/social.md#offering-and-accepting-possessions), [tracker](../../maintainers/parallel-batch-04-expeditions-and-exchange.md#px02--reciprocal-barter) and [actual evidence](../../verification/reciprocal-barter.md) distinguish delivered/verified scope from remaining economic, reservation and general preference/scale work.
 
 ### Scope and player journey
 
@@ -84,7 +86,7 @@ An ordinary arrival and an unfamiliar carried-item inspection produce grounded i
 
 ## PX04 — Take a voluntary outing together
 
-**Delivered October 6, 2026:** integrated PG02/PG03/PG04 supply ordinary choices and action interfaces. [Current social behavior](../worlds/base/social.md#voluntary-outings) and [native/browser/live evidence](../verification/voluntary-outings.md) qualify this pair/fixed-destination slice, including a context-grounded refusal and freely chosen replacement work that ends travel. Broader social/psychological scope remains open.
+**Delivered October 6, 2026:** integrated PG02/PG03/PG04 supply ordinary choices and action interfaces. [Current social behavior](../../worlds/base/social.md#voluntary-outings) and [native/browser/live evidence](../../verification/voluntary-outings.md) qualify this pair/fixed-destination slice, including a context-grounded refusal and freely chosen replacement work that ends travel. Broader social/psychological scope remains open.
 
 ### Scope and player journey
 
@@ -98,17 +100,17 @@ Invite, accept, travel, arrive and freely choose what to do next. Demonstrate a 
 
 ## PX05 — Design an editable place worth returning to
 
-Produce the missing technical counterpart to [Editable shelters](editable-shelters-feature-spec.md), reconcile that product proposal and create a scoped construction delivery breakdown beneath INV-6.4. Do not implement construction in this assignment.
+Produce the missing technical counterpart to [Editable shelters](../editable-shelters-feature-spec.md), reconcile that product proposal and create a scoped construction delivery breakdown beneath INV-6.4. Do not implement construction in this assignment.
 
 The design must make one ground-level light shelter buildable, alterable and reclaimable with real parts. Choose a location and useful size, preview actual occupied/covered space, consume real supported work, bring a belonging or ordinary activity there, change a panel, and recover surviving materials. Preserve each meaningful item's identity/condition. Include two different arrangements that use the same assembly rules. Ordinary geometry, permissions and supplies remain authoritative; a name or generated picture does not create coverage or safe passage.
 
 Settle the specific representation, support/coverage calculation, navigation invalidation, material custody during work, interruption, unsupported shapes, permissions, disclosure, same-version save lifecycle and natural-language authoring route. Reuse the existing product scope for rain/moisture, with clear staging: useful place-making is the attraction; general heat/spread and mandatory maintenance remain separate. Identify owner decisions that still need approval instead of quietly implementing them. Completion is an implementation-ready pair and task breakdown with worked success/failure traces, not runtime evidence or closure of INV-6.4.
 
-**PX05 disposition, October 5:** the [existing shelter feature specification](editable-shelters-feature-spec.md) and its [technical counterpart](editable-shelters-tech-design.md) now complete the design assignment. [SH01–SH06](../maintainers/editable-shelters.md) sequences one useful flat bay, separate wetting/drying, then shared two-bay and qualified lean-to variations. AV04 now delivers the selected flat construction/use/reclaim and finite rain/drying; the slope, broader qualification and home psychology remain open.
+**PX05 disposition, October 5:** the [existing shelter feature specification](../editable-shelters-feature-spec.md) and its [technical counterpart](../editable-shelters-tech-design.md) now complete the design assignment. [SH01–SH06](../../maintainers/editable-shelters.md) sequences one useful flat bay, separate wetting/drying, then shared two-bay and qualified lean-to variations. AV04 later delivered the selected flat construction/use/reclaim and finite rain/drying. The [October 7 slope/support and October 8 continuation evidence](../../verification/editable-shelters.md) subsequently qualifies the narrow lean-to/shared arrangements; broader shape, terrain/body/device and combined-use qualification, plus home psychology, remain open under SH01–SH06.
 
 ## Maintained records
 
-- Implementation status and parent reconciliation: [PX tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md).
+- Implementation status and parent reconciliation: [PX tracker](../../maintainers/parallel-batch-04-expeditions-and-exchange.md).
 - Mechanisms, source map, dependencies and handoff contracts: [technical definitions](parallel-batch-04-expeditions-and-exchange-tech-design.md).
-- Limits: [batch proposal constraints](../limits/parallel-batch-04-expeditions-and-exchange.md), linking canonical subsystem inventories. Undelivered restrictions remain proposals; accepted PX-L03 now links the current paired-outing limits.
-- Priorities: [design needs](../maintainers/needs-design.md), [selection principles](../repertoires/selection-and-scale.md) and [batch register](parallel-batches.md). Broader parents retain their unmet acceptance.
+- Limits: [batch proposal constraints](../../limits/parallel-batch-04-expeditions-and-exchange.md), linking canonical subsystem inventories. Undelivered restrictions remain proposals; accepted PX-L03 now links the current paired-outing limits.
+- Priorities: [design needs](../../maintainers/needs-design.md), [selection principles](../../repertoires/selection-and-scale.md) and [batch register](../parallel-batches.md). Broader parents retain their unmet acceptance.

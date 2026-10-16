@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                              | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The delivered flat and sloping changes are reviewed, repaired and verified with bounded performance evidence. | 2026-10-07   |
+| Completed | The delivered flat and sloping changes are reviewed, repaired and verified with bounded performance evidence. | 2026-10-16   |
 
 ## Scope, base and risk
 

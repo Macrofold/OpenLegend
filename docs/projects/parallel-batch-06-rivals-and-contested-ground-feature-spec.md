@@ -2,7 +2,9 @@
 
 | Status      | Current progress                                                                                                                          | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Combat mechanics, useful independent help and defensive response verified; hostile choices and the combined visual encounter remain open. | 2026-10-14   |
+| In progress | Combat mechanics, useful independent help and defensive response verified; hostile choices and the combined visual encounter remain open. | 2026-10-16   |
+
+**Current review, October 15:** the combat, consent and watchpost mechanics are integrated on main. Dated qualification records demonstrate useful independently chosen help and defensive guard, actual finite rewards and saved aftermath. Independently hostile attacks with both loadouts, the remaining pursuit/ammunition/evasion/adverse-choice cases, formal voluntary decline and the complete visual encounter remain open under CF01–CF05. The original planning horizon, branch/start instructions and experiments below remain history; their paid limits are not new audit authorization. The shared flight’s coaching-result integration gap remains tracked under [PC04](../maintainers/practical-competence.md#pc04--voluntary-coaching).
 
 ## Purpose and planning horizon
 

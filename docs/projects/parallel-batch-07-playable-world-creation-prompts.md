@@ -2,9 +2,9 @@
 
 | Status      | Current progress                                                                                                              | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Main and solo starts pass native creation, reload and browser preview; generated-tool play and parent acceptance remain open. | 2026-10-14   |
+| In progress | Main and solo starts pass native creation, reload and browser preview; generated-tool play and parent acceptance remain open. | 2026-10-16   |
 
-This is one assignment with internal stages. It can finish without Batch 06 or another assignment being implemented. Planning these instructions does not itself authorize running them.
+This is the historical October 11 launch prompt for one assignment with internal stages. Its then-unavailable Batch 06 branch and initial start-readiness instructions describe that launch; current main includes the integrated combat content and the separately delivered Main world/Solo testing ground correction. OC05 still requires genuinely generated-tool play, with permission for the next capped attempt pending as recorded in the [current implementation plan](parallel-batch-07-playable-world-creation-implementation-plan.md#october-13-continuation-plan). This quoted prompt grants no new implementation or paid-call authorization.
 
 ## One assignment — Create a world and enter its first activity
 

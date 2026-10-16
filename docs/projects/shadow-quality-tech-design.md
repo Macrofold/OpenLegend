@@ -2,11 +2,13 @@
 
 | Status      | Current progress                                                                                                                                   | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shadow improvements and scoped PG04 preview optimization are delivered; reliable sustained tails and physical lower-end qualification remain open. | 2026-10-14   |
+| In progress | Shadow improvements and scoped PG04 preview optimization are delivered; reliable sustained tails and physical lower-end qualification remain open. | 2026-10-16   |
 
 Approved chat scope, 2026-09-27. [Feature specification](shadow-quality-feature-spec.md) describes the visible outcome. Base: refreshed `origin/main` (`Macrofold/OpenLegend`) at `412b5b480b4911d9977de73168c6072e2c023b83`; clean detached checkout moved to `codex/shadow-quality`, with no branch history rewritten.
 
 The sequences, source pins and measurements below record successive historical implementations, not instructions to repeat their branch operations or rebuild delivered work. The silhouette/contact and relief follow-ups supersede the initial compound-profile representation; [world presentation](../world-presentation.md) owns current behavior. The supplied [mercenary pilot](completed/mercenary-scene-pilot.md) is now integrated under SW18.14. Its separate evidence does not qualify the combined model/eight-fire/3× workload or close the remaining cold-start, frame-time and physical-device checks.
+
+**Current illumination and historical revocation checks.** The later presentation policy retains a remembered fire's last-permitted image and light after it leaves sight, without updating hidden fuel or location. Fresh observed extinction, eviction and scope/timeline resets remove that light. Remembered objects still lose live shadow casting, selection and read-through. The original tests below that revoked a light merely on loss of sight describe their earlier implementation; [current sprite lighting](../world-presentation.md#sprite-lighting) and its existing EWF04 boundary follow-up govern the integrated behavior.
 
 ## Risk and ownership
 

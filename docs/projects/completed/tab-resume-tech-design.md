@@ -1,12 +1,12 @@
 # Explicit tab resume — technical design
 
-| Status    | Current progress                                                                                                 | Last updated |
-| --------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Quiet focus-pause display, keyboard isolation, recovery and existing tab controls passed focused browser checks. | 2026-10-14   |
+| Status    | Current progress                                                                                                                    | Last updated |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Quiet focus-pause display and tab controls passed focused checks; broader default-software-browser qualification remains with MP18. | 2026-10-16   |
 
 ## Plan, owners and risk
 
-Estimated 250–450 changed production logic lines. Medium risk: browser identity/liveness, authority races, private asynchronous results and login revocation cross client/server boundaries. Work stays on local main (a489c500); fetched origin/main is b50ec6ce. Preserve unrelated ongoing language/domain edits.
+The original October 3 implementation estimated 250–450 changed production logic lines, with medium risk from browser identity/liveness, authority races, private asynchronous results and login revocation across client/server boundaries. Its local-main base was a489c500 and fetched origin/main was b50ec6ce, with unrelated language/domain edits to preserve; these are historical execution details.
 
 1. Retain a random tab ID in session storage across reload. A bounded BroadcastChannel discovery distinguishes a copied tab from the original before any request uses its ID. Remember the selected open page across blur through that page's live reply; do not infer a competing tab merely from initial paused state.
 2. Automatic entry uses the non-replacing acquire operation. Permit reacquiring the same page and reclaiming a lease without a live controller; authorize the latter only from the server's serialized current participation, connections and verified presence, with expected control generation still fenced. Explicit Resume uses replace. Browser hints never authorize effects.
@@ -14,6 +14,8 @@ Estimated 250–450 changed production logic lines. Medium risk: browser identit
 4. Keep mutation serialization, stale-intent fences and 15-second request deadlines. An uncertain acquire refreshes current authority and retries at most one changed control revision through acquire; a fresh foreground check supersedes older automatic checks, while explicit Resume/logout retain their intent; an actual competition becomes the dialog, while server/return failure uses a connection/retry surface. Do not issue background loops or replay old intentions.
 5. Use the exact requested modal text, a primary Resume Here action and secondary Log Out action. Reuse existing session revocation. Notify every same-origin tab after successful logout; each clears the game view, private request authority and browser storage for private work. Server stream revocation and publication fences remain independently authoritative. Make explicit loopback Sign in usable after local logout.
 6. Update canonical architecture, limits, tracker, handbook and decision history. Adapt focused existing fixtures/journeys rather than author new automated tests. Typecheck/build/format, inspect the full affected diff and native failure cases before the final browser acceptance phase; fix and recheck findings.
+
+The current blur/hide path always releases control. That delivered entry behavior does not fulfill the earlier accepted default-on **Pause game when hidden** option: [UIUX14](../../maintainers/ui-ux.md#uiux14) retains both the missing ordinary preference control and browser departure handling that honors its saved value, with the same single-controller and return protections. Server support for a still-current controller does not by itself establish the browser opt-out.
 
 ## Persistence and separation
 
@@ -44,7 +46,7 @@ The later focus-pause display correction keeps the last world and open panels vi
 
 ## Accepted correction — October 3, 2026
 
-This revision supersedes mandatory Resume on initial entry, reload and sole-tab refocus. Historical acceptance remains in the linked report. MP18 is complete after the corrected entry, closing-tab and logout journeys passed focused native/browser checks.
+This revision supersedes mandatory Resume on initial entry, reload and sole-tab refocus. Historical acceptance remains in the linked report. The October 3 entry/logout slice of MP18 completed after those corrected journeys passed focused native/browser checks. Later [default-software-browser initial-entry qualification](../../verification/multiplayer-entry-maintenance.md#suspended-scene-resize-and-stock-journey-continuation) remains open under MP18; that later gap does not erase the recorded scoped passes.
 
 ## Completion evidence
 

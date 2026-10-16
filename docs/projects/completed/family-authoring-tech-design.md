@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                        | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Runtime integration, current-format persistence, privacy changes and focused verification are complete. | 2026-10-03   |
+| Completed | Runtime integration, current-format persistence, privacy changes and focused verification are complete. | 2026-10-16   |
 
 ## Authority and owners
 

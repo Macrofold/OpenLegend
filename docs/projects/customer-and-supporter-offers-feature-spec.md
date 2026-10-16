@@ -1,8 +1,8 @@
 # Customer and supporter offers
 
-| Status      | Current progress                                                                                                                            | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG27 product proposal. Offer adoption, technical design, runtime delivery, payment qualification and an actual paid validation remain open. | 2026-10-14   |
+| Status      | Current progress                                                                                                                                       | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | The product proposal is prepared; offer adoption, technical design, runtime delivery, payment qualification and an actual paid validation remain open. | 2026-10-16   |
 
 ## 1. Purpose and decision
 

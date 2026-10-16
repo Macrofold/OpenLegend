@@ -1,8 +1,8 @@
 # Foundation review and stable regression tests
 
-| Status    | Current progress                                                                                                                          | Last updated |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The review, thirteen immediate tasks, five conditional improvements and ten stable foundational tests are delivered with evidence limits. | 2026-10-14   |
+| Status    | Current progress                                                                                                                                 | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed | The review, thirteen immediate recommendations, five conditional improvements and ten stable tests are delivered; production fixes are separate. | 2026-10-16   |
 
 ## Scope and completion boundary
 

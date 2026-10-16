@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                               | Last updated |
 | --------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Expanded content, procedural artwork, native/persistence/browser checks and affected-diff review are finished. | 2026-10-04   |
+| Completed | Expanded content, procedural artwork, native/persistence/browser checks and affected-diff review are finished. | 2026-10-16   |
 
 ## Scope and decisions
 

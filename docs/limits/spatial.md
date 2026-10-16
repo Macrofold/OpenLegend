@@ -238,7 +238,7 @@ Spatial query radius: **10,000 world units**.
 
 **Current, source-inspected during integration · Restrictiveness: Safe.**
 
-One navigation worker per application owns at most six body-profile meshes and one active task; its pending queue contains at most 64 admitted action requests. Overflow remains saved/pending. Each query has 4,096 nodes, at most 12 candidate interaction destinations and 2,048 output/corridor points. The worker has a 128 MiB old-generation limit and a 20-second watchdog. Failed/incomplete work is explicit, not proof of unreachability. Native replanning allows two attempts. One completed reply may await mutation-lane admission, retrying publication after one real second without recomputing navigation. Shutdown drains retirement/publication.
+The ordinary movement coordinator owns one navigation worker with at most six body-profile meshes and one active task; its pending queue contains at most 64 admitted action requests. Overflow remains saved/pending. Each query has 4,096 nodes, at most 12 candidate interaction destinations and 2,048 output/corridor points. The worker has a 128 MiB V8 old-generation JavaScript heap limit and a 20-second watchdog; neither is a total process-memory or end-to-end latency bound. Failed/incomplete work is explicit, not proof of unreachability. Native replanning allows two attempts. One completed reply may await mutation-lane admission, retrying publication after one real second without recomputing navigation. Shutdown drains retirement/publication. Prepared world creation uses a separate bounded worker owner under [WC-L13](world-creation.md#wc-l13--prepared-empty-creation-targets), so this is not an application-wide one-worker ceiling.
 
 **Reason / tradeoff:** Bound CPU/memory and retain admitted intent. Required preparation pauses native time for the whole world while preserving prior debt; region-local blocking is unimplemented. These operating bounds are not latency/capacity certification. [Navigation owner](../../apps/server/src/navigation/coordinator.ts), [backend](../../apps/server/src/navigation/backend.ts), [contract](../../archive/07-technical-architecture/spatial-world-runtime.md#navigation-preparation).
 
@@ -260,7 +260,7 @@ The former static-object cache retained at most **256 observers** per immutable 
 
 ## SP04
 
-**Current — PW08 branch implementation · Restrictiveness: Safe correctness boundary.**
+**Current — integrated PW08 implementation · Restrictiveness: Safe correctness boundary.**
 
 Sight sampling and sight-crossing prediction consume the same body-height fractions from the perception owner. Reusing certain crossing results requires immutable map/definition identity and copied current sense/body/participation dependencies; mutable or unproved geometry clears the cache. Path equivalence uses the existing 10⁻⁹ motion tolerance at the union of remaining path breakpoints. [NW15](native-work.md#nw15) owns retained-pair growth and pruning; [native interval contract](../simulation-time.md#native-interval-contract) owns reuse semantics.
 

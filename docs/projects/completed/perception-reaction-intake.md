@@ -1,10 +1,12 @@
 # Perception changes and one reaction intake
 
-| Status      | Current progress                                                                                                | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Scoped perception and reaction changes are delivered, while dense-scene performance qualification remains open. | 2026-10-03   |
+| Status    | Current progress                                                                                                                           | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed | All nine scoped implementation, measurement and design stages are reconciled; dense performance and broader parent acceptance remain open. | 2026-10-16   |
 
-Approved in chat by Mike on 2026-09-28. The approval covers implementing the proposed [events, perception and reactions contract](../events-perception-and-reactions.md) within the scope below. It is not approval for the whole EPR program.
+**Current review, October 15:** the nine original stages are complete under their stated implementation/measurement/design exit criteria, with their measured limitations retained below; later PW08/NP02 improve specific work without qualifying dense capacity. Original source findings, branch assignments and pending-decision lists are historical. The separately authorized October 14 FR13 correction now completes EPR05’s durable-input prerequisite through the existing save-ticket owner; it does not imply the old code dispatched paid work before commit. Broad dense-scene performance and parent EPR/PF acceptance remain explicit.
+
+Approved in chat by Mike on 2026-09-28. The approval covers implementing the proposed [events, perception and reactions contract](../../events-perception-and-reactions.md) within the scope below. It is not approval for the whole EPR program.
 
 - **Base:** refreshed `origin/main` at `be68b1e0` (Rebase skill precedence 1: the task named the latest `origin/main`).
 - **Branch:** `claude/perception-reactions-090227`.
@@ -24,17 +26,17 @@ This plan is durable because the work crosses domain/server contracts, changes p
 
 Work in this order. Commit each stage separately so the branch stays coherent and mergeable. Do not merge into `main`.
 
-| #   | Item                                                                                                                    | Canonical tracker                                                                                                                                                                             |
-| --- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | EPR00 baseline trace and bounded counters on the seed-73 workload                                                       | [EPR00](../maintainers/events-perception-and-reactions.md#epr00--baseline-invariants-and-task-ownership)                                                                                      |
-| 2   | PF03/09 native CPU regression: Immer proxy/finalization and encounter costs, with identical outcomes, RNG and audiences | [PF03/09](../maintainers/performance.md#foundations-15-measurements-and-remaining-cost)                                                                                                       |
-| 3   | EPR01 typed stimulus scope and actor intake metadata                                                                    | [EPR01](../maintainers/events-perception-and-reactions.md#epr01--typed-stimulus-scope-and-actor-intake)                                                                                       |
-| 4   | EPR03 observer-private acquisition and exposure deltas                                                                  | [EPR03](../maintainers/events-perception-and-reactions.md#epr03--actor-private-perception-acquisition-and-exposure-deltas)                                                                    |
-| 5   | EPR05 change-fed `ActorWork` and one intake with per-character fairness; also PF09's per-character thought eligibility  | [EPR05](../maintainers/events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake), [PF09](../maintainers/performance.md#pf09--population-work-follows-relevance) |
-| 6   | EPR04 remaining parts: other state writers, sleep, first opportunity for a newly created hungry character               | [EPR04](../maintainers/events-perception-and-reactions.md#epr04--private-internal-threshold-events-and-native-protection)                                                                     |
-| 7   | EPR06 persistent stimuli with bounded character-local relevance                                                         | [EPR06](../maintainers/events-perception-and-reactions.md#epr06--persistent-stimuli-and-bounded-actor-local-relevance)                                                                        |
-| 8   | PF12.3, PF12.4 and SW08.4a dense first-exposure qualification, including the 344-entity first-sight burst               | [PF12](../maintainers/performance.md#pf12--eight-times-spatial-and-sensory-execution), [SW08](../maintainers/spatial-world.md)                                                                |
-| 9   | PF08 flat resident entity map: measure alternatives and write them up                                                   | [PF08/09](../maintainers/performance.md#foundations-15-measurements-and-remaining-cost)                                                                                                       |
+| #   | Item                                                                                                                    | Canonical tracker                                                                                                                                                                                   |
+| --- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | EPR00 baseline trace and bounded counters on the seed-73 workload                                                       | [EPR00](../../maintainers/events-perception-and-reactions.md#epr00--baseline-invariants-and-task-ownership)                                                                                         |
+| 2   | PF03/09 native CPU regression: Immer proxy/finalization and encounter costs, with identical outcomes, RNG and audiences | [PF03/09](../../maintainers/performance.md#foundations-15-measurements-and-remaining-cost)                                                                                                          |
+| 3   | EPR01 typed stimulus scope and actor intake metadata                                                                    | [EPR01](../../maintainers/events-perception-and-reactions.md#epr01--typed-stimulus-scope-and-actor-intake)                                                                                          |
+| 4   | EPR03 observer-private acquisition and exposure deltas                                                                  | [EPR03](../../maintainers/events-perception-and-reactions.md#epr03--actor-private-perception-acquisition-and-exposure-deltas)                                                                       |
+| 5   | EPR05 change-fed `ActorWork` and one intake with per-character fairness; also PF09's per-character thought eligibility  | [EPR05](../../maintainers/events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake), [PF09](../../maintainers/performance.md#pf09--population-work-follows-relevance) |
+| 6   | EPR04 remaining parts: other state writers, sleep, first opportunity for a newly created hungry character               | [EPR04](../../maintainers/events-perception-and-reactions.md#epr04--private-internal-threshold-events-and-native-protection)                                                                        |
+| 7   | EPR06 persistent stimuli with bounded character-local relevance                                                         | [EPR06](../../maintainers/events-perception-and-reactions.md#epr06--persistent-stimuli-and-bounded-actor-local-relevance)                                                                           |
+| 8   | PF12.3, PF12.4 and SW08.4a dense first-exposure qualification, including the 344-entity first-sight burst               | [PF12](../../maintainers/performance.md#pf12--eight-times-spatial-and-sensory-execution), [SW08](../../maintainers/spatial-world.md)                                                                |
+| 9   | PF08 flat resident entity map: measure alternatives and write them up                                                   | [PF08/09](../../maintainers/performance.md#foundations-15-measurements-and-remaining-cost)                                                                                                          |
 
 For item 9, implement a change only if it keeps the existing entity-map API and does not touch save or serialization code; otherwise record the design and stop.
 
@@ -49,7 +51,7 @@ For item 9, implement a change only if it keeps the existing entity-map API and 
 **Files this task owns:**
 
 - `packages/domain/src/{events,experience,perception,draft}.ts`
-- the perception parts of the spatial code: `encounter-cache.ts`, `object-exposure.ts`, `perception-frame.ts`, `event-audience.ts`, the perception snapshot in `entity-index.ts`. This is the original task inventory; NP02 later consolidates `object-exposure.ts` into the [encounter owner](../../packages/domain/src/encounter-cache.ts), preserving exact object sensing while removing duplicate preparation.
+- the perception parts of the spatial code: `encounter-cache.ts`, `object-exposure.ts`, `perception-frame.ts`, `event-audience.ts`, the perception snapshot in `entity-index.ts`. This is the original task inventory; NP02 later consolidates `object-exposure.ts` into the [encounter owner](../../../packages/domain/src/encounter-cache.ts), preserving exact object sensing while removing duplicate preparation.
 - `apps/server/src/{actor-work,interests,cognition-maintenance}.ts`
 
 **Shared files, kept to minimal edits and listed in the handoff:**
@@ -137,7 +139,7 @@ These come from reading `be68b1e0` and profiling it on this host; the evidence i
 - **System scope.** Control and diagnostic notices can no longer become character evidence. This is an intentional scope correction, not an optimization.
 - **Concurrency.** Fairness is solved inside the current single shared slot. Raising concurrency changes spending and needs separate approval.
 - **Considered evidence.** "Attempted" and "consumed" are separate records. A failed or skipped opportunity keeps its evidence available but does not retry the same opportunity automatically. No paid retry is introduced.
-- **Unchanged pending owner decisions:**
+- **Owner decisions still pending at the original September 28 checkpoint:**
   - condition policies for health and energy (BW07/D54);
   - how corpses and remains are sensed;
   - waking a sleeper for starvation;
@@ -157,7 +159,7 @@ These come from reading `be68b1e0` and profiling it on this host; the evidence i
   - directed speech without a duplicate autonomous opportunity;
   - sleep skip that does not consume evidence.
 - **Static checks:** pinned Prettier on changed files, `pnpm typecheck`, and focused existing domain tests.
-- **Done:** every scoped item is either implemented, or recorded as not achieved with evidence. Measured CPU and burst results, with their limits, are in [the verification report](../verification/perception-reaction-intake.md). Trackers, limits, architecture and changelog are reconciled. Required review is complete.
+- **Done:** every scoped item is either implemented, or recorded as not achieved with evidence. Measured CPU and burst results, with their limits, are in [the verification report](../../verification/perception-reaction-intake.md). Trackers, limits, architecture and changelog are reconciled. Required review is complete.
 
 ## Progress
 
@@ -172,4 +174,4 @@ These come from reading `be68b1e0` and profiling it on this host; the evidence i
 - [x] Stage 8 — dense qualification measured; per-record burst overhead cut; target-only rescans deferred with evidence.
 - [x] Stage 9 — PF08: write-set freeze implemented; sharding/lot separation recorded as designs.
 - [x] Documentation reconciliation and final review (two adversarial review passes; findings fixed or recorded as limits).
-- [x] Rebased onto local `main` (`9ce4b7ad`) on 2026-10-01. Main's features took precedence in shared files. The branch's cognition limits were renumbered CG10/CG11, because main already used CG06–CG09. Main's saves work now reports durability; the EPR05 hold is the open item that wires `ActorWork.durable` to it and clamps the stored considered-evidence cursor to the saved cut.
+- [x] Rebased onto local `main` (`9ce4b7ad`) on 2026-10-01. Main's features took precedence in shared files. The branch's cognition limits were renumbered CG10/CG11, because main already used CG06–CG09. At that October 1 checkpoint, main’s saves work reported durability and wiring the EPR05 hold remained open. The separately authorized [October 14 FR13 correction](../../maintainers/events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake) now captures a save ticket only on relevant input changes/wakes, checks durability for readiness/acknowledgement and caps considered evidence at the saved allocation cut; its actual native/PostgreSQL and restore checks remain scoped evidence.

@@ -2,9 +2,11 @@
 
 | Status      | Current progress                                                                                                       | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | NP02 delivers changed-object sensory preparation, while broader local simulation and publication work remain proposed. | 2026-10-03   |
+| In progress | NP02 delivers changed-object sensory preparation, while broader local simulation and publication work remain proposed. | 2026-10-16   |
 
 **Scope:** NP02 delivers the source-preparation portion of stage 2, and PW08 supplies the earlier bounded improvements identified below; the remaining stages are proposed work, not approved for implementation. Further implementation starts only with Mike's go-ahead. The choices at the end are proposals with their reasons, not independent implementation approval. Requested by Mike in chat on 2026-09-29 as the general follow-up to the [regional time and navigation work](regional-time-and-navigation.md). The documents that define current behavior stay authoritative: [simulation time](../simulation-time.md), [base-world time](../worlds/base/time.md), and the [boundary catalogue](../maintainers/simulation-boundaries.md), which is the maintainers' table of every kind of moment that can end a step. The trackers are linked from each stage.
+
+**Current review, October 15:** PW08’s membership/pair reuse and NP02’s incremental sensory source preparation remain delivered portions of this proposal. The remaining exact approach timing, entity-local integration, publication and active-work stages retain their stated approval/measurement gates. Current PF13/EPR/SW records distinguish these open costs from already delivered survival-rate ownership, body-only postponement, private flyer deadlines and source indexing; the historical percentages and staffing below are not a new current baseline.
 
 ## Current timing contract and historical baseline
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                    | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Continuing-life, attention and exact distant-activity designs are documented; runtime delivery and wider qualification remain open. | 2026-10-15   |
+| In progress | Continuing-life, attention and exact distant-activity designs are documented; runtime delivery and wider qualification remain open. | 2026-10-16   |
 
 **Status: proposed implementation design supporting accepted product direction, October 2, 2026. The October 2 design task delivered documentation only. No runtime work, new service, database migration, paid experiment, or deployment is authorized by this document.**
 

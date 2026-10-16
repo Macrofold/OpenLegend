@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                         | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-14   |
+| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-16   |
 
 **General composition remains proposed.** This is the appearance-composition detail of the [feature specification](3d-pixel-art-feature-spec.md), not a new mechanical ontology. Family examples are concrete design fixtures; their depiction does not claim that all corresponding gameplay mechanics exist.
 

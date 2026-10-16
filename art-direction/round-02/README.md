@@ -10,7 +10,7 @@ Click **Save** once and select **feedback-round-02.json inside this round-02 fol
 
 The round-two format, reference IDs, browser cache, and picker identity are separate from round one. Selecting a round-one feedback file is rejected before writing. Original notes are not prefilled as new ratings. Direct file saving requires browser support; an explicit Download copy fallback remains available.
 
-To discuss another iteration, ask the assistant to read `art-direction/round-02/feedback-round-02.json`. Saving does not itself notify the assistant. This file is created through Save, not by the board build.
+For a new save, the suggested location is `art-direction/round-02/feedback-round-02.json`. The reviewed September 19 feedback was actually saved at [../feedback-round-02.json](../feedback-round-02.json), and its preserved snapshot is [../round-02-feedback-reviewed.json](../round-02-feedback-reviewed.json); use those for the recorded analysis. Saving does not itself notify the assistant. Feedback files are created through Save, not by the board build.
 
 ## Files
 
@@ -28,8 +28,8 @@ Images need internet access and remain subject to the original hosts. A missing-
 
 ## Verification limits
 
-Catalog structure, bundled JavaScript syntax, persistence behavior, and rejection of first-round files are checked locally. Persistence checks use controlled file-handle adapters. The native picker and final HTML layout have not been verified interactively: the available browser blocks local-file previews, and this sandbox cannot start a local HTTP server. Selected public reference images were visually inspected during research.
+The original review checked catalog structure, bundled JavaScript syntax, persistence behavior and rejection of first-round files with controlled file-handle adapters. It did not verify the native picker or final HTML layout interactively: that browser blocked local-file previews and that sandbox could not start an HTTP server. Selected public reference images were visually inspected during research. These are historical results and environment limits; the documentation audit did not rerun native browser acceptance.
 
 ## Selection feedback
 
-Ratings and aspect selections update their pressed state immediately. The open detail controls remain mounted while browser backup and linked-file autosave update; file status changes disable Save only, not preference controls. The persistence suite uses fixture file handles, including edits after linking a file. Native file-picker and visual interaction verification remain unconfirmed in this environment.
+Ratings and aspect selections update their pressed state immediately. The open detail controls remain mounted while browser backup and linked-file autosave update; file status changes disable Save only, not preference controls. The persistence suite uses fixture file handles, including edits after linking a file. Native file-picker and visual interaction verification remain unconfirmed by the retained evidence.

@@ -2,7 +2,7 @@
 
 [Feature contract](../performance.md) · [Implementation work](../maintainers/performance-profiling.md) · [Tracking rules](README.md) · [Change backlog](../maintainers/limits-audit.md)
 
-Values below were source-inspected on 2026-10-06 against the review branch at `7fddcea7c7c1adf79bd53c1dfa16558111c772d3`; synchronization with newer main is deferred. These are implemented limits and known exceptions, not new capacity measurements or approval to expand them. Original recommendations retain the audit rationale. Ratings describe restrictiveness, not correctness or measured capacity. New rationale is an engineering assessment unless an authored decision is explicitly identified.
+The original source inspection was 2026-10-06 at `7fddcea7c7c1adf79bd53c1dfa16558111c772d3`. The October 15 documentation audit reconciled these capture, queue, query and monitoring bounds with the integrated source at local `main` `8ce0e2a236904b1a343cf6a07227b63e8a1968c1`; it adds no runtime measurement. These are implemented limits and known exceptions, not new capacity measurements or approval to expand them. Original recommendations retain the audit rationale. Ratings describe restrictiveness, not correctness or measured capacity. New rationale is an engineering assessment unless an authored decision is explicitly identified.
 
 Implementation starting points: [intelligence-log.ts](../../apps/server/src/intelligence-log.ts), [performance.ts](../../apps/server/src/performance.ts).
 

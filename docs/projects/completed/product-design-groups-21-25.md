@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                                                                                                 | Last updated |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Five researched product proposals, authored profiles where applicable, focused open delivery work and final gameplay critique are complete. Technical design, implementation and live qualification remain open. | 2026-10-14   |
+| Completed | Five researched product proposals, authored profiles where applicable, focused open delivery work and final gameplay critique are complete; technical design, implementation and live qualification remain open. | 2026-10-16   |
 
 ## Assignment and baseline
 
@@ -10,9 +10,9 @@ This assignment completed the next five groups in [Needs design](../../maintaine
 
 The first branch, `codex/product-design-groups-16-20-20261006`, received the requested pacing clarification in commit [`ad4ba6267ff5225ee6c513e6e7016962d274ebef`](https://github.com/Macrofold/OpenLegend/commit/ad4ba6267ff5225ee6c513e6e7016962d274ebef). DG02 now explicitly identifies ordinary human reading, composition and AI waiting alongside food, rest, work and company; CE05 carries the corresponding open qualification. It chooses no new rate, automatic feeding or pause policy and preserves every existing acceptance state.
 
-The new branch is **`codex/product-design-groups-21-25-20261006`**, created from that exact parent commit at the owner's request. Source work uses `/workspace/scratch/8a4f6bbf65a4/openlegend-design-21-25`, a separate mirror rather than a switched Git checkout or worktree. No rebase, merge, main-branch mutation or history rewrite is part of the assignment.
+The original assignment branch was **`codex/product-design-groups-21-25-20261006`**, created from that exact parent commit at the owner's request. Source work uses `/workspace/scratch/8a4f6bbf65a4/openlegend-design-21-25`, a separate mirror rather than a switched Git checkout or worktree. No rebase, merge, main-branch mutation or history rewrite is part of the assignment.
 
-Current GitHub `main` was separately inspected at [`0a3ab79b7a698a7f1941dc23722f89220d1ba425`](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425). It contains newer first-threat, player danger/death/scar treatment and adventure design work that the parent branch does not yet contain. The proposals consume the newest relevant meaning and evidence, with pinned source references and explicit integration prerequisites; inspecting it does not merge its runtime into this branch. Current sources were refreshed by domain and during final review. The older parent runtime is not described as current main.
+At the time, GitHub `main` was separately inspected at [`0a3ab79b7a698a7f1941dc23722f89220d1ba425`](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425). It contains newer first-threat, player danger/death/scar treatment and adventure design work that the parent branch does not yet contain. The proposals consume the newest relevant meaning and evidence, with pinned source references and explicit integration prerequisites; inspecting it does not merge its runtime into this branch. Current sources were refreshed by domain and during final review. The older parent runtime is not described as current main.
 
 ## Product rules and scope
 

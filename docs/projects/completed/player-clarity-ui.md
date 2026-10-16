@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                       | Last updated |
 | --------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The seven selected everyday-feedback changes were delivered and browser-qualified on 2026-09-28; broader parent work remains separate. | 2026-10-15   |
+| Completed | The seven selected everyday-feedback changes were delivered and browser-qualified on 2026-09-28; broader parent work remains separate. | 2026-10-16   |
 
 Approved in chat on 2026-09-28 by Mike: implement the seven clearer-everyday-feedback items below, in priority order, on `codex/player-clarity-ui` from `origin/main` `be68b1e0`. Estimated 1,000–1,300 changed logic lines across protocol, server read projections and client panels. Cross-layer read contracts and viewer-privacy boundaries warrant this durable plan. Each completed stage is committed separately so the branch stays coherent and mergeable. No paid provider calls (`AI_BUDGET_USD=0`).
 

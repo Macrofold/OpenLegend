@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                               | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Memory retrieval and local incremental replies are delivered; provider deployment and combined release acceptance remain open. | 2026-10-14   |
+| In progress | Memory retrieval and local incremental replies are delivered; provider deployment and combined release acceptance remain open. | 2026-10-16   |
 
 **Currency review, October 14, 2026.** The assignments, source observations and estimates below describe their original October 2 execution context. The table above and [PW tracking](../../maintainers/parallel-batch-01-playable-week.md) distinguish delivered work from remaining qualification; old branch/format references do not select the current development base or authorize compatibility work.
 

@@ -32,7 +32,7 @@ Deferring voluntary resident preparation never permits incorrect condition, eati
 ## CS02 — Food condition follows the real material
 
 - [ ] Introduce the selected condition and aging behavior through the shared material/lot owner. Preserve authoritative elapsed time, source age, quantity, identity, custody, lineage and the installed definition meaning.
-- [ ] Extend the current stateless-only split/merge/consumption boundary for this particular supported condition. A transfer, split, merge, rename, nested move or repeated transformation cannot rejuvenate food, erase worse condition or spend a referenced ingredient twice.
+- [ ] Extend the current material-family handling to support the selected food condition through split, merge and consumption. Selected homogeneous moisture state already supports splitting and equal-state merging; it does not implement food aging or stateful consumption. A transfer, split, merge, rename, nested move or repeated transformation cannot rejuvenate food, erase worse condition or spend a referenced ingredient twice.
 - [ ] Preserve active work, pending offers and claims under actual dependency rules. Revalidate changed food and access before a consequence; stale controls do not consume a replacement lot.
 - [ ] Establish one coherent current-format save/restart/restore result across threshold crossings and interrupted work. Reads, cold materialization and retries cannot age twice, reset a timer or reroll a previous result.
 

@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                    | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The agreed state, contribution and resource-claim slices were delivered; broader composition work remains separate. | 2026-10-15   |
+| Completed | The agreed state, contribution and resource-claim slices were delivered; broader composition work remains separate. | 2026-10-16   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](shared-state-contributions-feature-spec.md) owns behavior; [SC01–SC08](../../maintainers/state-contributions.md) owns detailed work and evidence. Parent ownership remains EWF02–03, INV-6.3, EWF07/SL00 and production data. Read [the five-project map](foundations-1-5.md) for the pinned baseline and cross-project order.
 
@@ -133,7 +133,7 @@ Do not append a transfer journal row on every microsecond of continuous drain. S
 
 The delivered record extraction used source verification and atomic cutover without simultaneous writable native and generic copies. Future state/storage changes follow the [development save policy](../../../AGENTS.md#development-save-policy). Missing required pins or invalid residue/contribution references fail before installation.
 
-SL00 capture includes active contributions, holds, progress, fractional carry, deadlines and exact definitions. Restore installs these together under a fresh timeline/authority fence, rebuilds lookups and schedules future native work without replaying initial application. Current privacy, control grants and external spending remain outside rewind. INV-5/EWF07 own live owner replacement; unsupported detach or missing migration blocks activation.
+SL00 capture includes active contributions, holds, actual family-owned progress, deadlines and exact definitions. A future quantized-rate family must include its own required remainder when introduced; the delivered continuous replenishment owner has no generic fractional-carry record. Restore installs current owned records together under a fresh timeline/authority fence, rebuilds lookups and schedules future native work without replaying initial application. Current privacy, control grants and external spending remain outside rewind. INV-5/EWF07 own live owner replacement; unsupported detach or missing migration blocks activation.
 
 ## 8. Dependencies, disclosure and bounded work
 

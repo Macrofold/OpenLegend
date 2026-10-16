@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                              | Last updated |
 | --------- | --------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Controls, native-based graphics, local authoring setup and focused verification are complete. | 2026-10-03   |
+| Completed | Controls, native-based graphics, local authoring setup and focused verification are complete. | 2026-10-16   |
 
 ## Scope and owners
 

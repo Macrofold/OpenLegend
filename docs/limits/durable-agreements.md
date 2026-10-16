@@ -1,6 +1,6 @@
 # Durable agreements limits and constraints
 
-This inventory accompanies the [DG22 feature specification](../projects/durable-agreements-feature-spec.md), [base-world profile](../worlds/base/durable-agreements.md) and [existing agreement delivery owner](../maintainers/inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation). These are product proposals, not implemented rules or measured capacity. The inspected implementation baseline is GitHub main `0a3ab79b7a698a7f1941dc23722f89220d1ba425`; existing one-way handover and readable personal promises are distinct from [PX02's proposed reciprocal exchange](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px02--trade-something-useful) and these future agreements.
+This inventory accompanies the [DG22 feature specification](../projects/durable-agreements-feature-spec.md), [base-world profile](../worlds/base/durable-agreements.md) and [existing agreement delivery owner](../maintainers/inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation). These are product proposals, not implemented rules or measured capacity. The original inspected implementation baseline was GitHub main `0a3ab79b7a698a7f1941dc23722f89220d1ba425`. Current one-way handover, [PX02's delivered immediate reciprocal exchange](../worlds/base/social.md#offering-and-accepting-possessions) and readable personal promises remain distinct from these future durable agreements.
 
 ## DA-L01 — One useful finite commission
 

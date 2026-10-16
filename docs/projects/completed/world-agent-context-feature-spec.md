@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                                  | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The approved finite context and native review foundation was delivered and locally qualified on 2026-09-28; wider release scope remains separate. | 2026-10-14   |
+| Completed | The approved finite context and native review foundation was delivered and locally qualified on 2026-09-28; wider release scope remains separate. | 2026-10-16   |
 
 **Delivered scope:** The approved finite foundation is implemented and locally qualified; the requirements below describe that scope and its explicit exclusions. Medium reasoning effort is an explicit owner requirement for the proposed World Agent execution profile. Other interface choices below are recommendations for implementation review.
 

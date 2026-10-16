@@ -2,11 +2,13 @@
 
 | Status      | Current progress                                                                                                                                          | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Bounded PG02, PG03, scoped PG04 and PG05 encounter/death/danger delivery are complete; one PG01 billing confirmation and combined acceptance remain open. | 2026-10-06   |
+| In progress | Bounded PG02, PG03, scoped PG04 and PG05 encounter/death/danger delivery are complete; one PG01 billing confirmation and combined acceptance remain open. | 2026-10-16   |
 
 PG02’s bounded resident demonstration, PG03, scoped PG04 and PG05’s encounter/death/danger delivery are complete; combined batch acceptance and broader character/performance qualification remain open.
 
 [Prioritized scope](parallel-batch-03-personal-game-feature-spec.md) · [Technical definitions](parallel-batch-03-personal-game-tech-design.md) · [Status and parent mapping](../maintainers/parallel-batch-03-personal-game.md)
+
+These retained prompts describe the original assignments and their historical prerequisites. Completed scoped delivery is not a new dispatch; the PG tracker identifies the exact billing and combined acceptance still open. Any future live execution requires its current authorization and accounting conditions.
 
 Start each assignment from a branch containing this planning packet. PG01–PG04 are delivery assignments; PG05 began as design only and later received separate owner authorization for the bounded runtime slice, now delivered. They can begin independently; PG01/PG02 live closure additionally requires the configured provider and authorized allowance described in the feature scope. Shared meanings are settled in the technical document, and tasks do not communicate with one another. Follow current AGENTS.md for the development workflow; these prompts add task scope, not separate Git, testing, spending or approval rules.
 

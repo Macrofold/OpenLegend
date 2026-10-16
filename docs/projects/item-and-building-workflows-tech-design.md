@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                           | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Mike deferred this follow-on during the imported UI review; its design and IWB01–IWB07 remain tracked for later selection. | 2026-10-15   |
+| Not started | Mike deferred this follow-on during the imported UI review; its design and IWB01–IWB07 remain tracked for later selection. | 2026-10-16   |
 
 Counterpart: [feature specification](item-and-building-workflows-feature-spec.md). Parent needs: [ND13](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization) for usable item/manufacturing controls and [ND07](../maintainers/needs-design.md#nd07--editable-buildings-that-become-usable-homes) for supported shelter refinement. This is an additive delivery project, not a replacement for the implemented PW04/PW11, native activity or SH foundations.
 
@@ -132,7 +132,7 @@ Accepted manufacturing-list content, current execution frontier and requested bo
 
 Client drafts use the existing private scope/retention owner. Do not put quantities, private contents, actor plans or transient target references in shared URLs or telemetry. A temporary pointer gesture, selected ghost and cached green result are not durable gameplay. Retained draft intent after a current-format restore does not retain execution permission; a changed timeline must be freshly scoped and checked before submission.
 
-The current pause/presence/lifecycle contract governs accepted work. Closing an ordinary task panel is not itself cancellation, while an actual human departure/load reconciliation can cancel unfinished physical work according to the existing world policy. No offline catch-up, human task resumption after death or revival of a terminal program is inferred from a saved pending list. Keep authentic uninterrupted native progress separate from an explicit new attempt.
+The current pause/presence/lifecycle contract governs accepted work. Closing an ordinary task panel is not itself cancellation. Paused current-format restoration preserves human work and accepted cooperation while waiting for verified reconnection; resetting browser connections alone is not physical departure. A real prior departure retains its original deadline, and continued absence when play resumes is reconciled before time advances and can cancel unfinished physical work under the [current continuation contract](../save-and-load.md#continuation-and-identity). No offline catch-up, human task resumption after death or revival of a terminal program is inferred from a saved pending list. Keep authentic uninterrupted native progress separate from an explicit new attempt.
 
 For every new list-start/edit/control or equip/stow write, use the existing command operation/receipt boundary. Resolve an identical recorded outcome before attempting a new operation; conflicting content under one identity refuses. Recheck current disclosure after any await. The client first reconciles an unconfirmed write instead of issuing a new request ID. A terminal result retained after a gameplay rewind reports historical effects without permitting them to run on the replacement timeline.
 

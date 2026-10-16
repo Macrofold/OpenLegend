@@ -108,7 +108,7 @@ Keep four capabilities distinct:
 
 A compacted recovery journal alone does not provide historical saves. “Ten minutes ago” is recoverable only to a retained point, unless a separate verified point-in-time reconstruction capability exists. Show both real creation time and simulated time so accelerated or paused play is unambiguous. A save is successful only once it is durably published, not when its request is queued.
 
-[Sling practice/coaching qualification](verification/practical-competence.md#continuity-and-private-inspection) verifies one outcome per actual release, duplicate receipts, current SQL reopening, active NPC work and current correction overlays. Completed support survives reconnect/restore. Continuously present NPC preparation and jointly chosen feedback retain their owned work and resolve once; the existing human departure/load contract cancels unfinished physical work. Saving supplies no consent or exception to presence rules.
+[Sling practice/coaching qualification](verification/practical-competence.md#continuity-and-private-inspection) verifies one outcome per actual release, duplicate receipts, current SQL reopening, active NPC work and current correction overlays. Completed support survives reconnect/restore. Continuously present NPC preparation and jointly chosen feedback retain their owned work and resolve once. Human work also survives the transport reset during paused restoration pending verified presence; actual departure or resuming without that presence interrupts it before simulation advances, as described in [Continuation and identity](#continuation-and-identity). Saving supplies no consent or exception to presence rules.
 
 ## Research and design basis
 

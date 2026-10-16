@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                          | Last updated |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | All five researched product proposals, final game-first critique, maintained-record reconciliation and documentation review are complete. | 2026-10-14   |
+| Completed | All five researched product proposals, final game-first critique, maintained-record reconciliation and documentation review are complete. | 2026-10-16   |
 
 ## Assignment and baseline
 
@@ -10,7 +10,7 @@ Produce comprehensive researched product and behavior specifications for the nex
 
 The owner explicitly requests product behavior rather than detailed architecture. This assignment therefore follows the previous five-group assignments in producing feature specifications, useful staged capabilities and maintained delivery/limits records without technical-design files or runtime changes. Later technical work remains explicit; a product proposal does not qualify its implementation.
 
-The task branch is `codex/product-design-groups-26-30-20261008`, created through the GitHub connector from the requested `codex/product-design-groups-21-25-20261006` at [671d52d724db5dfe39403ebe46f7c1ee24d6ec52](https://github.com/Macrofold/OpenLegend/commit/671d52d724db5dfe39403ebe46f7c1ee24d6ec52). Sources are read at that exact baseline. Local editing uses `/workspace/scratch/7bd3f464241b/OpenLegend`, a selective working mirror, without switching an existing Git checkout or changing main. All Git operations use the connector; branch updates preserve other paths and use an expected-head check.
+The original task branch was `codex/product-design-groups-26-30-20261008`, created through the GitHub connector from the requested `codex/product-design-groups-21-25-20261006` at [671d52d724db5dfe39403ebe46f7c1ee24d6ec52](https://github.com/Macrofold/OpenLegend/commit/671d52d724db5dfe39403ebe46f7c1ee24d6ec52). Sources are read at that exact baseline. Local editing uses `/workspace/scratch/7bd3f464241b/OpenLegend`, a selective working mirror, without switching an existing Git checkout or changing main. All Git operations use the connector; branch updates preserve other paths and use an expected-head check.
 
 The [preceding assignment](product-design-groups-21-25.md) supplies contacts and private text, correction/restoration meanings and the established distinction between design completion, adoption, technical work, implementation and qualification. Its accepted and proposed meanings are reused according to their recorded status. The branch is not represented as current main.
 

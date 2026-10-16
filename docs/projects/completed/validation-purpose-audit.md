@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                             | Last updated |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Provider decision assertions and demonstrated redundant checks removed; audit, guidance and selected verification completed. | 2026-10-03   |
+| Completed | Provider decision assertions and demonstrated redundant checks removed; audit, guidance and selected verification completed. | 2026-10-16   |
 
 ## Scope and reason
 

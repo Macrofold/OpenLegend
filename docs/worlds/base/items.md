@@ -26,7 +26,7 @@ Raw and cooked river fish are real portable lots. The raw catch has no edible nu
 
 ## Ground piles
 
-The [rewarding expedition profile](rewarding-expeditions.md) adds a finite portable lookout case and workshop satchel through the same ordinary ground-pile/container owner. Only permitted deliberate inspection shows actual nested stock; moving the case or record moves that same physical item, with no restock or hidden copy. The profile owns spear/method tuning and AV02's still-pending two-hand integration.
+The [rewarding expedition profile](rewarding-expeditions.md) adds a finite portable lookout case and workshop satchel through the same ordinary ground-pile/container owner. Only permitted deliberate inspection shows actual nested stock; moving the case or record moves that same physical item, with no restock or hidden copy. The profile owns spear/method tuning. AV02’s native two-hand equipment support is now integrated; [AV01/AV02](../../maintainers/parallel-batch-05-adventure-defense-and-home.md) retain the player comparison and broader acceptance criteria.
 
 A pile is a spatial entity holding item entities. Each active lot has one tagged placement: a world root, contained custody or an equipment attachment. Actor inventories, piles and admitted bags hold direct children without a second inventory list. Custody does not mean account authorship or legal ownership. Pickup/drop transfers existing quantities without creation or consumption. A complete unmerged transfer retains its identity; splitting allocates a new lot with lineage. Merge requires exact definition/unit pins, homogeneous state, matching ownership/provenance and no incompatible holds or active identity references. Individual objects and bags do not merge.
 

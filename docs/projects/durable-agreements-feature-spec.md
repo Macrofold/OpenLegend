@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                   | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG22 researched product proposal complete; adoption, technical work and runtime qualification remain open under INV-20.5 and BW17. | 2026-10-15   |
+| In progress | DG22 researched product proposal complete; adoption, technical work and runtime qualification remain open under INV-20.5 and BW17. | 2026-10-16   |
 
 This develops DG22, ND09 and the modest cooperative part of ND10. It recommends a coherent disposition of the relevant D11/D18/D64 questions without marking those decisions adopted. The [world profile](../worlds/base/durable-agreements.md) owns the proposed first arrangement and defaults. [INV-20.5](../maintainers/inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) remains the implementation owner; this is not a second promise or settlement system.
 
@@ -20,7 +20,7 @@ A later unsecured advance can create a meaningful trust choice: give someone a r
 
 The audit inspected [main 0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425) during the original proposal audit. Current one-way handover offers an exact carried lot to a nearby person and requires that recipient's acceptance. It transfers nothing before acceptance, reserves nothing, and lapses when its current goods or participants cease to qualify. Its short game-time expiry fits holding something out, not a multi-session promise. [Current handover](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/packages/domain/src/handover.ts), [world social contract](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/docs/worlds/base/social.md).
 
-[PX02 reciprocal barter](parallel-batch-04-expeditions-and-exchange-feature-spec.md#px02--trade-something-useful) delivers one exact lot on each side, changed-term assent and atomic settlement on current main. This proposal consumes that settlement and preserves PX02 as an independently complete earlier delivery. Durable commissions and broader commercial arrangements remain future work; exact barter is not a complete trading economy.
+[PX02 reciprocal barter](completed/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px02--trade-something-useful) delivers one exact lot on each side, changed-term assent and atomic settlement on current main. This proposal consumes that settlement and preserves PX02 as an independently complete earlier delivery. Durable commissions and broader commercial arrangements remain future work; exact barter is not a complete trading economy.
 
 Current personal promises are protected actor memories. The narrow gathering form can be completed by a matching gathering event; it does not prove a quantity was delivered to somebody. The player's own Journal has a delivered read-only promise view. Broader management and negotiated amendment wait on D64. [Readable promises](readable-promises-feature-spec.md), [current obligation owner](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/packages/domain/src/commitments.ts).
 

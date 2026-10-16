@@ -1,6 +1,6 @@
 # 08 · Plans, costs, rights and privacy
 
-[Guide home](README.md) · Last verified 2026-09-27. Not legal advice; check the current [Terms of Service](https://docs.midjourney.com/hc/en-us/articles/32083055291277-Terms-of-Service) before commercial decisions.
+[Guide home](README.md) · Original research 2026-09-27; plan table and the linked May 27, 2026 Terms rechecked 2026-10-15. Not legal advice; check the current [Terms of Service](https://docs.midjourney.com/hc/en-us/articles/32083055291277-Terms-of-Service) before commercial decisions.
 
 ## Plans
 
@@ -45,4 +45,4 @@ Practical approach (house): explore in Draft or SD on Relax where possible; spen
 
 ## No official API
 
-Midjourney has **no official public API** as of 2026 (community: several 2026 comparison articles; the V8 guide notes "No public API access"). Third-party "Midjourney APIs" are unofficial wrappers; check the Terms before using one. Midjourney therefore stays a **manual** tool for Open Legend, and the automated asset pipeline (artgen) uses fal.ai models instead ([06](06-game-concept-art.md#concepts-for-the-3d-pixel-art-pipeline)).
+The September research found no official public API and identified third-party offerings as unofficial wrappers (community evidence, not proof that an API can never exist). The current [Terms of Service](https://docs.midjourney.com/hc/en-us/articles/32083055291277-Terms-of-Service) expressly prohibit automated tools accessing or generating through the service; rechecked 2026-10-15. Midjourney therefore stays a **manual** tool for this documented workflow. The external artgen notes name fal.ai models; their executable implementation is not supplied or qualified by this repository ([06](06-game-concept-art.md#concepts-for-the-3d-pixel-art-pipeline)).

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                                                            | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The full selected product proposal is complete under Mike's adult-audience/non-explicit-presentation decision; mechanical adoption, technical design and runtime qualification remain open. | 2026-10-14   |
+| In progress | The full selected product proposal is complete under Mike's adult-audience/non-explicit-presentation decision; mechanical adoption, technical design and runtime qualification remain open. | 2026-10-16   |
 
 This is DG31's product proposal. The adult-family experience below remains independently useful. [Choosing and raising a family](generations-and-family-life/childhood-and-population.md) completes the reproductive, dependent-care and population scope after Mike resolved D16 on October 14, 2026: adult players, non-explicit display, and optional sex represented by obscuration, a heart or a fade rather than anatomical depiction. That direction is approved; the detailed mechanics are proposals, not installed behavior or a launched family service. Technical design is deliberately outside this assignment.
 
@@ -196,7 +196,7 @@ NPC grief can arise through the existing cause-linked appraisal and knowledge ow
 
 Current-format save and restore must keep the exact people, known ages/reference dates, parent links, active actions, item custody and permitted memories coherent. Loading does not recalculate invented ages from placeholders, duplicate an outcome, restart a fresh scenario endowment or generate missed interactions. Paused time produces no progress.
 
-The [development-save policy](../../AGENTS.md#development-save-policy) still rejects incompatible development state without automatic deletion or reset; this is not permission to build old-save migration. Fictional restoration does not restore spent provider money, repeal current privacy or access, or reopen a refunded commercial benefit. DG25 owns coupled shared restoration and DG29 owns travel consequences. A social visit can leave external memories even without transferred goods, so a family reunion is not an excuse to bypass their reconciliation limits.
+The [development-save policy](../../AGENTS.md#development-save-policy) requires current-format integrity and rejects incompatible state in the loader; AGENTS alone governs authorized replacement of incompatible development data and the resulting loss of progress. This proposal adds no old-save migration. Fictional restoration does not restore spent provider money, repeal current privacy or access, or reopen a refunded commercial benefit. DG25 owns coupled shared restoration and DG29 owns travel consequences. A social visit can leave external memories even without transferred goods, so a family reunion is not an excuse to bypass their reconciliation limits.
 
 Service interruption remains visible as service interruption. Current unavailable cognition can leave a resident unfed; there is no hidden family-care autopilot. The later selected isolated unattended profile has its own proposed coherent whole-world hold. Do not import that hold into a contested public world, freeze only a favored relative or label a failed provider choice as deliberate neglect. The growing-family proposal has its own explicitly narrow attended service boundary; it does not claim that boundary already runs.
 
@@ -339,7 +339,7 @@ The original fourteen records were retrieved October 9, 2026. Historical develop
 
 ### GF-R08 — Population costs affect the whole food cycle
 
-[Jason Rohrer, update, May 30, 2020](https://onehouronelife.com/forums/viewtopic.php?id=9833). **Observed:** Dependent animal growth was changed to require feeding, meat yield changed with it, and founder placement addressed depleted starting resources. **Inference:** New population costs require complete supply-cycle arithmetic and useful arrival conditions. **Access:** Developer's opening post read; later comments excluded. Animal husbandry rules do not determine human family policy.
+[Jason Rohrer, update, May 30, 2020](https://onehouronelife.com/forums/viewtopic.php?id=9833). **Observed:** Domestic pigs and sheep were changed to require feeding before reproduction, with increased meat yield to reflect that feeding cost; founder placement addressed depleted starting resources. **Inference:** New population costs require complete supply-cycle arithmetic and useful arrival conditions. **Access:** Developer's opening post read; later comments excluded. Animal husbandry rules do not determine human family policy.
 
 ### GF-R09 — A small household must be worth living in
 

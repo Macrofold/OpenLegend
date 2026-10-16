@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                         | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The action integration is merged, while its documented PostgreSQL, authenticated-browser and CI qualification gaps remain unclosed here. | 2026-10-14   |
+| In progress | The action integration is merged, while its documented PostgreSQL, authenticated-browser and CI qualification gaps remain unclosed here. | 2026-10-16   |
 
 **Currency review — October 14, 2026.** [September 26–27 evidence](../verification/native-action-integration.md) explicitly separates the completed merge (`75ee15f7`) from unfinished qualification. The historical disk/sign-in failures describe the original attempts, not a claim that today's environment is blocked. Later combined-build observations are useful scoped evidence but do not close the remaining AR checks listed below. Rebase instructions, SQLite isolation and save-upgrade passages preserve historical intent; [PostgreSQL-only storage](completed/postgresql-cognition-preparation.md) and the [current development-save policy](../../AGENTS.md#development-save-policy) govern current work.
 

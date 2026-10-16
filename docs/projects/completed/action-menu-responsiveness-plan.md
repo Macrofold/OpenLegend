@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                | Last updated |
 | --------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | First-opening queue waits and redundant work are removed; grouped choices and scoped verification are complete. | 2026-10-14   |
+| Completed | First-opening queue waits and redundant work are removed; grouped choices and scoped verification are complete. | 2026-10-16   |
 
 Mike authorized faster ordinary action menus and meaningful sections on October 14. The first opening must benefit; retaining a previous menu is not the performance strategy. Existing permitted choices, exact commands, explanations, refusal order, inspection/privacy, current control and final command admission remain controlling. This work does not depend on the separate unanswered survival-tuning questions.
 

@@ -1,6 +1,6 @@
 # Development world startup verification
 
-These are recorded observations from the original verification log, not a new run. “Current” refers to each observation’s recorded revision. [Verification index](../verification.md) · [Current acceptance owners](../maintainers/README.md).
+These are recorded observations from the original verification log, not a new run. “Current” refers to each observation’s recorded revision. [Verification index](../verification.md) · [Current acceptance owners](../maintainers/README.md). For present-day development-state handling, follow the [development save policy](../../AGENTS.md#development-save-policy).
 
 ## Development startup recovery
 

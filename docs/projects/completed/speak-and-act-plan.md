@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                    | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Requested behavior, scoped verification and documentation are complete; live model prose quality remains unclaimed. | 2026-10-15   |
+| Completed | Requested behavior, scoped verification and documentation are complete; live model prose quality remains unclaimed. | 2026-10-16   |
 
 ## Agreed behavior
 

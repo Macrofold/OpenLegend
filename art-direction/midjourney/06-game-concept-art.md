@@ -88,15 +88,15 @@ Expression sheet of the same man as in the reference, head-and-shoulders, six ex
 
 ## Pixel art (for the record)
 
-- **We don't use Midjourney to make pixel art (house).** The in-game pixel look comes from rendering simple 3D models at low resolution, as the 3D pixel-art style bible explains.
+- **We don't use Midjourney to make pixel art (house).** The proposed 3D pixel-art pipeline renders models at low resolution; the current game still mixes sprite art with a bounded character pilot. The [3D tracker](../../docs/maintainers/3d-pixel-art.md) owns delivery and remaining qualification.
 - Midjourney's "pixel art" tends toward "vivid contrasts and neon highlights," cyberpunk scenes and a "nostalgic and melancholy" mood rather than genuine low-resolution sprites (community, Midlibrary). The output is pseudo-pixel: the pixel grid isn't exact.
 - Older guides recommend `--v 4` and naming consoles or games ("SNES", "Metal Slug") (community). That's out of date, and naming games breaks our originality rule ([02](02-writing-prompts.md#artist-names-game-titles-and-franchises-house)).
 
 ## Concepts for the 3D pixel-art pipeline
 
-The asset pipeline (artgen) turns concept images into 3D models and needs **clean 3D-style images, not paintings**. The style bible explains that "image-to-3D models reconstruct badly from pixelated, dithered images," so pipeline concepts ask for "a clean stylized low-poly 3D render: chunky readable forms, broad flat colour regions, three-quarter view from above, plain background."
+The external style-bible notes describe an asset pipeline (artgen) that turns concept images into 3D models and needs **clean 3D-style images, not paintings**. That source is not supplied by this repository; these notes do not establish its current executable status. The style bible explains that "image-to-3D models reconstruct badly from pixelated, dithered images," so pipeline concepts ask for "a clean stylized low-poly 3D render: chunky readable forms, broad flat colour regions, three-quarter view from above, plain background."
 
-- artgen currently uses fal.ai models. **Midjourney has no official public API** (community, 2026), so it can't be wired into the pipeline. If you make a pipeline concept in Midjourney, download it and feed it in by hand.
+- The original external pipeline notes name fal.ai models. Midjourney remains a manual input here: its current [Terms of Service](https://docs.midjourney.com/hc/en-us/articles/32083055291277-Terms-of-Service) prohibit automated tools accessing or generating through the service (rechecked 2026-10-15). If you make a pipeline concept in Midjourney, download it and feed it in by hand.
 - If you do, match the pipeline's rules: grounded adult proportions (about 6 heads tall for people), handmade natural materials, no baked lighting or shadows, flat colour regions, plain background. Characters need a front **A-pose** plus left, back and right views for 3D reconstruction.
 
 ```

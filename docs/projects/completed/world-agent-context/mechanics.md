@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                                      | Last updated |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | This historical design inventory supported the finite foundation delivered on 2026-09-28; current mechanics remain in their canonical feature owners. | 2026-10-14   |
+| Completed | This historical design inventory supported the finite foundation delivered on 2026-09-28; current mechanics remain in their canonical feature owners. | 2026-10-16   |
 
 **Historical source inventory for the September 28 context design; not the current mechanical specification.** Baseline and project scope are in [the project packet](README.md). Values in examples describe that inspected world version; production packets must read current owners. The [technical design](../world-agent-context-tech-design.md#3-mechanical-descriptions) owns the proposed description shape.
 

@@ -10,7 +10,7 @@ Implementation starting points: [authority.ts](../../apps/server/src/authority.t
 
 **Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-The browser JSON decoder permits **16,384 bytes** by default, **131,072 bytes (128 KiB)** for the exact `/api/world-agent/authoring` pathname, and **1,048,576 bytes (1 MiB)** only for `/api/god/editor/` paths. Creator permission alone does not enlarge other routes. Declared and actual bytes are checked, invalid UTF-8 is rejected, and body reading has a **10-second** deadline. The browser API also counts at most **16 MiB** of retained in-flight body chunks across requests; this accounting is not a bound on parsed objects, concatenation copies or all HTTP memory. Inner action/editor schemas retain their independent limits.
+The browser JSON decoder permits **16,384 bytes** by default, **131,072 bytes (128 KiB)** for the exact `/api/world-agent/authoring`, `/api/world-agent/session/draft-save` and `/api/world-agent/session/draft-preview` pathnames, and **1,048,576 bytes (1 MiB)** only for `/api/god/editor/` paths. Creator permission alone does not enlarge other routes. Declared and actual bytes are checked, invalid UTF-8 is rejected, and body reading has a **10-second** deadline. The browser API also counts at most **16 MiB** of retained in-flight body chunks across requests; this accounting is not a bound on parsed objects, concatenation copies or all HTTP memory. Inner action/editor schemas retain their independent limits.
 
 **Reason / tradeoff:** Keep download/parse protection while ensuring every advertised editor operation can fit through its HTTP request limit.
 
@@ -54,7 +54,7 @@ Original recommendation: **Keep**.
 
 **Current (October 3, 2026) · Restrictiveness: Safe.**
 
-A verified foreground heartbeat expires after 12 seconds. A successful control return reserves the first heartbeat’s position for the same 12-second window through existing bounded message-order records; it prevents simultaneous acquisition before the stream opens without counting as foreground activity. Counters are ordered within each control generation, so a stable tab ID can reload with a fresh counter. A paused browser closes its stream and heartbeat immediately; only a current controller’s verified presence or admitted connected-background policy can keep the world running. Browser tabs always pause on blur; the saved background policy is available only to clients that deliberately retain a controlling connection.
+A verified foreground heartbeat expires after 12 seconds. A successful control return reserves the first heartbeat’s position for the same 12-second window through existing bounded message-order records; it prevents simultaneous acquisition before the stream opens without counting as foreground activity. Counters are ordered within each control generation, so a stable tab ID can reload with a fresh counter. A paused browser closes its stream and heartbeat immediately; only a current controller’s verified presence or admitted connected-background policy can keep the world running. Browser tabs currently always pause on blur; the saved background policy is usable only by clients that deliberately retain a controlling connection. [UIUX14](../maintainers/ui-ux.md#uiux14) retains the accepted browser opt-out, requiring both its missing control and tab control that honors the saved choice.
 
 **Reason / tradeoff:** Keep departure detection while ensuring ordinary browser timer delays do not unexpectedly pause active play.
 
@@ -112,6 +112,8 @@ Sole-tab opening, reload and refocus enter automatically. Only switching between
 
 **Changed decision:** October 3 correction replaces mandatory explicit Resume on every entry/refocus and page-lifetime IDs. The earlier implementation required unnecessary clicks even in one tab; this correction reserves the dialog for switching open tabs.
 
+The accepted saved background-play opt-out remains open under [UIUX14](../maintainers/ui-ux.md#uiux14). Its missing checkbox and unconditional control release on blur/hide need the existing preference and tab owners; the single-controller and return/replacement rules above remain required.
+
 ## MP10
 
 **Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
@@ -132,7 +134,7 @@ Ordinary return **after committed inactivity** tries the saved return anchor (or
 
 **Reported · Restrictiveness: Very safe.**
 
-Shared-world simulation pauses when no controlling connection satisfies the presence/background-play policy.
+Shared-world simulation pauses when no controlling connection satisfies the presence/background-play policy and no departing character's installed simulated exposure remains. The exposure exception lets its saved game-time deadline finish before the unattended world pauses.
 
 **Reason / tradeoff:** Avoid unattended shared progression unless the accepted background-play policy admits it.
 
@@ -220,7 +222,7 @@ Session lifetime: **8 hours default**, configurable **0.1–24 hours**, fixed ex
 
 **Reported · Restrictiveness: Safe.**
 
-Departure grace: **15 seconds default**, configurable **1–60 seconds**.
+Operational departure grace: **15 real seconds default**, configurable **1–60 seconds**, for worlds using the operational-deadline fallback. The bundled world's installed simulated-departure policy instead selects **300 game seconds** (five real seconds at its normal 60:1 speed); pause and route preparation do not count toward that exposure.
 
 **Reason / tradeoff:** Balance brief disconnect tolerance against prompt removal from physical simulation.
 

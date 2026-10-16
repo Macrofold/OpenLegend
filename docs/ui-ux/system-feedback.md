@@ -26,7 +26,7 @@ Distinguish local input echo from network/storage/model duration. An arbitrary s
 
 ## Search is a scoped read, not a side effect
 
-Use a persistent label/accessibility name, informative placeholder and unambiguous clear utility. Catalogue search differs from choosing a form value. Searching cannot equip, buy, move, generate or activate merely on Enter; current action search may open an invention draft but preserves explicit Send.
+Use a persistent label/accessibility name, informative placeholder and unambiguous clear utility. Catalogue search differs from choosing a form value. Typing or changing a search query is read-only. Enter follows the named control’s contract: ordinary action search may deliberately execute its selected available action, while unmatched text can open an editable invention draft that still requires explicit Send. A record search or an unmatched query must not silently equip, buy, move, generate or activate anything.
 
 Keep scope, filters and continuation together: **this container**, **this conversation**, **perceived events**, **known people**. Broad search uses a permitted server endpoint, not hidden-world data downloaded and filtered visually. Place search according to its importance to the task, and clearly distinguish any local search from a broader entry point. Apple's searching guidance supports intentional location and scope, not the same toolbar on every surface. [S13](research.md#s13)
 

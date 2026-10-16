@@ -1,8 +1,10 @@
 # Connected sight and hearing areas
 
-| Status    | Current progress                                                                                       | Last updated |
-| --------- | ------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | Connected outlines, faint fills, thin lines and short labels passed native, browser and static checks. | 2026-10-03   |
+| Status    | Current progress                                                                                                          | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Connected outlines, faint fills and labels are delivered; later visual tuning supersedes this plan's original line width. | 2026-10-16   |
+
+This plan and its measurements retain the October 3 display change. Later feedback work and the October 14 adjustment changed line width, opacity and fill strength; [the current range-guide inventory](../../limits/interface.md#rg01--perception-range-guide-display) owns those values. The original 0.0375-metre width below is historical, while the shared filled-area/outline construction remains delivered.
 
 ## Scope and decisions
 

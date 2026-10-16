@@ -1,12 +1,14 @@
 # Parallel batch 01 — Playable week — feature specification
 
-| Status      | Current progress                                                                                                      | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Chosen camp activities and supply selection are implemented; broader integration and learning acceptance remain open. | 2026-10-03   |
+| Status      | Current progress                                                                                                                    | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The native changes are integrated; combined browser, voluntary learning, deployed streaming and performance acceptance remain open. | 2026-10-16   |
 
 Implementation was authorized in chat. The original proposal was prepared on October 2, 2026 against local `main` / refreshed `origin/main` at `6664144a`; assigned implementation worktrees inherit planning commit `8005f7c7245cfecec128652efe3ef07926604e0a`. Branch evidence and combined acceptance remain separate in the delivery tracker. The expanded allocation is **five AI-assisted engineers × 80 hours = 400 engineer-hours** over the requested week: 312 hours of scoped delivery, including focused checks, and 88 hours of shared integration, review and qualification. This supersedes the original 200-hour allocation. Estimates assume repository familiarity; no fixed AI speed multiplier or guaranteed completion time is asserted.
 
 [Technical design](parallel-batch-01-playable-week-tech-design.md) · [Assignments and completion tracking](../maintainers/parallel-batch-01-playable-week.md)
+
+**Current reconciliation, October 15:** the source inventories, estimates, branch instructions and engineer-by-engineer updates below preserve the original October 2 allocation and its intermediate handoffs. The selected implementations are integrated in current main; the later [integration record](../maintainers/parallel-batch-01-playable-week.md#local-branch-integration) owns that delivery. [PG01](../maintainers/parallel-batch-03-personal-game.md#pg01--a-useful-live-invention) adds the later live player container/invention journey. PW06 retains combined acceptance, PW07 the complete paired meter/lifecycle matrix, PW03/PW10 voluntary NPC choice and finite-method retention/reuse, PW05 deployed streaming and visible-text latency, and PW04/PW11 their remaining complete browser/input matrices. Historical peer conflicts and missing component consumption are not current implementation prerequisites; their accepted scenarios remain required. Later shelter, fishing, equipment and death deliveries have their own owners and do not enlarge this original allocation.
 
 ## Recommendation
 
@@ -14,7 +16,7 @@ Make existing choices dependable, make invention extensible through its actual o
 
 This is deliberately narrower than a new weather, shelter or fluid simulation. Those are valuable next chapters; pretending they are small recipe additions would build the brittle foundation this plan is meant to avoid.
 
-## What the audit established
+## What the original October 2 audit established
 
 The audit read the maintainer index and related focused trackers, project plans, repertoire catalogues, relevant game/interaction research and the current callers of the proposed changes. It distinguishes source-confirmed defects from missing qualification and old statements about earlier versions. It did not rerun gameplay, benchmarks or paid models. Additional provider spending for this audit, including Jev: **$0**.
 
@@ -66,7 +68,7 @@ Priority remains correctness first, then foundation, then fuller gameplay and pr
 | Weather, functional shelter, fluids, food aging/preservation, equipment wear and land/stock ownership                                | Existing world/repertoire and INV/AC owners. A cache is useful now but does not create these missing consumers. The camp routine preserves a chosen personal minimum, not a new protected food entitlement.                                                           |
 | Learned conditional/repeating programs from incomplete observations                                                                  | AE/AC learning owners. PW10 learns qualified realized finite steps; a fire watch with branches/waits is explicitly chosen for that occasion. Unseen branches do not become learned knowledge.                                                                         |
 
-Before assigning PW01, inspect the unfinished `codex/save-editor-family` work already attached to this project. It contains save-restore, checkpoint, private-read and name-disclosure fixes. Integrate/review ready fixes through their existing project; do not rebuild them or assume the entire branch is safe to merge. Its family-learning work remains incomplete. This documentation task does not merge it. Existing active work must be rechecked at kickoff because branch ownership can change.
+The original kickoff instructed: before assigning PW01, inspect the then-unfinished `codex/save-editor-family` work already attached to this project. It contains save-restore, checkpoint, private-read and name-disclosure fixes. Integrate/review ready fixes through their existing project; do not rebuild them or assume the entire branch is safe to merge. Its family-learning work remains incomplete. This documentation task does not merge it. Existing active work must be rechecked at kickoff because branch ownership can change.
 
 ## Engineer 1 — choices and results that can be trusted
 
@@ -147,7 +149,7 @@ The [delivery tracker](../maintainers/parallel-batch-01-playable-week.md) owns t
 
 Collect matched browser/task timings and work/byte/query counts. This week can demonstrate that these changed paths avoid repeated whole-world scans and per-token inference; it cannot establish million-memory or dense-population capacity. No acceptance criterion may be satisfied by dropping history, shrinking the scene or lowering stored memories without disclosing the changed workload.
 
-The proposal makes explicit implementation choices for each assigned package. The added survival numeric-attribute contract and finite-versus-conditional activity-learning boundary are proposed mechanisms, clearly distinguished from already implemented behavior. Review the task briefs before approval; engineers should not have to invent product semantics midway through implementation. Implementation begins only after the owner's go-ahead. Upstream stream capability and existing branch contents are engineering checks, not reasons to silently substitute a smaller result.
+The original proposal made explicit implementation choices for each assigned package, including the survival numeric-attribute contract and finite-versus-conditional activity-learning boundary. The owner subsequently authorized implementation. Those accepted contracts and the still-unperformed scenarios remain controlling; this historical proposal is not another approval prerequisite. Upstream stream capability and existing branch contents are engineering checks, not reasons to silently substitute a smaller result.
 
 ## Maintained records
 

@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                       | Last updated |
 | --------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Runtime and PX01 integration are qualified; broader human-conflict, player-learning and capacity work remains tracked. | 2026-10-06   |
+| Completed | Runtime and PX01 integration are qualified; broader human-conflict, player-learning and capacity work remains tracked. | 2026-10-16   |
 
 [Technical design](first-threat-encounter-tech-design.md) · [Current world rules](../../worlds/base/first-threat-encounter.md)
 
@@ -26,7 +26,7 @@ Mike authorized full runtime delivery on October 4. The original October 3 desig
 4. **Respond.** The stag's antler preparation is a physical action, not a guaranteed earlier warning. Walk beyond reach or use cover. A received injury interrupts its preparation and preserves recovery. Sight, current reach and exact target life are checked at impact. A missed shot neither staggers it nor reveals an unseen shooter.
 5. **Disengage.** The stag follows current sight or briefly searches its last sighting. It cannot follow hidden present coordinates, cross its pursuit bound or replenish the episode's route/time allowance. Minor wounds persist on return; sufficient injury causes permanent displacement to refuge. Failed return stops at its supported location without teleportation.
 6. **Face aftermath.** Cache depletion, spent ammunition, wounds, displacement and death persist. A player death leaves an independently lootable body and retains half of carried types. Continue produces the same identity in a new physical life near a usable campfire with a treatable scar. Retrieve what remains or find that someone else took it. Killing leaves existing finite harvest; no ordinary revival or extra cache reward appears.
-7. **Leave deliberately.** Reach a place safe enough for five normally simulated seconds before losing control. New animal attacks and lethal effects remain possible during fading. Unfinished human work stops; there is no automatic retreat. Inactive protection begins at the simulation deadline, and return keeps the real aftermath.
+7. **Leave deliberately.** Reach a place safe enough for 300 game seconds (five real seconds at normal speed) before losing control. New animal attacks and lethal effects remain possible during fading. Unfinished human work stops; there is no automatic retreat. Inactive protection begins at the simulation deadline, and return keeps the real aftermath.
 
 ### Why invent or return?
 
@@ -36,7 +36,7 @@ The payoff is useful supplies brought home, a shorter route made safer and persi
 
 ## Human choices and tradeoffs
 
-The owner selected the encounter, observational danger, type-based death loss, continuity/scars, one exact potentially lethal attack confirmation, no new indirect harm and five fully simulated seconds of vulnerable departure. Remaining details were explicitly delegated. The [technical decision list](first-threat-encounter-tech-design.md#concrete-owner-decision-list) records the chosen rounding, scar/treatment and reconnection behavior with alternatives Mike can revise. Cooperative PvP, property policy and inactive protection are preserved. Broader D07 deliberate-luring/indirect harm and BW15 NPC ghosts/ordinary revival remain open.
+The owner selected the encounter, observational danger, type-based death loss, continuity/scars, one exact potentially lethal attack confirmation, no new indirect harm and 300 game seconds of vulnerable departure (five real seconds at normal speed). Remaining details were explicitly delegated. The [technical decision list](first-threat-encounter-tech-design.md#concrete-owner-decision-list) records the chosen rounding, scar/treatment and reconnection behavior with alternatives Mike can revise. Cooperative PvP, property policy and inactive protection are preserved. Broader D07 deliberate-luring/indirect harm and BW15 NPC ghosts/ordinary revival remain open.
 
 ## Player feedback and discoverability
 

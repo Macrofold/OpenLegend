@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                         | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-14   |
+| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-16   |
 
 **Broader qualification remains required; the bundled-model pilot has its own limited evidence.** This document turns the [feature specification](3d-pixel-art-feature-spec.md) into reviewable experiments and acceptance scenarios. It does not authorize game changes, automated test authoring, live provider work, or spending.
 

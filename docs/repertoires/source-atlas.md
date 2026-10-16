@@ -4,7 +4,7 @@
 
 ## Method and limits
 
-This atlas gives an individual design takeaway, caution and destination for **all 148 game subjects and all 28 fictional worlds**. It synthesizes dossier interaction cases, mechanics, reception/criticism and transfer discussions, together with the related thematic research. It is not a claim that every citation in every dossier was independently reopened, that every inherited research gate is complete, or that these new ideas have been tested with players.
+This atlas gives an individual design takeaway, caution and destination for **all 148 numbered game subjects and all 29 fictional worlds**. It synthesizes dossier interaction cases, mechanics, reception/criticism and transfer discussions, together with the related thematic research. It is not a claim that every citation in every dossier was independently reopened, that every inherited research gate is complete, or that these new ideas have been tested with players.
 
 The [research roster](../../archive/02-research/game-inspiration/research-roster.md) contains 148 subjects. The eighteen survival dossiers G131–G148 are now present in this checkout and included below. The [research progress ledger](../../archive/02-research/game-inspiration/research-progress.md) owns research completion and audit status; this proposal synthesis does not close its separate acceptance gates.
 
@@ -36,7 +36,7 @@ The purpose was to recover the full range of the sources: discovery, mastery, af
 
 Depth varies by dossier. This was not a line-by-line reread of every appendix, audit register or bibliography, an independent reopening of every external citation, or a new current-version verification of the games. New G131–G148 takeaways and targeted corrections below reflect this pass; useful earlier takeaways remain where they still express a particular lesson. Neither broad coverage nor retained references proves these proposed worlds will be fun: they still require playable selection and evaluation.
 
-All 148 game dossier links below are local and can develop beyond this snapshot. The world corpus still uses immutable remote links because it is not in this checkout; those committed paths were checked against the world snapshot. Remote access may require repository permissions. Later research can inform another selection without turning this atlas into a duplicate live progress ledger.
+All 148 game dossier links below are local and can develop beyond this snapshot. The original world takeaways retain immutable remote links for provenance; those committed paths were checked against the original world snapshot. The later 29-world corpus is now local, as recorded above. Remote access to the historical pins may require repository permissions. Later research can inform another selection without turning this atlas into a duplicate live progress ledger.
 
 Related game research: [what makes these worlds fun](../../archive/02-research/game-inspiration/essays/what-actually-makes-these-worlds-fun.md), [implications](../../archive/02-research/game-inspiration/essays/implications-for-openlegend.md), [production pitfalls](../../archive/02-research/game-inspiration/essays/production-and-platform-pitfalls.md), [evidence interpretation](../../archive/02-research/game-inspiration/essays/how-to-interpret-the-evidence.md), and the [mechanics studies](../../archive/02-research/game-inspiration/mechanics/README.md). The earlier broad essays and later dossiers have different scope and dates; use the individual dossier when resolving a subject-specific detail.
 

@@ -10,11 +10,11 @@ For each visible element, name its job: orientation, evidence, input, action, fe
 
 Present information in three layers:
 
-| Layer               | What belongs                                                                                   | Open Legend examples                                                                                |
-| ------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Immediately visible | Identity, current state, task-critical comparisons, main action, consequential cost or blocker | Item name and quantity; selected recipient; carrying limit; Save failed; action cannot reach target |
-| Nearby detail       | Explanation and alternatives that a player intentionally explores                              | Item history; modifier breakdown; why a recipe requires a tool; secondary character attributes      |
-| Specialist detail   | Rare configuration and diagnostic evidence                                                     | Trace JSON; generation settings; dependency graph; raw authoring fields                             |
+| Layer               | What belongs                                                                                   | Open Legend examples                                                                                         |
+| ------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Immediately visible | Identity, current state, task-critical comparisons, main action, consequential cost or blocker | Item name and quantity; selected recipient; container load/capacity; Save failed; action cannot reach target |
+| Nearby detail       | Explanation and alternatives that a player intentionally explores                              | Item history; modifier breakdown; why a recipe requires a material; secondary character attributes           |
+| Specialist detail   | Rare configuration and diagnostic evidence                                                     | Trace JSON; generation settings; dependency graph; raw authoring fields                                      |
 
 Frequency alone is insufficient. A rare but irreversible operation still needs conspicuous consequences. Required settings, invalid fields, purchase totals and permission changes must not disappear in Advanced. Unavailable information must say unknown/unobserved where that distinction matters, not display an empty meter or a zero.
 
@@ -22,7 +22,7 @@ This adapts Nielsen's progressive-disclosure guidance, not a rule that all detai
 
 ## Group by meaning and reading order
 
-Apply this hierarchy to the whole game, not only inventory. Stable HUD context answers who the player controls, what matters now and what work is underway. Player records have readable entry/return paths; creator, operations and diagnostics are explicit role-appropriate workspaces. Target selection keeps the world visible, with a readable candidate list as an alternative to precise pointing. It must not replace an execution form with an equally large mandatory action menu. The [whole-interface design](../projects/game-interaction-redesign-feature-spec.md#information-architecture-and-visual-hierarchy) gives all [58 current surface groups](interface-coverage.md) a design home; implementation is tracked separately. The proposed hierarchy does not invalidate native privacy, current camera meanings or meaningful authoring review.
+Apply this hierarchy to the whole game, not only inventory. Stable HUD context answers who the player controls, what matters now and what work is underway. Player records have readable entry/return paths; creator, operations and diagnostics are explicit role-appropriate workspaces. Target selection keeps the world visible, with a readable candidate list as an alternative to precise pointing. It must not replace an execution form with an equally large mandatory action menu. The [whole-interface design](../projects/game-interaction-redesign-feature-spec.md#information-architecture-and-visual-hierarchy) gives the [current surface groups, preserving the original 58-group audit](interface-coverage.md) a design home; implementation is tracked separately. The proposed hierarchy does not invalidate native privacy, current camera meanings or meaningful authoring review.
 
 Group inputs that answer one question or affect one decision. Put the label above its control by default, with a specific hint only when needed. Keep the label closer to its field than to the previous field. Place validation adjacent to the affected control. Use section headings for separate purposes, not a border around every row.
 

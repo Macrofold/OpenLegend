@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                 | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Survival and weapon mechanics are implemented, including AV02 compatible equipment; broader survival qualification remains open. | 2026-10-14   |
+| In progress | Survival and weapon mechanics are implemented, including AV02 compatible equipment; broader survival qualification remains open. | 2026-10-16   |
 
 **Status: approved for implementation in chat, September 27, 2026; mechanics implemented and complete Jev-only meals demonstrated; broader qualification incomplete.** The owner requests cognitively chosen survival behavior, removal of automatic berry seeking/eating, a knife for Mike and Ada, and reusable melee mechanics. The owner accepted the starting scene, biography, initial tuning and delivery plan below; optimal tuning remains unqualified. The owner confirmed that existing NPC ghost/revival policy stays in place.
 
@@ -35,6 +35,8 @@ Her values are not universal controller instructions. Another authored character
 > I imagine having a settled place someday: a sound roof, tools I understand, meals shared with people whose company I enjoy. I am curious about what I could learn and who I might become. Pain frightens me, and I do not regard my future as disposable. I also dislike needless cruelty.
 >
 > Right now I have a small camp and a few possessions. I have not yet learned this place well. What I can see, what I remember, and what another person tells me are different kinds of knowledge. When a plan fails I can be frustrated, reconsider it or seek help. I do not need to narrate every thought aloud, and I can change my mind when the situation changes.
+
+The quotation preserves the originally approved September 27 characterization. The current authored identity is the later PG02 revision in `worlds/base/characters.ts`, including Ada’s independent enjoyment of watching animals; it is not a literal copy of this original quotation. [BW18](../maintainers/base-world.md#bw18--ada-and-the-lean-starting-camp) records that content reconciliation.
 
 The minimization follow-up removes the earlier explicit acceptance of subsistence hunting and food-preparation paragraph. General practical knowledge, self-preservation and dislike of needless cruelty remain; hunting offers supply their food purpose without assigning an intention. Existing saved biographies are not rewritten.
 

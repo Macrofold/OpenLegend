@@ -19,7 +19,7 @@ Text alone can't keep a face, costume or painting style identical across images.
 
 - **Syntax:** put `--sref` and an image URL at the end. Separate several URLs with spaces. You can also use a numeric **style code** (`--sref 123456`) or `--sref random`, which becomes a code after you submit (docs).
 - **Style weight** `--sw`: 0–1000, default 100 (docs). Community: 50–150 balanced, 300+ dominant.
-- **Style reference version** `--sv`: on V8.2 and V7 there are six; `--sv 6` is the default and `--sv 4` is the older model. Codes and `random` work only with `--sv 4` and `--sv 6` (docs).
+- **Style reference version** `--sv`: the official [Style Reference](https://docs.midjourney.com/hc/en-us/articles/32180011136653-Style-Reference) page specifies six algorithms for V7, default `--sv 6`, with `--sv 4` retaining the older model. Codes and `random` work with `--sv 4` and `--sv 6`. It does not establish the same algorithm-version contract for V8.x; that earlier extrapolation is withdrawn (rechecked 2026-10-15) (docs).
 - **Keep the text simple.** "Avoid adding style words that might conflict with your reference image's look." "Use your text prompt to describe what you want to see, not how Midjourney should modify the reference image." A text prompt is still required (docs).
 - **Stability:** since V8.1, style references and moodboards are "super stable" (MJ). Community testers report the cleanest style-reference results on Niji 7.
 - **For Open Legend (house):** once one of our own painted concepts nails the finish, reuse it as `--sref <url> --sw 100–200` so a whole series matches. **Don't** use the pixel-art board screenshots as style references for concept art, because they'll pull the image toward pixel art. Third-party images may inspire early exploration but are never canon (house, from the 3D pixel-art style bible).
@@ -46,7 +46,7 @@ A midjourney.com-only tool that builds a custom style code (docs):
 
 - On the Personalize page, click the images you like best. Your **Global Profile** unlocks after enough picks, and after that you can create more profiles, each with its own ID (docs).
 - Use it with `--p` (default profile) or `--p pID` (a specific one); the ID turns into a code on submission (docs).
-- **Compatibility:** your V7 global profile works on V8.1 and V8.2. V8 profiles don't work on V7 (docs). Community: there's no V8 global profile yet.
+- **Compatibility:** your V7 global profile works on V8.1 and V8.2. V8 profiles don't work on V7 (docs). The [official Personalization page](https://docs.midjourney.com/hc/en-us/articles/32433330574221-Personalization) also says there is no Global V8 Profile yet (rechecked 2026-10-15).
 - **How many ratings:** community guidance is at least **40** for a usable profile, **200+** for a reliable one and **2,000+** for maximum refinement. V8.2 "better understands aesthetic preferences" and offers a larger pool of images to rate (MJ, community).
 - **Stylize interaction:** a low `--s` limits personalization; a high one strengthens it (docs). One community guide's V8 advice is to "lean heavily into personalization" and "crank stylize up to 1000" with a well-trained profile. That's an opinion to test, not a rule.
 - **Caution (house):** personalization pulls every image toward *your* general taste. For project work, prefer a project moodboard or style reference, and turn `--p` off when testing prompt wording.

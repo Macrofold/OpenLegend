@@ -2,13 +2,13 @@
 
 | Status    | Current progress                                                                                                                                                                 | Last updated |
 | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | All five product designs and the further gameplay critique are complete; independent delivery boundaries are reconciled, with technical/runtime work retained by feature owners. | 2026-10-14   |
+| Completed | All five product designs and the further gameplay critique are complete; independent delivery boundaries are reconciled, with technical/runtime work retained by feature owners. | 2026-10-16   |
 
 ## Assignment and baseline
 
 Complete the next five groups in [Needs design](../../maintainers/needs-design.md), one at a time: DG16 personal journal, DG17 continuing communities, DG18 crowds and social scenes, DG19 changing supplies, and DG20 heat and material consequences. Deliver detailed product behavior, complete player and resident journeys, failure and recovery, research, economic reasoning, staged capabilities and a final critique of their value to the game. The owner's explicit request excludes technical designs and runtime implementation from this assignment.
 
-The working branch is `codex/product-design-groups-16-20-20261006`, based on `Macrofold/OpenLegend` GitHub `main` at [`ce68e678ebe7589ae34db9fe7942782dbccbe7a5`](https://github.com/Macrofold/OpenLegend/commit/ce68e678ebe7589ae34db9fe7942782dbccbe7a5). That baseline includes the completed DG11–DG15 design assignment. Previously published proposals, current contracts and implementation evidence must be reconciled rather than treated as interchangeable.
+The original design branch was `codex/product-design-groups-16-20-20261006`, based on `Macrofold/OpenLegend` GitHub `main` at [`ce68e678ebe7589ae34db9fe7942782dbccbe7a5`](https://github.com/Macrofold/OpenLegend/commit/ce68e678ebe7589ae34db9fe7942782dbccbe7a5). That baseline includes the completed DG11–DG15 design assignment. Previously published proposals, current contracts and implementation evidence must be reconciled rather than treated as interchangeable.
 
 A subsequent source refresh on October 6 inspected GitHub `main` at [`34233ae24365eb8911fe1995c9c232bd57f34616`](https://github.com/Macrofold/OpenLegend/commit/34233ae24365eb8911fe1995c9c232bd57f34616), four commits beyond the branch's original base. The updated root guidance and action-availability contract were read before continuing. The designs incorporate relevant newly published evidence and action behavior; these upstream implementation changes are not work performed by this documentation assignment. The branch retains its original base and checkpoint history.
 

@@ -4,7 +4,7 @@
 
 **Baseline and completion.** Branched from Macrofold/OpenLegend `main` / `origin/main` at `7a576214fbb9891b2e9f742db56bbeccaa3a58a1` on `codex/missing-belonging`. Native/database/performance checks, Playwright desktop/mobile/short-viewport browser verification, and 7 bounded live-model dialogue/decision turns (`$0.075162` USD cumulative task spend, `0` uncertain completions) are recorded in [verification](../verification/parallel-batch-08-the-missing-belonging.md).
 
-**Integration, October 14, 2026.** Merged alongside Batch 07 into local `main`; the standard starting world includes the incident together with the existing people, territorial stag, fishing, shelter and expedition content. [Combined startup evidence](../verification/parallel-batch-08-the-missing-belonging.md#october-14-combined-starting-world) covers current-format initialization, HTTP serving, clean shutdown and database reopen. Batches 06 and 09 remain outside this integration.
+**Integration, October 14, 2026.** Merged alongside Batch 07 into local `main`; the standard starting world includes the incident together with the existing people, territorial stag, fishing, shelter and expedition content. [Combined startup evidence](../verification/parallel-batch-08-the-missing-belonging.md#october-14-combined-starting-world) covers current-format initialization, HTTP serving, clean shutdown and database reopen. Batches 06 and 09 were outside that specific integration checkpoint; both are now integrated on current main, as their [Batch 06](parallel-batch-06-rivals-and-contested-ground.md) and [Batch 09](parallel-batch-09-reviewed-content-removal.md) trackers record.
 
 ## MY01 — Author the incident and reachable places
 

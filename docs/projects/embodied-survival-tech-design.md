@@ -2,13 +2,13 @@
 
 | Status      | Current progress                                                                                                                 | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Survival and weapon mechanics are implemented, including AV02 compatible equipment; broader survival qualification remains open. | 2026-10-07   |
+| In progress | Survival and weapon mechanics are implemented, including AV02 compatible equipment; broader survival qualification remains open. | 2026-10-16   |
 
 **Status: approved for implementation in chat, September 27, 2026; mechanics implemented and complete Jev-only meals demonstrated; broader qualification incomplete.** [Feature specification](embodied-survival-feature-spec.md) owns the proposed experience. Required directions are distinguished there from recommended content and tuning.
 
 ## Baseline, scope and risk
 
-Source baseline: local `main` and freshly fetched `origin/main` at `412b5b480b4911d9977de73168c6072e2c023b83`, OpenLegend's verified remote default branch.
+Initial September 27 implementation baseline: local `main` and freshly fetched `origin/main` at `412b5b480b4911d9977de73168c6072e2c023b83`, OpenLegend's verified remote default branch.
 
 The initial estimate was several hundred to roughly a thousand logic lines across domain, context/scheduling and client projections. The implemented change is larger (roughly 1,200 added/changed logic lines plus removals); cross-layer qualification remains necessary. Risk is substantial because removing automatic feeding changes unattended survival, scheduling affects paid execution, and combat must preserve authority and exact-once effects across time and save/load. Re-estimate after tracing the implementation base and any action-foundation changes.
 
@@ -128,6 +128,8 @@ The same invocation goes through text grounding, contextual action discovery, NP
 5. A hit submits injury once through `commitBodyEffects`. Preserve actual injury, death, flee reactions and event audiences. A valid miss is a completed physical attempt, not a fabricated injury or an instruction to change goals.
 6. Recovery occupies the strike action until its deadline. If the action ends after impact through cancellation, interruption, target death or removal, retain its remaining attack recovery in the existing actor action-readiness/channel state (extend that owner narrowly if absent). Changing targets or re-equipping cannot accelerate attack cadence. This readiness is about the actor's attack execution, not a global freeze on unrelated actions.
 7. Finish with a typed hit/miss/blocked/interrupted result, actual damage when known and the actual target/action identity. Plans continue only under their existing outcome rules. A selected sequence can perform multiple strikes with one cognition; no executor creates more attacks on its own. A later strike against an already dead target is blocked with a clear result, without another damage event.
+
+**Current integration gap — October 15 source audit:** step 4’s one-draw requirement remains accepted. The installed strike executor skips the saved random draw when an eligible strike has accuracy exactly one (`kernel.ts`, wind-up completion), while ordinary probabilistic strikes draw once and out-of-range strikes draw none. [AC09.6](../maintainers/action-capabilities.md#ac096--equipped-contact-strikes-implemented-acceptance-partial) retains the correction and exact random-sequence qualification; earlier native pass reports do not establish this edge.
 
 Persist phase, exact references/version pins, remaining timing/recovery and whether impact already committed through existing world/action storage. Same-version restore cannot reroll or apply a hit twice. Plan cancellation, weapon transfer/deletion, changed definitions, incapacity and target removal must produce coherent terminal states. Use current live-definition policy rather than adding legacy readers or retaining incompatible old saves.
 

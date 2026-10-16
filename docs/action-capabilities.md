@@ -752,7 +752,7 @@ Removing `until sunset` can extend the activity rather than narrow it: disclose 
 
 **Reserved integration owner:** reconcile this section with the separately developed invention composition/runtime contracts before adding a second general mechanics interpreter. Invention authoring (draft, validate, revise, activate) remains a black-box application workflow. An invented mechanical workflow (select targets, consume resources, work, wait, effect) belongs to simulation execution and must share the relevant native invocation/predicate/output/lifecycle semantics with actor activities.
 
-| This branch uses now                                                                   | Future shared contract to reconcile                                     | Explicit non-goal here                                       |
+| Current finite actor slice                                                             | Future shared contract to reconcile                                     | Explicit non-goal here                                       |
 | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------ |
 | Domain `ActionInvocation` move/follow/pickup/drop codec and native binding             | Versioned invocation-facing descriptor in INV/EWF's common registry     | No second mechanics registry or universal verb enum          |
 | Existing concrete `Command` adapters and single AG action lane                         | Family admission, work/resource claims and executor interfaces          | No generated effects, raw state setters or host code         |
@@ -764,7 +764,7 @@ Removing `until sunset` can extend the activity rather than narrow it: disclose 
 
 Built-in and invented families should eventually provide the same discoverable parameter/target schema, eligibility and knowledge policy, authoritative validation, resource/work contract, output ports, progress/completion/cancellation semantics and actor-safe projections. The action layer should not care whether an eligible installed implementation originated in code or an admitted definition. Method installation, learning, possession, action permission and execution remain distinct.
 
-Continue point movement, narrow follow and fulfillment review independently of invention's authoring pipeline. Before introducing general branching/repetition, compound mechanical effects or richer persistent processes, reconcile their execution representation with the invention branch. A temporary actor plan and a reusable definition need not be stored identically, but must not acquire contradictory semantics for costs, waits, results and cancellation. This section does not mark that integration complete.
+Delivered point movement, narrow follow, fulfillment review and finite actor controls remain usable independently of invention's authoring pipeline. Before extending those controls into reusable definition workflows, compound mechanical effects or richer persistent processes, reconcile their execution representation through the shared INV/EWF contract. A temporary actor plan and a reusable definition need not be stored identically, but must not acquire contradictory semantics for costs, waits, results and cancellation. This section does not mark that integration complete.
 
 ### Delivered equipment and guard consumer
 

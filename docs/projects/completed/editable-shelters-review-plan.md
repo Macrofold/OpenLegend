@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                 | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | The delivered flat shelter is reviewed, repaired and qualified; wider expansion remains tracked. | 2026-10-06   |
+| Completed | The delivered flat shelter is reviewed, repaired and qualified; wider expansion remains tracked. | 2026-10-16   |
 
 ## Scope and risk
 

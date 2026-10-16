@@ -2,7 +2,9 @@
 
 | Status      | Current progress                                                                                                                          | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Combat mechanics, useful independent help and defensive response verified; hostile choices and the combined visual encounter remain open. | 2026-10-14   |
+| In progress | Combat mechanics, useful independent help and defensive response verified; hostile choices and the combined visual encounter remain open. | 2026-10-16   |
+
+**Current review, October 15:** these are retained original implementation instructions for work now integrated on main. The planned branch and readiness snapshot below describe October 8, not a branch to create again. The tracker preserves the still-open hostile-choice, formal-decline and combined visual encounter acceptance; this record grants no new paid execution.
 
 This replaces the five separate prompts at the owner's request. Their interleaving dependencies are now internal steps for one agent, on one branch; all existing scope and acceptance remain. CF01–CF05 identify work parts, not separate workers. This document originally prepared the future assignment; the owner subsequently authorized its complete implementation. Editing the prompt itself grants no additional authorization.
 

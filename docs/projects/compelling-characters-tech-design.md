@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                      | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Unified outcome memories, native perspective and quiet reflection are qualified for PG02; broader character reliability remains open. | 2026-10-06   |
+| In progress | Unified outcome memories, native perspective and quiet reflection are qualified for PG02; broader character reliability remains open. | 2026-10-16   |
 
 [Feature contract](compelling-characters-feature-spec.md#character-authorship-and-changing-personality) · [CE implementation and acceptance](../maintainers/character-experience.md) · [Memory contract](../memory-architecture.md) · [Agency contract](../agent-agency.md).
 
@@ -68,7 +68,7 @@ Personality development should use the existing accepted identity/understanding 
 
 ## Delivery stages, verification and limits
 
-1. **Delivered in this task:** accepted authoring distinctions, examples/counterfactual review, root reading route, narrow Ada text correction and truthful reopening of affected PG02 evidence. No larger runtime refactor is claimed.
+1. **Initial authoring correction, delivered before the runtime stages below:** accepted authoring distinctions, examples/counterfactual review, root reading route, narrow Ada text correction and truthful reopening of affected PG02 evidence. That initial correction changed content and guidance; the subsequent unified experience and native rendering changes are recorded in stages 2–3.
 2. **CE03/AG06/CR12:** trace required outcome identity/retention through existing experience selection; implement one personal-result projection and retire duplicate narrative preparation. Validate coverage/privacy/current-format restore and bounded reads before claiming replacement complete.
 3. **CE03/ACT/CR:** inventory personal fact producers/consumers and unify native perspective rendering, including feelings and outcome summaries. Verify source attribution and quote protection across storage, retrieval and display. No additional per-description paid calls.
 4. **CE01/CE04/CE05:** requalify independent pursuit and stopping with disposition-only content in the current authored world, including changed location/resources, urgent competing needs and ordinary invitation/refusal paraphrases. Retain failed controls and complete provider cost. Personality-development and whole-life acceptance remain separately scoped.

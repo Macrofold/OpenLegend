@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                                  | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The selected shared-world authority and private-view foundation was delivered on 2026-09-26; later participation and deployment work is separate. | 2026-10-15   |
+| Completed | The selected shared-world authority and private-view foundation was delivered on 2026-09-26; later participation and deployment work is separate. | 2026-10-16   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](multiplayer-authority-feature-spec.md) defines the experience. [MP01/MP04 delivery slices](../../maintainers/multiplayer.md#priority-2-implementation-slices) contain executable work; MP02/MP03, BW13/BW14, SL and D5/D6 retain their separate scope.
 
@@ -108,7 +108,7 @@ Use server transport/session facts to propose lifecycle operations; browser visi
 
 The world participation state machine is `active → exiting → inactive → active`. A return may be prepared outside the writer, but publication is one validated transition. The saved actor record carries phase/revision, last safe anchor and interruption/continuation references. Operational session expiry and exit-attempt identity/deadline are outside gameplay rewind. They describe current connectivity, not another writable copy of the body.
 
-When the last participating controlling connection is lost, enqueue one exit attempt. Its generation and deadline cannot be extended by duplicate disconnects or stale heartbeats. Numerical grace periods remain D03 tuning. Define the maximum exit bound in real elapsed operational time so a paused world cannot trap a logged-out human forever; the adapter supplies deadline-elapsed facts to the pure domain. Native action progression still uses simulation time, and no offline catch-up is introduced.
+When the last participating controlling connection is lost, enqueue one exit attempt. Its generation and deadline cannot be extended by duplicate disconnects or stale heartbeats. The original foundation used an operational elapsed-time bound so a paused world could not hold departure indefinitely. Mike's later [player-danger decision](../../worlds/base/player-danger.md#five-simulated-seconds-to-leave) supersedes that timing for the bundled world: its vulnerable exit advances only with the installed simulation exposure, excluding pause, navigation preparation and downtime. Operational session facts and exit identity remain server-owned, native timing remains domain-owned, and no offline catch-up is introduced.
 
 Each supported action family exposes safe-exit handling: finish already committed work, stop future work at an allowed boundary, release only unused holds and preserve completed costs/results. Long actions cannot veto departure indefinitely. Already applied damage is not undone. Unsupported delayed/indirect harmful mechanics require BW14's explicit policy before shared-world enablement; do not silently invent damage settlement, early impacts or immunity exceptions.
 

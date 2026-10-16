@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                      | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The operating-program proposal is prepared; adoption, funding, contracting and execution remain open. | 2026-10-14   |
+| In progress | The operating-program proposal is prepared; adoption, funding, contracting and execution remain open. | 2026-10-16   |
 
 | Field                | Value                                                                                                                                       |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |

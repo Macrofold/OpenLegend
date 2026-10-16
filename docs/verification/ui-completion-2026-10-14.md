@@ -713,7 +713,7 @@ duplicated by this final difference.
 This completes the independently executable implementation, selected
 qualification and tooling cleanup identified by the source/acceptance audit.
 Project status remains **In progress** for the real input/device/uncoached
-requirements below, and PR #27 remains draft and unmerged. Additional and
+requirements below. At that cleanup checkpoint, PR #27 was draft and unmerged. Additional and
 cumulative task provider/Jev cost: **$0**.
 
 ## Documentation-head Actions deadline

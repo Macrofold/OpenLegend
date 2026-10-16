@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                              | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Corrected flat contact/reach and the finite-stock single-bay lean-to are implemented, reviewed and qualified. | 2026-10-07   |
+| Completed | Corrected flat contact/reach and the finite-stock single-bay lean-to are implemented, reviewed and qualified. | 2026-10-16   |
 
 ## Scope, base and dependencies
 

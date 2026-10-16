@@ -1,8 +1,10 @@
 # Character visibility and target feedback
 
-| Status    | Current progress                                                                                       | Last updated |
-| --------- | ------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | Rendering, selection refusal and delayed outlines are implemented and checked in an isolated checkout. | 2026-10-03   |
+| Status    | Current progress                                                                                                   | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed | Rendering, selection refusal and outlines are delivered; later feedback work supersedes the original hover timing. | 2026-10-16   |
+
+The agreed experience and measurements below retain the October 3 delivery. The later [injury and direct-interaction delivery](embodied-feedback-plan.md) shortened the hover delay from one second to 0.3 seconds and softened the outline. [Current selection and hover behavior](../../world-presentation.md#selection-and-hover) owns that superseding rule; the original visibility and lifecycle evidence remains valid for its recorded scope.
 
 ## Agreed experience
 

@@ -2,9 +2,11 @@
 
 | Status    | Current progress                                                                                                                                       | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | Both requested reviews are complete, with immediate recipe-detail refresh, shared immutable identity, native/browser verification and maintained gaps. | 2026-10-07   |
+| Completed | Both requested reviews are complete, with immediate recipe-detail refresh, shared immutable identity, native/browser verification and maintained gaps. | 2026-10-16   |
 
 ## Agreed scope and base
+
+**Historical implementation and review record.** The branch/worktree, source pins and execution instructions below describe the completed October 6–7 work. Its current delivery and later integration are maintained in [AV01](../../maintainers/parallel-batch-05-adventure-defense-and-home.md#av01--rewarding-expeditions); they are not instructions to recreate or remerge those branches.
 
 Implement Mike's camp marker → abandoned lookout → riverside workshop journey under [AV01's feature scope](../parallel-batch-05-adventure-defense-and-home-feature-spec.md#av01--discover-something-worth-bringing-home), [technical contract](../parallel-batch-05-adventure-defense-and-home-tech-design.md#av01--sites-rewards-and-physical-recipe-records) and [authored content](../../worlds/base/rewarding-expeditions.md). Reuse PX03's private observations/known places, ordinary finite custody and native manufacture/use. No quest enrollment, restock, map revelation or required invention/combat/companion.
 
@@ -21,7 +23,7 @@ Expect approximately 400–700 affected runtime logic lines, excluding tests, pl
 - Server inventory/action projections and the existing recipe/detail surfaces expose only permitted method facts. All command schemas/binders/consumers are updated together.
 - Current-format validation and PostgreSQL persistence retain exact definitions, stock, knowledge and ordinary action receipts. Existing worlds are never reseeded or deleted.
 
-AV02's future attachment owner remains responsible for enforcing two-hand equipment occupancy. This branch uses the current single-equipped-tool owner and does not introduce a competing equipment store. Shared AV02 integration remains separately tracked.
+At the original expedition delivery, AV02's attachment owner and the spear's two-hand integration were still pending; the expedition used the then-current single-equipped-tool owner. That integration is now on local `main` through the existing body-port equipment owner: equipping the spear stows conflicting knife and shield without losing either item. [AV01](../../maintainers/parallel-batch-05-adventure-defense-and-home.md#av01--rewarding-expeditions) records the passing native comparison and keeps the final player-facing comparison open. The original expedition browser evidence does not qualify that later equipment change.
 
 ## Delivery sequence
 

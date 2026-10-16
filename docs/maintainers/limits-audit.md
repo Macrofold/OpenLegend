@@ -23,7 +23,7 @@ This file owns audit lifecycle and candidate ranking. Linked focused trackers ow
 
 Consider the permitted action path, automatic growth rate, hot-path frequency, protections before expensive work, scope of harm, recoverability and actual evidence. Do not assign precise probabilities without measurements. A world-wide pause is more serious than a refused optional request; a rapidly growing memory corpus deserves earlier attention than 10,000 manually created bows. A page/result limit, serialized lane or timeout is not automatically an input-work, backlog or resident-memory bound. Do not fix unbounded work by silently dropping protected information.
 
-**Remaining immediate priorities:** C18 (dense native work), C17 (growing recall/preparation), E01 (sustained release qualification). E04, R03 and C19 are implemented and removed from this todo; their permanent inventories retain behavior and reasons. See [delivered scope and evidence](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits). R04 (merge targets beyond the inventory page) is likewise removed; see [QU05](../limits/objects.md#qu05) and [player clarity evidence](../verification/player-clarity-ui.md#r04--merge-targets-beyond-the-page). E08 (characterless operator/spectator sessions and invite enrollment) is also implemented and removed; [MP02/MP05/MP15/MP17](../limits/multiplayer.md#mp02) retain behavior and [its evidence](../verification/multiplayer-entry-maintenance.md) records the checks. Open public sign-up is an owner decision in [D68](../../archive/05-project/open-decisions.md#d68--world-entry-beyond-invites). This is an engineering investigation order, not a claim that every risk has a measured failure threshold. Existing feature dependencies still apply. R02 moves to the bottom; R01 is deferred until a real reservation consumer exists.
+**Remaining immediate priorities:** C18 (dense native work), C17 (growing recall/preparation), E01 (sustained release qualification). E04, R03 and C19 are implemented and removed from this todo; their permanent inventories retain behavior and reasons. See [delivered scope and evidence](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits). R04 (merge targets beyond the inventory page) is likewise removed; see [QU05](../limits/objects.md#qu05) and [player clarity evidence](../verification/player-clarity-ui.md#r04--merge-targets-beyond-the-page). E08 (characterless operator/spectator sessions and invite enrollment) is also implemented and removed; [MP02/MP05/MP15/MP17](../limits/multiplayer.md#mp02) retain behavior and [its evidence](../verification/multiplayer-entry-maintenance.md) records the checks. Open public sign-up is an owner decision in [D68](../../archive/05-project/open-decisions.md#d68--world-entry-beyond-invites). This is an engineering investigation order, not a claim that every risk has a measured failure threshold. Existing feature dependencies still apply. R02 remains an extreme/manual case. R01 now has installed ranged and shelter consumers, so its receipt-growth risk is assessed as sustained use rather than deferred future integration.
 
 Original source-review baseline: `af1eb02`. The subsequent [implementation](../projects/completed/immediate-gameplay-limits.md) adds runtime evidence; broader LA01–LA04 acceptance remains open. [Inspected work and protections](../limits/README.md#growth-path-review-coverage) defines coverage and its limits.
 
@@ -31,15 +31,19 @@ Original source-review baseline: `af1eb02`. The subsequent [implementation](../p
 
 **Delivered save candidates, no longer ranked:** C05's autosave controls/manual priority and restart-visible failure status are delivered ([SL08-A](save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up), [SV23](../limits/persistence.md#sv23)); C24's durable capture ordering is delivered ([SB14](../limits/persistence.md#sb14)); C23's runtime checkpoint-worker watchdog and scoped slow-output qualification are delivered ([SB16](../limits/persistence.md#sb16), SL09-C). The inventories retain their rationale, limits and historical results. None closes the different large-vector restore failure, broad hosted capacity, or the command-line backup's separate snapshot limitation.
 
+<a id="c22"></a>
+
+**Delivered restore-file candidate, no longer ranked:** C22’s initial in-process cleanup was followed by durable attempt journals, attempt-owned file markers and a database commit marker. The later real CLI interrupted-copy, rollback/uncertain commit, pre-existing/changed slot and shared-directory checks close this specific file-reconciliation gap. [SB18](../limits/persistence.md#sb18), [actual evidence](../verification/ordered-async-saves.md#operational-restore-file-reconciliation-sb18-d1d2) and [D1/D2 delivery](production-data.md#remaining-d1d2-implementation-and-evidence) retain the supported boundaries; broader power-loss, hosted and complete recovery qualification remain open with their owners.
+
 ## Remove
 
 ### R01
 
-**P3. Future integration: a recurring gameplay caller starts creating reservations.** Accumulated receipts would block admission; no non-test runtime creator was found in this baseline.
+**P2. Sustained installed gameplay: repeated ranged shots and shelter work retain reservation receipts.** Accumulated terminal receipts can eventually block new admission; the exhaustion threshold has not been measured.
 
-Before integrating a recurring reservation consumer, move completed receipts out of live admission accounting while retaining durable idempotency evidence.
+Move completed receipts out of live admission accounting while retaining durable idempotency evidence, and qualify repeated release/cancellation/construction through the actual consumers.
 
-The retained-byte issue is real, but no non-test gameplay caller of `reserveResource` was found at `af1eb02`; ordinary crafting must not be described as already growing these receipts. Reprioritize immediately when a consumer lands. The 2026-09-28 camp sharing work evaluated one (reserving portions, tracker BW21) and deferred it partly for this reason; consent-aware offers deliberately use no holds. [ST09](../limits/state-effects.md#st09) · [Work](state-contributions.md)
+The historical `af1eb02` review found no non-test gameplay caller. Current aiming reserves a projectile and shelter phases reserve their actual material lots; consumed/released receipts still count toward retained-byte admission and have no cold-retention or expiry owner. This makes the source-confirmed growth reachable now, without establishing a measured failure rate or an immediate common-play threshold. BW21’s separate standing-portion claimant and receipt-retention dependency remain open; consent-aware offers themselves still use no holds. [ST09](../limits/state-effects.md#st09) owns the current source finding; [state contributions](state-contributions.md) retains reservation lifecycle integrity. This R01 item owns terminal-receipt retention and its qualification.
 
 ### R02
 
@@ -129,7 +133,7 @@ Audit connected producer/consumer contracts before raising limits. The 1,000-cha
 
 Replace positional truncation with relevant selection and explicit omissions across mind search, triggers and invention context.
 
-The first 8 matching mind lines affect the later attention query, not the complete accepted mind or the retained-corpus query. Qualify an actual omission at that consumer before changing it. The other historical 8-event, 24-recipe and 3-job prefixes likewise need their current paths checked before expansion. [LA008](../limits/memory.md#la008), [LA032](../limits/cognition.md#la032), [LA038](../limits/cognition.md#la038), [LA100](../limits/inventions.md#la100), [LA101](../limits/inventions.md#la101), [LA102](../limits/cognition.md#la102), [LA103](../limits/inventions.md#la103), [LA104](../limits/inventions.md#la104), [LA105](../limits/inventions.md#la105) · [Work](cognition-redesign.md)
+The first 8 matching mind lines affect the later attention query, not the complete accepted mind or the retained-corpus query. Qualify an actual omission at that consumer before changing it. The current spontaneous trigger selects the newest eight eligible events. Direct invention ranks the whole known recipe library before selecting 24; it also selects up to twelve memories and twelve events before byte reduction, while actor-invention context includes the latest three jobs. Qualify useful information actually lost at those consumers before expansion. [LA008](../limits/memory.md#la008), [LA032](../limits/cognition.md#la032), [LA038](../limits/cognition.md#la038), [LA100](../limits/inventions.md#la100), [LA101](../limits/inventions.md#la101), [LA102](../limits/cognition.md#la102), [LA103](../limits/inventions.md#la103), [LA104](../limits/inventions.md#la104), [LA105](../limits/inventions.md#la105) · [Work](cognition-redesign.md)
 
 ### C07
 
@@ -153,7 +157,7 @@ Completion needs bounded-memory evidence under slow storage and overlapping runn
 
 Use durable job/receipt retention for duplicate protection before retiring the old 300-ID rings.
 
-Changing a ring size alone can re-enable old effects. LA028 is the residual structured-mind helper, not the current inner-world publication route; current durable job evidence must be assessed at the actual caller. Remove compatibility-only consumers under DF04 rather than preserving a second workflow to enlarge its ring. [LA028](../limits/memory.md#la028), [LA066](../limits/cognition.md#la066) · [Work](production-data.md)
+Changing a ring size alone can re-enable old effects. LA028 is the unused residual structured-mind receipt helper, not the current inner-world publication route. The separate 300-entry response receipt ring remains active; assess its actual callers together with durable job evidence before changing retention or claiming a replay defect. Remove compatibility-only consumers under DF04 rather than preserving a second workflow to enlarge its ring. [LA028](../limits/memory.md#la028), [LA066](../limits/cognition.md#la066) · [Work](production-data.md)
 
 ### C16
 
@@ -162,12 +166,6 @@ Changing a ring size alone can re-enable old effects. LA028 is the residual stru
 Apply supported authored gates to contained/equipped continuous effects and source departure instead of assuming placement implies behavior.
 
 Carried objects cannot participate in existing continuous processing; source lifetime needs explicit semantics. [ST13](../limits/state-effects.md#st13), [ST14](../limits/state-effects.md#st14) · [Work](state-contributions.md)
-
-### C22
-
-**P2. Failure recovery: operational restore fails after copying slots.** Database rollback can leave newly copied save files behind.
-
-Reconcile only the attempt’s newly installed files after failure, preserving pre-existing/referenced slots and safe retry evidence. **In-process reconciliation done 2026-09-28**; process death between copy and install and shared data directories remain. [SB18](../limits/persistence.md#sb18) · [Work: D1/D2 file reconciliation](production-data.md#remaining-d1d2-implementation-and-evidence).
 
 ### C03
 
@@ -215,9 +213,9 @@ Delivered: coordinated capacity defaults for 100 players with 300 connections, 6
 
 **P2. Conditional: a busy scene has more useful context than small prefixes.** Decision quality suffers; increase only if useful information fits complete input.
 
-Let guaranteed relevant context and action descriptions use remaining request space rather than fixed 16/8 prefixes and a rigid 50,000-byte action share.
+Qualify useful context omitted by the current entity/item prefixes and let required information use the complete request budget.
 
-Relevant entities/items/evidence may fit but still be omitted. Measure quality and provider spend. [LA001](../limits/cognition.md#la001), [LA002](../limits/cognition.md#la002), [LA003](../limits/cognition.md#la003), [LA004](../limits/cognition.md#la004), [LA005](../limits/cognition.md#la005), [LA035](../limits/cognition.md#la035) · [Work](cognition-redesign.md)
+The 50,000-byte action value reserves headroom while selecting recall; it is not an eventual action-section cap. Action fitting already uses the remaining complete 100,000-byte allowance. Retain this candidate only for demonstrated useful omissions at the actual entity/item selection boundaries, measuring quality and provider spend rather than expanding a nonexistent half-context ceiling. [LA001](../limits/cognition.md#la001), [LA002](../limits/cognition.md#la002), [LA003](../limits/cognition.md#la003), [LA004](../limits/cognition.md#la004), [LA005](../limits/cognition.md#la005), [LA035](../limits/cognition.md#la035) · [Work](cognition-redesign.md)
 
 ### E02
 

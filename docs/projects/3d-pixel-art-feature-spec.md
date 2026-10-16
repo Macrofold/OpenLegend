@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                         | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-14   |
+| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-16   |
 
 **Original proposal — September 27, 2026.** The general pipeline remains proposed; the separately authorized bundled-model pilot is delivered. Requested by Mike on September 27, 2026. Source baseline: `Macrofold/OpenLegend` `main` at `412b5b480b4911d9977de73168c6072e2c023b83`. The original proposal task changed documentation only: zero runtime logic lines, no dependency changes, no paid generation, and no claimed graphics or provider qualification.
 

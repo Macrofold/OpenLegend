@@ -53,7 +53,7 @@ export interface OutingDestination<Point extends WorldPoint = SurfacePoint> {
   placement?: string;
 }
 /** Only live consent is retained here. Each participant's existing plan owns all motion.
- * docs/projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#exact-invitation-separate-agency */
+ * docs/projects/completed/parallel-batch-04-expeditions-and-exchange-tech-design.md#exact-invitation-separate-agency */
 interface CombatHelp {
   opponentId: string;
   opponentLife: number;

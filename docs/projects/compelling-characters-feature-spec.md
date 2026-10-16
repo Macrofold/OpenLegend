@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                            | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Unified personal evidence, native perspective and the bounded PG02 demonstration are delivered; broader character reliability remains open. | 2026-10-13   |
+| In progress | Unified personal evidence, native perspective and the bounded PG02 demonstration are delivered; broader character reliability remains open. | 2026-10-16   |
 
 **Accepted product direction, October 3, 2026; proposed delivery choices.** Mike requires multidimensional characters whose embodied experience, inner life, attention, choices and consequences work together. This is a product-design assignment, not permission to implement or run paid experiments. The October 4 owner clarification is developed in the [scoped technical design](compelling-characters-tech-design.md); broader psychological mechanics remain deferred. Existing implemented foundations and their unfinished acceptance retain their recorded status.
 

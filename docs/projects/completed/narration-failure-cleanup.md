@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                         | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | Explicit narration failures and removal of the player regeneration control are delivered with native and browser checks. | 2026-10-14   |
+| Completed | Explicit narration failures and removal of the player regeneration control are delivered with native and browser checks. | 2026-10-16   |
 
 **Currency review — October 14, 2026.** [September 27 evidence](../../verification/narration-and-chat-retry.md#explicit-narration-failure) records completion; `7ee0c0db4` integrates the change that day. Historical branch publication and SQLite verification below are provenance, not current startup instructions. [PostgreSQL-only storage](postgresql-cognition-preparation.md) and the [current development-save policy](../../../AGENTS.md#development-save-policy) govern current execution. Broader narration/model-quality checks and later conversation interruption fixes remain separate from this completed presentation change.
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                          | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | NPC afterlife and voluntary telepathy proposals are prepared; adoption, technical delivery and qualification remain open. | 2026-10-14   |
+| In progress | NPC afterlife and voluntary telepathy proposals are prepared; adoption, technical delivery and qualification remain open. | 2026-10-16   |
 
 **Proposal scope and inspected baseline:** product and behavior proposal for DG33, written 2026-10-09 UTC against the inspected `fffdafcf3f7b92d63e1a43e551627cde67708dea` baseline. Two independently selectable authored families are developed here: voluntary contact with a retained deceased NPC, including a separately gated ordinary return to life; and selective voluntary telepathy. Adoption, technical design, implementation and measured qualification remain open. Human recovery is independent of both families.
 

@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                        | Last updated |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Structured invention questions and their approved bounded acceptance were completed on 2026-09-29; wider release gates remain separate. | 2026-10-14   |
+| Completed | Structured invention questions and their approved bounded acceptance were completed on 2026-09-29; wider release gates remain separate. | 2026-10-16   |
 
 **Implemented design:** The approved finite scope is delivered; baseline findings and staging below retain the original design history. Implements the design scope of the [feature specification](invention-questions-feature-spec.md). The recommendation below preserves the current contract that human waiting is not active model execution.
 

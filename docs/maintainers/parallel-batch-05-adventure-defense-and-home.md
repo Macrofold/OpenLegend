@@ -31,19 +31,20 @@
 - [x] Integrate one current contact-defense/damage owner; complete real front/late/rear/miss/cancel/expiry/concurrent-impact and lifecycle/transfer/restore acceptance.
 - [x] Reconcile AC/PO/EWF/INV/BW/UIUX affected requirements and the [shield profile](../worlds/base/shield-defense.md), preserving supplied death/PvP decisions.
 
-**Delivered on `codex/av02-shield-defense`:** supplied local `main` at `51d43e3f4a91e7ceed1404add65123b331d97358` already contained the incoming encounter and lifecycle owners. The [shield profile](../worlds/base/shield-defense.md) and [verification report](../verification/shield-defense.md) own current behavior and evidence. This does not claim the branch is merged. **Consumers:** AV04's cloak uses this equipment owner; AV03/AV05 do not create alternate equipment stores. [AV02 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av02--equipment-and-one-contact-defense-owner).
+**Original branch delivery on `codex/av02-shield-defense`:** supplied local `main` at `51d43e3f4a91e7ceed1404add65123b331d97358` already contained the incoming encounter and lifecycle owners. The [shield profile](../worlds/base/shield-defense.md) and [verification report](../verification/shield-defense.md) own current behavior and evidence. That report recorded branch qualification; the implementation is now integrated as stated above. **Consumers:** AV04's cloak uses this equipment owner; AV03/AV05 do not create alternate equipment stores. [AV02 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av02--equipment-and-one-contact-defense-owner).
 
 **October 7 second review:** current resident attack/equipment admission, truthful Equip refusals, complete body-port descriptions and namespace-safe attachment validation are implemented and qualified. [Evidence](../verification/shield-defense.md#second-implementation-review--october-7-2026) records complete action-list measurements and the existing CG01/C17 inventory-preparation gap; wider population/model qualification remains open.
 
 ## AV03 — Useful competence and voluntary coaching
 
 - [x] Complete PC02's scoped technical counterpart and implement PC03's actual-use progression, inert target and private progress.
-- [x] Deliver PC04's two genuine consents, observed shot, chosen feedback and refusal/interruption, distinct from recipe teaching and method learning.
+- [x] Deliver PC04's original immediate-outcome consents, observed shot, chosen feedback and refusal/interruption, distinct from recipe teaching and method learning. The later finite-flight timing gap is the separate open repair below.
 - [x] Complete PC05 continuity/correction/cost and PC06 native comparisons under the exact world profile; no beginner nerf or mandatory target grind.
+- [ ] Complete [PC04's result-observation repair](practical-competence.md#pc04--voluntary-coaching) and its affected coaching qualification after finite projectile travel; preserve independent practice credit at release. PC04 owns the repair's full criteria.
 - [ ] Complete PC06 human game-value qualification: observe whether players notice and appreciate the benefit without treating practice as an opening chore.
 - [x] Reconcile [PC](practical-competence.md), DG14/ND03/ND04's scoped portion, EWF/SC/AE/AG/CE consumers and actual evidence.
 
-**Delivery:** [scoped design](../projects/authored-stats-tech-design.md) and [native, SQL, browser and real-choice evidence](../verification/practical-competence.md) cover the selected consumer. Human appreciation remains open in PC06. Coaching owns its finite episode and does not depend on PX04's trip controller. [AV03 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av03--practical-skill-from-committed-experience). The numerical effect is selected product scope, not proven enjoyment.
+**Delivery:** [scoped design](../projects/authored-stats-tech-design.md) and [native, SQL, browser and real-choice evidence](../verification/practical-competence.md) cover the original selected consumer. PC04's later flight/result-observation repair and PC06 human appreciation remain open. Coaching owns its finite episode and does not depend on PX04's trip controller. [AV03 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av03--practical-skill-from-committed-experience). The numerical effect is selected product scope, not proven enjoyment.
 
 ## AV04 — A usable editable shelter
 
@@ -52,7 +53,7 @@
 - [x] Implement extension, cloak use through AV02, safe support failure, material-preserving alteration/reclaim and complete current-format continuity.
 - [x] Complete the selected canopy/two-bay acceptance and reconcile PX05/DG13/ND07/shelter-only ND08, INV-6.4 and affected SW/PO/SC/BW work. Do not close general construction or rain/heat systems.
 
-**Delivered on `codex/av04-editable-shelter`:** PX05 design commits `716ae528c`/`78490fa93` and completed AV02 `e025fe0f55ce8010d58be6646decccc5a1a639aa` are incorporated. [Actual evidence](../verification/editable-shelters.md) covers native, disposable PostgreSQL, ordinary UI and bounded work; [SH01–SH06](editable-shelters.md) retains wider qualification and home scope; the separately authorized October 7 follow-on qualifies corrected contacts and the finite-stock single-bay slope. This is branch delivery, not a claim that the branch is merged. [AV04 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av04--real-construction-and-useful-shelter).
+**Original branch delivery on `codex/av04-editable-shelter`:** PX05 design commits `716ae528c`/`78490fa93` and completed AV02 `e025fe0f55ce8010d58be6646decccc5a1a639aa` are incorporated. [Actual evidence](../verification/editable-shelters.md) covers native, disposable PostgreSQL, ordinary UI and bounded work; [SH01–SH06](editable-shelters.md) retains wider qualification and home scope; the separately authorized October 7 follow-on qualifies corrected contacts and the finite-stock single-bay slope. That report recorded branch delivery; the implementation is now integrated as stated above. [AV04 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av04--real-construction-and-useful-shelter).
 
 ## AV05 — River fishing and world-defined cooking
 

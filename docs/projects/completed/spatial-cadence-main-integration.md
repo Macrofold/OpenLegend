@@ -2,11 +2,11 @@
 
 | Status    | Current progress                                                                                                                       | Last updated |
 | --------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Spatial/cadence reconciliation and its three scoped performance reductions are integrated with the recorded local validation complete. | 2026-10-14   |
+| Completed | Spatial/cadence reconciliation and its three scoped performance reductions are integrated with the recorded local validation complete. | 2026-10-16   |
 
 **Currency review — October 14, 2026.** [September 26 evidence](../../verification/spatial-cadence-main-integration.md) records the completed reconciliation, local automated/browser checks and measured follow-through; `f551e3d8f` integrated the work that day. The branch recovery/rebase instructions and separate hearing branch below are historical provenance. Later [hearing reconciliation](../hearing-main-integration.md) and [regional time work](../regional-time-and-navigation.md) extend the implementation. Broader dense/history/8×, platform and publication CI gates stay with their existing owners; this completed local integration does not claim they passed.
 
-Requested in chat on 2026-09-26: pull `feature/simulation-cadence`, thoroughly review its complete change against main, and rebase/reconcile both implementations for merge readiness. This authorizes local reconciliation, not merging main or force-publishing rewritten shared history.
+Requested in chat on 2026-09-26: pull `feature/simulation-cadence`, thoroughly review its complete change against main, and rebase/reconcile both implementations for merge readiness. That request authorized the recorded local reconciliation, not a standing instruction to merge main or force-publish rewritten shared history.
 
 ## Baseline and risk
 

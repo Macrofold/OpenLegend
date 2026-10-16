@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                  | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The three focused restore and privacy fixes have native/PostgreSQL evidence; graphical conversation-switch and broader acceptance remain tracked. | 2026-10-04   |
+| In progress | The three focused restore and privacy fixes have native/PostgreSQL evidence; graphical conversation-switch and broader acceptance remain tracked. | 2026-10-16   |
 
 These authorized independent follow-ups proceeded while [BW16 family authoring](completed/save-editor-family-plan.md) awaited its family disclosure and correction choices. The recorded branch began at local `main` `add92ccb`, incorporating `origin/main` `0382be76`. Those pins, branch overlaps and defect descriptions are historical implementation context, not instructions to rebuild the three delivered fixes or repeat that base selection. Current work follows the focused remaining acceptance and the root synchronization policy.
 

@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                             | Last updated |
 | --------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Fire care and consent-aware gifts are delivered and verified; standing reservations and later fire-watch qualification remain separate work. | 2026-10-14   |
+| Completed | Fire care and consent-aware gifts are delivered and verified; standing reservations and later fire-watch qualification remain separate work. | 2026-10-16   |
 
 **Currency review — October 14, 2026.** The selected fire-care and gift scope was verified on September 28 and integrated in `add92ccbf` on September 30; [the recorded checks](../../verification/camp-life.md#historical-fire-care-baseline--september-28-2026) and BW19–BW21 distinguish delivery from deferred standing reservations. The branch, edit coordination and implementation sequence below are historical. Later [reciprocal barter](../../worlds/base/social.md) extends the same consent owner; it does not change this plan's decision that a gift moves only after acceptance. Current shared action-catalogue gaps remain under AC02/AC09, rather than being closed by this finite family.
 

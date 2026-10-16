@@ -2,11 +2,9 @@
 
 | Status      | Current progress                                                                                                                | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Selected repeated-sight reductions and continuation repairs are delivered; server capacity and combined acceptance remain open. | 2026-10-14   |
+| In progress | Selected repeated-sight reductions and continuation repairs are delivered; server capacity and combined acceptance remain open. | 2026-10-16   |
 
 **Currency review, October 14, 2026.** The assignments, source observations and estimates below describe their original October 2 execution context. The table above and [PW tracking](../../maintainers/parallel-batch-01-playable-week.md) distinguish delivered work from remaining qualification; old branch/format references do not select the current development base or authorize compatibility work.
-
-**Original implementation brief.** Engineer 1: **36 hours**, following 20 hours of reliability repairs. The engineer's separate 24-hour integration allowance is shared with those repairs, not an additional implementation budget for this brief. The [feature specification](../parallel-batch-01-playable-week-feature-spec.md) and [technical design](../parallel-batch-01-playable-week-tech-design.md) own the expanded week's scope; [PW08](../../maintainers/parallel-batch-01-playable-week.md#pw08--proportional-simulation-work) owns completion. Creating this document does not authorize runtime implementation.
 
 **Original implementation allocation.** Engineer 1: **36 hours**, following 20 hours of reliability repairs. The engineer's separate 24-hour integration allowance is shared with those repairs, not an additional implementation budget for this brief. The [feature specification](../parallel-batch-01-playable-week-feature-spec.md) and [technical design](../parallel-batch-01-playable-week-tech-design.md) own the expanded week's scope; [PW08](../../maintainers/parallel-batch-01-playable-week.md#pw08--proportional-simulation-work) owns completion. The later owner authorization and delivered scope are recorded below; this original allocation is not an additional authorization or a reason to repeat implemented work.
 

@@ -1,6 +1,6 @@
 # 09 · Sources
 
-[Guide home](README.md) · All accessed 2026-09-27.
+[Guide home](README.md) · Original research accessed 2026-09-27. The October 15, 2026 audit rechecked Version, Parameter List, Draft & Conversational Modes, Multi-Prompts, Edit Model, Omni Reference, Comparing Plans, Style Reference, Personalization, Moodboards and Terms of Service; other source access dates remain historical.
 
 Reliability, from most to least trustworthy: official docs > Midjourney announcements > community guides. When a community claim conflicts with the docs, the docs win. Where they disagree, this guide says so.
 
@@ -18,7 +18,7 @@ Reliability, from most to least trustworthy: official docs > Midjourney announce
 | [Weird](https://docs.midjourney.com/hc/en-us/articles/32390120435085-Weird) | 0–3000; not fully compatible with seeds |
 | [Quality](https://docs.midjourney.com/hc/en-us/articles/32176522101773-Quality) | V7 `--q` values and costs |
 | [No](https://docs.midjourney.com/hc/en-us/articles/32173351982093-No) | `--no` syntax; −0.5 weight; words read on their own |
-| [Multi-Prompts & Weights](https://docs.midjourney.com/hc/en-us/articles/32658968492557-Multi-Prompts-Weights) | `::` syntax; not listed for V8.x |
+| [Multi-Prompts & Weights](https://docs.midjourney.com/hc/en-us/articles/32658968492557-Multi-Prompts-Weights) | `::` syntax; supported through V6.1, not V7 or V8.x (rechecked 2026-10-15) |
 | [Seeds](https://docs.midjourney.com/hc/en-us/articles/32604356340877-Seeds) | Range; "99% identical in V8.X"; A/B testing |
 | [Tile](https://docs.midjourney.com/docs/tile) | Seamless patterns; don't upscale |
 | [Permutations](https://docs.midjourney.com/docs/permutations) | `{}` syntax; plan limits; Fast/Turbo only |

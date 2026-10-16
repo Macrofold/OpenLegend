@@ -33,7 +33,7 @@ Do not assume a regional player cap handles dense interaction inside that region
 
 ## 4. What changed during the discussion
 
-Earlier reasoning favored preserving exact offscreen outcomes wherever possible. The accepted product rule is broader: declared coarse resolution may produce different outcomes while preserving established facts, scopes, permissions, and coherent continuation. Exact integration remains useful where available; it is not the only valid offscreen law.
+The October 2 discussion broadened the earlier exact-offscreen preference to permit explicitly declared coarse outcomes that preserve established facts, scopes, permissions and coherent continuation. The October 15 selected first physical families narrow that option: they preserve the same installed outcomes, ordering, resources, random attempts and eligible observations through rates, trajectories and event timing. Nonmatching physical approximation remains conditional future scope, rather than a current alternative for that first delivery. Separately selected compact expressive background contributions define their precision at creation; they do not relax physical consequences. [The suite principles](README.md#ps-p06--calculate-unobserved-activity-without-changing-its-consequences) and [selected design map](../maintainers/intelligent-simulation.md) own that current scope.
 
 Earlier clock examples coupled fast dates with proportionally faster mechanics and decision frequency. The desired authored-reality direction permits independent calendar pacing. Existing runtime speed semantics remain unchanged until an explicit feature implements that separation.
 

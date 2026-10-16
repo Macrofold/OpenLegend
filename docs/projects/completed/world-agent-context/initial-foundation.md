@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                    | Last updated |
 | --------- | --------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The finite graph, checks and pipeline foundation was delivered and locally qualified on 2026-09-28. | 2026-10-14   |
+| Completed | The finite graph, checks and pipeline foundation was delivered and locally qualified on 2026-09-28. | 2026-10-16   |
 
 **Status: finite initial foundation implemented and qualified.** The [current qualification record](../../../verification/world-agent-context.md#final-local-qualification) and [focused tracker](../../../maintainers/world-agent-writes.md#context-and-invention-loop-design) own evidence and remaining broader work. The owner requested that the first version include a foundation for every critical invention-process responsibility, including a basic dependency graph. This strengthens the [context feature specification](../world-agent-context-feature-spec.md) and [technical design](../world-agent-context-tech-design.md); the owner has approved implementation of this finite scope. It does not claim future mechanics exist.
 

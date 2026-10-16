@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                              | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Main and solo starts pass native creation, reload and browser preview; generated-tool play and parent acceptance remain open. | 2026-10-14   |
+| In progress | Main and solo starts pass native creation, reload and browser preview; generated-tool play and parent acceptance remain open. | 2026-10-16   |
 
 **Alignment updated:** 2026-10-14T08:14:37Z.
 
@@ -21,13 +21,13 @@ Preparation is explicit rather than per-tick work: one shared initializer constr
 
 **Delivered:** both choices prepare, activate and reopen on disposable PostgreSQL; direct solo startup and reopening work at the default seed; browser choice/preview and configured-database content were checked. Native startup exposed a rock at the solo arrival point, so the authored riverside clearing is reserved during landscape generation, with normal collision checks retained. Exact identity review fixed potential overwriting of a fixed scenario object and retained custom authoring's default. [Evidence and limitations](../verification/playable-world-creation.md#october-14-main-world-and-solo-testing-ground) qualify this correction, not broader first-play acceptance.
 
-## Baseline and independent completion
+## Original planning baseline and independent completion
 
-The inspected repository is `/Users/mzw/Documents/ChatGPT/OpenLegend`, local `main` at **`2c3f52038e3c1afae0f2cc7586c3e740f1cf5ad5`**, equal to refreshed `origin/main`. That baseline includes the existing invention, World Agent, character, exploration and Batch 05 consumers. Batch 06 on `codex/rivals-and-contested-ground` is unavailable to this assignment; none of its runtime behavior is required. No Macrofold change is required by this design.
+The original October 11 inspected repository was `/Users/mzw/Documents/ChatGPT/OpenLegend`, local `main` at **`2c3f52038e3c1afae0f2cc7586c3e740f1cf5ad5`**, equal to refreshed `origin/main`. That baseline includes the existing invention, World Agent, character, exploration and Batch 05 consumers. Batch 06 on `codex/rivals-and-contested-ground` is unavailable to this assignment; none of its runtime behavior is required. No Macrofold change is required by this design.
 
 **Start readiness: Ready after these planning files are on the selected local-main base. Open prerequisites: None.** Target preparation uses ordinary disposable current PostgreSQL and operator configuration during implementation qualification; the missing creation-target runtime is owned here. No other worker needs to provide a host service, character-removal operation, library, combat change or intermediate API.
 
-The [feature allocation](parallel-batch-07-playable-world-creation-feature-spec.md) implements [world creation §§2–11](world-creation-feature-spec.md#2-boundaries-inherited-from-the-project). This design defines a first supported creation consumer, not a replacement for that product contract. All OC stages are one assignment on the future branch `codex/playable-world-creation`.
+The [feature allocation](parallel-batch-07-playable-world-creation-feature-spec.md) implements [world creation §§2–11](world-creation-feature-spec.md#2-boundaries-inherited-from-the-project). This design defines a first supported creation consumer, not a replacement for that product contract. All OC stages formed one assignment on the then-future branch `codex/playable-world-creation`.
 
 ## Existing owners and the actual gaps
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                       | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Exact attended activity, compact background exchanges and independent personal reactions are designed; runtime delivery and qualification remain open. | 2026-10-15   |
+| In progress | Exact attended activity, compact background exchanges and independent personal reactions are designed; runtime delivery and qualification remain open. | 2026-10-16   |
 
 **Selected design, expanded October 15, 2026; not runtime delivery or implementation approval.** This extends the accepted PS04 direction. The [technical design](attention-and-scenes-tech-design.md) defines the exact attended slice and the selected two-NPC background family: compact expressive meaning, followed by the listener's independent interpretation, optional personal reaction and optional reply. Existing exact hearing evidence and captions retain their current behavior. Aggregate vocal activity, crowds and timed speech remain separate proposals; voice-media delivery and runtime implementation are outside this design assignment.
 

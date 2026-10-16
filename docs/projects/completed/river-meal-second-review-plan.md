@@ -2,7 +2,9 @@
 
 | Status    | Current progress                                                                                              | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The second review fixes, player and restoration checks, measured improvements and documentation are complete. | 2026-10-07   |
+| Completed | The second review fixes, player and restoration checks, measured improvements and documentation are complete. | 2026-10-16   |
+
+**Historical implementation record.** The source pins, branch/worktree and execution instructions below describe the completed delivery and reviews. AV05 is now integrated on local `main`; [the focused tracker](../../maintainers/parallel-batch-05-adventure-defense-and-home.md#av05--river-fishing-and-world-defined-cooking) preserves its finite completion and broader qualification. These records do not call for repeating the earlier branch setup.
 
 ## Scope and base
 

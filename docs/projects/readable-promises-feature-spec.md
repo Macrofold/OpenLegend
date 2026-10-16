@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                               | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Own-promise reading is delivered; required world-policy separation, bounded preparation and cross-account verification remain open under BW17. | 2026-10-15   |
+| In progress | Own-promise reading is delivered; required world-policy separation, bounded preparation and cross-account verification remain open under BW17. | 2026-10-16   |
 
 **Status:** the approved read-only first slice of [BW17](../maintainers/base-world.md#bw17--readable-promises-and-commitment-management) was delivered under the [player clarity plan](completed/player-clarity-ui.md), but its required boundary/preparation corrections and cross-account qualification remain unfinished. [Technical design](readable-promises-tech-design.md) defines the read contract and those remaining corrections. Current promise rules are in [base-world social behavior](../worlds/base/social.md#spoken-promises). Amending, cancelling and negotiated agreements stay out of scope until [D64](../../archive/05-project/open-decisions.md#social-exposure-decisions) is decided.
 

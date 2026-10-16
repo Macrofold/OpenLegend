@@ -1,8 +1,8 @@
 # Product designs for groups 31–35
 
-| Status    | Current progress                                                                                                                                                     | Last updated |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The product-design batch and critique are complete, including the resolved family audience and decision to retain browser delivery; implementation remains separate. | 2026-10-14   |
+| Status    | Current progress                                                                                                                                             | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed | The product-design batch and critique are complete, including the resolved family audience and browser choice; individual feature delivery remains separate. | 2026-10-16   |
 
 ## Assignment and baseline
 
@@ -80,7 +80,7 @@ The review removed compulsory membership, separated bow authority from depot aut
 
 The review removed a fixed manifestation timer and an immediate hunger/exhaustion penalty after revival. Ordinary eating need not end an attended visit. The new body retains authored age at death, scars, memories and relationships; elapsed calendar time is separately labeled. Old goods and claims persist, and the first non-harvestable body avoids making a generic yield redesign a prerequisite. A later harvestable family must conserve original entitlement instead of inheriting creator revival's administrative exception. No resource, body, inventory, plan or private message is replayed by return or restoration.
 
-The expedition distinguishes the four-unit territorial entry footprint from the eight-unit pursuit boundary and the actual final collection stance. Its newer-main human death/300-game-second vulnerable-exit package is an explicit dependency, not silently installed on this branch's collapse baseline. The inherited lethal-action warning needs a narrow consumer for the selected target's actual known return consequences; it cannot promise resurrection or reveal hidden eligibility. A last-known candidate list also cannot disclose unseen revival or private refusal by removing a name. Explicit pause ends the first manifestation/rite and active thought links, with no automatic recreation on Resume.
+The expedition distinguishes the four-unit territorial entry footprint from the eight-unit pursuit boundary and the actual final collection stance. At the October 9 design baseline, newer main's human-death/vulnerable-exit package was an explicit integration dependency rather than installed behavior on that design branch. That package is now integrated; the proposed afterlife consumer still needs implementation and qualification against the [current player-danger rules](../../worlds/base/player-danger.md). The inherited lethal-action warning needs a narrow consumer for the selected target's actual known return consequences; it cannot promise resurrection or reveal hidden eligibility. A last-known candidate list also cannot disclose unseen revival or private refusal by removing a name. Explicit pause ends the first manifestation/rite and active thought links, with no automatic recreation on Resume.
 
 The thirteen primary records preserve historical versus current rules, developer rationale versus measured results and reported corrections versus current defects. Cost examples count failed/uncertain attempts, cold recall, actual listeners, private derivatives and normal living needs. The first useful local conversations remain independent of the harder expedition, broad compulsion/colony mechanics and mature-scale qualification. If the route has no interesting choice or the private link is less useful than ordinary talk, improve or narrow that actual experience instead of adding upkeep or a larger magic economy. This adult afterlife scope does not silently supply a child's ghost/revival capability.
 
@@ -124,7 +124,7 @@ The five-group product assignment is complete: the selected behavior and staged 
 
 The earlier local mirror is unavailable in this environment. `pnpm` and the pinned Prettier installation were not available, and repository-byte download attempts failed; consequently the pinned formatter and automated repository-wide link checker were **not rerun for the continuation**. This is a tooling-verification limit, not a claimed pass or a waiver of normal CI/merge checks. No game, browser interaction, live character, load, payment, real-user or provider-quality test was run by this design continuation, and no new application/provider execution was dispatched.
 
-Task changes are committed to the named branch, not main. This completed overview is the sole assignment body; the former active path is navigation only so existing pointers continue to reach the maintained record. The completed platform decision uses the same navigation pattern. Source histories, useful alternatives, named task IDs and unperformed delivery criteria are retained.
+At the recorded design checkpoint, task changes were committed to the named branch rather than main; they have since integrated into main. This completed overview is the sole assignment body; the former active path is navigation only so existing pointers continue to reach the maintained record. The completed platform decision uses the same navigation pattern. Source histories, useful alternatives, named task IDs and unperformed delivery criteria are retained.
 
 ## Maintained records
 

@@ -1,10 +1,12 @@
 # Batch 05 — Technical definitions for adventure, defense and a home
 
-| Status      | Current progress                                                                                         | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | All five assignments are merged; human appreciation and broader qualification retain their tracked gaps. | 2026-10-08   |
+| Status      | Current progress                                                                                                                                            | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | All five implementations are integrated; the coaching-result repair, final player equipment comparison and combined/genuine-play qualification remain open. | 2026-10-16   |
 
 Current AV05 delivery: [installed preparation/cast contract](../food-preparation.md), [river profile](../worlds/base/river-fishing.md) and [native/player/live-choice evidence](../verification/river-meal.md). Existing qualification gaps remain tracked separately.
+
+**Current review, October 15:** all five runtime deliveries and their supplied prerequisites are integrated. Original source inventories, starting branches, partial-start directions and implementation plans below preserve the October 5–8 handoff history. Current equipment already supplies the spear’s two-hand integration; the final player-facing comparison remains AV01 work. The accepted coaching episode still requires observed release and result, with the current release-only observation defect tracked under [PC04](../maintainers/practical-competence.md#pc04--voluntary-coaching). Combined play, human appreciation and broader qualification remain open.
 
 ## Scope and baseline
 
@@ -160,7 +162,7 @@ Prove a changed admitted shield profile changes the same calculation and view. Q
 Implement [PC02–PC06](../maintainers/practical-competence.md), using the now-delivered [scoped technical counterpart](authored-stats-tech-design.md) for this selected consumer. Its [qualification](../verification/practical-competence.md) distinguishes delivered runtime evidence from open human appreciation. Preserve the broader optional examples rather than marking them delivered. The exact product and tuning owners are [section 16](authored-stats-feature-spec.md#16-dg14-expansion--become-more-capable-at-something-worth-doing) and [practical competence](../worlds/base/practical-competence.md).
 
 - `packages/domain/src/world-modules.ts`: applicable typed attribute definitions/read/write, missing/private distinctions and authored installation.
-- `kernel.ts`, `strikes.ts`, `worlds/base/recipe-families.ts`: current swing mechanism, release checks and single accuracy roll.
+- `kernel.ts`, `ranged.ts`, `practical-competence.ts` and `worlds/base/recipe-families.ts`: current shot setup, release checks, saved aim draw and shared flight/contact resolution.
 - `action-experience.ts`, `knowledge.ts`, `state-contributions.ts`: committed occurrence references, existing evidence/overlay boundaries and one authoritative derived contribution.
 - `action-capabilities.ts`, current native work and perception owners: inert target, actual observation and two-person feedback.
 - Server cognition/perceived context/action catalogue and person/inspection UI: relevant choices and private progress. No new planner or general relationship score.
@@ -169,7 +171,7 @@ Implement [PC02–PC06](../maintainers/practical-competence.md), using the now-d
 
 Register the world-owned competence on applicable bodies through existing typed-state ownership. Keep authored starting support distinct from earned support. A small progress component references up to the canonical six released-shot occurrences plus one qualifying completed coaching episode. It is supporting data for one current competence contribution, not another general history or XP store. The existing action/evidence records retain their independent retention policy.
 
-At an actual eligible release, capture the supported mechanism pin and current competence, consume the real projectile and resolve the one existing hit comparison. Commit that outcome; then reconcile progression and its future contribution in the same authoritative transition. A display refresh, narrated story, observed third-party shot or starting preparation cannot credit a release. Once coached improvement exists, continue gathering the bounded independent support to six as required by the canonical correction rule.
+At an actual eligible release, capture the supported mechanism pin and current competence, consume the real projectile and create its saved flight from the saved aim selection. Record that release and reconcile independent progression and its future contribution in the same authoritative transition; later shared flight/contact resolution determines the actual hit or miss. A display refresh, narrated story, observed third-party shot or starting preparation cannot credit a release. Once coached improvement exists, continue gathering the bounded independent support to six as required by the canonical correction rule.
 
 One reconciliation owner handles installation, eligible outcomes, coaching completion, support correction and permitted rule changes. Do not persist a mutable attribute value and an independently editable counter that can disagree. The owning state service exposes the supported current value; preview and execution consume it. Loss of sole support suppresses future benefit while retaining actual historical shots and spent ammunition. Ordinary compaction, absence and death do not invent loss.
 
@@ -179,7 +181,7 @@ Use a real nonliving target capability, not an immortal animal. Reuse the ranged
 
 Coaching is a finite two-person episode with exact participants, scope revision, separate consents, observation reference, participation/work phase and completion/cancellation. Use the current actor/action/consent patterns; do not re-purpose a recipe Teach command to grant skill. A request grants neither actor a future action. Each participant must actually select the episode, and can withdraw under existing replacement/cancellation. At most one active episode per participant under the authored profile.
 
-Bind the coach's **actual permitted observation** of a qualifying learner release during the agreed episode. Hearsay and omniscient source lookup are insufficient. After that observation, both choose the guided-feedback work; admission checks the coach's actual competence, participants, permitted communication/reach and work availability. Completion grants one support reference. Leaving midway preserves actual shots and ends incomplete feedback honestly. New consent is needed for a later attempt; reconnect does not manufacture it.
+Bind the coach’s **actual permitted observation of both the qualifying learner release and its result** during the agreed episode. Hearsay and omniscient source lookup are insufficient. After both observations, both choose the guided-feedback work; admission checks the coach's actual competence, participants, permitted communication/reach and work availability. Completion grants one support reference. Leaving midway preserves actual shots and ends incomplete feedback honestly. New consent is needed for a later attempt; reconnect does not manufacture it. The current implementation records observation at release and can admit feedback before the later flight outcome; [PC04](../maintainers/practical-competence.md#pc04--voluntary-coaching) owns this precise repair. Historical coaching qualification does not close that gate.
 
 Chosen NPC speech stays with the conversation owner. Native completion can describe the supported method and actual observed result without fabricating a quotation or diagnosing an unmodeled posture. A trained resident is authored through mechanical starting competence; biography alone grants nothing. The first prepared scene may provide a practiced resident, but never force acceptance or replace Ada's independent goals.
 

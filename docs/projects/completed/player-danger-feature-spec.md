@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                                       | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | Selected runtime, documentation, required review and focused native/service/browser verification are delivered; broader qualification remains tracked. | 2026-10-04   |
+| Completed | Selected runtime, documentation, required review and focused native/service/browser verification are delivered; broader qualification remains tracked. | 2026-10-16   |
 
 ## Accepted direction and purpose
 
@@ -12,7 +12,7 @@ The optional stag/cache has a real safe longer approach, finite observed pursuit
 
 ## Leaving and lethal choices
 
-After logout/control loss, the character fades while fully vulnerable for five normally simulated seconds. New animal attacks can start and death can occur. Unfinished human work/rest stops, with no automatic retreat/defense, new absent-player ammunition spending or paid cognition. Pause/navigation preparation/downtime do not consume exposure. Expiry wins a tied discrete hit and then ordinary inactive protection applies. Returning control cancels the fade with actual wounds/location preserved; a subsequent genuine departure starts another window. Continue after death is explicit.
+After logout/control loss, the character fades while fully vulnerable for 300 game seconds (five real seconds at normal speed). New animal attacks can start and death can occur. Unfinished human work/rest stops, with no automatic retreat/defense, new absent-player ammunition spending or paid cognition. Pause/navigation preparation/downtime do not consume exposure. Expiry wins a tied discrete hit and then ordinary inactive protection applies. Returning control cancels the fade with actual wounds/location preserved; a subsequent genuine departure starts another window. Continue after death is explicit.
 
 Potentially lethal human attacks receive one final-blow-style review. It identifies the observed target and chosen attack/tool/range/timing/ammunition, explains death, initially focuses Cancel and supports Escape/focus restoration. It does not pause the world. Confirmation covers one exact physical life and attempt, never a same-named replacement or continuing permission. No universal incapacitation/one-health clamp/separate execution framework is added. The world keeps ordinary finite death/remains and leaves BW15 ghost/summoning/ordinary revival open.
 

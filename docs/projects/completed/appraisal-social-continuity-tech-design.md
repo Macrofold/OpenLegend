@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                              | Last updated |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Persistent appraisals and character-owned relationship notes were delivered on 2026-09-26; broader actor and cognition work remains separate. | 2026-10-14   |
+| Completed | Persistent appraisals and character-owned relationship notes were delivered on 2026-09-26; broader actor and cognition work remains separate. | 2026-10-16   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](appraisal-social-continuity-feature-spec.md) owns behavior; [ACT07/ACT08 delivery slices](../../maintainers/actor-model.md#priority-5-implementation-slices) own implementation and evidence. CR owns accepted mind/knowledge publication, EPR owns intake, P1 provides typed owner conventions and P4 bounded dependencies. This project does not replace any of those authorities.
 

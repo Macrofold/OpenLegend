@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                        | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The hosting proposal and playbook are prepared; deployment, provider qualification and capacity acceptance remain open. | 2026-10-14   |
+| In progress | The hosting proposal and playbook are prepared; deployment, provider qualification and capacity acceptance remain open. | 2026-10-16   |
 
 **Status: recommendation, researched 1–2 October 2026; not implemented or capacity-certified.** Auth0 is selected by Mike. Runtime baseline: [`b9a08a05`](https://github.com/Macrofold/OpenLegend/commit/b9a08a05b45edbda31154ad40bccd03c69c21cdd); the production branch at `ca804cc8` was reviewed for this update. Read the [feature specification](production-deployment-feature-spec.md) for promises, the [checklist](../maintainers/production-deployment.md) for delivery order, and the [implementation playbook](production-deployment-playbook.md) for packaging, commands, CI/CD and release procedures.
 
@@ -24,7 +24,7 @@ This is not a claim that one Fargate task serves 100,000 players. Either cloud c
 
 **[Scaling package at d2fa69bd](https://github.com/Macrofold/OpenLegend/blob/d2fa69bd8e0a8975ebe3f6976b875305c402a702/docs/scaling/README.md) and its [architecture](https://github.com/Macrofold/OpenLegend/blob/d2fa69bd8e0a8975ebe3f6976b875305c402a702/archive/02-research/massive-scale/target-architecture.md):** Reuse bounded cells, separate simulation/intelligence/control responsibilities, and G0–G4 sequencing. That branch was 104 commits behind the initial main baseline; its September 25 code audit is not current implementation evidence. This package adds concrete hosting/operations choices, not another SC/SF/LT backlog.
 
-**[AI providers](../ai-providers.md) and [MW delivery](../maintainers/macrofold-worker-api.md):** Preserve Macrofold Worker, inference, scope and accounting contracts. Full cognition currently requires Macrofold; direct model access is not feature parity.
+**[AI providers](../ai-providers.md) and [MW delivery](../maintainers/macrofold-worker-api.md):** Preserve Macrofold Worker, inference, scope and accounting contracts. Full deliberation and workspace reflection currently require Macrofold; direct model access separately supports immediate inference and does not supply that reflection harness.
 
 **[Runtime art](../invention-art-pipeline.md) and [3D asset pipeline](3d-pixel-art-asset-pipeline.md):** Instantiate their versioned publication/rights/fallback design with storage and delivery services. Do not replace their art semantics or claim the bundled mercenary implements production storage.
 
@@ -139,7 +139,7 @@ The [asset release procedure](production-deployment-playbook.md#5-publish-assets
 
 ## 7. Inference and GPU decisions
 
-**Managed execution first; no owned GPUs and no permanent process per NPC.** Preserve native continuation, scoped recall, judgment and generation through [the current AI boundary](../ai-providers.md). Full cognition uses the configured Macrofold Worker. OpenLegend does not create, resume, replace or destroy shared Workers; its operator must separately qualify upstream capacity, isolation, region, support, idle policy and billing.
+**Managed execution first; no owned GPUs and no permanent process per NPC.** Preserve native continuation, scoped recall, judgment and generation through [the current AI boundary](../ai-providers.md). Full deliberation and workspace reflection use the configured Macrofold Worker; the separate direct-inference path remains available for immediate calls. OpenLegend does not create, resume, replace or destroy shared Workers; its operator must separately qualify upstream capacity, isolation, region, support, idle policy and billing.
 
 Use bounded admission classes for player dialogue, autonomous decisions, reflection/maintenance and art. Apply per-account/world fairness plus global concurrency, queue age and reserved-spend controls. Native simulation does not wait on a model. Persist attempt identity before dispatch, reconcile unknown outcomes, and revalidate relevant authority/timeline/state before publication. A queue transport such as SQS may be added when separate workers need it; it does not replace the existing durable job/receipt owner or provide exactly-once paid execution. Model output remains untrusted; executor tool/network grants must not expose database administration or unrelated private worlds.
 

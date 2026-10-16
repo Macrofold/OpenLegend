@@ -96,7 +96,7 @@ Recurring work cannot renew its interval while children remain pending and **can
 
 **Reported · Restrictiveness: Medium.**
 
-Saved top-level work currently recognizes status effects and feeling records/processes; adding another durable process family requires code integration.
+Saved top-level work currently recognizes status effects, feeling records/processes and the selected consensual coaching family. Coaching validates its exact active pair, participant life, definition pin and work identity through its own native owner. Adding another durable process family requires code integration.
 
 **Reason / tradeoff:** Only integrated process owners have durable resume/recovery contracts.
 
@@ -210,7 +210,7 @@ Private visual acquisition batches flush after 128 records; contact acquisition 
 
 **Current — native-action integration source review, 2026-09-26 · Restrictiveness: Safe.**
 
-Cognition and maintenance intake select at most 64 ready eligible actors before asynchronous schedule reads. September 28 ([perception-reaction intake](../projects/perception-reaction-intake.md)):
+Cognition and maintenance intake select at most 64 ready eligible actors before asynchronous schedule reads. September 28 ([perception-reaction intake](../projects/completed/perception-reaction-intake.md)):
 
 - Selection is by priority instead of roster order.
 - Tickets with producer urgency at least **7**, or waiting at least **10 real seconds**, come first by wait time; the rest follow by wait time.
@@ -223,7 +223,7 @@ Refresh still traverses the mind roster, but compares identity tokens. It reruns
 
 ## NW15
 
-**Current — PW08 branch implementation · Restrictiveness: Too liberal for unqualified dense worlds.**
+**Current — integrated PW08 implementation · Restrictiveness: Too liberal for unqualified dense worlds.**
 
 Certain sight/contact pairs have no independent count cap. Spatial candidate selection and existing work admission constrain construction; each live pair has exactly two reverse memberships. Shared mechanical rebuilds separately prune expired, missing or ineligible pairs and retain only pairs whose remaining original interval passes the [complete dependency contract](../simulation-time.md#native-interval-contract). Invalidation visits deduplicated incident keys. The uncertain-outcome memo retains NW12's 16,384-entry clear-and-recompute bound and is cleared at every shared rebuild. Cache maps/sets are copied on frozen continuation forks and reconstructed after load; none is saved authority.
 
@@ -231,7 +231,7 @@ Certain sight/contact pairs have no independent count cap. Spatial candidate sel
 
 ## NW16
 
-**Current — NP02 branch implementation · Restrictiveness: Safe bookkeeping; Too liberal retained growth for unqualified dense worlds.**
+**Current — integrated NP02 implementation · Restrictiveness: Safe bookkeeping; Too liberal retained growth for unqualified dense worlds.**
 
 Independent sensory bookkeeping retains at most **4,096 combined source/observer scopes** before clearing the incomplete set and requesting a complete rebuild. This reuses QU14's ceiling; it does not cap world changes, witnesses or stored observations. Unknown draft internals, whole-table/record replacement, map/sense-policy changes, restored worlds and mismatched continuation ownership also rebuild. Incomplete or overflowed deferred writes additionally reconstruct contact starting positions with an authoritative root-table walk; this recovery cost grows with the population. Private source bins retain one copied entry per participating physical root; there is no independent count cap. Observer bins and counted dimensions grow with that population. Existing work admission still applies; bins only select candidates.
 

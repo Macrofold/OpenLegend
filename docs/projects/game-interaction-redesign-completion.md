@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                              | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | UI repairs and requested code reviews are complete; browser/CI gates and human/device acceptance remain open. | 2026-10-15   |
+| In progress | UI repairs and requested code reviews are complete; browser/CI gates and human/device acceptance remain open. | 2026-10-16   |
 
 ## Scope and authority
 
@@ -95,7 +95,8 @@ failure and delayed-result cases; [the review report](../verification/ui-impleme
 retains exact counts, reproduced failures and native/evidence limits. FRL02 is
 implemented. The published head's required [PR checks](https://github.com/Macrofold/OpenLegend/pull/27/checks)
 remain the integration gate; earlier green heads do not waive it. Human/device
-acceptance and the separate proposed item/building scope question remain unchanged.
+acceptance remains open. The separate proposed item/building scope question was
+still open at that checkpoint; Mike subsequently deferred it explicitly.
 
 ### Complete imported-interface review — October 15
 
@@ -135,8 +136,8 @@ because shared dismissal/focus, asynchronous private reads and consequential-wri
 recovery can affect several screens. Any wider native contract change requires a
 revised estimate and plan before implementation. The separately designed IWB
 follow-on adds crafting-list and compound equipment behavior, not just presentation;
-its inclusion is awaiting Mike's scope clarification while independent review and
-repairs continue.
+its inclusion awaited Mike’s scope clarification at that review’s start. He later
+explicitly deferred it, while the settled interface repairs continued.
 
 Confirmed repairs cover complete equipment-conflict visibility; trade and Speak/Act
 focus ownership; exact edited-draft completion; construction draft retention and
@@ -198,8 +199,9 @@ focused observations plus required Code/Spatial/interface checks pass at executa
 source `38a8adcf6`. The [review report](../verification/ui-implementation-review.md)
 retains complete coverage, failures, the unchanged native-time-test retry and
 cleanup. UIUX18 retains broader human/input/device qualification. Inclusion of the
-separate proposed item/building follow-on remains a scope question; the current
-review did not silently implement its new native behaviors.
+separate proposed item/building follow-on was still a scope question at that
+checkpoint; Mike subsequently deferred it. This review did not implement its new
+native behaviors.
 
 ### Current continuation — October 14
 
@@ -248,7 +250,7 @@ The selected Journal native browser-zoom/reflow observation now passes at `c98de
 
 1. The original trace and actual [Actions browser case](../../tests/browser/actions.spec.ts) place the aggregate timeout at the ground right-click after reload; no individual five-second assertion fails. The reload takes 35.31 seconds although the document GET returns in 8.86 ms. This locates an unexplained browser document-commit interval; source review establishes no safe production or fixture correction. [Exact diagnosis](../verification/ui-completion-2026-10-14.md#documentation-head-actions-deadline) retains the trace and image limits.
 2. The original sixty-second total, five-second assertions, existing action/capture defaults, screenshots and acceptance assertions remain unchanged. This ordinary case does not set the temporary zoom observation's separate ten-second capture bound. No code, fixture or configuration change is made.
-3. The single [second attempt](https://github.com/Macrofold/OpenLegend/actions/runs/38692034677/attempts/2) passes on the identical published source `5926cf6478325b0764dcae271b95952de93653b9`, closing the current required-check gate alongside the passing Code checks. The first failure and earlier `d3c526392`/`c98de4a07` passes remain evidence; the pass proves no performance repair. No provider work or excluded hunting repair occurs.
+3. The single [second attempt](https://github.com/Macrofold/OpenLegend/actions/runs/38692034677/attempts/2) passes on the identical published source `5926cf6478325b0764dcae271b95952de93653b9`, closing that source’s required-check gate alongside its passing Code checks. Later integrated UI repairs retain the separate current browser/CI gap in the readiness report. The first failure and earlier `d3c526392`/`c98de4a07` passes remain evidence; the pass proves no performance repair. No provider work or excluded hunting repair occurs.
 
 The original completion sequence is retained below with its source-specific evidence.
 
@@ -454,14 +456,15 @@ All verification starts with providers disabled and `AI_BUDGET_USD=0`. Fixture i
 - [x] Original action and checkpoint requests recover through reload and same-page changes without replacement admission or duplicate effects; the named storage, identity, privacy and stale-result cases pass at their recorded sources.
 - [x] Completed-task presentation and the already specified composed game journeys are implemented and verified through their actual owners and rendered interface. The selected native Journal zoom/reflow observation passes at `c98de4a07`; full human-use acceptance remains separate.
 - [x] Base, clockwork and touch worlds remain coherent under current definitions, and the supported alternate recharge interaction works through the shared interface and persistence; the b26ecb7cb two-preset continuation passes.
-- [x] In-scope defects and required final Code/Spatial failures are resolved without weakening acceptance; the affected diff and canonical documentation are reviewed and committed. Published source `5926cf647` passes both Code checks and unchanged-source Spatial/interface attempt 2; attempt 1's timeout remains recorded.
+- [x] At the earlier published source `5926cf647`, the named in-scope defects and required Code/Spatial failures were resolved without weakening acceptance; the affected diff and canonical documentation were reviewed and committed. Both Code checks and unchanged-source Spatial/interface attempt 2 passed; attempt 1’s timeout remains recorded.
+- [ ] Complete the required ordinary-browser and CI gates for the later integrated UI repairs. The [current review readiness](../verification/ui-implementation-review.md#current-verification-and-readiness) retains unresolved readiness/resize failures and required CI not run for those new local commits; earlier green sources do not close this gate.
 - [ ] Remaining keyboard/non-drag, text/viewport, real operating-system input-method, assistive-device and uncoached-player requirements are accurately qualified. Automated browser or synthetic composition results cannot be reported as human/device evidence.
 
-Required Code and Spatial/interface checks pass at cleaned source `d3c526392`, and the selected Journal zoom/reflow case passes at `c98de4a07`. Published source `5926cf647` passes both Code checks and the unchanged-source second Spatial/interface attempt, closing the current required-check/review criterion. Its first Actions timeout remains recorded, and cleanup is complete. Real input/device/uncoached acceptance remains unperformed.
+Required Code and Spatial/interface checks pass at cleaned source `d3c526392`, and the selected Journal zoom/reflow case passes at `c98de4a07`. The earlier published source `5926cf647` passed both Code checks and the unchanged-source second Spatial/interface attempt, closing that source’s required-check/review criterion. The later integrated repairs retain the current ordinary-browser/CI gap linked above. The first Actions timeout at that earlier published source remains recorded, and cleanup is complete. Real input/device/uncoached acceptance remains unperformed.
 
 These are the full feature's acceptance criteria, not authorization to restart the excluded native repairs during the UI-only continuation. Source-specific progress lives in the linked verification report; a passed subset cannot close a compound criterion whose other cases remain unverified.
 
-There is no unresolved product decision blocking the delivered interface repairs. The separately proposed native item/building follow-on still awaits the scope answer recorded in the current review plan. Physical assistive-device and uncoached-player observations require suitable real participants/devices; their absence must remain explicit rather than silently waived or used to stop independently executable implementation work.
+There is no unresolved product decision blocking the delivered interface repairs. Mike explicitly deferred the separately proposed native item/building follow-on; its accepted design and unfinished delivery remain tracked under their own owners. Physical assistive-device and uncoached-player observations require suitable real participants/devices; their absence must remain explicit rather than silently waived or used to stop independently executable implementation work.
 
 ## Integrated recovery continuation — October 14
 

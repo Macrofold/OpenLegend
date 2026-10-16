@@ -65,9 +65,9 @@ Inherited rows are not newly written work. Psychology retains its earlier 276 en
 - [x] Recorded editorial corrections delivered: seed proposals separated from Inspiration, Traits' G99 label corrected to Assassin's Creed III, the nonexistent Food owner replaced, and ordinary appraisals/preferences under admitted unusual bodies distinguished from new reusable rules.
 - [x] Final continuation reviewed the complete Psychology and Traits expansion diffs and the Needs and Characters coverage diffs against this delivery record. No runtime or gameplay checks were required or run for this documentation reconciliation; no automated link-check or exhaustive external-link audit is claimed.
 
-## Integration handoff
+## Historical integration handoff at the recorded pin
 
-**No assigned Group 3 inventory expansion or research-reading task remains open at the recorded pin.** Shared integration is deliberately separate: update the repertoire README/source-atlas navigation, corpus and entry counts, and the shared documentation history when integrating the groups. The atlas still needs the newer D&D additions and revised 29-world coverage. These shared documents are read-only for this assignment and remain unchanged.
+**No assigned Group 3 inventory expansion or research-reading task remains open at the recorded pin.** Shared integration is deliberately separate: update the repertoire README/source-atlas navigation, corpus and entry counts, and the shared documentation history when integrating the groups. At that handoff, the atlas still needed the newer D&D additions and revised 29-world coverage; the current [source-revision register](source-atlas.md#catalogue-source-revisions) and [library overview](README.md) now retain that expanded provenance. The shared documents were read-only for the original Group 3 assignment. This paragraph preserves that historical integration boundary, not a new pending delivery task.
 
 The catalogues name broad dependencies rather than create runtime commitments: memory and attention, physiology and accommodation, skills and teaching, object history, care and work, agreement and relationships, institutional custody, performance, identity continuity and supernatural transfers. Missing entries remain with their existing category owners; no fabricated cross-catalogue IDs or implementation tasks were added.
 

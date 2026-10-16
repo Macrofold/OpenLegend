@@ -5,7 +5,7 @@
 [Spatial query results](spatial-world-runtime.md) distinguish points, supports and permitted topology. Tools must not leak hidden navigation geometry, generated-map seeds, precise unidentified sound origins or private NPC future routes. Physical safety checks may reject blocked motion without revealing an unobserved cause. Creator queries remain separately authorized.
 
 Current HTTP state, editor and diagnostic queries are described in [Architecture](../../docs/architecture.md). This document specifies the future bounded production query service and scoped world-agent/MCP contracts; it does not imply those tools are live.
-Status: **proposed production contract**, September 19, 2026; no endpoints, views or MCP server are implemented here. Companion to the [production data model](production-data-model.md) and [delivery/scale plan](data-delivery-and-scale.md). This is the interface to establish before writing world-agent prompts or feature queries that would otherwise depend on the prototype's JSON layout.
+Status: **proposed general production query contract**, September 19, 2026. The `ol.data/v1` compiler, views and tool names below remain proposed; existing narrower owner inspection and writable MCP services are delivered through [the current world-agent owners](../../docs/world-agent-runtime.md). Companion to the [production data model](production-data-model.md) and [delivery/scale plan](data-delivery-and-scale.md). This is the interface to establish before writing world-agent prompts or feature queries that would otherwise depend on the prototype's JSON layout.
 
 ## 1. One read service, several consumers
 
@@ -13,7 +13,7 @@ Provide an application-owned `GameDataReader` with versioned datasets, fields, t
 
 Implement typed repository operations consumed by current features during D1/D2; the broader compiler, report service and MCP surface follow D3 in the [production checklist](../../docs/maintainers/production-data.md). Historical reconstruction, replicas and archive readers are conditional capabilities and must report unsupported until delivered. A general query language must not block implementing ordinary memory, inventory or due-process queries.
 
-Start with read-only PostgreSQL `read_v1` views and a small parameterized query compiler. Local SQLite can implement the same response contracts. Storage changes, indexes, replicas, archive readers and shard routing stay behind that contract. New datasets/fields are additive; changing units, visibility, cardinality or meanings requires a new contract version. Do not rename a public field merely because its SQL column moved.
+Start with read-only PostgreSQL `read_v1` views and a small parameterized query compiler. Current local and production implementations use PostgreSQL only; this design does not reopen the retired SQLite adapter. Storage changes, indexes, replicas, archive readers and shard routing stay behind that contract. New datasets/fields are additive; changing units, visibility, cardinality or meanings requires a new contract version. Do not rename a public field merely because its SQL column moved.
 
 Use explicit supported capabilities rather than pretending the local adapter implements every production query. A dataset can be `unsupported`, `not_yet_migrated`, `temporarily_unavailable`, or present with zero matching records. These outcomes must remain distinct.
 
@@ -25,7 +25,7 @@ The following dataset names are the proposed `ol.data/v1` vocabulary. Their resp
 | -------------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `worlds`                               | One authorized world                                         | Identity, lineage, policy/clock/profile/manifest revisions, status; routing internals hidden                                                                                                                   |
 | `entities`                             | One world/entity                                             | Kind, name, lifecycle, sector, authorized placement/component summaries; no implicit biography join                                                                                                            |
-| `actors` / `characters`                | One world/actor; character view may narrow by supported role | Shared living identity including animals, admitted body/species/capabilities and permitted state; no mandatory human mind or vitals. Existing character consumers may use a scoped compatibility view.         |
+| `actors` / `characters`                | One world/actor; character view may narrow by supported role | Shared living identity including animals, admitted body/species/capabilities and permitted state; no mandatory human mind or vitals. A character view may narrow the supported role without a second actor identity or a legacy API.         |
 | `entity_components`                    | One world/entity/family                                      | Schema/version, known/unknown state, units and authorized payload; internal storage adapter hidden                                                                                                             |
 | `entity_relations`                     | One objective relation                                       | Type, source/target, role, allowed configuration and revision                                                                                                                                                  |
 | `inventory`                            | One item lot directly in a specified container               | Item/definition version, quantity/unit, condition, placement and container revision; recursive descendants requested explicitly                                                                                |
@@ -139,7 +139,7 @@ World-wide multi-sector reads initially use the one-shard transaction. After phy
 
 ## 5. Permissions and privacy
 
-The proposed [owner-private stimulus scope](../../docs/events-perception-and-reactions.md#4-scope-and-event-identity) applies to internal records and their projections. Retaining a source, diagnostic record or reaction-queue entry does not make it general actor knowledge or grant query access; this document retains query authorization ownership.
+The implemented [owner-private stimulus scope](../../docs/events-perception-and-reactions.md#4-scope-and-event-identity) applies to internal records and their projections. Retaining a source, diagnostic record or reaction-queue entry does not make it general actor knowledge or grant query access; this document retains query authorization ownership.
 
 | Audience                       | Permitted view                                                                                                                                                    |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -222,7 +222,7 @@ Stable error codes include `invalid_query`, `forbidden`, `not_found_or_not_visib
 
 ## 8. Contracts to test before consumers depend on them
 
-Publish one corpus of query requests/expected semantics and run it against PostgreSQL, the supported local adapter and future shard/archive implementations. Include empty/unknown/expired cases, exact units, duplicate names, cross-world ID reuse, late events, stable pagination during movement, forgotten memories, permission revocation mid-page, replica lag, big artifact reads and projections rebuilding from outbox.
+Publish one corpus of query requests/expected semantics and run it against the current PostgreSQL implementation and each future shard/archive capability when selected. Include empty/unknown/expired cases, exact units, duplicate names, cross-world ID reuse, late events, stable pagination during movement, forgotten memories, permission revocation mid-page, replica lag, big artifact reads and projections rebuilding from outbox.
 
 Test RLS/view/connection-pool isolation with different accounts and worlds, private fields inside JSON, counts/search snippets, NPC memory vs creator context, denied artifact dependencies and human-private records. Adversarial player text must not alter scope or the query plan. Test committed-state/watermark invariants during real process crashes, not just fixture object equality.
 

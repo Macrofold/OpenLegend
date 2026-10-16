@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                              | Last updated |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The bounded conversation-summary slice was implemented and locally qualified on 2026-09-27; broader conversation acceptance remains separate. | 2026-10-14   |
+| Completed | The bounded conversation-summary slice was implemented and locally qualified on 2026-09-27; broader conversation acceptance remains separate. | 2026-10-16   |
 
 **Status:** implemented and locally qualified on 2026-09-27, following developer approval and the updated remote design. [Feature specification](conversation-compaction-feature-spec.md) owns behavior. [NC14–NC17](../../maintainers/narration-and-conversations.md) record delivery; NC18 tracks conditional future work; [runtime evidence and limits](../../verification/conversation-compaction.md#conversation-compaction) distinguish native checks, live constructed scenarios and broader acceptance still outside this slice.
 

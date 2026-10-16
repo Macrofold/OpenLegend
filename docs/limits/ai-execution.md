@@ -2,7 +2,7 @@
 
 [Feature contract](../ai-providers.md) · [Implementation work](../maintainers/macrofold-worker-api.md) · [Tracking rules](README.md) · [Change backlog](../maintainers/limits-audit.md)
 
-Values describe the stated baseline, not approved future targets. Entries marked **source inspected 2026-10-06** were checked against review-branch source at `7fddcea7c7c1adf79bd53c1dfa16558111c772d3`; synchronization is deferred. Provider-limit claims and dated prices below retain their stated historical scope, not fresh vendor verification. **Reported** means the merged implementation report (2026-09-26, `c133000` / `a90d411`); **Historical** means the original audit and needs code recheck. Ratings describe restrictiveness, not correctness or measured capacity. New rationale is an engineering assessment unless an authored decision is explicitly identified.
+Values describe the stated baseline, not approved future targets. Entries marked **source inspected 2026-10-06** retain their original source-review baseline at `7fddcea7c7c1adf79bd53c1dfa16558111c772d3`; that historical base is not an outstanding integration prerequisite. Provider-limit claims and dated prices below retain their stated historical scope, not fresh vendor verification. **Reported** means the merged implementation report (2026-09-26, `c133000` / `a90d411`); **Historical** means the original audit and needs code recheck. Ratings describe restrictiveness, not correctness or measured capacity. New rationale is an engineering assessment unless an authored decision is explicitly identified.
 
 Implementation starting points: [validation.ts](../../packages/ai/src/validation.ts), [embedding.ts](../../packages/ai/src/embedding.ts), [config.ts](../../apps/server/src/config.ts).
 
@@ -228,7 +228,7 @@ Original recommendation: **Review**.
 
 ## LA184
 
-**Current PW01 branch evidence · Restrictiveness: Safe.**
+**Current — integrated PW01 evidence · Restrictiveness: Safe.**
 
 The direct generation-allowance helper defaults to a minimum of the greater of $0.25 and the configured generation reservation, before requested-model pricing can raise it. A caller may supply a different floor and token estimate: narration uses 26,000 input tokens, 1,800 output tokens and the configured generation reservation as its floor. This is a reservation calculation, not a minimum provider charge. The general interactive-headroom calculation reserves room for two generation calls, three judgments and one embedding call; in Jev-only mode it instead retains three judgment allowances and no generation/embedding headroom. This is admission headroom, not an instruction to make all those calls or proof of actual cost.
 
@@ -254,7 +254,7 @@ Original recommendation: **Review**.
 
 ## MP01 — Configured model prices
 
-**Current PW01 branch evidence · Restrictiveness: Safe.** Direct-provider estimates require an exact operator-configured requested model and prices. A differing reported identity requires an explicit alias belonging to that same entry. Unknown models, mismatches or reported cache writes without a write rate stay unpriced and retain the existing conservative reservation. Models and aliases have unique ownership; rates are finite/nonnegative. Identifiers use the adapter's 1–128-character model form. Default price fields remain the single default entry; an identical catalogue entry can attach aliases, while conflicting rates fail startup.
+**Current — integrated PW01 evidence · Restrictiveness: Safe.** Direct-provider estimates require an exact operator-configured requested model and prices. A differing reported identity requires an explicit alias belonging to that same entry. Unknown models, mismatches or reported cache writes without a write rate stay unpriced and retain the existing conservative reservation. Models and aliases have unique ownership; rates are finite/nonnegative. Identifiers use the adapter's 1–128-character model form. Default price fields remain the single default entry; an identical catalogue entry can attach aliases, while conflicting rates fail startup.
 
 **Reason / tradeoff:** Prevent a more expensive model from inheriting cheaper prices or being admitted below its defensible estimate. Operators must maintain price/alias configuration; this is estimated application spending, not invoice reconciliation. There is no independent catalogue/model-alias count cap in this trusted startup configuration; it is copied/frozen once and exact-model lookup grows linearly with catalogue entries. No new billing authority, automatic price download or paid retry is added. [PG01's follow-up](../verification/camp-life.md#embedding-accounting-and-readable-descriptions--october-4-2026) reuses this exact-model pricing contract for direct embeddings. The verified standard small-embedding default is $0.02 per million input tokens; explicit catalogue ownership overrides it, and other models never inherit it. Forty completed prior calls are now estimated through normal settlement; one interrupted call without usage retains $0.01 under WW11. [Configuration](../ai-providers.md#configuration-and-interface) · [PW01 evidence](../verification/level1-decisions.md#pw01-reliability-repairs--october-2-2026).
 
@@ -356,7 +356,7 @@ Original recommendation: **Review**.
 
 **Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Pending Run observation waits 500 milliseconds between passes; workspace operation polling waits 300 milliseconds. These delays follow the previous request/work, so they are not guaranteed fixed request rates. Diagnostic detail-page calls use a ten-second signal per page, while later receipt reconciliation uses one ten-second signal for its related completion/usage reads. Streaming progress and its publication window remain separate from status polling.
+Ordinary pending Run observation waits 500 milliseconds between passes; background reflection with bounded tool-count inspection waits 2,000 milliseconds. Event replay with remaining pages uses the 500-millisecond wait, and workspace operation polling waits 300 milliseconds. These delays follow the previous request/work, so they are not guaranteed fixed request rates. Diagnostic detail-page calls use a ten-second signal per page, while later receipt reconciliation uses one ten-second signal for its related completion/usage reads. Streaming progress and its publication window remain separate from status polling.
 
 **Reason / tradeoff:** Keep polling frequent enough for responsiveness without repeatedly querying a remote service faster than useful information changes.
 

@@ -2,11 +2,13 @@
 
 | Status      | Current progress                                                                                                                                          | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Bounded PG02, PG03, scoped PG04 and PG05 encounter/death/danger delivery are complete; one PG01 billing confirmation and combined acceptance remain open. | 2026-10-15   |
+| In progress | Bounded PG02, PG03, scoped PG04 and PG05 encounter/death/danger delivery are complete; one PG01 billing confirmation and combined acceptance remain open. | 2026-10-16   |
 
 PG02’s bounded resident demonstration, PG03, scoped PG04 and PG05’s encounter/death/danger delivery are complete; combined batch acceptance and broader character/performance qualification remain open.
 
 [Technical definitions](parallel-batch-03-personal-game-tech-design.md) · [Assignment prompts](parallel-batch-03-personal-game-prompts.md) · [Tracking](../maintainers/parallel-batch-03-personal-game.md)
+
+**Current review, October 15:** the scoped invention journey, bounded resident demonstration, action discovery/preview work and encounter delivery are integrated. The exact interrupted-embedding bill and the combined batch check remain open under the PG tracker; broader character and performance qualification remains with its existing owners. Original allocation, worktree inspections and start instructions below preserve their dated planning context. Current action-menu behavior follows the later owner corrections linked under PG03.
 
 ## Recommendation and source baseline
 
@@ -14,9 +16,9 @@ Select work that makes the existing personal game worth playing and watching: in
 
 This planning pass inspected local `main` at `dd21d1c7`, including the four newly merged branches. It changes documentation only, with zero production logic lines. The assignments are recommendations, not claims that their runtime scope has been approved or implemented. A copied implementation prompt supplies the recipient's requested task; this planning pass dispatches nobody.
 
-The [game-first sequence](five-product-feature-specs.md#game-first-delivery-sequence) and [first-playable agreement](../../archive/05-project/first-playable-mvp.md) are the product baseline. Current canonical contracts prevail over historical wording in that agreement: for example, tab departure and return follow today's multiplayer/lifecycle contracts, not the superseded background-play checkbox. NP01–NP05 are complete for their selected scope and are not restarted here.
+The [game-first sequence](five-product-feature-specs.md#game-first-delivery-sequence) and [first-playable agreement](../../archive/05-project/first-playable-mvp.md) are the product baseline. Tab departure and return follow the current multiplayer/lifecycle contracts. The agreement’s default-on option to pause when hidden remains accepted and has server support; [UIUX14](../maintainers/ui-ux.md#uiux14) requires both its ordinary player control and browser departure handling that honors the saved choice. The current browser still releases control on blur/hide regardless of that preference; correcting this must preserve single-controller and return rules, separately from the completed entry/Resume behavior. NP01–NP05 are complete for their selected scope and are not restarted here.
 
-October 3 status refresh: family authoring is now merged at c4e18d91. Separate PG02/PG03/PG04 branches are in progress; no integrated acceptance is inferred. [Batch 04](parallel-batch-04-expeditions-and-exchange-feature-spec.md) proposes follow-on work without changing this batch’s scope. The source/exclusion notes below preserve the original planning evidence.
+October 3 status refresh: family authoring is now merged at c4e18d91. Separate PG02/PG03/PG04 branches are in progress; no integrated acceptance is inferred. [Batch 04](completed/parallel-batch-04-expeditions-and-exchange-feature-spec.md) proposes follow-on work without changing this batch’s scope. The source/exclusion notes below preserve the original planning evidence.
 
 ### Allocation in priority order
 

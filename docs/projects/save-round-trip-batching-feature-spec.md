@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                 | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | The 2026-09-29 batching proposal remains unimplemented; its decision and measurement gate is still open in PF15. | 2026-10-14   |
+| Not started | The 2026-09-29 batching proposal remains unimplemented; its decision and measurement gate is still open in PF15. | 2026-10-16   |
 
 **Status: proposal, not approved for implementation.** Written 2026-09-29 at Mike's request as a follow-up to [background world saves](ordered-async-saves.md). Implementation needs a separate chat go-ahead. Technical design: [save round-trip batching — technical design](save-round-trip-batching-tech-design.md). Work items: [PF15](../maintainers/performance.md#pf15--save-round-trip-batching).
 

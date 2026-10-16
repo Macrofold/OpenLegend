@@ -1,12 +1,12 @@
 # Explicit tab resume — feature specification
 
-| Status    | Current progress                                                                                                       | Last updated |
-| --------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Quiet focus-pause display, automatic return, failure recovery and existing tab controls passed focused browser checks. | 2026-10-14   |
+| Status    | Current progress                                                                                                                    | Last updated |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Quiet focus-pause display and tab controls passed focused checks; broader default-software-browser qualification remains with MP18. | 2026-10-16   |
 
 ## Purpose and approved behavior
 
-A sole game tab enters automatically, including reload and return from another application. Leaving still pauses browser work and begins the existing protected character departure. Only another open tab holding the last selected play requires a blocking dialog. Its exact text is **Game Paused**, **OpenLegend is open in another tab.**, **Resume Here**, and **Log Out**. Resume Here deliberately transfers play; focus alone cannot displace another open tab.
+A sole game tab enters automatically, including reload and return from another application. Leaving still pauses browser work and begins the world's current character-departure process. Only another open tab holding the last selected play requires a blocking dialog. Its exact text is **Game Paused**, **OpenLegend is open in another tab.**, **Resume Here**, and **Log Out**. Resume Here deliberately transfers play; focus alone cannot displace another open tab.
 
 Ordinary focus loss retains the world and open panels beneath a slight tint over the entire game, with small **Game is paused.** text. This preserves the visible place the player left while input remains suspended. Returning to the sole tab remains automatic; genuine connection or return failures remain readable and retryable. [The current presentation](../../architecture.md#account-authority-and-participation) retains the existing departure and competing-tab behavior.
 
@@ -38,6 +38,8 @@ Initial 3D construction now waits until the tab enters play, keeping cold graphi
 
 The later focus-pause display correction replaces the entry/connection screen used during ordinary focus loss with the retained game and quiet overlay described above. It preserves automatic return and actual failure recovery. [Focused browser verification](../../verification/multiplayer-entry-maintenance.md#focus-pause-presentation--october-14-2026) covers the overlay, keyboard isolation, automatic return and failed-return recovery; the existing completion evidence below records the separately qualified entry and continuity behavior.
 
+The earlier accepted default-on **Pause game when hidden** option remains a separate unfinished requirement. [UIUX14](../../maintainers/ui-ux.md#uiux14) owns both the absent ordinary preference control and the browser departure handling that must honor the saved choice; the current tab always releases control on blur/hide, so server preference support alone does not deliver the browser opt-out. This focused entry/overlay completion does not close that requirement or change the single-controller and return rules.
+
 ## Maintained records
 
 - Implementation: [MP18](../../maintainers/multiplayer.md#mp18--explicit-tab-resume).
@@ -52,3 +54,5 @@ The original implementation required explicit Resume on every entry and refocus.
 ## Completion evidence
 
 [Corrected October 3 acceptance](../../verification/multiplayer-entry-maintenance.md#sole-tab-entry-and-shared-logout--october-3-2026) records native authority/logout checks, four focused browser journeys, the closing-tab regression/fix, copied-tab identity and held-logout blur/refocus, plus actual dialog/logout interaction. Broader Auth0/provider logout and multi-device qualification remain separately tracked.
+
+The later [current-build continuation](../../verification/multiplayer-entry-maintenance.md#suspended-scene-resize-and-stock-journey-continuation) passes the ordinary action/time journeys with Metal rendering but retains failed initial-entry observation under the default software renderer. That broader MP18 qualification remains open; the original focused completion does not override it.

@@ -1,10 +1,12 @@
 # Batch 08 — The missing belonging technical design
 
-| Status    | Current progress                                                                                                                               | Last updated |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | MY01–MY05 implemented and verified on `codex/missing-belonging`; broader parent social, memory and agency acceptance stays in parent trackers. | 2026-10-13   |
+| Status    | Current progress                                                                                                            | Last updated |
+| --------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | MY01–MY05 implemented and integrated on main; broader parent social, memory and agency acceptance stays in parent trackers. | 2026-10-16   |
 
 [Feature specification](parallel-batch-08-the-missing-belonging-feature-spec.md) · [Implementation prompt](parallel-batch-08-the-missing-belonging-prompts.md) · [Tracker](../../maintainers/parallel-batch-08-the-missing-belonging.md) · [Constraints](../../limits/parallel-batch-08-the-missing-belonging.md) · [Verification](../../verification/parallel-batch-08-the-missing-belonging.md)
+
+**Current delivery and retained design.** MY01–MY05 are complete and integrated on local main; [the October 14 evidence](../../verification/parallel-batch-08-the-missing-belonging.md#october-14-combined-starting-world) qualifies combined initialization and restart while retaining the original browser/live-model limits. The readiness, base, estimate and future-tense implementation directions below preserve the original design and acceptance definition. They are historical planning instructions, not outstanding delivery or a standing branch-creation request. Broader parent acceptance remains open as mapped below.
 
 ## Baseline, readiness and estimate
 

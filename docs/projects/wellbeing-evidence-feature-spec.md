@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                      | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG11’s researched product proposal and review are complete; study operation, technical design and human-outcome evidence remain open. | 2026-10-05   |
+| In progress | DG11’s researched product proposal and review are complete; study operation, technical design and human-outcome evidence remain open. | 2026-10-16   |
 
 ## 1. The experience and the decision it serves
 

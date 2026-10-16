@@ -6,4 +6,4 @@ Save to **feedback-round-03.json in this folder**. Browser storage, file identit
 
 The images are remote references, not licensed production assets. Large portraits are labeled separately from world avatars; motion is not established by screenshots. Some source imagery predates the current game build. Open Image source if a host stops serving an image.
 
-Build: `python3 art-direction/round-03/build_board.py`. The builder writes only this round's HTML and catalog, never feedback. The page inherits the repaired rating controls and autosave implementation. Native file-picker and visual browser verification remain unconfirmed in this environment.
+Build: `python3 art-direction/round-03/build_board.py`. The builder writes only this round's HTML and catalog, never feedback. The page inherits the repaired rating controls and autosave implementation. Native file-picker and visual browser verification remain unconfirmed by the retained creation-time evidence; this is not a claim that the current environment blocks them.

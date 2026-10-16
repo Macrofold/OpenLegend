@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                          | Last updated |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The scoped exact requests, bounded activities, interruption/resume and work-state display are delivered with native and browser evidence. | 2026-10-14   |
+| Completed | The scoped exact requests, bounded activities, interruption/resume and work-state display are delivered with native and browser evidence. | 2026-10-16   |
 
 **Currency review — October 14, 2026.** [September 29 evidence](../../verification/composed-activities.md) records delivery and review of the selected seven items plus world-supplied wording. Baselines, branch operations and future-tense steps below describe that completed implementation. The excluded common capability catalogue, invention bridge and broader live-model/reaction qualification remain in the AC/AG owners; this status does not close them.
 

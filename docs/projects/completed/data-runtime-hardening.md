@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                                  | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Cold-history residency, selective consumers and measured native reductions are delivered; broader population and checkpoint capacity remain open. | 2026-10-14   |
+| Completed | Cold-history residency, selective consumers and measured native reductions are delivered; broader population and checkpoint capacity remain open. | 2026-10-16   |
 
 **Currency review — October 14, 2026.** [September 25 delivery and September 26 consumer-review evidence](../../verification/data-runtime-hardening.md) establish completion of this scoped hardening work. The SQLite and migration passages below preserve what was implemented and tested then. They are superseded as executable guidance by [PostgreSQL-only storage](postgresql-cognition-preparation.md) and the [current development-save policy](../../../AGENTS.md#development-save-policy); no old adapter, conversion or compatibility fixture is authorized. Current history placement and source-validity contracts remain in [memory architecture](../../memory-architecture.md) and [save/load](../../save-and-load.md).
 

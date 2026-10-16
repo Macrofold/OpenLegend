@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                           | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | Bounded maintenance, streamed checkpoints, autosaves and atomic recovery are delivered with the scoped native and browser checks recorded. | 2026-10-14   |
+| Completed | Bounded maintenance, streamed checkpoints, autosaves and atomic recovery are delivered with the scoped native and browser checks recorded. | 2026-10-16   |
 
 **Currency review — October 14, 2026.** [September 26 delivery and follow-up integration evidence](../../verification/checkpoints-and-recovery.md#bounded-history-checkpoints-and-recovery) complete this local scope; wider population, hosted-failure and evolving-subsystem qualification remain separate. Instructions below to preserve old readers, convert preceding layouts or exercise SQLite are historical. [PostgreSQL-only storage](postgresql-cognition-preparation.md), the [current development-save policy](../../../AGENTS.md#development-save-policy) and the current [save/load contract](../../save-and-load.md#current-history-capture-boundary) supersede those parts. Current packages use only the streamed reader, and the recovery database row contains an integrity-checked file pointer; the October 14 foundation work removes the remaining alternate readers.
 

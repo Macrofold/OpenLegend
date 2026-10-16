@@ -234,7 +234,7 @@ Completed reservation receipts remain in memory and count against retained-memor
 
 **Reason / tradeoff:** Retain idempotency evidence; receipts lack a cold-retention path, so completed work can consume new-work capacity.
 
-**Reachability check (`af1eb02`):** `reserveResource` is exported but this pass found no non-test gameplay caller in `apps/` or `packages/`. No terminal receipt expiry/count limit exists at this owner; receipts continue to count toward retained-byte admission. Treat growing reservation receipts as a consumer-integration risk, not a demonstrated outcome of ordinary crafting today. [R01](../maintainers/limits-audit.md#r01) must be revisited before enabling a recurring reservation consumer.
+**Historical reachability check (`af1eb02`):** that baseline found no non-test gameplay caller. **Current source recheck, October 15:** aiming reserves a projectile in `ranged.ts`, and shelter phases reserve their material lots in `assemblies.ts`. Terminal receipts still have no expiry/count limit or cold-retention owner here; consumed/released records continue to count toward retained-byte admission. The accumulation risk is therefore reachable through installed gameplay, rather than conditional on a future consumer. This source trace does not measure how many repeated shots or shelter operations would exhaust admission. [R01](../maintainers/limits-audit.md#r01) owns receipt retention and its qualification.
 
 ## ST10
 

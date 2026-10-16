@@ -1,8 +1,8 @@
 # Parallel batch 04 — Expeditions and exchange — assignment tracker
 
-**Status: in progress, October 7, 2026.** PX01 encounter integration, PX02 immediate barter, PX03 discoveries and PX04 voluntary outings are complete with the scoped evidence below; PX05 shelter design is complete. Broader qualification remains open. The original October 3 planning pass completed no runtime work; its local-main baseline was c4e18d91. PX05 source inspection used refreshed `origin/main` at `34233ae24365eb8911fe1995c9c232bd57f34616` in `Macrofold/OpenLegend` (`origin`, `https://github.com/Macrofold/OpenLegend.git`). Runtime tasks start from integrated prerequisites in the technical design, not merely from the planning or design commit.
+**Status: completed for the five scoped assignments; reviewed October 15, 2026.** PX01 encounter integration, PX02 immediate barter, PX03 discoveries and PX04 voluntary outings are complete with the scoped evidence below; PX05 shelter design is complete. Broader qualification remains open. The original October 3 planning pass completed no runtime work; its local-main baseline was c4e18d91. PX05 source inspection used refreshed `origin/main` at `34233ae24365eb8911fe1995c9c232bd57f34616` in `Macrofold/OpenLegend` (`origin`, `https://github.com/Macrofold/OpenLegend.git`). Runtime tasks start from integrated prerequisites in the technical design, not merely from the planning or design commit.
 
-[Feature/acceptance](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md) · [Technical definitions](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md) · [Five prompts](../projects/parallel-batch-04-expeditions-and-exchange-prompts.md) · [Numbers and prior batches](../projects/parallel-batches.md)
+[Feature/acceptance](../projects/completed/parallel-batch-04-expeditions-and-exchange-feature-spec.md) · [Technical definitions](../projects/completed/parallel-batch-04-expeditions-and-exchange-tech-design.md) · [Five prompts](../projects/completed/parallel-batch-04-expeditions-and-exchange-prompts.md) · [Numbers and prior batches](../projects/parallel-batches.md)
 
 ## PX01 — A readable wilderness threat
 
@@ -11,14 +11,14 @@
 The [requested review](../verification/first-threat-encounter.md#px01-navigation-review--october-6-2026) is complete: direct ramp entry is retained, the longer support walk avoids a repeated destination, and matched bounded measurements plus actual walking/escape checks pass. Broader geometry/capacity qualification remains with SW05/SW17 and the existing parent trackers.
 
 - [x] Prerequisites supplied: PG05's paired encounter design with relevant owner decisions settled, plus integrated/qualified overlapping embodied-feedback behavior.
-- [x] Deliver warning, avoidance, engagement and aftermath under [PX01 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px01--a-readable-wilderness-threat) and [technical ownership](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px01--encounter-implementation-contract), preserving protection and actor-permitted pursuit. Warning means observable signs and actual preparation, not a guaranteed safe interval.
+- [x] Deliver warning, avoidance, engagement and aftermath under [PX01 scope](../projects/completed/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px01--a-readable-wilderness-threat) and [technical ownership](../projects/completed/parallel-batch-04-expeditions-and-exchange-tech-design.md#px01--encounter-implementation-contract), preserving protection and actor-permitted pursuit. Warning means observable signs and actual preparation, not a guaranteed safe interval.
 - [x] Complete integrated encounter acceptance, including changed geometry, miss, blocked reach/return, loss/disconnection/recovery and persistence; reconcile the exact delivered portions of PG05/BW14/MP04/PS05/DG07/ND11 without closing broader human-conflict or ghost scope.
 
 Parents: [PG05](parallel-batch-03-personal-game.md#pg05--first-threat-encounter-design), [base world](base-world.md), [multiplayer](multiplayer.md), [product scalability](product-scalability.md), [DG07/ND11](needs-design.md#dg07--human-participation-and-recoverable-conflict). Embodied-feedback's actual injury/targeting/escape/remains work is a prerequisite consumer, not a duplicate task.
 
 ## PX02 — Reciprocal barter
 
-- [x] Extend current handover/custody to exact, revisioned, consensual two-sided exchange, preserving gifts under [PX02 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px02--trade-something-useful) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px02--reciprocal-offer-contract).
+- [x] Extend current handover/custody to exact, revisioned, consensual two-sided exchange, preserving gifts under [PX02 scope](../projects/completed/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px02--trade-something-useful) and [contract](../projects/completed/parallel-batch-04-expeditions-and-exchange-tech-design.md#px02--reciprocal-offer-contract).
 - [x] Deliver readable player and actor choices without exposing private inventory; complete atomicity, changed-terms, refusal, replay and restart acceptance.
 - [x] Reconcile BW20, immediate-barter DG06/ND09 and the relevant INV-20/PO portions; retain standing reservations, credit, currency, promise management and institutions as separate open scope.
 
@@ -30,7 +30,7 @@ Parents: [base world](base-world.md), [persistent objects](persistent-objects.md
 
 [CF05](parallel-batch-06-rivals-and-contested-ground.md#cf05--a-contested-ruin-and-a-victory-that-lasts) implements an occupied-site discovery/return consumer of this place owner. PX03 is available on local main at `699417835`, so it is a reuse reference rather than an open CF05 prerequisite. The new batch does not supply a duplicate memory store or change PX03 completion evidence.
 
-- [x] Add grounded place-arrival and inventory-inspection evidence to existing encounter/story/experience ownership under [PX03 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px03--discover-useful-places-and-objects) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px03--encounter-evidence-and-known-places).
+- [x] Add grounded place-arrival and inventory-inspection evidence to existing encounter/story/experience ownership under [PX03 scope](../projects/completed/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px03--discover-useful-places-and-objects) and [contract](../projects/completed/parallel-batch-04-expeditions-and-exchange-tech-design.md#px03--encounter-evidence-and-known-places).
 - [x] Deliver the scoped Known places view with explicit focus/inspect/move, honest last-known information and current-format persistence; complete repeated-exposure, two-observer, privacy and stale-destination acceptance.
 - [x] Reconcile NC09–NC12's exposure subset, DG01/ND18 and relevant SW/memory work. Preserve broader narration, story and world-map acceptance.
 
@@ -46,7 +46,7 @@ Parents: [narration](narration-and-conversations.md), [spatial world](spatial-wo
 
 [Ending-cause checks](../verification/rivals-and-contested-ground.md#truthful-help-endings-after-live-expiry--october-14-2026) now distinguish real refusal/withdrawal from unanswered expiry and unavailable terms in both participants' private accounts, preserving replay without duplicate effects. These native checks repair falsely attributed agency; they do not qualify an independently chosen formal refusal or close CF04's combined encounter acceptance.
 
-- [x] Supply integrated PG02's ordinary decision and continuation behavior; define exact trip consent and independent current action ownership under [PX04 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px04--take-a-voluntary-outing-together) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px04--consenting-travel-companions).
+- [x] Supply integrated PG02's ordinary decision and continuation behavior; define exact trip consent and independent current action ownership under [PX04 scope](../projects/completed/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px04--take-a-voluntary-outing-together) and [contract](../projects/completed/parallel-batch-04-expeditions-and-exchange-tech-design.md#px04--consenting-travel-companions).
 - [x] Deliver invitation, voluntary acceptance/refusal, travel, arrival and leaving; complete changed-work, interruption, privacy, blocked-route and save/replay acceptance.
 - [x] Reconcile the concrete AG05/AG06/AG07/AG12, CE and DG06/ND10 subsets; leave group institutions, promise management, follow-everywhere behavior and unattended communities open.
 
@@ -60,7 +60,7 @@ Parents: [agency](agent-agency.md), [character experience](character-experience.
 
 ## PX05 — Editable shelter technical design
 
-- [x] Reconcile the existing shelter product specification and produce its technical counterpart under [PX05 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px05--design-an-editable-place-worth-returning-to) and the [design questions](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px05--shelter-technical-design-assignment).
+- [x] Reconcile the existing shelter product specification and produce its technical counterpart under [PX05 scope](../projects/completed/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px05--design-an-editable-place-worth-returning-to) and the [design questions](../projects/completed/parallel-batch-04-expeditions-and-exchange-tech-design.md#px05--shelter-technical-design-assignment).
 - [x] Resolve or explicitly gate structural, custody, support, permission and lifecycle choices; produce an actionable build/use/edit/reclaim delivery breakdown with contrasting arrangements and relevant failure traces.
 - [x] Reconcile DG13/ND07/shelter-only ND08, INV-6.4, SW/PO/BW and shelter limits. Mark only this design task complete when adequate; PX05 supplied no runtime construction. AV04 subsequently delivers the selected flat profile with [separate evidence](../verification/editable-shelters.md).
 
@@ -70,6 +70,6 @@ Parents: [shelter proposal](../projects/editable-shelters-feature-spec.md), [INV
 
 ## Completion and reconciliation
 
-Task-specific acceptance belongs to the feature/design pair above; this tracker owns checkbox state and parent disposition. [Constraint dispositions](../limits/parallel-batch-04-expeditions-and-exchange.md) record PX-L01 adoption into BW11; the other new constraints remain proposals until adopted into subsystem owners. The whole batch completes only after all five agreed assignments, their integration and actual required evidence are finished; drafting this allocation does not satisfy runtime scope. The owner integrates assignments without requiring task-to-task communication. Wider historical qualification is neither silently closed nor restarted by numbering this batch.
+Task-specific acceptance belongs to the feature/design pair above; this tracker owns checkbox state and parent disposition. [Constraint dispositions](../limits/parallel-batch-04-expeditions-and-exchange.md) record PX-L01 adoption into BW11, PX-L02 into SP08 and PX-L03 into BW14, with linked action/cognition owners; PX-L04 preserves the existing encounter/spatial/shelter boundaries. All five agreed assignments, their integration and actual required evidence are finished; their project records are filed together as completed. The unchecked population-capacity follow-up above and broader parent/combined-play acceptance remain open; drafting the original allocation alone did not satisfy runtime scope. The owner integrates assignments without requiring task-to-task communication. Wider historical qualification is neither silently closed nor restarted by numbering this batch.
 
 The [October 14 continued combat qualification](../verification/rivals-and-contested-ground.md#useful-independent-help-and-complete-choice-terms--october-14-2026) demonstrates real purpose-bound mercenary punches and independently secured finite stock. Shared accepted-help terms now explain separate physical work even without paired examples. This earns useful help for that episode; complete hostile/encounter and broader character-quality acceptance remain open.

@@ -228,7 +228,7 @@ The former **64 MiB non-streamed decode guard** accompanied whole-JSON checkpoin
 
 **Changed 2026-09-28 (C05) · Restrictiveness: Safe.**
 
-Autosaves are enabled by default. Holders of the save grant can disable them or change cadence and retention in the Game panel; the settings are stored per world outside gameplay rewind (a load does not change them) and survive restart. Disabling them leaves only manual saves and database commits for recovery.
+Autosaves are enabled by default. Holders of the save grant can disable them or change cadence and retention in **Game → Checkpoints**; the settings are stored per world outside gameplay rewind (a load does not change them) and survive restart. Disabling them leaves only manual saves and database commits for recovery.
 
 **Reason / tradeoff:** Provide recovery by default while giving operators disk and recovery control. [Settings](../../apps/server/src/game-saves.ts) (`settings`, `updateSettings`).
 
@@ -300,7 +300,7 @@ The save worker starts with the server and is not automatically restarted after 
 
 **Reported · Restrictiveness: Safe.**
 
-**Changed 2026-09-28 (SL08-A).** Checkpoint status is displayed in the creator’s Game panel and refreshed through catalog requests; it is not a continuously updating global notification. The latest checkpoint failure (automatic, manual or recovery) is stored with the world outside gameplay rewind and shown until a save-grant holder acknowledges it, including after restart. If storage cannot record it, it is shown from memory with that caveat. Catalog health (damaged/unlisted slots) stays separate. The last automatic checkpoint time comes from the catalog after restart, so the panel does not imply protection it cannot see. [Implementation](../../apps/server/src/game-saves.ts) (`recordFailure`, `acknowledgeFailure`).
+**Changed 2026-09-28 (SL08-A).** Checkpoint status is displayed in **Game → Checkpoints** and refreshed through catalog requests; it is not a continuously updating global notification. The latest checkpoint failure (automatic, manual or recovery) is stored with the world outside gameplay rewind and shown until a save-grant holder acknowledges it, including after restart. If storage cannot record it, it is shown from memory with that caveat. Catalog health (damaged/unlisted slots) stays separate. The last automatic checkpoint time comes from the catalog after restart, so the panel does not imply protection it cannot see. [Implementation](../../apps/server/src/game-saves.ts) (`recordFailure`, `acknowledgeFailure`).
 
 **Reason / tradeoff:** Operators must not lose failure evidence to a restart; one retained record avoids a failure log without bounds.
 

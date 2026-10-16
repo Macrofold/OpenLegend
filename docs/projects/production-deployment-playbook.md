@@ -2,9 +2,9 @@
 
 | Status      | Current progress                                                                                            | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The deployment design is documented; the application has not been deployed through this proposed procedure. | 2026-10-14   |
+| In progress | The deployment design is documented; the application has not been deployed through this proposed procedure. | 2026-10-16   |
 
-**Design only, researched 2 October 2026.** This is the execution companion to the [technical design](production-deployment-tech-design.md), not deployed infrastructure. The Dockerfile, CDK application, deployment workflows, maintenance controls and asset publisher described below still need implementation. Commands are reviewed examples, not evidence that they ran. [PD01–PD12](../maintainers/production-deployment.md) owns tasks and acceptance; this document owns the deployment procedure, not another checklist.
+**Design only, researched 2 October 2026.** This is the execution companion to the [technical design](production-deployment-tech-design.md), not deployed infrastructure. The Dockerfile, CDK application, deployment workflows, release-specific maintenance gate and asset publisher described below still need implementation. Commands are reviewed examples, not evidence that they ran. [PD01–PD12](../maintainers/production-deployment.md) owns tasks and acceptance; this document owns the deployment procedure, not another checklist.
 
 The release-specific write gate remains future work. Existing [maintenance controls](completed/multiplayer-entry-maintenance.md) already pause ordinary play and retain the notice across restart; reuse that owner rather than rebuilding maintenance.
 

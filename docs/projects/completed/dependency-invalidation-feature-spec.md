@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                            | Last updated |
 | --------- | ----------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The agreed dependency and bounded-query slices were delivered; broader aggregate capacity remains separate. | 2026-10-15   |
+| Completed | The agreed dependency and bounded-query slices were delivered; broader aggregate capacity remains separate. | 2026-10-16   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Original foundation priority 4. [Technical design](dependency-invalidation-tech-design.md) owns algorithms; [DI01–DI08](../../maintainers/dependency-invalidation.md) decomposes EWF08 while EPR/PF/SW retain their actual scheduler/query work. See [foundation package](foundations-1-5.md).
 

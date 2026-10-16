@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                               | Last updated |
 | --------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Selected replacement-life rules and optional world scars are delivered; broader qualification remains tracked. | 2026-10-14   |
+| Completed | Selected replacement-life rules and optional world scars are delivered; broader qualification remains tracked. | 2026-10-16   |
 
 **Alignment updated:** 2026-10-14T08:14:37Z.
 

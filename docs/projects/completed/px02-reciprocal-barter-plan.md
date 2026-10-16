@@ -2,9 +2,9 @@
 
 | Status    | Current progress                                                                                                                            | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Immediate barter, scoped recovery and voluntary resident evidence are delivered; current owners and remaining broader scope are reconciled. | 2026-10-06   |
+| Completed | Immediate barter, scoped recovery and voluntary resident evidence are delivered; current owners and remaining broader scope are reconciled. | 2026-10-16   |
 
-[Feature scope](../parallel-batch-04-expeditions-and-exchange-feature-spec.md#px02--trade-something-useful) · [Technical contract](../parallel-batch-04-expeditions-and-exchange-tech-design.md#px02--reciprocal-offer-contract) · [Acceptance tracker](../../maintainers/parallel-batch-04-expeditions-and-exchange.md#px02--reciprocal-barter)
+[Feature scope](parallel-batch-04-expeditions-and-exchange-feature-spec.md#px02--trade-something-useful) · [Technical contract](parallel-batch-04-expeditions-and-exchange-tech-design.md#px02--reciprocal-offer-contract) · [Acceptance tracker](../../maintainers/parallel-batch-04-expeditions-and-exchange.md#px02--reciprocal-barter)
 
 ## Scope and risk
 

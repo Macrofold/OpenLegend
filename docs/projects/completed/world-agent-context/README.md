@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                          | Last updated |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The finite context, graph and review foundation was delivered and locally qualified on 2026-09-28; broader release work remains separate. | 2026-10-14   |
+| Completed | The finite context, graph and review foundation was delivered and locally qualified on 2026-09-28; broader release work remains separate. | 2026-10-16   |
 
 **Status: finite foundation and approved custom-resource follow-up implemented and qualified; final-head CI remains the merge gate.** The owner’s “Okay implement all of it” approves WW18–WW23 and the initial graph/pipeline foundation. Design verification below remains historical evidence, not runtime completion.
 

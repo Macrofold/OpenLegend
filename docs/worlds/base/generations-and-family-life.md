@@ -42,7 +42,7 @@ On return, a person learns through permitted present evidence and what someone a
 
 ## Mortality and retained relationships
 
-This profile consumes the mortality dependency explicitly identified by [DG21](../../projects/recovery-and-care-feature-spec.md): newer inspected main `0a3ab79b` uses actual death and a Human Continue path into a new physical life with retained identity. That inspected behavior is a dependency of this proposal, not a claim it was merged into this older design branch. Do not combine it with the branch's older collapse wording as if both are simultaneous rules.
+This profile consumes the current mortality behavior identified by [DG21](../../projects/recovery-and-care-feature-spec.md): actual death and Human Continue create a new physical life with retained identity. The original audit inspected that behavior on main `0a3ab79b`; it is now integrated in the current baseline. The older collapse law is superseded, not an alternative simultaneous rule.
 
 A permitted dead-person description retains age at death and, where known, time since death as distinct facts; it does not imply continuously lived years while the identity is retained. A death does not make ancestry public, turn a relative into a controllable replacement, award their property automatically or erase a lived relationship. Memory and actual objects can remain meaningful. A person can mourn, choose company, continue work or feel something more complicated through the ordinary appraisal/agency owners; there is no compulsory mourning chore or automatic settlement-wide productivity penalty. Ordinary ghosts, revival and unusual shared identities remain DG33's separately selected scope.
 

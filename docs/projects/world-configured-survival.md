@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                           | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Configured survival and native/server consumers are delivered; the combined client, alternate-world and lifecycle acceptance remains open. | 2026-10-14   |
+| In progress | Configured survival and native/server consumers are delivered; the combined client, alternate-world and lifecycle acceptance remains open. | 2026-10-16   |
 
 **Currency review — October 14, 2026.** [October 2 evidence](../verification/world-configured-survival.md) and the [current EWF03/PW07 status](../maintainers/extensible-world-foundation.md#ewf03--extract-default-body-and-need-policies-through-real-consumers) establish delivery of stages 1/2a and selected generic-meter browser slices; they do not close stage 2b's combined matrix. The “engine today” sections below describe the October 1 extraction baseline. Current bundled behavior is in [survival](../worlds/base/survival.md): later player death/Continue replaces the former collapse/camp-recovery rule. Changing that world policy does not undo the general configuration work, and this audit claims no new lifecycle or alternate-world qualification.
 
@@ -160,7 +160,7 @@ October 2 domain/server work is published in `edd4d9ad6422074175f0f8de4c4770097c
 
 - [x] Stage 1 — rules that run every step (steps 1–7 and verification)
 - [x] Stage 2a — remaining rules in the simulation and server
-- [ ] Stage 2b — messages and game screen
+- [ ] Stage 2b — complete combined messages/game-screen acceptance; generic implementation and the focused browser slices above are delivered
 - [x] EWF03, limits and changelog reconciled for stages 1 and 2a; stage 2b remains subject to its combined acceptance
 
 ## Maintained records

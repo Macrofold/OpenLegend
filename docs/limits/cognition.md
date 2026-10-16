@@ -6,9 +6,11 @@ Values describe the stated baseline, not approved future targets. **Reported** m
 
 Implementation starting points: [decision-context.ts](../../apps/server/src/decision-context.ts), [recall.ts](../../apps/server/src/recall.ts), [cognition-contracts.ts](../../apps/server/src/cognition-contracts.ts).
 
+The October 15 source recheck distinguishes current immediate callers, retained unused cognition helpers and superseded entries below. Current source ownership includes [agency](../../packages/domain/src/agency.ts), [response admission](../../packages/domain/src/response.ts), [native observation](../../packages/domain/src/kernel.ts), [routing](../../apps/server/src/ai-director.ts), [interests](../../apps/server/src/interests.ts), and [diagnostic presentation](../../apps/server/src/cognition-inspection.ts). Rechecking these contracts adds no runtime, live-model or capacity evidence; the original tuning recommendations remain proposals.
+
 ## LA001
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
 The guaranteed information sent to a character's decision-making model includes at most 16 nearby characters or animals; optional relevance checks may add more.
 
@@ -20,7 +22,7 @@ Original recommendation: **Expand**.
 
 ## LA002
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
 The guaranteed information sent to a character's decision-making model includes at most 16 nearby objects; optional relevance checks may add more.
 
@@ -32,7 +34,7 @@ Original recommendation: **Expand**.
 
 ## LA003
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
 The guaranteed information sent to a character's decision-making model includes at most 16 owned items; optional relevance checks may add more.
 
@@ -44,7 +46,7 @@ Original recommendation: **Expand**.
 
 ## LA004
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
 The guaranteed information sent to a character's decision-making model includes at most 16 knowledge entries; optional relevance checks may add more.
 
@@ -56,7 +58,7 @@ Original recommendation: **Expand**.
 
 ## LA005
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
 The guaranteed information sent to a character's decision-making model includes at most 8 memories; optional relevance checks may add more.
 
@@ -68,7 +70,7 @@ Original recommendation: **Expand**.
 
 ## LA006
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
 Optional searches select at most 300 candidates from each information category, such as memories, before further relevance filtering.
 
@@ -80,9 +82,9 @@ Original recommendation: **Review**.
 
 ## LA032
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Historical caller; retained unused helper rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
-The older cognition workflow requests up to 300 experiences for full reasoning but only 30 for lighter reasoning.
+The retained `cognitionContext` helper requests up to 300 experiences for full reasoning and 30 for lighter reasoning, with 400,000/12,000-byte recall budgets respectively. The source recheck finds no current runtime caller of that helper; immediate decisions and independent reflection use their separate current preparation owners. These values do not describe every live cognition route.
 
 **Reason / tradeoff:** Choose relevant experiences according to available model input space rather than assuming a fixed record count matches reasoning difficulty.
 
@@ -92,9 +94,9 @@ Original recommendation: **Replace**.
 
 ## LA033
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Historical caller; retained unused helper rechecked October 15, 2026 · Restrictiveness: Safe.**
 
-The older cognition workflow limits its assembled model input to 80,000 characters and 400,000 bytes.
+The retained, currently uncalled `cognitionContext` helper checks its serialized context against both 80,000 JavaScript string units and 400,000 UTF-8 bytes, reducing optional recall while preserving required commitments. These are not the current immediate-decision envelope in LA034/CG08. The source remains present; no runtime cleanup is claimed.
 
 **Reason / tradeoff:** Reconcile the two measurements with the chosen provider's request limit and state exactly which check rejected an oversized request.
 
@@ -104,7 +106,7 @@ Original recommendation: **Review**.
 
 ## LA034
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
 The current immediate-decision workflow limits assembled model input to 100,000 bytes.
 
@@ -116,9 +118,9 @@ Original recommendation: **Review**.
 
 ## LA035
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
-The current decision workflow reserves no more than 50,000 bytes of its shared input allowance for action descriptions.
+During initial decision preparation, the server reserves up to 50,000 bytes of its shared input allowance for the largest candidate action descriptions. This protects room while optional recall is selected; it is not an independent 50,000-byte cap on the eventual action section. Later action preparation fits offered descriptions within the remaining complete 100,000-byte context allowance.
 
 **Reason / tradeoff:** Let relevant action descriptions use available space after required facts are included, rather than rigidly limiting actions to half the allowance.
 
@@ -128,7 +130,7 @@ Original recommendation: **Expand**.
 
 ## LA036
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
 The action-selection workflow searches the full eligible action library but returns at most 300 options for further judgment.
 
@@ -140,7 +142,7 @@ Original recommendation: **Review**.
 
 ## LA037
 
-**Removed at original audit; not reverified · Restrictiveness: — (removed).**
+**Removed — absence source rechecked October 15, 2026 · Restrictiveness: — (removed).**
 
 **Former limit, now removed:** When a computer-controlled character builds a multi-step plan, the model receives only the first 16 possible gathering, material-preparation and crafting steps after sorting by internal identifier.
 
@@ -152,7 +154,7 @@ Original recommendation: **Completed removals**.
 
 ## LA038
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
 A spontaneous cognition request describes at most the 8 newest significant experiences that could have caused the character to think.
 
@@ -164,7 +166,7 @@ Original recommendation: **Replace**.
 
 ## LA039
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
 An experience normally qualifies to trigger spontaneous thinking when its importance is at least 6, or its event type is explicitly configured as significant.
 
@@ -188,7 +190,7 @@ Original recommendation: **Completed removals**.
 
 ## LA041
 
-**Removed at original audit; not reverified · Restrictiveness: — (removed).**
+**Removed — absence source rechecked October 15, 2026 · Restrictiveness: — (removed).**
 
 **Former limit, now removed:** A computer-controlled character's action menu includes options to join only the first 4 eligible nearby conversations.
 
@@ -200,7 +202,7 @@ Original recommendation: **Completed removals**.
 
 ## LA042
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Medium.**
 
 The system accepts a proposed reasoning level only when Jev assigns the winning choice a probability of at least 0.5.
 
@@ -212,7 +214,7 @@ Original recommendation: **Review**.
 
 ## LA043
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
 The system skips further action selection when Jev assigns at least 0.8 probability to the answer that no action is needed.
 
@@ -224,7 +226,7 @@ Original recommendation: **Review**.
 
 ## LA044
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Medium.**
 
 Optional information passes Jev's relevance filter when its yes probability is at least 0.5.
 
@@ -236,7 +238,7 @@ Original recommendation: **Review**.
 
 ## LA045
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Medium.**
 
 Some intent and invention classification results require model confidence of at least 0.55 to avoid a clarification or refusal path.
 
@@ -248,7 +250,7 @@ Original recommendation: **Review**.
 
 ## LA058
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
 Immediate reasoning levels 2, 3 and 4 allow 1,024, 4,096 and 8,192 output tokens respectively.
 
@@ -260,7 +262,7 @@ Original recommendation: **Review**.
 
 ## LA059
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
 An immediate response that may include an invention gets an output allowance of at least 1,800 tokens.
 
@@ -272,11 +274,11 @@ Original recommendation: **Review**.
 
 ## LA060
 
-**Removed at original audit; not reverified · Restrictiveness: — (removed).**
+**Removed at original audit; source rechecked October 15, 2026 · Restrictiveness: — (removed).**
 
-**Former limit, now removed:** The reasoning-level table declares input and visible-output sizes, plus a level-5 entry, that are not independently enforced by the searched runtime code.
+**Former limit, now removed:** The original reasoning-level table declared unused input/display sizes and a level-5 entry. Those declarations remain absent from the current contracts.
 
-**Reason / tradeoff:** Removed unused input/display-size declarations and the unused level-5 table entry. Enforced level-2–4 output-token and reasoning settings remain.
+**Reason / tradeoff:** Removed the original unused input/display-size declarations and level-5 entry. The later independently enforced per-level table in [CG08](#cg08) is a separate delivered contract, including its reflection owner; this historical removal does not mean current per-level admission is unenforced.
 
 [Implementation starting point](../../apps/server/src/cognition-contracts.ts).
 
@@ -284,7 +286,7 @@ Original recommendation: **Completed removals**.
 
 ## LA061
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
 One generated character response can contain at most 16 proposed operations, such as speech, actions, thoughts or note edits, and at most 40,000 bytes.
 
@@ -296,7 +298,7 @@ Original recommendation: **Expand**.
 
 ## LA062
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
 A proposed response operation can depend on at most 16 other operations, and a generated plan contains at most 8 steps referenced by indexes 0–7.
 
@@ -308,7 +310,7 @@ Original recommendation: **Expand**.
 
 ## LA063
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Medium.**
 
 One speech operation generated by a character's model is limited to 1,200 characters.
 
@@ -320,7 +322,7 @@ Original recommendation: **Review**.
 
 ## LA064
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
 A generated action description or goal objective is limited to 500 characters.
 
@@ -332,7 +334,7 @@ Original recommendation: **Expand**.
 
 ## LA065
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
 One immediate private thought is limited to 240 characters and may name at most 8 associated characters, animals or objects by identifier.
 
@@ -344,7 +346,7 @@ Original recommendation: **Expand**.
 
 ## LA066
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Medium.**
 
 The game keeps only the latest 300 accepted character-response identifiers in its local duplicate-response prevention record.
 
@@ -356,7 +358,7 @@ Original recommendation: **Replace**.
 
 ## LA067
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
 Identifiers have different maximum lengths across the API: requests 100, beings/actions 120, goals/records 180 and operation-dependency labels 24 characters.
 
@@ -368,7 +370,7 @@ Original recommendation: **Keep**.
 
 ## LA068
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
 A character can have at most 8 unfinished goals tracked by the action-planning system.
 
@@ -380,9 +382,9 @@ Original recommendation: **Replace**.
 
 ## LA069
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
-A character's goal structure retains 16 finished goals and permits 24 goals in total.
+A character's goal structure permits 24 goals in total, sized from eight unfinished goals plus a sixteen-entry history allowance. There is no separately enforced sixteen-finished-goal cutoff: at total capacity, creating a goal removes one terminal goal only if no retained plan or child still references it; otherwise creation refuses.
 
 **Reason / tradeoff:** Store older goal history separately and retrieve it when useful instead of making the active-goal structure the only history store.
 
@@ -392,7 +394,7 @@ Original recommendation: **Replace**.
 
 ## LA070
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
 A character's current plan contains at most 8 steps, and only one plan step may be running at a time.
 
@@ -404,7 +406,7 @@ Original recommendation: **Replace**.
 
 ## LA071
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
 A character's planning structure retains only the latest 32 plan-history entries.
 
@@ -432,7 +434,7 @@ Input/stored intention text is 1–500 characters. Fulfillment descriptions/reas
 
 ## LA074
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
 A character can retain at most 16 unresolved commitments tracked by game rules, such as promises.
 
@@ -444,7 +446,7 @@ Original recommendation: **Replace**.
 
 ## LA075
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
 A character's editable knowledge notes allow 5,000 Unicode characters for general knowledge and 1,000 per subject-specific note.
 
@@ -456,7 +458,7 @@ Original recommendation: **Expand**.
 
 ## LA076
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
 A name learned for another being, including a spoken self-introduction, may contain at most 120 Unicode characters.
 
@@ -468,7 +470,7 @@ Original recommendation: **Review**.
 
 ## LA077
 
-**Removed at original audit; not reverified · Restrictiveness: — (removed).**
+**Removed — absence source rechecked October 15, 2026 · Restrictiveness: — (removed).**
 
 **Former limit, now removed:** The saved description of what should attract a character's attention keeps at most 16 item properties, 8 kinds of beings/objects and 24 item definitions.
 
@@ -480,7 +482,7 @@ Original recommendation: **Completed removals**.
 
 ## LA078
 
-**Removed at original audit; not reverified · Restrictiveness: — (removed).**
+**Removed — absence source rechecked October 15, 2026 · Restrictiveness: — (removed).**
 
 **Former limit, now removed:** The character-attention system returns only the first 32 visible beings or objects matching the character's saved interests.
 
@@ -492,7 +494,7 @@ Original recommendation: **Completed removals**.
 
 ## LA079
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
 A saved description of a character's attention interests expires after 7,200 game seconds.
 
@@ -504,7 +506,7 @@ Original recommendation: **Review**.
 
 ## LA091
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
 An urgent newly perceived event can cause at most one replacement attempt for an already-running response.
 
@@ -516,7 +518,7 @@ Original recommendation: **Keep**.
 
 ## LA102
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
 
 The generic character-observation function returns only the latest 24 perceived events in its recent-event field.
 
@@ -528,7 +530,7 @@ Original recommendation: **Replace**.
 
 ## LA231
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
 The scheduler for immediate AI responses runs only one interactive or spontaneous-cognition job at a time.
 
@@ -550,9 +552,9 @@ A running character response is eligible for one context refresh only when newly
 
 ## LA236
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Removed — source rechecked October 15, 2026 · Restrictiveness: — (superseded).**
 
-A short diagnostic description of what triggered cognition is cut to 120 characters by default.
+The former 120-character default diagnostic-trigger cutoff is absent from current publication. The director retains the exact stimulus in the detailed input and a readable trigger; `cognition-inspection.ts` removes standard prefix/time/addressing boilerplate without imposing that length cutoff. Existing diagnostic record/byte admission remains separate.
 
 **Reason / tradeoff:** Keep the list preview short but preserve the full triggering explanation in the request's detail view.
 
@@ -564,7 +566,7 @@ Original recommendation: **Keep**.
 
 **Current — source inspected at `af1eb02` · Restrictiveness: Liberal.**
 
-**World-context candidates are built before final context limits.** candidateSet traverses observed visible entities, ground items, direct inventory and known recipes to build descriptions/hashes before subsequent attention/model-byte selection. There is no separate total pre-formatting candidate count/byte cap here; perception, knowledge and custody filter membership. Unlimited recipe/content admission is not automatically bounded candidate work.
+**World observation precedes candidate and final context limits.** Candidate preparation rejects more than 8,192 combined visible/inventory/recipe/note items or more than 4 MiB of note text before constructing candidate descriptions/hashes. It still consumes an already prepared observation, and admission permits substantial formatting below these guards. Subsequent attention/model-byte selection has separate limits; perception, knowledge and custody filter membership. Unlimited recipe/content admission is not automatically bounded total decision-preparation work.
 
 **Exposure / consequence:** Crowds and ordinary growing inventories increase decision preparation; thousands of individually created items/recipes are lower-probability extremes. A model request limit protects provider input, not all prior formatting CPU/RAM.
 
@@ -574,7 +576,7 @@ Original recommendation: **Keep**.
 
 **Measured follow-through, October 7:** the [AV02 complete resident caller](../verification/shield-defense.md#second-implementation-review--october-7-2026) prepared 1,584 choices with 1,509 carried lots, largely optional per-lot Drop suggestions; sampled warm calls ranged 37–248 ms on the shared host. Native attack/equipment admission and earlier incompatible-tool filtering are delivered, while general observation and pre-selection action preparation remain C17/PF work. This is diagnostic evidence, not hosted capacity or a new content cap.
 
-**Implemented mitigation:** Candidate formatting rejects more than 8,192 combined visible/inventory/recipe/note items or more than 4 MiB of note text before constructing their strings. Observation and resident-world preparation still precede this guard. [Preparation owner](../memory-architecture.md#retrieval-preparation-admission).
+**Implemented mitigation:** The count/text guards refuse oversized candidate preparation without deleting retained sources. Observation and resident-world preparation still precede them. [Preparation owner](../memory-architecture.md#retrieval-preparation-admission).
 
 ## CG02
 
@@ -616,7 +618,7 @@ When combined visible/inventory/recipe/note preparation would exceed **8,192 row
 
 ## CG05
 
-**Current — level-1 selection and escalation, September 28 · Restrictiveness: Medium.** Level 1 rates each supplied action with an independent Noul question (`cognition-questions-v11`). The highest rating at or above **0.7** acts, or continues when it is the offered continue binding. A best rating from **0.5** to 0.7 is an uncertain selection; below 0.5 no supplied action fits; no rated action is its own reason. Each escalates to the most probable offered level-2–4 route in the same route answer (level 2 by default) when generation is enabled and its allowance can be reserved; otherwise the decision defers with that reason. Missing or invalid ratings defer without escalation; answers for unoffered handles are recorded, never executed and do not change the outcome. One selected binding may contain an explicit equip prerequisite plus strike through the existing bounded plan. Non-speech triggers rate actions in the routing request; speech triggers use a dependent second request, and an oversized combined request falls back to it before dispatch. Policy lives in `LEVEL1_POLICY` ([jev-questions.ts](../../apps/server/src/jev-questions.ts)); resolution is [level1-selection.ts](../../apps/server/src/level1-selection.ts).
+**Current — level-1 selection and escalation, September 28 · Restrictiveness: Medium.** Level 1 rates each supplied action with an independent Noul question (`cognition-questions-v14`). The highest rating at or above **0.7** acts, or continues when it is the offered continue binding. A best rating from **0.5** to 0.7 is an uncertain selection; below 0.5 no supplied action fits; no rated action is its own reason. Each escalates to the most probable offered level-2–4 route in the same route answer (level 2 by default) when generation is enabled and its allowance can be reserved; otherwise the decision defers with that reason. Missing or invalid ratings defer without escalation; answers for unoffered handles are recorded, never executed and do not change the outcome. One selected binding may contain an explicit equip prerequisite plus strike through the existing bounded plan. Non-speech triggers rate actions in the routing request; speech triggers use a dependent second request, and an oversized combined request falls back to it before dispatch. Policy lives in `LEVEL1_POLICY` ([jev-questions.ts](../../apps/server/src/jev-questions.ts)); resolution is [level1-selection.ts](../../apps/server/src/level1-selection.ts).
 
 **Reason / tradeoff:** Independent ratings replaced the proposed mutually exclusive Choice selector, whose similar alternatives diluted winning probabilities in live trials. Ratings measure concrete progress on a current need or goal, including preparation; explicit negative criteria reject unavailable prerequisites, inconsistent values and pointless repetition, and possible failure alone does not make an attempt useless. Escalation replaced the September 27 behavior of deferring whenever no action qualified, which left routine choices stalled; it trades an occasional generation charge for not trapping the actor in a shortlist. Defective answers never buy a larger model, so a malformed judgment cannot become an automatic paid repair. The thresholds are not calibrated correctness or feasibility guarantees; native admission remains mandatory. `AI_JEV_ONLY=true` disables generation, reflection, generated narration/compaction and paid embeddings, with no automatic fallback, so escalation defers there. [Provider contract](../ai-providers.md#jev-only-execution) and [AG13](../maintainers/agent-agency.md#ag13--embodied-survival-demonstration) record demonstrated spontaneous hunting and miss-aware retries with the 0.7 threshold; the 0.5 uncertainty line, escalation value and wider calibration remain unqualified. [Fixture evidence](../verification/level1-decisions.md).
 
@@ -656,7 +658,7 @@ Allowances are the existing per-call reservations (`decisionAllowance`): Jev use
 
 ## CG10
 
-**Current — September 28, [perception-reaction intake](../projects/perception-reaction-intake.md) · Restrictiveness: Medium.** Each observer keeps at most one private arrival record and one departure record per sighted person within a **3,600 game-second** window. The window is measured from its newest resident sighting record. Further comings and goings in the window update current visibility only. Losing sight of someone with memory is recorded at the arrival profile (importance **3**, urgency **0**, no automatic reasoning). Animals and objects stay unrecorded.
+**Current — September 28, [perception-reaction intake](../projects/completed/perception-reaction-intake.md) · Restrictiveness: Medium.** Each observer keeps at most one private arrival record and one departure record per sighted person within a **3,600 game-second** window. The window is measured from its newest resident sighting record. Further comings and goings in the window update current visibility only. Losing sight of someone with memory is recorded at the arrival profile (importance **3**, urgency **0**, no automatic reasoning). Routine appearances of ordinary animals and objects stay unrecorded under the bundled-world policy; exposed outward changes retain their separate private records.
 
 A person who returns within **30 game seconds** of a recorded departure keeps their perception episode, so non-authored recognition and plan targets survive a first brief occlusion or edge flicker. Live exposure, new detail and action reach still use exact current sight. The grace period counts only from the first departure recorded in the one-hour re-record window; later exits in that window write no record. A return within 30 seconds of that recorded departure keeps the episode even after further brief exits, and a return more than 30 seconds after it starts a new episode however brief the latest exit was. Outward-change records never re-arm a departure. [Base policy](../../packages/domain/src/worlds/base/senses.ts).
 
@@ -669,7 +671,7 @@ A person who returns within **30 game seconds** of a recorded departure keeps th
 
 ## CG11
 
-**Current — September 28, [perception-reaction intake](../projects/perception-reaction-intake.md) · Restrictiveness: Medium.** Active stimuli are derived from an observer's current exposure, never recorded per tick. At most **8** salient sources are kept per observer, ordered by salience, then novelty, then earlier onset, then ID; the rest are only counted.
+**Current — September 28, [perception-reaction intake](../projects/completed/perception-reaction-intake.md) · Restrictiveness: Medium.** Active stimuli are derived from an observer's current exposure, never recorded per tick. At most **8** salient sources are kept per observer, ordered by salience, then novelty, then earlier onset, then ID; the rest are only counted.
 
 - **Base-world salience:** burning **2**, incapacitated **3**, dead **3**; other outward states are 0. Bodies are not yet in visual exposure (an owner decision), so `dead` currently affects attention ranking only and never produces an active stimulus or review.
 - **Novelty:** a source is novel for **60** game seconds after its exposure episode starts.

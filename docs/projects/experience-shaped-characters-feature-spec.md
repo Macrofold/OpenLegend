@@ -1,8 +1,8 @@
 # People who change through living
 
-| Status      | Current progress                                                                                                      | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG23 product proposal complete; existing ACT/CR delivery, technical work and live gameplay qualification remain open. | 2026-10-14   |
+| Status      | Current progress                                                                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The DG23 product proposal is complete; its ACT/CR extensions, technical design, implementation and live gameplay qualification remain open. | 2026-10-16   |
 
 This is the product and behavior specification for DG23, the personality portion of ND04 and the older-recollection/dream portion of ND19. The [world profile](../worlds/base/experience-shaped-characters.md) supplies a concrete first experience. Existing ACT, CE and CR owners retain delivery, evidence and limits. Practical skill remains DG14 and the native learning owner. This assignment contains no technical design.
 

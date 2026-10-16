@@ -4,7 +4,7 @@
 
 ## 1. Canon
 
-Two sources. **Mike's expanded description (2026-09-27)** is newer than the repository's [Threewater March proposal](../../docs/repertoires/worlds/medieval-survival.md#maer-fen-38--the-raider-who-calls-every-payment-a-debt) and wins where they differ.
+The [current Threewater March proposal](../../docs/repertoires/worlds/medieval-survival.md#maer-fen-38--master-of-the-reed-knives) now includes **Mike's expanded description (2026-09-27)**, which supplied these prompt inputs. That optional setting owns the biography; this art file does not establish a second version or adopt it as game content.
 
 **From Mike's description:**
 
@@ -18,7 +18,7 @@ Two sources. **Mike's expanded description (2026-09-27)** is newer than the repo
 - Players might meet him at a **fishing supper while stolen convoy goods are priced in the next room**.
 - He wants the **winter storehouses**, the **cargo's silver**, and recognition as a power that must be bargained with.
 
-**From the repository proposal (not contradicted):** he fights from prepared positions with a **bow and hooked blade**; the stolen convoy's **toll seal** lets the thieves pose as lawful collectors; his refuge is the ruined storehouses on the Old Reed Road's raised causeways.
+**Earlier proposal cues retained for these concepts:** fighting from prepared positions with a **bow and hooked blade**; the stolen convoy's **toll seal** lets the thieves pose as lawful collectors; his refuge is the ruined storehouses on the Old Reed Road's raised causeways.
 
 **Visual hook:** a gracious, generous host whose hospitality sits one doorway away from the price of fear. The images should read charming first and dangerous second. He has two faces: plain river-working kit, and splendid feast-day dress.
 
@@ -26,11 +26,11 @@ Two sources. **Mike's expanded description (2026-09-27)** is newer than the repo
 
 His face, skin, hair, beard and earring; every colour and garment except the bow and hooked blade; the feast-day coat; the bronze seal; all six scenes. Showing the hooked blade as a reed-cutter's tool is an interpretation of his origin, not canon.
 
-**Identity anchor (repeated in every prompt):** "Compact and wiry, weathered olive-brown skin, shaved head, neat black mustache and short pointed chin beard flecked with grey, heavy-lidded patient eyes, a small gold ring in his left ear."
+**Starting identity anchor (shortened or varied for some scenes below):** "Compact and wiry, weathered olive-brown skin, shaved head, neat black mustache and short pointed chin beard flecked with grey, heavy-lidded patient eyes, a small gold ring in his left ear."
 
 He's deliberately distinct from Halven (lean and rangy, close-cropped hair, short beard) so the two read differently side by side.
 
-**Working kit (repeated):** "dark oiled-leather jerkin over an indigo-grey wool tunic, reed-green hooded wool cloak, a reed-cutter's hooked blade at his hip, a short hunting bow."
+**Starting working kit (scene variants follow):** "dark oiled-leather jerkin over an indigo-grey wool tunic, reed-green hooded wool cloak, a reed-cutter's hooked blade at his hip, a short hunting bow."
 
 **Feast-day dress (prompt 5):** "an oxblood-red wool coat trimmed with otter fur, a silver-studded belt, rings on his fingers."
 

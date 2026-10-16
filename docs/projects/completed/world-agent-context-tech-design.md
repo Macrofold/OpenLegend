@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                                  | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The approved finite context and native review foundation was delivered and locally qualified on 2026-09-28; wider release scope remains separate. | 2026-10-14   |
+| Completed | The approved finite context and native review foundation was delivered and locally qualified on 2026-09-28; wider release scope remains separate. | 2026-10-16   |
 
 **Implemented design:** The approved finite scope is delivered; baseline findings and staging below retain the original design history. Implements the requested design scope of the [feature specification](world-agent-context-feature-spec.md); current behavior is maintained in the linked runtime contract. Medium effort is the owner's explicit target. [Project packet](world-agent-context/README.md) records the inspected baseline and examples.
 

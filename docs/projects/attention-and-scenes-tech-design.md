@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                             | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Exact attended activity and compact background meaning are designed through existing owners; runtime delivery and qualification remain open. | 2026-10-15   |
+| In progress | Exact attended activity and compact background meaning are designed through existing owners; runtime delivery and qualification remain open. | 2026-10-16   |
 
 **Selected design, not runtime delivery or implementation approval.** This is the counterpart to the [feature specification](attention-and-scenes-feature-spec.md), particularly its [compact background family](attention-and-scenes-feature-spec.md#173-selected-compact-expressive-background-exchanges) and [shared-activity refinement](attention-and-scenes-feature-spec.md#18-research-refinement--independent-shared-activity-that-people-can-understand). It resolves the exact encounter and two-NPC compact meaning design under DG06/DG18 and PS04. Aggregate vocal activity, crowds, timed speech and broader ND13/ND15/ND16 scope remain separate. The psychological mechanism has its own [continuing-life owner](continuing-lives-tech-design.md#55-numerical-personal-reactions-without-required-prose).
 

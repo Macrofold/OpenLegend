@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                         | Last updated |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Characterless entry, scoped invitations and scheduled maintenance are delivered and verified through the selected real-account journeys. | 2026-10-14   |
+| Completed | Characterless entry, scoped invitations and scheduled maintenance are delivered and verified through the selected real-account journeys. | 2026-10-16   |
 
 **Currency review — October 14, 2026.** [September 28–29 evidence](../../verification/multiplayer-entry-maintenance.md#entry-and-maintenance--september-2829-2026) records the completed scope, including real OIDC/browser entry, revocation, restart and Ready. The branch setup and proposed implementation sequence below are historical. The reserved actor marker remains the documented storage choice; its original compatibility rationale does not prohibit a future coordinated current-format change. Any such change follows the [current development-save policy](../../../AGENTS.md#development-save-policy), not an obligation to preserve older development databases. Later tab/account UI work and broader hosted capacity remain distinct.
 

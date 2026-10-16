@@ -1,10 +1,12 @@
 # Batch 08 — The missing belonging implementation prompt
 
-| Status    | Current progress                                                                                                          | Last updated |
-| --------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | MY01–MY05 implemented and verified on `codex/missing-belonging`; broader parent trackers retain their remaining criteria. | 2026-10-13   |
+| Status    | Current progress                                                                                       | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed | MY01–MY05 implemented and integrated on main; broader parent trackers retain their remaining criteria. | 2026-10-16   |
 
 MY01–MY05 are internal parts of one assignment. [Feature](parallel-batch-08-the-missing-belonging-feature-spec.md), [design](parallel-batch-08-the-missing-belonging-tech-design.md), [tracker](../../maintainers/parallel-batch-08-the-missing-belonging.md), [world profile](../../worlds/base/missing-belonging.md) and [verification](../../verification/parallel-batch-08-the-missing-belonging.md) supply the complete definition and evidence. Writing this prompt does not dispatch or authorize runtime work.
+
+**Historical implementation prompt.** The assignment below was completed and integrated on local main on October 14. Its original branch creation, active-project paths and readiness directions are retained as the execution record, not current instructions to rerun the task. Use the completed-document links above for current navigation; [integration evidence](../../verification/parallel-batch-08-the-missing-belonging.md#october-14-combined-starting-world) preserves the precise combined-world qualification and remaining parent limits.
 
 ## One assignment — Investigate and return a missing belonging
 

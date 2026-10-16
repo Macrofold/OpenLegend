@@ -1,10 +1,12 @@
 # Batch 05 — Adventure, defense and a home
 
-| Status      | Current progress                                                                                         | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | All five assignments are merged; human appreciation and broader qualification retain their tracked gaps. | 2026-10-08   |
+| Status      | Current progress                                                                                                                                            | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | All five implementations are integrated; the coaching-result repair, final player equipment comparison and combined/genuine-play qualification remain open. | 2026-10-16   |
 
 Current AV05 delivery: [installed preparation/cast contract](../food-preparation.md), [river profile](../worlds/base/river-fishing.md) and [native/player/live-choice evidence](../verification/river-meal.md). Existing qualification gaps remain tracked separately.
+
+**Current review, October 15:** the threat, known-place, equipment and shelter-design prerequisites are integrated. The spear already uses the two-hand equipment rule and preserves the knife/shield when switching; AV01’s final player-facing comparison remains open. Coaching still needs the [PC04 repair](../maintainers/practical-competence.md#pc04--voluntary-coaching): the accepted episode requires witnessing both release and result, while the current observation is recorded at release. Human appreciation, voluntary/combined play and broader device/scale qualifications remain open in their existing owners. Original branch inspections, missing-prerequisite statements, estimates and allocation instructions below are historical.
 
 ## Purpose and selection
 
