@@ -24,8 +24,8 @@ export function initialCamera(): CameraState {
   return {
     focus: { x: 11, y: 0, z: 12 },
     yaw: 0,
-    pitch: 0.88,
-    zoom: 12,
+    pitch: 0.68,
+    zoom: 5.5,
     projection: 'orthographic',
     levelId: null,
     rotationLocked: false,

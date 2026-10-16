@@ -76,7 +76,7 @@ export const candidateArt: Readonly<ArtTreatment> = Object.freeze({
   environment: 'study',
   mercenaryArt: 'restored',
   sampling: 'screen',
-  sceneGrid: 'metres30',
+  sceneGrid: 'metres40',
   hareArt: 'field',
   groundPalette: 'woodland',
   vegetation: 'still',

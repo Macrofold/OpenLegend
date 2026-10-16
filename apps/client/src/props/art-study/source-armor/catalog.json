@@ -31,7 +31,7 @@
     {
       "id": "armor-field-tunic",
       "family": "armor",
-      "label": "Armor study",
+      "label": "Padded armor study",
       "variant": "field-tunic",
       "description": "Fitted field tunic with a restrained collar and hem. Anatomical eyes and hands; plain wool replaces the source mail print.",
       "recommended": true,
@@ -88,7 +88,7 @@
     {
       "id": "armor-work-vest",
       "family": "armor",
-      "label": "Armor study",
+      "label": "Padded armor study",
       "variant": "work-vest",
       "description": "Short fitted vest over linen with a clear waist. The underlayer remains complete beneath the tailored vest.",
       "recommended": false,
@@ -145,7 +145,7 @@
     {
       "id": "armor-travel-coat",
       "family": "armor",
-      "label": "Armor study",
+      "label": "Padded armor study",
       "variant": "travel-coat",
       "description": "Longer muted travel coat with broad cloth panels and a small collar fastening.",
       "recommended": false,
@@ -204,7 +204,7 @@
     {
       "id": "control-armor",
       "family": "armor",
-      "label": "Armor study",
+      "label": "Padded armor study",
       "variant": "source-control",
       "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
       "recommended": false,

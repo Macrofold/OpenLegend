@@ -27,7 +27,7 @@ PEOPLE={
  'tavin':('Tavin Vale',1,.38,.52,.5,'young_african_male',['short03','short04','afro01'],['514d31','777347','969061','beb786'],1),
  'kest':('Kest',1,.58,.72,.66,'middleage_caucasian_male',['short04','short02','short03'],['383e48','505966','747d86','a3a7a3'],2),
  'orin':('Orin',1,.32,.46,.44,'young_asian_male',['short02','long01','ponytail01'],['3f4936','5b674b','7d8965','a9b18a'],0),
- 'armor':('Armor study',1,.4,.65,.55,'young_caucasian_male',['short04','short04','short04'],['3b3630','5c5142','88745a','b5a07c'],0),
+ 'armor':('Padded armor study',1,.4,.65,.55,'young_caucasian_male',['short04','short04','short04'],['3b3630','5c5142','88745a','b5a07c'],0),
 }
 
 

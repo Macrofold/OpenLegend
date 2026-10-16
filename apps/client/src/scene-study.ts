@@ -1,6 +1,7 @@
 import type { GameView } from '@open-legend/protocol';
 import { WildernessScene } from './scene';
 import { StudyCapture } from './study-capture';
+import { initialCamera } from './world-camera';
 import { candidateArt, type ArtTreatment } from './art-treatment';
 import recorded from './props/art-study/starting-world.json';
 import './scene-study.css';
@@ -67,14 +68,22 @@ function treatment(): ArtTreatment {
 }
 function setCamera(): void {
   const current = scene.cameraState();
+  const ordinary = initialCamera();
+  // Each location is an explicit comparison composition, rather than following
+  // the interpolated player while a recorded journey jumps between snapshots.
+  if (current.following) scene.cameraCommand({ type: 'follow' });
   const zoom =
     select('world-framing').value === 'overview'
       ? 12
       : select('world-framing').value === 'detail'
         ? 4
-        : 5.5;
+        : ordinary.zoom;
   scene.cameraCommand({ type: 'zoom', delta: zoom - current.zoom });
-  scene.cameraCommand({ type: 'orbit', yaw: -current.yaw, pitch: 0.68 - current.pitch });
+  scene.cameraCommand({
+    type: 'orbit',
+    yaw: -current.yaw,
+    pitch: (select('world-framing').value === 'overview' ? 0.88 : ordinary.pitch) - current.pitch,
+  });
   scene.cameraCommand({
     type: 'focus',
     point: { ...view.player.position, z: view.player.position.z - 1.5 },
@@ -148,7 +157,7 @@ function mount(): void {
         status.textContent = message;
       },
     },
-    { rememberCamera: false, art: treatment() },
+    { rememberCamera: false, notices: false, art: treatment() },
   );
   scene.setPerceptionOptions({ vision: false, hearing: false });
   scene.setShadowQuality(select('world-shadows').value as 'detailed' | 'economy');
@@ -256,6 +265,9 @@ button('capture').onclick = () =>
     'openlegend-' + stop().id + '-' + select('world-light').value + '-' + select('route').value,
   );
 button('record').onclick = () => {
+  // Orbit comparisons begin from the same camera, so recorded alternatives
+  // can be played together without unrelated angular offsets.
+  if (orbit) setCamera();
   button('record').disabled = capture.record(
     'openlegend-' + stop().id + '-' + select('world-light').value + '-' + select('route').value,
     (message) => {

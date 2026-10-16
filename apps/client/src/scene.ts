@@ -239,7 +239,11 @@ export class WildernessScene implements WorldRenderer {
   constructor(
     private canvas: HTMLCanvasElement,
     private callbacks: SceneCallbacks,
-    private readonly options: { rememberCamera?: boolean; art?: ArtTreatment } = {},
+    private readonly options: {
+      rememberCamera?: boolean;
+      notices?: boolean;
+      art?: ArtTreatment;
+    } = {},
   ) {
     try {
       this.cameraSettings = restoreCameraPreferences(
@@ -658,7 +662,7 @@ export class WildernessScene implements WorldRenderer {
       view,
       [...this.actors.values()].map((entry) => entry.view),
     );
-    this.statuses.observe(view);
+    if (this.options.notices !== false) this.statuses.observe(view);
     this.statusIndicators.observe(entities);
     this.speech.observe(view);
     if (!this.readyRequested) {
@@ -1745,6 +1749,7 @@ export class WildernessScene implements WorldRenderer {
     }
     // Authored static scenery has no picking or collision authority. Reuse art by finite input.
     const groups = new Map<string, SceneryInstance[]>();
+    const library = ['kenney', 'quaternius', 'study'].includes(this.artSettings.environment);
     for (const instance of map.spatial.scenery ?? []) {
       const cell = instance.appearance === 'meadow-grass' ? 8 : 16;
       const patch = grouped
@@ -1752,7 +1757,6 @@ export class WildernessScene implements WorldRenderer {
         : '';
       // Library geometry is shared across authored rotation seeds. Keeping the
       // seed in this key splits identical meshes into redundant shadow draws.
-      const library = ['kenney', 'quaternius', 'study'].includes(this.artSettings.environment);
       const key = `${instance.appearance}:${library ? '' : instance.seed}:${instance.castShadows}${patch}`;
       const group = groups.get(key);
       if (group) group.push(instance);

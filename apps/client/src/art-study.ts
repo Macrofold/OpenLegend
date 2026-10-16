@@ -143,11 +143,11 @@ export class ArtStudy {
       farClip: 500,
     });
     this.app.root.addChild(this.camera);
-    this.pixels = new ScenePixels(this.app.graphicsDevice, this.camera.camera!);
     this.frame = new pc.CameraFrame(this.app, this.camera.camera!);
     this.frame.rendering.toneMapping = pc.TONEMAP_ACES;
     this.frame.rendering.samples = 4;
     this.frame.update();
+    this.pixels = new ScenePixels(this.app.graphicsDevice, this.camera.camera!);
     this.sun = new pc.Entity('Shared study daylight', this.app);
     this.sun.addComponent('light', {
       type: 'directional',
