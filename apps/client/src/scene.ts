@@ -82,7 +82,7 @@ import {
 } from './environment-art';
 import { VegetationMotion, type VegetationContributor } from './vegetation-motion';
 import { markPixelEnvironment } from './scene-pixels';
-import { GeneratedPropResources, type GeneratedPropActor } from './generated-prop';
+import { ScenePropResources, propDimensions, type ScenePropActor } from './scene-props';
 import { LibraryScenery } from './library-scenery';
 import { LibraryActors, hasLibraryActor, type LibraryActor } from './library-actors';
 import { VisionBlur, VISION_FOCUS } from './vision-blur';
@@ -109,8 +109,8 @@ const restingCardBounds = new pc.BoundingBox(new pc.Vec3(0, 0, 0), new pc.Vec3(0
 interface RenderedEntity {
   attackPose?: boolean;
   model?: MercenaryActor | LibraryActor;
-  generatedProp?: GeneratedPropActor;
-  generatedInstalled?: boolean;
+  sceneProp?: ScenePropActor;
+  propInstalled?: boolean;
   departedAt?: number;
   observed: boolean;
   card: boolean;
@@ -221,7 +221,7 @@ export class WildernessScene implements WorldRenderer {
   private readonly frameRateMeter = new FrameRateMeter();
   private readyRequested = false;
   private presentation!: WorldPresentation;
-  private generatedProps!: GeneratedPropResources;
+  private sceneProps!: ScenePropResources;
   private libraryScenery!: LibraryScenery;
   private libraryActors!: LibraryActors;
   private mercenary?: MercenaryModels;
@@ -302,12 +302,7 @@ export class WildernessScene implements WorldRenderer {
         sun.light!.light,
         this.artMaterials,
       );
-      this.generatedProps = new GeneratedPropResources(
-        this.app,
-        this.artMaterials,
-        sun.light!.light,
-        (material) => this.prepareSurface(material, 'bark'),
-      );
+      this.sceneProps = new ScenePropResources(this.app, this.artMaterials, sun.light!.light);
       this.outline = new HoverOutline(this.app, this.camera);
       this.mercenary = new MercenaryModels(
         this.app,
@@ -426,12 +421,12 @@ export class WildernessScene implements WorldRenderer {
         .filter((e) => e.model)
         .map((e) => e.model!.diagnostics()),
       props: [...this.actors.values()]
-        .filter((entry) => entry.generatedProp)
+        .filter((entry) => entry.sceneProp)
         .map((entry) => ({
           id: entry.view.id,
-          state: entry.generatedProp!.state,
-          visible: entry.generatedProp!.visible,
-          meshes: entry.generatedProp!.meshes.length,
+          state: entry.sceneProp!.state,
+          visible: entry.sceneProp!.visible,
+          meshes: entry.sceneProp!.meshes.length,
         })),
     };
   }
@@ -1181,7 +1176,7 @@ export class WildernessScene implements WorldRenderer {
   private releaseEntity(entry: RenderedEntity): void {
     if (this.hoveredId === entry.view.id) this.clearHover();
     entry.model?.destroy();
-    entry.generatedProp?.destroy();
+    entry.sceneProp?.destroy();
     this.cards.delete(entry.sprite);
     this.presentation.removeReveal(entry.reveal);
     if (entry.sprite.render) this.presentation.removeEffect(entry.sprite.render);
@@ -1494,25 +1489,32 @@ export class WildernessScene implements WorldRenderer {
       height,
       observed: true,
     };
-    if (crate && this.artSettings.prop !== 'authored') {
-      entry.generatedProp = this.generatedProps.create(
+    const preparedProp = propDimensions(view.appearance);
+    if (preparedProp || (crate && this.artSettings.prop !== 'authored')) {
+      if (preparedProp) {
+        entry.width = preparedProp.width;
+        entry.height = preparedProp.height;
+      }
+      entry.sceneProp = this.sceneProps.create(
         root,
-        width,
-        height,
-        0.8,
-        this.artSettings.prop,
+        preparedProp?.width ?? width,
+        preparedProp?.height ?? height,
+        preparedProp?.depth ?? 0.8,
+        preparedProp ? view.appearance : this.artSettings.prop,
       );
     }
     return entry;
   }
-  private installGeneratedProp(entry: RenderedEntity): void {
-    const actor = entry.generatedProp;
+  private installSceneProp(entry: RenderedEntity): void {
+    const actor = entry.sceneProp;
     const sprite = actor?.root;
     // Late asset arrival must not upgrade a remembered or cut-away object.
     // The ordinary visible-frame owner performs the atomic swap after admission.
-    if (!actor || !sprite || actor.state !== 'ready' || entry.generatedInstalled) return;
+    if (!actor || !sprite || actor.state !== 'ready' || entry.propInstalled) return;
     this.presentation.removeReveal(entry.reveal);
+    this.cards.delete(entry.sprite);
     for (const node of [...entry.root.children]) if (node !== sprite) node.destroy();
+    entry.card = false;
     entry.sprite = sprite;
     entry.meshes = this.appearanceMeshes(sprite);
     entry.meshCasters = entry.meshes.filter((mesh) => mesh.castShadow);
@@ -1526,7 +1528,7 @@ export class WildernessScene implements WorldRenderer {
       entry.meshes,
     );
     actor.setVisible(true);
-    entry.generatedInstalled = true;
+    entry.propInstalled = true;
     this.applyEntityOpacity(entry, this.entityOpacity(entry));
   }
   private buildLandscape(map: GameView['map']): void {
@@ -1964,7 +1966,7 @@ export class WildernessScene implements WorldRenderer {
       const positionChanged = position.distance(entry.root.getPosition()) > 1e-6;
       if (positionChanged) entry.root.setPosition(position);
       this.updateModelVisibility(entry);
-      if (entry.root.enabled) this.installGeneratedProp(entry);
+      if (entry.root.enabled) this.installSceneProp(entry);
       entry.model?.update(
         entry.view,
         dt,
@@ -2684,11 +2686,11 @@ export class WildernessScene implements WorldRenderer {
     this.outline?.destroy();
     for (const entry of this.actors.values()) {
       entry.model?.destroy();
-      entry.generatedProp?.destroy();
+      entry.sceneProp?.destroy();
       this.presentation?.removeReveal(entry.reveal);
     }
     this.presentation?.destroy();
-    const propParsing = this.generatedProps?.destroy();
+    const propParsing = this.sceneProps?.destroy();
     const mercenaryParsing = this.mercenary?.destroy();
     const animalParsing = this.libraryActors?.destroy();
     this.landscape?.destroy();

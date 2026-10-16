@@ -36,7 +36,7 @@ function treatment(): ArtTreatment {
     subjectDetail: route === 'family' ? 'preserve' : 'shared',
     surfaceArt: 'plain',
     environment: 'study',
-    prop: 'carved',
+    prop: 'banded',
     vegetation: 'still',
     cloth: 'settled',
   };
@@ -88,6 +88,24 @@ function publish(): void {
       };
     }),
   };
+  if (item.id === 'camp') {
+    const source = view.entities.find((entity) => entity.appearance === 'crate-mesh');
+    if (source)
+      view.entities.push({
+        ...source,
+        id: 'study-thin-sword',
+        name: 'Thin sword · display comparison',
+        appearance: 'study:sword-broad-tip',
+        kind: 'item',
+        status: 'Display fixture · no gameplay contents or actions',
+        actions: [],
+        position: {
+          ...view.player.position,
+          x: view.player.position.x + 1.3,
+          z: view.player.position.z + 0.35,
+        },
+      });
+  }
   scene.setView(view);
 }
 function mount(): void {

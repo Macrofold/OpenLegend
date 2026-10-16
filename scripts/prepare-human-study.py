@@ -202,9 +202,9 @@ def main(source,person):
             bone.rotation_quaternion=rest.inverted()@Quaternion((0,1,0),angle)@rest
         helper.normalize(objects,1.85)
         description=[
-            'Fitted field tunic, restrained collar and hem, tied-back hair. Real anatomical eyes and hands; plain wool replaces the source mail print.',
-            'Short moss vest over linen, cropped hair and a clear waist. The underlayer remains complete beneath the tailored vest.',
-            'Longer muted travel coat and braid, with broad cloth panels and a small collar fastening.',
+            'Fitted field tunic with a restrained collar and hem. Anatomical eyes and hands; plain wool replaces the source mail print.',
+            'Short fitted vest over linen with a clear waist. The underlayer remains complete beneath the tailored vest.',
+            'Longer muted travel coat with broad cloth panels and a small collar fastening.',
         ][index]
         asset,placement=export_asset(objects,output,person+'-'+variant,person,label,variant,description,index==recommendation,
             'MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.')

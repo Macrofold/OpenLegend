@@ -1,0 +1,203 @@
+{
+  "group": "source-kest",
+  "sourceFile": "art-direction/assets/source-study/source-kest.blend",
+  "sourceSha256": "b4b0f24ae6369e08790eb2b5fa71ea5f0d1a96b18bdc93eaf5335831cfffe534",
+  "recipe": {
+    "path": "scripts/prepare-human-study.py",
+    "sha256": "a0b9c8708764799fbde9b3014ac3a4014b43c13670e0de973e68dbf8d1281402"
+  },
+  "helpers": {
+    "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
+    "prepare-source-study.py": "324ec9807b07c217cde15734d66d55d4453ea22564fe26e479d79021cdb32a70",
+    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
+  },
+  "sources": [
+    {
+      "url": "https://github.com/makehumancommunity/mpfb2",
+      "license": "GPL-3.0-or-later code; CC0 core mesh"
+    },
+    {
+      "url": "https://static.makehumancommunity.org/assets/assetpacks/makehuman_system_assets.html",
+      "license": "CC0",
+      "archiveSha256": "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107"
+    },
+    {
+      "url": "https://static.makehumancommunity.org/assets/assetpacks/suits02.html",
+      "license": "CC0",
+      "archiveSha256": "437f4d7ab92b698c1fb1047e7d62b22c11f195b2473e936118661dc8e6b7eb7a"
+    }
+  ],
+  "assets": [
+    {
+      "id": "kest-field-tunic",
+      "family": "kest",
+      "label": "Kest",
+      "variant": "field-tunic",
+      "description": "Fitted field tunic with a restrained collar and hem. Anatomical eyes and hands; plain wool replaces the source mail print.",
+      "recommended": false,
+      "file": "kest-field-tunic.glb",
+      "bounds": {
+        "min": [
+          -0.37578,
+          0.0,
+          -0.288581
+        ],
+        "max": [
+          0.37578,
+          1.85,
+          0.288581
+        ]
+      },
+      "triangles": 31570,
+      "vertices": 16397,
+      "textureSizes": [
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "d09f98ccd479031b30ad3ac3aa555c4cc44bd766f2141db91b70298dca5b717c",
+      "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
+      "animatedFile": "kest-field-tunic-motion.glb",
+      "animatedSha256": "2e35bd03010f7a4db5b9f029f7b9eef22a804954d5a6b042b575c9936da1439e"
+    },
+    {
+      "id": "kest-work-vest",
+      "family": "kest",
+      "label": "Kest",
+      "variant": "work-vest",
+      "description": "Short fitted vest over linen with a clear waist. The underlayer remains complete beneath the tailored vest.",
+      "recommended": false,
+      "file": "kest-work-vest.glb",
+      "bounds": {
+        "min": [
+          -0.372482,
+          0.0,
+          -0.291723
+        ],
+        "max": [
+          0.372482,
+          1.85,
+          0.291723
+        ]
+      },
+      "triangles": 37578,
+      "vertices": 19226,
+      "textureSizes": [
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "1b64f64e2bb57bd86b33057f5f0d4a430a6187c42bb8b706ebdca155641ef627",
+      "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
+      "animatedFile": "kest-work-vest-motion.glb",
+      "animatedSha256": "6ea99a57e8e80e5ca8383c5291a4a502954c6fd1a8f908c3a65e67e29860af18"
+    },
+    {
+      "id": "kest-travel-coat",
+      "family": "kest",
+      "label": "Kest",
+      "variant": "travel-coat",
+      "description": "Longer muted travel coat with broad cloth panels and a small collar fastening.",
+      "recommended": true,
+      "file": "kest-travel-coat.glb",
+      "bounds": {
+        "min": [
+          -0.374321,
+          0.0,
+          -0.287461
+        ],
+        "max": [
+          0.374321,
+          1.85,
+          0.287461
+        ]
+      },
+      "triangles": 32442,
+      "vertices": 16543,
+      "textureSizes": [
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "8cb99c75d5d3dbd82a707ce4dcc9a73d51db869c9622af9416453917e1c20f0f",
+      "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
+      "animatedFile": "kest-travel-coat-motion.glb",
+      "animatedSha256": "e64579539e3f8e245463627934d0927181e70107ab8dbe05a90a407151f0fcbf"
+    }
+  ]
+}

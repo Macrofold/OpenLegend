@@ -1,26 +1,40 @@
 import * as pc from 'playcanvas';
 import { BundledModels } from './bundled-models';
 import generatedChestUrl from './props/generated-chest.glb?url';
-import { ArtMaterials, type ArtTreatment } from './art-treatment';
+import { ArtMaterials } from './art-treatment';
+import { studyAssets } from './study-assets';
 import carved from './props/art-study/source-chests/chest-carved-lid.glb?url';
 import banded from './props/art-study/source-chests/chest-banded-lid.glb?url';
 import cache from './props/art-study/source-chests/chest-plank-cache.glb?url';
 import { ShadowMaterial } from './shadow-material';
 import { ordinaryStencil, setVisibilityStencil } from './visibility-stencil';
 
-/** One attributed offline E08 prop. Appearance only: its caller supplies the
- * existing object's envelope and owns fallback, reveal and semantic picking.
- * docs/verification/generated-prop-coherence.md */
-export class GeneratedPropResources {
+interface PropSource {
+  url: string;
+  width: number;
+  height: number;
+  depth: number;
+}
+const sources = new Map<string, PropSource>([
+  ['generated', { url: generatedChestUrl, width: 1, height: 1, depth: 1 }],
+  ...Object.entries({ carved, banded, cache }).map(
+    ([key, url]) => [key, { url, width: 1, height: 0.8, depth: 0.8 }] as [string, PropSource],
+  ),
+]);
+for (const [key, asset] of studyAssets) if (!asset.animationUrl) sources.set(key, asset);
+export const propDimensions = (appearance: string) => sources.get(appearance);
+
+/** Offline prepared props. The scene owns fallback, reveal and semantic picking;
+ * source materials retain their authored wood, cloth and metal distinctions. */
+export class ScenePropResources {
   private readonly models: BundledModels;
   private disposed = false;
   private readonly prepared = new Map<pc.StandardMaterial, pc.StandardMaterial>();
-  private readonly actors = new Set<GeneratedPropActor>();
+  private readonly actors = new Set<ScenePropActor>();
   constructor(
     private readonly app: pc.Application,
     private readonly art: ArtMaterials,
     private readonly sun?: pc.Light,
-    private readonly prepareSurface?: (material: pc.StandardMaterial) => void,
   ) {
     this.models = new BundledModels(app);
   }
@@ -30,18 +44,16 @@ export class GeneratedPropResources {
     width: number,
     height: number,
     depth: number,
-    variant: Exclude<ArtTreatment['prop'], 'authored'> = 'generated',
-    onReady?: (actor: GeneratedPropActor) => void,
-  ): GeneratedPropActor {
-    const actor: GeneratedPropActor = new GeneratedPropActor(
+    variant: string = 'generated',
+    onReady?: (actor: ScenePropActor) => void,
+  ): ScenePropActor {
+    const source = sources.get(variant)!;
+    const actor: ScenePropActor = new ScenePropActor(
       parent,
-      width,
-      variant === 'generated' ? height : height / 0.8,
-      variant === 'generated' ? depth : depth / 0.8,
-      this.models.load(
-        'Chest · ' + variant,
-        { generated: generatedChestUrl, carved, banded, cache }[variant],
-      ),
+      width / source.width,
+      height / source.height,
+      depth / source.depth,
+      this.models.load('Scene prop · ' + variant, source.url),
       (material) => this.prepare(material),
       () => this.actors.delete(actor),
       onReady,
@@ -56,7 +68,6 @@ export class GeneratedPropResources {
     const material = new ShadowMaterial(this.sun).copy(source);
     setVisibilityStencil(material, ordinaryStencil);
     this.art.prepare(material);
-    this.prepareSurface?.(material);
     material.update();
     this.prepared.set(source, material);
     return material;
@@ -77,7 +88,7 @@ export class GeneratedPropResources {
   }
 }
 
-export class GeneratedPropActor {
+export class ScenePropActor {
   readonly ready: Promise<boolean>;
   readonly meshes: pc.MeshInstance[] = [];
   state: 'loading' | 'ready' | 'failed' = 'loading';
@@ -96,7 +107,7 @@ export class GeneratedPropActor {
     loaded: Promise<pc.ContainerResource>,
     prepare: (source: pc.StandardMaterial) => pc.StandardMaterial,
     private readonly release: () => void,
-    onReady?: (actor: GeneratedPropActor) => void,
+    onReady?: (actor: ScenePropActor) => void,
   ) {
     this.ready = loaded
       .then((resource) => {
@@ -116,7 +127,7 @@ export class GeneratedPropActor {
             this.meshes.push(instance);
           }
         }
-        if (this.meshes.length === 0) throw new Error('Generated prop contains no render meshes.');
+        if (this.meshes.length === 0) throw new Error('Scene prop contains no render meshes.');
         this.state = 'ready';
         this.setVisible(this.wanted);
         return true;
@@ -128,7 +139,7 @@ export class GeneratedPropActor {
           this.meshes.length = 0;
           this.state = 'failed';
           this.visible = false;
-          console.warn('Generated prop unavailable; keeping the authored crate.', error);
+          console.warn('Scene prop unavailable; keeping its authored fallback.', error);
         }
         return false;
       })

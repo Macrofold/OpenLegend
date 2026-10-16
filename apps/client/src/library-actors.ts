@@ -9,30 +9,29 @@ import { ArtMaterials, type ArtTreatment } from './art-treatment';
 import { WorldPresentation, type RevealBinding } from './world-presentation';
 import { ShadowMaterial } from './shadow-material';
 import { personStencil, setVisibilityStencil } from './visibility-stencil';
+import { studyAssets } from './study-assets';
 
 interface ActorSource {
   url: string;
   height: number;
   width: number;
 }
-const humanFiles = import.meta.glob<string>('./props/art-study/source-people/*-motion.glb', {
-  eager: true,
-  query: '?url',
-  import: 'default',
-});
 const sources = new Map<string, ActorSource>([
   ['field', { url: fieldUrl, height: 0.45, width: 0.76 }],
   ['russet', { url: russetUrl, height: 0.45, width: 0.76 }],
   ['winter', { url: winterUrl, height: 0.45, width: 0.76 }],
 ]);
-for (const [path, url] of Object.entries(humanFiles)) {
-  const name = path.split('/').at(-1)!.replace('-motion.glb', '');
-  sources.set('study:' + name, { url, height: 1.85, width: 0.85 });
-}
+for (const [key, asset] of studyAssets)
+  if (asset.animationUrl)
+    sources.set(key, {
+      url: asset.animationUrl,
+      height: asset.height,
+      width: Math.max(asset.width, asset.depth),
+    });
 export const hasLibraryActor = (appearance: string): boolean => sources.has(appearance);
 /** Retained CC0 anatomy and fitted clothing, plus the animated wild hare.
  * Meshes, textures, clips and prepared materials are shared per variant; ordinary
- * frames evaluate only each admitted visible animal's pose and heading. */
+ * frames evaluate only each admitted visible actor's pose and heading. */
 export class LibraryActors {
   private readonly models: BundledModels;
   private readonly prepared = new Map<pc.StandardMaterial, pc.StandardMaterial>();
