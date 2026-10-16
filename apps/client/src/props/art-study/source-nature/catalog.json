@@ -1,10 +1,15 @@
 {
   "group": "source-nature",
   "sourceFile": "art-direction/assets/source-study/source-nature.blend",
-  "sourceSha256": "730e8f52944ced674efe15d5c8edf707cc50eb4858ed1950f96be0747bd8738b",
+  "sourceSha256": "4dba001037d45b4ce20ec8c3377b29b3a99d2d2e45873c824b4e34556e1ae38a",
   "recipe": {
     "path": "scripts/prepare-source-study.py",
-    "sha256": "ec5b5fd3d1d126909981c45e9fd70e3ab39e19e6698dfe3014e690d2d167aaaa"
+    "sha256": "d3ad4571f248e3074f7261e22c841eb442bd7cfcf0ff52ef9caee79f3bda5ff2"
+  },
+  "helpers": {
+    "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
+    "prepare-source-study.py": "d3ad4571f248e3074f7261e22c841eb442bd7cfcf0ff52ef9caee79f3bda5ff2",
+    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
   },
   "sources": [
     {
@@ -57,7 +62,7 @@
           256
         ]
       ],
-      "sha256": "bc583d4af61d1e02fc754180df305a2b97825f3a6afb4797c7087c3198c1c5f0",
+      "sha256": "1e6e82f5c3a76e145a55c7c2f2748f23597095240aabf9328936e715e8681160",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0; normalized and source normal maps removed for controlled light."
     },
     {
@@ -96,7 +101,7 @@
           256
         ]
       ],
-      "sha256": "3b233c9abdd6eee650b9f0022c2b7408b42c67451e3f90709fee1ca309d6ef00",
+      "sha256": "13efab7153ac40b02209de824a876cc10fc77574118a8af41629c4445043e518",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0; normalized and source normal maps removed for controlled light."
     },
     {
@@ -135,7 +140,7 @@
           256
         ]
       ],
-      "sha256": "1da7026685878569c9c1934e7e0a2aa55378cda9e6ee1112f772eb408936d39c",
+      "sha256": "afe408f1437642fcc9f636352ea9fd24914e1854af026b0d0167b11e8e6b52c0",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0; normalized and source normal maps removed for controlled light."
     }
   ]

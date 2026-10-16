@@ -1,0 +1,206 @@
+{
+  "group": "source-equipment",
+  "sourceFile": "art-direction/assets/source-study/source-equipment.blend",
+  "sourceSha256": "0207623c58d753ca00d62cec283b32b4be4c285f5f7347d11f3d43b52adaabee",
+  "recipe": {
+    "path": "scripts/prepare-equipment-study.py",
+    "sha256": "6176e618ad623297a7ac0baaa21c806d5da4ed6320d0d23164254af6f01ff083"
+  },
+  "helpers": {
+    "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
+    "prepare-source-study.py": "d3ad4571f248e3074f7261e22c841eb442bd7cfcf0ff52ef9caee79f3bda5ff2",
+    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
+  },
+  "sources": [
+    {
+      "url": "https://quaternius.com/packs/medievalweapons.html",
+      "downloadFolder": "https://drive.google.com/drive/folders/17VIeQr9R2d6lCO6Q7NVjzxdL55dnBeh6",
+      "license": "CC0",
+      "downloadArchiveSha256": "248df142c92822ee873b8178e690e3b88bbfba42e2ce74807b24ed0d73e6d65e",
+      "files": [
+        {
+          "file": "Sword.blend",
+          "sha256": "1f3dff7c20ee40d02d0a40f709a2fe999d2e762b421568c5d9a51246f5be4a2e"
+        },
+        {
+          "file": "Sword_2.blend",
+          "sha256": "2637d61cbd0ad8cef856758ea743e28fc8c35ce251619946fca252c2270d2328"
+        },
+        {
+          "file": "Claymore.blend",
+          "sha256": "bea925e4d64034a39d4139855f1b2024c71364c456ed2a16505e250717239bea"
+        },
+        {
+          "file": "Shield_Round.blend",
+          "sha256": "0a219e3037ca1d0969d941a70ab462d352deff99bf3a80eb8645de4422d4b473"
+        },
+        {
+          "file": "Shield_Round_2.blend",
+          "sha256": "b0ff226fcb3907b5f31f1e832bae1d7dc25b6357179a443042382249395b57bd"
+        },
+        {
+          "file": "Shield_Heater.blend",
+          "sha256": "b2ae189a8f638a422584dd48d14ef8df6d438760a26d4d19279c3408ae827c0d"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "sword-straight-crossguard",
+      "family": "library-sword",
+      "label": "Sword",
+      "variant": "straight-crossguard",
+      "description": "Straight blade, distinct guard and wrapped grip; restrained steel facets.",
+      "recommended": true,
+      "file": "sword-straight-crossguard.glb",
+      "bounds": {
+        "min": [
+          -0.115229,
+          0.0,
+          -0.026341
+        ],
+        "max": [
+          0.115229,
+          1.1,
+          0.026341
+        ]
+      },
+      "triangles": 872,
+      "vertices": 438,
+      "textureSizes": [],
+      "sha256": "8957591c721579e61705c838221473bc4331e07a648f601f0c11ecd09e8b3626",
+      "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
+    },
+    {
+      "id": "sword-broad-tip",
+      "family": "library-sword",
+      "label": "Sword",
+      "variant": "broad-tip",
+      "description": "Broader shaped tip and changed guard; compare the blade silhouette at the same length.",
+      "recommended": false,
+      "file": "sword-broad-tip.glb",
+      "bounds": {
+        "min": [
+          -0.124926,
+          0.0,
+          -0.031849
+        ],
+        "max": [
+          0.124926,
+          1.1,
+          0.031849
+        ]
+      },
+      "triangles": 942,
+      "vertices": 473,
+      "textureSizes": [],
+      "sha256": "d86bfff5b8b57aa192e6316bb82102a7ccf9b40533453285352e876778f5bb1f",
+      "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
+    },
+    {
+      "id": "sword-long-grip",
+      "family": "library-sword",
+      "label": "Sword",
+      "variant": "long-grip",
+      "description": "Longer two-handed source with a longer grip and darker fittings. An equipment study, not newly granted gear.",
+      "recommended": false,
+      "file": "sword-long-grip.glb",
+      "bounds": {
+        "min": [
+          -0.100099,
+          0.0,
+          -0.027768
+        ],
+        "max": [
+          0.100099,
+          1.35,
+          0.027768
+        ]
+      },
+      "triangles": 1033,
+      "vertices": 533,
+      "textureSizes": [],
+      "sha256": "c114ab2f33b0f919fd57199e3fd0af0a1689b4b1ade6f0956be5a3470ee585d9",
+      "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
+    },
+    {
+      "id": "shield-round-boards",
+      "family": "library-shield",
+      "label": "Shield",
+      "variant": "round-boards",
+      "description": "Round timber shield with a clear central boss, rim and board seams.",
+      "recommended": true,
+      "file": "shield-round-boards.glb",
+      "bounds": {
+        "min": [
+          -0.38,
+          0.0,
+          -0.114699
+        ],
+        "max": [
+          0.38,
+          0.76,
+          0.114699
+        ]
+      },
+      "triangles": 1056,
+      "vertices": 560,
+      "textureSizes": [],
+      "sha256": "fc76fdc80b39c8e49c93067eb2a9b7ae2eff4c995be9ed755914114f4c55cc91",
+      "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
+    },
+    {
+      "id": "shield-reinforced-round",
+      "family": "library-shield",
+      "label": "Shield",
+      "variant": "reinforced-round",
+      "description": "Different rim and reinforcement layout on a round timber form.",
+      "recommended": false,
+      "file": "shield-reinforced-round.glb",
+      "bounds": {
+        "min": [
+          -0.38,
+          0.0,
+          -0.114699
+        ],
+        "max": [
+          0.38,
+          0.76,
+          0.114699
+        ]
+      },
+      "triangles": 1204,
+      "vertices": 636,
+      "textureSizes": [],
+      "sha256": "582cf1adbb79155a29d8fd1a24f688a68456774587979d836c2186282da028d8",
+      "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
+    },
+    {
+      "id": "shield-heater",
+      "family": "library-shield",
+      "label": "Shield",
+      "variant": "heater",
+      "description": "Tapered shield form with a clear point, framed timber and restrained metal edging.",
+      "recommended": false,
+      "file": "shield-heater.glb",
+      "bounds": {
+        "min": [
+          -0.32847,
+          0.0,
+          -0.09781
+        ],
+        "max": [
+          0.32847,
+          0.84,
+          0.09781
+        ]
+      },
+      "triangles": 1968,
+      "vertices": 1070,
+      "textureSizes": [],
+      "sha256": "21fa26efc31307da2036db0ccfc4059041e7165769ce0f39768b77c98d684770",
+      "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
+    }
+  ]
+}

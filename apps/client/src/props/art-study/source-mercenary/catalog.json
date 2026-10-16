@@ -1,10 +1,15 @@
 {
   "group": "source-mercenary",
   "sourceFile": "art-direction/assets/source-study/source-mercenary.blend",
-  "sourceSha256": "d008ea69f9d8ff22321711e697d431df5c120224a0de6a7d0e33a72583cc948c",
+  "sourceSha256": "360901dff6211f70df1841aaf1331ae049f901e51f31f056275637d66cc10405",
   "recipe": {
     "path": "scripts/prepare-source-study.py",
-    "sha256": "ec5b5fd3d1d126909981c45e9fd70e3ab39e19e6698dfe3014e690d2d167aaaa"
+    "sha256": "d3ad4571f248e3074f7261e22c841eb442bd7cfcf0ff52ef9caee79f3bda5ff2"
+  },
+  "helpers": {
+    "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
+    "prepare-source-study.py": "d3ad4571f248e3074f7261e22c841eb442bd7cfcf0ff52ef9caee79f3bda5ff2",
+    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
   },
   "sources": [
     {
@@ -45,7 +50,7 @@
           256
         ]
       ],
-      "sha256": "608a78e79797457a3033b32be09cbfad2c1fd138b47435619c7d3431c938fc33",
+      "sha256": "bbe2c865ac4eef1028a3221f19c5bdbedab633c633669e058859748d1e63e84d",
       "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
     },
     {
@@ -80,7 +85,7 @@
           1536
         ]
       ],
-      "sha256": "475b758e634a50ba77e814fe810988b4513f61c23c4f83c53292200913fad1ab",
+      "sha256": "cce05ffc8e9c4b7ff1772331fa57080faa20d98afa08c695bd996ae4981fcc86",
       "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
     },
     {
@@ -115,7 +120,7 @@
           1536
         ]
       ],
-      "sha256": "481646a72b4abed8cb7ea1d64ae5bcd227decc0b8d4f3e4972d4d2fa3d3bee00",
+      "sha256": "d9d9353d1b06917ee793447e42cc3be06cd471a72e88dc1d6dd7d05f04196653",
       "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
     }
   ]

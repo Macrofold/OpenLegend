@@ -218,7 +218,7 @@ def nature(libraries):
                     if node.type=='TEX_IMAGE' and node.image and any(socket.is_linked for socket in node.outputs):
                         node.image.scale(256,256)
                         if 'Leaves' in material.name:
-                            pixels=np.array(node.image.pixels[:]).reshape(-1,4)
+                            pixels=np.array(node.image.pixels[:],dtype=np.float32).reshape(-1,4)
                             pixels[:,:3]=1
                             node.image.pixels.foreach_set(pixels.ravel())
                         node.image.pack()

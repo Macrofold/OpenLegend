@@ -284,6 +284,9 @@ export class ArtStudy {
         let material = this.materials.get(source);
         if (!material) {
           material = source.clone();
+          // The source leaf cards carry deliberately shaped canopy normals.
+          // Reversing them on their backs makes a rotating crown flash dark.
+          if (source.name.startsWith('Leaves')) material.twoSidedLighting = false;
           for (const texture of [material.diffuseMap, material.normalMap, material.opacityMap]) {
             if (!texture) continue;
             texture.magFilter = pc.FILTER_NEAREST;

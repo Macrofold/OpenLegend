@@ -35,6 +35,11 @@ def prepare(libraries):
     ]):
         before=set(bpy.data.objects);bpy.ops.import_scene.gltf(filepath=str(filename))
         objects=list(set(bpy.data.objects)-before)
+        if variant=='banded-lid':
+            lid=next(obj for obj in objects if obj.name.startswith('lid'))
+            lid.rotation_mode='XYZ'
+            lid.rotation_euler=(0,0,0)
+            bpy.context.view_layer.update()
         # All alternatives occupy the same existing resource-crate envelope.
         points=[obj.matrix_world@vertex.co for obj in objects if obj.type=='MESH' for vertex in obj.data.vertices]
         low=Vector([min(p[i] for p in points) for i in range(3)])

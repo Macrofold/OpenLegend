@@ -1,10 +1,15 @@
 {
   "group": "source-chests",
   "sourceFile": "art-direction/assets/source-study/source-chests.blend",
-  "sourceSha256": "c7537baa4f4325373820e93f68d537fe4dfb3ef74185d63db6a02a1dc87b579b",
+  "sourceSha256": "dbb61d259c4b50ea6140ce1089e012bd3bf1d3562ad0900e0b1abdf1e04b0515",
   "recipe": {
     "path": "scripts/prepare-chest-study.py",
-    "sha256": "d2ce6b00dc4ce324950c4f724678d427c0c339e50200e6d3ac3664a0269c3cc6"
+    "sha256": "fe79480e1402766b33aa920ea3db996a19c05653006cde842f216afc3a7184a8"
+  },
+  "helpers": {
+    "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
+    "prepare-source-study.py": "d3ad4571f248e3074f7261e22c841eb442bd7cfcf0ff52ef9caee79f3bda5ff2",
+    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
   },
   "sources": [
     {
@@ -83,7 +88,7 @@
           64
         ]
       ],
-      "sha256": "eec2ad6648722bd0c3dec1b382e34eec32ea4ec66108b005b4c07d8d78b9305a",
+      "sha256": "398b91aefafad7f6c0c245103b8496e6b9f5ec0ca852e0a8411f803c85fe0b83",
       "source": "Kenney Survival Kit, CC0; OpenLegend fits and repaints the source."
     },
     {
