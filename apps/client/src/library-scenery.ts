@@ -174,7 +174,11 @@ export class LibraryScenery {
     const worldBounds = new pc.BoundingBox();
     const occluding = instances.map((instance, index) => {
       const p = instance.position;
-      rotation.setFromEulerAngles(0, Math.sin(p.x * 12.9898 + p.z * 78.233 + instance.seed) * 360, 0);
+      rotation.setFromEulerAngles(
+        0,
+        Math.sin(p.x * 12.9898 + p.z * 78.233 + instance.seed) * 360,
+        0,
+      );
       matrix.setTRS(
         position.set(p.x, p.y, p.z),
         rotation,

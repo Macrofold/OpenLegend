@@ -17,6 +17,7 @@ import sys
 import bpy
 import numpy as np
 from mathutils import Matrix, Vector
+from mathutils.bvhtree import BVHTree
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -134,37 +135,35 @@ def mercenaries(source):
         bpy.context.scene.frame_set(1)
         body = next(o for o in objects if o.name.startswith('Mercenary · worn'))
         body_node = color_texture(body.data.materials[0])
+        # Preserve the concept artist's actual facial features at sufficient
+        # atlas resolution. Broad world-space eye boxes fragmented across UV
+        # islands and damaged the source face; that experiment is rejected.
+        identity_image=body_node.image.copy();identity_image.scale(1024,1024)
+        original=paint.image_array(identity_image)
+        position,covered=paint.rasterize_surface(body,1024)
         if variant == 'restored':
             pixel_surface(body_node.image,body=True)
-            body_node.image.scale(512,512)
+            body_node.image.scale(1024,1024)
             designed=paint.image_array(body_node.image)
-            position,covered=paint.rasterize_surface(body,512)
         else:
-            image = body_node.image
-            image.scale(512,512)
-            original = paint.image_array(image)
-            position, covered = paint.rasterize_surface(body,512)
-            guides = paint.surface_materials(original,position,covered)
-            designed = paint.body_paint('graphic' if variant=='tailored' else 'painted',position,covered,guides)
-            # Keep the concept-derived head/hair and real hands; the preceding
-            # generic height paint made these delicate features waxy and flat.
-            identity = (position[:,:,2] > 1.59) | ((np.abs(position[:,:,0])>.255)&(position[:,:,2]>.73)&(position[:,:,2]<1.035))
-            designed[identity] = original[identity]
-        # Retain the original head, nose and beard; author broad eye/brow groups
-        # in its UV paint so they survive the 30 samples/metre comparison.
-        x,y,z=[position[:,:,i] for i in range(3)]
-        front=covered&(y<-.06)&(np.abs(x)<.075)&(z>1.66)&(z<1.79)
-        for sign in (-1,1):
-            eye=front&(np.abs(x-sign*.034)<.017)&(np.abs(z-1.734)<.011)
-            designed[eye]=paint.rgb('#343330')
-            brow=front&(np.abs(x-sign*.035)<.023)&(z>1.750)&(z<1.760)
-            designed[brow]=paint.rgb('#40332b')
-            # A small warm sclera accent, not a white cartoon disc.
-            glint=eye&(np.abs(x-sign*.044)<.006)&(z<1.735)&(z>1.729)
-            designed[glint]=paint.rgb('#c5b28b')
-        nose=front&(np.abs(x)<.010)&(z>1.697)&(z<1.744)
-        designed[nose]=paint.rgb('#d59e70')
+            guides=paint.surface_materials(original,position,covered)
+            designed=paint.body_paint('graphic' if variant=='tailored' else 'painted',position,covered,guides)
+        identity=(position[:,:,2]>1.59)|((np.abs(position[:,:,0])>.255)&(position[:,:,2]>.73)&(position[:,:,2]<1.035))
+        designed[identity]=original[identity]
         body_node.image = paint.save_image('Mercenary '+variant,designed,output/('body-'+variant+'.png'))
+        evaluated=body.evaluated_get(bpy.context.evaluated_depsgraph_get())
+        face_mesh=evaluated.to_mesh()
+        surface=BVHTree.FromPolygons([evaluated.matrix_world@v.co for v in face_mesh.vertices],
+            [tuple(p.vertices) for p in face_mesh.polygons])
+        face=paint.face_details('faithful',surface,rig.matrix_world@rig.pose.bones['Head'].matrix,eye_width=.021,eye_detail_scale=1.7)
+        evaluated.to_mesh_clear()
+        # Preserve the concept face; only strengthen eyes on that exact curved
+        # surface. The same retained geometry is consumed by the live head rig.
+        face['regions']=[r for r in face['regions'] if r['name'] in ('ivory','iris','charcoal')]
+        face['sourceSha256']=hashlib.sha256((source/'assets/mercenary.glb').read_bytes()).hexdigest()
+        face['authoringScript']='scripts/prepare-source-study.py'
+        (output/'face-study.json').write_text(json.dumps(face,indent=2)+'\n')
+        objects+=paint.editable_face(rig,face,prefix='Study eyes '+variant+' ')
         prepared_cape = set()
         for obj in objects:
             if obj.type!='MESH':
@@ -186,9 +185,9 @@ def mercenaries(source):
         clean_materials()
         normalize(objects,2.035)
         descriptions = [
-            'Earlier concept-derived model and 29-color surface preparation, with readable eye/brow paint and original gold mantle.',
-            'Original face anatomy with deliberate eyes, quiet mail, broader quilt seams and wrapped linen. Original cape retained.',
-            'Original face with deliberate eyes, open mail groups, seams and paired peacock embroidery. Cloth remains a continuous lined surface.',
+            'Earlier concept-derived model and 29-color surface preparation, with the original face and gold mantle preserved.',
+            'Original face anatomy and eyes, quiet mail, broader quilt seams and wrapped linen. Original cape retained.',
+            'Original face and eyes, open mail groups, seams and paired peacock embroidery. Cloth remains a continuous lined surface.',
         ]
         asset, placement = export_asset(objects,output,'mercenary-'+variant,'mercenary','Peacock Mercenary',variant,descriptions[index],variant=='restored',
             'Owner-supplied concept → Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified.')
@@ -252,6 +251,7 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument('--mercenary',type=Path,required=True)
     parser.add_argument('--libraries',type=Path,required=True)
+    parser.add_argument('--families',nargs='*',choices=['mercenary','broadleaf'])
     args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
-    mercenaries(args.mercenary)
-    nature(args.libraries)
+    if not args.families or 'mercenary' in args.families:mercenaries(args.mercenary)
+    if not args.families or 'broadleaf' in args.families:nature(args.libraries)

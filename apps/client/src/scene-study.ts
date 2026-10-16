@@ -51,7 +51,10 @@ function treatment(): ArtTreatment {
     ...candidateArt,
     mercenaryArt: select('mercenary').value as ArtTreatment['mercenaryArt'],
     sampling: route === 'shared' ? 'screen' : route === 'family' ? '60' : '96',
-    sceneGrid: route === 'control' || route === 'surface' ? 'full' : select('world-density').value as ArtTreatment['sceneGrid'],
+    sceneGrid:
+      route === 'control' || route === 'surface'
+        ? 'full'
+        : (select('world-density').value as ArtTreatment['sceneGrid']),
     subjectDetail: route === 'family' ? 'preserve' : 'shared',
     surfaceArt: route === 'control' ? 'plain' : 'rigid',
     environment: 'study',
@@ -209,7 +212,8 @@ select('world-light').onchange = publish;
 for (const id of ['route', 'mercenary', 'world-density', 'world-motion'])
   select(id).onchange = () => scene.setArtTreatment(treatment());
 select('world-framing').onchange = setCamera;
-select('world-shadows').onchange = () => scene.setShadowQuality(select('world-shadows').value as 'detailed' | 'economy');
+select('world-shadows').onchange = () =>
+  scene.setShadowQuality(select('world-shadows').value as 'detailed' | 'economy');
 button('action').onclick = () => {
   action = !action;
   button('action').setAttribute('aria-pressed', String(action));

@@ -276,12 +276,17 @@ def cape_paint(name, source):
     return out
 
 
-def face_details(name, surface, head_world):
+def face_details(name, surface, head_world, eye_width=None, eye_detail_scale=1):
     regions = {}
     inverse = head_world.inverted()
     normal_matrix = head_world.to_3x3().transposed()
 
     def patch(region, polygon, offset):
+        center_z=sum(p[1] for p in polygon)/len(polygon)
+        if region in ('ivory','iris','charcoal') and 1.725<center_z<1.742:
+            center_x=sum(p[0] for p in polygon)/len(polygon)
+            width_scale=eye_detail_scale if region in ('iris','charcoal') else 1
+            polygon=[(center_x+(x-center_x)*width_scale,1.733+(z-1.733)*eye_detail_scale) for x,z in polygon]
         if sum(a[0] * b[1] - b[0] * a[1] for a, b in zip(polygon, polygon[1:] + polygon[:1])) < 0:
             polygon = list(reversed(polygon))
         target = regions.setdefault(region, {'positions': [], 'normals': [], 'indices': []})
@@ -300,7 +305,7 @@ def face_details(name, surface, head_world):
     def ellipse(x, z, rx, rz, count=10):
         return [(x + math.cos(i * math.tau / count) * rx, z + math.sin(i * math.tau / count) * rz) for i in range(count)]
 
-    width = {'faithful': .0155, 'painted': .0170, 'graphic': .0180}[name]
+    width = eye_width or {'faithful': .0155, 'painted': .0170, 'graphic': .0180}[name]
     for sign in (-1, 1):
         x = sign * .031
         patch('ivory', [(x - width, 1.733), (x - width * .55, 1.740), (x + width * .5, 1.739), (x + width, 1.733), (x + width * .5, 1.727), (x - width * .5, 1.727)], .0015)
@@ -319,20 +324,24 @@ def face_details(name, surface, head_world):
     return {'sourceSha256': hashlib.sha256(SOURCE.read_bytes()).hexdigest(), 'space': 'Original animated Head node local coordinates, in source centimetres', 'authoringScript': 'scripts/prepare-mercenary-variants.py', 'palette': {k: v for k, v in PALETTES[name].items() if isinstance(v, str)}, 'regions': [{'name': key, **value} for key, value in regions.items()]}
 
 
-def editable_face(rig, face):
+def editable_face(rig, face, prefix='Authored facial detail '):
+    objects=[]
     for obj in list(bpy.data.objects):
-        if obj.name.startswith('Authored facial detail '):
+        if obj.name.startswith(prefix):
             bpy.data.objects.remove(obj, do_unlink=True)
     rest = rig.data.bones['Head'].matrix_local
     for region in face['regions']:
         positions = [rest @ Vector(region['positions'][i:i + 3]) for i in range(0, len(region['positions']), 3)]
         triangles = [region['indices'][i:i + 3] for i in range(0, len(region['indices']), 3)]
-        mesh = bpy.data.meshes.new('Authored facial detail ' + region['name'])
+        mesh = bpy.data.meshes.new(prefix + region['name'])
         mesh.from_pydata(positions, [], triangles)
         mesh.update()
         obj = bpy.data.objects.new(mesh.name, mesh)
         bpy.context.scene.collection.objects.link(obj)
         obj.matrix_world = rig.matrix_world
+        obj.parent=rig
+        obj.matrix_world=rig.matrix_world
+        objects.append(obj)
         group = obj.vertex_groups.new(name='Head')
         group.add(list(range(len(mesh.vertices))), 1, 'REPLACE')
         modifier = obj.modifiers.new('Original Head attachment', 'ARMATURE')
@@ -346,6 +355,7 @@ def editable_face(rig, face):
         mesh.materials.append(material)
         for polygon in mesh.polygons:
             polygon.use_smooth = True
+    return objects
 
 
 def editable_cloth(rig):

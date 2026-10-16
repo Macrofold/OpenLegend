@@ -72,15 +72,18 @@ export const candidateArt: Readonly<ArtTreatment> = Object.freeze({
   ...baselineArt,
   materials: 'regions',
   lighting: 'soft',
-  environment: 'quaternius',
-  mercenaryArt: 'graphic',
+  environment: 'study',
+  mercenaryArt: 'restored',
+  sampling: 'screen',
+  sceneGrid: 'metres30',
   hareArt: 'field',
   groundPalette: 'woodland',
-  vegetation: 'smooth',
+  vegetation: 'still',
   atmosphere: 'restrained',
   motion: 'held12',
-  prop: 'generated',
-  surfaceArt: 'painted',
+  prop: 'banded',
+  surfaceArt: 'rigid',
+  cloth: 'settled',
   surfaceEdges: 'filtered',
   coverage: 'msaa4',
   characterFiltering: 'mip',
@@ -320,8 +323,8 @@ export function mountArtControls(
                   ? 'World-anchored grid: 5 cm (orthographic)'
                   : value === 'anchored3'
                     ? 'World-anchored grid: 7.5 cm (orthographic)'
-                    : value === 'metres30'
-                      ? 'Fixed world density: 30 samples/metre'
+                    : value === 'metres30' || value === 'metres40'
+                      ? `Fixed world density: ${value.slice(6)} samples/metre`
                       : String(value);
       select.append(option);
     }
