@@ -1281,8 +1281,8 @@ export class WildernessScene implements WorldRenderer {
       view.id === game.player.id && game.player.inventory.some((item) => item.equipped);
     const deer = view.subtype === 'deer',
       bird = view.subtype === 'bird',
-      wolf = view.appearance === 'wolf-sprite',
-      bear = view.appearance === 'bear-sprite',
+      wolf = view.subtype === 'wolf',
+      bear = view.subtype === 'bear',
       crate = view.appearance === 'crate-mesh';
     // Identical procedural inputs produce identical artwork, regardless of identity.
     const resourceSeed = view.id.split('').reduce((sum, letter) => sum + letter.charCodeAt(0), 0);
@@ -1649,8 +1649,8 @@ export class WildernessScene implements WorldRenderer {
     }
     const stone = this.material('#7b8178'),
       timber = this.material('#715438');
-    this.prepareSurface(stone, 'stone');
-    this.prepareSurface(timber, 'bark');
+    this.prepareSurface(stone, 'masonry');
+    this.prepareSurface(timber, 'timber');
     setVisibilityStencil(stone, sceneryStencil);
     setVisibilityStencil(timber, sceneryStencil);
     for (const blocker of spatialBlockers(map)) {
@@ -1672,7 +1672,7 @@ export class WildernessScene implements WorldRenderer {
     }
     const deckMaterial = this.material('#b48b57'),
       rampMaterial = this.material('#8b8e7a');
-    this.prepareSurface(deckMaterial, 'bark');
+    this.prepareSurface(deckMaterial, 'timber');
     this.prepareSurface(rampMaterial, 'stone');
     setVisibilityStencil(deckMaterial, sceneryStencil);
     setVisibilityStencil(rampMaterial, sceneryStencil);

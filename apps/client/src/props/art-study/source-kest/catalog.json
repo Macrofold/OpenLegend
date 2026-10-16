@@ -199,5 +199,62 @@
       "animatedFile": "kest-travel-coat-motion.glb",
       "animatedSha256": "4a81114ee3c30dc64ae7eca8b639a50a8389aba08b880cf705f9b43980bbd03e"
     }
-  ]
+  ],
+  "controls": [
+    {
+      "id": "control-kest",
+      "family": "kest",
+      "label": "Kest",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-kest.glb",
+      "bounds": {
+        "min": [
+          -0.632298,
+          0.0,
+          -0.288581
+        ],
+        "max": [
+          0.632298,
+          1.85,
+          0.288581
+        ]
+      },
+      "triangles": 43410,
+      "vertices": 22195,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ]
+      ],
+      "sha256": "a0ac15cd7fc8a994b9050c2dde824d58e68392a38dcaf86431d0d11981aa5684",
+      "source": "MakeHuman CC0 anatomical base and Rehman Polanski source outfit; unpainted source control."
+    }
+  ],
+  "controlRecipe": {
+    "path": "scripts/prepare-study-controls.py",
+    "sha256": "5c9d42061bbef41ac4a011cc6864f0a00684f531fa6e8c8d4e0ae1c16087d81a"
+  }
 }

@@ -25,6 +25,8 @@ FAMILIES={
  'marker':('Carved work marker',.9,'camp',['signpost-single','signpost','signpost-single'],['single-board','crossroads','worn-post']),
  'supplies':('Workshop supplies',.6,'camp',['box-open','box-large-open','barrel-open'],['open-box','wide-box','stave-barrel']),
  'bundle':('Travelling bundle',.35,'camp',['bedroll-packed','bedroll','bedroll-packed'],['rolled-wool','open-bedroll','tied-bundle']),
+ 'workbench':('Riverside workbench',.85,'camp',['workbench','workbench','workbench'],['open-bench','long-table','narrow-bench']),
+ 'backpack':('Travelling pack',.48,'pack',['backpack','backpack','backpack'],['canvas-pack','broad-flap','slender-pack']),
  'shelter':('Canvas shelter',1.9,'camp',['tent-canvas-half','tent-canvas','tent'],['open-awning','canvas-tent','framed-tent']),
 }
 
@@ -78,7 +80,7 @@ def berries(objects,index):
     return added
 
 
-def main(libraries):
+def main(libraries,pack):
     spec=importlib.util.spec_from_file_location('sources',ROOT/'scripts/prepare-source-study.py')
     helper=importlib.util.module_from_spec(spec);spec.loader.exec_module(helper)
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -86,9 +88,14 @@ def main(libraries):
     assets=[];sources=[]
     for row,(family,(label,height,library,files,variants)) in enumerate(FAMILIES.items()):
         for index,(file,variant) in enumerate(zip(files,variants)):
-            path=libraries/('quaternius-standard/glTF' if library=='nature' else 'kenney_survival-kit/Models/GLB format')/(file+('.gltf' if library=='nature' else '.glb'))
+            path=pack if library=='pack' else libraries/('quaternius-standard/glTF' if library=='nature' else 'kenney_survival-kit/Models/GLB format')/(file+('.gltf' if library=='nature' else '.glb'))
             before=set(bpy.data.objects);bpy.ops.import_scene.gltf(filepath=str(path));objects=list(set(bpy.data.objects)-before)
             helper.normalize(objects,height);recolor(objects,family)
+            if family in ('workbench','backpack') and index:
+                for obj in objects:
+                    if not obj.parent:
+                        obj.scale.x*=1.28 if index==1 else .8
+                        obj.scale.y*=.85 if index==1 else .9
             fruits=[]
             if family=='berry-bush':
                 for obj in objects:
@@ -104,7 +111,7 @@ def main(libraries):
                         obj.scale.z*=.77 if family=='marker' else .88
             asset,placement=export_asset(objects,output,family+'-'+variant,'library-'+family,label,variant,
                 variant.replace('-',' ').capitalize()+': source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.',index==0,
-                ('Quaternius Stylized Nature MegaKit Standard' if library=='nature' else 'Kenney Survival Kit')+', CC0. OpenLegend proportions, material grouping and authored details.')
+                ('Quaternius Stylized Nature MegaKit Standard' if library=='nature' else 'Quaternius Survival Pack' if library=='pack' else 'Kenney Survival Kit')+', CC0. OpenLegend proportions, material grouping and authored details.')
             if fruits:
                 depleted,empty_root=export_asset([o for o in objects if o not in fruits],output,family+'-'+variant+'-empty','library-'+family,label,variant,
                     'The same source bush after the visible fruit is gathered.',False,asset['source'])
@@ -113,9 +120,11 @@ def main(libraries):
             placement.location.x=index*3;placement.location.y=row*4
             assets.append(asset);sources.append({'file':path.name,'library':library,'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
     helper.retain(group,assets,[{'url':'https://quaternius.com/packs/stylizednaturemegakit.html','license':'CC0'},
-        {'url':'https://kenney.nl/assets/survival-kit','license':'CC0','files':sources}],recipe=__file__)
+        {'url':'https://kenney.nl/assets/survival-kit','license':'CC0'},
+        {'url':'https://poly.pizza/m/2g9Jm7kvIU','creator':'Quaternius','license':'CC0','files':sources}],recipe=__file__)
 
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--libraries',type=Path,required=True)
-    args=parser.parse_args(sys.argv[sys.argv.index('--')+1:]);main(args.libraries)
+    parser.add_argument('--pack',type=Path,required=True)
+    args=parser.parse_args(sys.argv[sys.argv.index('--')+1:]);main(args.libraries,args.pack)

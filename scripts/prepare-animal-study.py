@@ -12,7 +12,7 @@ from pathlib import Path
 import sys
 import bpy
 import numpy as np
-from mathutils import Vector, Quaternion
+from mathutils import Vector, Quaternion, Matrix
 
 sys.dont_write_bytecode=True
 sys.path.insert(0,str(Path(__file__).resolve().parent))
@@ -87,9 +87,21 @@ def author_motion(rig,species):
         # from its anatomical rest rig and fold the real wings for ground idle.
         for b in rig.pose.bones:
             b.rotation_mode='QUATERNION';b.rotation_quaternion=Quaternion();b.location=(0,0,0)
+        for b in rig.pose.bones:
+            for constraint in b.constraints:
+                if constraint.type=='IK' and constraint.target is None: constraint.mute=True
         for side,sign in [('L',1),('R',-1)]:
-            b=rig.pose.bones['shoulder.'+side];rest=b.bone.matrix_local.to_quaternion()
-            b.rotation_quaternion=rest.inverted()@Quaternion((0,0,1),sign*1.18)@rest
+            # Fold at all three real wing joints, not just the shoulder. Keeping
+            # the outboard wing straight leaves long spikes behind the body.
+            for name,direction in [('shoulder',(sign*.004,.020,-.002)),
+                ('Wing',(sign*.002,-.020,-.004)),('Wing.001',(sign*.002,.023,-.002)),
+                ('Wing.002',(0,.045,-.005))]:
+                bpy.context.view_layer.update()
+                b=rig.pose.bones[name+'.'+side]
+                turn=(b.tail-b.head).rotation_difference(Vector(direction))
+                head=b.head.copy()
+                b.matrix=Matrix.Translation(head)@turn.to_matrix().to_4x4()@Matrix.Translation(-head)@b.matrix
+        bpy.context.view_layer.update()
     base={b.name:(b.matrix_basis.to_quaternion(),b.location.copy()) for b in rig.pose.bones}
     for name,duration in [('Idle',60),('Walk',30)]:
         action=bpy.data.actions.new(name);rig.animation_data.action=action;actions[name]=action
@@ -117,6 +129,10 @@ def author_motion(rig,species):
                 turn('tail_base',.035*math.sin(t))
                 for side,offset in [('L',0),('R',math.pi)]:
                     if name=='Walk':
+                        for joint in ['Wing','Wing.001','Wing.002']:
+                            wing=rig.pose.bones[joint+'.'+side]
+                            wing.rotation_quaternion=Quaternion()
+                            wing.keyframe_insert('rotation_quaternion',frame=frame)
                         b=rig.pose.bones['shoulder.'+side];rest=b.bone.matrix_local.to_quaternion()
                         sign=1 if side=='L' else -1
                         b.rotation_quaternion=rest.inverted()@Quaternion((0,1,0),sign*.55*math.sin(t*2))@rest
@@ -245,10 +261,10 @@ def main(sources,species):
         rig.animation_data.action=actions['Idle'];bpy.context.scene.frame_set(0)
         label='Woodland bird' if species=='bird' else species.title()
         attribution=('Bear by madtrollstudio, CC BY 3.0, https://poly.pizza/m/kLLBpmcw0w; recolored, proportion study and rig by OpenLegend.' if species=='bear' else
-            'Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and ground-motion study by OpenLegend.' if species=='bird' else
+            'Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and idle/flight study by OpenLegend.' if species=='bird' else
             'Quaternius Ultimate Animated Animals, CC0; coat grouping and proportions by OpenLegend; source Idle and Walk clips retained.')
         asset,root=export_asset(objects,output,species+'-'+variant,'library-'+species,label,variant,
-            variant.replace('-',' ').capitalize()+': retained source anatomy with deliberate coat regions. '+('Source idle/walk clips.' if species in ('wolf','deer','stag') else 'Authored study idle/walk clips; no new native action.'),index==0,attribution)
+            variant.replace('-',' ').capitalize()+': retained source anatomy with deliberate coat regions. '+('Source idle/walk clips.' if species in ('wolf','deer','stag') else 'Authored study idle/flight clips; no new native action.' if species=='bird' else 'Authored study idle/walk clips; no new native action.'),index==0,attribution)
         motion=output/(species+'-'+variant+'-motion.glb');export_clips(objects,rig,root,actions,motion)
         asset['animatedFile']=motion.name;asset['animatedSha256']=hashlib.sha256(motion.read_bytes()).hexdigest()
         root.location.x=index*3;assets.append(asset)

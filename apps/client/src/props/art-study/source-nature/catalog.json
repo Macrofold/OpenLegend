@@ -143,5 +143,50 @@
       "sha256": "afe408f1437642fcc9f636352ea9fd24914e1854af026b0d0167b11e8e6b52c0",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0; normalized and source normal maps removed for controlled light."
     }
-  ]
+  ],
+  "controls": [
+    {
+      "id": "control-library-broadleaf",
+      "family": "library-broadleaf",
+      "label": "Library broadleaf",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-broadleaf.glb",
+      "bounds": {
+        "min": [
+          -1.257564,
+          0.0,
+          -1.445449
+        ],
+        "max": [
+          1.257564,
+          4.8,
+          1.445449
+        ]
+      },
+      "triangles": 3182,
+      "vertices": 4873,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ]
+      ],
+      "sha256": "f6a18fca62548bc59bf2cd31c88ca873b8eb76846f1287fbfeb92770953c6443",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/CommonTree_5.gltf \u00b7 SHA256 fb7061f2bf9fe850870b056431f8f66cd8fdeb443c90695c5efbcf1fe6876d53"
+    }
+  ],
+  "controlRecipe": {
+    "path": "scripts/prepare-study-controls.py",
+    "sha256": "5c9d42061bbef41ac4a011cc6864f0a00684f531fa6e8c8d4e0ae1c16087d81a"
+  }
 }

@@ -2,7 +2,7 @@ import * as pc from 'playcanvas';
 import { intersectBox, type SceneryInstance } from '@open-legend/spatial';
 import { random } from './art';
 
-export type EnvironmentSurface = 'foliage' | 'bark' | 'stone' | 'ground';
+export type EnvironmentSurface = 'foliage' | 'bark' | 'stone' | 'ground' | 'masonry' | 'timber';
 
 /** Original stepped material clusters, not sampled lighting or per-pixel noise.
  * Leaf/bark plates repeat over two metres, with quiet ground over eight. */
@@ -14,6 +14,25 @@ export function environmentSurfaceArt(kind: EnvironmentSurface): HTMLCanvasEleme
   const paint = (surface: EnvironmentSurface): void => {
     ctx.fillStyle = '#808080';
     ctx.fillRect(0, 0, size, size);
+    if (surface === 'masonry' || surface === 'timber') {
+      // Useful construction, not an all-over detail overlay: quiet block faces,
+      // staggered mortar or long boards, plus a few authored edge chips.
+      const rows = surface === 'masonry' ? 8 : 1;
+      for (let row = 0; row < rows; row++) {
+        const offset = row % 2 ? 8 : 0;
+        for (let x = -16; x < size; x += 16) {
+          const y = row * 8, left = x + offset;
+          ctx.fillStyle = ['#858585','#929292','#7b7b7b'][(row + (x+16)/16)%3]!;
+          ctx.fillRect(left+1,y+1,15,surface === 'masonry' ? 7 : size);
+          ctx.fillStyle = '#626262';
+          ctx.fillRect(left,y,1,surface === 'masonry' ? 8 : size);
+          if (surface === 'masonry') ctx.fillRect(left,y,16,1);
+          ctx.fillStyle = '#a4a4a4';
+          ctx.fillRect(left+3,y+1,9,1);
+        }
+      }
+      return;
+    }
     // A small authored arrangement repeats at matching edges. Each mark is a
     // connected cluster several texels wide, leaving the surrounding field quiet.
     for (const dx of [-size, 0, size])
@@ -167,7 +186,7 @@ export function prepareEnvironmentSurface(
       }
       void getAlbedo() {
         ol_environmentSourceAlbedo();
-        if (ol_surfaceEnabled < .5) return;
+        if (ol_surfaceEnabled < .5${kind === 'masonry' || kind === 'timber' || kind === 'stone' ? '' : ' || ol_surfaceEnabled > 1.5'}) return;
         vec3 p = ol_environmentPosition * ${(density / texture.width).toFixed(3)};
         vec3 weights = pow(abs(normalize(ol_environmentNormal)),vec3(10.0));
         weights /= max(dot(weights,vec3(1.0)),.0001);

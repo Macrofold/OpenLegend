@@ -199,5 +199,62 @@
       "animatedFile": "orin-travel-coat-motion.glb",
       "animatedSha256": "3749ec9ac9590112ee090de5d8f58cebc3107d8116082c45f03b789b4f3c7513"
     }
-  ]
+  ],
+  "controls": [
+    {
+      "id": "control-orin",
+      "family": "orin",
+      "label": "Orin",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-orin.glb",
+      "bounds": {
+        "min": [
+          -0.575776,
+          0.0,
+          -0.252244
+        ],
+        "max": [
+          0.575776,
+          1.85,
+          0.252244
+        ]
+      },
+      "triangles": 45704,
+      "vertices": 23085,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ]
+      ],
+      "sha256": "30f77ce55b19abf6c2968cb5c8f0394be255ed245dfb4d5d71f3d6aac8f43e01",
+      "source": "MakeHuman CC0 anatomical base and Rehman Polanski source outfit; unpainted source control."
+    }
+  ],
+  "controlRecipe": {
+    "path": "scripts/prepare-study-controls.py",
+    "sha256": "5c9d42061bbef41ac4a011cc6864f0a00684f531fa6e8c8d4e0ae1c16087d81a"
+  }
 }

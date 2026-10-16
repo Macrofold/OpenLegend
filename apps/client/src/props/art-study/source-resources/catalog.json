@@ -1,10 +1,10 @@
 {
   "group": "source-resources",
   "sourceFile": "art-direction/assets/source-study/source-resources.blend",
-  "sourceSha256": "a8eef1b616b18ffdb187ae85bc0a934834ecd62575e95b6e6f56dc6fbf83d59c",
+  "sourceSha256": "103fcf6e2d82f046060e654cfa7456712e8f38bd62d37dcf2cba766dfbaa5a31",
   "recipe": {
     "path": "scripts/prepare-resource-study.py",
-    "sha256": "c64874509d16b7f6971e5d8fef97403d32f72d21462c014d275112c7d744d5cc"
+    "sha256": "0e083f37c07edbe6739a732823914d92fbe5ed9f9071bf289bece5b420ae18be"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
@@ -18,6 +18,11 @@
     },
     {
       "url": "https://kenney.nl/assets/survival-kit",
+      "license": "CC0"
+    },
+    {
+      "url": "https://poly.pizza/m/2g9Jm7kvIU",
+      "creator": "Quaternius",
       "license": "CC0",
       "files": [
         {
@@ -141,6 +146,36 @@
           "sha256": "980c222917e8564c68aa184af025d701612c7395e8ad8ef55b5b00785637a98f"
         },
         {
+          "file": "workbench.glb",
+          "library": "camp",
+          "sha256": "bf72d2d535fa29127e5078a6c4c2023a74fa5cd7d02d91ad550e897e088e1dc8"
+        },
+        {
+          "file": "workbench.glb",
+          "library": "camp",
+          "sha256": "bf72d2d535fa29127e5078a6c4c2023a74fa5cd7d02d91ad550e897e088e1dc8"
+        },
+        {
+          "file": "workbench.glb",
+          "library": "camp",
+          "sha256": "bf72d2d535fa29127e5078a6c4c2023a74fa5cd7d02d91ad550e897e088e1dc8"
+        },
+        {
+          "file": "backpack.glb",
+          "library": "pack",
+          "sha256": "315a559dc389f0a3a98395222d56c2db45b4bd505c93db282c7e34011f6e5c0f"
+        },
+        {
+          "file": "backpack.glb",
+          "library": "pack",
+          "sha256": "315a559dc389f0a3a98395222d56c2db45b4bd505c93db282c7e34011f6e5c0f"
+        },
+        {
+          "file": "backpack.glb",
+          "library": "pack",
+          "sha256": "315a559dc389f0a3a98395222d56c2db45b4bd505c93db282c7e34011f6e5c0f"
+        },
+        {
           "file": "tent-canvas-half.glb",
           "library": "camp",
           "sha256": "f6e12c0de280a9d5e93e27652a3e80ea620374865a6053dbe6fd5fb7eaca9d93"
@@ -187,7 +222,7 @@
           128
         ]
       ],
-      "sha256": "7ea517d287f40d676012772666107828efdb90ae4a61601c4bd8126954d46ca3",
+      "sha256": "91300db9af79edb07a1231fe560499dd3a4d8a78be2e51b123d2eb2235c563b3",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details.",
       "depletedFile": "berry-bush-fruit-groups-empty.glb",
       "depletedSha256": "44c53454632de690f8debc34435b3b2ea5163be1cb089ed6de1895af29fef883"
@@ -220,7 +255,7 @@
           128
         ]
       ],
-      "sha256": "4d33723d776afb3507c19fe97138338508d0ff30c7a9ded6f2587cb38b97ae3b",
+      "sha256": "58a68458b59d9884bc6dc75640e86da10cd3b0afb9d9ac2140b6b239e56c2523",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details.",
       "depletedFile": "berry-bush-open-canes-empty.glb",
       "depletedSha256": "760591b735d92ef70bd8dd0c39e515933390f1d168e0a54d1322a0f1933a680d"
@@ -253,7 +288,7 @@
           128
         ]
       ],
-      "sha256": "41a42ca77146891c3ec0c439e5f45feaa6cbf20ace099f706c81b0f7c0ad4296",
+      "sha256": "70bccb44726d12f0ef13ec1fc17dd546d99c814d4caa853eb24740d597d49b5c",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details.",
       "depletedFile": "berry-bush-low-thicket-empty.glb",
       "depletedSha256": "d9506e22e1977cd9dc12b6eea610c67cede89fd006f2bff4735b3c52e110576e"
@@ -914,6 +949,201 @@
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
     {
+      "id": "workbench-open-bench",
+      "family": "library-workbench",
+      "label": "Riverside workbench",
+      "variant": "open-bench",
+      "description": "Open bench: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": true,
+      "file": "workbench-open-bench.glb",
+      "bounds": {
+        "min": [
+          -0.482927,
+          0.0,
+          -0.438438
+        ],
+        "max": [
+          0.482927,
+          0.85,
+          0.438438
+        ]
+      },
+      "triangles": 236,
+      "vertices": 427,
+      "textureSizes": [
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "30122a91a50f6bf534862884c2e07a538078bff87d123fdb262f06621311b449",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "workbench-long-table",
+      "family": "library-workbench",
+      "label": "Riverside workbench",
+      "variant": "long-table",
+      "description": "Long table: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "workbench-long-table.glb",
+      "bounds": {
+        "min": [
+          -0.605689,
+          0.0,
+          -0.372672
+        ],
+        "max": [
+          0.630603,
+          0.85,
+          0.372672
+        ]
+      },
+      "triangles": 236,
+      "vertices": 427,
+      "textureSizes": [
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "efc8b0e2e3faec83c1e2bbe943140b55943f4c418e6b3b36beedc9bd6a5324f1",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "workbench-narrow-bench",
+      "family": "library-workbench",
+      "label": "Riverside workbench",
+      "variant": "narrow-bench",
+      "description": "Narrow bench: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "workbench-narrow-bench.glb",
+      "bounds": {
+        "min": [
+          -0.395239,
+          0.0,
+          -0.394594
+        ],
+        "max": [
+          0.377444,
+          0.85,
+          0.394594
+        ]
+      },
+      "triangles": 236,
+      "vertices": 427,
+      "textureSizes": [
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "5fde5315a0a04b76f64179930d7cab021a3d13a9a1f3aaddb034c9f640138548",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "backpack-canvas-pack",
+      "family": "library-backpack",
+      "label": "Travelling pack",
+      "variant": "canvas-pack",
+      "description": "Canvas pack: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": true,
+      "file": "backpack-canvas-pack.glb",
+      "bounds": {
+        "min": [
+          -0.2572,
+          -0.0,
+          -0.134312
+        ],
+        "max": [
+          0.2572,
+          0.48,
+          0.134312
+        ]
+      },
+      "triangles": 1748,
+      "vertices": 3503,
+      "textureSizes": [],
+      "sha256": "83b9647c6f092f45d4c18e28a7d1e84536746c252e2b0247f3e2f5b36c36f936",
+      "source": "Quaternius Survival Pack, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "backpack-broad-flap",
+      "family": "library-backpack",
+      "label": "Travelling pack",
+      "variant": "broad-flap",
+      "description": "Broad flap: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "backpack-broad-flap.glb",
+      "bounds": {
+        "min": [
+          -0.329216,
+          -0.0,
+          -0.119794
+        ],
+        "max": [
+          0.329216,
+          0.48,
+          0.108536
+        ]
+      },
+      "triangles": 1748,
+      "vertices": 3503,
+      "textureSizes": [],
+      "sha256": "cd61dcb1535bec52525df8c7b8dd4c980a65b6479c2213e2522dc7a2529b6d4d",
+      "source": "Quaternius Survival Pack, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "backpack-slender-pack",
+      "family": "library-backpack",
+      "label": "Travelling pack",
+      "variant": "slender-pack",
+      "description": "Slender pack: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "backpack-slender-pack.glb",
+      "bounds": {
+        "min": [
+          -0.20576,
+          -0.0,
+          -0.124633
+        ],
+        "max": [
+          0.20576,
+          0.48,
+          0.117128
+        ]
+      },
+      "triangles": 1748,
+      "vertices": 3503,
+      "textureSizes": [],
+      "sha256": "548d09beb64601e051b1277494904b62a19d6adcdd3c6a9327bb07a4bbbb1715",
+      "source": "Quaternius Survival Pack, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
       "id": "shelter-open-awning",
       "family": "library-shelter",
       "label": "Canvas shelter",
@@ -941,7 +1171,7 @@
           128
         ]
       ],
-      "sha256": "f4025cd5c4a826fbf856460e2032450d5b6cd26c734c97fccb948afbf1b6192e",
+      "sha256": "6bdfa7d679422b0417de9eda226310c3e5e3598845fb4106f769701b9103f323",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
     {
@@ -972,7 +1202,7 @@
           128
         ]
       ],
-      "sha256": "9d42c91a3400c67d694530883940c1128cb40f9eeaceb06614b78cc39014c40d",
+      "sha256": "15faa5b62feaaf0fdbb2d79582cc150e1855f848a66e05271fb8cc64567878ac",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
     {
@@ -1003,8 +1233,350 @@
           128
         ]
       ],
-      "sha256": "4ce0a4a4a949bd997ba7029c963000a79e551de62668c836de2a3ff77fcade75",
+      "sha256": "c155c61ad11858d5ce1d7d415ecdfb45d14d77dde884e454cf9c72cc1e06e658",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     }
-  ]
+  ],
+  "controls": [
+    {
+      "id": "control-library-shelter",
+      "family": "library-shelter",
+      "label": "Canvas shelter",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-shelter.glb",
+      "bounds": {
+        "min": [
+          -1.084165,
+          0.0,
+          -1.084624
+        ],
+        "max": [
+          1.084164,
+          1.9,
+          1.084624
+        ]
+      },
+      "triangles": 136,
+      "vertices": 272,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "161a99132a51d2451e9d4fb935642a112b55cb487958cdc18716ddbba9cd64a7",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/tent-canvas-half.glb \u00b7 SHA256 f6e12c0de280a9d5e93e27652a3e80ea620374865a6053dbe6fd5fb7eaca9d93"
+    },
+    {
+      "id": "control-library-backpack",
+      "family": "library-backpack",
+      "label": "Travelling pack",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-backpack.glb",
+      "bounds": {
+        "min": [
+          -0.2572,
+          -0.0,
+          -0.134312
+        ],
+        "max": [
+          0.2572,
+          0.48,
+          0.134312
+        ]
+      },
+      "triangles": 1748,
+      "vertices": 3503,
+      "textureSizes": [],
+      "sha256": "0354b7fe55242a7411b8086702afb7e49bb688a6b930d6eac09a29ca4e56485f",
+      "source": "/private/tmp/openlegend-source-study/backpack.glb \u00b7 SHA256 315a559dc389f0a3a98395222d56c2db45b4bd505c93db282c7e34011f6e5c0f"
+    },
+    {
+      "id": "control-library-workbench",
+      "family": "library-workbench",
+      "label": "Riverside workbench",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-workbench.glb",
+      "bounds": {
+        "min": [
+          -0.482927,
+          0.0,
+          -0.438438
+        ],
+        "max": [
+          0.482927,
+          0.85,
+          0.438438
+        ]
+      },
+      "triangles": 236,
+      "vertices": 427,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "d0438926ca332f3c6a7e7be1facdbf880aefd8e098213e280a402dfc4e3f22ff",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/workbench.glb \u00b7 SHA256 bf72d2d535fa29127e5078a6c4c2023a74fa5cd7d02d91ad550e897e088e1dc8"
+    },
+    {
+      "id": "control-library-bundle",
+      "family": "library-bundle",
+      "label": "Travelling bundle",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-bundle.glb",
+      "bounds": {
+        "min": [
+          -0.50814,
+          0.0,
+          -0.175
+        ],
+        "max": [
+          0.50814,
+          0.35,
+          0.175
+        ]
+      },
+      "triangles": 124,
+      "vertices": 240,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "8419223328956a90f9b814b589cee918afce3367cc0f6c57c5dc9c8c8c220e51",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/bedroll-packed.glb \u00b7 SHA256 980c222917e8564c68aa184af025d701612c7395e8ad8ef55b5b00785637a98f"
+    },
+    {
+      "id": "control-library-supplies",
+      "family": "library-supplies",
+      "label": "Workshop supplies",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-supplies.glb",
+      "bounds": {
+        "min": [
+          -0.244898,
+          0.0,
+          -0.244898
+        ],
+        "max": [
+          0.244898,
+          0.6,
+          0.244898
+        ]
+      },
+      "triangles": 156,
+      "vertices": 300,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "83d5319ce3412bba1228b0cca4be53e5854b1dfd792e39873b85ee6f10b9b1d0",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/box-open.glb \u00b7 SHA256 2169e2291052ef9c378af4d6736df3fcff4ebca8fc39cbcdb4b7ad6accdff568"
+    },
+    {
+      "id": "control-library-marker",
+      "family": "library-marker",
+      "label": "Carved work marker",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-marker.glb",
+      "bounds": {
+        "min": [
+          -0.204065,
+          0.0,
+          -0.042036
+        ],
+        "max": [
+          0.204065,
+          0.9,
+          0.042036
+        ]
+      },
+      "triangles": 28,
+      "vertices": 54,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "bf8f89353710b7d08ccc6ca391036bbbf5704e78ad8bf497b4f893ca2aaa5eb9",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/signpost-single.glb \u00b7 SHA256 ca011990b4e1a48240bb78edeb4b6f3b1bf7265dcc6500a5268fc8de1a54262c"
+    },
+    {
+      "id": "control-library-river-stones",
+      "family": "library-river-stones",
+      "label": "Loose river stones",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-river-stones.glb",
+      "bounds": {
+        "min": [
+          -0.170295,
+          0.0,
+          -0.146478
+        ],
+        "max": [
+          0.170295,
+          0.22,
+          0.146478
+        ]
+      },
+      "triangles": 44,
+      "vertices": 72,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "dfc92b9fdbaf2b4df080a1df9ea22508c77e270c5e3df238313c07ac4e75e1a4",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/resource-stone.glb \u00b7 SHA256 c0ad4ecc890f99dc7c62da067824e31de0f0515de4437e73d8690136bd06e3c0"
+    },
+    {
+      "id": "control-library-fallen-wood",
+      "family": "library-fallen-wood",
+      "label": "Fallen wood",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-fallen-wood.glb",
+      "bounds": {
+        "min": [
+          -0.394026,
+          0.0,
+          -0.167401
+        ],
+        "max": [
+          0.394026,
+          0.24,
+          0.167401
+        ]
+      },
+      "triangles": 64,
+      "vertices": 110,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "aa01ebfc1eed559c151e931e308e6743bd8bfe976d3ae4134874580d07798310",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/resource-wood.glb \u00b7 SHA256 1d5f559da9432f89bd323731ef76b60372e0deb261a96d0da8d5af570c485d80"
+    },
+    {
+      "id": "control-library-dry-fiber",
+      "family": "library-dry-fiber",
+      "label": "Dry fibers",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-dry-fiber.glb",
+      "bounds": {
+        "min": [
+          -0.100373,
+          0.0,
+          -0.111365
+        ],
+        "max": [
+          0.100373,
+          0.42,
+          0.111365
+        ]
+      },
+      "triangles": 326,
+      "vertices": 303,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "fc8744a2c296992981825e5605a1b2932d2c5dfad77ad5561d8e225a7886a0fc",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/Grass_Common_Tall.gltf \u00b7 SHA256 783466c838163bf7da44e10675ace3851b8c9fb83322387125df7a080b05cd70"
+    },
+    {
+      "id": "control-library-reeds",
+      "family": "library-reeds",
+      "label": "River reeds",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-reeds.glb",
+      "bounds": {
+        "min": [
+          -0.460602,
+          0.0,
+          -0.476646
+        ],
+        "max": [
+          0.460602,
+          1.0,
+          0.476646
+        ]
+      },
+      "triangles": 622,
+      "vertices": 644,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "18ab9b63393f4d6d5871b22236dec65c766a2a7555dd58e8342e30ed5854c835",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/Grass_Wispy_Tall.gltf \u00b7 SHA256 a05e3ac05e43abbdb89c5b61134e367c7d33e285ff8d2a6e0a40180cb335af0b"
+    },
+    {
+      "id": "control-library-berry-bush",
+      "family": "library-berry-bush",
+      "label": "Berry bush",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-berry-bush.glb",
+      "bounds": {
+        "min": [
+          -0.635543,
+          0.0,
+          -0.652237
+        ],
+        "max": [
+          0.635543,
+          1.05,
+          0.652237
+        ]
+      },
+      "triangles": 900,
+      "vertices": 1800,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "8b9ea04de5cebe35488ea9e928fc5d9c50ba555bf86840d69ef0d6dbc80aae50",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/Bush_Common.gltf \u00b7 SHA256 77811fca92610cb254713d3d49d5029ab6cf13050c3afb61aa942786a7b2ca90"
+    }
+  ],
+  "controlRecipe": {
+    "path": "scripts/prepare-study-controls.py",
+    "sha256": "5c9d42061bbef41ac4a011cc6864f0a00684f531fa6e8c8d4e0ae1c16087d81a"
+  }
 }

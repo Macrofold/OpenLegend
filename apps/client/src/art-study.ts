@@ -25,12 +25,14 @@ interface Catalog {
   group: string;
   sourceFile: string;
   assets: StudyAsset[];
+  controls?: StudyAsset[];
 }
 type Choice = StudyAsset & {
   url: string;
   motionUrl?: string;
   sourceUrl?: string;
   historical: boolean;
+  sourceControl?: boolean;
 };
 const catalogs = import.meta.glob<Catalog>('./props/art-study/*/catalog.json', {
   eager: true,
@@ -50,7 +52,10 @@ const sourceUrls = import.meta.glob<string>(
   },
 );
 const choices: Choice[] = Object.values(catalogs).flatMap((catalog) =>
-  catalog.assets.map((asset) => ({
+  [
+    ...catalog.assets,
+    ...(catalog.controls ?? []).map((asset) => ({ ...asset, sourceControl: true })),
+  ].map((asset) => ({
     ...asset,
     historical: !catalog.group.startsWith('source-'),
     url: modelUrls[`./props/art-study/${catalog.group}/${asset.file}`]!,
@@ -112,6 +117,7 @@ export class ArtStudy {
   private dragging?: { id: number; x: number; y: number };
   private readonly reduce = matchMedia('(prefers-reduced-motion: reduce)');
   private readonly gameCamera = initialCamera();
+  private motionAllowed = !this.reduce.matches;
   constructor(private readonly canvas: HTMLCanvasElement) {
     this.app = new pc.Application(canvas, {
       graphicsDeviceOptions: { antialias: true, alpha: false },
@@ -120,6 +126,7 @@ export class ArtStudy {
     this.app.autoRender = false;
     element('turn').setAttribute('aria-pressed', 'false');
     element('labels-toggle').setAttribute('aria-pressed', String(!element('labels').hidden));
+    element('motion-consent').hidden = !this.reduce.matches;
     this.models = new BundledModels(this.app);
     this.art = new ArtMaterials(this.app.graphicsDevice);
     this.app.scene.ambientLight = new pc.Color(0.32, 0.35, 0.37);
@@ -193,7 +200,7 @@ export class ArtStudy {
     on(element('zoom-in'), 'click', () => this.adjustZoom(0.8));
     on(element('zoom-out'), 'click', () => this.adjustZoom(1.25));
     on(element('turn'), 'click', () => {
-      this.turning = !this.turning && !this.reduce.matches;
+      this.turning = !this.turning && this.motionAllowed;
       this.app.autoRender = this.turning;
       this.invalidate();
       element('turn').setAttribute('aria-pressed', String(this.turning));
@@ -203,7 +210,20 @@ export class ArtStudy {
       labels.hidden = !labels.hidden;
       element('labels-toggle').setAttribute('aria-pressed', String(!labels.hidden));
     });
+    on(element('motion-consent'), 'click', () => {
+      this.motionAllowed = !this.motionAllowed;
+      if (!this.motionAllowed) {
+        this.turning = false;
+        this.app.autoRender = false;
+        element('turn').setAttribute('aria-pressed', 'false');
+      }
+      element('motion-consent').setAttribute('aria-pressed', String(this.motionAllowed));
+      this.invalidate();
+    });
     on(this.reduce, 'change', () => {
+      this.motionAllowed = !this.reduce.matches;
+      element('motion-consent').hidden = !this.reduce.matches;
+      element('motion-consent').setAttribute('aria-pressed', 'false');
       if (this.reduce.matches) this.turning = false;
       this.app.autoRender = this.turning;
       this.invalidate();
@@ -260,18 +280,23 @@ export class ArtStudy {
     on(window, 'pagehide', () => this.destroy());
     this.app.on('update', (dt: number) => {
       if (this.disposed) return;
-      if (this.turning && !this.reduce.matches) {
+      if (this.turning && this.motionAllowed) {
         this.yaw += Math.min(dt, 0.1) * 0.22;
         this.placeCamera();
       }
       const pose = element<HTMLSelectElement>('pose').value;
-      if (pose !== 'still' && !this.reduce.matches && this.animations.length) {
+      if (pose !== 'still' && this.motionAllowed && this.animations.length) {
         for (const anim of this.animations) {
           if (anim.baseLayer?.activeState !== pose) anim.baseLayer?.play(pose);
           anim.update(Math.min(dt, 0.1));
         }
         this.invalidate();
       }
+      element('motion-evidence').textContent = !this.motionAllowed
+        ? 'Motion paused by your reduced-motion preference.'
+        : pose === 'still'
+          ? 'Pose held for comparison.'
+          : `${this.animations.length} animated models · ${pose === 'Run' ? 'Movement' : 'Idle'} · ${(this.animations[0]?.baseLayer?.activeStateCurrentTime ?? 0).toFixed(1)} s`;
       if (this.labelsDirty) {
         this.labels();
         this.labelsDirty = false;
@@ -326,7 +351,8 @@ export class ArtStudy {
     if (this.disposed) return;
     const epoch = ++this.epoch,
       composition = ['composition', 'calibration', 'cast'].includes(subject.value);
-    const compare = !composition && element<HTMLSelectElement>('versions').value === 'compare';
+    const version = element<HTMLSelectElement>('versions').value;
+    const compare = !composition && version === 'compare';
     let selected = composition
       ? choices.filter(
           (asset) =>
@@ -338,8 +364,16 @@ export class ArtStudy {
                   : ['mercenary', 'ada']
                 ).includes(asset.family)),
         )
-      : choices.filter((asset) => subjectKey(asset) === subject.value);
-    if (!compare && !composition) selected = selected.filter((asset) => asset.recommended);
+      : choices.filter(
+          (asset) =>
+            subjectKey(asset) === subject.value &&
+            Boolean(asset.sourceControl) === (version === 'source'),
+        );
+    if (!compare && !composition && version !== 'source')
+      selected =
+        version === 'selected'
+          ? selected.filter((asset) => asset.recommended)
+          : selected.slice(Number(version), Number(version) + 1);
     if (!selected.length) {
       element('status').textContent = 'No exported assets are available for this subject yet.';
       return;
@@ -358,19 +392,26 @@ export class ArtStudy {
       );
       if (this.disposed || epoch !== this.epoch) return;
       const animations: pc.AnimComponent[] = [];
-      const fresh = resources.map((resource, index) => {
-        const artwork = resource.instantiateRenderEntity({
-          castShadows: true,
-          receiveShadows: true,
+      const fresh: pc.Entity[] = [];
+      try {
+        resources.forEach((resource, index) => {
+          const artwork = resource.instantiateRenderEntity({
+            castShadows: true,
+            receiveShadows: true,
+          });
+          fresh.push(artwork);
+          this.prepare(artwork);
+          if (selected[index]!.motionUrl) animations.push(installLocomotion(artwork, resource));
+          // A single exported mesh may carry its own origin offset. Position a
+          // parent so its original model transform (and ground contact) survives.
+          const placement = new pc.Entity(selected[index]!.id, this.app);
+          placement.addChild(artwork);
+          fresh[index] = placement;
         });
-        this.prepare(artwork);
-        if (selected[index]!.motionUrl) animations.push(installLocomotion(artwork, resource));
-        // A single exported mesh may carry its own origin offset. Position a
-        // parent so its original model transform (and ground contact) survives.
-        const placement = new pc.Entity(selected[index]!.id, this.app);
-        placement.addChild(artwork);
-        return placement;
-      });
+      } catch (error) {
+        for (const root of fresh) root.destroy();
+        throw error;
+      }
       for (const root of this.roots) root.destroy();
       this.roots = fresh;
       this.animations = animations;

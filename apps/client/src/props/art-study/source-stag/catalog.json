@@ -104,5 +104,37 @@
       "animatedFile": "stag-dark-mantle-motion.glb",
       "animatedSha256": "c39f55cfadbcbd507f5676f534bcf43c9f18bd36b1f565381f26ac3dd175819d"
     }
-  ]
+  ],
+  "controls": [
+    {
+      "id": "control-library-stag",
+      "family": "library-stag",
+      "label": "Stag",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-stag.glb",
+      "bounds": {
+        "min": [
+          -0.45977,
+          0.0,
+          -0.876994
+        ],
+        "max": [
+          0.45977,
+          1.95,
+          0.876994
+        ]
+      },
+      "triangles": 3670,
+      "vertices": 1845,
+      "textureSizes": [],
+      "sha256": "65e5494adb4839123d061fdd078515e0c9eb720d8d41b928049221123bc02387",
+      "source": "/private/tmp/openlegend-source-study/animals/Blends/Stag.blend \u00b7 SHA256 09cc635a05452d149baadd285ee1ea2cfe5ea1e7e0a6067f2ea147e612c50c3c"
+    }
+  ],
+  "controlRecipe": {
+    "path": "scripts/prepare-study-controls.py",
+    "sha256": "5c9d42061bbef41ac4a011cc6864f0a00684f531fa6e8c8d4e0ae1c16087d81a"
+  }
 }

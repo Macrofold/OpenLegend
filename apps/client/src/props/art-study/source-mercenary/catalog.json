@@ -123,5 +123,50 @@
       "sha256": "4c99b5c54ef32f5f1b0e6dcc773f08b997f79425b06a3ed739f38bba8c39adbe",
       "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
     }
-  ]
+  ],
+  "controls": [
+    {
+      "id": "control-mercenary",
+      "family": "mercenary",
+      "label": "Peacock Mercenary",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-mercenary.glb",
+      "bounds": {
+        "min": [
+          -0.484672,
+          0.0,
+          -0.370804
+        ],
+        "max": [
+          0.484672,
+          2.035,
+          0.370805
+        ]
+      },
+      "triangles": 42426,
+      "vertices": 46860,
+      "textureSizes": [
+        [
+          1024,
+          1536
+        ],
+        [
+          1254,
+          1254
+        ],
+        [
+          2048,
+          2048
+        ]
+      ],
+      "sha256": "b3f79adc76569d496c9d75f8b53a379057a809ad932980ad44bbedf1e2ceb001",
+      "source": "/Users/mzw/Documents/ChatGPT/OpenLegend-art/mercenary/study/assets/mercenary.glb \u00b7 SHA256 56805f557675bc87dce8512203dcd925fa63a6b6e725706f6e985114173ea9bd"
+    }
+  ],
+  "controlRecipe": {
+    "path": "scripts/prepare-study-controls.py",
+    "sha256": "5c9d42061bbef41ac4a011cc6864f0a00684f531fa6e8c8d4e0ae1c16087d81a"
+  }
 }

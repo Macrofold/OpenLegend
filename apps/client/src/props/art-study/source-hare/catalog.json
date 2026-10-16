@@ -1,0 +1,122 @@
+{
+  "group": "source-hare",
+  "sourceFile": "art-direction/assets/source-study/source-hare.blend",
+  "sourceSha256": "bb6deef1ee91b21380355138374cae87946451ce864502b1af68eb60f4750843",
+  "sources": [
+    {
+      "title": "Rabbit",
+      "author": "CDmir",
+      "collaborator": "TinyWorlds",
+      "page": "https://opengameart.org/content/rabbit-0",
+      "download": "https://opengameart.org/sites/default/files/rabbit.blend",
+      "published": "2015-11-14",
+      "downloaded": "2026-10-15",
+      "license": "CC0-1.0",
+      "sourceFile": "cdmir-rabbit-source.blend",
+      "sourceBytes": 5996916,
+      "sha256": "bb6deef1ee91b21380355138374cae87946451ce864502b1af68eb60f4750843"
+    }
+  ],
+  "recipe": {
+    "path": "scripts/prepare-library-animals.py",
+    "sha256": "08d529f8b8e0d07b58d2724db4ab9dd602a2f0f9194c297502647f0622b7df30"
+  },
+  "assets": [
+    {
+      "id": "hare-field",
+      "family": "library-hare",
+      "label": "Hare",
+      "variant": "field",
+      "description": "Warm field coat with quiet belly and dark ear tips. The earlier source-based working hare, retained for animated comparison.",
+      "recommended": true,
+      "file": "hare-field.glb",
+      "animatedFile": "hare-field.glb",
+      "bounds": {
+        "min": [
+          -0.22,
+          0,
+          -0.38
+        ],
+        "max": [
+          0.22,
+          0.45,
+          0.38
+        ]
+      },
+      "triangles": 1532,
+      "vertices": 1002,
+      "textureSizes": [
+        [
+          64,
+          64
+        ]
+      ],
+      "source": "Rabbit by CDmir/TinyWorlds, CC0; OpenLegend proportions and fixed coat design.",
+      "sha256": "754b9d73f0822af57106e85b21969b11819faa672b5f84d94cbc28de1bfa449b"
+    },
+    {
+      "id": "hare-russet",
+      "family": "library-hare",
+      "label": "Hare",
+      "variant": "russet",
+      "description": "Russet shoulder and haunch grouping; the same source anatomy and real clips.",
+      "recommended": false,
+      "file": "hare-russet.glb",
+      "animatedFile": "hare-russet.glb",
+      "bounds": {
+        "min": [
+          -0.22,
+          0,
+          -0.38
+        ],
+        "max": [
+          0.22,
+          0.45,
+          0.38
+        ]
+      },
+      "triangles": 1532,
+      "vertices": 1002,
+      "textureSizes": [
+        [
+          64,
+          64
+        ]
+      ],
+      "source": "Rabbit by CDmir/TinyWorlds, CC0; OpenLegend proportions and fixed coat design.",
+      "sha256": "e2b7bc50247ef2ee39ae6a184a013e18250cf5066d1e145fc8b8be88a00a947a"
+    },
+    {
+      "id": "hare-winter",
+      "family": "library-hare",
+      "label": "Hare",
+      "variant": "winter",
+      "description": "Pale seasonal coat with a dark eye and ear tip; a retained material comparison.",
+      "recommended": false,
+      "file": "hare-winter.glb",
+      "animatedFile": "hare-winter.glb",
+      "bounds": {
+        "min": [
+          -0.22,
+          0,
+          -0.38
+        ],
+        "max": [
+          0.22,
+          0.45,
+          0.38
+        ]
+      },
+      "triangles": 1532,
+      "vertices": 1002,
+      "textureSizes": [
+        [
+          64,
+          64
+        ]
+      ],
+      "source": "Rabbit by CDmir/TinyWorlds, CC0; OpenLegend proportions and fixed coat design.",
+      "sha256": "57fa452c338a06d4eaf64207b512dc0ef9b9dd8d1ed48ea3907a47be91c96df8"
+    }
+  ]
+}

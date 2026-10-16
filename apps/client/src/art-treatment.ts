@@ -15,7 +15,7 @@ export interface ArtTreatment {
     | 'anchored2'
     | 'anchored3'
     | 'metres30';
-  surfaceArt: 'plain' | 'painted';
+  surfaceArt: 'plain' | 'painted' | 'rigid';
   surfaceEdges: 'sharp' | 'filtered';
   coverage: 'none' | 'msaa4';
   subjectDetail: 'shared' | 'preserve';
@@ -99,7 +99,7 @@ export class ArtMaterials {
     this.settings[1] = style.lighting === 'smooth' ? 0 : style.lighting === 'hard' ? 1 : 2;
     this.settings[2] = 0.055;
     this.device.scope.resolve('ol_artStyle').setValue(this.settings);
-    this.device.scope.resolve('ol_surfaceEnabled').setValue(style.surfaceArt === 'painted' ? 1 : 0);
+    this.device.scope.resolve('ol_surfaceEnabled').setValue(style.surfaceArt === 'painted' ? 1 : style.surfaceArt === 'rigid' ? 2 : 0);
     this.device.scope
       .resolve('ol_surfaceEdges')
       .setValue(style.surfaceEdges === 'filtered' ? 1 : 0);

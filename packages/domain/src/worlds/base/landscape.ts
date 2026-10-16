@@ -209,7 +209,15 @@ export function populateOuterWilderness(world: WorldState): void {
       id,
       name: species[0]!.toUpperCase() + species.slice(1),
       kind: 'animal',
-      ...(species === 'wolf' || species === 'bear' ? { appearance: `${species}-sprite` } : {}),
+      ...(species === 'hare'
+        ? {}
+        : {
+            appearance: {
+              deer: 'study:deer-woodland-doe',
+              wolf: 'study:wolf-field-grey',
+              bear: 'study:bear-forest-brown',
+            }[species],
+          }),
       spatial: baseSpatial(species === 'hare' ? 'hare' : 'deer'),
       placement: worldPlacement(p, p.surfaceId),
       actor: nativeActor(species, world.simTime, energy),
@@ -238,6 +246,15 @@ export function populateOuterWilderness(world: WorldState): void {
       kind: 'resource',
       spatial: baseSpatial('object'),
       placement: worldPlacement(p, p.surfaceId),
+      appearance: (
+        {
+          berries: 'study:berry-bush-fruit-groups',
+          wood: 'study:fallen-wood-loose-branches',
+          stone: 'study:river-stones-loose-stones',
+          raw_fiber:
+            name === 'River reeds' ? 'study:reeds-river-fan' : 'study:dry-fiber-standing-stems',
+        } as Record<string, string>
+      )[definitionId],
       resource: { definitionId, quantity, workSeconds },
     };
   }

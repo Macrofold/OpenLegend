@@ -32,6 +32,10 @@
           <select id="versions">
             <option value="compare">Compare all three</option>
             <option value="selected">Working choice</option>
+            <option value="source">Original source control</option>
+            <option value="0">Option A</option>
+            <option value="1">Option B</option>
+            <option value="2">Option C</option>
           </select></label
         >
         <label
@@ -91,6 +95,10 @@
           </select>
         </label>
         <p id="pixel-evidence" aria-live="polite"></p>
+        <p id="motion-evidence"></p>
+        <button id="motion-consent" type="button" aria-pressed="false" hidden>
+          Allow motion for this study
+        </button>
       </section>
       <section class="study-stage" aria-label="Interactive 3D comparison">
         <canvas

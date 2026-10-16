@@ -32,9 +32,9 @@ function treatment(): ArtTreatment {
     ...candidateArt,
     mercenaryArt: select('mercenary').value as ArtTreatment['mercenaryArt'],
     sampling: route === 'shared' ? 'screen' : route === 'family' ? '60' : '96',
-    sceneGrid: route === 'control' ? 'full' : 'metres30',
+    sceneGrid: route === 'control' || route === 'surface' ? 'full' : 'metres30',
     subjectDetail: route === 'family' ? 'preserve' : 'shared',
-    surfaceArt: 'plain',
+    surfaceArt: route === 'surface' ? 'rigid' : 'plain',
     environment: 'study',
     prop: 'banded',
     vegetation: 'still',
@@ -71,13 +71,7 @@ function publish(): void {
     entities: original.entities.map((entity) => {
       if (!fire && entity.kind === 'station' && entity.status.startsWith('Lit'))
         return { ...entity, status: 'Unlit · study light comparison' };
-      if (
-        !motion ||
-        (entity.appearance !== 'mercenary-model' &&
-          !entity.appearance.startsWith('study:') &&
-          entity.subtype !== 'hare')
-      )
-        return entity;
+      if (!motion || !['actor', 'animal'].includes(entity.kind)) return entity;
       // Explicit display fixture over a recorded permitted view; never a command.
       const offset = entity.subtype === 'hare' ? 0.7 : 0;
       const t = phase + offset;
@@ -89,7 +83,7 @@ function publish(): void {
     }),
   };
   if (item.id === 'camp') {
-    const source = view.entities.find((entity) => entity.appearance === 'crate-mesh');
+    const source = view.entities.find((entity) => entity.id === 'lookout-cache');
     if (source)
       view.entities.push({
         ...source,
@@ -99,6 +93,8 @@ function publish(): void {
         kind: 'item-pile',
         status: 'Display fixture · no gameplay contents or actions',
         actions: [],
+        quantity: undefined,
+        contents: undefined,
         position: {
           ...view.player.position,
           x: view.player.position.x + 1.3,

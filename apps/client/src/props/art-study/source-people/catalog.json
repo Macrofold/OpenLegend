@@ -199,5 +199,62 @@
       "animatedFile": "ada-travel-coat-motion.glb",
       "animatedSha256": "08c008e985b79795041b430369805020b23633e7593230d7e2dc56f9f9f5b124"
     }
-  ]
+  ],
+  "controls": [
+    {
+      "id": "control-ada",
+      "family": "ada",
+      "label": "Ada",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-ada.glb",
+      "bounds": {
+        "min": [
+          -0.562773,
+          0.0,
+          -0.257865
+        ],
+        "max": [
+          0.562773,
+          1.85,
+          0.257865
+        ]
+      },
+      "triangles": 47712,
+      "vertices": 25048,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ]
+      ],
+      "sha256": "9707a872e0f37fe511f8b0dd22dec1ff4559c392d64eb197232a8abdb57db848",
+      "source": "MakeHuman CC0 anatomical base and Rehman Polanski source outfit; unpainted source control."
+    }
+  ],
+  "controlRecipe": {
+    "path": "scripts/prepare-study-controls.py",
+    "sha256": "5c9d42061bbef41ac4a011cc6864f0a00684f531fa6e8c8d4e0ae1c16087d81a"
+  }
 }

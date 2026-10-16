@@ -1,14 +1,14 @@
 {
   "group": "source-bear",
   "sourceFile": "art-direction/assets/source-study/source-bear.blend",
-  "sourceSha256": "0cbe7219ee7fb81ce21800bbef6175829672e0264442f083eacf2e8f7c45f4a1",
+  "sourceSha256": "a0af21a2a7663503a6ba7a3ad4d7ed099ecbeb82c1880d73d466d01c7b0a764c",
   "recipe": {
     "path": "scripts/prepare-animal-study.py",
-    "sha256": "4f8b2c44694f9bb4b51bf10a81d00185dd4dc4e31189f25313b82dd8e1fe7ec3"
+    "sha256": "d4bf684eeb5086c2d6357c52bde01a5e3713911c784de68e2fea628d2c350778"
   },
   "helpers": {
-    "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
-    "prepare-source-study.py": "324ec9807b07c217cde15734d66d55d4453ea22564fe26e479d79021cdb32a70",
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "7cf6b8bc5ca5aff50c4b71ee3744613128a806343a963b87ca693f1942b9f5fe",
     "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
   },
   "sources": [
@@ -48,10 +48,10 @@
           256
         ]
       ],
-      "sha256": "9bc7bdc85c7060f963ddf3cf286a5d89953836837233b799e2fc4f6f1cc9d72c",
+      "sha256": "67ffdf1482ede7904df937b4e2588884d8c746cdab98fbc85975c0ba21fcd29a",
       "source": "Bear by madtrollstudio, CC BY 3.0, https://poly.pizza/m/kLLBpmcw0w; recolored, proportion study and rig by OpenLegend.",
       "animatedFile": "bear-forest-brown-motion.glb",
-      "animatedSha256": "48af360f297e17a2ad0d93a8c6244b0241c259d71f977200e67b4f5ce91a6686"
+      "animatedSha256": "cb957c329e6707b489aa38de304eebc67983df66f4c10e7ac6f33dc406101180"
     },
     {
       "id": "bear-heavy-shoulder",
@@ -81,10 +81,10 @@
           256
         ]
       ],
-      "sha256": "5d90f3c85a3df9976f979c8461b5b3e5edc0f0ed59c8a1a6ede7edd53c2efaf5",
+      "sha256": "5cb8b221b15a3efd872ee510b41e9d02c3cd4ed2d97dfe79fa3b0e8ac3da7b82",
       "source": "Bear by madtrollstudio, CC BY 3.0, https://poly.pizza/m/kLLBpmcw0w; recolored, proportion study and rig by OpenLegend.",
       "animatedFile": "bear-heavy-shoulder-motion.glb",
-      "animatedSha256": "0db3b2993aaba4ce0de7fa7231ae367810085f260c7b963cfb73e107a3de2ad3"
+      "animatedSha256": "425f93c1f151b3e4c21cadad4403d34687c59106084f7e6e86f5e36225ab96ba"
     },
     {
       "id": "bear-pale-muzzle",
@@ -114,10 +114,10 @@
           256
         ]
       ],
-      "sha256": "5f0d07159ddfb4ba2e11f793aa360ca23b2f1f462c63c63ca2e89813313218ac",
+      "sha256": "22fdafb65e1ab7ead8f8b1f052374254c68e9ef0a3f9aeed69837c227a4526d3",
       "source": "Bear by madtrollstudio, CC BY 3.0, https://poly.pizza/m/kLLBpmcw0w; recolored, proportion study and rig by OpenLegend.",
       "animatedFile": "bear-pale-muzzle-motion.glb",
-      "animatedSha256": "41386410c38e8badf58c19896129b90747e21fd4017a64d2e0814683e9ad3032"
+      "animatedSha256": "0a2e094d41797a561e9fa7821523206410ea63ce8f84e6926712c8808bdb46a2"
     }
   ]
 }

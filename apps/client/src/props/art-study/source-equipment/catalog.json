@@ -472,5 +472,141 @@
       "sha256": "17335f9ac5bca9e59e9de3d34db02ef3e08210c8f45172583eb2d9fdea5a5a8d",
       "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
     }
-  ]
+  ],
+  "controls": [
+    {
+      "id": "control-library-arrow",
+      "family": "library-arrow",
+      "label": "Arrow",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-arrow.glb",
+      "bounds": {
+        "min": [
+          -0.414198,
+          0.0,
+          -4.13044
+        ],
+        "max": [
+          0.414198,
+          0.72,
+          4.13044
+        ]
+      },
+      "triangles": 224,
+      "vertices": 120,
+      "textureSizes": [],
+      "sha256": "9b65f729c128ba07b7f87ba9de03c1116b440ffc47139e650232d241833a3399",
+      "source": "/private/tmp/openlegend-source-study/weapons/Blends/Arrow.blend \u00b7 SHA256 aa3a3fd7dadcde3692baf653e056673bb99bdd72aef753f06165e3c1fcc298dd"
+    },
+    {
+      "id": "control-library-bow",
+      "family": "library-bow",
+      "label": "Bow",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-bow.glb",
+      "bounds": {
+        "min": [
+          -0.168754,
+          0.0,
+          -0.027983
+        ],
+        "max": [
+          0.168754,
+          1.25,
+          0.027983
+        ]
+      },
+      "triangles": 728,
+      "vertices": 370,
+      "textureSizes": [],
+      "sha256": "a4568138a4de2c62950f47cb4a160f5da20cc4e6473312450500d142cef4949a",
+      "source": "/private/tmp/openlegend-source-study/weapons/Blends/Bow_Wooden.blend \u00b7 SHA256 df4c3977b9f291ce19472b82101df31b959ebdf1f4829d9a8622327b67b6899a"
+    },
+    {
+      "id": "control-library-knife",
+      "family": "library-knife",
+      "label": "Knife",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-knife.glb",
+      "bounds": {
+        "min": [
+          -0.034226,
+          0.0,
+          -0.012776
+        ],
+        "max": [
+          0.034226,
+          0.32,
+          0.012776
+        ]
+      },
+      "triangles": 726,
+      "vertices": 365,
+      "textureSizes": [],
+      "sha256": "6cfc6d465f1057aaf2f06ce4e52bb475fedabc1389a33daa78866321ff50ed4f",
+      "source": "/private/tmp/openlegend-source-study/weapons/Blends/Dagger.blend \u00b7 SHA256 688b2a6efbec58d23075603c1a82d93c0fef8dae5b8400a42939901c76312286"
+    },
+    {
+      "id": "control-library-shield",
+      "family": "library-shield",
+      "label": "Shield",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-shield.glb",
+      "bounds": {
+        "min": [
+          -0.38,
+          0.0,
+          -0.114699
+        ],
+        "max": [
+          0.38,
+          0.76,
+          0.114699
+        ]
+      },
+      "triangles": 1056,
+      "vertices": 560,
+      "textureSizes": [],
+      "sha256": "542e6d4cdb0847b96e0a241b5f2db13e6625fac87eac410179838ff7b5631b37",
+      "source": "/private/tmp/openlegend-source-study/weapons/Blends/Shield_Round.blend \u00b7 SHA256 0a219e3037ca1d0969d941a70ab462d352deff99bf3a80eb8645de4422d4b473"
+    },
+    {
+      "id": "control-library-sword",
+      "family": "library-sword",
+      "label": "Sword",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-sword.glb",
+      "bounds": {
+        "min": [
+          -0.115229,
+          0.0,
+          -0.026341
+        ],
+        "max": [
+          0.115229,
+          1.1,
+          0.026341
+        ]
+      },
+      "triangles": 872,
+      "vertices": 438,
+      "textureSizes": [],
+      "sha256": "963176b056ceb4a2ec887ddb3f5f1c0668928b94abbee5c49fdd41993e8b7de1",
+      "source": "/private/tmp/openlegend-source-study/weapons/Blends/Sword.blend \u00b7 SHA256 1f3dff7c20ee40d02d0a40f709a2fe999d2e762b421568c5d9a51246f5be4a2e"
+    }
+  ],
+  "controlRecipe": {
+    "path": "scripts/prepare-study-controls.py",
+    "sha256": "5c9d42061bbef41ac4a011cc6864f0a00684f531fa6e8c8d4e0ae1c16087d81a"
+  }
 }

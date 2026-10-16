@@ -199,5 +199,62 @@
       "animatedFile": "armor-travel-coat-motion.glb",
       "animatedSha256": "e53f1a17cf2589a7821a6d6a734054b2b9703118ddf4d9d237f35005718f4d13"
     }
-  ]
+  ],
+  "controls": [
+    {
+      "id": "control-armor",
+      "family": "armor",
+      "label": "Armor study",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-armor.glb",
+      "bounds": {
+        "min": [
+          -0.630437,
+          0.0,
+          -0.287271
+        ],
+        "max": [
+          0.630437,
+          1.85,
+          0.287271
+        ]
+      },
+      "triangles": 43410,
+      "vertices": 22195,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ]
+      ],
+      "sha256": "c550dd29de618ba380ed05e41793024276791463ee87107fa813e48f6d083e77",
+      "source": "MakeHuman CC0 anatomical base and Rehman Polanski source outfit; unpainted source control."
+    }
+  ],
+  "controlRecipe": {
+    "path": "scripts/prepare-study-controls.py",
+    "sha256": "5c9d42061bbef41ac4a011cc6864f0a00684f531fa6e8c8d4e0ae1c16087d81a"
+  }
 }

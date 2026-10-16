@@ -117,10 +117,14 @@ export class ScenePropActor {
     this.ready = loaded
       .then((resource) => {
         if (this.disposed) return false;
-        const node = (this.node = resource.instantiateRenderEntity({
+        const artwork = resource.instantiateRenderEntity({
           castShadows: true,
           receiveShadows: true,
-        }));
+        });
+        // A single-mesh glTF can put its metre normalization on its root.
+        // Apply the requested envelope to a parent, never overwrite that scale.
+        const node = (this.node = new pc.Entity('Scene prop placement'));
+        node.addChild(artwork);
         node.setLocalScale(width, height, depth);
         node.enabled = false;
         parent.addChild(node);

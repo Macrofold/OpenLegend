@@ -702,5 +702,213 @@
       "sha256": "edcb8cfb565f6d62b0890558403ecaeb2b5c96a96671d205c5b49beb96f6bdfa",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
     }
-  ]
+  ],
+  "controls": [
+    {
+      "id": "control-library-fern",
+      "family": "library-fern",
+      "label": "Woodland fern",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-fern.glb",
+      "bounds": {
+        "min": [
+          -1.093438,
+          0.0,
+          -1.025898
+        ],
+        "max": [
+          1.093437,
+          0.65,
+          1.025898
+        ]
+      },
+      "triangles": 288,
+      "vertices": 243,
+      "textureSizes": [
+        [
+          2048,
+          2048
+        ]
+      ],
+      "sha256": "42c4b3ef58acbe3ee158c94636d4106efc87364e6c074624dc1ed1a857e44a3f",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/Fern_1.gltf \u00b7 SHA256 d41915cffe9dbbde1ae88be381eb9c60f7caa2274511436cc78fe4de627468ab"
+    },
+    {
+      "id": "control-library-grass",
+      "family": "library-grass",
+      "label": "Ground growth",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-grass.glb",
+      "bounds": {
+        "min": [
+          -0.100564,
+          0.0,
+          -0.116052
+        ],
+        "max": [
+          0.100564,
+          0.42,
+          0.116052
+        ]
+      },
+      "triangles": 155,
+      "vertices": 153,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "13f4834ef65ad522acdc476eda73f233b3d35d39579932c08d580338727d5ab0",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/Grass_Common_Short.gltf \u00b7 SHA256 6957b50622c9e26e7296c1b47ea8653bc0d957e0a547de444e2ed96f0075a21a"
+    },
+    {
+      "id": "control-library-rock",
+      "family": "library-rock",
+      "label": "Weathered stone",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-rock.glb",
+      "bounds": {
+        "min": [
+          -0.570874,
+          0.0,
+          -0.529098
+        ],
+        "max": [
+          0.570874,
+          0.8,
+          0.529098
+        ]
+      },
+      "triangles": 342,
+      "vertices": 351,
+      "textureSizes": [
+        [
+          2048,
+          2048
+        ]
+      ],
+      "sha256": "11244280e48aa9edfe4c5580ed44026827ad24d1ba6cc8ba568e9679646f0a29",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/Rock_Medium_1.gltf \u00b7 SHA256 5d1ab1fa03218f4a908728ed0eabe6486344a7e4f510b0d3d6f837fd1d011bd8"
+    },
+    {
+      "id": "control-library-shrub",
+      "family": "library-shrub",
+      "label": "Woodland shrub",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-shrub.glb",
+      "bounds": {
+        "min": [
+          -0.726335,
+          0.0,
+          -0.745414
+        ],
+        "max": [
+          0.726335,
+          1.2,
+          0.745414
+        ]
+      },
+      "triangles": 900,
+      "vertices": 1800,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "55ec37af942397f700018f27f9c277a19f501f32c2419a1695e71f5081260f64",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/Bush_Common.gltf \u00b7 SHA256 77811fca92610cb254713d3d49d5029ab6cf13050c3afb61aa942786a7b2ca90"
+    },
+    {
+      "id": "control-library-birch",
+      "family": "library-birch",
+      "label": "Pale woodland tree",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-birch.glb",
+      "bounds": {
+        "min": [
+          -1.401849,
+          0.0,
+          -1.342673
+        ],
+        "max": [
+          1.401849,
+          4.8,
+          1.342673
+        ]
+      },
+      "triangles": 5648,
+      "vertices": 8107,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ]
+      ],
+      "sha256": "93d07082c49ee437b5ec239b82c4442e0e961fe7fd2e10dc6ef8f394dd89d21d",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/CommonTree_2.gltf \u00b7 SHA256 67160975f0ac991b4a2ffb2add4ab4037b5e9c1bef9f66dac5235fcf0ba9bd52"
+    },
+    {
+      "id": "control-library-conifer",
+      "family": "library-conifer",
+      "label": "Conifer",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-conifer.glb",
+      "bounds": {
+        "min": [
+          -1.892211,
+          0.0,
+          -1.736733
+        ],
+        "max": [
+          1.892211,
+          5.6,
+          1.736733
+        ]
+      },
+      "triangles": 3947,
+      "vertices": 5246,
+      "textureSizes": [
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ]
+      ],
+      "sha256": "44d01a2c5b8c1d2bc5f5bcd3b98fb0f4f43bc6fd256c61dd4232daa2eb072a64",
+      "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/Pine_1.gltf \u00b7 SHA256 adc85a72e6f46f71317ca5f7630876bfb207f687427bc9e37cd97ec4af5f2cbc"
+    }
+  ],
+  "controlRecipe": {
+    "path": "scripts/prepare-study-controls.py",
+    "sha256": "5c9d42061bbef41ac4a011cc6864f0a00684f531fa6e8c8d4e0ae1c16087d81a"
+  }
 }

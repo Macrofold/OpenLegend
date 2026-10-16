@@ -199,5 +199,62 @@
       "animatedFile": "tavin-travel-coat-motion.glb",
       "animatedSha256": "6ddeb3c4ececca253bdeb0d62f7713895b0d8dd5e57170910fd904c8007ad4c0"
     }
-  ]
+  ],
+  "controls": [
+    {
+      "id": "control-tavin",
+      "family": "tavin",
+      "label": "Tavin Vale",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-tavin.glb",
+      "bounds": {
+        "min": [
+          -0.591333,
+          0.0,
+          -0.261209
+        ],
+        "max": [
+          0.591333,
+          1.85,
+          0.261209
+        ]
+      },
+      "triangles": 44282,
+      "vertices": 22341,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ]
+      ],
+      "sha256": "9ab1312ef75385ac7f75a0ff417194d7195fd27eb4ceaa4ee1143ad197122287",
+      "source": "MakeHuman CC0 anatomical base and Rehman Polanski source outfit; unpainted source control."
+    }
+  ],
+  "controlRecipe": {
+    "path": "scripts/prepare-study-controls.py",
+    "sha256": "5c9d42061bbef41ac4a011cc6864f0a00684f531fa6e8c8d4e0ae1c16087d81a"
+  }
 }

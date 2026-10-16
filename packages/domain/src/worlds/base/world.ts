@@ -274,6 +274,7 @@ export function createWorld(
       spatial: baseSpatial('person'),
       id: playerId,
       name: 'Mike',
+      appearance: 'study:mike-field-tunic',
       nameForm: 'proper',
       kind: 'player',
       placement: worldPlacement({ y: 0, x: 11, z: 13 }, 'terrain'),
@@ -317,6 +318,7 @@ export function createWorld(
       spatial: baseSpatial('object'),
       id: 'reeds',
       name: 'River reeds',
+      appearance: 'study:reeds-river-fan',
       nameForm: 'plural',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 5, z: 11 }, 'terrain'),
@@ -330,6 +332,7 @@ export function createWorld(
       spatial: baseSpatial('object'),
       id: 'reeds-east',
       name: 'Dry grass fibers',
+      appearance: 'study:dry-fiber-standing-stems',
       nameForm: 'plural',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 19, z: 12 }, 'terrain'),
@@ -343,6 +346,7 @@ export function createWorld(
       spatial: baseSpatial('object'),
       id: 'branches',
       name: 'Fallen branches',
+      appearance: 'study:fallen-wood-loose-branches',
       nameForm: 'plural',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 8, z: 8 }, 'terrain'),
@@ -356,6 +360,7 @@ export function createWorld(
       spatial: baseSpatial('object'),
       id: 'stones',
       name: 'River stones',
+      appearance: 'study:river-stones-loose-stones',
       nameForm: 'plural',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 5, z: 15 }, 'terrain'),
@@ -369,6 +374,7 @@ export function createWorld(
       spatial: baseSpatial('object'),
       id: 'berries-west',
       name: 'Berry bush',
+      appearance: 'study:berry-bush-fruit-groups',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 8, z: 13 }, 'terrain'),
       resource: {
@@ -381,6 +387,7 @@ export function createWorld(
       spatial: baseSpatial('object'),
       id: 'berries-east',
       name: 'Berry thicket',
+      appearance: 'study:berry-bush-low-thicket',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 19, z: 15 }, 'terrain'),
       resource: {
@@ -439,6 +446,7 @@ export function createWorld(
       spatial: baseSpatial('deer'),
       id: 'deer-1',
       name: 'Deer',
+      appearance: 'study:deer-woodland-doe',
       kind: 'animal',
       actor: nativeActor(
         'deer',
@@ -474,6 +482,7 @@ export function createWorld(
     {
       id: 'bird-1',
       name: 'Woodland bird',
+      appearance: 'study:bird-grey-wing',
       kind: 'animal',
       placement: worldPlacement({ x: 22, y: 3, z: 5.5 }, 'lookout-deck'),
       spatial: {
