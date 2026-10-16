@@ -12,11 +12,11 @@ from pathlib import Path
 
 import bpy
 import numpy as np
-from mathutils import Quaternion
+from mathutils import Quaternion, Vector
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from art_study_common import ROOT, export_asset, solid_material
+from art_study_common import ROOT, export_asset, solid_material, eye_accents
 from study_human_motion import export_motion
 
 # Visual proposals for this authored cast, not inferred personality or equipment.
@@ -175,9 +175,12 @@ def main(source,person):
                     image.pixels.foreach_set(pixels.ravel())
                 image.pack()
             image_material(obj,image,'hair' in obj.name.lower() or hair in obj.name or 'eyebrow' in obj.name)
-        # The anatomical source already has fitted eyes, brows and lips. A
-        # second projected feature layer made doubled brows and dark eye masks;
-        # preserve one facial design and assess it at the final sample density.
+        # The original brows/lips remain. A small eye-only accent gives the
+        # sampled face a deliberate light/dark pair without a dark face mask.
+        eyes=next(o for o in objects if o.type=='MESH' and 'low-poly' in o.name)
+        points=[eyes.matrix_world@v.co for v in eyes.data.vertices]
+        centers=[sum((p for p in points if (p.x>0)==positive),Vector())/sum((p.x>0)==positive for p in points) for positive in [False,True]]
+        objects.append(eye_accents([human,eyes],rig,'head',centers,label+' eye accents'))
         if index==1:
             # Reuse the fitted tunic as a sleeveless short over-vest. The complete
             # linen layer remains beneath it, so the cut cannot expose the torso.

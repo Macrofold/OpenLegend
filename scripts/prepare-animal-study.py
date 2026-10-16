@@ -82,6 +82,14 @@ def bear_rig(mesh):
 
 def author_motion(rig,species):
     rig.animation_data_create();actions={}
+    if species=='bird':
+        # The downloaded file contains an asymmetric demonstration pose. Start
+        # from its anatomical rest rig and fold the real wings for ground idle.
+        for b in rig.pose.bones:
+            b.rotation_mode='QUATERNION';b.rotation_quaternion=Quaternion();b.location=(0,0,0)
+        for side,sign in [('L',1),('R',-1)]:
+            b=rig.pose.bones['shoulder.'+side];rest=b.bone.matrix_local.to_quaternion()
+            b.rotation_quaternion=rest.inverted()@Quaternion((0,0,1),sign*1.18)@rest
     base={b.name:(b.matrix_basis.to_quaternion(),b.location.copy()) for b in rig.pose.bones}
     for name,duration in [('Idle',60),('Walk',30)]:
         action=bpy.data.actions.new(name);rig.animation_data.action=action;actions[name]=action
@@ -89,6 +97,11 @@ def author_motion(rig,species):
             t=frame/duration*math.tau
             for b in rig.pose.bones:
                 b.rotation_mode='QUATERNION';b.rotation_quaternion=base[b.name][0];b.location=base[b.name][1]
+                # Preserve every authored constant pose in exported NLA clips;
+                # otherwise unkeyed source joints can return to their rest pose.
+                if frame in (0,duration):
+                    b.keyframe_insert('rotation_quaternion',frame=frame)
+                    b.keyframe_insert('location',frame=frame)
             def turn(name,angle):
                 b=rig.pose.bones[name];b.rotation_quaternion=base[name][0]@Quaternion((1,0,0),angle)
                 b.keyframe_insert('rotation_quaternion',frame=frame)
@@ -103,6 +116,11 @@ def author_motion(rig,species):
                 turn('head',.06*math.sin(t))
                 turn('tail_base',.035*math.sin(t))
                 for side,offset in [('L',0),('R',math.pi)]:
+                    if name=='Walk':
+                        b=rig.pose.bones['shoulder.'+side];rest=b.bone.matrix_local.to_quaternion()
+                        sign=1 if side=='L' else -1
+                        b.rotation_quaternion=rest.inverted()@Quaternion((0,1,0),sign*.55*math.sin(t*2))@rest
+                        b.keyframe_insert('rotation_quaternion',frame=frame)
                     b=rig.pose.bones['foot_ctl.'+side]
                     # The source bird is approximately 12 cm tall before its
                     # parent scale. Small alternating foot targets retain IK.
@@ -182,6 +200,7 @@ def coat(objects,species,index,output,paint):
             value=rgba[:,:3]@np.array([.26,.55,.19])
             colors=np.array([[int(h[i:i+2],16)/255 for i in (0,2,4)] for h in [dark,base,light,'d6c9aa']])
             rgba[:,:3]=colors[np.digitize(value,[.19,.49,.76])]
+            rgba[value<.075,:3]=[.10,.12,.11]
             if index:
                 position,covered=paint.rasterize_surface(obj,256)
                 x,y,z=[position[:,:,i].reshape(-1) for i in range(3)]

@@ -1,10 +1,10 @@
 {
   "group": "source-bird",
   "sourceFile": "art-direction/assets/source-study/source-bird.blend",
-  "sourceSha256": "e2c23f5004d9b609cf08da36a935405d18197b828fa27e3b050c9ab3bb33cbb5",
+  "sourceSha256": "3896419ad3f9263d52591866590d38e9b1c0170aebd89c1e1aeb4368a51bebe6",
   "recipe": {
     "path": "scripts/prepare-animal-study.py",
-    "sha256": "79ef7afe4be2a82ab9277e3a31d49fe52fb48508779b8bf8d16da5d186e98ba9"
+    "sha256": "8d19b2f29a0d2f973324cea447569736b7bd1b343a6e5cbd74a1f289c391297b"
   },
   "helpers": {
     "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
@@ -30,14 +30,14 @@
       "file": "bird-grey-wing.glb",
       "bounds": {
         "min": [
-          -0.132391,
+          -0.247349,
           0.0,
-          -0.145976
+          -0.389489
         ],
         "max": [
-          0.132391,
+          0.247349,
           0.23,
-          0.145976
+          0.389489
         ]
       },
       "triangles": 996,
@@ -48,10 +48,10 @@
           256
         ]
       ],
-      "sha256": "3520086674c2a76d53c396558e7465537c87ec29e226b9b184d7cc956e58fc27",
+      "sha256": "5b8d67c0b9452a63911662eba811386baf2b00c1a247b8dbc1dda0a98c2e0847",
       "source": "Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and ground-motion study by OpenLegend.",
       "animatedFile": "bird-grey-wing-motion.glb",
-      "animatedSha256": "e8ee4e64962f6b73131ded19018d4e9e0e980860a574f13deb806404849c7133"
+      "animatedSha256": "46ca2362a8a19c4eea876188c8d9fe06690a4413fbec806163b8a916c89b3771"
     },
     {
       "id": "bird-warm-bib",
@@ -63,14 +63,14 @@
       "file": "bird-warm-bib.glb",
       "bounds": {
         "min": [
-          -0.142717,
-          0.000561,
-          -0.146451
+          -0.261028,
+          0.0,
+          -0.389489
         ],
         "max": [
-          0.139018,
-          0.244837,
-          0.1463
+          0.261024,
+          0.23,
+          0.389489
         ]
       },
       "triangles": 996,
@@ -81,10 +81,10 @@
           256
         ]
       ],
-      "sha256": "c68d01d91c630ba1a000585052d2d8fa8420b45cfa0a9e01b86361b6488e0a44",
+      "sha256": "b2481e4638377a23d5a95c9417855775d921d236ae7f6e46f7b683d9c806d3de",
       "source": "Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and ground-motion study by OpenLegend.",
       "animatedFile": "bird-warm-bib-motion.glb",
-      "animatedSha256": "6f5ffc87f19e174ee3fa7e66a5bec012f8e91f733d1b8b7744e99d4e71a8800d"
+      "animatedSha256": "475a6f0cfedfaf08550b62afe8df474475cf292fa69287bd00f273c125a71d58"
     },
     {
       "id": "bird-wing-bars",
@@ -96,14 +96,14 @@
       "file": "bird-wing-bars.glb",
       "bounds": {
         "min": [
-          -0.132391,
+          -0.247349,
           0.0,
-          -0.145976
+          -0.389489
         ],
         "max": [
-          0.132391,
+          0.247349,
           0.23,
-          0.145976
+          0.389489
         ]
       },
       "triangles": 996,
@@ -114,10 +114,10 @@
           256
         ]
       ],
-      "sha256": "d0a80e3d8921540f3d834cd8640a7907d35e4ad0950218a5679eabf6e2757611",
+      "sha256": "f65925973ba249d6aa438ba88f889a5417b5f8ccd8915df88871ab6df75b7c20",
       "source": "Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and ground-motion study by OpenLegend.",
       "animatedFile": "bird-wing-bars-motion.glb",
-      "animatedSha256": "78c890b5b25a863cdedc37bfde978c24171fdcf4aabec166ce13596c6ed46ed5"
+      "animatedSha256": "587e394dd4c2f81b1ddd3ef47fc842946e5dc77a15410016f8094ecf63cb8770"
     }
   ]
 }

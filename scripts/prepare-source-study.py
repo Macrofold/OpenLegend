@@ -20,7 +20,7 @@ from mathutils import Matrix, Vector
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from art_study_common import ROOT, export_asset, facial_features, pixel_material, box_uv
+from art_study_common import ROOT, export_asset, pixel_material, box_uv
 
 PALETTE = ['202830', '30383e', '454d50', '616b69', '87928a', 'a5ac98',
            '322924', '49342b', '634431', '825738', 'a87447', 'c99a60', 'e4bd83',

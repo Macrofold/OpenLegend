@@ -6,7 +6,15 @@ export interface ArtTreatment {
   materials: 'original' | 'regions';
   lighting: 'smooth' | 'hard' | 'soft';
   sampling: '40' | '60' | '80' | '96' | 'native' | 'screen';
-  sceneGrid: 'full' | 'half' | 'third' | 'pixels2' | 'pixels3' | 'anchored2' | 'anchored3';
+  sceneGrid:
+    | 'full'
+    | 'half'
+    | 'third'
+    | 'pixels2'
+    | 'pixels3'
+    | 'anchored2'
+    | 'anchored3'
+    | 'metres30';
   surfaceArt: 'plain' | 'painted';
   surfaceEdges: 'sharp' | 'filtered';
   coverage: 'none' | 'msaa4';
@@ -221,7 +229,16 @@ export function mountArtControls(
     materials: ['original', 'regions'],
     lighting: ['smooth', 'hard', 'soft'],
     sampling: ['40', '60', '80', '96', 'native', 'screen'],
-    sceneGrid: ['full', 'half', 'third', 'pixels2', 'pixels3', 'anchored2', 'anchored3'],
+    sceneGrid: [
+      'full',
+      'half',
+      'third',
+      'pixels2',
+      'pixels3',
+      'anchored2',
+      'anchored3',
+      'metres30',
+    ],
     surfaceArt: ['plain', 'painted'],
     surfaceEdges: ['sharp', 'filtered'],
     coverage: ['none', 'msaa4'],

@@ -1,0 +1,1010 @@
+{
+  "group": "source-resources",
+  "sourceFile": "art-direction/assets/source-study/source-resources.blend",
+  "sourceSha256": "a8eef1b616b18ffdb187ae85bc0a934834ecd62575e95b6e6f56dc6fbf83d59c",
+  "recipe": {
+    "path": "scripts/prepare-resource-study.py",
+    "sha256": "c64874509d16b7f6971e5d8fef97403d32f72d21462c014d275112c7d744d5cc"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "7cf6b8bc5ca5aff50c4b71ee3744613128a806343a963b87ca693f1942b9f5fe",
+    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
+  },
+  "sources": [
+    {
+      "url": "https://quaternius.com/packs/stylizednaturemegakit.html",
+      "license": "CC0"
+    },
+    {
+      "url": "https://kenney.nl/assets/survival-kit",
+      "license": "CC0",
+      "files": [
+        {
+          "file": "Bush_Common.gltf",
+          "library": "nature",
+          "sha256": "77811fca92610cb254713d3d49d5029ab6cf13050c3afb61aa942786a7b2ca90"
+        },
+        {
+          "file": "Bush_Common.gltf",
+          "library": "nature",
+          "sha256": "77811fca92610cb254713d3d49d5029ab6cf13050c3afb61aa942786a7b2ca90"
+        },
+        {
+          "file": "Bush_Common.gltf",
+          "library": "nature",
+          "sha256": "77811fca92610cb254713d3d49d5029ab6cf13050c3afb61aa942786a7b2ca90"
+        },
+        {
+          "file": "Grass_Wispy_Tall.gltf",
+          "library": "nature",
+          "sha256": "a05e3ac05e43abbdb89c5b61134e367c7d33e285ff8d2a6e0a40180cb335af0b"
+        },
+        {
+          "file": "Grass_Common_Tall.gltf",
+          "library": "nature",
+          "sha256": "783466c838163bf7da44e10675ace3851b8c9fb83322387125df7a080b05cd70"
+        },
+        {
+          "file": "Grass_Wispy_Tall.gltf",
+          "library": "nature",
+          "sha256": "a05e3ac05e43abbdb89c5b61134e367c7d33e285ff8d2a6e0a40180cb335af0b"
+        },
+        {
+          "file": "Grass_Common_Tall.gltf",
+          "library": "nature",
+          "sha256": "783466c838163bf7da44e10675ace3851b8c9fb83322387125df7a080b05cd70"
+        },
+        {
+          "file": "Grass_Wispy_Tall.gltf",
+          "library": "nature",
+          "sha256": "a05e3ac05e43abbdb89c5b61134e367c7d33e285ff8d2a6e0a40180cb335af0b"
+        },
+        {
+          "file": "Grass_Common_Short.gltf",
+          "library": "nature",
+          "sha256": "6957b50622c9e26e7296c1b47ea8653bc0d957e0a547de444e2ed96f0075a21a"
+        },
+        {
+          "file": "resource-wood.glb",
+          "library": "camp",
+          "sha256": "1d5f559da9432f89bd323731ef76b60372e0deb261a96d0da8d5af570c485d80"
+        },
+        {
+          "file": "tree-log-small.glb",
+          "library": "camp",
+          "sha256": "5b416addc4cb01d9d6ad30ec282606a8fefb018043d3253d5e42c1e353aab3c8"
+        },
+        {
+          "file": "tree-trunk.glb",
+          "library": "camp",
+          "sha256": "4f833d091adbae0af77ab78783e4717b53a918c512c59e46612936ea42f22b8f"
+        },
+        {
+          "file": "resource-stone.glb",
+          "library": "camp",
+          "sha256": "c0ad4ecc890f99dc7c62da067824e31de0f0515de4437e73d8690136bd06e3c0"
+        },
+        {
+          "file": "rock-flat.glb",
+          "library": "camp",
+          "sha256": "350f6440743ed400728d8889d711e0eb3eed56e8d7389e386352d9d98411a49d"
+        },
+        {
+          "file": "rock-c.glb",
+          "library": "camp",
+          "sha256": "a0f2e78460acfc4e02e029065472360f2e491c389d6e82f02837e3ed643b9d75"
+        },
+        {
+          "file": "signpost-single.glb",
+          "library": "camp",
+          "sha256": "ca011990b4e1a48240bb78edeb4b6f3b1bf7265dcc6500a5268fc8de1a54262c"
+        },
+        {
+          "file": "signpost.glb",
+          "library": "camp",
+          "sha256": "6d33757888c4ec9249610266ca8d60532b1138ae28fd37e93fa843ec4856fd25"
+        },
+        {
+          "file": "signpost-single.glb",
+          "library": "camp",
+          "sha256": "ca011990b4e1a48240bb78edeb4b6f3b1bf7265dcc6500a5268fc8de1a54262c"
+        },
+        {
+          "file": "box-open.glb",
+          "library": "camp",
+          "sha256": "2169e2291052ef9c378af4d6736df3fcff4ebca8fc39cbcdb4b7ad6accdff568"
+        },
+        {
+          "file": "box-large-open.glb",
+          "library": "camp",
+          "sha256": "b9a243c7c9aaaf211251ba6ad74f3221bd233613d91e228d7207200db01f40f7"
+        },
+        {
+          "file": "barrel-open.glb",
+          "library": "camp",
+          "sha256": "f24ab1c5ab3685fc758f7e7298bf4f255f039fc6dfc7463711fbe90c4c011a41"
+        },
+        {
+          "file": "bedroll-packed.glb",
+          "library": "camp",
+          "sha256": "980c222917e8564c68aa184af025d701612c7395e8ad8ef55b5b00785637a98f"
+        },
+        {
+          "file": "bedroll.glb",
+          "library": "camp",
+          "sha256": "2ad9baa2d800845195c7c92bd8423b0d99519530dee0afd3bd0ac4b2e255d728"
+        },
+        {
+          "file": "bedroll-packed.glb",
+          "library": "camp",
+          "sha256": "980c222917e8564c68aa184af025d701612c7395e8ad8ef55b5b00785637a98f"
+        },
+        {
+          "file": "tent-canvas-half.glb",
+          "library": "camp",
+          "sha256": "f6e12c0de280a9d5e93e27652a3e80ea620374865a6053dbe6fd5fb7eaca9d93"
+        },
+        {
+          "file": "tent-canvas.glb",
+          "library": "camp",
+          "sha256": "efc4bca46a22e4cc4fe391aeafba161c24bc39bfa75e192c57eaacaf686f9717"
+        },
+        {
+          "file": "tent.glb",
+          "library": "camp",
+          "sha256": "2c1c5fcc213929af0904a84921084361599ffab5077423a44d3d72a81d8c87c6"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "berry-bush-fruit-groups",
+      "family": "library-berry-bush",
+      "label": "Berry bush",
+      "variant": "fruit-groups",
+      "description": "Fruit groups: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": true,
+      "file": "berry-bush-fruit-groups.glb",
+      "bounds": {
+        "min": [
+          -0.635543,
+          0.0,
+          -0.652237
+        ],
+        "max": [
+          0.635543,
+          1.05,
+          0.652237
+        ]
+      },
+      "triangles": 1908,
+      "vertices": 2346,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "7ea517d287f40d676012772666107828efdb90ae4a61601c4bd8126954d46ca3",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details.",
+      "depletedFile": "berry-bush-fruit-groups-empty.glb",
+      "depletedSha256": "44c53454632de690f8debc34435b3b2ea5163be1cb089ed6de1895af29fef883"
+    },
+    {
+      "id": "berry-bush-open-canes",
+      "family": "library-berry-bush",
+      "label": "Berry bush",
+      "variant": "open-canes",
+      "description": "Open canes: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "berry-bush-open-canes.glb",
+      "bounds": {
+        "min": [
+          -0.525202,
+          0.0,
+          -0.57462
+        ],
+        "max": [
+          0.51709,
+          1.05,
+          0.573317
+        ]
+      },
+      "triangles": 1620,
+      "vertices": 2190,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "4d33723d776afb3507c19fe97138338508d0ff30c7a9ded6f2587cb38b97ae3b",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details.",
+      "depletedFile": "berry-bush-open-canes-empty.glb",
+      "depletedSha256": "760591b735d92ef70bd8dd0c39e515933390f1d168e0a54d1322a0f1933a680d"
+    },
+    {
+      "id": "berry-bush-low-thicket",
+      "family": "library-berry-bush",
+      "label": "Berry bush",
+      "variant": "low-thicket",
+      "description": "Low thicket: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "berry-bush-low-thicket.glb",
+      "bounds": {
+        "min": [
+          -0.782666,
+          0.034274,
+          -0.749258
+        ],
+        "max": [
+          0.793482,
+          0.853274,
+          0.750887
+        ]
+      },
+      "triangles": 1908,
+      "vertices": 2346,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "41a42ca77146891c3ec0c439e5f45feaa6cbf20ace099f706c81b0f7c0ad4296",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details.",
+      "depletedFile": "berry-bush-low-thicket-empty.glb",
+      "depletedSha256": "d9506e22e1977cd9dc12b6eea610c67cede89fd006f2bff4735b3c52e110576e"
+    },
+    {
+      "id": "reeds-river-fan",
+      "family": "library-reeds",
+      "label": "River reeds",
+      "variant": "river-fan",
+      "description": "River fan: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": true,
+      "file": "reeds-river-fan.glb",
+      "bounds": {
+        "min": [
+          -0.460602,
+          0.0,
+          -0.476646
+        ],
+        "max": [
+          0.460602,
+          1.0,
+          0.476646
+        ]
+      },
+      "triangles": 622,
+      "vertices": 644,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "e317d9df2f5c743616faf56aabae5192689962b9e2ce2f32c2f69281a201b579",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "reeds-broad-leaves",
+      "family": "library-reeds",
+      "label": "River reeds",
+      "variant": "broad-leaves",
+      "description": "Broad leaves: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "reeds-broad-leaves.glb",
+      "bounds": {
+        "min": [
+          -0.238984,
+          0.0,
+          -0.265156
+        ],
+        "max": [
+          0.238984,
+          1.0,
+          0.265156
+        ]
+      },
+      "triangles": 326,
+      "vertices": 303,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "46886f902266bcb8d0063b3de9bbd1387f009b3037972d95b5103724f6c8586b",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "reeds-broken-stems",
+      "family": "library-reeds",
+      "label": "River reeds",
+      "variant": "broken-stems",
+      "description": "Broken stems: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "reeds-broken-stems.glb",
+      "bounds": {
+        "min": [
+          -0.381009,
+          0.002588,
+          -0.476646
+        ],
+        "max": [
+          0.374379,
+          0.882588,
+          0.476646
+        ]
+      },
+      "triangles": 622,
+      "vertices": 644,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "5ffa2f2059dd565fb9f870f636509d0aaff4eee00febc4e7adbd29e81b2a46ff",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "dry-fiber-standing-stems",
+      "family": "library-dry-fiber",
+      "label": "Dry fibers",
+      "variant": "standing-stems",
+      "description": "Standing stems: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": true,
+      "file": "dry-fiber-standing-stems.glb",
+      "bounds": {
+        "min": [
+          -0.100373,
+          0.0,
+          -0.111365
+        ],
+        "max": [
+          0.100373,
+          0.42,
+          0.111365
+        ]
+      },
+      "triangles": 326,
+      "vertices": 303,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "ef8a4e6ab3bd4646fa11a70b476f7ab69b25e82adb0679113add71d7b2d4fc14",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "dry-fiber-loose-stems",
+      "family": "library-dry-fiber",
+      "label": "Dry fibers",
+      "variant": "loose-stems",
+      "description": "Loose stems: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "dry-fiber-loose-stems.glb",
+      "bounds": {
+        "min": [
+          -0.193453,
+          0.0,
+          -0.200191
+        ],
+        "max": [
+          0.193453,
+          0.42,
+          0.200191
+        ]
+      },
+      "triangles": 622,
+      "vertices": 644,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "d390aa40ae0e65ded80cf21554caca97fb1d83f12bdbcfeff94919b22031a18d",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "dry-fiber-low-tuft",
+      "family": "library-dry-fiber",
+      "label": "Dry fibers",
+      "variant": "low-tuft",
+      "description": "Low tuft: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "dry-fiber-low-tuft.glb",
+      "bounds": {
+        "min": [
+          -0.100564,
+          0.0,
+          -0.116052
+        ],
+        "max": [
+          0.100564,
+          0.42,
+          0.116052
+        ]
+      },
+      "triangles": 155,
+      "vertices": 153,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "170934e1cb0a89c0c3f5182c639facb29026ba117a9097a0c75b539cf2d37ba7",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "fallen-wood-loose-branches",
+      "family": "library-fallen-wood",
+      "label": "Fallen wood",
+      "variant": "loose-branches",
+      "description": "Loose branches: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": true,
+      "file": "fallen-wood-loose-branches.glb",
+      "bounds": {
+        "min": [
+          -0.394026,
+          0.0,
+          -0.167401
+        ],
+        "max": [
+          0.394026,
+          0.24,
+          0.167401
+        ]
+      },
+      "triangles": 64,
+      "vertices": 110,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "2a0f3f21ff81f0ae304555066a3eab4b7330629ca84274ff4281436408700458",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "fallen-wood-fallen-log",
+      "family": "library-fallen-wood",
+      "label": "Fallen wood",
+      "variant": "fallen-log",
+      "description": "Fallen log: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "fallen-wood-fallen-log.glb",
+      "bounds": {
+        "min": [
+          -0.108028,
+          0.0,
+          -0.281449
+        ],
+        "max": [
+          0.108028,
+          0.24,
+          0.281449
+        ]
+      },
+      "triangles": 88,
+      "vertices": 148,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "4c78537660ee41458149e95811d7566a8b697cf1b077431aed724403a9f7c8d1",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "fallen-wood-forked-stump",
+      "family": "library-fallen-wood",
+      "label": "Fallen wood",
+      "variant": "forked-stump",
+      "description": "Forked stump: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "fallen-wood-forked-stump.glb",
+      "bounds": {
+        "min": [
+          -0.092014,
+          0.0,
+          -0.092014
+        ],
+        "max": [
+          0.092014,
+          0.24,
+          0.092014
+        ]
+      },
+      "triangles": 52,
+      "vertices": 104,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "9d973e5693ccaf9e8cada5d50639c9b4efe879183d013ae584d9b372b3d73683",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "river-stones-loose-stones",
+      "family": "library-river-stones",
+      "label": "Loose river stones",
+      "variant": "loose-stones",
+      "description": "Loose stones: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": true,
+      "file": "river-stones-loose-stones.glb",
+      "bounds": {
+        "min": [
+          -0.170295,
+          0.0,
+          -0.146478
+        ],
+        "max": [
+          0.170295,
+          0.22,
+          0.146478
+        ]
+      },
+      "triangles": 44,
+      "vertices": 72,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "847ee1aebc37e3ec97ffe98986510ce904247987d4a74398db4f79e4d3bd4b9b",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "river-stones-flat-stone",
+      "family": "library-river-stones",
+      "label": "Loose river stones",
+      "variant": "flat-stone",
+      "description": "Flat stone: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "river-stones-flat-stone.glb",
+      "bounds": {
+        "min": [
+          -1.00771,
+          0.0,
+          -0.81673
+        ],
+        "max": [
+          1.00771,
+          0.22,
+          0.81673
+        ]
+      },
+      "triangles": 274,
+      "vertices": 444,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "e293c5edef763088dc8dfe93bbd587b5b4530a77ea0e6e10f99370b11c5e2b22",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "river-stones-split-stone",
+      "family": "library-river-stones",
+      "label": "Loose river stones",
+      "variant": "split-stone",
+      "description": "Split stone: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "river-stones-split-stone.glb",
+      "bounds": {
+        "min": [
+          -0.169036,
+          0.0,
+          -0.12206
+        ],
+        "max": [
+          0.169036,
+          0.22,
+          0.12206
+        ]
+      },
+      "triangles": 120,
+      "vertices": 198,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "9918a06192141ad4c929b964fba8010fd88c00f39faecbf33da514b6b65e9b61",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "marker-single-board",
+      "family": "library-marker",
+      "label": "Carved work marker",
+      "variant": "single-board",
+      "description": "Single board: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": true,
+      "file": "marker-single-board.glb",
+      "bounds": {
+        "min": [
+          -0.204065,
+          0.0,
+          -0.042036
+        ],
+        "max": [
+          0.204065,
+          0.9,
+          0.042036
+        ]
+      },
+      "triangles": 28,
+      "vertices": 54,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "be469e3f9ac4481e27bae94dbbdaa06a2716e5bf4a06d3e1a2d3c852d088ce92",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "marker-crossroads",
+      "family": "library-marker",
+      "label": "Carved work marker",
+      "variant": "crossroads",
+      "description": "Crossroads: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "marker-crossroads.glb",
+      "bounds": {
+        "min": [
+          -0.209431,
+          0.0,
+          -0.042036
+        ],
+        "max": [
+          0.209431,
+          0.9,
+          0.042036
+        ]
+      },
+      "triangles": 44,
+      "vertices": 84,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "86aa870ed5297d74cbff86c872c0382eac31c43ee47898813810d599d47a833c",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "marker-worn-post",
+      "family": "library-marker",
+      "label": "Carved work marker",
+      "variant": "worn-post",
+      "description": "Worn post: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "marker-worn-post.glb",
+      "bounds": {
+        "min": [
+          -0.16453,
+          0.0,
+          -0.042036
+        ],
+        "max": [
+          0.170136,
+          0.693,
+          0.042036
+        ]
+      },
+      "triangles": 28,
+      "vertices": 54,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "e95b632f62d6e2cf000332e2aeaf965f0a194c9671dc73ace7955bebbe59d0b1",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "supplies-open-box",
+      "family": "library-supplies",
+      "label": "Workshop supplies",
+      "variant": "open-box",
+      "description": "Open box: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": true,
+      "file": "supplies-open-box.glb",
+      "bounds": {
+        "min": [
+          -0.244898,
+          0.0,
+          -0.244898
+        ],
+        "max": [
+          0.244898,
+          0.6,
+          0.244898
+        ]
+      },
+      "triangles": 156,
+      "vertices": 300,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "ff0700e639eecdfe93332e08bc5f5f7bca047e2c2bf1846b1d3dd1de97ae95ec",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "supplies-wide-box",
+      "family": "library-supplies",
+      "label": "Workshop supplies",
+      "variant": "wide-box",
+      "description": "Wide box: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "supplies-wide-box.glb",
+      "bounds": {
+        "min": [
+          -0.244898,
+          0.0,
+          -0.489796
+        ],
+        "max": [
+          0.244898,
+          0.6,
+          0.489796
+        ]
+      },
+      "triangles": 156,
+      "vertices": 300,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "995ae4a51bd70f4656a6e08150b7484e6c184fddefe80badda0d43b778d88aee",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "supplies-stave-barrel",
+      "family": "library-supplies",
+      "label": "Workshop supplies",
+      "variant": "stave-barrel",
+      "description": "Stave barrel: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "supplies-stave-barrel.glb",
+      "bounds": {
+        "min": [
+          -0.20625,
+          0.0,
+          -0.20625
+        ],
+        "max": [
+          0.20625,
+          0.6,
+          0.20625
+        ]
+      },
+      "triangles": 380,
+      "vertices": 576,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "4de8c6e0cb244c7aaa9b31efd269988e6a881b24bd06bb0a995818b8daf923b0",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "bundle-rolled-wool",
+      "family": "library-bundle",
+      "label": "Travelling bundle",
+      "variant": "rolled-wool",
+      "description": "Rolled wool: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": true,
+      "file": "bundle-rolled-wool.glb",
+      "bounds": {
+        "min": [
+          -0.50814,
+          0.0,
+          -0.175
+        ],
+        "max": [
+          0.50814,
+          0.35,
+          0.175
+        ]
+      },
+      "triangles": 124,
+      "vertices": 240,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "bed1b8b3b757cc00eee8b618aa840a6e6ac06810a804d6fe8a95ad03b15a3a95",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "bundle-open-bedroll",
+      "family": "library-bundle",
+      "label": "Travelling bundle",
+      "variant": "open-bedroll",
+      "description": "Open bedroll: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "bundle-open-bedroll.glb",
+      "bounds": {
+        "min": [
+          -0.435117,
+          0.0,
+          -0.851705
+        ],
+        "max": [
+          0.435117,
+          0.35,
+          0.851705
+        ]
+      },
+      "triangles": 144,
+      "vertices": 220,
+      "textureSizes": [
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "1b43a3e73c2b6594812aa73cb490f1112873c4ca9021ab9d00bd527aa5f4bab6",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "bundle-tied-bundle",
+      "family": "library-bundle",
+      "label": "Travelling bundle",
+      "variant": "tied-bundle",
+      "description": "Tied bundle: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "bundle-tied-bundle.glb",
+      "bounds": {
+        "min": [
+          -0.599605,
+          0.0,
+          -0.175
+        ],
+        "max": [
+          0.599605,
+          0.308,
+          0.175
+        ]
+      },
+      "triangles": 124,
+      "vertices": 240,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "58785ee3e42b7617f7cbe2f1487d01c45a60fb92fd00c5d6b94da11cd59f58c3",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "shelter-open-awning",
+      "family": "library-shelter",
+      "label": "Canvas shelter",
+      "variant": "open-awning",
+      "description": "Open awning: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": true,
+      "file": "shelter-open-awning.glb",
+      "bounds": {
+        "min": [
+          -1.084165,
+          0.0,
+          -1.084624
+        ],
+        "max": [
+          1.084164,
+          1.9,
+          1.084624
+        ]
+      },
+      "triangles": 136,
+      "vertices": 272,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "f4025cd5c4a826fbf856460e2032450d5b6cd26c734c97fccb948afbf1b6192e",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "shelter-canvas-tent",
+      "family": "library-shelter",
+      "label": "Canvas shelter",
+      "variant": "canvas-tent",
+      "description": "Canvas tent: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "shelter-canvas-tent.glb",
+      "bounds": {
+        "min": [
+          -1.084165,
+          0.0,
+          -1.084624
+        ],
+        "max": [
+          1.084165,
+          1.9,
+          1.084624
+        ]
+      },
+      "triangles": 148,
+      "vertices": 296,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "9d42c91a3400c67d694530883940c1128cb40f9eeaceb06614b78cc39014c40d",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    },
+    {
+      "id": "shelter-framed-tent",
+      "family": "library-shelter",
+      "label": "Canvas shelter",
+      "variant": "framed-tent",
+      "description": "Framed tent: source-authored structure, restrained material regions and clear practical use. Display art does not add supplies or change physical cover.",
+      "recommended": false,
+      "file": "shelter-framed-tent.glb",
+      "bounds": {
+        "min": [
+          -1.084164,
+          0.0,
+          -1.084624
+        ],
+        "max": [
+          1.084164,
+          1.9,
+          1.084624
+        ]
+      },
+      "triangles": 124,
+      "vertices": 248,
+      "textureSizes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "sha256": "4ce0a4a4a949bd997ba7029c963000a79e551de62668c836de2a3ff77fcade75",
+      "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
+    }
+  ]
+}

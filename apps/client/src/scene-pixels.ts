@@ -108,13 +108,14 @@ export class ScenePixels {
     this.update();
   }
   update(): void {
-    const anchored = this.mode.startsWith('anchored');
+    const anchored = this.mode.startsWith('anchored') || this.mode === 'metres30';
     const enabled = anchored || this.mode.startsWith('pixels');
     const scale = this.mode.endsWith('3') ? 3 : 2;
     // A fixed orthographic surface scale enlarges the same grid when zooming.
     this.pixelSize =
       anchored && this.camera.projection === pc.PROJECTION_ORTHOGRAPHIC
-        ? (0.025 * scale * this.device.height) / (2 * this.camera.orthoHeight)
+        ? ((this.mode === 'metres30' ? 1 / 30 : 0.025 * scale) * this.device.height) /
+          (2 * this.camera.orthoHeight)
         : scale;
     this.grid.fill(0);
     this.grid[0] = enabled ? Math.max(1, this.pixelSize) : 0;

@@ -32,7 +32,7 @@ function treatment(): ArtTreatment {
     ...candidateArt,
     mercenaryArt: select('mercenary').value as ArtTreatment['mercenaryArt'],
     sampling: route === 'shared' ? 'screen' : route === 'family' ? '60' : '96',
-    sceneGrid: route === 'control' ? 'full' : 'pixels2',
+    sceneGrid: route === 'control' ? 'full' : 'metres30',
     subjectDetail: route === 'family' ? 'preserve' : 'shared',
     surfaceArt: 'plain',
     environment: 'study',

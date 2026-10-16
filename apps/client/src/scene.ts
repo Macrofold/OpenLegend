@@ -569,7 +569,7 @@ export class WildernessScene implements WorldRenderer {
           ?.slice(0, 12)
           .map((item) => `${item.definitionId}:${Math.min(3, item.quantity)}`)
           .join('|') ?? ''
-      }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.bodyState ?? ''}:${entity.kind === 'station' && entity.status.startsWith('Lit')}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
+      }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.quantity === 0 && !!propDimensions(entity.appearance)?.depletedUrl}:${entity.bodyState ?? ''}:${entity.kind === 'station' && entity.status.startsWith('Lit')}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
       if (entry && entry.root.tags.list()[0] !== signature) {
         this.releaseEntity(entry);
         this.actors.delete(entity.id);
@@ -1501,6 +1501,7 @@ export class WildernessScene implements WorldRenderer {
         preparedProp?.height ?? height,
         preparedProp?.depth ?? 0.8,
         preparedProp ? view.appearance : this.artSettings.prop,
+        view.quantity === 0,
       );
     }
     return entry;

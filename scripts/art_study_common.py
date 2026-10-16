@@ -16,8 +16,8 @@ from mathutils.bvhtree import BVHTree
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def facial_features(objects, rig, head, eyes, name, brow_offset=.028, mouth_offset=.068):
-    """Fit deliberate eye/lip shapes to this source head and attach to its rig.
+def eye_accents(objects, rig, head, eyes, name):
+    """Fit restrained eye whites/irises to the source head and attach to its rig.
 
     These are authored surface features, not camera-facing cards. Projecting
     against the eye meshes as well as skin keeps details over eye sockets.
@@ -49,13 +49,9 @@ def facial_features(objects, rig, head, eyes, name, brow_offset=.028, mouth_offs
             colors.append(color)
     for eye in eyes:
         x,z=eye.x,eye.z
-        patch([(x-.019,z+.007),(x-.012,z+.014),(x+.013,z+.013),(x+.021,z+.005),
-               (x+.015,z-.003),(x-.014,z-.003)],'493a31')
-        patch([(x-.007,z+.007),(x+.004,z+.007),(x+.005,z-.003),(x-.007,z-.003)],'242a2d',.0027)
-        brow=z+brow_offset
-        patch([(x-.023,brow),(x-.010,brow+.006),(x+.019,brow),(x+.020,brow-.008),(x-.012,brow-.003)],'40342d')
-    z=sum(eye.z for eye in eyes)/len(eyes)-mouth_offset
-    patch([(-.020,z+.002),(-.007,z+.005),(.007,z+.004),(.020,z),(.008,z-.005),(-.011,z-.003)],'815348')
+        patch([(x-.017,z),(x-.011,z+.007),(x+.011,z+.007),(x+.017,z),
+               (x+.010,z-.005),(x-.011,z-.005)],'b8b7a3')
+        patch([(x-.005,z+.007),(x+.005,z+.007),(x+.005,z-.005),(x-.005,z-.005)],'293331',.0027)
     mesh=bpy.data.meshes.new(name)
     mesh.from_pydata(positions,[],triangles)
     mesh.update()
@@ -66,6 +62,9 @@ def facial_features(objects, rig, head, eyes, name, brow_offset=.028, mouth_offs
         for loop in polygon.loop_indices: attribute.data[loop].color=(*linear,1)
     obj=bpy.data.objects.new(name,mesh)
     bpy.context.collection.objects.link(obj)
+    # All meshes sharing this skin must share the rig's transform origin. A
+    # sibling outside it makes PlayCanvas apply the normalized rig scale twice.
+    obj.parent=rig
     obj.matrix_world=rig.matrix_world.copy()
     weights=obj.vertex_groups.new(name=head)
     weights.add(list(range(len(positions))),1,'REPLACE')

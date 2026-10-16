@@ -14,6 +14,7 @@ interface PropSource {
   width: number;
   height: number;
   depth: number;
+  depletedUrl?: string;
 }
 const sources = new Map<string, PropSource>([
   ['generated', { url: generatedChestUrl, width: 1, height: 1, depth: 1 }],
@@ -45,6 +46,7 @@ export class ScenePropResources {
     height: number,
     depth: number,
     variant: string = 'generated',
+    depleted = false,
     onReady?: (actor: ScenePropActor) => void,
   ): ScenePropActor {
     const source = sources.get(variant)!;
@@ -53,7 +55,10 @@ export class ScenePropResources {
       width / source.width,
       height / source.height,
       depth / source.depth,
-      this.models.load('Scene prop · ' + variant, source.url),
+      this.models.load(
+        'Scene prop · ' + variant,
+        depleted && source.depletedUrl ? source.depletedUrl : source.url,
+      ),
       (material) => this.prepare(material),
       () => this.actors.delete(actor),
       onReady,

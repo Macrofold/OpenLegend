@@ -1,6 +1,6 @@
 {
   "recipe": "scripts/prepare-study-scenery.py",
-  "recipeSha256": "7ae4cf9ba2b4c91ef92b0b17b7045e5013ad344f4a2c31a26c88645b1d10db76",
+  "recipeSha256": "b09da369a45fe4a519709fea07f54a1940aaf21fac7d0766a6355b9ddc789b50",
   "sources": [
     {
       "catalog": "apps/client/src/props/art-study/source-nature/catalog.json",
@@ -8,14 +8,14 @@
     },
     {
       "catalog": "apps/client/src/props/art-study/source-vegetation/catalog.json",
-      "sha256": "20e053260342e89d99ca6b84f178480c8079aa6c6946b127fdcfcb3591254e7b"
+      "sha256": "01e17b537ed1500c41fed9237cf0371d5930da484defda17ee769608120b6ad4"
     }
   ],
   "outputs": [
     {
       "path": "scenery-study.json",
-      "bytes": 5322188,
-      "sha256": "dda5de6c7e81a3348ad376eac135f720655adfcef45f3b66f7ac75d04bda0c97"
+      "bytes": 4874530,
+      "sha256": "282e8074f05d9434abeb9383210ed34817abf76ceac7367f255ed0519ed496a2"
     }
   ]
 }
