@@ -1,8 +1,8 @@
 # Dimensional pixel art — restyle the existing starting scene
 
-| Status      | Current progress                                                                                                                     | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Representative study review fixes are verified and delivered; default-game human-face readability remains an open art-adoption gate. | 2026-10-15   |
+| Status      | Current progress                                                                                                                             | Last updated         |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| In progress | Mike rejected the procedural study; a mercenary-led, library-based replacement study is planned, with visual and moving-art acceptance open. | 2026-10-16 00:22 EDT |
 
 ## Purpose and authorization
 
@@ -101,7 +101,7 @@ Estimated impact is approximately **2,000–3,000 executable authoring/viewer li
 
 Completion is a useful, reviewable representative pixel-art set with multiple retained options, explained working recommendations, editable Blender assets, actual moving inspection and integrated study access. It does not require guessing Mike's final artistic feedback or solving every older mercenary/crowd/renderer gap. Any asset that still reads as plain low-poly, loses its face or pops through clothing must be revised or explicitly left unselected; successful export alone is insufficient.
 
-**Delivered October 15:** all six study steps are complete for thirty alternatives across ten families, with actual render-driven revisions, editable sources, an integrated production inspection page, retained moving/scale comparisons and scoped verification. [Study evidence and limits](../verification/representative-art-study.md) own the measured result. This completes V3D01.15; earlier mercenary, animated-art and wider-device acceptance remains open.
+**Historical technical delivery — October 15:** thirty alternatives across ten families, render-driven revisions, editable sources, an integrated production inspection page, retained moving/scale comparisons and scoped checks were delivered. [Study evidence and limits](../verification/representative-art-study.md) own that measured result. The earlier claim of complete V3D01.15 delivery was incorrect: Mike rejected the art on October 16, reopening its visual requirement. Technical implementation remains preserved; mercenary, animated-art and wider-device acceptance also remain open.
 
 ## Requested complete study review — October 15, 2026
 
@@ -119,6 +119,48 @@ Performance answers: work grows with selected/catalog assets, material/triangle 
 **Review delivered:** camera/depth fitting, true game-camera scale, on-demand drawing, browser shortcuts/history restoration, outward source winding and shared load/destruction defects are corrected and verified through the actual browser/export/game callers. The [review evidence](../verification/representative-art-study.md#requested-complete-review--october-15-2026) records measurements and the newly exposed default-game facial-readability adoption gate.
 
 Completion requires reproduced issues fixed, all selected checks passing, final affected-diff review and truthful documentation/commit. Existing accurate animation, gameplay art, device/crowd and general asset-pipeline gaps remain with their current trackers; this review does not waive them.
+
+## Proposed replacement study — October 16, 2026
+
+Mike rejected the thirty-option procedural study: mannequin-like people, inflated foliage, wrapped coarse paint and props that still read as ordinary polygon models. He clarified that the original mercenary came from his concept art through Meshy and that its earlier pixel rendering was better. [Recorded feedback](../../art-direction/decisions.md#corrected-study-requirements--october-16-2026) supersedes the earlier working recommendations. The rejected assets, editable sources and technical evidence remain preserved. This update plans the replacement; it delivers no new art or renderer.
+
+### Source and first proof
+
+Use the actual concept-derived mercenary, rig, clothing and cape as the central source. The original local study retains the concept, editable Blender source, model, source textures, pixel materials and viewer. Preserve the original files and work on copies. Recover the **actual earlier pixel rendering**, not merely its portable GLB under default Blender/viewer materials: its lighting and sampling are part of the stronger result. Keep that viewer and the current game mercenary as separately named controls. Compare apparent density at equal character framing; whole-canvas resolution and body-image rows are different measurements.
+
+Prepare three meaningful finishes on that same character: faithful refinement of the earlier look; more deliberate facial/material clusters and quieter mail/cloth; and stronger cinematic lighting with restrained edges. These are proposed art directions, not three texture-size presets or a reason to reconstruct primitive anatomy. Preserve hair/beard, layered armor, wrapped limbs, asymmetrical red mantle and gold cape identity. Repair actual face/garment defects in Blender and source artwork; avoid repeated global reduction that erases facial information. He must remain a modestly tall adult beside ordinary people, with physical and displayed height checked separately.
+
+The first complete visual proof contains only **mercenary + one broadleaf tree + one chest**, using screened library geometry for the latter two. It must demonstrate coherent pixel silhouettes, deliberate material/light clusters, recognizable features and convincing forms. Sparse blocky marks on smooth polygons do not pass. Compare the concept, earlier mercenary and selected game references beside actual candidate renders. Inspect clean daylight before firelight or atmosphere. Expand once this small set withstands critical still and moving review; technical exports and immutable textures alone do not establish that result.
+
+### Comprehensive study and source selection
+
+| Coverage                | Source and intended study                                                                                                                                                                                                                                 |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Character and equipment | Original Meshy mercenary, face/hair/mail/padded clothing/cape; sword and shield held or adjacent for scale. A second adult tests reuse after the mercenary proof, using an appropriate authored/library source rather than an unrelated primitive person. |
+| Vegetation              | Broadleaf, conifer, berry bush, grass/ground patch; screen acquired Quaternius/Kenney models and stronger organic library geometry for their shapes.                                                                                                      |
+| Stone and props         | Irregular boulder, smaller rock grouping, timber chest, sword and shield; source geometry must be worth adapting before material treatment.                                                                                                               |
+| Animal                  | Acquired animated CC0 rabbit, deliberately adapted to the hare's silhouette and motion rather than replaced by a primitive animal.                                                                                                                        |
+| Environment together    | Existing-world woodland arrangement with ground contact, layered vegetation, a person/animal/prop encounter, daylight and localized firelight. This is visual staging, not a new playable opening or new native mechanics.                                |
+
+Screen [Poly Haven's tree](https://polyhaven.com/a/tree_small_02), [shrub](https://polyhaven.com/a/shrub_04), [boulder](https://polyhaven.com/a/boulder_01) and [chest](https://polyhaven.com/a/treasure_chest) as CC0 source candidates, alongside already acquired geometry. Their photographic finish, source complexity or motifs may be unsuitable; selection requires viewing and adaptation, not automatic import into gameplay. [Quaternius weapons](https://quaternius.com/packs/medievalweapons.html) provide editable sword/shield starting shapes; their existing simple finish is not the target. [Acquired sources](../../art-direction/assets/README.md) retain exact licenses/provenance. No new source has been downloaded or artistically qualified by this plan.
+
+For each revised subject retain a few genuinely different finished options, the source before adaptation, editable files and an explicit recommendation against Garbage Country's organic environments, t3ssel8r's expressive shaped people, and The Last Night/REPLACED's pixel craft and purposeful light. Prefer useful differences in silhouette interpretation, material grouping and light response over tint-only variants. A shared finish must still let skin, cloth, mail, wood, leaves and steel behave differently. Working picks may continue autonomously under Mike's standing instruction; final artistic approval remains his.
+
+### Rendering, motion and scale decisions
+
+Begin with the stronger existing mercenary's full-detail source and actual pixel treatment. Compare deliberate lighting bands, palettes, restrained edges and controlled sampling on the same source. Treat a coarse UV atlas as one surface input, never as proof of the final pixel-art image. Preserve faces and thin equipment during sampling. Characters, environment, foliage and loose cloth may use different appropriate techniques while sharing depth, palette and light; a universal whole-scene reduction is not assumed. Literal block bodies and already-failed splat integrations are not the default restart. Revisit an earlier failed method only with a specific changed hypothesis.
+
+Separate causes in short matched clips: fixed pose/light with pan/orbit/pitch/zoom in both supported projections; fixed camera with idle/walk/turn; then changing light. Show actual game framing beside ordinary adults and known props, as well as close face/cloth views and cape extremes. Reject distracting crawling, flickering, disappearing features and exposed underlying body. Changing visible coverage during rotation is unavoidable; do not promise frozen screen pixels or claim a still image proves shimmer-free motion. Preserve existing camera freedom and resolve incompatible techniques through evidence rather than silently restricting controls.
+
+If faces cannot read at the current distant game view, compare it with an explicitly labeled closer gameplay framing for all subjects while keeping real body dimensions fixed. A proposed camera change needs review on the complete scene; a flattering portrait cannot silently stand in for normal-play acceptance.
+
+### Implementation bounds and delivery
+
+This planning update affects **zero executable logic lines**. Initial recovery/comparison wiring is provisionally **100–300 logic lines**, excluding asset editing and tests; refresh the estimate after tracing the preserved viewer and current renderer. A materially different sampling method needs its own scoped estimate before implementation, not an unbounded renderer rewrite. Reuse the inspection controls, camera defaults, bundled-model ownership and existing scene. The source art, rig and Blender are already available; no new Meshy generation is necessary to begin. Shared external spending remains $0 settled, $0 reserved/uncertain of the existing $25 ceiling.
+
+Cost grows with visible triangles/materials, skinned characters, source/runtime texture memory, frame pixels, extra render stages, transparent overlap and shadowed lights. Prepare immutable source conversion and reduction offline; share runtime resources and update only dependencies that changed. Static inspection remains idle until visual changes; moving subjects require actual drawing. Use existing visibility/culling and add batching only for compatible repeated geometry supported by measured need. Measure complete matched frames, loading, idle drawing and resource lifetime, including ordinary game integration; fewer texture pixels or triangles alone do not establish acceptable cost.
+
+Deliver matched source/finished comparisons, full-scene and detail images, short movement clips, interactive variants, a plain recommendation and specific remaining flaws. Verify actual exported/reimported geometry/textures, normal gameplay framing, clothing coverage, input/resize/history/teardown, depth/picking and full-frame performance as applicable. Run scoped formatting/typecheck/build for changed executable owners and required diff review. Retain successful technical checks separately from visual acceptance. Adopt into the existing starting scene only after the revised art earns that step; preserve existing assets and progress throughout.
 
 ## Maintained records
 

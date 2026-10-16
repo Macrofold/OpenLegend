@@ -100,7 +100,15 @@ Mike explicitly asked Codex to choose the strongest working versions while he is
 
 ## Representative Blender study — selected direction
 
-The completed thirty-option study selects natural rock/broadleaf/berry bush, open conifer, crafted chest/sword/Mara/Tavin and quiet round shield/armor. The selection favors shaped silhouettes, readable eyes, broad quiet material fields and a few deliberate stepped paint clusters. Small constructed details belong where they explain the object, such as a latch, blade fuller or coat patch. Geometry supplies cloth coverage and solid foliage; no camera-dependent repainting or whole-frame reduction disguises the source. [Actual comparisons, revisions and limits](../docs/verification/representative-art-study.md) retain the evidence. The study is a working proposal, not Mike's final art approval or a replacement for the animated mercenary; all alternatives and older models remain available.
+**Rejected by Mike on October 16, 2026.** Earlier assistant recommendations selected natural rock/broadleaf/berry bush, open conifer, crafted chest/sword/Mara/Tavin and quiet round shield/armor. Their claimed readable faces, organic forms and pixel-art finish did not withstand creator review. [Actual comparisons, revisions and technical limits](../docs/verification/representative-art-study.md) remain historical evidence, not successful art qualification. All alternatives and older models remain preserved.
+
+## Corrected study requirements — October 16, 2026
+
+Mike rejected the new people, primitive foliage and ordinary-3D props. He identified coarse paint wrapping around smooth surfaces as a failed pixel-art result and noted that the chest, sword and shield do not visibly read as pixel art at all. Technical texture/export correctness did not establish artistic success.
+
+The mercenary was the only supplied real 3D character: Mike's concept art converted through Meshy. It must be central to the new study; its earlier pixel rendering is a stronger starting benchmark. Preserve the original design, model and earlier alternatives. Use real free-library models as source material for other subjects, with Blender for deliberate adaptation and refinement. The rejected procedural people do not substitute for that character work.
+
+Mike requests a comprehensive beautiful 3D pixel-art study following all established references. The [replacement plan](../docs/projects/3d-pixel-art-first-scene-plan.md#proposed-replacement-study--october-16-2026) proposes a mercenary/tree/prop proof before expansion, multiple meaningful finished options, complete-image pixel craft, actual game-scale and moving review, and preserved controls. This plan is not a claim that replacement art has been created or approved.
 
 ## Decision entry format
 

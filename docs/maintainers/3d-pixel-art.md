@@ -1,6 +1,6 @@
 # Progressive 3D pixel art — implementation tracker
 
-**Status: The first starting-scene candidate was rejected for its normal-3D environment. The authorized pixel-finish trials and scoped checks are delivered, with critical visual acceptance and frame-time failures still open; prior E01–E08 measurements remain historical evidence, not visual acceptance. Mike's creator review, broader pipeline, production rights and crowd/device gates remain open.** Last reconciled October 15, 2026.
+**Status: Mike rejected both the first normal-3D scene finish and the later procedural Blender study. Technical inspection/review work is delivered; a mercenary-led, library-based replacement study is planned. Visual acceptance, frame-time failures, broader pipeline, remaining source rights and crowd/device gates stay open.** Last reconciled October 16, 2026.
 
 ## Maintained records
 
@@ -181,12 +181,12 @@ V3D01.1–V3D01.11 are **Completed investigations, scoped implementation and tec
 
 **Owner:** offline nature/people/objects authors and existing client/developer presentation. **Depends on:** preserved V3D01.14 sources and [authorized study plan](../projects/3d-pixel-art-first-scene-plan.md#representative-blender-asset-study--authorized-october-15-2026). Mike delegates working selections, preserving alternatives and the $25 shared spending ceiling.
 
-- [x] Author meaningful fixed-pixel Blender alternatives for rocks, trees, berry bushes, chests, people, armor and swords/weapons, with actual repertoire links, clear faces, coherent scale and source rights.
+- [ ] Author meaningful finished 3D pixel-art alternatives for rocks, trees, berry bushes, chests, people, armor and swords/weapons, with actual repertoire links, clear faces, coherent scale and source rights. **Reopened after October 16 creator review:** the delivered thirty-option art does not satisfy the visual requirement; the mercenary was omitted. Technical source/export delivery remains recorded below.
 - [x] Retain editable sources, reproducible preparation, GLBs/textures and provenance; inspect and revise actual early renders before selecting defaults against the agreed references.
 - [x] Deliver a usable finite 3D inspection page with comparison and composed views, camera/light controls and existing developer entry; preserve all earlier assets and native world state.
 - [x] Complete moving/scale/coverage, controls/failure/lifetime, reduced-motion/narrow-view and complete-renderer checks; review the affected diff, synchronize current owners/evidence/limits and commit. Final creator feedback and broader game release qualification remain distinct.
 
-**Evidence:** [Representative study delivery and limits](../verification/representative-art-study.md). These checks close the finite study implementation, not the preceding critical gameplay/mercenary acceptance gates. The requested code review has corrected and verified camera fitting, idle rendering, source winding, browser shortcuts/history restoration and shared loading/replacement; its actual checks and remaining acceptance are in the same report.
+**Evidence:** [Representative study delivery and limits](../verification/representative-art-study.md). Technical inspection implementation is delivered; its artistic delivery is reopened after rejection. The requested code review has corrected and verified camera fitting, idle rendering, source winding, browser shortcuts/history restoration and shared loading/replacement; its actual checks remain valid within their recorded scope. The [replacement plan](../projects/3d-pixel-art-first-scene-plan.md#proposed-replacement-study--october-16-2026) retains the preceding critical gameplay/mercenary gates rather than replacing them.
 
 - [ ] Qualify the selected human art at the ordinary game's actual default camera before adopting it into gameplay. The review found that the former “Game distance” preset used a much closer view; its roughly128-pixel person image was not normal-play evidence. The corrected game-camera preset projects Mara's upright body line to about31pixels at the measured680-pixel stage, where facial detail is not reliably readable. The close-study people selections are **not accepted game-distance representations**. Resolve this through the existing V3D01.12/.13 camera/subject-detail and readability work; preserve modest real dimensions and avoid silently enlarging bodies, changing world rules or accepting an unreadable face. This is an existing art-adoption gate exposed accurately, not a new general asset-pipeline prerequisite.
 

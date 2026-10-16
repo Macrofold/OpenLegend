@@ -1,10 +1,10 @@
 # Progressive 3D pixel art — technical design
 
-| Status      | Current progress                                                                                                                  | Last updated         |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| In progress | Library comparisons and the static Blender study are delivered; normal-play faces and general pipeline qualification remain open. | 2026-10-16 00:04 UTC |
+| Status      | Current progress                                                                                                                           | Last updated         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
+| In progress | Technical study tooling is delivered; its art was rejected and a mercenary-led replacement is planned. Broader mechanisms remain proposed. | 2026-10-16 00:22 EDT |
 
-**Last referenced during specification reconciliation: 2026-10-16 00:04 UTC.** The architectural body below retains the broader proposed mechanisms; this consultation does not requalify them or establish an earlier implementation-use datetime. The [feature specification's current delivery](3d-pixel-art-feature-spec.md) and [current presentation contract](../world-presentation.md#representative-blender-asset-inspection) record the delivered finite asset inspector, distinct from a separate playable opening.
+**Last referenced during replacement-study planning: 2026-10-16 00:22 EDT.** The architectural body below retains the broader proposed mechanisms; this consultation does not requalify them or establish an earlier implementation-use datetime. The [feature specification](3d-pixel-art-feature-spec.md) and [replacement study plan](3d-pixel-art-first-scene-plan.md#proposed-replacement-study--october-16-2026) distinguish delivered inspection tooling, rejected artwork and proposed corrective work; no separate playable opening is introduced.
 
 **October 14 renderer research:** [Asset/rendering explanations](../../art-direction/research/3d-pixel-worlds/rendering-techniques.md) distinguish authored surface texels from voxel geometry and screen sampling. The [PlayCanvas feasibility inspection](../../art-direction/research/3d-pixel-worlds/openlegend-adaptation.md#what-is-already-available-and-what-is-not-established) identifies candidate facilities in the current pinned engine, without implementing effects or selecting a replacement engine.
 
