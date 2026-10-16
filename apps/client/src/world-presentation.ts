@@ -79,7 +79,7 @@ export function lightSprite(material: pc.StandardMaterial, device: pc.GraphicsDe
 }
 
 export interface RevealBinding {
-  sourceMesh?: pc.MeshInstance;
+  sourceMeshes: readonly pc.MeshInstance[];
   sourceMaterials?: pc.StandardMaterial[];
   meshes: pc.MeshInstance[];
   strength: number;
@@ -398,7 +398,7 @@ export class WorldPresentation {
       meshes,
       layer,
       protection,
-      sourceMesh: sourceMeshes[0],
+      sourceMeshes,
       sourceMaterials,
       strength: 0,
       frame: material,
@@ -447,7 +447,10 @@ export class WorldPresentation {
       });
       this.foregroundLayer.addMeshInstances(binding.foreground, true);
     }
-    for (const mesh of binding.foreground ?? []) {
+    for (let i = 0; i < (binding.foreground?.length ?? 0); i++) {
+      const mesh = binding.foreground![i]!;
+      const original = binding.sourceMeshes[i]!;
+      if (mesh.skinInstance !== original.skinInstance) mesh.skinInstance = original.skinInstance;
       mesh.visible = authorized && selected;
       if (!binding.sourceMaterials && source !== binding.frame)
         mesh.material = this.foregroundMaterial(source);
@@ -463,21 +466,31 @@ export class WorldPresentation {
     binding.size[0] = binding.size[2] = Math.max(width * 0.7, 0.1);
     binding.size[1] = Math.max(height * 0.65, 0.1);
     const spriteFoot = (
-      binding.sourceMesh?.getParameter('ol_spriteFoot') as { data?: ArrayLike<number> } | undefined
+      binding.sourceMeshes[0]?.getParameter('ol_spriteFoot') as
+        | { data?: ArrayLike<number> }
+        | undefined
     )?.data;
     binding.foot[0] = spriteFoot?.[0] ?? foot.x;
     binding.foot[1] = spriteFoot?.[1] ?? foot.y;
     binding.foot[2] = spriteFoot?.[2] ?? foot.z;
     binding.spriteSize[0] = width;
     binding.spriteSize[1] = height;
-    for (const mi of binding.meshes) {
+    for (let i = 0; i < binding.meshes.length; i++) {
+      const mi = binding.meshes[i]!;
+      // Floor focus disables the source hierarchy. PlayCanvas recreates its
+      // skin when it returns, so borrowed copies must follow the current skin.
+      const original = binding.sourceMeshes[i]!;
+      if (mi.skinInstance !== original.skinInstance) mi.skinInstance = original.skinInstance;
       mi.visible = !selected && binding.strength > 0.01;
       if (!binding.sourceMaterials && source !== binding.frame)
         mi.material = this.revealMaterial(source);
       if (binding.lastStrength !== binding.strength)
         mi.setParameter('ol_revealStrength', binding.strength);
     }
-    for (const mesh of binding.protection ?? []) {
+    for (let i = 0; i < (binding.protection?.length ?? 0); i++) {
+      const mesh = binding.protection![i]!;
+      const original = binding.sourceMeshes[i]!;
+      if (mesh.skinInstance !== original.skinInstance) mesh.skinInstance = original.skinInstance;
       mesh.visible = !selected && binding.strength > 0.01;
       if (!binding.sourceMaterials && source !== binding.frame)
         mesh.material = this.protectionMaterial(source);
@@ -543,7 +556,7 @@ export class WorldPresentation {
       Math.hypot(e.position.x - p.x, e.position.y - p.y, e.position.z - p.z) -
       (this.selectedLights.has(e.id) ? 1 : 0);
     const sources = remembered
-      .filter((e) => e.kind === 'station' && e.status.startsWith('Lit'))
+      .filter((e) => e.heat?.lit)
       .sort((a, b) => distance(a) - distance(b) || a.id.localeCompare(b.id))
       .slice(0, this.shadowQuality === 'economy' ? 2 : 8);
     // Retain admitted lights through small distance crossovers; a missing or

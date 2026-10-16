@@ -714,6 +714,7 @@ export async function projectView(
             supportSurfaceId: worldSupport(entity),
             heading: entity.spatial.heading,
             appearance: entity.appearance ?? 'sprite',
+            ...(entity.heat ? { heat: { lit: entity.heat.lit } } : {}),
             radius: entity.kind === 'campfire' ? 0.5 : 0.35,
             ...(entity.actor
               ? {

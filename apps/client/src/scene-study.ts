@@ -27,10 +27,19 @@ let capture = new StudyCapture(canvas);
 let measurement:
   | {
       start: number;
+      lastRender: number;
+      lastRenderAt: number;
       intervals: number[];
       frames: ReturnType<WildernessScene['sampleArtFrame']>[];
     }
   | undefined;
+function cancelMeasurement(message: string): void {
+  if (!measurement) return;
+  measurement = undefined;
+  scene.setArtMeasurement(false);
+  button('measure').disabled = false;
+  metrics.textContent = message + ' Start a new measurement for this view.';
+}
 function distribution(values: number[]) {
   if (!values.length) return null;
   values.sort((a, b) => a - b);
@@ -108,8 +117,8 @@ function publish(): void {
     entities: original.entities.map((entity) => {
       if (berriesGathered && entity.appearance?.startsWith('study:berry-bush'))
         return { ...entity, quantity: 0, status: 'Gathered · visual comparison' };
-      if (!fire && entity.kind === 'station' && entity.status.startsWith('Lit'))
-        return { ...entity, status: 'Unlit · study light comparison' };
+      if (!fire && entity.heat?.lit)
+        return { ...entity, heat: { lit: false }, status: 'Unlit · study light comparison' };
       if (!motion || !['actor', 'animal'].includes(entity.kind)) return entity;
       // Explicit display fixture over a recorded permitted view; never a command.
       const offset = entity.subtype === 'hare' ? 0.7 : 0;
@@ -148,6 +157,7 @@ function mount(): void {
     canvas,
     {
       select(entity) {
+        scene.select(entity?.id ?? null);
         status.textContent = entity ? entity.name + ' · ' + entity.kind : 'Ground';
       },
       move() {
@@ -176,8 +186,15 @@ function update(now: number): void {
   const elapsed = prior ? now - prior : 0;
   prior = now;
   if (measurement && elapsed > 0) {
-    measurement.intervals.push(elapsed);
-    measurement.frames.push(scene.sampleArtFrame());
+    const sample = scene.sampleArtFrame();
+    // A browser callback can continue after a failed/stopped render. Count only
+    // completed scene frames, not duplicate counters from a frozen canvas.
+    if (sample.renderedFrames !== measurement.lastRender) {
+      measurement.intervals.push(now - measurement.lastRenderAt);
+      measurement.frames.push(sample);
+      measurement.lastRenderAt = now;
+      measurement.lastRender = sample.renderedFrames;
+    }
     if (now - measurement.start >= 10000) {
       const frames = measurement.frames;
       metrics.textContent = JSON.stringify(
@@ -189,7 +206,7 @@ function update(now: number): void {
           shadowQuality: select('world-shadows').value,
           stagedMotion: motion,
           cameraOrbit: orbit,
-          displayedIntervals: distribution(measurement.intervals),
+          renderedFrameIntervals: distribution(measurement.intervals),
           frameCosts: Object.fromEntries(
             (['updateMs', 'renderSubmissionMs', 'gpuPassMs', 'draws'] as const).map((key) => [
               key,
@@ -287,16 +304,39 @@ button('record').onclick = () => {
 };
 button('measure').onclick = () => {
   scene.setArtMeasurement(true);
-  measurement = { start: performance.now(), intervals: [], frames: [] };
+  const now = performance.now();
+  measurement = {
+    start: now,
+    lastRenderAt: now,
+    lastRender: scene.sampleArtFrame().renderedFrames,
+    intervals: [],
+    frames: [],
+  };
   button('measure').disabled = true;
   metrics.textContent = 'Measuring this view for ten seconds…';
 };
 button('remount').onclick = () => {
-  measurement = undefined;
-  button('measure').disabled = false;
+  cancelMeasurement('Renderer reloaded; the interrupted measurement was discarded.');
+  capture.destroy();
+  capture = new StudyCapture(canvas);
+  button('record').disabled = false;
   scene.destroy();
   mount();
 };
+const changedComparison = () =>
+  cancelMeasurement('Comparison changed; the interrupted measurement was discarded.');
+const controls = document.querySelector('.world-study-controls')!;
+controls.addEventListener('change', changedComparison);
+controls.addEventListener('click', (event) => {
+  if ((event.target as HTMLElement).closest('button')) changedComparison();
+});
+select('world-shadows').addEventListener('change', changedComparison);
+for (const event of ['pointerdown', 'wheel', 'keydown'])
+  canvas.addEventListener(event, changedComparison);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden)
+    cancelMeasurement('Study hidden; the interrupted measurement was discarded.');
+});
 const pauseForPreference = () => {
   if (reducedMotion.matches) {
     motion = false;
@@ -310,6 +350,7 @@ reducedMotion.addEventListener('change', pauseForPreference);
 function dispose(): void {
   if (disposed) return;
   disposed = true;
+  cancelMeasurement('Study closed; the interrupted measurement was discarded.');
   cancelAnimationFrame(frame);
   capture.destroy();
   reducedMotion.removeEventListener('change', pauseForPreference);

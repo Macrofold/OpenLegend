@@ -324,6 +324,8 @@ export interface EntityView extends Named {
   appearance: string;
   radius: number;
   status: string;
+  /** Observed heat state. Renderers must not infer it from status wording. */
+  heat?: { lit: boolean };
   description?: string;
   traits?: Array<{ id: string; name: string; description: string }>;
   canTalk?: boolean;

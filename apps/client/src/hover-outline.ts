@@ -90,6 +90,7 @@ export class HoverOutline extends pc.OutlineRenderer {
       const mesh = this.copies[i]!;
       const source = sources[i]!;
       if (mesh.mesh !== source.mesh) mesh.mesh = source.mesh;
+      if (mesh.skinInstance !== source.skinInstance) mesh.skinInstance = source.skinInstance;
       mesh.material = this.material(source.material);
       mesh.setParameter('pcOutlineColor', this.white);
       for (const name in source.parameters) mesh.setParameter(name, source.parameters[name]!.data);

@@ -195,7 +195,8 @@ export class LibraryActor {
         : pc.math.lerpAngle(this.yaw, target, 1 - Math.exp(-step * 12));
     node.setLocalEulerAngles(0, this.yaw, 0);
     const next = moving ? 'Run' : 'Idle';
-    if (next !== this.clip) {
+    const changed = next !== this.clip;
+    if (changed) {
       node.anim.baseLayer?.transition(next, 0.08);
       this.clip = next;
       this.elapsed = this.sampled = 0;
@@ -203,7 +204,10 @@ export class LibraryActor {
     if (!paused) this.elapsed += step;
     const frequency = art.motion === 'held8' ? 8 : art.motion === 'held12' ? 12 : 0;
     const sampled = frequency ? Math.floor(this.elapsed * frequency) / frequency : this.elapsed;
-    node.anim.update(Math.max(0, sampled - this.sampled));
+    // Holding a pose (or pausing) needs no repeat skeleton evaluation. Rendering
+    // still follows current placement and reveal, independently of pose cadence.
+    const advance = Math.max(0, sampled - this.sampled);
+    if (changed || advance > 0) node.anim.update(advance);
     this.sampled = sampled;
     this.presentation.updateReveal(
       this.binding,

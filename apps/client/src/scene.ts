@@ -219,6 +219,7 @@ export class WildernessScene implements WorldRenderer {
   private destroyed = false;
   private suspended = false;
   private readonly frameRateMeter = new FrameRateMeter();
+  private renderedFrames = 0;
   private readyRequested = false;
   private presentation!: WorldPresentation;
   private sceneProps!: ScenePropResources;
@@ -458,6 +459,7 @@ export class WildernessScene implements WorldRenderer {
     // Detailed CPU counters are provided by development/profiler builds only.
     // A release build must report absence rather than a zero-cost frame.
     return {
+      renderedFrames: this.renderedFrames,
       updateMs: frame.updateStart ? frame.updateTime : null,
       renderSubmissionMs: frame.renderStart ? frame.renderTime : null,
       gpuPassMs: this.app.stats.gpu.size
@@ -468,8 +470,10 @@ export class WildernessScene implements WorldRenderer {
   }
   private resetFrameRate = (): void => this.frameRateMeter.reset();
   private recordFrame = (): void => {
-    if (this.view && document.visibilityState === 'visible')
+    if (this.view && document.visibilityState === 'visible') {
+      this.renderedFrames++;
       this.frameRateMeter.record(performance.now());
+    }
   };
   sampleFrameRate(): number | null {
     return this.destroyed || this.suspended || document.visibilityState !== 'visible'
@@ -605,7 +609,7 @@ export class WildernessScene implements WorldRenderer {
           ?.slice(0, 12)
           .map((item) => `${item.definitionId}:${Math.min(3, item.quantity)}`)
           .join('|') ?? ''
-      }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.quantity === 0 && !!propDimensions(entity.appearance)?.depletedUrl}:${entity.bodyState ?? ''}:${entity.kind === 'station' && entity.status.startsWith('Lit')}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
+      }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.quantity === 0 && !!propDimensions(entity.appearance)?.depletedUrl}:${entity.bodyState ?? ''}:${!!entity.heat?.lit}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
       if (entry && entry.root.tags.list()[0] !== signature) {
         this.releaseEntity(entry);
         this.actors.delete(entity.id);
@@ -1311,7 +1315,7 @@ export class WildernessScene implements WorldRenderer {
       };
     }
     const dead = !!view.bodyState;
-    const lit = view.kind === 'station' && view.status.startsWith('Lit');
+    const lit = !!view.heat?.lit;
     const person = view.kind === 'actor' || (view.kind === 'remains' && view.bodyPlan === 'biped');
     const equipped =
       view.id === game.player.id && game.player.inventory.some((item) => item.equipped);

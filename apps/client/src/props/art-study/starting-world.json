@@ -1,6 +1,6 @@
 {
   "source": "Fresh standard seed-1086 world; ordinary authenticated commands and native travel; disposable database; no paid calls. These are permitted player views, with staged light/motion only in the viewer.",
-  "capturedAt": "2026-10-16T09:45:42.940Z",
+  "capturedAt": "2026-10-16T10:42:43.724Z",
   "mapSha256": "8a87ac23135ea0607bfd6c5592005257b7d151af588d623fbbb559d95f1f5459",
   "map": {
     "width": 62,
@@ -15521,13 +15521,13 @@
       "view": {
         "schemaVersion": 2,
         "maintenance": null,
-        "worldEventsRevision": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:0:0",
-        "historyRevision": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:0",
-        "historyEpoch": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:0",
+        "worldEventsRevision": "02e28af0-5b72-4eff-8232-6649c58350c2:0:0",
+        "historyRevision": "02e28af0-5b72-4eff-8232-6649c58350c2:0",
+        "historyEpoch": "02e28af0-5b72-4eff-8232-6649c58350c2:0",
         "narrator": null,
         "revision": 18,
         "worldId": "wilderness-1086",
-        "saveTimeline": "281804a8-a47b-43f7-be7d-7a72f5a06750",
+        "saveTimeline": "cfb30998-cd85-44a2-a088-fe8475430d54",
         "godMode": false,
         "inventionPolicy": { "revision": 1, "playerLocked": false, "agentLocked": true },
         "profile": {
@@ -16505,7 +16505,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"entity-0002\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"entity-0002\"]",
               "personId": "entity-0002",
               "personName": "person",
               "labels": {
@@ -16713,7 +16713,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"peacock-mercenary\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"peacock-mercenary\"]",
               "personId": "peacock-mercenary",
               "personName": "person",
               "labels": {
@@ -16892,6 +16892,7 @@
             "supportSurfaceId": "terrain",
             "heading": 0,
             "appearance": "sprite",
+            "heat": { "lit": true },
             "radius": 0.5,
             "statusEffects": [],
             "actionAnimation": null,
@@ -17962,7 +17963,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"mara\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"mara\"]",
               "personId": "mara",
               "personName": "Mara Reed",
               "labels": {
@@ -18168,7 +18169,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"tavin\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"tavin\"]",
               "personId": "tavin",
               "personName": "Tavin Vale",
               "labels": {
@@ -18696,13 +18697,13 @@
       "view": {
         "schemaVersion": 2,
         "maintenance": null,
-        "worldEventsRevision": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:2:0",
-        "historyRevision": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:1",
-        "historyEpoch": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:0",
+        "worldEventsRevision": "02e28af0-5b72-4eff-8232-6649c58350c2:2:0",
+        "historyRevision": "02e28af0-5b72-4eff-8232-6649c58350c2:1",
+        "historyEpoch": "02e28af0-5b72-4eff-8232-6649c58350c2:0",
         "narrator": null,
         "revision": 24,
         "worldId": "wilderness-1086",
-        "saveTimeline": "281804a8-a47b-43f7-be7d-7a72f5a06750",
+        "saveTimeline": "cfb30998-cd85-44a2-a088-fe8475430d54",
         "godMode": false,
         "inventionPolicy": { "revision": 1, "playerLocked": false, "agentLocked": true },
         "profile": {
@@ -19670,7 +19671,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"entity-0002\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"entity-0002\"]",
               "personId": "entity-0002",
               "personName": "person",
               "labels": {
@@ -19878,7 +19879,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"peacock-mercenary\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"peacock-mercenary\"]",
               "personId": "peacock-mercenary",
               "personName": "person",
               "labels": {
@@ -20057,6 +20058,7 @@
             "supportSurfaceId": "terrain",
             "heading": 0,
             "appearance": "sprite",
+            "heat": { "lit": true },
             "radius": 0.5,
             "statusEffects": [],
             "actionAnimation": null,
@@ -20965,7 +20967,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"mara\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"mara\"]",
               "personId": "mara",
               "personName": "Mara Reed",
               "labels": {
@@ -21172,7 +21174,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"tavin\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"tavin\"]",
               "personId": "tavin",
               "personName": "Tavin Vale",
               "labels": {
@@ -21648,13 +21650,13 @@
       "view": {
         "schemaVersion": 2,
         "maintenance": null,
-        "worldEventsRevision": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:7:0",
-        "historyRevision": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:6",
-        "historyEpoch": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:0",
+        "worldEventsRevision": "02e28af0-5b72-4eff-8232-6649c58350c2:7:0",
+        "historyRevision": "02e28af0-5b72-4eff-8232-6649c58350c2:6",
+        "historyEpoch": "02e28af0-5b72-4eff-8232-6649c58350c2:0",
         "narrator": null,
         "revision": 53,
         "worldId": "wilderness-1086",
-        "saveTimeline": "281804a8-a47b-43f7-be7d-7a72f5a06750",
+        "saveTimeline": "cfb30998-cd85-44a2-a088-fe8475430d54",
         "godMode": false,
         "inventionPolicy": { "revision": 1, "playerLocked": false, "agentLocked": true },
         "profile": {
@@ -22622,7 +22624,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"entity-0002\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"entity-0002\"]",
               "personId": "entity-0002",
               "personName": "person",
               "labels": {
@@ -22830,7 +22832,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"peacock-mercenary\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"peacock-mercenary\"]",
               "personId": "peacock-mercenary",
               "personName": "person",
               "labels": {
@@ -23009,6 +23011,7 @@
             "supportSurfaceId": "terrain",
             "heading": 0,
             "appearance": "sprite",
+            "heat": { "lit": true },
             "radius": 0.5,
             "statusEffects": [],
             "actionAnimation": null,
@@ -24122,7 +24125,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"mara\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"mara\"]",
               "personId": "mara",
               "personName": "Mara Reed",
               "labels": {
@@ -24329,7 +24332,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"tavin\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"tavin\"]",
               "personId": "tavin",
               "personName": "Tavin Vale",
               "labels": {
@@ -24891,13 +24894,13 @@
       "view": {
         "schemaVersion": 2,
         "maintenance": null,
-        "worldEventsRevision": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:10:0",
-        "historyRevision": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:8",
-        "historyEpoch": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:0",
+        "worldEventsRevision": "02e28af0-5b72-4eff-8232-6649c58350c2:10:0",
+        "historyRevision": "02e28af0-5b72-4eff-8232-6649c58350c2:8",
+        "historyEpoch": "02e28af0-5b72-4eff-8232-6649c58350c2:0",
         "narrator": null,
         "revision": 80,
         "worldId": "wilderness-1086",
-        "saveTimeline": "281804a8-a47b-43f7-be7d-7a72f5a06750",
+        "saveTimeline": "cfb30998-cd85-44a2-a088-fe8475430d54",
         "godMode": false,
         "inventionPolicy": { "revision": 1, "playerLocked": false, "agentLocked": true },
         "profile": {
@@ -25865,7 +25868,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"entity-0002\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"entity-0002\"]",
               "personId": "entity-0002",
               "personName": "person",
               "labels": {
@@ -26073,7 +26076,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"peacock-mercenary\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"peacock-mercenary\"]",
               "personId": "peacock-mercenary",
               "personName": "person",
               "labels": {
@@ -26252,6 +26255,7 @@
             "supportSurfaceId": "terrain",
             "heading": 0,
             "appearance": "sprite",
+            "heat": { "lit": true },
             "radius": 0.5,
             "statusEffects": [],
             "actionAnimation": null,
@@ -27672,7 +27676,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"mara\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"mara\"]",
               "personId": "mara",
               "personName": "Mara Reed",
               "labels": {
@@ -27879,7 +27883,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"tavin\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"tavin\"]",
               "personId": "tavin",
               "personName": "Tavin Vale",
               "labels": {
@@ -28465,13 +28469,13 @@
       "view": {
         "schemaVersion": 2,
         "maintenance": null,
-        "worldEventsRevision": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:14:0",
-        "historyRevision": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:12",
-        "historyEpoch": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:0",
+        "worldEventsRevision": "02e28af0-5b72-4eff-8232-6649c58350c2:14:0",
+        "historyRevision": "02e28af0-5b72-4eff-8232-6649c58350c2:12",
+        "historyEpoch": "02e28af0-5b72-4eff-8232-6649c58350c2:0",
         "narrator": null,
         "revision": 99,
         "worldId": "wilderness-1086",
-        "saveTimeline": "281804a8-a47b-43f7-be7d-7a72f5a06750",
+        "saveTimeline": "cfb30998-cd85-44a2-a088-fe8475430d54",
         "godMode": false,
         "inventionPolicy": { "revision": 1, "playerLocked": false, "agentLocked": true },
         "profile": {
@@ -29439,7 +29443,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"entity-0002\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"entity-0002\"]",
               "personId": "entity-0002",
               "personName": "person",
               "labels": {
@@ -29647,7 +29651,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"peacock-mercenary\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"peacock-mercenary\"]",
               "personId": "peacock-mercenary",
               "personName": "person",
               "labels": {
@@ -29826,6 +29830,7 @@
             "supportSurfaceId": "terrain",
             "heading": 0,
             "appearance": "sprite",
+            "heat": { "lit": true },
             "radius": 0.5,
             "statusEffects": [],
             "actionAnimation": null,
@@ -30872,7 +30877,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"mara\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"mara\"]",
               "personId": "mara",
               "personName": "Mara Reed",
               "labels": {
@@ -31079,7 +31084,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"tavin\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"tavin\"]",
               "personId": "tavin",
               "personName": "Tavin Vale",
               "labels": {
@@ -31683,13 +31688,13 @@
       "view": {
         "schemaVersion": 2,
         "maintenance": null,
-        "worldEventsRevision": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:19:0",
-        "historyRevision": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:16",
-        "historyEpoch": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:0",
+        "worldEventsRevision": "02e28af0-5b72-4eff-8232-6649c58350c2:19:0",
+        "historyRevision": "02e28af0-5b72-4eff-8232-6649c58350c2:16",
+        "historyEpoch": "02e28af0-5b72-4eff-8232-6649c58350c2:0",
         "narrator": null,
         "revision": 126,
         "worldId": "wilderness-1086",
-        "saveTimeline": "281804a8-a47b-43f7-be7d-7a72f5a06750",
+        "saveTimeline": "cfb30998-cd85-44a2-a088-fe8475430d54",
         "godMode": false,
         "inventionPolicy": { "revision": 1, "playerLocked": false, "agentLocked": true },
         "profile": {
@@ -32584,6 +32589,7 @@
             "supportSurfaceId": "terrain",
             "heading": 0,
             "appearance": "sprite",
+            "heat": { "lit": true },
             "radius": 0.5,
             "statusEffects": [],
             "actionAnimation": null,
@@ -34408,7 +34414,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"tavin\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"tavin\"]",
               "personId": "tavin",
               "personName": "Tavin Vale",
               "labels": {
@@ -35063,13 +35069,13 @@
       "view": {
         "schemaVersion": 2,
         "maintenance": null,
-        "worldEventsRevision": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:28:0",
-        "historyRevision": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:22",
-        "historyEpoch": "d601c102-3310-4aeb-9d06-4b2fbe6dd8e2:0",
+        "worldEventsRevision": "02e28af0-5b72-4eff-8232-6649c58350c2:28:0",
+        "historyRevision": "02e28af0-5b72-4eff-8232-6649c58350c2:22",
+        "historyEpoch": "02e28af0-5b72-4eff-8232-6649c58350c2:0",
         "narrator": null,
         "revision": 157,
         "worldId": "wilderness-1086",
-        "saveTimeline": "281804a8-a47b-43f7-be7d-7a72f5a06750",
+        "saveTimeline": "cfb30998-cd85-44a2-a088-fe8475430d54",
         "godMode": false,
         "inventionPolicy": { "revision": 1, "playerLocked": false, "agentLocked": true },
         "profile": {
@@ -36368,7 +36374,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"kest\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"kest\"]",
               "personId": "kest",
               "personName": "person",
               "labels": {
@@ -36563,7 +36569,7 @@
             "bodyRevision": 0,
             "species": "human",
             "trade": {
-              "scope": "[\"[\\\"84ac829dca4bee9e28a2870b735813ba4be3e50048ed08dd697c57f3c4380fe1\\\",\\\"281804a8-a47b-43f7-be7d-7a72f5a06750\\\"]\",\"orin\"]",
+              "scope": "[\"[\\\"e0ad619f8a9f71c14ef33281457d6b3cc4406835bedb6795a902de3936b16736\\\",\\\"cfb30998-cd85-44a2-a088-fe8475430d54\\\"]\",\"orin\"]",
               "personId": "orin",
               "personName": "person",
               "labels": {

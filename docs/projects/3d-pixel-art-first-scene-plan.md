@@ -169,6 +169,19 @@ The [revised study qualification](3d-pixel-art-validation.md#replacement-study-r
 
 The study is delivered when the complete agreed subject set and composed scene comparisons are reviewable, the recommended treatment meets the stated art/motion requirements on the measured workload, meaningful options and editable sources are preserved, and in-scope defects/checks are resolved or honestly block completion. A pleasing still, a working shader, a catalog count, or finished documentation is insufficient. Broader arbitrary-asset generation, universal rig/equipment composition and wider-device/crowd qualification retain their separate V3D owners.
 
+## Requested implementation review — October 16, 2026
+
+Review the complete source-study change from `d74cbcf7dc6bae4dcd466c62e2598101d15e8bb9` through `7bb2d4f6e38fdf346d5108ea4c2872a31ebf6d10`, including callers, authored appearance bindings, offline recipes and retained evidence. The development base remains the explicit local `codex/mercenary-original-refinement@1438ea13749d4acc7a852843d8677f687dbdd931`; no reconciliation or checkout change is needed. Expected fixes affect roughly 100–250 executable lines in existing presentation, animation and review-tool owners; risk is moderate because borrowed GPU resources and asynchronous cleanup cross owners.
+
+1. Trace asset loading/replacement, skin/reveal/hover lifetimes, fallback admission and world-owned appearance choices. Keep physical rules and save authority unchanged.
+2. Repair confirmed defects and remove repeated pose work, without introducing a new renderer, importer or cache framework. Preserve every art alternative.
+3. Exercise floor hide/restore and highlights in the real scene, held/paused animation through its actual owner, and interrupted measurement/recording. Check existing source catalogs/exports, TypeScript, production build, formatting and the final affected diff.
+4. Reconcile current behavior and actual evidence with the existing specification, limits and V3D tracker, then commit all review fixes. Existing creator acceptance, startup hitch and broader device/crowd qualification remain separate open gates.
+
+Performance answers: cost grows with visible rig count, mesh copies and simultaneous model loads. Meshes, materials and clips remain shared; each visible actor owns its pose. Pose changes and engine replacement of a skin invalidate only their corresponding derived state, while camera movement must not rebuild assets. Measure held/paused evaluation counts through the animation owner and browser resource/highlight behavior through the whole scene; discard timing runs when the comparison or visibility changes rather than reporting mixed workloads as one result.
+
+The review also found fire rendering coupled to an English status prefix. Project the already-observable heat component's `lit` flag through the existing permitted entity view, and update flames, lighting and the recorded study together. Absence means no projected heat component; wording grants no light. No native fire rule, save schema, access scope or new renderer family changes. This adds a narrow server/protocol consumer fix and disposable recapture to the review scope (approximately 150–300 total logic lines).
+
 ## Earlier plans and delivered experiments
 
 The dated plans and results below retain their original scope, decisions and evidence. The replacement strategy above owns the next study sequence; prior technical completion does not accept the rejected artwork.

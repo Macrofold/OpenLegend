@@ -32,7 +32,11 @@ export class StudyCapture {
     let recorder: MediaRecorder;
     try {
       stream = this.canvas.captureStream(30);
-      recorder = new MediaRecorder(stream);
+      const mimeType = ['video/webm', 'video/mp4'].find((type) =>
+        MediaRecorder.isTypeSupported(type),
+      );
+      if (!mimeType) throw new Error('No supported review-video format.');
+      recorder = new MediaRecorder(stream, { mimeType });
     } catch {
       stream?.getTracks().forEach((track) => track.stop());
       finished('This browser cannot record the canvas.');
@@ -50,7 +54,12 @@ export class StudyCapture {
       clearTimeout(this.timer);
       stream?.getTracks().forEach((track) => track.stop());
       if (!this.disposed) {
-        if (!failed) this.download(new Blob(chunks, { type: recorder.mimeType }), name + '.webm');
+        if (!chunks.length) failed = true;
+        if (!failed)
+          this.download(
+            new Blob(chunks, { type: recorder.mimeType }),
+            name + (recorder.mimeType.startsWith('video/mp4') ? '.mp4' : '.webm'),
+          );
         finished(failed ? 'Recording failed; no incomplete video was saved.' : 'Recording saved.');
       }
       this.recorder = undefined;
