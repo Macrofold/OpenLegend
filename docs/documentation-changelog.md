@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## October 16, 2026 — Source-based starting-world study
+
+Reconciled the feature specification and A–F delivery plan with 41 source-based families, retained options, current camera/scale/pixel/quality choices and actual scene evidence. Recorded the technical design consultation datetime, source rights, animation/resource fixes, measured warm/reload limits and explicit creator/production gaps. Updated current presentation, architecture, implementation index, VP01/A3D19, art navigation and tracker status; preserved superseded profiles under clearly historical headings. No AGENTS/skill instruction duplication or policy changes.
+
 ## October 16, 2026 — Comprehensive starting-world art-study strategy
 
 At Mike's request, the [replacement plan](projects/3d-pixel-art-first-scene-plan.md#proposed-replacement-study--october-16-2026) now critiques the previous outline and gives a source-led, scene-based production sequence. It maps actual starting people/animals/materials/locations, moves scale and ordinary-play framing before bulk work, separates asset-art alternatives from rendering and lighting tests, and makes daylight/low-sun/firelight composition part of production. The original mercenary remains central; retained rabbit/chest/library sources are evaluated before new generation. No camera default, shader, paid tool or replacement artwork is accepted or implemented by this plan.

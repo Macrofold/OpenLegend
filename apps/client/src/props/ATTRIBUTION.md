@@ -12,6 +12,21 @@ The replacement study's carved-lid chest uses this same attributed derivative, w
 
 # Source-based people and vegetation study
 
-The Ada study uses MakeHuman/MPFB core anatomy, eyes and hair and Rehman Polanski's Viking tunic, trousers and boots, all released under CC0. OpenLegend adapted the fitted garments, designed cloth panels and facial features, and preserved the original rig. [Acquisition hashes and license sources](../../../../art-direction/assets/source-study/human-sources.json) distinguish the CC0 graphical assets from the external MPFB authoring tool's GPL code. The MPFB code is not bundled in the game.
+The Ada, Mike, Mara, Tavin, Kest, Orin and armor studies use MakeHuman/MPFB core anatomy, eyes and hair and Rehman Polanski's Viking tunic, trousers and boots, all released under CC0. OpenLegend adapted the fitted garments, designed cloth panels and facial features, and preserved the original rig. [Acquisition hashes and license sources](../../../../art-direction/assets/source-study/human-sources.json) distinguish the CC0 graphical assets from the external MPFB authoring tool's GPL code. The MPFB code is not bundled in the game.
 
-The broadleaf study uses Quaternius Stylized Nature MegaKit Standard geometry under CC0; its [existing provenance](library-environment/provenance.json) records the acquired archive and license. OpenLegend adapted scale, paint and foliage normals. These are study candidates; their source licenses do not imply artistic acceptance.
+The broadleaf, conifer, birch, shrub, rock, grass, fern and related resource studies use Quaternius Stylized Nature MegaKit Standard geometry under CC0; its [existing provenance](library-environment/provenance.json) records the acquired archive and license. OpenLegend adapted scale, paint and foliage normals. These are study candidates; their source licenses do not imply artistic acceptance.
+
+# Source-based animals
+
+- **Deer, stag and wolf:** Quaternius [Ultimate Animated Animals](https://quaternius.com/packs/ultimateanimatedanimals.html), CC0. OpenLegend adapts coat/material grouping and proportions; source Idle/Walk clips remain credited. Exact source files/digests appear in their `art-study/source-*/catalog.json` records.
+- **Hare:** rabbit by CDmir / TinyWorlds, CC0, acquired through OpenGameArt. The retained source and [existing provenance](library-animals/provenance.json) record the exact acquisition. OpenLegend adapts ears, proportions and coat regions, retaining the rig and locomotion.
+- **Woodland bird:** [Yellow-billed shrike by pistachio](https://opengameart.org/content/bird-yellow-billed-shrike), CC0. OpenLegend adapts plumage/proportions and authors idle/ground-walk clips with folded wings.
+- **Bear:** [Bear by madtrollstudio](https://poly.pizza/m/kLLBpmcw0w), licensed [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). OpenLegend modifies coat colors, proportions and adds a study rig with idle/walk animation. No endorsement is implied. Source SHA-256: `e36363e07cfc3f7b4f9e6997b860daae8ac30a90b0d41a0316ec90a84ebed09c`. Attribution applies to all three bear derivatives and the retained source control.
+
+# Source-based equipment and camp resources
+
+Quaternius [Modular Weapons](https://quaternius.com/packs/medievalweapons.html), CC0, supplies the selected sword, shield, knife, bow and arrow source constructions. OpenLegend normalizes scale and authors restrained steel, leather and timber grouping. The equipment catalog retains exact archive/source digests.
+
+Kenney [Survival Kit](https://kenney.nl/assets/survival-kit), CC0, supplies chest/box, fallen wood, loose stones, markers, supplies, bundles, workbench and shelter source geometry. Quaternius nature sources supply berry bushes, reeds and fiber plants. Quaternius [Survival Pack backpack](https://poly.pizza/m/2g9Jm7kvIU), CC0, supplies the backpack study. OpenLegend adapts form, painting and material/detail grouping; depleted berry exports remove fruit without changing native gathering rules. Per-family catalog records identify the exact files. Cord/sling geometry and leather patterns are first-party authored additions; stone-tool planes derive from Kenney rocks.
+
+The owner-supplied mercenary remains a separate concept-to-Meshy source with unqualified production rights; no new provider upload or generation occurred. First-party modifications retain AGPL-3.0-only licensing without replacing the applicable upstream asset licenses. The [source-study instructions](../../../../art-direction/assets/source-study/README.md) and individual catalogs distinguish tools, references, sources and derivatives.

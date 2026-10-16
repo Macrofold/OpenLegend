@@ -29,25 +29,12 @@
       "recommended": true,
       "file": "bear-forest-brown.glb",
       "bounds": {
-        "min": [
-          -0.365508,
-          0.0,
-          -1.152355
-        ],
-        "max": [
-          0.365508,
-          1.25,
-          1.152355
-        ]
+        "min": [-0.365508, 0.0, -1.152355],
+        "max": [0.365508, 1.25, 1.152355]
       },
       "triangles": 946,
       "vertices": 1876,
-      "textureSizes": [
-        [
-          256,
-          256
-        ]
-      ],
+      "textureSizes": [[256, 256]],
       "sha256": "67ffdf1482ede7904df937b4e2588884d8c746cdab98fbc85975c0ba21fcd29a",
       "source": "Bear by madtrollstudio, CC BY 3.0, https://poly.pizza/m/kLLBpmcw0w; recolored, proportion study and rig by OpenLegend.",
       "animatedFile": "bear-forest-brown-motion.glb",
@@ -62,25 +49,12 @@
       "recommended": false,
       "file": "bear-heavy-shoulder.glb",
       "bounds": {
-        "min": [
-          -0.391093,
-          0.0,
-          -1.152355
-        ],
-        "max": [
-          0.391093,
-          1.25,
-          1.152355
-        ]
+        "min": [-0.391093, 0.0, -1.152355],
+        "max": [0.391093, 1.25, 1.152355]
       },
       "triangles": 946,
       "vertices": 1876,
-      "textureSizes": [
-        [
-          256,
-          256
-        ]
-      ],
+      "textureSizes": [[256, 256]],
       "sha256": "5cb8b221b15a3efd872ee510b41e9d02c3cd4ed2d97dfe79fa3b0e8ac3da7b82",
       "source": "Bear by madtrollstudio, CC BY 3.0, https://poly.pizza/m/kLLBpmcw0w; recolored, proportion study and rig by OpenLegend.",
       "animatedFile": "bear-heavy-shoulder-motion.glb",
@@ -95,25 +69,12 @@
       "recommended": false,
       "file": "bear-pale-muzzle.glb",
       "bounds": {
-        "min": [
-          -0.365508,
-          0.0,
-          -1.152355
-        ],
-        "max": [
-          0.365508,
-          1.25,
-          1.152355
-        ]
+        "min": [-0.365508, 0.0, -1.152355],
+        "max": [0.365508, 1.25, 1.152355]
       },
       "triangles": 946,
       "vertices": 1876,
-      "textureSizes": [
-        [
-          256,
-          256
-        ]
-      ],
+      "textureSizes": [[256, 256]],
       "sha256": "22fdafb65e1ab7ead8f8b1f052374254c68e9ef0a3f9aeed69837c227a4526d3",
       "source": "Bear by madtrollstudio, CC BY 3.0, https://poly.pizza/m/kLLBpmcw0w; recolored, proportion study and rig by OpenLegend.",
       "animatedFile": "bear-pale-muzzle-motion.glb",
@@ -130,25 +91,12 @@
       "recommended": false,
       "file": "control-library-bear.glb",
       "bounds": {
-        "min": [
-          -0.365508,
-          -0.0,
-          -1.152355
-        ],
-        "max": [
-          0.365508,
-          1.25,
-          1.152355
-        ]
+        "min": [-0.365508, -0.0, -1.152355],
+        "max": [0.365508, 1.25, 1.152355]
       },
       "triangles": 946,
       "vertices": 1876,
-      "textureSizes": [
-        [
-          1024,
-          1024
-        ]
-      ],
+      "textureSizes": [[1024, 1024]],
       "sha256": "3cb2d25140aed34671b1c37685816f56164aa48630a75179c3d522c6f2017e12",
       "source": "/private/tmp/openlegend-source-study/animals/bear.glb \u00b7 SHA256 e36363e07cfc3f7b4f9e6997b860daae8ac30a90b0d41a0316ec90a84ebed09c"
     }

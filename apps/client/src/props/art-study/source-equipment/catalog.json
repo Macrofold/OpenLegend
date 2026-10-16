@@ -91,16 +91,8 @@
       "recommended": false,
       "file": "sword-straight-crossguard.glb",
       "bounds": {
-        "min": [
-          -0.115229,
-          0.0,
-          -0.026341
-        ],
-        "max": [
-          0.115229,
-          1.1,
-          0.026341
-        ]
+        "min": [-0.115229, 0.0, -0.026341],
+        "max": [0.115229, 1.1, 0.026341]
       },
       "triangles": 872,
       "vertices": 438,
@@ -117,16 +109,8 @@
       "recommended": true,
       "file": "sword-broad-tip.glb",
       "bounds": {
-        "min": [
-          -0.124926,
-          0.0,
-          -0.031849
-        ],
-        "max": [
-          0.124926,
-          1.1,
-          0.031849
-        ]
+        "min": [-0.124926, 0.0, -0.031849],
+        "max": [0.124926, 1.1, 0.031849]
       },
       "triangles": 942,
       "vertices": 473,
@@ -143,16 +127,8 @@
       "recommended": false,
       "file": "sword-long-grip.glb",
       "bounds": {
-        "min": [
-          -0.100099,
-          0.0,
-          -0.027768
-        ],
-        "max": [
-          0.100099,
-          1.35,
-          0.027768
-        ]
+        "min": [-0.100099, 0.0, -0.027768],
+        "max": [0.100099, 1.35, 0.027768]
       },
       "triangles": 1033,
       "vertices": 533,
@@ -169,16 +145,8 @@
       "recommended": true,
       "file": "shield-round-boards.glb",
       "bounds": {
-        "min": [
-          -0.38,
-          0.0,
-          -0.114699
-        ],
-        "max": [
-          0.38,
-          0.76,
-          0.114699
-        ]
+        "min": [-0.38, 0.0, -0.114699],
+        "max": [0.38, 0.76, 0.114699]
       },
       "triangles": 1056,
       "vertices": 560,
@@ -195,16 +163,8 @@
       "recommended": false,
       "file": "shield-reinforced-round.glb",
       "bounds": {
-        "min": [
-          -0.38,
-          0.0,
-          -0.114699
-        ],
-        "max": [
-          0.38,
-          0.76,
-          0.114699
-        ]
+        "min": [-0.38, 0.0, -0.114699],
+        "max": [0.38, 0.76, 0.114699]
       },
       "triangles": 1204,
       "vertices": 636,
@@ -221,16 +181,8 @@
       "recommended": false,
       "file": "shield-heater.glb",
       "bounds": {
-        "min": [
-          -0.32847,
-          0.0,
-          -0.09781
-        ],
-        "max": [
-          0.32847,
-          0.84,
-          0.09781
-        ]
+        "min": [-0.32847, 0.0, -0.09781],
+        "max": [0.32847, 0.84, 0.09781]
       },
       "triangles": 1968,
       "vertices": 1070,
@@ -247,16 +199,8 @@
       "recommended": true,
       "file": "knife-utility.glb",
       "bounds": {
-        "min": [
-          -0.034226,
-          0.0,
-          -0.012776
-        ],
-        "max": [
-          0.034226,
-          0.32,
-          0.012776
-        ]
+        "min": [-0.034226, 0.0, -0.012776],
+        "max": [0.034226, 0.32, 0.012776]
       },
       "triangles": 726,
       "vertices": 365,
@@ -273,16 +217,8 @@
       "recommended": false,
       "file": "knife-leaf-point.glb",
       "bounds": {
-        "min": [
-          -0.03318,
-          0.0,
-          -0.013208
-        ],
-        "max": [
-          0.03318,
-          0.32,
-          0.013208
-        ]
+        "min": [-0.03318, 0.0, -0.013208],
+        "max": [0.03318, 0.32, 0.013208]
       },
       "triangles": 736,
       "vertices": 370,
@@ -299,16 +235,8 @@
       "recommended": false,
       "file": "knife-long-knife.glb",
       "bounds": {
-        "min": [
-          -0.043996,
-          0.0,
-          -0.010057
-        ],
-        "max": [
-          0.043996,
-          0.42,
-          0.010057
-        ]
+        "min": [-0.043996, 0.0, -0.010057],
+        "max": [0.043996, 0.42, 0.010057]
       },
       "triangles": 872,
       "vertices": 438,
@@ -325,16 +253,8 @@
       "recommended": true,
       "file": "bow-field-bow.glb",
       "bounds": {
-        "min": [
-          -0.168754,
-          0.0,
-          -0.027983
-        ],
-        "max": [
-          0.168754,
-          1.25,
-          0.027983
-        ]
+        "min": [-0.168754, 0.0, -0.027983],
+        "max": [0.168754, 1.25, 0.027983]
       },
       "triangles": 728,
       "vertices": 370,
@@ -351,16 +271,8 @@
       "recommended": false,
       "file": "bow-curved-limbs.glb",
       "bounds": {
-        "min": [
-          -0.168754,
-          0.0,
-          -0.027983
-        ],
-        "max": [
-          0.168754,
-          1.25,
-          0.027983
-        ]
+        "min": [-0.168754, 0.0, -0.027983],
+        "max": [0.168754, 1.25, 0.027983]
       },
       "triangles": 664,
       "vertices": 338,
@@ -377,16 +289,8 @@
       "recommended": false,
       "file": "bow-bound-grip.glb",
       "bounds": {
-        "min": [
-          -0.181649,
-          0.0,
-          -0.027983
-        ],
-        "max": [
-          0.181649,
-          1.25,
-          0.027983
-        ]
+        "min": [-0.181649, 0.0, -0.027983],
+        "max": [0.181649, 1.25, 0.027983]
       },
       "triangles": 776,
       "vertices": 394,
@@ -403,16 +307,8 @@
       "recommended": true,
       "file": "arrow-bone-point.glb",
       "bounds": {
-        "min": [
-          -0.414198,
-          0.0,
-          -4.13044
-        ],
-        "max": [
-          0.414198,
-          0.72,
-          4.13044
-        ]
+        "min": [-0.414198, 0.0, -4.13044],
+        "max": [0.414198, 0.72, 4.13044]
       },
       "triangles": 224,
       "vertices": 120,
@@ -429,16 +325,8 @@
       "recommended": false,
       "file": "arrow-broad-fletching.glb",
       "bounds": {
-        "min": [
-          -0.530173,
-          0.0,
-          -5.286963
-        ],
-        "max": [
-          0.530173,
-          0.72,
-          5.286963
-        ]
+        "min": [-0.530173, 0.0, -5.286963],
+        "max": [0.530173, 0.72, 5.286963]
       },
       "triangles": 224,
       "vertices": 120,
@@ -455,16 +343,8 @@
       "recommended": false,
       "file": "arrow-slender-shaft.glb",
       "bounds": {
-        "min": [
-          -0.323074,
-          0.0,
-          -3.221743
-        ],
-        "max": [
-          0.323074,
-          0.72,
-          3.221743
-        ]
+        "min": [-0.323074, 0.0, -3.221743],
+        "max": [0.323074, 0.72, 3.221743]
       },
       "triangles": 224,
       "vertices": 120,
@@ -483,16 +363,8 @@
       "recommended": false,
       "file": "control-library-arrow.glb",
       "bounds": {
-        "min": [
-          -0.414198,
-          0.0,
-          -4.13044
-        ],
-        "max": [
-          0.414198,
-          0.72,
-          4.13044
-        ]
+        "min": [-0.414198, 0.0, -4.13044],
+        "max": [0.414198, 0.72, 4.13044]
       },
       "triangles": 224,
       "vertices": 120,
@@ -509,16 +381,8 @@
       "recommended": false,
       "file": "control-library-bow.glb",
       "bounds": {
-        "min": [
-          -0.168754,
-          0.0,
-          -0.027983
-        ],
-        "max": [
-          0.168754,
-          1.25,
-          0.027983
-        ]
+        "min": [-0.168754, 0.0, -0.027983],
+        "max": [0.168754, 1.25, 0.027983]
       },
       "triangles": 728,
       "vertices": 370,
@@ -535,16 +399,8 @@
       "recommended": false,
       "file": "control-library-knife.glb",
       "bounds": {
-        "min": [
-          -0.034226,
-          0.0,
-          -0.012776
-        ],
-        "max": [
-          0.034226,
-          0.32,
-          0.012776
-        ]
+        "min": [-0.034226, 0.0, -0.012776],
+        "max": [0.034226, 0.32, 0.012776]
       },
       "triangles": 726,
       "vertices": 365,
@@ -561,16 +417,8 @@
       "recommended": false,
       "file": "control-library-shield.glb",
       "bounds": {
-        "min": [
-          -0.38,
-          0.0,
-          -0.114699
-        ],
-        "max": [
-          0.38,
-          0.76,
-          0.114699
-        ]
+        "min": [-0.38, 0.0, -0.114699],
+        "max": [0.38, 0.76, 0.114699]
       },
       "triangles": 1056,
       "vertices": 560,
@@ -587,16 +435,8 @@
       "recommended": false,
       "file": "control-library-sword.glb",
       "bounds": {
-        "min": [
-          -0.115229,
-          0.0,
-          -0.026341
-        ],
-        "max": [
-          0.115229,
-          1.1,
-          0.026341
-        ]
+        "min": [-0.115229, 0.0, -0.026341],
+        "max": [0.115229, 1.1, 0.026341]
       },
       "triangles": 872,
       "vertices": 438,

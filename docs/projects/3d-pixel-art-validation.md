@@ -1,8 +1,10 @@
 # Progressive 3D pixel art — visual and operational qualification
 
-| Status      | Current progress                                                                                                                        | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Earlier artwork was rejected; the comprehensive replacement study has an ordered review protocol, with art and runtime acceptance open. | 2026-10-16   |
+| Status      | Current progress                                                                                                                                | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The replacement study has source, moving-scene, failure/lifetime and device evidence; creator acceptance and broader qualification remain open. | 2026-10-16   |
+
+**Replacement study evidence — 2026-10-16 10:15 UTC.** [The source-based report](../verification/source-based-starting-study.md) records the actual 41-family collection, restored mercenary, scale/framing controls, 21 location/light captures, matched rendering/motion clips, source hashes, load/interruption/resource fixes and complete moving-scene measurements. Earlier failed/rejected captures are not reused as successful proof. Technical delivery does not close creator acceptance, guarantee zero shimmer at arbitrary viewpoints, qualify unprepared poses or erase the measured initial-load hitch. The review order and critical failure criteria below remain controlling.
 
 **October 14 reference update:** The [research comparison proposal](../../art-direction/research/3d-pixel-worlds/openlegend-adaptation.md#what-a-successful-comparison-must-show) makes surface attachment, face readability, garment coverage and restrained effects explicit review concerns. The 34-image library is external reference media, not OpenLegend qualification evidence. The moving comparison and creator acceptance below remain required.
 

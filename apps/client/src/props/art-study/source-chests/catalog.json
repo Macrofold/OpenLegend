@@ -38,25 +38,12 @@
       "recommended": false,
       "file": "chest-carved-lid.glb",
       "bounds": {
-        "min": [
-          -0.5,
-          0.0,
-          -0.4
-        ],
-        "max": [
-          0.5,
-          0.8,
-          0.4
-        ]
+        "min": [-0.5, 0.0, -0.4],
+        "max": [0.5, 0.8, 0.4]
       },
       "triangles": 6912,
       "vertices": 12816,
-      "textureSizes": [
-        [
-          64,
-          64
-        ]
-      ],
+      "textureSizes": [[64, 64]],
       "sha256": "9439623cc80d41f6bd4dc9fa17cddcea136f4626ae55faf7728b892f7b9da569",
       "source": "Production Gothic reward chest created with Meshy; runtime processing by Samfa12/Codex. CC BY 4.0; OpenLegend closes, fits and repaints the source."
     },
@@ -69,25 +56,12 @@
       "recommended": true,
       "file": "chest-banded-lid.glb",
       "bounds": {
-        "min": [
-          -0.5,
-          0.0,
-          -0.4
-        ],
-        "max": [
-          0.5,
-          0.8,
-          0.4
-        ]
+        "min": [-0.5, 0.0, -0.4],
+        "max": [0.5, 0.8, 0.4]
       },
       "triangles": 322,
       "vertices": 558,
-      "textureSizes": [
-        [
-          64,
-          64
-        ]
-      ],
+      "textureSizes": [[64, 64]],
       "sha256": "398b91aefafad7f6c0c245103b8496e6b9f5ec0ca852e0a8411f803c85fe0b83",
       "source": "Kenney Survival Kit, CC0; OpenLegend fits and repaints the source."
     },
@@ -100,25 +74,12 @@
       "recommended": false,
       "file": "chest-plank-cache.glb",
       "bounds": {
-        "min": [
-          -0.5,
-          0.0,
-          -0.4
-        ],
-        "max": [
-          0.5,
-          0.8,
-          0.4
-        ]
+        "min": [-0.5, 0.0, -0.4],
+        "max": [0.5, 0.8, 0.4]
       },
       "triangles": 124,
       "vertices": 248,
-      "textureSizes": [
-        [
-          64,
-          64
-        ]
-      ],
+      "textureSizes": [[64, 64]],
       "sha256": "d411f984c3ed6a2a24d741bbb06f38527f7a2b2f64e27542305c845ab8cb3c8e",
       "source": "Kenney Survival Kit, CC0; OpenLegend fits and repaints the source."
     }
@@ -133,25 +94,12 @@
       "recommended": false,
       "file": "control-library-chest.glb",
       "bounds": {
-        "min": [
-          -0.339291,
-          0.0,
-          -0.354438
-        ],
-        "max": [
-          0.339291,
-          0.8,
-          0.354438
-        ]
+        "min": [-0.339291, 0.0, -0.354438],
+        "max": [0.339291, 0.8, 0.354438]
       },
       "triangles": 322,
       "vertices": 558,
-      "textureSizes": [
-        [
-          512,
-          512
-        ]
-      ],
+      "textureSizes": [[512, 512]],
       "sha256": "4f8ff675c94271645e0a400dafaf71e9c0579d0922300dfc9856ec0ca50919c8",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/chest.glb \u00b7 SHA256 84b03023e425cc1f96c6d0b0f352608be9e8e01b112790e6b00b8651bf84379b"
     }

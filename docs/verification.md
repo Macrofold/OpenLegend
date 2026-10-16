@@ -1,5 +1,7 @@
 # Verification
 
+[Source-based starting-world study](verification/source-based-starting-study.md) records the October 16 replacement: source/variant coverage, actual composed scenes, scale/pixel choices, motion/resource fixes and complete moving-scene device measurements.
+
 - [World and engine boundaries](verification/world-engine-boundaries.md) — all 13 selected-owner fixes, capability omission, contrasting native definitions, PostgreSQL continuation and truthful player presentation.
 
 - [Existing starting-scene art revision](verification/starting-scene-pixel-art.md): combined E01–E08 decisions, original scene preservation and integrated device evidence; [character](verification/starting-scene-character.md), [environment](verification/starting-scene-environment.md), [native routes](verification/starting-scene-gameplay.md), [generated prop](verification/generated-prop-coherence.md) and [standalone texel splatting](verification/texel-splatting.md) retain scoped results. Creator review remains open.

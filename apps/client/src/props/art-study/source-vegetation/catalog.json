@@ -101,32 +101,15 @@
       "recommended": false,
       "file": "conifer-tiered-boughs.glb",
       "bounds": {
-        "min": [
-          -1.892211,
-          0.0,
-          -1.736733
-        ],
-        "max": [
-          1.892211,
-          5.6,
-          1.736733
-        ]
+        "min": [-1.892211, 0.0, -1.736733],
+        "max": [1.892211, 5.6, 1.736733]
       },
       "triangles": 3947,
       "vertices": 5246,
       "textureSizes": [
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ]
+        [128, 128],
+        [128, 128],
+        [128, 128]
       ],
       "sha256": "dadc8e2e034df24043886da656a0682239af506fb6dabe2ca04596ae78a7e643",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
@@ -140,32 +123,15 @@
       "recommended": false,
       "file": "conifer-slender-crown.glb",
       "bounds": {
-        "min": [
-          -1.367916,
-          0.0,
-          -1.513521
-        ],
-        "max": [
-          1.367916,
-          5.6,
-          1.513521
-        ]
+        "min": [-1.367916, 0.0, -1.513521],
+        "max": [1.367916, 5.6, 1.513521]
       },
       "triangles": 4964,
       "vertices": 6573,
       "textureSizes": [
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ]
+        [128, 128],
+        [128, 128],
+        [128, 128]
       ],
       "sha256": "f936542fb98ca0a9d35667229f0b1c54e5b029ae8c443b6eb1644b4ace5a4a44",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
@@ -179,32 +145,15 @@
       "recommended": true,
       "file": "conifer-sheltered-pine.glb",
       "bounds": {
-        "min": [
-          -2.060613,
-          0.0,
-          -1.997018
-        ],
-        "max": [
-          2.060613,
-          5.6,
-          1.997018
-        ]
+        "min": [-2.060613, 0.0, -1.997018],
+        "max": [2.060613, 5.6, 1.997018]
       },
       "triangles": 1646,
       "vertices": 2315,
       "textureSizes": [
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ]
+        [128, 128],
+        [128, 128],
+        [128, 128]
       ],
       "sha256": "1ad9111792a34734b4171e966ca990e42c7ce7757e336ac6ffb9bb8c68272265",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
@@ -218,32 +167,15 @@
       "recommended": false,
       "file": "birch-forked-trunk.glb",
       "bounds": {
-        "min": [
-          -1.401849,
-          0.0,
-          -1.342673
-        ],
-        "max": [
-          1.401849,
-          4.8,
-          1.342673
-        ]
+        "min": [-1.401849, 0.0, -1.342673],
+        "max": [1.401849, 4.8, 1.342673]
       },
       "triangles": 5648,
       "vertices": 8107,
       "textureSizes": [
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ]
+        [128, 128],
+        [128, 128],
+        [128, 128]
       ],
       "sha256": "877360538a342747f5c115b2945fa5f64a4fb607db31399327efbc2403a32805",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
@@ -257,32 +189,15 @@
       "recommended": true,
       "file": "birch-slender-birch.glb",
       "bounds": {
-        "min": [
-          -1.03455,
-          0.0,
-          -1.079934
-        ],
-        "max": [
-          1.03455,
-          4.8,
-          1.079934
-        ]
+        "min": [-1.03455, 0.0, -1.079934],
+        "max": [1.03455, 4.8, 1.079934]
       },
       "triangles": 3505,
       "vertices": 5749,
       "textureSizes": [
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ]
+        [128, 128],
+        [128, 128],
+        [128, 128]
       ],
       "sha256": "3305449e18c1e02bd22cc383a6c51d2b163b446c6e6bdfd7bf4ee87222f2206a",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
@@ -296,32 +211,15 @@
       "recommended": false,
       "file": "birch-open-branches.glb",
       "bounds": {
-        "min": [
-          -0.972758,
-          0.0,
-          -0.95492
-        ],
-        "max": [
-          0.972758,
-          4.8,
-          0.95492
-        ]
+        "min": [-0.972758, 0.0, -0.95492],
+        "max": [0.972758, 4.8, 0.95492]
       },
       "triangles": 4066,
       "vertices": 5900,
       "textureSizes": [
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ]
+        [128, 128],
+        [128, 128],
+        [128, 128]
       ],
       "sha256": "9df3a0f27545388bc6930c6edf282e06947c47dffc585d195dbeca23e86025a0",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
@@ -335,25 +233,12 @@
       "recommended": true,
       "file": "shrub-rounded-thicket.glb",
       "bounds": {
-        "min": [
-          -0.726335,
-          0.0,
-          -0.745414
-        ],
-        "max": [
-          0.726335,
-          1.2,
-          0.745414
-        ]
+        "min": [-0.726335, 0.0, -0.745414],
+        "max": [0.726335, 1.2, 0.745414]
       },
       "triangles": 900,
       "vertices": 1800,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "c60cb0f262aa750242a76c5a62a800332ddbdd8f180ad442bce957f10c08a76a",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
     },
@@ -366,28 +251,14 @@
       "recommended": false,
       "file": "shrub-open-flowering.glb",
       "bounds": {
-        "min": [
-          -0.726335,
-          0.0,
-          -0.745414
-        ],
-        "max": [
-          0.726335,
-          1.2,
-          0.745414
-        ]
+        "min": [-0.726335, 0.0, -0.745414],
+        "max": [0.726335, 1.2, 0.745414]
       },
       "triangles": 1368,
       "vertices": 2515,
       "textureSizes": [
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ]
+        [128, 128],
+        [128, 128]
       ],
       "sha256": "a3e70f3064440fbfa45e8a0ec17be3fe71215981d610a2af41dc460c5aaf7fc5",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
@@ -401,25 +272,12 @@
       "recommended": false,
       "file": "shrub-low-spreading.glb",
       "bounds": {
-        "min": [
-          -0.971539,
-          0.040951,
-          -0.878471
-        ],
-        "max": [
-          0.989566,
-          0.964951,
-          0.880705
-        ]
+        "min": [-0.971539, 0.040951, -0.878471],
+        "max": [0.989566, 0.964951, 0.880705]
       },
       "triangles": 900,
       "vertices": 1800,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "732d34288c8fc3eabf3ab99e5881062f72dea2629611a08334dee26d150395d3",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
     },
@@ -432,25 +290,12 @@
       "recommended": true,
       "file": "rock-rounded-shoulder.glb",
       "bounds": {
-        "min": [
-          -0.570874,
-          0.0,
-          -0.529098
-        ],
-        "max": [
-          0.570874,
-          0.8,
-          0.529098
-        ]
+        "min": [-0.570874, 0.0, -0.529098],
+        "max": [0.570874, 0.8, 0.529098]
       },
       "triangles": 342,
       "vertices": 351,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "b27e2a4f66d843f4ffeb856d1e8828b3e1819767a02df0dcd8097a1606740359",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
     },
@@ -463,25 +308,12 @@
       "recommended": false,
       "file": "rock-split-planes.glb",
       "bounds": {
-        "min": [
-          -0.642191,
-          0.0,
-          -0.522192
-        ],
-        "max": [
-          0.642191,
-          0.8,
-          0.522192
-        ]
+        "min": [-0.642191, 0.0, -0.522192],
+        "max": [0.642191, 0.8, 0.522192]
       },
       "triangles": 244,
       "vertices": 249,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "252e9ac269da82ee84bfcf06ea8ff6f2f56e84d5583bc938bbbd69fe7552095a",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
     },
@@ -494,25 +326,12 @@
       "recommended": false,
       "file": "rock-low-slab.glb",
       "bounds": {
-        "min": [
-          -0.590616,
-          0.0,
-          -0.600291
-        ],
-        "max": [
-          0.590616,
-          0.8,
-          0.600291
-        ]
+        "min": [-0.590616, 0.0, -0.600291],
+        "max": [0.590616, 0.8, 0.600291]
       },
       "triangles": 522,
       "vertices": 531,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "20ff77ff3110633ee6e26f410975f24a500380673e0e841704fbcb721723d86f",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
     },
@@ -525,25 +344,12 @@
       "recommended": true,
       "file": "grass-broad-tuft.glb",
       "bounds": {
-        "min": [
-          -0.100564,
-          0.0,
-          -0.116052
-        ],
-        "max": [
-          0.100564,
-          0.42,
-          0.116052
-        ]
+        "min": [-0.100564, 0.0, -0.116052],
+        "max": [0.100564, 0.42, 0.116052]
       },
       "triangles": 155,
       "vertices": 153,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "13a42ae6b7e9f94e782e18e0615f3a4deacb1c2a132b19ddc1fdb93fe1ff9d05",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
     },
@@ -556,25 +362,12 @@
       "recommended": false,
       "file": "grass-fine-tuft.glb",
       "bounds": {
-        "min": [
-          -0.259047,
-          0.0,
-          -0.237017
-        ],
-        "max": [
-          0.259047,
-          0.42,
-          0.237017
-        ]
+        "min": [-0.259047, 0.0, -0.237017],
+        "max": [0.259047, 0.42, 0.237017]
       },
       "triangles": 494,
       "vertices": 559,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "3e957edfbaceb53f0871f0c6e339415255a258ae27ce3e03ff0a75c1d7d55522",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
     },
@@ -587,25 +380,12 @@
       "recommended": false,
       "file": "grass-open-stems.glb",
       "bounds": {
-        "min": [
-          -0.100373,
-          0.0,
-          -0.111365
-        ],
-        "max": [
-          0.100373,
-          0.42,
-          0.111365
-        ]
+        "min": [-0.100373, 0.0, -0.111365],
+        "max": [0.100373, 0.42, 0.111365]
       },
       "triangles": 326,
       "vertices": 303,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "0c076aefc2456270b30b61643b0cb5040d13c3156384052a954a7ef78d7d6c05",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
     },
@@ -618,25 +398,12 @@
       "recommended": true,
       "file": "fern-open-fronds.glb",
       "bounds": {
-        "min": [
-          -1.093438,
-          0.0,
-          -1.025898
-        ],
-        "max": [
-          1.093437,
-          0.65,
-          1.025898
-        ]
+        "min": [-1.093438, 0.0, -1.025898],
+        "max": [1.093437, 0.65, 1.025898]
       },
       "triangles": 288,
       "vertices": 243,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "e5b2bb1b2e25fbdfde44a76fb0eb5e992f0d3167728970e921549ba67ed7e50a",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
     },
@@ -649,25 +416,12 @@
       "recommended": false,
       "file": "fern-arching-fronds.glb",
       "bounds": {
-        "min": [
-          -1.268388,
-          0.015,
-          -1.190042
-        ],
-        "max": [
-          1.268387,
-          0.552395,
-          1.190042
-        ]
+        "min": [-1.268388, 0.015, -1.190042],
+        "max": [1.268387, 0.552395, 1.190042]
       },
       "triangles": 288,
       "vertices": 243,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "0b6a43919955a5fc6e3280a5604260e6fd0257a24fafab7b1d8012497421181e",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
     },
@@ -680,25 +434,12 @@
       "recommended": false,
       "file": "fern-sheltered-fronds.glb",
       "bounds": {
-        "min": [
-          -0.751515,
-          0.004786,
-          -0.828087
-        ],
-        "max": [
-          0.73556,
-          0.602786,
-          0.81335
-        ]
+        "min": [-0.751515, 0.004786, -0.828087],
+        "max": [0.73556, 0.602786, 0.81335]
       },
       "triangles": 288,
       "vertices": 243,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "edcb8cfb565f6d62b0890558403ecaeb2b5c96a96671d205c5b49beb96f6bdfa",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
     }
@@ -713,25 +454,12 @@
       "recommended": false,
       "file": "control-library-fern.glb",
       "bounds": {
-        "min": [
-          -1.093438,
-          0.0,
-          -1.025898
-        ],
-        "max": [
-          1.093437,
-          0.65,
-          1.025898
-        ]
+        "min": [-1.093438, 0.0, -1.025898],
+        "max": [1.093437, 0.65, 1.025898]
       },
       "triangles": 288,
       "vertices": 243,
-      "textureSizes": [
-        [
-          2048,
-          2048
-        ]
-      ],
+      "textureSizes": [[2048, 2048]],
       "sha256": "42c4b3ef58acbe3ee158c94636d4106efc87364e6c074624dc1ed1a857e44a3f",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/Fern_1.gltf \u00b7 SHA256 d41915cffe9dbbde1ae88be381eb9c60f7caa2274511436cc78fe4de627468ab"
     },
@@ -744,25 +472,12 @@
       "recommended": false,
       "file": "control-library-grass.glb",
       "bounds": {
-        "min": [
-          -0.100564,
-          0.0,
-          -0.116052
-        ],
-        "max": [
-          0.100564,
-          0.42,
-          0.116052
-        ]
+        "min": [-0.100564, 0.0, -0.116052],
+        "max": [0.100564, 0.42, 0.116052]
       },
       "triangles": 155,
       "vertices": 153,
-      "textureSizes": [
-        [
-          512,
-          512
-        ]
-      ],
+      "textureSizes": [[512, 512]],
       "sha256": "13f4834ef65ad522acdc476eda73f233b3d35d39579932c08d580338727d5ab0",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/Grass_Common_Short.gltf \u00b7 SHA256 6957b50622c9e26e7296c1b47ea8653bc0d957e0a547de444e2ed96f0075a21a"
     },
@@ -775,25 +490,12 @@
       "recommended": false,
       "file": "control-library-rock.glb",
       "bounds": {
-        "min": [
-          -0.570874,
-          0.0,
-          -0.529098
-        ],
-        "max": [
-          0.570874,
-          0.8,
-          0.529098
-        ]
+        "min": [-0.570874, 0.0, -0.529098],
+        "max": [0.570874, 0.8, 0.529098]
       },
       "triangles": 342,
       "vertices": 351,
-      "textureSizes": [
-        [
-          2048,
-          2048
-        ]
-      ],
+      "textureSizes": [[2048, 2048]],
       "sha256": "11244280e48aa9edfe4c5580ed44026827ad24d1ba6cc8ba568e9679646f0a29",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/Rock_Medium_1.gltf \u00b7 SHA256 5d1ab1fa03218f4a908728ed0eabe6486344a7e4f510b0d3d6f837fd1d011bd8"
     },
@@ -806,25 +508,12 @@
       "recommended": false,
       "file": "control-library-shrub.glb",
       "bounds": {
-        "min": [
-          -0.726335,
-          0.0,
-          -0.745414
-        ],
-        "max": [
-          0.726335,
-          1.2,
-          0.745414
-        ]
+        "min": [-0.726335, 0.0, -0.745414],
+        "max": [0.726335, 1.2, 0.745414]
       },
       "triangles": 900,
       "vertices": 1800,
-      "textureSizes": [
-        [
-          1024,
-          1024
-        ]
-      ],
+      "textureSizes": [[1024, 1024]],
       "sha256": "55ec37af942397f700018f27f9c277a19f501f32c2419a1695e71f5081260f64",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/Bush_Common.gltf \u00b7 SHA256 77811fca92610cb254713d3d49d5029ab6cf13050c3afb61aa942786a7b2ca90"
     },
@@ -837,32 +526,15 @@
       "recommended": false,
       "file": "control-library-birch.glb",
       "bounds": {
-        "min": [
-          -1.401849,
-          0.0,
-          -1.342673
-        ],
-        "max": [
-          1.401849,
-          4.8,
-          1.342673
-        ]
+        "min": [-1.401849, 0.0, -1.342673],
+        "max": [1.401849, 4.8, 1.342673]
       },
       "triangles": 5648,
       "vertices": 8107,
       "textureSizes": [
-        [
-          1024,
-          1024
-        ],
-        [
-          2048,
-          2048
-        ],
-        [
-          2048,
-          2048
-        ]
+        [1024, 1024],
+        [2048, 2048],
+        [2048, 2048]
       ],
       "sha256": "93d07082c49ee437b5ec239b82c4442e0e961fe7fd2e10dc6ef8f394dd89d21d",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/CommonTree_2.gltf \u00b7 SHA256 67160975f0ac991b4a2ffb2add4ab4037b5e9c1bef9f66dac5235fcf0ba9bd52"
@@ -876,32 +548,15 @@
       "recommended": false,
       "file": "control-library-conifer.glb",
       "bounds": {
-        "min": [
-          -1.892211,
-          0.0,
-          -1.736733
-        ],
-        "max": [
-          1.892211,
-          5.6,
-          1.736733
-        ]
+        "min": [-1.892211, 0.0, -1.736733],
+        "max": [1.892211, 5.6, 1.736733]
       },
       "triangles": 3947,
       "vertices": 5246,
       "textureSizes": [
-        [
-          2048,
-          2048
-        ],
-        [
-          2048,
-          2048
-        ],
-        [
-          2048,
-          2048
-        ]
+        [2048, 2048],
+        [2048, 2048],
+        [2048, 2048]
       ],
       "sha256": "44d01a2c5b8c1d2bc5f5bcd3b98fb0f4f43bc6fd256c61dd4232daa2eb072a64",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/Pine_1.gltf \u00b7 SHA256 adc85a72e6f46f71317ca5f7630876bfb207f687427bc9e37cd97ec4af5f2cbc"

@@ -101,7 +101,9 @@ function publish(): void {
     clock: {
       ...original.clock,
       paused: !motion,
-      hour: light === 'day' ? 10 : light === 'low' ? 17 : 19.3,
+      // Keep low sun visibly above twilight so its long directional shadows
+      // remain a useful comparison against the separate firelit dusk study.
+      hour: light === 'day' ? 10 : light === 'low' ? 16 : 19.3,
     },
     entities: original.entities.map((entity) => {
       if (berriesGathered && entity.appearance?.startsWith('study:berry-bush'))

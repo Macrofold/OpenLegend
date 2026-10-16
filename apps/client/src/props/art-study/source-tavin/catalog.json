@@ -37,48 +37,19 @@
       "recommended": false,
       "file": "tavin-field-tunic.glb",
       "bounds": {
-        "min": [
-          -0.343654,
-          0.0,
-          -0.261209
-        ],
-        "max": [
-          0.343654,
-          1.85,
-          0.261209
-        ]
+        "min": [-0.343654, 0.0, -0.261209],
+        "max": [0.343654, 1.85, 0.261209]
       },
       "triangles": 32462,
       "vertices": 16567,
       "textureSizes": [
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          512,
-          512
-        ]
+        [256, 256],
+        [256, 256],
+        [256, 256],
+        [256, 256],
+        [256, 256],
+        [256, 256],
+        [512, 512]
       ],
       "sha256": "77f2f777eee76903132c1fe948a03a00e529af9687056410d48865c3ef5dc6ce",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
@@ -94,48 +65,19 @@
       "recommended": true,
       "file": "tavin-work-vest.glb",
       "bounds": {
-        "min": [
-          -0.344119,
-          0.0,
-          -0.261562
-        ],
-        "max": [
-          0.344119,
-          1.85,
-          0.261562
-        ]
+        "min": [-0.344119, 0.0, -0.261562],
+        "max": [0.344119, 1.85, 0.261562]
       },
       "triangles": 33076,
       "vertices": 17271,
       "textureSizes": [
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          512,
-          512
-        ]
+        [256, 256],
+        [256, 256],
+        [256, 256],
+        [256, 256],
+        [256, 256],
+        [256, 256],
+        [512, 512]
       ],
       "sha256": "1b73386b865757b6e5a0fb6345866de8c5ff80ff1292c46bfd713e0653642cf2",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
@@ -151,48 +93,19 @@
       "recommended": false,
       "file": "tavin-travel-coat.glb",
       "bounds": {
-        "min": [
-          -0.339153,
-          0.0,
-          -0.257788
-        ],
-        "max": [
-          0.339153,
-          1.85,
-          0.257788
-        ]
+        "min": [-0.339153, 0.0, -0.257788],
+        "max": [0.339153, 1.85, 0.257788]
       },
       "triangles": 32732,
       "vertices": 17752,
       "textureSizes": [
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          512,
-          512
-        ]
+        [256, 256],
+        [256, 256],
+        [256, 256],
+        [256, 256],
+        [256, 256],
+        [256, 256],
+        [512, 512]
       ],
       "sha256": "d4cb14683639942a3083cc631954b3d3465f4c775da13f04c79359dd9fec0ea1",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
@@ -210,44 +123,18 @@
       "recommended": false,
       "file": "control-tavin.glb",
       "bounds": {
-        "min": [
-          -0.591333,
-          0.0,
-          -0.261209
-        ],
-        "max": [
-          0.591333,
-          1.85,
-          0.261209
-        ]
+        "min": [-0.591333, 0.0, -0.261209],
+        "max": [0.591333, 1.85, 0.261209]
       },
       "triangles": 44282,
       "vertices": 22341,
       "textureSizes": [
-        [
-          1024,
-          1024
-        ],
-        [
-          1024,
-          1024
-        ],
-        [
-          1024,
-          1024
-        ],
-        [
-          2048,
-          2048
-        ],
-        [
-          2048,
-          2048
-        ],
-        [
-          2048,
-          2048
-        ]
+        [1024, 1024],
+        [1024, 1024],
+        [1024, 1024],
+        [2048, 2048],
+        [2048, 2048],
+        [2048, 2048]
       ],
       "sha256": "9ab1312ef75385ac7f75a0ff417194d7195fd27eb4ceaa4ee1143ad197122287",
       "source": "MakeHuman CC0 anatomical base and Rehman Polanski source outfit; unpainted source control."

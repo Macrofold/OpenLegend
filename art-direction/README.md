@@ -4,7 +4,9 @@ This folder is the shared home for visual references, feedback, decisions, and f
 
 ## Start here
 
-**Agreed next delivery:** [Starting-scene art revision and revised comprehensive study strategy](../docs/projects/3d-pixel-art-first-scene-plan.md#proposed-replacement-study--october-16-2026) · [Implementation and experiment tasks](../docs/maintainers/3d-pixel-art.md#first-scene-delivery-and-experiment-tasks). Restyle the existing starting scene and retain its broader playtesting content; add demonstration subjects only where needed for a specific art comparison. The procedural study was rejected; its technical delivery does not establish art acceptance.
+**Current study:** [Source-based starting-world review and evidence](../docs/verification/source-based-starting-study.md) — 41 families, original mercenary, actual scene/light/motion comparisons and preserved alternatives. Creator acceptance remains open.
+
+**Agreed scope:** [Starting-scene art revision and revised comprehensive study strategy](../docs/projects/3d-pixel-art-first-scene-plan.md#proposed-replacement-study--october-16-2026) · [Implementation and experiment tasks](../docs/maintainers/3d-pixel-art.md#first-scene-delivery-and-experiment-tasks). Restyle the existing starting scene and retain its broader playtesting content; add demonstration subjects only where needed for a specific art comparison. The procedural study was rejected; its technical delivery does not establish art acceptance.
 
 **Realtime follow-up:** [Pixel rendering and lighting](research/3d-pixel-worlds/realtime-pixel-rendering.md) · [Texel splatting and shimmer](research/3d-pixel-worlds/texel-splatting.md) · [Animation tools and techniques](research/3d-pixel-worlds/animation-tools-and-techniques.md) · [All video links](research/3d-pixel-worlds/video-library.md). The t3ssel8r references shift the leading comparison toward renderer-driven art; painted textures remain useful rather than mandatory everywhere.
 

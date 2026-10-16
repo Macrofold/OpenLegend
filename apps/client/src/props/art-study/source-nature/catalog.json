@@ -35,32 +35,15 @@
       "recommended": false,
       "file": "broadleaf-open-boughs.glb",
       "bounds": {
-        "min": [
-          -1.424325,
-          0.0,
-          -1.512297
-        ],
-        "max": [
-          1.424325,
-          4.8,
-          1.512297
-        ]
+        "min": [-1.424325, 0.0, -1.512297],
+        "max": [1.424325, 4.8, 1.512297]
       },
       "triangles": 6265,
       "vertices": 9458,
       "textureSizes": [
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ]
+        [256, 256],
+        [256, 256],
+        [256, 256]
       ],
       "sha256": "1e6e82f5c3a76e145a55c7c2f2748f23597095240aabf9328936e715e8681160",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0; normalized and source normal maps removed for controlled light."
@@ -74,32 +57,15 @@
       "recommended": false,
       "file": "broadleaf-layered-crown.glb",
       "bounds": {
-        "min": [
-          -0.972758,
-          0.0,
-          -0.95492
-        ],
-        "max": [
-          0.972758,
-          4.8,
-          0.95492
-        ]
+        "min": [-0.972758, 0.0, -0.95492],
+        "max": [0.972758, 4.8, 0.95492]
       },
       "triangles": 4066,
       "vertices": 5900,
       "textureSizes": [
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ]
+        [256, 256],
+        [256, 256],
+        [256, 256]
       ],
       "sha256": "13efab7153ac40b02209de824a876cc10fc77574118a8af41629c4445043e518",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0; normalized and source normal maps removed for controlled light."
@@ -113,32 +79,15 @@
       "recommended": true,
       "file": "broadleaf-sheltered-crown.glb",
       "bounds": {
-        "min": [
-          -1.257564,
-          0.0,
-          -1.445449
-        ],
-        "max": [
-          1.257564,
-          4.8,
-          1.445449
-        ]
+        "min": [-1.257564, 0.0, -1.445449],
+        "max": [1.257564, 4.8, 1.445449]
       },
       "triangles": 3182,
       "vertices": 4873,
       "textureSizes": [
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ]
+        [256, 256],
+        [256, 256],
+        [256, 256]
       ],
       "sha256": "afe408f1437642fcc9f636352ea9fd24914e1854af026b0d0167b11e8e6b52c0",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0; normalized and source normal maps removed for controlled light."
@@ -154,32 +103,15 @@
       "recommended": false,
       "file": "control-library-broadleaf.glb",
       "bounds": {
-        "min": [
-          -1.257564,
-          0.0,
-          -1.445449
-        ],
-        "max": [
-          1.257564,
-          4.8,
-          1.445449
-        ]
+        "min": [-1.257564, 0.0, -1.445449],
+        "max": [1.257564, 4.8, 1.445449]
       },
       "triangles": 3182,
       "vertices": 4873,
       "textureSizes": [
-        [
-          1024,
-          1024
-        ],
-        [
-          2048,
-          2048
-        ],
-        [
-          2048,
-          2048
-        ]
+        [1024, 1024],
+        [2048, 2048],
+        [2048, 2048]
       ],
       "sha256": "f6a18fca62548bc59bf2cd31c88ca873b8eb76846f1287fbfeb92770953c6443",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/CommonTree_5.gltf \u00b7 SHA256 fb7061f2bf9fe850870b056431f8f66cd8fdeb443c90695c5efbcf1fe6876d53"

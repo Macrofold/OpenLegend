@@ -154,25 +154,12 @@
       "recommended": true,
       "file": "berry-bush-fruit-groups.glb",
       "bounds": {
-        "min": [
-          -0.635543,
-          0.0,
-          -0.652237
-        ],
-        "max": [
-          0.635543,
-          1.05,
-          0.652237
-        ]
+        "min": [-0.635543, 0.0, -0.652237],
+        "max": [0.635543, 1.05, 0.652237]
       },
       "triangles": 1908,
       "vertices": 2346,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "3eccbbc3273473cbea6fd0f5d35dae7c320101307ffb328e0731ca4711c8ea51",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details.",
       "depletedFile": "berry-bush-fruit-groups-empty.glb",
@@ -187,25 +174,12 @@
       "recommended": false,
       "file": "berry-bush-open-canes.glb",
       "bounds": {
-        "min": [
-          -0.525202,
-          0.0,
-          -0.57462
-        ],
-        "max": [
-          0.51709,
-          1.05,
-          0.573317
-        ]
+        "min": [-0.525202, 0.0, -0.57462],
+        "max": [0.51709, 1.05, 0.573317]
       },
       "triangles": 1620,
       "vertices": 2190,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "347fa2a801a8c175ce6a75e5e13425b55f6c4eb2703fab59b20d7a581a406661",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details.",
       "depletedFile": "berry-bush-open-canes-empty.glb",
@@ -220,25 +194,12 @@
       "recommended": false,
       "file": "berry-bush-low-thicket.glb",
       "bounds": {
-        "min": [
-          -0.782666,
-          0.034274,
-          -0.749258
-        ],
-        "max": [
-          0.793482,
-          0.853274,
-          0.750887
-        ]
+        "min": [-0.782666, 0.034274, -0.749258],
+        "max": [0.793482, 0.853274, 0.750887]
       },
       "triangles": 1908,
       "vertices": 2346,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "07e14a6663a8835cc8e2feba1457c407f71193cd14c11e4478c97fa990acebfc",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details.",
       "depletedFile": "berry-bush-low-thicket-empty.glb",
@@ -253,25 +214,12 @@
       "recommended": true,
       "file": "reeds-river-fan.glb",
       "bounds": {
-        "min": [
-          -0.460602,
-          0.0,
-          -0.476646
-        ],
-        "max": [
-          0.460602,
-          1.0,
-          0.476646
-        ]
+        "min": [-0.460602, 0.0, -0.476646],
+        "max": [0.460602, 1.0, 0.476646]
       },
       "triangles": 622,
       "vertices": 644,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "e317d9df2f5c743616faf56aabae5192689962b9e2ce2f32c2f69281a201b579",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -284,25 +232,12 @@
       "recommended": false,
       "file": "reeds-broad-leaves.glb",
       "bounds": {
-        "min": [
-          -0.238984,
-          0.0,
-          -0.265156
-        ],
-        "max": [
-          0.238984,
-          1.0,
-          0.265156
-        ]
+        "min": [-0.238984, 0.0, -0.265156],
+        "max": [0.238984, 1.0, 0.265156]
       },
       "triangles": 326,
       "vertices": 303,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "46886f902266bcb8d0063b3de9bbd1387f009b3037972d95b5103724f6c8586b",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -315,25 +250,12 @@
       "recommended": false,
       "file": "reeds-broken-stems.glb",
       "bounds": {
-        "min": [
-          -0.381009,
-          0.002588,
-          -0.476646
-        ],
-        "max": [
-          0.374379,
-          0.882588,
-          0.476646
-        ]
+        "min": [-0.381009, 0.002588, -0.476646],
+        "max": [0.374379, 0.882588, 0.476646]
       },
       "triangles": 622,
       "vertices": 644,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "5ffa2f2059dd565fb9f870f636509d0aaff4eee00febc4e7adbd29e81b2a46ff",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -346,25 +268,12 @@
       "recommended": true,
       "file": "dry-fiber-standing-stems.glb",
       "bounds": {
-        "min": [
-          -0.100373,
-          0.0,
-          -0.111365
-        ],
-        "max": [
-          0.100373,
-          0.42,
-          0.111365
-        ]
+        "min": [-0.100373, 0.0, -0.111365],
+        "max": [0.100373, 0.42, 0.111365]
       },
       "triangles": 326,
       "vertices": 303,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "ef8a4e6ab3bd4646fa11a70b476f7ab69b25e82adb0679113add71d7b2d4fc14",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -377,25 +286,12 @@
       "recommended": false,
       "file": "dry-fiber-loose-stems.glb",
       "bounds": {
-        "min": [
-          -0.193453,
-          0.0,
-          -0.200191
-        ],
-        "max": [
-          0.193453,
-          0.42,
-          0.200191
-        ]
+        "min": [-0.193453, 0.0, -0.200191],
+        "max": [0.193453, 0.42, 0.200191]
       },
       "triangles": 622,
       "vertices": 644,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "d390aa40ae0e65ded80cf21554caca97fb1d83f12bdbcfeff94919b22031a18d",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -408,25 +304,12 @@
       "recommended": false,
       "file": "dry-fiber-low-tuft.glb",
       "bounds": {
-        "min": [
-          -0.100564,
-          0.0,
-          -0.116052
-        ],
-        "max": [
-          0.100564,
-          0.42,
-          0.116052
-        ]
+        "min": [-0.100564, 0.0, -0.116052],
+        "max": [0.100564, 0.42, 0.116052]
       },
       "triangles": 155,
       "vertices": 153,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "170934e1cb0a89c0c3f5182c639facb29026ba117a9097a0c75b539cf2d37ba7",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -439,25 +322,12 @@
       "recommended": true,
       "file": "fallen-wood-loose-branches.glb",
       "bounds": {
-        "min": [
-          -0.394026,
-          0.0,
-          -0.167401
-        ],
-        "max": [
-          0.394026,
-          0.24,
-          0.167401
-        ]
+        "min": [-0.394026, 0.0, -0.167401],
+        "max": [0.394026, 0.24, 0.167401]
       },
       "triangles": 64,
       "vertices": 110,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "2a0f3f21ff81f0ae304555066a3eab4b7330629ca84274ff4281436408700458",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -470,25 +340,12 @@
       "recommended": false,
       "file": "fallen-wood-fallen-log.glb",
       "bounds": {
-        "min": [
-          -0.108028,
-          0.0,
-          -0.281449
-        ],
-        "max": [
-          0.108028,
-          0.24,
-          0.281449
-        ]
+        "min": [-0.108028, 0.0, -0.281449],
+        "max": [0.108028, 0.24, 0.281449]
       },
       "triangles": 88,
       "vertices": 148,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "4c78537660ee41458149e95811d7566a8b697cf1b077431aed724403a9f7c8d1",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -501,25 +358,12 @@
       "recommended": false,
       "file": "fallen-wood-forked-stump.glb",
       "bounds": {
-        "min": [
-          -0.092014,
-          0.0,
-          -0.092014
-        ],
-        "max": [
-          0.092014,
-          0.24,
-          0.092014
-        ]
+        "min": [-0.092014, 0.0, -0.092014],
+        "max": [0.092014, 0.24, 0.092014]
       },
       "triangles": 52,
       "vertices": 104,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "9d973e5693ccaf9e8cada5d50639c9b4efe879183d013ae584d9b372b3d73683",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -532,25 +376,12 @@
       "recommended": true,
       "file": "river-stones-loose-stones.glb",
       "bounds": {
-        "min": [
-          -0.170295,
-          0.0,
-          -0.146478
-        ],
-        "max": [
-          0.170295,
-          0.22,
-          0.146478
-        ]
+        "min": [-0.170295, 0.0, -0.146478],
+        "max": [0.170295, 0.22, 0.146478]
       },
       "triangles": 44,
       "vertices": 72,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "847ee1aebc37e3ec97ffe98986510ce904247987d4a74398db4f79e4d3bd4b9b",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -563,25 +394,12 @@
       "recommended": false,
       "file": "river-stones-flat-stone.glb",
       "bounds": {
-        "min": [
-          -0.3,
-          0.0,
-          -0.243144
-        ],
-        "max": [
-          0.3,
-          0.065495,
-          0.243144
-        ]
+        "min": [-0.3, 0.0, -0.243144],
+        "max": [0.3, 0.065495, 0.243144]
       },
       "triangles": 274,
       "vertices": 444,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "4327ab66c3bffe3ed4513798e63d0210d5d12db6afff9157d7f27453c029e51c",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -594,25 +412,12 @@
       "recommended": false,
       "file": "river-stones-split-stone.glb",
       "bounds": {
-        "min": [
-          -0.169036,
-          0.0,
-          -0.12206
-        ],
-        "max": [
-          0.169036,
-          0.22,
-          0.12206
-        ]
+        "min": [-0.169036, 0.0, -0.12206],
+        "max": [0.169036, 0.22, 0.12206]
       },
       "triangles": 120,
       "vertices": 198,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "9918a06192141ad4c929b964fba8010fd88c00f39faecbf33da514b6b65e9b61",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -625,25 +430,12 @@
       "recommended": true,
       "file": "marker-single-board.glb",
       "bounds": {
-        "min": [
-          -0.204065,
-          0.0,
-          -0.042036
-        ],
-        "max": [
-          0.204065,
-          0.9,
-          0.042036
-        ]
+        "min": [-0.204065, 0.0, -0.042036],
+        "max": [0.204065, 0.9, 0.042036]
       },
       "triangles": 28,
       "vertices": 54,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "be469e3f9ac4481e27bae94dbbdaa06a2716e5bf4a06d3e1a2d3c852d088ce92",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -656,25 +448,12 @@
       "recommended": false,
       "file": "marker-crossroads.glb",
       "bounds": {
-        "min": [
-          -0.209431,
-          0.0,
-          -0.042036
-        ],
-        "max": [
-          0.209431,
-          0.9,
-          0.042036
-        ]
+        "min": [-0.209431, 0.0, -0.042036],
+        "max": [0.209431, 0.9, 0.042036]
       },
       "triangles": 44,
       "vertices": 84,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "86aa870ed5297d74cbff86c872c0382eac31c43ee47898813810d599d47a833c",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -687,25 +466,12 @@
       "recommended": false,
       "file": "marker-worn-post.glb",
       "bounds": {
-        "min": [
-          -0.16453,
-          0.0,
-          -0.042036
-        ],
-        "max": [
-          0.170136,
-          0.693,
-          0.042036
-        ]
+        "min": [-0.16453, 0.0, -0.042036],
+        "max": [0.170136, 0.693, 0.042036]
       },
       "triangles": 28,
       "vertices": 54,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "e95b632f62d6e2cf000332e2aeaf965f0a194c9671dc73ace7955bebbe59d0b1",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -718,25 +484,12 @@
       "recommended": true,
       "file": "supplies-open-box.glb",
       "bounds": {
-        "min": [
-          -0.244898,
-          0.0,
-          -0.244898
-        ],
-        "max": [
-          0.244898,
-          0.6,
-          0.244898
-        ]
+        "min": [-0.244898, 0.0, -0.244898],
+        "max": [0.244898, 0.6, 0.244898]
       },
       "triangles": 156,
       "vertices": 300,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "ff0700e639eecdfe93332e08bc5f5f7bca047e2c2bf1846b1d3dd1de97ae95ec",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -749,25 +502,12 @@
       "recommended": false,
       "file": "supplies-wide-box.glb",
       "bounds": {
-        "min": [
-          -0.244898,
-          0.0,
-          -0.489796
-        ],
-        "max": [
-          0.244898,
-          0.6,
-          0.489796
-        ]
+        "min": [-0.244898, 0.0, -0.489796],
+        "max": [0.244898, 0.6, 0.489796]
       },
       "triangles": 156,
       "vertices": 300,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "995ae4a51bd70f4656a6e08150b7484e6c184fddefe80badda0d43b778d88aee",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -780,25 +520,12 @@
       "recommended": false,
       "file": "supplies-stave-barrel.glb",
       "bounds": {
-        "min": [
-          -0.20625,
-          0.0,
-          -0.20625
-        ],
-        "max": [
-          0.20625,
-          0.6,
-          0.20625
-        ]
+        "min": [-0.20625, 0.0, -0.20625],
+        "max": [0.20625, 0.6, 0.20625]
       },
       "triangles": 380,
       "vertices": 576,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "4de8c6e0cb244c7aaa9b31efd269988e6a881b24bd06bb0a995818b8daf923b0",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -811,25 +538,12 @@
       "recommended": true,
       "file": "bundle-rolled-wool.glb",
       "bounds": {
-        "min": [
-          -0.50814,
-          0.0,
-          -0.175
-        ],
-        "max": [
-          0.50814,
-          0.35,
-          0.175
-        ]
+        "min": [-0.50814, 0.0, -0.175],
+        "max": [0.50814, 0.35, 0.175]
       },
       "triangles": 124,
       "vertices": 240,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "bed1b8b3b757cc00eee8b618aa840a6e6ac06810a804d6fe8a95ad03b15a3a95",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -842,28 +556,14 @@
       "recommended": false,
       "file": "bundle-open-bedroll.glb",
       "bounds": {
-        "min": [
-          -0.435117,
-          0.0,
-          -0.851705
-        ],
-        "max": [
-          0.435117,
-          0.35,
-          0.851705
-        ]
+        "min": [-0.435117, 0.0, -0.851705],
+        "max": [0.435117, 0.35, 0.851705]
       },
       "triangles": 144,
       "vertices": 220,
       "textureSizes": [
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ]
+        [128, 128],
+        [128, 128]
       ],
       "sha256": "435519d2549a5ad595ef6625432289ad731804847a779542b46d5490a1f3f347",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
@@ -877,25 +577,12 @@
       "recommended": false,
       "file": "bundle-tied-bundle.glb",
       "bounds": {
-        "min": [
-          -0.599605,
-          0.0,
-          -0.175
-        ],
-        "max": [
-          0.599605,
-          0.308,
-          0.175
-        ]
+        "min": [-0.599605, 0.0, -0.175],
+        "max": [0.599605, 0.308, 0.175]
       },
       "triangles": 124,
       "vertices": 240,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "58785ee3e42b7617f7cbe2f1487d01c45a60fb92fd00c5d6b94da11cd59f58c3",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -908,32 +595,15 @@
       "recommended": true,
       "file": "workbench-open-bench.glb",
       "bounds": {
-        "min": [
-          -0.482927,
-          0.0,
-          -0.438438
-        ],
-        "max": [
-          0.482927,
-          0.85,
-          0.438438
-        ]
+        "min": [-0.482927, 0.0, -0.438438],
+        "max": [0.482927, 0.85, 0.438438]
       },
       "triangles": 236,
       "vertices": 427,
       "textureSizes": [
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ]
+        [128, 128],
+        [128, 128],
+        [128, 128]
       ],
       "sha256": "276451552155da4fa07f734f31d4e50aa59736b39702a78e4f3e9e97e469f7d9",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
@@ -947,32 +617,15 @@
       "recommended": false,
       "file": "workbench-long-table.glb",
       "bounds": {
-        "min": [
-          -0.605689,
-          0.0,
-          -0.372672
-        ],
-        "max": [
-          0.630603,
-          0.85,
-          0.372672
-        ]
+        "min": [-0.605689, 0.0, -0.372672],
+        "max": [0.630603, 0.85, 0.372672]
       },
       "triangles": 236,
       "vertices": 427,
       "textureSizes": [
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ]
+        [128, 128],
+        [128, 128],
+        [128, 128]
       ],
       "sha256": "dfa80184f6418f4e15b158098e78cdb4af6f93e6cf726d931d2274a62d9476ab",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
@@ -986,32 +639,15 @@
       "recommended": false,
       "file": "workbench-narrow-bench.glb",
       "bounds": {
-        "min": [
-          -0.395239,
-          0.0,
-          -0.394594
-        ],
-        "max": [
-          0.377444,
-          0.85,
-          0.394594
-        ]
+        "min": [-0.395239, 0.0, -0.394594],
+        "max": [0.377444, 0.85, 0.394594]
       },
       "triangles": 236,
       "vertices": 427,
       "textureSizes": [
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ],
-        [
-          128,
-          128
-        ]
+        [128, 128],
+        [128, 128],
+        [128, 128]
       ],
       "sha256": "34555b07e74e00a26874c4cef6e12b1ede62c44bb2b878287c2448873b25b985",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
@@ -1025,16 +661,8 @@
       "recommended": true,
       "file": "backpack-canvas-pack.glb",
       "bounds": {
-        "min": [
-          -0.2572,
-          -0.0,
-          -0.134312
-        ],
-        "max": [
-          0.2572,
-          0.48,
-          0.134312
-        ]
+        "min": [-0.2572, -0.0, -0.134312],
+        "max": [0.2572, 0.48, 0.134312]
       },
       "triangles": 1748,
       "vertices": 3503,
@@ -1051,16 +679,8 @@
       "recommended": false,
       "file": "backpack-broad-flap.glb",
       "bounds": {
-        "min": [
-          -0.329216,
-          -0.0,
-          -0.119794
-        ],
-        "max": [
-          0.329216,
-          0.48,
-          0.108536
-        ]
+        "min": [-0.329216, -0.0, -0.119794],
+        "max": [0.329216, 0.48, 0.108536]
       },
       "triangles": 1748,
       "vertices": 3503,
@@ -1077,16 +697,8 @@
       "recommended": false,
       "file": "backpack-slender-pack.glb",
       "bounds": {
-        "min": [
-          -0.20576,
-          -0.0,
-          -0.124633
-        ],
-        "max": [
-          0.20576,
-          0.48,
-          0.117128
-        ]
+        "min": [-0.20576, -0.0, -0.124633],
+        "max": [0.20576, 0.48, 0.117128]
       },
       "triangles": 1748,
       "vertices": 3503,
@@ -1103,25 +715,12 @@
       "recommended": true,
       "file": "shelter-open-awning.glb",
       "bounds": {
-        "min": [
-          -1.084165,
-          0.0,
-          -1.084624
-        ],
-        "max": [
-          1.084164,
-          1.9,
-          1.084624
-        ]
+        "min": [-1.084165, 0.0, -1.084624],
+        "max": [1.084164, 1.9, 1.084624]
       },
       "triangles": 136,
       "vertices": 272,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "6bdfa7d679422b0417de9eda226310c3e5e3598845fb4106f769701b9103f323",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -1134,25 +733,12 @@
       "recommended": false,
       "file": "shelter-canvas-tent.glb",
       "bounds": {
-        "min": [
-          -1.084165,
-          0.0,
-          -1.084624
-        ],
-        "max": [
-          1.084165,
-          1.9,
-          1.084624
-        ]
+        "min": [-1.084165, 0.0, -1.084624],
+        "max": [1.084165, 1.9, 1.084624]
       },
       "triangles": 148,
       "vertices": 296,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "15faa5b62feaaf0fdbb2d79582cc150e1855f848a66e05271fb8cc64567878ac",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
@@ -1165,25 +751,12 @@
       "recommended": false,
       "file": "shelter-framed-tent.glb",
       "bounds": {
-        "min": [
-          -1.084164,
-          0.0,
-          -1.084624
-        ],
-        "max": [
-          1.084164,
-          1.9,
-          1.084624
-        ]
+        "min": [-1.084164, 0.0, -1.084624],
+        "max": [1.084164, 1.9, 1.084624]
       },
       "triangles": 124,
       "vertices": 248,
-      "textureSizes": [
-        [
-          128,
-          128
-        ]
-      ],
+      "textureSizes": [[128, 128]],
       "sha256": "c155c61ad11858d5ce1d7d415ecdfb45d14d77dde884e454cf9c72cc1e06e658",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     }
@@ -1198,25 +771,12 @@
       "recommended": false,
       "file": "control-library-shelter.glb",
       "bounds": {
-        "min": [
-          -1.084165,
-          0.0,
-          -1.084624
-        ],
-        "max": [
-          1.084164,
-          1.9,
-          1.084624
-        ]
+        "min": [-1.084165, 0.0, -1.084624],
+        "max": [1.084164, 1.9, 1.084624]
       },
       "triangles": 136,
       "vertices": 272,
-      "textureSizes": [
-        [
-          512,
-          512
-        ]
-      ],
+      "textureSizes": [[512, 512]],
       "sha256": "161a99132a51d2451e9d4fb935642a112b55cb487958cdc18716ddbba9cd64a7",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/tent-canvas-half.glb \u00b7 SHA256 f6e12c0de280a9d5e93e27652a3e80ea620374865a6053dbe6fd5fb7eaca9d93"
     },
@@ -1229,16 +789,8 @@
       "recommended": false,
       "file": "control-library-backpack.glb",
       "bounds": {
-        "min": [
-          -0.2572,
-          -0.0,
-          -0.134312
-        ],
-        "max": [
-          0.2572,
-          0.48,
-          0.134312
-        ]
+        "min": [-0.2572, -0.0, -0.134312],
+        "max": [0.2572, 0.48, 0.134312]
       },
       "triangles": 1748,
       "vertices": 3503,
@@ -1255,25 +807,12 @@
       "recommended": false,
       "file": "control-library-workbench.glb",
       "bounds": {
-        "min": [
-          -0.482927,
-          0.0,
-          -0.438438
-        ],
-        "max": [
-          0.482927,
-          0.85,
-          0.438438
-        ]
+        "min": [-0.482927, 0.0, -0.438438],
+        "max": [0.482927, 0.85, 0.438438]
       },
       "triangles": 236,
       "vertices": 427,
-      "textureSizes": [
-        [
-          512,
-          512
-        ]
-      ],
+      "textureSizes": [[512, 512]],
       "sha256": "78af17b29f32de331549fd248ae2992cb67b4cb1b3e468c9687b5e6760c5e382",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/workbench.glb \u00b7 SHA256 bf72d2d535fa29127e5078a6c4c2023a74fa5cd7d02d91ad550e897e088e1dc8"
     },
@@ -1286,25 +825,12 @@
       "recommended": false,
       "file": "control-library-bundle.glb",
       "bounds": {
-        "min": [
-          -0.50814,
-          0.0,
-          -0.175
-        ],
-        "max": [
-          0.50814,
-          0.35,
-          0.175
-        ]
+        "min": [-0.50814, 0.0, -0.175],
+        "max": [0.50814, 0.35, 0.175]
       },
       "triangles": 124,
       "vertices": 240,
-      "textureSizes": [
-        [
-          512,
-          512
-        ]
-      ],
+      "textureSizes": [[512, 512]],
       "sha256": "8419223328956a90f9b814b589cee918afce3367cc0f6c57c5dc9c8c8c220e51",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/bedroll-packed.glb \u00b7 SHA256 980c222917e8564c68aa184af025d701612c7395e8ad8ef55b5b00785637a98f"
     },
@@ -1317,25 +843,12 @@
       "recommended": false,
       "file": "control-library-supplies.glb",
       "bounds": {
-        "min": [
-          -0.244898,
-          0.0,
-          -0.244898
-        ],
-        "max": [
-          0.244898,
-          0.6,
-          0.244898
-        ]
+        "min": [-0.244898, 0.0, -0.244898],
+        "max": [0.244898, 0.6, 0.244898]
       },
       "triangles": 156,
       "vertices": 300,
-      "textureSizes": [
-        [
-          512,
-          512
-        ]
-      ],
+      "textureSizes": [[512, 512]],
       "sha256": "83d5319ce3412bba1228b0cca4be53e5854b1dfd792e39873b85ee6f10b9b1d0",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/box-open.glb \u00b7 SHA256 2169e2291052ef9c378af4d6736df3fcff4ebca8fc39cbcdb4b7ad6accdff568"
     },
@@ -1348,25 +861,12 @@
       "recommended": false,
       "file": "control-library-marker.glb",
       "bounds": {
-        "min": [
-          -0.204065,
-          0.0,
-          -0.042036
-        ],
-        "max": [
-          0.204065,
-          0.9,
-          0.042036
-        ]
+        "min": [-0.204065, 0.0, -0.042036],
+        "max": [0.204065, 0.9, 0.042036]
       },
       "triangles": 28,
       "vertices": 54,
-      "textureSizes": [
-        [
-          512,
-          512
-        ]
-      ],
+      "textureSizes": [[512, 512]],
       "sha256": "bf8f89353710b7d08ccc6ca391036bbbf5704e78ad8bf497b4f893ca2aaa5eb9",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/signpost-single.glb \u00b7 SHA256 ca011990b4e1a48240bb78edeb4b6f3b1bf7265dcc6500a5268fc8de1a54262c"
     },
@@ -1379,25 +879,12 @@
       "recommended": false,
       "file": "control-library-river-stones.glb",
       "bounds": {
-        "min": [
-          -0.170295,
-          0.0,
-          -0.146478
-        ],
-        "max": [
-          0.170295,
-          0.22,
-          0.146478
-        ]
+        "min": [-0.170295, 0.0, -0.146478],
+        "max": [0.170295, 0.22, 0.146478]
       },
       "triangles": 44,
       "vertices": 72,
-      "textureSizes": [
-        [
-          512,
-          512
-        ]
-      ],
+      "textureSizes": [[512, 512]],
       "sha256": "dfc92b9fdbaf2b4df080a1df9ea22508c77e270c5e3df238313c07ac4e75e1a4",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/resource-stone.glb \u00b7 SHA256 c0ad4ecc890f99dc7c62da067824e31de0f0515de4437e73d8690136bd06e3c0"
     },
@@ -1410,25 +897,12 @@
       "recommended": false,
       "file": "control-library-fallen-wood.glb",
       "bounds": {
-        "min": [
-          -0.394026,
-          0.0,
-          -0.167401
-        ],
-        "max": [
-          0.394026,
-          0.24,
-          0.167401
-        ]
+        "min": [-0.394026, 0.0, -0.167401],
+        "max": [0.394026, 0.24, 0.167401]
       },
       "triangles": 64,
       "vertices": 110,
-      "textureSizes": [
-        [
-          512,
-          512
-        ]
-      ],
+      "textureSizes": [[512, 512]],
       "sha256": "aa01ebfc1eed559c151e931e308e6743bd8bfe976d3ae4134874580d07798310",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/kenney_survival-kit/Models/GLB format/resource-wood.glb \u00b7 SHA256 1d5f559da9432f89bd323731ef76b60372e0deb261a96d0da8d5af570c485d80"
     },
@@ -1441,25 +915,12 @@
       "recommended": false,
       "file": "control-library-dry-fiber.glb",
       "bounds": {
-        "min": [
-          -0.100373,
-          0.0,
-          -0.111365
-        ],
-        "max": [
-          0.100373,
-          0.42,
-          0.111365
-        ]
+        "min": [-0.100373, 0.0, -0.111365],
+        "max": [0.100373, 0.42, 0.111365]
       },
       "triangles": 326,
       "vertices": 303,
-      "textureSizes": [
-        [
-          512,
-          512
-        ]
-      ],
+      "textureSizes": [[512, 512]],
       "sha256": "fc8744a2c296992981825e5605a1b2932d2c5dfad77ad5561d8e225a7886a0fc",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/Grass_Common_Tall.gltf \u00b7 SHA256 783466c838163bf7da44e10675ace3851b8c9fb83322387125df7a080b05cd70"
     },
@@ -1472,25 +933,12 @@
       "recommended": false,
       "file": "control-library-reeds.glb",
       "bounds": {
-        "min": [
-          -0.460602,
-          0.0,
-          -0.476646
-        ],
-        "max": [
-          0.460602,
-          1.0,
-          0.476646
-        ]
+        "min": [-0.460602, 0.0, -0.476646],
+        "max": [0.460602, 1.0, 0.476646]
       },
       "triangles": 622,
       "vertices": 644,
-      "textureSizes": [
-        [
-          512,
-          512
-        ]
-      ],
+      "textureSizes": [[512, 512]],
       "sha256": "18ab9b63393f4d6d5871b22236dec65c766a2a7555dd58e8342e30ed5854c835",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/Grass_Wispy_Tall.gltf \u00b7 SHA256 a05e3ac05e43abbdb89c5b61134e367c7d33e285ff8d2a6e0a40180cb335af0b"
     },
@@ -1503,25 +951,12 @@
       "recommended": false,
       "file": "control-library-berry-bush.glb",
       "bounds": {
-        "min": [
-          -0.635543,
-          0.0,
-          -0.652237
-        ],
-        "max": [
-          0.635543,
-          1.05,
-          0.652237
-        ]
+        "min": [-0.635543, 0.0, -0.652237],
+        "max": [0.635543, 1.05, 0.652237]
       },
       "triangles": 900,
       "vertices": 1800,
-      "textureSizes": [
-        [
-          1024,
-          1024
-        ]
-      ],
+      "textureSizes": [[1024, 1024]],
       "sha256": "8b9ea04de5cebe35488ea9e928fc5d9c50ba555bf86840d69ef0d6dbc80aae50",
       "source": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/Bush_Common.gltf \u00b7 SHA256 77811fca92610cb254713d3d49d5029ab6cf13050c3afb61aa942786a7b2ca90"
     }

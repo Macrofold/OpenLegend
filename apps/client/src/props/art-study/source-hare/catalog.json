@@ -32,25 +32,12 @@
       "recommended": true,
       "file": "hare-field.glb",
       "bounds": {
-        "min": [
-          -0.103891,
-          0.0,
-          -0.210375
-        ],
-        "max": [
-          0.103891,
-          0.45,
-          0.212324
-        ]
+        "min": [-0.103891, 0.0, -0.210375],
+        "max": [0.103891, 0.45, 0.212324]
       },
       "triangles": 1532,
       "vertices": 1002,
-      "textureSizes": [
-        [
-          64,
-          64
-        ]
-      ],
+      "textureSizes": [[64, 64]],
       "sha256": "7e0aa770679fc3f83855998d45e53211943aa2e5254f39e79af9a17506472c43",
       "source": "Rabbit by CDmir/TinyWorlds, CC0; OpenLegend proportions and fixed coat design.",
       "animatedFile": "hare-field-motion.glb",
@@ -66,25 +53,12 @@
       "recommended": false,
       "file": "hare-russet.glb",
       "bounds": {
-        "min": [
-          -0.120141,
-          -0.0,
-          -0.221909
-        ],
-        "max": [
-          0.120141,
-          0.45,
-          0.223965
-        ]
+        "min": [-0.120141, -0.0, -0.221909],
+        "max": [0.120141, 0.45, 0.223965]
       },
       "triangles": 1532,
       "vertices": 1002,
-      "textureSizes": [
-        [
-          64,
-          64
-        ]
-      ],
+      "textureSizes": [[64, 64]],
       "sha256": "d7a2d99ebdf0cb3f69693bb2d9215cebb9b652f638e06c4eae24510deb6d3fa7",
       "source": "Rabbit by CDmir/TinyWorlds, CC0; OpenLegend proportions and fixed coat design.",
       "animatedFile": "hare-russet-motion.glb",
@@ -100,25 +74,12 @@
       "recommended": false,
       "file": "hare-winter.glb",
       "bounds": {
-        "min": [
-          -0.133889,
-          0.0,
-          -0.229182
-        ],
-        "max": [
-          0.133889,
-          0.45,
-          0.231306
-        ]
+        "min": [-0.133889, 0.0, -0.229182],
+        "max": [0.133889, 0.45, 0.231306]
       },
       "triangles": 1532,
       "vertices": 1002,
-      "textureSizes": [
-        [
-          64,
-          64
-        ]
-      ],
+      "textureSizes": [[64, 64]],
       "sha256": "90684bf4fa70b905a1a63c89a14fa7f559c2c202cecbe64ebf77b8ee55fbae48",
       "source": "Rabbit by CDmir/TinyWorlds, CC0; OpenLegend proportions and fixed coat design.",
       "animatedFile": "hare-winter-motion.glb",
@@ -136,16 +97,8 @@
       "recommended": false,
       "file": "control-library-hare.glb",
       "bounds": {
-        "min": [
-          -0.112594,
-          0.0,
-          -0.232423
-        ],
-        "max": [
-          0.112594,
-          0.45,
-          0.232423
-        ]
+        "min": [-0.112594, 0.0, -0.232423],
+        "max": [0.112594, 0.45, 0.232423]
       },
       "triangles": 1700,
       "vertices": 893,
