@@ -96,7 +96,7 @@ function publish(): void {
         id: 'study-thin-sword',
         name: 'Thin sword · display comparison',
         appearance: 'study:sword-broad-tip',
-        kind: 'item',
+        kind: 'item-pile',
         status: 'Display fixture · no gameplay contents or actions',
         actions: [],
         position: {

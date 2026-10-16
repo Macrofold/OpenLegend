@@ -1,0 +1,108 @@
+{
+  "group": "source-wolf",
+  "sourceFile": "art-direction/assets/source-study/source-wolf.blend",
+  "sourceSha256": "ee071d076e173016433ce21e4369f1309915ab2b7836af7e8515df074dd9f354",
+  "recipe": {
+    "path": "scripts/prepare-animal-study.py",
+    "sha256": "d3d5d8b5c2166b0468e4ea08140b47e319329728e477e8da701d831b485f5a00"
+  },
+  "helpers": {
+    "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
+    "prepare-source-study.py": "324ec9807b07c217cde15734d66d55d4453ea22564fe26e479d79021cdb32a70",
+    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
+  },
+  "sources": [
+    {
+      "url": "https://quaternius.com/packs/ultimateanimatedanimals.html",
+      "license": "CC0",
+      "file": "Wolf.blend",
+      "sha256": "fe31c3829dd2a8b9dfedb2e5cb656939a1d525ebd535a62434d2d25a4399cb9e"
+    }
+  ],
+  "assets": [
+    {
+      "id": "wolf-field-grey",
+      "family": "library-wolf",
+      "label": "Wolf",
+      "variant": "field-grey",
+      "description": "Field grey: retained source anatomy with deliberate coat regions. Source idle/walk clips.",
+      "recommended": true,
+      "file": "wolf-field-grey.glb",
+      "bounds": {
+        "min": [
+          -0.189565,
+          0.0,
+          -0.946805
+        ],
+        "max": [
+          0.189565,
+          0.960008,
+          0.946805
+        ]
+      },
+      "triangles": 1962,
+      "vertices": 983,
+      "textureSizes": [],
+      "sha256": "349cb78330dd4e17dd6a1387ca7157e76babc083670dc32405bdf314ab5d98a8",
+      "source": "Quaternius Ultimate Animated Animals, CC0; coat grouping and proportions by OpenLegend; source Idle and Walk clips retained.",
+      "animatedFile": "wolf-field-grey-motion.glb",
+      "animatedSha256": "e8c4a9713027137cfd03fc170fddbd1686d04996d01d80c13169a8f2b03acca6"
+    },
+    {
+      "id": "wolf-full-ruff",
+      "family": "library-wolf",
+      "label": "Wolf",
+      "variant": "full-ruff",
+      "description": "Full ruff: retained source anatomy with deliberate coat regions. Source idle/walk clips.",
+      "recommended": false,
+      "file": "wolf-full-ruff.glb",
+      "bounds": {
+        "min": [
+          -0.204848,
+          0.0,
+          -0.946805
+        ],
+        "max": [
+          0.204848,
+          0.959703,
+          0.946805
+        ]
+      },
+      "triangles": 1962,
+      "vertices": 983,
+      "textureSizes": [],
+      "sha256": "5d55d79213c8b7813c8ce26c4c0accf551a0b73be51b0929d7310ea307e56f9c",
+      "source": "Quaternius Ultimate Animated Animals, CC0; coat grouping and proportions by OpenLegend; source Idle and Walk clips retained.",
+      "animatedFile": "wolf-full-ruff-motion.glb",
+      "animatedSha256": "16f0533e8eb7b8bd36d49061b5f38ddfff70ff0d60918a89caac1295f1d498d4"
+    },
+    {
+      "id": "wolf-dark-saddle",
+      "family": "library-wolf",
+      "label": "Wolf",
+      "variant": "dark-saddle",
+      "description": "Dark saddle: retained source anatomy with deliberate coat regions. Source idle/walk clips.",
+      "recommended": false,
+      "file": "wolf-dark-saddle.glb",
+      "bounds": {
+        "min": [
+          -0.189565,
+          0.0,
+          -0.946805
+        ],
+        "max": [
+          0.189565,
+          0.960008,
+          0.946805
+        ]
+      },
+      "triangles": 1962,
+      "vertices": 983,
+      "textureSizes": [],
+      "sha256": "8c4379aae009b2a438b51849324bb8921066b1bb76e4230b86c001aad59b0ad7",
+      "source": "Quaternius Ultimate Animated Animals, CC0; coat grouping and proportions by OpenLegend; source Idle and Walk clips retained.",
+      "animatedFile": "wolf-dark-saddle-motion.glb",
+      "animatedSha256": "4b794855a3abbe113cf156073d722510d3358661fee8aafbf3324f4b53795cd8"
+    }
+  ]
+}

@@ -15,14 +15,29 @@ PALETTE={'Steel':'788787','LightSteel':'bac1ad','DarkSteel':'414d50','Gold':'a47
          'LightRed':'965b47','Red':'784438','White':'b6ad85'}
 FAMILIES={
     'library-sword':('Sword',[
-        ('Sword','straight-crossguard',1.10,'Straight blade, distinct guard and wrapped grip; restrained steel facets.',True),
-        ('Sword_2','broad-tip',1.10,'Broader shaped tip and changed guard; compare the blade silhouette at the same length.',False),
+        ('Sword','straight-crossguard',1.10,'Straight blade, distinct guard and wrapped grip; restrained steel facets.',False),
+        ('Sword_2','broad-tip',1.10,'Broader shaped tip and changed guard; compare the blade silhouette at the same length.',True),
         ('Claymore','long-grip',1.35,'Longer two-handed source with a longer grip and darker fittings. An equipment study, not newly granted gear.',False),
     ]),
     'library-shield':('Shield',[
         ('Shield_Round','round-boards',.76,'Round timber shield with a clear central boss, rim and board seams.',True),
         ('Shield_Round_2','reinforced-round',.76,'Different rim and reinforcement layout on a round timber form.',False),
         ('Shield_Heater','heater',.84,'Tapered shield form with a clear point, framed timber and restrained metal edging.',False),
+    ]),
+    'library-knife':('Knife',[
+        ('Dagger','utility',.32,'Short practical blade, restrained guard and a clear wooden grip.',True),
+        ('Dagger_2','leaf-point',.32,'Different leaf-shaped blade and handle layout at the same useful length.',False),
+        ('Sword','long-knife',.42,'Shortened straight source with a narrow blade; compare grip-to-blade balance.',False),
+    ]),
+    'library-bow':('Bow',[
+        ('Bow_Wooden','field-bow',1.25,'Bent timber limbs, quiet grip and a visible string; follows the existing field-bow idea.',True),
+        ('Bow_Wooden2','curved-limbs',1.25,'Different limb curve and reinforcement, compared at equal height.',False),
+        ('Bow_Golden','bound-grip',1.25,'Restrained timber adaptation of the shaped source with distinct grip fittings.',False),
+    ]),
+    'library-arrow':('Arrow',[
+        ('Arrow','bone-point',.72,'Pale point and paired fiber fletching on a straight shaft.',True),
+        ('Arrow','broad-fletching',.72,'Wider source feather geometry for readability at distance.',False),
+        ('Arrow','slender-shaft',.72,'Slimmer shaft and quieter fletching for a lighter outline.',False),
     ]),
 }
 
@@ -45,7 +60,12 @@ def prepare(source):
                     bpy.context.collection.objects.link(obj);objects.append(obj)
                     for slot in obj.material_slots:
                         name=slot.material.name.split('.')[0]
-                        slot.material=materials[name]
+                        # The Claymore uses red material slots on its blade.
+                        # Preserve material regions but author steel, not red iron.
+                        slot.material=materials['LightSteel' if name=='LightRed' else 'Steel' if name=='Red' else name]
+                    if family=='library-arrow' and index:
+                        obj.scale.x*=1.28 if index==1 else .78
+                        obj.scale.y*=1.28 if index==1 else .78
                     # Source facets are intentional bevels; preserve their normals.
             helper.normalize(objects,height)
             asset,placement=export_asset(objects,output,label.lower()+'-'+variant,family,label,variant,description,recommended,

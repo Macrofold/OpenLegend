@@ -1,14 +1,14 @@
 {
   "group": "source-equipment",
   "sourceFile": "art-direction/assets/source-study/source-equipment.blend",
-  "sourceSha256": "0207623c58d753ca00d62cec283b32b4be4c285f5f7347d11f3d43b52adaabee",
+  "sourceSha256": "200ede9dc9a6ae5a1b783c9c254bf590d7ec46e5d7799c7b41727148086d23ff",
   "recipe": {
     "path": "scripts/prepare-equipment-study.py",
-    "sha256": "6176e618ad623297a7ac0baaa21c806d5da4ed6320d0d23164254af6f01ff083"
+    "sha256": "236d4cb38483bc5c21598758ad3108a82480ee2cb2edeb1b4cdb4fbf358b1a98"
   },
   "helpers": {
     "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
-    "prepare-source-study.py": "d3ad4571f248e3074f7261e22c841eb442bd7cfcf0ff52ef9caee79f3bda5ff2",
+    "prepare-source-study.py": "324ec9807b07c217cde15734d66d55d4453ea22564fe26e479d79021cdb32a70",
     "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
   },
   "sources": [
@@ -41,6 +41,42 @@
         {
           "file": "Shield_Heater.blend",
           "sha256": "b2ae189a8f638a422584dd48d14ef8df6d438760a26d4d19279c3408ae827c0d"
+        },
+        {
+          "file": "Dagger.blend",
+          "sha256": "688b2a6efbec58d23075603c1a82d93c0fef8dae5b8400a42939901c76312286"
+        },
+        {
+          "file": "Dagger_2.blend",
+          "sha256": "6e9cb6c6ff586f760a84ff9c1ae4a5935d70b9e4401fabdd707f9786806a571c"
+        },
+        {
+          "file": "Sword.blend",
+          "sha256": "1f3dff7c20ee40d02d0a40f709a2fe999d2e762b421568c5d9a51246f5be4a2e"
+        },
+        {
+          "file": "Bow_Wooden.blend",
+          "sha256": "df4c3977b9f291ce19472b82101df31b959ebdf1f4829d9a8622327b67b6899a"
+        },
+        {
+          "file": "Bow_Wooden2.blend",
+          "sha256": "6a4ea73f295805531dbdb68782c630df24a915d1d6e3fe7d324918cc7ae54b98"
+        },
+        {
+          "file": "Bow_Golden.blend",
+          "sha256": "12305370a25d0fb34b7755cbe79b97190a798c483887b485d53c5db5fb03c01c"
+        },
+        {
+          "file": "Arrow.blend",
+          "sha256": "aa3a3fd7dadcde3692baf653e056673bb99bdd72aef753f06165e3c1fcc298dd"
+        },
+        {
+          "file": "Arrow.blend",
+          "sha256": "aa3a3fd7dadcde3692baf653e056673bb99bdd72aef753f06165e3c1fcc298dd"
+        },
+        {
+          "file": "Arrow.blend",
+          "sha256": "aa3a3fd7dadcde3692baf653e056673bb99bdd72aef753f06165e3c1fcc298dd"
         }
       ]
     }
@@ -52,7 +88,7 @@
       "label": "Sword",
       "variant": "straight-crossguard",
       "description": "Straight blade, distinct guard and wrapped grip; restrained steel facets.",
-      "recommended": true,
+      "recommended": false,
       "file": "sword-straight-crossguard.glb",
       "bounds": {
         "min": [
@@ -78,7 +114,7 @@
       "label": "Sword",
       "variant": "broad-tip",
       "description": "Broader shaped tip and changed guard; compare the blade silhouette at the same length.",
-      "recommended": false,
+      "recommended": true,
       "file": "sword-broad-tip.glb",
       "bounds": {
         "min": [
@@ -121,7 +157,7 @@
       "triangles": 1033,
       "vertices": 533,
       "textureSizes": [],
-      "sha256": "c114ab2f33b0f919fd57199e3fd0af0a1689b4b1ade6f0956be5a3470ee585d9",
+      "sha256": "09c0ac3a8869f6701909c7d67f8487fb84720372655646ff2ddd58a5dbcec7be",
       "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
     },
     {
@@ -200,6 +236,240 @@
       "vertices": 1070,
       "textureSizes": [],
       "sha256": "21fa26efc31307da2036db0ccfc4059041e7165769ce0f39768b77c98d684770",
+      "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
+    },
+    {
+      "id": "knife-utility",
+      "family": "library-knife",
+      "label": "Knife",
+      "variant": "utility",
+      "description": "Short practical blade, restrained guard and a clear wooden grip.",
+      "recommended": true,
+      "file": "knife-utility.glb",
+      "bounds": {
+        "min": [
+          -0.034226,
+          0.0,
+          -0.012776
+        ],
+        "max": [
+          0.034226,
+          0.32,
+          0.012776
+        ]
+      },
+      "triangles": 726,
+      "vertices": 365,
+      "textureSizes": [],
+      "sha256": "1f46f8741b86ab284f0c277d6da7f4e2cd7d13685d9acb1f829ef269dde44520",
+      "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
+    },
+    {
+      "id": "knife-leaf-point",
+      "family": "library-knife",
+      "label": "Knife",
+      "variant": "leaf-point",
+      "description": "Different leaf-shaped blade and handle layout at the same useful length.",
+      "recommended": false,
+      "file": "knife-leaf-point.glb",
+      "bounds": {
+        "min": [
+          -0.03318,
+          0.0,
+          -0.013208
+        ],
+        "max": [
+          0.03318,
+          0.32,
+          0.013208
+        ]
+      },
+      "triangles": 736,
+      "vertices": 370,
+      "textureSizes": [],
+      "sha256": "f8f6e80f445eec72f336de9d6a03c24b0568606a82da6784641915ab8923bfb0",
+      "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
+    },
+    {
+      "id": "knife-long-knife",
+      "family": "library-knife",
+      "label": "Knife",
+      "variant": "long-knife",
+      "description": "Shortened straight source with a narrow blade; compare grip-to-blade balance.",
+      "recommended": false,
+      "file": "knife-long-knife.glb",
+      "bounds": {
+        "min": [
+          -0.043996,
+          0.0,
+          -0.010057
+        ],
+        "max": [
+          0.043996,
+          0.42,
+          0.010057
+        ]
+      },
+      "triangles": 872,
+      "vertices": 438,
+      "textureSizes": [],
+      "sha256": "f878fdb96d8dc4c6196c90a306903ad6e0d86c0f5fcd8f7a453ce6688d492fa5",
+      "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
+    },
+    {
+      "id": "bow-field-bow",
+      "family": "library-bow",
+      "label": "Bow",
+      "variant": "field-bow",
+      "description": "Bent timber limbs, quiet grip and a visible string; follows the existing field-bow idea.",
+      "recommended": true,
+      "file": "bow-field-bow.glb",
+      "bounds": {
+        "min": [
+          -0.168754,
+          0.0,
+          -0.027983
+        ],
+        "max": [
+          0.168754,
+          1.25,
+          0.027983
+        ]
+      },
+      "triangles": 728,
+      "vertices": 370,
+      "textureSizes": [],
+      "sha256": "a6cb72cdcc4548ebba8278d09e523b3cc08ef60db4348adae515db24a8d9de20",
+      "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
+    },
+    {
+      "id": "bow-curved-limbs",
+      "family": "library-bow",
+      "label": "Bow",
+      "variant": "curved-limbs",
+      "description": "Different limb curve and reinforcement, compared at equal height.",
+      "recommended": false,
+      "file": "bow-curved-limbs.glb",
+      "bounds": {
+        "min": [
+          -0.168754,
+          0.0,
+          -0.027983
+        ],
+        "max": [
+          0.168754,
+          1.25,
+          0.027983
+        ]
+      },
+      "triangles": 664,
+      "vertices": 338,
+      "textureSizes": [],
+      "sha256": "35d132105cdf112da878681ff957b13358458eef161c1e4da4e2a853ad041908",
+      "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
+    },
+    {
+      "id": "bow-bound-grip",
+      "family": "library-bow",
+      "label": "Bow",
+      "variant": "bound-grip",
+      "description": "Restrained timber adaptation of the shaped source with distinct grip fittings.",
+      "recommended": false,
+      "file": "bow-bound-grip.glb",
+      "bounds": {
+        "min": [
+          -0.181649,
+          0.0,
+          -0.027983
+        ],
+        "max": [
+          0.181649,
+          1.25,
+          0.027983
+        ]
+      },
+      "triangles": 776,
+      "vertices": 394,
+      "textureSizes": [],
+      "sha256": "c50b11025869106ab1bbe5b2145d5b03b47f090edca57be18f6d1c370344a07f",
+      "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
+    },
+    {
+      "id": "arrow-bone-point",
+      "family": "library-arrow",
+      "label": "Arrow",
+      "variant": "bone-point",
+      "description": "Pale point and paired fiber fletching on a straight shaft.",
+      "recommended": true,
+      "file": "arrow-bone-point.glb",
+      "bounds": {
+        "min": [
+          -0.414198,
+          0.0,
+          -4.13044
+        ],
+        "max": [
+          0.414198,
+          0.72,
+          4.13044
+        ]
+      },
+      "triangles": 224,
+      "vertices": 120,
+      "textureSizes": [],
+      "sha256": "b1370d93b0b7b5e0c21e79a900d2852e50e674c5f35380d716182ac3638971ca",
+      "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
+    },
+    {
+      "id": "arrow-broad-fletching",
+      "family": "library-arrow",
+      "label": "Arrow",
+      "variant": "broad-fletching",
+      "description": "Wider source feather geometry for readability at distance.",
+      "recommended": false,
+      "file": "arrow-broad-fletching.glb",
+      "bounds": {
+        "min": [
+          -0.530173,
+          0.0,
+          -5.286963
+        ],
+        "max": [
+          0.530173,
+          0.72,
+          5.286963
+        ]
+      },
+      "triangles": 224,
+      "vertices": 120,
+      "textureSizes": [],
+      "sha256": "811dc2e08f7c1d03ae4e74032760c8d141739ffe453fae32bbf246827bdc2651",
+      "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
+    },
+    {
+      "id": "arrow-slender-shaft",
+      "family": "library-arrow",
+      "label": "Arrow",
+      "variant": "slender-shaft",
+      "description": "Slimmer shaft and quieter fletching for a lighter outline.",
+      "recommended": false,
+      "file": "arrow-slender-shaft.glb",
+      "bounds": {
+        "min": [
+          -0.323074,
+          0.0,
+          -3.221743
+        ],
+        "max": [
+          0.323074,
+          0.72,
+          3.221743
+        ]
+      },
+      "triangles": 224,
+      "vertices": 120,
+      "textureSizes": [],
+      "sha256": "17335f9ac5bca9e59e9de3d34db02ef3e08210c8f45172583eb2d9fdea5a5a8d",
       "source": "Quaternius Modular Weapons Pack, CC0. OpenLegend normalizes scale and authors restrained steel, timber and leather colors; source topology retained."
     }
   ]

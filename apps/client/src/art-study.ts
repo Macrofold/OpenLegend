@@ -2,6 +2,7 @@ import * as pc from 'playcanvas';
 import { ArtMaterials, candidateArt } from './art-treatment';
 import { BundledModels, destroyModelApplication } from './bundled-models';
 import { CAMERA_FOV_DEGREES, initialCamera } from './world-camera';
+import { installLocomotion } from './model-animation';
 import studyLayout from './props/art-study/layout.json';
 import './art-study.css';
 
@@ -13,6 +14,7 @@ interface StudyAsset {
   description: string;
   recommended: boolean;
   file: string;
+  animatedFile?: string;
   bounds: { min: number[]; max: number[] };
   triangles: number;
   vertices: number;
@@ -24,7 +26,12 @@ interface Catalog {
   sourceFile: string;
   assets: StudyAsset[];
 }
-type Choice = StudyAsset & { url: string; sourceUrl?: string; historical: boolean };
+type Choice = StudyAsset & {
+  url: string;
+  motionUrl?: string;
+  sourceUrl?: string;
+  historical: boolean;
+};
 const catalogs = import.meta.glob<Catalog>('./props/art-study/*/catalog.json', {
   eager: true,
   import: 'default',
@@ -47,6 +54,9 @@ const choices: Choice[] = Object.values(catalogs).flatMap((catalog) =>
     ...asset,
     historical: !catalog.group.startsWith('source-'),
     url: modelUrls[`./props/art-study/${catalog.group}/${asset.file}`]!,
+    motionUrl: asset.animatedFile
+      ? modelUrls[`./props/art-study/${catalog.group}/${asset.animatedFile}`]
+      : undefined,
     sourceUrl: sourceUrls[`../../../${catalog.sourceFile}`],
   })),
 );
@@ -83,6 +93,7 @@ export class ArtStudy {
   private readonly materials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private readonly stageMaterial: pc.StandardMaterial;
   private roots: pc.Entity[] = [];
+  private animations: pc.AnimComponent[] = [];
   private readonly bounds: pc.Vec3[] = [];
   private displayed: Choice[] = [];
   private anchors: { node: pc.Entity; label: HTMLElement; height: number }[] = [];
@@ -253,6 +264,14 @@ export class ArtStudy {
         this.yaw += Math.min(dt, 0.1) * 0.22;
         this.placeCamera();
       }
+      const pose = element<HTMLSelectElement>('pose').value;
+      if (pose !== 'still' && !this.reduce.matches && this.animations.length) {
+        for (const anim of this.animations) {
+          if (anim.baseLayer?.activeState !== pose) anim.baseLayer?.play(pose);
+          anim.update(Math.min(dt, 0.1));
+        }
+        this.invalidate();
+      }
       if (this.labelsDirty) {
         this.labels();
         this.labelsDirty = false;
@@ -306,7 +325,7 @@ export class ArtStudy {
   async show(): Promise<void> {
     if (this.disposed) return;
     const epoch = ++this.epoch,
-      composition = ['composition', 'calibration'].includes(subject.value);
+      composition = ['composition', 'calibration', 'cast'].includes(subject.value);
     const compare = !composition && element<HTMLSelectElement>('versions').value === 'compare';
     let selected = composition
       ? choices.filter(
@@ -314,7 +333,10 @@ export class ArtStudy {
             asset.recommended &&
             (subject.value === 'composition'
               ? asset.historical
-              : ['mercenary', 'ada'].includes(asset.family)),
+              : (subject.value === 'cast'
+                  ? ['mercenary', 'ada', 'mike', 'mara', 'tavin', 'kest', 'orin']
+                  : ['mercenary', 'ada']
+                ).includes(asset.family)),
         )
       : choices.filter((asset) => subjectKey(asset) === subject.value);
     if (!compare && !composition) selected = selected.filter((asset) => asset.recommended);
@@ -332,15 +354,17 @@ export class ArtStudy {
     element('status').textContent = 'Loading fixed artwork…';
     try {
       const resources = await Promise.all(
-        selected.map((asset) => this.models.load(asset.label, asset.url)),
+        selected.map((asset) => this.models.load(asset.label, asset.motionUrl ?? asset.url)),
       );
       if (this.disposed || epoch !== this.epoch) return;
+      const animations: pc.AnimComponent[] = [];
       const fresh = resources.map((resource, index) => {
         const artwork = resource.instantiateRenderEntity({
           castShadows: true,
           receiveShadows: true,
         });
         this.prepare(artwork);
+        if (selected[index]!.motionUrl) animations.push(installLocomotion(artwork, resource));
         // A single exported mesh may carry its own origin offset. Position a
         // parent so its original model transform (and ground contact) survives.
         const placement = new pc.Entity(selected[index]!.id, this.app);
@@ -349,6 +373,7 @@ export class ArtStudy {
       });
       for (const root of this.roots) root.destroy();
       this.roots = fresh;
+      this.animations = animations;
       this.bounds.length = 0;
       this.displayed = selected;
       element('labels').replaceChildren();
@@ -370,7 +395,7 @@ export class ArtStudy {
       fresh.forEach((node, index) => {
         const asset = selected[index]!;
         const at = composition
-          ? subject.value === 'calibration'
+          ? subject.value !== 'composition'
             ? [(index - (fresh.length - 1) / 2) * 1.2, 0]
             : (layout[asset.family]?.position ?? [index * 1.5, 0])
           : [(index - (fresh.length - 1) / 2) * spacing, 0];

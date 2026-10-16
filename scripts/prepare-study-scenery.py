@@ -42,7 +42,7 @@ def add(data,appearance,path):
                 normals=(np.linalg.inv(matrix[:3,:3]).T@normals.T).T
                 normals/=np.linalg.norm(normals,axis=1)[:,None]
                 source=model['materials'][primitive['material']];pbr=source.get('pbrMetallicRoughness',{})
-                key='study-'+hashlib.sha256((str(path)+str(primitive['material'])).encode()).hexdigest()[:12]
+                key='study-'+hashlib.sha256((str(path.relative_to(ROOT))+str(primitive['material'])).encode()).hexdigest()[:12]
                 material={'baseColor':pbr.get('baseColorFactor',[1,1,1,1]),'alphaCutoff':source.get('alphaCutoff',.5) if source.get('alphaMode')=='MASK' else 0,'doubleSided':source.get('doubleSided',False),'canopyNormals':any(word in source.get('name','').lower() for word in ['leav','leaf','grass','fern'])}
                 if 'baseColorTexture' in pbr:
                     pixels,digest=image(pbr['baseColorTexture']['index'])
@@ -76,7 +76,7 @@ if __name__=='__main__':
         data['materials'].update(source['materials']);data['textures'].update(source['textures'])
     data['variants']['study']=dict(data['variants']['quaternius'])
     add(data,'tree-broadleaf',ROOT/'apps/client/src/props/art-study/source-nature/broadleaf-sheltered-crown.glb')
-    for appearance,file in [('tree-conifer','conifer-tiered-boughs'),('tree-birch','birch-slender-birch'),('woodland-shrub','shrub-rounded-thicket'),('meadow-grass','grass-broad-tuft')]:
+    for appearance,file in [('tree-conifer','conifer-sheltered-pine'),('tree-birch','birch-slender-birch'),('woodland-shrub','shrub-rounded-thicket'),('meadow-grass','grass-broad-tuft')]:
         add(data,appearance,ROOT/'apps/client/src/props/art-study/source-vegetation'/(file+'.glb'))
     data['variants']={'study':data['variants']['study']}
     outputs=reader.write_variants(data,output)

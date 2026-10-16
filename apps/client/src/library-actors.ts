@@ -10,6 +10,7 @@ import { WorldPresentation, type RevealBinding } from './world-presentation';
 import { ShadowMaterial } from './shadow-material';
 import { personStencil, setVisibilityStencil } from './visibility-stencil';
 import { studyAssets } from './study-assets';
+import { installLocomotion } from './model-animation';
 
 interface ActorSource {
   url: string;
@@ -150,31 +151,7 @@ export class LibraryActor {
     const material = this.meshes[0]?.material;
     if (!(material instanceof pc.StandardMaterial)) throw new Error('Actor mesh missing.');
     this.material = material;
-    node.addComponent('anim', { activate: true });
-    const anim = node.anim;
-    if (!anim) throw new Error('Actor animation component missing.');
-    anim.loadStateGraph({
-      layers: [
-        {
-          name: 'Body',
-          states: [{ name: 'START' }, { name: 'Idle', loop: true }, { name: 'Run', loop: true }],
-          transitions: [{ from: 'START', to: 'Idle' }],
-        },
-      ],
-      parameters: {},
-    });
-    for (const name of ['Idle', 'Run']) {
-      const track = resource.animations
-        .map((asset) => asset.resource)
-        .find(
-          (track): track is pc.AnimTrack => track instanceof pc.AnimTrack && track.name === name,
-        );
-      if (!track) throw new Error('Actor clip missing: ' + name);
-      anim.assignAnimation(name, track);
-    }
-    anim.playing = false;
-    anim.baseLayer?.play('Idle');
-    anim.update(0);
+    installLocomotion(node, resource);
     this.binding = this.presentation.addReveal(node, material, false, true, this.meshes);
     this.state = 'ready';
     // Loading never publishes appearance. The ordinary scene update admits the

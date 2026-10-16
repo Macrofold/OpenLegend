@@ -1,0 +1,108 @@
+{
+  "group": "source-stag",
+  "sourceFile": "art-direction/assets/source-study/source-stag.blend",
+  "sourceSha256": "3cb98c3bf2a9a36ae349c0a0da936eb9793464ea5110e7564ce14210ccea89a1",
+  "recipe": {
+    "path": "scripts/prepare-animal-study.py",
+    "sha256": "d3d5d8b5c2166b0468e4ea08140b47e319329728e477e8da701d831b485f5a00"
+  },
+  "helpers": {
+    "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
+    "prepare-source-study.py": "324ec9807b07c217cde15734d66d55d4453ea22564fe26e479d79021cdb32a70",
+    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
+  },
+  "sources": [
+    {
+      "url": "https://quaternius.com/packs/ultimateanimatedanimals.html",
+      "license": "CC0",
+      "file": "Stag.blend",
+      "sha256": "09cc635a05452d149baadd285ee1ea2cfe5ea1e7e0a6067f2ea147e612c50c3c"
+    }
+  ],
+  "assets": [
+    {
+      "id": "stag-branching-antlers",
+      "family": "library-stag",
+      "label": "Stag",
+      "variant": "branching-antlers",
+      "description": "Branching antlers: retained source anatomy with deliberate coat regions. Source idle/walk clips.",
+      "recommended": true,
+      "file": "stag-branching-antlers.glb",
+      "bounds": {
+        "min": [
+          -0.459756,
+          -0.0,
+          -0.876938
+        ],
+        "max": [
+          0.459756,
+          1.95,
+          0.876937
+        ]
+      },
+      "triangles": 3670,
+      "vertices": 1845,
+      "textureSizes": [],
+      "sha256": "51b49c316637c526078592c022a123853c049e9641bbe6045a2f7df06024ae89",
+      "source": "Quaternius Ultimate Animated Animals, CC0; coat grouping and proportions by OpenLegend; source Idle and Walk clips retained.",
+      "animatedFile": "stag-branching-antlers-motion.glb",
+      "animatedSha256": "6598f0dae60db9ea7b27c5fd08e94a2556c3019a7c37884bf483c9d72caa1859"
+    },
+    {
+      "id": "stag-slender-stag",
+      "family": "library-stag",
+      "label": "Stag",
+      "variant": "slender-stag",
+      "description": "Slender stag: retained source anatomy with deliberate coat regions. Source idle/walk clips.",
+      "recommended": false,
+      "file": "stag-slender-stag.glb",
+      "bounds": {
+        "min": [
+          -0.432171,
+          -0.0,
+          -0.876912
+        ],
+        "max": [
+          0.432171,
+          1.95,
+          0.876937
+        ]
+      },
+      "triangles": 3670,
+      "vertices": 1845,
+      "textureSizes": [],
+      "sha256": "ca3cb834f6ec24d80ac478feee3fe16a6113b335011cb1221e05101bf3e38d3c",
+      "source": "Quaternius Ultimate Animated Animals, CC0; coat grouping and proportions by OpenLegend; source Idle and Walk clips retained.",
+      "animatedFile": "stag-slender-stag-motion.glb",
+      "animatedSha256": "8f466612262ee75dc69b508d140ce3912abd1e59c7ee09f6c51b25e58962b8a1"
+    },
+    {
+      "id": "stag-dark-mantle",
+      "family": "library-stag",
+      "label": "Stag",
+      "variant": "dark-mantle",
+      "description": "Dark mantle: retained source anatomy with deliberate coat regions. Source idle/walk clips.",
+      "recommended": false,
+      "file": "stag-dark-mantle.glb",
+      "bounds": {
+        "min": [
+          -0.459756,
+          -0.0,
+          -0.876938
+        ],
+        "max": [
+          0.459756,
+          1.95,
+          0.876937
+        ]
+      },
+      "triangles": 3670,
+      "vertices": 1845,
+      "textureSizes": [],
+      "sha256": "3c99be8bd699e9eed4c27d5220ab5b07cf87e70024b798a1dc0d79e5f01cbdbf",
+      "source": "Quaternius Ultimate Animated Animals, CC0; coat grouping and proportions by OpenLegend; source Idle and Walk clips retained.",
+      "animatedFile": "stag-dark-mantle-motion.glb",
+      "animatedSha256": "c39f55cfadbcbd507f5676f534bcf43c9f18bd36b1f565381f26ac3dd175819d"
+    }
+  ]
+}

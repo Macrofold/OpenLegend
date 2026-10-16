@@ -1,0 +1,123 @@
+{
+  "group": "source-bird",
+  "sourceFile": "art-direction/assets/source-study/source-bird.blend",
+  "sourceSha256": "e2c23f5004d9b609cf08da36a935405d18197b828fa27e3b050c9ab3bb33cbb5",
+  "recipe": {
+    "path": "scripts/prepare-animal-study.py",
+    "sha256": "79ef7afe4be2a82ab9277e3a31d49fe52fb48508779b8bf8d16da5d186e98ba9"
+  },
+  "helpers": {
+    "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
+    "prepare-source-study.py": "324ec9807b07c217cde15734d66d55d4453ea22564fe26e479d79021cdb32a70",
+    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
+  },
+  "sources": [
+    {
+      "url": "https://opengameart.org/content/bird-yellow-billed-shrike",
+      "license": "CC0",
+      "file": "bird_shrike1.blend",
+      "sha256": "968bb9cc5aeb99c6da55b8dc752c4d1b6f8010e1939d4b23dcde23b1dee253cf"
+    }
+  ],
+  "assets": [
+    {
+      "id": "bird-grey-wing",
+      "family": "library-bird",
+      "label": "Woodland bird",
+      "variant": "grey-wing",
+      "description": "Grey wing: retained source anatomy with deliberate coat regions. Authored study idle/walk clips; no new native action.",
+      "recommended": true,
+      "file": "bird-grey-wing.glb",
+      "bounds": {
+        "min": [
+          -0.132391,
+          0.0,
+          -0.145976
+        ],
+        "max": [
+          0.132391,
+          0.23,
+          0.145976
+        ]
+      },
+      "triangles": 996,
+      "vertices": 534,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "3520086674c2a76d53c396558e7465537c87ec29e226b9b184d7cc956e58fc27",
+      "source": "Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and ground-motion study by OpenLegend.",
+      "animatedFile": "bird-grey-wing-motion.glb",
+      "animatedSha256": "e8ee4e64962f6b73131ded19018d4e9e0e980860a574f13deb806404849c7133"
+    },
+    {
+      "id": "bird-warm-bib",
+      "family": "library-bird",
+      "label": "Woodland bird",
+      "variant": "warm-bib",
+      "description": "Warm bib: retained source anatomy with deliberate coat regions. Authored study idle/walk clips; no new native action.",
+      "recommended": false,
+      "file": "bird-warm-bib.glb",
+      "bounds": {
+        "min": [
+          -0.142717,
+          0.000561,
+          -0.146451
+        ],
+        "max": [
+          0.139018,
+          0.244837,
+          0.1463
+        ]
+      },
+      "triangles": 996,
+      "vertices": 534,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "c68d01d91c630ba1a000585052d2d8fa8420b45cfa0a9e01b86361b6488e0a44",
+      "source": "Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and ground-motion study by OpenLegend.",
+      "animatedFile": "bird-warm-bib-motion.glb",
+      "animatedSha256": "6f5ffc87f19e174ee3fa7e66a5bec012f8e91f733d1b8b7744e99d4e71a8800d"
+    },
+    {
+      "id": "bird-wing-bars",
+      "family": "library-bird",
+      "label": "Woodland bird",
+      "variant": "wing-bars",
+      "description": "Wing bars: retained source anatomy with deliberate coat regions. Authored study idle/walk clips; no new native action.",
+      "recommended": false,
+      "file": "bird-wing-bars.glb",
+      "bounds": {
+        "min": [
+          -0.132391,
+          0.0,
+          -0.145976
+        ],
+        "max": [
+          0.132391,
+          0.23,
+          0.145976
+        ]
+      },
+      "triangles": 996,
+      "vertices": 534,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "d0a80e3d8921540f3d834cd8640a7907d35e4ad0950218a5679eabf6e2757611",
+      "source": "Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and ground-motion study by OpenLegend.",
+      "animatedFile": "bird-wing-bars-motion.glb",
+      "animatedSha256": "78c890b5b25a863cdedc37bfde978c24171fdcf4aabec166ce13596c6ed46ed5"
+    }
+  ]
+}

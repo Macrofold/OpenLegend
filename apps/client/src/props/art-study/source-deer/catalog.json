@@ -1,0 +1,108 @@
+{
+  "group": "source-deer",
+  "sourceFile": "art-direction/assets/source-study/source-deer.blend",
+  "sourceSha256": "95b003a6a5a49557b7cfe59359c2f06472815b16a8316b6d11ee158d44dff959",
+  "recipe": {
+    "path": "scripts/prepare-animal-study.py",
+    "sha256": "d3d5d8b5c2166b0468e4ea08140b47e319329728e477e8da701d831b485f5a00"
+  },
+  "helpers": {
+    "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
+    "prepare-source-study.py": "324ec9807b07c217cde15734d66d55d4453ea22564fe26e479d79021cdb32a70",
+    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
+  },
+  "sources": [
+    {
+      "url": "https://quaternius.com/packs/ultimateanimatedanimals.html",
+      "license": "CC0",
+      "file": "Deer.blend",
+      "sha256": "e0561b31230bb10434fdaf1755a140dcffce80f1d1e36d5d674f922976d801a4"
+    }
+  ],
+  "assets": [
+    {
+      "id": "deer-woodland-doe",
+      "family": "library-deer",
+      "label": "Deer",
+      "variant": "woodland-doe",
+      "description": "Woodland doe: retained source anatomy with deliberate coat regions. Source idle/walk clips.",
+      "recommended": true,
+      "file": "deer-woodland-doe.glb",
+      "bounds": {
+        "min": [
+          -0.247482,
+          0.0,
+          -0.745903
+        ],
+        "max": [
+          0.247482,
+          1.45,
+          0.745903
+        ]
+      },
+      "triangles": 2098,
+      "vertices": 1051,
+      "textureSizes": [],
+      "sha256": "7fcb6e18f438009cec0d57f9b3cf93420cc12dc9ca9bb55051f30abc8dd3b2dc",
+      "source": "Quaternius Ultimate Animated Animals, CC0; coat grouping and proportions by OpenLegend; source Idle and Walk clips retained.",
+      "animatedFile": "deer-woodland-doe-motion.glb",
+      "animatedSha256": "3f1459370a3c97b10f012e893f6a3dd4002458c8c48e10e5818cb92ae616d3ea"
+    },
+    {
+      "id": "deer-slender-doe",
+      "family": "library-deer",
+      "label": "Deer",
+      "variant": "slender-doe",
+      "description": "Slender doe: retained source anatomy with deliberate coat regions. Source idle/walk clips.",
+      "recommended": false,
+      "file": "deer-slender-doe.glb",
+      "bounds": {
+        "min": [
+          -0.232633,
+          0.0,
+          -0.745843
+        ],
+        "max": [
+          0.232633,
+          1.45,
+          0.745903
+        ]
+      },
+      "triangles": 2098,
+      "vertices": 1051,
+      "textureSizes": [],
+      "sha256": "9903c887337dbcb6153fd2fd8988b5fca692455673fbae3089927953038e5172",
+      "source": "Quaternius Ultimate Animated Animals, CC0; coat grouping and proportions by OpenLegend; source Idle and Walk clips retained.",
+      "animatedFile": "deer-slender-doe-motion.glb",
+      "animatedSha256": "615c450527ea61ebd7c4c65c45cd46fea5dcf0060348bae73f721d085aa9c552"
+    },
+    {
+      "id": "deer-dark-back",
+      "family": "library-deer",
+      "label": "Deer",
+      "variant": "dark-back",
+      "description": "Dark back: retained source anatomy with deliberate coat regions. Source idle/walk clips.",
+      "recommended": false,
+      "file": "deer-dark-back.glb",
+      "bounds": {
+        "min": [
+          -0.247482,
+          0.0,
+          -0.745903
+        ],
+        "max": [
+          0.247482,
+          1.45,
+          0.745903
+        ]
+      },
+      "triangles": 2098,
+      "vertices": 1051,
+      "textureSizes": [],
+      "sha256": "a8a527df9bd5e8abf7322e376feb9d05170003ad4c8f129246cb173970c2361d",
+      "source": "Quaternius Ultimate Animated Animals, CC0; coat grouping and proportions by OpenLegend; source Idle and Walk clips retained.",
+      "animatedFile": "deer-dark-back-motion.glb",
+      "animatedSha256": "09bb0639da1754f1cb0f039b51ddb524cfc11f8b27172ff6bc1d39d4abffc735"
+    }
+  ]
+}

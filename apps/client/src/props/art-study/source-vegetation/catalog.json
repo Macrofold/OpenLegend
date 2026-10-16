@@ -1,10 +1,10 @@
 {
   "group": "source-vegetation",
   "sourceFile": "art-direction/assets/source-study/source-vegetation.blend",
-  "sourceSha256": "1a41f208fd342d5d5b7e52a33bbeca5ab945bd47d5d3c915a764d059e4e15fb0",
+  "sourceSha256": "1b4b32bd0c0a8a42f2a3464675c91c7261aee22edb43a7bfe8829bc58593bf39",
   "recipe": {
     "path": "scripts/prepare-nature-study.py",
-    "sha256": "86c53c229f20968472c80ef47d3be481b7bda8c0c218abeea27032a15693d256"
+    "sha256": "abb7c8c73c103825de6586b965524400339e9e99c4badc1e4a97f4ea896b5602"
   },
   "helpers": {
     "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
@@ -98,7 +98,7 @@
       "label": "Conifer",
       "variant": "tiered-boughs",
       "description": "Source-authored Pine_1 structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. tiered boughs.",
-      "recommended": true,
+      "recommended": false,
       "file": "conifer-tiered-boughs.glb",
       "bounds": {
         "min": [
@@ -176,7 +176,7 @@
       "label": "Conifer",
       "variant": "sheltered-pine",
       "description": "Source-authored Pine_5 structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. sheltered pine.",
-      "recommended": false,
+      "recommended": true,
       "file": "conifer-sheltered-pine.glb",
       "bounds": {
         "min": [
@@ -215,7 +215,7 @@
       "label": "Pale woodland tree",
       "variant": "forked-trunk",
       "description": "Source-authored CommonTree_2 structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. forked trunk.",
-      "recommended": true,
+      "recommended": false,
       "file": "birch-forked-trunk.glb",
       "bounds": {
         "min": [
@@ -254,7 +254,7 @@
       "label": "Pale woodland tree",
       "variant": "slender-birch",
       "description": "Source-authored CommonTree_3 structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. slender birch.",
-      "recommended": false,
+      "recommended": true,
       "file": "birch-slender-birch.glb",
       "bounds": {
         "min": [
@@ -389,7 +389,7 @@
           128
         ]
       ],
-      "sha256": "5fbcdf14534d7cb9fbf2e33dd089adcba646e2d9925d069aa740a915186551a6",
+      "sha256": "a3e70f3064440fbfa45e8a0ec17be3fe71215981d610a2af41dc460c5aaf7fc5",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps."
     },
     {

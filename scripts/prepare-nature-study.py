@@ -73,14 +73,14 @@ def main(libraries):
       vertex=obj.data.loops[loop].vertex_index;p=obj.matrix_world@obj.data.vertices[vertex].co
       if foliage:
        palette=['314b42','425b47','61734f','81905c'] if family=='library-conifer' else ['354d3e','526b43','72854d','97a165']
-       h=palette[min(3,max(0,int(p.z/height*3.5)))];rgb=np.array([int(h[i:i+2],16)/255 for i in (0,2,4)])
+       h='c9c5a2' if 'flower' in name else palette[min(3,max(0,int(p.z/height*3.5)))];rgb=np.array([int(h[i:i+2],16)/255 for i in (0,2,4)])
        rgb=np.where(rgb<=.04045,rgb/12.92,((rgb+.055)/1.055)**2.4)
        colors.data[loop if colors.domain=='CORNER' else vertex].color=(*rgb,1)
        n=Vector((p.x*.55,p.y*.55,(p.z-height*.55)*.3+.7)).normalized()
        normals[loop]=(normal_inverse@n).normalized()
     obj.data.normals_split_custom_set(normals)
    asset,placement=export_asset(objects,output,family.replace('library-','')+'-'+variant,family,label,variant,
-     'Source-authored '+file+' structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. '+variant.replace('-',' ')+'.',index==0,
+     'Source-authored '+file+' structure; broad moss/olive or stone groups, restrained bark and controlled canopy normals. '+variant.replace('-',' ')+'.',index==({'library-conifer':2,'library-birch':1}.get(family,0)),
      'Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend material groups and selected crown proportions; no source normal maps.')
    placement.location.x=index*(height+1);placement.location.y=row*7
    assets.append(asset);sources.append({'file':path.name,'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
