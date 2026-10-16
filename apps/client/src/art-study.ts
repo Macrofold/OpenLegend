@@ -35,7 +35,7 @@ const modelUrls = import.meta.glob<string>('./props/art-study/**/*.glb', {
   import: 'default',
 });
 const sourceUrls = import.meta.glob<string>(
-  '../../../art-direction/assets/representative-study/*.blend',
+  '../../../art-direction/assets/{representative-study,source-study}/*.blend',
   {
     eager: true,
     query: '?url',
@@ -62,6 +62,8 @@ for (const family of new Set(choices.map((choice) => choice.family))) {
 }
 const requested = new URLSearchParams(location.hash.slice(1)).get('subject');
 if (requested && choices.some((choice) => choice.family === requested)) subject.value = requested;
+else if (!requested && choices.some((choice) => choice.family === 'mercenary'))
+  subject.value = 'mercenary';
 
 /** Finite trusted asset inspection, independent of saves, world actions and AI. */
 export class ArtStudy {
@@ -72,6 +74,7 @@ export class ArtStudy {
   private readonly observer: ResizeObserver;
   private readonly camera: pc.Entity;
   private readonly sun: pc.Entity;
+  private readonly frame: pc.CameraFrame;
   private readonly materials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private readonly stageMaterial: pc.StandardMaterial;
   private roots: pc.Entity[] = [];
@@ -112,6 +115,10 @@ export class ArtStudy {
       farClip: 500,
     });
     this.app.root.addChild(this.camera);
+    this.frame = new pc.CameraFrame(this.app, this.camera.camera!);
+    this.frame.rendering.toneMapping = pc.TONEMAP_ACES;
+    this.frame.rendering.samples = 4;
+    this.frame.update();
     this.sun = new pc.Entity('Shared study daylight', this.app);
     this.sun.addComponent('light', {
       type: 'directional',
@@ -148,6 +155,7 @@ export class ArtStudy {
     on(element('light'), 'change', () => this.light());
     on(element('projection'), 'change', () => this.placeCamera());
     on(element('shading'), 'change', () => this.shading());
+    on(element('pixel-treatment'), 'change', () => this.placeCamera());
     for (const [id, yaw] of [
       ['front', 0],
       ['quarter', 0.55],
@@ -420,12 +428,6 @@ export class ArtStudy {
     );
   }
   private resize(): void {
-    const rect = this.canvas.parentElement!.getBoundingClientRect();
-    this.app.setCanvasResolution(
-      pc.RESOLUTION_FIXED,
-      Math.max(1, Math.round(rect.width)),
-      Math.max(1, Math.round(rect.height)),
-    );
     this.placeCamera();
   }
   private invalidate(): void {
@@ -511,6 +513,26 @@ export class ArtStudy {
       target.z + Math.cos(this.yaw) * h,
     );
     this.camera.lookAt(target);
+    const rect = this.canvas.parentElement!.getBoundingClientRect();
+    const density = element<HTMLSelectElement>('pixel-treatment').value;
+    // A metre of art retains the same number of samples during inspection zoom.
+    // Resolve coverage before nearest enlargement, as the original viewer did.
+    // This is a rendering comparison, not proof of stable rotating surface cells.
+    const wantedHeight = density === 'native' ? rect.height : 2 * height * Number(density);
+    const scale = Math.max(1, rect.height / Math.max(1, wantedHeight));
+    const width = Math.max(1, Math.round(rect.width / scale));
+    const pixelsHigh = Math.max(1, Math.round(rect.height / scale));
+    if (this.app.graphicsDevice.width !== width || this.app.graphicsDevice.height !== pixelsHigh) {
+      this.app.setCanvasResolution(pc.RESOLUTION_FIXED, width, pixelsHigh);
+      this.frame.update();
+    }
+    const scenePass = this.camera.camera!.renderPasses.find(
+      (pass): pass is pc.FramePassCameraFrame => pass instanceof pc.FramePassCameraFrame,
+    );
+    if (scenePass) scenePass.renderTargetScale = density === 'native' ? 1 : 2;
+    this.canvas.style.imageRendering = density === 'native' ? 'auto' : 'pixelated';
+    element('pixel-evidence').textContent =
+      `${width} × ${pixelsHigh} image · ${density === 'native' ? 'full display resolution' : `${density} samples per metre at the focus plane`} · ${framing === 'game' ? 'current game camera' : 'inspection framing'}`;
     this.invalidate();
   }
   private labels(): void {
@@ -583,6 +605,7 @@ export class ArtStudy {
     for (const material of this.materials.values()) material.destroy();
     this.materials.clear();
     this.stageMaterial.destroy();
+    this.frame.destroy();
     element('labels').replaceChildren();
     destroyModelApplication(this.app, [this.models.destroy()]);
     this.canvas.dataset.ready = 'false';

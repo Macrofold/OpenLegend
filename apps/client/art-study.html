@@ -9,11 +9,11 @@
     <main class="study">
       <header class="study-header">
         <div>
-          <p class="eyebrow">Open Legend · Blender asset study</p>
-          <h1>One woodland, many small stories</h1>
+          <p class="eyebrow">Open Legend · Source-based art study</p>
+          <h1>A woodland worth inhabiting</h1>
           <p>
-            Shaped 3D forms with fixed painted pixels. Compare materials, faces and silhouettes from
-            every side.
+            The original mercenary and real library sources, compared at the same scale and light.
+            Earlier rejected studies remain available as controls.
           </p>
         </div>
         <a href="/">Return to game</a>
@@ -22,7 +22,7 @@
         <label
           >Subject
           <select id="subject">
-            <option value="composition">Selected assets together</option>
+            <option value="composition">Earlier composition · rejected</option>
           </select></label
         >
         <label
@@ -69,6 +69,17 @@
         ><button id="zoom-out" type="button" aria-label="Zoom out">Zoom out</button>
         <button id="turn" type="button" aria-pressed="false">Turntable</button>
         <button id="labels-toggle" type="button" aria-pressed="true">Labels</button>
+      </section>
+      <section class="study-controls" aria-label="Pixel comparison">
+        <label
+          >Pixel treatment
+          <select id="pixel-treatment">
+            <option value="48">Fixed detail · 48 pixels per metre</option>
+            <option value="64">Finer detail · 64 pixels per metre</option>
+            <option value="native">Smooth 3D control</option>
+          </select>
+        </label>
+        <p id="pixel-evidence" aria-live="polite"></p>
       </section>
       <section class="study-stage" aria-label="Interactive 3D comparison">
         <canvas

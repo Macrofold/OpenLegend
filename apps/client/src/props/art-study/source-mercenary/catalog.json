@@ -1,0 +1,83 @@
+{
+  "group": "source-mercenary",
+  "sourceFile": "art-direction/assets/source-study/source-mercenary.blend",
+  "sourceSha256": "ad35b5f33c2403e423e536d311471820544c4d764afabbf8b477386daf5fdf20",
+  "recipe": {
+    "path": "scripts/prepare-source-study.py",
+    "sha256": "74e39e82f3b56cd80dba18533cfd56b42d6086f6a162465e99d652ba2189cdb0"
+  },
+  "sources": [
+    {
+      "path": "/Users/mzw/Documents/ChatGPT/OpenLegend-art/mercenary/study/assets/mercenary.glb",
+      "sha256": "56805f557675bc87dce8512203dcd925fa63a6b6e725706f6e985114173ea9bd"
+    }
+  ],
+  "assets": [
+    {
+      "id": "mercenary-restored",
+      "family": "mercenary",
+      "label": "Peacock Mercenary",
+      "variant": "restored",
+      "description": "Earlier concept-derived model and 29-color surface preparation. Unchanged face and original gold mantle; reference control.",
+      "recommended": true,
+      "file": "mercenary-restored.glb",
+      "bounds": {
+        "min": [-0.484672, 0.0, -0.370804],
+        "max": [0.484672, 2.035, 0.370805]
+      },
+      "triangles": 42426,
+      "vertices": 46860,
+      "textureSizes": [
+        [256, 256],
+        [256, 256],
+        [2048, 2048]
+      ],
+      "sha256": "608a78e79797457a3033b32be09cbfad2c1fd138b47435619c7d3431c938fc33",
+      "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
+    },
+    {
+      "id": "mercenary-tailored",
+      "family": "mercenary",
+      "label": "Peacock Mercenary",
+      "variant": "tailored",
+      "description": "Original face and anatomy with quiet mail, broader quilt seams and wrapped linen. Original cape retained.",
+      "recommended": false,
+      "file": "mercenary-tailored.glb",
+      "bounds": {
+        "min": [-0.484672, 0.0, -0.370804],
+        "max": [0.484672, 2.035, 0.370805]
+      },
+      "triangles": 42426,
+      "vertices": 46860,
+      "textureSizes": [
+        [512, 512],
+        [1024, 1536],
+        [2048, 2048]
+      ],
+      "sha256": "5033cb2c3ab766b5301dfd999bea733970e683e57f4c978886e1ef0530df5b92",
+      "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
+    },
+    {
+      "id": "mercenary-embroidered",
+      "family": "mercenary",
+      "label": "Peacock Mercenary",
+      "variant": "embroidered",
+      "description": "Original face with open mail groups, deliberate seams and paired peacock embroidery. Cloth remains a continuous lined surface.",
+      "recommended": false,
+      "file": "mercenary-embroidered.glb",
+      "bounds": {
+        "min": [-0.484672, 0.0, -0.370804],
+        "max": [0.484672, 2.035, 0.370805]
+      },
+      "triangles": 42426,
+      "vertices": 46860,
+      "textureSizes": [
+        [512, 512],
+        [1024, 1536],
+        [2048, 2048]
+      ],
+      "sha256": "5f17a68040748105a12bed001386749cc9546e075141d1c136d49da00b443e66",
+      "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
+    }
+  ]
+}

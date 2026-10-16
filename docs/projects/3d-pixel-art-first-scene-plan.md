@@ -14,7 +14,9 @@ The documentation snapshot was `/Users/mzw/.codex/worktrees/415f/OpenLegend`, `c
 
 ## Proposed replacement study — October 16, 2026
 
-**Strategy revised 2026-10-16 00:49 EDT.** This replaces the earlier mercenary/tree/chest outline with a complete study of the existing starting world. It is a proposed execution strategy under Mike's established art requirements and permission to make reversible working selections. This planning pass creates no replacement art, changes no game defaults and claims no new visual or performance qualification. The earlier assets, sources, comparisons and rejection evidence remain preserved.
+**Strategy revised 2026-10-16 00:49 EDT; implementation authorized October 16.** Mike explicitly requested full implementation of this strategy without stopping for optional feedback. This replaces the earlier mercenary/tree/chest outline with a complete study of the existing starting world. The earlier assets, sources, comparisons and rejection evidence remain preserved. Working choices are autonomous; final creator acceptance remains distinct from technical delivery.
+
+Implementation starts from `codex/starting-scene-pixel-art@d74cbcf7dc6bae4dcd466c62e2598101d15e8bb9` in `/Users/mzw/.codex/worktrees/415f/OpenLegend`, retaining the explicit local base `codex/mercenary-original-refinement@1438ea13749d4acc7a852843d8677f687dbdd931` in `https://github.com/Macrofold/OpenLegend.git`. No branch/worktree switch or reconciliation was necessary. The existing 800–2,000-line estimate, staged completion criteria and performance answers below govern execution; source preparation and inspector comparison are first, before adoption into gameplay.
 
 ### Critique of the preceding plan
 

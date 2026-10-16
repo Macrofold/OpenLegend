@@ -1,0 +1,91 @@
+{
+  "group": "source-nature",
+  "sourceFile": "art-direction/assets/source-study/source-nature.blend",
+  "sourceSha256": "ab79d9899b548011c704aaf250e35a171fcb97e1e71c13fde154e06ef0b0ae29",
+  "recipe": {
+    "path": "scripts/prepare-source-study.py",
+    "sha256": "74e39e82f3b56cd80dba18533cfd56b42d6086f6a162465e99d652ba2189cdb0"
+  },
+  "sources": [
+    {
+      "path": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/CommonTree_1.gltf",
+      "sha256": "b51cdea6545edb51d102dd6c27caafe62aa75e3c328ac8f9039f4e7bfd690bfa"
+    },
+    {
+      "path": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/CommonTree_4.gltf",
+      "sha256": "ddf0e8837705702871d3f03de8cf7aeed61ad4bf8ee92052b6f95bdd771297b6"
+    },
+    {
+      "path": "/private/tmp/openlegend-library-art-20261015/environment/quaternius-standard/glTF/CommonTree_5.gltf",
+      "sha256": "fb7061f2bf9fe850870b056431f8f66cd8fdeb443c90695c5efbcf1fe6876d53"
+    }
+  ],
+  "assets": [
+    {
+      "id": "broadleaf-open-boughs",
+      "family": "library-broadleaf",
+      "label": "Library broadleaf",
+      "variant": "open-boughs",
+      "description": "Actual Quaternius branching and leaf-card geometry. Crown structure comparison; source textures retained for material review.",
+      "recommended": false,
+      "file": "broadleaf-open-boughs.glb",
+      "bounds": {
+        "min": [-1.424325, 0.0, -1.512297],
+        "max": [1.424325, 4.8, 1.512297]
+      },
+      "triangles": 6265,
+      "vertices": 9458,
+      "textureSizes": [
+        [1024, 1024],
+        [2048, 2048],
+        [2048, 2048]
+      ],
+      "sha256": "f12989c89e96600650ffe91cb6fd864f9300bcb231cc5ba6a80144e1d1c0f834",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0; normalized and source normal maps removed for controlled light."
+    },
+    {
+      "id": "broadleaf-layered-crown",
+      "family": "library-broadleaf",
+      "label": "Library broadleaf",
+      "variant": "layered-crown",
+      "description": "Actual Quaternius branching and leaf-card geometry. Crown structure comparison; source textures retained for material review.",
+      "recommended": true,
+      "file": "broadleaf-layered-crown.glb",
+      "bounds": {
+        "min": [-0.972758, 0.0, -0.95492],
+        "max": [0.972758, 4.8, 0.95492]
+      },
+      "triangles": 4066,
+      "vertices": 5900,
+      "textureSizes": [
+        [1024, 1024],
+        [2048, 2048],
+        [2048, 2048]
+      ],
+      "sha256": "a9aad534ec9156cdd679e15da43966ac0e55e51be99be7cd87fd3bdb15616e26",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0; normalized and source normal maps removed for controlled light."
+    },
+    {
+      "id": "broadleaf-sheltered-crown",
+      "family": "library-broadleaf",
+      "label": "Library broadleaf",
+      "variant": "sheltered-crown",
+      "description": "Actual Quaternius branching and leaf-card geometry. Crown structure comparison; source textures retained for material review.",
+      "recommended": false,
+      "file": "broadleaf-sheltered-crown.glb",
+      "bounds": {
+        "min": [-1.257564, 0.0, -1.445449],
+        "max": [1.257564, 4.8, 1.445449]
+      },
+      "triangles": 3182,
+      "vertices": 4873,
+      "textureSizes": [
+        [1024, 1024],
+        [2048, 2048],
+        [2048, 2048]
+      ],
+      "sha256": "d1d5f5c0b68b1e1d4aece73e6fec50f59febc7c9dbe0a0c4ad2278ea3dba697b",
+      "source": "Quaternius Stylized Nature MegaKit Standard, CC0; normalized and source normal maps removed for controlled light."
+    }
+  ]
+}
