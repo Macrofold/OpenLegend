@@ -393,7 +393,8 @@ export class ArtStudy {
             asset.recommended &&
             (subject.value === 'composition'
               ? asset.historical
-              : (subject.value === 'cast'
+              : !asset.historical &&
+                (subject.value === 'cast'
                   ? ['mercenary', 'ada', 'mike', 'mara', 'tavin', 'kest', 'orin']
                   : ['mercenary', 'ada']
                 ).includes(asset.family)),
@@ -417,6 +418,7 @@ export class ArtStudy {
       selected.every((asset, index) => asset === this.displayed[index])
     ) {
       element('status').textContent = '';
+      this.canvas.dataset.ready = 'true';
       return;
     }
     element('status').textContent = 'Loading fixed artwork…';
@@ -524,6 +526,7 @@ export class ArtStudy {
       console.error(error);
       element('status').textContent =
         'This comparison could not load. The previous displayed assets are retained; choose another subject or reload.';
+      this.canvas.dataset.ready = String(this.roots.length > 0);
     } finally {
       if (this.pendingModels === models) this.pendingModels = undefined;
       if (!installed) {

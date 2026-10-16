@@ -47,10 +47,12 @@ export class MercenaryMotion {
     anim.update(0);
   }
   rest(): void {
-    if (this.clip !== 'Idle') {
-      this.anim.baseLayer?.play('Idle');
-      this.clip = 'Idle';
-    }
+    // A visibility/position discontinuity cancels the whole blend. In the
+    // pinned engine, play() removes clips but retains an interrupted blend's
+    // previous states; the next transition can then reference missing clips.
+    this.anim.baseLayer?.reset();
+    this.anim.baseLayer?.play('Idle');
+    this.clip = 'Idle';
     this.fixture = false;
     this.anim.update(0);
   }
