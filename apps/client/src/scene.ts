@@ -1750,7 +1750,10 @@ export class WildernessScene implements WorldRenderer {
       const patch = grouped
         ? `:${Math.floor(instance.position.x / cell)}:${Math.floor(instance.position.z / cell)}`
         : '';
-      const key = `${instance.appearance}:${instance.seed}:${instance.castShadows}${patch}`;
+      // Library geometry is shared across authored rotation seeds. Keeping the
+      // seed in this key splits identical meshes into redundant shadow draws.
+      const library = ['kenney', 'quaternius', 'study'].includes(this.artSettings.environment);
+      const key = `${instance.appearance}:${library ? '' : instance.seed}:${instance.castShadows}${patch}`;
       const group = groups.get(key);
       if (group) group.push(instance);
       else groups.set(key, [instance]);
@@ -1765,7 +1768,6 @@ export class WildernessScene implements WorldRenderer {
         const shape = this.libraryScenery.create(
           this.artSettings.environment,
           first.appearance,
-          first.seed,
           instances,
         );
         if (shape) {

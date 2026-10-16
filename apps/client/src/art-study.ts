@@ -187,7 +187,10 @@ export class ArtStudy {
       target.addEventListener(event, handler, { signal: this.events.signal });
     for (const id of ['subject', 'versions']) on(element(id), 'change', () => void this.show());
     const captureName = () => 'openlegend-asset-' + subject.value.replace(':', '-');
-    on(element('save-image'), 'click', () => this.capture.image(captureName()));
+    on(element('save-image'), 'click', () => {
+      this.invalidate();
+      this.capture.image(captureName());
+    });
     on(element('record-motion'), 'click', () => {
       const button = element<HTMLButtonElement>('record-motion');
       button.disabled = this.capture.record(captureName(), (message) => {

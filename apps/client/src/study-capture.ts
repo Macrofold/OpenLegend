@@ -55,7 +55,14 @@ export class StudyCapture {
       }
       this.recorder = undefined;
     };
-    recorder.start();
+    try {
+      recorder.start();
+    } catch {
+      stream?.getTracks().forEach((track) => track.stop());
+      this.recorder = undefined;
+      finished('This browser could not start recording.');
+      return false;
+    }
     this.timer = setTimeout(() => {
       if (recorder.state === 'recording') recorder.stop();
     }, 8000);

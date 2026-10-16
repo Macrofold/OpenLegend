@@ -108,14 +108,15 @@ export class ScenePixels {
     this.update();
   }
   update(): void {
-    const anchored = this.mode.startsWith('anchored') || this.mode === 'metres30';
+    const density = this.mode === 'metres30' ? 30 : this.mode === 'metres40' ? 40 : 0;
+    const anchored = this.mode.startsWith('anchored') || density > 0;
     const enabled = anchored || this.mode.startsWith('pixels');
     const scale = this.mode.endsWith('3') ? 3 : 2;
     // The camera owner also retains its focus-plane half-height in orthoHeight
     // for perspective. Keep density fixed there while zooming; depth still
     // changes perspective coverage away from that plane.
     this.pixelSize = anchored
-      ? ((this.mode === 'metres30' ? 1 / 30 : 0.025 * scale) * this.device.height) /
+      ? ((density ? 1 / density : 0.025 * scale) * this.device.height) /
         (2 * this.camera.orthoHeight)
       : scale;
     this.grid.fill(0);

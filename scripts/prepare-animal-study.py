@@ -116,22 +116,27 @@ def author_motion(rig,species):
                 aim(name+'.'+side,direction,(-sign,0,0))
             for name in ['w_feather','w_feather.001']:
                 aim(name+'.'+side,(0,.028,-.004),(-sign,0,0))
+            # Closed feathers overlap rather than hanging at their full flight
+            # width. The flight clip restores their original spread.
+            for name in ['Wing','Wing.001','Wing.002','w_feather','w_feather.001']:
+                rig.pose.bones[name+'.'+side].scale.x=.46
             # Fold the tail fan into a narrow layered silhouette.
             aim('t_feather.'+side,(-sign*.001,.032,-.006))
             aim('t_feather.'+side+'.001',(0,.032,-.006))
         bpy.context.view_layer.update()
-    base={b.name:(b.matrix_basis.to_quaternion(),b.location.copy()) for b in rig.pose.bones}
+    base={b.name:(b.rotation_quaternion.copy(),b.location.copy(),b.scale.copy()) for b in rig.pose.bones}
     for name,duration in [('Idle',60),('Walk',30)]:
         action=bpy.data.actions.new(name);rig.animation_data.action=action;actions[name]=action
         for frame in range(0,duration+1,2):
             t=frame/duration*math.tau
             for b in rig.pose.bones:
-                b.rotation_mode='QUATERNION';b.rotation_quaternion=base[b.name][0];b.location=base[b.name][1]
+                b.rotation_mode='QUATERNION';b.rotation_quaternion=base[b.name][0];b.location=base[b.name][1];b.scale=base[b.name][2]
                 # Preserve every authored constant pose in exported NLA clips;
                 # otherwise unkeyed source joints can return to their rest pose.
                 if frame in (0,duration):
                     b.keyframe_insert('rotation_quaternion',frame=frame)
                     b.keyframe_insert('location',frame=frame)
+                    b.keyframe_insert('scale',frame=frame)
             def turn(name,angle):
                 b=rig.pose.bones[name];b.rotation_quaternion=base[name][0]@Quaternion((1,0,0),angle)
                 b.keyframe_insert('rotation_quaternion',frame=frame)
@@ -147,10 +152,12 @@ def author_motion(rig,species):
                 turn('tail_base',.035*math.sin(t))
                 for side,offset in [('L',0),('R',math.pi)]:
                     if name=='Walk':
-                        for joint in ['Wing','Wing.001','Wing.002']:
+                        for joint in ['Wing','Wing.001','Wing.002','w_feather','w_feather.001']:
                             wing=rig.pose.bones[joint+'.'+side]
                             wing.rotation_quaternion=Quaternion()
+                            wing.scale=(1,1,1)
                             wing.keyframe_insert('rotation_quaternion',frame=frame)
+                            wing.keyframe_insert('scale',frame=frame)
                         b=rig.pose.bones['shoulder.'+side];rest=b.bone.matrix_local.to_quaternion()
                         sign=1 if side=='L' else -1
                         b.rotation_quaternion=rest.inverted()@Quaternion((0,1,0),sign*.55*math.sin(t*2))@rest

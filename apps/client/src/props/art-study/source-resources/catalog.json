@@ -1,27 +1,19 @@
 {
   "group": "source-resources",
   "sourceFile": "art-direction/assets/source-study/source-resources.blend",
-  "sourceSha256": "103fcf6e2d82f046060e654cfa7456712e8f38bd62d37dcf2cba766dfbaa5a31",
+  "sourceSha256": "0a1ea30c8fc4f99e4980b3624f5a33df9ba4e0f37d27b539ce85cfd4d0ef0d28",
   "recipe": {
     "path": "scripts/prepare-resource-study.py",
-    "sha256": "0e083f37c07edbe6739a732823914d92fbe5ed9f9071bf289bece5b420ae18be"
+    "sha256": "bd0afc6b49dd253fc15633838a22944fb1113934144744059fd556440e8aa03c"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
-    "prepare-source-study.py": "7cf6b8bc5ca5aff50c4b71ee3744613128a806343a963b87ca693f1942b9f5fe",
+    "prepare-source-study.py": "8ba81318fee15d09e5000eda0369d8fad5015bb01e56fbbe0a385ab290789550",
     "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
   },
   "sources": [
     {
       "url": "https://quaternius.com/packs/stylizednaturemegakit.html",
-      "license": "CC0"
-    },
-    {
-      "url": "https://kenney.nl/assets/survival-kit",
-      "license": "CC0"
-    },
-    {
-      "url": "https://poly.pizza/m/2g9Jm7kvIU",
       "creator": "Quaternius",
       "license": "CC0",
       "files": [
@@ -31,16 +23,6 @@
           "sha256": "77811fca92610cb254713d3d49d5029ab6cf13050c3afb61aa942786a7b2ca90"
         },
         {
-          "file": "Bush_Common.gltf",
-          "library": "nature",
-          "sha256": "77811fca92610cb254713d3d49d5029ab6cf13050c3afb61aa942786a7b2ca90"
-        },
-        {
-          "file": "Bush_Common.gltf",
-          "library": "nature",
-          "sha256": "77811fca92610cb254713d3d49d5029ab6cf13050c3afb61aa942786a7b2ca90"
-        },
-        {
           "file": "Grass_Wispy_Tall.gltf",
           "library": "nature",
           "sha256": "a05e3ac05e43abbdb89c5b61134e367c7d33e285ff8d2a6e0a40180cb335af0b"
@@ -49,27 +31,19 @@
           "file": "Grass_Common_Tall.gltf",
           "library": "nature",
           "sha256": "783466c838163bf7da44e10675ace3851b8c9fb83322387125df7a080b05cd70"
-        },
-        {
-          "file": "Grass_Wispy_Tall.gltf",
-          "library": "nature",
-          "sha256": "a05e3ac05e43abbdb89c5b61134e367c7d33e285ff8d2a6e0a40180cb335af0b"
-        },
-        {
-          "file": "Grass_Common_Tall.gltf",
-          "library": "nature",
-          "sha256": "783466c838163bf7da44e10675ace3851b8c9fb83322387125df7a080b05cd70"
-        },
-        {
-          "file": "Grass_Wispy_Tall.gltf",
-          "library": "nature",
-          "sha256": "a05e3ac05e43abbdb89c5b61134e367c7d33e285ff8d2a6e0a40180cb335af0b"
         },
         {
           "file": "Grass_Common_Short.gltf",
           "library": "nature",
           "sha256": "6957b50622c9e26e7296c1b47ea8653bc0d957e0a547de444e2ed96f0075a21a"
-        },
+        }
+      ]
+    },
+    {
+      "url": "https://kenney.nl/assets/survival-kit",
+      "creator": "Kenney",
+      "license": "CC0",
+      "files": [
         {
           "file": "resource-wood.glb",
           "library": "camp",
@@ -111,11 +85,6 @@
           "sha256": "6d33757888c4ec9249610266ca8d60532b1138ae28fd37e93fa843ec4856fd25"
         },
         {
-          "file": "signpost-single.glb",
-          "library": "camp",
-          "sha256": "ca011990b4e1a48240bb78edeb4b6f3b1bf7265dcc6500a5268fc8de1a54262c"
-        },
-        {
           "file": "box-open.glb",
           "library": "camp",
           "sha256": "2169e2291052ef9c378af4d6736df3fcff4ebca8fc39cbcdb4b7ad6accdff568"
@@ -141,39 +110,9 @@
           "sha256": "2ad9baa2d800845195c7c92bd8423b0d99519530dee0afd3bd0ac4b2e255d728"
         },
         {
-          "file": "bedroll-packed.glb",
-          "library": "camp",
-          "sha256": "980c222917e8564c68aa184af025d701612c7395e8ad8ef55b5b00785637a98f"
-        },
-        {
           "file": "workbench.glb",
           "library": "camp",
           "sha256": "bf72d2d535fa29127e5078a6c4c2023a74fa5cd7d02d91ad550e897e088e1dc8"
-        },
-        {
-          "file": "workbench.glb",
-          "library": "camp",
-          "sha256": "bf72d2d535fa29127e5078a6c4c2023a74fa5cd7d02d91ad550e897e088e1dc8"
-        },
-        {
-          "file": "workbench.glb",
-          "library": "camp",
-          "sha256": "bf72d2d535fa29127e5078a6c4c2023a74fa5cd7d02d91ad550e897e088e1dc8"
-        },
-        {
-          "file": "backpack.glb",
-          "library": "pack",
-          "sha256": "315a559dc389f0a3a98395222d56c2db45b4bd505c93db282c7e34011f6e5c0f"
-        },
-        {
-          "file": "backpack.glb",
-          "library": "pack",
-          "sha256": "315a559dc389f0a3a98395222d56c2db45b4bd505c93db282c7e34011f6e5c0f"
-        },
-        {
-          "file": "backpack.glb",
-          "library": "pack",
-          "sha256": "315a559dc389f0a3a98395222d56c2db45b4bd505c93db282c7e34011f6e5c0f"
         },
         {
           "file": "tent-canvas-half.glb",
@@ -189,6 +128,18 @@
           "file": "tent.glb",
           "library": "camp",
           "sha256": "2c1c5fcc213929af0904a84921084361599ffab5077423a44d3d72a81d8c87c6"
+        }
+      ]
+    },
+    {
+      "url": "https://poly.pizza/m/2g9Jm7kvIU",
+      "creator": "Quaternius",
+      "license": "CC0",
+      "files": [
+        {
+          "file": "backpack.glb",
+          "library": "pack",
+          "sha256": "315a559dc389f0a3a98395222d56c2db45b4bd505c93db282c7e34011f6e5c0f"
         }
       ]
     }
@@ -222,7 +173,7 @@
           128
         ]
       ],
-      "sha256": "91300db9af79edb07a1231fe560499dd3a4d8a78be2e51b123d2eb2235c563b3",
+      "sha256": "8f6ce54dcfed401a310256b4d1cf63fb729bb400d106b724820367c57a9439c2",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details.",
       "depletedFile": "berry-bush-fruit-groups-empty.glb",
       "depletedSha256": "44c53454632de690f8debc34435b3b2ea5163be1cb089ed6de1895af29fef883"
@@ -255,7 +206,7 @@
           128
         ]
       ],
-      "sha256": "58a68458b59d9884bc6dc75640e86da10cd3b0afb9d9ac2140b6b239e56c2523",
+      "sha256": "9fcdb9f12ef4b4e99dcdbdf67962510b5305936137782cc2043fd904fe449f28",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details.",
       "depletedFile": "berry-bush-open-canes-empty.glb",
       "depletedSha256": "760591b735d92ef70bd8dd0c39e515933390f1d168e0a54d1322a0f1933a680d"
@@ -288,7 +239,7 @@
           128
         ]
       ],
-      "sha256": "70bccb44726d12f0ef13ec1fc17dd546d99c814d4caa853eb24740d597d49b5c",
+      "sha256": "41eeb29e94660b3b0609a70796962a809efd24ee3227daed167df2b85d3b7695",
       "source": "Quaternius Stylized Nature MegaKit Standard, CC0. OpenLegend proportions, material grouping and authored details.",
       "depletedFile": "berry-bush-low-thicket-empty.glb",
       "depletedSha256": "d9506e22e1977cd9dc12b6eea610c67cede89fd006f2bff4735b3c52e110576e"
@@ -914,7 +865,7 @@
           128
         ]
       ],
-      "sha256": "1b43a3e73c2b6594812aa73cb490f1112873c4ca9021ab9d00bd527aa5f4bab6",
+      "sha256": "435519d2549a5ad595ef6625432289ad731804847a779542b46d5490a1f3f347",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
     {
@@ -984,7 +935,7 @@
           128
         ]
       ],
-      "sha256": "30122a91a50f6bf534862884c2e07a538078bff87d123fdb262f06621311b449",
+      "sha256": "691a6be077dff6adcf0644461581b82fa008705e19362292af8c7a2aa72ddea2",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
     {
@@ -1023,7 +974,7 @@
           128
         ]
       ],
-      "sha256": "efc8b0e2e3faec83c1e2bbe943140b55943f4c418e6b3b36beedc9bd6a5324f1",
+      "sha256": "ff7c10cbcd3862d23d089b51daf56e7d48475230b05aa5656b656f82495ee8c5",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
     {
@@ -1062,7 +1013,7 @@
           128
         ]
       ],
-      "sha256": "5fde5315a0a04b76f64179930d7cab021a3d13a9a1f3aaddb034c9f640138548",
+      "sha256": "34555b07e74e00a26874c4cef6e12b1ede62c44bb2b878287c2448873b25b985",
       "source": "Kenney Survival Kit, CC0. OpenLegend proportions, material grouping and authored details."
     },
     {
@@ -1577,6 +1528,6 @@
   ],
   "controlRecipe": {
     "path": "scripts/prepare-study-controls.py",
-    "sha256": "5b16232aabfa4ed836a02b2cb4d10baa172f4961f8574c6eca88b60352bf7999"
+    "sha256": "763eb966939e619ced879007d741b2bb42a8c0795a4daba88455f2e965c23944"
   }
 }

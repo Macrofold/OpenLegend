@@ -228,7 +228,7 @@ export class WorldPresentation {
     );
     if (pass) {
       const sourceFilter =
-        style.sceneGrid.startsWith('pixels') || style.sceneGrid.startsWith('anchored')
+        style.sceneGrid.startsWith('pixels') || style.sceneGrid.startsWith('anchored') || style.sceneGrid.startsWith('metres')
           ? pc.FILTER_LINEAR
           : pc.FILTER_NEAREST;
       pass.sceneTexture.minFilter = sourceFilter;

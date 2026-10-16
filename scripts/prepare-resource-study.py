@@ -119,9 +119,12 @@ def main(libraries,pack):
                 asset['depletedFile']=depleted['file'];asset['depletedSha256']=depleted['sha256']
             placement.location.x=index*3;placement.location.y=row*4
             assets.append(asset);sources.append({'file':path.name,'library':library,'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
-    helper.retain(group,assets,[{'url':'https://quaternius.com/packs/stylizednaturemegakit.html','license':'CC0'},
-        {'url':'https://kenney.nl/assets/survival-kit','license':'CC0'},
-        {'url':'https://poly.pizza/m/2g9Jm7kvIU','creator':'Quaternius','license':'CC0','files':sources}],recipe=__file__)
+    helper.retain(group,assets,[{'url':url,'creator':creator,'license':'CC0',
+        'files':list({entry['file']:entry for entry in sources if entry['library']==library}.values())}
+        for library,url,creator in [
+            ('nature','https://quaternius.com/packs/stylizednaturemegakit.html','Quaternius'),
+            ('camp','https://kenney.nl/assets/survival-kit','Kenney'),
+            ('pack','https://poly.pizza/m/2g9Jm7kvIU','Quaternius')]],recipe=__file__)
 
 
 if __name__=='__main__':

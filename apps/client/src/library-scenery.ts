@@ -143,7 +143,7 @@ export class LibraryScenery {
     this.materials.set(id, material);
     return material;
   }
-  create(family: Library, appearance: string, seed: number, instances: readonly SceneryInstance[]) {
+  create(family: Library, appearance: string, instances: readonly SceneryInstance[]) {
     const shape = this.sources.get(family)?.shapes[appearance];
     if (!shape) return null;
     let meshes = this.meshes.get(shape);
@@ -174,7 +174,7 @@ export class LibraryScenery {
     const worldBounds = new pc.BoundingBox();
     const occluding = instances.map((instance, index) => {
       const p = instance.position;
-      rotation.setFromEulerAngles(0, Math.sin(p.x * 12.9898 + p.z * 78.233 + seed) * 360, 0);
+      rotation.setFromEulerAngles(0, Math.sin(p.x * 12.9898 + p.z * 78.233 + instance.seed) * 360, 0);
       matrix.setTRS(
         position.set(p.x, p.y, p.z),
         rotation,

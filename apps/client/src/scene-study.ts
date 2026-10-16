@@ -15,6 +15,8 @@ let view: GameView;
 let motion = false;
 let orbit = false;
 let fire = true;
+let action = false;
+let berriesGathered = false;
 let phase = 0;
 let frame = 0;
 let prior = 0;
@@ -49,13 +51,15 @@ function treatment(): ArtTreatment {
     ...candidateArt,
     mercenaryArt: select('mercenary').value as ArtTreatment['mercenaryArt'],
     sampling: route === 'shared' ? 'screen' : route === 'family' ? '60' : '96',
-    sceneGrid: route === 'control' || route === 'surface' ? 'full' : 'metres30',
+    sceneGrid: route === 'control' || route === 'surface' ? 'full' : select('world-density').value as ArtTreatment['sceneGrid'],
     subjectDetail: route === 'family' ? 'preserve' : 'shared',
     surfaceArt: route === 'control' ? 'plain' : 'rigid',
     environment: 'study',
     prop: 'banded',
     vegetation: 'still',
     cloth: 'settled',
+    actionFixture: action,
+    motion: select('world-motion').value as ArtTreatment['motion'],
   };
 }
 function setCamera(): void {
@@ -86,6 +90,8 @@ function publish(): void {
       hour: light === 'day' ? 10 : light === 'low' ? 17 : 19.3,
     },
     entities: original.entities.map((entity) => {
+      if (berriesGathered && entity.appearance?.startsWith('study:berry-bush'))
+        return { ...entity, quantity: 0, status: 'Gathered · visual comparison' };
       if (!fire && entity.kind === 'station' && entity.status.startsWith('Lit'))
         return { ...entity, status: 'Unlit · study light comparison' };
       if (!motion || !['actor', 'animal'].includes(entity.kind)) return entity;
@@ -142,6 +148,7 @@ function mount(): void {
     { rememberCamera: false, art: treatment() },
   );
   scene.setPerceptionOptions({ vision: false, hearing: false });
+  scene.setShadowQuality(select('world-shadows').value as 'detailed' | 'economy');
   publish();
   setCamera();
   status.textContent = stop().label + ' · source-based art comparison';
@@ -199,9 +206,20 @@ select('place').onchange = () => {
   status.textContent = stop().label;
 };
 select('world-light').onchange = publish;
-for (const id of ['route', 'mercenary'])
+for (const id of ['route', 'mercenary', 'world-density', 'world-motion'])
   select(id).onchange = () => scene.setArtTreatment(treatment());
 select('world-framing').onchange = setCamera;
+select('world-shadows').onchange = () => scene.setShadowQuality(select('world-shadows').value as 'detailed' | 'economy');
+button('action').onclick = () => {
+  action = !action;
+  button('action').setAttribute('aria-pressed', String(action));
+  scene.setArtTreatment(treatment());
+};
+button('berries').onclick = () => {
+  berriesGathered = !berriesGathered;
+  button('berries').setAttribute('aria-pressed', String(berriesGathered));
+  publish();
+};
 button('projection').onclick = () => {
   scene.cameraCommand({ type: 'projection' });
   button('projection').textContent =

@@ -1,122 +1,129 @@
 {
   "group": "source-hare",
   "sourceFile": "art-direction/assets/source-study/source-hare.blend",
-  "sourceSha256": "bb6deef1ee91b21380355138374cae87946451ce864502b1af68eb60f4750843",
+  "sourceSha256": "eafd1f6e9618502c0c3f4cbc6db3c0e4965341850cd143e518ff331c51d1acb4",
+  "recipe": {
+    "path": "scripts/prepare-hare-study.py",
+    "sha256": "4df485925121c9591ee9b0e48c3a2e7096ec9401c7e0e4be6c1ff0ee9706eec5"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "8ba81318fee15d09e5000eda0369d8fad5015bb01e56fbbe0a385ab290789550",
+    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
+  },
   "sources": [
     {
-      "title": "Rabbit",
-      "author": "CDmir",
-      "collaborator": "TinyWorlds",
-      "page": "https://opengameart.org/content/rabbit-0",
-      "download": "https://opengameart.org/sites/default/files/rabbit.blend",
-      "published": "2015-11-14",
-      "downloaded": "2026-10-15",
-      "license": "CC0-1.0",
-      "sourceFile": "cdmir-rabbit-source.blend",
-      "sourceBytes": 5996916,
-      "sha256": "bb6deef1ee91b21380355138374cae87946451ce864502b1af68eb60f4750843"
+      "url": "https://opengameart.org/content/rabbit-0",
+      "creator": "CDmir / TinyWorlds",
+      "license": "CC0",
+      "file": "cdmir-rabbit-source.blend",
+      "sha256": "bb6deef1ee91b21380355138374cae87946451ce864502b1af68eb60f4750843",
+      "preparationRecipe": "scripts/prepare-library-animals.py",
+      "preparationRecipeSha256": "08d529f8b8e0d07b58d2724db4ab9dd602a2f0f9194c297502647f0622b7df30"
     }
   ],
-  "recipe": {
-    "path": "scripts/prepare-library-animals.py",
-    "sha256": "08d529f8b8e0d07b58d2724db4ab9dd602a2f0f9194c297502647f0622b7df30"
-  },
   "assets": [
     {
       "id": "hare-field",
       "family": "library-hare",
       "label": "Hare",
       "variant": "field",
-      "description": "Warm field coat with quiet belly and dark ear tips. The earlier source-based working hare, retained for animated comparison.",
+      "description": "Lean field hare, long ears, quiet belly and dark ear tips. Original source Idle/Run clips retained.",
       "recommended": true,
       "file": "hare-field.glb",
-      "animatedFile": "hare-field.glb",
       "bounds": {
         "min": [
-          -0.22,
-          0,
-          -0.38
+          -0.951058,
+          -1.0,
+          -1.0
         ],
         "max": [
-          0.22,
-          0.45,
-          0.38
+          0.951058,
+          1.0,
+          1.0
         ]
       },
-      "triangles": 1532,
-      "vertices": 1002,
+      "triangles": 1612,
+      "vertices": 1044,
       "textureSizes": [
         [
           64,
           64
         ]
       ],
+      "sha256": "b54083dcf1bff5fb97997d64af112f914c5e35df5fba3465a4b7e9c2236f92dc",
       "source": "Rabbit by CDmir/TinyWorlds, CC0; OpenLegend proportions and fixed coat design.",
-      "sha256": "754b9d73f0822af57106e85b21969b11819faa672b5f84d94cbc28de1bfa449b"
+      "animatedFile": "hare-field-motion.glb",
+      "animatedSha256": "754b9d73f0822af57106e85b21969b11819faa672b5f84d94cbc28de1bfa449b",
+      "preparedInputSha256": "754b9d73f0822af57106e85b21969b11819faa672b5f84d94cbc28de1bfa449b"
     },
     {
       "id": "hare-russet",
       "family": "library-hare",
       "label": "Hare",
       "variant": "russet",
-      "description": "Russet shoulder and haunch grouping; the same source anatomy and real clips.",
+      "description": "Broader shoulders and outward ears with russet haunch grouping. Original source Idle/Run clips retained.",
       "recommended": false,
       "file": "hare-russet.glb",
-      "animatedFile": "hare-russet.glb",
       "bounds": {
         "min": [
-          -0.22,
-          0,
-          -0.38
+          -0.951058,
+          -1.0,
+          -1.0
         ],
         "max": [
-          0.22,
-          0.45,
-          0.38
+          0.951058,
+          1.0,
+          1.0
         ]
       },
-      "triangles": 1532,
-      "vertices": 1002,
+      "triangles": 1612,
+      "vertices": 1044,
       "textureSizes": [
         [
           64,
           64
         ]
       ],
+      "sha256": "641a242fe1c6f4f6f4f329866041d5daae24f33d167d0d840419e4ef3d142c31",
       "source": "Rabbit by CDmir/TinyWorlds, CC0; OpenLegend proportions and fixed coat design.",
-      "sha256": "e2b7bc50247ef2ee39ae6a184a013e18250cf5066d1e145fc8b8be88a00a947a"
+      "animatedFile": "hare-russet-motion.glb",
+      "animatedSha256": "e2b7bc50247ef2ee39ae6a184a013e18250cf5066d1e145fc8b8be88a00a947a",
+      "preparedInputSha256": "e2b7bc50247ef2ee39ae6a184a013e18250cf5066d1e145fc8b8be88a00a947a"
     },
     {
       "id": "hare-winter",
       "family": "library-hare",
       "label": "Hare",
       "variant": "winter",
-      "description": "Pale seasonal coat with a dark eye and ear tip; a retained material comparison.",
+      "description": "Fuller body and shorter ears with restrained winter coat fields. Original source Idle/Run clips retained.",
       "recommended": false,
       "file": "hare-winter.glb",
-      "animatedFile": "hare-winter.glb",
       "bounds": {
         "min": [
-          -0.22,
-          0,
-          -0.38
+          -0.951058,
+          -1.0,
+          -1.0
         ],
         "max": [
-          0.22,
-          0.45,
-          0.38
+          0.951058,
+          1.0,
+          1.0
         ]
       },
-      "triangles": 1532,
-      "vertices": 1002,
+      "triangles": 1612,
+      "vertices": 1044,
       "textureSizes": [
         [
           64,
           64
         ]
       ],
+      "sha256": "6ac7c95acb176a8e23efc210889cb5e9621f09b0da61c1ab2568ba4ce1799210",
       "source": "Rabbit by CDmir/TinyWorlds, CC0; OpenLegend proportions and fixed coat design.",
-      "sha256": "57fa452c338a06d4eaf64207b512dc0ef9b9dd8d1ed48ea3907a47be91c96df8"
+      "animatedFile": "hare-winter-motion.glb",
+      "animatedSha256": "57fa452c338a06d4eaf64207b512dc0ef9b9dd8d1ed48ea3907a47be91c96df8",
+      "preparedInputSha256": "57fa452c338a06d4eaf64207b512dc0ef9b9dd8d1ed48ea3907a47be91c96df8"
     }
   ],
   "controls": [
@@ -130,25 +137,25 @@
       "file": "control-library-hare.glb",
       "bounds": {
         "min": [
-          -0.112594,
+          -0.500417,
           0.0,
-          -0.232423
+          -1.03299
         ],
         "max": [
-          0.112594,
-          0.45,
-          0.232423
+          0.500417,
+          2.000001,
+          1.03299
         ]
       },
       "triangles": 1700,
       "vertices": 893,
       "textureSizes": [],
-      "sha256": "c2c6ab6115df36a2f64efd6dda7ddd0922f8684981ce7ea79a6bb55d96844b7c",
+      "sha256": "1f78bb61b2bef470c96b7abbbf7a66b3d2d957c37d07f5a26aea8cf36e0100a2",
       "source": "/Users/mzw/.codex/worktrees/415f/OpenLegend/apps/client/src/props/library-animals/cdmir-rabbit-source.blend \u00b7 SHA256 bb6deef1ee91b21380355138374cae87946451ce864502b1af68eb60f4750843"
     }
   ],
   "controlRecipe": {
     "path": "scripts/prepare-study-controls.py",
-    "sha256": "5b16232aabfa4ed836a02b2cb4d10baa172f4961f8574c6eca88b60352bf7999"
+    "sha256": "763eb966939e619ced879007d741b2bb42a8c0795a4daba88455f2e965c23944"
   }
 }
