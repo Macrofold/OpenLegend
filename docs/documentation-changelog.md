@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 16, 2026 — Comprehensive starting-world art-study strategy
+
+At Mike's request, the [replacement plan](projects/3d-pixel-art-first-scene-plan.md#proposed-replacement-study--october-16-2026) now critiques the previous outline and gives a source-led, scene-based production sequence. It maps actual starting people/animals/materials/locations, moves scale and ordinary-play framing before bulk work, separates asset-art alternatives from rendering and lighting tests, and makes daylight/low-sun/firelight composition part of production. The original mercenary remains central; retained rabbit/chest/library sources are evaluated before new generation. No camera default, shader, paid tool or replacement artwork is accepted or implemented by this plan.
+
+The current strategy is moved ahead of the preserved historical plans in the same document. The paired feature/technical records, [qualification order](projects/3d-pixel-art-validation.md#replacement-study-review-order), V3D01.15 and art navigation now agree on planned versus delivered scope. The old study's source README explicitly records its rejection, and the art index's stale claim that no packs were acquired is corrected. Existing art criteria, camera freedom, active-world preservation, external budget and unresolved performance/rights gates remain intact; no new guidance policy or general art subsystem is introduced.
+
 ## October 16, 2026 — Reject the procedural artwork and plan a source-led study
 
 Mike rejected the representative study's mannequin-like people, inflated foliage, stretched coarse paint and ordinary-3D chest/sword/shield. The original mercenary was his concept art converted through Meshy; omitting it and substituting procedural people failed the intended study. Its earlier pixel rendering is now the comparison benchmark. [Art decisions](../art-direction/decisions.md#corrected-study-requirements--october-16-2026) record the feedback; V3D01.15's visual delivery is reopened while its scoped technical checks remain historical evidence.

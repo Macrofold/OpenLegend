@@ -1,6 +1,6 @@
 # Progressive 3D pixel art — implementation tracker
 
-**Status: Mike rejected both the first normal-3D scene finish and the later procedural Blender study. Technical inspection/review work is delivered; a mercenary-led, library-based replacement study is planned. Visual acceptance, frame-time failures, broader pipeline, remaining source rights and crowd/device gates stay open.** Last reconciled October 16, 2026.
+**Status: Mike rejected both the first normal-3D scene finish and the later procedural Blender study. Technical inspection/review work is delivered; the revised strategy covers the existing starting world's people, animals, objects, environment and lighting. Replacement artwork, visual acceptance, frame-time failures, broader pipeline, remaining source rights and crowd/device gates stay open.** Last reconciled October 16, 2026.
 
 ## Maintained records
 
@@ -187,6 +187,13 @@ V3D01.1–V3D01.11 are **Completed investigations, scoped implementation and tec
 - [x] Complete moving/scale/coverage, controls/failure/lifetime, reduced-motion/narrow-view and complete-renderer checks; review the affected diff, synchronize current owners/evidence/limits and commit. Final creator feedback and broader game release qualification remain distinct.
 
 **Evidence:** [Representative study delivery and limits](../verification/representative-art-study.md). Technical inspection implementation is delivered; its artistic delivery is reopened after rejection. The requested code review has corrected and verified camera fitting, idle rendering, source winding, browser shortcuts/history restoration and shared loading/replacement; its actual checks remain valid within their recorded scope. The [replacement plan](../projects/3d-pixel-art-first-scene-plan.md#proposed-replacement-study--october-16-2026) retains the preceding critical gameplay/mercenary gates rather than replacing them.
+
+**Replacement-study work, planned October 16:** The [revised strategy](../projects/3d-pixel-art-first-scene-plan.md#proposed-replacement-study--october-16-2026) supersedes the earlier short outline. The completed checks above describe the old tooling/exports only. These items remain open:
+
+- [ ] Recover the original mercenary appearance as a control, refresh the starting-world visual-family inventory, prepare reference/scene-color targets, and calibrate adult/prop scale and actual viewing distances (stage A).
+- [ ] Produce the finished camp proof with meaningful preserved alternatives, compare asset art separately from rendering and lighting, and demonstrate readable moving people, foliage and thin equipment before expansion (stage B; existing E01–E03 and V3D01.13).
+- [ ] Demonstrate reuse on an ordinary adult, hare and contrasting materials, then complete the planned starting-world family coverage and composed location/light studies (stages C–E). Every missing candidate or retained fallback remains explicit; a catalog count does not close the artistic criterion.
+- [ ] Complete the [ordered visual/motion review](../projects/3d-pixel-art-validation.md#replacement-study-review-order), applicable interaction/lifetime checks, source/export records and complete-scene performance measurement; present a supported recommendation with all options preserved (stage F). V3D01.12 retains creator acceptance; this does not close broader pipeline/crowd/device work.
 
 - [ ] Qualify the selected human art at the ordinary game's actual default camera before adopting it into gameplay. The review found that the former “Game distance” preset used a much closer view; its roughly128-pixel person image was not normal-play evidence. The corrected game-camera preset projects Mara's upright body line to about31pixels at the measured680-pixel stage, where facial detail is not reliably readable. The close-study people selections are **not accepted game-distance representations**. Resolve this through the existing V3D01.12/.13 camera/subject-detail and readability work; preserve modest real dimensions and avoid silently enlarging bodies, changing world rules or accepting an unreadable face. This is an existing art-adoption gate exposed accurately, not a new general asset-pipeline prerequisite.
 

@@ -1,8 +1,8 @@
 # Progressive 3D pixel art — visual and operational qualification
 
-| Status      | Current progress                                                                                                       | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Licensed asset and authored variant comparisons are delivered; face, moving-art and frame-time acceptance remain open. | 2026-10-15   |
+| Status      | Current progress                                                                                                                        | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Earlier artwork was rejected; the comprehensive replacement study has an ordered review protocol, with art and runtime acceptance open. | 2026-10-16   |
 
 **October 14 reference update:** The [research comparison proposal](../../art-direction/research/3d-pixel-worlds/openlegend-adaptation.md#what-a-successful-comparison-must-show) makes surface attachment, face readability, garment coverage and restrained effects explicit review concerns. The 34-image library is external reference media, not OpenLegend qualification evidence. The moving comparison and creator acceptance below remain required.
 
@@ -88,6 +88,19 @@ The creator should answer concrete questions at normal gameplay size and in moti
 | Production usefulness    | Variation and new assets can be produced and corrected repeatedly with manageable effort                 | Every outfit or pose requires rebuilding the entire character, or routine generated output needs extensive bespoke repair |
 
 Artistic judgment remains a human acceptance decision; a single model-generated beauty score is not a release gate. Record findings and tradeoffs rather than claiming a universal numerical aesthetics score. The comparison can legitimately select sprites for a family while choosing meshes for another.
+
+### Replacement-study review order
+
+Revised 2026-10-16 00:49 EDT for the [comprehensive starting-world study](3d-pixel-art-first-scene-plan.md#proposed-replacement-study--october-16-2026). Apply the existing rubric to the actual rendered result. Immutable texture cells, an export pass or a still-image equality check cannot substitute for any visual criterion. Earlier rejected art and historical measurements remain controls, not passed candidates.
+
+1. **Calibrate before judging detail.** Record source revision, actual adult/prop size, feet-to-crown height, camera/projection, viewport, render targets and displayed silhouette/face size. Compare ordinary adults beside the mercenary on the same support and at comparable depth. Distinguish the current overview, proposed ordinary-play framing and close inspection. Compare densities at matched framing before comparing framing; a candidate must not win by enlarging its body or its screenshot.
+2. **Review asset art under common conditions.** Show reference, source and three meaningful alternatives for each materially revised subject. Freeze camera, pose, lighting, exposure and final sampling. Check silhouette, anatomy, eyes/brows/hair, material groups, hidden sides, garment fit and source-to-export agreement. Source quality and artifact rights remain independent from aesthetic judgment.
+3. **Review the rendered pixel language.** Use the same assets for E01–E03. Inspect silhouettes, shading and highlights as well as surface paint; plain smooth props with a coarse texture fail the already selected art requirement. Check the smallest important features beside scenery, and inspect overlaps when different families use different sampling. A beauty render cannot be substituted for an actual application capture.
+4. **Isolate movement defects.** First hold pose, lights and wind fixed while panning, orbiting, changing pitch and zooming in both supported projections. Then hold the camera fixed for character/animal motion and cape extremes; then vary light/shadow; finally combine them. Inspect normal-speed footage before enlarged/slow diagnostics. Record where material marks crawl, fine features disappear, shadows jump, cloth leaks or mixed-resolution edges halo. Expected silhouette/disocclusion changes do not excuse distracting artifacts. Identical still pairs establish only frozen-state determinism.
+5. **Judge composed scenes and complete cost.** Use the plan's actual camp and surrounding-location coverage, with neutral diagnostics and daylight/low-sun/firelight treatments. Confirm identity, relevant possessions, clear routes and coherent ground contact under the real camera. Reuse applicable Q checks and the performance protocol below, including actual mixed moving subjects, selected variants only, cold arrivals and cleanup. Retaining a sprite or unfinished family is labeled explicitly and does not fulfill a promised finished alternative.
+6. **Record a justified working decision.** For each comparison name the best supported option, the exact improvements, visible defects, rejected alternatives and cost/effort limits. Select independently under Mike's standing instruction and continue useful work; only his feedback establishes final creator acceptance. If every candidate fails a critical criterion, record failure and correct its cause before extending that treatment across the library. A successful technique investigation and an incomplete art study can coexist.
+
+The delivery contains matched actual-game stills, short repeatable movement clips and the interactive comparisons, plus editable sources, exports and a concise recommendation. All initial visual families must be accounted for in the plan's coverage ledger; do not replace the full-scene review with an attractive isolated lineup. This protocol adds no mandatory backend, global pixel size, camera restriction or general-purpose automated test suite.
 
 ## 4. Lifecycle and authority scenarios
 

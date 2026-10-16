@@ -1,5 +1,7 @@
 # Representative Blender study
 
+**Artwork rejected October 16, 2026.** Retained for comparison and source history; the [comprehensive replacement strategy](../../../docs/projects/3d-pixel-art-first-scene-plan.md#proposed-replacement-study--october-16-2026) owns the next art work. The technical export and inspector observations below do not establish artistic acceptance.
+
 Thirty original static GLBs, three alternatives in each of ten families, accompany these three editable Blender files. The [study report](../../../docs/verification/representative-art-study.md) records working selections, actual visual revisions, checks and limits. Existing game assets and earlier trials remain preserved.
 
 Open `/art-study.html` on the development/game host, or run the standalone client preview from the repository root:
