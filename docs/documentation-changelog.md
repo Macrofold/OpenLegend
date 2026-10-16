@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## October 16, 2026 — Source-study lessons and guidance audit
+
+[CG29](maintainers/agent-guidance.md#source-study-review-follow-up--october-16-2026-1121-utc) records the narrow follow-up: completed-work measurement instead of callback cadence, borrowed-resource and render-pass restoration, duplicate shadow submissions, and explicit permitted facts for visual effects. Render measurement is now an explicit root/skill trigger. The measurement reminder is consolidated under the existing performance owner; art criteria, change-based reuse and engine/world policies remain with their existing owners. The feature specification and technical-design consultation are dated; rendered pixels are not represented as permanent cells or proven shimmer-free artwork. No runtime behavior or acceptance requirement changes.
+
 ## October 16, 2026 — Requested source-study implementation review
 
 Recorded floor restoration and duplicate-shadow fixes, held/paused pose-work reduction, explicitly projected lit-heat state, and interrupted measurement/capture behavior in the existing presentation/specification/plan/evidence owners. Qualified the old browser-callback timing tables, retained actual measurements, and added the concrete unsupported morph-ownership gate to V3D05. The feature specification is synchronized and the technical design consultation time updated. Existing art acceptance, initial-load, rights and wider qualification gaps remain open. No guidance duplication, new art choice or world-law change.
