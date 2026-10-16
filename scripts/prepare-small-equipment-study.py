@@ -4,6 +4,7 @@ These small patterns supplement library weapons; they do not replace source
 characters or trees with generated primitives, or grant native equipment.
 """
 import argparse
+import hashlib
 import importlib.util
 import math
 from pathlib import Path
@@ -37,7 +38,7 @@ def main(libraries):
     output.mkdir(parents=True,exist_ok=True)
     fiber=solid_material('Twisted flax','b6a07b');leather=solid_material('Worn sling leather','7e5941')
     stone=solid_material('Flaked grey stone','75817a');edge=solid_material('Fresh stone edge','a1aaa0')
-    assets=[]
+    assets=[]; source_files=[]
     for family in ['cord','sling','stone-tool']:
         for index in range(3):
             objects=[]
@@ -64,6 +65,7 @@ def main(libraries):
             else:
                 variants=['broad-flake','pointed-flake','small-scraper'];label='Stone tool'
                 path=libraries/'kenney_survival-kit/Models/GLB format'/(['rock-c','rock-b','rock-flat'][index]+'.glb')
+                source_files.append({'file':path.name,'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
                 before=set(bpy.data.objects);bpy.ops.import_scene.gltf(filepath=str(path));objects=list(set(bpy.data.objects)-before)
                 helper.normalize(objects,.18,max_span=.28)
                 for obj in objects:
@@ -83,7 +85,7 @@ def main(libraries):
                 'OpenLegend authored cord/leather patterns, AGPL-3.0-only; stone-tool source Kenney Survival Kit, CC0.')
             root.location.x=index*1.1;root.location.y=['cord','sling','stone-tool'].index(family)*1.5
             assets.append(asset)
-    helper.retain(group,assets,[{'url':'https://kenney.nl/assets/survival-kit','license':'CC0','scope':'Stone flake source planes'}],recipe=__file__)
+    helper.retain(group,assets,[{'url':'https://kenney.nl/assets/survival-kit','license':'CC0','scope':'Stone flake source planes','files':source_files}],recipe=__file__)
 
 
 if __name__=='__main__':

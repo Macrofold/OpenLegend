@@ -145,7 +145,7 @@ export class WorldPresentation {
       camera.camera!.layers = [...camera.camera!.layers, layer.id];
       sun.light!.layers = [...sun.light!.layers, layer.id];
     }
-    this.setShadowQuality('detailed');
+    this.setShadowQuality('economy');
     // Angular spread, not a world-space blur radius: large values make the
     // blocker search miss small bodies. Keep the sun close to a small disk.
     sun.light!.penumbraSize = 0.015;

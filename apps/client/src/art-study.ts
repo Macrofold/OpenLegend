@@ -89,7 +89,9 @@ else if (!requested && choices.some((choice) => choice.family === 'mercenary'))
 /** Finite trusted asset inspection, independent of saves, world actions and AI. */
 export class ArtStudy {
   readonly app: pc.Application;
-  private readonly models: BundledModels;
+  private models: BundledModels;
+  private pendingModels?: BundledModels;
+  private readonly modelCleanup = new Set<Promise<void>>();
   private readonly art: ArtMaterials;
   private readonly events = new AbortController();
   private readonly observer: ResizeObserver;
@@ -98,7 +100,7 @@ export class ArtStudy {
   private readonly fill: pc.Entity;
   private readonly frame: pc.CameraFrame;
   private readonly pixels: ScenePixels;
-  private readonly materials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
+  private materials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private readonly stageMaterial: pc.StandardMaterial;
   private roots: pc.Entity[] = [];
   private animations: pc.AnimComponent[] = [];
@@ -193,6 +195,9 @@ export class ArtStudy {
     on(element('save-image'), 'click', () => {
       this.invalidate();
       this.capture.image(captureName());
+    });
+    on(element('inspect-resources'), 'click', () => {
+      element('inspection-metrics').textContent = JSON.stringify(this.diagnostics(), null, 2);
     });
     on(element('record-motion'), 'click', () => {
       const button = element<HTMLButtonElement>('record-motion');
@@ -342,13 +347,13 @@ export class ArtStudy {
     });
     this.invalidate();
   }
-  private prepare(node: pc.Entity): void {
+  private prepare(node: pc.Entity, materials: Map<pc.StandardMaterial, pc.StandardMaterial>): void {
     for (const component of node.findComponents('render')) {
       if (!(component instanceof pc.RenderComponent)) continue;
       for (const mesh of component.meshInstances) {
         const source = mesh.material;
         if (!(source instanceof pc.StandardMaterial)) continue;
-        let material = this.materials.get(source);
+        let material = materials.get(source);
         if (!material) {
           material = source.clone();
           // The source leaf cards carry deliberately shaped canopy normals.
@@ -362,7 +367,7 @@ export class ArtStudy {
           }
           this.art.prepare(material);
           material.update();
-          this.materials.set(source, material);
+          materials.set(source, material);
         }
         mesh.material = material;
       }
@@ -372,6 +377,8 @@ export class ArtStudy {
     if (this.disposed) return;
     const epoch = ++this.epoch,
       composition = ['composition', 'calibration', 'cast'].includes(subject.value);
+    if (this.pendingModels) this.releaseModels(this.pendingModels);
+    this.pendingModels = undefined;
     const versions = element<HTMLSelectElement>('versions');
     const sourceOption = versions.querySelector<HTMLOptionElement>('option[value="source"]')!;
     sourceOption.disabled =
@@ -414,9 +421,15 @@ export class ArtStudy {
     }
     element('status').textContent = 'Loading fixed artwork…';
     this.canvas.dataset.ready = 'false';
+    // A comparison owns only its selected models. Keep the previous comparison
+    // visible until this replacement succeeds, without accumulating the full
+    // library's textures/rigs as someone browses all subjects.
+    const models = (this.pendingModels = new BundledModels(this.app));
+    const materials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
+    let installed = false;
     try {
       const resources = await Promise.all(
-        selected.map((asset) => this.models.load(asset.label, asset.motionUrl ?? asset.url)),
+        selected.map((asset) => models.load(asset.label, asset.motionUrl ?? asset.url)),
       );
       if (this.disposed || epoch !== this.epoch) return;
       const animations: pc.AnimComponent[] = [];
@@ -428,7 +441,7 @@ export class ArtStudy {
             receiveShadows: true,
           });
           fresh.push(artwork);
-          this.prepare(artwork);
+          this.prepare(artwork, materials);
           if (selected[index]!.motionUrl) animations.push(installLocomotion(artwork, resource));
           // A single exported mesh may carry its own origin offset. Position a
           // parent so its original model transform (and ground contact) survives.
@@ -441,6 +454,11 @@ export class ArtStudy {
         throw error;
       }
       for (const root of this.roots) root.destroy();
+      for (const material of this.materials.values()) material.destroy();
+      this.releaseModels(this.models);
+      this.models = models;
+      this.materials = materials;
+      installed = true;
       this.roots = fresh;
       this.animations = animations;
       this.bounds.length = 0;
@@ -506,7 +524,19 @@ export class ArtStudy {
       console.error(error);
       element('status').textContent =
         'This comparison could not load. The previous displayed assets are retained; choose another subject or reload.';
+    } finally {
+      if (this.pendingModels === models) this.pendingModels = undefined;
+      if (!installed) {
+        for (const material of materials.values()) material.destroy();
+        this.releaseModels(models);
+      }
     }
+  }
+  private releaseModels(models: BundledModels): void {
+    const pending = models.destroy();
+    if (!pending) return;
+    this.modelCleanup.add(pending);
+    void pending.finally(() => this.modelCleanup.delete(pending));
   }
   private cards(assets: Choice[]): void {
     element('asset-cards').replaceChildren(
@@ -715,6 +745,7 @@ export class ArtStudy {
       draws: this.app.stats.drawCalls.total,
       triangles: this.app.stats.frame.triangles,
       buffer: [this.app.graphicsDevice.width, this.app.graphicsDevice.height],
+      memoryBytes: { ...this.app.stats.vram },
       textures: [...this.materials.values()].map((material) => ({
         width: material.diffuseMap?.width,
         height: material.diffuseMap?.height,
@@ -736,7 +767,9 @@ export class ArtStudy {
     this.frame.destroy();
     this.pixels.destroy();
     element('labels').replaceChildren();
-    destroyModelApplication(this.app, [this.models.destroy()]);
+    this.releaseModels(this.models);
+    if (this.pendingModels) this.releaseModels(this.pendingModels);
+    destroyModelApplication(this.app, [...this.modelCleanup]);
     this.canvas.dataset.ready = 'false';
   }
 }

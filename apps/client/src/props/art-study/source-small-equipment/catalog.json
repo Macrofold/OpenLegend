@@ -15,7 +15,21 @@
     {
       "url": "https://kenney.nl/assets/survival-kit",
       "license": "CC0",
-      "scope": "Stone flake source planes"
+      "scope": "Stone flake source planes",
+      "files": [
+        {
+          "file": "rock-c.glb",
+          "sha256": "a0f2e78460acfc4e02e029065472360f2e491c389d6e82f02837e3ed643b9d75"
+        },
+        {
+          "file": "rock-b.glb",
+          "sha256": "f0f4eec72f18722dee56f799c6045953835a91856929dff6fb71331602b12c2e"
+        },
+        {
+          "file": "rock-flat.glb",
+          "sha256": "350f6440743ed400728d8889d711e0eb3eed56e8d7389e386352d9d98411a49d"
+        }
+      ]
     }
   ],
   "assets": [
@@ -28,16 +42,8 @@
       "recommended": true,
       "file": "cord-loose-coil.glb",
       "bounds": {
-        "min": [
-          -0.156998,
-          0.003938,
-          -0.151998
-        ],
-        "max": [
-          0.146998,
-          0.016062,
-          0.16189
-        ]
+        "min": [-0.156998, 0.003938, -0.151998],
+        "max": [0.146998, 0.016062, 0.16189]
       },
       "triangles": 2640,
       "vertices": 1326,
@@ -54,16 +60,8 @@
       "recommended": false,
       "file": "cord-figure-eight.glb",
       "bounds": {
-        "min": [
-          -0.176912,
-          0.001603,
-          -0.096996
-        ],
-        "max": [
-          0.17699,
-          0.022661,
-          0.096966
-        ]
+        "min": [-0.176912, 0.001603, -0.096996],
+        "max": [0.17699, 0.022661, 0.096966]
       },
       "triangles": 1152,
       "vertices": 582,
@@ -80,16 +78,8 @@
       "recommended": false,
       "file": "cord-working-length.glb",
       "bounds": {
-        "min": [
-          -0.244069,
-          0.003938,
-          -0.066997
-        ],
-        "max": [
-          0.281151,
-          0.016062,
-          0.045696
-        ]
+        "min": [-0.244069, 0.003938, -0.066997],
+        "max": [0.281151, 0.016062, 0.045696]
       },
       "triangles": 192,
       "vertices": 102,
@@ -106,16 +96,8 @@
       "recommended": true,
       "file": "sling-split-pouch.glb",
       "bounds": {
-        "min": [
-          -0.071345,
-          0.005651,
-          -0.432239
-        ],
-        "max": [
-          0.071345,
-          0.037,
-          0.432239
-        ]
+        "min": [-0.071345, 0.005651, -0.432239],
+        "max": [0.071345, 0.037, 0.432239]
       },
       "triangles": 328,
       "vertices": 182,
@@ -132,16 +114,8 @@
       "recommended": false,
       "file": "sling-oval-pouch.glb",
       "bounds": {
-        "min": [
-          -0.061538,
-          0.005674,
-          -0.432236
-        ],
-        "max": [
-          0.061538,
-          0.037,
-          0.432236
-        ]
+        "min": [-0.061538, 0.005674, -0.432236],
+        "max": [0.061538, 0.037, 0.432236]
       },
       "triangles": 336,
       "vertices": 182,
@@ -158,16 +132,8 @@
       "recommended": false,
       "file": "sling-long-pouch.glb",
       "bounds": {
-        "min": [
-          -0.046943,
-          0.005522,
-          -0.43225
-        ],
-        "max": [
-          0.046943,
-          0.037,
-          0.43225
-        ]
+        "min": [-0.046943, 0.005522, -0.43225],
+        "max": [0.046943, 0.037, 0.43225]
       },
       "triangles": 336,
       "vertices": 182,
@@ -184,16 +150,8 @@
       "recommended": true,
       "file": "stone-tool-broad-flake.glb",
       "bounds": {
-        "min": [
-          -0.138303,
-          0.0,
-          -0.017976
-        ],
-        "max": [
-          0.138303,
-          0.18,
-          0.017976
-        ]
+        "min": [-0.138303, 0.0, -0.017976],
+        "max": [0.138303, 0.18, 0.017976]
       },
       "triangles": 120,
       "vertices": 198,
@@ -210,16 +168,8 @@
       "recommended": false,
       "file": "stone-tool-pointed-flake.glb",
       "bounds": {
-        "min": [
-          -0.14,
-          0.0,
-          -0.021881
-        ],
-        "max": [
-          0.14,
-          0.140432,
-          0.021881
-        ]
+        "min": [-0.14, 0.0, -0.021881],
+        "max": [0.14, 0.140432, 0.021881]
       },
       "triangles": 156,
       "vertices": 258,
@@ -236,16 +186,8 @@
       "recommended": false,
       "file": "stone-tool-small-scraper.glb",
       "bounds": {
-        "min": [
-          -0.14,
-          0.0,
-          -0.020424
-        ],
-        "max": [
-          0.14,
-          0.019867,
-          0.020424
-        ]
+        "min": [-0.14, 0.0, -0.020424],
+        "max": [0.14, 0.019867, 0.020424]
       },
       "triangles": 274,
       "vertices": 444,
