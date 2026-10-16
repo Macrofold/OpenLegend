@@ -522,6 +522,15 @@ export class WorldPresentation {
     this.protectionMaterials.get(source)?.destroy();
     this.protectionMaterials.delete(source);
   }
+  /** Re-enabling a floor precedes restoring per-mesh visibility. The engine only
+   * registers shadows during enable, so admit the restored casters afterward. */
+  restoreShadowCasters(node: pc.Entity): void {
+    for (const render of node.findComponents('render') as pc.RenderComponent[]) {
+      if (!render.enabled || !render.entity.enabled) continue;
+      for (const id of render.layers)
+        this.app.scene.layers.getLayerById(id)?.addShadowCasters(render.meshInstances);
+    }
+  }
   /** A floor cutaway changes camera visibility, not shadow casting or physical geometry. */
   setCutaway(node: pc.Entity, hidden: boolean): void {
     for (const render of node.findComponents('render') as pc.RenderComponent[])

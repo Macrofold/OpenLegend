@@ -337,8 +337,12 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden)
     cancelMeasurement('Study hidden; the interrupted measurement was discarded.');
 });
+window.addEventListener('resize', () =>
+  cancelMeasurement('Viewport changed; the interrupted measurement was discarded.'),
+);
 const pauseForPreference = () => {
   if (reducedMotion.matches) {
+    cancelMeasurement('Motion preference changed; the interrupted measurement was discarded.');
     motion = false;
     orbit = false;
     button('orbit').setAttribute('aria-pressed', 'false');

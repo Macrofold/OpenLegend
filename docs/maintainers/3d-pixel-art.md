@@ -238,6 +238,7 @@ The [animation research](../../art-direction/research/3d-pixel-worlds/animation-
 **Owners:** client pose/attachment and authored rig family, with body/PO projection consumers. **Depends on:** V3D02/V3D03; V3D01 supplies the early art prototype.
 
 - [ ] Qualify one humanoid rig and deliberately varied bodies/outfits. Define rest/bind pose, semantic joints, scale/fit ranges, in-place animation, supported action/state cues and identity consistency with portraits/sprites.
+- [ ] Before admitting morph-target assets, establish independent morph-instance lifetime for reveal/hover copies: the pinned engine destroys the previous morph instance on assignment, so skin-style borrowing is unsafe. None of the 241 checked current client GLBs contains morph targets; this is an expansion gate, not a current asset failure.
 - [ ] Add rigid attachments, garment fit/layer masks, hair/helmet policy, primary and secondary grips, bounded IK and declared fallbacks. Preserve actual equipment slots/custody; matching names alone do not establish rig compatibility.
 - [ ] Exercise walking/turning/equip/drop and relevant supported use/rest/death states at normal gameplay size. Native action receipts remain authoritative; no root-motion or animation-event writes to the world.
 
