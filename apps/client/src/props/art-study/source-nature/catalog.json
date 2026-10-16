@@ -1,14 +1,14 @@
 {
   "group": "source-nature",
   "sourceFile": "art-direction/assets/source-study/source-nature.blend",
-  "sourceSha256": "4dba001037d45b4ce20ec8c3377b29b3a99d2d2e45873c824b4e34556e1ae38a",
+  "sourceSha256": "e2756e9f91eb6845ed466ada26986205acf0becfb08d9b3b3d6018640cb77aa3",
   "recipe": {
     "path": "scripts/prepare-source-study.py",
-    "sha256": "d3ad4571f248e3074f7261e22c841eb442bd7cfcf0ff52ef9caee79f3bda5ff2"
+    "sha256": "401368a39500c381fe3b5116e845b6198f45fb4213e2efe2ec0d6302807b276f"
   },
   "helpers": {
     "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
-    "prepare-source-study.py": "d3ad4571f248e3074f7261e22c841eb442bd7cfcf0ff52ef9caee79f3bda5ff2",
+    "prepare-source-study.py": "401368a39500c381fe3b5116e845b6198f45fb4213e2efe2ec0d6302807b276f",
     "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
   },
   "sources": [

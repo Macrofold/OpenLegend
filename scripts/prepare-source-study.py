@@ -136,6 +136,9 @@ def mercenaries(source):
         body_node = color_texture(body.data.materials[0])
         if variant == 'restored':
             pixel_surface(body_node.image,body=True)
+            body_node.image.filepath_raw=str(output/'body-restored.png')
+            body_node.image.file_format='PNG'
+            body_node.image.save()
         else:
             image = body_node.image
             image.scale(512,512)
@@ -162,6 +165,10 @@ def mercenaries(source):
                         texture.image = paint.save_image('Peacock paired embroidery',paint.cape_paint('painted',paint.image_array(texture.image)),output/'cape-embroidered.png')
                     elif variant=='restored':
                         pixel_surface(texture.image)
+                    if variant != 'embroidered':
+                        texture.image.filepath_raw=str(output/('cape-'+variant+'.png'))
+                        texture.image.file_format='PNG'
+                        texture.image.save()
         clean_materials()
         if variant != 'restored':
             objects.append(facial_features([body],rig,'Head',

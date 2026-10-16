@@ -1,14 +1,14 @@
 {
   "group": "source-mercenary",
   "sourceFile": "art-direction/assets/source-study/source-mercenary.blend",
-  "sourceSha256": "360901dff6211f70df1841aaf1331ae049f901e51f31f056275637d66cc10405",
+  "sourceSha256": "49eabb20605f987e5b6f8bbbbf720568ce4a7696b9c2ec46481c1db06826e0be",
   "recipe": {
     "path": "scripts/prepare-source-study.py",
-    "sha256": "d3ad4571f248e3074f7261e22c841eb442bd7cfcf0ff52ef9caee79f3bda5ff2"
+    "sha256": "401368a39500c381fe3b5116e845b6198f45fb4213e2efe2ec0d6302807b276f"
   },
   "helpers": {
     "art_study_common.py": "a197078cd4770db195dc6fb3cdc88508025bb9ca07b0f1b1818d8003126d2d3e",
-    "prepare-source-study.py": "d3ad4571f248e3074f7261e22c841eb442bd7cfcf0ff52ef9caee79f3bda5ff2",
+    "prepare-source-study.py": "401368a39500c381fe3b5116e845b6198f45fb4213e2efe2ec0d6302807b276f",
     "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
   },
   "sources": [
@@ -50,7 +50,7 @@
           256
         ]
       ],
-      "sha256": "bbe2c865ac4eef1028a3221f19c5bdbedab633c633669e058859748d1e63e84d",
+      "sha256": "1d8c8cd67435917924eb352d1f0939099c91e088888b66d4a2c11b837f6ed1df",
       "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
     },
     {
@@ -85,7 +85,7 @@
           1536
         ]
       ],
-      "sha256": "cce05ffc8e9c4b7ff1772331fa57080faa20d98afa08c695bd996ae4981fcc86",
+      "sha256": "de9d356125660bf8b383eb60c2ae90f2ad0b77dc9e16250594ed9c37cc610991",
       "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
     },
     {
@@ -120,7 +120,7 @@
           1536
         ]
       ],
-      "sha256": "d9d9353d1b06917ee793447e42cc3be06cd471a72e88dc1d6dd7d05f04196653",
+      "sha256": "4c99b5c54ef32f5f1b0e6dcc773f08b997f79425b06a3ed739f38bba8c39adbe",
       "source": "Owner-supplied concept \u2192 Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified."
     }
   ]

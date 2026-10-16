@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Open Legend · Starting world art study</title>
+  </head>
+  <body>
+    <main class="world-study">
+      <header>
+        <div>
+          <p class="eyebrow">Open Legend · Starting world art study</p>
+          <h1>People in a living woodland</h1>
+        </div>
+        <nav>
+          <a href="/art-study.html">Compare individual assets</a><a href="/">Play the game</a>
+        </nav>
+      </header>
+      <section class="world-study-controls" aria-label="World study controls">
+        <label>Place<select id="place"></select></label>
+        <label
+          >Light<select id="world-light">
+            <option value="day">Clear daylight</option>
+            <option value="low">Low sun</option>
+            <option value="fire">Dusk / firelight</option>
+          </select></label
+        >
+        <label
+          >Pixel treatment<select id="route">
+            <option value="shared">One final grid</option>
+            <option value="family">Separate character detail</option>
+            <option value="control">Earlier game control</option>
+          </select></label
+        >
+        <label
+          >Mercenary<select id="mercenary">
+            <option value="restored">A · Restored original</option>
+            <option value="tailored">B · Quiet tailoring</option>
+            <option value="embroidered">C · Selective embroidery</option>
+          </select></label
+        >
+        <label
+          >Framing<select id="world-framing">
+            <option value="ordinary">Closer play</option>
+            <option value="overview">Earlier overview</option>
+            <option value="detail">Inspect people</option>
+          </select></label
+        >
+        <button id="projection" type="button">Perspective</button
+        ><button id="turn-left" type="button">Turn left</button
+        ><button id="turn-right" type="button">Turn right</button>
+        <button id="motion" type="button" aria-pressed="false">Staged walking</button
+        ><button id="fire" type="button" aria-pressed="true">Fire on</button>
+        <button id="capture" type="button">Save image</button
+        ><button id="record" type="button">Record 8 seconds</button>
+      </section>
+      <section class="world-study-stage">
+        <canvas
+          id="world"
+          tabindex="0"
+          aria-label="Starting world. Drag to orbit, scroll to zoom. Click a visible object to inspect its name."
+        ></canvas>
+        <p id="world-status" role="status">Loading the starting world…</p>
+      </section>
+      <p class="study-note">
+        The actual game renderer and starting layout. Places replay permitted views recorded after
+        real travel. Staged walking and light controls are visual comparisons; they do not change a
+        save. Drag to orbit and scroll to zoom.
+      </p>
+      <details>
+        <summary>Measurement and source details</summary>
+        <p id="world-source"></p>
+        <pre id="world-metrics"></pre>
+        <button id="measure" type="button">Measure 10 seconds</button
+        ><button id="remount" type="button">Reload renderer</button>
+      </details>
+    </main>
+    <script type="module" src="/src/scene-study.ts"></script>
+  </body>
+</html>

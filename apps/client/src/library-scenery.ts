@@ -7,7 +7,7 @@ import { ShadowMaterial } from './shadow-material';
 import { sceneryStencil, setVisibilityStencil } from './visibility-stencil';
 import { markPixelEnvironment } from './scene-pixels';
 
-type Library = 'kenney' | 'quaternius';
+type Library = 'kenney' | 'quaternius' | 'study';
 interface GeometryPart {
   positions: number[];
   normals: number[];
@@ -26,6 +26,7 @@ interface MaterialArt {
   doubleSided?: boolean;
   texture?: string;
   paintedTexture?: string;
+  canopyNormals?: boolean;
 }
 interface PixelArt {
   width: number;
@@ -104,7 +105,7 @@ export class LibraryScenery {
     material.alphaTest = entry.alphaCutoff ?? 0;
     material.opacityMapChannel = 'a';
     material.cull = entry.doubleSided ? pc.CULLFACE_NONE : pc.CULLFACE_BACK;
-    material.twoSidedLighting = entry.doubleSided ?? false;
+    material.twoSidedLighting = !entry.canopyNormals && (entry.doubleSided ?? false);
     material.useMetalness = true;
     material.metalness = 0;
     material.specular.set(0.015, 0.015, 0.015);

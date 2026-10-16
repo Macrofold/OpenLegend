@@ -14,17 +14,24 @@ export interface ArtTreatment {
   shadowSampling: 'screen' | 'fixed';
   filtering: 'source' | 'nearest' | 'mip';
   characterFiltering: 'source' | 'nearest' | 'mip';
-  mercenaryArt: 'original' | 'faithful' | 'painted' | 'graphic';
+  mercenaryArt:
+    | 'original'
+    | 'faithful'
+    | 'painted'
+    | 'graphic'
+    | 'restored'
+    | 'tailored'
+    | 'embroidered';
   hareArt: 'sprite' | 'field' | 'russet' | 'winter';
   edges: 'none' | 'silhouette' | 'depth';
   motion: 'smooth' | 'held8' | 'held12';
   cloth: 'flowing' | 'settled';
-  environment: 'baseline' | 'grouped' | 'kenney' | 'quaternius';
+  environment: 'baseline' | 'grouped' | 'kenney' | 'quaternius' | 'study';
   groundPalette: 'meadow' | 'woodland';
   vegetation: 'still' | 'smooth' | 'held';
   atmosphere: 'baseline' | 'restrained';
   effects: 'direct' | 'buffer';
-  prop: 'authored' | 'generated';
+  prop: 'authored' | 'generated' | 'carved' | 'banded' | 'cache';
   actionFixture: boolean;
 }
 export const baselineArt: Readonly<ArtTreatment> = Object.freeze({
@@ -220,17 +227,25 @@ export function mountArtControls(
     shadowSampling: ['screen', 'fixed'],
     filtering: ['source', 'nearest', 'mip'],
     characterFiltering: ['source', 'nearest', 'mip'],
-    mercenaryArt: ['original', 'faithful', 'painted', 'graphic'],
+    mercenaryArt: [
+      'restored',
+      'tailored',
+      'embroidered',
+      'original',
+      'faithful',
+      'painted',
+      'graphic',
+    ],
     hareArt: ['sprite', 'field', 'russet', 'winter'],
     edges: ['none', 'silhouette', 'depth'],
     motion: ['smooth', 'held8', 'held12'],
     cloth: ['flowing', 'settled'],
-    environment: ['baseline', 'grouped', 'kenney', 'quaternius'],
+    environment: ['study', 'baseline', 'grouped', 'kenney', 'quaternius'],
     groundPalette: ['meadow', 'woodland'],
     vegetation: ['still', 'smooth', 'held'],
     atmosphere: ['baseline', 'restrained'],
     effects: ['direct', 'buffer'],
-    prop: ['authored', 'generated'],
+    prop: ['carved', 'banded', 'cache', 'authored', 'generated'],
   };
   const controls = new Map<keyof ArtTreatment, HTMLSelectElement>();
   const labels: Record<string, string> = {

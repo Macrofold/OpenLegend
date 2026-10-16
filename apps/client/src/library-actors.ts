@@ -10,19 +10,33 @@ import { WorldPresentation, type RevealBinding } from './world-presentation';
 import { ShadowMaterial } from './shadow-material';
 import { personStencil, setVisibilityStencil } from './visibility-stencil';
 
-export type HareVariant = 'field' | 'russet' | 'winter';
-const sources: Record<HareVariant, string> = {
-  field: fieldUrl,
-  russet: russetUrl,
-  winter: winterUrl,
-};
-/** Three fixed painted/shape alternatives from the retained CC0 wild rabbit.
+interface ActorSource {
+  url: string;
+  height: number;
+  width: number;
+}
+const humanFiles = import.meta.glob<string>('./props/art-study/source-people/*-motion.glb', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+});
+const sources = new Map<string, ActorSource>([
+  ['field', { url: fieldUrl, height: 0.45, width: 0.76 }],
+  ['russet', { url: russetUrl, height: 0.45, width: 0.76 }],
+  ['winter', { url: winterUrl, height: 0.45, width: 0.76 }],
+]);
+for (const [path, url] of Object.entries(humanFiles)) {
+  const name = path.split('/').at(-1)!.replace('-motion.glb', '');
+  sources.set('study:' + name, { url, height: 1.85, width: 0.85 });
+}
+export const hasLibraryActor = (appearance: string): boolean => sources.has(appearance);
+/** Retained CC0 anatomy and fitted clothing, plus the animated wild hare.
  * Meshes, textures, clips and prepared materials are shared per variant; ordinary
  * frames evaluate only each admitted visible animal's pose and heading. */
-export class LibraryAnimals {
+export class LibraryActors {
   private readonly models: BundledModels;
   private readonly prepared = new Map<pc.StandardMaterial, pc.StandardMaterial>();
-  private readonly actors = new Set<LibraryAnimalActor>();
+  private readonly actors = new Set<LibraryActor>();
   private disposed = false;
   constructor(
     private readonly app: pc.Application,
@@ -33,11 +47,13 @@ export class LibraryAnimals {
   ) {
     this.models = new BundledModels(app);
   }
-  create(parent: pc.Entity, variant: HareVariant): LibraryAnimalActor {
-    const actor = new LibraryAnimalActor(
+  create(parent: pc.Entity, variant: string): LibraryActor {
+    const source = sources.get(variant)!;
+    const actor = new LibraryActor(
       parent,
       variant,
-      this.models.load('Library hare · ' + variant, sources[variant]),
+      this.models.load('Library actor · ' + variant, source.url),
+      source,
       this.presentation,
       this.camera,
       (source) => this.prepare(source),
@@ -76,11 +92,15 @@ export class LibraryAnimals {
   }
 }
 
-export class LibraryAnimalActor {
+export class LibraryActor {
   state: 'loading' | 'ready' | 'failed' = 'loading';
   visible = false;
-  readonly height = 0.45;
-  readonly width = 0.76;
+  get height(): number {
+    return this.source.height;
+  }
+  get width(): number {
+    return this.source.width;
+  }
   private node?: pc.Entity;
   private meshes: pc.MeshInstance[] = [];
   private binding?: RevealBinding;
@@ -92,8 +112,9 @@ export class LibraryAnimalActor {
   private sampled = 0;
   constructor(
     private readonly parent: pc.Entity,
-    private readonly variant: HareVariant,
+    private readonly variant: string,
     loading: Promise<BundledModel>,
+    private readonly source: ActorSource,
     private readonly presentation: WorldPresentation,
     private readonly camera: pc.Entity,
     private readonly prepare: (source: pc.StandardMaterial) => pc.StandardMaterial,
@@ -108,7 +129,7 @@ export class LibraryAnimalActor {
         if (this.disposed) return;
         this.clear();
         this.state = 'failed';
-        console.warn('Library hare unavailable; keeping its sprite.', error);
+        console.warn('Library actor unavailable; keeping its sprite.', error);
       });
   }
   private install(resource: BundledModel): void {
@@ -121,18 +142,18 @@ export class LibraryAnimalActor {
       if (!(component instanceof pc.RenderComponent)) continue;
       for (const mesh of component.meshInstances) {
         if (!(mesh.material instanceof pc.StandardMaterial))
-          throw new Error('Unsupported hare material.');
+          throw new Error('Unsupported actor material.');
         mesh.material = this.prepare(mesh.material);
         mesh.visible = mesh.castShadow = false;
         this.meshes.push(mesh);
       }
     }
     const material = this.meshes[0]?.material;
-    if (!(material instanceof pc.StandardMaterial)) throw new Error('Hare mesh missing.');
+    if (!(material instanceof pc.StandardMaterial)) throw new Error('Actor mesh missing.');
     this.material = material;
     node.addComponent('anim', { activate: true });
     const anim = node.anim;
-    if (!anim) throw new Error('Hare animation component missing.');
+    if (!anim) throw new Error('Actor animation component missing.');
     anim.loadStateGraph({
       layers: [
         {
@@ -149,7 +170,7 @@ export class LibraryAnimalActor {
         .find(
           (track): track is pc.AnimTrack => track instanceof pc.AnimTrack && track.name === name,
         );
-      if (!track) throw new Error('Hare clip missing: ' + name);
+      if (!track) throw new Error('Actor clip missing: ' + name);
       anim.assignAnimation(name, track);
     }
     anim.playing = false;
@@ -247,7 +268,7 @@ export class LibraryAnimalActor {
       state: this.state,
       visible: this.visible,
       variant: this.variant,
-      representation: 'library-rigged-hare',
+      representation: 'library-rigged-actor',
       height: this.height,
       width: this.width,
       meshes: this.meshes.length,

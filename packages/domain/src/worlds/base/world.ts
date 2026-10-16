@@ -283,6 +283,7 @@ export function createWorld(
       spatial: baseSpatial('person'),
       id: residentId,
       name: 'Ada',
+      appearance: 'study:ada-field-tunic',
       nameForm: 'proper',
       kind: 'npc',
       placement: worldPlacement({ y: 0, x: 13, z: 12 }, 'terrain'),

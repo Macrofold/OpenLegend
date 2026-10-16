@@ -6,6 +6,12 @@ import paintedBody from './mercenary-assets/variants/body-painted.png?url';
 import paintedCape from './mercenary-assets/variants/cape-painted.png?url';
 import graphicBody from './mercenary-assets/variants/body-graphic.png?url';
 import graphicCape from './mercenary-assets/variants/cape-graphic.png?url';
+import restoredBody from '../props/art-study/source-mercenary/body-restored.png?url';
+import restoredCape from '../props/art-study/source-mercenary/cape-restored.png?url';
+import tailoredBody from '../props/art-study/source-mercenary/body-tailored.png?url';
+import tailoredCape from '../props/art-study/source-mercenary/cape-tailored.png?url';
+import embroideredBody from '../props/art-study/source-mercenary/body-embroidered.png?url';
+import embroideredCape from '../props/art-study/source-mercenary/cape-embroidered.png?url';
 
 export type MercenaryArt = ArtTreatment['mercenaryArt'];
 type PaintedArt = Exclude<MercenaryArt, 'original'>;
@@ -14,6 +20,9 @@ const sources: Record<PaintedArt, readonly [string, string]> = {
   faithful: [faithfulBody, faithfulCape],
   painted: [paintedBody, paintedCape],
   graphic: [graphicBody, graphicCape],
+  restored: [restoredBody, restoredCape],
+  tailored: [tailoredBody, tailoredCape],
+  embroidered: [embroideredBody, embroideredCape],
 };
 
 /** Finite offline artwork, shared by the existing mercenary owner. Loading a

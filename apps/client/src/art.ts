@@ -412,7 +412,7 @@ export function animalArt(deer: boolean, step = 0, dead = false): HTMLCanvasElem
   }
   return image;
 }
-export function fireArt(frame: number): HTMLCanvasElement {
+export function fireArt(frame: number, lit = true): HTMLCanvasElement {
   const [image, ctx] = canvas(64, 72);
   const rng = random(500 + frame);
   poly(ctx, '#4c5145', [8, 62, 17, 50, 45, 50, 57, 62, 50, 69, 14, 69]);
@@ -422,6 +422,7 @@ export function fireArt(frame: number): HTMLCanvasElement {
   }
   poly(ctx, '#665137', [16, 55, 20, 51, 45, 62, 43, 65]);
   poly(ctx, '#ab7843', [17, 62, 44, 52, 46, 55, 21, 65]);
+  if (!lit) return image;
   for (let i = 0; i < 8; i++) {
     const x = 20 + rng() * 22;
     poly(ctx, i % 2 ? '#efc268' : '#d68b48', [

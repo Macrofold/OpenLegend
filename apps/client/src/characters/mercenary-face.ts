@@ -21,6 +21,9 @@ const designs: Record<MercenaryArt, FaceArt> = {
   faithful,
   painted,
   graphic,
+  restored: faithful,
+  tailored: faithful,
+  embroidered: painted,
 };
 
 /** Shaped features follow the original curved face. One vertex-colored mesh

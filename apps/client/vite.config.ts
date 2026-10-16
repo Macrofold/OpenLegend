@@ -10,6 +10,12 @@ export default defineConfig({
     outDir: `${workspace}/dist/client`,
     emptyOutDir: true,
     target: 'es2022',
-    rolldownOptions: { input: { game: `${root}index.html`, study: `${root}art-study.html` } },
+    rolldownOptions: {
+      input: {
+        game: `${root}index.html`,
+        study: `${root}art-study.html`,
+        worldStudy: `${root}scene-study.html`,
+      },
+    },
   },
 });

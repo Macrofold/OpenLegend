@@ -1,8 +1,8 @@
 # Dimensional pixel art — restyle the existing starting scene
 
-| Status      | Current progress                                                                                                                | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | A comprehensive starting-world study strategy is drafted; replacement art, motion and scene-performance acceptance remain open. | 2026-10-16   |
+| Status      | Current progress                                                                                                                                       | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Source-based mercenary, adult, tree, chest and equipment comparisons are exported; actual-world integration and moving-art qualification are underway. | 2026-10-16   |
 
 ## Purpose and authorization
 
@@ -17,6 +17,8 @@ The documentation snapshot was `/Users/mzw/.codex/worktrees/415f/OpenLegend`, `c
 **Strategy revised 2026-10-16 00:49 EDT; implementation authorized October 16.** Mike explicitly requested full implementation of this strategy without stopping for optional feedback. This replaces the earlier mercenary/tree/chest outline with a complete study of the existing starting world. The earlier assets, sources, comparisons and rejection evidence remain preserved. Working choices are autonomous; final creator acceptance remains distinct from technical delivery.
 
 Implementation starts from `codex/starting-scene-pixel-art@d74cbcf7dc6bae4dcd466c62e2598101d15e8bb9` in `/Users/mzw/.codex/worktrees/415f/OpenLegend`, retaining the explicit local base `codex/mercenary-original-refinement@1438ea13749d4acc7a852843d8677f687dbdd931` in `https://github.com/Macrofold/OpenLegend.git`. No branch/worktree switch or reconciliation was necessary. The existing 800–2,000-line estimate, staged completion criteria and performance answers below govern execution; source preparation and inspector comparison are first, before adoption into gameplay.
+
+**Implementation checkpoint, 2026-10-16 02:17 EDT:** Three source-based mercenary, broadleaf, chest, Ada, sword and shield alternatives are retained with editable Blender files. The original mercenary paints now run through the existing walking/cloth owner. The fitted anatomical adult uses the existing shared rigged-actor owner expanded from the hare, without another per-person capture renderer. `/scene-study.html` reuses `WildernessScene` for seven permitted starting-world views and explicit light/motion comparisons; it is a display replay, not a new world or native-action authority. A fresh disposable seed-1086 world again produced 129 entities, 27 actors and the same map digest. The native journey evidence remains applicable to unchanged routes and gameplay. Source export is not artistic acceptance: faces, sampling, remaining families, actual compositions, temporal checks and complete-scene performance remain in progress. Revised full runtime/tool estimate is 1,800–3,000 lines because rigged-person adaptation and full scene comparison are now concrete. The staged order and scope remain unchanged. Additional paid spend and outstanding commitments are both $0.
 
 ### Critique of the preceding plan
 

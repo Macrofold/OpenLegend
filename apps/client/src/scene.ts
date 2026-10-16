@@ -84,7 +84,7 @@ import { VegetationMotion, type VegetationContributor } from './vegetation-motio
 import { markPixelEnvironment } from './scene-pixels';
 import { GeneratedPropResources, type GeneratedPropActor } from './generated-prop';
 import { LibraryScenery } from './library-scenery';
-import { LibraryAnimals, type LibraryAnimalActor } from './library-animals';
+import { LibraryActors, hasLibraryActor, type LibraryActor } from './library-actors';
 import { VisionBlur, VISION_FOCUS } from './vision-blur';
 import { PerceptionOverlay } from './perception-overlay';
 import { FrameRateMeter } from './frame-rate';
@@ -108,7 +108,7 @@ const restingCardBounds = new pc.BoundingBox(new pc.Vec3(0, 0, 0), new pc.Vec3(0
 
 interface RenderedEntity {
   attackPose?: boolean;
-  model?: MercenaryActor | LibraryAnimalActor;
+  model?: MercenaryActor | LibraryActor;
   generatedProp?: GeneratedPropActor;
   generatedInstalled?: boolean;
   departedAt?: number;
@@ -223,7 +223,7 @@ export class WildernessScene implements WorldRenderer {
   private presentation!: WorldPresentation;
   private generatedProps!: GeneratedPropResources;
   private libraryScenery!: LibraryScenery;
-  private libraryAnimals!: LibraryAnimals;
+  private libraryActors!: LibraryActors;
   private mercenary?: MercenaryModels;
   private artMaterials!: ArtMaterials;
   private artSettings: ArtTreatment = { ...baselineArt };
@@ -292,7 +292,7 @@ export class WildernessScene implements WorldRenderer {
       this.artMaterials = new ArtMaterials(this.app.graphicsDevice);
       this.presentation = new WorldPresentation(this.app, this.camera, sun);
       this.libraryScenery = new LibraryScenery(this.app, this.artMaterials, sun.light!.light);
-      this.libraryAnimals = new LibraryAnimals(
+      this.libraryActors = new LibraryActors(
         this.app,
         this.presentation,
         this.camera,
@@ -555,7 +555,7 @@ export class WildernessScene implements WorldRenderer {
           ?.slice(0, 12)
           .map((item) => `${item.definitionId}:${Math.min(3, item.quantity)}`)
           .join('|') ?? ''
-      }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.bodyState ?? ''}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
+      }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.bodyState ?? ''}:${entity.kind === 'station' && entity.status.startsWith('Lit')}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
       if (entry && entry.root.tags.list()[0] !== signature) {
         this.releaseEntity(entry);
         this.actors.delete(entity.id);
@@ -1260,6 +1260,7 @@ export class WildernessScene implements WorldRenderer {
       };
     }
     const dead = !!view.bodyState;
+    const lit = view.kind === 'station' && view.status.startsWith('Lit');
     const person = view.kind === 'actor' || (view.kind === 'remains' && view.bodyPlan === 'biped');
     const equipped =
       view.id === game.player.id && game.player.inventory.some((item) => item.equipped);
@@ -1285,7 +1286,7 @@ export class WildernessScene implements WorldRenderer {
               : view.kind === 'practice-target'
                 ? 'practice-target'
                 : view.kind === 'station'
-                  ? 'fire'
+                  ? `fire:${lit}`
                   : `resource:${JSON.stringify([view.subtype + view.name, resourceSeed])}`;
     let width =
       view.kind === 'item-pile'
@@ -1355,13 +1356,13 @@ export class WildernessScene implements WorldRenderer {
                 : view.kind === 'practice-target'
                   ? [practiceTargetArt()]
                   : view.kind === 'station'
-                    ? [0, 1, 2].map(fireArt)
+                    ? (lit ? [0, 1, 2] : [0]).map((frame) => fireArt(frame, lit))
                     : [resourceArt(view.subtype + view.name, resourceSeed)];
       const materials = crate
         ? [this.material('#a17a4d'), this.material('#564631')]
         : images.map((source) => {
             if (view.bodyState === 'rotting') source = rottingArt(source);
-            const m = this.material('#ffffff', source, true, view.kind === 'station');
+            const m = this.material('#ffffff', source, true, lit);
             configureBillboard(m);
             if (m.useLighting) lightSprite(m, this.app.graphicsDevice);
             this.artMaterials.prepare(m);
@@ -1434,18 +1435,20 @@ export class WildernessScene implements WorldRenderer {
         view.kind !== 'station',
         asset.padding,
       );
-    if (view.kind === 'station' && sprite.render) this.presentation.addEffect(sprite.render);
+    if (lit && sprite.render) this.presentation.addEffect(sprite.render);
     const meshes = this.appearanceMeshes(root);
     const entry: RenderedEntity = {
       model:
         !dead && view.appearance === 'mercenary-model'
           ? this.mercenary?.create(root)
-          : !dead &&
-              view.kind === 'animal' &&
-              view.subtype === 'hare' &&
-              this.artSettings.hareArt !== 'sprite'
-            ? this.libraryAnimals.create(root, this.artSettings.hareArt)
-            : undefined,
+          : !dead && hasLibraryActor(view.appearance)
+            ? this.libraryActors.create(root, view.appearance)
+            : !dead &&
+                view.kind === 'animal' &&
+                view.subtype === 'hare' &&
+                this.artSettings.hareArt !== 'sprite'
+              ? this.libraryActors.create(root, this.artSettings.hareArt)
+              : undefined,
       root,
       sprite,
       meshes,
@@ -1471,8 +1474,14 @@ export class WildernessScene implements WorldRenderer {
       height,
       observed: true,
     };
-    if (crate && this.artSettings.prop === 'generated') {
-      entry.generatedProp = this.generatedProps.create(root, width, height, 0.8);
+    if (crate && this.artSettings.prop !== 'authored') {
+      entry.generatedProp = this.generatedProps.create(
+        root,
+        width,
+        height,
+        0.8,
+        this.artSettings.prop,
+      );
     }
     return entry;
   }
@@ -1686,7 +1695,8 @@ export class WildernessScene implements WorldRenderer {
       const first = instances[0]!;
       if (
         this.artSettings.environment === 'kenney' ||
-        this.artSettings.environment === 'quaternius'
+        this.artSettings.environment === 'quaternius' ||
+        this.artSettings.environment === 'study'
       ) {
         const shape = this.libraryScenery.create(
           this.artSettings.environment,
@@ -2660,7 +2670,7 @@ export class WildernessScene implements WorldRenderer {
     this.presentation?.destroy();
     const propParsing = this.generatedProps?.destroy();
     const mercenaryParsing = this.mercenary?.destroy();
-    const animalParsing = this.libraryAnimals?.destroy();
+    const animalParsing = this.libraryActors?.destroy();
     this.landscape?.destroy();
     this.libraryScenery?.destroy();
     for (const { mesh } of this.reliefMeshes.values()) {

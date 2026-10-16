@@ -16,6 +16,7 @@ from mathutils import Quaternion
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from art_study_common import ROOT, export_asset, solid_material, facial_features
+from study_human_motion import export_motion
 
 
 def load_module(name, path):
@@ -144,6 +145,11 @@ def main(source):
                 image=source_image(obj).copy()
                 size=512 if obj==human else 256
                 image.scale(size,size)
+                if hair in obj.name or 'eyebrow' in obj.name.lower():
+                    pixels=np.array(image.pixels[:],dtype=np.float32).reshape(-1,4)
+                    value=pixels[:,:3]@np.array([.26,.55,.19])
+                    pixels[:,:3]=np.array([.21,.14,.10])+value[:,None]*np.array([.22,.16,.10])
+                    image.pixels.foreach_set(pixels.ravel())
                 image.pack()
             image_material(obj,image,'hair' in obj.name.lower() or hair in obj.name or 'eyebrow' in obj.name)
         eyes=next(obj for obj in objects if 'low-poly' in obj.name)
@@ -158,7 +164,7 @@ def main(source):
             bpy.context.collection.objects.link(vest);objects.append(vest)
             import bmesh
             mesh=bmesh.new();mesh.from_mesh(vest.data)
-            remove=[v for v in mesh.verts if v.co.z<1.02 or abs(v.co.x)>.235]
+            remove=[v for v in mesh.verts if v.co.z<.90 or abs(v.co.x)>.26]
             bmesh.ops.delete(mesh,geom=remove,context='VERTS');mesh.to_mesh(vest.data);mesh.free()
             for vertex in vest.data.vertices:
                 vertex.co.x*=1.035;vertex.co.y*=1.07
@@ -181,6 +187,9 @@ def main(source):
         ][index]
         asset,placement=export_asset(objects,output,'ada-'+variant,'ada','Ada',variant,description,index==0,
             'MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.')
+        motion_path=output/('ada-'+variant+'-motion.glb')
+        export_motion(objects,rig,placement,motion_path)
+        asset['animatedFile']=motion_path.name
         placement.location.x=index*1.25
         assets.append(asset)
     helper.retain(group,assets,[

@@ -1,7 +1,10 @@
 import * as pc from 'playcanvas';
 import { BundledModels } from './bundled-models';
 import generatedChestUrl from './props/generated-chest.glb?url';
-import { ArtMaterials } from './art-treatment';
+import { ArtMaterials, type ArtTreatment } from './art-treatment';
+import carved from './props/art-study/source-chests/chest-carved-lid.glb?url';
+import banded from './props/art-study/source-chests/chest-banded-lid.glb?url';
+import cache from './props/art-study/source-chests/chest-plank-cache.glb?url';
 import { ShadowMaterial } from './shadow-material';
 import { ordinaryStencil, setVisibilityStencil } from './visibility-stencil';
 
@@ -27,14 +30,18 @@ export class GeneratedPropResources {
     width: number,
     height: number,
     depth: number,
+    variant: Exclude<ArtTreatment['prop'], 'authored'> = 'generated',
     onReady?: (actor: GeneratedPropActor) => void,
   ): GeneratedPropActor {
     const actor: GeneratedPropActor = new GeneratedPropActor(
       parent,
       width,
-      height,
-      depth,
-      this.models.load('Generated chest', generatedChestUrl),
+      variant === 'generated' ? height : height / 0.8,
+      variant === 'generated' ? depth : depth / 0.8,
+      this.models.load(
+        'Chest · ' + variant,
+        { generated: generatedChestUrl, carved, banded, cache }[variant],
+      ),
       (material) => this.prepare(material),
       () => this.actors.delete(actor),
       onReady,
