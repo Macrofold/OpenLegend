@@ -117,7 +117,7 @@ def author_motion(rig,species):
             for name in ['w_feather','w_feather.001']:
                 aim(name+'.'+side,(0,.028,-.004),(-sign,0,0))
             # Closed feathers overlap rather than hanging at their full flight
-            # width. The flight clip restores their original spread.
+            # width. Ground locomotion keeps that folded silhouette.
             for name in ['Wing','Wing.001','Wing.002','w_feather','w_feather.001']:
                 rig.pose.bones[name+'.'+side].scale.x=.46
             # Fold the tail fan into a narrow layered silhouette.
@@ -151,17 +151,6 @@ def author_motion(rig,species):
                 turn('head',.06*math.sin(t))
                 turn('tail_base',.035*math.sin(t))
                 for side,offset in [('L',0),('R',math.pi)]:
-                    if name=='Walk':
-                        for joint in ['Wing','Wing.001','Wing.002','w_feather','w_feather.001']:
-                            wing=rig.pose.bones[joint+'.'+side]
-                            wing.rotation_quaternion=Quaternion()
-                            wing.scale=(1,1,1)
-                            wing.keyframe_insert('rotation_quaternion',frame=frame)
-                            wing.keyframe_insert('scale',frame=frame)
-                        b=rig.pose.bones['shoulder.'+side];rest=b.bone.matrix_local.to_quaternion()
-                        sign=1 if side=='L' else -1
-                        b.rotation_quaternion=rest.inverted()@Quaternion((0,1,0),sign*.55*math.sin(t*2))@rest
-                        b.keyframe_insert('rotation_quaternion',frame=frame)
                     b=rig.pose.bones['foot_ctl.'+side]
                     # The source bird is approximately 12 cm tall before its
                     # parent scale. Small alternating foot targets retain IK.
@@ -290,10 +279,10 @@ def main(sources,species):
         rig.animation_data.action=actions['Idle'];bpy.context.scene.frame_set(0)
         label='Woodland bird' if species=='bird' else species.title()
         attribution=('Bear by madtrollstudio, CC BY 3.0, https://poly.pizza/m/kLLBpmcw0w; recolored, proportion study and rig by OpenLegend.' if species=='bear' else
-            'Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and idle/flight study by OpenLegend.' if species=='bird' else
+            'Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and idle/walk study by OpenLegend.' if species=='bird' else
             'Quaternius Ultimate Animated Animals, CC0; coat grouping and proportions by OpenLegend; source Idle and Walk clips retained.')
         asset,root=export_asset(objects,output,species+'-'+variant,'library-'+species,label,variant,
-            variant.replace('-',' ').capitalize()+': retained source anatomy with deliberate coat regions. '+('Source idle/walk clips.' if species in ('wolf','deer','stag') else 'Authored study idle/flight clips; no new native action.' if species=='bird' else 'Authored study idle/walk clips; no new native action.'),index==0,attribution)
+            variant.replace('-',' ').capitalize()+': retained source anatomy with deliberate coat regions. '+('Source idle/walk clips.' if species in ('wolf','deer','stag') else 'Authored study idle/walk clips; no new native action.' if species=='bird' else 'Authored study idle/walk clips; no new native action.'),index==0,attribution)
         motion=output/(species+'-'+variant+'-motion.glb');export_clips(objects,rig,root,actions,motion)
         asset['animatedFile']=motion.name;asset['animatedSha256']=hashlib.sha256(motion.read_bytes()).hexdigest()
         root.location.x=index*3;assets.append(asset)

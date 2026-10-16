@@ -90,7 +90,8 @@ try {
   await capture('lookout', 'Lookout · deck, ramp and supplies');
   await move(ground(11, 18));
   await capture('mending', 'Mending Clearing · Mara and Tavin');
-  await move(ground(8, 33));
+  // Stand beside the existing work surface so this view actually exposes it.
+  await move(ground(10, 34));
   await capture('workshop', 'Riverside workshop');
   await move(ground(27, 19));
   await capture('woodland', 'Woodland · animals and overlapping trees');

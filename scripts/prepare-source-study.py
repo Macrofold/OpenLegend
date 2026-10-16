@@ -187,9 +187,9 @@ def mercenaries(source):
         clean_materials()
         normalize(objects,2.035)
         descriptions = [
-            'Earlier concept-derived model and 29-color surface preparation, with the original face and gold mantle preserved.',
-            'Original face anatomy and eyes, quiet mail, broader quilt seams and wrapped linen. Original cape retained.',
-            'Original face and eyes, open mail groups, seams and paired peacock embroidery. Cloth remains a continuous lined surface.',
+            'Earlier concept-derived model and 29-color surface preparation, with original face detail, fitted eye accents and gold mantle preserved.',
+            'Original face anatomy with fitted eye accents, quiet mail, broader quilt seams and wrapped linen. Original cape retained.',
+            'Original face with fitted eye accents, open mail groups, seams and paired peacock embroidery. Cloth remains a continuous lined surface.',
         ]
         asset, placement = export_asset(objects,output,'mercenary-'+variant,'mercenary','Peacock Mercenary',variant,descriptions[index],variant=='restored',
             'Owner-supplied concept → Meshy body/rig; original OpenLegend cape. Study use; production rights remain unqualified.')

@@ -1,5 +1,7 @@
 import * as pc from 'playcanvas';
 
+let nextModelOwner = 0;
+
 export type BundledModel = pc.ContainerResource & { animations: pc.Asset[] };
 function container(value: unknown): value is BundledModel {
   return (
@@ -16,6 +18,7 @@ function container(value: unknown): value is BundledModel {
  * cancelled; already-started local glTF parsing must finish before its registry
  * is destroyed because the pinned parser registers embedded images asynchronously. */
 export class BundledModels {
+  private readonly cacheIdentity = ++nextModelOwner;
   private readonly assets: pc.Asset[] = [];
   private readonly pending = new Map<string, Promise<BundledModel>>();
   private readonly downloads = new Set<AbortController>();
@@ -37,7 +40,13 @@ export class BundledModels {
       .finally(() => this.downloads.delete(download))
       .then((contents) => {
         if (this.disposed) throw new Error('Model owner was destroyed.');
-        const asset = new pc.Asset(name, 'container', { url, filename: url, contents });
+        // The engine caches parsed containers by URL. Independently disposable
+        // owners must not share that mutable resource: replacing a comparison
+        // with an overlapping subset otherwise destroys the new model when the
+        // old owner unloads. Fetch the canonical URL once per owner; isolate only
+        // the parser's cache key, retaining the original filename for decoding.
+        const cacheUrl = `${url}${url.includes('?') ? '&' : '?'}model-owner=${this.cacheIdentity}`;
+        const asset = new pc.Asset(name, 'container', { url: cacheUrl, filename: url, contents });
         const parsed = new Promise<BundledModel>((resolve, reject) => {
           asset.once('load', () => {
             if (this.disposed || !container(asset.resource)) {

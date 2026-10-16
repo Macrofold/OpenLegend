@@ -1,15 +1,15 @@
 {
   "group": "source-bird",
   "sourceFile": "art-direction/assets/source-study/source-bird.blend",
-  "sourceSha256": "2162d03a3952d6ea8b545ca735f3bcb14a78e1c30933aa6c0343ff846f14a756",
+  "sourceSha256": "c4057b10687c09568c6934415aabb0ea65190d83b3f811bf6dada651496713ba",
   "recipe": {
     "path": "scripts/prepare-animal-study.py",
-    "sha256": "bcab688cdd959b0b04a8e7017bbd6ac2ba08842094ee848f444029eb7d475c4d"
+    "sha256": "ac3a0a12fa19f4f12e0297a0c69ceb4d5a037fd95612d4b6bf59aa94933e1a3e"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
-    "prepare-source-study.py": "8ba81318fee15d09e5000eda0369d8fad5015bb01e56fbbe0a385ab290789550",
-    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
+    "prepare-source-study.py": "d804fccad268c9deda4b06491b70927992afc1a816d5eaad5db8ab38d9579533",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
   },
   "sources": [
     {
@@ -25,7 +25,7 @@
       "family": "library-bird",
       "label": "Woodland bird",
       "variant": "grey-wing",
-      "description": "Grey wing: retained source anatomy with deliberate coat regions. Authored study idle/flight clips; no new native action.",
+      "description": "Grey wing: retained source anatomy with deliberate coat regions. Authored study idle/walk clips; no new native action.",
       "recommended": true,
       "file": "bird-grey-wing.glb",
       "bounds": {
@@ -49,16 +49,16 @@
         ]
       ],
       "sha256": "4ad9d5e1340cc72ba1bd35b13de97fdf24b1b3c5faa2b82c2c45f644c82ee891",
-      "source": "Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and idle/flight study by OpenLegend.",
+      "source": "Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and idle/walk study by OpenLegend.",
       "animatedFile": "bird-grey-wing-motion.glb",
-      "animatedSha256": "5fe029cca4b4d8585832c00c51ebf7e9575dd1486540364c3e6196a856778c4c"
+      "animatedSha256": "3c00b7bcd4e02f29db152bc5aa3622aeac40418379a64398c633a2e451a91334"
     },
     {
       "id": "bird-warm-bib",
       "family": "library-bird",
       "label": "Woodland bird",
       "variant": "warm-bib",
-      "description": "Warm bib: retained source anatomy with deliberate coat regions. Authored study idle/flight clips; no new native action.",
+      "description": "Warm bib: retained source anatomy with deliberate coat regions. Authored study idle/walk clips; no new native action.",
       "recommended": false,
       "file": "bird-warm-bib.glb",
       "bounds": {
@@ -82,16 +82,16 @@
         ]
       ],
       "sha256": "c6fe867ee726e6f085824b88b99583a51ff8ce340245b2038842a998438acbc5",
-      "source": "Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and idle/flight study by OpenLegend.",
+      "source": "Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and idle/walk study by OpenLegend.",
       "animatedFile": "bird-warm-bib-motion.glb",
-      "animatedSha256": "0b7ea1927073aaa6806a5eeb7a32f3e1f9e510e3963a54ca686c90a14ba1d964"
+      "animatedSha256": "8c48ec0077af8abf1acb9d2e838a4458eb4b4a3c2861391ea7330a35823f1818"
     },
     {
       "id": "bird-wing-bars",
       "family": "library-bird",
       "label": "Woodland bird",
       "variant": "wing-bars",
-      "description": "Wing bars: retained source anatomy with deliberate coat regions. Authored study idle/flight clips; no new native action.",
+      "description": "Wing bars: retained source anatomy with deliberate coat regions. Authored study idle/walk clips; no new native action.",
       "recommended": false,
       "file": "bird-wing-bars.glb",
       "bounds": {
@@ -115,9 +115,9 @@
         ]
       ],
       "sha256": "5256bfa669898310affdac1476008e100fa7760e08c7748e7ba995f59f7b6300",
-      "source": "Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and idle/flight study by OpenLegend.",
+      "source": "Yellow-billed shrike by pistachio, CC0, OpenGameArt; woodland plumage and idle/walk study by OpenLegend.",
       "animatedFile": "bird-wing-bars-motion.glb",
-      "animatedSha256": "faf70a59fd28064727eaf12f627149e0f0a0b501007bcb0d3531826178b0fe51"
+      "animatedSha256": "89e4a4569cf7a86cb3995db709554799f967bef785c47365c8aeff5eba1342c2"
     }
   ],
   "controls": [

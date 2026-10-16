@@ -23,7 +23,7 @@
       "family": "mercenary",
       "label": "Peacock Mercenary",
       "variant": "restored",
-      "description": "Earlier concept-derived model and 29-color surface preparation, with the original face and gold mantle preserved.",
+      "description": "Earlier concept-derived model and 29-color surface preparation, with original face detail, fitted eye accents and gold mantle preserved.",
       "recommended": true,
       "file": "mercenary-restored.glb",
       "bounds": {
@@ -58,7 +58,7 @@
       "family": "mercenary",
       "label": "Peacock Mercenary",
       "variant": "tailored",
-      "description": "Original face anatomy and eyes, quiet mail, broader quilt seams and wrapped linen. Original cape retained.",
+      "description": "Original face anatomy with fitted eye accents, quiet mail, broader quilt seams and wrapped linen. Original cape retained.",
       "recommended": false,
       "file": "mercenary-tailored.glb",
       "bounds": {
@@ -93,7 +93,7 @@
       "family": "mercenary",
       "label": "Peacock Mercenary",
       "variant": "embroidered",
-      "description": "Original face and eyes, open mail groups, seams and paired peacock embroidery. Cloth remains a continuous lined surface.",
+      "description": "Original face with fitted eye accents, open mail groups, seams and paired peacock embroidery. Cloth remains a continuous lined surface.",
       "recommended": false,
       "file": "mercenary-embroidered.glb",
       "bounds": {

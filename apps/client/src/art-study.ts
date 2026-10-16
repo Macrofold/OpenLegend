@@ -396,7 +396,7 @@ export class ArtStudy {
               : !asset.historical &&
                 (subject.value === 'cast'
                   ? ['mercenary', 'ada', 'mike', 'mara', 'tavin', 'kest', 'orin']
-                  : ['mercenary', 'ada']
+                  : ['mercenary', 'ada', 'library-chest', 'library-sword']
                 ).includes(asset.family)),
         )
       : choices.filter(
@@ -589,9 +589,10 @@ export class ArtStudy {
   }
   private applyFraming(): void {
     this.zoom = 1;
-    if (element<HTMLSelectElement>('framing').value === 'game') {
+    if (['game', 'overview'].includes(element<HTMLSelectElement>('framing').value)) {
       this.yaw = this.gameCamera.yaw;
-      this.pitch = this.gameCamera.pitch;
+      this.pitch =
+        element<HTMLSelectElement>('framing').value === 'overview' ? 0.88 : this.gameCamera.pitch;
       element<HTMLSelectElement>('projection').value =
         this.gameCamera.projection === 'orthographic' ? 'ortho' : 'perspective';
     }
@@ -631,7 +632,7 @@ export class ArtStudy {
     const camera = this.camera.camera!;
     const framing = element<HTMLSelectElement>('framing').value;
     const target = this.center.clone();
-    if (framing === 'game') target.y = 0;
+    if (framing === 'game' || framing === 'overview') target.y = 0;
     if (framing === 'detail') target.y = this.tallest * 0.85;
     camera.projection =
       element<HTMLSelectElement>('projection').value === 'perspective'
@@ -644,13 +645,15 @@ export class ArtStudy {
     if (framing === 'detail')
       this.detailSpan = Math.max(this.span * 0.32, this.fit(target, perspective, tangent, true));
     const height =
-      (framing === 'game'
-        ? this.gameCamera.zoom
-        : framing === 'closer'
-          ? 4.5
-          : framing === 'detail'
-            ? this.detailSpan
-            : this.span) * this.zoom;
+      (framing === 'overview'
+        ? 12
+        : framing === 'game'
+          ? this.gameCamera.zoom
+          : framing === 'closer'
+            ? 4.5
+            : framing === 'detail'
+              ? this.detailSpan
+              : this.span) * this.zoom;
     camera.orthoHeight = height;
     // Lower orthographic rays must start above the ground, including shallow
     // views; otherwise the foreground falls behind the camera's near plane.

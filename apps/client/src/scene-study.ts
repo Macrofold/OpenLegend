@@ -81,7 +81,9 @@ function setCamera(): void {
   scene.cameraCommand({ type: 'zoom', delta: zoom - current.zoom });
   scene.cameraCommand({
     type: 'orbit',
-    yaw: -current.yaw,
+    // Face across the river at the workshop; its existing bank-side tree
+    // otherwise hides the work surface in the default north-facing view.
+    yaw: (stop().id === 'workshop' ? Math.PI / 2 : 0) - current.yaw,
     pitch: (select('world-framing').value === 'overview' ? 0.88 : ordinary.pitch) - current.pitch,
   });
   scene.cameraCommand({
@@ -163,6 +165,8 @@ function mount(): void {
   scene.setShadowQuality(select('world-shadows').value as 'detailed' | 'economy');
   publish();
   setCamera();
+  button('projection').textContent =
+    scene.cameraState().projection === 'orthographic' ? 'Perspective' : 'Orthographic';
   status.textContent = stop().label + ' · source-based art comparison';
 }
 function update(now: number): void {
@@ -177,6 +181,8 @@ function update(now: number): void {
       metrics.textContent = JSON.stringify(
         {
           place: stop().label,
+          light: select('world-light').value,
+          route: select('route').value,
           viewport: [canvas.clientWidth, canvas.clientHeight],
           shadowQuality: select('world-shadows').value,
           stagedMotion: motion,
@@ -309,7 +315,16 @@ function dispose(): void {
 }
 window.addEventListener('pagehide', dispose);
 window.addEventListener('pageshow', (event) => {
-  if (!event.persisted || !disposed) return;
+  if (!event.persisted) {
+    // Native history restoration can restore select values after mount().
+    // Apply the controls that are actually visible, as the asset inspector does.
+    scene.setArtTreatment(treatment());
+    scene.setShadowQuality(select('world-shadows').value as 'detailed' | 'economy');
+    publish();
+    setCamera();
+    return;
+  }
+  if (!disposed) return;
   disposed = false;
   capture = new StudyCapture(canvas);
   button('record').disabled = false;
