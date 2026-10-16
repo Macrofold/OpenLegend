@@ -37,7 +37,7 @@ The reveal linked to the first numbered development diary, but the first blog po
 
 **Interpretation:** this case resists both simplistic narratives. It was not commercially invisible, but an apparently good sales comparison did not settle whether the additional scope and expense were worthwhile. The denominator matters: comparison with another game's Steam receipts is not comparison with that game's total business.
 
-Likewise, a publisher and public demo were present, so weak early labor returns cannot be reduced to “nobody marketed it.” Neither does the record prove that the publisher caused the shortfall. The useful question is which level of production expense the demonstrated demand could support.
+Likewise, a publisher and public playable showing were present, so weak early labor returns cannot be reduced to “nobody marketed it.” Neither does the record prove that the publisher caused the shortfall. The useful question is which level of production expense the demonstrated demand could support.
 
 The related [Spooky Bonus](spooky-bonus.md) and [Regency Solitaire](regency-solitaire.md) cases preserve a different outcome within the same studio. They are not independent evidence for a statistical rule that shorter games always win.
 

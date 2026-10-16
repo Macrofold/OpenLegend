@@ -4,9 +4,9 @@
 
 ## Origin and the small-team boundary
 
-An original Sequoia profile describes **six former Microsoft HoloLens colleagues**—Nick Fajt, Cam Brown, Dan Kroymann, Bilal Orhan, John Bevis and Josh Wehrly—building the first version in **under one hundred days** in 2016. Existing working relationships, specialist skills, hardware support and investor contacts preceded public launch. The profile is an investor's account with founder participation, not a neutral financial audit. [S1]
+An original Sequoia profile describes **six former Microsoft HoloLens colleagues**—Nick Fajt, Cam Brown, Dan Kroyman, Bilal Orhan, John Bevis and Josh Wehrly—building the first version in **under one hundred days** in 2016. Prior working relationships and specialist skills preceded public launch. The profile is an investor's account with founder participation, not a neutral financial audit. [S1]
 
-It describes Brown meeting early players **inside the game**, introducing activities and listening to feedback. This supplies a concrete community-building behavior at small scale, rather than a story requiring a huge social audience before anyone can play. Exact early account/follower counts and first-public-build dates are not consistently established across sources, so the chronology here uses 2016 rather than an unsupported precise launch day. [S1]
+Brown met early players **inside the game**, introducing activities and listening to feedback. The same profile describes **Tamara Hughes / Mamamonkey** moving from organizing community play to being hired. That is a documented collaboration route; compensation and employment terms are not disclosed. Exact early account/follower counts and first-public-build dates are not consistently established, so this chronology uses 2016 rather than an unsupported precise launch day. [S1]
 
 ## Financing and audience growth were real, but not profit
 
@@ -35,14 +35,14 @@ The preserved final posts show a place for participants to discuss the closure. 
 | YouTube and social growth | Original account dates, regular upload cadence and comparable follower curves. |
 | Discord/email | Server founding, active membership, acquisition sources and launch mailing-list performance. |
 | Early funding | Complete founding-round terms and exact relationship between initial expenditure and early test results. |
-| Specialist hiring | Original recruitment beyond known colleagues, artist contracts, marketing-team composition and vendor costs. |
+| Specialist hiring | Recruitment beyond the documented colleagues/community route, artist contracts, marketing-team composition and vendor costs. |
 | Final economics | Complete cost categories, operating margins over time, residual assets and verified individual refunds/payouts. |
 
 The company's account points to market changes as well as financial imbalance. Those are attributed explanations, not proof that one particular product decision, technology or employee caused the closure. Nor is the later large company representative of a six-person indie game's cost structure.
 
 ## Case-specific observations
 
-This is the clearest **community success without sustainable company economics** comparison in this expansion. It should not be treated as failure to attract players, or as a story where fundraising never happened.
+This is an explicit **community success without sustainable company economics** comparison. It should not be treated as failure to attract players, or as a story where fundraising never happened.
 
 For an independent creator, the relevant questions are what ongoing obligations success creates and which costs grow with activity. The case does not determine Open Legend's business model or prove that social creation platforms are inherently unviable; it supplies a counterexample to judging viability from audience or financing alone.
 
@@ -52,7 +52,7 @@ Because it hosts a system of games and creators, Rec Room is counted as a **plat
 
 Accessed 2026-10-16.
 
-- **[S1] [Sequoia, original Nick Fajt profile](https://sequoiacap.com/article/nick-fajt-rec-room-spotlight)** — founding team, prior relationships, rapid working product and in-game community formation; investor perspective is explicit.
+- **[S1] [Sequoia, original Nick Fajt profile](https://sequoiacap.com/article/nick-fajt-rec-room-spotlight)** — December 7, 2021; founding team, working product, in-game community formation and community-to-hire example; investor perspective is explicit.
 - **[S2] [Rec Room company funding announcement](https://www.prnewswire.com/news-releases/social-gaming-platform-rec-room-raises-145-million-at-a-3-5-billion-valuation-301448340.html)** — December 20, 2021; primary financing and audience claims.
 - **[S3] [GeekWire, original company-interview reporting](https://www.geekwire.com/2021/seattle-vr-startup-rec-room-hits-3-5b-valuation-with-new-145m-round/)** — December 2021; contemporaneous staffing context.
 - **[S4] [Company closure announcement](https://blog.recroom.com/posts/schools-out-for-rec-room)** — March 30, 2026; indexed original text retrieved, direct page returned an access error. Admitted financial imbalance and planned wind-down, not independent account auditing.
