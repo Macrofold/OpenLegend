@@ -1,8 +1,8 @@
 # Source register, coverage and confidence
 
-**Research checked:** 17 October 2026. **Project baseline:** `0eb7358f251d1ab706592ccb6e9829e98c729fe9`.
+**Research checked:** 17 October 2026. **Original project baseline:** `0eb7358f251d1ab706592ccb6e9829e98c729fe9`. **Design integration reviewed against:** `334d61a8ba0bffa019e33e9f1d304af8bd3ea6ab`.
 
-This research uses **189 distinct resource records**. They include individual skill files, API documentation, model cards, papers, developer interviews, store records and community accounts. Multiple records from one company or creator are not independent confirmations. The detailed [machine-readable register](sources.json) records each resource's author, date where established, evidence type, supported claim and limitations. The topical dossiers place citations beside the actual claims.
+This research uses **195 distinct resource records**. They include individual skill files, API documentation, model cards, papers, developer interviews, store records and community accounts. Multiple records from one company or creator are not independent confirmations. The detailed [machine-readable register](sources.json) records each resource's author, date where established, evidence type, supported claim and limitations. The topical dossiers place citations beside the actual claims.
 
 ## Coverage against the request
 
@@ -21,6 +21,8 @@ This research uses **189 distinct resource records**. They include individual sk
 | Voice, effects and music                 | Specialist model docs, official TTS skill, public mods and released voice-game accounts                                    | Separate acting from text generation and measure the full interaction                                     | Delivery latency, interruption, multilingual quality and recurring economics |
 | PlayCanvas versus Godot                  | Actual OpenLegend source/dependency context; current PlayCanvas/Godot/Unity/Unreal docs and real tool scope                | Retain current stack pending a material measured reason to change                                         | Same-slice authoring and browser delivery comparison                         |
 | Testing and overall development          | EA SEED production paper, Play2Code method, live editor/browser skill checks and project guidance                          | Observable actions, reproducible failures, selective automation and human play                            | Whether the slice is engaging and whether AI exploration adds value          |
+
+The review added official ComfyUI graph/API/agent resources and Scenario workflow documentation, bringing the tooling audit to 27 candidates. The [production handbook](../../../docs/production-workflows/README.md) turns the evidence into reusable routes; [review and integration](14-review-and-design-integration.md) records the critique, creative opportunities and existing design owners. Those methods have not been executed as tool qualification.
 
 General coding leaderboards were deliberately excluded. Historical coding results, generic web-app benchmarks and tutoring quality scores were not used as evidence for game narrative or design superiority. Broad legal/platform policy research was not repeated; the current project owners and concrete tool/output requirements were respected.
 
@@ -221,6 +223,12 @@ The rows below are navigation into the inspected resources. The detailed support
 | SK084 | [OpenLegend client dependencies](https://github.com/Macrofold/OpenLegend/blob/0eb7358f251d1ab706592ccb6e9829e98c729fe9/apps/client/package.json)                                                            | OpenLegend maintainers               | project source                  |
 | SK085 | [OpenLegend renderer boundary](https://github.com/Macrofold/OpenLegend/blob/0eb7358f251d1ab706592ccb6e9829e98c729fe9/apps/client/src/world-renderer.ts)                                                     | OpenLegend maintainers               | project source                  |
 | SK086 | [OpenLegend world scene](https://github.com/Macrofold/OpenLegend/blob/0eb7358f251d1ab706592ccb6e9829e98c729fe9/apps/client/src/scene.ts)                                                                    | OpenLegend maintainers               | project source                  |
+| SK087 | [ComfyUI workflow API format](https://github.com/Comfy-Org/docs/blob/main/development/api-development/workflow-api-format.mdx) | Comfy Org | official_documentation_source |
+| SK088 | [ComfyUI CLI agent tools](https://docs.comfy.org/agent-tools/cli) | Comfy Org | official_documentation |
+| SK089 | [Official ComfyUI agent skills](https://github.com/Comfy-Org/comfy-skills) | Comfy Org | official_repository_documentation |
+| SK090 | [ComfyUI official generate-image command](https://github.com/Comfy-Org/comfy-skills/blob/main/claude-code/commands/generate-image.md) | Comfy Org | official_agent_command_source |
+| SK091 | [Scenario key capabilities at a glance](https://docs.scenario.com/get-started/documentation/key-capabilities-at-a-glance) | Scenario | official_documentation |
+| SK092 | [Scenario workflows and apps](https://docs.scenario.com/get-started/documentation/workflows-and-apps) | Scenario | official_documentation |
 
 ### Language, image, geometry, motion and audio evidence
 

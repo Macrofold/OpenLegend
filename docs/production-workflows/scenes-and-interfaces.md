@@ -18,7 +18,7 @@ A world-content author and environment contributor establish these choices toget
 
 The [creative brief](../../art-direction/final-board/creative-brief.md) calls for layered nature, expressive people, meaningful detail and purposeful light, including warmth and daylight. Use density to reveal material, use and identity. Preserve negative space and contrast so every bush, item and spark does not compete for attention.
 
-**Useful result:** the place has an understandable visual and gameplay purpose. If there is no interesting activity or reason to return, improve the situation through [characters and play](characters-and-play.md) before multiplying decorative assets.
+**Useful result:** the place fulfills its intended visual and player purpose, whether activity, discovery, orientation, atmosphere or a quiet interval. If that purpose is unclear or unrewarding, revise the situation or composition before multiplying decorative assets; [characters and play](characters-and-play.md) can help when the missing value is an encounter or activity.
 
 ### 2. Build a traversable blockout and review approaches
 
@@ -158,7 +158,7 @@ Compare the intended and actual full-screen result at equivalent size and state.
 
 Inspect the packaged result when changes to assets, fonts, CSS or delivery can differ from development. Reuse relevant checks and add work only to resolve a concrete remaining risk. Preserve the exemplar, accepted source art, component changes, useful state fixture and concise repair notes in their established locations.
 
-When comparing models, keep the question explicit. Fixed-art implementation tests execution of a design. Brief-to-composition tests design judgment. A separate image comparison tests artwork supply. The [research evaluation plan](../../archive/02-research/ai-game-development/11-evaluation-and-adoption.md) defines the distinction; changing all inputs at once cannot establish which model caused improvement.
+When comparing models, keep the question explicit. Fixed-design implementation holds the approved layout, artwork and interaction specification constant to test fidelity and working behavior. Brief-to-composition tests design judgment using the same supplied content and art. A separate image comparison tests artwork supply. The [research evaluation plan](../../archive/02-research/ai-game-development/11-evaluation-and-adoption.md) defines the distinction; changing all inputs at once cannot establish which model caused improvement.
 
 ## Parallelism and revision across both routes
 

@@ -2,6 +2,8 @@
 
 **Research checked:** 17 October 2026. **Status:** diagnosis hypotheses and proposed workflow. This document does not accept a new visual direction, replace the existing design system, or claim a fresh inspection of the running application.
 
+The [interface production route](../../../docs/production-workflows/scenes-and-interfaces.md#art-directed-working-interfaces) is the reusable working guide; the [UI brief](../../../docs/ui-design-brief.md#production-and-visual-comparison) integrates it with current design-system and interaction owners. This dossier explains the evidence and alternative diagnoses.
+
 ## Direct answer
 
 The research does not establish that OpenAI is inherently unable to produce a strong game interface, that Claude is universally better at game design, or that React prevents a convincing inventory. It does establish that **art inputs, visual decisions, implementation, and feedback are separate contributors**. The supplied WoW-style demonstration changes all of them simultaneously. Its result is a good reason to study its production process and audition alternatives, not a controlled model comparison.

@@ -112,7 +112,7 @@ Parallelize independent exploration, asset variants, bounded component work or r
 
 Keep dependent work sequential when concurrent changes would invalidate it. Final skinning depends on sufficiently stable geometry; fitted clothing depends on the body and rig convention; a downstream export should not silently consume whichever source an agent last overwrote. Give one contributor ownership of each shared source and one integrator responsibility for the complete player result. Stateful application operations also follow the selected tool's concurrency limitations.
 
-Use a shared baseline and explicit output locations. Review each handoff as it arrives instead of waiting for every discipline to finish. More agents are useful only when accepted throughput improves after reconciliation and correction work are counted. [Research principles](../../archive/02-research/ai-game-development/09-openlegend-principles.md) retain the supporting evidence.
+Use a shared baseline and explicit output locations. Review each handoff as it arrives instead of waiting for every discipline to finish. Additional agents can improve independent exploration, review or delivery; assess those benefits alongside reconciliation and correction effort. [Research principles](../../archive/02-research/ai-game-development/09-openlegend-principles.md) retain the supporting evidence.
 
 ## Select tools by the stage they improve
 

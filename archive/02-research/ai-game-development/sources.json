@@ -31,7 +31,9 @@
       "limits": "Publisher-set release plans can change; no released-game reviews or revenue corroboration.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD03",
@@ -44,7 +46,9 @@
       "limits": "Review aggregate changes; reviews establish reception, not audited revenue or cause of success.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD04",
@@ -57,7 +61,9 @@
       "limits": "Development-era interview; no measured labor comparison. Side-view pipeline differs from OpenLegend's live camera.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD05",
@@ -70,7 +76,9 @@
       "limits": "Broad confirmation, not detailed export specifications.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD06",
@@ -83,7 +91,10 @@
       "limits": "Stylistic choices in one game; no independent causal study of readability or productivity.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md", "03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "02-developer-case-studies.md",
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD07",
@@ -96,7 +107,9 @@
       "limits": "Historical implementation; 2022 comment qualifies original algorithm. Not an OpenLegend architecture prescription.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD08",
@@ -109,7 +122,9 @@
       "limits": "Historical promotional interview, not a current engine benchmark or audited savings study.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD09",
@@ -122,7 +137,10 @@
       "limits": "Reviewed published abstract. Linked PDF was approximately 239 MB and could not be retrieved; exact algorithm not analyzed.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md", "03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "02-developer-case-studies.md",
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD10",
@@ -135,7 +153,9 @@
       "limits": "Abstract reviewed, not entire talk; claimed savings lack an independently audited baseline.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD11",
@@ -148,7 +168,9 @@
       "limits": "Announcement describes talk scope; full presentation was not watched.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD12",
@@ -161,7 +183,9 @@
       "limits": "Public abstract establishes stages, not implementation details or economics.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD13",
@@ -174,7 +198,9 @@
       "limits": "Internal workflow, not a released universal converter; no controlled productivity comparison.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD14",
@@ -187,7 +213,10 @@
       "limits": "Does not demonstrate economical replication by a small project or identify every later shipped application.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md", "03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "02-developer-case-studies.md",
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD15",
@@ -200,7 +229,9 @@
       "limits": "Corroborates direction of production work, not identical reuse of the 2021 system or every enemy's implementation.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD16",
@@ -213,7 +244,9 @@
       "limits": "No named shipped-title evaluation, controlled narrative-quality comparison or cost accounting.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD17",
@@ -226,7 +259,9 @@
       "limits": "Explicit prototype with narrative roles; not shipped autonomous-resident proof.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD18",
@@ -239,7 +274,9 @@
       "limits": "Explicitly experimental; no controlled retention, reliability or serving-cost results.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD19",
@@ -252,7 +289,9 @@
       "limits": "Dataset and rights representations are publisher claims; rejection rates, cleanup and retention are not reported.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD20",
@@ -265,7 +304,9 @@
       "limits": "Promotional self-report without audited baseline, rejection rates or comparable-output accounting.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD21",
@@ -278,7 +319,9 @@
       "limits": "Advertised efficiency and complexity figures have no independent method or final-asset acceptance accounting.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD22",
@@ -291,7 +334,9 @@
       "limits": "Earlier Fusebox revenue is not new-title revenue; two-founder framing omits wider production resources; no audited savings.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD23",
@@ -304,7 +349,9 @@
       "limits": "Capability documentation, not a productivity comparison or OpenLegend style qualification.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD24",
@@ -317,7 +364,9 @@
       "limits": "Documented mechanism does not supply art direction or automatic runtime graph execution.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD25",
@@ -330,7 +379,9 @@
       "limits": "Requires a suitable mesh and baking inputs; not a geometry repair tool or imported runtime graph guarantee.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD26",
@@ -343,7 +394,9 @@
       "limits": "Not evaluated locally; authoring capabilities do not imply engine migration or a proven agent integration.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD27",
@@ -356,7 +409,9 @@
       "limits": "Godot implementation is an authoring-tool fact, not a constraint on the receiving game's engine.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD28",
@@ -369,7 +424,9 @@
       "limits": "Lower page contains an old Blender example; use maintained exporter documentation for version-specific instructions.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD29",
@@ -382,7 +439,9 @@
       "limits": "Main branch changes; specification support is not proof that OpenLegend's general intake is implemented.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD30",
@@ -395,7 +454,9 @@
       "limits": "Search-indexed primary text retrieved; direct page open failed. No version-specific procedure asserted.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD31",
@@ -408,7 +469,9 @@
       "limits": "Search-indexed staging documentation; direct open failed. Not used for a measured performance claim.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD32",
@@ -421,7 +484,9 @@
       "limits": "Historical update date; no claim of raw asset redistribution rights, universal anatomy support or comparative quality.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD33",
@@ -434,7 +499,9 @@
       "limits": "Some FAQ feature statements are historical; current export documentation used separately. No current paid-plan recommendation.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD34",
@@ -447,7 +514,9 @@
       "limits": "Format capability is not a verified OpenLegend rig or publication integration.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD35",
@@ -460,7 +529,9 @@
       "limits": "Documentation and vendor recommendations, not an independent comparison or measured cleanup estimate.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD36",
@@ -473,8 +544,13 @@
       "limits": "Research capability; no local inference, skeleton qualification or OpenLegend integration performed.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "also_registered_as": ["MOD30"],
-      "cited_in": ["03-procedural-art-and-animation.md", "07-image-3d-and-audio-models.md"]
+      "also_registered_as": [
+        "MOD30"
+      ],
+      "cited_in": [
+        "03-procedural-art-and-animation.md",
+        "07-image-3d-and-audio-models.md"
+      ]
     },
     {
       "id": "PROD37",
@@ -487,7 +563,9 @@
       "limits": "Requires setup and data; vendor example, not a shipped-game productivity benchmark. Large example download not fetched.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["03-procedural-art-and-animation.md"]
+      "cited_in": [
+        "03-procedural-art-and-animation.md"
+      ]
     },
     {
       "id": "PROD38",
@@ -500,7 +578,9 @@
       "limits": "Release history demonstrates distribution, not active users, stable behavior in every configuration or product economics.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD39",
@@ -513,7 +593,9 @@
       "limits": "Download count is project-reported and not unique active players. Player-view vision differs from resident-local observations.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD40",
@@ -526,7 +608,9 @@
       "limits": "Capability documentation; no automatic personality-quality evaluation or OpenLegend import compatibility.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD41",
@@ -539,7 +623,9 @@
       "limits": "Tuning advice and claimed savings are hardware/provider-dependent; no controlled end-to-end benchmark.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD42",
@@ -552,7 +638,9 @@
       "limits": "README and public repository reviewed, not installed or fully audited; claims of deep awareness do not establish strict knowledge isolation.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD43",
@@ -565,7 +653,9 @@
       "limits": "Describes a collaborative-story product; no measured hallucination rate or proof that all important facts survive compression.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD44",
@@ -578,7 +668,9 @@
       "limits": "Specific ratios are product choices, not a universal recommendation for OpenLegend's resident context.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD45",
@@ -591,7 +683,9 @@
       "limits": "Methods and invoices unpublished; reported average TTS latency is not equivalent to first-audio or full-interaction latency.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD46",
@@ -604,7 +698,9 @@
       "limits": "Small and changing review sample; no sales, retention or profitability inference.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD47",
@@ -617,7 +713,9 @@
       "limits": "Developer claim without a cost breakdown; no independent evidence of margin or lifetime service sustainability.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD48",
@@ -630,7 +728,9 @@
       "limits": "Promotional account; reported longest session is one observation, not retention distribution or causal evidence.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD49",
@@ -643,7 +743,9 @@
       "limits": "Record establishes provenance; detailed engineering claims use the full paper.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "PROD50",
@@ -656,7 +758,9 @@
       "limits": "Integration study of specific control tasks; no claim of automatic fun assessment or autonomous full-game QA.",
       "accessed_at": "2026-10-17",
       "group": "production",
-      "cited_in": ["02-developer-case-studies.md"]
+      "cited_in": [
+        "02-developer-case-studies.md"
+      ]
     },
     {
       "id": "SK001",
@@ -669,7 +773,9 @@
       "limits": "Collection breadth and stars are not a comparative engine benchmark or shipped-game credential.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK002",
@@ -682,7 +788,10 @@
       "limits": "Does not establish best engine; generic router should not override OpenLegend context.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md", "05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md",
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK003",
@@ -695,7 +804,9 @@
       "limits": "No independent shipped-game/sales record established in this review.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK004",
@@ -708,7 +819,9 @@
       "limits": "Baselines are not upgrade instructions.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK005",
@@ -721,7 +834,9 @@
       "limits": "No image generator supplied; Python/Pillow helpers not executed.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK006",
@@ -734,7 +849,9 @@
       "limits": "Generic layout and numeric recommendations require adaptation.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK007",
@@ -747,7 +864,9 @@
       "limits": "Does not supersede OpenLegend persisted deterministic world authority.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK008",
@@ -760,7 +879,9 @@
       "limits": "Not a version-matched PlayCanvas/WGSL implementation guide.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK009",
@@ -773,7 +894,9 @@
       "limits": "Guidance, not validated OpenLegend art.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK010",
@@ -786,7 +909,9 @@
       "limits": "Does not guarantee generated animation consistency.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK011",
@@ -799,7 +924,9 @@
       "limits": "Website list differs from repository; actual current skill files used.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK012",
@@ -812,7 +939,9 @@
       "limits": "Current instructions can exceed OpenLegend pinned engine capabilities.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK013",
@@ -825,7 +954,9 @@
       "limits": "Generic local physics/game-state patterns conflict with OpenLegend server authority.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK014",
@@ -838,7 +969,9 @@
       "limits": "Installed version and project boundaries remain primary.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK015",
@@ -851,7 +984,9 @@
       "limits": "Examples are not full production architecture; not executed.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK016",
@@ -864,7 +999,9 @@
       "limits": "Existing OpenLegend accepted controls must remain authoritative.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK017",
@@ -877,7 +1014,9 @@
       "limits": "Bounds do not establish facing; compressed decoding dependencies and Meshopt limitations.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK018",
@@ -890,7 +1029,9 @@
       "limits": "Visual calibration cannot define authoritative physical shape.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK019",
@@ -903,7 +1044,9 @@
       "limits": "Playback time alone does not prove a functioning skeleton.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK020",
@@ -929,7 +1072,9 @@
       "limits": "Decoder download/runtime/version costs need actual measurement.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK022",
@@ -942,7 +1087,9 @@
       "limits": "Must preserve actual OpenLegend day/night clock; studio preview insufficient.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK023",
@@ -955,7 +1102,9 @@
       "limits": "Actual first-use performance and visual restraint unmeasured.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK024",
@@ -968,7 +1117,10 @@
       "limits": "OpenLegend pins 2.22.2, so unavailable without separate version decision.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md", "05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md",
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK025",
@@ -981,7 +1133,9 @@
       "limits": "Byte-exact only where preserving pixels is the intended property; aesthetics require judgment.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK026",
@@ -994,7 +1148,9 @@
       "limits": "No universal platform budget or measured OpenLegend speedup.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK027",
@@ -1007,7 +1163,9 @@
       "limits": "Shader chunk API and GLSL/WGSL differ across versions; check 2.22.2.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK028",
@@ -1020,7 +1178,9 @@
       "limits": "Blanket baking not suitable for changing sun and movable/buildable world.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK029",
@@ -1033,7 +1193,10 @@
       "limits": "Not an adapter for arbitrary standalone Engine scene source.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md", "05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md",
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK030",
@@ -1046,7 +1209,9 @@
       "limits": "Generated package endpoints inaccessible; generator inspected instead.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK031",
@@ -1059,7 +1224,9 @@
       "limits": "Generator inspected, generated archive not installed or verified in host.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK032",
@@ -1072,7 +1239,9 @@
       "limits": "Optional dependency not installed; targeted testing only.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK033",
@@ -1085,7 +1254,9 @@
       "limits": "Web-page examples need game adaptation; not evidence of inherent model superiority.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK034",
@@ -1098,7 +1269,9 @@
       "limits": "Does not claim same license for every item in Anthropic repository.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK035",
@@ -1111,7 +1284,9 @@
       "limits": "Mandatory sign-off ceremony conflicts with already-authorized work context; renderer-specific tools not for ordinary browser.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK036",
@@ -1124,7 +1299,9 @@
       "limits": "Not every dimension requires user question; reuse OpenLegend docs.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK037",
@@ -1154,7 +1331,9 @@
       "limits": "Accessibility snapshots alone do not verify game art; use permitted development sessions.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK039",
@@ -1167,7 +1346,9 @@
       "limits": "Not independent benchmark; existing project browser tooling may already suffice.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK040",
@@ -1180,7 +1361,9 @@
       "limits": "Primary page retrieved through search cache; direct open/source hosting inaccessible; no implementation/license audit.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK041",
@@ -1190,10 +1373,12 @@
       "date": "Accessed 2026-10-17",
       "type": "official project catalog",
       "verified_claim": "Identifies Blender Lab MCP initiative separately from community Blender MCP.",
-      "limits": "Lab status not a claim of production fitness.",
+      "limits": "Catalog labels the Blender Lab MCP project Released and identifies it separately from community Blender MCP; publication status does not establish OpenLegend production fitness. Source hosting was unavailable to this review; implementation security and package license were not audited.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK042",
@@ -1206,7 +1391,9 @@
       "limits": "Not official Blender; not installed; provider rights and spend depend on configuration.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK043",
@@ -1219,7 +1406,9 @@
       "limits": "Requires separate DCC-MCP/Blender adapter; not first-party Blender or engine export proof.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK044",
@@ -1232,7 +1421,9 @@
       "limits": "Requires separate DCC-MCP/Blender adapter; not first-party Blender or engine export proof.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK045",
@@ -1245,7 +1436,9 @@
       "limits": "Requires separate DCC-MCP/Blender adapter; not first-party Blender or engine export proof.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK046",
@@ -1258,7 +1451,9 @@
       "limits": "Author-reported tests; no local installation or actual game qualification.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK047",
@@ -1271,7 +1466,9 @@
       "limits": "Days-old collection, Blender5.2 target, no runtime validation here.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK048",
@@ -1284,7 +1481,9 @@
       "limits": "Watertightness/grounding heuristics must be adapted for intentional cards/offsets.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK049",
@@ -1297,7 +1496,9 @@
       "limits": "Universal numerical platform budgets not adopted.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK050",
@@ -1310,7 +1511,9 @@
       "limits": "Unity/Unreal/Roblox profiles not PlayCanvas contract; arbitrary creatures not verified.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK051",
@@ -1323,7 +1526,9 @@
       "limits": "Aseprite separate product/license; examples author-provided, not independent validation.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK052",
@@ -1336,7 +1541,9 @@
       "limits": "Does not generate visual identity or automatically ensure animation continuity.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK053",
@@ -1349,7 +1556,9 @@
       "limits": "Requires Adobe Designer and SDK; hashes alone not visual correctness; community not Adobe.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK054",
@@ -1362,7 +1571,9 @@
       "limits": "Dependencies not all separately hashed; no generator quality or downstream shader validation.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK055",
@@ -1375,7 +1586,9 @@
       "limits": "No shipped game or OpenLegend benchmark; Cycles displacement not automatic runtime asset.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK056",
@@ -1388,7 +1601,9 @@
       "limits": "Using authoring tool does not require game engine Godot.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK057",
@@ -1401,7 +1616,9 @@
       "limits": "Cannot recommend as complete production automation; inspected actual addon README.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK058",
@@ -1414,7 +1631,9 @@
       "limits": "Very new, author-reported Windows live and host-only Linux checks; timeout does not cancel mutations.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK059",
@@ -1427,7 +1646,10 @@
       "limits": "Listed tools do not establish full visual scene-review loop; stars not benchmark.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md", "05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md",
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK060",
@@ -1440,7 +1662,9 @@
       "limits": "Not installed; .NET building/validation outside tool scope.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK061",
@@ -1453,7 +1677,9 @@
       "limits": "Not Unity official; README quickstart/release-version drift; no engine-comparison benchmark.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK062",
@@ -1466,7 +1692,9 @@
       "limits": "Not recommended; MIT badge not independently matched to license file.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK063",
@@ -1479,7 +1707,9 @@
       "limits": "Version/platform-sensitive; no OpenLegend performance measurement.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK064",
@@ -1492,7 +1722,9 @@
       "limits": "Possible architecture, not free integration/migration.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK065",
@@ -1505,7 +1737,9 @@
       "limits": "Authoring capability does not ensure art direction.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK066",
@@ -1518,7 +1752,9 @@
       "limits": "Good rigs and clips still needed; no comparison run.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK067",
@@ -1531,7 +1767,9 @@
       "limits": "No sales or native-to-web equivalence inferred.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK068",
@@ -1544,7 +1782,9 @@
       "limits": "Not a performance ranking.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK069",
@@ -1557,7 +1797,9 @@
       "limits": "Feature availability must match installed2.22.2.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK070",
@@ -1570,7 +1812,9 @@
       "limits": "Capability not automatic game aesthetic quality.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK071",
@@ -1583,7 +1827,9 @@
       "limits": "Tutorial pause patterns not OpenLegend server authority.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK072",
@@ -1596,7 +1842,10 @@
       "limits": "Does not prove quality of any particular inventory.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md", "08-ui-quality-and-production.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md",
+        "08-ui-quality-and-production.md"
+      ]
     },
     {
       "id": "SK073",
@@ -1609,7 +1858,9 @@
       "limits": "Current docs matter; older single-thread blanket claims invalid; no performance measured.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK074",
@@ -1622,7 +1873,9 @@
       "limits": "Hosted rendering not equivalent to local client-web rendering.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK075",
@@ -1635,7 +1888,9 @@
       "limits": "No numerical hosting cost or latency claimed.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK076",
@@ -1648,7 +1903,10 @@
       "limits": "Dynamic snapshot; stars/activity are not quality or commercial success.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md", "05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md",
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK077",
@@ -1661,7 +1919,10 @@
       "limits": "Dynamic snapshot; stars/activity are not quality or commercial success.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md", "05-playcanvas-godot-and-engine-choice.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md",
+        "05-playcanvas-godot-and-engine-choice.md"
+      ]
     },
     {
       "id": "SK078",
@@ -1674,7 +1935,9 @@
       "limits": "Dynamic snapshot; stars/activity are not quality or commercial success.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK079",
@@ -1687,7 +1950,9 @@
       "limits": "Dynamic snapshot; stars/activity are not quality or commercial success.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK080",
@@ -1700,7 +1965,9 @@
       "limits": "Dynamic snapshot; stars/activity are not quality or commercial success.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK081",
@@ -1713,7 +1980,9 @@
       "limits": "Dynamic snapshot; stars/activity are not quality or commercial success.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK082",
@@ -1726,7 +1995,9 @@
       "limits": "Dynamic snapshot; stars/activity are not quality or commercial success.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK083",
@@ -1739,7 +2010,9 @@
       "limits": "Dynamic snapshot; stars/activity are not quality or commercial success.",
       "group": "skills",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     },
     {
       "id": "SK084",
@@ -1781,6 +2054,100 @@
       "cited_in": []
     },
     {
+      "id": "SK087",
+      "url": "https://github.com/Comfy-Org/docs/blob/main/development/api-development/workflow-api-format.mdx",
+      "title": "ComfyUI workflow API format",
+      "author": "Comfy Org",
+      "date": "Living documentation; accessed 2026-10-17",
+      "type": "official_documentation_source",
+      "verified_claim": "ComfyUI distinguishes an editable UI workflow from its API execution export. The API representation preserves executable nodes and links while omitting visual layout information.",
+      "limits": "Documentation inspected, not executed. The consuming installation still needs the relevant nodes and models; an exported graph is not an accepted OpenLegend asset.",
+      "accessed_at": "2026-10-17",
+      "group": "skills",
+      "cited_in": [
+        "04-skills-and-tooling.md",
+        "07-image-3d-and-audio-models.md"
+      ]
+    },
+    {
+      "id": "SK088",
+      "url": "https://docs.comfy.org/agent-tools/cli",
+      "title": "ComfyUI CLI agent tools",
+      "author": "Comfy Org",
+      "date": "Living documentation; accessed 2026-10-17",
+      "type": "official_documentation",
+      "verified_claim": "The CLI exposes local, cloud and generation operations, supports explicit execution targeting, and can select cloud when signed in. Cloud routes have subscription or credit requirements.",
+      "limits": "Some operations are beta. No CLI installation, account check, workflow execution or paid operation was performed; behavior must be checked for the selected route.",
+      "accessed_at": "2026-10-17",
+      "group": "skills",
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
+    },
+    {
+      "id": "SK089",
+      "url": "https://github.com/Comfy-Org/comfy-skills",
+      "title": "Official ComfyUI agent skills",
+      "author": "Comfy Org",
+      "date": "Current repository README; accessed 2026-10-17",
+      "type": "official_repository_documentation",
+      "verified_claim": "The official repository describes agent tooling that separates stable operating methods from discovery of current models and workflow templates. It distinguishes current Claude Code tooling from legacy skills and CLI-bundled instructions.",
+      "limits": "Repository guidance inspected, not installed or qualified for OpenLegend. Available templates and model catalogs are mutable; client-specific instructions require adaptation.",
+      "accessed_at": "2026-10-17",
+      "group": "skills",
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
+    },
+    {
+      "id": "SK090",
+      "url": "https://github.com/Comfy-Org/comfy-skills/blob/main/claude-code/commands/generate-image.md",
+      "title": "ComfyUI official generate-image command",
+      "author": "Comfy Org",
+      "date": "Command source inspected 2026-10-17; blob 4a84e5729fed07c17a5046b25b450c0ec7c37329",
+      "type": "official_agent_command_source",
+      "verified_claim": "The command discovers existing templates, substitutes requested inputs, checks intent and connected output nodes, then submits work and retrieves artifacts through its tool-specific flow.",
+      "limits": "The complete command source was read. Its client-specific retrieval and shell instructions are not an OpenLegend execution contract; nothing was installed or run.",
+      "accessed_at": "2026-10-17",
+      "group": "skills",
+      "cited_in": [
+        "04-skills-and-tooling.md",
+        "07-image-3d-and-audio-models.md"
+      ]
+    },
+    {
+      "id": "SK091",
+      "url": "https://docs.scenario.com/get-started/documentation/key-capabilities-at-a-glance",
+      "title": "Scenario key capabilities at a glance",
+      "author": "Scenario",
+      "date": "Living documentation; accessed 2026-10-17",
+      "type": "official_documentation",
+      "verified_claim": "Scenario documents reference editing, style and subject model training, paired before/after editor training, asset collections and asynchronous production operations.",
+      "limits": "Vendor capability documentation, not independent productivity or quality evidence. Account-specific availability, setup effort and OpenLegend output quality were not trialed.",
+      "accessed_at": "2026-10-17",
+      "group": "skills",
+      "cited_in": [
+        "04-skills-and-tooling.md",
+        "07-image-3d-and-audio-models.md"
+      ]
+    },
+    {
+      "id": "SK092",
+      "url": "https://docs.scenario.com/get-started/documentation/workflows-and-apps",
+      "title": "Scenario workflows and apps",
+      "author": "Scenario",
+      "date": "Living documentation; accessed 2026-10-17",
+      "type": "official_documentation",
+      "verified_claim": "Scenario documents reusable graph workflows with declared inputs, node execution and an execution lifecycle. Apps expose discoverable workflows, subject to their publication and project scope.",
+      "limits": "Relevant workflow concepts and endpoint descriptions were inspected; this was not a complete schema audit or an implementation. No workflow was created or executed.",
+      "accessed_at": "2026-10-17",
+      "group": "skills",
+      "cited_in": [
+        "04-skills-and-tooling.md",
+        "07-image-3d-and-audio-models.md"
+      ]
+    },
+    {
       "id": "MOD01",
       "url": "https://developers.openai.com/api/docs/models/gpt-6-astra",
       "title": "GPT-6 Astra model documentation",
@@ -1791,7 +2158,9 @@
       "limits": "Capability documentation, not a game narrative benchmark.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD02",
@@ -1804,7 +2173,9 @@
       "limits": "Does not isolate game writing, UI composition, or asset generation quality.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD03",
@@ -1817,7 +2188,9 @@
       "limits": "Vendor demonstrations and self-evaluations are not independent game comparisons.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD04",
@@ -1830,7 +2203,9 @@
       "limits": "Large context and model availability do not establish persistent NPC fidelity or account access.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD05",
@@ -1840,10 +2215,12 @@
       "date": "2026-10-15 board; checked 2026-10-17",
       "type": "evaluator-owned human preference leaderboard",
       "verified_claim": "Selected current creative-writing preference entries favor Opus 5.5 High and Gemini 4 Argon High over GPT-6.1 Sol Max and GPT-6 Astra Max; top-two displayed intervals overlap and Argon is preliminary.",
-      "limits": "Intervals overlap; creative preference is not long-session world-grounded NPC quality.",
+      "limits": "The leading Claude and Gemini entries have overlapping displayed intervals. These selected entries are not a complete pairwise significance analysis or a comparison of every available model. Human creative-writing preference does not establish long-session, world-grounded NPC quality.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD06",
@@ -1856,7 +2233,9 @@
       "limits": "LLM judge; long-form task; current dynamic ranking table not reliably retrieved.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD07",
@@ -1869,7 +2248,9 @@
       "limits": "Older model set; test design transfers more reliably than rankings.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD08",
@@ -1882,7 +2263,9 @@
       "limits": "Synthetic conversation and reward-model preferences do not equal OpenLegend player judgment.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD09",
@@ -1895,7 +2278,9 @@
       "limits": "Not a current all-provider trial or proof that LLMs should own authoritative world simulation.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD10",
@@ -1908,7 +2293,9 @@
       "limits": "Interactive task benchmark, not pure prose-quality ranking.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD11",
@@ -1921,7 +2308,9 @@
       "limits": "Does not rank all current flagships; study conditions differ from OpenLegend context assembly.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD12",
@@ -1934,7 +2323,9 @@
       "limits": "Older model families; entire psychological-state implementation is not justified for OpenLegend.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD13",
@@ -1947,7 +2338,9 @@
       "limits": "Community evidence; varied rounds/coverage; some explicit-content reward goals conflict with project policy.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD14",
@@ -1960,7 +2353,9 @@
       "limits": "Limited samples and judge bias; no shipped-game qualification.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD15",
@@ -1973,7 +2368,9 @@
       "limits": "Limited duration, incomplete current flagship coverage, insufficient independent judge calibration established.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD16",
@@ -1986,7 +2383,9 @@
       "limits": "Explicitly excluded as narrative-ranking evidence; illustrates task-label confounding.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD17",
@@ -1999,7 +2398,9 @@
       "limits": "Model card does not establish available hardware, game quality or production serving economics.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD18",
@@ -2012,7 +2413,9 @@
       "limits": "Self-reported companion-platform population, largely Spanish/Russian; not accepted OpenLegend policy or task distribution.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["06-models-for-stories-and-characters.md"]
+      "cited_in": [
+        "06-models-for-stories-and-characters.md"
+      ]
     },
     {
       "id": "MOD19",
@@ -2025,7 +2428,9 @@
       "limits": "Documentation verifies capabilities, not comparative asset-family quality or guaranteed precision.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md"
+      ]
     },
     {
       "id": "MOD20",
@@ -2051,7 +2456,9 @@
       "limits": "Reference support is not geometry/animation/alpha correctness; no OpenLegend quality trial.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md"
+      ]
     },
     {
       "id": "MOD22",
@@ -2064,7 +2471,9 @@
       "limits": "Two-day-old release; comparisons and hardware results are maker/NVIDIA measurements.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md"
+      ]
     },
     {
       "id": "MOD23",
@@ -2077,7 +2486,9 @@
       "limits": "Specific inspectable checkpoint, not claimed latest service; curated maker examples.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md"
+      ]
     },
     {
       "id": "MOD24",
@@ -2090,7 +2501,9 @@
       "limits": "Service breadth does not establish accepted game asset quality.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md"
+      ]
     },
     {
       "id": "MOD25",
@@ -2103,7 +2516,9 @@
       "limits": "Body-family support does not qualify OpenLegend anatomy, equipment, weights or motion.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md"
+      ]
     },
     {
       "id": "MOD26",
@@ -2116,7 +2531,9 @@
       "limits": "Older search/tutorial snapshots differ; no accepted OpenLegend geometry or rendering proof.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md"
+      ]
     },
     {
       "id": "MOD27",
@@ -2129,7 +2546,9 @@
       "limits": "Do not generalize separate web-app capabilities to automation API; skeleton is not animation qualification.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md"
+      ]
     },
     {
       "id": "MOD28",
@@ -2142,7 +2561,9 @@
       "limits": "High-end vendor timing, not browser/laptop guarantee; no rig/skin/animation acceptance implied.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md"
+      ]
     },
     {
       "id": "MOD29",
@@ -2155,7 +2576,9 @@
       "limits": "Specific release, not latest hosted Hunyuan service; exact license/dependencies require deployment review.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md"
+      ]
     },
     {
       "id": "MOD31",
@@ -2168,7 +2591,9 @@
       "limits": "Variant-specific licenses; other checkpoints differ; memory numbers not full production throughput.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md"
+      ]
     },
     {
       "id": "MOD32",
@@ -2181,7 +2606,9 @@
       "limits": "Vendor capability and inference timing, not game acting or end-to-end speed benchmark.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md"
+      ]
     },
     {
       "id": "MOD33",
@@ -2194,7 +2621,9 @@
       "limits": "Acting quality, native-world delivery and language suitability untested locally.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md"
+      ]
     },
     {
       "id": "MOD34",
@@ -2207,7 +2636,9 @@
       "limits": "No universal acting/language comparison; API voices distinct from language model.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md"
+      ]
     },
     {
       "id": "MOD35",
@@ -2220,7 +2651,10 @@
       "limits": "Referral URL; supplied transcript discloses sponsored credits; not an independent benchmark or cash audit.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md", "12-supplied-examples-and-community.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md",
+        "12-supplied-examples-and-community.md"
+      ]
     },
     {
       "id": "MOD36",
@@ -2233,7 +2667,10 @@
       "limits": "Discovery aid; visual preference not rigging/performance proof; related commercial ecosystem.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md", "12-supplied-examples-and-community.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md",
+        "12-supplied-examples-and-community.md"
+      ]
     },
     {
       "id": "MOD37",
@@ -2246,7 +2683,10 @@
       "limits": "Credentials self-reported; no independently verified named shipped-game success in this research.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["07-image-3d-and-audio-models.md", "12-supplied-examples-and-community.md"]
+      "cited_in": [
+        "07-image-3d-and-audio-models.md",
+        "12-supplied-examples-and-community.md"
+      ]
     },
     {
       "id": "MOD38",
@@ -2259,7 +2699,10 @@
       "limits": "Inspected only; not installed or executed; tool skill is not project art/voice direction.",
       "group": "models",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md", "07-image-3d-and-audio-models.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md",
+        "07-image-3d-and-audio-models.md"
+      ]
     },
     {
       "id": "ROOT01",
@@ -2272,7 +2715,9 @@
       "limits": "Does not evaluate OpenLegend's current appearance.",
       "group": "root",
       "accessed_at": "2026-10-17",
-      "cited_in": ["08-ui-quality-and-production.md"]
+      "cited_in": [
+        "08-ui-quality-and-production.md"
+      ]
     },
     {
       "id": "ROOT02",
@@ -2285,7 +2730,9 @@
       "limits": "Technique availability does not establish a good visual design.",
       "group": "root",
       "accessed_at": "2026-10-17",
-      "cited_in": ["08-ui-quality-and-production.md"]
+      "cited_in": [
+        "08-ui-quality-and-production.md"
+      ]
     },
     {
       "id": "ROOT03",
@@ -2298,7 +2745,9 @@
       "limits": "Adoption evidence, not a judgment of its UI quality.",
       "group": "root",
       "accessed_at": "2026-10-17",
-      "cited_in": ["08-ui-quality-and-production.md"]
+      "cited_in": [
+        "08-ui-quality-and-production.md"
+      ]
     },
     {
       "id": "ROOT04",
@@ -2311,7 +2760,9 @@
       "limits": "Vendor observations; absolute claims about agent creativity are not established.",
       "group": "root",
       "accessed_at": "2026-10-17",
-      "cited_in": ["08-ui-quality-and-production.md"]
+      "cited_in": [
+        "08-ui-quality-and-production.md"
+      ]
     },
     {
       "id": "ROOT05",
@@ -2324,7 +2775,9 @@
       "limits": "Prototype, placeholders, no game-load or localization qualification.",
       "group": "root",
       "accessed_at": "2026-10-17",
-      "cited_in": ["08-ui-quality-and-production.md"]
+      "cited_in": [
+        "08-ui-quality-and-production.md"
+      ]
     },
     {
       "id": "ROOT06",
@@ -2337,7 +2790,9 @@
       "limits": "Gameface renderer restrictions do not apply wholesale to a browser.",
       "group": "root",
       "accessed_at": "2026-10-17",
-      "cited_in": ["08-ui-quality-and-production.md"]
+      "cited_in": [
+        "08-ui-quality-and-production.md"
+      ]
     },
     {
       "id": "ROOT07",
@@ -2350,7 +2805,10 @@
       "limits": "Project methodology read; no independent benchmark reproduction or human-fun result.",
       "group": "root",
       "accessed_at": "2026-10-17",
-      "cited_in": ["09-openlegend-principles.md", "10-openlegend-workflows.md"]
+      "cited_in": [
+        "09-openlegend-principles.md",
+        "10-openlegend-workflows.md"
+      ]
     },
     {
       "id": "ROOT08",
@@ -2363,7 +2821,9 @@
       "limits": "Credentials and audience figures self-reported; not shipped-game verification.",
       "group": "root",
       "accessed_at": "2026-10-17",
-      "cited_in": ["12-supplied-examples-and-community.md"]
+      "cited_in": [
+        "12-supplied-examples-and-community.md"
+      ]
     },
     {
       "id": "ROOT09",
@@ -2376,7 +2836,9 @@
       "limits": "Transcript read in full; video not independently watched or build played.",
       "group": "root",
       "accessed_at": "2026-10-17",
-      "cited_in": ["12-supplied-examples-and-community.md"]
+      "cited_in": [
+        "12-supplied-examples-and-community.md"
+      ]
     },
     {
       "id": "ROOT10",
@@ -2389,7 +2851,9 @@
       "limits": "Not a controlled model comparison, audited bill or verified MMO implementation.",
       "group": "root",
       "accessed_at": "2026-10-17",
-      "cited_in": ["12-supplied-examples-and-community.md"]
+      "cited_in": [
+        "12-supplied-examples-and-community.md"
+      ]
     },
     {
       "id": "ROOT11",
@@ -2402,7 +2866,9 @@
       "limits": "Claims are not independent production evidence; some suggestions explicitly untested.",
       "group": "root",
       "accessed_at": "2026-10-17",
-      "cited_in": ["12-supplied-examples-and-community.md"]
+      "cited_in": [
+        "12-supplied-examples-and-community.md"
+      ]
     },
     {
       "id": "ROOT12",
@@ -2415,7 +2881,9 @@
       "limits": "No shipped success or total production cost independently verified.",
       "group": "root",
       "accessed_at": "2026-10-17",
-      "cited_in": ["12-supplied-examples-and-community.md"]
+      "cited_in": [
+        "12-supplied-examples-and-community.md"
+      ]
     },
     {
       "id": "ROOT13",
@@ -2428,7 +2896,9 @@
       "limits": "Provider-role opinions conflict; no controlled quality or cost comparison.",
       "group": "root",
       "accessed_at": "2026-10-17",
-      "cited_in": ["12-supplied-examples-and-community.md"]
+      "cited_in": [
+        "12-supplied-examples-and-community.md"
+      ]
     },
     {
       "id": "ROOT14",
@@ -2441,7 +2911,9 @@
       "limits": "Prototype/test-stage work and self-reported performance, not established MMO delivery.",
       "group": "root",
       "accessed_at": "2026-10-17",
-      "cited_in": ["12-supplied-examples-and-community.md"]
+      "cited_in": [
+        "12-supplied-examples-and-community.md"
+      ]
     },
     {
       "id": "ROOT15",
@@ -2454,7 +2926,9 @@
       "limits": "Longer linked video was not watched; no verified commercial outcome.",
       "group": "root",
       "accessed_at": "2026-10-17",
-      "cited_in": ["12-supplied-examples-and-community.md"]
+      "cited_in": [
+        "12-supplied-examples-and-community.md"
+      ]
     },
     {
       "id": "ROOT16",
@@ -2467,7 +2941,10 @@
       "limits": "No OpenLegend integration or performance qualification.",
       "group": "root",
       "accessed_at": "2026-10-17",
-      "cited_in": ["04-skills-and-tooling.md"]
+      "cited_in": [
+        "04-skills-and-tooling.md"
+      ]
     }
-  ]
+  ],
+  "review_baseline": "334d61a8ba0bffa019e33e9f1d304af8bd3ea6ab"
 }

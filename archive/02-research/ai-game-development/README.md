@@ -1,6 +1,6 @@
 # AI game development research for OpenLegend
 
-**Research date:** 17 October 2026. **Project baseline:** `0eb7358f251d1ab706592ccb6e9829e98c729fe9`. **Status:** completed research and proposed workflows; no engine migration, provider switch, tool installation or runtime behavior is adopted by these documents.
+**Research date:** 17 October 2026. **Original project baseline:** `0eb7358f251d1ab706592ccb6e9829e98c729fe9`. **Review baseline:** `334d61a8ba0bffa019e33e9f1d304af8bd3ea6ab`. **Status:** completed research and proposed workflows; no engine migration, provider switch, tool installation or runtime behavior is adopted by these documents.
 
 ## Recommended direction
 
@@ -8,9 +8,11 @@
 
 The research favors that direction because it addresses the actual project and the user's UI concern while preserving useful work. It does not require confidence that one engine or model is universally best.
 
-This collection contains **14 Markdown documents, 16 developer case studies, 25 tooling-workflow candidates, 14 consolidated principles, 10 working procedures and 189 distinct source records**. Individual skill files, API pages and related publisher material count as resources, not independent studies. The [source register](13-source-register-and-coverage.md) explains coverage, reputation, access limits and what remains empirically untested; [sources.json](sources.json) retains the detailed source metadata.
+This collection contains **15 research Markdown documents, 16 developer case studies, 27 tooling-workflow candidates, 14 consolidated principles, 10 task procedures and 195 distinct source records**. Individual skill files, API pages and related publisher material count as resources, not independent studies. The [source register](13-source-register-and-coverage.md) explains coverage, reputation, access limits and what remains empirically untested; [sources.json](sources.json) retains the detailed source metadata.
 
 ## Read these first
+
+For reusable **idea → art → asset → animation → working game entity** routes, start with the five-document [production handbook](../../../docs/production-workflows/README.md). It also covers places, lighting, interfaces, character situations and coordinated feedback. The [critical review and design integration](14-review-and-design-integration.md) explain what changed after review, the positive opportunities for OpenLegend and how this collection connects to the existing designs and needs-design register.
 
 1. [UI quality and production](08-ui-quality-and-production.md) — why the showcased interface is not a controlled Claude-versus-OpenAI or browser-versus-engine comparison, and how to isolate the actual cause.
 2. [Consolidated principles](09-openlegend-principles.md) — what to carry into OpenLegend, with evidence, project-specific reasons and limits for every principle.
@@ -62,7 +64,7 @@ The Project Tomorrow creator explicitly used procedural techniques without AI. H
 | [01 — Context and method](01-context-and-method.md)                     | Current project facts, baseline, research questions and evidence standards                    |
 | [02 — Developer case studies](02-developer-case-studies.md)             | Attributed workflows, shipped/research/prototype distinctions, reputation and transfer limits |
 | [03 — Procedural art and animation](03-procedural-art-and-animation.md) | Material graphs, smart surfaces, modular props, vegetation, motion and lighting               |
-| [04 — Skills and tooling](04-skills-and-tooling.md)                     | Actual instructions/helpers, 25 candidates, dependencies and compatibility findings           |
+| [04 — Skills and tooling](04-skills-and-tooling.md)                     | Actual instructions/helpers, 27 candidates, dependencies and compatibility findings           |
 | [05 — Engine choice](05-playcanvas-godot-and-engine-choice.md)          | Catalog omission, current client, Godot/Unity/Unreal tradeoffs and migration criteria         |
 | [06 — Stories and characters](06-models-for-stories-and-characters.md)  | Current provider evidence, authoring, roleplay, memory, open models and evaluation            |
 | [07 — Images, 3D and audio](07-image-3d-and-audio-models.md)            | Separate specialist models, output contracts, rigging, motion, voice and production cost      |
@@ -72,9 +74,10 @@ The Project Tomorrow creator explicitly used procedural techniques without AI. H
 | [11 — Evaluation](11-evaluation-and-adoption.md)                        | Proposed sample tasks, acceptance, accounting and adoption decisions                          |
 | [12 — Supplied sources](12-supplied-examples-and-community.md)          | All starting links, transcript reconstruction, cost/reputation caveats and Reddit trails      |
 | [13 — Sources and coverage](13-source-register-and-coverage.md)         | Coverage matrix, credibility rules, limits and the source index                               |
+| [14 — Review and design integration](14-review-and-design-integration.md) | Critique, changes, creative opportunities and the map into maintained production/design owners |
 | [Source metadata](sources.json)                                         | Machine-readable identities, URLs, dates, evidence types, supported claims and limits         |
 
-This README is the fourteenth Markdown document. The detailed dossiers intentionally separate observed practice from OpenLegend recommendations so future decisions can cite a specific reason rather than inherit an unsupported slogan.
+This README and the fourteen numbered dossiers form the fifteen-document research collection. The five production-handbook documents are maintained separately under `docs/production-workflows/`. The detailed dossiers intentionally separate observed practice from OpenLegend recommendations so future decisions can cite a specific reason rather than inherit an unsupported slogan.
 
 ## Practical priorities
 
@@ -84,10 +87,10 @@ Choose the next task from the current playable loop and its biggest quality gap;
 - **One editable material or prop family:** prove that a useful revision and another variant remain cheap and consistent.
 - **One useful animation on a compatible body:** inspect actual motion, contacts and equipment at the game's camera.
 - **A small creative-authoring/character comparison:** retain the actual incumbent and judge equivalent permitted evidence.
-- **Narrow automation for repeated friction:** use inspected compatible skills and existing project owners rather than adding a generic platform.
+- **Useful automation and creative exploration:** use inspected compatible skills or saved workflows where they reduce repeated work, improve revisions or enable a worthwhile result.
 
 ## Confidence and limits
 
 This is a comprehensive desk-research pass over the requested areas, with deliberate follow-up from supplied links into primary documentation, source repositories, developer accounts and research methods. It is not proof that every possible source exists in this collection or that an unrun tool will work well for OpenLegend.
 
-The decisive unknowns are now concrete: which visual workflow produces an accepted screen with less correction; which asset route survives export and reuse; and which model produces better valid character moments under the game's actual constraints. The evaluation plan makes those questions answerable without first committing to an engine rewrite, mass tool installation or global provider replacement.
+The decisive unknowns are now concrete: which visual workflow produces an accepted screen with less correction; which asset route survives export and reuse; which model supports better complete character episodes under the game's actual constraints; and whether the resulting play makes invention, independent people and lasting consequences noticeable and worthwhile. The evaluation plan makes those questions answerable without first committing to an engine rewrite, mass tool installation or global provider replacement.

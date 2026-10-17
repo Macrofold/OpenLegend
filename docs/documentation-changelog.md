@@ -1,5 +1,14 @@
 # Documentation changelog
 
+## October 17, 2026 — Review AI game-development research and integrate production workflows
+
+The [research collection](../archive/02-research/ai-game-development/README.md) records developer practices, procedural methods, public skills, tools, narrative/asset models, UI quality and engine tradeoffs, with source-specific reputation and access limits. The [critical review](../archive/02-research/ai-game-development/14-review-and-design-integration.md) strengthens creative/player value, separates artwork, composition and fixed-design implementation comparisons, and adds saved ComfyUI/Scenario workflow candidates. The updated register contains 195 resources, including related pages that are not independent confirmations.
+
+The new [production handbook](production-workflows/README.md) supplies reusable routes from ideas through editable art, assets, animation, scenes, interfaces, characters and coordinated feedback to a playable result. It records inputs, handoffs, optional paths, useful acceptance and where revisions return. The existing 3D and compelling-character feature/technical pairs, UI brief, world presentation, art trackers and playability gates now link those methods to their established responsibilities. Creative exploration and better player experience can justify a tool or workflow alongside time and cost savings.
+
+[Needs-design](maintainers/needs-design.md#ai-assisted-game-production-research-and-design-integration) maps remaining choices into existing V3D/INV, CE, UIUX, DG and research owners while preserving all 37 stable ND IDs. R02 now acknowledges the delivered mercenary study and retains broader qualification. Repository and marketing navigation connect the methods with current design and commercial work. This is research and design preparation: runtime, provider selection, model trials, tool qualification and browser-only delivery status are unchanged by these documents.
+
+
 ## October 17, 2026 — Consolidate indie-launch research and commercial hypotheses
 
 The [commercial research collection](../archive/02-research/indie-launch-commercials/README.md) preserves 62 game histories and two platform/service histories, a full-corpus review map, twelve synthesis principles, and detailed and short execution guides. Historical observations, participant explanations and product inferences remain distinct; the collection establishes neither an industry success rate nor demand for Open Legend.
@@ -1996,3 +2005,4 @@ Added native kind-backed operational draft/review sessions, a thin writable MCP 
 ## Unified conversation delivery
 
 Connected the native owner session/turn/review APIs to the World Agent panel, replacing tool-less Discuss as its privileged conversation path. Retained the finite native recipe shortcut and read-only earlier local transcripts. Updated implementation status and exact approval/recovery guidance; wider physical/social/art capabilities remain independently tracked. Added MW06/MW07 rather than claiming manual native observations replace automated or browser/live qualification.
+

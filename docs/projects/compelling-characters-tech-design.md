@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                      | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Unified outcome memories, native perspective and quiet reflection are qualified for PG02; broader character reliability remains open. | 2026-10-16   |
+| In progress | Unified outcome memories, native perspective and quiet reflection are qualified for PG02; broader character reliability remains open. | 2026-10-17   |
 
 [Feature contract](compelling-characters-feature-spec.md#character-authorship-and-changing-personality) · [CE implementation and acceptance](../maintainers/character-experience.md) · [Memory contract](../memory-architecture.md) · [Agency contract](../agent-agency.md).
 
@@ -77,8 +77,15 @@ Stages 1–4 are delivered for the explicitly bounded PG02 slice, including the 
 
 Required reads are actor-scoped and batched through existing retrieval/cache and byte admission. The history-edit owner adds an index on an action’s result reference for reverse correction/forgetting; it does not scan all historical actions. No synchronous I/O is added to simulation and no new scheduler or paid call is added to preparation. Rendering traverses already bounded native facts once. Local 33-record preparation measurements are recorded in the evidence report, not a population-scale claim. Existing observer-reference population work remains CR/PF09.
 
+## Production and comparative evaluation
+
+Use the [characters and play production route](../production-workflows/characters-and-play.md) to move from an appealing person and situation through inexpensive rehearsal to the existing evidence, choice, action and consequence owners. When an encounter disappoints, distinguish an uninteresting premise or missing opportunity from lost personal evidence, unsupported action, failed continuation or unclear presentation. Revise the responsible content or owner; a more elaborate biography or another model is a candidate intervention, not a diagnosis.
+
+For comparative work, preserve complete required identity, source-specific permitted evidence and the actual world conditions relevant to the comparison. Trace the selected experience through the existing cognition and native-action paths, including what later behavior changes. Reuse the feature's [complete flows and creative comparisons](compelling-characters-feature-spec.md#production-route-and-creative-comparisons) and the [intelligent-simulation evaluation design](intelligent-simulation-evaluation-tech-design.md); do not create another evidence store or controller for production experiments. The reviewed [evaluation and adoption guidance](../../archive/02-research/ai-game-development/11-evaluation-and-adoption.md) keeps creative appeal, reliable execution, responsiveness and complete cost visible as separate considerations. These production links leave the bounded PG02 qualification and outstanding whole-life work above unchanged.
+
 ## Maintained records
 
 - Implementation: [CE01–CE05](../maintainers/character-experience.md), with [AG06/AG07/AG12](../maintainers/agent-agency.md) and [CR12](../maintainers/cognition-redesign.md); existing DG23 owns broader personality development.
 - Limits and constraints: [CG14 authorship boundary](../limits/cognition.md#cg14--character-authorship-and-personal-evidence), [memory/cognition limits](../limits/cognition.md), [feeling limits](../limits/feelings.md). No new numerical runtime bound is introduced.
 - Evidence: [PG02 report](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices), historical trials remain distinct from the new content and expanded world.
+

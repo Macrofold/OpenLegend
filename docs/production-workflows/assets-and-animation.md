@@ -169,7 +169,7 @@ Preserve adequate existing poses and representations when optional polish is una
 
 When family reuse is the intended benefit, repeat the process on a second compatible outfit, body or equipment case. Record the real adjustments required. A second humanoid does not prove a quadruped route; a motion that fits a bare body may fail with a cape, pack or held tool.
 
-Preserve the source body, rig, material family, clips, export settings and accepted game context. Add the smallest reusable instruction or preparation tool that removes an observed repeated failure. Keep valuable manual decisions visible rather than claiming a fully automatic pipeline because one candidate happened to work.
+Preserve the source body, rig, material family, clips, export settings and accepted game context. Add the smallest reusable instruction or preparation tool that saves repeated work, improves a meaningful revision, or prevents an observed recurring defect. Keep valuable manual decisions visible rather than claiming a fully automatic pipeline because one candidate happened to work.
 
 ## Repair map and downstream effects
 

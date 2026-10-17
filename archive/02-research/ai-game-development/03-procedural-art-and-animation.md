@@ -2,7 +2,9 @@
 
 **Research checked:** 2026-10-17. **Status:** research recommendations, not adopted implementation policy. No asset generator, paid service, animation tool, or external skill was installed or run for this research.
 
-The strongest production opportunity is an editable family of assets that survives repeated changes. An attractive output is useful only after it works at OpenLegend's camera distance, under its lighting, through its animation states, and within its delivery budget. The [developer case studies](02-developer-case-studies.md) establish the evidence and its limits; this document turns those findings into proposed working methods.
+The strongest production opportunity is an editable family of assets that survives repeated changes. Visual exploration can reveal a better idea before production is settled. A selected production asset then needs to work at OpenLegend's camera distance, under its lighting, through its relevant animation states, and within its delivery budget. The [developer case studies](02-developer-case-studies.md) establish the evidence and its limits; this document turns those findings into proposed working methods.
+
+The maintained [asset and animation route](../../../docs/production-workflows/assets-and-animation.md) and [scene/material/lighting route](../../../docs/production-workflows/scenes-and-interfaces.md) organize these methods into inputs, handoffs, optional stages and revision paths. This dossier retains the research rationale and source-specific limits.
 
 ## 1. Begin with the game that exists
 

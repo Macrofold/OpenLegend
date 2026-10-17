@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                         | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-16   |
+| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-17   |
 
 **General generation/publication pipeline remains proposed; no live-generation qualification is claimed.** This document specifies art production during play, including optional 2D-first/3D-later delivery. It implements the direction of the [feature specification](3d-pixel-art-feature-spec.md) through the [technical contracts](3d-pixel-art-tech-design.md); it does not authorize mechanical invention, spending, or arbitrary generated code by itself.
 
@@ -12,6 +12,17 @@
 - Capacity and staged-work limits: [A3D inventory](../limits/3d-pixel-art.md). Shared [AI execution](../limits/ai-execution.md), [invention](../limits/inventions.md), and [persistence](../limits/persistence.md) limits remain controlling.
 - Existing policy: [runtime art and publication](../invention-art-pipeline.md), [shared episode funding](../invention-budgets.md), [INV workflow](../maintainers/inventions-and-world-evolution.md), and [AI/provider boundary](../ai-providers.md). The [original visual direction](../../archive/03-design-proposals/visual-direction.md#art-generated-during-play) retains artistic intent, not a competing publication or spending contract.
 - Visual coverage: [appearance families](3d-pixel-art-appearance-families.md). Evidence: [qualification](3d-pixel-art-validation.md).
+- Offline production: [workflow handbook](../production-workflows/README.md), [asset/animation route](../production-workflows/assets-and-animation.md), and [source-to-export handoff](3d-pixel-art-tech-design.md#editable-source-handoff-and-reviewed-runtime-export).
+
+## Connection to development production
+
+The [offline workflow handbook](../production-workflows/README.md) owns how developers explore an idea, produce editable art/geometry/materials/rigs, export them and judge a working game entity. This document owns the proposed adaptation to art delivered during play. The routes share appearance identity, useful editable sources and reviewed output; their execution conditions differ. An offline contributor can inspect and deliberately repair a candidate, while live delivery must use the bounded stages, durable records, current authorization and publication behavior specified below.
+
+Use offline work to build the vocabulary that makes later invention expressive and economical: approved objects, compatible parts, material recipes, fitted rigs and useful clips. Develop a rough supported native interaction alongside visual exploration, then qualify the exact exported result in the current game. Retain the selected features and source handoff through the [technical design](3d-pixel-art-tech-design.md#editable-source-handoff-and-reviewed-runtime-export). A successful study can inform a family or adapter; it does not qualify every anatomy, state, attachment or device, and the current mercenary remains a fixed-asset pilot.
+
+A repeated image edit, graph evaluation, mesh preparation or export can become a reviewed production step when it removes actual recurring work. Keep its relevant inputs, dependencies, selected processing/tool revision and inspected output in the existing source/stage records. A saved authoring workflow is not automatically trusted runtime code or permission to run an entire desktop toolchain during play. Select only the step the concrete family needs, then apply the same intake, cost and publication contracts as any other producer. Current candidate tools and version-specific findings live in the [tooling research](../../archive/02-research/ai-game-development/04-skills-and-tooling.md) and [asset-model research](../../archive/02-research/ai-game-development/07-image-3d-and-audio-models.md), without selecting a provider here.
+
+The during-play plan can reuse an existing final asset, compose reviewed parts, publish adequate 2D art, or take a direct model route. The idea → art → 3D → animation sequence is one useful production path, not a mandatory sequence of purchases. Choose the path from the accepted appearance need and actual family support; preserve a creator's selected identity when refining it and the current adequate representation while optional polish waits. The existing V3D/INV dependency and acceptance owners determine when each route becomes available.
 
 ## 1. The pipeline is demand-driven, not a simulation loop
 
@@ -172,3 +183,4 @@ The [completed mercenary pilot](completed/mercenary-scene-pilot.md) processes on
 After the native artifact/publication pipeline works, use one explicitly bounded approved trial: a supported rigid invention with a distinctive appearance and known physical constraints. Produce an approved 2D representation, then a matching model, display the transition in the real client, reload, and reuse it on a compatible second instance without generation. Include a rejected candidate or failed stage and a removed initiating object.
 
 Report useful-asset success rate, identity defects, total provider/compute cost including unsuccessful work, planning and validation overhead, time to fallback/sprite/model, human correction time, artifact size, import cost, and remaining state coverage. Separate fixture correctness from live provider quality. Broader generated characters, animals, and constructions remain independently gated.
+
