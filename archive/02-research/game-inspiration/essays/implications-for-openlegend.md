@@ -1,6 +1,6 @@
 ## 9. Implications for OpenLegend
 
-**Current reading context:** this essay preserves earlier research recommendations. The [current gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md) own selection: enjoyable adventure, useful invention, independent character choice and persistent consequence belong in connected play from the start. Read the numbered priorities below as historical emphasis, not a sequence that postpones the distinctive experience. The [later mobile comparison](mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity) supplies further positive possibilities, including action, discovery and expressive creation.
+**Selection:** the [current gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md) own selection: enjoyable adventure, useful invention, independent character choice and persistent consequence belong in connected play from the start. Apply the numbered priorities below within that connected experience. The [mobile comparison](mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity) explores positive possibilities for action, discovery and expressive creation.
 
 ### 9.1 Choose a first player promise that does not require explaining the engine
 

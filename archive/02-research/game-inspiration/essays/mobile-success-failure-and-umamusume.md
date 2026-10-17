@@ -2,15 +2,13 @@
 
 [Research library](../README.md) · [Ten full dossiers and completion record](../research-progress-mobile-2026-10-17.md) · [Research requirements](../research-requirements.md)
 
-**Research and critical review: October 17, 2026.** The ten underlying dossiers are complete within their recorded evidence limits. This synthesis connects their mechanics, reported pleasures and commercial outcomes to possible OpenLegend experiences. Design interpretations and constructed examples below are proposals; their enjoyment and commercial value have not been tested in OpenLegend.
+**Research date: October 17, 2026.** The ten underlying dossiers are complete within their recorded evidence limits. This synthesis connects their mechanics, reported pleasures and commercial outcomes to possible OpenLegend experiences. Design interpretations and constructed examples below are proposals; their enjoyment and commercial value have not been tested in OpenLegend.
 
 ## The question the comparison needs to answer
 
 The useful question behind the quoted $2.5 billion is what people value enough to spend their attention, affection and money on. For OpenLegend, the strongest opportunity is to connect an enjoyable activity with a particular ambition, a method the player can make their own, and an outcome that matters afterward. Commercial viability adds a further question: can we repeatedly deliver that value at a supportable cost?
 
 Our working explanation for Umamusume is that character attachment, repeated improvement, persistent ownership and renewed goals can reinforce each other. The dossiers document the relevant mechanisms; the strength of each mechanism's contribution to revenue remains an inference. Public spending estimates cannot tell us how much income came from affection for a character, competitive ambition, convenience, an expiring offer or another motive. The final comparison therefore distinguishes the observable product from the proposed explanation of its results.
-
-**The review changes the emphasis.** Both the successful games and the closed services contain worthwhile experiences and limitations. The original synthesis gave the latter too much of a warning role and made OpenLegend's opportunities too abstract. The positive reading map below leads into concrete possibilities for adventure, discovery, mastery, invention, relationships and creation. Financial evidence remains available with its original scope.
 
 For a design question, start with [what all ten games can contribute](#what-all-ten-games-can-contribute), then [OpenLegend's particular opportunity](#openlegends-particular-opportunity). The [canonical fun synthesis](fun-and-sustainable-engagement.md) owns the broader principles; [current gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md) own selection for the playable game.
 

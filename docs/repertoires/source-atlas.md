@@ -1558,7 +1558,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 ## Additional studies and navigation
 
-**Later mobile cohort, G168–G177:** the [positive experience map](../../archive/02-research/game-inspiration/essays/mobile-success-failure-and-umamusume.md#what-all-ten-games-can-contribute) links all ten dossiers; its [OpenLegend interpretations](../../archive/02-research/game-inspiration/essays/mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity) connect the findings to the current design foundation. The [mobile ledger](../../archive/02-research/game-inspiration/research-progress-mobile-2026-10-17.md) owns completion. This is a reading route, not a claim that the existing catalogue cards were revised from these sources.
+**Mobile studies, G168–G177:** the [positive experience map](../../archive/02-research/game-inspiration/essays/mobile-success-failure-and-umamusume.md#what-all-ten-games-can-contribute) links all ten dossiers; its [OpenLegend interpretations](../../archive/02-research/game-inspiration/essays/mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity) connect the findings to the current design foundation. The [mobile ledger](../../archive/02-research/game-inspiration/research-progress-mobile-2026-10-17.md) owns completion.
 
 These studies deepen the numbered game and world dossiers without renumbering the current game roster. Their source-specific evidence remains in the research library; the catalogue entries link them where a lesson was actually incorporated.
 

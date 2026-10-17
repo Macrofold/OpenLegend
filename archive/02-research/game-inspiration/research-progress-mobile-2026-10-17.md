@@ -2,13 +2,11 @@
 
 [Library](README.md) · [Roster](research-roster.md#october-17-mobile-successes-and-unsuccessful-services) · [Requirements](research-requirements.md) · [Economics and enjoyment amendment](research-economics-engagement-and-creation.md)
 
-## Scope and execution
+## Scope
 
-**Status: Complete within the recorded evidence limits. Last updated: 2026-10-17.** Mike requested five notable successful and five unsuccessful mobile games, full mechanics/commercial research, and an explanation of Umamusume's reported $2.5 billion. This ledger owns only G168–G177. Earlier research, G150–G166's unstarted full passes, and packet-wide preservation gates retain their existing owners and status.
+**Status: Complete within the recorded evidence limits. Research date: 2026-10-17.** This study covers five notable successful and five unsuccessful mobile games, their mechanics and commercial results, and Umamusume's reported $2.5 billion. This ledger owns only G168–G177. Other research, G150–G166's unstarted full passes, and packet-wide preservation gates have separate owners and status.
 
-**Repository and branch:** `Macrofold/OpenLegend`, `research/mobile-successes-and-failures-20261017`, created from GitHub `main` at `727ea785d5618f3281e5bf5b739c29d226247c18`. Edits are prepared in `/workspace/scratch/38aac85bce64/OpenLegend-research` and committed through the GitHub connector. No runtime changes or purchases are included.
-
-Subjects are processed one at a time. Mechanics, business and reception research may run concurrently for the active subject; its dossier is reviewed and committed before the next subject begins. Source access and the five-review gate remain explicit. A spending estimate is not audited profit. An ended service is not proof of a specific financial loss.
+**Repository and branch:** `Macrofold/OpenLegend`, `research/mobile-successes-and-failures-20261017`.
 
 ## Subject status
 
@@ -27,26 +25,12 @@ Subjects are processed one at a time. Mechanics, business and reception research
 
 ## Completion and evidence boundaries
 
-**All ten subjects are reviewed and committed.** The [cross-case synthesis](essays/mobile-success-failure-and-umamusume.md) answers the Umamusume question, compares dated commercial evidence and develops research questions for OpenLegend. Its mechanics and commercial reviews are complete, and README links both this ledger and the essay.
+**All ten dossiers are complete.** The [cross-case synthesis](essays/mobile-success-failure-and-umamusume.md) answers the Umamusume question, compares dated commercial evidence and develops positive possibilities for OpenLegend.
 
 Completion requires substantive R01–R14 coverage, the R15 applicability decision, amended economic/enjoyment/lore/creation analysis, five substantive independent written reviews where available (or a documented search/access limit), direct player testimony where accessible, source/internal-link review and a committed dossier. Publisher shutdown reasons stay separate from causal hypotheses.
 
 The ten dossiers contain **52 counted substantial written assessments**, with access, authorship and version boundaries recorded individually. Each meets the five-assessment gate; Apex and Durango each include six. Minecraft Earth's assessments concern beta/early-access builds, and Durango distinguishes direct full-body reads from complete indexed bodies. Supplementary or excluded perspectives are not silently counted as independent reviews.
 
-## Verification and preservation
+The [mobile/recent-games supplement](references/fun-research-expansion-mobile-and-recent.md) covers other selected games. Detailed source access and financial uncertainty belong in each dossier. A spending estimate is not audited profit, and an ended service is not proof of a specific financial loss.
 
-The recorded base tree contains no full dossier for these ten subjects. The existing [mobile/recent-games supplement](references/fun-research-expansion-mobile-and-recent.md) covers other selected games and remains preserved. Earlier roster identities and their owners remain in place. Detailed source access and financial uncertainty belong in each dossier.
-
-The initial dossier delivery comprised **15 research documents: 12 added and three modified**. That remote comparison and base-file inspection found no deleted files or runtime changes. All 167 pre-existing roster rows were unchanged; G168–G177 extended the inventory to 177 without renumbering. README and roster counts agreed, and earlier requirements and authorization boundaries remained preserved.
-
-The initial link check covered 320 relative-link occurrences across those 15 documents, with no missing targets or locally available anchors. The thirteen pre-existing remote-only anchor occurrences were resolved through read-only retrieval of their three target documents. The new manuscripts received Markdown formatting checks and a scan for temporary retrieval IDs and unfinished drafting markers. Financial review preserved dates, store/platform coverage, gross/net distinctions, franchise/company boundaries and conflicting estimate series. Mechanics review checked the synthesis against the dossier evidence and corrected banner-expiry timing and alternate-trainee wording.
-
-Completion applies only to this ten-subject assignment and its synthesis. Document review is distinguished from actual gameplay; no firsthand play or watched footage is claimed without evidence. No runtime tests were needed for these research-only changes. The dossiers retain unavailable source bodies, unverified reconstruction, missing commercial data and other access limits explicitly; completion does not convert those limits into verified facts.
-
-## Critical review for OpenLegend's ambitions
-
-The subsequent October 17 review read all ten completed manuscripts and the synthesis, with separate mechanics, reception and commercial passes, and compared the interpretation with current gameplay priorities and the design foundation. The main finding was an editorial imbalance: the dossiers contained positive experiences that the synthesis too often reduced to commercial cautions and generic questions.
-
-The revised [positive experience map](essays/mobile-success-failure-and-umamusume.md#what-all-ten-games-can-contribute) gives all ten games a useful contribution. The [OpenLegend interpretation](essays/mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity) adds concrete hypothetical situations, action and aesthetic pleasure, familiar return, finite completion, author and player value, and explicit boundaries around invention, independent characters and market uniqueness. Genshin, Pokémon GO and Candy Crush gained focused reading or interpretation improvements; Genshin's investment wording was corrected from verified to reported.
-
-The research index, canonical fun synthesis, design foundation and source atlas now lead readers into these findings. The earlier implications essay identifies current selection authority, and the atlas distinguishes its original 148 subjects from later roster additions. The new links and anchors were checked, and the revised synthesis received a further bounded mechanics, reception and commercial review. The original completion commits above remain provenance for the full dossier passes; this critical review adds no feature commitments or claim of playtested enjoyment.
+Research completion does not establish firsthand gameplay or watched footage unless a dossier explicitly records that evidence. Unavailable source bodies, unverified reconstruction, missing commercial data and other access limits remain identified beside the relevant claims.
