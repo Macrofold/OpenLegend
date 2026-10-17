@@ -1,20 +1,30 @@
-# Recommended working procedures for OpenLegend
+# Research applications for OpenLegend production
 
-**Research checked:** 17 October 2026. **Status:** proposed procedures for future development tasks. They are concrete enough to review and use, but this research does not implement them, authorize service purchases, or replace the current project owners.
+**Research checked:** 17 October 2026. **Status:** proposed task examples for future development. The reusable routes now live in [Production workflows](../../../docs/production-workflows/README.md); this research preserves their source-specific applications. No example implements a capability, authorizes service purchases or replaces the current project owners.
 
-The [principles](09-openlegend-principles.md) explain the reasoning. The procedures below identify inputs, a sequence of work, acceptance evidence and likely tools. Use the parts needed for the current task; they are not a requirement to run every procedure for every change.
+The [principles](09-openlegend-principles.md) explain the reasoning. The examples below retain useful task details and tool candidates from this research. Select the relevant example after choosing the experience or production opportunity; their numbering is not a delivery order.
+
+| Reusable route | Examples in this document | What the route connects |
+| --- | --- | --- |
+| [Shared production approach](../../../docs/production-workflows/README.md) | Task framing and final review | Desired result, current owners, creative exploration, production, inspection and revision |
+| [Assets and animation](../../../docs/production-workflows/assets-and-animation.md) | Material families, prop/icon delivery and character actions | An idea and its function through editable sources, compatible exports and a usable entity |
+| [Scenes and interfaces](../../../docs/production-workflows/scenes-and-interfaces.md) | Inventory and scene population | Visual intent, spatial/interaction structure, coherent art and the complete client |
+| [Characters and play](../../../docs/production-workflows/characters-and-play.md) | Encounter authoring, resident comparison and playable revision | A worthwhile situation and person through independent choice, actual consequence and another encounter |
+| [Audio and feedback](../../../docs/production-workflows/audio-and-feedback.md) | Sound cues and character voices | An actual action or utterance through fitting sound, presentation and the player's experience |
+
+The [existing playability questions](../../../docs/projects/five-product-feature-specs.md#playability-gates) determine whether a production improvement helps the game. Technical asset acceptance, an appealing screenshot and lower cost each supply different evidence.
 
 ## 1. Begin each substantial task with a player outcome
 
 **Use when:** starting a feature, meaningful visual improvement or production experiment.
 
-**Inputs:** the current relevant project owners, the actual implementation baseline, and one observable player problem.
+**Inputs:** the current relevant project owners, the actual implementation baseline, and a worthwhile player or production opportunity.
 
-Write a short task brief that answers: what can the player do or understand afterward; what currently blocks it; what existing behavior and visual direction the work relies on; and what evidence would show success. Include relevant screenshots or a small reproducible world state. Resolve routine details from the existing docs rather than repeatedly reopening accepted decisions.
+Write a short task brief that answers: what becomes worth doing, seeing or creating; which current limitation or new possibility motivates the work; what existing behavior and visual direction it relies on; and what evidence would show success. Include relevant screenshots or a small reproducible world state. Resolve routine details from the existing docs rather than repeatedly reopening accepted decisions. Explore alternatives where a substantive creative choice remains open.
 
 Split work along outcomes and ownership. For example, an inventory-art task can separate the icon family from interface composition after both use the same item definitions and style. Dependent integration stays with one owner. Give an agent the tools and source access it needs for that bounded job, then ask it to produce the result and inspect it.
 
-**Acceptance evidence:** a complete player action or understandable visual improvement in the real client, plus the required impact-based checks and a concise account of defects repaired.
+**Acceptance evidence:** a complete player action or understandable visual improvement in the real client, the required impact-based checks, and a separate judgment of what became more interesting, expressive, satisfying or useful. Record defects and remaining uncertainty as well as gains.
 
 **Why here:** OpenLegend's current priority is a playable survival-adventure with genuine invention and independent characters in the early loop. A task should improve that experience rather than create infrastructure with no current consumer. [Gameplay priorities](../../../docs/repertoires/gameplay-priorities.md), [root workflow](../../../AGENTS.md).
 
@@ -76,13 +86,15 @@ Choose one action required by play. Establish its start, anticipation, contact, 
 
 Inspect joints, contacts, root travel, equipment grip and transitions. Fix body or export problems at their actual source rather than compensating with arbitrary scene offsets. Export selected clips and verify real non-root joint motion. Test the complete movement in the game at normal pixel scale from relevant orbit and pitch angles.
 
-Only after one action succeeds should the workflow be repeated on another compatible body or equipment configuration. That second case reveals whether the procedure is reusable.
+When broad reuse is the claim, repeat the qualified procedure on another compatible body or equipment configuration. Keep a deliberately bespoke action valid within its stated scope.
 
 **Likely tools:** existing clip libraries and Blender; current PlayCanvas animation skill; Mixamo, Cascadeur or DeepMotion when suited to the input; Kimodo as a proposed offline constrained-motion trial. Video-only generation supplies reference unless actual skeletal motion is exported. [Motion assessment](07-image-3d-and-audio-models.md).
 
 **Acceptance evidence:** readable action and intention, correct contacts and transitions, no false success indicated by presentation, and adequate behavior at camera distance. An advancing animation timer is not sufficient.
 
 **Why here:** expressive people and useful combat need action coverage more urgently than an unqualified collection of bodies. Compatible reuse fits the project better than immediately building custom learned locomotion. [World presentation](../../../docs/world-presentation.md).
+
+The [delivered first-threat encounter](../../../docs/projects/completed/first-threat-encounter-feature-spec.md) is one possible application of coordinated action feedback: it already supplies actual preparation, contact, retreat and aftermath. Its retained simple deer presentation is not proof of a newly qualified stag rig or bespoke charge animation. Select compatible assets and preserve the current action timing unless that owning design is separately changed.
 
 ## 6. Populate a scene while preserving gameplay structure
 
@@ -106,13 +118,13 @@ Add distant simplification only when needed. Inspect the runtime representation 
 
 **Inputs:** the world brief, the playable loop, a person's motives/history, known facts and resources, and the existing content format.
 
-Ask for a small number of alternative situations whose tensions arise from those facts. Choose one that creates useful choices, then refine its clarity and relationship to exploration, combat or invention. A person's concerns should explain several plausible actions; they should not prescribe a hidden sequence of exact player and NPC moves.
+Explore alternative situations whose possibilities arise from those facts. Choose a promising source of value: discovery, danger, mastery, invention, shared enjoyment, rivalry or pleasure in a place. Use the [existing situation-authoring questions](../../../docs/repertoires/design-foundation.md#how-systems-produce-a-situation) to connect people, information, physical possibilities and consequences. A person's concerns should explain several plausible actions; they should not prescribe a hidden sequence of exact player and NPC moves.
 
-Use an authoring model to propose and revise dialogue examples, motives, environmental clues and consequences. Review the output for distinct voice, usable conflict and excessive exposition. Integrate only content supported by the current native/world authoring path; record missing capabilities as design questions rather than inventing an undocumented executor.
+Use an authoring model to propose and revise dialogue examples, motives, environmental clues and possible consequences. A text rehearsal, paper layout or inexpensive playable content pass can expose a weak premise before detailed art. Preserve the eventual live-invention and independent-choice proof where required; a rehearsal does not supply it. Review for distinct identity, worthwhile choices and excessive exposition. Integrate content through the current native/world authoring path. If a valuable possibility needs new capability, develop it through the existing design owner instead of dismissing it solely because the present tool cannot perform it.
 
 **Likely tools:** current incumbent plus a bounded Claude/Gemini authoring audition, existing world records, and a reviewer who knows the game's intended experience.
 
-**Acceptance evidence:** a situation the player can understand and affect, a character who can reasonably disagree or change, and consequences compatible with actual world behavior. Attractive prose is necessary for some content, but not the complete acceptance criterion.
+**Acceptance evidence:** a situation the player wants to engage with and can affect, a person whose own concern matters, and a consequence the player understands or wants to investigate. Keep actual world validity separate from these experience judgments. A refusal, retreat or quiet shared activity can be an appropriate outcome.
 
 **Why here:** OpenLegend's authored people and non-canned invention distinguish it from both a fixed quest script and a narrator that can decree anything. [Character direction](../../../docs/projects/compelling-characters-feature-spec.md), [game priorities](../../../docs/repertoires/gameplay-priorities.md).
 
@@ -120,15 +132,15 @@ Use an authoring model to propose and revise dialogue examples, motives, environ
 
 **Use when:** selecting or changing a runtime character model, context procedure or relevant authored persona.
 
-**Inputs:** a permitted evidence snapshot, current person definition, the actual output contract, and a small set of challenging situations.
+**Inputs:** a permitted evidence snapshot, current person definition, the actual output contract, and relevant [complete character episodes](../../../docs/projects/compelling-characters-feature-spec.md#complete-behavioral-flows).
 
-Begin with fixed-context comparisons so candidates see equivalent evidence. Test a first meeting, a request against the resident's concerns, contradictory hearsay, an unavailable item, another person's secret, failed action, and changed conditions after an absence. Continue with a few closed-loop sessions where earlier responses and actual native outcomes affect later conversation. Include one supported proposal that receives an accepted or rejected native result, followed by a response and revisit; an intended or rejected action must not become a remembered completed event.
+Begin with fixed-context comparisons so candidates see equivalent evidence. Select relevant cases such as a first meeting, a request against the resident's concerns, contradictory hearsay, an unavailable item, another person's secret, failure, enjoyment or changed conditions after an absence. Continue through the existing episode comparison: independent choice, actual activity, a relevant interruption or change, stopping and a later opportunity for the experience to matter. Ordinary company, curiosity, satisfaction and chosen solitude deserve attention alongside adverse cases. An intended or rejected action must not become a remembered completed event. [Existing episode evaluation](../../../docs/projects/intelligent-simulation-evaluation-feature-spec.md#the-episode-not-the-preferred-answer).
 
 Save what context was actually delivered, including the distinction between observation and reported information. When a response fails, identify whether the cause was missing evidence, wrong retrieval, prose quality, persona drift, invalid operation or delivery behavior. Repair the owning stage; do not add more world history indiscriminately.
 
 **Likely tools:** the existing provider/harness contract, human blind review of valid outputs, and calibrated automated triage where useful. Public persona benchmarks contribute scenario design; they are not the acceptance authority.
 
-**Acceptance evidence:** distinct concise voice, plausible agency, faithful uncertainty, no unauthorized knowledge or invented event, appropriate development, and acceptable total response time/cost.
+**Acceptance evidence:** distinct concise voice, plausible agency, faithful uncertainty, no unauthorized knowledge or invented event, appropriate continuity/development, and acceptable complete cost and delay. Separately identify what made this particular person curious, amusing, challenging or worth knowing to a player. Accurate recollection alone cannot establish that result.
 
 **Why here:** public memory products and mods demonstrate that stored context, actual model input and the final spoken response are separate stages. OpenLegend's own perspective requirements are stricter than a mod that shares the player's camera with every NPC. [Narrative dossier](06-models-for-stories-and-characters.md), [runtime case studies](02-developer-case-studies.md).
 
@@ -146,7 +158,7 @@ For voices, keep casting stable across returning visits. Use the same short audi
 
 **Acceptance evidence:** useful feedback in motion, consistent voice identity, intelligible speech, controlled repetition and complete delivery behavior. A good whole song does not automatically provide a score that transitions between game states.
 
-**Why here:** sound can make current actions feel more complete without an engine rewrite. Voice is a later product choice when it improves the intended play, not a prerequisite imposed by this research. [Audio assessment](07-image-3d-and-audio-models.md).
+**Why here:** sound can make current actions feel more complete without an engine rewrite. Voice is a separate product choice when it improves the intended play. The [audio and feedback route](../../../docs/production-workflows/audio-and-feedback.md) combines sound with the visible action and player feedback; this research does not make voice a prerequisite. [Audio assessment](07-image-3d-and-audio-models.md).
 
 ## 10. Close the loop with play, diagnosis and a durable repair
 
@@ -154,13 +166,13 @@ For voices, keep casting stable across returning visits. Use the same short audi
 
 **Inputs:** an actual build, a reproducible starting condition, intended actions and a short list of observable criteria.
 
-Run a human play session and appropriate existing automation. Check whether a player can discover the goal, act, understand feedback, recover from failure and use the reward. Inspect the full interface and world together. Record a defect with its starting state, action sequence and visible/native result; avoid a vague request for “more polish.”
+When play is authorized, use a human session and appropriate existing automation. Apply the existing [playability questions](../../../docs/projects/five-product-feature-specs.md#playability-gates): can the player find something they want to try, turn the intention into a useful result, understand another person's part in it, and reach a satisfying consequence or next possibility? Inspect the full interface and world together. Observe voluntary choices, delight, interest and valued difficulty as well as confusion and waiting. Record a defect with its starting state, action sequence and visible/native result; avoid a vague request for “more polish.”
 
 Assign the defect to its cause: art, layout, control, world rules, asset export, context selection or delivery. Repair the relevant owner and rerun the affected path plus any surrounding interaction it could disturb. If the same error recurs, add the smallest useful check or instruction.
 
 **Likely tools:** the existing client/browser route and verification tools; an exploratory AI player only where it can use supported actions and provide reproducible observations.
 
-**Acceptance evidence:** the intended loop works and remains understandable, relevant failures recover properly, and the chosen checks pass. Human willingness to continue playing remains separate from automated task completion.
+**Acceptance evidence:** the selected checks establish their actual technical scope, and labeled player observations address the intended experience. Record why someone wanted to continue, change approach, return or finish contentedly; time spent alone does not explain enjoyment. Small sessions do not establish retention or broad appeal. Existing episode and verification owners retain the evidence, rather than a second universal fun rubric.
 
 **Why here:** EA's production testing augments existing scripted systems selectively, and Play2Code makes browser play part of iterative repair. Neither demonstrates that automated agents can decide all of OpenLegend's fun, art or character quality. [EA/other cases](02-developer-case-studies.md), [Play2Code's public method](https://continual-game-generation.vercel.app/), [project verification](../../../.agents/rules/verification.md).
 
@@ -177,13 +189,14 @@ The following is a proposed checklist for a substantial production trial. Reuse 
 | Tool identity        | Exact relevant model, application and skill/helper revision                  |
 | Work and cost        | Preparation, attempts, correction time, paid work and final accepted outputs |
 | Acceptance evidence  | Actual exports, complete-client views and relevant interactions              |
+| Experience judgment  | What became worth doing or caring about, observed tradeoffs and uncertainty |
 | Failure and recovery | What went wrong, how it was repaired, any remaining qualification limit      |
 | Reuse                | Source assets, settings and the next variation that tests repeatability      |
 
 This record need not become a new database or a large form. Its purpose is to preserve the few facts that let another session repeat and improve the work.
 
-## Proposed sequence for the next development effort
+## Choose the application from the current opportunity
 
-Begin with the inventory/scene baseline because it directly addresses Mike's concern, then choose the procedure that addresses the most consequential gap in the current playable loop. The prop, animation, material and character procedures are selectable work, not serial prerequisites. Independent authoring or asset work can proceed in parallel when its inputs are clear.
+Use current [gameplay priorities and coverage](../../../docs/repertoires/gameplay-priorities.md), the affected owners and actual evidence to choose a worthwhile result. Inventory work directly addresses Mike's reported concern; a character, action, place or invention may be the more consequential current opportunity. No inventory-first sequence is selected here. The [reusable routes](../../../docs/production-workflows/README.md) and these examples are selectable production methods, not serial prerequisites. Independent authoring or asset work can proceed in parallel when its inputs are clear.
 
-Use compatible reference skills whenever they help the chosen task. Add a new bridge or recurring automation when it solves observed repeated work; use a second family member when the claim being tested is broad reuse. An engine port or self-hosted model operation needs its own measured product or production reason. This approach applies the research's strongest finding: useful references, editable reuse and real review can improve the game while producing evidence for larger choices.
+Use compatible reference skills when they help the chosen task. A new bridge or automation can earn a trial by reducing repeated work or enabling a valuable creative capability. Test another family member when broad reuse is the claim. An engine port or self-hosted model operation needs evidence of sufficient product or production benefit, including its operating and transition costs. Useful references, editable reuse, creative exploration and real play/revision can improve the game while informing those larger choices.

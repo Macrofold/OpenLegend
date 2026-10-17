@@ -1,10 +1,10 @@
 # Skills and tooling worth evaluating for OpenLegend
 
-**Research date:** 17 October 2026. **Status:** proposed adoption plan. No skill, plugin, executable, model service, or editor integration was installed or activated during this review.
+**Research date:** 17 October 2026. **Reviewed:** 17 October 2026. **Status:** proposed adoption plan. No skill, plugin, executable, model service, or editor integration was installed or activated during this review.
 
 ## What is most useful now
 
-The best immediate candidates are the official PlayCanvas asset/lighting/animation skills, Adobe's React Aria documentation skill, Microsoft's browser inspection workflow, a disciplined asset-family workflow, and a small Blender preparation/verification pipeline. They address the stack and production problems OpenLegend already has. An engine migration, an all-purpose agent router, or many overlapping editor bridges would add work before establishing a benefit.
+The best immediate candidates are the official PlayCanvas asset/lighting/animation skills, Adobe's React Aria documentation skill, Microsoft's browser inspection workflow, a disciplined asset-family workflow, and a small Blender preparation/verification pipeline. ComfyUI and Scenario also merit targeted trials for saving and repeating image transformations. These candidates address the stack and production problems OpenLegend already has; broader tooling changes should answer a specific authoring or player-experience question.
 
 The selection follows the [current UI brief](../../../docs/ui-design-brief.md), [art direction](../../../docs/maintainers/art-direction.md), [world presentation](../../../docs/world-presentation.md), [3D asset proposal](../../../docs/projects/3d-pixel-art-asset-pipeline.md), and [gameplay priorities](../../../docs/repertoires/gameplay-priorities.md). The target is a convincing survival-adventure slice and a repeatable supply of coherent assets, not the largest possible tool installation.
 
@@ -36,9 +36,9 @@ A strong workflow combines these deliberately. For example, a skill can direct B
 
 Metadata dates mean repository activity, not the last successful test of every instruction. The [catalog's version table](https://github.com/gamedev-skills/awesome-gamedev-agent-skills/blob/0a70cfc64672d512c5b5b6006b5dcb5cf90dbdbd/docs/VERSION-SUPPORT.md) and current README even differ on a Bevy baseline. PlayCanvas's website skill list also lags its repository. Use the actual selected files and installed application version as the review basis.
 
-## Twenty-five candidate workflows
+## Twenty-seven candidate workflows
 
-These are candidate workflows rather than 25 installations. Several combine neighboring skills that solve one production task.
+These are candidate workflows rather than 27 installations. Several combine neighboring skills that solve one production task.
 
 ### 1. Find the right PlayCanvas surface and reuse its existing capabilities
 
@@ -94,7 +94,7 @@ OpenLegend's repeated props and sprite/mesh populations make this relevant. Redu
 
 [verify-pixels](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/verify-pixels/SKILL.md) requires a controlled camera, state, time, and randomness; first check that the baseline can repeat. It reserves byte-identical expectations for changes that should preserve pixels exactly.
 
-[inspect-runtime](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/inspect-runtime/SKILL.md) uses a development inspector hook and requires Engine 2.23+. Our [client manifest](../../../apps/client/package.json) pins 2.22.2, so this is **not immediately compatible**. Do not add a production hook or upgrade merely to follow the skill. Full-screen UI review must capture React DOM alongside the canvas.
+[inspect-runtime](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/inspect-runtime/SKILL.md) uses a development inspector hook and requires Engine 2.23+. Our [client manifest](../../../apps/client/package.json) pins 2.22.2, so this is **not immediately compatible**. If its inspection capability would resolve a useful scene problem, assess the required engine update and regression risk as part of that trial; keep the hook in the development surface. Full-screen UI review must capture React DOM alongside the canvas.
 
 ### 8. PlayCanvas Editor MCP, if we choose an Editor authoring workflow
 
@@ -154,9 +154,9 @@ For OpenLegend, perform real inventory and world interactions, then inspect the 
 
 ### 15. Blender Foundation's Blender Lab MCP
 
-**Kind:** first-party experimental authoring integration. **Proposal:** evaluate as one possible Blender bridge.
+**Kind:** first-party standalone authoring integration, published through Blender Lab. **Proposal:** evaluate as one possible Blender bridge.
 
-The [official Blender Lab page](https://www.blender.org/lab/mcp-server/) describes a Python-API connection requiring Blender 5.1+, an add-on, a separate MCP server, and an LLM client. It explicitly says model-written Python executes without a data-protection sandbox. [Blender Lab's catalog](https://www.blender.org/lab/) identifies the project.
+The [official Blender Lab page](https://www.blender.org/lab/mcp-server/) describes a Python-API connection requiring Blender 5.1+, an add-on, a separate MCP server, and an LLM client. It explicitly says model-written Python executes without a data-protection sandbox. [Blender Lab's catalog](https://www.blender.org/lab/) labels the project **Released**; that publication status does not qualify an OpenLegend installation. Its documented mesh-complexity-versus-screen-space inspection suggests a useful trial: find costly details that scarcely contribute at our actual camera distance.
 
 This is distinct from Ahuja's popular community repository. A disposable asset workspace and explicit export destinations are appropriate for a future trial because the actual operation is arbitrary Python inside Blender. Source hosting was inaccessible in this research environment; only official documentation was verified, so no package-level license or implementation-security claim is made. Start by inspecting an existing scene, not by granting a generator unrestricted work over important source files.
 
@@ -242,6 +242,22 @@ The newer [Tigertycoon descendant](https://github.com/Tigertycoon/material-maker
 
 [CoplayDev/unity-mcp](https://github.com/CoplayDev/unity-mcp) is community/Aura-sponsored, not Unity official. Its documented Unity 2021.3 LTS–6.x, Python, and uv workflow includes scene, asset, animation, profiling, and test operations. Recent activity and many stars make these worth examining; they do not show they outperform a PlayCanvas workflow on this project. Use them only within the [engine comparison conditions](05-playcanvas-godot-and-engine-choice.md).
 
+### 26. ComfyUI saved workflows and official agent tooling
+
+**Kind:** editable workflow application, CLI/API, and first-party agent instructions. **Proposal:** pilot a repeated image transformation.
+
+ComfyUI separates the [editable visual graph from its API execution export](https://github.com/Comfy-Org/docs/blob/main/development/api-development/workflow-api-format.mdx). Its [official image-generation command](https://github.com/Comfy-Org/comfy-skills/blob/main/claude-code/commands/generate-image.md) discovers templates, substitutes inputs, and checks that the requested result connects to a retrievable output. The [official skills repository](https://github.com/Comfy-Org/comfy-skills) keeps stable operating methods separate from model/template discovery.
+
+For OpenLegend, try an approved reference → controlled edit → alpha cleanup → normalized icon export workflow, using supported nodes or templates. Keep the editable graph, execution export, model/node versions, source inputs, and accepted files together. Reuse it on another family member and judge both in the inventory. Select execution explicitly: the [CLI](https://docs.comfy.org/agent-tools/cli) can choose cloud when signed in; its cloud routes have subscription/credit requirements. Adapt client-specific retrieval instructions to our existing tooling. This is an authoring candidate, with no installation or execution performed here.
+
+### 27. Scenario managed asset workflows
+
+**Kind:** hosted generation, asset organization, and workflow API. **Proposal:** compare one saved asset-family workflow with direct generation.
+
+Scenario documents [reference editing, style/subject training, paired before/after editor training, and asset collections](https://docs.scenario.com/get-started/documentation/key-capabilities-at-a-glance), plus [reusable multi-step workflows](https://docs.scenario.com/get-started/documentation/workflows-and-apps). These capabilities give a concrete route to investigate beyond the vendor-hosted customer accounts in the [case studies](02-developer-case-studies.md).
+
+Use approved OpenLegend source art to produce a coherent icon or material family. Save the workflow definition/settings, inputs, chosen model, edits, and final exports with the existing asset owner. Compare repeat editing effort and in-game coherence with a direct API route. Custom training is optional when its expected consistency or editing benefit justifies setup. Assess workflow convenience separately from generator quality; published operations and customer anecdotes do not establish an OpenLegend quality advantage.
+
 ## Candidates deliberately not adopted
 
 | Candidate or temptation                                                                          | Reason                                                                                                                                                                                                                                                                                                                   |
@@ -257,14 +273,14 @@ Audio and model-specific asset generators belong with the separate model/product
 
 ## Proposed adoption order and evidence
 
-Start with methods that can improve the next deliverable without creating a new platform:
+Start with methods that can improve the next deliverable. These trials can proceed independently where they do not share a required input or design decision:
 
 1. **One inventory family:** use current OpenLegend art direction, the catalog's asset-family process, React Aria references, and complete-screen browser review. Retain icons, border assets, component states, and the accepted screenshot together.
 2. **One 3D asset round trip:** inspect/calibrate the model, fix only observed Blender problems, verify clips, load in the current PlayCanvas scene, and record source/export conventions. Use one Blender execution path.
 3. **One lighting comparison:** establish reproducible noon, dusk, and night views with the public clock; review sprites, models, UI legibility, and contact shadows together.
-4. **One procedural material or foliage recipe:** retain graph, inputs, seed, exports, and preview. Choose Designer if available and suitable, or Material Maker/Blender based on actual setup cost. Prove that another variant is cheaper to produce and remains coherent.
-5. **Only then automate the repeated steps:** turn the successful calibration, export, family-preview, and browser-review operations into narrow project instructions. Keep the existing repository's skill routing and avoid competing general routers.
+4. **One procedural material or foliage recipe:** retain graph, inputs, seed, exports, and preview. Choose Designer if available and suitable, or Material Maker/Blender based on actual setup cost. Compare the effort to make another variant and whether it preserves coherence while offering useful visual range.
+5. **Automate useful repeated steps as they emerge:** preserve a successful image transformation as a saved ComfyUI or Scenario workflow where it helps; turn calibration, export, family-preview, and browser-review operations into narrow project instructions. Keep the existing repository's skill routing. A reusable recipe can develop during a trial without waiting for unrelated asset work.
 
-For each pilot, record hands-on setup, agent correction rounds, broken exports, visual defects found, reuse effort, and the final in-game result. Compare with the prior way of producing the same asset family. Tool counts, generated lines, and uninterrupted agent hours do not answer whether we improved production.
+For each pilot, record hands-on setup, agent correction rounds, broken exports, visual defects found, reuse effort, and the final in-game result. Compare with the prior way of producing the same asset family. Assess expressive range, readability, and the intended player experience separately from throughput: a useful tool may enable a more distinctive result as well as save effort. Tool counts, generated lines, and uninterrupted agent hours do not answer whether we improved production.
 
 The research supports these candidates because their actual instructions address observable OpenLegend problems. It does not claim that any unrun integration is installed, tested, safe by inspection alone, or better than every alternative. A small, successful end-to-end pilot supplies the missing evidence needed to adopt it with confidence.

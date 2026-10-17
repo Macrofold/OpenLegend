@@ -1,10 +1,10 @@
 # PlayCanvas, Godot, and the engine decision for OpenLegend
 
-**Research date:** 17 October 2026. **Status:** proposed recommendation, not an engine decision or a migration plan accepted by the project.
+**Research date:** 17 October 2026. **Reviewed:** 17 October 2026. **Status:** proposed recommendation within the accepted browser-only product direction, not an engine decision or a migration plan accepted by the project.
 
 ## Recommendation
 
-Keep PlayCanvas for the current OpenLegend survival-adventure slice. Improve the asset, lighting, animation, UI, and visual-review workflows around it. Revisit the engine only if a representative experiment establishes a concrete limitation that prevents the intended game, or if the product deliberately changes toward a native, editor-centered production model.
+Keep PlayCanvas as the current production default and improve the asset, lighting, animation, UI, and visual-review workflows around it. Run a bounded comparison with Godot or another authoring environment when it can answer a specific question about visual iteration, animation, scene assembly, contributor access, or browser delivery. A useful experiment does not require first proving that PlayCanvas prevents a feature. OpenLegend's accepted distribution remains browser-only; assess alternatives against the [platform and offline decision](../../../docs/projects/completed/platform-and-offline-decision-brief.md).
 
 This recommendation follows OpenLegend's existing architecture and immediate gameplay priorities. It is not a claim that PlayCanvas is universally superior. The project already has a renderer-independent authoritative world, a browser client, direct PlayCanvas scene code, React interfaces, and substantial presentation work. Its next goal is a convincing playable loop in which survival needs lead to useful invention and independent characters create consequences. Rebuilding the client must earn its place against that work. See [architecture](../../../docs/architecture.md), [engine and world boundaries](../../../docs/engine-and-world-boundaries.md), and [gameplay priorities](../../../docs/repertoires/gameplay-priorities.md).
 
@@ -18,7 +18,7 @@ GitHub metadata puts the catalog's creation on 24 June 2026, and the official Pl
 
 The [official PlayCanvas skills repository](https://github.com/playcanvas/skills/tree/38d8fa75ab56d628dc2dac7daea5383aee783903) has 16 actual skill files covering application conventions, official examples and reusable scripts, GLB inspection, model calibration, animation, asset loading, lighting, effects, runtime inspection, image verification, draw calls, shader modifications, and baking. They support code-based Engine, React, and web-component workflows. They are authoring instructions and helper scripts, not a new runtime dependency. See [the official guide](https://developer.playcanvas.com/user-manual/getting-started/use-playcanvas-skills/) and the [tooling review](04-skills-and-tooling.md).
 
-One compatibility detail matters immediately: OpenLegend pins PlayCanvas **2.22.2**, while the current official `inspect-runtime` skill requires **2.23 or newer**. This is evidence for checking versions before adopting a skill, not for upgrading an engine merely to use a tool. [Client dependencies](../../../apps/client/package.json), [runtime inspection skill](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/inspect-runtime/SKILL.md).
+One compatibility detail matters immediately: OpenLegend pins PlayCanvas **2.22.2**, while the current official `inspect-runtime` skill requires **2.23 or newer**. If the inspector would resolve a useful scene problem, include the engine update and regression risk in the proposed trial. Tool availability alone does not establish the benefit of that update. [Client dependencies](../../../apps/client/package.json), [runtime inspection skill](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/inspect-runtime/SKILL.md).
 
 ## Start from the engine arrangement we actually have
 
@@ -61,7 +61,7 @@ Its strongest relevant advantages are integrated visual authoring and game-orien
 
 Sources: [Theme editor](https://docs.godotengine.org/en/stable/tutorials/ui/gui_using_theme_editor.html), [AnimationTree](https://docs.godotengine.org/en/stable/tutorials/animation/animation_tree.html), [Godot MCP source](https://github.com/Coding-Solo/godot-mcp), [tooling review](04-skills-and-tooling.md).
 
-These are genuine reasons to run a focused prototype if visual scene and animation authoring become the dominant work. They do not require us to replace the browser interface today. Conversely, retaining PlayCanvas should not mean forbidding an offline Godot or Material Maker authoring experiment whose output is an ordinary texture or asset.
+These are useful reasons for a focused prototype whenever the expected authoring benefit warrants its cost. An offline Godot or Material Maker experiment can also produce ordinary textures or assets for PlayCanvas. Keep that authoring choice separate from a decision to replace the browser runtime.
 
 ### Godot's current web tradeoffs
 
@@ -87,7 +87,7 @@ Unity's current 6.6 web documentation is more nuanced than older blanket claims 
 
 The official Unreal browser route investigated here is Pixel Streaming: an Unreal application runs on a host and sends rendered frames/audio to browser clients, which send input back. That can serve demanding visuals, but it moves rendering to hosted infrastructure and introduces transport latency and session-capacity work. It is not equivalent to distributing the current client to render locally in each player's browser. [Epic Pixel Streaming overview](https://dev.epicgames.com/documentation/en-us/unreal-engine/pixel-streaming-in-unreal-engine), [infrastructure](https://dev.epicgames.com/documentation/unreal-engine/pixel-streaming-infrastructure).
 
-A native-first product requiring extensive authored cinematics, a large specialist art team, or deeply integrated editor tools could rationally favor one of these engines. That would be a new product and production argument, not evidence obtained from the cited clone video's UI.
+Deep editor tooling or authored cinematics can justify an authoring comparison, but native-only advantages do not satisfy OpenLegend's accepted browser-only distribution. Any proposal to change that product decision belongs with its [existing owner](../../../docs/projects/completed/platform-and-offline-decision-brief.md). The cited clone video's UI supplies no such argument.
 
 ## What migration would actually require
 
@@ -105,10 +105,10 @@ This list comes from the responsibilities visible in [the current scene](../../.
 
 ## Proposed decision experiment and revisit criteria
 
-First complete one polished OpenLegend scene and inventory slice on the current stack. Use the same art direction, one approved item family, representative dynamic lighting, and actual interaction states. Record asset-preparation effort, correction rounds, complete-screen evidence, frame-time behavior, load behavior, and any specific task the engine prevents.
+Develop the PlayCanvas slice while investigating engine-specific uncertainties at the scale needed to resolve them. A small authoring or export experiment can run before the complete slice when it answers an important question cheaply. Define the intended visual or player-experience improvement, the task to reproduce, and the output needed by the browser game.
 
-Only if that exposes an important unresolved constraint should a Godot prototype reproduce the **same** slice, consuming the same permitted world view and assets. Hold the camera, art, data, device, and interactions constant. Report the total workflow, including setup, export, browser integration, corrections, and maintenance burden. Do not compare a Godot editor viewport with the PlayCanvas browser build.
+Compare the **same representative task** using the same source assets, visual intent, permitted world view, camera, target device, and interactions. Inspect both creation and revision: a workflow that makes the first scene easy may make later changes difficult, or the reverse. Record setup, export, browser integration, corrections, loading, frame-time behavior, and maintenance effort. An editor-only result can demonstrate an authoring capability; a runtime claim requires the delivered browser result.
 
-A switch becomes credible if that experiment shows a material, persistent authoring or product benefit that outweighs the replacement work, or if the intended distribution changes to favor native applications. A switch remains unsupported if its only evidence is catalog coverage, model-generated screenshots, star counts, a different game's successful launch, or frustration with one unart-directed UI attempt.
+A switch becomes credible when representative evidence shows a material, persistent authoring or player-experience benefit that outweighs integration, replacement, and continuing maintenance work while meeting browser delivery needs. Catalog coverage, generated screenshots, star counts, and a different game's success can suggest investigations; they do not establish that net benefit.
 
-The proposed immediate choice is to improve the workflow in the engine we have. The tool survey supplies concrete ways to do that without turning an art and usability problem into an unmeasured engine rewrite.
+The proposed immediate choice is to improve the current workflow while keeping useful alternatives testable. The tool survey supplies concrete candidates, and a successful offline authoring experiment can be adopted without changing the production engine.

@@ -8,13 +8,13 @@ We can be confident that the research has covered the major relevant production 
 
 We cannot be 100% certain that every useful private workflow, unindexed tutorial or newly released tool has been found. Nor can further reading determine which candidate works best on OpenLegend's exact art, characters, context and budget. The next increase in confidence comes from a small comparative production exercise whose output remains useful to the project.
 
-The [coverage register](13-source-register-and-coverage.md) records what was investigated and which evidence remains unavailable. This plan defines the experiments that resolve the remaining decision-relevant uncertainty.
+The [coverage register](13-source-register-and-coverage.md) records what was investigated and which evidence remains unavailable. This plan offers comparisons for the remaining decision-relevant uncertainty. The [reusable production routes](../../../docs/production-workflows/README.md) explain the complete working methods; these trials help select between candidates for a particular route.
 
 ## Decisions supported by research alone
 
 | Decision             | Recommended position                                                                        | Basis and limit                                                                                                      |
 | -------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Runtime engine       | Retain PlayCanvas for the next polished slice                                               | Existing project investment and documented capability; no measured blocker establishes a migration benefit           |
+| Runtime engine       | Retain PlayCanvas as the current production baseline                                        | Existing project investment and capability; no comparative result establishes sufficient migration benefit           |
 | Interface framework  | Retain the current React/React Aria foundation while improving its visual production        | It supports custom game styling; no controlled evidence identifies React as the cause of the current dissatisfaction |
 | Production structure | Use shared references, editable families and complete-client review                         | Supported across shipped procedural production and newer AI workflows                                                |
 | Skills               | Select a few inspected, compatible references or helpers                                    | Actual source audit found both useful operations and concrete incompatibilities                                      |
@@ -24,9 +24,17 @@ The [coverage register](13-source-register-and-coverage.md) records what was inv
 
 These recommendations do not require making every experimental tool part of the stack. Detailed rationale lives in the relevant dossiers.
 
+## Evaluate the gain the work is meant to create
+
+A production comparison and a player-experience comparison answer different questions. The former can establish reliable exports, repeatable style, reduced correction or an affordable new capability. The latter asks whether the result makes the intended activity more compelling. Use the existing [playability questions](../../../docs/projects/five-product-feature-specs.md#playability-gates), [whole-character episodes](../../../docs/projects/compelling-characters-feature-spec.md#complete-behavioral-flows) and [episode evaluation](../../../docs/projects/intelligent-simulation-evaluation-feature-spec.md) for those judgments. This plan adds no universal fun score or parallel evaluation program.
+
+Choose a trial because it can improve a particular result: recognizing a prized object, reading and enjoying an action, discovering a possibility, expressing an invention or wanting to return to a person. An unfamiliar creative capability can justify exploration even before repeated production friction exists. Compare less expensive exploratory representations when the premise is still uncertain, then qualify actual game delivery for the promising route.
+
+When claiming savings, hold the intended quality and experience constant. When a candidate creates a stronger result at greater cost, report that tradeoff rather than calling it inefficient by definition. A technically valid invented object or remembered reply may still feel conventional; observe whether the player notices useful authorship, an independent concern or a consequence that affects their next choice. The existing playability owner supplies the broader questions, including legitimate refusal, known methods and quiet enjoyment.
+
 ## A small experiment portfolio
 
-The suggested sample sizes below are **starting designs**, not a statistical guarantee or an accepted delivery schedule. Reduce a trial when early evidence rules a candidate out; broaden it only to resolve a concrete uncertainty.
+The suggested sample sizes below are **starting designs**, not a statistical guarantee or an accepted delivery schedule. Select the relevant comparison; neither the inventory example nor completion of this portfolio is a prerequisite for other work. Reduce a trial when early evidence rules a candidate out; broaden it only to resolve a concrete uncertainty.
 
 ### Trial A: one game inventory, separated into art and composition
 
@@ -38,7 +46,7 @@ For the **implementation-agent comparison**, give the incumbent and one challeng
 
 Review in a blinded order where practical. Score family consistency, item recognition, hierarchy, readability and fidelity to the brief. Independently check behavior: selection, equipment, quantities, long names, unavailable art, pending/rejected operations, changes while the panel is open, focus and return to world control.
 
-**Decision:** adopt an improved art route or agent for this task only when the complete usable screen improves and correction effort is acceptable. A beautiful but static panel does not pass. If both agents struggle with the same ambiguous brief, repair the input before declaring a model failure.
+**Decision:** adopt an improved art route or agent for this task when the complete usable screen improves and correction effort is acceptable. Include how well the screen expresses OpenLegend's identity and makes actual possessions worth inspecting or using. A beautiful but static panel does not pass. If both agents struggle with the same ambiguous brief, repair the input before declaring a model failure.
 
 **Deliverables:** baseline and candidate captures, approved art kit, actual interaction record, total work/cost and a short decision. [Detailed UI procedure](08-ui-quality-and-production.md).
 
@@ -62,7 +70,7 @@ Choose three representative existing needs, such as a held tool, a container wit
 
 Keep the brief, reference quality, required parts, camera and material constraints constant. Inspect the full mesh, hidden surfaces, scale, pivot, texture behavior, exported size and world/icon identity. Apply the current or explicitly scoped qualification path; do not declare the proposed general importer delivered merely because these assets were viewed.
 
-**Decision:** select by accepted outputs and required repair. A route that frequently fuses important parts or fails the output contract can stop early. Record rejected assets rather than repeatedly sampling until a lucky example wins.
+**Decision:** select by useful appearance, accepted outputs and required repair. Judge whether the distinctive parts communicate the object's identity and intended use at game scale, including player authorship when that is the purpose. A route that frequently fuses important parts or fails the output contract can stop early. Record rejected assets rather than repeatedly sampling until a lucky example wins.
 
 **Deliverables:** candidate and accepted files, source lineage, concrete defect list and total cost/time. If installation or representation replacement is included, check a failed/delayed load and a reload preserve the object, its current state and adequate fallback under the existing publication contract. [3D assessment](07-image-3d-and-audio-models.md), [appearance owner](../../../docs/invention-art-pipeline.md).
 
@@ -71,6 +79,8 @@ Keep the brief, reference quality, required parts, camera and material constrain
 **Question:** does the chosen motion and export workflow generalize beyond one manually repaired asset?
 
 Use a known compatible rig and one actual needed action. Compare an existing/authored clip with one selected assisted route, rather than every motion service. Test anticipation, contact, recovery, root travel, feet, hands, equipment and transitions in the actual camera.
+
+Use an existing playable consumer where appropriate. The [first-threat encounter](../../../docs/projects/completed/first-threat-encounter-feature-spec.md) provides actual action and aftermath behavior; its simple current presentation does not establish a qualified new creature rig or bespoke animation. Coordinated animation and sound can be evaluated through the [audio/feedback route](../../../docs/production-workflows/audio-and-feedback.md) without silently changing the underlying attack rules.
 
 Repeat the procedure on a second compatible body or equipment configuration only when broad reuse is the claim being evaluated. Different anatomy is a distinct qualification question. Kimodo is a candidate for constrained offline motion; image-to-video remains reference unless it exports the required animation data.
 
@@ -84,19 +94,19 @@ Repeat the procedure on a second compatible body or equipment configuration only
 
 Start with the actual configured incumbent, Claude Opus 5.5 and Gemini 4 Argon if available through appropriate approved routes. Record effective model identities and settings; model names in docs are not proof of deployment configuration.
 
-For authoring, use a few real briefs: a person with conflicting concerns, an encounter that offers multiple meaningful approaches, and a concise revision that preserves existing world facts. Evaluate usable originality and editing effort.
+For authoring, use real briefs selected from the [characters-and-play route](../../../docs/production-workflows/characters-and-play.md): a person with a present life, a worthwhile situation with room for different approaches, or a concise revision that preserves existing world facts. Include pleasures and interests alongside conflict where they fit. Evaluate usable originality and editing effort, then carry a promising result into inexpensive playable content before treating prose preference as game quality.
 
-For runtime behavior, a suggested initial design is about twenty fixed-context situations per candidate, spanning the scenario categories in the [narrative dossier](06-models-for-stories-and-characters.md). Repeat the difficult or unstable cases. Then use a few short closed-loop sessions to observe how choices compound. A longer persistence test should target a candidate that first passes the shorter validity checks; this avoids paying for a lengthy session that repeats an already disqualifying failure.
+For runtime behavior, select relevant existing episode families and compare fixed-context situations from them, informed by the [narrative dossier](06-models-for-stories-and-characters.md). Repeat difficult or unstable cases. Then follow complete short episodes through independent choice, actual execution, a relevant interruption or changed circumstance, stopping and another encounter. Include ordinary company, curiosity, enjoyment and chosen solitude where those are the intended experience. A longer persistence test should target a candidate that first passes the shorter validity checks; this avoids paying for a lengthy session that repeats an already disqualifying failure. Scope the sample to the decision instead of adopting a fixed case count as a quality guarantee.
 
-Keep invalid actions, forbidden knowledge, fabricated memories and policy violations outside the aesthetic score, while retaining all attempts in the validity denominator. Among valid responses, judge distinct voice, concision, plausible agency and meaningful invitation to play. Include both earned personality change and circumstances where change would be ungrounded. For a candidate reaching closed-loop evaluation, include a supported proposal with a native accepted or rejected outcome, a subsequent response and a revisit; intended or rejected actions must not become remembered successes.
+Keep invalid actions, forbidden knowledge, fabricated memories and policy violations separate from the aesthetic judgment, while retaining all attempts in the validity denominator. Among valid responses, judge distinct voice, concision, plausible agency and meaningful invitation to play. Ask what the player found interesting about this particular person and whether the resident's concern affected a worthwhile choice. Include both earned personality change and circumstances where change would be ungrounded. For a candidate reaching closed-loop evaluation, include a supported proposal with a native accepted or rejected outcome, a subsequent response and a revisit; intended or rejected actions must not become remembered successes. Existing CE/AG/CR evaluation owners retain these results.
 
-**Decision:** adopt for the demonstrated role. A strong story author need not become every ordinary speech route. Open-model serving becomes a later comparison if a measured need for control, adaptation or recurring economics justifies its operating work.
+**Decision:** adopt for the demonstrated role. A strong story author need not become every ordinary speech route. Open-model serving can earn a comparison through a credible need for control, adaptation, a particular creative capability or recurring economics; include its setup and operating work.
 
 **Deliverables:** permitted inputs, raw responses, validity labels, blind preferences, failure examples, correction effort, latency and usage receipts.
 
 ### Trial F: voice or sound, when it improves the current slice
 
-**Question:** does the audio make the intended action or person clearer without unacceptable delivery cost?
+**Question:** does the audio make the intended action or person clearer, more expressive or more satisfying at an acceptable complete cost?
 
 A sound-effects trial can use a few real material/event families. A voice trial should reuse accepted character words, stable casting and a short shared audition script. Compare one incumbent and a small specialist challenger set. Inspect pronunciation, acting, repeated identity, interruption and intelligibility in the mix.
 
@@ -125,7 +135,7 @@ Equivalent effort does not mean vendor settings with identical names consume ide
 | Audio     | Correct words/event, usable export, cancellation/loop behavior          | Acting, timbre, mix fit and pleasant variation                  |
 | Engine    | Required product behavior, deployment and observer boundaries           | Authoring speed, revision convenience, maintenance burden       |
 
-These are proposed categories to tailor to the exact task. They do not add a universal test suite for every cosmetic edit.
+These are proposed categories to tailor to the exact task. They do not add a universal test suite for every cosmetic edit. Judge the useful result in its selected activity through the existing playability owner: an evocative voice, clear anticipation or intriguing object can matter even when a preference gap is not captured by a numerical score. Record positive, negative and indeterminate observations with their limits.
 
 ### Count failures and recovery
 
@@ -152,7 +162,7 @@ For a defined repeated task, report:
 - **Revision cost**, for one specified change to the accepted output.
 - **Runtime burden**, where applicable: loading, memory, frame time, latency and recurring serving cost.
 
-A useful unit-cost calculation divides attributable total cost by accepted comparable outputs. If no usable output is accepted, report the spend and failure; do not manufacture a favorable unit price. A dollar valuation of human time should be stated explicitly or left separate. No savings percentage is forecast by this research.
+A useful asset unit-cost calculation divides attributable total cost by accepted comparable outputs. For a playable episode, report its complete cost and scope alongside the separate experience judgment; do not divide by a count of unequal player moments. If no usable output is accepted, report the spend and failure; do not manufacture a favorable unit price. A dollar valuation of human time should be stated explicitly or left separate. No savings percentage is forecast by this research.
 
 ## Adoption decisions and stopping rules
 
@@ -162,13 +172,13 @@ A useful unit-cost calculation divides attributable total cost by accepted compa
 | Attractive outputs but repeated repair or integration failure                                                            | Keep as a concept/candidate tool or stop the trial; do not call it production ready                        |
 | Comparable quality with lower total work                                                                                 | Prefer the simpler maintainable route, accounting for setup and recurring costs                            |
 | Small or inconsistent preference gap                                                                                     | Retain the incumbent and the useful reference/asset improvements; gather more only if the decision matters |
-| A measured engine capability blocks an important part of the slice and no adequate current-stack solution is established | Investigate that constraint with the same slice in Godot; include the full delivery workflow               |
+| A credible engine or tooling alternative offers a valuable capability or material reduction in complete authoring work | Compare a representative result, including delivery, revision, integration and transition cost            |
 | New output family or changed model/version invalidates relevant evidence                                                 | Recheck the affected qualification, reusing valid existing evidence elsewhere                              |
 
 The research recommends no automatic engine migration, global provider switch, mass skill installation or custom model-training project. Those decisions require evidence about the concrete task that would justify their ongoing cost.
 
 ## What this research has completed
 
-The requested desk research, source appraisal, project mapping, skills audit, comparative model assessment and proposed production procedures are the deliverable. The unrun experiments above are the necessary next evidence for adoption; they are explicitly outside the completed research's claims.
+The requested desk research, source appraisal, project mapping, skills audit, comparative model assessment and proposed production procedures are the deliverable. The unrun comparisons above can resolve uncertain adoption decisions; they are explicitly outside the completed research's claims. They are not a compulsory portfolio before using a compatible reference, repairing an obvious defect or pursuing already authorized work.
 
-The immediate value is already concrete: a better first production target, specific compatible skills to inspect, credible model/asset challengers, known weak leads to avoid, and tests that distinguish an impressive demonstration from a workflow that helps build OpenLegend.
+The immediate value is concrete: reusable routes from an idea to working content, compatible skills to inspect, credible model/asset challengers, and comparisons that connect production gains to OpenLegend's creative ambitions. Existing owners preserve the distinction between a useful method, a delivered capability and an experience people have actually enjoyed.
