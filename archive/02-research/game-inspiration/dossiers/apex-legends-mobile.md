@@ -1,8 +1,8 @@
-# Apex Legends Mobile — research checkpoint (G175)
+# Apex Legends Mobile — full-game dossier (G175)
 
 [Library](../README.md) · [Roster](../research-roster.md#october-17-mobile-successes-and-unsuccessful-services) · [Research status](../research-progress-mobile-2026-10-17.md) · [Research requirements](../research-requirements.md)
 
-**Research status: incomplete substantive checkpoint, October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
+**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
 
 ## Game, mechanics and player-created content
 
@@ -10,7 +10,7 @@
 
 Launch Battle Royale placed sixty players in twenty three-person squads on World’s Edge. The objective was to become the last surviving squad as a damaging ring progressively reduced safe space. Ranked added competitive progression to that structure. Other maps, modes and progression rules arrived during the short service life. [Peter Hunt Szpytek, Gameranx, May 25, 2022; full body read, launch scope](https://gameranx.com/features/id/307638/article/apex-legends-mobile-game-modes-explained/)
 
-The connected decisions are squad composition, landing position, equipment collection, movement to the next safe area, engagement and recovery. A strong initial position can become untenable as the ring changes. Searching another building trades possible supplies against travel time and exposure. These are implications of the rules, rather than observations that every squad followed one route.
+As the ring changes, searching one more building trades possible supplies against travel time. This is analysis of the rules, not an observed match.
 
 Mobile added persistent Legend progression. Playing a particular character earned Mastery progress and character-specific tokens used to unlock perks; General, Finisher and Ability categories altered the selected kit. Loadout choices therefore extended character selection beyond the three base abilities. This was separate from the weapons and supplies found during an individual match. [Dipanjan Dey, Pro Game Guides, June 4, 2022; full Mobile perk guide read](https://progameguides.com/apex-legends-mobile/what-are-perks-and-how-to-unlock-them-in-apex-legends-mobile/)
 
@@ -22,11 +22,17 @@ Players could adjust layout and sensitivity, automate ammunition pickup and door
 
 The settings also exposed aim assist, gyroscope aiming, automatic weapon switching when empty, continuous grenade throwing, crouch toggles, slide/jump assistance and choices about whether damage interrupted death-box looting. These were configurable options, not a claim that a guide’s recommended values were universal defaults. [John Paul Santiago, PlayerAssist, 2022-era guide; full body read, exact publication day not exposed](https://playerassist.com/apex-legends-mobile-best-gameplay-settings/)
 
+A third-person lobby still allowed switching to first-person view; perspective matchmaking was not a ban on that camera toggle. [GamingTrend, May 26, 2022; full review body read](https://gamingtrend.com/reviews/apex-legends-mobile-review-some-mistakes-can-be-fixed-others-can-only-be-avenged/)
+
 Automation changes the number of finger actions needed to execute a decision. It does not choose a safe rotation or make an exposed revival safe. Likewise, practising a weapon can improve execution without supplying that weapon in the next Battle Royale match.
 
 ### 3. Equipment, damage and recovery
 
-Body shields absorbed ordinary incoming damage before health. Evo Shields developed through damage dealt to opponents: white, blue, purple and red offered successively larger shield pools. Shooting an already knocked opponent did not earn Evo progress. Gold armor instead strengthened small healing items and did not develop into red armor. Shield Cells and Batteries replenished depleted protection. These are Mobile’s May 2022 documented equipment rules; later care-package rotations did not make the entire loot pool timeless. [Gameranx, May 31, 2022; full Evo Shield guide read](https://gameranx.com/features/id/310310/article/apex-legends-mobile-evo-shield-explained/)
+The arsenal covered assault rifles, submachine guns, light machine guns, shotguns, marksman rifles, sniper rifles and pistols. Examples included the light-ammunition R-301, heavy-ammunition Flatline, energy Havoc, shotgun-shell Mastiff and sniper-ammunition Sentinel. Players balanced range, recoil, firing pattern, magazine size and reload exposure, using hip fire or aiming down sights. Compatible attachments changed that calculation: extended magazines increased capacity; the Havoc’s **Turbocharger** reduced its firing delay; **Selectfire Receiver** added automatic fire to the Prowler; scopes changed useful sight distances. Compatibility mattered: the energy-ammunition Triple Take did not accept long-range sniper scopes. [Upanishad Sharma, Beebom; full body read; article explicitly labels its arsenal May 2022 despite an October 2025 metadata update](https://beebom.com/apex-legends-mobile-guns-weapons-guide/)
+
+Ordinary throwable ordnance included **Frag Grenades** with a delayed area explosion, adhesive **Arc Stars**, and **Thermite Grenades** that created fire. These consumed inventory resources, unlike a Legend’s recharging tactical ability. A grenade could influence an opponent’s route as well as directly damage them. [Francesco De Meo, Touch, Tap, Play, May 31, 2022; full Mobile guide read; exact damage assertions excluded](https://www.touchtapplay.com/how-to-use-ordnance-in-apex-legends-mobile/)
+
+Body shields absorbed ordinary incoming damage before health. Evo Shields developed through damage dealt to opponents: white, blue, purple and red offered 50, 75, 100 and 125 shield points. Shooting an already knocked opponent did not earn Evo progress. Gold armor instead strengthened small healing items and did not develop into red armor. Shield Cells and Batteries replenished depleted protection. The figures describe May 2022 Mobile rules. [Gameranx, May 31, 2022; full Evo Shield guide read](https://gameranx.com/features/id/310310/article/apex-legends-mobile-evo-shield-explained/)
 
 Helmets mitigated headshot damage without requiring recharging. A better helmet therefore differed from another rechargeable shield pool. The highest helmet tier also improved ability availability; purple and gold were not simply successive increases to head protection. [Gameranx, May 31, 2022; full helmet guide read; internally inconsistent cooldown bullet excluded in favor of its explanatory paragraph](https://gameranx.com/features/id/310480/article/apex-legends-mobile-helmets-explained/)
 
@@ -38,11 +44,17 @@ Helmets mitigated headshot damage without requiring recharging. A better helmet 
 | Shield Battery         | Full shield            | 5 seconds           |
 | Phoenix Kit            | Full health and shield | 10 seconds          |
 
-Using these items limited movement and could be cancelled. Ring damage and Caustic’s gas could threaten health despite remaining shields, so a shield-only recovery was not always sufficient. [Sumant Meena, Pocket Gamer, May 17, 2022; full Mobile regeneration guide read](https://www.pocketgamer.com/apex-legends-mobile/regen-guide/)
+Base health was 100. Using these items limited movement and could be cancelled. Ring damage and Caustic’s gas could threaten health despite remaining shields, so a shield-only recovery was not always sufficient. [Sumant Meena, Pocket Gamer, May 17, 2022; full Mobile regeneration guide read](https://www.pocketgamer.com/apex-legends-mobile/regen-guide/)
 
-A fallen teammate’s death box could supply a recoverable banner; carrying it to a Respawn Beacon enabled a return to the match. That was a separate recovery stage from helping a teammate who was still knocked down. Teammates could communicate locations through map pings. [Try Hard Guides, May 16, 2022](https://tryhardguides.com/apex-legends-mobile-beginner-walkthrough-and-guide/)
+A knocked player could face a **Knockdown Shield** toward incoming fire while awaiting help. Gold shields permitted self-revival in the documented Mobile rules. After death, a teammate recovered the banner and used a Respawn Beacon; deployable Mobile Respawn Beacons provided another location option. Recovery required surviving squadmates and opportunity, not simply waiting for an automatic ordinary-BR respawn. Exact bleedout and banner-expiry timers were not verified. [Gakstr福, original TapTap Mobile account, December 2022; full body read, using only recovery descriptions](https://www.taptap.io/br/post/3607630)
+
+Map pings shared positions without requiring a voice explanation. [Try Hard Guides, May 16, 2022](https://tryhardguides.com/apex-legends-mobile-beginner-walkthrough-and-guide/)
 
 ### 4. Complete released base-ability inventory
+
+Mobile used **Offensive, Defensive, Support and Recon** role labels. A May 2022 guide identified shared perks only for Defensive and Recon: Gibraltar and Caustic’s **Fortified** reduced damage and prevented bullet slowing, while the old **Low Profile** disadvantage was absent from the released launch cast. These were distinct from earned loadout perks. [Jeremy Kanjanapangka, Touch, Tap, Play, May 24, 2022; full body read](https://www.touchtapplay.com/how-do-fortified-and-low-profile-perks-work-in-apex-legends-mobile/)
+
+Recon status also enabled Survey Beacon scanning for the next ring. [Pro Game Guides, August 26, 2022; Mobile Crypto guide, full body read by the review team](https://progameguides.com/apex-legends-mobile/all-crypto-abilities-in-apex-legends-mobile/)
 
 Each Legend combined a passive, tactical and ultimate. The table is a functional inventory of the sixteen released Mobile characters. It deliberately avoids transferring later PC reworks or contemporary PC class bonuses. Release-era entries below are not a promise that every cooldown and damage value remained unchanged.
 
@@ -76,6 +88,8 @@ Each Legend combined a passive, tactical and ultimate. The table is a functional
 
 [Sumant Meena, Pocket Gamer, May 23, 2022; full Mobile Fade guide read; its incorrect premium-currency terminology is excluded](https://www.pocketgamer.com/apex-legends-mobile/fade-guide/)
 
+Phase Chamber also catches allies; affected characters cannot deal or receive damage. [EA launch notes](https://www.ea.com/ea-originals/news/prime-time-patch-notes)
+
 | Legend and release boundary | Passive                                                               | Tactical                                      | Ultimate                                                       |
 | --------------------------- | --------------------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------- |
 | Loba — Cold Snap, June 2022 | **Eye for Quality:** reveals nearby high-tier loot through obstacles. | **Burglar’s Best Friend:** bracelet teleport. | **Black Market Boutique:** accesses surrounding loot remotely. |
@@ -106,19 +120,79 @@ Each Legend combined a passive, tactical and ultimate. The table is a functional
 
 [John Paul Santiago, PlayerAssist, Aspire Season 4 report; full body read, February 2023 release scope](https://playerassist.com/apex-legends-mobile-aspire-patch-notes-season-4/)
 
-Rhapsody’s verified July 2022 entry and the final comparison of kit-specific perks are being integrated into this checkpoint. Her absence from the partial table is not an assertion that she was unreleased.
+| Legend and release boundary      | Passive                                                          | Tactical                                                                                          | Ultimate                                                                     |
+| -------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Rhapsody — Distortion, July 2022 | **Gifted Ear:** detects and visualizes sounds at extended range. | **Hype Anthem:** speeds nearby squadmates and replenishes shields; taking damage ends the effect. | **Rowdy’s Rave:** one-way visual cover that blocks incoming sight and scans. |
+
+[Sumant Meena, Pocket Gamer, July 28, 2022; full Rhapsody guide read](https://www.pocketgamer.com/apex-legends-mobile/rhapsody-guide/)
+
+A loadout equipped three perks, one each from General, Finisher and Exclusive/Ability categories. Rhapsody’s **Volume Control** temporarily shared Gifted Ear with teammates affected by her tactical; **Harmony** improved revival and healing-item effectiveness during it. The player selected a combination, rather than activating every unlocked benefit simultaneously. [Daniel Conlan, MobileMatters, July 14, 2022; full Mobile Rhapsody progression guide read](https://mobilematters.gg/gaming/apex-legends-mobile-rhapsody-how-to-unlock-abilities-legend-progression-tips-and-tricks)
+
+Crypto’s **Battle Adaptation** finisher perk awarded Evo development, while **System Scan** exposed health and armor after sustained drone scanning. These rewards changed the value of a risky close-range execution or time spent maintaining a scan. [Hyperbeat publisher notes, full TapTap reproduction](https://www.taptap.io/th/post/1670632)
 
 ### 5. Version changes that alter play
 
-Cold Snap added **Armed and Dangerous**, restricting weapons to shotguns and sniper rifles, and World’s Edge’s **Climatizer**. Its changing snow conditions and frosted supplies gave players additional destinations; Snow Grenades combined damage with slowing. EA also described bots as an onboarding aid whose exposure should diminish with experience and skill, rather than promising that a particular rank contained no bots. [EA, Cold Snap primary release notes](https://www.ea.com/en-gb/inside-ea/news/cold-snap-patch-notes)
+Cold Snap added the shotgun/sniper-only **Armed and Dangerous** mode and World’s Edge’s **Climatizer**, with snow and frosted supplies. Snow Grenades damaged and slowed. EA described bots as onboarding support that diminished with experience and skill, without guaranteeing bot-free ranks. [EA, Cold Snap primary release notes](https://www.ea.com/en-gb/inside-ea/news/cold-snap-patch-notes)
 
-Hyperbeat added Crypto and a new ranked split, plus Kings Canyon’s **Pythas Theater** and VIP supply bins. A VIP pass obtained through the associated crates opened access to stronger supplies. Its drone-following change explicitly distinguished Mobile Crypto from merely copying another platform’s character. [EA Hyperbeat notes, full TapTap reproduction](https://www.taptap.io/th/post/1670632)
+Hyperbeat reset ranks for a new split and added VIP-pass supply access in Kings Canyon. [EA Hyperbeat notes, full TapTap reproduction](https://www.taptap.io/th/post/1670632)
 
-From Champions onward, perks became available in Ranked. The update also shared collected crafting materials across the squad and rotated World’s Edge and Kings Canyon hourly in ordinary and ranked play. These changes affect how account progression and team resources enter competitive matches. [EA Champions notes, full TapTap reproduction](https://www.taptap.io/br/post/1775214)
+From Champions onward, perks became available in Ranked. The update also shared collected crafting materials across the squad and rotated World’s Edge and Kings Canyon hourly in ordinary and ranked play. [EA Champions notes, full TapTap reproduction](https://www.taptap.io/br/post/1775214)
 
-### Checkpoint boundary
+#### Map and mode breadth
 
-Still being integrated: weapon families and attachment examples; final Rhapsody entry; exact perk selection and ranked scoring; mode chronology including the removal of Arenas and later Solos; six worked situations; final reset/failure and access records. The separate context section covers mobile-exclusive character lore and native lobby/creation capabilities; commercial covers purchases and closure.
+At launch, **Team Deathmatch** used six-player teams, repeated respawns and a thirty-kill target, with base and random respawn variants. **Arenas** offered three-versus-three rounds and equipment purchases with match currency. **Quick Battle** shortened Battle Royale with thirty players and an already reduced opening area. [Gameranx, May 25, 2022; full mode guide read; its uncertain Arenas round-count claim is excluded](https://gameranx.com/features/id/307638/article/apex-legends-mobile-game-modes-explained/)
+
+The smaller-map pool included **Artillery, Market, Overflow, Skull Town and Thermal Station**, with mode-specific rotations. Market emphasized tight spaces around a shopping complex, while Thermal Station organized movement around a central drill. These were bounded combat spaces rather than extra full Battle Royale worlds. [Ryan Willcox, Gamepur, May 16, 2022; full map guide read](https://www.gamepur.com/guides/all-maps-in-apex-legends-mobile)
+
+**Distortion** added Kings Canyon and the Pythas Block 0 deathmatch map, and withdrew Arenas with a stated intention to return it. **Gun Game** advanced the weapon sequence through kills. **Hack** opposed attackers attempting two possible hacking sites against defenders; successful objectives powered an orbital attack, and four round wins decided the match. The same season introduced objective-based Club Showdown competition. [EA Distortion notes, reproduced by Touch, Tap, Play, July 12, 2022; full mechanics body read](https://www.touchtapplay.com/apex-legends-mobile-season-2-distortion-patch-notes/)
+
+**Aftershow** added genuine **Solo Battle Royale**, distinct from entering the trio queue without friends. It removed the temporary Encore Galore and Pythas Theater locations. Its rank-protection events distributed limited-duration cards that prevented specified rank-level or point losses; they were conditional event resources, not a permanent promise against losing progress. [John Paul Santiago, PlayerAssist, October 2022 Aftershow report; full body read](https://playerassist.com/apex-legends-mobile-aftershow-patch-notes/)
+
+**Underworld** featured **Airdrop Escalation**, increasing drops containing fully equipped weapons, and **Second Shot**, a limited mode with a direct return after defeat. Requiem supply bins yielded **Metal Skulls** for seasonal rewards. These rules modified the ordinary supply and recovery loops only within the applicable event. [Respawn announcement, The Gamers’ Temple, November 29, 2022; full primary press text read](https://www.gamerstemple.com/news/32795/apex-legends-mobile-descends-into-the-underworld)
+
+**Aspire** added **Olympus**. **Lightning Battle** shortened matches through smaller zones and faster ability availability. **Deja Loot** made equipment and routes predictable within its daily configuration. This confirmed final-season content beyond November’s roster; system-run tournaments are discussed with the creation boundary. [PlayerAssist, Aspire report; full body read](https://playerassist.com/apex-legends-mobile-aspire-patch-notes-season-4/)
+
+This inventory distinguishes permanent progression from modes and map features that came and went. It does not claim all listed queues remained simultaneously selectable until shutdown, or that the promised Arenas return was confirmed.
+
+### 6. Progression, social play and resource boundaries
+
+Ranked unlocked at account level eight; Apex Predator reflected the highest regional placement. [Daniel Conlan, MobileMatters, May 19, 2022; full guide body read by commercial research](https://mobilematters.gg/gaming/apex-legends-mobile-ranked-mode-rewards)
+
+The eight ranks were **Iron, Bronze, Silver, Gold, Platinum, Diamond, Master and Apex Predator**. Champions’ published table assigned increasing entry costs at higher ranks. This resolves a launch guide’s incomplete table, which omitted Iron despite mentioning it in prose. [EA Champions notes, full Dexerto reproduction read](https://www.dexerto.com/apex-legends/apex-legends-mobile-season-3-patch-notes-ash-buffs-nerfs-map-changes-1956707/)
+
+Later split resets and loss-protection events supersede any launch-only no-demotion claim. A complete final scoring formula remains unverified.
+
+Clubs supplied cooperative missions and a Club Store. Mastery Missions and the Tutorial offered authored practice goals. **Heat Shields** and supply/crafting **Replicators** added equipment destinations to Battle Royale. These systems supplied team goals and match resources; their existence did not mean players could rewrite maps or combat rules. [EA, Prime Time launch notes; full primary body read](https://www.ea.com/ea-originals/news/prime-time-patch-notes)
+
+The economic distinction is between supplies that help win this match and account rewards that make later sessions different. Ammunition is spent by firing, healing items by successful use, and throwables by throwing; backpack capacity and two weapon slots force substitutions. Mastery unlocks, cosmetics and event rewards operate on longer schedules. Actual currencies, passes, random rewards and purchasing conditions are documented in the commercial section.
+
+### 7. Six constructed interactions
+
+These are analytical scenarios assembled from documented Mobile rules, not observed matches. They show where an action’s success depends on positioning, timing or a previously selected perk.
+
+1. **Fade enters and retreats.** Starting behind cover, Fade slides into an attack and uses Flash Back before his earlier safe position becomes obsolete. A contemporary review reports that the return reloads weapons but does not ordinarily restore health or shields; **Pact of the Suit** adds a shield benefit. The player still needs a survivable return location and further recovery. [Cassie Peterson, GamingTrend, May 26, 2022 Mobile review; full body read](https://gamingtrend.com/reviews/apex-legends-mobile-review-some-mistakes-can-be-fixed-others-can-only-be-avenged/)
+
+2. **Lifeline recovers a damaged squad.** With a knocked teammate behind cover, Lifeline activates Combat Revive and continues defending. A gold backpack improves the revived teammate’s returned health and shields. She then supplies D.O.C. while a surviving teammate uses a Shield Battery, addressing two damage pools in parallel. Position matters: the drone can also heal nearby enemies and is not a solution for remaining outside the ring. [Pocket Gamer’s Mobile Lifeline guide](https://www.pocketgamer.com/apex-legends-mobile/apex-legends-mobile-lifeline-guide/)
+
+3. **Rhapsody makes a retreat possible.** Extended sound detection warns of an approaching squad. Rhapsody gathers teammates before Hype Anthem so its movement and shield benefits reach them, then uses Rowdy’s Rave to obstruct enemy sight and scans along the withdrawal. Being hit can end the tactical benefit; the visual wall should not be treated as a bulletproof bunker. The interaction rewards coordinated timing, not merely owning a support character. [Pocket Gamer’s Rhapsody guide](https://www.pocketgamer.com/apex-legends-mobile/rhapsody-guide/)
+
+4. **A shield upgrade creates a recovery choice.** An attacker deals damage to develop an Evo Shield, then finds gold armor. Keeping the evolving armor preserves the route toward red; choosing gold improves small-item recovery instead. Damage to a knocked victim will not advance the Evo choice. With non-gold armor and fifty shield points missing, two ordinary Cells take six seconds, while a Battery completes in five: time, stock and cover determine the useful choice. [Gameranx’s Mobile Evo guide](https://gameranx.com/features/id/310310/article/apex-legends-mobile-evo-shield-explained/); [Pocket Gamer’s Mobile item timings](https://www.pocketgamer.com/apex-legends-mobile/regen-guide/)
+
+5. **Revenant prepares a temporary assault.** Place a Death Totem in a defensible location, activate its protection, then use Silence to suppress an opponent’s abilities during the push. **Zombie Siphon**, if equipped, restores health on a knock while the totem applies; **Nightmare Fuel** offers reloads during climbing. Taking lethal damage under protection returns the attacker with partial health. The plan depends on the limited protection window and a safe return point. [MobileMatters’ Mobile Revenant guide](https://mobilematters.gg/gaming/apex-legends-mobile-revenant-abilities-perks-how-to-unlock)
+
+6. **Ordnance changes a firing problem.** An enemy controls a doorway while the player has a slow-firing close-range weapon. Throwing Thermite across the route can make immediate pursuit costly, buying a possible reload or repositioning window. A Frag’s delayed explosion instead rewards anticipating where an opponent will be; an Arc Star changes the placement problem by adhering to a target or surface. Neither removes the need to aim the follow-up shot or verify the enemy’s actual route. [Touch, Tap, Play’s Mobile ordnance guide](https://www.touchtapplay.com/how-to-use-ordnance-in-apex-legends-mobile/)
+
+### 8. Failure, persistence and scope of evidence
+
+**Reset interpretation:** A match defeat renews the search for useful equipment and safe positioning, while account mastery persists toward another attempt. This follows the documented match and progression systems; no client save-file test was performed.
+
+Ranked losses and seasonal resets affected competitive standing; temporary points-protection cards had expiry conditions. Choosing another Legend changed which mastery progression was being earned. The service closure ultimately removed access to the entire online loop; dates, purchasing consequences and cross-platform limitations are documented in the commercial section.
+
+#### Source and coverage record
+
+All URLs adjacent to claims identify written evidence. Primary EA pages were readable for Prime Time and Cold Snap. Later publisher notes were read through explicitly identified reproductions; their attribution does not make a TapTap user an EA employee. Dedicated guides supply Mobile item, class, control and ability detail. The release-era tables preserve their dates; no current PC rules or unverified leaked Legends were added.
+
+Several original EA routes and Mobile wiki pages failed to load. Their unread bodies do not support this account. Numerical details with contradictory sources—some weapon statistics, exact revival timers, the final rank formula and the complete last-day queue schedule—remain unresolved rather than filled from the PC game. Post-shutdown webpage update stamps are separated from the May 2022 rules those pages describe. The companion context covers fiction and actual room/tournament capabilities; the commercial section screens unofficial modifications and current OpenLegend policy boundaries.
 
 ### Fiction that connects to the mobile game
 
@@ -215,7 +289,7 @@ Hyperbeat additionally increased Eternal-item odds across Store Vault draws, up 
 
 In the earnings-call Q&A, Andrew Wilson identified three problems: the translation of Apex's verticality and team complexity to phones, insufficient casual-player retention despite core engagement and new-user attraction, and a softer mobile market. He linked a healthy player pool to team competition and argued that future mobile experiences should connect more closely with the wider franchise, potentially through progression rather than crossplay. These are management's explanations; no retention cohort, causal experiment or numerical threshold accompanied them. [C22](https://www.fool.com/earnings/call-transcripts/2023/01/31/electronic-arts-ea-q3-2023-earnings-call-transcrip/)
 
-**Commercial inference:** timed collection and paid reward tracks depend on repeated worthwhile play. Maintaining a separate multiplayer population and content schedule can therefore matter as much as producing attractive new purchases. Store complexity could increase spending opportunities, yet cannot by itself make a difficult session enjoyable or keep teammates returning. This is a mechanism suggested by the purchase architecture and management's account, not a measured allocation of blame. The evidence does not isolate input friction, competitors, production coordination, pricing fatigue or the partners' return requirements sufficiently to rank their causal contributions. Nor does it establish that removing random rewards, adding cross-progression or changing pass prices would have saved the service. [C21](https://www.gamespot.com/articles/apex-legends-mobile-season-3-event-overview/1100-6508699/); [C22](https://www.fool.com/earnings/call-transcripts/2023/01/31/electronic-arts-ea-q3-2023-earnings-call-transcrip/)
+**Commercial inference:** these purchases require repeated worthwhile play. More store offers cannot alone preserve a multiplayer population. The evidence cannot rank input friction, competition, production coordination or pricing as causes, or establish a counterfactual cure. [C21](https://www.gamespot.com/articles/apex-legends-mobile-season-3-event-overview/1100-6508699/); [C22](https://www.fool.com/earnings/call-transcripts/2023/01/31/electronic-arts-ea-q3-2023-earnings-call-transcrip/)
 
 ### R15 applicability: external content creation and preservation
 
@@ -366,6 +440,23 @@ Short Reddit URLs initially failed retrieval for several results; full thread pa
 
 For a quick reading route, compare R5 with R3, then P3 with P6. For later competition, read R6 alongside the dated mechanics section. An optional [GameSpot video review](https://www.youtube.com/watch?v=O_9R7dUF2e0) was discovered as a viewing route only; its footage and audio were not viewed or used as evidence. No hands-on game session was performed for this dossier.
 
-## Completion work remaining
+## Requirement coverage and preservation
 
-The latest substantive research is preserved here while remaining mechanics, narrative, creation and source integration are completed. The assembled document still requires its final requirement coverage, factual and link review. It is not yet a completed R01–R15 dossier; the scoped ledger records the actual subject status.
+| Requirement          | Substantive coverage                                                                                                             |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| R01                  | Player promise, exact game identity, release and version boundaries in the game and commercial sections.                         |
+| R02–R03              | Major mechanics inventory, named resources, capabilities, compatibility and worked situations.                                   |
+| R04                  | Fictional economy, permanent versus temporary progress, time costs, failure and restart boundaries.                              |
+| R05                  | Constructed multi-system situations with conditions, actions, outcomes and limitations.                                          |
+| R06                  | Character roles, authored behavior, social systems, multiplayer or explicit absences.                                            |
+| R07                  | Art, sound, controls, interface, feedback and production evidence; firsthand device testing not claimed.                         |
+| R08                  | Fiction, named characters/institutions and narrative connections to actual play.                                                 |
+| R09–R10              | Production, release sequence, iteration, distribution, marketing and qualified discovery hypotheses.                             |
+| R11                  | Dated financial metrics, platform/territory definitions, estimate method and missing cost/profit evidence.                       |
+| R12                  | Five substantive independent written reviews where accessible, contrasting player testimony, enjoyment and abandonment analysis. |
+| R13                  | Explicitly labeled transferable research hypotheses, dependencies and counterexamples.                                           |
+| R14                  | Adjacent sources, annotated access/version limits, reading/viewing routes, navigation and this map.                              |
+| R15                  | Dated modding applicability finding and conditional investigation in the mechanics or commercial/creation section.               |
+| October 13 amendment | Commercial outcome; reasons to enjoy, return or leave; fictional economy; meaningful lore; actual creator capabilities.          |
+
+This subject had no earlier full dossier at the recorded branch base. Existing mobile reference studies, game dossiers and their historical evidence remain intact. Source observations are distinguished from interpretation and constructed examples. No gameplay, purchases, account modifications or uninspected video content are presented as firsthand evidence. The linked research ledger owns completion and commit status, including any remaining review work.
