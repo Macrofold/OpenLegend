@@ -1,14 +1,14 @@
 # Open Legend — language, communication and elevator pitches
 
-| Status                              | Current progress                                                                                                        | Last updated |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Selected wording and usage guidance | Fourteen selections preserved; discussion vocabulary, systemic/emergent distinctions and audience tradeoffs reconciled. | 2026-10-17   |
+| Status                              | Current progress                                                                                        | Last updated |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------ |
+| Selected wording and usage guidance | Game, industry and creator descriptions, elevator pitches, taglines, terminology and audience guidance. | 2026-10-17   |
 
 ## Purpose and scope
 
-This is the canonical reference for the language Mike selected in the October 17, 2026 positioning conversation. The quoted copy below preserves those selections. Audience labels, suggested ordering and explanations are editorial guidance; no exclusive tagline winner has been chosen.
+This is the canonical reference for Open Legend’s selected descriptions, elevator pitches and taglines. The quoted copy is the wording reference; audience labels, suggested ordering and explanations help choose a suitable version and communicate its meaning. Choose the tagline that fits the message and audience.
 
-The terminology reference also retains considered wording and the reasoning behind it. A term’s inclusion in the glossary does not make it another selected description or a new product requirement.
+The terminology reference explains the selected language and optional terms. A term’s inclusion in the glossary does not make it a selected description or a product requirement.
 
 Use this language to communicate what Open Legend is being built to become. For a project introduction, establish that context with “We’re building…” before using a selected description. Public descriptions of an available build must match [current architecture](../../docs/architecture.md) and [verification evidence](../../docs/verification.md). Selecting a pitch does not establish completed features, measured MMO scale, a release date or tested audience response.
 
@@ -123,9 +123,9 @@ Connects continuity with the player’s ability to influence what happens next. 
 
 Connects inhabiting the world personally with contributing to its wider development.
 
-The existing endorsed line, **“Create a world by playing it. Share what you discover.”**, also remains available in [Positioning and copy](positioning-and-copy.md#positioning-hypothesis). The three selections above add options; this conversation did not choose a replacement for every use.
+**“Create a world by playing it. Share what you discover.”** is an additional endorsed line in [Positioning and copy](positioning-and-copy.md#positioning-hypothesis). Pair the chosen tagline with a description or demonstration that explains its meaning.
 
-For reuse, retain Mike’s selected wording: “your consequences” and “you shape.” Earlier brainstorming used different variants, which are not interchangeable with these selections.
+Use the selected taglines verbatim.
 
 ## Explain what makes the combination distinctive
 
@@ -141,7 +141,7 @@ Together, these support the explanatory idea **“a world whose possibilities ex
 
 **Systemic gameplay uses consistent, interacting rules. Those interactions can produce emergent situations, solutions, and stories.**
 
-Use **systemic** to describe the design of the interacting rules and **emergent** to describe the situations and possibilities that arise through play. The earlier definition combined both ideas; separating them makes the distinction clearer.
+Use **systemic** to describe the design of the interacting rules and **emergent** to describe the situations and possibilities that arise through play.
 
 | Term           | What it describes                                          | Open Legend meaning                                                                                               |
 | -------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
@@ -166,7 +166,7 @@ These are useful distinctions for this guide; industry usage overlaps rather tha
 
 ## Meaning of the other key terms
 
-These definitions preserve the conversation’s substantive vocabulary, including related aliases and optional terms. Choose the terms that help the particular audience understand the intended experience; the glossary is not a request to put every term in one pitch. Project meaning follows the [product baseline](../01-requirements/product-baseline.md) and [gameplay priorities](../../docs/repertoires/gameplay-priorities.md); current capability remains owned by architecture and verification.
+This glossary groups related aliases and explains selected language alongside optional terms. Choose the terms that help the particular audience understand the intended experience; the glossary is not a request to put every term in one pitch. Project meaning follows the [product baseline](../01-requirements/product-baseline.md) and [gameplay priorities](../../docs/repertoires/gameplay-priorities.md); current capability remains owned by architecture and verification.
 
 ### Genre, structure and simulation
 
@@ -224,7 +224,7 @@ These definitions preserve the conversation’s substantive vocabulary, includin
 
 ## Terms to use deliberately
 
-These are positioning judgments about the expectations a label can create. They retain the earlier discussion’s tradeoffs without promoting the labels into selected copy.
+These optional labels can create specific expectations. Use the guidance below to decide whether a label helps communicate the intended experience.
 
 | Term or label                                      | How to use it for Open Legend                                                                                                                                                                                                                                                                                                      |
 | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -236,13 +236,13 @@ These are positioning judgments about the expectations a label can create. They 
 
 ## Communication principles
 
-The original draft, **“Open persistent world AI-driven survival simulator MMORPG,”** captures the intended blend but compresses several kinds of information into one list. The selected descriptions clarify the game’s form and then explain the distinctive experience. “Open world” concerns exploration, “persistent” continuity and “AI-native” the role of AI; the inhabitants, invention and consequences give people reasons to care.
+Describe the game’s form, then explain the distinctive experience. “Open world” concerns exploration, “persistent” continuity and “AI-native” the role of AI; the inhabitants, invention and consequences give people reasons to care.
 
 1. **Connect the three defining ideas.** Use [autonomous lives, useful invention and persistent consequences](#explain-what-makes-the-combination-distinctive) together with a concrete example. Their interaction carries the proposition.
 2. **Give players activities and reasons to care.** Exploration, combat, making, relationships, discovery, beauty and accomplishment can all matter. Explain how the chosen example becomes enjoyable and consequential.
 3. **Explain invention as something usable.** A new tool or technique can create an opportunity and remain useful later. Coherent world rules, supported realization and character knowledge determine what can actually happen.
 4. **Match the level of ambition to the conversation.** Use the large vision freely when introducing what we are building. When showing a specific build, identify the demonstrated slice and use its actual evidence.
 5. **Keep player agency and creator authority legible.** Describe changing a world through participation separately from defining its rules as an authorized creator.
-6. **Use the selected copy as the wording reference.** Keep newly suggested alternatives visibly separate until selected. Do not silently rewrite the chosen taglines or promote every earlier brainstorming term into the preferred vocabulary.
+6. **Use the selected copy as the wording reference.** Keep optional alternatives distinct from selected wording, and preserve that wording when reusing it.
 
 For demonstration structure and broader public-claim guidance, use [Positioning and copy](positioning-and-copy.md#hero-demo-concept). For what to build and what is currently supported, use the existing product, architecture and verification owners linked above.
