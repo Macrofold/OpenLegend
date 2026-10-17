@@ -1,6 +1,6 @@
 # Repertoires for inhabited worlds
 
-**28 canonical catalogues: 7,871 non-action entries and 385 action examples.** Each catalogue contains the full descriptions, stable IDs, current priorities, useful worked patterns, applicability, build gaps and research. There is one maintained version of each idea—not separate source inventories and ranking registers. The 270 worked patterns overlap some entries; these are not additive counts of unique features.
+**28 canonical catalogues: 7,872 non-action entries and 385 action examples.** Each catalogue contains the full descriptions, stable IDs, current priorities, useful worked patterns, applicability, build gaps and research. There is one maintained version of each idea—not separate source inventories and ranking registers. The 270 worked patterns overlap some entries; these are not additive counts of unique features.
 
 **A complete, enjoyable OpenLegend experience comes first.** Readable combat, exploration, rewards, progression, useful crafting and building belong alongside a small real instance of practical invention, independent characters and persistent consequences. Neither chores nor a technical showcase can substitute for enjoyable play. Start with the [priority policy](gameplay-priorities.md), then [whole-game coverage](coverage.md) and [selection and scale](selection-and-scale.md).
 
@@ -26,7 +26,7 @@ Counts identify rows, not separate runtime systems or obligations to ship them. 
 | Expertise, labor and making               | [Work and crafting](work-crafting.md)                       |     296 | Professions and processes for making, modifying and repairing things                             |
 | Places that shape action                  | [Settlements and architecture](settlements-architecture.md) |     252 | Functional homes, workshops, fortresses, prisons, ruins and contested routes                     |
 | Living surroundings                       | [Ecology and weather](ecology-weather.md)                   |     244 | Habitats, predators, harvests, hazards and beautiful places                                      |
-| Different ways to inhabit reality         | [Bodies and species](bodies-species.md)                     |     259 | Senses, growth, injury, predation, mortality and unusual bodies                                  |
+| Different ways to inhabit reality         | [Bodies and species](bodies-species.md)                     |     260 | Senses, growth, injury, predation, mortality and unusual bodies                                  |
 | Wealth, livelihoods and exchange          | [Economy and logistics](economy-logistics.md)               |     298 | Trade, wages, debt, monopoly, smuggling and spoils                                               |
 | People who affect each other              | [Relationships](relationships.md)                           |     360 | Companionship, love, rivalry, loyalty, patronage, dependency and betrayal                        |
 | People with a past and a future           | [Characters and backstories](characters-backstories.md)     |     300 | Knights, rivals, ordinary families, personal histories and present aims                          |

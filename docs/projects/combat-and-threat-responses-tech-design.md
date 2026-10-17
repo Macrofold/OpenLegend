@@ -41,7 +41,7 @@ Use the stable CTR identifiers in the [tracker](../maintainers/combat-and-threat
 7. **CTR09:** extend the existing contextual action preference through the same authoritative catalogue.
 8. **CTR10:** qualify the integrated player and independent-character journeys, resolve failures, and reconcile delivered truth.
 
-Each module must leave an end-to-end usable path, not merely add a type with no consumer. The finished design will supply fields, dependencies, failure rules, deadlines, work bounds and acceptance for those modules.
+Each module must leave an end-to-end usable path, not merely add a type with no consumer. The following contracts define fields, dependencies, failure rules, deadlines, work bounds and acceptance for those modules.
 
 ## Performance questions answered before implementation
 
@@ -50,6 +50,328 @@ Cost grows with nearby living density, active danger relations, route candidates
 Invalidate reuse for the actual entity life, control or timeline, observed evidence, physical/navigation dependencies, chosen objective, relevant authored definitions and elapsed deadlines. A whole-world revision is not a substitute for identifying those dependencies. Budget exhaustion means incomplete work, not safety, lack of witnesses or unreachable terrain.
 
 Measure complete caller paths, including cold preparation, dense danger, obstacle invalidation, provider-stage delay and persisted continuation. Retain deterministic native ordering and saved random choices. Report planned targets separately from measured results.
+
+## Physical attack and contact contract — CTR01
+
+### Permission before commitment
+
+Change the installed base-world combat participation definition, not a client allowlist: human-issued targets include vulnerable player, NPC and native bodies. Preserve performer/issuer distinction, source availability, exact target life, currently permitted target observation, body capability, tool/ammunition and ordinary work/recovery checks. A high-level voluntary help request still grants no exact attack command; direct orders retain human provenance and final-blow review. Do not change the territorial stag's target-selection rule merely because player-targeted commands are now allowed.
+
+All current paths consume one permission answer: typed commands, interpreted action binding, menus, equipped-item and Command shortcuts, grounded NPC alternatives, temporary activity control, plans, held aim and automatic shots. Current policy data is in the bundled body/participation profiles; `combat-consent.ts` remains a shared admission consumer. A different installed combat profile that denies human PvP must still work through every consumer, without a bundled-world fallback.
+
+Melee and unreleased ranged actions retain exact intended-life binding. Revalidate only the dependencies that can actually have changed at approach, wind-up and release. Admission of a potential future action does not commit its material cost. In particular, showing an attack, choosing a purpose, preparing a prospective interruption and opening a lethal review remain nonphysical operations.
+
+### Released contact data and execution
+
+Extend the existing saved projectile record rather than create another flight or event log. The exact technical field names can reuse current projectile fields; the following distinctions are mandatory and are not interchangeable:
+
+| Binding | Required meaning |
+| --- | --- |
+| Committed source | Source entity/person reference, source physical life, issuing-controller provenance, admitted action/receipt and world/timeline of release. It remains valid attribution after departure or death and never gives a dead source perception. |
+| Intended target | Selected entity/life and last permitted aim point at release. This is historical intention, not an impact-damage allowlist or a live tracking reference. |
+| Frozen physical effect | Launch point, direction, launch time, speed, remaining range, injury inputs, exact tool/ammunition and installed profile pins already used by release. |
+| Contact policy | Exact admitted world contact-response binding. The bundled binding applies captured injury to actual vulnerable bodily contact; another supported binding can differ. |
+| Launch-overlap state | Whether the projectile has actually exited the launch source's physical capsule. Limit the initial self-collision exception to that exit; do not exclude the source ID for all flight. |
+| Actual contact | Exact collider/material or physical body/life found by the current swept contact query, contact fraction/time/position and incoming direction. Resolve this before applying damage. |
+| Outcome | Original intention and actual contact remain separate; record material interception, bodily impact/prevention, miss/range expiry and true committed quantities through the existing occurrence/action-experience owners. |
+
+Keep the existing motion/collision interval and canonical tie ordering. For each projectile, find the earliest supported physical contact; at most one body/material receives the first-family impact. Do not stop a shot at an old target point when no collider is there. Retain point-projectile and straight-path limitations as authored/current supported-family scope.
+
+Remove the impact guard that requires the contacted body's ID/life to equal the original target. Remove post-release target-specific lethal-review rejection under the selected base-world policy. Do not replace either with a controller/friendship/practice special case. Invoke the common contact-defense/body-effect owner using the actual body and incoming direction; apply susceptibility, prevention, injury, scars, clamping, interruption and death once. Full shield prevention is a real physical result. A practice shot uses the same contact rule and only earns practice-target evidence when the actual target was hit.
+
+Use captured source attribution when its current entity is gone; do not require an alive source merely to create the committed contact effect. A narrow effect-context parameter may replace an unnecessarily live-source parameter in the contact owner, with no second damage implementation. Source damage multipliers already captured at release are not recomputed from a successor. The contacted body's current susceptibility/guard still applies.
+
+An intended target's successor is not automatically attacked by an unreleased old command. After release, any actual vulnerable body intersecting the trajectory can receive damage, including such a successor. This is physical collision under an existing committed law, not permission to issue a new attack against a different life. Fully inactive participants remain absent from projectile-body capture; exposed fading participants remain vulnerable until their existing exact deadline. Never leave an inactive body as an indestructible invisible shield.
+
+Keep current material-response owners: scenery can resist and stop, a practice target records contact, and supported damageable material commits its defined effect. New structural-destruction physics is outside CTR01. The [world contact contract](../worlds/base/ranged-counterplay.md#selected-contact-consequences) states this limit explicitly; a future material family extends contact response without restoring target-only immunity.
+
+### Observation and result handling
+
+Create the authoritative actual-contact occurrence before any recorder copies it. Include actual effect location, contact role and exact injury/prevention quantities. Preserve original shot intention separately in the release/action occurrence. Do not describe an intercepted shot as a hit on its unharmed intended target; its terminal result can distinguish observed collateral, observed miss and unknown outcome.
+
+The victim receives their personally experienced contact with only permitted source attribution. Other observers and the shooter receive only their own evidence, not world-truth damage telemetry. An unknown shooter can produce anonymous urgent danger. The hit animal and territorial withdrawal owner receive the same committed harm/attempt event, even when the shot was intended for someone else. A valid shield interception can be a credible threat without health loss. Expiry or removal of a historical source must not synthesize a name, death observation or current location.
+
+No second material debit, practice credit, contact injury or appraisal occurs on request replay, flight restoration or observation projection. Native effects already committed cannot be undone by late model cancellation.
+
+## Observer-scoped encounter evidence — CTR02
+
+### One bounded-lived meaning
+
+Use a narrow native encounter-evidence owner, installed only when the world selects this supported behavior. It records short-lived personally known attack facts and own exact offensive conduct. It is not another memory database, an actor's emotional state or a world-wide combat relation. Existing occurrence/observation records remain causal evidence; existing plans remain chosen commitments.
+
+The initial record is keyed by the structured tuple of observer physical life and other physical life within the world/timeline. Never concatenate IDs with an ambiguous delimiter or use display names. A person can have several directed records simultaneously. Anonymous harm has an observation-bound unknown-source entry and cannot be joined to a guessed nearby body.
+
+| Saved logical field | Contract |
+| --- | --- |
+| Observer identity/life and episode identity | Exact owner of this personal record. A new life/control timeline cannot inherit executable bindings by matching a name. |
+| Other identity/life, if personally identified | Publicly known physical reference for this record. Missing identity stays unknown. A record does not reveal a source beyond observation authority. |
+| Source occurrence/observation references | Exact personally admitted causes and last processed native sequence. Keep current summary references, not copied prose or a second history of every hit. |
+| Latest hostile evidence time and kind | Observed directed preparation, attempt/release, contact, meaningful prevention, or a relevant observed closing/withdrawal transition. Interpretation of motive remains separate. |
+| Last observed physical facts | Actual observed point, time and exposed activity identity/phase, distinguishing current exposure from remembered facts. No hidden future path or target plan. |
+| Observed-active token | Exact source action/flight observation and evidence revision currently establishing an active directed attack. It becomes inactive on a known ending or loss of exposure. |
+| Own selected offensive preference | Exact successfully admitted attack/aim method and target life plus its originating intention/receipt; only the controlling actor owns this information. Rejected commands and menu previews create none. |
+| Recent deadline | Absolute installed-world simulation deadline. Renew only at the world-defined hostile evidence boundary, not on read or mere proximity. |
+| Optional deliberate social override | Controller-and-pair-local explicit Speak choice, with the observed hostile-evidence revision it overrides. It neither alters the other actor's behavior nor suppresses later new danger. |
+
+Reuse any existing field that already owns one of these facts; do not persist a second mutable copy of a current action or position. Derived pair indexes, active-attack lookups and display role are rebuilt from the authoritative record/action/evidence owners. A record can retain a known body's last observation without pretending it is currently visible.
+
+### Producers and updates
+
+Intake from already-permitted event observation, not unrestricted scanning of every actor's action target. Add a common observable attack-activity adapter across punch, equipped strike, aim/shot and explicitly exposed contact phases. The current unphased punch must supply the same directed-preparation facts as other strikes without silently changing its work time, damage or recovery. An observed cue can say that an attack is directed at this body only when the installed observation rule discloses that relation. Seeing an archer preparing is otherwise a general possible threat, not proof of a secret aim target.
+
+Each real observation/command lifecycle transition updates its affected pair once. Actor-controlled selection, hovering, local Command preview, private proposed plans and a model's discarded alternatives create no event or hostile record. Witnessing A attack B does not create A-attacking-observer. An unknown impact stays unknown even when several humans are visible.
+
+Current witnessed activity can keep a pair active without periodic history writes. On observed ending, cancellation, loss of sight or flight termination, clear only the matching active token and start/retain the world's recent grace from the last actual knowledge boundary. A stale completion cannot clear a newer attack token. Ordinary meaningful observations of a known assailant closing or leaving can wake a decision; they do not disclose that person's private pursuit objective. Do not equate movement toward a body with proved aggressive intent.
+
+Native action results remain precise distinct evidence. Coalesce scheduling notifications, not different attacks, injuries or observations. When several events share a simulation timestamp, use the existing ordered native sequence. Expiration uses the existing due-work owner and stops unnecessary retained pairs when no current activity, own commitment or grace remains. Personal history/appraisals keep their own lifetime.
+
+### Queries, continuation and privacy
+
+Known-pair lookup is direct. Build the current actor's relevant pair list from owned membership and active observed actions/flights, not all world pairs or all stored history. For incoming flights, use observer-authorized launch/contact evidence keyed to exact flight/source/life, not launch time alone; simultaneous releases must not become indistinguishable. The current contextual action helper's whole-projectile scan is replaced with this owned projection.
+
+A derived quick-action preference consumes current target visibility, the observer's pair record, installed world priorities and ordinary action availability. It does not grant attack authority. The server's existing serialized preferred-choice guard compares the exact displayed command and current authoritative preferred choice; receipt recovery precedes rechecking a repeated request. Body/control/timeline, action/tool/ammunition, relevant definition, observation, overridden evidence and deadline are dependencies. A stationary body crossing a time-only deadline must still refresh its preference without waiting for another movement or global revision.
+
+Save these authoritative short-lived facts in the current world format with existing source identity/deletion rules. Retire executable preference on death, physical-life replacement, current-controller loss, world leave or profile removal. Retained personal recollection can still mention the old person. On restore, preserve original deadlines and sequence watermarks, rebuild derived indexes, clear pointer gestures and old request handles, and do not replay attacks or inference. Invalid private evidence ownership, impossible life bindings or malformed current-format records refuse activation through the current validator; no legacy reader is added.
+
+## Contextual action integration — CTR09
+
+Extend the current `worlds/base/context-actions.ts` profile and server catalogue; preserve the implemented renderer and exact preferred-choice admission. The [world decision table](../worlds/base/combat.md#contextual-action-decision-table) owns the actual default. Do not create a new combat menu, command executor, global target flag, or separate authoritative client threat timer.
+
+Temporary blockage and permanent removal differ. During recovery, preserve the selected attack row as disabled with its owning deadline/reason. When a held weapon is permanently gone, invalidate the old choice; a newly requested preview may disclose a newly selected allowed method. Never silently replace a held gesture's bindings. An unavailable computation is its own pending/refused display and does not imply that Speak is now the intended action.
+
+Pointer-down captures the fully disclosed exact action; pointer-up may dispatch only that unchanged intention. Native admission rechecks the captured preferred-choice binding and the full action/transition. A drag, lost modifier, pointer cancellation, canvas blur, text-entry focus, owner/timeline change or target loss cancels the gesture. Existing menu-dismissal input cannot leak into an action, and browser Command/Control context-menu conventions remain owned by the current controls.
+
+The keyboard-accessible object/action route uses the same label and exact command. Display approach, ammunition, real preparation/recovery and lethal review before commitment. No target hover or modifier gesture dispatches AI, grants sight, spends ammunition or warns Ada. A click during physical recovery is refused/explained without queuing an attack to occur later. Ordinary manual selection of an alternate action remains available.
+
+## Shared continuation, authoring and removal
+
+Treat current saves as one supported format. Update domain types, validators, installed definition bindings, server projections, pending native work, public protocol and all retained action/context consumers together. A changed current-format definition is not a reason to invent version-suffixed compatibility records or an old-save migration.
+
+Capture the exact selected meaning at each committed phase. An author can change supported profile values through the normal admitted world-definition route for later commitments. Incompatible removal of a family still used by active flight, an animal route or a chosen finite plan refuses before partial mutation unless the existing owner supports an explicit whole-operation cancellation. Do not rewrite committed costs or reset deadlines when a profile changes.
+
+Authoring inspection must explain what is supported: native danger classes, refuge/speed parameters and allowed controller family; prepared personal purpose definitions and their actual action capabilities; harm/participation policy; and UI grace. Prose cannot install unsupported free flight, grappling, omniscient sensing, social consent or host execution. Current edit/inspection grants remain enforced. No new world-creator privilege follows from changing a fictional combat rule.
+
+## Open decisions and intentional limits
+
+The first implementation has no unanswered product question that blocks these modules. Numerical animal/response/UI values are selected initial world tuning and must be evaluated, not rediscovered by an implementer. Reliability, latency, scale and fun remain unperformed acceptance work, not unspecified design choices.
+
+Later owner decisions remain explicit and do not block this slice: richer material destruction/penetration; additional animal ecology/cognition; long-term relationship and legal consequences; broader indirect hazards/background conflict fairness; explicit repeat-attack or team tactics; and any expansion of the initial perception or locomotion capabilities. The selected no-PvP-enrollment rule is settled for this world, not deferred back to those later questions.
+
+If a required native condition or supported API cannot implement the exact declared behavior, record the concrete missing computation in CTR's owning module and add the smallest compatible capability. Do not silently narrow coverage, force Ada, drop dangers, substitute an automatic reflex or mark the module complete from a fixture. This design authorizes implementation planning; this documentation task does not claim runtime delivery.
+
+## Native animal execution (CTR03–CTR04)
+
+### Owners and integration
+
+Replace the current selected animal steering adapter with one installed trusted native response family. Keep the existing `actor.controller = native` authority distinction. Do not turn species into controllers, route animals through the person's Decision API, or introduce a second write path for position. A native controller can be a small coded policy; world ownership means its installation, parameters, meanings and permitted choices can differ between worlds.
+
+The current producers/consumers that must be reconciled together are `worlds/base/animal-behavior.ts`, `worlds/base/actions.ts`, `worlds/base/bodies.ts`, `worlds/base/spawn.ts`, `worlds/base/world.ts`, `worlds/base/landscape.ts`, `worlds/base/first-threat.ts`, `territorial-threat.ts`, `flight.ts`, `kernel.ts`, `temporal-boundaries.ts`, motion/sensory prediction, body/energy active-work detection, public behavior projections and current-format validation. Search all reads of the former animal danger/direction fields and the old universal flee speed; a clean primary adapter does not prove those secondary meanings agree.
+
+The world contract [animal-responses.md](../worlds/base/animal-responses.md) owns constants, species bindings, candidate construction, comparison and deferred repertoire. Reuse existing movement, navigation, perception and lifecycle operations. A narrow route-to-one-of-these-destinations preparation can extend the existing navigation request if needed, with its complete candidate set and common body/query budget; do not create a second worker fleet or world-wide navigation service for animals.
+
+The engine installation dispatcher resolves the supported native family and exact profile. Kernel/domain callers use that selection, not imports of base-world animal constants. A world without that family has no automatic escape behavior. A contrasting fixture binds a small native rover that avoids a locally perceived harmful emitter and selects a reachable sheltered endpoint using a different locomotion profile; it makes no claim to simulate new radiation physics. Supply the fixture's harmful-region input through an admitted test/world policy. This proves the dispatcher and physical route execution do not require humans, animal species, fear prose or this world's distances. Do not implement that fictional world as shipped content.
+
+### One state owner
+
+Evolve or replace the existing animal behavior state in one current-format change. The final runtime type names may follow neighboring contracts, but these meanings are mandatory:
+
+| Logical field | Meaning and invariant |
+| --- | --- |
+| Profile pin and physical life | Exact admitted controller/profile definition and current body life. A name or species display label is insufficient. |
+| Episode identity, start and latest cause | One active alarm, with exact existing source occurrence references. Repeated hits update evidence without duplicating physical episodes or replaying events. |
+| Phase | Routine, escaping, settling or blocked. A territorial owner can contain an escape withdrawal substate, but cannot run a second ordinary escape updater. |
+| Danger estimates | Latest permitted observed body/region state, source-life key when recognized, observation time, uncertainty representation and expiry. Distinct anonymous evidence retains its uncertainty. No private inventory or hidden live target location. |
+| Chosen refuge | Exact supported world point or admitted aerial/perch destination, original selection inputs/revision and RNG result. No second saved movement path. |
+| Movement reference | Exact current action/flight ownership reference and purpose. Required references agree in both directions. |
+| Review and clearance deadlines | Absolute simulation times, optional `clearSince` only while continuously clear, and the last meaningful danger/geometry revision. |
+| Blocked continuation | Actual refusal category and last tried input signature, plus the next eligible review. Repeating identical blocked input does not allocate fresh work. |
+
+The animal state retains lightweight geometric danger estimates, not the person's autobiographical memory or appraisal model. Authoritative observation events remain under their existing owners; transient candidate lists, spatial indexes and mesh data are derived. Aggregate diagnostic counters do not become gameplay fields.
+
+### Transition order
+
+At each applicable native boundary:
+
+1. Apply already-committed physical contact and body consequences through their owners. Produce the exact hurt/attempt/passage evidence and its permitted animal exposure. Released projectiles retain source attribution without revealing the shooter.
+2. Intake all new eligible alarm evidence, including when the animal is busy, perched, airborne, incapacitated or falling. A physical-work condition may defer movement; it must not discard evidence. Dead bodies receive no new animal response. Injury/flight interruption follows existing physical owners.
+3. Reconcile source estimates from the animal's complete permitted local danger set. Expire old estimates by original observation deadlines. Native spatial broad-phase membership is not itself perception. Do not silently truncate to the nearest danger.
+4. Determine whether a real dependency, temporal crossing or due review invalidates the current refuge. Continue an unchanged admissible route without a new query. A fresh threat can interrupt ordinary cancellable wandering/walking, while a committed physical phase must use its real interruption semantics.
+5. If needed, prepare the bounded refuge candidates through the ordinary navigation owner. Direct supported movement stays on its established fast path; unresolved preparation retains explicit pending state. Finish/refuse the complete request before committing the destination, RNG draw and movement ownership together. Preparation itself grants neither success nor elapsed world time.
+6. Execute/predict actual movement through one owner. At arrival evaluate current clearance, start/reset settling or request the next refuge. Crossing a danger boundary ends or subdivides the applicable interval exactly enough to preserve continuous-clearance semantics.
+7. Emit only real coarse behavior transitions and actual physical outcomes under current disclosure. Repeated reviews do not emit repeated thoughts, alarm-start events, history entries or public destination hints.
+
+Use canonical animal and candidate ordering at semantic decisions. Incidental renderer frames, client reads, preview calls, different service callback partitions or a navigation result's wall-clock arrival do not consume randomness. Tie selection has no draw for a single possible winner and exactly one saved draw for an interchangeable candidate set. A stale navigation result is discarded before that draw or any action replacement; current evidence/geometry is then reconsidered.
+
+### Flight and territorial integration
+
+The current bird route is a looping native flight record. The implementation must supply a terminal escape-route/landing outcome through the same flight owner, rather than letting the loop immediately take off toward danger after reaching a refuge. Add the smallest supported flight continuation distinction needed for an admitted finite escape route, preserving existing loop behavior as an explicit selection. All current route definitions and current-format validation change together; no legacy default hides the distinction.
+
+New escape connections require current swept-body clearance, allowed climb/descent and compatible landing support. A route swap retains the current physical position and never spends the interval twice. While airborne, ordinary ground escape cannot also run. If all aerial alternatives are unsupported, use the actual flight recovery/ground fallback and keep a truthful unresolved alarm. No implicit teleport, free hovering at arbitrary height or invented landing point is permitted.
+
+The territorial stag keeps the existing territory decisions, antler strike, pursuit deadlines and relinquishment outcome. Its pursuit speed becomes an explicit authored territorial value so replacing the generic animal speed cannot silently double encounter difficulty. When the territory owner selects withdrawal, it delegates to the same escape evaluator and profile speed; its old authored refuge is only a preferred eligible candidate. Active antler preparation/recovery cannot run concurrently with the delegated move. Settling preserves relinquishment; ordinary prey code never reacquires the cache on its behalf.
+
+### Performance contract
+
+Let A be living native animals, E the subset with active alarm episodes, D the eligible local danger records for an animal, C the bounded new candidate count, and P the actual accepted route segments. Routine work must grow with A through existing participant membership and actual sensing/behavior deadlines, not A multiplied by all world entities, all history or all observers. Active comparison is proportional to the complete local D and at most C route candidates; segment danger checks cost O(C × D × P), with early rejection only when it preserves the specified comparison. The retained route is checked directly. C is bounded in the world profile; D has no independent nearest-N cutoff, and its reachable growth/retention must be recorded honestly in the limits inventory.
+
+Share immutable body meshes and static support preparation through the existing coordinator. Reuse a complete observer-scoped danger snapshot within one review; do not rerun perception separately for every candidate, tool, route segment or public projection. Current positions/uncertainty remain live at the relevant boundary. Geometry dependency keys cover actual changed parts/supports, not only the top-level map object. Relevant motion and evidence expiry invalidate safety without invalidating unrelated static meshes.
+
+Use the current spatial work/admission budgets, finite navigation request queue and explicit pending outcomes. A queue or computation ceiling does not establish unreachable terrain or an absent danger. No new background busy loop retries all blocked animals each tick. No candidate/path history is appended on a harmless refresh. Retire transient episodes and derived entries when ordinary behavior resumes, the current body life ends, its controller is removed, or the timeline changes.
+
+The existing navigation preparation can technically hold native time while required work is prepared. This design adds no gameplay pause for animal thinking and must measure that existing hold through the real caller. A thousand alarmed animals can overwhelm a small navigation queue despite twelve candidates each. If required qualification fails, optimize shared preparation and invalidation or keep the affected population capability unqualified; do not publish success by dropping animals, skipping threats, replacing paths with collision-blind steering or claiming a timing win from paused/inactive simulation.
+
+Required implementation measurements use identical seed, geometry, native rules, inputs and host for old/new comparison. Include ordinary opening density, 100 native animals and 500 native animals in valid admitted layouts; add a 1,000-animal exploratory workload only where world admission permits it. For each, separate calm, 10% alarmed, all alarmed, two converging groups of human dangers, concentrated geometry edits and save/load cold reconstruction. Record elapsed simulation achieved at normal and requested 8× speed, native CPU/headroom, whole-server responsiveness, navigation pending/hold time, allocations/retained state, and counts of danger candidates, exact perception checks, route preparations, reused routes, invalidations and RNG draws. Report accepted population/time behavior and failures; no numerical speedup or capacity is established by this design document.
+
+### Qualification matrix for CTR10
+
+| Case | Required check |
+| --- | --- |
+| Two humans and one original attacker | Safe selection accounts for both; changing which human delivered the blow cannot permit the same dangerous corridor. |
+| Entire locally perceived danger set | Add more than a plausible nearest-N display count; a farther body on the route still changes safety. No silent truncation at ordinary catalogue/UI limits. |
+| Open ground, wall detour, U-shaped obstacle, slope, support seam, narrow opening, map edge | Use continuous body-checked movement; choose an admitted detour when available; distinguish no candidate, outside local scope, blocked and incomplete preparation. |
+| Threat lost behind a wall and later reacquired | Use retained estimate and increasing uncertainty; no hidden current position. Reappearance updates only actual perceived evidence. |
+| Unknown shooter and intercepted shot | Retain actual damage/bearing without identifying the hidden shooter; an unintended contacted animal still becomes alarmed. |
+| Clearance clock | Arrival alone is insufficient; reentry just before expiry resets it, pause freezes it and clock-only expiry is honored without a new position update. |
+| Destination stability | Harmless small movement/global revisions do not redraw. Material route danger or an actual obstruction can cause a new refuge. |
+| No physical exit | No clipping, teleport, invented strike, infinite paid/native retry or false safe state. An opening created later permits a meaningful retry. |
+| Species and injury | Actual motion, prediction, energy, sensory crossings and projectile contact use one selected speed, once adjusted for the existing injury/scar policy. |
+| Perched and airborne bird | Alarm is not lost behind the flight early return; route handoff/terminal landing are valid and single-owned; missing coverage is explicit. |
+| Territorial stag | Readable pursuit timing remains; injury withdrawal avoids all dangers, with no overlapping strike/move and no loss of cache relinquishment. |
+| Save/load and native interval partition | Equivalent admitted inputs yield equivalent movement, deadlines and RNG; no event replay. Include a route turn, pending preparation, settling near expiry and malformed current-format references. |
+| Alternate installation and omission | Controller execution does not require base-world species/names; omitting the family removes its choices with no bundled fallback. |
+| Ordinary player experience | Watch/pursue using actual controls and clock; record purposeful motion, hunting usefulness, awkward blocked cases and any navigation stalls separately from native correctness. |
+
+### Concrete limits to record in the existing base-world inventory
+
+CTR04 changes the old universal half-person flee speed to species profiles; replaces the 16-direction/four-metre local steering and exponentially decaying danger with persisted refuge routing and continuous clearance; adds finite local refuge/observation/route-review rules; retains no top-N-danger limit; and makes animal model calls exactly zero for this family. World values and their reasons are canonical in the animal profile; the inventory records their selected/unimplemented status and restrictiveness. Existing spatial query, path, worker, queue and world-admission limits remain separate. Offspring, pack, predator, scent, generalized free flight, burst endurance and optional rare animal cognition remain explicit deferred capabilities rather than implied implementation TODOs in this slice.
+
+## Complete threat choices, appraisal and voluntary action — CTR05–CTR07
+
+### Current defect and minimum repair
+
+`apps/server/src/context.ts` currently returns from physical-choice construction when `actor.action` exists. The comment protects actual work/materials from implicit replacement, but the return also hides later ordinary strikes, guards and equipment choices. Keep the material protection and remove the omission. Merely deleting the return is insufficient: direct-action preview can reject an alternative because current work still occupies its lane, and an adapter that pretends current work is absent would conceal cancellation costs.
+
+Extend the existing action-availability/preparation owner with a **read-only prospective transition**: continue, replace, or interrupt current native work, followed by one exact action/invocation. Its result includes whether that transition is supported now; expected current plan/action revision; actual spent inputs and unrecoverable progress; paused-work disposition; outstanding strike/evasion/guard recovery; the exact subsequent binding; and the earliest meaningful boundary for a temporary blocker. Share these facts between ordinary action details, NPC candidates and final admission. Do not allocate an action ID, stop a task, reserve physical inputs, apply costs or mutate a throwaway gameplay copy to build the menu. Temporary preparation unavailable is distinct from an impossible action.
+
+For interrupted work, preserve the current owner's real semantics. An unfinished restarted step may lose its partial elapsed work; consumed inputs are not refunded; one already suspended frontier can prevent another suspension. Replacement discards the corresponding paused work. An attack's committed contact or recovery cannot be cancelled away. A refused transition must leave the original action untouched. Recheck the full transition and its exact action together immediately before any interruption or cost; accepting only the transition and later discovering a predictable action refusal would reproduce the bug in another form.
+
+Precompute actor/tool prerequisites once per request snapshot, before expansion across current permitted targets. Build every relevant feasible family even while busy. Do not cross every inventory lot with every visible entity before rejecting unusable tools. Exact source/tool/life identities remain bindings; display descriptions use permitted names. Empty hands still allow the world's granted unarmed action. A method unavailable because of current recovery remains explained with its current deadline; it is not quietly replaced by conversation or labelled permanently unsupported.
+
+### One actor-permitted decision snapshot
+
+The same prepared snapshot feeds both semantic stages and the current inspection surface. Required context has these meanings:
+
+| Context | Required owner and exact content |
+| --- | --- |
+| Personal identity | Complete accepted About me/current dispositions, not a combat-specific replacement biography. Keep chosen goals separate from author content. |
+| Body and capability | Actual current bodily measurements/conditions, pain, ability to move/strike, equipped means, costs and recovery through existing native projections. Never infer hidden abilities from biography. |
+| Present work | Current and paused plan/frontier, actual progress/outcomes, spent/held resources, explicit supported control transitions and next boundary. |
+| Immediate cause | Exact personally experienced/observed occurrence, observation roles, known/unknown source, source revision, observation time and cause sentence. No arbitrary latest world event. |
+| Encounter | Observer-scoped CTR02 relations, current observed attack versus past occurrence, current sight versus last-seen evidence, simultaneous relevant opponents, and own chosen finite commitment. |
+| Appraisals | Relevant active private records with current intensity, installed scale, source/subject, lifetime and revision. The existing label-only `decisionFeelings` rendering must carry admitted numerical meaning for the selected profile. |
+| Other people/place | Only actual permitted current observations and retained sources needed for a purpose, such as a particular endangered person or known destination. Another person's fear or goal is never supplied as world truth. |
+| Alternatives | Current feasible exact choices plus consequential temporary blockers and their prospective transitions. A source/tool not prepared remains unknown, not nonexistent. |
+| Experience | Required immediate attack/action-result/changed-term evidence before optional recall, through the existing memory owner. Include relevant contrary/new evidence and distinguish reported intent from witnessed conduct. |
+
+The actor's current protected identity, required cause, current body/work and necessary target interpretation cannot be dropped to make the request smaller. Reuse existing complete-context byte admission; if the complete required set does not fit, refuse preparation with its cause and preserve the pending opportunity. Optional recall remains optional, and no independent unbounded combat-memory cache is added. A shortlist length alone does not bound preparation; measure selected source bytes, candidate visits and exact physical checks.
+
+### Catalogue, bindings and definition ownership
+
+The [world catalogue](../worlds/base/threat-response-options.md) owns purpose meanings and initial finite templates; [psychological reactions](../worlds/base/psychological-reactions.md#interpreted-threat-reactions) owns fear/anger definitions and numerical choices. Install their data beside the existing base-world cognition/appraisal/activity profiles, with one pinned definition consumed by discovery, candidate preparation, prompt text, selection, inspection, native admission and current-format saves. Do not scatter fallback purpose strings or fear coefficients through `context.ts`, `ai-director.ts` or the kernel.
+
+Bind each request-local option to actor/world/timeline/control and physical life; purpose definition pin; permitted source/subject references and their evidence/observation revisions; exact method/tool/target life/destination; explicit work transition; current native prerequisite dependencies; and selected deadline/stop conditions. Display a compact handle, natural purpose, actual first action, costs and finite continuation. A handle is not an entity ID, an executable sentence or authority to substitute a more powerful method.
+
+Use existing `ActorGoal`/`ActorPlan` and the finite activity composition/`ChosenActivityControl` owners. A selected purpose is metadata on that admitted work; there is no second combat goal or mutable global aggression state. Where a simple strike needs no durable personal goal, do not manufacture one. Use installed observation conditions to express current visible target, selected reach, anchor boundary and deadline. A truly missing condition receives one narrow reviewed native implementation with declared reads, unknown result, dependencies and next boundary; it is not evaluated by a model every tick.
+
+The initial offered attack authorizes one strike. A pursuit can be an exact visible approach/follow or a currently supported approach-and-one-strike composition, bounded as the profile states. Target loss, changed life, route refusal or a selected limit cannot be repaired by substituting another opponent or restarting the original deadline. A last-seen point requires a separately selected permitted binding; unseen target movement never updates it. Future multi-strike compositions remain explicit later options, not the fallback for slow cognition.
+
+### Stage one: situation relevance and independent appraisals
+
+Reuse the existing Jev relevance/question infrastructure and shared rubric. Native feasibility first filters only proven impossibility: missing actor capability, unavailable exact target/subject, absent protected person, unsupported material/control operation or other native refusal. It does not decide whether Ada ought to be angry, whether someone deserves punishment, or whether protection is personally worthwhile.
+
+The first cheap Decision API call is mandatory for this selected threat-response route. Supply one independent question per eligible purpose family, with its candidate meaning in the actual question text and the full shared actor-scoped context. Keep relevant, irrelevant and uncertain meanings explicit under the current provider/rating policy. A stable question ID is bookkeeping; it must not be the only place the meaning appears. Preserve all relevant and uncertain purposes; a fixed top-N truncation must not silently hide a legitimate response. Existing byte/work limits can refuse an oversized preparation, not misclassify it as irrelevance.
+
+Independent finite appraisal questions share this call and the same source snapshot. Each can choose no change or an exact source-bound supported fear/anger operation, using current feelings plus the new evidence. Do not combine every feeling amount with every purpose/action into a Cartesian product. Native known work—visibility, life checks, movement availability, source eligibility and arithmetic—does not purchase its own relevance call.
+
+After the response, decode through the existing provider boundary; validate handles, values and supplied question coverage. Unknown is not zero and an unavailable/invalid relevance response is not a chosen empty shortlist. Partially unavailable appraisal operations get explicit individual receipts; a valid relevance result can still proceed using the actual unchanged or accepted state. An invalid overall relevance response defers this pipeline; no fabricated shortlist or automatic paid fallback is created.
+
+Before any appraisal effect, recheck actor authority/life, source privacy/revision, current definition pin and supplied record revision through the existing appraisal binding and serialized publication path. Use target-stacking source-bound creation for a genuine new interpretation, retaining predecessor outcomes and original-occurrence deduplication. Existing same-cause reframe cannot change a decaying value or restart its curve. The automatic damage-to-fear producers, including projectile fear, are removed in the same installed-world change; native body effects and immediate urgency remain. Do not run both mechanisms in parallel.
+
+### Stage two: actual personal choice
+
+Prepare the relevant/uncertain purposes' fully grounded compatible action options, reusing the valid prepared native prerequisites and checking changed dependencies. This is deliberate purpose-plus-action composition, not a cross product of unrelated judgments. The second Decision API call chooses **one** complete bound response, explicit continuation/no new action, or an uncertain/deferred outcome through the existing selection semantics. It sees the actual admitted appraisal values, current required context, transition costs, available alternatives, chosen finite limits and temporary blockers. It is not told which response passes an evaluation.
+
+No required generated thought, explanation, new goal or speech accompanies this selection. Existing generated conversation/unlisted-action routes remain independently available under their current rules; no automatic third call, generative repair or preset thought is added. A finite catalogue response and a novel generated response are different routes with distinct accounting and admission; selecting the catalogue does not pretend that richer generation ran.
+
+After the wait, recheck the exact actor/control/timeline, current observation association, sources, method/definition/tool/target life, chosen plan revision and all current physical prerequisites. Harmless unrelated world edits do not invalidate the choice. Relevant changed evidence or an invalid prerequisite produces a stale/refused disposition and leaves newer cues pending. One strike already released or contact already committed follows its actual native owner; an old response cannot cancel or refund it. The native receipt, not the chosen option text, establishes whether the attack began, failed or caused harm.
+
+If stage one committed a private feeling and stage two fails, preserve that independently accepted feeling and both stages' accounting; record that no physical choice was committed. If neither stage ran or returned a valid answer, never report deliberate pacifism, paralysis or indifference. A newly meaningful situation may schedule a fresh decision with new source identity. Repeating the same failed work is not automatically authorized spending.
+
+## Reconsideration, finite continuation and prompt reactions — CTR08
+
+### Subscription ownership and saved state
+
+Extend `ThoughtIntakeInputs`/`ActorWork` and current plan/goal/interest dependency capture. A person's active threat response subscribes only to the relevant observed opponents, protected subject if any, selected target/destination/tool, own body/work, defining terms and deadline. Reuse CTR02's observer-scoped episode index for changes; do not scan every world's pair or poll each record's history. Each transition carries the native source/evidence reference and actor-perspective cause sentence into normal intake.
+
+Save canonical actual plan/invocation bindings and revisions; selected purpose definition pin and source references; target life/observation binding; original anchor and deadline; current frontier and actual result/cost counters; previous meaningful observation band and its pending stabilization time when that affects future delivery; consumed transition/cause identity or watermark; and pending eligible reconsideration evidence under the existing scheduling owner. Persist nothing twice if an existing owner already carries it. Derived subscriptions/indexes are rebuilt from those owners after restore or relevant revision change, without spending, inference or RNG.
+
+Current-format validation checks identities, finite positive selected durations, supported installed conditions, world-relative positions/support, deadlines, private evidence ownership and legal plan/control state. Pausing stops game time; a restore preserves original deadlines and unresolved cues and cancels old-timeline provider work. Rebuilding subscriptions cannot generate an extra attack or replay an acknowledged appraisal. Death, retirement, control transfer and deleted/forgotten evidence release or invalidate the respective subscriptions through their existing owners. Physical consequences already released persist independently.
+
+### Exact meaningful triggers
+
+The [world profile](../worlds/base/threat-response-options.md#5-first-delivery-commitments-and-reconsideration-tuning) owns selected numeric hysteresis/deadlines. The following table owns producer-to-intake behavior. “Immediate” means eligible in the next normal scheduling pass with urgent priority, not a promise of instant provider completion. Native invalidation always occurs at its real boundary independently of paid scheduling.
+
+| Trigger | Native observation/condition | Scheduling and what remains authoritative |
+| --- | --- | --- |
+| Actual new harm | Personally experienced new impact/body injury with exact source uncertainty | Immediate urgent opportunity; retain each distinct cause, coalesce scheduling while busy. The body effect already happened. It can supersede stale same-actor decision context. |
+| New credible attack | Newly personally observed directed preparation/attempt/incoming trajectory or another supported threat cue | Immediate urgent opportunity using only disclosed source/target facts. Mere selection/hover or a hidden intention is not a trigger. |
+| Opponent leaves relevant reach | Observed distance exceeds the selected method's actual reach plus the profile hysteresis continuously for its stabilization interval | One fresh opportunity to pursue, hold, withdraw or let go. Native reach checks already prevent remote contact. Do not trigger on every changing distance. |
+| Chosen approach enters reach | A personally observed target crosses into the admitted selected method's reachable band | If an already selected approach-and-one-strike still authorizes that strike, execute normally; otherwise schedule a fresh urgent choice. Never turn mere follow into attack. |
+| Opponent ceases observed preparation | The previously observed activity ends/cancels or changes to a non-preparation state and remains changed through stabilization | One new opportunity with current activity/result evidence. Cancellation is not surrender, friendliness or permission to read a new hidden target. |
+| Lost sight | Current perception of a relevant target actually ends | Sight-dependent native work stops immediately; after short stabilization, coalesce a fresh opportunity with exact last-seen evidence or unknown location. A brief reacquisition coalesces the changed facts without two redundant paid calls. |
+| Reacquired sight | A still-relevant opponent is newly recognized through current observation rules | One opportunity if it changes a blocked/searching/withdrawing commitment or supplies new credible danger. Recognition is not recovered by comparing display names. |
+| Strike/guard/evasion completes or fails | Actual result through action-experience, including miss/block/refusal and remaining recovery | With the initial one-strike template, schedule reconsideration before a second attack. Preserve result memory even if the result does not also create an awareness row. No inferred victory from a selected option. |
+| Selected recovery ends | The real recovery deadline passes while this response was waiting on that capability | One opportunity from the due queue if still relevant; no all-actor combat polling. A recovered hand is not a standing command to punch. |
+| Route or exact target becomes unusable | Movement/observation/native prerequisite owner blocks or ends the selected frontier | Immediate native stop/refusal plus a fresh opportunity describing only what the person can know. Server identity loss does not reveal unseen death or teleportation. |
+| Pursuit/hold/wait limit reached | Original selected time or spatial boundary becomes true | Stop the dependent native continuation at that boundary, then offer a new decision. No automatic extension or return to home; the larger personal goal remains independently chosen. |
+| Protected person's situation changes | Actual permitted movement, new injury, disappearance, communicated refusal or other relevant source | Immediate for new danger; otherwise stabilized once. Protection options are rebuilt from reality, never retained against a missing subject or invented consent. |
+| Own body or means materially changes | A relevant bodily condition threshold, incapacitation, equipment/custody loss, or exact selected capability changes | Native feasibility changes immediately; urgent significant changes enter intake. Do not infer a mandatory flee percentage or emotion from the condition. |
+| Purpose/reason changes | Actual accepted goal/plan change, relevant received speech or a personally known supporting condition changes | One opportunity through existing change-fed attention. Words are attributed testimony; accepting a peace suggestion is still a choice. |
+| Quiet after the exchange | The person explicitly chose assessment/waiting, or the normal existing quiet opportunity becomes eligible | Use the chosen deadline or existing quiet scheduler, not the Command-click grace or a new forever-combat timer. Retained memory and lingering feeling can still affect the next ordinary choice. |
+
+For a range or visibility condition, remember the last emitted stable band and an optional pending candidate band with its first-observed game time. A reversal before stabilization clears that pending transition; it does not erase actual observed evidence or undo native stoppage. A stable transition emits once and advances the band/watermark. A new direct harm/credible attack bypasses this smoothing. Enter/exit thresholds use the same installed reach and geometry owner; cache expiry includes the next deadline even if entity objects did not change.
+
+Never acknowledge evidence beyond the captured native sequence. If a punch is being processed and a withdrawal arrives, acknowledge only the processed snapshot and leave the withdrawal eligible. Coalesce duplicate scheduling wakes, not distinct actual blows or material changes. A budget-exhausted preparation remains incomplete; it must not clear a threat, declare a route unreachable or mark a cue handled. Missing or forgotten evidence never gets reconstructed from omniscient current state.
+
+### Bounded urgent concurrency
+
+**Current baseline:** the director's single global running slot can hold an attacked person's decision behind another actor's provider call. **Selected target:** permit at most two simultaneous immediate decision pipelines per world, at most one pipeline for a particular actor, and at most one ordinary pipeline at a time. The second capacity slot is available for urgent threat response; two urgent pipelines may occupy both slots. This is an initial protected service/concurrency choice, not an animal simulation rule or unlimited parallel cognition. Existing background-maintenance/reflection budgets retain their own owners and do not acquire extra allowances from it.
+
+Keep one existing director/admission coordinator with actor/job-indexed running records and a fair coalescing ready queue. Reuse the current urgency/aging order: urgent or long-waiting eligible work first within available lane eligibility. When two pipelines are active, retain later actors' coalesced cues; do not drop them, launch a third pipeline or cancel an unrelated admitted job to make room. One ordinary job can run alongside one urgent job without freezing the world. Apply the same existing external monetary, request and provider concurrency ceilings; a world-local free slot is not funding or provider capacity.
+
+Each running record owns its stable job ID, actor/life/control/timeline bindings, captured evidence cut, stage, abort controller, exact reservations, retained preparation and completion disposition. Provider callbacks close over that record. Completion/cancellation removes a map entry only if it is still the same actor-and-job record; an old callback cannot delete a replacement run, overwrite another actor's response watcher, clear another actor's preview or release another job's reservation. Stop/control-loss targets the matching actor/job; whole-world teardown cancels every owned record explicitly. Preserve serial native commits and ordinary state revalidation after every wait.
+
+An actor never runs stages one and two concurrently: the second depends on the admitted first-stage interpretation and relevance. The original job allowance accounts for both planned calls; reserve each through the existing durable accounting owner before its dispatch, with sufficient admitted allowance for the intended two-stage route. No extra use is hidden as “preparation.” Same-actor urgent supersession follows the existing one-refresh/changed-situation policy and exact cancellation receipts; a genuinely new source can create a newly funded semantic opportunity, but the same failed call never purchases its own retry. Already accepted first-stage appraisals remain real effects. If allowance is unavailable, defer honestly; no aggression fallback or clock pause is created.
+
+### Latency and complete-path measurement
+
+Share immutable world catalogue preparation, actor/tool feasibility and current source retrieval inside each valid request scope. Reuse required current observations and cause-bound memory across both stages where their dependencies remain valid; do not retrieve the same history again merely because the second call has a new request ID. Hydrate only selected actor-permitted optional records. Retain each job's own immutable prepared data across awaits rather than depending on a single mutable “latest context” cache that concurrent actors overwrite.
+
+Measure perception-to-enqueue, queue wait, native/source preparation, first provider stage, appraisal admission, option binding, second provider stage, final native admission and first visible physical response separately. Record cold versus warm preparation, repeated hits, two unrelated simultaneous actors, a long ordinary generation beside urgent combat, provider cancellation/failure and dense visible threats. Count candidates visited, exact checks, source rows/bytes and every paid call, including calls that selected continuation or were superseded. Report precise cumulative Jev cost and unavailable billing separately. Two short calls are an architectural choice, not evidence that the route is already fast.
+
+No host pause, tactical slow motion, free reflex counterattack or invisible catch-up movement compensates for provider delay. The selected design must preserve playable native input and ongoing physics while waiting. Initial optimization targets and measured release timing belong with CTR10's actual offered model/service workload; a failed performance comparison remains open work, not a claim that asynchronous code is fast.
+
+## Independent character acceptance — CTR10
+
+The required ordinary Ada outcome is an **actually admitted and started physical counterattack chosen by Ada**, not merely a relevant option, hostile language, model intent or imposed script. Use the actual installed world profile, real perception, complete identity, ordinary two-stage selection and normal command path. Keep the attacker observable, reachable and capable of receiving that attack long enough to qualify her choice independently of an impossible intercept. Then separately qualify ordinary real-time punch-and-run behavior without holding the target still or stopping the clock.
+
+Before paid execution, fix a small finite baseline suite and funding under the verification owner. The selected suite is twelve ordinary baseline runs: idle, moving and doing actual interruptible work, each with two permitted starting equipment contexts (unarmed and an ordinary usable melee method), repeated twice with independently scheduled normal choices. Every run retains the exact initial profile, delivered evidence, options, relevance/selection results, actual action receipts, latency and cost. **All twelve must start a native counterattack**; do not reroll failures or average them away with fluent speeches. This is an explicit first-delivery acceptance sample, not a statistical guarantee about all future model outputs.
+
+Use separate counterfactual controls for anonymous/unseen source, target fleeing before range, blocked route, incapacitated body, credible overwhelming danger, a different coherent personality, an endangered third person, current non-interruptible/spent work and a provider outage. Their acceptance is truthful context, complete feasible choices and permitted physical outcomes; no impossible strike is demanded. Counterfactuals must not be substituted into or used to relax the ordinary Ada baseline. Verify that removing/changing the name while retaining the same relevant character/world data leaves the native mechanism identical, and that changing a meaningful disposition/evidence can lead to a different independent choice without code changes.
+
+Diagnosis proceeds cause delivery → required context → complete availability/control meaning → relevance stage → appraisal and actual intensity → final choice → native admission → physical result → next trigger. Retain each failed boundary separately. Fix a missing context/action/wake in its general owner before adding more personality wording. If coherent disposition changes are tested, identify them as alternative authored profiles; never disguise a conditional response command as biography or omit valid withdrawal options until a desired answer wins. A model-directed diagnostic strike can verify the mechanical path only.
+
+Native/fixture qualification also covers private known/unknown target attribution, two-stage stale races, rejected appraisal with valid relevance, first-stage success/second-stage failure, repeated/cold-source deduplication, failed prospective interruption with no costs, full current-format restore, the two-pipeline actor/job isolation races and cue coalescing without lost evidence. No such runtime, browser, live-provider or enjoyment evidence is produced by this documentation task; all of these exits remain open in the tracker.
 
 ## Maintained records
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                      | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Unified outcome memories, native perspective and quiet reflection are qualified for PG02; broader character reliability remains open. | 2026-10-16   |
+| In progress | PG02's bounded evidence path is qualified and the independent combat-response extension is designed; broader character reliability remains open. | 2026-10-17   |
 
 [Feature contract](compelling-characters-feature-spec.md#character-authorship-and-changing-personality) · [CE implementation and acceptance](../maintainers/character-experience.md) · [Memory contract](../memory-architecture.md) · [Agency contract](../agent-agency.md).
 
@@ -66,6 +66,12 @@ Keep authored history, current self-understanding, current dispositions, fleetin
 
 Personality development should use the existing accepted identity/understanding and appraisal owners, with actual permitted experience as support and explicit creator authority where applicable. The absence of a complete automatic personality-development mechanism is tracked in CE/DG23; this design grants no new background model loop or arbitrary trait effects. A chosen temporary intention belongs to goals/plans. Scenario-seeded intentions remain explicitly labeled author interventions, not autonomous motivation.
 
+## October 17 combat-response integration
+
+The [combat technical design](combat-and-threat-responses-tech-design.md) owns the new CTR05–CTR08 changes: complete prospective action transitions while busy, interpreted source-linked fear/anger, two-stage relevance then personal choice, and exact observed-change/finite-purpose reconsideration. Reuse this project's unified required experience and shared personal perspective. Do not duplicate the result narrative or replace the complete identity with a combat prompt. The original PG02 slice's no-additional-call claims describe that delivered slice, not the separately selected two-call threat route.
+
+[Ada's selected baseline](../worlds/base/threat-response-options.md#4-initial-ada-disposition-and-required-behavior) now requires an independently selected and actually begun counterattack in the ordinary able/identified/feasible unprovoked-punch situation. Her assertiveness is authored content with general meaning; native mechanisms remain indifferent to her name. CTR10 retains strict ordinary-path acceptance, unsuccessful cases and separate capability/uncertainty controls. A fixture or forced command proves only admission/physics, and repeated generation until a preferred answer appears cannot qualify the character. Existing PG02 observations remain historical evidence of their exact situations, not combat evidence. Long-term personality/relationship change remains outside this extension.
+
 ## Delivery stages, verification and limits
 
 1. **Initial authoring correction, delivered before the runtime stages below:** accepted authoring distinctions, examples/counterfactual review, root reading route, narrow Ada text correction and truthful reopening of affected PG02 evidence. That initial correction changed content and guidance; the subsequent unified experience and native rendering changes are recorded in stages 2–3.
@@ -82,3 +88,4 @@ Required reads are actor-scoped and batched through existing retrieval/cache and
 - Implementation: [CE01–CE05](../maintainers/character-experience.md), with [AG06/AG07/AG12](../maintainers/agent-agency.md) and [CR12](../maintainers/cognition-redesign.md); existing DG23 owns broader personality development.
 - Limits and constraints: [CG14 authorship boundary](../limits/cognition.md#cg14--character-authorship-and-personal-evidence), [memory/cognition limits](../limits/cognition.md), [feeling limits](../limits/feelings.md). No new numerical runtime bound is introduced.
 - Evidence: [PG02 report](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices), historical trials remain distinct from the new content and expanded world.
+

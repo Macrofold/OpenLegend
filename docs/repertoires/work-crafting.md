@@ -14,6 +14,8 @@ Seed labels follow the four proposals. FA includes optional later traditions wit
 
 Keep household production, agriculture, construction, arms and armor, repair, technical trades, artistry, instruction, personal services, field work, and research. Different work can require choosing a design, judging a material, coordinating stages, satisfying a client, interpreting evidence, or handling an exception. Do not turn every profession into the same timed button with a different noun. Optional hands-on controls, description, commissions, and delegation can express the same meaningful craft choices.
 
+The selected [combat and threat response design](../projects/combat-and-threat-responses-feature-spec.md) requires urgent reconsideration to retain all relevant action choices while a person is working. Current work supplies its actual stop, replacement or noninterruptible consequences; it cannot hide every defensive alternative from cognition. This preserves the value of work without making a craft activity an accidental inability to respond to a threat. Long-lived workpieces such as WORK-283 remain separate proposed capabilities.
+
 ## The commission with room for taste
 
 **ALL · Play · Moderate/Extend.** Gap: requirements, negotiable preferences and inspectable acceptance.
