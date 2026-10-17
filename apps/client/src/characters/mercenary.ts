@@ -226,7 +226,10 @@ export class MercenaryActor {
     }
     anim.speed = paused ? 0 : 1;
     this.cloth.update(dt, !paused);
-    this.revealAmount = reveal;
+    this.setReadThrough(reveal);
+  }
+  setReadThrough(strength: number): void {
+    this.revealAmount = strength;
   }
   get revealStrength(): number {
     return this.visible ? this.revealAmount : 0;

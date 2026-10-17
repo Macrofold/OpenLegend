@@ -18,13 +18,50 @@ export interface EventDisclosurePolicy {
 export function observeEvent(world: WorldState, event: WorldEvent, observerId: string) {
   const policy = selectedEventDisclosure(world);
   const owned = event.scope === 'private' || event.actorId === observerId;
-  const complete = () => ({
-    sourceId: event.actorId,
-    targetId: event.targetId,
-    text: event.narration ? renderNarration(world, event.narration, observerId) : event.text,
-    eventType: event.type,
-    eventData: policy.data(event, observerId, true),
-  });
+  const names = (sourceId?: string, targetId?: string) => [
+    ...(sourceId
+      ? [
+          {
+            id: sourceId,
+            label: renderNarration(
+              world,
+              { parts: [{ entityId: sourceId, role: 'name', article: 'none' }] },
+              observerId,
+            ),
+            role: 'actor' as const,
+          },
+        ]
+      : []),
+    ...(targetId
+      ? [
+          {
+            id: targetId,
+            label: renderNarration(
+              world,
+              { parts: [{ entityId: targetId, role: 'name', article: 'none' }] },
+              observerId,
+            ),
+            role: 'target' as const,
+          },
+        ]
+      : []),
+  ];
+  const complete = () => {
+    const eventData = policy.data(event, observerId, true);
+    let text = event.narration ? renderNarration(world, event.narration, observerId) : event.text;
+    // A visible meter change does not expose a private bodily cause. The installed
+    // disclosure policy must separately admit the recorded cause before it is narrated.
+    if (event.type === 'attribute-changed' && typeof eventData['causeLabel'] === 'string')
+      text = `${text.replace(/[.!?]$/, '')} from ${eventData['causeLabel'].toLowerCase()}.`;
+    return {
+      sourceId: event.actorId,
+      targetId: event.targetId,
+      text,
+      eventType: event.type,
+      eventData,
+      references: names(event.actorId, event.targetId),
+    };
+  };
   // Private acquisition is the common path; its producer already supplied the grant.
   if (owned) return complete();
   // The trusted audience resolver already tested this source at this occurrence.
@@ -71,5 +108,6 @@ export function observeEvent(world: WorldState, event: WorldEvent, observerId: s
     text: typeof narration === 'string' ? narration : renderNarration(world, narration, observerId),
     eventType: 'activity-observed',
     eventData: policy.data(event, observerId, false),
+    references: names(sourceId, targetId),
   };
 }

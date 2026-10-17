@@ -127,7 +127,7 @@ const profile = (
   stanceTolerance: 0.2,
   description: `One chosen cast takes ${workSeconds} game seconds, with an ordinary ${Math.round(chance * 100)}% chance of a catch while supply remains. No bait is spent.`,
   actionLabel: 'Fish here with',
-  availableText: 'River reach · choose one cast',
+  availableText: 'River reach; choose one cast',
   toolRequiredText: 'Carry a compatible fishing tool, such as a River line.',
   supplyUnknownText: 'Finite local supply; its remaining quantity is not known',
   caughtText: 'caught one raw river fish.',

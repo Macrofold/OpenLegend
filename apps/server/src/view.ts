@@ -1,3 +1,4 @@
+import { selectedEventPresentation } from '@open-legend/domain';
 import {
   replacementRest,
   rangedTargetAllowed,
@@ -52,7 +53,7 @@ import {
   nativeActionIcon,
   nativeGatherShortcut,
 } from '@open-legend/domain';
-import { worldPosition, worldSupport } from '@open-legend/domain';
+import { exposedPlaces, worldPosition, worldSupport } from '@open-legend/domain';
 import {
   commandRecoveryScopeKey,
   checkpointRecoveryScopeKey,
@@ -107,8 +108,16 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 import { describeEntity } from './entity-description.js';
+import { entityBodyReference } from './entity-references.js';
 import { reincarnationPolicy, scarTreatmentProblem } from '@open-legend/domain';
 import type { WorldService } from './world-service.js';
+
+/** Private evidence changed during a read; discard and prepare a current view. */
+export class ViewChangedError extends Error {
+  constructor() {
+    super('The world changed while preparing this view. Refresh to see current information.');
+  }
+}
 
 interface ViewCache {
   scope: RequestScope;
@@ -264,6 +273,37 @@ export async function projectView(
     },
   );
   const player = world.entities[scope.actorId]!;
+  const presentation = memo(
+    'presentation',
+    [world.presentation, world.places, player, observation.visibleEntities],
+    () => {
+      const position = worldPosition(player);
+      let nearest: { id: string; label: string; distance: number } | undefined;
+      // Location is a current perception, not the world's fixed opening heading or a remembered site.
+      for (const place of exposedPlaces(
+        world,
+        player,
+        observation.visibleEntities.map((entity) => entity.id),
+      )) {
+        const distance =
+          (position.x - place.point.x) ** 2 +
+          (position.y - place.point.y) ** 2 +
+          (position.z - place.point.z) ** 2;
+        if (
+          !nearest ||
+          distance < nearest.distance ||
+          (distance === nearest.distance && place.id < nearest.id)
+        )
+          nearest = { id: place.id, label: place.label, distance };
+      }
+      const worldName = world.presentation?.worldName ?? 'World';
+      return {
+        worldName,
+        locationName: nearest?.label ?? worldName,
+        timeLabel: world.presentation?.timeLabel ?? 'World time',
+      };
+    },
+  );
   const actor = player.actor!;
   const generation = service.generation;
   const historyEpoch = service.historyEpoch;
@@ -303,7 +343,7 @@ export async function projectView(
   // A correction can revoke retained evidence while SQL inspection is pending.
   // Recheck even a cached promise before publishing pre-correction private text.
   if (generation !== service.generation || historyEpoch !== service.historyEpoch)
-    throw new Error('The world changed during practice inspection.');
+    throw new ViewChangedError();
   service.assertScope(scope);
   const quantity = (definitionId: string) => quantityOf(world, player.id, definitionId);
   const active =
@@ -319,6 +359,7 @@ export async function projectView(
     command: ActionOption['command'],
     possible = true,
     reason?: string,
+    icon = nativeActionIcon(command.type),
   ): ActionOption => {
     // Consent-ending rows carry the server's complete current preview. They require
     // control, while declining physical work requires no live body or running clock.
@@ -329,7 +370,7 @@ export async function projectView(
     return {
       id,
       label,
-      icon: nativeActionIcon(command.type),
+      icon,
       command,
       enabled: canChoose && possible,
       ...(!canChoose
@@ -474,7 +515,14 @@ export async function projectView(
           for (const option of statusEffectActions(world, player, entity)) {
             const preview = service.previewCommand(option.command, scope.actorId);
             actions.push(
-              action(option.id, option.label, option.command, preview.ok, preview.message),
+              action(
+                option.id,
+                option.label,
+                option.command,
+                preview.ok,
+                preview.message,
+                option.icon,
+              ),
             );
           }
           if (entity.actor)
@@ -830,8 +878,8 @@ export async function projectView(
                     : 'Fresh remains'
                   : entity.heat
                     ? entity.heat.lit
-                      ? `Lit · cooking heat · ${fireFuelDescription(entity.heat)}`
-                      : `Cold · ${fireFuelDescription(entity.heat)}`
+                      ? `Lit, cooking heat; ${fireFuelDescription(entity.heat)}`
+                      : `Cold; ${fireFuelDescription(entity.heat)}`
                     : entity.replenisher
                       ? `${Math.round(entity.replenisher.remaining)} units of supply`
                       : entity.kind === 'item-pile'
@@ -855,6 +903,7 @@ export async function projectView(
                     ? { health: entity.actor.health }
                     : {}),
                   bodyRevision: entity.actor.body?.revision,
+                  bodyReference: entityBodyReference(scopeKey(scope), entity),
                   ...(!entity.actor.alive
                     ? {
                         bodyState:
@@ -994,7 +1043,14 @@ export async function projectView(
     }),
     ...statusEffectActions(world, player, player).map((option) => {
       const preview = service.previewCommand(option.command, scope.actorId);
-      return action(option.id, option.label, option.command, preview.ok, preview.message);
+      return action(
+        option.id,
+        option.label,
+        option.command,
+        preview.ok,
+        preview.message,
+        option.icon,
+      );
     }),
     // Queued, waiting, stopped and paused work can be stopped too, not only a running action.
     action('cancel', 'Stop all work', { type: 'cancel' }, hasWork, 'No work to stop.'),
@@ -1100,8 +1156,8 @@ export async function projectView(
       : 'Guided feedback',
     evade: bodyPolicy(world)?.evasion?.label ?? 'Moving',
     hunt: `Hunting${targetName ? ` ${targetName.toLowerCase()}` : ''}`,
-    aim: `${work?.ranged ? `${world.itemDefinitions[work.ranged.tool.id]?.name ?? 'Selected tool'} · ` : ''}${work?.ranged?.ready ? BASE_RANGED_TEXT.readyLabel : BASE_RANGED_TEXT.aimingLabel}${targetName ? ` · ${targetName}` : ''}`,
-    'shoot-once': `${BASE_RANGED_TEXT.shootingLabel}${targetName ? ` · ${targetName}` : ''}`,
+    aim: `${work?.ranged ? `${world.itemDefinitions[work.ranged.tool.id]?.name ?? 'Selected tool'}: ` : ''}${work?.ranged?.ready ? BASE_RANGED_TEXT.readyLabel : BASE_RANGED_TEXT.aimingLabel}${targetName ? ` (${targetName})` : ''}`,
+    'shoot-once': `${BASE_RANGED_TEXT.shootingLabel}${targetName ? ` (${targetName})` : ''}`,
     cook: 'Cooking',
     fish: 'Fishing',
     'tend-fire':
@@ -1114,7 +1170,16 @@ export async function projectView(
     craft: `Crafting${work?.recipeId && world.recipes[work.recipeId] ? ` ${world.recipes[work.recipeId]!.output.name}` : ''}`,
   };
   const guide = perceptionGuide(world, player);
-  return {
+  // Read the indexed latest passage before publishing the view. A temporary null
+  // while this refreshes would dismiss and then reannounce the same old narration.
+  // Narration completion already calls notifyHistory; unrelated telemetry is not a dependency.
+  const narrator = await memo(
+    'narrator',
+    [service.historyRevision, historyEpoch],
+    () =>
+      service.store.history?.latestNarration(world.id, scope.accountId) ?? Promise.resolve(null),
+  );
+  const projected: GameView = {
     schemaVersion: 2,
     checkpoint: service.mayManageSaves(scope)
       ? {
@@ -1141,27 +1206,10 @@ export async function projectView(
     worldEventsRevision: service.worldEventsRevision(scope.actorId),
     historyRevision: service.historyRevision,
     historyEpoch: service.historyEpoch,
-    narrator: optional(
-      service,
-      cache,
-      'narrator',
-      memo(
-        'narrator',
-        [service.historyRevision, telemetryRevision],
-        () =>
-          service.store.history?.latestNarration(world.id, scope.accountId) ??
-          Promise.resolve(null),
-      ),
-      null,
-    ),
+    narrator,
     revision,
     worldId: world.id,
-    // An authored heading is optional content, not a prerequisite for a valid saved world.
-    presentation: world.presentation ?? {
-      worldName: 'World',
-      locationName: 'Current location',
-      timeLabel: 'World time',
-    },
+    presentation,
     saveTimeline: service.timelineId,
     commandEpoch: service.commandEpoch,
     godMode: service.config.godMode && service.currentScope(scope, 'create'),
@@ -1445,7 +1493,7 @@ export async function projectView(
             provenance:
               recipe.provenance.source === 'authored-world'
                 ? 'Known authored method; learned through an admitted disclosure.'
-                : `${recipe.provenance.source} · ${recipe.provenance.model ?? 'supplied proposal'}`,
+                : `${recipe.provenance.source} (${recipe.provenance.model ?? 'supplied proposal'})`,
             actions: [
               action(
                 `craft-${recipe.id}`,
@@ -1463,7 +1511,7 @@ export async function projectView(
         // Recognize legacy movement records that predate structured action types.
         .filter(isJournalEvent)
         .slice(-60)
-        .map(publicEvent),
+        .map((event) => publicEvent(event, selectedEventPresentation(world), player.id)),
     ),
     conversation: conversationEntries.map((event) => {
       const reply = replies.get(event.id);
@@ -1527,9 +1575,15 @@ export async function projectView(
     })),
     persistence: {
       status: storageError ? 'error' : 'saved',
-      message: storageError ?? 'Saved locally · the world pauses when you leave',
+      message: storageError ?? 'Saved locally; the world pauses when you leave',
     },
   };
+  // Reads above can cross a correction, forgotten memory, restored world or control change.
+  // Do not retain or publish an old passage (or any other private view facts) across that boundary.
+  if (generation !== service.generation || historyEpoch !== service.historyEpoch)
+    throw new ViewChangedError();
+  service.assertScope(scope);
+  return projected;
 }
 
 function same(left: unknown, right: unknown): boolean {

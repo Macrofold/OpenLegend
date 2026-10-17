@@ -1,3 +1,4 @@
+import { validExactInventorySources } from './native-command-contracts.js';
 import {
   isCookingInputRole,
   preparationDefinition,
@@ -1269,6 +1270,8 @@ export function isPhysicalCommand(command: Command): boolean {
       );
     case 'drop':
       return (
+        (command.sources === undefined ||
+          validExactInventorySources(command.sources, command.quantity)) &&
         isSafeRecordId(command.itemId) &&
         Number.isSafeInteger(command.quantity) &&
         command.quantity > 0

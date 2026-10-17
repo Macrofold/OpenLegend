@@ -39,8 +39,8 @@ export const BASE_HANDOVER = {
     unavailable: 'The agreed items are no longer available.',
     giftUnavailable: 'The offered items are no longer available.',
     unknown: 'No item has been disclosed. They can offer an item first.',
-    carriedLot: (name: string, index: number) => `${name} · carried lot ${index + 1}`,
-    disclosedLot: (name: string, index: number) => `${name} · disclosed lot ${index + 1}`,
+    carriedLot: (name: string, index: number) => `${name} (carried stack ${index + 1})`,
+    disclosedLot: (name: string, index: number) => `${name} (disclosed stack ${index + 1})`,
     actionLabel: (verb: string, terms: string, person: string, incoming: boolean) =>
       `${verb} ${terms} ${incoming ? 'from' : 'to'} ${person}`,
     acceptDescription: (receive: string, give?: string) =>

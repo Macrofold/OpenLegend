@@ -1,5 +1,6 @@
+import { LoadingDialog } from '../design-system/loading';
 import { useEffect, useRef, useState } from 'react';
-import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
+import { Modal, ModalOverlay } from 'react-aria-components';
 import type { ApiResult, GameView } from '@open-legend/protocol';
 import { post, privateDraftScope } from '../api';
 import { Button, IconButton, Tag } from '../design-system/components';
@@ -417,7 +418,7 @@ export function CreationRecoveryModal({
       onOpenChange={(open) => !open && close()}
     >
       <Modal className="ol-modal">
-        <Dialog className="ol-person-dialog" aria-label="Original creation">
+        <LoadingDialog className="ol-person-dialog" aria-label="Original creation">
           <header className="ol-modal-head">
             <div>
               <Tag tone="highlight">God mode</Tag>
@@ -483,7 +484,7 @@ export function CreationRecoveryModal({
               </Button>
             )}
           </footer>
-        </Dialog>
+        </LoadingDialog>
       </Modal>
     </ModalOverlay>
   );

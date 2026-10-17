@@ -58,6 +58,8 @@ The generic work-point query accepts at most twelve supplied stance candidates t
 
 Current family definitions admit one to eight uniquely named arrangements, bounding authored choice metadata and validation. The bundled profile supplies exactly two; another entry still needs actual material, span, support, body/reach and exposure qualification. This is a definition/input envelope, not a generator or proof that eight different structures are implemented. Revisit it with a concrete additional qualified arrangement and measured metadata/admission work.
 
+The visible shelter controls permit one material read and one optional placement check at a time; each has a 15-second browser deadline. Hiding, disconnecting or replacing the read scope aborts those reads and clears the obsolete preview owner. A failed material refresh removes the checked ghost and blocks Start until current facts return; a timed-out preview leaves the chosen place available for another deliberate check. These are read/recovery bounds, not native work cancellation or placement permission.
+
 The shelter controls currently read the actor's full carried material choices and scan retained entities for visible-root lowered choices. Per-grant origin membership is also read for each candidate. This is qualified for the finite selected scene, not many supplies/grants/viewers. SH06 must measure that complete two-second refresh and use the existing inventory paging/custody/authority owners for any demonstrated batching or filtering need. A paged shelter chooser or claim/provenance index is not delivered; a future optimization must retain selected actual IDs and permissions rather than silently omit required stock.
 
 ## SH-L13 — Exposed material forms and homogeneous condition

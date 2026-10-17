@@ -1,5 +1,7 @@
 import { RESERVOIR_ACTIVITY_HOST } from './worlds/reservoir-demo/activity.js';
 import { BASE_EVENT_DISCLOSURE } from './worlds/base/event-disclosure.js';
+import { BASE_EVENT_PRESENTATION } from './worlds/base/event-presentation.js';
+import { baseContextActions } from './worlds/base/context-actions.js';
 import {
   nativeActivityView as baseActivityView,
   sharedNativeActivityName as baseActivityName,
@@ -92,4 +94,20 @@ export function sharedNativeActivityName(world: WorldState, command: Command) {
 export function selectedEventDisclosure(world: WorldState) {
   selectedCreationProfileForWorld(world);
   return BASE_EVENT_DISCLOSURE;
+}
+
+export function selectedEventPresentation(world: WorldState) {
+  selectedCreationProfileForWorld(world);
+  return BASE_EVENT_PRESENTATION;
+}
+
+/** A requested object's menu and direct shortcut use the same selected world preference. */
+export function selectedContextActions(
+  world: WorldState,
+  actorId: string,
+  targetId?: string,
+  observedLaunches?: ReadonlySet<number>,
+) {
+  selectedCreationProfileForWorld(world);
+  return baseContextActions(world, actorId, targetId, observedLaunches);
 }

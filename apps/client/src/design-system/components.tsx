@@ -11,8 +11,6 @@ import {
 } from 'react';
 import {
   Button as AriaButton,
-  Tooltip,
-  TooltipTrigger,
   Radio,
   RadioGroup,
   Toolbar,
@@ -25,9 +23,20 @@ import {
   ListBoxItem,
   ListBoxLoadMoreItem,
   Collection,
+  DialogTrigger,
+  Focusable,
   type ButtonProps as AriaButtonProps,
 } from 'react-aria-components';
 import icons from './icons/icons.json';
+import {
+  LoadingDialog,
+  LoadingIndicator,
+  LoadingRegion,
+  LoadingScope,
+  useLoadingStatus,
+} from './loading';
+import { PointerTooltip } from './pointer-tooltip';
+import { formatDisplayNumber } from '@open-legend/language';
 export { Toolbar };
 export function Icon({
   name,
@@ -91,26 +100,66 @@ export function Button({
   busy?: boolean;
   disabled?: boolean;
 }) {
+  const pending = !!(busy || props.isPending);
+  const showBusy = useLoadingStatus(pending, typeof children === 'string' ? children : 'Working');
   return (
     <AriaButton
       {...props}
       className={`ol-btn ${typeof props.className === 'string' ? props.className : ''}`}
       data-variant={variant}
       data-size={size}
-      data-busy={busy || undefined}
+      data-busy={pending || undefined}
+      data-show-busy={showBusy || undefined}
       isDisabled={disabled || busy || props.isDisabled}
-      aria-busy={busy || undefined}
+      aria-busy={pending || undefined}
     >
       {icon && <Icon name={icon} size={16} />}
       <span>{children}</span>
-      {busy && (
-        <span className="ol-dots" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </span>
-      )}
+      {showBusy && <span className="ol-spinner" aria-hidden="true" />}
     </AriaButton>
+  );
+}
+
+/** Filters change the visible records; their pressed appearance differs from commands. */
+export function FilterButton({
+  selected,
+  children,
+  className = '',
+  ...props
+}: Omit<AriaButtonProps, 'children' | 'className'> & {
+  selected: boolean;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <AriaButton {...props} className={`ol-filter-button ${className}`} aria-pressed={selected}>
+      {children}
+    </AriaButton>
+  );
+}
+
+/** Optional tools stay anchored to their opener rather than moving it into a new row. */
+export function DisclosurePopover({
+  label,
+  children,
+  className = '',
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <DialogTrigger>
+      <Button size="sm" variant="quiet" className={`ol-disclosure-trigger ${className}`}>
+        {label}
+        <span className="ol-disclosure-chevron" aria-hidden="true" />
+      </Button>
+      <Popover className="ol-root ol-disclosure-popover" placement="bottom end" offset={8}>
+        <LoadingDialog aria-label={label} className="ol-portal-content ol-disclosure-content">
+          {children}
+        </LoadingDialog>
+      </Popover>
+    </DialogTrigger>
   );
 }
 export function IconButton({
@@ -275,29 +324,33 @@ export function SelectField({
         placement={placement}
         style={{ width: popupWidth }}
       >
-        <ListBox<SelectOption>
-          className="ol-select-list ol-portal-content"
-          renderEmptyState={() => (
-            <p className="ol-select-empty">{loading ? 'Searching…' : 'No matches.'}</p>
-          )}
-        >
-          {remote ? (
-            <>
-              <Collection items={options}>{option}</Collection>
-              {(onLoadMore || loading) && (
-                <ListBoxLoadMoreItem
-                  className="ol-select-more"
-                  onLoadMore={onLoadMore}
-                  isLoading={loading}
-                >
-                  Loading…
-                </ListBoxLoadMoreItem>
-              )}
-            </>
-          ) : (
-            option
-          )}
-        </ListBox>
+        <LoadingRegion>
+          <ListBox<SelectOption>
+            className="ol-select-list ol-portal-content"
+            renderEmptyState={() => (
+              <div className="ol-select-empty">
+                {loading ? <LoadingIndicator active label="Searching choices" /> : 'No matches.'}
+              </div>
+            )}
+          >
+            {remote ? (
+              <>
+                <Collection items={options}>{option}</Collection>
+                {(onLoadMore || (loading && options.length > 0)) && (
+                  <ListBoxLoadMoreItem
+                    className="ol-select-more"
+                    onLoadMore={onLoadMore}
+                    isLoading={loading}
+                  >
+                    <LoadingIndicator active={loading} label="Loading more choices" />
+                  </ListBoxLoadMoreItem>
+                )}
+              </>
+            ) : (
+              option
+            )}
+          </ListBox>
+        </LoadingRegion>
       </Popover>
     </ComboBox>
   );
@@ -319,19 +372,17 @@ export function Launcher({
 }) {
   return (
     <div className="ol-launcher-wrap" data-side={side}>
-      <AriaButton
-        className="ol-launcher"
-        aria-label={label}
-        aria-expanded={open}
-        aria-keyshortcuts={shortcut}
-        onPress={onPress}
-      >
-        <Icon name={icon} size={24} />
-      </AriaButton>
-      <span className="ol-hover-label" aria-hidden="true">
-        {label}
-        {shortcut ? ` · ${shortcut}` : ''}
-      </span>
+      <TextTooltip text={`${label}${shortcut ? ` — ${shortcut}` : ''}`}>
+        <AriaButton
+          className="ol-launcher"
+          aria-label={label}
+          aria-expanded={open}
+          aria-keyshortcuts={shortcut}
+          onPress={onPress}
+        >
+          <Icon name={icon} size={24} />
+        </AriaButton>
+      </TextTooltip>
     </div>
   );
 }
@@ -366,7 +417,9 @@ export function Condition({
         )
           return (
             <div className="ol-meter ol-meter-text" key={id}>
-              <span className="ol-meter-label">{name}</span>
+              <span className="ol-meter-label">
+                <MechanicTerm label={name} explanation={attribute.meaning} />
+              </span>
               <span>
                 {attribute.status === 'unknown'
                   ? 'Unknown'
@@ -391,28 +444,56 @@ export function Condition({
           : 'accent';
         const fieldError = fieldErrors?.[id];
         const fieldErrorId = `${errorId}-${id}`;
-        const display = `${unit === '%' ? Math.round(value) : Math.round(value * 10) / 10}${unit === '%' ? '%' : ` ${unit ?? ''}`}`;
-        return (
+        const formatValue = (amount: number) =>
+          `${formatDisplayNumber(amount, { integer: attribute.bodyHealth || max >= 100 })}${unit ? ` ${unit}` : ''}`;
+        const display = formatValue(value);
+        const help = (
+          <div className="ol-condition-help">
+            <div className="ol-condition-help-heading">
+              <strong>{name}</strong>
+              <span>{display}</span>
+            </div>
+            <div className="ol-condition-help-range">
+              Range: {formatValue(min)} to {formatValue(max)}
+            </div>
+            {attribute.condition && (
+              <div className="ol-condition-help-state">{attribute.condition}</div>
+            )}
+            {attribute.meaning && (
+              <div className="ol-condition-help-meaning">{attribute.meaning}</div>
+            )}
+          </div>
+        );
+        const row = (
           <div
             className="ol-meter"
             key={id}
+            role={onTextChange ? undefined : 'meter'}
+            aria-label={onTextChange ? undefined : name}
+            aria-valuemin={onTextChange ? undefined : min}
+            aria-valuemax={onTextChange ? undefined : max}
+            aria-valuenow={onTextChange ? undefined : value}
+            aria-valuetext={
+              onTextChange ? undefined : [display, attribute.condition].filter(Boolean).join(', ')
+            }
             data-critical={critical || undefined}
             style={
               { '--c': `var(--${critical ? 'danger' : color})`, '--v': percentage } as CSSProperties
             }
           >
             <Icon name={presentation.icon} fallbackLabel={name} />
-            <span className="ol-meter-label">{name}</span>
-            <span
-              className="ol-meter-track"
-              role="meter"
-              aria-hidden={!!onTextChange || undefined}
-              aria-label={name}
-              aria-valuemin={min}
-              aria-valuemax={max}
-              aria-valuenow={value}
-              aria-valuetext={[display, attribute.condition].filter(Boolean).join(', ')}
-            >
+            <span className="ol-meter-label">
+              {onTextChange ? (
+                <PointerTooltip content={help} className="ol-condition-tooltip">
+                  <AriaButton className="ol-mechanic-term" aria-label={`About ${name}`}>
+                    {name}
+                  </AriaButton>
+                </PointerTooltip>
+              ) : (
+                name
+              )}
+            </span>
+            <span className="ol-meter-track" aria-hidden="true">
               <span className="ol-meter-fill" />
             </span>
             {onTextChange ? (
@@ -438,12 +519,16 @@ export function Condition({
                 {fieldError}
               </span>
             )}
-            {attribute.condition && (
-              <span className="ol-condition-description" title={attribute.meaning}>
-                {attribute.condition}
-              </span>
-            )}
           </div>
+        );
+        // The entire read-only meter owns hover/focus. Editors retain native
+        // inputs beside their help button, never nested in another control.
+        return onTextChange ? (
+          row
+        ) : (
+          <PointerTooltip key={id} content={help} className="ol-condition-tooltip">
+            <Focusable>{row}</Focusable>
+          </PointerTooltip>
         );
       })}
     </div>
@@ -496,6 +581,9 @@ export function Panel({
   >(undefined);
   const detail = !!onBack;
   useLayoutEffect(() => {
+    panelElement.current?.dispatchEvent(new Event('ol-panel-moved', { bubbles: true }));
+  }, [offset]);
+  useLayoutEffect(() => {
     const element = body.current;
     if (!element) return;
     element.scrollTop = detail ? 0 : listScroll.current;
@@ -520,7 +608,7 @@ export function Panel({
       const bounds = panel.getBoundingClientRect();
       const scale = bounds.width / panel.offsetWidth || 1;
       const left = Math.max(8, Math.min(innerWidth - bounds.width - 8, bounds.left));
-      const top = Math.max(8, Math.min(innerHeight - 56, bounds.top));
+      const top = Math.max(8, Math.min(innerHeight - bounds.height - 8, bounds.top));
       const dx = left - bounds.left;
       const dy = top - bounds.top;
       if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
@@ -571,7 +659,10 @@ export function Panel({
     );
     const dy = Math.max(
       8 - active.top,
-      Math.min(innerHeight - 56 - active.top, event.clientY - active.pointerY),
+      Math.min(
+        Math.max(8, innerHeight - (element?.getBoundingClientRect().height ?? 56) - 8) - active.top,
+        event.clientY - active.pointerY,
+      ),
     );
     setOffset({ x: active.offsetX + dx / scale, y: active.offsetY + dy / scale });
   };
@@ -594,49 +685,51 @@ export function Panel({
         } as CSSProperties
       }
     >
-      <header
-        className="ol-panel-head"
-        onPointerDown={startDrag}
-        onPointerMove={moveDrag}
-        onPointerUp={() => (drag.current = undefined)}
-        onPointerCancel={() => (drag.current = undefined)}
-        onLostPointerCapture={() => (drag.current = undefined)}
-      >
-        <div>
-          {onBack && (
-            <Button
-              aria-label={`Back to ${backLabel ?? 'list'}`}
-              variant="quiet"
-              size="sm"
-              icon="ui.back"
-              onPress={onBack}
-            >
-              {backLabel ?? 'Back'}
-            </Button>
-          )}
-          <h2 id={titleId} className="ol-panel-title ol-heading">
-            {title}
-          </h2>
+      <LoadingScope region={panelElement}>
+        <header
+          className="ol-panel-head"
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={() => (drag.current = undefined)}
+          onPointerCancel={() => (drag.current = undefined)}
+          onLostPointerCapture={() => (drag.current = undefined)}
+        >
+          <div>
+            {onBack && (
+              <Button
+                aria-label={`Back to ${backLabel ?? 'list'}`}
+                variant="quiet"
+                size="sm"
+                icon="ui.back"
+                onPress={onBack}
+              >
+                {backLabel ?? 'Back'}
+              </Button>
+            )}
+            <h2 id={titleId} className="ol-panel-title ol-heading">
+              {title}
+            </h2>
+          </div>
+          <div className="ol-panel-tools">
+            {workspace && (
+              <Button
+                className="ol-panel-expand"
+                size="sm"
+                variant="quiet"
+                onPress={workspace.onToggle}
+              >
+                {workspace.expanded ? 'Compact workspace' : 'Expand workspace'}
+              </Button>
+            )}
+            <IconButton icon="ui.close" label={`Hide ${title} panel`} onPress={onClose} />
+          </div>
+        </header>
+        {tabs}
+        <div ref={body} className="ol-panel-body">
+          {children}
         </div>
-        <div className="ol-panel-tools">
-          {workspace && (
-            <Button
-              className="ol-panel-expand"
-              size="sm"
-              variant="quiet"
-              onPress={workspace.onToggle}
-            >
-              {workspace.expanded ? 'Compact workspace' : 'Expand workspace'}
-            </Button>
-          )}
-          <IconButton icon="ui.close" label={`Hide ${title} panel`} onPress={onClose} />
-        </div>
-      </header>
-      {tabs}
-      <div ref={body} className="ol-panel-body">
-        {children}
-      </div>
-      {footer && <footer className="ol-panel-foot">{footer}</footer>}
+        {footer && <footer className="ol-panel-foot">{footer}</footer>}
+      </LoadingScope>
     </section>
   );
 }
@@ -690,11 +783,7 @@ export function EntityRow({
         <span className="ol-row-title">{name}</span>
         {meta && <span className="ol-row-meta">{meta}</span>}
       </span>
-      {count !== undefined ? (
-        <span className="ol-row-count">{count}</span>
-      ) : (
-        <Icon name="ui.next" size={16} />
-      )}
+      {count !== undefined && <span className="ol-row-count">{formatDisplayNumber(count)}</span>}
     </AriaButton>
   );
 }
@@ -707,15 +796,12 @@ export function EmptyState({ title, children }: { title: string; children?: Reac
     </div>
   );
 }
-/** Short hover/focus labels use plain text; rich action details use Explanation. */
+/** Short and rich explanations share pointer placement and readable surfaces. */
 export function TextTooltip({ children, text }: { children: ReactNode; text?: string | null }) {
   return (
-    <TooltipTrigger delay={300} closeDelay={100} isDisabled={!text}>
+    <PointerTooltip content={text} className="ol-text-tooltip" disabled={!text}>
       {children}
-      <Tooltip className="ol-text-tooltip ol-root" placement="top" offset={4}>
-        <span className="ol-portal-content">{text}</span>
-      </Tooltip>
-    </TooltipTrigger>
+    </PointerTooltip>
   );
 }
 
@@ -731,10 +817,10 @@ export function Explanation({
   facts?: Array<[string, string]>;
 }) {
   return (
-    <TooltipTrigger delay={1000} closeDelay={150}>
-      {children}
-      <Tooltip className="ol-tip ol-root" placement="end" offset={8}>
-        <div className="ol-portal-content">
+    <PointerTooltip
+      className="ol-tip"
+      content={
+        <>
           <b>{title}</b>
           {text && <div className="ol-prose">{text}</div>}
           {!!facts?.length && (
@@ -747,9 +833,11 @@ export function Explanation({
               ))}
             </dl>
           )}
-        </div>
-      </Tooltip>
-    </TooltipTrigger>
+        </>
+      }
+    >
+      {children}
+    </PointerTooltip>
   );
 }
 export function SegmentedControl({
@@ -797,9 +885,30 @@ export function symbol(id: string): string {
     cancel: 'ui.close',
     recover: 'meter.health',
     teach: 'action.talk',
+    'status-effect': 'ui.cognition',
   };
   return (
     (Object.hasOwn(native, id) ? native[id] : undefined) ??
     (Object.hasOwn(icons, id) ? id : `action.${id}`)
+  );
+}
+
+/** One explanation surface for world-authored mechanics, in events, meters and inspectors. */
+export function MechanicTerm({
+  label,
+  explanation,
+  children,
+}: {
+  label: string;
+  explanation?: string | null;
+  children?: ReactNode;
+}) {
+  if (!explanation) return <>{children ?? label}</>;
+  return (
+    <TextTooltip text={explanation}>
+      <AriaButton className="ol-mechanic-term" aria-label={`${label}: ${explanation}`}>
+        {children ?? label}
+      </AriaButton>
+    </TextTooltip>
   );
 }

@@ -1,30 +1,28 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
+  GameView,
   PerceivedEventsPage,
   PublicEvent,
   WorldEventSourceDetail,
   WorldEventSourceReference,
   WorldEventSourcesView,
 } from '@open-legend/protocol';
-import { Button, Icon, IconButton } from '../design-system/components';
-import { EventTime } from './event-time';
+import { Button, FilterButton, Icon, IconButton } from '../design-system/components';
+import { EventTime, clockParts } from './event-time';
+import { PerceivedEventText } from './perceived-event-text';
+import './world-events.css';
+import { formatDisplayNumber } from '@open-legend/language';
+import { LoadingIndicator } from '../design-system/loading';
 import { ConversationThread } from './conversation';
 import { getScoped, post } from '../api';
 
 const filters = [
   ['all', 'All'],
   ['speech', 'Speech'],
-  ['expression', 'Expressions'],
-  ['encounter', 'Encounters'],
-  ['action-started', 'Action started'],
-  ['action-stopped', 'Action stopped'],
-  ['crafted', 'Crafting'],
-  ['taught', 'Teaching'],
-  ['shot', 'Shots'],
-  ['death', 'Deaths'],
-  ['body-effect', 'Body effects'],
-  ['attribute-concern', 'Body sensations'],
-  ['contact', 'Contacts'],
+  ['actions', 'Actions'],
+  ['conflict', 'Conflict'],
+  ['body', 'Body'],
+  ['observations', 'Observations'],
 ] as const;
 
 type SlotOrigin = { type: string; query: string };
@@ -36,15 +34,33 @@ const sameSource = (a: WorldEventSourceReference | null, b: WorldEventSourceRefe
   a?.family === b.family && a.sourceId === b.sourceId;
 
 /** A durable, read-only perspective. Opening this panel never creates awareness or captions. */
-type Props = { scope: string; revision: string | undefined; visible?: boolean };
+type Props = {
+  scope: string;
+  revision: string | undefined;
+  visible?: boolean;
+  view: GameView;
+  inspectEntity?: (id: string) => void;
+};
 /** Keyed ownership clears old rows during the same render, not a later effect. The owner may
  * control the filter, for example to open Speech from the missed-caption notice. */
 export const WorldEvents = memo(function WorldEvents({
-  ownerScope,
+  view,
+  inspectEntity,
   type: controlledType,
   onTypeChange,
   ...props
-}: Props & { ownerScope: string; type?: string; onTypeChange?: (type: string) => void }) {
+}: Props & { type?: string; onTypeChange?: (type: string) => void }) {
+  // Reading belongs to the person, not the current controller connection. The
+  // nested history owner separately clears revoked/edited evidence immediately.
+  const ownerScope = JSON.stringify([
+    view.worldId,
+    view.player.id,
+    view.access?.privateDraftScope,
+    view.saveTimeline,
+  ]);
+  const inspection = useRef(inspectEntity);
+  inspection.current = inspectEntity;
+  const inspectCurrent = useCallback((id: string) => inspection.current?.(id), []);
   const [localType, setLocalType] = useState('all');
   const type = controlledType ?? localType;
   const setType = onTypeChange ?? setLocalType;
@@ -53,6 +69,12 @@ export const WorldEvents = memo(function WorldEvents({
     <ScopedComparisonOwner
       key={ownerScope}
       {...props}
+      canShowAll={!!view.godMode}
+      controlScope={view.access?.scope ?? ''}
+      historyEpoch={view.historyEpoch ?? ''}
+      day={view.clock.day}
+      offsetHours={view.clock.offsetHours}
+      inspectEntity={inspectEntity ? inspectCurrent : undefined}
       type={type}
       setType={setType}
       query={query}
@@ -61,7 +83,23 @@ export const WorldEvents = memo(function WorldEvents({
   );
 });
 
-function ScopedComparisonOwner({
+type HistoryProps = Omit<Props, 'view'> & {
+  day: number;
+  offsetHours: number;
+  controlScope: string;
+  historyEpoch: string;
+  canShowAll: boolean;
+};
+
+// Only clock formatting/date bounds reach the historical reader; live positions and
+// meters must not rebuild all loaded event rows on every world update.
+const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
+  controlScope,
+  historyEpoch,
+  canShowAll,
+  day,
+  offsetHours,
+  inspectEntity,
   scope,
   revision,
   visible = true,
@@ -69,7 +107,7 @@ function ScopedComparisonOwner({
   setType,
   query,
   setQuery,
-}: Props & {
+}: HistoryProps & {
   type: string;
   setType: (type: string) => void;
   query: string;
@@ -86,6 +124,18 @@ function ScopedComparisonOwner({
     error: string;
   }>();
   const [pendingReturnId, setPendingReturnId] = useState<string | null>(null);
+  const [selectionScope, setSelectionScope] = useState(controlScope);
+  if (selectionScope !== controlScope) {
+    // Source tokens are current-authority capabilities, even when their already
+    // admitted prose remains readable by this same private owner.
+    setSelectionScope(controlScope);
+    setSlots([null, null]);
+    setOrigins([null, null]);
+    setComparisonOpen(false);
+    setChoosingSlot(null);
+    setDetailRead(undefined);
+    setPendingReturnId(null);
+  }
   const lastTriggerId = useRef<string | null>(null);
   const detailGeneration = useRef(0);
   const detailController = useRef<AbortController | null>(null);
@@ -161,8 +211,14 @@ function ScopedComparisonOwner({
 
   return (
     <ScopedWorldEvents
-      key={`${scope}:${type}`}
+      key={`${historyEpoch}:${canShowAll}`}
       scope={scope}
+      controlScope={controlScope}
+      historyEpoch={historyEpoch}
+      canShowAll={canShowAll}
+      day={day}
+      offsetHours={offsetHours}
+      inspectEntity={inspectEntity}
       revision={revision}
       visible={visible}
       type={type}
@@ -188,9 +244,13 @@ function ScopedComparisonOwner({
       lastTriggerId={lastTriggerId}
     />
   );
-}
+});
 
 function ScopedWorldEvents({
+  canShowAll,
+  day,
+  offsetHours,
+  inspectEntity,
   scope,
   revision,
   visible = true,
@@ -213,7 +273,7 @@ function ScopedWorldEvents({
   pendingReturnId,
   setPendingReturnId,
   lastTriggerId,
-}: Props & {
+}: HistoryProps & {
   type: string;
   setType: (type: string) => void;
   query: string;
@@ -240,7 +300,19 @@ function ScopedWorldEvents({
   const sectionRef = useRef<HTMLElement>(null);
   const [scanLimited, setScanLimited] = useState(false);
   const [events, setEvents] = useState<PublicEvent[]>([]);
+  const [pageScope, setPageScope] = useState<string>();
+  const currentPage = pageScope === scope;
   const [cursor, setCursor] = useState<string>();
+  const [newerCursor, setNewerCursor] = useState<string>();
+  const [showAll, setShowAll] = useState(false);
+  const [jumpDay, setJumpDay] = useState(String(day));
+  const [jumpClock, setJumpClock] = useState('12:00');
+  const [jumpTime, setJumpTime] = useState<number>();
+  const readKey = JSON.stringify([scope, type, query, showAll, jumpTime]);
+  const [loadedReadKey, setLoadedReadKey] = useState<string>();
+  const currentQueryPage = loadedReadKey === readKey;
+  const currentReadKey = useRef(readKey);
+  currentReadKey.current = readKey;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [newEntries, setNewEntries] = useState(false);
@@ -249,14 +321,14 @@ function ScopedWorldEvents({
   const controller = useRef<AbortController | null>(null);
   const loadedRevision = useRef(revision);
   const loadedQuery = useRef<string | null>(null);
-  const failedOlder = useRef(false);
+  const failedOlder = useRef<boolean | 'newer'>(false);
 
   useEffect(() => {
     setDraft(query);
   }, [query]);
 
-  async function load(older = false) {
-    if (!visible) return;
+  async function load(older: boolean | 'newer' = false) {
+    if (!visible || (older && !currentQueryPage)) return;
     controller.current?.abort();
     const abort = new AbortController();
     controller.current = abort;
@@ -266,46 +338,66 @@ function ScopedWorldEvents({
     setBusy(true);
     setError('');
     try {
-      const params = new URLSearchParams({ type });
+      const params = new URLSearchParams({ category: type, showAll: String(showAll) });
+      if (!older && jumpTime !== undefined) params.set('at', String(jumpTime));
       if (query) params.set('q', query);
-      if (older && cursor) params.set('cursor', cursor);
+      if (older === true && cursor) params.set('cursor', cursor);
+      if (older === 'newer' && newerCursor) params.set('cursor', newerCursor);
       const page = await getScoped<PerceivedEventsPage>(
         `/api/world-events?${params}`,
         abort.signal,
       );
-      if (request !== generation.current) return;
+      if (
+        abort.signal.aborted ||
+        request !== generation.current ||
+        currentReadKey.current !== readKey
+      )
+        return;
       setEvents((previous) => {
         if (!older) return page.events;
         const seen = new Set(previous.map((event) => event.id));
-        return [...page.events.filter((event) => !seen.has(event.id)), ...previous];
+        const incoming = page.events.filter((event) => !seen.has(event.id));
+        return older === 'newer' ? [...previous, ...incoming] : [...incoming, ...previous];
       });
-      setCursor(page.nextCursor);
+      if (older !== 'newer') setCursor(page.nextCursor);
+      if (older !== true) setNewerCursor(page.newerCursor);
       setScanLimited(!!page.scanLimited);
+      setPageScope(scope);
+      setLoadedReadKey(readKey);
       loadedQuery.current = query;
       if (!older) {
         loadedRevision.current = atRevision;
         setNewEntries(false);
-        setOpeningRevision((n) => n + 1);
+        if (currentPage || !events.length) setOpeningRevision((n) => n + 1);
       }
     } catch (reason) {
-      if (request === generation.current) setError(String(reason));
+      if (
+        !abort.signal.aborted &&
+        request === generation.current &&
+        currentReadKey.current === readKey
+      )
+        setError(String(reason));
     } finally {
-      if (request === generation.current) setBusy(false);
+      if (request === generation.current && currentReadKey.current === readKey) setBusy(false);
     }
   }
   useEffect(() => {
     generation.current++;
-    setEvents([]);
     setCursor(undefined);
+    setNewerCursor(undefined);
     loadedQuery.current = null;
     return () => {
       generation.current++;
       controller.current?.abort();
     };
-  }, [scope, type, query]);
+  }, [scope, type, query, showAll, jumpTime]);
+  useEffect(() => {
+    setEvents([]);
+    setPageScope(undefined);
+  }, [showAll]);
   useEffect(() => {
     if (visible && loadedQuery.current !== query) void load();
-  }, [visible, scope, type, query]);
+  }, [visible, scope, type, query, showAll, jumpTime]);
   useEffect(() => {
     if (loadedRevision.current !== revision) setNewEntries(true);
   }, [revision, busy]);
@@ -318,6 +410,8 @@ function ScopedWorldEvents({
       `[data-source-inspect="${CSS.escape(sourceId)}"]`,
     );
     if (!row && !button) return false;
+    const disclosure = button?.closest('details');
+    if (disclosure) disclosure.open = true;
     row?.scrollIntoView({ block: 'nearest' });
     (button ?? row)?.focus();
     return true;
@@ -399,6 +493,7 @@ function ScopedWorldEvents({
   function closeComparison() {
     setComparisonOpen(false);
     setChoosingSlot(null);
+    setPendingReturnId(null);
     const triggerId = lastTriggerId.current;
     if (!triggerId || !focusSourceRow(triggerId)) {
       searchInput.current?.focus();
@@ -424,54 +519,110 @@ function ScopedWorldEvents({
     }
   }
 
-  const items = useMemo(
-    () =>
-      events.map((event) => {
-        const source = event.source;
-        const inSlot0 = source && sameSource(slots[0], source);
-        const inSlot1 = source && sameSource(slots[1], source);
-        const selectedSlot = inSlot0 ? 1 : inSlot1 ? 2 : null;
-        return {
-          id: event.id,
-          content: (
-            <article className="ol-world-event" data-source-row={event.id}>
-              <div className="ol-meta">
-                <EventTime time={event.time} /> ·{' '}
-                {filters.find(([value]) => value === event.type)?.[1] ?? event.type}
-                {event.modality &&
-                  ` · ${event.modality === 'heard' ? 'Heard' : event.modality === 'observed' ? 'Observed' : event.modality === 'felt' ? 'Felt' : 'Personal experience'}`}
-                {selectedSlot !== null && ` · Source ${selectedSlot}`}
-              </div>
-              <p>
-                {event.type === 'speech' && <Icon name="ui.speech" size={16} />} {event.text}
-              </p>
-              {source && (
-                <div className="ol-world-event-actions">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    data-source-inspect={event.id}
-                    onPress={() => handleInspectSource(source)}
-                  >
-                    {choosingSlot !== null ? `Use as Source ${choosingSlot + 1}` : 'Inspect source'}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={selectedSlot !== null ? 'primary' : 'secondary'}
-                    onPress={() => handleCompareSource(source)}
-                  >
-                    {selectedSlot !== null
-                      ? `Comparing (Source ${selectedSlot})`
-                      : 'Compare sources'}
-                  </Button>
-                </div>
+  const items = useMemo(() => {
+    let previousDay: number | undefined,
+      previousTime = -Infinity;
+    return events.map((event) => {
+      const source = currentPage ? event.source : undefined;
+      const selectedSlot =
+        source && sameSource(slots[0], source)
+          ? 1
+          : source && sameSource(slots[1], source)
+            ? 2
+            : null;
+      const clock = clockParts(event.time, offsetHours);
+      const newDay = previousDay !== clock.day;
+      const showTime = newDay || event.time - previousTime >= 600;
+      previousDay = clock.day;
+      previousTime = event.time;
+      const timestamp = `Day ${clock.day}, ${clock.hour}:${clock.minute}`;
+      return {
+        id: event.id,
+        content: (
+          <>
+            {newDay && <div className="ol-event-day">Day {clock.day}</div>}
+            <article className="ol-world-event" data-source-row={event.id} title={timestamp}>
+              {showTime && (
+                <time className="ol-event-clock">
+                  {clock.hour}:{clock.minute}
+                </time>
               )}
+              <div className="ol-world-event-line">
+                <Icon name={event.presentation?.icon ?? 'ui.inview'} size={16} />
+                <p>
+                  <PerceivedEventText event={event} inspectEntity={inspectEntity} />
+                </p>
+              </div>
+              <details className="ol-world-event-detail">
+                <summary
+                  aria-label={
+                    selectedSlot
+                      ? `Event details, comparing as Source ${selectedSlot}`
+                      : 'Event details'
+                  }
+                  title="Event details"
+                >
+                  <Icon name="ui.more" size={16} />
+                </summary>
+                <p>
+                  {timestamp}
+                  {event.modality
+                    ? `, ${event.modality === 'heard' ? 'heard' : event.modality === 'observed' ? 'observed' : event.modality === 'felt' ? 'felt' : 'personal experience'}`
+                    : ''}
+                </p>
+                {event.attributeChange && (
+                  <p>
+                    {event.attributeChange.name ?? 'Meter'}:{' '}
+                    {formatDisplayNumber(event.attributeChange.before, {
+                      integer: event.attributeChange.kind === 'health',
+                    })}
+                    {event.attributeChange.unit} to{' '}
+                    {formatDisplayNumber(event.attributeChange.after, {
+                      integer: event.attributeChange.kind === 'health',
+                    })}
+                    {event.attributeChange.unit}
+                  </p>
+                )}
+                {event.speech?.recipient && <p>To {event.speech.recipient.nameAtTime}</p>}
+                {inspectEntity &&
+                  (event.references ?? []).map((ref) => (
+                    <button
+                      type="button"
+                      key={`${ref.role}:${ref.id}`}
+                      className="ol-inline-reference"
+                      onClick={() => inspectEntity(ref.id)}
+                    >
+                      {ref.label}
+                    </button>
+                  ))}
+                {source && (
+                  <div className="ol-world-event-actions">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      data-source-inspect={event.id}
+                      onPress={() => handleInspectSource(source)}
+                    >
+                      {choosingSlot !== null
+                        ? `Use as Source ${choosingSlot + 1}`
+                        : 'Inspect source'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={selectedSlot ? 'primary' : 'secondary'}
+                      onPress={() => handleCompareSource(source)}
+                    >
+                      {selectedSlot ? `Comparing (Source ${selectedSlot})` : 'Compare sources'}
+                    </Button>
+                  </div>
+                )}
+              </details>
             </article>
-          ),
-        };
-      }),
-    [events, slots, choosingSlot, type, query],
-  );
+          </>
+        ),
+      };
+    });
+  }, [events, slots, choosingSlot, type, query, inspectEntity, offsetHours, currentPage]);
 
   const visibleSlotIndices = [0, 1] as const;
 
@@ -480,6 +631,7 @@ function ScopedWorldEvents({
       ref={sectionRef}
       className="ol-world-events"
       aria-label="Perceived world events"
+      aria-busy={busy}
       onKeyDown={(event) => {
         if (event.key === 'Escape' && (comparisonOpen || choosingSlot !== null)) {
           event.preventDefault();
@@ -489,33 +641,85 @@ function ScopedWorldEvents({
       }}
     >
       <div className="ol-world-event-controls">
-        <label>
-          Type{' '}
-          <select
-            aria-label="World event type"
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-          >
-            {filters.map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <Button size="sm" isPending={busy} onPress={() => void load()}>
-          {newEntries ? 'New events — refresh' : 'Refresh'}
-        </Button>
+        <div className="ol-event-filters" role="group" aria-label="Filter events">
+          {filters.map(([value, label]) => (
+            <FilterButton key={value} selected={type === value} onPress={() => setType(value)}>
+              {label}
+            </FilterButton>
+          ))}
+        </div>
       </div>
+      <form
+        className="ol-event-time-jump"
+        aria-label="Jump to time"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const [hour, minute] = jumpClock.split(':').map(Number);
+          const day = Number(jumpDay);
+          if (!Number.isInteger(day) || day < 1 || hour === undefined || minute === undefined)
+            return;
+          const daySeconds =
+            (((hour * 3600 + minute * 60 - offsetHours * 3600) % 86400) + 86400) % 86400;
+          const at = (day - 1) * 86400 + daySeconds;
+          if (at === jumpTime) void load();
+          else setJumpTime(at);
+        }}
+      >
+        <div className="ol-event-time-heading">
+          <span className="ol-event-time-label">Jump to time</span>
+          <Button
+            variant="quiet"
+            isDisabled={busy}
+            onPress={() => {
+              if (jumpTime !== undefined) setJumpTime(undefined);
+              else void load();
+            }}
+          >
+            Latest
+          </Button>
+          {newEntries && (
+            <span className="ol-event-new" aria-label="New events available">
+              New events
+            </span>
+          )}
+        </div>
+        <label>
+          Day
+          <input
+            className="ol-field-control"
+            aria-label="Event day"
+            type="number"
+            min="1"
+            max={day}
+            step="1"
+            value={jumpDay}
+            onChange={(e) => setJumpDay(e.target.value)}
+            required
+          />
+        </label>
+        <label>
+          Time
+          <input
+            className="ol-field-control"
+            aria-label="Event time"
+            type="time"
+            value={jumpClock}
+            onChange={(e) => setJumpClock(e.target.value)}
+            required
+          />
+        </label>
+        <Button type="submit" variant="secondary" isDisabled={busy}>
+          Jump
+        </Button>
+      </form>
       {/* Matches only the text shown for each event you perceived, never unheard words. */}
       <form
-        className="ol-memory-search"
+        className="ol-memory-search ol-event-search"
         role="search"
         onSubmit={(event) => {
           event.preventDefault();
           if (composing.current) return;
           if (draft.trim() === query) return;
-          setEvents([]);
           setCursor(undefined);
           setError('');
           setQuery(draft.trim());
@@ -541,6 +745,9 @@ function ScopedWorldEvents({
               composing.current = false;
             }}
           />
+          <span className="ol-event-loading-slot">
+            <LoadingIndicator active={busy} label="Loading events" />
+          </span>
           {draft && (
             <IconButton
               icon="ui.close"
@@ -548,7 +755,6 @@ function ScopedWorldEvents({
               onPress={() => {
                 setDraft('');
                 if (query) {
-                  setEvents([]);
                   setQuery('');
                 }
                 searchInput.current?.focus();
@@ -556,10 +762,28 @@ function ScopedWorldEvents({
             />
           )}
         </div>
-        <Button size="sm" type="submit" isPending={busy}>
+        <Button type="submit" isDisabled={busy}>
           Search
         </Button>
       </form>
+      {canShowAll && (
+        <div className="ol-event-options">
+          <label className="ol-event-show-all">
+            <input
+              type="checkbox"
+              checked={showAll}
+              onChange={(e) => setShowAll(e.target.checked)}
+            />
+            Show all events
+          </label>
+        </div>
+      )}
+      {pendingReturnId && !busy && (
+        <p className="ol-meta" role="status">
+          That source is not on a loaded page. Load older or newer events to find it; your
+          comparison stays open.
+        </p>
+      )}
       {comparisonOpen && (slots[0] !== null || slots[1] !== null || choosingSlot !== null) && (
         <section className="ol-world-event-comparison" aria-label="Compare sources">
           <div className="ol-world-event-comparison-header">
@@ -576,11 +800,7 @@ function ScopedWorldEvents({
               search or load older events without losing your other selection.
             </p>
           )}
-          {detailBusy && (
-            <p className="ol-meta" role="status">
-              Loading source detail…
-            </p>
-          )}
+          <LoadingIndicator active={detailBusy} label="Loading source detail" />
           {detailError && (
             <div className="ol-world-event-comparison-error" role="alert">
               <span>{detailError}</span>{' '}
@@ -625,8 +845,7 @@ function ScopedWorldEvents({
                   ) : detail?.status === 'unavailable' ? (
                     <>
                       <div className="ol-world-event-source-meta">
-                        <strong>Source {slotIndex + 1} · Unavailable</strong>
-                        <p className="ol-meta">Record reference {ref.sourceId}</p>
+                        <strong>Source {slotIndex + 1}, Unavailable</strong>
                       </div>
                       <div className="ol-world-event-source-body">
                         <p className="ol-world-event-source-unavailable">{detail.reason}</p>
@@ -659,11 +878,10 @@ function ScopedWorldEvents({
                       {/* 1. Source, time, and acquisition */}
                       <div className="ol-world-event-source-meta">
                         <strong>
-                          Source {slotIndex + 1} · {detail.acquisitionLabel}
+                          Source {slotIndex + 1}, {detail.acquisitionLabel}
                         </strong>
                         <p className="ol-meta">
-                          {detail.sourceLabel} · <EventTime time={detail.time} /> · Record #
-                          {detail.order}
+                          {detail.sourceLabel}, <EventTime time={detail.time} />
                         </p>
                         {detail.acquisition === 'inspected-document' && (
                           <p className="ol-meta">
@@ -673,11 +891,8 @@ function ScopedWorldEvents({
                         )}
                         {detail.observedLocation && (
                           <p className="ol-meta">
-                            <strong>Observed here then:</strong> {detail.observedLocation.label}
-                            {detail.observedLocation.point
-                              ? ` (${Math.round(detail.observedLocation.point.x)}, ${Math.round(detail.observedLocation.point.z)})`
-                              : ''}{' '}
-                            at <EventTime time={detail.time} /> (historical observation, not live
+                            <strong>Observed here then:</strong> {detail.observedLocation.label} at{' '}
+                            <EventTime time={detail.time} /> (historical observation, not live
                             location)
                           </p>
                         )}
@@ -720,9 +935,7 @@ function ScopedWorldEvents({
                     <>
                       <div className="ol-world-event-source-meta">
                         <strong>Source {slotIndex + 1}</strong>
-                        <p className="ol-meta">
-                          {detailBusy ? 'Loading retained source…' : 'Source detail unavailable.'}
-                        </p>
+                        <p className="ol-meta">{!detailBusy && 'Source detail unavailable.'}</p>
                       </div>
                       <div className="ol-world-event-source-actions">
                         <Button
@@ -754,25 +967,16 @@ function ScopedWorldEvents({
           </div>
         </section>
       )}
-      <p className="ol-meta" role="status">
-        {query && busy
-          ? 'Searching…'
-          : error
-            ? 'Reading did not finish. Any entries already loaded are kept below.'
-            : query
-              ? loadedQuery.current !== query
-                ? 'Searching perceived events…'
-                : `${events.length} ${events.length === 1 ? 'match' : 'matches'} for “${query}”${
-                    scanLimited
-                      ? '. This search stopped at its record limit; older events remain to search.'
-                      : cursor
-                        ? '. Older events remain to search.'
-                        : '. End of the retained records.'
-                  }`
-              : type === 'speech'
-                ? 'Speech you perceived across all conversations.'
-                : 'Events you perceived, in time order.'}
-      </p>
+      {!busy && !error && query && currentQueryPage && (
+        <p className="ol-meta" role="status">
+          {events.length} {events.length === 1 ? 'match' : 'matches'} for “{query}”
+          {scanLimited
+            ? '. More history remains to search.'
+            : cursor || newerCursor
+              ? '. More history remains to search.'
+              : '. End of the retained records.'}
+        </p>
+      )}
       {error && (
         <div className="ol-reading-error">
           <p role="alert">{error}</p>
@@ -786,15 +990,15 @@ function ScopedWorldEvents({
           </Button>
         </div>
       )}
-      {!busy && !error && loadedQuery.current === query && !events.length && (
+      {!busy && !error && currentQueryPage && !events.length && (
         <p>
           {query
-            ? `No matches in the perceived events searched.${cursor ? ' Search older events or change your words.' : ''}`
+            ? `No matches in the perceived events searched.${cursor || newerCursor ? ' Continue through history or change your words.' : ''}`
             : 'No retained perceived events match this filter.'}
         </p>
       )}
       <ConversationThread
-        conversationKey={`${scope}:${type}:${query}`}
+        conversationKey={`${type}:${query}`}
         visible={visible}
         preserveReading
         liveAnnouncements="off"
@@ -803,17 +1007,20 @@ function ScopedWorldEvents({
         openingRevision={openingRevision}
         before={
           <>
-            {cursor && (
+            {currentQueryPage && cursor && (
               <Button size="sm" isPending={busy} onPress={() => void load(true)}>
                 {query ? 'Search older events' : 'Load older events'}
               </Button>
             )}
-            {/* During a search the status line above announces progress. */}
-            {busy && !query && <p role="status">Loading events…</p>}
           </>
         }
         items={items}
       />
+      {currentQueryPage && newerCursor && (
+        <Button size="sm" variant="secondary" isPending={busy} onPress={() => void load('newer')}>
+          Load newer events
+        </Button>
+      )}
     </section>
   );
 }

@@ -13,6 +13,7 @@ export interface SceneCallbacks {
   select(entity: EntityView | null, at?: ScreenPoint, ground?: SurfacePoint): void;
   move(position: SurfacePoint): void;
   target(entity: EntityView): void;
+  primaryAction(entity: EntityView): void;
   hover(entity: EntityView | null, at: ScreenPoint): void;
   selectionDenied(message: string): void;
   cameraChanged?(state: CameraState): void;
@@ -35,8 +36,26 @@ export interface PerceptionOptions {
   vision: boolean;
   hearing: boolean;
 }
+export interface ConstructionPlacement {
+  position(): SurfacePoint;
+  /** Null means the current choice has no visible supported surface. */
+  move(point: SurfacePoint | null): void;
+  place(): void;
+  rotate(direction: -1 | 1): void;
+  cancel(): void;
+}
+export interface ConstructionPreviewTransform {
+  origin: SurfacePoint;
+  position: SurfacePoint;
+  rotation: number;
+}
 export interface WorldRenderer {
-  setConstructionPreview(shapes: readonly ConstructionShape[] | null, valid?: boolean): void;
+  setConstructionPreview(
+    shapes: readonly ConstructionShape[] | null,
+    valid?: boolean,
+    transform?: ConstructionPreviewTransform,
+  ): void;
+  setConstructionPlacement(placement: ConstructionPlacement | null): void;
   setTargeting(active: boolean): void;
   setSuspended(suspended: boolean): void;
   sampleFrameRate(): number | null;

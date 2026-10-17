@@ -1,3 +1,4 @@
+import { resolveInventoryGroup } from './inventory-groups.js';
 import { assemblyView } from './construction.js';
 import { reconcileConstructionAuthority } from '@open-legend/domain';
 import { endsCoachingConsent, endsOutingConsent } from '@open-legend/domain';
@@ -187,6 +188,7 @@ import { digest, type SavedWorld, type GameRepository, type PreparedCommit } fro
 import type { CreationActivationReceipt } from './creation-target-contracts.js';
 import { prepareWorldForStartup } from './initial-world-preparation.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
+import { primaryActionRefusal } from './action-catalogue.js';
 
 const id = z
   .string()
@@ -195,6 +197,10 @@ const id = z
   .regex(/^[a-zA-Z0-9_.:-]+$/);
 export const commandInputSchema = z
   .object({
+    primaryAction: z
+      .object({ targetId: id, actionId: z.string().min(1) })
+      .strict()
+      .optional(),
     type: z.enum([
       'construction',
       'construction-rest',
@@ -305,6 +311,7 @@ export const commandInputSchema = z
       })
       .strict()
       .optional(),
+    inventoryGroup: z.string().min(1).max(4096).optional(),
     targetId: id.optional(),
     definitionId: id.optional(),
     distance: z.number().min(1.5).max(12).optional(),
@@ -4417,6 +4424,10 @@ export class WorldService {
       // Legacy callers retain their old identity rules; new clients bind retries to their issued epoch.
       if (scope && (!epoch || !this.store.commands)) throw new AuthorityError('stale-scope');
       const prepare = async () => {
+        const refusal = input.primaryAction
+          ? primaryActionRefusal(this, input, scope ?? this.localScope)
+          : undefined;
+        if (refusal) return refusal;
         if (!input.knownPlace) return input;
         if (input.type !== 'move')
           return {
@@ -4555,6 +4566,27 @@ export class WorldService {
     actorId: string,
     humanInitiated = true,
   ): Command | ApiResult {
+    let inventorySources: import('@open-legend/domain').ExactInventorySource[] | undefined;
+    if (input.inventoryGroup) {
+      if (!['transfer-item', 'drop'].includes(input.type) || input.quantity === undefined)
+        return { ok: false, code: 'item', message: 'Choose a move or drop amount for this stack.' };
+      try {
+        inventorySources = resolveInventoryGroup(
+          this.world,
+          actorId,
+          input.inventoryGroup,
+          input.quantity,
+          this.timelineId,
+          input.itemId,
+        );
+      } catch (error) {
+        return {
+          ok: false,
+          code: 'stale',
+          message: error instanceof Error ? error.message : 'Refresh this stack.',
+        };
+      }
+    }
     const combatHelpId = combatHelpBinding(this.world, actorId, input);
     const envelope = {
       id: commandId,
@@ -4733,7 +4765,8 @@ export class WorldService {
         command = {
           ...envelope,
           type: input.type,
-          itemId: input.itemId,
+          ...(inventorySources ? { sources: inventorySources } : {}),
+          itemId: inventorySources?.[0]?.itemId ?? input.itemId,
           quantity: input.quantity,
           targetId: input.targetId,
           expectedRevision: input.expectedRevision,
@@ -4762,7 +4795,13 @@ export class WorldService {
       case 'drop':
         if (!input.itemId || input.quantity === undefined)
           return { ok: false, code: 'item', message: 'Choose an item and quantity.' };
-        command = { ...envelope, type: 'drop', itemId: input.itemId, quantity: input.quantity };
+        command = {
+          ...envelope,
+          type: 'drop',
+          itemId: inventorySources?.[0]?.itemId ?? input.itemId,
+          quantity: input.quantity,
+          ...(inventorySources ? { sources: inventorySources } : {}),
+        };
         break;
       case 'confirm-attempt':
       case 'withdraw-attempt':

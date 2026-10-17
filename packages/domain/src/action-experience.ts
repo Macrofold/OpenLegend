@@ -1,3 +1,4 @@
+import { validExactInventorySources } from './native-command-contracts.js';
 import {
   invocationFields,
   commandEntityFields,
@@ -270,6 +271,10 @@ export function isRecordedActivityCommand(command: Command): boolean {
     'targetRevision' in command
   )
     return (
+      (!('sources' in command) ||
+        command.sources === undefined ||
+        (command.type === 'transfer-item' &&
+          validExactInventorySources(command.sources, command.quantity))) &&
       isSafeRecordId(command.itemId) &&
       isSafeRecordId(command.targetId) &&
       Number.isSafeInteger(command.quantity) &&
@@ -481,8 +486,23 @@ export function beginActivity(
         : {}),
     };
   }
+  if ('sources' in command && command.sources) {
+    for (const source of command.sources) {
+      const entity = world.entities[source.itemId];
+      if (entity?.item)
+        objects[source.itemId] = {
+          kind: entity.kind,
+          definitionId: entity.item.definitionPin.id,
+          definitionVersion: entity.item.definitionPin.version,
+          definitionDigest: entity.item.definitionPin.digest,
+        };
+    }
+  }
   const record: ActivityOccurrence = {
-    ...(['practice-shot', 'coaching'].includes(command.type) ? { noLearningControl: true } : {}),
+    ...(['practice-shot', 'coaching'].includes(command.type) ||
+    ('sources' in command && command.sources)
+      ? { noLearningControl: true }
+      : {}),
     id: command.id,
     commandId: command.id,
     actionId,

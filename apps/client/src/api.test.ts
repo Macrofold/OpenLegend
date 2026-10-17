@@ -292,7 +292,7 @@ it('clears private drafts on logout or ownership replacement, but preserves ordi
   const view = publicView();
   acceptAccess(view);
   const draft = { text: 'Unfinished private text', revision: 'edit-1' };
-  const key = composerDraftKey(composerDraftScope(view), 'invention', null);
+  const key = composerDraftKey(composerDraftScope(view), 'act', null);
   saveDraft(key, draft);
   const resumed = { ...view, access: { ...view.access!, scope: 'scope:2', controlGeneration: 2 } };
   acceptAccess(resumed);

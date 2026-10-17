@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../design-system/loading';
 import { useEffect, useState } from 'react';
 import type { ContainerPage, InventoryItemView, ObjectHistoryPage } from '@open-legend/protocol';
 import { post } from '../api';
@@ -44,11 +45,11 @@ export function InventoryHistory({
       <p className="ol-caption">
         Recorded splits, merges and consumption while in your character’s custody.
       </p>
-      {loading && open && <p role="status">Loading history…</p>}
+      <LoadingIndicator active={loading && open} label="Loading item history" />
       {current?.error && <p role="alert">{current.error}</p>}
       {current?.page?.entries.map((entry) => (
         <p key={entry.id}>
-          {entry.name} · {entry.quantity}{' '}
+          {entry.name}, {entry.quantity}{' '}
           {entry.type === 'consume'
             ? 'consumed'
             : entry.type === 'merge'
@@ -129,7 +130,7 @@ function MatchingLots({ item, containerId, pageKey, canAct, visible, onMerge }: 
   // A permission or revision change hides stale matching lots immediately.
   const loading = result?.key !== key;
   const current = result?.key === key && visible ? result : undefined;
-  if (!current) return <p role="status">Finding matching lots…</p>;
+  if (!current) return <LoadingIndicator active={visible} label="Finding matching lots" />;
   if (current.error && !loading)
     return (
       <>
@@ -161,7 +162,7 @@ function MatchingLots({ item, containerId, pageKey, canAct, visible, onMerge }: 
               )}
               {targets.map((other, index) => (
                 <option key={other.id} value={other.id}>
-                  {other.name} × {other.quantity} · matching lot {index + 1}
+                  {other.name} × {other.quantity}, matching lot {index + 1}
                 </option>
               ))}
             </select>
@@ -179,7 +180,7 @@ function MatchingLots({ item, containerId, pageKey, canAct, visible, onMerge }: 
         <p className="ol-caption">No matching lot in this part of the container.</p>
       )}
       <span className="ol-caption" role="status">
-        {loading ? 'Finding matching lots…' : ''}
+        <LoadingIndicator active={loading} label="Finding matching lots" />
       </span>
       {current.page?.next && (
         <Button size="sm" variant="quiet" onPress={() => setCursor(current.page!.next)}>

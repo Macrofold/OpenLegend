@@ -518,6 +518,13 @@ interface Envelope {
   id: string;
   actorId: string;
 }
+export interface ExactInventorySource {
+  itemId: string;
+  quantity: number;
+  revision: number;
+  placementRevision: number;
+}
+
 export type Command = Envelope &
   (
     | import('./outings.js').OutingCommand
@@ -558,7 +565,7 @@ export type Command = Envelope &
       }
     /** quantity picks up exactly that many from one divisible stack (itemId required). */
     | { type: 'pickup'; targetId: string; itemId?: string; quantity?: number }
-    | { type: 'drop'; itemId: string; quantity: number }
+    | { type: 'drop'; itemId: string; quantity: number; sources?: ExactInventorySource[] }
     | {
         type: 'transfer-stock';
         sourceId: string;
@@ -571,6 +578,7 @@ export type Command = Envelope &
       }
     | {
         type: 'transfer-item' | 'split-item' | 'merge-item';
+        sources?: ExactInventorySource[];
         itemId: string;
         quantity: number;
         targetId: string;

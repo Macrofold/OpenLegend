@@ -3,6 +3,7 @@ import {
   clearSegment,
   distance3D,
   soundTransmission,
+  SPATIAL_LIMITS,
   surfaceContains,
   surfaceHeight,
   type WorldPoint,
@@ -16,6 +17,7 @@ export const GUIDE_SAMPLING = {
   rays: 128,
   steps: 32,
   refinements: 8,
+  boundarySubdivisions: 2,
   intervalMs: 100,
   sliceMs: 4,
 } as const;
@@ -110,6 +112,16 @@ export function* perceptionFieldSteps(
   const eye = { ...origin, y: origin.y + view.vision.eyeHeight };
   const ear = { ...origin, y: origin.y + view.hearing.earHeight };
   const maximum = Math.max(...contours.map((contour) => contour.radius));
+  // Prepare the declared sheets once per field, not once per sample. Keep their
+  // order and full vertical extent so nearby stacked/sloping supports stay exact.
+  const reach = maximum + SPATIAL_LIMITS.epsilon;
+  const nearbySurfaces = surfaces.filter(
+    (surface) =>
+      surface.minX <= origin.x + reach &&
+      surface.maxX >= origin.x - reach &&
+      surface.minZ <= origin.z + reach &&
+      surface.maxZ >= origin.z - reach,
+  );
   // Airborne actors use a horizontal cross-section; grounded actors prefer their
   // own support, then the closest declared sheet. Never join stacked floors.
   const footAt = (x: number, z: number): WorldPoint | null => {
@@ -119,7 +131,7 @@ export function* perceptionFieldSteps(
       return { x, y: surfaceHeight(current, x, z), z };
     let y = 0,
       best = Math.abs(origin.y);
-    for (const surface of surfaces) {
+    for (const surface of nearbySurfaces) {
       if (!surfaceContains(surface, { x, z })) continue;
       const candidate = surfaceHeight(surface, x, z),
         separation = Math.abs(candidate - origin.y);
@@ -239,9 +251,10 @@ function* guideMesh(
     crossings.set(key, result);
     return result;
   };
-  const edgePasses = (a: Sample, b: Sample): boolean => {
-    const cache = a.id < originalPoints && b.id < originalPoints ? midpoints : clippedMidpoints;
+  const edgeSamples = new Map<number, Sample>();
+  const surfaceMidpoint = (a: Sample, b: Sample): SurfaceSample => {
     const key = edgeKey(a.id, b.id);
+    const cache = a.id < originalPoints && b.id < originalPoints ? midpoints : clippedMidpoints;
     let middle = cache.get(key);
     if (!middle) {
       const center = {
@@ -252,6 +265,23 @@ function* guideMesh(
       middle = { center, support: footAt(center.x, center.z) };
       cache.set(key, middle);
     }
+    return middle;
+  };
+  const midpoint = (a: Sample, b: Sample): Sample => {
+    const key = edgeKey(a.id, b.id);
+    const existing = edgeSamples.get(key);
+    if (existing) return existing;
+    const middle = surfaceMidpoint(a, b);
+    const result = {
+      id: nextId++,
+      point: middle.support ?? middle.center,
+      inside: middle.support !== null && passes(middle.support),
+    };
+    edgeSamples.set(key, result);
+    return result;
+  };
+  const edgePasses = (a: Sample, b: Sample): boolean => {
+    const middle = surfaceMidpoint(a, b);
     return (
       middle.support !== null &&
       Math.abs(middle.support.y - middle.center.y) <= 0.05 &&
@@ -272,9 +302,14 @@ function* guideMesh(
     if (boundary.has(key)) boundary.delete(key);
     else boundary.set(key, [a, b]);
   };
-  let triangleNumber = 0;
-  const triangle = (corners: Sample[]): void => {
-    const ordinal = triangleNumber++;
+  type Triangle = {
+    corners: [Sample, Sample, Sample];
+    original?: number;
+    pieces?: Array<{ corners: [Sample, Sample, Sample]; allowed: boolean }>;
+  };
+  const evaluate = (triangle: Triangle): NonNullable<Triangle['pieces']> => {
+    if (triangle.pieces) return triangle.pieces;
+    const { corners } = triangle;
     const polygon: Sample[] = [];
     for (let i = 0; i < 3; i++) {
       const a = corners[i]!,
@@ -282,22 +317,18 @@ function* guideMesh(
       if (a.inside) polygon.push(a);
       if (a.inside !== b.inside) polygon.push(crossing(a, b));
     }
-    if (polygon.length < 3) return;
-    const first = index(polygon[0]!);
+    const pieces: NonNullable<Triangle['pieces']> = [];
     for (let i = 1; i + 1 < polygon.length; i++) {
-      const a = index(polygon[i]!),
-        b = index(polygon[i + 1]!);
-      const from = vertices[first]!,
-        to = vertices[a]!,
-        last = vertices[b]!;
+      const points: [Sample, Sample, Sample] = [polygon[0]!, polygon[i]!, polygon[i + 1]!];
+      const from = points[0].point,
+        to = points[1].point,
+        last = points[2].point;
       if (
         Math.abs((to.x - from.x) * (last.z - from.z) - (to.z - from.z) * (last.x - from.x)) < 1e-9
       )
         continue;
-      // Check each rendered triangle, including both halves of a clipped quadrilateral.
-      // Native interior classification and support height exclude hidden/stacked ground.
-      const unchanged = corners.every((corner) => corner.inside);
-      let interior = unchanged ? interiors[ordinal] : undefined;
+      const unchanged = triangle.original !== undefined && corners.every((corner) => corner.inside);
+      let interior = unchanged ? interiors[triangle.original!] : undefined;
       if (!interior) {
         const center = {
           x: (from.x + to.x + last.x) / 3,
@@ -305,36 +336,112 @@ function* guideMesh(
           z: (from.z + to.z + last.z) / 3,
         };
         interior = { center, support: footAt(center.x, center.z) };
-        if (unchanged) interiors[ordinal] = interior;
+        if (unchanged) interiors[triangle.original!] = interior;
       }
       const { center, support } = interior;
-      if (!support || Math.abs(support.y - center.y) > 0.05 || !passes(support)) continue;
-      // A visible center alone can still bridge an unseen wall corner. Exclude
-      // that triangle instead of breaking its outline; the resulting hole closes.
-      if (
-        !edgePasses(polygon[0]!, polygon[i]!) ||
-        !edgePasses(polygon[i]!, polygon[i + 1]!) ||
-        !edgePasses(polygon[i + 1]!, polygon[0]!)
-      )
-        continue;
-      triangles.push(first, a, b);
-      edge(first, a);
-      edge(a, b);
-      edge(b, first);
+      pieces.push({
+        corners: points,
+        allowed:
+          support !== null &&
+          Math.abs(support.y - center.y) <= 0.05 &&
+          passes(support) &&
+          edgePasses(points[0], points[1]) &&
+          edgePasses(points[1], points[2]) &&
+          edgePasses(points[2], points[0]),
+      });
     }
+    triangle.pieces = pieces;
+    return pieces;
+  };
+  let mesh: Triangle[] = [];
+  let original = 0;
+  const addOriginal = (corners: Triangle['corners']): void => {
+    // As before, a cell with no admitted corners contributes no display. Keep
+    // its ordinal stable across bands without retaining it for later mesh passes.
+    if (corners.some((corner) => corner.inside)) mesh.push({ corners, original });
+    original++;
   };
   for (let ring = 1; ring < samples.length; ring++) {
     for (let ray = 0; ray < GUIDE_SAMPLING.rays; ray++) {
       const next = (ray + 1) % GUIDE_SAMPLING.rays;
       const outer = samples[ring]!;
       const inner = samples[ring - 1]!;
-      if (ring === 1) triangle([inner[0]!, outer[ray]!, outer[next]!]);
+      if (ring === 1) addOriginal([inner[0]!, outer[ray]!, outer[next]!]);
       else {
-        triangle([inner[ray]!, outer[ray]!, outer[next]!]);
-        triangle([inner[ray]!, outer[next]!, inner[next]!]);
+        addOriginal([inner[ray]!, outer[ray]!, outer[next]!]);
+        addOriginal([inner[ray]!, outer[next]!, inner[next]!]);
       }
-      if ((ray + 1) % 8 === 0) yield;
     }
+    yield;
+  }
+  // Refine only cells whose clipped interior/edge checks failed. Dropping the
+  // entire coarse cell creates long spikes near wall corners. Split shared edges
+  // on both neighboring cells so refinement cannot introduce cracks or false outlines.
+  for (let depth = 0; depth < GUIDE_SAMPLING.boundarySubdivisions; depth++) {
+    const split = new Set<number>();
+    for (let i = 0; i < mesh.length; i++) {
+      const triangle = mesh[i]!;
+      if (evaluate(triangle).some((piece) => !piece.allowed)) {
+        const [a, b, c] = triangle.corners;
+        split.add(edgeKey(a.id, b.id));
+        split.add(edgeKey(b.id, c.id));
+        split.add(edgeKey(c.id, a.id));
+      }
+      if ((i + 1) % 16 === 0) yield;
+    }
+    if (!split.size) break;
+    const refined: Triangle[] = [];
+    const add = (a: Sample, b: Sample, c: Sample): void => {
+      refined.push({ corners: [a, b, c] });
+    };
+    for (let i = 0; i < mesh.length; i++) {
+      const triangle = mesh[i]!;
+      const corners = triangle.corners;
+      const divided = corners.map((a, index) =>
+        split.has(edgeKey(a.id, corners[(index + 1) % 3]!.id)),
+      );
+      const count = divided.filter(Boolean).length;
+      if (!count) refined.push(triangle);
+      else if (count === 3) {
+        const [a, b, c] = corners;
+        const ab = midpoint(a, b),
+          bc = midpoint(b, c),
+          ca = midpoint(c, a);
+        add(a, ab, ca);
+        add(ab, b, bc);
+        add(ca, bc, c);
+        add(ab, bc, ca);
+      } else {
+        const start = divided.indexOf(count === 1);
+        const a = corners[start]!,
+          b = corners[(start + 1) % 3]!,
+          c = corners[(start + 2) % 3]!;
+        if (count === 1) {
+          const ab = midpoint(a, b);
+          add(a, ab, c);
+          add(ab, b, c);
+        } else {
+          const bc = midpoint(b, c),
+            ca = midpoint(c, a);
+          add(a, b, bc);
+          add(a, bc, ca);
+          add(ca, bc, c);
+        }
+      }
+      if ((i + 1) % 64 === 0) yield;
+    }
+    mesh = refined;
+  }
+  for (let i = 0; i < mesh.length; i++) {
+    for (const piece of evaluate(mesh[i]!)) {
+      if (!piece.allowed) continue;
+      const [a, b, c] = piece.corners.map(index) as [number, number, number];
+      triangles.push(a, b, c);
+      edge(a, b);
+      edge(b, c);
+      edge(c, a);
+    }
+    if ((i + 1) % 16 === 0) yield;
   }
   return {
     vertices,

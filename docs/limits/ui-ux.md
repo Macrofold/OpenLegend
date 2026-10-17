@@ -36,7 +36,7 @@ UXL01–UXL05 remain **proposed display starting values**, documented September 
 
 **Measurement scope:** Google's good-INP threshold is at most 200ms at the 75th percentile of page visits, with device-class segmentation. It is a different field metric, not an alternate value for this target, a camera frame budget or an end-to-end completion SLA. No INP measurement or telemetry collection was performed. [Source and scope](../ui-ux/research.md#s15)
 
-No universal spinner-delay/minimum-duration or sub-500ms mutation requirement is introduced. If a future feature selects such a behavioral value, record its purpose, boundary behavior and evidence with that feature. Visual smoothing must not falsely extend pending status after a consequential completion/failure.
+The owner subsequently selected the shared visual loading delay in [UXL13](#uxl13). It does not introduce a minimum animation duration or sub-500ms mutation requirement.
 
 ## UXL06
 
@@ -91,6 +91,12 @@ The implemented default is a compact care-task summary that names every conseque
 **Implementation candidate; integrated native/browser qualification pending · Restrictiveness: Medium (one unresolved creator request).** Item, person and environment creation share one unresolved request per native private namespace, world, save timeline and actor. A new creation waits until the original outcome and matching local cleanup are resolved. The browser must successfully retain and read back the exact request before sending; inaccessible or corrupt storage blocks that creator action. Unrelated play, supported creation kinds and valid quantities remain unaffected.
 
 **Reason/tradeoff:** Closing a dialog, changing a destination or reloading must not turn an uncertain successful creation into a second effect. **Retry original creation** is an explicit mutation that can recover or perform the original request, never an automatic check. A later refusal does not erase an earlier unknown outcome. This trades simultaneous creator creation for understandable recovery using the existing native receipt owner. Same-owner reload retains the request; logout/private-access loss, owner change and another save timeline follow existing private cleanup. The boundary is not account-wide recovery across cleared browser storage. Revisit only with a supported multiple-request task model, preserving exact identities and scope. [Feature behavior](../projects/game-interaction-redesign-feature-spec.md#direct-world-and-character-editing) · [Implementation plan](../projects/game-interaction-redesign-tech-design.md#recover-item-person-and-environment-creation) · [UIUX15](../maintainers/ui-ux.md#uiux15)
+
+## UXL13
+
+**Implemented, owner-selected October 16 · Restrictiveness: Low (presentation only).** Shared loading feedback appears after 500 ms of continuous waiting. Fast operations show no transient spinner or loading text. Completion/failure removes the indicator immediately; duplicate-submit and authority guards remain immediate. There is no minimum display duration and no added network delay. One shared hook/constant owns the value across readers and buttons. Retain readable authorized content and stable control geometry. This supersedes the earlier policy leaving visual delay to each task. [Feedback guidance](../ui-ux/system-feedback.md#every-operation-has-a-readable-state) · [UIUX19](../maintainers/ui-ux.md#uiux19)
+
+**Display precision:** ordinary numeric readouts use at most two decimal places without unnecessary trailing zeros; Health uses integers at every body maximum; needs and other numeric meters whose maximum is at least 100 also use integers. Editable values, exact stored evidence, authored/quoted speech and real spending/accounting retain their necessary precision. Rounding presentation never changes simulation, validation or event causes. Full details may retain exact evidence when essential. This is a readability policy, not a simulation precision limit.
 
 ## Existing bounds and non-limits
 

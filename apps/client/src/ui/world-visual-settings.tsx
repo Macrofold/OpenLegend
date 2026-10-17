@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ApiResult, GameView, PlayerPreferencePatch } from '@open-legend/protocol';
 import { post } from '../api';
 import { Section } from '../design-system/components';
+import { LoadingIndicator } from '../design-system/loading';
 import type { ShadowQuality } from '../world-renderer';
 import './lifecycle.css';
 
@@ -105,7 +106,7 @@ export function WorldVisualSettings({
           Only current character-visible objects qualify. Camera movement never grants sight through
           walls.
         </p>
-        {busy && <p role="status">Saving your visibility preference…</p>}
+        <LoadingIndicator active={busy} label="Saving your visibility preference" />
         {saved && !busy && <p role="status">Visibility preference saved to your player profile.</p>}
         {error && <p role="alert">{error} Choose the preference again to retry.</p>}
       </div>

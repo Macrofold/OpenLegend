@@ -32,16 +32,16 @@ test('scaled themes, reduced motion and responsive controls persist across reloa
     await page.getByRole('checkbox', { name: 'Reduce motion', exact: true }).check();
     await expect(page.locator('html')).toHaveAttribute('data-reduce-motion', 'true');
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.locator('.ol-rail').getByRole('button', { name: 'Create', exact: true }).click();
-    await page.getByRole('button', { name: 'New conversation', exact: true }).first().click();
+    await page.getByRole('button', { name: 'Game', exact: true }).click();
+    await page.getByRole('button', { name: 'World editor', exact: true }).click();
     await page.getByRole('button', { name: 'Start conversation', exact: true }).click();
     await page.screenshot({ path: info.outputPath('scifi-scaled.png') });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: info.outputPath('mobile-scaled.png') });
     for (const locator of [
       page.locator('.ol-timebar'),
-      page.locator('#agentPanel'),
-      page.locator('#agentPanel').getByRole('button', { name: 'Send', exact: true }),
+      page.locator('#world-editorPanel'),
+      page.locator('#world-editorPanel').getByRole('button', { name: 'Send', exact: true }),
     ]) {
       const bounds = await locator.boundingBox();
       expect(bounds).not.toBeNull();
@@ -49,7 +49,7 @@ test('scaled themes, reduced motion and responsive controls persist across reloa
       expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(391);
       expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(845);
     }
-    for (const name of ['Inventory', 'Crafting', 'Character', 'Journal', 'Create', 'In view'])
+    for (const name of ['Inventory', 'Craft', 'Build', 'Character', 'Events', 'Create', 'In view'])
       await page
         .locator('.ol-rail')
         .getByRole('button', { name, exact: true })

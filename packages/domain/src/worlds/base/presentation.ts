@@ -6,7 +6,7 @@ import { NATIVE_PREPARATIONS } from './items.js';
 /** Vocabulary belongs to the installed native capability, not to an inventory widget.
  * These adapters describe the bundled native families; they do not install effects. */
 export const BASE_WORLD_PRESENTATION: NonNullable<WorldState['presentation']> = {
-  worldName: 'The first clearing',
+  worldName: 'The Wilderness',
   locationName: 'The first clearing',
   timeLabel: 'Time in the wilderness',
 };
@@ -47,6 +47,7 @@ const actionIcons: Readonly<Partial<Record<string, string>>> = {
   recover: 'meter.health',
   replenish: 'meter.energy',
   teach: 'action.talk',
+  'status-effect': 'ui.cognition',
 };
 export function nativeActionIcon(type: string): string {
   return (Object.hasOwn(actionIcons, type) ? actionIcons[type] : undefined) ?? `action.${type}`;

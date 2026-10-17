@@ -44,6 +44,7 @@ export class HoverOutline extends pc.OutlineRenderer {
         }`,
     });
     this.quadRenderer = new pc.QuadRender(this.shaderBlend);
+    app.on('prerender', this.prepareFrame);
   }
   private material(source: pc.Material): pc.Material {
     let material = this.materials.get(source);
@@ -94,8 +95,13 @@ export class HoverOutline extends pc.OutlineRenderer {
       mesh.setParameter('pcOutlineColor', this.white);
       for (const name in source.parameters) mesh.setParameter(name, source.parameters[name]!.data);
     }
-    this.frameUpdate(this.camera, this.blendLayer, true);
   }
+  private prepareFrame = (): void => {
+    // Updates continue while the GPU submission queue is full. frameUpdate registers
+    // a one-frame blend callback, so call it only for a frame that will actually render.
+    // Otherwise skipped frames stack up blends and make the same outline flash brighter.
+    if (this.outlineCameraEntity.enabled) this.frameUpdate(this.camera, this.blendLayer, true);
+  };
   override blendOutlines(): void {
     const device = this.app.graphicsDevice;
     device.scope.resolve('source').setValue(this.rt.colorBuffer);
@@ -118,6 +124,7 @@ export class HoverOutline extends pc.OutlineRenderer {
     this.materials.clear();
   }
   override destroy(): void {
+    this.app.off('prerender', this.prepareFrame);
     this.clearTarget();
     this.camera.camera!.layers = this.camera.camera!.layers.filter(
       (id) => id !== this.blendLayer.id,

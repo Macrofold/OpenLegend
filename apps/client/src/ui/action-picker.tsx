@@ -1,3 +1,4 @@
+import { LoadingIndicator, LoadingScope } from '../design-system/loading';
 import { WorldIntentIcon, type WorldIntent } from './world-composer';
 import { namePhrase } from '@open-legend/language';
 import { godCharacterAvailability } from './god-character-actions';
@@ -5,15 +6,22 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { Button as AriaButton } from 'react-aria-components';
 import type {
   ActionCatalogue,
+  ActionOption,
+  ApiResult,
   ActionContext,
   CatalogueAction,
   EntityView,
   GameView,
 } from '@open-legend/protocol';
-import { actionSections, filterActions, retainActionOrder } from '../action-browser';
+import {
+  actionSections,
+  actionSubjectKey,
+  filterActions,
+  retainActionOrder,
+} from '../action-browser';
 import { post } from '../api';
 import { playerEntity } from '../entity-view';
-import { Icon, IconButton, symbol } from '../design-system/components';
+import { Button, Icon, IconButton, symbol } from '../design-system/components';
 import { ActionChoice } from './action-choice';
 import { Pullout, PulloutPicker } from './pullout';
 import { ActivityEntries, type ActivityEntry } from './camp-activity';
@@ -24,6 +32,7 @@ export type PickerContext = {
   item?: { id: string; name: string };
   browse?: boolean;
   opener?: HTMLElement;
+  dispatchCommand?(action: ActionOption): Promise<ApiResult>;
 };
 // A display window, not a discovery cutoff: search still visits every choice.
 const CHOICE_WINDOW = 40;
@@ -43,8 +52,12 @@ export function ActionPicker({
   spawn,
   createPerson,
   createItem,
+  presentation = 'context',
+  visible = true,
 }: {
   picker: PickerContext;
+  presentation?: 'context' | 'inspection';
+  visible?: boolean;
   view: GameView;
   connected: boolean;
   close(): void;
@@ -63,6 +76,7 @@ export function ActionPicker({
   ): void;
   createPerson(position: { x: number; y: number; z: number; surfaceId: string }): void;
 }) {
+  const embedded = presentation === 'inspection';
   const [query, setQuery] = useState(''),
     [result, setResult] = useState<{
       key: string;
@@ -95,11 +109,6 @@ export function ActionPicker({
     view.saveTimeline,
     context,
   ]);
-  const key = JSON.stringify([scopeKey, view.player.inventoryRevision, view.clock.paused]);
-  const entities = useMemo(
-    () => new Map(view.entities.map((entity) => [entity.id, entity])),
-    [view.entities],
-  );
   // Movement replaces entity data without changing which targets are permitted.
   // Only identity membership needs to invalidate catalogue/search filtering.
   const visibleIds = view.entities.map((entity) => entity.id);
@@ -108,9 +117,24 @@ export function ActionPicker({
   const subject =
     picker.context.targetId === view.player.id
       ? playerEntity(view)
-      : entities.get(picker.context.targetId ?? '');
+      : view.entities.find((entity) => entity.id === picker.context.targetId);
+  const key = JSON.stringify([
+    scopeKey,
+    view.player.inventoryRevision,
+    view.clock.paused,
+    actionSubjectKey(subject),
+  ]);
   const lostTarget = !full && !!picker.context.targetId && !subject;
-  const checking = refreshing || (!!result && result.key !== key);
+  const available = visible && connected;
+  const [availability, setAvailability] = useState({ available, revision: 0 });
+  if (availability.available !== available)
+    setAvailability({ available, revision: availability.revision + 1 });
+  // A retained hidden sheet needs one new read when shown, even if no projected
+  // revision changed during its absence. It must not prepare catalogues in hiding.
+  const readKey = JSON.stringify([key, availability.revision]);
+  const currentReadKey = useRef<string | null>(readKey);
+  currentReadKey.current = available ? readKey : null;
+  const checking = !available || refreshing || (!!result && result.key !== readKey);
   // Pause changes availability, so those rows stay mounted for focus. Possession
   // or authority changes hide old details before another read can publish them.
   const catalogueCurrent =
@@ -131,6 +155,7 @@ export function ActionPicker({
   );
   const hadFocus = useRef(false);
   const refresh = useCallback(async () => {
+    if (!available) return;
     const request = ++refreshRequest.current;
     readController.current?.abort();
     const controller = new AbortController();
@@ -143,7 +168,7 @@ export function ActionPicker({
         context,
         controller.signal,
       );
-      if (request !== refreshRequest.current) return;
+      if (request !== refreshRequest.current || currentReadKey.current !== readKey) return;
       if (!result.ok) throw new Error(result.message);
       setResult((previous) => {
         const actions = retainActionOrder(
@@ -151,7 +176,7 @@ export function ActionPicker({
           result.catalogue.actions,
         );
         return {
-          key,
+          key: readKey,
           scopeKey,
           inventoryRevision: view.player.inventoryRevision,
           actions,
@@ -159,20 +184,23 @@ export function ActionPicker({
         };
       });
       setError('');
-    } catch (reason) {
-      if (request === refreshRequest.current) {
+    } catch {
+      if (request === refreshRequest.current && currentReadKey.current === readKey) {
         setResult(undefined);
-        setError(
-          `Actions could not be checked. Close and reopen this menu to try again. ${String(reason)}`,
-        );
+        setError('Actions could not be checked. Your inventory and selection are unchanged.');
       }
     } finally {
-      if (request === refreshRequest.current) setRefreshing(false);
+      if (request === refreshRequest.current && currentReadKey.current === readKey)
+        setRefreshing(false);
     }
     // The serialized read identity includes actor/control/timeline and possession changes.
     // An obsolete completion cannot publish details for a different authorized scope.
-  }, [key]);
+  }, [readKey, available]);
   useEffect(() => {
+    if (!available) {
+      setRefreshing(false);
+      return;
+    }
     void refresh();
     return () => {
       refreshRequest.current++;
@@ -180,11 +208,12 @@ export function ActionPicker({
     };
   }, [refresh]);
   useEffect(() => {
-    input.current?.focus();
-  }, []);
+    if (visible && !embedded) input.current?.focus();
+  }, [embedded, visible]);
   useLayoutEffect(() => {
-    if (hadFocus.current && document.activeElement === document.body) input.current?.focus();
-  }, [result, key, lostTarget, actions.length]);
+    if (visible && hadFocus.current && document.activeElement === document.body)
+      input.current?.focus();
+  }, [result, key, lostTarget, actions.length, visible]);
   // Walking uses primary click. Known blocked choices remain inspectable.
   const contextualActions = useMemo(
     () =>
@@ -305,7 +334,7 @@ export function ActionPicker({
     !error &&
     !checking &&
     !lostTarget &&
-    result?.key === key &&
+    result?.key === readKey &&
     !!query.trim() &&
     (full || !taskMatches) &&
     !matches.some((a) => a.enabled);
@@ -313,6 +342,7 @@ export function ActionPicker({
     !full &&
     !!subject &&
     !!picker.entity &&
+    !embedded &&
     picker.entity.id !== view.player.id &&
     (!query || 'look closer description inspect'.includes(query.toLowerCase()));
   const showOpen =
@@ -348,6 +378,12 @@ export function ActionPicker({
     }
     return choices;
   }, [matches, full, searching, showSpeak, showAct, showInspect, showOpen]);
+  const menuSections = useMemo(() => {
+    const promoted = new Set(suggested.map((action) => action.id));
+    return sections.filter(
+      (section) => section.actions.length !== 1 || !promoted.has(section.actions[0]!.id),
+    );
+  }, [sections, suggested]);
   const showRevive =
     !full &&
     !lostTarget &&
@@ -367,6 +403,7 @@ export function ActionPicker({
     !!creationPosition &&
     (!query || 'add something spawn god mode'.includes(query.toLowerCase()));
   useLayoutEffect(() => {
+    if (embedded) return;
     const place = () => {
       const bounds = menu.current?.getBoundingClientRect();
       if (bounds)
@@ -383,13 +420,13 @@ export function ActionPicker({
       observer.disconnect();
       window.removeEventListener('resize', place);
     };
-  }, [picker, matches.length, error]);
+  }, [picker, matches.length, error, embedded]);
   return (
     <div
       ref={menu}
-      id="contextMenu"
-      className="ol-picker"
-      role="dialog"
+      id={embedded ? undefined : 'contextMenu'}
+      className={embedded ? 'ol-action-browser ol-action-browser-embedded' : 'ol-picker'}
+      role={embedded ? 'region' : 'dialog'}
       onFocusCapture={() => {
         hadFocus.current = true;
       }}
@@ -402,12 +439,14 @@ export function ActionPicker({
           hadFocus.current = false;
       }}
       aria-label={`Actions for ${full ? 'all known choices' : (picker.item?.name ?? (subject ? namePhrase(subject, 'definite') : picker.entity ? namePhrase(picker.entity, 'definite') : view.presentation.locationName))}`}
-      style={{ left: position.x, top: position.y }}
+      style={embedded ? undefined : { left: position.x, top: position.y }}
       onKeyDown={(e) => {
         if (e.defaultPrevented || e.nativeEvent.isComposing || e.repeat) return;
         // Portaled pullouts own their keyboard navigation; React events still bubble here.
         if (!e.currentTarget.contains(e.target as Node)) return;
         if (e.key === 'Escape') {
+          // The enclosing inspector owns its own close and focus behavior.
+          if (embedded) return;
           e.preventDefault();
           e.stopPropagation();
           close();
@@ -427,303 +466,318 @@ export function ActionPicker({
         }
         if (e.key === 'Enter' && e.target === input.current) {
           e.preventDefault();
-          if (!connected || checking || error || lostTarget || result?.key !== key) return;
+          if (!available || checking || error || lostTarget || result?.key !== readKey) return;
           const first = visibleMatches.find((a) => a.enabled);
           if (first) run(first);
           else if (canInvent) invent(query.trim());
         }
       }}
     >
-      <div className="ol-picker-head">
-        <Icon
-          name={subject?.icon ?? picker.entity?.icon ?? 'ui.inview'}
-          fallbackLabel={picker.item?.name ?? subject?.name ?? picker.entity?.name}
-        />
-        <strong id="contextTitle">
-          {full
-            ? 'Action browser'
-            : (picker.item?.name ??
-              subject?.name ??
-              picker.entity?.name ??
-              view.presentation.locationName)}
-        </strong>
-        <IconButton icon="ui.close" label="Close action picker" onPress={close} />
-      </div>
-      {full && (
-        <p className="ol-meta">Known actions involving what you can currently see or carry.</p>
-      )}
-      <div className="ol-search">
-        <Icon name="ui.search" size={16} />
-        <input
-          type="search"
-          ref={input}
-          id="actionSearch"
-          aria-label="Find an action"
-          placeholder={browsing ? 'Search actions or invent something…' : 'Search actions…'}
-          value={query}
-          onChange={(e) => changeQuery(e.target.value)}
-          maxLength={1000}
-        />
-        {canInvent && (
-          <AriaButton
-            className="ol-search-invent"
-            aria-label={`Invent ${query}`}
-            onPress={() => invent(query.trim())}
-          >
-            <Icon name="action.invent" size={16} />
-            Invent
-          </AriaButton>
-        )}
-        {query && (
-          <IconButton
-            icon="ui.close"
-            label="Clear search"
-            onPress={() => {
-              changeQuery('');
-              input.current?.focus();
-            }}
-          />
-        )}
-      </div>
-      <div
-        className="ol-menu-scroll"
-        aria-busy={checking}
-        onScroll={
-          searching
-            ? (event) =>
-                revealOnScroll(null, visibleMatches.length, matches.length, event.currentTarget)
-            : undefined
-        }
-      >
-        {showSpeak && (
-          <AriaButton data-picker-row className="ol-item" onPress={() => compose('speak')}>
-            <WorldIntentIcon mode="speak" />
-            <span>Speak</span>
-          </AriaButton>
-        )}
-        {showAct && (
-          <AriaButton data-picker-row className="ol-item" onPress={() => compose('act')}>
-            <WorldIntentIcon mode="act" />
-            <span>Act</span>
-          </AriaButton>
-        )}
-        {(checking || (!result && !error)) && (
-          <p role="status" className="ol-meta">
-            {result ? 'Checking current choices…' : 'Loading actions…'}
-          </p>
-        )}
-        {lostTarget && (
-          <p role="status" className="ol-meta">
-            {picker.entity?.name ?? 'That target'} is no longer in view. Choose a currently
-            perceived target or browse all known actions.
-          </p>
-        )}
-        {showOpen && subject && (
-          <AriaButton
-            data-picker-row
-            className="ol-item"
-            isDisabled={!connected}
-            onPress={() => openContainer(subject)}
-          >
-            <Icon name="ui.inventory" />
-            <span>Open {subject.name}</span>
-          </AriaButton>
-        )}
-        {!full && subject && !lostTarget && (
-          <ActivityEntries
-            view={view}
-            targetId={subject.id}
-            connected={connected}
-            onOpen={openActivity}
-            query={query}
-            presentation="menu"
-            onMatchCount={setTaskMatches}
-            excludeFamilies={actions.flatMap((action) =>
-              action.targetId === subject.id && action.intent.kind === 'activity'
-                ? [action.intent.family]
-                : [],
-            )}
-          />
-        )}
-        {showInspect && (
-          <AriaButton data-picker-row className="ol-item" onPress={() => inspect(subject!)}>
-            <Icon name="ui.inview" />
-            <span>Look closer</span>
-            <small className="ol-item-hint">Inspect</small>
-          </AriaButton>
-        )}
-        {searching ? (
-          <>
-            {visibleMatches.map(actionRow)}
-            {visibleMatches.length < matches.length && (
-              <AriaButton
-                data-picker-row
-                className="ol-menu-toggle"
-                onPress={() => showMore(null, visibleMatches, matches, menu.current)}
-              >
-                Show more choices ({visibleMatches.length} of {matches.length} shown)
-              </AriaButton>
-            )}
-          </>
+      <LoadingScope region={menu}>
+        {embedded ? (
+          <h3 className="ol-heading ol-inspector-actions-title">Actions</h3>
         ) : (
-          <>
-            {suggested.map(actionRow)}
-            {!!sections.length && <p className="ol-menu-section-label">All actions</p>}
-            {sections.map((section) => {
-              const key = `category:${section.category}`;
-              const count = display?.counts.get(section.category) ?? CHOICE_WINDOW;
-              const open =
-                !!section.actions.length && display?.scopeKey === scopeKey && openPullout === key;
-              const visible = open ? section.actions.slice(0, count) : [];
-              return (
-                <Pullout
-                  key={section.category}
-                  label={section.category}
-                  icon="ui.more"
-                  badge={String(section.actions.length)}
-                  muted={!section.actions.some((action) => action.enabled)}
-                  disabled={!section.actions.length}
-                  isOpen={open}
-                  onOpenChange={(open) => {
-                    if (open && !display) setSectionDisplay({ scopeKey, counts: new Map() });
-                    setOpenPullout((current) => (open ? key : current === key ? null : current));
-                  }}
-                >
-                  <div className="ol-pullout-head">
-                    <strong>{section.category}</strong>
-                    <span className="ol-caption">{section.actions.length} choices</span>
-                  </div>
-                  <div
-                    className="ol-action-category"
-                    data-action-section={section.category}
-                    onScroll={(event) =>
-                      revealOnScroll(
-                        section.category,
-                        visible.length,
-                        section.actions.length,
-                        event.currentTarget,
-                      )
-                    }
-                  >
-                    {visible.map(actionRow)}
-                    {visible.length < section.actions.length && (
-                      <AriaButton
-                        data-picker-row
-                        className="ol-menu-toggle"
-                        onPress={(event) =>
-                          showMore(
-                            section.category,
-                            visible,
-                            section.actions,
-                            event.target.parentElement,
-                          )
-                        }
-                      >
-                        Show more choices ({visible.length} of {section.actions.length} shown)
-                      </AriaButton>
-                    )}
-                  </div>
-                </Pullout>
-              );
-            })}
-          </>
-        )}
-        {(showRevive || showCognition || showAdd) && !lostTarget && (
-          <div className="ol-picker-creator" role="group" aria-label="God mode">
-            <p className="ol-eyebrow">God mode</p>
-            {showCognition && (
-              <AriaButton
-                data-picker-row
-                className="ol-item ol-god-action"
-                isDisabled={!connected}
-                onPress={() => enableCognition(subject!)}
-              >
-                <Icon name="ui.star" />
-                <span>Grant cognition and speech</span>
-                <small>God mode</small>
-              </AriaButton>
-            )}
-            {showRevive && (
-              <AriaButton
-                data-picker-row
-                className="ol-item ol-god-action"
-                isDisabled={!connected}
-                onPress={() => revive(subject!)}
-              >
-                <Icon name="ui.star" />
-                <span>Revive</span>
-                <small className="ol-item-hint">God mode</small>
-              </AriaButton>
-            )}
-            {showAdd && (
-              <PulloutPicker
-                label="Add something"
-                isOpen={openPullout === 'add'}
-                onOpenChange={(open) => setOpenPullout(open ? 'add' : null)}
-                icon="ui.plus"
-                badge="God mode"
-                placeholder="Search objects…"
-                options={[]}
-                groups={[
-                  {
-                    label: 'Items',
-                    icon: 'ui.inventory',
-                    options: (view.godTools?.itemOptions ?? []).map((option) => ({
-                      ...option,
-                      id: `item:${option.id}`,
-                      icon: symbol(option.icon ?? 'ui.inventory'),
-                    })),
-                  },
-                  ...(['Actors', 'Environment'] as const).map((category) => ({
-                    label: category,
-                    icon: category === 'Actors' ? 'ui.character' : 'ui.world',
-                    options: (view.godTools?.spawnOptions ?? [])
-                      .filter((option) => option.category === category)
-                      .map((option) => ({ ...option, icon: option.icon ?? 'ui.plus' })),
-                  })),
-                ]}
-                onSelect={(type) => {
-                  if (type.startsWith('item:')) createItem(type.slice(5), creationPosition!);
-                  else if (type === 'person') createPerson(creationPosition!);
-                  else spawn(type, creationPosition!);
-                }}
-              />
-            )}
+          <div className="ol-picker-head">
+            <Icon
+              name={subject?.icon ?? picker.entity?.icon ?? 'ui.inview'}
+              fallbackLabel={picker.item?.name ?? subject?.name ?? picker.entity?.name}
+            />
+            <strong>
+              {full
+                ? 'Action browser'
+                : (picker.item?.name ??
+                  subject?.name ??
+                  picker.entity?.name ??
+                  view.presentation.locationName)}
+            </strong>
+            <IconButton icon="ui.close" label="Close action picker" onPress={close} />
           </div>
         )}
-        {error && (
-          <p role="status" className="ol-meta">
-            {error}
-          </p>
+        {full && (
+          <p className="ol-meta">Known actions involving what you can currently see or carry.</p>
         )}
-        {!error &&
-          !checking &&
-          !lostTarget &&
-          result?.key === key &&
-          !matches.length &&
-          (full || !taskMatches) &&
-          !showOpen &&
-          !showCognition &&
-          !showInspect &&
-          !showSpeak &&
-          !showAct &&
-          !showRevive &&
-          !showAdd && (
+        <div className="ol-search">
+          <Icon name="ui.search" size={16} />
+          <input
+            type="search"
+            ref={input}
+            id={embedded ? undefined : 'actionSearch'}
+            aria-label="Find an action"
+            placeholder={browsing ? 'Search actions or invent something…' : 'Search actions…'}
+            value={query}
+            onChange={(e) => changeQuery(e.target.value)}
+            maxLength={1000}
+          />
+          {canInvent && (
+            <AriaButton
+              className="ol-search-invent"
+              aria-label={`Invent ${query}`}
+              onPress={() => invent(query.trim())}
+            >
+              <Icon name="action.invent" size={16} />
+              Invent
+            </AriaButton>
+          )}
+          {query && (
+            <IconButton
+              icon="ui.close"
+              label="Clear search"
+              onPress={() => {
+                changeQuery('');
+                input.current?.focus();
+              }}
+            />
+          )}
+        </div>
+        <div
+          className="ol-menu-scroll"
+          aria-busy={available && refreshing}
+          onScroll={
+            searching
+              ? (event) =>
+                  revealOnScroll(null, visibleMatches.length, matches.length, event.currentTarget)
+              : undefined
+          }
+        >
+          {showSpeak && (
+            <AriaButton data-picker-row className="ol-item" onPress={() => compose('speak')}>
+              <WorldIntentIcon mode="speak" />
+              <span>Speak</span>
+            </AriaButton>
+          )}
+          {showAct && (
+            <AriaButton data-picker-row className="ol-item" onPress={() => compose('act')}>
+              <WorldIntentIcon mode="act" />
+              <span>Act</span>
+            </AriaButton>
+          )}
+          <LoadingIndicator active={available && refreshing} label="Reading available actions" />
+          {lostTarget && (
             <p role="status" className="ol-meta">
-              {!browsing
-                ? query
-                  ? 'No matching known actions.'
-                  : 'No known actions here.'
-                : query
-                  ? view.inventionPolicy.playerLocked
-                    ? 'No matching actions. Player invention is locked.'
-                    : canInvent
-                      ? 'No matching actions. Enter opens an editable invention idea; only Send submits it.'
-                      : 'No matching known actions.'
-                  : 'No known actions in the current view.'}
+              {picker.entity?.name ?? 'That target'} is no longer in view. Choose a currently
+              perceived target or browse all known actions.
             </p>
           )}
-      </div>
+          {showOpen && subject && (
+            <AriaButton
+              data-picker-row
+              className="ol-item"
+              isDisabled={!connected}
+              onPress={() => openContainer(subject)}
+            >
+              <Icon name="ui.inventory" />
+              <span>Open {subject.name}</span>
+            </AriaButton>
+          )}
+          {!full && subject && !lostTarget && (
+            <ActivityEntries
+              view={view}
+              targetId={subject.id}
+              connected={available}
+              onOpen={openActivity}
+              query={query}
+              presentation="menu"
+              onMatchCount={setTaskMatches}
+              excludeFamilies={actions.flatMap((action) =>
+                action.targetId === subject.id && action.intent.kind === 'activity'
+                  ? [action.intent.family]
+                  : [],
+              )}
+            />
+          )}
+          {showInspect && (
+            <AriaButton data-picker-row className="ol-item" onPress={() => inspect(subject!)}>
+              <Icon name="ui.inview" />
+              <span>Look closer</span>
+            </AriaButton>
+          )}
+          {searching ? (
+            <>
+              {visibleMatches.map(actionRow)}
+              {visibleMatches.length < matches.length && (
+                <AriaButton
+                  data-picker-row
+                  className="ol-menu-toggle"
+                  onPress={() => showMore(null, visibleMatches, matches, menu.current)}
+                >
+                  Show more choices ({visibleMatches.length} of {matches.length} shown)
+                </AriaButton>
+              )}
+            </>
+          ) : (
+            <>
+              {suggested.map(actionRow)}
+              {!!menuSections.length && <p className="ol-menu-section-label">All actions</p>}
+              {menuSections.map((section) => {
+                if (section.actions.length === 1) return actionRow(section.actions[0]!);
+                const key = `category:${section.category}`;
+                const count = display?.counts.get(section.category) ?? CHOICE_WINDOW;
+                const open =
+                  !!section.actions.length && display?.scopeKey === scopeKey && openPullout === key;
+                const visible = open ? section.actions.slice(0, count) : [];
+                return (
+                  <Pullout
+                    key={section.category}
+                    label={section.category}
+                    icon="ui.more"
+                    badge={String(section.actions.length)}
+                    muted={!section.actions.some((action) => action.enabled)}
+                    disabled={!section.actions.length}
+                    isOpen={open}
+                    onOpenChange={(open) => {
+                      if (open && !display) setSectionDisplay({ scopeKey, counts: new Map() });
+                      setOpenPullout((current) => (open ? key : current === key ? null : current));
+                    }}
+                  >
+                    <div className="ol-pullout-head">
+                      <strong>{section.category}</strong>
+                      <span className="ol-caption">
+                        {section.actions.length}{' '}
+                        {section.actions.length === 1 ? 'choice' : 'choices'}
+                      </span>
+                    </div>
+                    <div
+                      className="ol-action-category"
+                      data-action-section={section.category}
+                      onScroll={(event) =>
+                        revealOnScroll(
+                          section.category,
+                          visible.length,
+                          section.actions.length,
+                          event.currentTarget,
+                        )
+                      }
+                    >
+                      {visible.map(actionRow)}
+                      {visible.length < section.actions.length && (
+                        <AriaButton
+                          data-picker-row
+                          className="ol-menu-toggle"
+                          onPress={(event) =>
+                            showMore(
+                              section.category,
+                              visible,
+                              section.actions,
+                              event.target.parentElement,
+                            )
+                          }
+                        >
+                          Show more choices ({visible.length} of {section.actions.length} shown)
+                        </AriaButton>
+                      )}
+                    </div>
+                  </Pullout>
+                );
+              })}
+            </>
+          )}
+          {(showRevive || showCognition || showAdd) && !lostTarget && (
+            <div className="ol-picker-creator" role="group" aria-label="God mode">
+              <p className="ol-eyebrow">God mode</p>
+              {showCognition && (
+                <AriaButton
+                  data-picker-row
+                  className="ol-item ol-god-action"
+                  isDisabled={!connected}
+                  onPress={() => enableCognition(subject!)}
+                >
+                  <Icon name="ui.star" />
+                  <span>Grant cognition and speech</span>
+                  <small>God mode</small>
+                </AriaButton>
+              )}
+              {showRevive && (
+                <AriaButton
+                  data-picker-row
+                  className="ol-item ol-god-action"
+                  isDisabled={!connected}
+                  onPress={() => revive(subject!)}
+                >
+                  <Icon name="ui.star" />
+                  <span>Revive</span>
+                  <small className="ol-item-hint">God mode</small>
+                </AriaButton>
+              )}
+              {showAdd && (
+                <PulloutPicker
+                  label="Add something"
+                  isOpen={openPullout === 'add'}
+                  onOpenChange={(open) => setOpenPullout(open ? 'add' : null)}
+                  icon="ui.plus"
+                  badge="God mode"
+                  placeholder="Search objects…"
+                  options={[]}
+                  groups={[
+                    {
+                      label: 'Items',
+                      icon: 'ui.inventory',
+                      options: (view.godTools?.itemOptions ?? []).map((option) => ({
+                        ...option,
+                        id: `item:${option.id}`,
+                        icon: symbol(option.icon ?? 'ui.inventory'),
+                      })),
+                    },
+                    ...(['Actors', 'Environment'] as const).map((category) => ({
+                      label: category,
+                      icon: category === 'Actors' ? 'ui.character' : 'ui.world',
+                      options: (view.godTools?.spawnOptions ?? [])
+                        .filter((option) => option.category === category)
+                        .map((option) => ({ ...option, icon: option.icon ?? 'ui.plus' })),
+                    })),
+                  ]}
+                  onSelect={(type) => {
+                    if (type.startsWith('item:')) createItem(type.slice(5), creationPosition!);
+                    else if (type === 'person') createPerson(creationPosition!);
+                    else spawn(type, creationPosition!);
+                  }}
+                />
+              )}
+            </div>
+          )}
+          {error && (
+            <div className="ol-stack">
+              <p role="status" className="ol-meta">
+                {error}
+              </p>
+              <Button
+                size="sm"
+                disabled={!connected}
+                busy={refreshing}
+                onPress={() => void refresh()}
+              >
+                Try again
+              </Button>
+            </div>
+          )}
+          {!error &&
+            !checking &&
+            !lostTarget &&
+            result?.key === readKey &&
+            !matches.length &&
+            (full || !taskMatches) &&
+            !showOpen &&
+            !showCognition &&
+            !showInspect &&
+            !showSpeak &&
+            !showAct &&
+            !showRevive &&
+            !showAdd && (
+              <p role="status" className="ol-meta">
+                {!browsing
+                  ? query
+                    ? 'No matching known actions.'
+                    : 'No known actions here.'
+                  : query
+                    ? view.inventionPolicy.playerLocked
+                      ? 'No matching actions. Player invention is locked.'
+                      : canInvent
+                        ? 'No matching actions. Enter opens an editable invention idea; only Send submits it.'
+                        : 'No matching known actions.'
+                    : 'No known actions in the current view.'}
+              </p>
+            )}
+        </div>
+      </LoadingScope>
     </div>
   );
 }

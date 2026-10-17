@@ -1,3 +1,4 @@
+import { inventoryGroupReason, moveInventoryGroup, dropInventoryGroup } from './inventory-group.js';
 import { BASE_EVASION_TEXT, BASE_RANGED_TEXT } from './worlds/base/ranged-counterplay.js';
 import { prepareEvasion } from './evasion.js';
 import { recordSemanticChange } from './dependencies.js';
@@ -1625,6 +1626,15 @@ function prepareNativeOperation(
       break;
     }
     case 'drop': {
+      if (command.sources) {
+        const problem = inventoryGroupReason(world, actor, command.sources, command.quantity);
+        if (problem) return reject('cannot-drop', problem);
+        for (const source of command.sources) {
+          const reason = dropItemReason(world, actor, source.itemId, source.quantity);
+          if (reason) return reject('cannot-drop', reason);
+        }
+        break;
+      }
       const reason = dropItemReason(world, actor, command.itemId, command.quantity);
       if (reason) return reject('cannot-drop', reason);
       break;
@@ -2047,6 +2057,42 @@ function executeCommandNative(
       case 'transfer-item':
       case 'split-item':
       case 'merge-item': {
+        if (command.sources) {
+          if (command.type !== 'transfer-item')
+            return reject('unsupported-command', 'Grouped quantities support moving or dropping.');
+          try {
+            const moved = moveInventoryGroup(
+              world,
+              actor,
+              command.sources,
+              command.quantity,
+              command.targetId,
+              command.targetRevision,
+              command.id,
+            );
+            result = {
+              ...outcome(true, 'items-arranged', 'Possessions updated.'),
+              itemId: moved[0],
+            };
+            emit(
+              world,
+              events,
+              'items-arranged',
+              subjectNarration(actor, 'arranged some belongings.'),
+              actor,
+              undefined,
+              undefined,
+              'private',
+            );
+          } catch (error) {
+            if (error instanceof WorkBudgetError) throw error;
+            return reject(
+              'item-unavailable',
+              error instanceof Error ? error.message : 'Item transfer unavailable.',
+            );
+          }
+          break;
+        }
         // Scope checks precede all hidden-item/capacity diagnostics. Fictional ownership
         // grants neither physical access nor another human's private contents.
         // Merge-target discovery mirrors these checks in object-access mergeTargetAvailable.
@@ -2183,7 +2229,9 @@ function executeCommandNative(
         break;
       }
       case 'drop': {
-        const reason = dropItems(world, actor, command.itemId, command.quantity, events);
+        const reason = command.sources
+          ? dropInventoryGroup(world, actor, command.sources, command.quantity, events)
+          : dropItems(world, actor, command.itemId, command.quantity, events);
         if (reason) return reject('cannot-drop', reason);
         result = outcome(true, 'dropped', 'Items dropped on the ground.');
         break;

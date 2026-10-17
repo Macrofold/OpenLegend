@@ -1,5 +1,6 @@
+import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import { useEffect, useId, useRef, useState } from 'react';
-import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
+import { Modal, ModalOverlay } from 'react-aria-components';
 import type {
   ActivityChoice,
   ActivityChoicePage,
@@ -164,9 +165,9 @@ export function ActivityObjectField({
     return (
       <p className="ol-task-bound-target">
         {field.label}: <strong>{selected?.label ?? 'Selected object'}</strong>
-        {selected?.location && <> · {selected.location}</>}
-        {value && !page && <> · Rechecking…</>}
-        {value && page && !selected && <> · {page.message ?? 'No longer available.'}</>}
+        {selected?.location && <>; {selected.location}</>}
+        {value && !page && <>; Rechecking…</>}
+        {value && page && !selected && <>; {page.message ?? 'No longer available.'}</>}
       </p>
     );
   return (
@@ -261,7 +262,7 @@ export function ActivityObjectField({
         }}
       >
         <Modal className="ol-modal">
-          <Dialog
+          <LoadingDialog
             className="ol-person-dialog ol-camp-picker"
             aria-label={`Choose ${field.label.toLowerCase()}`}
             onPointerDown={(event) => event.stopPropagation()}
@@ -300,7 +301,7 @@ export function ActivityObjectField({
                 />
               )}
             </div>
-          </Dialog>
+          </LoadingDialog>
         </Modal>
       </ModalOverlay>
     </div>
@@ -414,7 +415,7 @@ function RoleSearch({
           </Button>
         )}
       </div>
-      {!current && <p role="status">Finding permitted choices…</p>}
+      <LoadingIndicator active={connected && !current} label="Finding permitted choices" />
       {current?.error && <p role="alert">{current.error}</p>}
       {page?.message && <p role="status">{page.message}</p>}
       <ul className="ol-camp-results">

@@ -183,6 +183,7 @@ export function validateStatusEffectPolicy(
         'actions',
         'contribution',
         'lifecycleCause',
+        'meaning',
       ],
     );
     if (
@@ -205,6 +206,7 @@ export function validateStatusEffectPolicy(
         fail('unsupported contribution family or lifetime.');
     }
     text(d.label);
+    if (d.meaning !== undefined) text(d.meaning);
     if (d.lifecycleCause !== undefined) text(d.lifecycleCause, 64);
     number(d.reactivationDelaySeconds, 0, 86400);
     if (!Array.isArray(d.interruptOn) || d.interruptOn.length > 32) fail('interrupt reasons.');
@@ -272,9 +274,15 @@ export function validateStatusEffectPolicy(
       }
     }
     if (d.actions !== undefined) {
-      object(d.actions, ['activate', 'deactivate', 'allowOther', 'activateOther']);
+      object(
+        d.actions,
+        ['activate', 'deactivate', 'allowOther', 'activateOther'],
+        ['activateIcon', 'deactivateIcon'],
+      );
       text(d.actions.activate);
       text(d.actions.deactivate);
+      for (const key of ['activateIcon', 'deactivateIcon'])
+        if (d.actions[key] !== undefined) text(d.actions[key], 128);
       if (typeof d.actions.allowOther !== 'boolean' || typeof d.actions.activateOther !== 'boolean')
         fail('action scope.');
     }

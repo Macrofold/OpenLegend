@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../design-system/loading';
 import { namePhrase } from '@open-legend/language';
 import { useEffect, useId, useRef, useState } from 'react';
 import type {
@@ -220,7 +221,7 @@ function DestinationWorkspace({
       </div>
       <div ref={collection} className="ol-inventory-destination-list" aria-busy={loading}>
         {!connected && <p role="status">Reconnect to search permitted storage.</p>}
-        {available && loading && <p role="status">Finding permitted storage…</p>}
+        <LoadingIndicator active={available && loading} label="Finding permitted storage" />
         {current?.error && <p role="alert">{current.error}</p>}
         {current?.page?.status === 'unavailable' && (
           <p role="status">

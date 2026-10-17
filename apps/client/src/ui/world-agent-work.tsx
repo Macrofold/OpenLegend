@@ -1,3 +1,4 @@
+import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import { useEffect, useRef, useState } from 'react';
 import type {
   WorldAgentDraftView,
@@ -11,7 +12,7 @@ import type {
   WorldAgentWorkResult,
   WorldCreationTargetView,
 } from '@open-legend/protocol';
-import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
+import { Modal, ModalOverlay } from 'react-aria-components';
 import { Button, EmptyState, Icon, Tag } from '../design-system/components';
 import { post, privateDraftScope } from '../api';
 import { readLocal, writeLocal } from './storage';
@@ -556,7 +557,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                   }
                   size={14}
                 />
-                {kindLabel[row.kind]} · revision {row.revision} ·{' '}
+                {kindLabel[row.kind]}, revision {row.revision},{' '}
                 {(row.state ?? row.preparation?.next)?.replaceAll('_', ' ') ?? 'Saved proposal'}
                 {row.summary && ` — ${row.summary}`}
               </span>
@@ -576,7 +577,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
               <article key={plan.id}>
                 <p>{plan.validation.semantics}</p>
                 <p className="ol-caption">
-                  Revision {plan.revision} · {plan.status} · {plan.validation.message}
+                  Revision {plan.revision}, {plan.status}, {plan.validation.message}
                 </p>
                 <Button size="sm" variant="quiet" onPress={() => onOpenReview(plan.id)}>
                   Inspect exact review
@@ -617,7 +618,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                   Refresh exact revision
                 </Button>
               </div>
-              {loading && <p role="status">Loading revision {selected.revision}…</p>}
+              <LoadingIndicator active={loading} label={`Loading revision ${selected.revision}`} />
               {selectedExact && (
                 <>
                   <h3 ref={detailHeading} tabIndex={-1}>
@@ -635,7 +636,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                     <dt>Latest saved</dt>
                     <dd>Revision {selectedExact.latestRevision}</dd>
                     <dt>Your local changes</dt>
-                    <dd>{dirty ? 'Unsaved · this device' : 'No unsaved changes'}</dd>
+                    <dd>{dirty ? 'Unsaved, this device' : 'No unsaved changes'}</dd>
                   </dl>
                   {historical && (
                     <p role="status">
@@ -692,7 +693,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                       {history.revisions.map((revision) => (
                         <div key={revision.revision} className="ol-agent-history-row">
                           <span>
-                            Revision {revision.revision} · {revision.intent}
+                            Revision {revision.revision}, {revision.intent}
                           </span>
                           <Button
                             size="sm"
@@ -842,7 +843,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                       {applicablePlans.map((plan) => (
                         <article key={plan.id}>
                           <p>
-                            Exact review: {plan.status} · {plan.validation.message}
+                            Exact review: {plan.status}, {plan.validation.message}
                           </p>
                           {plan.result && <p>{plan.result.message}</p>}
                           <Button size="sm" variant="quiet" onPress={() => onOpenReview(plan.id)}>
@@ -948,7 +949,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
           }}
         >
           <Modal className="ol-modal">
-            <Dialog
+            <LoadingDialog
               ref={switchDialog}
               className="ol-person-dialog ol-creator-confirm"
               aria-label="Unsaved draft changes"
@@ -986,7 +987,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                   Discard changes and continue
                 </Button>
               </div>
-            </Dialog>
+            </LoadingDialog>
           </Modal>
         </ModalOverlay>
       )}

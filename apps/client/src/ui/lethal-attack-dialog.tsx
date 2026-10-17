@@ -1,4 +1,5 @@
-import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
+import { LoadingDialog } from '../design-system/loading';
+import { Modal, ModalOverlay } from 'react-aria-components';
 import type { ApiResult } from '@open-legend/protocol';
 import { Button } from '../design-system/components';
 import './tab-resume.css';
@@ -26,7 +27,7 @@ export function LethalAttackDialog({
       }}
     >
       <Modal className="ol-modal ol-tab-resume ol-lethal-review">
-        <Dialog
+        <LoadingDialog
           aria-label={review.title}
           aria-describedby="lethal-review-description"
           className="ol-person-dialog"
@@ -57,7 +58,7 @@ export function LethalAttackDialog({
               {review.confirmLabel}
             </Button>
           </footer>
-        </Dialog>
+        </LoadingDialog>
       </Modal>
     </ModalOverlay>
   );

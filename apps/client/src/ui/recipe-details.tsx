@@ -1,4 +1,5 @@
 import type { RecipeDetailsView } from '@open-legend/protocol';
+import { formatDisplayNumber } from '@open-legend/language';
 import { Fragment } from 'react';
 import './recipe-details.css';
 
@@ -20,7 +21,7 @@ export function RecipeDetails({ recipe }: { recipe: RecipeDetailsView }) {
           ))}
         </dd>
         <dt>Work</dt>
-        <dd>{recipe.workSeconds} game seconds</dd>
+        <dd>{formatDisplayNumber(recipe.workSeconds)} game seconds</dd>
         <dt>Makes</dt>
         <dd>
           <strong>{recipe.output.name}</strong>
@@ -30,7 +31,7 @@ export function RecipeDetails({ recipe }: { recipe: RecipeDetailsView }) {
           <Fragment key={fact.id}>
             <dt>{fact.label}</dt>
             <dd>
-              {fact.value}
+              {typeof fact.value === 'number' ? formatDisplayNumber(fact.value) : fact.value}
               {fact.unit && ` ${fact.unit}`}
             </dd>
           </Fragment>

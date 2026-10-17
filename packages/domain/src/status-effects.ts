@@ -97,6 +97,8 @@ export interface StatusEffectDefinition {
   type: 'statusEffect';
   target: '$subject';
   label: string;
+  /** World-authored explanation for perceived consequences and status UI. */
+  meaning?: string;
   lifecycleCause?: string;
   enabled: boolean;
   requires: StatusCondition;
@@ -110,7 +112,14 @@ export interface StatusEffectDefinition {
   presentation?: StatusPresentation;
   onActivate?: { emit: { target: EntityReference; type: 'stateChanged'; narration: string } };
   onDeactivate?: { emit: { target: EntityReference; type: 'stateChanged'; narration: string } };
-  actions?: { activate: string; deactivate: string; allowOther: boolean; activateOther: boolean };
+  actions?: {
+    activate: string;
+    deactivate: string;
+    activateIcon?: string;
+    deactivateIcon?: string;
+    allowOther: boolean;
+    activateOther: boolean;
+  };
   contribution?: {
     disclosure: 'owner' | 'public';
   } & (
@@ -681,7 +690,12 @@ export interface BodyRateInterval {
   amount: number;
   causes: string[];
   /** Separate actual occurrences share the existing body-before-action phase. */
-  periodicChanges?: Array<{ amount: number; cause: string }>;
+  periodicChanges?: Array<{
+    amount: number;
+    cause: string;
+    causeLabel: string;
+    causeMeaning?: string;
+  }>;
 }
 export function applyBodyRate(
   world: WorldState,
@@ -715,7 +729,15 @@ export function applyBodyRate(
   }
   for (const change of rate.periodicChanges ?? []) {
     if (!actor.alive || actor.incapacitated) break;
-    commitHealthChange(world, target, change.amount, change.cause, events);
+    commitHealthChange(
+      world,
+      target,
+      change.amount,
+      change.cause,
+      events,
+      change.causeLabel,
+      change.causeMeaning,
+    );
   }
 }
 export function integrateStatusRates(
@@ -850,7 +872,12 @@ export function integrateStatusRates(
           : (amount * target.actor.body.maxHealth) / range;
       for (let occurrence = 0; occurrence < count; occurrence++) {
         chargeWork({ effects: 1 });
-        (rate.periodicChanges ??= []).push({ amount: rawAmount, cause });
+        (rate.periodicChanges ??= []).push({
+          amount: rawAmount,
+          cause,
+          causeLabel: interval.definition.label,
+          ...(interval.definition.meaning ? { causeMeaning: interval.definition.meaning } : {}),
+        });
       }
     } else {
       for (let occurrence = 0; occurrence < count; occurrence++) {

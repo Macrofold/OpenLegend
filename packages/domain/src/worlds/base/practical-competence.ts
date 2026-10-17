@@ -20,7 +20,7 @@ export const SLING_HANDLING: AttributeDefinition = {
       unavailableRank: 'unavailable',
       effect:
         '{missReductionPercent}% reduction of the tool-related miss chance; later shots only.',
-      progress: '{releases}/{independentRequired} real releases · Completed coaching: {coached}',
+      progress: '{releases}/{independentRequired} real releases; Completed coaching: {coached}',
       authoredStarting: 'Practiced starting competence was explicitly authored.',
       evidenceHeading: 'Supporting releases',
       evidenceItem: 'Release {number}: {description}',

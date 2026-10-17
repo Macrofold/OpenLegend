@@ -2,7 +2,6 @@ import { WorldComposer, type WorldIntent } from './ui/world-composer';
 import { AimControls } from './ui/aim-controls';
 import { modalOwnsInput, uiOwnsShortcut } from './ui/keyboard';
 import { Construction } from './ui/construction';
-import { namePhrase } from '@open-legend/language';
 import { FamilyEditor } from './ui/family-editor';
 import { WorldEvents } from './ui/world-events';
 import { GameSavesPanel } from './ui/game-saves';
@@ -62,6 +61,8 @@ import { CaptionGapNotice, useMissedCaptions } from './ui/caption-gap-notice';
 import { captionScope } from './speech-captions';
 import { CameraControls } from './ui/camera-controls';
 import { FpsCounter } from './ui/fps-counter';
+import { usePrimaryAction } from './ui/primary-action';
+import { CurrentWork } from './ui/current-work';
 import { AiConnectionNotice, EvasionCooldown } from './ui/hud-status';
 import type { CameraState } from './world-camera';
 import {
@@ -74,6 +75,7 @@ import {
   Launcher,
   Panel,
   Section,
+  SelectField,
   SegmentedControl,
   Toolbar,
   symbol,
@@ -89,7 +91,6 @@ import {
 } from './ui/god-tools';
 import { QuickActions } from './ui/quick-actions';
 import { WorldAgent } from './ui/world-agent';
-import { Composer, type ComposerEntry } from './ui/composer';
 import { EventTime } from './ui/event-time';
 import { AiSettings, Character, Crafting, EntityDetail, Inventory } from './ui/panels';
 import { CampActivity, type ActivityEntry } from './ui/camp-activity';
@@ -106,6 +107,9 @@ type PanelId =
   | 'activity'
   | 'character'
   | 'agent'
+  | 'world-editor'
+  | 'world-inspection'
+  | 'building'
   | 'game'
   | 'checkpoints'
   | 'nearby'
@@ -113,24 +117,25 @@ type PanelId =
   | 'events'
   | 'ai'
   | 'intelligence'
-  | 'composer'
   | 'help'
   | 'mind';
 const timeSpeeds = [0.5, 1, 3, 8];
 const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?: boolean }> = {
   inventory: { title: 'Inventory', side: 'left' },
-  crafting: { title: 'Crafting', side: 'left' },
+  crafting: { title: 'Craft', side: 'left' },
+  building: { title: 'Build', side: 'left' },
+  'world-editor': { title: 'World editor', side: 'right', wide: true },
+  'world-inspection': { title: 'Inspect world', side: 'right', wide: true },
   activity: { title: 'Current task', side: 'left', wide: true },
   character: { title: 'Character', side: 'left' },
   agent: { title: 'Create', side: 'right', wide: true },
   game: { title: 'Game', side: 'right' },
   checkpoints: { title: 'Checkpoints', side: 'right', wide: true },
   nearby: { title: 'In view', side: 'right' },
-  journal: { title: 'Journal', side: 'left', wide: true },
-  events: { title: 'World Events', side: 'left', wide: true },
+  journal: { title: 'Character records', side: 'left', wide: true },
+  events: { title: 'Events', side: 'left', wide: true },
   ai: { title: 'Intelligence & allowance', side: 'right' },
   intelligence: { title: 'Intelligence', side: 'right', wide: true },
-  composer: { title: 'Conversation', side: 'left', wide: true },
   help: { title: 'Settings & help', side: 'right', wide: true },
   mind: { title: 'Private mind', side: 'right', wide: true },
 };
@@ -161,6 +166,9 @@ function App({
     [sceneError, setSceneError] = useState(''),
     [sceneCreated, setSceneCreated] = useState(false),
     [notice, setNotice] = useState('');
+  const [conditionPolicyRevision, setConditionPolicyRevision] = useState(0);
+  const [inspectors, setInspectors] = useState<{ id: string; slot: number }[]>([]);
+  const [activeInspector, setActiveInspector] = useState<string | null>(null);
   const [worldIntent, setWorldIntent] = useState<(WorldIntent & { owner: string }) | null>(null);
   const [itemCreation, setItemCreation] = useState<{
     target: ItemCreationTarget;
@@ -168,10 +176,9 @@ function App({
   } | null>(null);
   const [creationEntryScope, setCreationEntryScope] = useState<string | null>(null);
   const [cameraView, setCameraView] = useState<
-    Pick<CameraState, 'projection' | 'levelId' | 'rotationLocked' | 'following'>
+    Pick<CameraState, 'projection' | 'rotationLocked' | 'following'>
   >({
     projection: 'orthographic',
-    levelId: null,
     rotationLocked: false,
     following: true,
   });
@@ -211,14 +218,13 @@ function App({
   const [choosingActionSubject, setChoosingActionSubject] = useState(false);
   const subjectReturnPanels = useRef<PanelId[]>([]);
   const [storyRequest, setStoryRequest] = useState(0);
+  const [settingsSection, setSettingsSection] = useState('reading');
+  const gameReturnFocus = useRef<Element | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
   const [gameError, setGameError] = useState('');
   const [mindDirty, setMindDirty] = useState(false);
   const [mindSwitchMessage, setMindSwitchMessage] = useState('');
-  const [npcId, setNpcId] = useState<string | null>(null),
-    [composerEntry, setComposerEntry] = useState<ComposerEntry | null>(null),
-    [talkRevision, setTalkRevision] = useState(0),
-    [inventionSeed, setInventionSeed] = useState<{
+  const [inventionSeed, setInventionSeed] = useState<{
       id: string;
       text: string;
     } | null>(null),
@@ -262,11 +268,6 @@ function App({
     'detailed',
     (v): v is ShadowQuality => v === 'detailed' || v === 'economy',
   );
-  const [captionsEnabled, setCaptionsEnabled] = useLocal(
-    'open-legend:captions',
-    true,
-    (v): v is boolean => typeof v === 'boolean',
-  );
   const [captionsPaused, setCaptionsPaused] = useLocal(
     'open-legend:captions-paused',
     false,
@@ -283,7 +284,7 @@ function App({
     (value): value is boolean => typeof value === 'boolean',
   );
   const [captionOcclusions, setCaptionOcclusions] = useState<ScreenRect[]>([]);
-  const missedCaptions = useMissedCaptions(captionsEnabled);
+  const missedCaptions = useMissedCaptions(true);
   const [eventsType, setEventsType] = useState('all');
   // Opening speech history from the missed-caption notice starts a fresh, unsearched list.
   const [eventsReset, setEventsReset] = useState(0);
@@ -301,6 +302,7 @@ function App({
       ) => {},
       move: (_p: { x: number; y: number; z: number; surfaceId: string }) => {},
       target: (_entity: EntityView) => {},
+      primaryAction: (_entity: EntityView) => {},
     }),
     retry = useRef(() => {});
   latest.current = view;
@@ -317,7 +319,7 @@ function App({
     document.documentElement.style.setProperty('--ui-scale', String(scale));
   }, [theme, reduce, scale]);
   useEffect(() => {
-    document.title = view ? `Open Legend · ${view.presentation.worldName}` : 'Open Legend';
+    document.title = view ? `Open Legend — ${view.presentation.worldName}` : 'Open Legend';
   }, [view?.presentation.worldName]);
   const { paused: tabPaused, acceptView, pause: pauseTab, isPaused, enter } = tab;
   const connected = transportReady && !tabPaused && !!view?.access?.controlling;
@@ -565,19 +567,34 @@ function App({
   const needsSheet = (nextWidth: number, nextHeight: number) =>
     nextWidth / scale < 720 || nextHeight / scale <= 600;
   const narrow = needsSheet(width, height);
+  // Full meters, the clock and useful current-work details need a horizontal
+  // launcher strip on short narrow screens; centered rails leave too little room.
+  const shortHud = narrow && height / scale < 780;
+  const inspectedEntities = new Map(
+    inspectors.length ? view?.entities.map((entity) => [entity.id, entity] as const) : [],
+  );
+  const raisedInspector = inspectors.some((entry) => entry.id === activeInspector)
+    ? activeInspector
+    : (inspectors.at(-1)?.id ?? null);
+  const inspectorSheetVisible =
+    narrow && activeInspector !== null && inspectors.length > 0 && open.at(-1) !== 'game';
+  const inspectorOptions = inspectors.map(({ id }) => ({
+    id,
+    label: inspectedEntities.get(id)?.name ?? 'Out of sight',
+  }));
+  const panelVisible = (id: PanelId) =>
+    open.includes(id) && (!narrow || (open.at(-1) === id && !inspectorSheetVisible));
   const inventoryFeedbackVisible = useRef(false);
   const activityFeedbackVisible = useRef(false);
   useLayoutEffect(() => {
     // A delayed acknowledgement belongs to the panel currently shown, not its dispatch closure.
-    inventoryFeedbackVisible.current =
-      connected && open.includes('inventory') && (!narrow || open.at(-1) === 'inventory');
-    activityFeedbackVisible.current =
-      connected && open.includes('activity') && (!narrow || open.at(-1) === 'activity');
+    inventoryFeedbackVisible.current = panelVisible('inventory');
+    activityFeedbackVisible.current = connected && panelVisible('activity');
     return () => {
       inventoryFeedbackVisible.current = false;
       activityFeedbackVisible.current = false;
     };
-  }, [connected, narrow, open]);
+  }, [connected, narrow, open, inspectorSheetVisible]);
   useEffect(() => {
     const resize = () => {
       if (!narrow && needsSheet(innerWidth, innerHeight)) {
@@ -624,18 +641,23 @@ function App({
     height,
     scale,
     open,
+    inspectors,
+    activeInspector,
     timeSettings,
     expandedWorkspaces,
     choosingActionSubject,
     tabPaused,
     !!view?.player.action?.controls,
+    !!view?.player.hasWork,
     aimPanel,
   ]);
   const workspaceWidth = Math.min(792, Math.max(336, width / scale - 184));
   function fit(panels: PanelId[]) {
     const available = width / scale;
     if (narrow) return panels;
-    let result = [...panels];
+    // Game overlays the current tasks; its width must never evict one of them.
+    const hasGame = panels.includes('game');
+    let result = panels.filter((id) => id !== 'game');
     const size = (id: PanelId) =>
       expandedWorkspaces.includes(id) ? workspaceWidth : panelInfo[id].wide ? 504 : 336;
     while (
@@ -645,9 +667,26 @@ function App({
           result.filter((id) => panelInfo[id].side === panelInfo[result.at(-1)!].side).length > 1))
     )
       result.shift();
-    return result;
+    return hasGame ? [...result, 'game' as const] : result;
   }
   function show(id: PanelId) {
+    if (id === 'game') {
+      if (!panelVisible('game')) gameReturnFocus.current = document.activeElement;
+      const opener = document.activeElement;
+      setOpen((panels) => [...panels.filter((panel) => panel !== 'game'), 'game']);
+      requestAnimationFrame(() => {
+        const target = document.querySelector<HTMLButtonElement>('#gamePanel .ol-game-return');
+        if (
+          target &&
+          !target.closest('[hidden]') &&
+          (document.activeElement === opener || document.activeElement === document.body)
+        )
+          target.focus({ preventScroll: true });
+      });
+      return;
+    }
+    gameReturnFocus.current = null;
+    setActiveInspector(null);
     if (
       ['character', 'journal', 'events', 'help', 'checkpoints', 'mind', 'intelligence'].includes(id)
     )
@@ -656,14 +695,11 @@ function App({
     if (id === 'activity') setActivityOpened(true);
     // Opening speech history is the recovery path, so it settles the missed-caption notice.
     if (id === 'events') missedCaptions.clear();
-    setOpen((v) => fit([...v.filter((p) => p !== id), id]));
+    setOpen((v) => fit([...v.filter((p) => p !== id && p !== 'game'), id]));
   }
   function openGameTask(id: PanelId) {
     const opener = document.activeElement;
     show(id);
-    // Game is navigation, not an editing task. Its focused launcher must not
-    // displace the chosen task when the layout becomes a single narrow sheet.
-    setOpen((panels) => panels.filter((panel) => panel !== 'game'));
     requestAnimationFrame(() => {
       const target = document.getElementById(`${id}Panel`);
       if (
@@ -679,6 +715,8 @@ function App({
   function hide(id: PanelId) {
     if (id === 'inventory') containerOpening.cancel();
     const focused = document.activeElement;
+    const returnTo = id === 'game' ? gameReturnFocus.current : null;
+    if (id === 'game') gameReturnFocus.current = null;
     const ownsFocus =
       focused === document.body ||
       (focused instanceof HTMLElement &&
@@ -687,6 +725,14 @@ function App({
     if (ownsFocus)
       requestAnimationFrame(() => {
         if (document.activeElement !== document.body && document.activeElement !== focused) return;
+        if (
+          returnTo instanceof HTMLElement &&
+          returnTo.isConnected &&
+          !returnTo.closest('[hidden], [inert], [aria-hidden="true"]')
+        ) {
+          returnTo.focus({ preventScroll: true });
+          return;
+        }
         const launcher = document.querySelector<HTMLButtonElement>(
           `.ol-launcher[aria-label="${panelInfo[id].title}"]`,
         );
@@ -706,8 +752,48 @@ function App({
       });
   }
   function toggle(id: PanelId) {
-    if (open.includes(id)) hide(id);
+    if (panelVisible(id) && !inspectorSheetVisible && (id === 'game' || !open.includes('game')))
+      hide(id);
     else show(id);
+  }
+  function showInspector(id: string) {
+    gameReturnFocus.current = null;
+    setOpen((panels) => panels.filter((panel) => panel !== 'game'));
+    const focused = document.activeElement;
+    setActiveInspector(id);
+    if (narrow)
+      requestAnimationFrame(() => {
+        if (document.activeElement !== document.body && document.activeElement !== focused) return;
+        const inspection = [...document.querySelectorAll<HTMLElement>('[data-inspector-id]')].find(
+          (element) => element.dataset.inspectorId === id && !element.hidden,
+        );
+        inspection
+          ?.querySelector<HTMLElement>('.ol-inspector-switch input, .ol-panel-tools button')
+          ?.focus({ preventScroll: true });
+      });
+  }
+  function closeInspector(id: string) {
+    const remaining = inspectors.filter((entry) => entry.id !== id);
+    const focused = document.activeElement;
+    const ownsFocus =
+      focused === document.body ||
+      (focused instanceof HTMLElement &&
+        focused.closest<HTMLElement>('[data-inspector-id]')?.dataset.inspectorId === id);
+    setInspectors(remaining);
+    setActiveInspector((current) => (current === id ? (remaining.at(-1)?.id ?? null) : current));
+    if (ownsFocus)
+      requestAnimationFrame(() => {
+        if (document.activeElement !== document.body && document.activeElement !== focused) return;
+        const next = remaining.at(-1)?.id;
+        const inspection = [...document.querySelectorAll<HTMLElement>('[data-inspector-id]')].find(
+          (element) => element.dataset.inspectorId === next && !element.hidden,
+        );
+        const panel = open.length ? document.getElementById(`${open.at(-1)}Panel`) : null;
+        const target = inspection ?? (panel?.closest('[hidden]') ? null : panel);
+        (
+          target?.querySelector<HTMLButtonElement>('.ol-panel-tools button') ?? canvas.current
+        )?.focus({ preventScroll: true });
+      });
   }
   useEffect(() => setOpen((v) => fit(v)), [width, height, scale, expandedWorkspaces]);
   async function sendCommand(
@@ -777,12 +863,12 @@ function App({
       if (!r.ok || (r.code !== 'accepted' && !localReceipt)) notify(r.message);
       return r;
     } catch (e) {
-      if (latest.current?.access?.scope === requestedScope)
-        notify(`${String(e)} Check the journal before repeating this action.`);
+      const message = `${String(e)} The action's outcome is unconfirmed. Check Events and the world before repeating it; a missing event does not prove it failed.`;
+      if (latest.current?.access?.scope === requestedScope) notify(message);
       return {
         ok: false,
         code: 'unconfirmed',
-        message: `${String(e)} Check the journal before repeating this action.`,
+        message,
       };
     }
   }
@@ -822,32 +908,29 @@ function App({
     }
   }
   function talk(id: string) {
-    setNpcId(id);
-    setComposerEntry(null);
-    setTalkRevision((value) => value + 1);
-    show('composer');
+    const current = latest.current;
+    const recipient = current?.entities.find((entity) => entity.id === id && entity.canTalk);
+    if (!current || !recipient) return;
+    setWorldIntent({
+      mode: 'speak',
+      targetId: id,
+      label: recipient.name,
+      owner: JSON.stringify([current.worldId, current.saveTimeline, current.player.id]),
+    });
     setPicker(null);
   }
-  function chooseRecipient(id: string) {
-    if (!latest.current?.entities.some((entity) => entity.id === id && entity.canTalk)) return;
-    setNpcId(id);
-    setComposerEntry((entry) =>
-      entry ? { ...entry, id: crypto.randomUUID(), recipientId: id } : null,
-    );
-    setTalkRevision((value) => value + 1);
-  }
   function talkAbout(item: { itemId: string; name: string; recipientId?: string }) {
-    const recipient = latest.current?.entities.find(
-      (entity) => entity.canTalk && entity.id === (item.recipientId ?? npcId),
+    const current = latest.current;
+    if (!current) return;
+    const recipient = current.entities.find(
+      (entity) => entity.canTalk && entity.id === item.recipientId,
     );
-    setNpcId(recipient?.id ?? null);
-    setComposerEntry({
-      id: crypto.randomUUID(),
-      ...(recipient ? { recipientId: recipient.id } : {}),
-      item: { itemId: item.itemId, name: item.name },
+    setWorldIntent({
+      mode: 'speak',
+      ...(recipient ? { targetId: recipient.id, label: recipient.name } : {}),
+      item: { id: item.itemId, name: item.name },
+      owner: JSON.stringify([current.worldId, current.saveTimeline, current.player.id]),
     });
-    setTalkRevision((value) => value + 1);
-    show('composer');
     setPicker(null);
   }
   function invent(text = '') {
@@ -927,14 +1010,27 @@ function App({
     }
     if (scene.current && !scene.current.select(entity.id)) return;
     setSelected(entity.id);
-    show(entity.id === view?.player.id ? 'character' : 'nearby');
+    if (entity.id === view?.player.id) show('character');
+    else {
+      setInspectors((current) => {
+        const existing = current.find((entry) => entry.id === entity.id);
+        if (existing) return current;
+        const used = new Set(current.map((entry) => entry.slot));
+        let slot = 0;
+        while (used.has(slot)) slot++;
+        return [...current.filter((entry) => entry.id !== entity.id), { id: entity.id, slot }];
+      });
+      showInspector(entity.id);
+    }
     setPicker(null);
   }
   function clearSelection() {
     setSelected(null);
     scene.current?.select(null);
   }
+  const primaryAction = usePrimaryAction(view, connected && !tabPaused, run, notify);
   handlers.current = {
+    primaryAction,
     target: (entity) => {
       if (choosingActionSubject) return;
       const action = latest.current?.entities.find(
@@ -1025,6 +1121,7 @@ function App({
           select: (...args) => handlers.current.select(...args),
           move: (p) => handlers.current.move(p),
           target: (entity) => handlers.current.target(entity),
+          primaryAction: (entity) => handlers.current.primaryAction(entity),
           hover: (entity, point) =>
             setHover((previous) =>
               previous?.entity === entity &&
@@ -1036,14 +1133,13 @@ function App({
                   : null,
             ),
           selectionDenied: notify,
-          cameraChanged: ({ projection, levelId, rotationLocked, following }) =>
+          cameraChanged: ({ projection, rotationLocked, following }) =>
             setCameraView((previous) =>
               previous.projection === projection &&
-              previous.levelId === levelId &&
               previous.rotationLocked === rotationLocked &&
               previous.following === following
                 ? previous
-                : { projection, levelId, rotationLocked, following },
+                : { projection, rotationLocked, following },
             ),
         });
         allocated.setSuspended(true);
@@ -1122,7 +1218,7 @@ function App({
   }, [view?.access?.scope, view?.saveTimeline, tabPaused, connected]);
   useEffect(() => {
     scene.current?.setCaptionOptions({
-      enabled: captionsEnabled,
+      enabled: true,
       onMissedCaptions: missedCaptions.report,
       paused: captionsPaused,
       readingScale: captionReadingScale,
@@ -1135,7 +1231,6 @@ function App({
     tabPaused,
     sceneCreated,
     sceneError,
-    captionsEnabled,
     captionsPaused,
     captionReadingScale,
     scale,
@@ -1178,21 +1273,34 @@ function App({
     const key = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.isComposing || isPaused() || modalOwnsInput()) return;
       if (e.key === 'Escape') {
+        if (e.repeat) return;
+        // Child popups own the first Escape. Ordinary retained panels keep their
+        // drafts and reading position while the Game menu opens above them.
+        if (document.querySelector('[role="listbox"], [role="menu"]')) return;
+        e.preventDefault();
         if (choosingActionSubject) {
-          e.preventDefault();
           finishActionSubject();
         } else if (picker) {
           closePicker();
         } else if (targeting) {
           setTargeting(false);
-          e.preventDefault();
         } else if (timeSettings) setTimeSettings(false);
-        else if (selected && open.includes('nearby')) clearSelection();
-        else if (open.length) hide(open.at(-1)!);
+        else if (panelVisible('game')) hide('game');
+        else if (view) show('game');
         return;
       }
       if (choosingActionSubject) return;
       if (uiOwnsShortcut(e) || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.shiftKey && (e.code === 'KeyS' || e.code === 'KeyA')) {
+        if (!view || !connected || e.repeat) return;
+        e.preventDefault();
+        setWorldIntent({
+          mode: e.code === 'KeyS' ? 'speak' : 'act',
+          owner: JSON.stringify([view.worldId, view.saveTimeline, view.player.id]),
+        });
+        setPicker(null);
+        return;
+      }
       if (e.key.toLowerCase() === 't') {
         if (!view || picker || !connected || e.repeat) return;
         e.preventDefault();
@@ -1227,7 +1335,7 @@ function App({
         k: 'character',
         w: 'agent',
         v: 'nearby',
-        j: 'journal',
+        j: 'events',
       };
       const id = ids[e.key.toLowerCase()];
       if (id) {
@@ -1264,9 +1372,9 @@ function App({
       setSpeedPending(false);
     }
   }
-  function run(a: CatalogueAction) {
+  function run(a: CatalogueAction, dispatchCommand?: (action: ActionOption) => Promise<ApiResult>) {
     if (a.intent.kind === 'command')
-      void command({
+      void (dispatchCommand ?? command)({
         id: a.id,
         label: a.label,
         enabled: a.enabled,
@@ -1385,30 +1493,73 @@ function App({
     setPersonPosition(null);
     setPicker(null);
   }
-  const entity =
-    view &&
-    (selected === view.player.id
-      ? playerEntity(view)
-      : view.entities.find((e) => e.id === selected));
   const title = (id: PanelId) =>
     id === 'activity' && activityEntry
       ? activityEntry.label
       : id === 'nearby' && choosingActionSubject
         ? 'Choose a subject'
-        : id === 'nearby' && entity
-          ? namePhrase(entity, 'indefinite')
-          : id === 'intelligence' && intelligenceSelection
-            ? `${intelligenceSelection.actorName ?? 'World agent'} request`
-            : panelInfo[id].title;
+        : id === 'intelligence' && intelligenceSelection
+          ? `${intelligenceSelection.actorName ?? 'World agent'} request`
+          : panelInfo[id].title;
+  function actionBrowser(
+    picker: PickerContext,
+    presentation: 'context' | 'inspection' = 'context',
+    visible = true,
+  ) {
+    if (!view) return null;
+    return (
+      <ActionPicker
+        key={JSON.stringify([presentation, picker.context, picker.point])}
+        createItem={(definitionId, position) => {
+          openItemCreation({ definitionId, target: { position } });
+          setPicker(null);
+        }}
+        presentation={presentation}
+        visible={visible}
+        picker={picker}
+        view={view}
+        connected={connected}
+        close={closePicker}
+        run={(action) => run(action, picker.dispatchCommand)}
+        invent={invent}
+        inspect={inspect}
+        openContainer={openContainer}
+        openActivity={openActivity}
+        compose={(mode) => {
+          const targetId = picker.context.itemId ?? picker.context.targetId;
+          setWorldIntent({
+            mode,
+            owner: JSON.stringify([view.worldId, view.saveTimeline, view.player.id]),
+            ...(targetId &&
+            targetId !== view.player.id &&
+            (mode === 'act' || !!picker.entity?.canTalk)
+              ? {
+                  targetId,
+                  label: picker.item?.name ?? picker.entity?.name,
+                  possession: !!picker.context.itemId,
+                }
+              : {}),
+          });
+          setPicker(null);
+        }}
+        revive={(target) => void revive(target)}
+        enableCognition={(target) => void enableCognition(target)}
+        spawn={(type, position) => void spawn(type, position)}
+        createPerson={(position) => {
+          setPicker(null);
+          if (!creation.openEntry()) return;
+          setCreationEntryScope(creation.key);
+          setItemCreation(null);
+          setPersonPosition(position);
+        }}
+      />
+    );
+  }
   function content(id: PanelId) {
     if (!view) return null;
-    // Keep editable drafts mounted, but close readers with their own polling.
-    if (
-      (tabPaused || !view.access?.controlling) &&
-      !['inventory', 'activity', 'agent', 'composer', ...retainedPanels].includes(id)
-    )
-      return null;
-    const visible = connected && open.includes(id) && (!narrow || open.at(-1) === id);
+    // Quiet pause leaves the player's reading place mounted. Each reader owns
+    // request cancellation and privacy loss; inactive control never permits writes.
+    const visible = connected && panelVisible(id);
     const props = {
       view,
       connected,
@@ -1423,31 +1574,39 @@ function App({
               {...props}
               narrow={narrow}
               showHeading={false}
-              browseActions={(item, opener) => {
+              browseActions={(item, opener, dispatchCommand) => {
                 const bounds = opener.getBoundingClientRect();
                 setPicker({
-                  context: { itemId: item.id },
+                  context: {
+                    itemId: item.id,
+                    inventoryGroup: item.group?.token,
+                    quantity: item.availableQuantity,
+                  },
                   browse: true,
                   item: { id: item.id, name: item.name },
                   point: { x: bounds.right, y: bounds.top },
                   entity: null,
                   opener,
+                  dispatchCommand,
                 });
               }}
               command={(action, request) => command(action, request, 'inventory')}
               openContainer={containerOpening.openContainer}
               onTalkAbout={talkAbout}
-              visible={
-                connected && open.includes('inventory') && (!narrow || open.at(-1) === 'inventory')
-              }
+              visible={panelVisible('inventory')}
               addItem={() => openItemCreation({ target: { actorId: view.player.id } })}
-              contextMenu={(item, point, opener) =>
+              contextMenu={(item, point, opener, dispatchCommand) =>
                 setPicker({
-                  context: { itemId: item.id },
+                  context: {
+                    itemId: item.id,
+                    inventoryGroup: item.group?.token,
+                    quantity: item.availableQuantity,
+                  },
                   item: { id: item.id, name: item.name },
                   point,
                   entity: null,
                   opener,
+                  dispatchCommand,
                 })
               }
             />
@@ -1460,54 +1619,46 @@ function App({
             connected={connected}
             command={(action, request) => command(action, request, 'activity')}
             entry={activityEntry}
-            visible={
-              connected && open.includes('activity') && (!narrow || open.at(-1) === 'activity')
-            }
+            visible={connected && panelVisible('activity')}
           />
         );
       case 'crafting':
+        return <Crafting {...props} invent={() => invent()} />;
+      case 'building':
         return (
-          <>
-            <Construction
-              key={taskScope(view)}
-              view={view}
-              connected={connected}
-              visible={open.includes('crafting') && (!narrow || open.at(-1) === 'crafting')}
-              command={command}
-              preview={(shapes, valid) => scene.current?.setConstructionPreview(shapes, valid)}
-            />
-            <Crafting {...props} invent={() => invent()} />
-          </>
+          <Construction
+            key={taskScope(view)}
+            view={view}
+            connected={connected}
+            visible={panelVisible('building')}
+            command={command}
+            placement={(controls) => scene.current?.setConstructionPlacement(controls)}
+            preview={(shapes, valid, transform) =>
+              scene.current?.setConstructionPreview(shapes, valid, transform)
+            }
+          />
         );
       case 'character':
         return (
-          <Character
-            {...props}
-            key={taskScope(view)}
-            visible={visible}
-            actionSubject={actionSubject}
-            actionEntry={actionEntry}
-            conditionEntry={conditionEntry}
-            workEntry={workEntry}
-            chooseActionSubject={chooseActionSubject}
-            clearActionSubject={() => setActionSubject(null)}
-            openInventory={() => show('inventory')}
-            godControls={characterGodControls(playerEntity(view))}
-            openActivity={() => openActivity()}
-            openMind={() => openMind(view.player.id)}
-          />
+          <>
+            <Character
+              {...props}
+              key={taskScope(view)}
+              visible={visible}
+              actionSubject={actionSubject}
+              actionEntry={actionEntry}
+              conditionEntry={conditionEntry}
+              workEntry={workEntry}
+              chooseActionSubject={chooseActionSubject}
+              clearActionSubject={() => setActionSubject(null)}
+              godControls={characterGodControls(playerEntity(view))}
+              openActivity={() => openActivity()}
+              openMind={() => openMind(view.player.id)}
+            />
+          </>
         );
       case 'nearby':
-        return entity && !choosingActionSubject ? (
-          <EntityDetail
-            entity={entity}
-            {...props}
-            talk={talk}
-            openContainer={openContainer}
-            openActivity={openActivity}
-            godControls={characterGodControls(entity)}
-          />
-        ) : (
+        return (
           <>
             <p className="ol-meta">
               {choosingActionSubject
@@ -1553,10 +1704,16 @@ function App({
           </>
         );
       case 'agent':
+      case 'world-editor':
+      case 'world-inspection':
         return (
           <WorldAgent
+            mode={id === 'agent' ? 'invent' : id === 'world-editor' ? 'author' : 'inspect'}
+            conditionPolicyRevision={conditionPolicyRevision}
+            onStatusPolicyChanged={() => setConditionPolicyRevision((value) => value + 1)}
             actorId={view.player.id}
             accessScope={view.access?.privateDraftScope ?? view.player.id}
+            requestScope={view.access?.scope ?? ''}
             inspectionScope={JSON.stringify([view.access?.scope, view.historyEpoch])}
             budget={view.ai.budget}
             godMode={view.godMode}
@@ -1568,23 +1725,7 @@ function App({
             connected={connected}
             inventionSeed={inventionSeed}
             invent={invent}
-            visible={connected && open.includes('agent') && (!narrow || open.at(-1) === 'agent')}
-          />
-        );
-      case 'composer':
-        return (
-          <Composer
-            {...props}
-            npcId={npcId}
-            entry={composerEntry}
-            talkRevision={talkRevision}
-            chooseRecipient={chooseRecipient}
-            clearEntry={() => setComposerEntry(null)}
-            setup={() => show('ai')}
-            notify={notify}
-            visible={
-              connected && open.includes('composer') && (!narrow || open.at(-1) === 'composer')
-            }
+            visible={visible}
           />
         );
       case 'ai':
@@ -1592,14 +1733,17 @@ function App({
       case 'events':
         return (
           <WorldEvents
+            view={view}
+            inspectEntity={(id) => {
+              const target =
+                id === view.player.id
+                  ? playerEntity(view)
+                  : view.entities.find((entity) => entity.id === id);
+              if (target) inspect(target);
+              else notify('This person or object is not currently in view.');
+            }}
             key={eventsReset}
             visible={visible}
-            ownerScope={JSON.stringify([
-              view.worldId,
-              view.saveTimeline,
-              view.access?.scope,
-              view.player.id,
-            ])}
             scope={captionScope(view)}
             revision={view.worldEventsRevision}
             type={eventsType}
@@ -1609,9 +1753,6 @@ function App({
       case 'journal':
         return (
           <>
-            <Button size="sm" variant="quiet" onPress={() => show('events')}>
-              World Events · what you perceived
-            </Button>
             <Journal
               key={taskScope(view)}
               view={view}
@@ -1658,10 +1799,12 @@ function App({
       case 'game':
         return (
           <div className="ol-game-menu">
-            <p>
-              {view.presentation.worldName} · playing as {view.player.name}
-            </p>
-            <Button variant="primary" onPress={() => hide('game')}>
+            <header className="ol-game-brand">
+              <h1 className="t-wordmark">OPEN LEGEND</h1>
+              <strong>{view.presentation.worldName}</strong>
+              <p className="ol-caption">Playing as {view.player.name}</p>
+            </header>
+            <Button className="ol-game-return" variant="primary" onPress={() => hide('game')}>
               Back to the world
             </Button>
             <Section title="Your game">
@@ -1672,25 +1815,49 @@ function App({
                 <Button onPress={() => openGameTask('checkpoints')}>Checkpoints</Button>
               )}
               <Button onPress={() => openGameTask('help')}>Settings & help</Button>
+              <Button
+                onPress={() => {
+                  setSettingsSection('controls');
+                  openGameTask('help');
+                }}
+              >
+                Controls
+              </Button>
+              <Button disabled aria-describedby="gameEncyclopediaHelp">
+                Encyclopedia
+              </Button>
+              <p id="gameEncyclopediaHelp" className="ol-caption">
+                Not available yet.
+              </p>
               <Button onPress={() => openGameTask('ai')}>Intelligence & allowance</Button>
             </Section>
-            <Section title="Creation and inspection">
-              <Button onPress={() => openGameTask('agent')}>Create</Button>
+            <Section title="Create">
+              <Button onPress={() => openGameTask('agent')}>Invent something</Button>
               <p className="ol-caption">
-                Open your invention workshop
-                {view.godMode ? ' and the world-owner conversation' : ''}.
+                Describe an idea, find learned recipes, or revisit a request.
               </p>
-              {view.godMode && (
-                <Button onPress={() => openGameTask('intelligence')}>
-                  God mode · Intelligence diagnostics
-                </Button>
-              )}
-              {view.access?.canOperate && (
-                <a href="/?view=operations" target="_blank" rel="noopener">
-                  World operations · opens separately
-                </a>
-              )}
             </Section>
+            {(view.godMode || view.access?.canOperate) && (
+              <Section title="World tools">
+                {view.godMode && (
+                  <>
+                    <Button onPress={() => openGameTask('world-editor')}>World editor</Button>
+                    <p className="ol-caption">
+                      Chat about changes to the world, then review and apply them.
+                    </p>
+                    <Button onPress={() => openGameTask('world-inspection')}>Inspect world</Button>
+                    <Button onPress={() => openGameTask('intelligence')}>
+                      Intelligence diagnostics
+                    </Button>
+                  </>
+                )}
+                {view.access?.canOperate && (
+                  <a href="/?view=operations" target="_blank" rel="noopener">
+                    World operations — opens separately
+                  </a>
+                )}
+              </Section>
+            )}
             {view.player.departureNotice && <p>{view.player.departureNotice}</p>}
             <Button busy={loggingOut} onPress={() => void leaveAccount()}>
               Log Out
@@ -1710,14 +1877,14 @@ function App({
         return (
           <Settings
             view={view}
+            section={settingsSection}
+            setSection={setSettingsSection}
             theme={theme}
             setTheme={setTheme}
             scale={scale}
             setScale={setScale}
             reduce={reduce}
             setReduce={setReduce}
-            captionsEnabled={captionsEnabled}
-            setCaptionsEnabled={setCaptionsEnabled}
             captionsPaused={captionsPaused}
             setCaptionsPaused={setCaptionsPaused}
             captionReadingScale={captionReadingScale}
@@ -1757,6 +1924,7 @@ function App({
         data-narrow={narrow}
         data-compact={width / scale < 1200}
         data-tight={width / scale < 360}
+        data-short={shortHud}
         data-picking={choosingActionSubject}
         style={{ '--ui-scale': scale } as CSSProperties}
         inert={tabPaused && !showEntry}
@@ -1778,13 +1946,7 @@ function App({
           // Keep the last game view and drafts visible through ordinary focus loss.
           // Actual entry/return failures retain their separate retry screen.
           <div className="ol-play-workspace" hidden={showEntry} inert={tabPaused}>
-            <h1 className="ol-wordmark t-wordmark">OPEN LEGEND</h1>
             <section ref={survival} className="ol-card ol-survival" aria-label="Your condition">
-              <div className="ol-survival-top">
-                <span id="saveStatus" className="ol-caption" title={view.persistence.message}>
-                  {view.persistence.status === 'saved' ? 'World saved' : 'World save failed'}
-                </span>
-              </div>
               <div className="ol-survival-name">
                 <Button
                   variant="quiet"
@@ -1797,39 +1959,20 @@ function App({
                   {view.player.name}
                   <Icon name="ui.character" size={16} />
                 </Button>
-                <span className="ol-meta">{view.presentation.locationName}</span>
               </div>
               <Condition {...view.player} />
               <EvasionCooldown evasion={view.player.evasion} />
 
-              <p className="ol-caption ol-player-state">
-                {view.player.participation === 'inactive'
-                  ? 'Away from the world'
-                  : view.player.participation === 'exiting'
-                    ? 'Preparing to leave'
-                    : !view.player.alive
-                      ? 'Life has ended'
-                      : 'In the world'}
-              </p>
-              {view.player.hasWork && (
-                <div className="ol-current-work">
-                  <span className="ol-caption">Current work</span>
-                  <strong>
-                    {view.player.action?.label ?? view.player.activity?.name ?? 'Work is waiting'}
-                  </strong>
-                  {view.player.activity?.reason && (
-                    <span className="ol-caption">{view.player.activity.reason}</span>
-                  )}
-                  <Button
-                    size="sm"
-                    onPress={() => {
-                      setWorkEntry((value) => value + 1);
-                      show('character');
-                    }}
-                  >
-                    Review current work
-                  </Button>
-                </div>
+              {(view.player.participation !== 'active' || !view.player.alive) && (
+                <p className="ol-caption ol-player-state">
+                  {view.player.participation === 'inactive'
+                    ? 'Away from the world'
+                    : view.player.participation === 'exiting'
+                      ? 'Preparing to leave'
+                      : !view.player.alive
+                        ? 'Life has ended'
+                        : null}
+                </p>
               )}
               {view.persistence.status === 'error' && (
                 <p className="ol-save-failure" role="alert">
@@ -1842,6 +1985,14 @@ function App({
                 </p>
               )}
             </section>
+            <CurrentWork
+              key={taskScope(view)}
+              player={view.player}
+              review={() => {
+                setWorkEntry((value) => value + 1);
+                show('character');
+              }}
+            />
             {choosingActionSubject && (
               <section className="ol-card ol-subject-picking" aria-label="Choose action subject">
                 <strong>Choose a subject</strong>
@@ -1867,15 +2018,16 @@ function App({
                       {clockParts(view.clock.seconds, view.clock.offsetHours).hour}:
                       {clockParts(view.clock.seconds, view.clock.offsetHours).minute}
                     </span>
-                    <div className="ol-caption">
-                      {view.clock.paused
-                        ? view.clock.pauseReason === 'maintenance'
-                          ? 'Paused for maintenance'
-                          : 'Paused'
-                        : view.clock.preparingNavigation
-                          ? 'Preparing navigation…'
-                          : view.presentation.timeLabel}
-                    </div>
+                    <div className="ol-timebar-location">{view.presentation.locationName}</div>
+                    {(view.clock.paused || view.clock.preparingNavigation) && (
+                      <div className="ol-timebar-status">
+                        {view.clock.paused
+                          ? view.clock.pauseReason === 'maintenance'
+                            ? 'Paused for maintenance'
+                            : 'Paused'
+                          : 'Preparing navigation…'}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <span className="ol-timebar-sep" />
@@ -1943,15 +2095,19 @@ function App({
                   key={side}
                   className={`ol-rail ol-rail-${side}`}
                   orientation={
-                    width / scale < 360 || (narrow && open.length > 0) ? 'horizontal' : 'vertical'
+                    width / scale < 360 ||
+                    shortHud ||
+                    (narrow && (open.length > 0 || inspectors.length > 0))
+                      ? 'horizontal'
+                      : 'vertical'
                   }
                   aria-label={
                     side === 'left' ? 'Your character and records' : 'World actions and creation'
                   }
                 >
                   {(side === 'left'
-                    ? (['inventory', 'character', 'journal', 'composer'] as PanelId[])
-                    : (['nearby', 'crafting', 'agent'] as PanelId[])
+                    ? (['inventory', 'character', 'events', 'journal'] as PanelId[])
+                    : (['nearby', 'crafting', 'building', 'agent'] as PanelId[])
                   ).map((id) => (
                     <Launcher
                       key={id}
@@ -1962,7 +2118,7 @@ function App({
                           character: 'ui.character',
                           journal: 'ui.journal',
                           events: 'ui.journal',
-                          composer: 'action.talk',
+                          building: 'ui.build',
                           agent: 'ui.agent',
                           game: 'ui.settings',
                           nearby: 'ui.inview',
@@ -1979,19 +2135,33 @@ function App({
                           character: 'K',
                           agent: 'W',
                           nearby: 'V',
-                          journal: 'J',
+                          events: 'J',
                         }[id as 'inventory']
                       }
                       onPress={() => toggle(id)}
                     />
                   ))}
+                  {side === 'right' && (
+                    <Launcher
+                      icon="ui.speech"
+                      label="Speak"
+                      open={worldIntent?.mode === 'speak'}
+                      side="right"
+                      onPress={() =>
+                        setWorldIntent({
+                          mode: 'speak',
+                          owner: JSON.stringify([view.worldId, view.saveTimeline, view.player.id]),
+                        })
+                      }
+                    />
+                  )}
                 </Toolbar>
               ))}
             </div>
-            {narrow && open.length > 0 && (
+            {narrow && (open.length > 0 || inspectors.length > 0) && (
               <div
                 className="ol-mobile-tabs"
-                data-single={open.length === 1 ? 'true' : undefined}
+                data-single={open.length + Number(inspectors.length > 0) === 1 ? 'true' : undefined}
                 role="toolbar"
                 aria-label="Open panels"
               >
@@ -1999,35 +2169,63 @@ function App({
                   <Button
                     key={id}
                     size="sm"
-                    variant={id === open.at(-1) ? 'primary' : 'quiet'}
+                    variant={!inspectorSheetVisible && id === open.at(-1) ? 'primary' : 'quiet'}
                     onPress={() => show(id)}
                   >
                     {panelInfo[id].title}
                   </Button>
                 ))}
+                {raisedInspector && (
+                  <Button
+                    size="sm"
+                    variant={inspectorSheetVisible ? 'primary' : 'quiet'}
+                    onPress={() => showInspector(raisedInspector)}
+                  >
+                    Inspect
+                  </Button>
+                )}
               </div>
             )}
-            {(['left', 'right'] as const).map((side) => (
-              <div key={side} className={`ol-dock ol-dock-${side}`} data-side={side}>
+            {(['left', 'right', 'game'] as const).map((side) => (
+              <div
+                key={side}
+                className={`ol-dock ol-dock-${side}`}
+                data-side={side === 'game' ? 'right' : side}
+              >
                 {(Object.keys(panelInfo) as PanelId[])
-                  .filter((id) => panelInfo[id].side === side)
+                  .filter((id) =>
+                    side === 'game' ? id === 'game' : id !== 'game' && panelInfo[id].side === side,
+                  )
                   .map((id) => (
                     <div
                       key={id}
                       className="ol-panel-slot"
-                      hidden={!open.includes(id) || (narrow && open.at(-1) !== id)}
+                      hidden={!panelVisible(id)}
                       style={{ order: open.indexOf(id) }}
+                      onPointerDownCapture={() => {
+                        if (id !== 'game') setActiveInspector(null);
+                      }}
+                      onFocusCapture={() => {
+                        if (id !== 'game') setActiveInspector(null);
+                      }}
                     >
                       <Panel
                         title={title(id)}
                         id={id === 'nearby' ? 'nearbyPanel' : `${id}Panel`}
                         wide={panelInfo[id].wide}
-                        draggable={!narrow && ['agent', 'composer', 'intelligence'].includes(id)}
+                        draggable={!narrow}
                         resizable={!narrow && id === 'intelligence'}
                         workspace={
-                          ['inventory', 'agent', 'journal', 'events', 'character', 'mind'].includes(
-                            id,
-                          )
+                          [
+                            'inventory',
+                            'agent',
+                            'world-editor',
+                            'world-inspection',
+                            'journal',
+                            'events',
+                            'character',
+                            'mind',
+                          ].includes(id)
                             ? {
                                 expanded: expandedWorkspaces.includes(id),
                                 width: workspaceWidth,
@@ -2057,16 +2255,16 @@ function App({
                         }
                         onClose={() => hide(id)}
                         onBack={
-                          id === 'nearby' && entity
-                            ? clearSelection
-                            : id === 'intelligence' && intelligenceSelection
-                              ? () => setIntelligenceSelection(null)
-                              : undefined
+                          id === 'intelligence' && intelligenceSelection
+                            ? () => setIntelligenceSelection(null)
+                            : undefined
                         }
                         backLabel={id === 'intelligence' ? 'Intelligence' : 'In view'}
                       >
                         {id === 'agent' ||
-                        id === 'composer' ||
+                        id === 'world-editor' ||
+                        id === 'world-inspection' ||
+                        id === 'building' ||
                         (id === 'inventory' && inventoryOpened) ||
                         (id === 'activity' && activityOpened) ||
                         retainedPanels.includes(id) ||
@@ -2078,6 +2276,71 @@ function App({
                   ))}
               </div>
             ))}
+            <div
+              className="ol-inspectors"
+              style={{
+                zIndex:
+                  activeInspector && !panelVisible('game') ? 'calc(var(--z-sheet) + 2)' : undefined,
+              }}
+            >
+              {inspectors.map(({ id, slot }, index) => {
+                const inspected = inspectedEntities.get(id);
+                const raised = raisedInspector === id;
+                return (
+                  <div
+                    key={`${taskScope(view)}:${id}`}
+                    className="ol-inspector-slot"
+                    data-inspector-id={id}
+                    hidden={narrow && (!raised || !inspectorSheetVisible)}
+                    style={
+                      {
+                        '--inspector-offset': `${(slot % 5) * 24}px`,
+                        zIndex: raised ? inspectors.length : index,
+                      } as CSSProperties
+                    }
+                    onPointerDownCapture={() => setActiveInspector(id)}
+                    onFocusCapture={() => setActiveInspector(id)}
+                  >
+                    <Panel
+                      title={inspected?.name ?? 'Out of sight'}
+                      draggable={!narrow}
+                      tabs={
+                        narrow && inspectors.length > 1 ? (
+                          <div className="ol-inspector-switch">
+                            <SelectField
+                              label="Open inspections"
+                              value={id}
+                              options={inspectorOptions}
+                              onChange={showInspector}
+                            />
+                          </div>
+                        ) : undefined
+                      }
+                      onClose={() => closeInspector(id)}
+                    >
+                      {inspected ? (
+                        <EntityDetail
+                          entity={inspected}
+                          view={view}
+                          connected={connected}
+                          command={command}
+                          godControls={characterGodControls(inspected)}
+                          actionBrowser={actionBrowser(
+                            { entity: inspected, context: { targetId: id }, point: { x: 0, y: 0 } },
+                            'inspection',
+                            !narrow || (raised && inspectorSheetVisible),
+                          )}
+                        />
+                      ) : (
+                        <EmptyState title="No longer in sight">
+                          Look at this person or object again to inspect it.
+                        </EmptyState>
+                      )}
+                    </Panel>
+                  </div>
+                );
+              })}
+            </div>
             <div
               className="ol-world-controls"
               data-bounded={narrow && open.length === 0 ? '' : undefined}
@@ -2094,63 +2357,27 @@ function App({
                 toggleOverlay={(sense) =>
                   sense === 'vision' ? setVisionGuide(!visionGuide) : setHearingGuide(!hearingGuide)
                 }
-                levels={view.map.spatial.levels}
                 state={cameraView}
                 send={(command) => scene.current?.cameraCommand(command)}
                 center={() => scene.current?.center()}
               />
             </div>
-            {!tabPaused && (
+            <div hidden={tabPaused}>
               <Narrator
-                key={`narrator:${captionScope(view)}`}
+                key={JSON.stringify([
+                  view.worldId,
+                  view.saveTimeline,
+                  view.player.id,
+                  view.player.life,
+                  view.access?.privateDraftScope,
+                  view.historyEpoch,
+                ])}
                 item={view.narrator}
                 onReadStory={readStory}
               />
-            )}
+            </div>
             {!tabPaused && performance && <FpsCounter renderer={scene} />}
-            {!tabPaused && picker && !creation.visible && (
-              <ActionPicker
-                createItem={(definitionId, position) => {
-                  openItemCreation({ definitionId, target: { position } });
-                  setPicker(null);
-                }}
-                key={`${view.access?.scope}:${view.access?.controlGeneration}:${view.saveTimeline}:${picker.point.x}:${picker.point.y}:${picker.entity?.id}:${picker.context.itemId}:${picker.context.catalogue === true}:${picker.browse === true}`}
-                picker={picker}
-                view={view}
-                connected={connected}
-                close={closePicker}
-                run={run}
-                invent={invent}
-                inspect={inspect}
-                openContainer={openContainer}
-                openActivity={openActivity}
-                compose={(mode) => {
-                  const targetId = picker.context.itemId ?? picker.context.targetId;
-                  setWorldIntent({
-                    mode,
-                    owner: JSON.stringify([view.worldId, view.saveTimeline, view.player.id]),
-                    ...(mode === 'act' && targetId && targetId !== view.player.id
-                      ? {
-                          targetId,
-                          label: picker.item?.name ?? picker.entity?.name,
-                          possession: !!picker.context.itemId,
-                        }
-                      : {}),
-                  });
-                  setPicker(null);
-                }}
-                revive={(target) => void revive(target)}
-                enableCognition={(target) => void enableCognition(target)}
-                spawn={(type, position) => void spawn(type, position)}
-                createPerson={(position) => {
-                  setPicker(null);
-                  if (!creation.openEntry()) return;
-                  setCreationEntryScope(creation.key);
-                  setItemCreation(null);
-                  setPersonPosition(position);
-                }}
-              />
-            )}
+            {!tabPaused && picker && !creation.visible && actionBrowser(picker)}
             <WorldComposer
               key={JSON.stringify([
                 view.worldId,
@@ -2285,7 +2512,7 @@ function App({
             {hover?.entity.equippedAction?.label ??
               'Choose a highlighted target for an equipped-item action.'}
             <Button size="sm" onPress={() => setTargeting(false)}>
-              Cancel · Esc
+              Cancel — Esc
             </Button>
           </div>
         )}
@@ -2293,7 +2520,7 @@ function App({
           <CaptionGapNotice
             missed={missedCaptions.value}
             scope={captionScope(view)}
-            enabled={captionsEnabled}
+            enabled={true}
             onOpen={() => {
               setEventsType('speech');
               setEventsReset((value) => value + 1);
@@ -2301,7 +2528,9 @@ function App({
               // Opening history hides this notice; keep keyboard focus in the opened history.
               requestAnimationFrame(() =>
                 document
-                  .querySelector<HTMLElement>('select[aria-label="World event type"]')
+                  .querySelector<HTMLElement>(
+                    '#eventsPanel .ol-event-filters button[aria-pressed="true"]',
+                  )
                   ?.focus(),
               );
             }}
@@ -2333,6 +2562,7 @@ function App({
       </div>
       {hover && !picker && !tabPaused && (
         <WorldHover
+          key={hover?.entity.id}
           name={hover.entity.name}
           point={hover.point}
           contents={view?.entities.find((entity) => entity.id === hover.entity.id)?.contents}

@@ -2,6 +2,7 @@ import type { IntentSlots } from '@open-legend/domain';
 import type { RequestRecoveryResult } from '@open-legend/protocol';
 import { scopeKey, type RequestScope } from './authority.js';
 import { digest } from './store.js';
+import { humanRequestId } from './human-request-id.js';
 import type { WorldService } from './world-service.js';
 
 export type PlayerActionRequest = {
@@ -22,7 +23,7 @@ export function playerActionIdentity(
   request: PlayerActionRequest,
 ): { id: string; fingerprint: string } {
   return {
-    id: `human:${digest({ account: authority.accountId, world: authority.worldId, id: request.requestId })}`,
+    id: humanRequestId(authority, request.requestId),
     fingerprint: digest({
       kind: 'action',
       world: worldId,
@@ -86,6 +87,7 @@ export async function recoverPlayerAction(
       code: job.status,
       message: job.message,
       jobId: identity.id,
+      jobStatus: job.status,
     },
   };
 }

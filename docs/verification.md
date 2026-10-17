@@ -1,5 +1,7 @@
 # Verification
 
+- [World-first player experience](verification/player-experience-overhaul.md) — current speech/Events, inspection, creation, visual placement and shared UI audit; actual browser evidence, controlled local provider presentation and remaining decisions are distinguished. [Inventory and inspection evidence](verification/player-experience-inventory.md) owns grouped-stock authority and reader continuity.
+
 - [Imported interface implementation review](verification/ui-implementation-review.md) — full source/design audit, equipment consequences, draft/focus/privacy repairs, original-request retention and scoped browser/native evidence.
 
 - [Speak, descriptive Act and contextual menus](verification/speak-and-act.md) — scoped HTTP/PostgreSQL fixtures, speech volumes, expression-only effects, stale/replay guards and bottom-bar browser interactions.

@@ -1,4 +1,6 @@
+import { LoadingIndicator } from '../design-system/loading';
 import { useEffect, useRef, useState } from 'react';
+import { formatDisplayNumber } from '@open-legend/language';
 import type {
   ActionOption,
   ApiResult,
@@ -39,6 +41,7 @@ export function KnownPlaces({
     [error, setError] = useState(''),
     [message, setMessage] = useState('');
   const [loadedRevision, setLoadedRevision] = useState(revision);
+  const [inspecting, setInspecting] = useState(false);
   const newer = loadedRevision !== revision;
   const request = useRef(0),
     detailRequest = useRef(0),
@@ -46,6 +49,7 @@ export function KnownPlaces({
   const active = useRef(visible);
   active.current = visible;
   const loadedQuery = useRef<string | undefined>(undefined);
+  const currentPage = loadedQuery.current === query;
   const pageAbort = useRef<AbortController | undefined>(undefined);
   const detailAbort = useRef<AbortController | undefined>(undefined);
   const detailHeading = useRef<HTMLHeadingElement>(null);
@@ -57,7 +61,7 @@ export function KnownPlaces({
   }, [inspection?.place.sourceId]);
 
   async function load(more = false) {
-    if (!active.current) return;
+    if (!active.current || (more && !currentPage)) return;
     pageAbort.current?.abort();
     const abort = new AbortController();
     pageAbort.current = abort;
@@ -75,6 +79,7 @@ export function KnownPlaces({
       );
       if (id !== request.current || !active.current) return;
       if (!result.ok) throw new Error(result.message ?? 'Known places are unavailable.');
+      if (!more) loadedQuery.current = query;
       setPage(result);
       setEntries((old) => {
         if (!more) return result.entries;
@@ -95,15 +100,14 @@ export function KnownPlaces({
   useEffect(() => {
     if (visible) {
       if (loadedQuery.current !== query) {
-        loadedQuery.current = query;
-        setPage(undefined);
-        setEntries([]);
         setInspection(undefined);
+        setInspecting(false);
         setMessage('');
         void load();
       } else if (!page) void load();
     } else {
       setBusy(false);
+      setInspecting(false);
       if (!inspection) setMessage('');
     }
     return () => {
@@ -123,7 +127,8 @@ export function KnownPlaces({
     inspectionFocus.current?.focus({ preventScroll: true });
     setInspection(undefined);
     setError('');
-    setMessage('Loading the remembered observation…');
+    setMessage('');
+    setInspecting(true);
     try {
       const result = await post<Result<KnownPlaceInspection>>(
         '/api/known-places/inspect',
@@ -139,6 +144,8 @@ export function KnownPlaces({
         setMessage('');
         setError(failure instanceof Error ? failure.message : String(failure));
       }
+    } finally {
+      if (id === detailRequest.current) setInspecting(false);
     }
   }
   async function move(selected: KnownPlaceInspection) {
@@ -216,6 +223,8 @@ export function KnownPlaces({
         isDisabled={busy}
         onPress={() => {
           detailRequest.current++;
+          detailAbort.current?.abort();
+          setInspecting(false);
           setInspection(undefined);
           setMessage('');
           void load();
@@ -224,10 +233,12 @@ export function KnownPlaces({
         {newer ? 'New or updated observations — refresh' : 'Refresh known places'}
       </Button>
       <p ref={inspectionFocus} tabIndex={-1} className="ol-meta" role="status">
-        {busy ? 'Loading known places…' : message}
+        {message}
+        <LoadingIndicator active={busy || inspecting} label="Reading known places" />
       </p>
       {error && <p role="alert">{error}</p>}
-      {!busy && page && !entries.length && (
+      {error && !currentPage && page && <p>Earlier search results remain below.</p>}
+      {!busy && currentPage && page && !entries.length && (
         <EmptyState title={query ? 'No matching known places.' : 'No places learned yet.'}>
           {page.next
             ? 'More remembered places remain to search.'
@@ -236,14 +247,19 @@ export function KnownPlaces({
               : 'Explore and notice a useful place to remember it here.'}
         </EmptyState>
       )}
-      <ul className="ol-known-place-list">
+      <ul
+        className="ol-known-place-list"
+        aria-label={currentPage ? 'Known places' : 'Previous search results'}
+      >
         {entries.map((place) => (
           <li key={place.id}>
             <strong>{place.label}</strong>
             <p className="ol-caption">{place.description}</p>
             <p className="ol-caption">
-              {place.locationLabel} · {place.position.x.toFixed(1)}, {place.position.y.toFixed(1)},{' '}
-              {place.position.z.toFixed(1)} m · Last observed <EventTime time={place.time} />
+              Last observed location: {place.locationLabel}, {formatDisplayNumber(place.position.x)}
+              , {formatDisplayNumber(place.position.y)}, {formatDisplayNumber(place.position.z)} m.
+              <br />
+              Last observed <EventTime time={place.time} />
             </p>
             {place.corrected && <p className="ol-caption">Observation corrected</p>}
             <Button
@@ -258,7 +274,7 @@ export function KnownPlaces({
           </li>
         ))}
       </ul>
-      {page?.next && (
+      {currentPage && page?.next && (
         <Button size="sm" variant="quiet" isDisabled={busy} onPress={() => void load(true)}>
           {page.scanLimited ? 'Search more known places' : 'More known places'}
         </Button>
@@ -274,8 +290,11 @@ export function KnownPlaces({
           <p>{inspection.place.description}</p>
           <p className="ol-caption">
             Last observed location: {inspection.place.locationLabel},{' '}
-            {inspection.place.position.x.toFixed(1)}, {inspection.place.position.y.toFixed(1)},{' '}
-            {inspection.place.position.z.toFixed(1)} m. <EventTime time={inspection.place.time} />
+            {formatDisplayNumber(inspection.place.position.x)},{' '}
+            {formatDisplayNumber(inspection.place.position.y)},{' '}
+            {formatDisplayNumber(inspection.place.position.z)} m.
+            <br />
+            Last observed <EventTime time={inspection.place.time} />
           </p>
           <Button size="sm" variant="quiet" onPress={() => focus(inspection.place.position)}>
             Focus last-known location

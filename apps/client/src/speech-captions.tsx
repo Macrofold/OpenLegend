@@ -10,7 +10,13 @@ import {
   type PresentationLifetime,
 } from './ui-lifetime';
 import type { SpeechCaptionOptions } from './world-renderer';
-export type CaptionPoint = { x: number; y: number; arrow?: number };
+export type CaptionPoint = {
+  x: number;
+  y: number;
+  arrow?: number;
+  approximate?: boolean;
+  source?: { x: number; y: number };
+};
 export type CaptionProjection = {
   head(id: string): CaptionPoint | null;
   direction(speech: PerceivedSpeech, width: number, height: number): CaptionPoint | null;
@@ -31,6 +37,7 @@ type Entry = {
   height: number;
   ring?: SVGCircleElement;
   arrow?: HTMLElement;
+  directionLabel?: HTMLElement;
   attach: (node: HTMLDivElement | null) => void;
 };
 // Queue residence is separate from the ring's reading budget. Old hidden speech remains in history.
@@ -57,7 +64,13 @@ function chunks(text: string): string[] {
 }
 /** The caption presentation scope; a change clears captions and the missed count. */
 export const captionScope = (view: GameView) =>
-  `${view.worldId}:${view.saveTimeline}:${view.access?.scope}:${view.player.id}:${view.historyEpoch}`;
+  JSON.stringify([
+    view.worldId,
+    view.saveTimeline,
+    view.access?.scope,
+    view.player.id,
+    view.historyEpoch,
+  ]);
 const captionText = (event: PublicEvent & { speech: PerceivedSpeech }) =>
   event.speech.intelligibility === 'none'
     ? event.text
@@ -318,17 +331,17 @@ export class SpeechCaptions {
                     <span>
                       {speech.speaker?.nameAtTime ?? 'Someone nearby'}
                       {speech.delivery === 'whisper'
-                        ? ' · Whispering'
+                        ? ' (whispering)'
                         : speech.delivery === 'shout'
-                          ? ' · Shouting'
+                          ? ' (shouting)'
                           : ''}
-                      {speech.intelligibility === 'partial' ? ' · Partly heard' : ''}
+                      {speech.intelligibility === 'partial' ? ' (partly heard)' : ''}
                       {entry.chunks.length > 1
-                        ? ` · ${entry.chunk + 1}/${entry.chunks.length}`
+                        ? ` (${entry.chunk + 1}/${entry.chunks.length})`
                         : ''}
-                      {speech.perception === 'seen' ? ' · Seen' : ''}
+                      {speech.perception === 'seen' ? ' (seen)' : ''}
                       {speech.direction?.elevation !== 'level' && speech.direction
-                        ? ` · ${speech.direction.elevation}`
+                        ? ` (${speech.direction.elevation})`
                         : ''}
                     </span>
                     <span
@@ -340,6 +353,20 @@ export class SpeechCaptions {
                       ➜
                     </span>
                   </div>
+                  {speech.recipient && (
+                    <div className="ol-speech-caption-recipient">
+                      To {speech.recipient.nameAtTime}:
+                    </div>
+                  )}
+                  <span
+                    className="ol-speech-direction-label"
+                    ref={(node) => {
+                      entry.directionLabel = node ?? undefined;
+                    }}
+                    hidden
+                  >
+                    Approximate direction heard
+                  </span>
                   <div className="ol-speech-caption-text">
                     {speech.perception !== 'seen' && <Icon name="ui.speech" size={16} />}
                     {speech.intelligibility === 'none'
@@ -378,19 +405,21 @@ export class SpeechCaptions {
       const speech = entry.event.speech;
       const head = speech.speaker ? p.head(speech.speaker.entityId) : null;
       const { width, height } = entry;
-      let point = head ?? p.direction(speech, width, height) ?? p.neutral(index);
       if (!width || !height) continue;
-      if (
-        point.x - width / 2 < 8 ||
-        point.x + width / 2 > p.width - 8 ||
-        point.y - height < 8 ||
-        point.y > p.height - 8
-      )
-        point = p.neutral(index);
+      const inBounds = (point: CaptionPoint) =>
+        point.x - width / 2 >= 8 &&
+        point.x + width / 2 <= p.width - 8 &&
+        point.y - height >= 8 &&
+        point.y <= p.height - 8;
+      const direction = p.direction(speech, width, height);
+      const candidates = [head, direction, p.neutral(index)].filter(
+        (point): point is CaptionPoint => !!point && inBounds(point),
+      );
+      let point = candidates[0] ?? p.neutral(index);
       // Small bounded stacking, not a second layout engine or an inferred source location.
       let y = point.y;
       let fits = false;
-      for (let attempt = 0; attempt < 2; attempt++) {
+      for (let attempt = 0; attempt < Math.max(1, candidates.length); attempt++) {
         for (let pass = 0; pass <= occupied.length; pass++) {
           const collision = occupied.find(
             (other) =>
@@ -406,10 +435,10 @@ export class SpeechCaptions {
           y <= p.height - 8 &&
           point.x - width / 2 >= 8 &&
           point.x + width / 2 <= p.width - 8;
-        if (fits || attempt === 1) break;
-        // A fixed HUD can occupy the whole space above a speaker. Keep the
-        // authorized caption readable elsewhere without inventing a bearing.
-        point = p.neutral(index);
+        if (fits || attempt + 1 >= candidates.length) break;
+        // A fixed HUD can cover the head. Try the admitted direction, then a
+        // neutral readable placement; never derive a hidden source position.
+        point = candidates[attempt + 1]!;
         y = point.y;
       }
       entry.visible = fits;
@@ -421,9 +450,17 @@ export class SpeechCaptions {
       node.style.transform = `translate(${point.x}px, ${y}px) translate(-50%, -100%)`;
       if (fits) occupied.push({ x: point.x, y, w: width, h: height });
       if (entry.arrow) {
-        entry.arrow.style.display = point.arrow === undefined ? 'none' : 'inline-block';
-        entry.arrow.style.transform = `rotate(${point.arrow ?? 0}rad)`;
+        const source = head?.source ?? direction?.source;
+        // A panel may move this card past an onscreen speaker. Its final location,
+        // not the camera centre, determines which way the connecting arrow points.
+        const arrow =
+          source && (point !== head || y !== point.y)
+            ? Math.atan2(source.y - (y - height / 2), source.x - point.x)
+            : point.arrow;
+        entry.arrow.style.display = arrow === undefined ? 'none' : 'inline-block';
+        entry.arrow.style.transform = `rotate(${arrow ?? 0}rad)`;
       }
+      if (entry.directionLabel) entry.directionLabel.hidden = !point.approximate;
       const fraction = sampleLifetime(entry.lifetime, this.clock.now).remainingFraction;
       const draw = this.reducedMotion ? Math.ceil(fraction * 4) / 4 : fraction;
       entry.ring?.setAttribute('stroke-dashoffset', String((1 - progressFraction(draw)) * 100));

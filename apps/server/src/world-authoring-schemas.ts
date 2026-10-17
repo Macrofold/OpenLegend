@@ -171,6 +171,8 @@ export const statusPolicySchema = z
               .object({
                 activate: text(),
                 deactivate: text(),
+                activateIcon: text(128).optional(),
+                deactivateIcon: text(128).optional(),
                 allowOther: z.boolean(),
                 activateOther: z.boolean(),
               })

@@ -1,4 +1,5 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { LoadingIndicator } from '../design-system/loading';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   ActionOption,
   ApiResult,
@@ -9,8 +10,10 @@ import type {
 } from '@open-legend/protocol';
 import { getScoped, post } from '../api';
 import type { CommandDispatcher } from '../command-request';
-import { Button, Section, SelectField } from '../design-system/components';
+import { Button, SelectField } from '../design-system/components';
 import { useInventoryCommand } from './use-inventory-command';
+import type { ConstructionPlacement, ConstructionPreviewTransform } from '../world-renderer';
+import { ConstructionIllustration } from './construction-illustration';
 import './construction.css';
 export function Construction({
   view,
@@ -18,19 +21,50 @@ export function Construction({
   visible,
   command,
   preview,
+  placement,
 }: {
   view: GameView;
   connected: boolean;
   visible: boolean;
   command: CommandDispatcher;
-  preview(shapes: readonly ConstructionShape[] | null, valid?: boolean): void;
+  preview(
+    shapes: readonly ConstructionShape[] | null,
+    valid?: boolean,
+    transform?: ConstructionPreviewTransform,
+  ): void;
+  placement(controls: ConstructionPlacement | null): void;
 }) {
-  const [opened, setOpened] = useState(false),
-    [read, setRead] = useState<{ key: string; value?: ConstructionView; error?: string }>(),
+  const [placing, setPlacing] = useState(false),
+    [commitRequested, setCommitRequested] = useState(false),
+    [unsupportedPoint, setUnsupportedPoint] = useState(false),
+    [read, setRead] = useState<{
+      key: string;
+      owner: string;
+      value?: ConstructionView;
+      error?: string;
+    }>(),
     [error, setError] = useState(''),
     [readRevision, setReadRevision] = useState(0),
     [busyScope, setBusyScope] = useState<string>();
-  const available = opened && visible && connected;
+  const available = visible && connected;
+  const owner = JSON.stringify([
+    view.worldId,
+    view.saveTimeline,
+    view.player.id,
+    view.access?.privateDraftScope,
+  ]);
+  const currentOwner = useRef(owner);
+  currentOwner.current = owner;
+  const placementRevision = useRef(0);
+  const submittedPlacement = useRef<{ owner: string; revision: number } | null>(null);
+  function choosePlacement(active: boolean) {
+    placementRevision.current++;
+    setPlacing(active);
+    setCommitRequested(false);
+    setUnsupportedPoint(false);
+    setReview(undefined);
+    preview(null);
+  }
   const [availability, setAvailability] = useState({ available, revision: 0 });
   if (availability.available !== available)
     setAvailability({ available, revision: availability.revision + 1 });
@@ -44,7 +78,9 @@ export function Construction({
   // Drafts survive same-owner Resume; old material facts and checked ghosts do not.
   // Fence completions during render, before the earlier read's Effect cleans up.
   currentReadKey.current = available ? readKey : null;
-  const currentRead = available && read?.key === readKey ? read : undefined;
+  // Pausing a tab suspends commands, not the player's view of the materials.
+  // Ownership/timeline loss still removes private information immediately.
+  const currentRead = read?.owner === owner ? read : undefined;
   const data = currentRead?.value?.ok ? currentRead.value : undefined;
   const unsupported = currentRead?.value?.ok === false ? currentRead.value.message : '';
   const readError = currentRead?.error ?? '';
@@ -57,7 +93,6 @@ export function Construction({
     [postIds, setPostIds] = useState<string[]>([]),
     [bindingIds, setBindingIds] = useState<string[]>([]);
   const [site, setSite] = useState<ConstructionPlan['site']>(),
-    [coordinates, setCoordinates] = useState<{ x?: string; z?: string }>({}),
     [heading, setHeading] = useState<0 | 1 | 2 | 3>(0),
     [keepCovered, setKeepCovered] = useState(true),
     [review, setReview] = useState<{
@@ -66,16 +101,6 @@ export function Construction({
       plan: ConstructionPlan;
       key: string;
     }>();
-  const coordinateHint = useId();
-  const coordinate = (axis: 'x' | 'z') => {
-    const text = coordinates[axis];
-    if (text === undefined) return site?.[axis];
-    const value = Number(text);
-    return text.trim() && Number.isFinite(value) ? value : undefined;
-  };
-  const x = coordinate('x'),
-    z = coordinate('z');
-  const validSite = site && x !== undefined && z !== undefined ? { ...site, x, z } : undefined;
   const roots = view.entities.filter(
       (entity) => !!data && entity.assembly?.familyId === data.family.id,
     ),
@@ -87,9 +112,12 @@ export function Construction({
     let timer: ReturnType<typeof setTimeout> | undefined;
     const load = async () => {
       try {
-        const next = await getScoped<ConstructionView>('/api/construction', abort.signal);
+        const next = await getScoped<ConstructionView>(
+          '/api/construction',
+          AbortSignal.any([abort.signal, AbortSignal.timeout(15000)]),
+        );
         if (live && currentReadKey.current === readKey) {
-          setRead({ key: readKey, value: next });
+          setRead({ key: readKey, owner, value: next });
           if (next.ok) {
             setSite((old) => old ?? next.suggested);
           } else {
@@ -99,7 +127,12 @@ export function Construction({
         }
       } catch (reason) {
         if (live && !abort.signal.aborted && currentReadKey.current === readKey)
-          setRead({ key: readKey, error: String(reason) });
+          setRead((previous) => ({
+            key: readKey,
+            owner,
+            value: previous?.owner === owner ? previous.value : undefined,
+            error: String(reason),
+          }));
       } finally {
         // One read at a time. A completed write restarts this owner and aborts its
         // older read, so slow polling cannot restore outdated material choices.
@@ -136,13 +169,13 @@ export function Construction({
     const options = (choices: typeof materials) =>
       choices.map((item) => ({
         id: item.id,
-        label: `${item.name} · ${item.availableQuantity === item.quantity ? item.quantity : `${item.availableQuantity} available of ${item.quantity}`}${item.condition ? ` · ${item.condition}` : ''}`,
+        label: `${item.name}, ${item.availableQuantity === item.quantity ? item.quantity : `${item.availableQuantity} available of ${item.quantity}`}${item.condition ? `, ${item.condition}` : ''}`,
       }));
     const postOptionsByHeight = new Map<number, ReturnType<typeof options>>();
     for (const p of posts) {
       if (!p.postHeight) continue;
       const group = postOptionsByHeight.get(p.postHeight) ?? [];
-      group.push({ id: p.id, label: `${p.name} · ${p.availableQuantity}` });
+      group.push({ id: p.id, label: `${p.name}, ${p.availableQuantity}` });
       postOptionsByHeight.set(p.postHeight, group);
     }
     return {
@@ -186,7 +219,7 @@ export function Construction({
     usedPosts.add(selected);
   }
   const installing = ['build', 'extend', 'replace', 'resume'].includes(operation);
-  const selectedSite = root?.assembly?.site ?? validSite;
+  const selectedSite = root?.assembly?.site ?? site;
   const plan = useMemo<ConstructionPlan | undefined>(
     () =>
       !data || !selectedSite || (rootId && !root)
@@ -217,8 +250,6 @@ export function Construction({
     [
       data,
       site,
-      x,
-      z,
       operation,
       rootId,
       root,
@@ -260,10 +291,30 @@ export function Construction({
   const currentKey = useRef(key);
   currentKey.current = key;
   useEffect(() => {
-    if (!available || readError || !review || review.key !== key) preview(null);
-    else preview(review.shapes, review.result.ok);
-  }, [available, readError, key, review]);
-  useEffect(() => () => preview(null), []);
+    if (
+      !available ||
+      !placing ||
+      !data?.authorized ||
+      readError ||
+      read?.key !== readKey ||
+      !review ||
+      !plan
+    )
+      preview(null);
+    else
+      preview(review.shapes, !unsupportedPoint && review.key === key && review.result.ok, {
+        origin: review.plan.site,
+        position: plan.site,
+        rotation: ((plan.orientation - review.plan.orientation) * Math.PI) / 2,
+      });
+  }, [available, placing, key, review, unsupportedPoint, readError, read?.key, readKey]);
+  useEffect(
+    () => () => {
+      preview(null);
+      placement(null);
+    },
+    [],
+  );
   const operations = useInventoryCommand({
     worldId: view.worldId,
     actorId: view.player.id,
@@ -275,6 +326,17 @@ export function Construction({
     command,
     task: 'construction',
     onResolved(result) {
+      const submitted = submittedPlacement.current;
+      if (
+        result.ok &&
+        submitted?.owner === currentOwner.current &&
+        submitted.revision === placementRevision.current
+      ) {
+        // A receipt may arrive after reconnect or after its material refresh.
+        // Clear only the placement that submitted it, never a newer selection.
+        choosePlacement(false);
+      }
+      submittedPlacement.current = null;
       setError(result.ok ? '' : result.message);
       setReadRevision((revision) => revision + 1);
     },
@@ -284,66 +346,232 @@ export function Construction({
     type: ActionOption['command']['type'],
     label: string,
     extra: Partial<ActionOption['command']> = {},
-  ) =>
-    operations.dispatch({
+  ) => {
+    if (type !== 'construction') submittedPlacement.current = null;
+    return operations.dispatch({
       id: `construction-${type}`,
       label,
       enabled: true,
       command: { type, ...extra },
     });
+  };
+  const checking = useRef<AbortController | null>(null);
+  useEffect(
+    () => () => {
+      checking.current?.abort();
+      checking.current = null;
+    },
+    [available, readKey],
+  );
+  const submitting = useRef(false);
+  const [previewRevision, setPreviewRevision] = useState(0);
   const check = async () => {
-    if (!plan || readError || currentReadKey.current !== readKey) return;
+    if (
+      checking.current ||
+      interaction.current.unsupportedPoint ||
+      !plan ||
+      !data?.authorized ||
+      readError ||
+      read?.key !== readKey ||
+      currentReadKey.current !== readKey
+    )
+      return;
+    const abort = new AbortController();
+    checking.current = abort;
+    const checkedPlacement = placementRevision.current;
     setBusyScope(readKey);
     setError('');
     try {
       const result = await post<ApiResult & { shapes: ConstructionShape[] }>(
         '/api/construction/preview',
         plan,
+        AbortSignal.any([abort.signal, AbortSignal.timeout(15000)]),
       );
-      if (currentKey.current === key) {
+      if (
+        checking.current === abort &&
+        currentKey.current === key &&
+        placementRevision.current === checkedPlacement
+      ) {
         setReview({ result, shapes: result.shapes, plan, key });
       }
-    } catch (reason) {
-      if (currentKey.current === key) setError(String(reason));
+    } catch {
+      if (
+        checking.current === abort &&
+        currentKey.current === key &&
+        placementRevision.current === checkedPlacement
+      ) {
+        setReview({
+          result: {
+            ok: false,
+            code: 'unavailable',
+            message: 'The placement check could not finish. Check again before building.',
+          },
+          shapes: [],
+          plan,
+          key,
+        });
+        setCommitRequested(false);
+      }
     } finally {
-      setBusyScope((current) => (current === readKey ? undefined : current));
+      if (checking.current === abort) {
+        checking.current = null;
+        setBusyScope((current) => (current === readKey ? undefined : current));
+        if (currentKey.current !== key || placementRevision.current !== checkedPlacement)
+          setPreviewRevision((value) => value + 1);
+      }
     }
   };
   const start = async () => {
     if (
       !canCommand ||
+      submitting.current ||
+      interaction.current.unsupportedPoint ||
+      !placing ||
+      !data?.authorized ||
+      view.clock.paused ||
       readError ||
       currentReadKey.current !== readKey ||
       !review?.result.ok ||
       review.key !== key
     )
       return;
+    submitting.current = true;
     setBusyScope(readKey);
+    submittedPlacement.current = { owner, revision: placementRevision.current };
     try {
       const result = await invoke('construction', 'Start selected construction', {
         constructionPlan: review.plan,
       });
       if (currentKey.current !== key) return;
-      if (result) {
-        setError(result.ok ? '' : result.message);
-        if (result.ok) {
-          preview(null);
-          setReview(undefined);
-        }
-      }
+      if (result) setError(result.ok ? '' : result.message);
     } finally {
+      submitting.current = false;
       setBusyScope((current) => (current === readKey ? undefined : current));
     }
   };
+  const interaction = useRef({
+    commitRequested,
+    connected,
+    site,
+    unsupportedPoint,
+    pending: !!operations.pending,
+  });
+  interaction.current = {
+    commitRequested,
+    connected,
+    site,
+    unsupportedPoint,
+    pending: !!operations.pending,
+  };
+  function requestPlacement() {
+    if (
+      interaction.current.commitRequested ||
+      !interaction.current.connected ||
+      interaction.current.unsupportedPoint ||
+      interaction.current.pending ||
+      submitting.current
+    )
+      return;
+    // A completed edit keeps the selected structure but ends its preview. The
+    // next explicit action must be able to check that same work choice again.
+    if (root) setPlacing(true);
+    interaction.current.commitRequested = true;
+    setCommitRequested(true);
+  }
+  useEffect(() => {
+    if (
+      !placing ||
+      !available ||
+      !site ||
+      root ||
+      !data?.authorized ||
+      readError ||
+      read?.key !== readKey ||
+      view.clock.paused ||
+      operations.pending
+    ) {
+      placement(null);
+      return;
+    }
+    placement({
+      position: () => interaction.current.site ?? site,
+      move(point) {
+        if (
+          interaction.current.commitRequested ||
+          interaction.current.pending ||
+          submitting.current
+        )
+          return;
+        // Retain the draft's location without treating a blocked ray as a choice
+        // of that older location. The ref fences confirmation before React renders.
+        interaction.current.unsupportedPoint = !point;
+        setUnsupportedPoint(!point);
+        if (point) {
+          interaction.current.site = point;
+          setSite(point);
+        }
+      },
+      place: requestPlacement,
+      rotate(direction) {
+        if (
+          !interaction.current.commitRequested &&
+          !interaction.current.pending &&
+          !submitting.current
+        )
+          setHeading((old) => ((old + direction + 4) % 4) as 0 | 1 | 2 | 3);
+      },
+      cancel() {
+        choosePlacement(false);
+      },
+    });
+    return () => placement(null);
+  }, [
+    placing,
+    available,
+    !!site,
+    rootId,
+    data?.authorized,
+    readError,
+    read?.key,
+    readKey,
+    view.clock.paused,
+    !!operations.pending,
+  ]);
+  useEffect(() => {
+    if (!placing || !available || !plan || unsupportedPoint || readError || operations.pending)
+      return;
+    // One settled pointer position is checked; obsolete replies cannot replace it.
+    const timer = setTimeout(() => void check(), commitRequested ? 0 : 180);
+    return () => clearTimeout(timer);
+  }, [
+    placing,
+    available,
+    key,
+    read?.key,
+    commitRequested,
+    unsupportedPoint,
+    !!operations.pending,
+    previewRevision,
+  ]);
+  useEffect(() => {
+    if (!commitRequested || review?.key !== key || !available) return;
+    setCommitRequested(false);
+    if (review.result.ok) void start();
+    else setError(review.result.message);
+  }, [commitRequested, review, key, available]);
+  const actionStatusVisible = !!(data?.authorized && (!rootId || root) && (placing || root));
+  const readNotice = readError ? (
+    <p role="status">
+      Building choices could not be refreshed. Your selections are kept; checking and building will
+      return when current choices are available.
+    </p>
+  ) : null;
   return (
-    <Section title="Make a place">
-      <Button onPress={() => setOpened(!opened)}>
-        {opened ? 'Close shelter controls' : 'Preview a shelter'}
-      </Button>
+    <div className="ol-building-workspace">
       {operations.pending && (
         <div role="status">
           <p>
-            {operations.pending.request?.label ?? 'Earlier construction action'} ·{' '}
+            {operations.pending.request?.label ?? 'Earlier construction action'}:{' '}
             {operations.pending.status === 'sending'
               ? 'Sending'
               : operations.pending.status === 'checking'
@@ -362,22 +590,27 @@ export function Construction({
         </div>
       )}
       {operations.message && <p role="status">{operations.message}</p>}
-      {opened && (
+      {
         <div className="ol-construction">
-          {!connected ? (
-            <p>Reconnect to inspect the current place and materials.</p>
-          ) : unsupported ? (
+          {!actionStatusVisible && readNotice}
+          {unsupported ? (
             <p role="status">{unsupported}</p>
           ) : !data ? (
-            !readError && <p>Reading current building choices…</p>
+            !readError &&
+            (connected ? (
+              <LoadingIndicator active label="Reading building choices" />
+            ) : (
+              <p>Building choices will be available when you reconnect.</p>
+            ))
           ) : (
             <>
-              <p>{data.family.description}</p>
-              <p className="ol-caption">{data.family.help}</p>
+              {!placing && !root && (
+                <p className="ol-caption">Choose what to build, then place it in the world.</p>
+              )}
               {view.player.activity?.name === data.family.name && (
                 <p role="status">
                   {view.player.activity.status === 'active'
-                    ? `${view.player.action?.label ?? 'Preparing the next phase'}${view.player.action ? ` · ${Math.ceil((view.player.action.durationSeconds - view.player.action.elapsedSeconds) / 60)} game minutes remaining` : ''}`
+                    ? `${view.player.action?.label ?? 'Preparing the next phase'}${view.player.action ? `, ${Math.ceil((view.player.action.durationSeconds - view.player.action.elapsedSeconds) / 60)} game minutes remaining` : ''}`
                     : view.player.activity.status === 'blocked'
                       ? `Work stopped: ${view.player.activity.reason ?? 'Review the current place and materials.'}`
                       : view.player.activity.status === 'completed'
@@ -385,28 +618,34 @@ export function Construction({
                         : 'Work stopped. Completed parts remain.'}
                 </p>
               )}
-              <SelectField
-                label="Structure"
-                value={rootId}
-                options={[
-                  { id: '', label: 'New place' },
-                  ...(rootId && !root
-                    ? [{ id: rootId, label: 'Selected structure is not in view' }]
-                    : []),
-                  ...roots.map((e) => ({ id: e.id, label: e.name })),
-                ]}
-                onChange={(id) => {
-                  setRootId(id);
-                  setPostIds([]);
-                  setOperation(id ? 'resume' : 'build');
-                  setOutgoingId('');
-                  setReview(undefined);
-                }}
-              />
+              {(roots.length > 0 || rootId) && (
+                <details className="ol-building-existing" open={!!rootId}>
+                  <summary>Work on an existing structure</summary>
+                  <SelectField
+                    label="Structure"
+                    value={rootId}
+                    options={[
+                      { id: '', label: 'New place' },
+                      ...(rootId && !root
+                        ? [{ id: rootId, label: 'Selected structure is not in view' }]
+                        : []),
+                      ...roots.map((e) => ({ id: e.id, label: e.name })),
+                    ]}
+                    onChange={(id) => {
+                      setRootId(id);
+                      setPostIds([]);
+                      setOperation(id ? 'resume' : 'build');
+                      choosePlacement(!!id);
+                      setOutgoingId('');
+                      setReview(undefined);
+                    }}
+                  />
+                </details>
+              )}
               {root?.assembly && (
                 <>
                   <p>
-                    {root.assembly.parts.filter((p) => p.role === 'post').length} installed posts ·{' '}
+                    {root.assembly.parts.filter((p) => p.role === 'post').length} installed posts,{' '}
                     {root.assembly.parts.filter((p) => p.role === 'cover').length} coverings
                   </p>
                   <div className="ol-actions">
@@ -453,7 +692,7 @@ export function Construction({
                       .map((part) => (
                         <li key={part.id}>
                           {part.name}
-                          {part.condition ? ` · ${part.condition}` : ''}
+                          {part.condition ? `, ${part.condition}` : ''}
                         </li>
                       ))}
                   </ul>
@@ -470,89 +709,95 @@ export function Construction({
                 </p>
               ) : (
                 <>
-                  <SelectField
-                    label="Work"
-                    value={operation}
-                    options={(root
-                      ? [
-                          'resume',
-                          ...(arrangement?.maximumBays === 2 ? ['extend'] : []),
-                          'replace',
-                          'lower',
-                          'dismantle',
-                          'reclaim',
-                        ]
-                      : ['build']
-                    ).map((id) => ({
-                      id,
-                      label: data.family.planLabels[id as ConstructionPlan['operation']],
-                    }))}
-                    onChange={(id) => {
-                      setOperation(id as ConstructionPlan['operation']);
-                      setPostIds([]);
-                      setReview(undefined);
-                    }}
-                  />
+                  {root && (
+                    <SelectField
+                      label="Work"
+                      value={operation}
+                      options={(root
+                        ? [
+                            'resume',
+                            ...(arrangement?.maximumBays === 2 ? ['extend'] : []),
+                            'replace',
+                            'lower',
+                            'dismantle',
+                            'reclaim',
+                          ]
+                        : ['build']
+                      ).map((id) => ({
+                        id,
+                        label: data.family.planLabels[id as ConstructionPlan['operation']],
+                      }))}
+                      onChange={(id) => {
+                        setOperation(id as ConstructionPlan['operation']);
+                        setPostIds([]);
+                        setReview(undefined);
+                        choosePlacement(true);
+                      }}
+                    />
+                  )}
                   {!root && (
                     <>
-                      <SelectField
-                        label="Arrangement"
-                        value={arrangement?.id ?? ''}
-                        options={data.family.arrangements.map((a) => ({ id: a.id, label: a.name }))}
-                        onChange={(id) => {
-                          setArrangementId(id);
-                          setPostIds([]);
-                          setReview(undefined);
-                        }}
-                      />
-                      <p className="ol-caption">{arrangement?.description}</p>
-                      <div className="ol-construction-coordinates">
-                        <label>
-                          Ground X
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            value={coordinates.x ?? String(site?.x ?? '')}
-                            aria-invalid={
-                              (coordinates.x !== undefined && x === undefined) || undefined
-                            }
-                            aria-describedby={coordinateHint}
-                            onChange={(e) =>
-                              setCoordinates((old) => ({ ...old, x: e.target.value }))
-                            }
-                          />
-                        </label>
-                        <label>
-                          Ground Z
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            value={coordinates.z ?? String(site?.z ?? '')}
-                            aria-invalid={
-                              (coordinates.z !== undefined && z === undefined) || undefined
-                            }
-                            aria-describedby={coordinateHint}
-                            onChange={(e) =>
-                              setCoordinates((old) => ({ ...old, z: e.target.value }))
-                            }
-                          />
-                        </label>
+                      <div
+                        className="ol-building-catalogue"
+                        aria-label="Building choices"
+                        hidden={placing}
+                      >
+                        {data.family.arrangements.map((choice) => (
+                          <button
+                            type="button"
+                            className="ol-building-tile"
+                            key={choice.id}
+                            aria-pressed={arrangement?.id === choice.id && placing}
+                            onClick={() => {
+                              setArrangementId(choice.id);
+                              setPostIds([]);
+                              setReview(undefined);
+                              choosePlacement(true);
+                            }}
+                          >
+                            <ConstructionIllustration arrangement={choice} family={data.family} />
+                            <strong>{choice.name}</strong>
+                          </button>
+                        ))}
                       </div>
-                      <p id={coordinateHint} className="ol-caption">
-                        {(coordinates.x !== undefined && x === undefined) ||
-                        (coordinates.z !== undefined && z === undefined)
-                          ? 'Enter a complete number for each ground coordinate before reviewing placement. Your entered coordinates are kept.'
-                          : 'Ground coordinates set the new structure’s position. Reviewing does not start work.'}
-                      </p>
-                      <SelectField
-                        label="Orientation"
-                        value={String(heading)}
-                        options={[0, 1, 2, 3].map((id) => ({
-                          id: String(id),
-                          label: `${id * 90}°`,
-                        }))}
-                        onChange={(id) => setHeading(Number(id) as 0 | 1 | 2 | 3)}
-                      />
+                      {placing && (
+                        <div
+                          className="ol-placement-controls"
+                          role="group"
+                          aria-label="Place building"
+                        >
+                          <strong>{arrangement?.name}</strong>
+                          <p>
+                            Point or use arrow keys to place. Click or Enter builds. Q / E rotate.
+                            Escape cancels.
+                          </p>
+                          <div className="ol-actions">
+                            <Button
+                              size="sm"
+                              disabled={commitRequested || !!operations.pending}
+                              onPress={() => setHeading((old) => ((old + 3) % 4) as 0 | 1 | 2 | 3)}
+                            >
+                              Rotate left
+                            </Button>
+                            <Button
+                              size="sm"
+                              disabled={commitRequested || !!operations.pending}
+                              onPress={() => setHeading((old) => ((old + 1) % 4) as 0 | 1 | 2 | 3)}
+                            >
+                              Rotate right
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="quiet"
+                              onPress={() => {
+                                choosePlacement(false);
+                              }}
+                            >
+                              Cancel placement
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
                   {['replace', 'lower'].includes(operation) && (
@@ -562,7 +807,7 @@ export function Construction({
                       options={
                         root?.assembly?.parts
                           .filter((p) => p.role === 'cover')
-                          .map((p) => ({ id: p.id, label: `${p.name} · bay ${p.bay + 1}` })) ?? []
+                          .map((p) => ({ id: p.id, label: `${p.name}, bay ${p.bay + 1}` })) ?? []
                       }
                       onChange={setOutgoingId}
                     />
@@ -587,125 +832,149 @@ export function Construction({
                       onChange={setOutgoingId}
                     />
                   )}
-                  {Array.from({ length: missing }, (_, i) => (
-                    <SelectField
-                      key={`post-${i}`}
-                      label={`Actual post ${i + 1} · ${arrangement?.rowHeights[Number(requiredSlots[i]?.split(':')[1])]?.toFixed(2)} m`}
-                      value={chosenPosts[i]}
-                      options={
-                        postOptionsByHeight.get(
-                          arrangement?.rowHeights[Number(requiredSlots[i]?.split(':')[1])] ?? 0,
-                        ) ?? []
-                      }
-                      onChange={(id) =>
-                        setPostIds((old) => {
-                          const next = [...old];
-                          next[i] = id;
-                          return next;
-                        })
-                      }
-                    />
-                  ))}
-                  {installing && (
+                  {(placing || root) && (
                     <>
-                      <SelectField
-                        label="Actual covering"
-                        value={coverId || covers[0]?.id}
-                        options={coverOptions}
-                        onChange={setCoverId}
-                      />
-                      {[0, 1, 2, 3].map((i) => (
-                        <SelectField
-                          key={i}
-                          label={`Binding unit ${i + 1}`}
-                          value={bindingIds[i] ?? defaultBindings[i]}
-                          options={bindingOptions}
-                          onChange={(id) =>
-                            setBindingIds((old) => {
-                              const next = [...old];
-                              next[i] = id;
-                              return next;
-                            })
+                      <details className="ol-building-materials">
+                        <summary>
+                          Materials{installing ? `: ${missing} posts, 1 covering, 4 bindings` : ''}
+                        </summary>
+                        {Array.from({ length: missing }, (_, i) => (
+                          <SelectField
+                            key={`post-${i}`}
+                            label={`Post ${i + 1}, ${arrangement?.rowHeights[Number(requiredSlots[i]?.split(':')[1])]?.toFixed(2)} m`}
+                            value={chosenPosts[i]}
+                            options={
+                              postOptionsByHeight.get(
+                                arrangement?.rowHeights[Number(requiredSlots[i]?.split(':')[1])] ??
+                                  0,
+                              ) ?? []
+                            }
+                            onChange={(id) =>
+                              setPostIds((old) => {
+                                const next = [...old];
+                                next[i] = id;
+                                return next;
+                              })
+                            }
+                          />
+                        ))}
+                        {installing && (
+                          <>
+                            <SelectField
+                              label="Covering"
+                              value={coverId || covers[0]?.id}
+                              options={coverOptions}
+                              onChange={setCoverId}
+                            />
+                            {[0, 1, 2, 3].map((i) => (
+                              <SelectField
+                                key={i}
+                                label={`Binding ${i + 1}`}
+                                value={bindingIds[i] ?? defaultBindings[i]}
+                                options={bindingOptions}
+                                onChange={(id) =>
+                                  setBindingIds((old) => {
+                                    const next = [...old];
+                                    next[i] = id;
+                                    return next;
+                                  })
+                                }
+                              />
+                            ))}
+                          </>
+                        )}
+                        {installing &&
+                          (chosenPosts.some((id) => !id) ||
+                            !covers.length ||
+                            defaultBindings.length < 4) && (
+                            <p role="status">
+                              Select enough eligible material for the remaining work. Reclaim parts
+                              or choose another arrangement if stock is missing.
+                            </p>
+                          )}
+                      </details>
+                      <div className="ol-actions">
+                        <Button
+                          busy={busy}
+                          disabled={!connected || !plan || unsupportedPoint || !!readError}
+                          onPress={() => void check()}
+                        >
+                          Check placement
+                        </Button>
+                        <Button
+                          variant="primary"
+                          busy={busy}
+                          disabled={
+                            !canCommand ||
+                            !!readError ||
+                            (!placing && !root) ||
+                            !plan ||
+                            unsupportedPoint ||
+                            view.clock.paused
                           }
-                        />
-                      ))}
+                          onPress={requestPlacement}
+                        >
+                          {root ? data.family.planLabels[operation] : 'Build here'}
+                        </Button>
+                        {view.player.hasWork && (
+                          <Button
+                            disabled={!canCommand}
+                            onPress={() => void invoke('cancel', 'Stop current work')}
+                          >
+                            Stop current work
+                          </Button>
+                        )}
+                      </div>
+                      {view.clock.paused && (
+                        <p className="ol-caption">Resume the world to start the selected work.</p>
+                      )}
+                      {readError ? (
+                        readNotice
+                      ) : unsupportedPoint ? (
+                        <p role="status">Choose a visible supported surface.</p>
+                      ) : review ? (
+                        <p role="status">
+                          {review.key !== key
+                            ? 'The place, materials or permissions changed. Review again.'
+                            : review.result.message}
+                        </p>
+                      ) : null}
+                      <details className="ol-building-details">
+                        <summary>Building details</summary>
+                        {arrangement?.description && <p>{arrangement.description}</p>}
+                        <p className="ol-caption">
+                          Each post takes {data.family.postSeconds / 60} game minutes. Fastening a
+                          covering takes {data.family.coverSeconds / 60}, including work at every
+                          corner. Stop releases unused material and leaves completed parts.
+                        </p>
+                        <p className="ol-caption">
+                          The preview shows the last checked placement. Starting work checks the
+                          current place, materials and permissions again.
+                        </p>
+                      </details>
                     </>
-                  )}
-                  {installing &&
-                    (chosenPosts.some((id) => !id) ||
-                      !covers.length ||
-                      defaultBindings.length < 4) && (
-                      <p role="status">
-                        Select enough eligible material for the remaining work. Reclaim parts or
-                        choose another arrangement if stock is missing.
-                      </p>
-                    )}
-                  <p className="ol-caption">
-                    Each post takes {data.family.postSeconds / 60} game minutes. Fastening a
-                    covering takes {data.family.coverSeconds / 60}, including work at every corner.
-                    Stop releases unused material and leaves completed parts.
-                  </p>
-                  <p className="ol-caption">
-                    The preview shows the last checked placement. Starting work checks the current
-                    place, materials and permissions again.
-                  </p>
-                  <div className="ol-actions">
-                    <Button
-                      busy={busy}
-                      disabled={!plan || !!readError}
-                      onPress={() => void check()}
-                    >
-                      Review placement and materials
-                    </Button>
-                    <Button
-                      variant="primary"
-                      busy={busy}
-                      disabled={
-                        !canCommand ||
-                        !!readError ||
-                        !review?.result.ok ||
-                        review.key !== key ||
-                        view.clock.paused
-                      }
-                      onPress={() => void start()}
-                    >
-                      Start selected work
-                    </Button>
-                    <Button
-                      disabled={!canCommand}
-                      onPress={() => void invoke('cancel', 'Stop current work')}
-                    >
-                      Stop current work
-                    </Button>
-                  </div>
-                  {view.clock.paused && (
-                    <p className="ol-caption">Resume the world to start the selected work.</p>
-                  )}
-                  {review && (
-                    <p role="status">
-                      {review.key !== key
-                        ? 'The place, materials or permissions changed. Review again.'
-                        : review.result.message}
-                    </p>
                   )}
                 </>
               )}
               {data.canCueShower && (
-                <Button
-                  disabled={!connected || view.clock.paused}
-                  onPress={() =>
-                    void post<ApiResult>('/api/god/construction-shower', {
-                      id: crypto.randomUUID(),
-                    })
-                      .then((result) => {
-                        setError(result.message);
-                        setReadRevision((revision) => revision + 1);
+                <details>
+                  <summary>Developer tools</summary>
+                  <Button
+                    disabled={!connected || view.clock.paused}
+                    onPress={() =>
+                      void post<ApiResult>('/api/god/construction-shower', {
+                        id: crypto.randomUUID(),
                       })
-                      .catch((reason) => setError(String(reason)))
-                  }
-                >
-                  {data.shower?.actionLabel}
-                </Button>
+                        .then((result) => {
+                          setError(result.message);
+                          setReadRevision((revision) => revision + 1);
+                        })
+                        .catch((reason) => setError(String(reason)))
+                    }
+                  >
+                    {data.shower?.actionLabel}
+                  </Button>
+                </details>
               )}
               {data.weather && data.shower && (
                 <p>
@@ -720,14 +989,8 @@ export function Construction({
             </>
           )}
           {error && <p role="status">{error}</p>}
-          {readError && (
-            <p role="status">
-              Building choices could not be refreshed. Your selections are kept; editing will be
-              available after the next successful read.
-            </p>
-          )}
         </div>
-      )}
-    </Section>
+      }
+    </div>
   );
 }

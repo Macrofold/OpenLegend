@@ -8,7 +8,7 @@ import {
 } from './practical-competence.js';
 import { validateCoaching } from './coaching.js';
 import { validateAssemblies } from './assembly-validation.js';
-import { validNarrationTemplate } from '@open-legend/language';
+import { validNarrationTemplate, formatDisplayNumber } from '@open-legend/language';
 import {
   narrationTemplate,
   renderNarration,
@@ -752,7 +752,7 @@ export function setAttribute(
       {
         parts: [
           ...narrationTemplate('{subject.subject}', { subject: entity }).parts,
-          ` ${d.name} changed from ${before}${d.schema.unit} to ${value}${d.schema.unit}.`,
+          ` ${d.name} changed from ${formatDisplayNumber(before)}${d.schema.unit} to ${formatDisplayNumber(value)}${d.schema.unit}.`,
         ],
       },
       entity,
@@ -760,6 +760,8 @@ export function setAttribute(
       {
         attributeId: d.id,
         definitionVersion: d.version,
+        attributeName: d.name,
+        ...(d.meaning ? { attributeMeaning: d.meaning } : {}),
         attributeRevision: prior.revision,
         before,
         after: value,
@@ -785,7 +787,7 @@ export function setAttribute(
             ...narrationTemplate(concerned ? d.concern.text : `${d.name} is no longer low.`, {
               subject: entity,
             }).parts,
-            ` ${d.name}: ${value}${d.schema.unit}.`,
+            ` ${d.name}: ${formatDisplayNumber(value)}${d.schema.unit}.`,
           ],
         },
         entity,

@@ -1,4 +1,5 @@
 import { playerActionIdentity } from './action-request-recovery.js';
+import { humanRequestId } from './human-request-id.js';
 import { namePhrase } from '@open-legend/language';
 import { normalizeReceiptCost } from '@open-legend/ai';
 import {
@@ -379,7 +380,13 @@ export class AiDirector {
         const previous = await this.service.store.getJob(id);
         if (previous)
           return previous.kind === 'action' && previous.fingerprint === fingerprint
-            ? { ok: true, code: 'duplicate', message: previous.message, jobId: id }
+            ? {
+                ok: true,
+                code: 'duplicate',
+                message: previous.message,
+                jobId: id,
+                jobStatus: previous.status,
+              }
             : {
                 ok: false,
                 code: 'idempotency-conflict',
@@ -761,7 +768,7 @@ export class AiDirector {
     authority ??= initiatingActor ? undefined : this.service.localScope;
     const admit = async () => {
       if (authority) {
-        id = `human:${digest({ account: authority.accountId, world: authority.worldId, id })}`;
+        id = humanRequestId(authority, id);
         // Parent and retry IDs are opaque IDs already returned by the server.
       }
       if (mode && (kind !== 'invention' || initiatingActor))
@@ -861,6 +868,7 @@ export class AiDirector {
               code: previous.status,
               message: previous.message,
               jobId: id,
+              jobStatus: previous.status,
             }
           : {
               ok: false,

@@ -1,5 +1,6 @@
+import { LoadingDialog } from '../design-system/loading';
 import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Button as AriaButton, Dialog, ListBox, ListBoxItem, Popover } from 'react-aria-components';
+import { Button as AriaButton, ListBox, ListBoxItem, Popover } from 'react-aria-components';
 import { Icon } from '../design-system/components';
 
 export type PulloutOption = {
@@ -264,9 +265,9 @@ export function Pullout({
             }
           }}
         >
-          <Dialog className="ol-pullout-dialog" aria-label={label}>
+          <LoadingDialog className="ol-pullout-dialog" aria-label={label}>
             {children}
-          </Dialog>
+          </LoadingDialog>
         </div>
       </Popover>
     </>

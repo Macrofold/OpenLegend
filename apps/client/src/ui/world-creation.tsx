@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../design-system/loading';
 import { useEffect, useRef, useState } from 'react';
 import type {
   WorldAgentExactDraftView,
@@ -177,7 +178,7 @@ export function WorldCreationSelector({
         choosing where to start it.
       </p>
       {reason && <p role="status">{reason}</p>}
-      {loading && <p role="status">Reading supported openings…</p>}
+      <LoadingIndicator active={loading} label="Reading supported openings" />
       {choices?.length === 0 && <p>No supported prepared opening is currently available.</p>}
       <div className="ol-world-creation-choices">
         {choices?.map((choice) => (

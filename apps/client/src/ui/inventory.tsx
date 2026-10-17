@@ -2,7 +2,7 @@ import { inventoryCommandStorageKey } from '../inventory-command-record';
 import { RecipeDetails } from './recipe-details';
 import { namePhrase } from '@open-legend/language';
 import { useEffect, useLayoutEffect, useRef, useState, type DragEvent } from 'react';
-import { Dialog, Popover } from 'react-aria-components';
+import { Popover } from 'react-aria-components';
 import type {
   ActionOption,
   ContainerPage,
@@ -13,7 +13,8 @@ import type {
 } from '@open-legend/protocol';
 import { post } from '../api';
 import type { CommandDispatcher } from '../command-request';
-import { Button, Icon, Tag, symbol } from '../design-system/components';
+import { Button, DisclosurePopover, Icon, Tag, symbol } from '../design-system/components';
+import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import { InventoryCollection, type InventorySide } from './inventory-collection';
 import { InventoryHistory, MergeTargets } from './inventory-details';
 import { InventoryQuantity, exactQuantity } from './inventory-controls';
@@ -26,8 +27,17 @@ import './inventory.css';
 type InventoryProps = {
   view: GameView;
   addItem(): void;
-  browseActions?(item: InventoryItemView, opener: HTMLElement): void;
-  contextMenu(item: InventoryItemView, point: { x: number; y: number }, opener: HTMLElement): void;
+  browseActions?(
+    item: InventoryItemView,
+    opener: HTMLElement,
+    dispatchCommand: (action: ActionOption) => Promise<ApiResult>,
+  ): void;
+  contextMenu(
+    item: InventoryItemView,
+    point: { x: number; y: number },
+    opener: HTMLElement,
+    dispatchCommand: (action: ActionOption) => Promise<ApiResult>,
+  ): void;
   command: CommandDispatcher;
   connected: boolean;
   visible: boolean;
@@ -63,6 +73,8 @@ function sameItem(left: InventoryItemView, right: InventoryItemView) {
     left.id === right.id &&
     left.revision === right.revision &&
     left.placementRevision === right.placementRevision &&
+    left.group?.members === right.group?.members &&
+    left.quantity === right.quantity &&
     left.container?.revision === right.container?.revision &&
     left.availableQuantity === right.availableQuantity
   );
@@ -81,6 +93,7 @@ function arrange(
     enabled: true,
     command: {
       type,
+      ...(type === 'transfer-item' && item.group ? { inventoryGroup: item.group.token } : {}),
       itemId: item.id,
       targetId,
       quantity,
@@ -119,7 +132,14 @@ export function Inventory(props: InventoryProps) {
     access.privateDraftScope,
     props.view.saveTimeline,
   ]);
-  return <InventoryWorkspace key={privateOwner} {...props} scope={access.scope} />;
+  return (
+    <InventoryWorkspace
+      key={privateOwner}
+      {...props}
+      scope={access.scope}
+      displayOwner={privateOwner}
+    />
+  );
 }
 
 function InventoryWorkspace({
@@ -135,7 +155,8 @@ function InventoryWorkspace({
   openContainer,
   onTalkAbout,
   scope,
-}: InventoryProps & { scope: string }) {
+  displayOwner,
+}: InventoryProps & { scope: string; displayOwner: string }) {
   const workspace = useRef<HTMLDivElement>(null);
   const anchor = useRef<HTMLButtonElement>(null);
   const detail = useRef<HTMLDivElement>(null);
@@ -212,9 +233,7 @@ function InventoryWorkspace({
     view.player.participation,
     !!view.player.action,
     view.player.statusEffects,
-    view.player.position,
     view.player.supportSurfaceId,
-    view.map.spatial.revision,
     view.player.inventory.map((item) => [
       item.id,
       item.equipped,
@@ -230,6 +249,7 @@ function InventoryWorkspace({
   const left = useInventoryCollection({
     initialId: view.player.id,
     scope,
+    displayOwner,
     revisionKey,
     visible,
     connected,
@@ -238,7 +258,8 @@ function InventoryWorkspace({
   const right = useInventoryCollection({
     initialId: openContainer?.containerId ?? '',
     scope,
-    revisionKey,
+    displayOwner,
+    revisionKey: JSON.stringify([revisionKey, view.player.position, view.map.spatial.revision]),
     visible,
     connected,
     expectedRootId: worldRoot?.id ?? view.player.id,
@@ -303,7 +324,12 @@ function InventoryWorkspace({
     },
   });
   const busy = !!operations.pending || ownerBusy;
-  const canAct = visible && connected && view.player.canUseInventory && !busy;
+  const canAct =
+    visible &&
+    connected &&
+    view.player.canUseInventory &&
+    !busy &&
+    (!selection || (selection.side === 'belongings' ? left.current : right.current));
   const collection = (side: InventorySide) => (side === 'belongings' ? left : right);
   const opposite = (side: InventorySide) => (side === 'belongings' ? right : left);
   useLayoutEffect(() => {
@@ -330,7 +356,11 @@ function InventoryWorkspace({
       ])
   )
     inspectedSelection.current = undefined;
-  const amount = amountDraft && exactQuantity(amountDraft.value, item?.availableQuantity);
+  const amountMaximum =
+    amountDraft?.operation === 'offer' && item?.group
+      ? item.group.representativeAvailableQuantity
+      : item?.availableQuantity;
+  const amount = amountDraft && exactQuantity(amountDraft.value, amountMaximum);
   const draftStale =
     !!amountDraft &&
     (!item ||
@@ -535,7 +565,11 @@ function InventoryWorkspace({
     side: InventorySide,
     selected: InventoryItemView,
     button: HTMLButtonElement,
-    open: (item: InventoryItemView, opener: HTMLElement) => void,
+    open: (
+      item: InventoryItemView,
+      opener: HTMLElement,
+      dispatchCommand: (action: ActionOption) => Promise<ApiResult>,
+    ) => void,
   ) {
     const state = collection(side);
     const source = state.page;
@@ -555,12 +589,18 @@ function InventoryWorkspace({
       return;
     const current = source.items.find((entry) => entry.id === selected.id);
     if (!current || !sameItem(current, selected)) return;
-    choose(side, current, button, true);
+    anchor.current = button;
+    setSelection({ side, itemId: current.id, actions: true });
+    // Opening an action menu is not inspection. In particular it must not send a
+    // write and replace the inventory behind the menu.
     // The native item catalogue accepts possessions, including carried bags.
     // World-container contents keep their exact local transfer/details route.
-    if (!source.breadcrumbs.some((entry) => entry.id === view.player.id)) return;
+    if (!source.breadcrumbs.some((entry) => entry.id === view.player.id)) {
+      choose(side, current, button, true);
+      return;
+    }
     setDetailOpen(false);
-    open(current, button);
+    open(current, button, (action) => contextDispatch.current(action, side));
   }
   function moveIntention(
     side: InventorySide,
@@ -598,7 +638,7 @@ function InventoryWorkspace({
     side: InventorySide,
     tradeScope?: string,
   ): Promise<ApiResult> {
-    if (!canAct || !action.enabled)
+    if (!alive.current || !canAct || !collection(side).current || !action.enabled)
       return Promise.resolve({
         ok: false,
         code: operations.pending ? 'unconfirmed' : 'unavailable',
@@ -620,6 +660,9 @@ function InventoryWorkspace({
     if (!selection) focusCollection(side);
     return operations.dispatch(action, tradeScope);
   }
+  // A retained external menu invokes the current inventory owner, never an old page closure.
+  const contextDispatch = useRef(send);
+  contextDispatch.current = send;
   function quickMove(side: InventorySide, sourceItem: InventoryItemView) {
     if (ignoreClick.current) return;
     const action = moveIntention(side, sourceItem);
@@ -675,7 +718,14 @@ function InventoryWorkspace({
       source: selectedContainer,
       target: operation === 'move' ? target : undefined,
       action,
-      value: operation === 'split' ? '1' : String(item.availableQuantity ?? ''),
+      value:
+        operation === 'split'
+          ? '1'
+          : String(
+              operation === 'offer' && item.group
+                ? item.group.representativeAvailableQuantity
+                : (item.availableQuantity ?? ''),
+            ),
     });
   }
   function submitAmount() {
@@ -748,13 +798,12 @@ function InventoryWorkspace({
             {showHeading && <h2 className="ol-heading">Belongings</h2>}
             {view.godMode && (
               <Button size="sm" variant="quiet" disabled={busy || !connected} onPress={addItem}>
-                God mode · Add item
+                Add item (God mode)
               </Button>
             )}
           </div>
         )}
-        <details className="ol-inventory-controls">
-          <summary>Inventory controls</summary>
+        <DisclosurePopover label="Controls" className="ol-inventory-controls">
           <p className="ol-caption">
             Select an item to inspect it. With two containers open, drag between them or Shift-click
             to move its available units. Keyboard: Tab to an item, Enter to inspect, Shift+Enter to
@@ -766,7 +815,7 @@ function InventoryWorkspace({
               of your bags beside them.
             </p>
           )}
-        </details>
+        </DisclosurePopover>
         {view.player.inventory.some((entry) => entry.equipped) && (
           <section className="ol-inventory-equipment" aria-label="Equipped items">
             <strong>Equipped</strong>
@@ -822,7 +871,7 @@ function InventoryWorkspace({
             <div key={side} className="ol-inventory-side">
               <InventoryCollection
                 side={side}
-                title={side === 'belongings' ? 'My belongings' : currentTitle}
+                title={side === 'belongings' ? 'Your belongings' : currentTitle}
                 state={state}
                 selectedId={selection?.side === side ? selection.itemId : undefined}
                 onSelectedAnchor={(button) => {
@@ -830,7 +879,10 @@ function InventoryWorkspace({
                 }}
                 busy={busy}
                 canMove={
-                  canAct && !!state.page && !!other.page && state.location.id !== other.location.id
+                  canAct &&
+                  state.current &&
+                  other.current &&
+                  state.location.id !== other.location.id
                 }
                 dropActive={
                   !!drag &&
@@ -842,8 +894,8 @@ function InventoryWorkspace({
                 onNavigate={(id) => navigate(side, id)}
                 onSelect={(selected, button, actions) => choose(side, selected, button, actions)}
                 onContextMenu={(selected, button, point) =>
-                  openItemContext(side, selected, button, (current, opener) =>
-                    contextMenu(current, point, opener),
+                  openItemContext(side, selected, button, (current, opener, dispatchCommand) =>
+                    contextMenu(current, point, opener, dispatchCommand),
                   )
                 }
                 onQuickMove={(selected) => quickMove(side, selected)}
@@ -867,7 +919,7 @@ function InventoryWorkspace({
       </div>
       <Popover
         triggerRef={anchor}
-        isOpen={detailOpen && !!selection && !!item && visible && connected}
+        isOpen={detailOpen && !!selection && !!item && visible}
         onOpenChange={(open) => {
           setDetailOpen(open);
         }}
@@ -890,7 +942,7 @@ function InventoryWorkspace({
             }
           }}
         >
-          <Dialog
+          <LoadingDialog
             className="ol-inventory-detail"
             aria-label={item ? `${item.name} actions and details` : 'Item details'}
           >
@@ -900,18 +952,20 @@ function InventoryWorkspace({
                 Close
               </Button>
             </div>
-            {operations.pending && (
+            <LoadingIndicator
+              active={operations.pending?.status === 'sending'}
+              label="Sending inventory action"
+            />
+            {operations.pending && operations.pending.status !== 'sending' && (
               <p className="ol-caption">
-                {operations.pending.status === 'sending'
-                  ? 'Sending this action…'
-                  : 'The original request needs recovery. Use Check result in the inventory.'}
+                The original request needs recovery. Use Check result in the inventory.
               </p>
             )}
             {operations.message && <p className="ol-caption">{operations.message}</p>}
             {item && selectedContainer && selection && (
               <>
                 <p className="ol-caption">
-                  {selectedContainer.name} · {item.quantity} units {item.equipped && '· Equipped'}
+                  {selectedContainer.name}, {item.quantity} units {item.equipped && ', equipped'}
                 </p>
                 {amountDraft ? (
                   <>
@@ -930,7 +984,7 @@ function InventoryWorkspace({
                         setAmountDraft({ ...amountDraft, value });
                         setQuantityError('');
                       }}
-                      maximum={item.availableQuantity}
+                      maximum={amountMaximum}
                       disabled={busy}
                       error={quantityError}
                     />
@@ -994,6 +1048,7 @@ function InventoryWorkspace({
                                     label: amountDraft.item.name,
                                     description: amountDraft.item.description,
                                     quantity:
+                                      amountDraft.item.group?.representativeAvailableQuantity ??
                                       amountDraft.item.availableQuantity ??
                                       amountDraft.item.quantity,
                                     revision: amountDraft.item.revision,
@@ -1123,7 +1178,9 @@ function InventoryWorkspace({
                         }
                         onPress={() => chooseAmount('offer')}
                       >
-                        Offer to a person…
+                        {item.group
+                          ? `Offer up to ${item.group.representativeAvailableQuantity} from one stack…`
+                          : 'Offer to a person…'}
                       </Button>
                       {onTalkAbout && (
                         <Button
@@ -1192,13 +1249,13 @@ function InventoryWorkspace({
                       <p>{item.description}</p>
                       {item.materialCondition && (
                         <p>
-                          {item.materialCondition.label} ·{' '}
+                          {item.materialCondition.label},{' '}
                           {item.materialCondition.coveredFraction >= 1 - 1e-6
                             ? 'covered'
                             : item.materialCondition.coveredFraction > 0
                               ? 'partly covered'
                               : 'exposed'}{' '}
-                          · {item.materialCondition.process}
+                          , {item.materialCondition.process}
                         </p>
                       )}
                       <div className="ol-tags">
@@ -1208,12 +1265,12 @@ function InventoryWorkspace({
                         {item.individual && <Tag>Individual object</Tag>}
                       </div>
                       <p className="ol-caption">
-                        Available: {item.availableQuantity ?? 'Unknown'} · Packing load:{' '}
+                        Available: {item.availableQuantity ?? 'Unknown'}, Packing load:{' '}
                         {item.packingLoad ?? 'Unknown'}
                         {item.container ? ' including its contents' : ' per unit'}
                       </p>
                       {item.declaredOwner && <p>Declared owner: {item.declaredOwner.name}</p>}
-                      {item.recipeRecord && (
+                      {item.recipeRecord && (!connected || selectedCollection?.current) && (
                         <section aria-label="Recorded production method">
                           <h4>{item.recipeRecord.method?.name ?? 'Recorded method unavailable'}</h4>
                           <p>{item.recipeRecord.message}</p>
@@ -1275,7 +1332,7 @@ function InventoryWorkspace({
                         </details>
                       ) : null;
                     })}
-                    {!item.individual && !item.container && !item.equipped && (
+                    {!item.group && !item.individual && !item.container && !item.equipped && (
                       <MergeTargets
                         key={item.id}
                         item={item}
@@ -1300,7 +1357,7 @@ function InventoryWorkspace({
                     )}
                     {view.godMode && (
                       <details>
-                        <summary>God mode · Declare ownership</summary>
+                        <summary>Declare ownership (God mode)</summary>
                         <p>
                           A declaration records an owner; it does not move the object or grant
                           access.
@@ -1358,31 +1415,32 @@ function InventoryWorkspace({
                 )}
               </>
             )}
-          </Dialog>
+          </LoadingDialog>
         </div>
       </Popover>
       <footer className="ol-inventory-feedback">
-        {operations.pending && (
+        <LoadingIndicator
+          active={operations.pending?.status === 'sending'}
+          label="Sending inventory action"
+        />
+        {operations.pending && operations.pending.status !== 'sending' && (
           <section className="ol-inventory-pending" aria-label="Unresolved inventory action">
             <p role="status">
-              {operations.pending.status === 'sending'
-                ? `Sending ${operations.pending.request?.label ?? 'inventory action'}…`
-                : operations.pending.status === 'checking'
-                  ? 'Checking the recorded result…'
-                  : `The original request for ${operations.pending.request?.label ?? 'an earlier inventory action'} needs recovery. Further inventory actions are paused to avoid repeating it.`}
+              The original request for{' '}
+              {operations.pending.request?.label ?? 'an earlier inventory action'} needs
+              confirmation. Further inventory actions are paused to avoid repeating it.
             </p>
-            {operations.pending.status === 'unknown' && (
-              <Button
-                disabled={!connected}
-                onPress={() => {
-                  if (actionFocus.current)
-                    actionInput.current = captureCollectionFocus(actionFocus.current.side);
-                  void operations.check();
-                }}
-              >
-                {operations.pending.request ? 'Check result' : 'Read retained request'}
-              </Button>
-            )}
+            <Button
+              disabled={!connected}
+              busy={operations.pending.status === 'checking'}
+              onPress={() => {
+                if (actionFocus.current)
+                  actionInput.current = captureCollectionFocus(actionFocus.current.side);
+                void operations.check();
+              }}
+            >
+              {operations.pending.request ? 'Check result' : 'Read retained request'}
+            </Button>
             <p className="ol-caption">
               Checking reads the existing result. It never sends the action again.
             </p>
@@ -1414,7 +1472,7 @@ function InventoryWorkspace({
                   })
                 }
               >
-                God mode · {container.restricted ? 'Share' : 'Restrict'} {container.name}
+                God mode: {container.restricted ? 'Share' : 'Restrict'} {container.name}
               </Button>
             ) : null;
           })}

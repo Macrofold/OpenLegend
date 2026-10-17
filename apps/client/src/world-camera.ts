@@ -5,7 +5,6 @@ export interface CameraState {
   pitch: number;
   zoom: number;
   projection: 'orthographic' | 'perspective';
-  levelId: string | null;
   rotationLocked: boolean;
   following: boolean;
 }
@@ -14,7 +13,6 @@ export type CameraCommand =
   | { type: 'pan'; dx: number; dy: number; viewportHeight: number }
   | { type: 'zoom'; delta: number }
   | { type: 'focus'; point: WorldPoint }
-  | { type: 'level'; id: string | null; y: number }
   | { type: 'projection' }
   | { type: 'rotation-lock' }
   | { type: 'follow' };
@@ -27,7 +25,6 @@ export function initialCamera(): CameraState {
     pitch: 0.88,
     zoom: 12,
     projection: 'orthographic',
-    levelId: null,
     rotationLocked: false,
     following: true,
   };
@@ -68,25 +65,14 @@ export function updateCamera(state: CameraState, command: CameraCommand): Camera
         ? { ...state, zoom: clamp(state.zoom + command.delta, 4, 30) }
         : state;
     case 'focus':
-      return finitePoint(command.point)
-        ? { ...state, focus: { ...command.point }, levelId: null }
-        : state;
-    case 'level':
-      return Number.isFinite(command.y)
-        ? {
-            ...state,
-            following: false,
-            levelId: command.id,
-            focus: { ...state.focus, y: command.y },
-          }
-        : state;
+      return finitePoint(command.point) ? { ...state, focus: { ...command.point } } : state;
     case 'projection':
       return {
         ...state,
         projection: state.projection === 'orthographic' ? 'perspective' : 'orthographic',
       };
     case 'follow':
-      return { ...state, following: !state.following, levelId: null };
+      return { ...state, following: !state.following };
     case 'rotation-lock':
       return { ...state, rotationLocked: !state.rotationLocked };
   }

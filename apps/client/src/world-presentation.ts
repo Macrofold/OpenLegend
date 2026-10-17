@@ -98,20 +98,17 @@ export class WorldPresentation {
   private foregroundMaterials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private protectionMaterials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private spriteRevealMesh?: pc.Mesh;
-  private readonly worldLayer: pc.Layer;
   private readonly lights: pc.Entity[] = [];
   private readonly selectedLights = new Set<string>();
   private readonly sunDirection = new pc.Vec3();
   private readonly sunRotation = new pc.Quat();
   private shadowQuality?: ShadowQuality;
   private readonly frame: pc.CameraFrame;
-  private readonly hiddenMeshes = new WeakSet<pc.MeshInstance>();
   constructor(
     private app: pc.Application,
     private camera: pc.Entity,
     private sun: pc.Entity,
   ) {
-    this.worldLayer = app.scene.layers.getLayerById(pc.LAYERID_WORLD)!;
     this.layer = new pc.Layer({ name: 'Authorized read-through' });
     this.characterLayer = new pc.Layer({ name: 'Character read-through' });
     this.foregroundLayer = new pc.Layer({ name: 'Selected foreground' });
@@ -298,6 +295,7 @@ export class WorldPresentation {
     dt: number,
     authorized: boolean,
     selected: boolean,
+    immediate = false,
   ): void {
     // Most targets are outside the local reveal. Skip both allocations and uniform writes
     // once hidden, but always process revocation of a previously visible target immediately.
@@ -319,9 +317,11 @@ export class WorldPresentation {
       if (source !== binding.frame) mesh.material = this.foregroundMaterial(source);
     }
     if (target === 0 && binding.strength === 0 && !selected) return;
-    binding.strength = authorized
-      ? binding.strength + (target - binding.strength) * (1 - Math.exp(-Math.min(dt, 0.1) * 12))
-      : 0;
+    binding.strength = !authorized
+      ? 0
+      : immediate
+        ? target
+        : binding.strength + (target - binding.strength) * (1 - Math.exp(-Math.min(dt, 0.1) * 12));
     if (Math.abs(binding.strength - target) < 0.001) binding.strength = target;
     binding.center[0] = foot.x;
     binding.center[1] = foot.y + height / 2;
@@ -372,20 +372,6 @@ export class WorldPresentation {
     this.foregroundMaterials.delete(source);
     this.protectionMaterials.get(source)?.destroy();
     this.protectionMaterials.delete(source);
-  }
-  /** A floor cutaway changes camera visibility, not shadow casting or physical geometry. */
-  setCutaway(node: pc.Entity, hidden: boolean): void {
-    for (const render of node.findComponents('render') as pc.RenderComponent[])
-      for (const mi of render.meshInstances) {
-        const wasHidden = this.hiddenMeshes.has(mi);
-        if (hidden && !wasHidden) {
-          this.hiddenMeshes.add(mi);
-          this.worldLayer.removeMeshInstances([mi], true);
-        } else if (!hidden && wasHidden) {
-          this.hiddenMeshes.delete(mi);
-          this.worldLayer.addMeshInstances([mi], true);
-        }
-      }
   }
   lighting(view: GameView, remembered: GameView['entities'] = view.entities): void {
     const { daylight, toSun } = sunlightAtHour(view.clock.hour);

@@ -41,7 +41,7 @@ export function ActionChoice({
             {action.label}
             {!!identity?.length && (
               <small className="ol-item-identity">
-                {identity.map(([label, value]) => `${label}: ${value}`).join(' · ')}
+                {identity.map(([label, value]) => `${label}: ${value}`).join('; ')}
               </small>
             )}
             <small className="ol-item-reason">{actionCommitment(action)}</small>

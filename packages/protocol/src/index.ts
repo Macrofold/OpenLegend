@@ -22,6 +22,9 @@ export type { SurfacePoint, SpatialLayout };
 
 /** Deliberately smaller than the domain command: the server supplies actor/authority. */
 export interface CommandInput {
+  /** A contextual shortcut must still select this exact offer at command admission.
+   * Omitted for an explicitly chosen menu action. Not native command authority. */
+  primaryAction?: { targetId: string; actionId: string };
   volume?: SpeechVolume;
   type:
     | 'construction'
@@ -126,6 +129,8 @@ export interface CommandInput {
   scarId?: string;
   lethalReviewId?: string;
   quantity?: number;
+  /** Exact currently displayed inventory group; resolved to native sources before admission. */
+  inventoryGroup?: string;
   expectedRevision?: number;
   /** A scoped Stop must not cancel work that replaced the selected action. */
   expectedActionId?: string;
@@ -283,6 +288,8 @@ export interface ActionOption {
 /** A discoverable option is either a native intention, a composer, or a missing prerequisite. */
 export interface CatalogueAction {
   id: string;
+  /** Selected-world presentation order; larger values come first. Never admission. */
+  priority?: number;
   label: string;
   icon?: string;
   category: string;
@@ -305,6 +312,7 @@ export interface ActionContext {
   catalogue?: boolean;
   targetId?: string;
   itemId?: string;
+  inventoryGroup?: string;
   destinationId?: string;
   quantity?: number;
   position?: SurfacePoint;
@@ -313,6 +321,8 @@ export interface ActionContext {
 export interface ActionCatalogue {
   revision: number;
   actions: CatalogueAction[];
+  /** Exact preferred offer, including its refusal when temporarily unavailable. */
+  defaultActionId?: string;
   /** Permitted category labels, including categories with no concrete choices. */
   categories: string[];
 }
@@ -385,6 +395,8 @@ export interface EntityView extends Named {
   speechCapable?: boolean;
   health?: number;
   bodyRevision?: number;
+  /** Opaque current-body identity for delayed presentation choices; not action authority. */
+  bodyReference?: string;
   bodyState?: 'dead' | 'rotting';
   bodyPlan?: 'biped' | 'quadruped' | 'avian';
   /** Observed fraction of the installed simulated departure exposure. */
@@ -400,6 +412,13 @@ export interface InventoryItemView extends Named {
   revision: number;
   placementRevision: number;
   individual?: boolean;
+  /** Presentation grouping preserves every physical object and its provenance. */
+  group?: {
+    token: string;
+    members: number;
+    representativeQuantity: number;
+    representativeAvailableQuantity: number;
+  };
   container?: { load: number; capacity: number; revision: number };
   declaredOwner?: { name: string; revision: number };
   id: string;
@@ -500,6 +519,7 @@ export interface PerceivedSpeech {
   intelligibility: 'none' | 'partial' | 'clear';
   segments: Array<{ kind: 'heard'; text: string } | { kind: 'unintelligible' }>;
   speaker: (Omit<Named, 'name'> & { entityId: string; nameAtTime: string }) | null;
+  recipient?: (Omit<Named, 'name'> & { entityId: string; nameAtTime: string }) | null;
   delivery: SpeechVolume | null;
   direction: { sector: number; elevation: 'above' | 'level' | 'below' } | null;
   listenerPosition: Position;
@@ -507,6 +527,8 @@ export interface PerceivedSpeech {
 export interface PerceivedEventsPage {
   events: PublicEvent[];
   nextCursor?: string;
+  /** Continues toward the present after a historical time jump. */
+  newerCursor?: string;
   /** A text search examined its per-request window without filling the page; the cursor
    * continues into older history. */
   scanLimited?: boolean;
@@ -639,6 +661,13 @@ export interface WorldEventSourcesView {
 }
 
 export interface PublicEvent {
+  presentation?: {
+    category: 'speech' | 'actions' | 'conflict' | 'body' | 'observations';
+    icon: string;
+    displayToPlayer?: boolean;
+  };
+  /** Only identities and names admitted when this character perceived the occurrence. */
+  references?: Array<{ id: string; label: string; role: 'actor' | 'target' }>;
   /** Perceived descriptive expression, with no mechanical effects. */
   descriptive?: true;
   /** Actual committed change, taken only from this observer's permitted evidence. */
@@ -648,6 +677,11 @@ export interface PublicEvent {
     before: number;
     after: number;
     unit: string;
+    name?: string;
+    meaning?: string;
+    cause?: string;
+    causeMeaning?: string;
+    kind?: 'health';
   };
   speech?: PerceivedSpeech;
   modality?: 'heard' | 'observed' | 'felt' | 'internal';
@@ -907,6 +941,8 @@ export interface ApiResult {
   code: string;
   message: string;
   jobId?: string;
+  /** Exact retained workflow status on a duplicate-request receipt. */
+  jobStatus?: AiJobView['status'];
   itemId?: string;
   /** The exact entity created by this result, even if it has since moved. */
   entityId?: string;

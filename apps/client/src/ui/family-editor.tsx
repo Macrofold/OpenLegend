@@ -1,5 +1,6 @@
+import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import { useEffect, useRef, useState } from 'react';
-import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
+import { Modal, ModalOverlay } from 'react-aria-components';
 import type {
   ApiResult,
   FamilyEdit,
@@ -212,7 +213,7 @@ export function FamilyEditor({
       }}
     >
       <Modal className="ol-modal">
-        <Dialog className="ol-person-dialog ol-family-dialog" aria-label={title}>
+        <LoadingDialog className="ol-person-dialog ol-family-dialog" aria-label={title}>
           <header className="ol-modal-head">
             <div>
               <Tag tone="highlight">God mode</Tag>
@@ -259,7 +260,11 @@ export function FamilyEditor({
                 {parent && (
                   <div className="ol-family-confirm">
                     <p className="ol-caption">Proposed relationship · not saved</p>
-                    <p>{view.preview ?? 'Loading preview…'}</p>
+                    <p>
+                      {view.preview ?? (
+                        <LoadingIndicator active={loading} label="Loading family preview" />
+                      )}
+                    </p>
                     <Button
                       variant="primary"
                       disabled={locked || loading || !view.preview}
@@ -352,7 +357,7 @@ export function FamilyEditor({
                 )}
               </>
             )}
-            {loading && <p role="status">Loading family…</p>}
+            <LoadingIndicator active={loading} label="Loading family" />
             {error && <p role="alert">{error}</p>}
             {notice && <p role="status">{notice}</p>}
           </div>
@@ -375,7 +380,7 @@ export function FamilyEditor({
               </Button>
             )}
           </footer>
-        </Dialog>
+        </LoadingDialog>
       </Modal>
     </ModalOverlay>
   );

@@ -15,6 +15,8 @@ import * as pc from 'playcanvas';
 import { ShadowMaterial } from './shadow-material';
 import { SpriteShadowBatches } from './shadow-batches';
 import { HoverOutline } from './hover-outline';
+import { WORLD_HOVER_DELAY_MS, WORLD_HOVER_FADE_MS } from './hover-feedback';
+import { uiOwnsShortcut } from './ui/keyboard';
 import {
   ordinaryStencil,
   personStencil,
@@ -29,10 +31,8 @@ import {
   pickSurfaces,
   rayHits,
   spatialBlockers,
-  surfaceById,
   surfaceContains,
   surfaceHeight,
-  surfacesInBounds,
   type SceneryInstance,
   type WorldPoint,
 } from '@open-legend/spatial';
@@ -52,6 +52,8 @@ import type {
   SpeechCaptionOptions,
   ShadowQuality,
   PerceptionOptions,
+  ConstructionPlacement,
+  ConstructionPreviewTransform,
 } from './world-renderer';
 import {
   birdArt,
@@ -122,9 +124,11 @@ export class WildernessScene implements WorldRenderer {
   private cameraSettings = initialCamera();
   private constructionPreview?: pc.Entity;
   private constructionPreviewMaterial?: pc.StandardMaterial;
-  private geometryNodes = new Map<string, pc.Entity>();
+  private constructionPreviewValid?: boolean;
+  private constructionShapes?: readonly ConstructionShape[];
+  private constructionPlacement: ConstructionPlacement | null = null;
+  private placementSampleTime = 0;
   private geometryMeshes: pc.Mesh[] = [];
-  private cutaways = new Set<string>();
   private cards = new Map<
     pc.Entity,
     {
@@ -145,6 +149,8 @@ export class WildernessScene implements WorldRenderer {
   private hoveredId: string | null = null;
   private hoverStarted = 0;
   private targeting = false;
+  private commandHeld = false;
+  private revealHeld = false;
   private landscapeBuffers: pc.VertexBuffer[] = [];
   private shadowBatches!: SpriteShadowBatches;
   private reliefMeshes = new Map<pc.Texture, ReturnType<typeof createSpriteRelief>>();
@@ -168,7 +174,6 @@ export class WildernessScene implements WorldRenderer {
   private terrain?: GameView['map']['terrain'];
   private terrainKey = '';
   private worldKey = '';
-  private cutawayKey = '';
   private orientedYaw = NaN;
   private orientedPitch = NaN;
   private nextHoverAt = 0;
@@ -187,6 +192,7 @@ export class WildernessScene implements WorldRenderer {
     pan: boolean;
     orbit: boolean;
     moved: boolean;
+    primaryAction: boolean;
   } | null = null;
   // Some browsers emit contextmenu on press, others after release. Pointer
   // gestures own their menu; suppress that native duplicate until the next press.
@@ -280,15 +286,19 @@ export class WildernessScene implements WorldRenderer {
       this.resizeObserver.observe(canvas);
       canvas.addEventListener('pointerdown', this.pointerDown);
       canvas.addEventListener('pointermove', this.pointerMove);
-      canvas.addEventListener('pointerleave', this.clearHover);
+      canvas.addEventListener('pointerleave', this.leaveCanvas);
       canvas.addEventListener('pointerup', this.pointerUp);
       canvas.addEventListener('pointercancel', this.pointerCancel);
       canvas.addEventListener('lostpointercapture', this.pointerCancel);
       canvas.addEventListener('contextmenu', this.contextMenu);
       canvas.addEventListener('wheel', this.wheel, { passive: false });
       canvas.addEventListener('keydown', this.cameraKey);
+      canvas.addEventListener('blur', this.blur);
+      window.addEventListener('keydown', this.modifierKey);
+      window.addEventListener('keyup', this.modifierKey);
+      document.addEventListener('focusin', this.focusChanged);
       window.addEventListener('blur', this.blur);
-      document.addEventListener('visibilitychange', this.resetFrameRate);
+      document.addEventListener('visibilitychange', this.visibilityChanged);
       this.app.on('update', (dt: number) => this.update(dt));
       this.app.on('postrender', this.recordFrame);
       this.app.on('framerender', this.prepareRender);
@@ -344,6 +354,7 @@ export class WildernessScene implements WorldRenderer {
   }
   setSuspended(suspended: boolean): void {
     if (this.suspended === suspended) return;
+    if (suspended) this.blur();
     this.suspended = suspended;
     this.frameRateMeter.reset();
     this.app.autoRender = !suspended;
@@ -362,7 +373,7 @@ export class WildernessScene implements WorldRenderer {
   }
   setTargeting(active: boolean): void {
     this.targeting = active;
-    this.canvas.style.cursor = active ? 'crosshair' : '';
+    this.updateCursor();
   }
   setView(view: GameView): void {
     const controlChanged = this.view?.access?.scope !== view.access?.scope;
@@ -395,7 +406,6 @@ export class WildernessScene implements WorldRenderer {
       this.selected = null;
       this.initialized = false;
       this.worldKey = worldKey;
-      this.cutawayKey = '';
     }
     if (this.mapKey !== key) {
       // Geometry changes rebuild the landscape, not every unchanged actor's sprite/GPU assets.
@@ -426,6 +436,7 @@ export class WildernessScene implements WorldRenderer {
       this.resetTransientCaptions();
       this.knownEvents = new Set(view.events.map((event) => event.id));
       this.clearHover();
+      this.setModifiers(false, false);
       for (const [id, entry] of this.actors)
         if (!visible.has(id)) {
           this.releaseEntity(entry);
@@ -524,7 +535,7 @@ export class WildernessScene implements WorldRenderer {
       this.releaseEntity(entry);
       this.actors.delete(id);
     }
-    this.applyLevelFocus();
+    this.updateEntityPresentation();
     this.presentation.lighting(
       view,
       [...this.actors.values()].map((entry) => entry.view),
@@ -568,12 +579,6 @@ export class WildernessScene implements WorldRenderer {
   }
   cameraCommand(command: CameraCommand): void {
     if (!this.view) return;
-    if (
-      command.type === 'level' &&
-      command.id &&
-      !this.view?.map.spatial.levels.some((level) => level.id === command.id)
-    )
-      return;
     this.cameraSettings = updateCamera(this.cameraSettings, command);
     if (command.type === 'follow' && this.cameraSettings.following && this.view)
       this.cameraSettings = updateCamera(this.cameraSettings, {
@@ -581,7 +586,6 @@ export class WildernessScene implements WorldRenderer {
         point: this.view.player.position,
       });
     this.placeCamera();
-    this.applyLevelFocus();
     // No storage write for every pointer sample. Commit preferences when a gesture ends.
     if (!this.drag) this.saveCameraPreferences();
     this.callbacks.cameraChanged?.(this.cameraState());
@@ -596,73 +600,15 @@ export class WildernessScene implements WorldRenderer {
       /* Optional local presentation preference. */
     }
   }
-  private applyLevelFocus(): void {
-    const map = this.view?.map;
-    if (!map) return;
-    const level = map.spatial.levels.find((entry) => entry.id === this.cameraSettings.levelId);
-    const cutawayKey = `${this.mapKey}:${level?.id ?? 'all'}`;
-    if (this.cutawayKey !== cutawayKey) {
-      this.cutawayKey = cutawayKey;
-      this.cutaways.clear();
-      if (level) {
-        for (const surface of map.spatial.surfaces) {
-          const minimum = Math.min(
-            surfaceHeight(surface, surface.minX, surface.minZ),
-            surfaceHeight(surface, surface.minX, surface.maxZ),
-            surfaceHeight(surface, surface.maxX, surface.minZ),
-            surfaceHeight(surface, surface.maxX, surface.maxZ),
-          );
-          if (surface.levelId !== level.id && minimum > level.focusY + 0.05)
-            this.cutaways.add(surface.id);
-        }
-        for (const blocker of spatialBlockers(map)) {
-          const { min, max } = blocker.bounds;
-          if (min.y <= level.focusY + 0.05) continue;
-          // A named floor can include raised/sloping ground. Keep its actual cover visible;
-          // a nominal focus height alone would hide walls which still stop movement and shots.
-          // docs/spatial-world.md#levels-and-cutaways
-          const onSelectedFloor = surfacesInBounds(map, {
-            min: { ...min, y: min.y - 0.05 },
-            max: { ...max, y: max.y + 0.05 },
-          }).some((surface) => {
-            if (surface.levelId !== level.id) return false;
-            const lowX = Math.max(min.x, surface.minX),
-              highX = Math.min(max.x, surface.maxX),
-              lowZ = Math.max(min.z, surface.minZ),
-              highZ = Math.min(max.z, surface.maxZ);
-            const lowest = surfaceHeight(
-                surface,
-                surface.slopeX >= 0 ? lowX : highX,
-                surface.slopeZ >= 0 ? lowZ : highZ,
-              ),
-              highest = surfaceHeight(
-                surface,
-                surface.slopeX >= 0 ? highX : lowX,
-                surface.slopeZ >= 0 ? highZ : lowZ,
-              );
-            return lowest <= max.y + 0.05 && highest >= min.y - 0.05;
-          });
-          if (!onSelectedFloor) this.cutaways.add(blocker.id);
-        }
-      }
-      for (const [id, node] of this.geometryNodes)
-        this.presentation.setCutaway(node, this.cutaways.has(id));
-    }
+  private updateEntityPresentation(): void {
     for (const entry of this.actors.values()) {
-      const support = surfaceById(map, entry.view.supportSurfaceId ?? '');
-      entry.root.enabled =
-        !level ||
-        !support ||
-        support.levelId === level.id ||
-        entry.view.id === this.view!.player.id;
       this.updateModelVisibility(entry);
-      for (const mesh of entry.meshCasters) mesh.castShadow = entry.observed && entry.root.enabled;
+      for (const mesh of entry.meshCasters) mesh.castShadow = entry.observed;
       this.applyEntityOpacity(entry, this.entityOpacity(entry));
+      // Suspended scenes can still render a newly scoped snapshot once. Revoke
+      // old see-through silhouettes here rather than waiting for frame updates.
+      if (!entry.observed) this.updateReadThrough(entry, 0, true);
     }
-    this.canvas.dataset.projection = this.cameraSettings.projection;
-    this.canvas.dataset.floor = level?.id ?? 'all';
-    this.canvas.dataset.cameraYaw = String(this.cameraSettings.yaw);
-    this.canvas.dataset.cameraPitch = String(this.cameraSettings.pitch);
   }
   screenPosition(id: string): { x: number; y: number } | null {
     const entry = this.actors.get(id);
@@ -697,68 +643,87 @@ export class WildernessScene implements WorldRenderer {
     };
   }
 
-  /** Only permitted bearings and the listener's own pose enter this projection.
-   * docs/hearing-and-speech.md#8-listener-centered-directional-captions */
+  /** Hearing controls content; the camera controls where permitted evidence is shown. */
   private updateSpeech(): void {
     const view = this.view;
     if (!view) return;
     const width = this.canvas.clientWidth,
       height = this.canvas.clientHeight;
-    const player = view.player.position;
-    const project = (point: pc.Vec3): CaptionPoint | null => {
-      if (point.clone().sub(this.camera.getPosition()).dot(this.camera.forward) <= 0) return null;
+    const cameraPosition = this.camera.getPosition();
+    const project = (point: pc.Vec3): CaptionPoint => {
       const screen = this.camera.camera!.worldToScreen(point);
       return { x: screen.x, y: screen.y };
     };
-    // Match main's displayed-pose interpolation; current authoritative movement below
-    // still revokes an obsolete bearing before it can track a hidden source.
-    const displayed = this.actors.get(view.player.id)?.root.getPosition();
-    const origin = displayed
-      ? displayed.clone().add(new pc.Vec3(0, 1, 0))
-      : new pc.Vec3(player.x, player.y + 1, player.z);
-    const center = project(origin);
-    const inView =
-      center &&
-      center.x >= 32 &&
-      center.x <= width - 32 &&
-      center.y >= 100 &&
-      center.y <= height - 32;
+    const inFront = (point: pc.Vec3) =>
+      point.clone().sub(cameraPosition).dot(this.camera.forward) > 0;
     this.speech.update({
       width,
       height,
       head: (id) => {
         const entity = this.actors.get(id);
-        if (!entity || !project(entity.root.getPosition())) return null;
+        if (!entity?.observed || !inFront(entity.root.getPosition())) return null;
         const p = this.statusAnchor(id);
-        // Reserve space for native work/status notices; never follow remembered ghosts.
-        return p ? { x: p.x, y: p.y - 54 } : null;
+        if (!p || p.x < 0 || p.x > width || p.y < 0 || p.y > height) return null;
+        return { x: p.x, y: p.y - 54, source: p };
       },
       direction: (speech, captionWidth, captionHeight) => {
-        if (!inView || !speech.direction || view.hearing.referenceRadius <= 0) return null;
-        const heardAt = speech.listenerPosition;
-        if (Math.hypot(player.x - heardAt.x, player.y - heardAt.y, player.z - heardAt.z) > 0.5)
-          return null;
-        const radius = Math.min(3, view.hearing.referenceRadius * 0.3);
-        const angle = (speech.direction.sector * Math.PI) / 4;
-        for (const scale of [1, 0.75, 0.5, 0.25]) {
-          const point = project(
-            origin
-              .clone()
-              .add(
-                new pc.Vec3(Math.cos(angle) * radius * scale, 0, Math.sin(angle) * radius * scale),
-              ),
-          );
-          if (!point || !center || Math.hypot(point.x - center.x, point.y - center.y) < 2) continue;
-          if (
-            point.x - captionWidth / 2 < 8 ||
-            point.x + captionWidth / 2 > width - 8 ||
-            point.y - captionHeight < 8 ||
-            point.y > height - 8
-          )
-            continue;
-          return { ...point, arrow: Math.atan2(point.y - center.y, point.x - center.x) };
+        const speaker = speech.speaker ? this.actors.get(speech.speaker.entityId) : undefined;
+        let dx: number,
+          dy: number,
+          approximate = false;
+        let source: { x: number; y: number } | undefined;
+        if (speaker?.observed) {
+          const point = speaker.root
+            .getPosition()
+            .clone()
+            .add(new pc.Vec3(0, 1, 0));
+          const screen = project(point);
+          if (inFront(point)) source = screen;
+          // Perspective divides by depth and flips points behind the camera;
+          // orthographic projection keeps their screen-space direction unchanged.
+          const sign = this.cameraSettings.projection === 'perspective' && !inFront(point) ? -1 : 1;
+          dx = (screen.x - width / 2) * sign;
+          dy = (screen.y - height / 2) * sign;
+        } else {
+          // An event-time bearing has no range. Until the localization contract
+          // grants one, don't pretend this is a camera-relative hidden position.
+          if (!speech.direction) return null;
+          const heardAt = speech.listenerPosition,
+            player = view.player.position;
+          if (Math.hypot(player.x - heardAt.x, player.y - heardAt.y, player.z - heardAt.z) > 0.5)
+            return null;
+          const angle = (speech.direction.sector * Math.PI) / 4;
+          const vector = new pc.Vec3(Math.cos(angle), 0, Math.sin(angle));
+          dx = vector.dot(this.camera.right);
+          dy = -vector.dot(this.camera.up);
+          approximate = true;
         }
-        return null;
+        const length = Math.hypot(dx, dy);
+        if (length < 0.001) {
+          dx = 0;
+          dy = 1;
+        } else {
+          dx /= length;
+          dy /= length;
+        }
+        // A screen-space circle stays useful when the camera is detached or zoomed.
+        const radius = Math.max(
+          0,
+          Math.min(
+            280,
+            width * 0.35,
+            height * 0.35,
+            (width - captionWidth) / 2 - 16,
+            (height - captionHeight) / 2 - 16,
+          ),
+        );
+        return {
+          x: width / 2 + dx * radius,
+          y: height / 2 + dy * radius + captionHeight / 2,
+          arrow: Math.atan2(dy, dx),
+          approximate,
+          source,
+        };
       },
       neutral: () => ({ x: width / 2, y: height - 90 }),
     });
@@ -1002,12 +967,29 @@ export class WildernessScene implements WorldRenderer {
     material.destroy();
     this.materials = this.materials.filter((entry) => entry !== material);
   }
-  setConstructionPreview(shapes: readonly ConstructionShape[] | null, valid = false): void {
+  setConstructionPlacement(placement: ConstructionPlacement | null): void {
+    const entering = placement && !this.constructionPlacement;
+    this.constructionPlacement = placement;
+    this.updateCursor();
+    if (entering) this.canvas.focus({ preventScroll: true });
+  }
+  setConstructionPreview(
+    shapes: readonly ConstructionShape[] | null,
+    valid = false,
+    transform?: ConstructionPreviewTransform,
+  ): void {
+    // Pointer motion transforms one retained mesh; it never rebuilds all the parts.
+    if (shapes && shapes === this.constructionShapes && this.constructionPreview) {
+      this.positionConstructionPreview(valid, transform);
+      return;
+    }
+    this.constructionShapes = shapes ?? undefined;
     this.constructionPreview?.destroy();
     this.constructionPreview = undefined;
     if (this.constructionPreviewMaterial) {
       this.releaseMaterial(this.constructionPreviewMaterial);
       this.constructionPreviewMaterial = undefined;
+      this.constructionPreviewValid = undefined;
     }
     if (!shapes) return;
     const root = new pc.Entity('Construction preview', this.app);
@@ -1020,8 +1002,34 @@ export class WildernessScene implements WorldRenderer {
     this.constructionPreview = root;
     this.constructionPreviewMaterial = material;
     for (const shape of shapes) {
-      const node = this.constructionPart(shape, root, material, { x: 0, y: 0, z: 0 });
+      const node = this.constructionPart(
+        shape,
+        root,
+        material,
+        transform?.origin ?? { x: 0, y: 0, z: 0 },
+      );
       node.render!.castShadows = false;
+    }
+    this.positionConstructionPreview(valid, transform);
+  }
+  private positionConstructionPreview(
+    valid: boolean,
+    transform?: ConstructionPreviewTransform,
+  ): void {
+    const root = this.constructionPreview;
+    if (!root) return;
+    root.setPosition(
+      transform?.position.x ?? 0,
+      transform?.position.y ?? 0,
+      transform?.position.z ?? 0,
+    );
+    root.setEulerAngles(0, ((transform?.rotation ?? 0) * 180) / Math.PI, 0);
+    const material = this.constructionPreviewMaterial;
+    if (material && this.constructionPreviewValid !== valid) {
+      this.constructionPreviewValid = valid;
+      material.diffuse.fromString(valid ? '#75dca0' : '#dfb76d');
+      material.emissive.copy(material.diffuse).mulScalar(0.25);
+      material.update();
     }
   }
   private constructionPart(
@@ -1375,7 +1383,6 @@ export class WildernessScene implements WorldRenderer {
     this.landscapeMaterials = [];
     for (const mesh of this.geometryMeshes) mesh.destroy();
     this.geometryMeshes = [];
-    this.geometryNodes.clear();
     const materialStart = this.materials.length;
     this.landscape = new pc.Entity('Landscape', this.app);
     this.app.root.addChild(this.landscape);
@@ -1480,7 +1487,6 @@ export class WildernessScene implements WorldRenderer {
         b.y - a.y,
         b.z - a.z,
       );
-      this.geometryNodes.set(blocker.id, node);
     }
     const deckMaterial = this.material('#b48b57'),
       rampMaterial = this.material('#8b8e7a');
@@ -1499,7 +1505,6 @@ export class WildernessScene implements WorldRenderer {
         receiveShadows: true,
       });
       this.landscape.addChild(node);
-      this.geometryNodes.set(surface.id, node);
       if (surface.material === 'timber') {
         const seams = surfaceSeamsMesh(this.app.graphicsDevice, surface);
         this.geometryMeshes.push(seams);
@@ -1636,6 +1641,9 @@ export class WildernessScene implements WorldRenderer {
         ? pc.PROJECTION_ORTHOGRAPHIC
         : pc.PROJECTION_PERSPECTIVE;
     this.camera.camera!.orthoHeight = this.cameraSettings.zoom;
+    this.canvas.dataset.projection = this.cameraSettings.projection;
+    this.canvas.dataset.cameraYaw = String(this.cameraSettings.yaw);
+    this.canvas.dataset.cameraPitch = String(this.cameraSettings.pitch);
     if (
       this.orientedYaw !== this.cameraSettings.yaw ||
       this.orientedPitch !== this.cameraSettings.pitch
@@ -1781,17 +1789,7 @@ export class WildernessScene implements WorldRenderer {
             mi.setParameter('ol_spriteFoot', [p.x, p.y, p.z]);
         }
       }
-      this.presentation.updateReveal(
-        entry.reveal,
-        entry.materials[Math.max(0, entry.lastFrame) % entry.materials.length]!,
-        position,
-        this.cards.get(entry.sprite)?.horizontalHeight === undefined ? entry.width : entry.height,
-        this.cards.get(entry.sprite)?.horizontalHeight ?? entry.height,
-        this.revealStrength(entry),
-        dt,
-        entry.observed && entry.root.enabled && !entry.model?.visible,
-        this.selected === entry.view.id && this.identifiable(entry),
-      );
+      this.updateReadThrough(entry, dt);
     }
     const selected = this.selected ? this.actors.get(this.selected) : undefined;
     if (this.selected && (!selected || !this.identifiable(selected))) {
@@ -1865,17 +1863,17 @@ export class WildernessScene implements WorldRenderer {
     }
     const hovered = this.hoveredId ? this.actors.get(this.hoveredId) : undefined;
     const hoverValid = !!hovered && this.identifiable(hovered) && !this.drag && !!this.hoverPoint;
-    const age = (performance.now() - this.hoverStarted) / 1000;
+    const age = performance.now() - this.hoverStarted;
     const fade =
       !hoverValid ||
       (this.targeting && !hovered?.view.equippedAction) ||
-      (!this.targeting && age <= 0.3)
+      (!this.targeting && age <= WORLD_HOVER_DELAY_MS)
         ? 0
         : document.documentElement.dataset.reduceMotion === 'true'
           ? 1
           : this.targeting
             ? 1
-            : Math.min(1, (age - 0.3) / 0.25);
+            : Math.min(1, (age - WORLD_HOVER_DELAY_MS) / WORLD_HOVER_FADE_MS);
     this.outline.update(
       fade > 0 && hovered
         ? hovered.model?.visible
@@ -1896,6 +1894,9 @@ export class WildernessScene implements WorldRenderer {
   private revealStrength(entry: RenderedEntity): number {
     const view = this.view;
     if (!view || !entry.observed || !entry.root.enabled) return 0;
+    // The modifier broadens presentation only to this already-permitted projection.
+    // Reuse the same GPU scenery mask; never discover targets or scan target × blocker pairs.
+    if (this.revealHeld) return 0.95;
     const prefs = view.profile.preferences,
       mode = prefs.revealMode ?? 'nearby';
     if (mode === 'off') return 0;
@@ -1910,6 +1911,64 @@ export class WildernessScene implements WorldRenderer {
       Math.max(0, Math.min(1, (radius - d) / Math.min(1.5, radius * 0.3)))
     );
   }
+  private updateReadThrough(entry: RenderedEntity, dt: number, immediate = false): void {
+    this.presentation.updateReveal(
+      entry.reveal,
+      entry.materials[Math.max(0, entry.lastFrame) % entry.materials.length]!,
+      entry.root.getPosition(),
+      this.cards.get(entry.sprite)?.horizontalHeight === undefined ? entry.width : entry.height,
+      this.cards.get(entry.sprite)?.horizontalHeight ?? entry.height,
+      this.revealStrength(entry),
+      dt,
+      entry.observed && entry.root.enabled && !entry.model?.visible,
+      this.selected === entry.view.id && this.identifiable(entry),
+      immediate,
+    );
+  }
+  private updateCursor(): void {
+    this.canvas.style.cursor =
+      this.drag?.moved && this.drag.pan
+        ? 'grabbing'
+        : this.targeting || this.constructionPlacement
+          ? 'crosshair'
+          : this.commandHeld
+            ? 'pointer'
+            : '';
+  }
+  private setModifiers(command: boolean, reveal: boolean): void {
+    if (this.commandHeld !== command) {
+      this.commandHeld = command;
+      this.updateCursor();
+    }
+    if (this.revealHeld === reveal) return;
+    this.revealHeld = reveal;
+    this.canvas.dataset.revealing = String(reveal);
+    // Reconcile once on the gesture boundary, including when suspension stops updates.
+    // Releasing Option restores the configured appearance without a stuck paused frame.
+    for (const entry of this.actors.values()) {
+      this.updateReadThrough(entry, 0, true);
+      entry.model?.setReadThrough(this.revealStrength(entry));
+    }
+    this.app.renderNextFrame = true;
+  }
+  private modifierKey = (event: KeyboardEvent): void => {
+    if (this.suspended || uiOwnsShortcut(event)) {
+      this.setModifiers(false, false);
+      return;
+    }
+    this.setModifiers(event.metaKey, event.altKey);
+  };
+  private focusChanged = (event: FocusEvent): void => {
+    if (event.target !== this.canvas) this.setModifiers(false, false);
+  };
+  private leaveCanvas = (): void => {
+    this.clearHover();
+    if (!this.drag) this.setModifiers(false, false);
+  };
+  private visibilityChanged = (): void => {
+    this.resetFrameRate();
+    if (document.visibilityState !== 'visible') this.blur();
+  };
   private updateModelVisibility(entry: RenderedEntity): void {
     if (!entry.model) return;
     const supported =
@@ -2029,8 +2088,7 @@ export class WildernessScene implements WorldRenderer {
   private readonly alphaMasks = new WeakMap<pc.Texture, ImageData>();
   private cameraObstruction(ray: { from: pc.Vec3; to: pc.Vec3 }): number {
     if (!this.view) return 0;
-    let obstruction =
-      rayHits(this.view.map, ray.from, ray.to, 'sight', this.cutaways)[0]?.fraction ?? Infinity;
+    let obstruction = rayHits(this.view.map, ray.from, ray.to, 'sight')[0]?.fraction ?? Infinity;
     // Decorative canopies obstruct the camera but never grant or remove bodily perception.
     for (const card of this.landscapeCards) {
       if (!card.enabled || this.cards.get(card)!.height < 2) continue;
@@ -2135,9 +2193,8 @@ export class WildernessScene implements WorldRenderer {
   private groundPoint(x: number, y: number): SurfacePoint | null {
     if (!this.view) return null;
     const ray = this.screenRay(x, y);
-    const obstruction =
-      rayHits(this.view.map, ray.from, ray.to, 'sight', this.cutaways)[0]?.fraction ?? Infinity;
-    const hit = pickSurfaces(this.view.map, ray.from, ray.to, this.cameraSettings.levelId)[0];
+    const obstruction = rayHits(this.view.map, ray.from, ray.to, 'sight')[0]?.fraction ?? Infinity;
+    const hit = pickSurfaces(this.view.map, ray.from, ray.to, null)[0];
     return hit && hit.fraction <= obstruction + 1e-4 ? hit.point : null;
   }
   private local(event: MouseEvent): { x: number; y: number } {
@@ -2145,13 +2202,14 @@ export class WildernessScene implements WorldRenderer {
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   }
   private pointerDown = (event: PointerEvent): void => {
-    if (!this.view) {
+    if (!this.view || this.suspended) {
       // A rejected press must not open a delayed native menu after the first view arrives.
       this.pointerContextHandled = true;
       return;
     }
     if (event.button > 2 || this.drag) return;
     this.canvas.focus({ preventScroll: true });
+    this.setModifiers(event.metaKey, event.altKey);
     this.pointerContextHandled = false;
     // macOS Control-click is a context gesture even when reported as primary.
     if (event.button === 0 && event.ctrlKey) return;
@@ -2164,13 +2222,23 @@ export class WildernessScene implements WorldRenderer {
       pan: event.button !== 0,
       orbit: event.button === 2 && !event.shiftKey,
       moved: false,
+      primaryAction: event.button === 0 && event.metaKey,
     };
     this.canvas.setPointerCapture(event.pointerId);
     this.publishHover(null, { x: event.clientX, y: event.clientY });
   };
   private pointerMove = (event: PointerEvent): void => {
+    if (this.suspended) return;
+    if (document.activeElement === this.canvas || document.activeElement === document.body)
+      this.setModifiers(event.metaKey, event.altKey);
     this.hoverPoint = { x: event.clientX, y: event.clientY };
     const drag = this.drag;
+    if (this.constructionPlacement && !drag && event.timeStamp - this.placementSampleTime >= 40) {
+      this.placementSampleTime = event.timeStamp;
+      const local = this.local(event);
+      const point = this.groundPoint(local.x, local.y);
+      this.constructionPlacement.move(point);
+    }
     if (drag) {
       if (event.pointerId !== drag.pointerId) return;
       const heldButton = drag.button === 1 ? 4 : drag.button === 2 ? 2 : 1;
@@ -2203,11 +2271,21 @@ export class WildernessScene implements WorldRenderer {
     this.cancelDrag();
     if (drag.moved || event.button !== drag.button) return;
     if (drag.button === 2) {
+      if (this.constructionPlacement) {
+        this.constructionPlacement.cancel();
+        return;
+      }
       this.openContextMenu(event);
       return;
     }
     if (drag.button !== 0 || event.ctrlKey) return;
     const local = this.local(event);
+    if (this.constructionPlacement) {
+      const point = this.groundPoint(local.x, local.y);
+      this.constructionPlacement.move(point);
+      if (point) this.constructionPlacement.place();
+      return;
+    }
     const entry = this.pick(local.x, local.y);
     if (entry && !this.identifiable(entry)) {
       this.denySelection();
@@ -2215,6 +2293,10 @@ export class WildernessScene implements WorldRenderer {
     }
     if (this.targeting) {
       if (entry) this.callbacks.target(entry.view);
+      return;
+    }
+    if (drag.primaryAction) {
+      if (entry) this.callbacks.primaryAction(entry.view);
       return;
     }
     if (entry) this.callbacks.select(entry.view);
@@ -2243,7 +2325,36 @@ export class WildernessScene implements WorldRenderer {
     )
       return;
     const delta = Math.PI / 8;
-    if (event.key === 'Home') this.center();
+    if (
+      this.constructionPlacement &&
+      (event.code === 'KeyQ' ||
+        event.code === 'KeyE' ||
+        event.key === 'Escape' ||
+        event.key === 'Enter' ||
+        event.key.startsWith('Arrow'))
+    ) {
+      if (event.key === 'Escape') this.constructionPlacement.cancel();
+      else if (event.key === 'Enter') {
+        if (!event.repeat) this.constructionPlacement.place();
+      } else if (event.key.startsWith('Arrow')) {
+        const point = this.constructionPlacement.position();
+        const screen = this.camera.camera!.worldToScreen(new pc.Vec3(point.x, point.y, point.z));
+        const next = this.groundPoint(
+          screen.x + (event.key === 'ArrowLeft' ? -16 : event.key === 'ArrowRight' ? 16 : 0),
+          screen.y + (event.key === 'ArrowUp' ? -16 : event.key === 'ArrowDown' ? 16 : 0),
+        );
+        this.constructionPlacement.move(next);
+      } else this.constructionPlacement.rotate(event.code === 'KeyQ' ? -1 : 1);
+    } else if (event.shiftKey && event.key.startsWith('Arrow')) {
+      // Keyboard panning follows the same screen-space command as dragging;
+      // it never moves the character or grants additional perception.
+      this.cameraCommand({
+        type: 'pan',
+        dx: event.key === 'ArrowLeft' ? 48 : event.key === 'ArrowRight' ? -48 : 0,
+        dy: event.key === 'ArrowUp' ? 48 : event.key === 'ArrowDown' ? -48 : 0,
+        viewportHeight: this.canvas.clientHeight,
+      });
+    } else if (event.key === 'Home') this.center();
     else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight')
       this.cameraCommand({
         type: 'orbit',
@@ -2252,26 +2363,14 @@ export class WildernessScene implements WorldRenderer {
       });
     else if (event.key === 'ArrowUp' || event.key === 'ArrowDown')
       this.cameraCommand({ type: 'orbit', yaw: 0, pitch: event.key === 'ArrowUp' ? 0.12 : -0.12 });
-    else if (event.key === 'PageUp' || event.key === 'PageDown') {
-      const levels = this.view?.map.spatial.levels ?? [];
-      const choices = [null, ...levels.map((level) => level.id)];
-      const index = choices.indexOf(this.cameraSettings.levelId);
-      const id =
-        choices[(index + (event.key === 'PageUp' ? 1 : choices.length - 1)) % choices.length] ??
-        null;
-      this.cameraCommand({
-        type: 'level',
-        id,
-        y: levels.find((level) => level.id === id)?.focusY ?? this.view?.player.position.y ?? 0,
-      });
-    } else return;
+    else return;
     event.preventDefault();
     event.stopPropagation();
   };
   private cancelDrag(): void {
     const drag = this.drag;
     this.drag = null;
-    this.canvas.style.cursor = this.targeting ? 'crosshair' : '';
+    this.updateCursor();
     if (!drag) return;
     if (drag.button === 2) this.pointerContextHandled = true;
     this.saveCameraPreferences();
@@ -2280,6 +2379,7 @@ export class WildernessScene implements WorldRenderer {
   }
   private pointerCancel = (event: PointerEvent): void => {
     if (event.pointerId === this.drag?.pointerId) {
+      this.setModifiers(false, false);
       this.clearHover();
       this.cancelDrag();
     }
@@ -2295,6 +2395,10 @@ export class WildernessScene implements WorldRenderer {
   };
   private openContextMenu(event: MouseEvent): void {
     if (!this.view) return;
+    if (this.constructionPlacement) {
+      this.constructionPlacement.cancel();
+      return;
+    }
     const local = this.local(event);
     const keyboard =
       !Number.isFinite(event.clientX) ||
@@ -2306,6 +2410,9 @@ export class WildernessScene implements WorldRenderer {
           ? this.actors.get(this.selected)!.view
           : null
         : (this.pick(local.x, local.y)?.view ?? null);
+    // Resolve the object as the player saw it at the click. Clearing held Option
+    // first would make a revealed object unpickable before its menu could open.
+    this.setModifiers(false, false);
     if (entity) {
       const entry = this.actors.get(entity.id);
       if (!entry || !this.identifiable(entry)) {
@@ -2324,6 +2431,7 @@ export class WildernessScene implements WorldRenderer {
     );
   }
   private blur = (): void => {
+    this.setModifiers(false, false);
     this.clearHover();
     this.cancelDrag();
   };
@@ -2334,15 +2442,19 @@ export class WildernessScene implements WorldRenderer {
     this.resizeObserver?.disconnect();
     this.canvas.removeEventListener('pointerdown', this.pointerDown);
     this.canvas.removeEventListener('pointermove', this.pointerMove);
-    this.canvas.removeEventListener('pointerleave', this.clearHover);
+    this.canvas.removeEventListener('pointerleave', this.leaveCanvas);
     this.canvas.removeEventListener('pointerup', this.pointerUp);
     this.canvas.removeEventListener('pointercancel', this.pointerCancel);
     this.canvas.removeEventListener('lostpointercapture', this.pointerCancel);
     this.canvas.removeEventListener('contextmenu', this.contextMenu);
     this.canvas.removeEventListener('wheel', this.wheel);
     this.canvas.removeEventListener('keydown', this.cameraKey);
+    this.canvas.removeEventListener('blur', this.blur);
+    window.removeEventListener('keydown', this.modifierKey);
+    window.removeEventListener('keyup', this.modifierKey);
+    document.removeEventListener('focusin', this.focusChanged);
     window.removeEventListener('blur', this.blur);
-    document.removeEventListener('visibilitychange', this.resetFrameRate);
+    document.removeEventListener('visibilitychange', this.visibilityChanged);
     this.app.off('postrender', this.recordFrame);
     this.app.off('framerender', this.prepareRender);
     this.app.off('postrender', this.finishRender);

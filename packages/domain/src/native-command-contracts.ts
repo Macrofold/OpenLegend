@@ -1,4 +1,5 @@
 import type { ActivityNode, ActivityBinding } from './action-experience.js';
+import { STOCK_TRANSFER_LIMITS } from './stock-transfer.js';
 import { isSafeRecordId } from './records.js';
 import type { Command } from './types.js';
 import { activityCommandFields, isCookingInputField } from './food-preparation.js';
@@ -166,4 +167,31 @@ export function validActivityBinding(
     typeof value === 'string' &&
     (kind === 'text' ? !!value.trim() && value.length <= 1500 : isSafeRecordId(value))
   );
+}
+
+/** Current saved/received group commands retain exact physical units. */
+export function validExactInventorySources(value: unknown, total: number): boolean {
+  if (!Array.isArray(value) || !value.length || value.length > STOCK_TRANSFER_LIMITS.movedLots)
+    return false;
+  const ids = new Set<string>();
+  let quantity = 0;
+  for (const source of value) {
+    if (
+      !source ||
+      typeof source !== 'object' ||
+      !isSafeRecordId(source.itemId) ||
+      ids.has(source.itemId) ||
+      ![source.quantity, source.revision, source.placementRevision].every(Number.isSafeInteger) ||
+      source.quantity < 1 ||
+      source.revision < 0 ||
+      source.placementRevision < 0 ||
+      Object.keys(source).some(
+        (key) => !['itemId', 'quantity', 'revision', 'placementRevision'].includes(key),
+      )
+    )
+      return false;
+    ids.add(source.itemId);
+    quantity += source.quantity;
+  }
+  return Number.isSafeInteger(quantity) && quantity === total;
 }

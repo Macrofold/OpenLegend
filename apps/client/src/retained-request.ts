@@ -9,12 +9,13 @@ export type RetainedRequest<T> =
 export function readRetainedRequest<T>(
   key: string | undefined,
   valid: (value: unknown) => value is T,
+  maximumCharacters = 8192,
 ): RetainedRequest<T> {
   if (!key) return { status: 'unreadable' };
   try {
     const text = sessionStorage.getItem(key);
     if (text === null) return { status: 'empty' };
-    if (text.length > 8192) return { status: 'unreadable' };
+    if (text.length > maximumCharacters) return { status: 'unreadable' };
     const value: unknown = JSON.parse(text);
     return valid(value) ? { status: 'pending', request: value } : { status: 'unreadable' };
   } catch {
@@ -25,13 +26,14 @@ export function readRetainedRequest<T>(
 export function retainRequest<T extends { requestId: string }>(
   key: string | undefined,
   request: T,
+  maximumCharacters = 8192,
 ): void {
   if (!key) throw new Error('Refresh your access before sending. Nothing was sent.');
   // Check before writing: a remounted component cannot replace an earlier unknown request.
   if (sessionStorage.getItem(key) !== null)
     throw new Error('Check the original request before sending another one. Nothing was sent.');
   const text = JSON.stringify(request);
-  if (text.length > 8192)
+  if (text.length > maximumCharacters)
     throw new Error('The recovery description is too large. Nothing was sent.');
   sessionStorage.setItem(key, text);
   if (sessionStorage.getItem(key) !== text)

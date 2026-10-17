@@ -54,6 +54,7 @@ function clearSessionDrafts(
         (!preservePendingCommands &&
           (key.startsWith('open-legend:action-request:') ||
             key.startsWith('open-legend:inventory-command:') ||
+            key.startsWith('open-legend:invention-request:') ||
             key.startsWith('open-legend:activity-command:')))
       )
         sessionStorage.removeItem(key);

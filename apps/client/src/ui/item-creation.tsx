@@ -1,5 +1,6 @@
+import { LoadingDialog } from '../design-system/loading';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
+import { Modal, ModalOverlay } from 'react-aria-components';
 import type { ApiResult, SurfacePoint } from '@open-legend/protocol';
 import { Button, IconButton, SelectField, Tag } from '../design-system/components';
 export type ItemCreationTarget = { actorId: string } | { position: SurfacePoint };
@@ -58,7 +59,7 @@ export function ItemCreationModal({
       onOpenChange={(open) => !open && close()}
     >
       <Modal className="ol-modal">
-        <Dialog className="ol-person-dialog" aria-label="Create item">
+        <LoadingDialog className="ol-person-dialog" aria-label="Create item">
           <form onSubmit={(event) => void submit(event)}>
             <header className="ol-modal-head">
               <div>
@@ -125,7 +126,7 @@ export function ItemCreationModal({
               </Button>
             </footer>
           </form>
-        </Dialog>
+        </LoadingDialog>
       </Modal>
     </ModalOverlay>
   );

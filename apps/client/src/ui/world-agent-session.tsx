@@ -14,9 +14,9 @@ import { ConversationComposer, ConversationMessage, ConversationThread } from '.
 import { WorldAgentQuestionCard } from './world-agent-question';
 import { WorldAgentReview } from './world-agent-review';
 import { WorldAgentWorkView } from './world-agent-work';
-import { UsageRemaining } from './usage-remaining';
 import { WorldCreationSelector } from './world-creation';
 import { authoringKey } from './world-agent-identity';
+import { worldAgentKindLabel } from './world-agent-labels';
 
 type Pending = { id: string; text: string };
 type Page<T> = { ok: boolean; message?: string; data: T };
@@ -57,8 +57,6 @@ export function WorldAgentSession({
   nativeCreation,
   onCreated,
   controls,
-  navigationOpen = false,
-  closeNavigation,
   onStatusPolicyChanged,
 }: {
   worldId: string;
@@ -71,8 +69,6 @@ export function WorldAgentSession({
   nativeCreation?: boolean;
   onCreated(): void;
   controls?: ReactNode;
-  navigationOpen?: boolean;
-  closeNavigation?(): void;
   onStatusPolicyChanged(): void;
 }) {
   const key = authoringKey('session', worldId, accessScope, sessionId);
@@ -111,14 +107,10 @@ export function WorldAgentSession({
   const [view, setView] = useState<'conversation' | 'work'>('conversation');
   const viewOptions = useRef<HTMLDivElement>(null);
   const [newMessageTarget, setNewMessageTarget] = useState<HTMLSpanElement | null>(null);
-  const detailsRef = useRef<HTMLDetailsElement>(null);
   const detailsId = useId();
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const readingVisible = visible && !detailsOpen && !navigationOpen;
-  const closeDetails = () => {
-    if (detailsRef.current) detailsRef.current.open = false;
-    closeNavigation?.();
-  };
+  const readingVisible = visible && !detailsOpen;
+  const closeDetails = () => setDetailsOpen(false);
   const [seenWork, setSeenWork] = useState<string>();
   const [review, setReview] = useState<string>();
   const [requestedSelection, setRequestedSelection] = useState<{ id: string; revision: number }>();
@@ -557,87 +549,110 @@ export function WorldAgentSession({
         ]
       : []),
   ]);
+  const latestDraft = session?.drafts[0];
+  if (latestDraft)
+    entries.push({
+      id: `saved-change:${latestDraft.id}:${latestDraft.revision}`,
+      content: (
+        <article className="ol-creator-change-card">
+          <span className="ol-caption">{worldAgentKindLabel[latestDraft.kind]}</span>
+          <strong>{latestDraft.title || latestDraft.intent}</strong>
+          {latestDraft.summary && <p>{latestDraft.summary}</p>}
+          <Button
+            size="sm"
+            variant="secondary"
+            onPress={() => {
+              closeDetails();
+              setRequestedSelection({ id: latestDraft.id, revision: latestDraft.revision });
+              setSeenWork(workRevision);
+              setView('work');
+            }}
+          >
+            Review saved change
+          </Button>
+        </article>
+      ),
+    });
   return (
-    <div className="ol-world-agent-session">
-      {session && (
-        <header className="ol-world-agent-header">
-          <div className="ol-world-agent-identity">
-            <Tag tone="highlight">God mode</Tag>
-            {!nativeOpeningSession && (
-              <UsageRemaining
-                label="Conversation allowance"
-                limit={session.budget.limitUsd}
-                spent={session.budget.spentUsd}
-                reserved={session.budget.reservedUsd}
-                available={connected}
-              />
-            )}
-          </div>
-          <details
-            ref={detailsRef}
-            className="ol-world-agent-controls"
-            onToggle={(event) => {
-              setDetailsOpen(event.currentTarget.open);
-              if (event.currentTarget.open) closeNavigation?.();
+    <div
+      className="ol-world-agent-session"
+      onKeyDown={(event) => {
+        if (
+          event.key !== 'Escape' ||
+          event.defaultPrevented ||
+          event.nativeEvent.isComposing ||
+          !detailsOpen
+        )
+          return;
+        if (
+          !(event.target instanceof Element) ||
+          event.target.closest('[role="dialog"], [role="listbox"], [role="menu"]')
+        )
+          return;
+        event.preventDefault();
+        event.stopPropagation();
+        setDetailsOpen(false);
+        viewOptions.current?.querySelector<HTMLButtonElement>('[aria-controls]')?.focus();
+      }}
+    >
+      <div className="ol-creator-views" role="group" aria-label="World editor views">
+        <div
+          ref={viewOptions}
+          className="ol-world-agent-view-options"
+          onFocusCapture={(event) => {
+            const button = event.target;
+            if (!(button instanceof HTMLButtonElement)) return;
+            const strip = event.currentTarget;
+            if (
+              button.offsetLeft < strip.scrollLeft ||
+              button.offsetLeft + button.offsetWidth > strip.scrollLeft + strip.clientWidth
+            )
+              strip.scrollLeft = button.offsetLeft;
+          }}
+        >
+          <Button
+            size="sm"
+            variant="quiet"
+            aria-pressed={view === 'conversation' && !detailsOpen}
+            onPress={() => {
+              closeDetails();
+              setView('conversation');
             }}
           >
-            <summary aria-label="Session details and owner spending" aria-controls={detailsId}>
-              <span className="ol-world-agent-detail-label">
-                Session details and owner spending
-              </span>
-              <span className="ol-world-agent-detail-label-short" aria-hidden="true">
-                Session &amp; spending
-              </span>
-            </summary>
-          </details>
-        </header>
-      )}
-      {session && (
-        <div className="ol-creator-views" role="group" aria-label="World Agent views">
-          <div
-            ref={viewOptions}
-            className="ol-world-agent-view-options"
-            onFocusCapture={(event) => {
-              const button = event.target;
-              if (!(button instanceof HTMLButtonElement)) return;
-              const strip = event.currentTarget;
-              // Browser focus can leave a partly visible control clipped in this strip.
-              if (
-                button.offsetLeft < strip.scrollLeft ||
-                button.offsetLeft + button.offsetWidth > strip.scrollLeft + strip.clientWidth
-              )
-                strip.scrollLeft = button.offsetLeft;
+            Chat
+          </Button>
+          <Button
+            size="sm"
+            variant="quiet"
+            aria-pressed={view === 'work' && !detailsOpen}
+            disabled={!session}
+            onPress={() => {
+              closeDetails();
+              setSeenWork(workRevision);
+              setView('work');
             }}
           >
-            <Button
-              size="sm"
-              variant="quiet"
-              aria-pressed={view === 'conversation'}
-              onPress={() => {
-                closeDetails();
-                setView('conversation');
-              }}
-            >
-              Conversation
-            </Button>
-            <Button
-              size="sm"
-              variant="quiet"
-              aria-pressed={view === 'work'}
-              onPress={() => {
-                closeDetails();
-                setSeenWork(workRevision);
-                setView('work');
-              }}
-            >
-              Work{newWork && <span> · New work</span>}
-            </Button>
-          </div>
-          <span className="ol-world-agent-new-message" ref={setNewMessageTarget} />
+            Saved changes{newWork && <span className="ol-unread-label"> New</span>}
+          </Button>
+          <Button
+            size="sm"
+            variant="quiet"
+            aria-expanded={detailsOpen}
+            aria-controls={detailsId}
+            onPress={() => setDetailsOpen((value) => !value)}
+          >
+            Options
+          </Button>
         </div>
-      )}
+        <span className="ol-world-agent-new-message" ref={setNewMessageTarget} />
+      </div>
       <div className="ol-world-agent-reading">
-        <div hidden={view !== 'conversation' || detailsOpen || navigationOpen}>
+        {!status && !error && (
+          <p role="status" className="ol-caption">
+            Opening conversation…
+          </p>
+        )}
+        <div hidden={view !== 'conversation' || detailsOpen}>
           {sessionPurpose === 'creation' && status && (nativeOpeningSession || session) && (
             <WorldCreationSelector
               worldId={worldId}
@@ -671,8 +686,7 @@ export function WorldAgentSession({
             />
           )}
         </div>
-        {!session && controls}
-        {!session && status && !nativeOpeningSession && (
+        {!session && status && !nativeOpeningSession && !detailsOpen && (
           <EmptyState
             title={
               sessionPurpose === 'invention'
@@ -697,20 +711,24 @@ export function WorldAgentSession({
                 separately by the world owner.
               </p>
             </details>
-            <Button busy={busy} disabled={!connected} onPress={() => void open()}>
+            <Button variant="primary" busy={busy} disabled={!connected} onPress={() => void open()}>
               Start conversation
             </Button>
           </EmptyState>
         )}
-        {!session && status && !nativeOpeningSession && !status.availability.configured && (
-          <p role="status" className="ol-caption">
-            {status.availability.reason}
-          </p>
-        )}
+        {!session &&
+          status &&
+          !nativeOpeningSession &&
+          !detailsOpen &&
+          !status.availability.configured && (
+            <p role="status" className="ol-caption">
+              {status.availability.reason}
+            </p>
+          )}
         {session && (
           <>
             <div
-              hidden={view !== 'conversation' || detailsOpen || navigationOpen}
+              hidden={view !== 'conversation' || detailsOpen}
               className="ol-world-agent-conversation"
             >
               <ConversationThread
@@ -773,20 +791,24 @@ export function WorldAgentSession({
               onOpenReview={setReview}
               requestedSelection={requestedSelection}
             />
-            <div id={detailsId} className="ol-world-agent-context" hidden={!detailsOpen}>
-              {controls}
+          </>
+        )}
+        <div id={detailsId} className="ol-world-agent-context" hidden={!detailsOpen}>
+          {controls}
+          {session && (
+            <>
+              <Tag tone="highlight">God mode</Tag>
               <p className="ol-caption">
-                A proposed change stays in Work until you review and apply it.
+                Saved changes stay separate from the world until you review and apply them.
               </p>
               <p className="ol-caption">
                 Session {sessionId}. Closing the workspace keeps this conversation and its saved
                 work.
               </p>
               <p>
-                ${session.budget.spentUsd.toFixed(3)} used · $
-                {session.budget.reservedUsd.toFixed(3)} reserved · $
-                {session.budget.limitUsd.toFixed(2)} Run cap. Shared Worker capacity is billed
-                separately.
+                ${session.budget.spentUsd.toFixed(3)} used; ${session.budget.reservedUsd.toFixed(3)}{' '}
+                reserved; ${session.budget.limitUsd.toFixed(2)} Run cap. Shared Worker capacity is
+                billed separately.
               </p>
               {session.budget.uncertainUsd > 0 && (
                 <p>${session.budget.uncertainUsd.toFixed(3)} is unconfirmed and remains counted.</p>
@@ -802,7 +824,7 @@ export function WorldAgentSession({
                     disabled={busy}
                     onPress={() => void closeSession()}
                   >
-                    End session · keep history
+                    End conversation and keep history
                   </Button>
                 )}
               </div>
@@ -812,121 +834,127 @@ export function WorldAgentSession({
                   history remains readable; start a new session to act.
                 </p>
               )}
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
-      <div className="ol-world-agent-footer">
-        {session && (
-          <>
-            {(!!session.activeTurn || !!session.question) && (
-              <Button size="sm" disabled={busy} onPress={() => void cancel()}>
-                Stop this request
-              </Button>
-            )}
-            <div hidden={view !== 'conversation'} className="ol-world-agent-compose">
-              <p role="status" aria-live="polite" className="ol-caption">
-                {session.question
-                  ? 'Waiting for your choice.'
-                  : session.activeTurn
-                    ? turns.find((turn) => turn.id === session.activeTurn)?.progress?.stage ===
-                      'replying'
-                      ? 'Writing a reply.'
-                      : 'Investigating your request.'
-                    : turns.at(-1)?.progress?.completeness === 'complete'
-                      ? 'Reply complete.'
-                      : ''}
-              </p>
-              {pending && (
-                <div className="ol-notice" role="status">
-                  <p>Checking acknowledgement for: {pending.text}</p>
-                  <p>No replacement run is started automatically.</p>
-                  <Button
-                    size="sm"
-                    disabled={
-                      !connected ||
-                      busy ||
-                      pendingUnreadable ||
-                      !!session.activeTurn ||
-                      !session.available ||
-                      !status.availability.configured
-                    }
-                    onPress={() => void send(pending)}
-                  >
-                    Resubmit the same request
-                  </Button>
-                  <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
-                    Check saved result
-                  </Button>
-                </div>
+      <div className="ol-world-agent-footer" hidden={!session && !error}>
+        <div className="ol-world-agent-feedback">
+          {session && (
+            <>
+              {(!!session.activeTurn || !!session.question) && (
+                <Button size="sm" disabled={busy} onPress={() => void cancel()}>
+                  Stop this request
+                </Button>
               )}
-              {pendingUnreadable && (
-                <div className="ol-notice" role="alert">
-                  <p>
-                    This browser could not read or update the original request’s recovery record.
-                    Restore browser storage access, then check the saved result. Another request
-                    will stay blocked until it can be checked.
-                  </p>
-                  {!pending && (
+              <div hidden={view !== 'conversation'} className="ol-world-agent-feedback-context">
+                <p role="status" aria-live="polite" className="ol-caption">
+                  {session.question
+                    ? 'Waiting for your choice.'
+                    : session.activeTurn
+                      ? turns.find((turn) => turn.id === session.activeTurn)?.progress?.stage ===
+                        'replying'
+                        ? 'Writing a reply.'
+                        : 'Investigating your request.'
+                      : turns.at(-1)?.progress?.completeness === 'complete'
+                        ? 'Reply complete.'
+                        : ''}
+                </p>
+                {pending && (
+                  <div className="ol-notice" role="status">
+                    <p>Checking acknowledgement for: {pending.text}</p>
+                    <p>No replacement run is started automatically.</p>
+                    <Button
+                      size="sm"
+                      disabled={
+                        !connected ||
+                        busy ||
+                        pendingUnreadable ||
+                        !!session.activeTurn ||
+                        !session.available ||
+                        !status.availability.configured
+                      }
+                      onPress={() => void send(pending)}
+                    >
+                      Resubmit the same request
+                    </Button>
                     <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
                       Check saved result
                     </Button>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
+                {pendingUnreadable && (
+                  <div className="ol-notice" role="alert">
+                    <p>
+                      This browser could not read or update the original request’s recovery record.
+                      Restore browser storage access, then check the saved result. Another request
+                      will stay blocked until it can be checked.
+                    </p>
+                    {!pending && (
+                      <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
+                        Check saved result
+                      </Button>
+                    )}
+                  </div>
+                )}
 
-              {nativeOpeningSession && (
-                <p className="ol-caption">
-                  This prepared-opening workspace has no generation allowance. To describe a custom
-                  opening in conversation, choose Describe a world and explicitly start a funded
-                  conversation.
-                </p>
-              )}
-              <ConversationComposer
-                inputRef={input}
-                ariaLabel="Message to World Agent"
-                placeholder={
-                  sessionPurpose === 'creation'
-                    ? 'Describe a new world opening…'
-                    : 'Investigate, design, or ask for a change…'
-                }
-                maxLength={2000}
-                value={text}
-                onChange={(value) => {
-                  textRevision.current++;
-                  setText(value);
-                }}
-                onSubmit={() => send()}
-                disabled={
-                  !connected ||
-                  busy ||
-                  !!session.activeTurn ||
-                  !!session.question ||
-                  !!pending ||
-                  pendingUnreadable ||
-                  !session.available ||
-                  !status.availability.configured ||
-                  session.budget.availableUsd <= 0 ||
-                  !text.trim()
-                }
-              />
-            </div>
-            <p className="ol-caption" role="status">
-              {!connected
-                ? 'Reconnect to send a request. Your draft is kept.'
-                : !session.available
-                  ? 'This history is read only. Start a new conversation to make another request.'
-                  : session.question
-                    ? 'Answer the current question before sending a different request.'
-                    : !status.availability.configured
-                      ? status.availability.reason
-                      : session.budget.availableUsd <= 0
-                        ? 'This conversation has no remaining allowance for a new request.'
-                        : ''}
-            </p>
-          </>
+                {nativeOpeningSession && (
+                  <p className="ol-caption">
+                    This prepared-opening workspace has no generation allowance. To describe a
+                    custom opening in conversation, choose Describe a world and explicitly start a
+                    funded conversation.
+                  </p>
+                )}
+              </div>
+              <p className="ol-caption" role="status">
+                {!connected
+                  ? 'Reconnect to send a request. Your draft is kept.'
+                  : !session.available
+                    ? 'This history is read only. Start a new conversation to make another request.'
+                    : session.question
+                      ? 'Answer the current question before sending a different request.'
+                      : !status.availability.configured
+                        ? status.availability.reason
+                        : session.budget.availableUsd <= 0
+                          ? 'This conversation has no remaining allowance for a new request.'
+                          : ''}
+              </p>
+            </>
+          )}
+          {error && <p role="alert">{error}</p>}
+        </div>
+        {session && (
+          <div hidden={view !== 'conversation'} className="ol-world-agent-compose">
+            <ConversationComposer
+              inputRef={input}
+              ariaLabel="Message to World Agent"
+              placeholder={
+                sessionPurpose === 'creation'
+                  ? 'Describe a new world opening…'
+                  : 'Investigate, design, or ask for a change…'
+              }
+              maxLength={2000}
+              value={text}
+              onChange={(value) => {
+                textRevision.current++;
+                setText(value);
+              }}
+              onSubmit={() => send()}
+              disabled={
+                !connected ||
+                busy ||
+                !!session.activeTurn ||
+                !!session.question ||
+                !!pending ||
+                pendingUnreadable ||
+                !session.available ||
+                !status.availability.configured ||
+                session.budget.availableUsd <= 0 ||
+                !text.trim()
+              }
+            />
+          </div>
         )}
-        {error && <p role="alert">{error}</p>}
       </div>
       {review && visible && (
         <WorldAgentReview

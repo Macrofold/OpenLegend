@@ -4,6 +4,7 @@ import { ACCESS_CAPABILITY_TEXT } from '@open-legend/protocol';
 import { AccessError, SignInRequiredError, getOperations, logOut } from '../api';
 import { Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
 import { Button, Section, Tag } from '../design-system/components';
+import { LoadingIndicator } from '../design-system/loading';
 import { EntryNotice } from './entry-notice';
 import { GameSavesPanel } from './game-saves';
 import { AccessSection } from './operations-access';
@@ -123,11 +124,13 @@ export function OperationsConsole() {
                 ? 'No access to World operations'
                 : entry === 'failed'
                   ? 'World operations could not connect'
-                  : 'Opening World operations…'}
+                  : 'World operations'}
           </h2>
-          <p role={error ? 'alert' : 'status'}>
-            {error || 'Checking this account’s permitted world access.'}
-          </p>
+          {error ? (
+            <p role="alert">{error}</p>
+          ) : (
+            <LoadingIndicator active={refreshing} label="Checking world access" />
+          )}
           {entry === 'forbidden' && (
             <p>
               Ask the world operator to check this account’s access, or sign in with another

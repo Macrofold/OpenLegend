@@ -128,7 +128,7 @@ it('scopes object menus to their target, including relevant missing prerequisite
     actionCatalogue(service, {
       position: { y: 0, x: 11, z: 13, surfaceId: 'terrain' },
     }).actions.map((action) => action.id),
-  ).toEqual(['evade:point', 'move']);
+  ).toEqual(['move']);
 });
 
 it('refreshes availability after pause and never previews a hidden target', async () => {
@@ -213,9 +213,7 @@ it('updates contextual food descriptions from the player’s current state witho
   const fullness =
     service.world.entities[PLAYER_ID]!.actor!.attributes!['wilderness:fullness']!.value;
   if (fullness === undefined) throw new Error('Wilderness fixture lacks fullness.');
-  expect(food.description).toContain(
-    `Current Food: ${Math.round(Number(fullness))} %; range 0–100.`,
-  );
+  expect(food.description).toContain(`Current Food: ${Math.round(Number(fullness))}; range 0–100.`);
   if (food.intent.kind !== 'command') throw new Error('Missing fixture food command');
   expect((await service.command('fixture-eat', food.intent.command)).ok).toBe(true);
   const next = actionCatalogue(service, { itemId }).actions.find(
@@ -226,7 +224,7 @@ it('updates contextual food descriptions from the player’s current state witho
     service.world.entities[PLAYER_ID]!.actor!.attributes!['wilderness:fullness']!.value;
   if (nextFullness === undefined) throw new Error('Wilderness fixture lacks fullness.');
   expect(next.description).toContain(
-    `Current Food: ${Math.round(Number(nextFullness))} %; range 0–100.`,
+    `Current Food: ${Math.round(Number(nextFullness))}; range 0–100.`,
   );
   expect(JSON.stringify(actionCatalogue(service, { targetId: PLAYER_ID }))).not.toContain(
     service.world.entities[NPC_ID]!.actor!.agency.goals[0]!.objective,

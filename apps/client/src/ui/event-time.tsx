@@ -4,7 +4,7 @@ import { createContext, useContext } from 'react';
  * Displays read it rather than assuming a start hour. */
 export const ClockOffsetContext = createContext(0);
 
-/** "Day N · HH:MM": the day counts from the world's start; the hour reads its clock. */
+/** "Day N, HH:MM": the day counts from the world's start; the hour reads its clock. */
 export function clockParts(time: number, offsetHours: number) {
   const minutes = Math.floor(time / 60 + offsetHours * 60);
   return {
@@ -18,7 +18,7 @@ export function EventTime({ time }: { time: number }) {
   const { day, hour, minute } = clockParts(time, useContext(ClockOffsetContext));
   return (
     <time className="ol-event-time" aria-label={`Game day ${day}, ${hour}:${minute}`}>
-      Day {day} · {hour}:{minute}
+      Day {day}, {hour}:{minute}
     </time>
   );
 }
