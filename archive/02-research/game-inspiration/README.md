@@ -4,7 +4,7 @@
 
 ## Start here
 
-- **[World of Warcraft: Forever — G178](dossiers/world-of-warcraft-forever.md):** an independent prelaunch study of its enduring-world promise, gameplay, community, development, business model and relevance to OpenLegend. The [scoped ledger](research-progress-forever-2026-10-17.md) records current coverage and evidence limits.
+- **[World of Warcraft: Forever — G178](dossiers/world-of-warcraft-forever.md):** an independent prelaunch study of its enduring-world promise, gameplay, community, development, business model and relevance to OpenLegend. Read the [Open Legend synthesis](essays/wow-forever-and-a-world-worth-returning-to.md) and [addon study](references/wow-forever-addon-ecosystem.md). The [scoped ledger](research-progress-forever-2026-10-17.md) records coverage and evidence limits.
 
 - **[Why Umamusume made billions — and what OpenLegend can take forward](essays/mobile-success-failure-and-umamusume.md):** positive experience routes through all ten games, concrete OpenLegend possibilities, commercial interpretation and dated financial evidence. The [OpenLegend section](essays/mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity) connects adventure, invention, independent people, expressive creation and lasting consequences to current project goals.
 - **[Ten mobile successes and unsuccessful services — G168–G177](research-progress-mobile-2026-10-17.md):** full mechanics, reception and commercial studies of the ten October 17 additions, beginning with Umamusume. The scoped ledger owns actual completion and links each dossier.
@@ -37,7 +37,7 @@
 
 ## Expanded per-game dossiers
 
-The dossiers supplement the original chapters and granular studies rather than replacing them. Use the [earlier progress ledger](research-progress.md) and [expansion ledger](research-progress-expansion-2026-10-13.md) for their respective completion states and commit references; the [roster](research-roster.md) remains the owner of numbering and edition boundaries. These reading routes cover canonical G40–G60 without implying that the entire current 177-subject roster or packet-wide preservation audit is finished.
+The dossiers supplement the original chapters and granular studies rather than replacing them. Use the [earlier progress ledger](research-progress.md) and [expansion ledger](research-progress-expansion-2026-10-13.md) for their respective completion states and commit references; the [roster](research-roster.md) remains the owner of numbering and edition boundaries. These reading routes cover canonical G40–G60 without implying that the entire current 178-subject roster or packet-wide preservation audit is finished.
 
 **September 27, 2026 scoped resolution:** all recorded G40–G60 manuscript-audit findings now have committed remedies. Seventeen subjects required corrections or additional research; four had no major gap identified. The [original matrix](references/games-40-60-coverage-audit.md) and [later-game findings](references/games-51-60-coverage-audit.md) remain historical baseline evidence, not competing current task trackers. Their pending labels are superseded by the ledger's per-game remedy records. Declared source/access/version limits remain, rather than being relabelled as successful reading or testing.
 

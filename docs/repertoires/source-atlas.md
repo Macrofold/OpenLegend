@@ -1867,6 +1867,16 @@ These studies deepen the numbered game and world dossiers without renumbering th
 
 **New catalogue:** [magic](magic.md)
 
+## Focused source addition — World of Warcraft: Forever
+
+[G178 dossier](../../archive/02-research/game-inspiration/dossiers/world-of-warcraft-forever.md) · [Full interpretation](../../archive/02-research/game-inspiration/essays/wow-forever-and-a-world-worth-returning-to.md) · [Addon ecosystem](../../archive/02-research/game-inspiration/references/wow-forever-addon-ecosystem.md)
+
+**Design takeaway:** continuing usefulness and recognizable consequences can make a world worth returning to. Shared activity needs a worthwhile purpose; temporary cooperation, pleasant company and a lasting relationship are different outcomes. New practical combinations can broaden a player's choices while selected power gains remain rewarding.
+
+**Caution to carry forward:** Forever's beta does not prove durable community, mature progression or commercial sustainability. Its authored MMO systems do not demonstrate Open Legend's independent inhabitants or useful invention. Preserve those existing [early playable-game priorities](gameplay-priorities.md); slow movement, camp bonuses and a fixed level cap are not substitutes for an enjoyable adventure.
+
+**Research destinations:** [multiplayer](../../archive/02-research/game-inspiration/synthesis/multiplayer-and-player-social-systems.md), [progression](../../archive/02-research/game-inspiration/synthesis/progression-and-builds.md), and [commercial sustainability](../../archive/02-research/game-inspiration/synthesis/monetization-and-commercial-sustainability.md). This focused addition does not reprioritize catalogue entries or certify unrelated source coverage.
+
 ## Catalogue source revisions
 
 The 27 expanded catalogues were consolidated from these eight source revisions. Current descriptions and priorities are maintained in the [canonical catalogue map](README.md#catalogue-map); these pins identify research provenance, not alternative current editions. Later source-branch changes require comparison by stable ID and meaning, not automatic replacement. Existing source branches are unchanged.
@@ -1883,3 +1893,4 @@ The 27 expanded catalogues were consolidated from these eight source revisions. 
 | 8     | `repertoires-v2-group-8` | [90f0ba3d726a27c2cf372f9c5938f0467a6f5ccb](https://github.com/Macrofold/OpenLegend/tree/90f0ba3d726a27c2cf372f9c5938f0467a6f5ccb/docs/repertoires) | Research references remain in the canonical catalogues    |
 
 Category source groups: [combat-rescue](combat-rescue.md) — 8; [objects](objects.md) — 2; [adventure-discovery](adventure-discovery.md) — 8; [abilities-progression](abilities-progression.md) — 7; [needs](needs.md) — 3; [materials-resources](materials-resources.md) — 2; [work-crafting](work-crafting.md) — 2; [settlements-architecture](settlements-architecture.md) — 5; [ecology-weather](ecology-weather.md) — 5; [bodies-species](bodies-species.md) — 5; [economy-logistics](economy-logistics.md) — 2; [relationships](relationships.md) — 4; [characters-backstories](characters-backstories.md) — 3; [mechanics](mechanics.md) — 1; [psychology-behavior](psychology-behavior.md) — 3; [traits](traits.md) — 3; [diplomacy-conflict](diplomacy-conflict.md) — 4; [institutions-politics](institutions-politics.md) — 4; [history-myth](history-myth.md) — 6; [languages-knowledge](languages-knowledge.md) — 6; [arts-leisure](arts-leisure.md) — 6; [faith-ritual](faith-ritual.md) — 6; [magic](magic.md) — 7; [technology](technology.md) — 7; [automation-creators](automation-creators.md) — 1; [unusual-realities](unusual-realities.md) — 1; [simulation-experiments](simulation-experiments.md) — 1.
+

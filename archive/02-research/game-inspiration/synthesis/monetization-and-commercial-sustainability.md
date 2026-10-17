@@ -1,6 +1,6 @@
 # Monetization and commercial sustainability
 
-**Status: Not started — shell only. Topic: BUSINESS.** No game has been assessed or incorporated into this guide.
+**Status: In progress — focused Forever assessment under review. Topic: BUSINESS.** The wider topic remains unassessed.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md)
 
@@ -22,11 +22,23 @@ Owns real commercial outcomes and purchase design. Fictional currency belongs to
 
 ## Desired experiences and contrasting approaches
 
-<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+A player should understand what participation, identity, additional content and continued access cost. A developer needs revenue sufficient for the specific production and support promise. An attractive offer can satisfy enthusiasts while dividing friends or making nonbuyers feel that their chosen identity is incomplete.
 
 ## Cross-game evidence and counterexamples
 
+The [Forever commercial record](../dossiers/world-of-warcraft-forever.md#required-commercial-evidence-record) provides a concrete subscription/bundle case with a documented search and an indeterminate financial outcome. Its [purchase comparison](../dossiers/world-of-warcraft-forever.md#what-a-player-pays-for) separates access entitlements; [player reactions](../dossiers/world-of-warcraft-forever.md#what-direct-players-value-and-where-the-same-systems-disappoint) show competing fairness judgments. This assesses the available prelaunch evidence and its limits, not the business topic's other games.
+
 ## Consolidated lessons and tradeoffs
+
+<a id="business-l001"></a>
+### BUSINESS-L001 — Measure the commercial result that belongs to the product
+
+Attention, activity, purchases, gross spending, recognized receipts and profit answer different questions. A bundled service can create value by retaining someone who would otherwise leave, but moving an already-paying customer's hours between included products does not automatically add revenue. A defensible estimate needs a purchase/price basis and a justified allocation. When those inputs are missing, explaining the uncertainty is more useful than a fabricated numerical range.
+
+<a id="business-l002"></a>
+### BUSINESS-L002 — Treat identity and continued belonging as part of purchase design
+
+An offer can be clearly explained and still conflict with a player's sense of fairness. Evaluate what another person sees, what a nonbuyer can do and whether friends can continue together. Appearance, practical advantage, a new origin story and early testing are different benefits. Their boundaries matter even before a price can be judged against operating costs.
 
 ## Current OpenLegend baseline and existing design owners
 
@@ -34,13 +46,17 @@ Use the [source and goal map](source-and-goal-map.md#topic-business) to locate r
 
 ## Complete situations and cross-topic consequences
 
-<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+**Hypothetical product situation:** one friend purchases an optional origin experience while another uses ordinary access. They need to know whether they can meet, whether the purchase changes practical strength, and what remains accessible when a temporary invitation ends. A developer could instead fund the game through a base purchase, subscription, paid additions or professional creator tools. Each has different entry barriers and continuing obligations; none is selected for Open Legend by this comparison.
+
+A large response to an invitation would test interest. It would not, on its own, establish paid conversion, durable enjoyment or the cost of supporting those people. DISCOVERY, TRUST and PRODUCTION own those adjacent questions.
 
 ## Possible OpenLegend applications and limits
 
+The [synthesis essay](../essays/wow-forever-and-a-world-worth-returning-to.md) applies these questions to a world where people may invest in inventions and relationships. Preserve understandable purchase choices and account for authoring, service and support work before promising indefinite expansion. This is commercial research, not approval of a pricing model, spending or an implementation policy.
+
 ## Open questions and missing evidence
 
-<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
+Forever-specific paid units, realized prices, subscription lift, retention, attributable receipts, production budgets and operating costs were not disclosed in the inspected corpus. Their absence prevents a profitability judgment but does not imply failure. Open Legend cannot inherit another publisher's audience, brand familiarity, installed tools or unit economics; its own value and sustainability need separate evidence.
 
 ## OpenLegend-specific research subtopics
 
@@ -62,3 +78,4 @@ None registered yet. These research questions are not implementation tasks. Use 
 
 | Subtopic ID | Intended experience and scope | Research lesson / evidence | Design register entry | Feature specification | Technical design |
 | ----------- | ----------------------------- | -------------------------- | --------------------- | --------------------- | ---------------- |
+

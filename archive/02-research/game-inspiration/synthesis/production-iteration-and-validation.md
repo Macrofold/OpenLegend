@@ -8,6 +8,8 @@
 
 Use [Production and platform pitfalls](../essays/production-and-platform-pitfalls.md) and [A practical validation program](../essays/a-practical-validation-program.md). Keep their existing arguments and evidence in place, and reconcile any research proposal with current AGENTS.md before treating it as an operating requirement.
 
+For a documented prelaunch example, read [Forever's production process](../dossiers/world-of-warcraft-forever.md#production-iteration-and-the-design-process) and its [Open Legend synthesis](../essays/wow-forever-and-a-world-worth-returning-to.md). This route does not certify a complete source-to-PRODUCTION assessment.
+
 ## Research subtopics to keep explicit
 
 ### Small complete experiences versus broad unfinished systems
@@ -44,3 +46,4 @@ None registered yet. Research headings are not implementation tasks. Add scoped 
 ## Ownership and integration boundary
 
 Existing essays retain substantive research ownership. This page provides local design references and scope questions; it creates no new test suite, budget, approval ritual or delivery commitment. Coverage remains X until its actual source evidence is reconciled.
+
