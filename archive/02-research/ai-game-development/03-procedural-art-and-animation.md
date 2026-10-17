@@ -10,14 +10,14 @@ OpenLegend already has a PlayCanvas world, React interface, elevated spatial geo
 
 **Proposed rule:** establish a small approved visual vocabulary in the real adventure before automating its variations. Prioritize a readable enemy, weapon, reward, useful invention, and resident interaction over a large unvalidated asset catalogue. That follows the project's enjoyable adventure and invention priorities, including an independently motivated resident and remembered consequences. [Project: gameplay priorities](../../../docs/repertoires/gameplay-priorities.md).
 
-| Asset family | Most promising production method | Useful AI contribution | Acceptance question for OpenLegend |
-|---|---|---|---|
-| Ground, stone, wood, metal | Editable material recipe and baked maps | Propose palette, masks, and bounded parameter variations | Does the surface remain readable under the actual camera and lights? |
-| Ruins, workbenches, rigid inventions | Approved modular geometry and material families | Fill a genuinely missing visual part; propose compatible composition | Are shape, scale, contact points, and functional parts understandable? |
-| Humanoid characters | Approved body/rig family with reusable clips | Draft appearance, poses, or compatible motion | Does the character work through actions and camera changes? |
-| Vegetation | Controlled scattering and reusable geometry | Suggest distributions and variants | Does density preserve navigation, sight lines, and frame time? |
-| Inventory icons and portraits | Explicit family template and shared appearance identity | Produce constrained variations and edits | Is the same item or person recognizable in UI and world? |
-| Impacts, spells, interaction effects | Reusable particle, shader, or flipbook families | Draft timing and imagery | Is the action legible without obscuring threats? |
+| Asset family                         | Most promising production method                        | Useful AI contribution                                               | Acceptance question for OpenLegend                                     |
+| ------------------------------------ | ------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Ground, stone, wood, metal           | Editable material recipe and baked maps                 | Propose palette, masks, and bounded parameter variations             | Does the surface remain readable under the actual camera and lights?   |
+| Ruins, workbenches, rigid inventions | Approved modular geometry and material families         | Fill a genuinely missing visual part; propose compatible composition | Are shape, scale, contact points, and functional parts understandable? |
+| Humanoid characters                  | Approved body/rig family with reusable clips            | Draft appearance, poses, or compatible motion                        | Does the character work through actions and camera changes?            |
+| Vegetation                           | Controlled scattering and reusable geometry             | Suggest distributions and variants                                   | Does density preserve navigation, sight lines, and frame time?         |
+| Inventory icons and portraits        | Explicit family template and shared appearance identity | Produce constrained variations and edits                             | Is the same item or person recognizable in UI and world?               |
+| Impacts, spells, interaction effects | Reusable particle, shader, or flipbook families         | Draft timing and imagery                                             | Is the action legible without obscuring threats?                       |
 
 These are proposed methods, not claims that each intake or generator already exists.
 
@@ -80,13 +80,13 @@ In OpenLegend, a decorative plant and a harvestable or obstructing plant may loo
 
 First specify the visible gameplay action: anticipation, contact, recovery, direction, and relevant equipment. Then choose motion tooling. A motion that looks natural in a presentation may feel unresponsive when the player needs an immediate attack or turn; action timing must be judged with input and game state.
 
-| Starting point | Evidence-backed capability | Production work still needed |
-|---|---|---|
-| Authored animation or licensed clip | Editable motion with an established skeleton | Retargeting, contacts, timing, equipment, export |
-| Mixamo | Adobe documents automatic rigging and reusable animation for bipedal humanoids; its FAQ permits royalty-free game use | Suitable mesh and pose; local source retention; quality review on the actual body |
-| Cascadeur | Assisted posing/physics workflow and current GLB/GLTF export documentation | Animator decisions and polishing; verify current feature and licence eligibility |
-| DeepMotion Animate 3D | Video-to-motion workflow with explicit foot-locking controls | Input quality, retargeting, contact cleanup, foot sliding, action readability |
-| NVIDIA Kimodo | Documented skeletal motion generation with constraints | Skeleton compatibility and game-specific validation; research capability is not automatic pipeline qualification |
+| Starting point                      | Evidence-backed capability                                                                                            | Production work still needed                                                                                     |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Authored animation or licensed clip | Editable motion with an established skeleton                                                                          | Retargeting, contacts, timing, equipment, export                                                                 |
+| Mixamo                              | Adobe documents automatic rigging and reusable animation for bipedal humanoids; its FAQ permits royalty-free game use | Suitable mesh and pose; local source retention; quality review on the actual body                                |
+| Cascadeur                           | Assisted posing/physics workflow and current GLB/GLTF export documentation                                            | Animator decisions and polishing; verify current feature and licence eligibility                                 |
+| DeepMotion Animate 3D               | Video-to-motion workflow with explicit foot-locking controls                                                          | Input quality, retargeting, contact cleanup, foot sliding, action readability                                    |
+| NVIDIA Kimodo                       | Documented skeletal motion generation with constraints                                                                | Skeleton compatibility and game-specific validation; research capability is not automatic pipeline qualification |
 
 Sources: [Adobe Mixamo FAQ](https://helpx.adobe.com/creative-cloud/faq/mixamo-faq.html), [Cascadeur FAQ](https://cascadeur.com/help/faq), [Cascadeur GLB/GLTF export](https://cascadeur.com/help/category/283), [DeepMotion foot-locking documentation](https://www.deepmotion.com/article/foot-locking), [NVIDIA Kimodo documentation](https://research.nvidia.com/labs/sil/projects/kimodo/docs/). These are primary capability documents, not comparative quality tests or endorsements of a particular paid plan.
 

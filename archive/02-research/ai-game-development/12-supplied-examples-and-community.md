@@ -8,17 +8,17 @@ The Project Tomorrow transcript was supplied directly in the request. Two additi
 
 The two supplied Reddit threads and selected linked discussions were readable through retrieved pages after initial direct-link failures. They are included as community testimony, with identifiable handles and explicit limits. A source's popularity or its author's confidence is not counted as verification of a production result.
 
-| Supplied starting point | Where its findings are recorded |
-| --- | --- |
-| Project Tomorrow video and full pasted transcript | This document and [developer case studies](02-developer-case-studies.md), with [procedural methods](03-procedural-art-and-animation.md) |
-| Unreal/Blender video, mfSM2BSHb2I | Detailed audit below |
-| WoW-style 36-hour video, doR2RhsneRA | Detailed workflow and cost audit below; [UI diagnosis](08-ui-quality-and-production.md) |
-| “Genuinely good-looking games” Reddit thread | Community section below |
-| r/aigamedev community | Followed discussions below and concrete skill leads in [tooling](04-skills-and-tooling.md) |
-| “Full indie game” Claude thread | Community section below |
-| Higgsfield | Creator context below and [asset-provider assessment](07-image-3d-and-audio-models.md) |
-| Top3D and Learn3D | Creator context below and [3D-model evaluation](07-image-3d-and-audio-models.md) |
-| awesome-gamedev-agent-skills | Actual source audit in [tooling](04-skills-and-tooling.md), omission explained in [engine choice](05-playcanvas-godot-and-engine-choice.md) |
+| Supplied starting point                           | Where its findings are recorded                                                                                                             |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Project Tomorrow video and full pasted transcript | This document and [developer case studies](02-developer-case-studies.md), with [procedural methods](03-procedural-art-and-animation.md)     |
+| Unreal/Blender video, mfSM2BSHb2I                 | Detailed audit below                                                                                                                        |
+| WoW-style 36-hour video, doR2RhsneRA              | Detailed workflow and cost audit below; [UI diagnosis](08-ui-quality-and-production.md)                                                     |
+| “Genuinely good-looking games” Reddit thread      | Community section below                                                                                                                     |
+| r/aigamedev community                             | Followed discussions below and concrete skill leads in [tooling](04-skills-and-tooling.md)                                                  |
+| “Full indie game” Claude thread                   | Community section below                                                                                                                     |
+| Higgsfield                                        | Creator context below and [asset-provider assessment](07-image-3d-and-audio-models.md)                                                      |
+| Top3D and Learn3D                                 | Creator context below and [3D-model evaluation](07-image-3d-and-audio-models.md)                                                            |
+| awesome-gamedev-agent-skills                      | Actual source audit in [tooling](04-skills-and-tooling.md), omission explained in [engine choice](05-playcanvas-godot-and-engine-choice.md) |
 
 ## 1. Project Tomorrow: automation without generative AI
 
@@ -68,14 +68,14 @@ This matters directly to Mike's UI question. A screen composed from deliberate i
 
 The following are transcript claims, not an audited bill or reproduced benchmark. The roughly $2,175–$2,200 estimate values language-model token usage at API rates; it is not a total production cost including asset credits, preparation and human work.
 
-| Reported quantity | Correct interpretation | What should not be inferred |
-| --- | --- | --- |
-| Approximately 36 elapsed hours, around 30 active hours | Duration of this demonstrated run, with setup and recovery discussed separately | Equivalent time for a completed commercial game or OpenLegend's scope |
-| Around 7.85 billion counted tokens, roughly 99% cache reads | A usage total dominated by reuse of already processed context | Billions of newly generated output tokens or fresh reasoning tokens |
-| Approximately $2,175–$2,200 | The creator's API-equivalent valuation of reported usage | That this amount was necessarily paid in cash for the experiment |
-| Subscription allocation and sponsored Higgsfield credits | Access conditions influenced the experiment's economics | Free or identical economics for another developer |
-| Roughly 7,000 Higgsfield credits, 300 Tripo models and 600 images, plus other media | Reported production volume across services | Hundreds of accepted, optimized, unique production assets |
-| Around ten parallel agents | The creator's chosen orchestration scale | A measured optimum or a tenfold productivity multiplier |
+| Reported quantity                                                                   | Correct interpretation                                                          | What should not be inferred                                           |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Approximately 36 elapsed hours, around 30 active hours                              | Duration of this demonstrated run, with setup and recovery discussed separately | Equivalent time for a completed commercial game or OpenLegend's scope |
+| Around 7.85 billion counted tokens, roughly 99% cache reads                         | A usage total dominated by reuse of already processed context                   | Billions of newly generated output tokens or fresh reasoning tokens   |
+| Approximately $2,175–$2,200                                                         | The creator's API-equivalent valuation of reported usage                        | That this amount was necessarily paid in cash for the experiment      |
+| Subscription allocation and sponsored Higgsfield credits                            | Access conditions influenced the experiment's economics                         | Free or identical economics for another developer                     |
+| Roughly 7,000 Higgsfield credits, 300 Tripo models and 600 images, plus other media | Reported production volume across services                                      | Hundreds of accepted, optimized, unique production assets             |
+| Around ten parallel agents                                                          | The creator's chosen orchestration scale                                        | A measured optimum or a tenfold productivity multiplier               |
 
 The transcript also contains ambiguous subscription-price wording. This research does not silently repair it to a more familiar plan price. The supported accounting lesson is to distinguish actual cash spending, subscription allocation, sponsored credits, API-equivalent estimates, cache reads and final accepted output.
 
@@ -138,4 +138,3 @@ The supplied material consistently points toward reference preparation, speciali
 It does not turn every community claim into fact. The dossier preserves missing build access, sponsorship, unverified economics, prototype status and untested adaptations. It also avoids the opposite mistake: discarding a useful method merely because the creator is early in development.
 
 For OpenLegend, the adoption question is concrete: can this method improve a representative player experience with less total work while preserving the game's visual identity, native rules and independent characters? The [principles](09-openlegend-principles.md), [working procedures](10-openlegend-workflows.md), and [evaluation plan](11-evaluation-and-adoption.md) turn that question into reviewable next steps.
-

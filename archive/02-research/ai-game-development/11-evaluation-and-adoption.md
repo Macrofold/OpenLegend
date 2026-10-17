@@ -12,15 +12,15 @@ The [coverage register](13-source-register-and-coverage.md) records what was inv
 
 ## Decisions supported by research alone
 
-| Decision | Recommended position | Basis and limit |
-| --- | --- | --- |
-| Runtime engine | Retain PlayCanvas for the next polished slice | Existing project investment and documented capability; no measured blocker establishes a migration benefit |
-| Interface framework | Retain the current React/React Aria foundation while improving its visual production | It supports custom game styling; no controlled evidence identifies React as the cause of the current dissatisfaction |
-| Production structure | Use shared references, editable families and complete-client review | Supported across shipped procedural production and newer AI workflows |
-| Skills | Select a few inspected, compatible references or helpers | Actual source audit found both useful operations and concrete incompatibilities |
-| Language models | Audition current Claude and Gemini against the actual incumbent for specific creative tasks | Credible comparative writing evidence; no universal persistent-character winner |
-| Assets | Compare specialist generators independently of their language director | The modalities, endpoints, constraints and finishing work differ |
-| Runtime AI | Preserve existing perspective, authority, accounting and delivery boundaries | These are project requirements, independent of provider preference |
+| Decision             | Recommended position                                                                        | Basis and limit                                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Runtime engine       | Retain PlayCanvas for the next polished slice                                               | Existing project investment and documented capability; no measured blocker establishes a migration benefit           |
+| Interface framework  | Retain the current React/React Aria foundation while improving its visual production        | It supports custom game styling; no controlled evidence identifies React as the cause of the current dissatisfaction |
+| Production structure | Use shared references, editable families and complete-client review                         | Supported across shipped procedural production and newer AI workflows                                                |
+| Skills               | Select a few inspected, compatible references or helpers                                    | Actual source audit found both useful operations and concrete incompatibilities                                      |
+| Language models      | Audition current Claude and Gemini against the actual incumbent for specific creative tasks | Credible comparative writing evidence; no universal persistent-character winner                                      |
+| Assets               | Compare specialist generators independently of their language director                      | The modalities, endpoints, constraints and finishing work differ                                                     |
+| Runtime AI           | Preserve existing perspective, authority, accounting and delivery boundaries                | These are project requirements, independent of provider preference                                                   |
 
 These recommendations do not require making every experimental tool part of the stack. Detailed rationale lives in the relevant dossiers.
 
@@ -116,14 +116,14 @@ Equivalent effort does not mean vendor settings with identical names consume ide
 
 ### Separate hard acceptance from preference
 
-| Area | Hard acceptance examples | Preference or usefulness examples |
-| --- | --- | --- |
-| UI | Correct live data, working input/focus, readable text, no stale success | Composition, coherence, feeling appropriate to the game |
-| Prop | Required parts, valid export, suitable scale, supported materials | Appealing silhouette, material character, fit with existing art |
-| Animation | Clip binds, contacts and timing support the actual action | Weight, expression, responsiveness and style |
-| Character | Permitted evidence and actions, truthful event status, accepted policy | Voice, economy, emotional specificity and plausible choice |
-| Audio | Correct words/event, usable export, cancellation/loop behavior | Acting, timbre, mix fit and pleasant variation |
-| Engine | Required product behavior, deployment and observer boundaries | Authoring speed, revision convenience, maintenance burden |
+| Area      | Hard acceptance examples                                                | Preference or usefulness examples                               |
+| --------- | ----------------------------------------------------------------------- | --------------------------------------------------------------- |
+| UI        | Correct live data, working input/focus, readable text, no stale success | Composition, coherence, feeling appropriate to the game         |
+| Prop      | Required parts, valid export, suitable scale, supported materials       | Appealing silhouette, material character, fit with existing art |
+| Animation | Clip binds, contacts and timing support the actual action               | Weight, expression, responsiveness and style                    |
+| Character | Permitted evidence and actions, truthful event status, accepted policy  | Voice, economy, emotional specificity and plausible choice      |
+| Audio     | Correct words/event, usable export, cancellation/loop behavior          | Acting, timbre, mix fit and pleasant variation                  |
+| Engine    | Required product behavior, deployment and observer boundaries           | Authoring speed, revision convenience, maintenance burden       |
 
 These are proposed categories to tailor to the exact task. They do not add a universal test suite for every cosmetic edit.
 
@@ -156,14 +156,14 @@ A useful unit-cost calculation divides attributable total cost by accepted compa
 
 ## Adoption decisions and stopping rules
 
-| Result | Appropriate action |
-| --- | --- |
-| Clear improvement in the defined task, preserved hard requirements, acceptable correction/operating cost | Adopt that narrow use; record the chosen version, inputs and acceptance evidence |
-| Attractive outputs but repeated repair or integration failure | Keep as a concept/candidate tool or stop the trial; do not call it production ready |
-| Comparable quality with lower total work | Prefer the simpler maintainable route, accounting for setup and recurring costs |
-| Small or inconsistent preference gap | Retain the incumbent and the useful reference/asset improvements; gather more only if the decision matters |
-| A measured engine capability blocks an important part of the slice and no adequate current-stack solution is established | Investigate that constraint with the same slice in Godot; include the full delivery workflow |
-| New output family or changed model/version invalidates relevant evidence | Recheck the affected qualification, reusing valid existing evidence elsewhere |
+| Result                                                                                                                   | Appropriate action                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Clear improvement in the defined task, preserved hard requirements, acceptable correction/operating cost                 | Adopt that narrow use; record the chosen version, inputs and acceptance evidence                           |
+| Attractive outputs but repeated repair or integration failure                                                            | Keep as a concept/candidate tool or stop the trial; do not call it production ready                        |
+| Comparable quality with lower total work                                                                                 | Prefer the simpler maintainable route, accounting for setup and recurring costs                            |
+| Small or inconsistent preference gap                                                                                     | Retain the incumbent and the useful reference/asset improvements; gather more only if the decision matters |
+| A measured engine capability blocks an important part of the slice and no adequate current-stack solution is established | Investigate that constraint with the same slice in Godot; include the full delivery workflow               |
+| New output family or changed model/version invalidates relevant evidence                                                 | Recheck the affected qualification, reusing valid existing evidence elsewhere                              |
 
 The research recommends no automatic engine migration, global provider switch, mass skill installation or custom model-training project. Those decisions require evidence about the concrete task that would justify their ongoing cost.
 
@@ -172,4 +172,3 @@ The research recommends no automatic engine migration, global provider switch, m
 The requested desk research, source appraisal, project mapping, skills audit, comparative model assessment and proposed production procedures are the deliverable. The unrun experiments above are the necessary next evidence for adoption; they are explicitly outside the completed research's claims.
 
 The immediate value is already concrete: a better first production target, specific compatible skills to inspect, credible model/asset challengers, known weak leads to avoid, and tests that distinguish an impressive demonstration from a workflow that helps build OpenLegend.
-

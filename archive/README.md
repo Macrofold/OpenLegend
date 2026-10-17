@@ -93,3 +93,4 @@ M10/M11 clarify the first playable: live LLM decisions and NPC conversation, Jev
 The original brief stays unchanged. The baseline distinguishes required direction, preferences and aspirations. Assistant recommendations stay marked proposed until accepted. New ideas do not become tasks automatically. Research uses primary sources where available and distinguishes vendor claims, historical findings, original analysis and unrun experiments.
 
 When accepting a decision, record date and rationale, update the relevant proposal, and link evidence. When implementation begins, update status only after concrete work and verification. The [status page](05-project/implementation-status.md) is the source of truth about what exists; the [research backlog](05-project/research-backlog.md) is the source of truth about what remains untested.
+
