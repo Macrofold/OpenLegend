@@ -1,6 +1,6 @@
 {
   "recipe": "scripts/prepare-study-scenery.py",
-  "recipeSha256": "a04ca9001e95f9a2676c7baa49c75bec9db35e02c743fa3e9af3d2b5ee7c52dd",
+  "recipeSha256": "ad27513e9e84410211116803f8034cdf85797b28d2c0d9834120ef8b519ee9bd",
   "sources": [
     {
       "path": "apps/client/src/props/library-environment/scenery-study.json",
@@ -8,14 +8,14 @@
     },
     {
       "path": "apps/client/src/props/art-study/source-grounded-conifer/catalog.json",
-      "sha256": "03f437e1f691ce24af209bcff73cd9310a89d30440485ce59a24d8e510083e3a"
+      "sha256": "0a506227e973ee69aebbb3048d30e3778a2b7a41e75bd7355c30daadf86a1fe3"
     }
   ],
   "outputs": [
     {
       "path": "scenery-canopy.json",
-      "bytes": 9764276,
-      "sha256": "64310e74f89c94fc75e294c648870f1b1992b2ce894ab42fa0818b5d99b2391a"
+      "bytes": 9768866,
+      "sha256": "df14212fbea5ad77fba0609697b99d0227262198c67cfcf44fddc2bb7cf81b21"
     }
   ]
 }

@@ -1,10 +1,10 @@
 {
   "group": "source-grounded-conifer",
   "sourceFile": "art-direction/assets/source-study/source-grounded-conifer.blend",
-  "sourceSha256": "30f613de93d955cc2faad13b35edde65b6f8c03962638aaf99332dc689ffa0af",
+  "sourceSha256": "6768433d4e4be824b6636aef3bb992d0511b797783e89df836fa934d4c014220",
   "recipe": {
     "path": "scripts/prepare-grounded-study.py",
-    "sha256": "daedffe8f9f1d21596c9f608279a7dc6b1a2b0b949ecedd4c6722d9252fd005f"
+    "sha256": "d27878a6678f6c5a153c8cb09b48f533fd04faca91d09cfbcecb25a5f652ea53"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
@@ -81,30 +81,30 @@
       "family": "grounded-conifer",
       "label": "Poly Haven woodland fir",
       "variant": "clear",
-      "description": "Natural source form with retained albedo detail and quiet highlights; fixed-density pixel rendering.",
+      "description": "Source branch structure with broader retained needle groups, brighter grouped greens and diffuse canopy normals.",
       "recommended": false,
       "file": "grounded-conifer-clear.glb",
       "bounds": {
         "min": [
-          -1.525572,
+          -1.49715,
           0.003858,
-          -1.430456
+          -1.406843
         ],
         "max": [
-          1.542351,
-          5.596748,
-          1.395903
+          1.503442,
+          5.582905,
+          1.401427
         ]
       },
       "triangles": 30000,
-      "vertices": 35225,
+      "vertices": 35259,
       "textureSizes": [
         [
           512,
           512
         ]
       ],
-      "sha256": "f636b738a1fd258c462bdcb7c1c86c82ab717aa78dd9fac9f2fa80d1388c2339",
+      "sha256": "13d3a58840ac25e0b20a84610b4a2412b3ee9b56272b0ebacd4559b65a9fab04",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/fir_sapling_medium; normalized and adapted by OpenLegend."
     },
     {
@@ -112,30 +112,30 @@
       "family": "grounded-conifer",
       "label": "Poly Haven woodland fir",
       "variant": "quiet",
-      "description": "Natural source form with grouped earth colors and restrained fine texture.",
+      "description": "Source branch structure with broader retained needle groups, restrained olive/forest greens and real gaps between boughs.",
       "recommended": true,
       "file": "grounded-conifer-quiet.glb",
       "bounds": {
         "min": [
-          -1.525572,
+          -1.49715,
           0.003858,
-          -1.430456
+          -1.406843
         ],
         "max": [
-          1.542351,
-          5.596748,
-          1.395903
+          1.503442,
+          5.582905,
+          1.401427
         ]
       },
       "triangles": 30000,
-      "vertices": 35225,
+      "vertices": 35259,
       "textureSizes": [
         [
           256,
           256
         ]
       ],
-      "sha256": "aacec0a4987ef88f4f6fd6012361ce5182bbaa59a47711fe89e98a11554b73f6",
+      "sha256": "0b6649f20b3a494f6ebc2a8b392893c7f34aaa665e0e2cc8b8546c40a14d862b",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/fir_sapling_medium; normalized and adapted by OpenLegend."
     },
     {
@@ -143,30 +143,30 @@
       "family": "grounded-conifer",
       "label": "Poly Haven woodland fir",
       "variant": "weathered",
-      "description": "Weathered material study with muted color and softer worn highlights.",
+      "description": "The same source-shaped crown with muted, weathered greens; fixed vertex paint avoids needle-atlas bleed.",
       "recommended": false,
       "file": "grounded-conifer-weathered.glb",
       "bounds": {
         "min": [
-          -1.525572,
+          -1.49715,
           0.003858,
-          -1.430456
+          -1.406843
         ],
         "max": [
-          1.542351,
-          5.596748,
-          1.395903
+          1.503442,
+          5.582905,
+          1.401427
         ]
       },
       "triangles": 30000,
-      "vertices": 35225,
+      "vertices": 35259,
       "textureSizes": [
         [
           256,
           256
         ]
       ],
-      "sha256": "75b1b5533c75f94c13b3c152eaa086382113131e59a924639da1449e9d068621",
+      "sha256": "1ef8244a8ab1cf7c960ec1f6d59e9b112c603e3acc4ae66429004fe78a9f4b83",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/fir_sapling_medium; normalized and adapted by OpenLegend."
     }
   ],

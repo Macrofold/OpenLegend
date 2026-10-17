@@ -2,7 +2,7 @@
 
 Every recoverable earlier capture is preserved here, including rejected work. Original review packages and filenames are unchanged. Source assets and alternate exports remain in their existing catalogs.
 
-[Current detail and atmosphere study](2026-10-17-detail-and-atmosphere/README.md) · [Historical file checksums](archive-through-2026-10-16/archive-manifest.json)
+[Current foliage and coarser-detail comparison](2026-10-17-foliage-and-detail/README.md) · [Previous detail and atmosphere study](2026-10-17-detail-and-atmosphere/README.md) · [Historical file checksums](archive-through-2026-10-16/archive-manifest.json)
 
 Archived October 17, 2026 UTC: 331 files, 214,545,633 bytes. This is the set recovered from the prior study directory; it cannot recover earlier UI states that were never captured. Marketing/reference images remain third-party reference material, not licensed runtime assets.
 

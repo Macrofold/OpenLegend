@@ -33,7 +33,7 @@ SUBJECTS = {
 }
 
 
-def group_needles(mesh):
+def group_needles(mesh, needle_materials):
     """Preserve source branch structure and whole needles at a coarser art scale.
 
     Blind decimation erases the crown. Retain a distributed subset of complete
@@ -51,7 +51,7 @@ def group_needles(mesh):
             for edge in vertex.link_edges:
                 other=edge.other_vert(vertex)
                 if other in remaining:remaining.remove(other);stack.append(other)
-        if len(component)>16:continue
+        if len(component)>16 or any(face.material_index not in needle_materials for vertex in component for face in vertex.link_faces):continue
         index+=1
         if index%12:
             remove.extend(component);continue
@@ -127,7 +127,7 @@ def prepare(sources, subject):
                     bmesh.ops.remove_doubles(mesh, verts=list(mesh.verts), dist=0.00001)
                     if family == 'conifer':
                         mesh.verts.index_update()
-                        group_needles(mesh)
+                        group_needles(mesh,{i for i,m in enumerate(obj.data.materials) if 'twigs' in m.name})
                     mesh.to_mesh(obj.data)
                     mesh.free()
             for obj in meshes:
@@ -210,6 +210,12 @@ def prepare(sources, subject):
             'quiet': 'Natural source form with grouped earth colors and restrained fine texture.',
             'weathered': 'Weathered material study with muted color and softer worn highlights.',
         }
+        if family == 'conifer':
+            descriptions.update({
+                'clear': 'Source branch structure with broader retained needle groups, brighter grouped greens and diffuse canopy normals.',
+                'quiet': 'Source branch structure with broader retained needle groups, restrained olive/forest greens and real gaps between boughs.',
+                'weathered': 'The same source-shaped crown with muted, weathered greens; fixed vertex paint avoids needle-atlas bleed.',
+            })
         asset, placement = export_asset(objects, output, 'grounded-'+family+'-'+variant,
             'grounded-'+family, label, variant, descriptions[variant],
             variant == ('quiet' if family in ('boulder', 'conifer') else 'clear'),

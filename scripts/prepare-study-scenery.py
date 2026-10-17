@@ -90,6 +90,17 @@ def canopy(data):
             colors=np.array(part['colors'],dtype=float).reshape(-1,4)
             colors[:,:3]*=palette[group.astype(int)]
             part['colors']=np.round(np.clip(colors,0,1).flatten(),6).tolist()
+    # UV transforms have been baked already. Join truly identical materials,
+    # including the fir's living/dead bark, instead of adding a draw per patch.
+    for shape in data['variants']['canopy'].values():
+        merged={}
+        for part in shape['parts']:
+            signature=json.dumps(data['materials'][part['material']],sort_keys=True)
+            if signature not in merged:merged[signature]=part;continue
+            target=merged[signature];offset=len(target['positions'])//3
+            for key in ['positions','normals','uvs','colors']:target[key].extend(part[key])
+            target['indices'].extend(index+offset for index in part['indices'])
+        shape['parts']=list(merged.values())
     # Both comparisons may be loaded together; distinct prepared materials must
     # not overwrite the retained source's cache entry when someone switches.
     keys={part['material'] for shape in data['variants']['canopy'].values() for part in shape['parts']}

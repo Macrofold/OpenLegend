@@ -138,6 +138,8 @@ Selection, read-through and outlines share the sampled color/depth figure. Displ
 
 ## A3D19 — First-scene experiment profiles
 
+**Current foliage/detail refinement — October 17, 2026:** 30 ordinary / 60 small-subject samples per metre replace the too-fine 40/120 selection, which remains a comparison. The selected Poly Haven fir keeps real source branch gaps with a 30,000-triangle bound and two merged material groups; broadleaf/birch still use earlier source geometry with grouped greens. Leaf diffusion is approximated by wrapped direct and stronger existing ambient light, not physical subsurface transport. [Measured evidence](../verification/small-subject-art-and-atmosphere.md#coarser-detail-and-open-foliage--october-17-2026) retains motion, geometry cost and incomplete universal stability/device qualification.
+
 ### Current detail and atmosphere increment — October 17, 2026 UTC
 
 [This increment](../verification/small-subject-art-and-atmosphere.md) selects **40 samples/metre ordinary / 120 small**, with display-resolution limits and a once-per-source **1.6 m maximum normalized extent** classification. The existing resolve retains an opaque alpha tag in RGBA16F (RGBA32F fallback); this adds no geometry pass or per-object target. The matched 1231×468 moving camp counts **104,481,556 bytes** versus **101,413,496 bytes** for shared density, about **3.07 MB more**. Frame median/p95/p99/max are **16.0/17.5/24.6/25.8 ms** versus **16.0/18.6/25.8/42.6 ms** in sequential warm controls; these observations do not prove faster rendering or qualify strict 60 Hz/cold startup/other hardware.
