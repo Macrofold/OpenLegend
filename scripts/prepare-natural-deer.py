@@ -29,6 +29,7 @@ def walking_action(rig):
     Keep source anatomy/weights and idle; bake this finite gait at export time.
     """
     scene = bpy.context.scene
+    original_action = rig.animation_data.action
     scene.frame_set(0)
     basis = {b.name: b.matrix_basis.copy() for b in rig.pose.bones}
     matrices = {b.name: b.matrix.copy() for b in rig.pose.bones}
@@ -76,6 +77,12 @@ def walking_action(rig):
         for bone in rig.pose.bones:
             for channel in ('location', 'rotation_quaternion', 'scale'):
                 bone.keyframe_insert(channel, frame=frame, group=bone.name)
+    # Idle does not key every controller. Restore the source baseline so the
+    # authored walk cannot leak its final foot/body offsets into that clip.
+    rig.animation_data.action = original_action
+    for bone in rig.pose.bones:
+        bone.matrix_basis = basis[bone.name]
+    scene.frame_set(0)
     return action
 
 

@@ -79,6 +79,7 @@ function treatment(): ArtTreatment {
             ? 'balanced'
             : 'shared',
     atmosphere: select('world-atmosphere').value as ArtTreatment['atmosphere'],
+    groundLighting: select('world-ground-light').value as ArtTreatment['groundLighting'],
     surfaceArt: route === 'control' ? 'plain' : 'rigid',
     assetSources: select('world-assets').value as ArtTreatment['assetSources'],
     groundPalette: ['natural', 'open'].includes(select('world-foliage').value)
@@ -228,6 +229,8 @@ function update(now: number): void {
           atmosphere: select('world-atmosphere').value,
           foliage: select('world-foliage').value,
           assetSources: select('world-assets').value,
+          groundLighting: select('world-ground-light').value,
+          fire,
           viewport: [canvas.clientWidth, canvas.clientHeight],
           shadowQuality: select('world-shadows').value,
           stagedMotion: motion,
@@ -278,6 +281,7 @@ for (const id of [
   'route',
   'mercenary',
   'world-density',
+  'world-ground-light',
   'world-motion',
   'world-atmosphere',
   'world-foliage',
@@ -330,6 +334,8 @@ const captureName = () =>
     select('world-atmosphere').value,
     select('world-foliage').value,
     select('world-assets').value,
+    select('world-ground-light').value,
+    fire ? 'fire' : 'no-fire',
     select('world-density').value,
   ].join('-');
 button('capture').onclick = () => capture.image(captureName());

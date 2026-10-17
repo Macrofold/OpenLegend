@@ -7,11 +7,13 @@ and commit are retained beside the editable derivatives. Never execute sources.
 import argparse
 import importlib.util
 import json
+import math
 from pathlib import Path
 import shutil
 import sys
 
 import bpy
+from mathutils import Quaternion
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -25,11 +27,13 @@ INPUTS = {
     'wolf-idle': 'animation/quadraped/wolf_idle_01.dae',
     'wolf-run': 'animation/quadraped/wolf_run.dae',
     'wolf-walk': 'animation/quadraped/wolf_walk.dae',
+    'wolf-idle-02': 'animation/quadraped/wolf_idle_02.dae',
+    'wolf-idle-03': 'animation/quadraped/wolf_idle_03.dae',
     'backpack': 'meshes/props/m_backpack.dae',
 }
 ATTRIBUTION = ('Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, '
     'https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf '
-    'motion retained, materials and silhouette smoothing adapted by OpenLegend. '
+    'walk retained; quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. '
     'These derivative assets remain CC BY-SA 3.0.')
 
 
@@ -39,6 +43,34 @@ def convert(sources):
         bpy.ops.wm.collada_import(filepath=str(sources/file))
         bpy.context.preferences.filepaths.save_version = 0
         bpy.ops.wm.save_as_mainfile(filepath=str(sources/(name+'-converted.blend')), compress=True)
+
+
+def standing_idle(rig):
+    """Keep the source standing pose; its stretching idle reads as broken legs.
+
+    Small head/tail motion is baked once. All four feet remain on the floor,
+    and the first/last poses match rather than snapping at the loop boundary.
+    """
+    scene = bpy.context.scene
+    scene.frame_set(0)
+    basis = {b.name: b.matrix_basis.copy() for b in rig.pose.bones}
+    action = bpy.data.actions.new('Quiet standing idle')
+    rig.animation_data.action = action
+    duration = scene.render.fps * 4
+    for frame in range(duration+1):
+        scene.frame_set(frame)
+        phase = frame/duration*math.tau
+        for bone in rig.pose.bones:
+            bone.rotation_mode = 'QUATERNION'
+            bone.matrix_basis = basis[bone.name]
+            if bone.name in ('Neck2', 'Neck3', 'Head'):
+                bone.rotation_quaternion @= Quaternion((0, 0, 1), .012*math.sin(phase))
+            elif bone.name in ('Tail1', 'Tail2', 'Tail3'):
+                bone.rotation_quaternion @= Quaternion((0, 0, 1), .025*math.sin(phase))
+            for channel in ('location', 'rotation_quaternion', 'scale'):
+                bone.keyframe_insert(channel, frame=frame, group=bone.name)
+    scene.frame_set(0)
+    return action
 
 
 def prepare(sources, family):
@@ -54,7 +86,7 @@ def prepare(sources, family):
         meshes = [o for o in objects if o.type == 'MESH']
         if wolf:
             rig = next(o for o in objects if o.type == 'ARMATURE')
-            idle = rig.animation_data.action
+            idle = rig.animation_data.action if variant == 'source' else standing_idle(rig)
             idle.name = 'Idle'
             with bpy.data.libraries.load(str(sources/'wolf-walk-converted.blend'), link=False) as (original, loaded):
                 loaded.actions = original.actions
@@ -156,9 +188,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--sources', type=Path, required=True)
     parser.add_argument('--convert-collada', action='store_true')
+    parser.add_argument('--families', nargs='+', choices=['wolf', 'backpack'], default=['wolf', 'backpack'])
     args = parser.parse_args(sys.argv[sys.argv.index('--')+1:])
     if args.convert_collada:
         convert(args.sources)
     else:
-        for family in ['wolf']:
+        for family in args.families:
             prepare(args.sources, family)

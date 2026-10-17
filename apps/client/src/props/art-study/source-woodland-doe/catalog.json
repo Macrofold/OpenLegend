@@ -1,16 +1,16 @@
 {
   "group": "source-woodland-doe",
   "sourceFile": "art-direction/assets/source-study/source-woodland-doe.blend",
-  "sourceSha256": "e80b28971c38a7227860420aac74cd1c32037c2f1fbe00083f27535a404fabee",
+  "sourceSha256": "0075c0c34acfe6db4c459643a8b5f4a2fe69118f0f6ddb357718a0542632de2d",
   "recipe": {
     "path": "scripts/prepare-natural-deer.py",
-    "sha256": "d75abb2ce075226451bb750a3a2bfba793c07085d0e676bbda9300bdbf6b03c9"
+    "sha256": "397abdd03fac3c5f0422cd1d70abbc78afad452c72fbb48013e8ef1162a60a45"
   },
   "helpers": {
     "art_study_common.py": "056aacf5dd656c0300ad02e0ee5f628237f203998f99a598be5102d3f0508869",
     "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
     "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581",
-    "prepare-natural-replacements.py": "beeba80520a4a0799ffdcc96d56c939b008e8d0d1a5d234c82e3612e7911ae91"
+    "prepare-natural-replacements.py": "3306a8291ed281aae4078d1b5c3647da8be0cfda1221f8132cbc5257f6eddcd5"
   },
   "sources": [
     {
@@ -54,7 +54,7 @@
           512
         ]
       ],
-      "sha256": "f697a6ef7fa9d80cea39d2a72e4a4fe7785166af944341476bc99cc43be009c2",
+      "sha256": "7d63e6aec6b234ba2edbbdab9827d434e72b061214443a784aa2a7c30d50b2f4",
       "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/deer-female; source skin and idle retained; four-beat walk, materials and export naming adapted by OpenLegend.",
       "animatedFile": "woodland-doe-clear-motion.glb",
       "animatedSha256": "b5397e1e9b2fc2b1aa92c837c47f566b28ecc80aed4ddd54ed874080fc04ff95"
@@ -91,7 +91,7 @@
           256
         ]
       ],
-      "sha256": "3659ae4548c08860f037c2baec377305b1002449e45a82e833304c2e2c2a23f8",
+      "sha256": "16ae9b20ae0b262fc39bc6d81bf65a7af6a62a8cd7a2d306a786ff4a6e9933e3",
       "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/deer-female; source skin and idle retained; four-beat walk, materials and export naming adapted by OpenLegend.",
       "animatedFile": "woodland-doe-quiet-motion.glb",
       "animatedSha256": "6640196d16a4bb2fec17dbfcb193a359a9117a7f1367dd838be9ffc3e6c9953b"
@@ -128,7 +128,7 @@
           256
         ]
       ],
-      "sha256": "3630cc894ed1bdacb952a4ed515f38dd82365b6b292272401f693bdb589b8f0c",
+      "sha256": "85280fb4f7844987b6da9d8f9683d7dc2a8071a4fa17153ab43dca139e35c59e",
       "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/deer-female; source skin and idle retained; four-beat walk, materials and export naming adapted by OpenLegend.",
       "animatedFile": "woodland-doe-weathered-motion.glb",
       "animatedSha256": "1506601bd989b2c7ba6b82c2f201127ac8c5c726409bec89aa8fc375b40c0988"
@@ -167,7 +167,7 @@
           1024
         ]
       ],
-      "sha256": "ce6240a0f225aebcaaba0dd5e69b75651f37f045c37f791d2e1e5196ff3da4b1",
+      "sha256": "a12d244feb31ef562c786630b06f533da29465af6037c1d6ba75bee6076a2fa6",
       "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/deer-female; source skin and idle retained; four-beat walk, materials and export naming adapted by OpenLegend."
     }
   ]

@@ -40,6 +40,7 @@ export interface ArtTreatment {
   assetSources: 'retained' | 'natural';
   environment: 'natural' | 'baseline' | 'grouped' | 'kenney' | 'quaternius' | 'study' | 'canopy';
   groundPalette: 'meadow' | 'woodland' | 'understory';
+  groundLighting: 'banded' | 'diffuse';
   vegetation: 'still' | 'smooth' | 'held';
   atmosphere: 'baseline' | 'restrained' | 'survival';
   effects: 'direct' | 'buffer';
@@ -67,6 +68,7 @@ export const baselineArt: Readonly<ArtTreatment> = Object.freeze({
   assetSources: 'retained',
   environment: 'baseline',
   groundPalette: 'meadow',
+  groundLighting: 'banded',
   vegetation: 'still',
   atmosphere: 'baseline',
   effects: 'direct',
@@ -84,6 +86,7 @@ export const candidateArt: Readonly<ArtTreatment> = Object.freeze({
   sceneGrid: 'metres30',
   hareArt: 'field',
   groundPalette: 'understory',
+  groundLighting: 'diffuse',
   vegetation: 'still',
   atmosphere: 'survival',
   subjectDetail: 'balanced',
@@ -111,6 +114,7 @@ export class ArtMaterials {
       .resolve('ol_groundContrast')
       .setValue(style.groundPalette === 'understory' ? 0.3 : 1);
     this.device.scope.resolve('ol_foliageLight').setValue(style.foliageLight === 'diffuse' ? 1 : 0);
+    this.device.scope.resolve('ol_groundLighting').setValue(style.groundLighting === 'diffuse' ? 1 : 0);
     this.settings[0] = style.materials === 'regions' ? 1 : 0;
     this.settings[1] = style.lighting === 'smooth' ? 0 : style.lighting === 'hard' ? 1 : 2;
     this.settings[2] = 0.055;

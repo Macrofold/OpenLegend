@@ -236,6 +236,24 @@ export function prepareEnvironmentSurface(
   kind: EnvironmentSurface,
   texture: pc.Texture,
 ): void {
+  if (kind === 'ground') {
+    // Quantizing the angle to a nearby point light makes broad concentric
+    // plateaus on a flat floor. Keep pixel sampling/paint, but let illumination
+    // vary continuously; the old bands remain an explicit study comparison.
+    const lambert = pc.ShaderChunks.get(device).get('lightDiffuseLambertPS')!;
+    const styled = material.shaderChunks.glsl.get('lightDiffuseLambertPS') ?? lambert;
+    material.shaderChunks.glsl.set(
+      'lightDiffuseLambertPS',
+      styled.replace('float getLightDiffuse(', 'float ol_styledGroundDiffuse(') +
+        lambert.replace('float getLightDiffuse(', 'float ol_continuousGroundDiffuse(') +
+        `
+      uniform float ol_groundLighting;
+      float getLightDiffuse(vec3 n, vec3 v, vec3 l) {
+        return ol_groundLighting > .5 ? ol_continuousGroundDiffuse(n,v,l)
+          : ol_styledGroundDiffuse(n,v,l);
+      }`,
+    );
+  }
   texture.mipmaps = true;
   texture.minFilter = pc.FILTER_LINEAR_MIPMAP_LINEAR;
   texture.magFilter = pc.FILTER_LINEAR;
@@ -337,7 +355,7 @@ export function groupedGroundArt(
     palette === 'understory'
       ? earth
         ? ['#8e8270', '#918573', '#8b7f6d', '#938775']
-        : ['#46634f', '#496651', '#43604d', '#4b6853']
+        : ['#46634f', '#476450', '#45624e', '#486550']
       : palette === 'woodland'
         ? earth
           ? ['#8e8270', '#968975', '#897c69', '#9c8e79']

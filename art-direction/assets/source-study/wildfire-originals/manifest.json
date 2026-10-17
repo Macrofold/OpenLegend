@@ -79,6 +79,18 @@
       "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/ui/session/portraits/gaia/fauna_wolf.png",
       "bytes": 29340,
       "sha256": "398bc60afa6aacf27d2053d740c97e78887fdaa219b46e0310be32d8a6eca97a"
+    },
+    {
+      "file": "animation/quadraped/wolf_idle_02.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/wolf_idle_02.dae",
+      "bytes": 979108,
+      "sha256": "0af78e32cfa67a5b94736cc515106f649f20f391da0e034e20160f7a81d6d9cb"
+    },
+    {
+      "file": "animation/quadraped/wolf_idle_03.dae",
+      "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/wolf_idle_03.dae",
+      "bytes": 594265,
+      "sha256": "6a87cdf513dedd27fbade4807f1b0800f5a056eda0e112f1862cd53d68f768b5"
     }
   ]
 }

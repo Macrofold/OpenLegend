@@ -1,16 +1,16 @@
 {
   "group": "source-woodland-stag",
   "sourceFile": "art-direction/assets/source-study/source-woodland-stag.blend",
-  "sourceSha256": "2a67dd0299ed293d85dd53e93116d69d8f308420560bf455bbd61ca1a82a0e78",
+  "sourceSha256": "445cff57b07008d4e81b21666a1f73d8db15c43ce869cf5cf23fbe1685a4bea1",
   "recipe": {
     "path": "scripts/prepare-natural-deer.py",
-    "sha256": "d75abb2ce075226451bb750a3a2bfba793c07085d0e676bbda9300bdbf6b03c9"
+    "sha256": "397abdd03fac3c5f0422cd1d70abbc78afad452c72fbb48013e8ef1162a60a45"
   },
   "helpers": {
     "art_study_common.py": "056aacf5dd656c0300ad02e0ee5f628237f203998f99a598be5102d3f0508869",
     "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
     "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581",
-    "prepare-natural-replacements.py": "beeba80520a4a0799ffdcc96d56c939b008e8d0d1a5d234c82e3612e7911ae91"
+    "prepare-natural-replacements.py": "3306a8291ed281aae4078d1b5c3647da8be0cfda1221f8132cbc5257f6eddcd5"
   },
   "sources": [
     {
