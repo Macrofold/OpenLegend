@@ -1,8 +1,8 @@
-# Final Fantasy VII: The First Soldier — research checkpoint (G176)
+# Final Fantasy VII: The First Soldier — full-game dossier (G176)
 
 [Library](../README.md) · [Roster](../research-roster.md#october-17-mobile-successes-and-unsuccessful-services) · [Research status](../research-progress-mobile-2026-10-17.md) · [Research requirements](../research-requirements.md)
 
-**Research status: incomplete substantive checkpoint, October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
+**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
 
 ## Game, mechanics and player-created content
 
@@ -163,13 +163,43 @@ The **Egg Hunter** event gave the creature another purpose. Between March 31 and
 
 ### Cosmetic expression and organized private matches
 
-The **Collection** feature exchanged data from monsters and special boxes for themed cosmetics. Gil-bought weapon appearances included a **Nail Bat** sword skin and **Umbrella** staff skin. Those labels describe appearances, not newly programmed weapon classes. [Ateam feature reveal](https://www.ateam-entertainment.com/en/news/772/). Avatar editing and the final breadth of private-room controls remain under investigation in this checkpoint.
+The **Collection** feature exchanged data from monsters and special boxes for themed cosmetics. Gil-bought weapon appearances included a **Nail Bat** sword skin and **Umbrella** staff skin. Those labels describe appearances, not newly programmed weapon classes. [Ateam feature reveal](https://www.ateam-entertainment.com/en/news/772/).
 
 Actual private-room use is documented by Square Enix's **August 2022 North America championship rules**. Teams received a room name and password; organizers coordinated through Discord. The specified matches used Midgar Slums, omitted bots if the lobby was short, and disabled chocobos and their stops. Thus, at least organized events could assemble participants and impose a different competitive configuration. These rules establish neither universal player hosting nor an arbitrary map editor. They describe this tournament, not every normal queue. [Official championship rules](https://www.square-enix-games.com/en_US/documents/final-fantasy-vii-the-first-soldier-championship-north-america).
 
-### Source access and remaining context work
+### Context source access
 
-The cited publisher pages, producer interview passage and two farm guides were read as written bodies. Videos linked by those pages were not watched. Broader wiki bodies and the specialized breeding page failed retrieval; search excerpts are leads only. Exact breeding inheritance, feeding limits and the room-access rollout still require verification. This checkpoint does not claim a complete native-creation inventory.
+The cited publisher pages, producer interview passage and two farm guides were read as written bodies. Videos linked by those pages were not watched. The following creation section distinguishes subsequently recovered complete indexed wiki bodies from directly retrieved guides, and records the remaining historical-version limitations.
+
+### Chocobo development had costs and tradeoffs
+
+The dedicated game wiki records five feed effects. Raising a useful traversal stat could weaken another capability:
+
+| Feed          | Increased | Decreased       |
+| ------------- | --------- | --------------- |
+| Tantalplant   | HP        | Jump, speed     |
+| Pahsana Fruit | Stamina   | Jump, speed     |
+| Curiel Root   | Speed     | Attack, stamina |
+| Gysahl Greens | Jump      | Attack, HP      |
+| Krakka Root   | Attack    | HP, stamina     |
+
+Its undated later farm description gives **four starting pens, expandable to fourteen with Shinra Credits**, differing from Ateam's launch announcement of seven. The transition date is unverified. It also distinguishes inherited traits from cosmetic saddles, bridles and skins. Thus a bird's appearance alone does not describe its utility. [Dedicated Chocobo wiki; complete substantive indexed body read, direct fetch blocked](https://final-fantasy-vii-the-first-soldier.fandom.com/wiki/Chocobo). Feed-name spellings follow the [broader game's indexed table](https://finalfantasy.fandom.com/wiki/Final_Fantasy_VII_The_First_Soldier).
+
+**Breeding workflow:** choose a male and female, inspect their stats and traits, choose a nut, create an egg, then incubate it. Both parents leave the farm; this is a replacement decision, not an unlimited offspring generator that retains the same pair. Kamigame describes offspring stats between the parents' values, modified by the nut, and possible inheritance of multiple traits. Its examples associate **Pram Nut** with jump/speed and **Saraha Nut** with attack/HP. It explicitly offers waiting or spending the Japanese currency **神羅トークン** to hatch. Exact inheritance probabilities and final prices are not established. [Dedicated coupling guide; full Japanese body read](https://kamigame.jp/FF7FS/page/185428762567914763.html).
+
+The English game wiki independently names **Shinra Credits** as the incubation accelerator. [Full indexed farm section](https://finalfantasy.fandom.com/wiki/Final_Fantasy_VII_The_First_Soldier). These systems connect account investment to a future mount without guaranteeing every stat improves.
+
+### Avatar editing
+
+The creator offered male/female body types, a base face, hair, eyes, skin color and voice. The documented route for later appearance changes was **Barracks → Locker → character icon**, returning to the creator. The guide distinguishes these choices from weapon and vehicle skins; alternative voices cost **600 gil** in its recorded version. Its claim that names cannot change is not adopted as a verified final-service rule. [Kamigame character-creation guide; complete body read](https://kamigame.jp/FF7FS/page/184709104592286627.html).
+
+### Private-room rollout and authoring boundary
+
+The community chronology dates ambassador access to **April 27, 2022**, followed by limited keys on **May 20** for candidates at **SOLDIER: 3rd Class or higher**, with restricted customization during testing. [Game wiki; complete indexed Season 2 section read](https://finalfantasy.fandom.com/wiki/Final_Fantasy_VII_The_First_Soldier).
+
+Kamigame dates formal release to **June 2**: a key created a room for up to **75 participants**. The host opened the mode-selection key icon, chose room creation and obtained a key; the guide lists **100 神羅トークン** per key. Others entered the supplied password through room participation. **August 23** added individual spawn toggles for guns, ammunition, Materia, consumables and accessories, plus a mode with faster safe-zone contraction. This is concrete match configuration within existing environments. It does not establish map construction or script importing. [Dedicated private-match guide; complete body read](https://kamigame.jp/FF7FS/page/207891549822929281.html).
+
+These dated rollout descriptions complement the already documented August North American tournament's actual room use. Kamigame marks these guides as no longer updated and credits Ateam provision alongside its own editorial work. Fandom direct access failed; the cited indexed bodies were available in full. No linked footage was watched. Remaining limits concern exact final breeding probabilities, capacity-change timing and regional purchase conditions.
 
 ### Blitz Mode: a shorter competitive loop
 
@@ -192,7 +222,9 @@ The same report gives about **1.25 million first-month downloads**, compared wit
 
 The publisher's earlier milestone and the provider's later estimate are separate measurement series. Their similar rounded totals cannot establish that growth stopped in December: coverage, deduplication and estimation differences are unresolved. **Estimation decision:** retain the dated observations; do not manufacture a lifetime gross-spending total, average payer spending, retention rate or numerical loss by combining them. Downloads are not purchases and neither figure measures the wider Final Fantasy franchise.
 
-There is direct evidence of poor cost recovery. Ateam's **September 6, 2024 medium-term plan** retrospectively attributes the January 2023 withdrawal to difficulty making profits and recouping substantial development expenditure. This is a company statement about this title, stronger than inferring failure from a small store estimate alone. It still supplies no exact write-off, final loss or split between Square Enix and Ateam. The relevant table was readable in the indexed original document; the PDF's ordinary text extraction is incomplete. [C14](https://assets.minkabu.jp/news/article_media_content/urn%3Anewsml%3Atdnet.info%3A20240920587142/140120240920587142.pdf)
+There is direct evidence of poor cost recovery. Ateam's **2024 medium-term plan** retrospectively attributes the January 2023 withdrawal to difficulty making profits and recouping substantial development expenditure. This is a company statement about this title, stronger than inferring failure from a small store estimate alone. It still supplies no exact write-off, final loss or split between Square Enix and Ateam. The complete relevant table was readable in the indexed original document; the PDF's ordinary text extraction is incomplete. [C14](https://assets.minkabu.jp/news/article_media_content/urn%3Anewsml%3Atdnet.info%3A20240920587142/140120240920587142.pdf)
+
+The dates need separation: **September 6, 2024** is the original plan/adoption date; **September 20, 2024** is the listed disclosure date of the delayed English-language plan. The latter is not a second withdrawal or a revised lifetime financial result. [C22: Ateam adoption notice](https://www.a-tm.co.jp/en/news/48353/) [C23: dated disclosure register](https://jp.kabumap.com/servlets/kabumap/Action?SRC=basic%2Ftop%2Fbase&codetext=3662&tdNetViewAll=1)
 
 The **FY2022 second-quarter earnings-call transcript** provides narrower contemporary context. Management reported **¥1.2 billion of temporary Entertainment-business investment during the first half**, including the new title's development and advertising expenses, and said final prerelease costs had not been fully recovered. It also identified weak monetization while expressing hopes for improvement through updates and collaborations. This is a period-specific investment discussion, **not the game's complete development budget**. The transcript's group loss figures and forecasts cover other businesses and are not assigned to this game. No disclosed lifetime staffing total, complete launch/live-operations cost account, licensing rate or partner revenue split was established by the reviewed materials. [C15](https://www.alphaspread.com/security/tse/3662/investor-relations/earnings-call/q2-2022)
 
@@ -269,7 +301,7 @@ KawaiiPhysics's own showcase also lists the title, but in its catalog of games u
 - **C11 — Ateam, 2022-03-17.** Original Crisis Core promotion body read through its indexed article; premium-currency/ticket routes and limits.
 - **C12 — FModel compatibility repository, retrieved 2026-10-17.** Title entry and compatibility caveat read; a technical artifact, not popularity evidence.
 - **C13 — KawaiiPhysics official showcase, retrieved 2026-10-17.** Title's developer-use listing read; not a player modding facility.
-- **C14 — Ateam medium-term business plan, 2024-09-06, exchange-document mirror.** Original table read through indexed document body; direct PDF text extraction incomplete. Qualitative cost-recovery explanation only.
+- **C14 — Ateam medium-term business plan, dated 2024-09-06; English disclosure 2024-09-20, exchange-document mirror.** Complete indexed “Carved-Out and Closed Services (FY2023/FY2024)” table read, including the title's Entertainment/January-2023/reason row. Direct PDF extraction is incomplete; attempted screenshots supplied no usable image content. Qualitative cost-recovery statement only.
 - **C15 — Ateam FY2022 Q2 call, Alpha Spread transcript.** Management/interpreter statements read in full; period investment separated from lifetime budget and group forecasts.
 - **C16 — Kamigame season-pass guide, 2022 context; retrieved 2026-10-17.** Full relevant body read; Ateam-provided, independently edited guide with discontinued-update warning.
 - **C17 — Kamigame Japanese payment guide, retrieved 2026-10-17.** Full relevant body read; paid/free token components and historical yen prices.
@@ -277,6 +309,8 @@ KawaiiPhysics's own showcase also lists the title, but in its catalog of games u
 - **C19 — Kamigame Moogle Medal guide, retrieved 2026-10-17.** Body read; duplicate conversion, earned routes and cosmetic exchange.
 - **C20 — Gamepur, Jamie Moorcroft-Sharp, 2021-11-20.** Full guide body read; author's documented Mog Bell and gil-purchase experience.
 - **C21 — Gildor's Forums, title-specific UE Viewer thread, retrieved 2026-10-17.** Actual posts read; extraction work distinguished from gameplay mods or service restoration.
+- **C22 — Ateam adoption notice, 2024-09-06.** Original dated notice read; establishes the original plan date.
+- **C23 — Kabumap TDnet disclosure register, retrieved 2026-10-17.** Full dated entries read; lists the delayed English plan at 2024-09-20 15:00 and original Japanese plan/adoption on September 6. No market-price data used.
 
 Access limits: the original game-site shutdown page failed retrieval; its full publisher statement survives in C02. The AppMagic link in C01 now resolves to a product deck, not the historical app report. Some Ateam holding-company routes failed while corresponding Entertainment-site bodies were readable. Fandom and ResetEra direct pages were unreliable and are not needed for the final purchase rules. No authenticated analytics, game client, payment flow or unofficial extraction tool was accessed.
 
@@ -415,6 +449,23 @@ A targeted Steam-store search did not establish a released listing for this exac
 
 For optional visual follow-up, R4 embeds a [gameplay video](https://www.youtube.com/watch?v=Vnbr7SG3bag) alongside its November 2021 test. The embed's existence was observed; neither video nor audio was reviewed here. The R1 and R6 written bodies offer direct reading routes for control tradeoffs, while the Nova Crystallis preview offers a dated music lead. Embedded media should be checked against its displayed build before supplying additional conclusions.
 
-## Completion work remaining
+## Requirement coverage and preservation
 
-The latest substantive research is preserved here while remaining mechanics, narrative, creation and source integration are completed. The assembled document still requires its final requirement coverage, factual and link review. It is not yet a completed R01–R15 dossier; the scoped ledger records the actual subject status.
+| Requirement          | Substantive coverage                                                                                                             |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| R01                  | Player promise, exact game identity, release and version boundaries in the game and commercial sections.                         |
+| R02–R03              | Major mechanics inventory, named resources, capabilities, compatibility and worked situations.                                   |
+| R04                  | Fictional economy, permanent versus temporary progress, time costs, failure and restart boundaries.                              |
+| R05                  | Constructed multi-system situations with conditions, actions, outcomes and limitations.                                          |
+| R06                  | Character roles, authored behavior, social systems, multiplayer or explicit absences.                                            |
+| R07                  | Art, sound, controls, interface, feedback and production evidence; firsthand device testing not claimed.                         |
+| R08                  | Fiction, named characters/institutions and narrative connections to actual play.                                                 |
+| R09–R10              | Production, release sequence, iteration, distribution, marketing and qualified discovery hypotheses.                             |
+| R11                  | Dated financial metrics, platform/territory definitions, estimate method and missing cost/profit evidence.                       |
+| R12                  | Five substantive independent written reviews where accessible, contrasting player testimony, enjoyment and abandonment analysis. |
+| R13                  | Explicitly labeled transferable research hypotheses, dependencies and counterexamples.                                           |
+| R14                  | Adjacent sources, annotated access/version limits, reading/viewing routes, navigation and this map.                              |
+| R15                  | Dated modding applicability finding and conditional investigation in the mechanics or commercial/creation section.               |
+| October 13 amendment | Commercial outcome; reasons to enjoy, return or leave; fictional economy; meaningful lore; actual creator capabilities.          |
+
+This subject had no earlier full dossier at the recorded branch base. Existing mobile reference studies, game dossiers and their historical evidence remain intact. Source observations are distinguished from interpretation and constructed examples. No gameplay, purchases, account modifications or uninspected video content are presented as firsthand evidence. The linked research ledger owns completion and commit status, including any remaining review work.
