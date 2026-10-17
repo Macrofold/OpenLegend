@@ -1,10 +1,12 @@
 # Positioning and copy — create a world by playing it
 
-| Status | Current progress | Last updated |
-|---|---|---|
-| Draft concepts | Player-facing adventure positioning is distinct from creator, developer and hosting messages; all public claims require a representative working demonstration. | 2026-10-17 |
+| Status                                           | Current progress                                                                                                                                    | Last updated |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Selected language linked; concepts remain drafts | The language guide records Mike’s selected copy; audience hypotheses and demonstration concepts remain distinct from qualified public-build claims. | 2026-10-17   |
 
 The wording is untested and not trademark-cleared. [Gameplay priorities](../../docs/repertoires/gameplay-priorities.md) own the intended player experience; [business assumptions](business-plan.md) own offer choices. This page supplies message candidates, not new runtime promises.
+
+[Language, communication and elevator pitches](language-and-elevator-pitches.md) owns Mike’s selected descriptions, pitches and taglines from October 17, 2026, with audience guidance and terminology explanations. Use that guide for selected wording; this page retains the broader positioning hypothesis, earlier draft alternatives and demonstration concepts.
 
 ## Positioning hypothesis
 
@@ -18,13 +20,13 @@ A separate authoring proposition is a world-building environment where authorize
 
 ## Audiences and entry points
 
-| Audience hypothesis | What they might value | Demonstration to test |
-|---|---|---|
-| Survival-adventure and sandbox players | Worthwhile goals, choices, reward and a place worth returning to | A connected expedition, obstacle, useful improvement and another activity |
-| Players interested in experimentation | Inventing a practical alternative instead of only selecting a predefined answer | A supported non-canned invention realized and useful beside a valid known approach |
-| Consequence-focused simulation players | Characters with independent aims and understandable later responses | Someone reacts to what they actually perceived, affecting a later opportunity |
-| Worldbuilders and game masters | Authoring a distinctive setting and inviting others | A separately qualified creator session with explicit authority |
-| Modders and developers | Inspectable definitions and an extensible open project | Inspect a real mechanic and make a bounded useful contribution |
+| Audience hypothesis                    | What they might value                                                           | Demonstration to test                                                              |
+| -------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Survival-adventure and sandbox players | Worthwhile goals, choices, reward and a place worth returning to                | A connected expedition, obstacle, useful improvement and another activity          |
+| Players interested in experimentation  | Inventing a practical alternative instead of only selecting a predefined answer | A supported non-canned invention realized and useful beside a valid known approach |
+| Consequence-focused simulation players | Characters with independent aims and understandable later responses             | Someone reacts to what they actually perceived, affecting a later opportunity      |
+| Worldbuilders and game masters         | Authoring a distinctive setting and inviting others                             | A separately qualified creator session with explicit authority                     |
+| Modders and developers                 | Inspectable definitions and an extensible open project                          | Inspect a real mechanic and make a bounded useful contribution                     |
 
 Prioritize the intended adventure audience for the first game test. Test creator and hosting preferences separately rather than counting all technology or authoring interest as game demand. Do not force invention, persuasion or social participation when a reliable known route is a valid choice.
 
@@ -51,6 +53,8 @@ Candidate calls to action: **Watch the adventure**, **Request a playtest**, **Pl
 A separate patronage message is **“Help bring this world into existence, and become part of its history.”** Explain recognition under the [patron proposal](patrons-contributors-and-world-history.md), and do not treat supporter payments as proof of demand for the game itself.
 
 ## Tagline candidates
+
+Mike’s current [selected taglines](language-and-elevator-pitches.md#selected-taglines) are recorded in the language guide. The earlier candidates below remain brainstorming history, except for the separately endorsed “Create a world by playing it. Share what you discover.” Use the selected wording for new copy; in particular, Mike chose “your consequences” in place of the earlier “with consequences” variant.
 
 - Create a world by playing it. Share what you discover.
 - Play an idea into existence.
@@ -85,12 +89,12 @@ Characters need their own knowledge and permissions; adding a spell does not aut
 
 ## Messages to keep precise
 
-| Candidate claim | Intended meaning / qualification |
-|---|---|
-| Create a world by playing it | Practical invention and consequence within the game's supported capabilities; broader authoring belongs to authorized creator controls |
-| Your world, your rules | Creator authority over the permitted world, not universal player authority |
-| Open platform, private worlds | Repository code and separate world data/packs have their own documented access and licensing boundaries |
-| Shape a world that remembers | Persisted outcomes and supported character memory, not perfect recall or simulated consciousness |
-| People with plans of their own | Observable supported behavior with independent aims, not a personality paragraph or guaranteed cooperation |
+| Candidate claim                | Intended meaning / qualification                                                                                                       |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Create a world by playing it   | Practical invention and consequence within the game's supported capabilities; broader authoring belongs to authorized creator controls |
+| Your world, your rules         | Creator authority over the permitted world, not universal player authority                                                             |
+| Open platform, private worlds  | Repository code and separate world data/packs have their own documented access and licensing boundaries                                |
+| Shape a world that remembers   | Persisted outcomes and supported character memory, not perfect recall or simulated consciousness                                       |
+| People with plans of their own | Observable supported behavior with independent aims, not a personality paragraph or guaranteed cooperation                             |
 
 Avoid “anything is possible,” “instant game creation,” “unlimited AI,” “guaranteed creator income,” “every creation is legally yours” and “nobody can copy your mechanics.” See [ownership boundaries](open-platform-and-private-worlds.md). A managed subscription, a paid game and authoring rights are separate purchase propositions; use only the approved terms of the actual offer.
