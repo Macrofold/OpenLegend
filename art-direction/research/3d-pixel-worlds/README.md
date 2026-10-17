@@ -16,12 +16,14 @@ That recommendation is a proposal for comparison, not a claim that every referen
 
 ## Read in this order
 
-For new source acquisition, start with [grounded asset creators](grounded-asset-creators.md), researched October 16 after the explicit style clarification. These are unadopted candidates; the earlier technique research below is not a supplier endorsement.
+For source selection, start with the [October 17 ranked survey](asset-source-survey-2026-10-17.md) and its [Excel workbook](Open_Legend_3D_Asset_Survey.xlsx): 59 collection entries from 55 providers across shared foundations, medieval survival, fantasy and sci-fi. The [October 16 shortlist](grounded-asset-creators.md) remains as historical research. The expanded [concept-first generation assessment](generative-pipeline.md#concept-first-assets-for-open-legend--october-17-2026) compares Midjourney, Meshy and Tripo for original designs alongside those sources. These are research recommendations with explicit evidence limits.
 
 The follow-up adds [realtime rendering and lighting](realtime-pixel-rendering.md), [texel splatting](texel-splatting.md), [animation tools and techniques](animation-tools-and-techniques.md), [tool and license notes](tool-and-license-notes.md), and a [complete video/source index](video-library.md).
 
 | Document                                                  | What it answers                                                                                       |
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| [Ranked source survey](asset-source-survey-2026-10-17.md) | Which free and paid collections best fit each world, with complete source and rights records. |
+| [Excel source catalog](Open_Legend_3D_Asset_Survey.xlsx) | The same 59 ranked research entries in filterable workbook form, including inventories, formats and world uses. |
 | [Screenshot gallery](gallery.md)                          | What qualities are we trying to achieve? Includes 34 locally saved reference images.                  |
 | [Reference research](reference-techniques.md)             | What each creator actually disclosed, what we can infer, and what remains unknown.                    |
 | [Rendering and asset techniques](rendering-techniques.md) | Surface pixels, camera stability, faces, cloth, lighting, foliage, water and bokeh.                   |
@@ -64,3 +66,4 @@ Some requested sites limited access: Kickstarter and Sketchfab did not expose us
 ## Scope and completion
 
 This documentation task affected zero executable logic lines. Its plan was to verify the references and transcripts, preserve a credited image library, explain the techniques, connect them to the existing art/pipeline design, and validate the resulting documents and files. Those research deliverables are complete. Runtime experiments, paid generation and an engine change were outside this task; proposed experiments remain under [V3D01](../../../docs/maintainers/3d-pixel-art.md#v3d01--visual-comparison-and-style-decision).
+

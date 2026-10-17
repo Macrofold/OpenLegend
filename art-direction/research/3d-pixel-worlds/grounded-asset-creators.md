@@ -2,7 +2,7 @@
 
 Researched October 16, 2026. This is a source-art shortlist under Mike's [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026): beautiful dimensional pixel art with believable real-world proportions, explicitly excluding visibly low-poly, blocky, cutesy and big-head/small-body designs. These are candidates for adaptation, not selected suppliers or a promise that conversion will produce the desired finish.
 
-**Expanded research — October 17, 2026:** See the [comprehensive asset-source survey](asset-source-survey-2026-10-17.md) for 59 ranked collection entries from 55 distinct providers, organized by shared foundations, medieval survival, fantasy and sci-fi. It includes current edition/pricing distinctions, close visual comparisons and source-specific rights conditions. The recommendations below remain the historical starting shortlist; the newer survey supersedes its stale BMS Fab rig observation.
+**Expanded research — October 17, 2026:** See the [comprehensive asset-source survey](asset-source-survey-2026-10-17.md) and [Excel workbook](Open_Legend_3D_Asset_Survey.xlsx) for 59 ranked collection entries from 55 distinct providers, organized by shared foundations, medieval survival, fantasy and sci-fi. The report retains the complete inventories, formats, world-use mappings, edition/pricing distinctions, close comparisons and source-specific rights conditions. [Concept-first generation](generative-pipeline.md#concept-first-assets-for-open-legend--october-17-2026) assesses Midjourney, Meshy and Tripo alongside these sources. The recommendations below remain the historical starting shortlist; the newer survey supersedes its stale BMS Fab rig observation.
 
 ## What changed
 

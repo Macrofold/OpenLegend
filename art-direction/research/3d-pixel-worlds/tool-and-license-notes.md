@@ -2,6 +2,32 @@
 
 Reviewed October 14, 2026. These notes distinguish learning an algorithm, modifying licensed source and shipping assets. No package was purchased, installed or uploaded to a model during this research.
 
+## Generator rights and plan snapshot — October 17, 2026
+
+This follow-up supports the [concept-first production recommendation](generative-pipeline.md#concept-first-assets-for-open-legend--october-17-2026). The original toolkit research below retains its October 14 evidence. No account, subscription, model upload or paid generation was used for this review.
+
+| Service | Terms relevant to original OpenLegend concepts and models |
+| --- | --- |
+| [Midjourney](https://docs.midjourney.com/hc/en-us/articles/32083055291277-Terms-of-Service) | Output ownership is limited by applicable law and third-party rights. A company with more than $1 million in annual revenue, and employees using the service for that company, require Pro/Mega. Content is public/remixable by default; Stealth is best-efforts nonpublication, and shared Discord posts remain visible. Midjourney receives a broad surviving input/output license. Necessary input rights remain ours to establish. Its ordinary service terms prohibit automated access. |
+| [Meshy](https://www.meshy.ai/terms-of-use) | Paid customers own output to the extent legally possible, with private options. Section 2.9 allows training/testing/improvement on non-enterprise inputs and outputs unless an Order says otherwise. Free output is CC BY 4.0 with attribution. Publishing Customer Output on the Meshy Community page puts that output under CC0; other content published there, including uploaded reference images, receives CC BY-NC 4.0 terms. Supplied service rigs/animations have separate incorporation-based terms. |
+| [Tripo](https://www.tripo3d.ai/terms) | Section 5.2.2 gives compliant paid users broad output-use, modification and distribution rights, subject to its service license, and expressly excludes paid-user inputs/outputs from AI training, validation, testing and improvement. This is a meaningful stated distinction from ordinary non-enterprise Meshy terms; it does not establish visual quality or rights in unlicensed inputs. |
+
+Tripo's free-plan documentation conflicts: its [pricing page](https://www.tripo3d.ai/pricing) says public/noncommercial, while the [image-to-3D FAQ](https://www.tripo3d.ai/features/image-to-3d-model) describes CC BY 4.0 and commercial use. The free-user terms do not resolve that into a clear corresponding grant. Treat free output as evaluation material pending clarification; do not assume that upgrading retroactively changes an older output's license.
+
+A private model and a model excluded from provider training are separate conditions. Preserve the exact input rights, provider, model/version, generation date, applicable plan, terms and export provenance with eventual assets. An asset-store commercial-game license alone does not establish permission to send a purchased model or its renders through either generation service. The [source survey](asset-source-survey-2026-10-17.md#rights-that-affect-the-sourcing-decision) records those supplier-specific constraints. The mercenary's existing unresolved production rights remain unchanged.
+
+### Observed starting plan prices
+
+USD observations on October 17, 2026; taxes and account-specific offers excluded. These are research references, not purchases or an approved generation budget.
+
+| Service | Public plan observation | Qualification |
+| --- | --- | --- |
+| [Midjourney plans](https://docs.midjourney.com/hc/en-us/articles/27870484040333-Comparing-Midjourney-Plans) | Monthly Basic $10, Standard $30, Pro $60, Mega $120 | Unlimited image Relax Mode starts at Standard; Stealth at Pro. Apply the company-revenue condition above. |
+| [Meshy plans](https://www.meshy.ai/pricing) | Pro $20/month; advertised first month $10; 1,000 monthly credits | Four free retries per task are a web-app feature. API operations have separate [credit charges](https://docs.meshy.ai/en/api/pricing); do not transfer website entitlements to API calls. |
+| [Tripo plans](https://www.tripo3d.ai/pricing) | Pro displayed at $20/month **billed annually as $240/year**, with 3,000 monthly credits | Keep the observed billing commitment explicit. Advertised model counts do not measure accepted finished assets or complete mesh/texture/rig costs. |
+
+Subscription cost alone does not compare production economics. The proposed audition records discarded candidates and manual correction time as well as actual provider charges. Obtain the applicable task quote before any authorized generation; this documentation performs no subscription or paid action.
+
 ## Should we buy Critter to reverse engineer it?
 
 **Do not buy it solely on the assumption that we can clone or port it.** If a package supplies source and its terms permit the intended inspection and adaptation, source review can be technically useful. Purchase alone does not establish those permissions or prove that its renderer fits OpenLegend.
@@ -32,3 +58,4 @@ The [existing image library](gallery.md) remains reference material with separat
 A source package is easier to inspect than a compiled plugin, but source availability does not remove license conditions. A binary-only plugin may also make a useful port impractical. Conversely, an independently implemented camera-snapping equation or lighting technique does not require reproducing proprietary code.
 
 Any eventual dependency decision should record the exact version, license, source/art distinction and intended distribution. This task supplies research and documentation only; it does not approve a paid purchase, proprietary dependency, AI upload, source publication or engine migration.
+
