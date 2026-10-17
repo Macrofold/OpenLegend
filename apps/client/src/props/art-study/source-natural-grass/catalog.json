@@ -1,0 +1,193 @@
+{
+  "group": "source-natural-grass",
+  "sourceFile": "art-direction/assets/source-study/source-natural-grass.blend",
+  "sourceSha256": "383d92b94387f0b5fa0c88f0b9f45fdaf99e9c686ae8240518428c4b5e3364d6",
+  "recipe": {
+    "path": "scripts/prepare-natural-replacements.py",
+    "sha256": "8c5e24992be84e6a1291290f77251dee385f80736a1829acca44897a8a38c65f"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
+  },
+  "sources": [
+    {
+      "url": "https://polyhaven.com/a/grass_medium_01",
+      "license": "CC0",
+      "files": [
+        {
+          "asset": "grass_medium_01",
+          "file": "grass_medium_01_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/grass_medium_01/grass_medium_01_1k.gltf",
+          "bytes": 27110,
+          "sha256": "3e5e2a314c94e16de54fd7c28e41709731fbd2b1613ab539f1544f622ddb6a85"
+        },
+        {
+          "asset": "grass_medium_01",
+          "file": "textures/grass_medium_01_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/grass_medium_01/grass_medium_01_nor_gl_1k.jpg",
+          "bytes": 956166,
+          "sha256": "cae298d3d1d7ff7c7e210ad8ac772b96706e356f9315a6b04fde373ce01ccf1e"
+        },
+        {
+          "asset": "grass_medium_01",
+          "file": "textures/grass_medium_01_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/grass_medium_01/grass_medium_01_diff_1k.jpg",
+          "bytes": 395673,
+          "sha256": "71495bd6a11fddcab0aaff38246fea1a7b802a705483f1c7cbca53955daa8050"
+        },
+        {
+          "asset": "grass_medium_01",
+          "file": "textures/grass_medium_01_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/grass_medium_01/grass_medium_01_arm_1k.jpg",
+          "bytes": 679518,
+          "sha256": "9a3a30f72bc02f4398967c5b08f2d20cce30bd423a2613b42a727034296fa3ae"
+        },
+        {
+          "asset": "grass_medium_01",
+          "file": "grass_medium_01.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/grass_medium_01/grass_medium_01.bin",
+          "bytes": 1006632,
+          "sha256": "f4587cabdb96a2e96d8be644923dc954a248edfaaa717a0ff224cacb898bee1f"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "natural-grass-clear",
+      "family": "natural-grass",
+      "label": "Meadow grass",
+      "variant": "clear",
+      "description": "Retained natural form and readable source color, restrained highlights.",
+      "recommended": false,
+      "file": "natural-grass-clear.glb",
+      "bounds": {
+        "min": [
+          -0.232462,
+          0.0,
+          -0.248852
+        ],
+        "max": [
+          0.232462,
+          0.44,
+          0.248852
+        ]
+      },
+      "triangles": 1257,
+      "vertices": 1386,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "703f7ae54da26f066b27b4bf6aa83cefd8f22a3e06eb3e66fdd3ecabb0164e51",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/grass_medium_01"
+    },
+    {
+      "id": "natural-grass-quiet",
+      "family": "natural-grass",
+      "label": "Meadow grass",
+      "variant": "quiet",
+      "description": "Grouped, muted woodland color with restrained fine texture.",
+      "recommended": true,
+      "file": "natural-grass-quiet.glb",
+      "bounds": {
+        "min": [
+          -0.232462,
+          0.0,
+          -0.248852
+        ],
+        "max": [
+          0.232462,
+          0.44,
+          0.248852
+        ]
+      },
+      "triangles": 1257,
+      "vertices": 1386,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "f49b322718f64a3a9c613dca3096b2bbf42b4d82ecba48aa2b7e0af547ae3a9c",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/grass_medium_01"
+    },
+    {
+      "id": "natural-grass-weathered",
+      "family": "natural-grass",
+      "label": "Meadow grass",
+      "variant": "weathered",
+      "description": "Worn, lower-saturation material variation on the same natural form.",
+      "recommended": false,
+      "file": "natural-grass-weathered.glb",
+      "bounds": {
+        "min": [
+          -0.232462,
+          0.0,
+          -0.248852
+        ],
+        "max": [
+          0.232462,
+          0.44,
+          0.248852
+        ]
+      },
+      "triangles": 1257,
+      "vertices": 1386,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "96cff006dfa3c66498d7cbf6790c812cd6390476c94d7ca51298f06381e1a689",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/grass_medium_01"
+    }
+  ],
+  "controls": [
+    {
+      "id": "natural-grass-source",
+      "family": "natural-grass",
+      "label": "Meadow grass",
+      "variant": "source",
+      "description": "Normalized original geometry and albedo; source control.",
+      "recommended": false,
+      "file": "natural-grass-source.glb",
+      "bounds": {
+        "min": [
+          -0.232462,
+          0.0,
+          -0.248852
+        ],
+        "max": [
+          0.232462,
+          0.44,
+          0.248852
+        ]
+      },
+      "triangles": 1257,
+      "vertices": 1386,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "c1987ce098268af110dc577b2bbc61fad8c4c5367a338f11d8d7194ea37246a0",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/grass_medium_01"
+    }
+  ]
+}

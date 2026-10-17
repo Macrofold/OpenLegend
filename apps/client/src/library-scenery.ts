@@ -10,7 +10,7 @@ import { ShadowMaterial } from './shadow-material';
 import { sceneryStencil, setVisibilityStencil } from './visibility-stencil';
 import { markPixelEnvironment } from './scene-pixels';
 
-type Library = 'kenney' | 'quaternius' | 'study' | 'canopy';
+type Library = 'natural' | 'kenney' | 'quaternius' | 'study' | 'canopy';
 interface GeometryPart {
   positions: number[];
   normals: number[];

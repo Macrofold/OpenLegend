@@ -1,3 +1,4 @@
+import { studyAppearance } from './study-assets';
 import { destroyModelApplication } from './bundled-models';
 import type { ConstructionShape } from '@open-legend/protocol';
 import { itemPileArt } from './art';
@@ -363,14 +364,16 @@ export class WildernessScene implements WorldRenderer {
       style.environment !== this.artSettings.environment ||
       style.groundPalette !== this.artSettings.groundPalette ||
       style.surfaceArt !== this.artSettings.surfaceArt;
+    const previousSources = this.artSettings.assetSources;
+    const replaceSources = style.assetSources !== previousSources;
     const replaceProp = style.prop !== this.artSettings.prop;
     const replaceHares = style.hareArt !== this.artSettings.hareArt;
     const relight = style.atmosphere !== this.artSettings.atmosphere;
     this.artSettings = { ...style };
     this.artMaterials.update(style);
     this.libraryScenery?.setTreatment(style);
-    if (['kenney', 'quaternius', 'study', 'canopy'].includes(style.environment)) {
-      const family = style.environment as 'kenney' | 'quaternius' | 'study' | 'canopy';
+    if (['natural', 'kenney', 'quaternius', 'study', 'canopy'].includes(style.environment)) {
+      const family = style.environment as 'natural' | 'kenney' | 'quaternius' | 'study' | 'canopy';
       void this.libraryScenery
         .load(family)
         .then((loaded) => {
@@ -404,10 +407,13 @@ export class WildernessScene implements WorldRenderer {
       this.cutawayKey = '';
       this.applyLevelFocus();
     }
-    if ((replaceProp || replaceHares) && this.view) {
+    if ((replaceProp || replaceHares || replaceSources) && this.view) {
       let replaced = false;
       for (const [id, entry] of this.actors)
         if (
+          (replaceSources &&
+            studyAppearance(entry.view.appearance, previousSources) !==
+              studyAppearance(entry.view.appearance, style.assetSources)) ||
           (replaceProp && entry.view.appearance === 'crate-mesh') ||
           (replaceHares && entry.view.kind === 'animal' && entry.view.subtype === 'hare')
         ) {
@@ -616,7 +622,7 @@ export class WildernessScene implements WorldRenderer {
           ?.slice(0, 12)
           .map((item) => `${item.definitionId}:${Math.min(3, item.quantity)}`)
           .join('|') ?? ''
-      }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.quantity === 0 && !!propDimensions(entity.appearance)?.depletedUrl}:${entity.bodyState ?? ''}:${!!entity.heat?.lit}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
+      }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.quantity === 0 && !!propDimensions(studyAppearance(entity.appearance, this.artSettings.assetSources))?.depletedUrl}:${entity.bodyState ?? ''}:${!!entity.heat?.lit}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
       if (entry && entry.root.tags.list()[0] !== signature) {
         this.releaseEntity(entry);
         this.actors.delete(entity.id);
@@ -1505,8 +1511,12 @@ export class WildernessScene implements WorldRenderer {
       model:
         !dead && view.appearance === 'mercenary-model'
           ? this.mercenary?.create(root)
-          : !dead && hasLibraryActor(view.appearance)
-            ? this.libraryActors.create(root, view.appearance)
+          : !dead &&
+              hasLibraryActor(studyAppearance(view.appearance, this.artSettings.assetSources))
+            ? this.libraryActors.create(
+                root,
+                studyAppearance(view.appearance, this.artSettings.assetSources),
+              )
             : !dead &&
                 view.kind === 'animal' &&
                 view.subtype === 'hare' &&
@@ -1538,14 +1548,18 @@ export class WildernessScene implements WorldRenderer {
       height,
       observed: true,
     };
-    const preparedProp = propDimensions(view.appearance);
+    const preparedProp = propDimensions(
+      studyAppearance(view.appearance, this.artSettings.assetSources),
+    );
     if (preparedProp || (crate && this.artSettings.prop !== 'authored')) {
       entry.sceneProp = this.sceneProps.create(
         root,
         preparedProp?.width ?? width,
         preparedProp?.height ?? height,
         preparedProp?.depth ?? 0.8,
-        preparedProp ? view.appearance : this.artSettings.prop,
+        preparedProp
+          ? studyAppearance(view.appearance, this.artSettings.assetSources)
+          : this.artSettings.prop,
         view.quantity === 0,
       );
     }
@@ -1561,7 +1575,9 @@ export class WildernessScene implements WorldRenderer {
     this.cards.delete(entry.sprite);
     for (const node of [...entry.root.children]) if (node !== sprite) node.destroy();
     entry.card = false;
-    const dimensions = propDimensions(entry.view.appearance);
+    const dimensions = propDimensions(
+      studyAppearance(entry.view.appearance, this.artSettings.assetSources),
+    );
     if (dimensions) {
       entry.width = dimensions.width;
       entry.height = dimensions.height;
@@ -1762,7 +1778,7 @@ export class WildernessScene implements WorldRenderer {
     }
     // Authored static scenery has no picking or collision authority. Reuse art by finite input.
     const groups = new Map<string, SceneryInstance[]>();
-    const library = ['kenney', 'quaternius', 'study', 'canopy'].includes(
+    const library = ['natural', 'kenney', 'quaternius', 'study', 'canopy'].includes(
       this.artSettings.environment,
     );
     for (const instance of map.spatial.scenery ?? []) {
@@ -1780,6 +1796,7 @@ export class WildernessScene implements WorldRenderer {
     for (const instances of groups.values()) {
       const first = instances[0]!;
       if (
+        this.artSettings.environment === 'natural' ||
         this.artSettings.environment === 'kenney' ||
         this.artSettings.environment === 'quaternius' ||
         this.artSettings.environment === 'study' ||

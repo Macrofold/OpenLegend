@@ -37,7 +37,8 @@ export interface ArtTreatment {
   edges: 'none' | 'silhouette' | 'depth';
   motion: 'smooth' | 'held8' | 'held12';
   cloth: 'flowing' | 'settled';
-  environment: 'baseline' | 'grouped' | 'kenney' | 'quaternius' | 'study' | 'canopy';
+  assetSources: 'retained' | 'natural';
+  environment: 'natural' | 'baseline' | 'grouped' | 'kenney' | 'quaternius' | 'study' | 'canopy';
   groundPalette: 'meadow' | 'woodland' | 'understory';
   vegetation: 'still' | 'smooth' | 'held';
   atmosphere: 'baseline' | 'restrained' | 'survival';
@@ -63,6 +64,7 @@ export const baselineArt: Readonly<ArtTreatment> = Object.freeze({
   edges: 'none',
   motion: 'smooth',
   cloth: 'flowing',
+  assetSources: 'retained',
   environment: 'baseline',
   groundPalette: 'meadow',
   vegetation: 'still',
@@ -75,7 +77,8 @@ export const candidateArt: Readonly<ArtTreatment> = Object.freeze({
   ...baselineArt,
   materials: 'regions',
   lighting: 'soft',
-  environment: 'canopy',
+  assetSources: 'natural',
+  environment: 'natural',
   mercenaryArt: 'restored',
   sampling: 'screen',
   sceneGrid: 'metres30',
@@ -277,7 +280,8 @@ export function mountArtControls(
     edges: ['none', 'silhouette', 'depth'],
     motion: ['smooth', 'held8', 'held12'],
     cloth: ['flowing', 'settled'],
-    environment: ['canopy', 'study', 'baseline', 'grouped', 'kenney', 'quaternius'],
+    assetSources: ['natural', 'retained'],
+    environment: ['natural', 'canopy', 'study', 'baseline', 'grouped', 'kenney', 'quaternius'],
     groundPalette: ['understory', 'meadow', 'woodland'],
     vegetation: ['still', 'smooth', 'held'],
     atmosphere: ['survival', 'restrained', 'baseline'],
@@ -303,6 +307,7 @@ export function mountArtControls(
     edges: 'Character edges',
     motion: 'Walking poses',
     cloth: 'Cape movement',
+    assetSources: 'Asset sources',
     environment: 'Environment shapes',
     groundPalette: 'Ground palette',
     vegetation: 'Grass movement',

@@ -1,3 +1,5 @@
+import selections from './props/art-study/selections.json';
+
 /** Finite, offline-authored study exports. URL imports do not fetch the models;
  * the scene's existing model owner loads only the selected appearances. */
 interface Catalog {
@@ -40,3 +42,9 @@ for (const catalog of Object.values(catalogs))
       depth: asset.bounds.max[2]! - asset.bounds.min[2]!,
     });
   }
+
+/** Current art comparison, applied only in presentation. The retained profile
+ * keeps the previous source models available without changing a saved world. */
+const selectedAppearances = new Map(Object.entries(selections));
+export const studyAppearance = (appearance: string, sources: 'retained' | 'natural') =>
+  sources === 'natural' ? (selectedAppearances.get(appearance) ?? appearance) : appearance;

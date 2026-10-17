@@ -416,7 +416,7 @@ export class ArtStudy {
               : !asset.historical &&
                 (subject.value === 'cast'
                   ? ['mercenary', 'ada', 'mike', 'mara', 'tavin', 'kest', 'orin']
-                  : ['mercenary', 'ada', 'library-chest', 'library-sword']
+                  : ['mercenary', 'ada', 'grounded-chest', 'natural-sword']
                 ).includes(asset.family)),
         )
       : choices.filter(

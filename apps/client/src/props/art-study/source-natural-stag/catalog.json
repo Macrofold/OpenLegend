@@ -1,0 +1,190 @@
+{
+  "group": "source-natural-stag",
+  "sourceFile": "art-direction/assets/source-study/source-natural-stag.blend",
+  "sourceSha256": "13db10a1a774cc4b041b925abee3abb6c27a0b01d3265b464d532dc09e9424e4",
+  "recipe": {
+    "path": "scripts/prepare-natural-deer.py",
+    "sha256": "cd91f35b7620efc589d2039a23c403c68edffbf223cd0240cd39a4a5226ed1cb"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581",
+    "prepare-natural-replacements.py": "304fc9204e436fcdd1646124570b3df34a7ee4e3cfdbd239f1f9dd0d656c8c3a"
+  },
+  "sources": [
+    {
+      "url": "https://opengameart.org/content/old-deer-male",
+      "creator": "CDmir / TinyWorlds",
+      "license": "CC0",
+      "file": "stag-source.blend",
+      "sha256": "729f47b10f29e13d128aa2e0a2a5ba47be40cb6593e1e86ac31e236e93bef003"
+    }
+  ],
+  "assets": [
+    {
+      "id": "natural-stag-clear",
+      "family": "natural-stag",
+      "label": "Woodland stag",
+      "variant": "clear",
+      "description": "Source anatomy and eyes, clear coat finish with fixed-density pixel rendering.",
+      "recommended": false,
+      "file": "natural-stag-clear.glb",
+      "bounds": {
+        "min": [
+          -0.462358,
+          0.0,
+          -0.85344
+        ],
+        "max": [
+          0.462358,
+          1.949999,
+          0.85344
+        ]
+      },
+      "triangles": 4924,
+      "vertices": 2521,
+      "textureSizes": [
+        [
+          512,
+          512
+        ],
+        [
+          512,
+          512
+        ],
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "e9ef67034017288846320b383d53f9eff349efb1be22af214f83df361f53b531",
+      "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/old-deer-male; source skin and Idle/Run motion retained, materials adapted by OpenLegend.",
+      "animatedFile": "natural-stag-clear-motion.glb",
+      "animatedSha256": "dca9acd59931374b173b5d09930e7bf506068b2bb093cc18a80a1b380f8f0dcb"
+    },
+    {
+      "id": "natural-stag-quiet",
+      "family": "natural-stag",
+      "label": "Woodland stag",
+      "variant": "quiet",
+      "description": "Source anatomy and eyes, quiet coat finish with fixed-density pixel rendering.",
+      "recommended": true,
+      "file": "natural-stag-quiet.glb",
+      "bounds": {
+        "min": [
+          -0.462358,
+          0.0,
+          -0.85344
+        ],
+        "max": [
+          0.462358,
+          1.949999,
+          0.85344
+        ]
+      },
+      "triangles": 4924,
+      "vertices": 2521,
+      "textureSizes": [
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "3043a23353f1c0de487cf42cd239c8478a310e7d86cd825eb7b5debd0aee262a",
+      "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/old-deer-male; source skin and Idle/Run motion retained, materials adapted by OpenLegend.",
+      "animatedFile": "natural-stag-quiet-motion.glb",
+      "animatedSha256": "5e15531194e3355013411b75d098926fc54807e624ded9701c3692d670ee4807"
+    },
+    {
+      "id": "natural-stag-weathered",
+      "family": "natural-stag",
+      "label": "Woodland stag",
+      "variant": "weathered",
+      "description": "Source anatomy and eyes, weathered coat finish with fixed-density pixel rendering.",
+      "recommended": false,
+      "file": "natural-stag-weathered.glb",
+      "bounds": {
+        "min": [
+          -0.462358,
+          0.0,
+          -0.85344
+        ],
+        "max": [
+          0.462358,
+          1.949999,
+          0.85344
+        ]
+      },
+      "triangles": 4924,
+      "vertices": 2521,
+      "textureSizes": [
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "e50180654d15efc2af2e88bf7cb672f66bd10d64e4657b1a08290cb0ffda2860",
+      "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/old-deer-male; source skin and Idle/Run motion retained, materials adapted by OpenLegend.",
+      "animatedFile": "natural-stag-weathered-motion.glb",
+      "animatedSha256": "b71d3f6220f6dcc1224c24c61de60782ebd98216542cbd18eb527c2f81ad96e3"
+    }
+  ],
+  "controls": [
+    {
+      "id": "natural-stag-source",
+      "family": "natural-stag",
+      "label": "Woodland stag",
+      "variant": "source",
+      "description": "Source anatomy and eyes, original albedo control.",
+      "recommended": false,
+      "file": "natural-stag-source.glb",
+      "bounds": {
+        "min": [
+          -0.462358,
+          0.0,
+          -0.85344
+        ],
+        "max": [
+          0.462358,
+          1.949999,
+          0.85344
+        ]
+      },
+      "triangles": 4924,
+      "vertices": 2521,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "05f3fc1c14a506808b95951f9686c94114acd5cbe60d7975896acbc5b36fe55e",
+      "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/old-deer-male; source skin and Idle/Run motion retained, materials adapted by OpenLegend."
+    }
+  ]
+}

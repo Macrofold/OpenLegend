@@ -212,6 +212,8 @@ V3D01.1–V3D01.11 are **Completed investigations, scoped implementation and tec
 
 Remaining within V3D01.12/.13 visual/performance acceptance: review rectangular terrain supports and remaining older broadleaf/birch source forms against the organic reference; improve the angular bear/simple human motion if rejected; qualify subpixel/grazing-edge stability and unprepared states; resolve the measured initial renderer-load hitch before claiming consistently smooth startup. [Current measured limits](../verification/small-subject-art-and-atmosphere.md#final-matched-moving-scene-cost) supersede older warm-profile timings without qualifying crowds or other devices; the earlier report retains the initial-load evidence.
 
+**October 16, 2026 23:03 EDT — Quaternius replacement authorized:** [The existing plan](../projects/3d-pixel-art-first-scene-plan.md#replace-the-remaining-quaternius-selections--october-16-2026-edt) inventories all selected scenery, animal, resource and equipment dependencies. Acquisition, three finishes/source controls, movement/depletion preservation, actual scene adoption, visual/performance checks and archive/documentation reconciliation are in progress. Existing controls remain; suitable source access/quality must be demonstrated before each replacement is marked delivered.
+
 ## V3D02 — Immutable appearance and artifact foundation
 
 **Owners:** protocol, server appearance/storage, client asset intake. **Depends on:** V3D01 for the target profile; technical fixture work can precede final style approval.

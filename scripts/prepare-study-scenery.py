@@ -110,8 +110,28 @@ def canopy(data):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--canopy',action='store_true');args=parser.parse_args()
+    parser=argparse.ArgumentParser();
+    choice=parser.add_mutually_exclusive_group();choice.add_argument('--canopy',action='store_true');choice.add_argument('--natural',action='store_true');args=parser.parse_args()
     output=ROOT/'apps/client/src/props/library-environment'
+    if args.natural:
+        data={'variants':{'natural':{}},'materials':{},'textures':{}}
+        selected={
+            'tree-broadleaf':('natural-broadleaf','quiet'),
+            'tree-birch':('natural-birch','quiet'),
+            'tree-conifer':('grounded-conifer','quiet'),
+            'woodland-shrub':('natural-shrub','quiet'),
+            'meadow-grass':('natural-grass','quiet'),
+        }
+        paths=[]
+        for appearance,(family,variant) in selected.items():
+            directory=ROOT/'apps/client/src/props/art-study'/('source-'+family)
+            add(data,appearance,directory/(family+'-'+variant+'.glb'),'natural')
+            paths.append(directory/'catalog.json')
+        outputs=reader.write_variants(data,output)
+        provenance={'recipe':str(Path(__file__).relative_to(ROOT)),'recipeSha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            'sources':[{'path':str(p.relative_to(ROOT)),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in paths],'outputs':outputs}
+        (output/'natural-provenance.json').write_text(json.dumps(provenance,indent=2)+'\n')
+        sys.exit(0)
     if args.canopy:
         source=json.loads((output/'scenery-study.json').read_text())
         data={'variants':{'canopy':source['shapes']},'materials':source['materials'],'textures':source['textures']}

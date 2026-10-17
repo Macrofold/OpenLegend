@@ -1,0 +1,193 @@
+{
+  "group": "source-natural-knife",
+  "sourceFile": "art-direction/assets/source-study/source-natural-knife.blend",
+  "sourceSha256": "98321723983e56f1516bead3d6193910698337fd41ae143743951944bf8af660",
+  "recipe": {
+    "path": "scripts/prepare-natural-replacements.py",
+    "sha256": "8c5e24992be84e6a1291290f77251dee385f80736a1829acca44897a8a38c65f"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
+  },
+  "sources": [
+    {
+      "url": "https://polyhaven.com/a/fish_knife",
+      "license": "CC0",
+      "files": [
+        {
+          "asset": "fish_knife",
+          "file": "fish_knife_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/fish_knife/fish_knife_1k.gltf",
+          "bytes": 4611,
+          "sha256": "868d30c0bcaf12c4d7f426ce66d9cd1d98baf1407f6d5faeaf1a568c969b5539"
+        },
+        {
+          "asset": "fish_knife",
+          "file": "textures/fish_knife_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fish_knife/fish_knife_nor_gl_1k.jpg",
+          "bytes": 692765,
+          "sha256": "7e2da8cc6d86ecdfb660c9fbe1765ec2c1b920201e7e76f636d8fc9943c01ce1"
+        },
+        {
+          "asset": "fish_knife",
+          "file": "textures/fish_knife_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fish_knife/fish_knife_diff_1k.jpg",
+          "bytes": 749609,
+          "sha256": "738b14413837348591c4320a3d82fbe3634a76d4a6d1cfc329b6d4b1c4ef531f"
+        },
+        {
+          "asset": "fish_knife",
+          "file": "textures/fish_knife_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fish_knife/fish_knife_arm_1k.jpg",
+          "bytes": 1023377,
+          "sha256": "e131557dc8611db7c34df207615251e3642ab911f75b8e19ae8930cd44550c67"
+        },
+        {
+          "asset": "fish_knife",
+          "file": "fish_knife.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/fish_knife/fish_knife.bin",
+          "bytes": 95136,
+          "sha256": "6053e6fa14f67d8b7254a4b8c919718edc1cc6aa9d8492bcc40c76dcfd114137"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "natural-knife-clear",
+      "family": "natural-knife",
+      "label": "Utility knife",
+      "variant": "clear",
+      "description": "Retained natural form and readable source color, restrained highlights.",
+      "recommended": true,
+      "file": "natural-knife-clear.glb",
+      "bounds": {
+        "min": [
+          -0.021544,
+          0.0,
+          -0.012027
+        ],
+        "max": [
+          0.021544,
+          0.32,
+          0.012027
+        ]
+      },
+      "triangles": 2736,
+      "vertices": 2460,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "ea33b4d1bb8d16e4b2ff47b9913d1325268f5f7ad78129f86b794f018087030c",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/fish_knife"
+    },
+    {
+      "id": "natural-knife-quiet",
+      "family": "natural-knife",
+      "label": "Utility knife",
+      "variant": "quiet",
+      "description": "Grouped, muted woodland color with restrained fine texture.",
+      "recommended": false,
+      "file": "natural-knife-quiet.glb",
+      "bounds": {
+        "min": [
+          -0.021544,
+          0.0,
+          -0.012027
+        ],
+        "max": [
+          0.021544,
+          0.32,
+          0.012027
+        ]
+      },
+      "triangles": 2736,
+      "vertices": 2460,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "a763f5b49afe9396237989436742bd52abc8fa88c3c9dcb4bd4d9ab5016778fb",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/fish_knife"
+    },
+    {
+      "id": "natural-knife-weathered",
+      "family": "natural-knife",
+      "label": "Utility knife",
+      "variant": "weathered",
+      "description": "Worn, lower-saturation material variation on the same natural form.",
+      "recommended": false,
+      "file": "natural-knife-weathered.glb",
+      "bounds": {
+        "min": [
+          -0.021544,
+          0.0,
+          -0.012027
+        ],
+        "max": [
+          0.021544,
+          0.32,
+          0.012027
+        ]
+      },
+      "triangles": 2736,
+      "vertices": 2460,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "28952dce1468f1ce88c1104c72fac5e15a9160cb91ff2fde669b4d238b7efb15",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/fish_knife"
+    }
+  ],
+  "controls": [
+    {
+      "id": "natural-knife-source",
+      "family": "natural-knife",
+      "label": "Utility knife",
+      "variant": "source",
+      "description": "Normalized original geometry and albedo; source control.",
+      "recommended": false,
+      "file": "natural-knife-source.glb",
+      "bounds": {
+        "min": [
+          -0.021544,
+          0.0,
+          -0.012027
+        ],
+        "max": [
+          0.021544,
+          0.32,
+          0.012027
+        ]
+      },
+      "triangles": 2736,
+      "vertices": 2460,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "ab865902659136017a4803452a5d84e8a540495b3e3eca02819abce06ff3d566",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/fish_knife"
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "group": "source-natural-arrow",
+  "sourceFile": "art-direction/assets/source-study/source-natural-arrow.blend",
+  "sourceSha256": "0e87ecfa0cea5955629136982cb633721da6dfb50c5d7f03943bee244856949a",
+  "recipe": {
+    "path": "scripts/prepare-natural-replacements.py",
+    "sha256": "8c5e24992be84e6a1291290f77251dee385f80736a1829acca44897a8a38c65f"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
+  },
+  "sources": [
+    {
+      "url": "https://opengameart.org/content/archery-set",
+      "license": "CC0",
+      "files": [
+        {
+          "url": "https://opengameart.org/sites/default/files/archerySetOGA.blend",
+          "bytes": 2047224,
+          "sha256": "adc4ebb55ab76bcc44d921a36e6691023db1cee9322368027f3c3e830f3adc89"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "natural-arrow-clear",
+      "family": "natural-arrow",
+      "label": "Fletched arrow",
+      "variant": "clear",
+      "description": "Retained natural form and readable source color, restrained highlights.",
+      "recommended": true,
+      "file": "natural-arrow-clear.glb",
+      "bounds": {
+        "min": [
+          -0.031447,
+          -0.0,
+          -0.005159
+        ],
+        "max": [
+          0.031447,
+          0.72,
+          0.005159
+        ]
+      },
+      "triangles": 56,
+      "vertices": 38,
+      "textureSizes": [],
+      "sha256": "dea743288cd0562359aab683e37d273bef0a016858ff1fcdad1bab8017df7987",
+      "source": "yd, CC0, https://opengameart.org/content/archery-set"
+    },
+    {
+      "id": "natural-arrow-quiet",
+      "family": "natural-arrow",
+      "label": "Fletched arrow",
+      "variant": "quiet",
+      "description": "Grouped, muted woodland color with restrained fine texture.",
+      "recommended": false,
+      "file": "natural-arrow-quiet.glb",
+      "bounds": {
+        "min": [
+          -0.031447,
+          -0.0,
+          -0.005159
+        ],
+        "max": [
+          0.031447,
+          0.72,
+          0.005159
+        ]
+      },
+      "triangles": 56,
+      "vertices": 38,
+      "textureSizes": [],
+      "sha256": "3f1876f33df47a54f493b89c04af4edf62f8c3097bba8a8da161e791490aa7bc",
+      "source": "yd, CC0, https://opengameart.org/content/archery-set"
+    },
+    {
+      "id": "natural-arrow-weathered",
+      "family": "natural-arrow",
+      "label": "Fletched arrow",
+      "variant": "weathered",
+      "description": "Worn, lower-saturation material variation on the same natural form.",
+      "recommended": false,
+      "file": "natural-arrow-weathered.glb",
+      "bounds": {
+        "min": [
+          -0.031447,
+          -0.0,
+          -0.005159
+        ],
+        "max": [
+          0.031447,
+          0.72,
+          0.005159
+        ]
+      },
+      "triangles": 56,
+      "vertices": 38,
+      "textureSizes": [],
+      "sha256": "bd588c87b984f36f190ff9f4975accf60d3fab71884eb043572358970a8609b2",
+      "source": "yd, CC0, https://opengameart.org/content/archery-set"
+    }
+  ],
+  "controls": [
+    {
+      "id": "natural-arrow-source",
+      "family": "natural-arrow",
+      "label": "Fletched arrow",
+      "variant": "source",
+      "description": "Normalized original geometry and albedo; source control.",
+      "recommended": false,
+      "file": "natural-arrow-source.glb",
+      "bounds": {
+        "min": [
+          -0.031447,
+          -0.0,
+          -0.005159
+        ],
+        "max": [
+          0.031447,
+          0.72,
+          0.005159
+        ]
+      },
+      "triangles": 56,
+      "vertices": 38,
+      "textureSizes": [],
+      "sha256": "471767a6d95e69eb4e945f7196204722f228fe084db5332269fdc20a7ebdc7ae",
+      "source": "yd, CC0, https://opengameart.org/content/archery-set"
+    }
+  ]
+}

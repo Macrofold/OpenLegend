@@ -1,0 +1,238 @@
+{
+  "group": "source-natural-shield",
+  "sourceFile": "art-direction/assets/source-study/source-natural-shield.blend",
+  "sourceSha256": "adcca8b81058742b3ad087e9c3e662ddb77874dfb3f1efbc2c3b9b126af5d3dc",
+  "recipe": {
+    "path": "scripts/prepare-natural-replacements.py",
+    "sha256": "8c5e24992be84e6a1291290f77251dee385f80736a1829acca44897a8a38c65f"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
+  },
+  "sources": [
+    {
+      "url": "https://polyhaven.com/a/kite_shield",
+      "license": "CC0",
+      "files": [
+        {
+          "asset": "kite_shield",
+          "file": "kite_shield_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/kite_shield/kite_shield_1k.gltf",
+          "bytes": 6826,
+          "sha256": "269a2467ca0c52df75bc5272a5246e2bcaf6cfe128eecf801542696a7bfef61d"
+        },
+        {
+          "asset": "kite_shield",
+          "file": "textures/kite_shield_body_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/kite_shield/kite_shield_body_diff_1k.jpg",
+          "bytes": 761392,
+          "sha256": "7ed490545ccf4df0902d9b9cd71910cdbacb2f4cfef9aac72ca04134436d471b"
+        },
+        {
+          "asset": "kite_shield",
+          "file": "textures/kite_shield_body_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/kite_shield/kite_shield_body_nor_gl_1k.jpg",
+          "bytes": 843237,
+          "sha256": "562b943c11ff3ba16cc0e10b49976faba38f7602c83d501cb36dee5b3ea027db"
+        },
+        {
+          "asset": "kite_shield",
+          "file": "textures/kite_shield_clamps_trim_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/kite_shield/kite_shield_clamps_trim_diff_1k.jpg",
+          "bytes": 417567,
+          "sha256": "fd786e98045804fc772b1a3005b38a936fe30852919644a30d9241c7beb67f98"
+        },
+        {
+          "asset": "kite_shield",
+          "file": "textures/kite_shield_clamps_trim_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/kite_shield/kite_shield_clamps_trim_arm_1k.jpg",
+          "bytes": 521972,
+          "sha256": "2e1fe58aab65306124a63b8878fece977382b4662e23a2957c434e71272dc190"
+        },
+        {
+          "asset": "kite_shield",
+          "file": "kite_shield.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/kite_shield/kite_shield.bin",
+          "bytes": 289804,
+          "sha256": "5f936bc82f628fe243b062f2a240ea11549995fbf24d1c1055bdc29292cf96a9"
+        },
+        {
+          "asset": "kite_shield",
+          "file": "textures/kite_shield_clamps_trim_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/kite_shield/kite_shield_clamps_trim_nor_gl_1k.jpg",
+          "bytes": 413510,
+          "sha256": "e430f8032662bccd15ef42037e6971c94277da6eb3549d00965d61b7e3f604d2"
+        },
+        {
+          "asset": "kite_shield",
+          "file": "textures/kite_shield_body_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/kite_shield/kite_shield_body_arm_1k.jpg",
+          "bytes": 563372,
+          "sha256": "a4b6e349a5f33cae71c00f9ab98ee41b2b06817d87d0ef07e8e815f0dc628e38"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "natural-shield-clear",
+      "family": "natural-shield",
+      "label": "Timber kite shield",
+      "variant": "clear",
+      "description": "Retained natural form and readable source color, restrained highlights.",
+      "recommended": true,
+      "file": "natural-shield-clear.glb",
+      "bounds": {
+        "min": [
+          -0.163661,
+          0.0,
+          -0.040591
+        ],
+        "max": [
+          0.163661,
+          0.84,
+          0.040591
+        ]
+      },
+      "triangles": 10306,
+      "vertices": 7124,
+      "textureSizes": [
+        [
+          512,
+          512
+        ],
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "cb5e85c4faeccbee08126fa895f3e3833abe006e039ecb9d056e9cb15abf695b",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/kite_shield"
+    },
+    {
+      "id": "natural-shield-quiet",
+      "family": "natural-shield",
+      "label": "Timber kite shield",
+      "variant": "quiet",
+      "description": "Grouped, muted woodland color with restrained fine texture.",
+      "recommended": false,
+      "file": "natural-shield-quiet.glb",
+      "bounds": {
+        "min": [
+          -0.163661,
+          0.0,
+          -0.040591
+        ],
+        "max": [
+          0.163661,
+          0.84,
+          0.040591
+        ]
+      },
+      "triangles": 10306,
+      "vertices": 7124,
+      "textureSizes": [
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "adca4bf527182a0da84920b7f0e74abc7da9e5fbbec9cb46db07827cb3bbf1fd",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/kite_shield"
+    },
+    {
+      "id": "natural-shield-weathered",
+      "family": "natural-shield",
+      "label": "Timber kite shield",
+      "variant": "weathered",
+      "description": "Worn, lower-saturation material variation on the same natural form.",
+      "recommended": false,
+      "file": "natural-shield-weathered.glb",
+      "bounds": {
+        "min": [
+          -0.163661,
+          0.0,
+          -0.040591
+        ],
+        "max": [
+          0.163661,
+          0.84,
+          0.040591
+        ]
+      },
+      "triangles": 10306,
+      "vertices": 7124,
+      "textureSizes": [
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "0d2afda4bb2571827af3d4eac07e19b09a0e61111b2a85d2f1a5a14bd7ff8a8b",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/kite_shield"
+    }
+  ],
+  "controls": [
+    {
+      "id": "natural-shield-source",
+      "family": "natural-shield",
+      "label": "Timber kite shield",
+      "variant": "source",
+      "description": "Normalized original geometry and albedo; source control.",
+      "recommended": false,
+      "file": "natural-shield-source.glb",
+      "bounds": {
+        "min": [
+          -0.163661,
+          0.0,
+          -0.040591
+        ],
+        "max": [
+          0.163661,
+          0.84,
+          0.040591
+        ]
+      },
+      "triangles": 10306,
+      "vertices": 7124,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "ce1e2822e3849b9296be82a7ac538e286cb8d6278255c13953906c32aaeb4b30",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/kite_shield"
+    }
+  ]
+}

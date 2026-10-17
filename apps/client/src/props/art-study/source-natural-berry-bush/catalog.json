@@ -1,0 +1,199 @@
+{
+  "group": "source-natural-berry-bush",
+  "sourceFile": "art-direction/assets/source-study/source-natural-berry-bush.blend",
+  "sourceSha256": "d232f17f9b01952d46c605554beb2a09f97da5f186179cb4206877c0161769df",
+  "recipe": {
+    "path": "scripts/prepare-natural-replacements.py",
+    "sha256": "8c5e24992be84e6a1291290f77251dee385f80736a1829acca44897a8a38c65f"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
+  },
+  "sources": [
+    {
+      "url": "https://polyhaven.com/a/shrub_02",
+      "license": "CC0",
+      "files": [
+        {
+          "asset": "shrub_02",
+          "file": "shrub_02_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/shrub_02/shrub_02_1k.gltf",
+          "bytes": 8083,
+          "sha256": "99de0a70fe88ad414615cc8d8e020617c8512e2abfe08b911b153a6fcc40d93e"
+        },
+        {
+          "asset": "shrub_02",
+          "file": "textures/shrub_02_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_02/shrub_02_arm_1k.jpg",
+          "bytes": 313715,
+          "sha256": "7186bf604d5c02f873aef6de2346cc06b6fa48f47d054edbef36d2c3772c0890"
+        },
+        {
+          "asset": "shrub_02",
+          "file": "textures/shrub_02_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_02/shrub_02_nor_gl_1k.jpg",
+          "bytes": 490815,
+          "sha256": "54c24e433365d5410223b7ebd2b33042b80831f80976e10768114db5ef6911d7"
+        },
+        {
+          "asset": "shrub_02",
+          "file": "shrub_02.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/shrub_02/shrub_02.bin",
+          "bytes": 758692,
+          "sha256": "5c1b79da1cfdbac90599542ccd1f75ba433a3a4d356b1ea03655adb39b0e2c96"
+        },
+        {
+          "asset": "shrub_02",
+          "file": "textures/shrub_02_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_02/shrub_02_diff_1k.jpg",
+          "bytes": 395120,
+          "sha256": "9956eff294034d70516d867e9668428a23d782feb3d4c34061dce5e44bacd5a8"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "natural-berry-bush-clear",
+      "family": "natural-berry-bush",
+      "label": "Berry thicket",
+      "variant": "clear",
+      "description": "Retained natural form and readable source color, restrained highlights.",
+      "recommended": true,
+      "file": "natural-berry-bush-clear.glb",
+      "bounds": {
+        "min": [
+          -0.408727,
+          0.0,
+          -0.510089
+        ],
+        "max": [
+          0.407822,
+          1.05,
+          0.510089
+        ]
+      },
+      "triangles": 8598,
+      "vertices": 5671,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "55a832e085ab970f0d65aba8ae77d2392c6a3a998b43c4a971ccb34bf42cbc5a",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_02",
+      "depletedFile": "natural-berry-bush-clear-depleted.glb",
+      "depletedSha256": "9eb61185b9d66191c467fe1bf7b63d9d510f8bac8a3add7793785d95d645010c"
+    },
+    {
+      "id": "natural-berry-bush-quiet",
+      "family": "natural-berry-bush",
+      "label": "Berry thicket",
+      "variant": "quiet",
+      "description": "Grouped, muted woodland color with restrained fine texture.",
+      "recommended": false,
+      "file": "natural-berry-bush-quiet.glb",
+      "bounds": {
+        "min": [
+          -0.408727,
+          0.0,
+          -0.510089
+        ],
+        "max": [
+          0.407822,
+          1.05,
+          0.510089
+        ]
+      },
+      "triangles": 8310,
+      "vertices": 5515,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "ca42efd358d19d876b8e8d577bf81aec5c47e8ead6256120c149071834a062a6",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_02",
+      "depletedFile": "natural-berry-bush-quiet-depleted.glb",
+      "depletedSha256": "c5417188f34aa6e19e276683352e5b694786e29fa47396fd183ff339ba92ae98"
+    },
+    {
+      "id": "natural-berry-bush-weathered",
+      "family": "natural-berry-bush",
+      "label": "Berry thicket",
+      "variant": "weathered",
+      "description": "Worn, lower-saturation material variation on the same natural form.",
+      "recommended": false,
+      "file": "natural-berry-bush-weathered.glb",
+      "bounds": {
+        "min": [
+          -0.408727,
+          0.0,
+          -0.510089
+        ],
+        "max": [
+          0.407822,
+          1.05,
+          0.510089
+        ]
+      },
+      "triangles": 8598,
+      "vertices": 5671,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "b81bc6bb21032999fe695148737cad89f91c4fb148b68e72434eb931fddf3d49",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_02",
+      "depletedFile": "natural-berry-bush-weathered-depleted.glb",
+      "depletedSha256": "6a0bc7e671c1f6154bad648307e9cd927ff7c99680fd630a55bd93e7bed70b25"
+    }
+  ],
+  "controls": [
+    {
+      "id": "natural-berry-bush-source",
+      "family": "natural-berry-bush",
+      "label": "Berry thicket",
+      "variant": "source",
+      "description": "Normalized original geometry and albedo; source control.",
+      "recommended": false,
+      "file": "natural-berry-bush-source.glb",
+      "bounds": {
+        "min": [
+          -0.407822,
+          0.0,
+          -0.510089
+        ],
+        "max": [
+          0.407822,
+          1.05,
+          0.510089
+        ]
+      },
+      "triangles": 7590,
+      "vertices": 5125,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "0742c4c9c713aa709ba29a1755639ee0818bd1379f2a50edd75e095dd1b47fb7",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_02"
+    }
+  ]
+}

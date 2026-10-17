@@ -1,0 +1,174 @@
+{
+  "group": "source-natural-deer",
+  "sourceFile": "art-direction/assets/source-study/source-natural-deer.blend",
+  "sourceSha256": "29d69e3b31200f5b8cd3117a8b332536202b766f793481f617a1566258a9968c",
+  "recipe": {
+    "path": "scripts/prepare-natural-deer.py",
+    "sha256": "cd91f35b7620efc589d2039a23c403c68edffbf223cd0240cd39a4a5226ed1cb"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581",
+    "prepare-natural-replacements.py": "304fc9204e436fcdd1646124570b3df34a7ee4e3cfdbd239f1f9dd0d656c8c3a"
+  },
+  "sources": [
+    {
+      "url": "https://opengameart.org/content/deer-female",
+      "creator": "CDmir / TinyWorlds",
+      "license": "CC0",
+      "file": "deer-source.blend",
+      "sha256": "577b9e48ce7cee955c6dac1b0a70333eccdfcad3f11eaa1f96a15900b64ca25e"
+    }
+  ],
+  "assets": [
+    {
+      "id": "natural-deer-clear",
+      "family": "natural-deer",
+      "label": "Woodland doe",
+      "variant": "clear",
+      "description": "Source anatomy and eyes, clear coat finish with fixed-density pixel rendering.",
+      "recommended": false,
+      "file": "natural-deer-clear.glb",
+      "bounds": {
+        "min": [
+          -0.191522,
+          -0.0,
+          -0.785462
+        ],
+        "max": [
+          0.191522,
+          1.450001,
+          0.785462
+        ]
+      },
+      "triangles": 4784,
+      "vertices": 2441,
+      "textureSizes": [
+        [
+          512,
+          512
+        ],
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "6d0749995271f0a68505371c42eeb6c73ee75718bc678458dcd690663f435378",
+      "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/deer-female; source skin and Idle/Run motion retained, materials adapted by OpenLegend.",
+      "animatedFile": "natural-deer-clear-motion.glb",
+      "animatedSha256": "4877a5c6f3c34047916055b2826bf290635fe6d410bee4f7e3e52f6d177fbe18"
+    },
+    {
+      "id": "natural-deer-quiet",
+      "family": "natural-deer",
+      "label": "Woodland doe",
+      "variant": "quiet",
+      "description": "Source anatomy and eyes, quiet coat finish with fixed-density pixel rendering.",
+      "recommended": true,
+      "file": "natural-deer-quiet.glb",
+      "bounds": {
+        "min": [
+          -0.191522,
+          -0.0,
+          -0.785462
+        ],
+        "max": [
+          0.191522,
+          1.450001,
+          0.785462
+        ]
+      },
+      "triangles": 4784,
+      "vertices": 2441,
+      "textureSizes": [
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "4ceeebeffc6c92d25e9fab8e8121d935c8819c99912b40916e540c27adf03261",
+      "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/deer-female; source skin and Idle/Run motion retained, materials adapted by OpenLegend.",
+      "animatedFile": "natural-deer-quiet-motion.glb",
+      "animatedSha256": "a7f049462a6125df00408e83afcebdd8f4acd4189d8fe2095ded3ef82e080833"
+    },
+    {
+      "id": "natural-deer-weathered",
+      "family": "natural-deer",
+      "label": "Woodland doe",
+      "variant": "weathered",
+      "description": "Source anatomy and eyes, weathered coat finish with fixed-density pixel rendering.",
+      "recommended": false,
+      "file": "natural-deer-weathered.glb",
+      "bounds": {
+        "min": [
+          -0.191522,
+          -0.0,
+          -0.785462
+        ],
+        "max": [
+          0.191522,
+          1.450001,
+          0.785462
+        ]
+      },
+      "triangles": 4784,
+      "vertices": 2441,
+      "textureSizes": [
+        [
+          256,
+          256
+        ],
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "7ebd6c19211bd665e3f99b756631795af19507fceef21ed3ddc80970db0034d3",
+      "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/deer-female; source skin and Idle/Run motion retained, materials adapted by OpenLegend.",
+      "animatedFile": "natural-deer-weathered-motion.glb",
+      "animatedSha256": "c0bc5cec5affb9d4bbc6d7895315d7ba600079389d57d2665c467f027609d490"
+    }
+  ],
+  "controls": [
+    {
+      "id": "natural-deer-source",
+      "family": "natural-deer",
+      "label": "Woodland doe",
+      "variant": "source",
+      "description": "Source anatomy and eyes, original albedo control.",
+      "recommended": false,
+      "file": "natural-deer-source.glb",
+      "bounds": {
+        "min": [
+          -0.191522,
+          -0.0,
+          -0.785462
+        ],
+        "max": [
+          0.191522,
+          1.450001,
+          0.785462
+        ]
+      },
+      "triangles": 4784,
+      "vertices": 2441,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "cee83eed683d679ebfeae4b9aa1a37ff1b7c69583c976ea1bb57b2e05fd1facd",
+      "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/deer-female; source skin and Idle/Run motion retained, materials adapted by OpenLegend."
+    }
+  ]
+}

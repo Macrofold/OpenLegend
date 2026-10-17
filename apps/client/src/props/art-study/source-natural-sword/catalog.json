@@ -1,0 +1,193 @@
+{
+  "group": "source-natural-sword",
+  "sourceFile": "art-direction/assets/source-study/source-natural-sword.blend",
+  "sourceSha256": "dc2a13cb80017fa64544bd1531f6e479dabc57868490222ebe6a5bc2a61f5e22",
+  "recipe": {
+    "path": "scripts/prepare-natural-replacements.py",
+    "sha256": "8c5e24992be84e6a1291290f77251dee385f80736a1829acca44897a8a38c65f"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
+  },
+  "sources": [
+    {
+      "url": "https://polyhaven.com/a/antique_estoc",
+      "license": "CC0",
+      "files": [
+        {
+          "asset": "antique_estoc",
+          "file": "antique_estoc_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/antique_estoc/antique_estoc_1k.gltf",
+          "bytes": 2884,
+          "sha256": "8b89790cb865aade4992cafc6310292318528a6bad6b2445b194733a1ba924e8"
+        },
+        {
+          "asset": "antique_estoc",
+          "file": "textures/antique_estoc_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/antique_estoc/antique_estoc_arm_1k.jpg",
+          "bytes": 895669,
+          "sha256": "f8b8b340672af212d019c49e51dcd7a0f1ebac1db361f0a64b363352038e7dc9"
+        },
+        {
+          "asset": "antique_estoc",
+          "file": "textures/antique_estoc_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/antique_estoc/antique_estoc_nor_gl_1k.jpg",
+          "bytes": 719026,
+          "sha256": "0f8bbbcc2ab273d87d66711c65bd61cb44de654543db8576c5fcb2139ae51df2"
+        },
+        {
+          "asset": "antique_estoc",
+          "file": "textures/antique_estoc_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/antique_estoc/antique_estoc_diff_1k.jpg",
+          "bytes": 683853,
+          "sha256": "a67b7f734e8eaaed7584fb35f55166209e2df4d62e349c379309b44def844dd4"
+        },
+        {
+          "asset": "antique_estoc",
+          "file": "antique_estoc.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/antique_estoc/antique_estoc.bin",
+          "bytes": 226660,
+          "sha256": "ef986112b317dd667f0bc8ca80647621572e82b04dacddbe4eed078121af89d7"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "natural-sword-clear",
+      "family": "natural-sword",
+      "label": "Forged estoc",
+      "variant": "clear",
+      "description": "Retained natural form and readable source color, restrained highlights.",
+      "recommended": true,
+      "file": "natural-sword-clear.glb",
+      "bounds": {
+        "min": [
+          -0.136919,
+          0.0,
+          -0.054948
+        ],
+        "max": [
+          0.136919,
+          1.1,
+          0.054948
+        ]
+      },
+      "triangles": 8246,
+      "vertices": 5537,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "c0342d709c4f6c38287f1dd98c2048c240ef9b588619c99d2017b90745048a48",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/antique_estoc"
+    },
+    {
+      "id": "natural-sword-quiet",
+      "family": "natural-sword",
+      "label": "Forged estoc",
+      "variant": "quiet",
+      "description": "Grouped, muted woodland color with restrained fine texture.",
+      "recommended": false,
+      "file": "natural-sword-quiet.glb",
+      "bounds": {
+        "min": [
+          -0.136919,
+          0.0,
+          -0.054948
+        ],
+        "max": [
+          0.136919,
+          1.1,
+          0.054948
+        ]
+      },
+      "triangles": 8246,
+      "vertices": 5537,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "511d97cea147a30c624684980e02d14d20d6d88cfc0f240a1743c652897dd69c",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/antique_estoc"
+    },
+    {
+      "id": "natural-sword-weathered",
+      "family": "natural-sword",
+      "label": "Forged estoc",
+      "variant": "weathered",
+      "description": "Worn, lower-saturation material variation on the same natural form.",
+      "recommended": false,
+      "file": "natural-sword-weathered.glb",
+      "bounds": {
+        "min": [
+          -0.136919,
+          0.0,
+          -0.054948
+        ],
+        "max": [
+          0.136919,
+          1.1,
+          0.054948
+        ]
+      },
+      "triangles": 8246,
+      "vertices": 5537,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "1e4dedb7e8f3074ee606e17bd31529455c60e183844545d61d2941cfe4baec3b",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/antique_estoc"
+    }
+  ],
+  "controls": [
+    {
+      "id": "natural-sword-source",
+      "family": "natural-sword",
+      "label": "Forged estoc",
+      "variant": "source",
+      "description": "Normalized original geometry and albedo; source control.",
+      "recommended": false,
+      "file": "natural-sword-source.glb",
+      "bounds": {
+        "min": [
+          -0.136919,
+          0.0,
+          -0.054948
+        ],
+        "max": [
+          0.136919,
+          1.1,
+          0.054948
+        ]
+      },
+      "triangles": 8246,
+      "vertices": 5537,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "e1e7b9ae41a80935644f14154002908fe62dc5f93ae463d14624b757ec8b63d6",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/antique_estoc"
+    }
+  ]
+}
