@@ -14,6 +14,8 @@
   --panel-texture: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .94 0 0 0 0 .9 0 0 0 0 .82 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
   --panel-sheen: linear-gradient(180deg, rgba(239, 231, 214, 0.035), rgba(239, 231, 214, 0) 120px);
   --control-radius: var(--radius-sm);
+  --control-height: 40px;
+  --control-height-sm: 32px;
   --round: var(--radius-full);
   --motion-scale: 1;
   /* Text over the world: one tight 1px shadow — reads as flat, holds on light ground. */
@@ -281,11 +283,12 @@
 
 /* Button */
 .ol-btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 40px;
+  min-height: var(--control-height);
   padding: 0 16px;
   border-radius: var(--control-radius);
   border: 1px solid var(--line-strong);
@@ -304,7 +307,7 @@
   background: var(--surface-hover);
 }
 .ol-btn[data-size='sm'] {
-  height: 32px;
+  min-height: var(--control-height-sm);
   padding: 0 12px;
   font-size: 13px;
   gap: 6px;
@@ -356,36 +359,120 @@
 .ol-btn[data-busy='true'] {
   cursor: progress;
 }
-.ol-dots {
+.ol-btn > .ol-spinner {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+}
+.ol-btn[data-show-busy] > :not(.ol-spinner) {
+  opacity: 0;
+}
+.ol-loading-indicator {
   display: inline-flex;
-  gap: 3px;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  min-height: 20px;
+  color: var(--ink-muted);
 }
-.ol-dots i {
-  width: 4px;
-  height: 4px;
+.ol-loading-region {
+  position: relative;
+  min-height: 64px;
+}
+.ol-loading-dialog,
+.ol-modal:has(.ol-loading-dialog),
+.ol-action-browser-embedded {
+  position: relative;
+}
+.ol-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.ol-loading-overlay > .ol-loading-indicator {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: currentColor;
-  animation: ol-dot calc(1.2s / max(var(--motion-scale), 0.001)) infinite;
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
 }
-.ol-dots i:nth-child(2) {
-  animation-delay: 0.15s;
+.ol-loading-standalone {
+  display: grid;
+  place-items: center;
+  min-height: 64px;
+  width: 100%;
 }
-.ol-dots i:nth-child(3) {
-  animation-delay: 0.3s;
+.ol-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: 50%;
+  animation: ol-spin calc(0.8s / max(var(--motion-scale), 0.001)) linear infinite;
 }
-@keyframes ol-dot {
-  0%,
-  80%,
-  100% {
-    opacity: 0.3;
-    transform: translateY(0);
-  }
-  40% {
-    opacity: 1;
-    transform: translateY(-3px);
-  }
+.ol-filter-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--control-height);
+  padding: 4px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  background: var(--surface-hover);
+  color: var(--ink-muted);
+  font: 500 13px/20px var(--font-ui);
+  white-space: nowrap;
+  cursor: pointer;
 }
-
+.ol-filter-button[aria-pressed='true'] {
+  color: var(--accent);
+  background: var(--accent-quiet);
+  border-color: var(--accent);
+}
+.ol-filter-button:disabled {
+  color: var(--ink-faint);
+  cursor: not-allowed;
+}
+.ol-disclosure-trigger > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.ol-disclosure-chevron {
+  width: 7px;
+  height: 7px;
+  border-inline-end: 1.5px solid currentColor;
+  border-block-end: 1.5px solid currentColor;
+  transform: rotate(45deg) translateY(-2px);
+}
+.ol-disclosure-trigger[aria-expanded='true'] .ol-disclosure-chevron {
+  transform: rotate(225deg) translate(-2px, -2px);
+}
+.ol-disclosure-popover {
+  width: min(360px, calc(100vw - 24px));
+  max-height: var(--available-height);
+  overflow: auto;
+  z-index: var(--z-menu);
+  background: var(--surface-raised);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--control-radius);
+  box-shadow: var(--shadow-panel);
+}
+.ol-disclosure-content {
+  padding: 16px;
+  outline: none;
+}
+.ol-disclosure-content > :first-child {
+  margin-block-start: 0;
+}
+.ol-disclosure-content > :last-child {
+  margin-block-end: 0;
+}
 /* Icon button (close, back, pause, settings) */
 .ol-ibtn {
   display: inline-grid;
@@ -440,7 +527,7 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  min-height: 40px;
+  min-height: var(--control-height);
   padding: 0 3px 0 11px;
   border: 1px solid var(--line-strong);
   border-radius: var(--control-radius);
@@ -799,6 +886,40 @@
   align-items: center;
   gap: 8px;
   --ol-icon: 16px;
+}
+.ol-meter[role='meter'] {
+  cursor: help;
+  border-radius: var(--radius-sm);
+}
+.ol-pointer-tooltip.ol-condition-tooltip {
+  width: min(320px, calc(100vw - 16px));
+}
+.ol-condition-help {
+  display: grid;
+  gap: var(--space-2);
+}
+.ol-condition-help-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-4);
+  font-size: 14px;
+}
+.ol-condition-help-heading > span {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.ol-condition-help-range {
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+.ol-condition-help-state {
+  font-weight: 600;
+}
+.ol-condition-help-meaning {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--line);
+  color: var(--ink-muted);
 }
 .ol-meter-text {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -1552,9 +1673,15 @@
   color: var(--ink-muted);
 }
 
-/* Tooltip (detailed explanation after 1s hover intent) */
-.ol-tip {
-  width: 248px;
+/* Portaled hover help shares one opaque surface and one pointer/focus owner. */
+.ol-tooltip-trigger {
+  display: contents;
+}
+.ol-pointer-tooltip {
+  /* Help can originate inside a modal; its portal belongs above that surface. */
+  z-index: calc(var(--z-sheet) + 5);
+  width: max-content;
+  overflow: auto;
   padding: 12px 14px;
   border-radius: var(--radius-md);
   background: var(--surface);
@@ -1562,8 +1689,22 @@
   box-shadow: var(--shadow-float);
   font-size: 13px;
   line-height: 19px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  pointer-events: auto;
+}
+.ol-text-tooltip {
+  width: max-content;
+  max-width: min(24rem, calc(100vw - 16px));
+  font-size: 12px;
+  line-height: 1.4;
+}
+.ol-text-tooltip > .ol-portal-content {
+  max-width: 24rem;
+}
+.ol-tip {
+  width: 280px;
   color: var(--ink-muted);
-  animation: ol-pop calc(120ms * var(--motion-scale)) var(--ease-out) both;
 }
 .ol-tip b {
   display: block;
@@ -1728,4 +1869,26 @@
   border-radius: var(--radius-xs);
   overflow: hidden;
   border: 1px solid var(--line);
+}
+
+.ol-mechanic-term {
+  display: inline;
+  border: 0;
+  border-radius: 0.15rem;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-underline-offset: 0.15em;
+}
+.ol-mechanic-term {
+  text-decoration-style: dashed;
+  cursor: help;
+}
+.ol-mechanic-term:hover {
+  text-decoration-color: currentColor;
 }

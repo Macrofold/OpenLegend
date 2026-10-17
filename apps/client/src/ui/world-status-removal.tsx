@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../design-system/loading';
 import { useEffect, useRef, useState } from 'react';
 import { Checkbox } from 'react-aria-components';
 import type {
@@ -483,7 +484,7 @@ export function WorldStatusRemovalDetails({
           </Button>
         ))}
       </div>
-      {loading && <p role="status">Reading this page of the saved removal review…</p>}
+      <LoadingIndicator active={loading} label="Reading the saved removal review" />
       {error && <p role="alert">{error} Your optional choices are retained.</p>}
       {error && (
         <Button

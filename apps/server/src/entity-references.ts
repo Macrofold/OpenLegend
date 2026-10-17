@@ -6,9 +6,20 @@ import type {
   Entity,
   WorldState,
 } from '@open-legend/domain';
-import { createHash } from 'node:crypto';
+import { createHash, createHmac, randomBytes } from 'node:crypto';
 
 const cache = new WeakMap<WorldState, Map<string, Map<string, string>>>();
+// A life count has a small guessable range. A process-local key keeps the
+// presentation reference opaque; restart invalidation grants no authority.
+const bodyReferenceKey = randomBytes(32);
+
+/** Presentation freshness for one permitted body, without exposing its life count.
+ * Unlike body revision, this stays stable through ordinary injury and healing. */
+export function entityBodyReference(scope: string, entity: Entity): string {
+  return createHmac('sha256', bodyReferenceKey)
+    .update(JSON.stringify([scope, entity.id, entity.actor?.physicalLife ?? 0]))
+    .digest('hex');
+}
 
 /** Opaque presentation references are not domain identities or authority.
  * docs/memory-architecture.md#metadata-stays-in-the-server-binding

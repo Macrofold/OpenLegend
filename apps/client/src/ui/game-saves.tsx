@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../design-system/loading';
 import {
   checkpointRequestKey,
   boundedText,
@@ -425,15 +426,10 @@ export function GameSavesPanel({
             </Button>
           </div>
         )}
-        {unresolved && (
+        {unresolved && !creating && (!rowBusy || rowUncertain) && (
           <div className="ol-notice" role="alert">
-            <strong>
-              {creating || rowBusy
-                ? 'Checkpoint operation in progress…'
-                : checking
-                  ? 'Checking original checkpoint…'
-                  : 'Checkpoint result not confirmed'}
-            </strong>
+            <strong>Checkpoint result not confirmed</strong>
+            <LoadingIndicator active={!!(rowBusy || checking)} label="Reading checkpoint result" />
             {pendingRequest ? (
               <>
                 <p>
@@ -493,12 +489,6 @@ export function GameSavesPanel({
             Create checkpoint
           </Button>
         </div>
-        {creating && (
-          <p role="status">
-            Creating “{pendingRequest?.label ?? (label.trim() || 'Manual save')}”… If another
-            checkpoint is running, this one starts after it.
-          </p>
-        )}
         {!creating && autosaves?.pendingManual && (
           <p role="status">A manual checkpoint is waiting for the current capture to finish.</p>
         )}
@@ -526,7 +516,7 @@ export function GameSavesPanel({
             {listed ? ' The earlier list remains visible.' : ''}
           </p>
         )}
-        {!listed && listing && <p role="status">Reading checkpoint history…</p>}
+        <LoadingIndicator active={!listed && listing} label="Reading checkpoints" />
         {listed && !saves.length && !catalogError && (
           <p>No checkpoints are listed yet. Create one above to keep the current world.</p>
         )}

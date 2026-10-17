@@ -7,7 +7,16 @@ import type { EventDisclosurePolicy } from '../../event-observation.js';
  */
 const fields: Record<string, readonly string[]> = {
   expression: ['mechanical', 'descriptive'],
-  'attribute-changed': ['attributeId', 'definitionVersion', 'before', 'after', 'unit'],
+  'attribute-changed': [
+    'changeKind',
+    'attributeId',
+    'definitionVersion',
+    'before',
+    'after',
+    'unit',
+    'attributeName',
+    'attributeMeaning',
+  ],
   gathered: ['definitionId', 'quantity'],
   ate: ['definitionId'],
   crafted: ['recipeId'],

@@ -34,6 +34,8 @@ Local mode has one authenticated principal and follows the saved local binding. 
 
 Resolve stored identities by exact key, not name scans or a per-frame search for the player. Preserve explicit player projections, ID-keyed nearby entities and incremental public patches. Cache and delayed-publication dependencies must include the relevant account/actor, audience, grant, timeline and control state; a controlled entity ID alone is not a complete privacy boundary. Private NPC and human data remain subject to their distinct ownership rules.
 
+Delayed direct-action lookups also retain the controlled player's physical life and the clicked character's opaque body reference. The reference is projected only for a currently visible character and changes with that character's physical life; ordinary injury, healing or other body-condition changes leave it stable. A received replacement-body projection invalidates the pending choice even when the entity ID is unchanged. A private process-local key prevents guessing the hidden life count from the reference; server restart changes these presentation references. This presentation check adds no command authority and does not replace native action admission or committed work's exact life bindings.
+
 ## Compatibility
 
 Definition and entity IDs remain stable stored keys. Existing bindings are authoritative; renaming must not rewrite historical IDs, request fingerprints, response digests or provider audit data. The former older-world binding conversion and diagnostic fallback description is historical, not an instruction to retain or extend it. Current-format integrity and explicit incompatible-save rejection follow the [development save policy](../AGENTS.md#development-save-policy).

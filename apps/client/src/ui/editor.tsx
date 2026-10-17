@@ -1,5 +1,6 @@
+import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import { useId, useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react';
-import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
+import { Modal, ModalOverlay } from 'react-aria-components';
 import { Button, Icon, IconButton, Tag } from '../design-system/components';
 import './creator-workspaces.css';
 
@@ -212,7 +213,7 @@ export function EditorPanel({
           ) : saveReason ? (
             <span role="status">{saveReason}</span>
           ) : saving ? (
-            'Saving changes…'
+            <LoadingIndicator active={saving} label="Saving changes" />
           ) : dirty ? (
             'Unsaved changes'
           ) : closeGuard ? (
@@ -247,7 +248,7 @@ export function EditorPanel({
           onOpenChange={(open) => !open && setConfirmClose(false)}
         >
           <Modal className="ol-modal">
-            <Dialog
+            <LoadingDialog
               className="ol-person-dialog ol-creator-confirm"
               role="alertdialog"
               aria-label={`Unsaved changes in ${title}`}
@@ -281,7 +282,7 @@ export function EditorPanel({
                   Save and Close
                 </Button>
               </div>
-            </Dialog>
+            </LoadingDialog>
           </Modal>
         </ModalOverlay>
       )}

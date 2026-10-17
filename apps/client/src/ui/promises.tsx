@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../design-system/loading';
 import { useEffect, useRef, useState } from 'react';
 import type { OwnPromise, OwnPromisePage } from '@open-legend/protocol';
 import { post } from '../api';
@@ -86,21 +87,20 @@ export function Promises({ visible = true, revision }: { visible?: boolean; revi
     <div className="ol-promises" aria-busy={busy}>
       <p className="ol-caption">Your spoken words, their terms and the recorded outcome.</p>
       <p className="ol-meta" role="status">
-        {busy && !page
-          ? 'Loading promises…'
-          : page
-            ? `${
-                unlisted > 0
-                  ? `${page.open.length} open, plus ${unlisted} unlisted ${unlisted === 1 ? 'commitment' : 'commitments'} counted toward the limit of ${page.openLimit}.`
-                  : `${page.open.length} of ${page.openLimit} open.`
-              }${
-                !full
-                  ? ''
-                  : unlisted > 0
-                    ? ' New promises are not recorded while all of these stay unresolved.'
-                    : ' New promises are not recorded until one is kept.'
-              }`
-            : ''}
+        <LoadingIndicator active={busy} label="Loading promises" />
+        {page
+          ? `${
+              unlisted > 0
+                ? `${page.open.length} open, plus ${unlisted} unlisted ${unlisted === 1 ? 'commitment' : 'commitments'} counted toward the limit of ${page.openLimit}.`
+                : `${page.open.length} of ${page.openLimit} open.`
+            }${
+              !full
+                ? ''
+                : unlisted > 0
+                  ? ' New promises are not recorded while all of these stay unresolved.'
+                  : ' New promises are not recorded until one is kept.'
+            }`
+          : ''}
       </p>
       {error && (
         <div className="ol-reading-error">

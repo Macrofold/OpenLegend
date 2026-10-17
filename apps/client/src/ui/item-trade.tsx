@@ -205,7 +205,7 @@ export function ItemTrade({
   );
   return (
     <section ref={workspace} tabIndex={-1} className="ol-item-trade" aria-label={labels.title}>
-      <Section title={labels.title + ' · ' + trade.personName}>
+      <Section title={`${labels.title}: ${trade.personName}`}>
         {trade.offers.map((offer) => {
           const changed = reviewed[offer.id] !== undefined && reviewed[offer.id] !== offer.revision;
           return (

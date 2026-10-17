@@ -11,7 +11,7 @@ export function statusEffectActions(
   world: WorldState,
   source: Entity,
   target: Entity,
-): Array<{ id: string; label: string; command: CommandInput }> {
+): Array<{ id: string; label: string; icon?: string; command: CommandInput }> {
   source = world.entities[source.id]!;
   target = world.entities[target.id]!;
   return world.statusEffectPolicy.definitions.flatMap((d) => {
@@ -29,6 +29,7 @@ export function statusEffectActions(
       {
         id: `${d.id}:${target.id}:${active ? 'deactivate' : 'activate'}`,
         label: `${active ? d.actions.deactivate : d.actions.activate}${source.id === target.id ? '' : ` · ${target.name}`}`,
+        icon: active ? d.actions.deactivateIcon : d.actions.activateIcon,
         command: {
           type: 'status-effect',
           definitionId: d.id,

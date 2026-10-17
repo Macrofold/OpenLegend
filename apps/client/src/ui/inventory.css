@@ -27,16 +27,26 @@
 }
 .ol-inventory-header {
   display: grid;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 4px 12px;
   flex: none;
 }
-.ol-inventory-controls > summary {
-  min-block-size: 32px;
-  padding-block: 6px;
-  cursor: pointer;
+.ol-inventory-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
-.ol-inventory-header .ol-inventory-controls > p {
-  margin-block-start: 8px;
+.ol-inventory-controls {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  font-size: var(--text-detail-size);
+}
+.ol-inventory-equipment {
+  grid-column: 1 / -1;
+  justify-self: stretch;
 }
 .ol-inventory-context {
   /* Stacked grids can be longer than the narrow sheet. Both endpoints remain
@@ -460,4 +470,19 @@
 .ol-trade-terms select {
   min-width: 0;
   max-width: 100%;
+}
+
+.ol-inventory-grid-scroll {
+  position: relative;
+}
+.ol-inventory-refreshing {
+  position: absolute;
+  inset-block-start: 4px;
+  inset-inline-end: 8px;
+  z-index: 1;
+  margin: 0;
+  padding: 2px 6px;
+  border-radius: var(--control-radius);
+  background: var(--surface);
+  pointer-events: none;
 }

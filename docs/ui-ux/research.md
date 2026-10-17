@@ -438,6 +438,14 @@ Mike explicitly requested object-opened grids and ordinary play without executio
 
 ## Local implementation evidence
 
+### October 16 world-first redesign refresh
+
+Reopened the existing [Valheim build palette](screenshots/valheim/07-build-menu.jpg), [selected building-piece view](screenshots/valheim/13-building-piece-context.jpg) and [Minecraft recipe book](screenshots/minecraft/02-recipe-book.jpg) as images. The Valheim views visibly keep the world, selected piece, material requirements and placement/rotation controls together. Minecraft visibly separates the searchable recipe choices from the selected recipe and inventory. These are the already attributed atlas images, not newly captured live sessions in those games.
+
+Refreshed primary references: [Mojang's crafting guide](https://www.minecraft.net/en-us/article/how-craft), [Facepunch's Building Plan entry](https://wiki.facepunch.com/rust/item/building.planner), [Roblox Studio documentation](https://create.roblox.com/docs/studio) and [EA's SimCity 4 Deluxe manual](https://cdn.akamai.steamstatic.com/steam/apps/24780/manuals/SIMC4DpcMAN%28ukeng%29_DDAM.pdf). The manual documents separate camera/building rotation, release-tool and world-view controls; it does not establish modern multiplayer behavior. Roblox Studio is an authoring reference, not evidence of every Roblox game's player UI. The Facepunch item page alone is not evidence for an entire construction workflow.
+
+Applied synthesis: choose an illustrated option, manipulate its preview in the world, show the current requirements and expose one clear commit/cancel path. Keep the choice catalogue out of the way during placement. A reusable action browser serves both transient right-click menus and persistent object inspection. Small recipe summaries expose material shortfalls before commitment, with detailed evidence opened deliberately. These are Open Legend decisions under the [world-first specification](../projects/player-experience-overhaul-feature-spec.md), not copied game laws. New runtime screenshots stay outside Git; [the verification report](../verification/player-experience-overhaul.md) records the actual local checks.
+
 ### OL01
 
 **OpenLegend shelter delivery review, October 6, 2026.** [Recorded browser and native evidence](../verification/editable-shelters.md#delivery-review).

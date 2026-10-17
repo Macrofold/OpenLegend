@@ -16,7 +16,7 @@ Choose checks by impact: pinned Prettier on changed files, `pnpm typecheck` for 
 
 If a check fails, distinguish introduced failures from an existing baseline using the diff and available evidence. `pnpm typecheck` also checks test sources; stale tests can block it without proving the production build is broken. Report both outcomes where checked; never suppress diagnostics or claim the whole branch is green from a narrower pass. Required CI remains a merge gate unless maintainers explicitly decide otherwise.
 
-Stress meaningful hot-path changes under the [performance skill](../skills/openlegend-performance/SKILL.md). Record specific missing coverage, reproduction and expected behavior in its focused tracker, using [TODO](../../docs/maintainers/TODO.md) only without a focused owner. Consolidate related gaps and remove only clearly obsolete requirements, not unmet checks. Deferred verification is not acceptance.
+Stress meaningful hot-path changes under the [performance skill](../skills/openlegend-performance/SKILL.md). Before interpreting timings, confirm the intended active caller path ran: presence, pause/recovery state and expected prepared results must match the workload. An expired session returning a cheap refusal does not measure active inventory preparation. Discard such samples; distinguish helper, complete service, HTTP and rendered-interaction costs. Record specific missing coverage, reproduction and expected behavior in its focused tracker, using [TODO](../../docs/maintainers/TODO.md) only without a focused owner. Consolidate related gaps and remove only clearly obsolete requirements, not unmet checks. Deferred verification is not acceptance.
 
 ## Rebase verification
 

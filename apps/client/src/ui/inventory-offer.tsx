@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../design-system/loading';
 import { namePhrase } from '@open-legend/language';
 import { useEffect, useId, useState } from 'react';
 import type {
@@ -87,7 +88,7 @@ export function InventoryOffer({
           setCursor(undefined);
         }}
       />
-      {active && !current && <p role="status">Finding recipients…</p>}
+      <LoadingIndicator active={active && !current} label="Finding recipients" />
       {current?.error && <p role="alert">{current.error}</p>}
       {current?.page?.message && <p role="status">{current.page.message}</p>}
       <ul>

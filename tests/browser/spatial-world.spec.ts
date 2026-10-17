@@ -38,7 +38,7 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
     await enterGame(page);
     const canvas = page.locator('#world');
     await expect(canvas).toHaveAttribute('data-ready', 'true');
-    await expect(canvas).toHaveAttribute('data-floor', 'all');
+    await expect(page.getByLabel('Focus level', { exact: true })).toHaveCount(0);
     await page.screenshot({ path: info.outputPath('spatial-clearing.png') });
     // The first local browser owns control in this fresh database; no wall-clock ticks run.
     await expect(page.getByRole('button', { name: 'Pause world', exact: true })).toBeVisible();
@@ -71,17 +71,19 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
       .toBeCloseTo(3);
     await page.getByRole('button', { name: 'Pause world', exact: true }).click();
     await page.getByRole('button', { name: 'Center on player', exact: true }).click();
-    await page.getByRole('button', { name: 'Camera options', exact: true }).click();
+    await page.getByRole('button', { name: 'Camera settings', exact: true }).click();
     await page.getByRole('button', { name: 'Rotate right', exact: true }).click();
     await expect(canvas).toHaveAttribute('data-camera-yaw', String(Math.PI / 4));
     await page.getByRole('button', { name: 'Perspective view', exact: true }).click();
     await expect(canvas).toHaveAttribute('data-projection', 'perspective');
-    await page.getByLabel('Focus level', { exact: true }).selectOption('ground');
-    await expect(canvas).toHaveAttribute('data-floor', 'ground');
+    await canvas.focus();
+    await page.keyboard.down('Alt');
+    await expect(canvas).toHaveAttribute('data-revealing', 'true');
     expect(
       game.service.world.map.spatial.surfaces.some((surface) => surface.id === 'lookout-deck'),
     ).toBe(true);
-    await page.getByLabel('Focus level', { exact: true }).selectOption('');
+    await page.keyboard.up('Alt');
+    await expect(canvas).toHaveAttribute('data-revealing', 'false');
     await page.getByRole('button', { name: 'Lock rotation', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Rotate right', exact: true })).toBeDisabled();
     await page.getByRole('button', { name: 'Lock rotation', exact: true }).click();

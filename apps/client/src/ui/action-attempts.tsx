@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../design-system/loading';
 import {
   boundedText,
   readRetainedRequest,
@@ -349,15 +350,14 @@ export function ActionAttempts({
   };
   return (
     <div className="ol-character-actions">
-      {retained.status !== 'empty' && (
+      <LoadingIndicator active={requestPhase === 'sending'} label="Sending original action" />
+      {retained.status !== 'empty' && requestPhase !== 'sending' && (
         <div className="ol-notice" role="status">
-          <strong>
-            {requestPhase === 'sending'
-              ? 'Sending original action…'
-              : requestPhase === 'checking'
-                ? 'Checking original action…'
-                : 'Original action result not confirmed'}
-          </strong>
+          <strong>Original action result not confirmed</strong>
+          <LoadingIndicator
+            active={requestPhase === 'checking'}
+            label="Reading original action result"
+          />
           {retained.status === 'pending' ? (
             <>
               <p>{retained.request.text}</p>
@@ -418,7 +418,7 @@ export function ActionAttempts({
           )}
           {work && (
             <details className="ol-character-work-details">
-              <summary>God mode · Work steps</summary>
+              <summary>Work steps (God mode)</summary>
               <p>
                 <StateTag state={work.state} /> {work.label}
               </p>
@@ -463,7 +463,7 @@ export function ActionAttempts({
           }
         }}
       >
-        <strong>{view.player.name} · Action</strong>
+        <strong>{view.player.name}: Action</strong>
         <div className="ol-action-subject">
           {subject ? (
             <>
@@ -536,10 +536,10 @@ export function ActionAttempts({
           )}
           <details>
             <summary>Examples and wording</summary>
-            {examples.length > 0 && <p>{examples.map((example) => `“${example}”`).join(' · ')}</p>}
+            {examples.length > 0 && <p>{examples.map((example) => `“${example}”`).join('; ')}</p>}
             <p className="ol-caption">
-              Describe an action here; use Conversation to speak. Coordinates use X,Z. Left and
-              right refer to your character.
+              Describe an action here; use Speak to say something. Left and right refer to your
+              character.
             </p>
           </details>
           {unavailable && <p role="status">{unavailable}</p>}
@@ -556,15 +556,13 @@ export function ActionAttempts({
             isPending={busy}
             onPress={() => void send()}
           >
-            {busy
-              ? 'Sending action…'
-              : !hasWork
-                ? 'Attempt action'
-                : mode === 'replace'
-                  ? 'Replace work'
-                  : mode === 'interrupt'
-                    ? 'Pause and attempt'
-                    : 'Queue action'}
+            {!hasWork
+              ? 'Attempt action'
+              : mode === 'replace'
+                ? 'Replace work'
+                : mode === 'interrupt'
+                  ? 'Pause and attempt'
+                  : 'Queue action'}
           </Button>
           <Button variant="quiet" onPress={closeEditor}>
             Cancel

@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../design-system/loading';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ApiResult, GameView } from '@open-legend/protocol';
 import { post } from '../api';
@@ -120,7 +121,7 @@ export function InventionSettings({ view }: { view: GameView }) {
       {!view.godMode && (
         <p className="ol-muted">You can read these world permissions. A creator can change them.</p>
       )}
-      {loading && <p role="status">Reading the current world permissions…</p>}
+      <LoadingIndicator active={loading} label="Reading world permissions" />
       {stale && (
         <p role="status">
           The world permissions changed while this panel was open.{' '}

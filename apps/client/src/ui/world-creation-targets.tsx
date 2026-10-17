@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../design-system/loading';
 import { useEffect, useId, useRef, useState } from 'react';
 import type { WorldAgentWorkResult, WorldCreationTargetView } from '@open-legend/protocol';
 import { getScoped } from '../api';
@@ -30,9 +31,14 @@ export function WorldCreationTargets({
   eligibleCallback.current = onEligible;
   useEffect(() => {
     const controller = new AbortController();
-    setTargets(undefined);
     eligibleCallback.current(undefined);
-    if (!connected) return;
+    if (!connected) {
+      setTargets(undefined);
+      setLoading(false);
+      return;
+    }
+    // The parent keys this chooser by private owner, session and exact opening revision.
+    // Refresh keeps those labels steady but grants no eligibility until the read succeeds.
     setLoading(true);
     setError('');
     void getScoped<WorldAgentWorkResult<WorldCreationTargetView[]>>(
@@ -60,12 +66,15 @@ export function WorldCreationTargets({
   const target = targets?.find((entry) => entry.id === selectedId);
   useEffect(() => {
     eligibleCallback.current(
-      (target?.status === 'available' || target?.status === 'unchecked') && connected
+      (target?.status === 'available' || target?.status === 'unchecked') &&
+        connected &&
+        !loading &&
+        !error
         ? target
         : undefined,
     );
     return () => eligibleCallback.current(undefined);
-  }, [target, connected]);
+  }, [target, connected, loading, error]);
   return (
     <section
       ref={section}
@@ -78,9 +87,9 @@ export function WorldCreationTargets({
         Only hosts prepared by the operator are offered. Starting this opening cannot replace an
         existing world.
       </p>
-      {loading && <p role="status">Reading permitted hosts…</p>}
+      <LoadingIndicator active={loading} label="Reading permitted hosts" />
       {!connected && <p role="status">Reconnect to check prepared hosts.</p>}
-      {targets?.length === 0 && (
+      {targets?.length === 0 && !loading && !error && (
         <p>No permitted prepared host is available. Your opening remains saved.</p>
       )}
       <label>

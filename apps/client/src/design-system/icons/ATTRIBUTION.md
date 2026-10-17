@@ -36,3 +36,5 @@ Lucide utility icons: Lucide contributors, ISC license (see LUCIDE-LICENSE).
 `ui.speech` is an original OpenLegend outline glyph, licensed AGPL-3.0-only.
 
 `ui.hearing` is an original OpenLegend ear outline glyph, licensed AGPL-3.0-only.
+
+`ui.build` is an original OpenLegend building outline glyph, licensed AGPL-3.0-only.

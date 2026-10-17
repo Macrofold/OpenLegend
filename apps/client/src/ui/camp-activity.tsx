@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../design-system/loading';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
 import type {
@@ -168,11 +169,7 @@ export function ActivityEntries({
   if (!permitted) return null;
   return (
     <div className="ol-task-entries">
-      {!current && (
-        <p className="ol-caption" role="status">
-          Reading available tasks…
-        </p>
-      )}
+      <LoadingIndicator active={!current} label="Reading available tasks" />
       {entries.map((entry) =>
         presentation === 'menu' ? (
           <AriaButton
@@ -905,8 +902,8 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           onChange={(event) => change(key, event.target.value)}
         />
         <span className="ol-caption" id={`${fieldId}-${key}-hint`}>
-          Whole units{field.minimum !== undefined ? ` · at least ${field.minimum}` : ''}
-          {field.maximum !== undefined ? ` · at most ${field.maximum}` : ''}.
+          Whole units{field.minimum !== undefined ? `, at least ${field.minimum}` : ''}
+          {field.maximum !== undefined ? `, at most ${field.maximum}` : ''}.
           {draft[key] !== undefined && issues[key] ? ` ${issues[key]}` : ''}
         </span>
       </label>
@@ -1050,7 +1047,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
             Retry reading tasks
           </Button>
         ) : (
-          <p role="status">Reading this object's tasks…</p>
+          <LoadingIndicator active label="Reading object tasks" />
         )
       ) : !presentation || !bound ? (
         <p role="status">
@@ -1206,7 +1203,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
                         .map((time) => ({
                           id: time.name,
                           label: `Next ${time.name}`,
-                          description: `Day ${clockParts(time.at, view.clock.offsetHours).day} · ${clockParts(time.at, view.clock.offsetHours).hour}:${clockParts(time.at, view.clock.offsetHours).minute}`,
+                          description: `Day ${clockParts(time.at, view.clock.offsetHours).day}, ${clockParts(time.at, view.clock.offsetHours).hour}:${clockParts(time.at, view.clock.offsetHours).minute}`,
                         })),
                     ]}
                     onChange={(when) => {
@@ -1267,11 +1264,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
                 <p role="alert">{currentReview.result.message}</p>
               )
             ) : ready ? (
-              <p>
-                {invitation
-                  ? 'Checking invitation conditions…'
-                  : 'Checking current supplies and conditions…'}
-              </p>
+              <LoadingIndicator active label="Checking task requirements" />
             ) : (
               <p>{Object.values(issues)[0]}</p>
             )}

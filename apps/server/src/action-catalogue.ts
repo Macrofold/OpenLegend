@@ -1,10 +1,13 @@
 import { nativeCommandKind } from './native-command-kind.js';
 import {
+  canonicalJson,
   nativeCommandSupported,
   installedActionMeaning,
   installedActionMeanings,
   rangedTargetAllowed,
   rangedPolicy,
+  selectedContextActions,
+  nativeGatherShortcut,
 } from '@open-legend/domain';
 import {
   isEquipped,
@@ -12,8 +15,6 @@ import {
   BASE_GUARD_TEXT,
   rangedChoiceLabel,
   BASE_RANGED_TEXT,
-  BASE_EVASION_KEYWORDS,
-  evasionChoices,
   BASE_OUTING,
   outingInvitationProblem,
   BASE_COMBAT_HELP,
@@ -52,12 +53,50 @@ import type {
   CatalogueAction,
   ActionOption,
   CommandInput,
+  ApiResult,
 } from '@open-legend/protocol';
 import type { WorldService } from './world-service.js';
 import { ACTION_DESCRIPTIONS, actionDescriptions } from './action-descriptions.js';
+import { awarenessBindsSubject } from './entity-references.js';
 
 /** Safe selected-subject failures; other exceptions remain generic at the HTTP boundary. */
 export class ActionCatalogueUnavailable extends Error {}
+
+/** The shortcut selected an implicit default, unlike an explicit menu choice.
+ * Recheck only at its serialized admission, after recovering any earlier receipt. */
+export function primaryActionRefusal(
+  service: WorldService,
+  input: CommandInput,
+  scope: RequestScope,
+): ApiResult | undefined {
+  // Confirming a lethal review explicitly chooses that bound attack; the native
+  // review owner still checks the exact reviewed command, bodies and permission.
+  if (!input.primaryAction || input.lethalReviewId) return;
+  const stale: ApiResult = {
+    ok: false,
+    code: 'stale-primary-action',
+    message: 'The preferred action for this object changed. Choose it again.',
+  };
+  let catalogue: ActionCatalogue;
+  try {
+    catalogue = actionCatalogue(service, { targetId: input.primaryAction.targetId }, scope);
+  } catch (error) {
+    if (error instanceof ActionCatalogueUnavailable) return stale;
+    throw error;
+  }
+  const action = catalogue.actions.find((entry) => entry.id === catalogue.defaultActionId);
+  if (action?.id !== input.primaryAction.actionId || action.intent.kind !== 'command') return stale;
+  const { primaryAction: _selection, lethalReviewId: _review, ...command } = input;
+  // Compare the wire meaning: optional undefined fields disappear in transport,
+  // and object property order must not change an otherwise identical choice.
+  if (canonicalJson(command) !== canonicalJson(action.intent.command)) return stale;
+  if (!action.enabled)
+    return {
+      ok: false,
+      code: 'unavailable',
+      message: action.reason ?? 'This action is unavailable now.',
+    };
+}
 
 // Finite native family adapters remain here; INV-3 owns shared discovery/execution.
 // See archive/07-technical-architecture/world-module-runtime.md#7-action-families-and-agency-integration.
@@ -102,8 +141,23 @@ export function actionCatalogue(
       : { ok: false, message: option.reason ?? controlUnavailable.message };
   if (selectedItem) {
     const item = selectedItem;
-    const projected = inventoryItemChoices(service, scope, item, preview),
-      options = [...projected.actions];
+    const projected = inventoryItemChoices(service, scope, item, preview);
+    const options = projected.actions
+      .filter((option) => !context.inventoryGroup || option.command.type !== 'split-item')
+      .map(
+        (option): ActionOption =>
+          context.inventoryGroup && option.command.type === 'drop'
+            ? {
+                ...option,
+                label: `Drop ${context.quantity ?? item.quantity} ${service.world.itemDefinitions[item.definitionId]!.name}`,
+                command: {
+                  ...option.command,
+                  inventoryGroup: context.inventoryGroup,
+                  quantity: context.quantity ?? item.quantity,
+                },
+              }
+            : option,
+      );
     if (context.destinationId) {
       const destination = service.world.entities[context.destinationId];
       if (!destination || custodian(service.world, destination.id) !== scope.actorId)
@@ -113,6 +167,7 @@ export function actionCatalogue(
         itemId: item.id,
         targetId: destination.id,
         quantity: context.quantity ?? item.quantity,
+        ...(context.inventoryGroup ? { inventoryGroup: context.inventoryGroup } : {}),
         expectedRevision: item.revision,
         placementRevision: item.placementRevision,
         targetRevision: destination.inventoryRevision ?? 0,
@@ -134,8 +189,10 @@ export function actionCatalogue(
           label: option.label,
           icon: option.icon ?? nativeActionIcon(option.command.type),
           category: 'Possessions',
-          description: descriptions.describe(option.command),
-          facts: descriptions.facts(option.command),
+          description: option.command.inventoryGroup
+            ? `Move ${option.command.quantity} units from this stack.`
+            : `${context.inventoryGroup ? `Uses one stack of ${item.quantity} units. ` : ''}${descriptions.describe(option.command)}`,
+          facts: option.command.inventoryGroup ? [] : descriptions.facts(option.command),
           keywords: [service.world.itemDefinitions[item.definitionId]!.name],
           enabled: availability.ok,
           ...(!availability.ok ? { reason: availability.message } : {}),
@@ -167,6 +224,7 @@ export function actionCatalogue(
     keywords: string[] = [],
     targetId?: string,
     provided?: { availability: { ok: boolean; message: string }; description: string },
+    icon = nativeActionIcon(command.type),
   ) => {
     if (actionIds.has(id) || !nativeCommandSupported(world, nativeCommandKind(command.type)))
       return;
@@ -197,7 +255,7 @@ export function actionCatalogue(
     actions.push({
       id,
       label,
-      icon: nativeActionIcon(command.type),
+      icon,
       category,
       description: provided?.description ?? descriptions.describe(command),
       facts: descriptions.facts(command),
@@ -307,25 +365,8 @@ export function actionCatalogue(
       ? { ...worldPosition(selected), surfaceId: worldSupport(selected)! }
       : undefined
     : context.position;
-  if (position && (!selected || selected.id === scope.actorId) && bodyPolicy(world)?.evasion)
-    add(
-      'evade:point',
-      `${bodyPolicy(world)!.evasion!.label} here`,
-      'Defense',
-      { type: 'evade', position },
-      BASE_EVASION_KEYWORDS,
-      selected?.id,
-    );
-  if (context.catalogue || selected?.id === scope.actorId)
-    for (const choice of evasionChoices(world, observation.actor))
-      add(
-        `evade:${choice.label}`,
-        choice.label,
-        'Defense',
-        { type: 'evade', position: choice.destination },
-        BASE_EVASION_KEYWORDS,
-        selected?.id,
-      );
+  // Evasion remains a native capability. Deliberate menu browsing is not its
+  // player interaction; a future quick control will use the same native admission.
   if (position)
     add(
       'move',
@@ -341,8 +382,17 @@ export function actionCatalogue(
       ? [selected]
       : [])
     for (const option of statusEffectActions(world, world.entities[scope.actorId]!, target))
-      add(option.id, option.label, 'States', option.command, [], target.id);
+      add(option.id, option.label, 'States', option.command, [], target.id, undefined, option.icon);
   const self = world.entities[scope.actorId]!.actor!;
+  if (self.action?.ranged?.manual && self.action.targetId)
+    add(
+      `release-shot:${self.action.id}`,
+      BASE_RANGED_TEXT.shootingName,
+      'Combat',
+      { type: 'release-shot', aimId: self.action.id },
+      BASE_RANGED_TEXT.keywords,
+      self.action.targetId,
+    );
   // Select carried tools/projectiles once for this immutable actor read, before
   // expanding their uses across perceived targets. Item browsing keeps only its tool.
   const tools = actionTargets.some((target) => target.actor)
@@ -455,7 +505,7 @@ export function actionCatalogue(
     if (target.resource && !target.resource.cast)
       add(
         `gather-${target.id}`,
-        `Gather ${target.name}`,
+        nativeGatherShortcut(world, target.resource.definitionId)?.label ?? `Gather ${target.name}`,
         'Gather',
         { type: 'gather', targetId: target.id },
         [world.itemDefinitions[target.resource.definitionId]!.name, 'collect'],
@@ -521,7 +571,7 @@ export function actionCatalogue(
       // Opening a composer is read-only, including while paused or AI is unconfigured.
       actions.push({
         id: `talk-${target.id}`,
-        label: `Talk to ${namePhrase(target, 'definite')}`,
+        label: `Speak to ${namePhrase(target, 'definite')}`,
         category: 'Social',
         description: `Open a conversation with ${namePhrase(target, 'definite')}. Ask about their experiences, discuss a plan, or offer a suggestion. You can edit your message before sending it.`,
         keywords: ['chat', 'speak', 'conversation'],
@@ -549,7 +599,7 @@ export function actionCatalogue(
         if (!actionIds.has(option.id))
           add(
             option.id,
-            `${option.label} · ${definition.name}`,
+            `${option.label} (${definition.name})`,
             'Possessions',
             option.command,
             [definition.name],
@@ -571,7 +621,7 @@ export function actionCatalogue(
     if (definition.nutrition && bodyPolicy(world)?.consumption)
       add(
         `eat-${item.id}`,
-        `${bodyPolicy(world)!.consumption!.label} · ${definition.name}`,
+        `${bodyPolicy(world)!.consumption!.label} ${definition.name}`,
         'Body',
         { type: 'eat', itemId: item.id },
         [],
@@ -757,9 +807,52 @@ export function actionCatalogue(
     if (meaning.fallback) includeUnavailableCategory(command, meaning.fallback.category);
   }
   includeUnavailableCategory('talk', 'Social');
+  // Prepare once per explicit catalogue request, never per frame or per offer.
+  // The world ranks permitted exact choices; ordinary command dispatch still admits
+  // the selected binding and obtains any required lethal confirmation.
+  // Active flight alone cannot identify a shooter the character never witnessed.
+  // Reuse the bounded resident evidence tail and its continuous-recognition guard.
+  const observedLaunches = new Set<number>();
+  if (selected?.actor)
+    for (const aware of world.experience?.awareness[scope.actorId] ?? [])
+      if (
+        aware.eventType === 'shot-released' &&
+        aware.sourceId === selected.id &&
+        aware.targetId === scope.actorId &&
+        awarenessBindsSubject(world, scope.actorId, aware, selected.id)
+      )
+        observedLaunches.add(aware.at);
+  const present = selectedContextActions(world, scope.actorId, selected?.id, observedLaunches);
+  let preferred: CatalogueAction | undefined;
+  for (const action of actions) {
+    const intent = action.intent;
+    const presentation = present({
+      ...(intent.kind === 'command'
+        ? {
+            command: nativeCommandKind(intent.command.type),
+            definitionId: intent.command.definitionId,
+            itemId: intent.command.itemId,
+          }
+        : {}),
+      speech: intent.kind === 'compose' && intent.mode === 'chat',
+    });
+    action.priority = presentation.priority;
+    if (
+      selected &&
+      presentation.primary &&
+      (!preferred ||
+        (action.priority ?? 0) > (preferred.priority ?? 0) ||
+        (action.priority === preferred.priority && action.enabled && !preferred.enabled))
+    )
+      preferred = action;
+  }
+  // Keep the menu's first concrete choice identical to the direct shortcut even
+  // when equally ranked tools have different alphabetical labels.
+  if (preferred) preferred.priority = (preferred.priority ?? 0) + 1;
   return {
     revision: service.version,
     actions,
+    ...(preferred ? { defaultActionId: preferred.id } : {}),
     categories: [
       ...new Set([...actions.map((action) => action.category), ...unavailableCategories]),
     ],

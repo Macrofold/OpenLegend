@@ -480,6 +480,7 @@ function recordEvent(
         urgency: event.urgency ?? urgency,
         eventType: perceived.eventType,
         eventData: perceived.eventData,
+        references: perceived.references,
         ...(perceived.sourceId ? { sourceId: perceived.sourceId } : {}),
         ...(perceived.targetId ? { targetId: perceived.targetId } : {}),
         triggerKind:

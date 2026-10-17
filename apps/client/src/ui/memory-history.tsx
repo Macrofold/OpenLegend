@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { MemoryEntryView, MemoryHistoryPage } from '@open-legend/protocol';
 import { post } from '../api';
 import { Button, Icon, IconButton } from '../design-system/components';
+import { LoadingIndicator } from '../design-system/loading';
 import { EventTime } from './event-time';
 import { ConversationThread } from './conversation';
 import './reading.css';
@@ -36,47 +37,62 @@ export function MemoryHistory({
   const [openingRevision, setOpeningRevision] = useState(0);
   const request = useRef(0);
   const failedOlder = useRef(false);
+  const controller = useRef<AbortController | null>(null);
+  const loadedQueryKey = useRef<string | null>(null);
   const composing = useRef(false);
   const searchInput = useRef<HTMLInputElement>(null);
   const recentRevision = JSON.stringify(recent);
   const baseline = useRef(recentRevision);
   const filtered = !!query || thoughts;
   const path = owned ? '/api/memories' : '/api/god/memories';
+  const queryKey = JSON.stringify([query, thoughts]);
+  const currentResults =
+    loaded !== null ? loadedQueryKey.current === queryKey : !filtered && snapshot !== undefined;
 
-  async function page(cursor?: string) {
-    const result = await post<Result>(path, {
-      actorId,
-      ...(cursor ? { cursor } : {}),
-      ...(query ? { query } : {}),
-      ...(thoughts ? { thoughts } : {}),
-    });
+  async function page(signal: AbortSignal, cursor?: string) {
+    const result = await post<Result>(
+      path,
+      {
+        actorId,
+        ...(cursor ? { cursor } : {}),
+        ...(query ? { query } : {}),
+        ...(thoughts ? { thoughts } : {}),
+      },
+      signal,
+    );
     if (!result.ok) throw new Error(result.message ?? 'Memories are unavailable.');
     return result;
   }
-  /** Loads the first page, or the next older page. Leaving the live snapshot loads two
-   * pages, so the first press reaches memories older than the snapshot. */
   /** Ignores any page still loading. */
   function cancel() {
     request.current++;
+    controller.current?.abort();
     setBusy(false);
   }
+  /** Loads the first page, or the next older page. Leaving the live snapshot loads two
+   * pages, so the first press reaches memories older than the snapshot. */
   async function load(older: boolean) {
+    if (!visible || (older && !currentResults)) return;
+    controller.current?.abort();
+    const abort = new AbortController();
+    controller.current = abort;
     const id = ++request.current;
     const atRevision = recentRevision;
     failedOlder.current = older;
     setBusy(true);
     setError('');
     try {
-      let result = await page(older ? (next ?? undefined) : undefined);
+      let result = await page(abort.signal, older ? (next ?? undefined) : undefined);
       if (id !== request.current) return;
       let entries = result.entries;
       if (!older && !filtered && recent) {
         if (result.next) {
-          result = await page(result.next);
+          result = await page(abort.signal, result.next);
           entries = [...result.entries, ...entries];
         }
       }
       if (id !== request.current) return;
+      loadedQueryKey.current = queryKey;
       setLoaded((current) => {
         if (!older || !current) return entries;
         const seen = new Set(current.map((entry) => entry.id));
@@ -100,23 +116,26 @@ export function MemoryHistory({
   // A new search or filter starts from the newest matches; plain inspection loads its own
   // first page when there is no live snapshot.
   useEffect(() => {
-    setLoaded(null);
-    setNext(null);
-    setScanLimited(false);
-    setError('');
-    if (filtered || !recent) void load(false);
-    else {
-      cancel();
+    cancel();
+    if (!visible) return;
+    if (filtered || !recent) {
+      if (!currentResults) void load(false);
+    } else if (!currentResults) {
+      setLoaded(null);
+      setNext(null);
+      setScanLimited(false);
+      setError('');
       setSnapshot(recent);
       baseline.current = recentRevision;
       setOpeningRevision((value) => value + 1);
     }
     return () => {
       request.current++;
+      controller.current?.abort();
     };
-  }, [query, thoughts]);
+  }, [query, thoughts, visible]);
 
-  const shown = loaded ?? (filtered ? [] : (snapshot ?? []));
+  const shown = loaded ?? snapshot ?? [];
   const staleRecent = recentRevision !== baseline.current;
   const moreLabel = filtered
     ? scanLimited
@@ -138,8 +157,6 @@ export function MemoryHistory({
           event.preventDefault();
           if (composing.current) return;
           if (draft.trim() === query) return;
-          setLoaded(null);
-          setNext(null);
           setError('');
           setQuery(draft.trim());
         }}
@@ -191,13 +208,14 @@ export function MemoryHistory({
         )}
       </form>
       <p className="ol-meta" role="status">
-        {busy
-          ? 'Loading memories…'
-          : error
-            ? 'Reading did not finish. Any entries already loaded are kept below.'
+        <LoadingIndicator active={busy} label="Loading memories" />
+        {error
+          ? 'Reading did not finish. Any entries already loaded are kept below.'
+          : !currentResults
+            ? null
             : filtered
               ? loaded === null
-                ? 'Searching memories…'
+                ? null
                 : `${shown.length} ${shown.length === 1 ? 'memory' : 'memories'}${query ? ` matching “${query}”` : ''}${
                     scanLimited
                       ? '. This search stopped at its record limit; older memories remain to search.'
@@ -224,6 +242,7 @@ export function MemoryHistory({
           </Button>
         </div>
       )}
+      {error && !currentResults && shown.length > 0 && <p>Earlier search results remain below.</p>}
       <Button
         size="sm"
         isDisabled={busy}
@@ -258,6 +277,7 @@ export function MemoryHistory({
         ariaLabel={owned ? 'Your retained memories' : 'Character memory records'}
         newMessageLabel="New memories"
         before={
+          currentResults &&
           (filtered ? !!next : loaded === null ? !!snapshot?.length : !!next) && (
             <Button size="sm" isPending={busy} onPress={() => void load(loaded !== null)}>
               {moreLabel}
@@ -275,6 +295,7 @@ export function MemoryHistory({
         }))}
         empty={
           !busy &&
+          currentResults &&
           (!filtered || loaded !== null) &&
           !error && (
             <p className="ol-meta">

@@ -100,14 +100,16 @@ Use plain sections when most content is needed or simultaneous comparison matter
 
 ## Which overlay?
 
-| Pattern                       | Appropriate use                                                          | Focus and dismissal                                                                        |
-| ----------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| Tooltip                       | Short supplementary, noninteractive label/explanation                    | Hover and focus where supported; no essential-only instruction; current plain-text styling |
-| Popover                       | Small contextual choice or filter                                        | Defined keyboard route, collision handling and return to anchor                            |
-| Context menu                  | Commands for a particular object                                         | Alternative discoverable route; no form inside a menu item                                 |
-| Panel / drawer / narrow sheet | Continued inspection, inventory, chat or authoring                       | May be modal or non-modal; declare actual behavior rather than infer it from appearance    |
-| Modal dialog                  | Bounded task requiring exclusive attention or consequential confirmation | Background inert, managed focus, clear exit, focus restoration                             |
-| Dedicated workspace           | Larger comparison or authoring task                                      | Clear return to the prior world and selection                                              |
+| Pattern                       | Appropriate use                                                          | Focus and dismissal                                                                               |
+| ----------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| Tooltip                       | Short supplementary, noninteractive label/explanation                    | Hover and focus where supported; readable pointer-anchored surface; no essential-only instruction |
+| Popover                       | Small contextual choice or filter                                        | Defined keyboard route, collision handling and return to anchor                                   |
+| Context menu                  | Commands for a particular object                                         | Alternative discoverable route; no form inside a menu item                                        |
+| Panel / drawer / narrow sheet | Continued inspection, inventory, chat or authoring                       | May be modal or non-modal; declare actual behavior rather than infer it from appearance           |
+| Modal dialog                  | Bounded task requiring exclusive attention or consequential confirmation | Background inert, managed focus, clear exit, focus restoration                                    |
+| Dedicated workspace           | Larger comparison or authoring task                                      | Clear return to the prior world and selection                                                     |
+
+Panel hover explanations use one shared opaque, padded surface. Anchor its lower left or right corner near the pointer, choosing the side with more usable space; flip vertically and clamp to the viewport when necessary. Keyboard focus uses the control as the anchor. Portals escape clipping without losing their modal context, and text remains readable at enlarged scale. Do not implement a separate placement rule or transparent label for each mechanic, trait, action or utility. The October 16, 2026 owner request supersedes the former plain transparent tooltip treatment.
 
 A tooltip cannot contain interactive links or controls. Use an explicitly opened popover/detail view for that content. Keep supplementary hover content dismissible and usable when the pointer moves onto it as required by the pattern; never use a tooltip to hide a required decision. [S02](research.md#s02) [S11](research.md#s11)
 

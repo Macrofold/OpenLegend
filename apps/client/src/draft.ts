@@ -2,7 +2,7 @@ import type { GameView } from '@open-legend/protocol';
 
 type DraftStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 type GetStorage = () => DraftStorage;
-export type ComposerMode = 'chat' | 'invention';
+export type ComposerMode = 'speak' | 'act';
 export interface ComposerItem {
   itemId: string;
   name: string;
@@ -14,16 +14,11 @@ export interface ComposerDraft {
 }
 export const emptyDraft = (): ComposerDraft => ({ text: '', revision: '' });
 
-/** Connection scope can change without changing whose private draft this is. */
+/** A pause or connection renewal does not change whose private draft this is.
+ * This storage namespace never grants current permission to send. */
 export function composerDraftScope(view: GameView): string | null {
   const access = view.access;
-  if (
-    !access?.privateDraftScope ||
-    !access.controlling ||
-    access.actorId !== view.player.id ||
-    view.player.participation === 'inactive'
-  )
-    return null;
+  if (!access?.privateDraftScope || access.actorId !== view.player.id) return null;
   return JSON.stringify([
     access.privateDraftScope,
     view.worldId,
@@ -36,9 +31,10 @@ export function composerDraftKey(
   scope: string | null,
   mode: ComposerMode,
   recipientId: string | null,
+  itemId: string | null = null,
 ): string | null {
-  if (!scope || (mode === 'chat' && !recipientId)) return null;
-  return `open-legend:composer-draft:${JSON.stringify([scope, mode, mode === 'chat' ? recipientId : null])}`;
+  if (!scope) return null;
+  return `open-legend:composer-draft:${JSON.stringify([scope, mode, recipientId, itemId])}`;
 }
 
 /** Session storage keeps exact text in this tab, for this character and recipient only. */

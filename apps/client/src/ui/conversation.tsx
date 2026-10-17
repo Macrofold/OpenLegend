@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { Button, Icon, TextTooltip } from '../design-system/components';
+import { LoadingIndicator } from '../design-system/loading';
 import { AutoTextarea } from './auto-textarea';
 import { FailureStatus } from './message-status';
 
@@ -7,18 +8,6 @@ export type ConversationItem = {
   id: string;
   content: ReactNode;
 };
-
-export function TypingIndicator() {
-  return (
-    <span className="ol-typing" role="status" aria-label="Waiting for a reply">
-      <span className="ol-dots" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-      </span>
-    </span>
-  );
-}
 
 export function ConversationMessage({
   role,
@@ -69,11 +58,11 @@ export function ConversationMessage({
         )}
         {children}
       </div>
-      {pending && (
-        <div className="ol-message ol-message-agent ol-message-waiting">
-          <TypingIndicator />
-        </div>
-      )}
+      <LoadingIndicator
+        active={!!pending}
+        label="Waiting for a reply"
+        className="ol-message ol-message-agent ol-message-waiting"
+      />
     </>
   );
 }

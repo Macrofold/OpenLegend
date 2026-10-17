@@ -1,3 +1,4 @@
+export { formatDisplayNumber } from './numbers.js';
 /** English presentation only: no world vocabulary, identity policy or simulation dependencies. */
 export type NameForm = 'count' | 'proper' | 'plural' | 'mass';
 export type NameArticle = 'none' | 'indefinite' | 'definite';

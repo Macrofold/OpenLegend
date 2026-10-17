@@ -1,3 +1,5 @@
+import { formatDisplayNumber } from '@open-legend/language';
+import { LoadingIndicator } from '../design-system/loading';
 import {
   useEffect,
   useLayoutEffect,
@@ -9,7 +11,8 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { ActivityHistory } from './activity-history';
-import { Focusable, Tooltip, TooltipTrigger } from 'react-aria-components';
+import { Focusable } from 'react-aria-components';
+import { PointerTooltip } from '../design-system/pointer-tooltip';
 import type {
   AuthoredAppraisalRequest,
   GodMindView,
@@ -17,7 +20,7 @@ import type {
   MindSubject,
   MindSubjectPage,
 } from '@open-legend/protocol';
-import { post } from '../api';
+import { AccessError, post } from '../api';
 import { EventTime } from './event-time';
 import { SubjectPicker, subjectPath } from './subject-picker';
 import { modalOwnsInput } from './keyboard';
@@ -251,7 +254,7 @@ function KnowledgeEditor({
             </Button>
           </details>
         )}
-        {loading && <p role="status">Loading notes…</p>}
+        <LoadingIndicator active={loading} label="Loading notes" />
         {failed && (
           <Button
             size="sm"
@@ -510,7 +513,7 @@ export function Mind({
       {mind ? (
         <>
           <header className="ol-creator-context">
-            <Tag>{owned ? 'Private to your character' : 'God mode · Private inspection'}</Tag>
+            <Tag>{owned ? 'Private to your character' : 'God mode, Private inspection'}</Tag>
             <h3>{currentSnapshot ? `${mind.name}’s private mind` : 'Private mind'}</h3>
             <p className="ol-caption">
               {owned
@@ -549,14 +552,14 @@ export function Mind({
                   <div key={feeling.id}>
                     <p>
                       {feeling.label}
-                      {feeling.subject ? ` · ${feeling.subject}` : ''}
-                      {feeling.value !== null ? ` · ${Number(feeling.value.toFixed(3))}` : ''}
+                      {feeling.subject ? `, ${feeling.subject}` : ''}
+                      {feeling.value !== null ? `, ${formatDisplayNumber(feeling.value)}` : ''}
                     </p>
                     <p className="ol-caption">
                       {feeling.lifetime === 'persistent'
                         ? 'Persists until resolved'
-                        : feeling.lifetime.replaceAll('-', ' ')}{' '}
-                      · {feeling.coverage}
+                        : feeling.lifetime.replaceAll('-', ' ')}
+                      , {feeling.coverage}
                     </p>
                     {mind.continuity?.authoring && (
                       <Button
@@ -657,7 +660,7 @@ export function Mind({
           </div>
         </>
       ) : (
-        !error && <p>Loading mind…</p>
+        !error && <LoadingIndicator active label="Loading mind" />
       )}
     </div>
   );
@@ -687,15 +690,18 @@ function Preview({
   children: ComponentProps<typeof Focusable>['children'];
 }) {
   return (
-    <TooltipTrigger delay={250} closeDelay={150}>
-      <Focusable>{children}</Focusable>
-      <Tooltip className="ol-root ol-inspection-tooltip" placement="start" offset={8}>
-        <div className="ol-portal-content">
+    <PointerTooltip
+      delay={250}
+      className="ol-inspection-tooltip"
+      content={
+        <>
           <strong>{title}</strong>
           <div>{value}</div>
-        </div>
-      </Tooltip>
-    </TooltipTrigger>
+        </>
+      }
+    >
+      <Focusable>{children}</Focusable>
+    </PointerTooltip>
   );
 }
 function levelLabel(route?: string): string | undefined {
@@ -777,16 +783,16 @@ function shortValue(value: unknown): string {
         ([key, item]) =>
           `${humanize(key)}: ${typeof item === 'object' ? (Array.isArray(item) ? `${item.length} items` : `${Object.keys(item as object).length} fields`) : shortValue(item)}`,
       )
-      .join(' · ') || 'No additional fields'
+      .join(', ') || 'No additional fields'
   );
 }
 function stageInput(call: IntelligenceCall): string {
   if (call.kind === 'Jev')
-    return `${Object.keys(object(path(call.input, 'questions')) ?? {}).length} questions · actor context and candidates`;
+    return `${Object.keys(object(path(call.input, 'questions')) ?? {}).length} questions, actor context and candidates`;
   if (call.kind.startsWith('LM')) {
     const context = path(call.input, 'context') ?? '';
     const rendered = typeof context === 'string' ? context : JSON.stringify(context);
-    return `${lmPurposeTitle(textAt(call.input, 'task'))} · ${rendered.length.toLocaleString()} context characters`;
+    return `${lmPurposeTitle(textAt(call.input, 'task'))}, ${rendered.length.toLocaleString()} context characters`;
   }
   return shortValue(call.input);
 }
@@ -809,13 +815,13 @@ function stageResult(call: IntelligenceCall): string {
     );
     if (rated.length && (choices.length || actionRatings)) {
       const best = Math.max(...rated.map(([, answer]) => Number(path(answer, 'noul') ?? 0)));
-      return [...choices, `${rated.length} actions rated · best ${percent(best)}`].join(' · ');
+      return [...choices, `${rated.length} actions rated, best ${percent(best)}`].join(', ');
     }
     if (rated.length) {
       const yes = rated.filter(([, answer]) => answerBucket(answer) === 'yes').length;
-      return `${yes} included · ${rated.length - yes} excluded`;
+      return `${yes} included, ${rated.length - yes} excluded`;
     }
-    return choices.join(' · ');
+    return choices.join(', ');
   }
   if (call.kind === 'Decision accounting')
     return `${usd(path(call.output, 'total', 'settledUsd'))} across ${String(path(call.output, 'total', 'requests') ?? 0)} requests`;
@@ -868,31 +874,31 @@ function stageGroups(calls: IntelligenceCall[]) {
 }
 
 function stageTitle(call: IntelligenceCall): string {
-  if (call.kind === 'Jev') return `Jev · ${jevPurpose(call)}`;
-  if (call.kind.startsWith('LM ·')) return `LM · ${lmPurposeTitle(textAt(call.input, 'task'))}`;
+  if (call.kind === 'Jev') return `Jev, ${jevPurpose(call)}`;
+  if (call.kind.startsWith('LM ·')) return `LM, ${lmPurposeTitle(textAt(call.input, 'task'))}`;
   switch (call.kind) {
     case 'Embeddings':
-      return 'Semantic retrieval · Query embedding';
+      return 'Semantic retrieval, Query embedding';
     case 'Context and retrieval':
-      return 'Semantic retrieval · Memory context';
+      return 'Semantic retrieval, Memory context';
     case 'Semantic decision':
-      return 'Routing · Selected response level';
+      return 'Routing, Selected response level';
     case 'Level-1 selection':
-      return 'Level 1 · Action selection';
+      return 'Level 1, Action selection';
     case 'Decision accounting':
-      return 'Accounting · Cost by level';
+      return 'Accounting, Cost by level';
     case 'Response admission':
-      return 'Response · Admission';
+      return 'Response, Admission';
     case 'Workflow failure':
-      return 'Workflow · Failure';
+      return 'Workflow, Failure';
     case 'Full harness · world agent':
-      return 'World agent · Conversation';
+      return 'World agent, Conversation';
     case 'Reflection context':
-      return 'Reflection · Context';
+      return 'Reflection, Context';
     case 'Consolidation coverage':
-      return 'Memory consolidation · Coverage';
+      return 'Memory consolidation, Coverage';
     case 'Summary publication':
-      return 'Memory consolidation · Publication';
+      return 'Memory consolidation, Publication';
     default:
       return call.kind;
   }
@@ -1084,7 +1090,7 @@ function jevScores(answer: JsonObject | undefined, options: string[]): string {
     return keys
       .filter((key) => typeof probabilities[key] === 'number')
       .map((key) => `${key} ${percent(Number(probabilities[key]))}`)
-      .join(' · ');
+      .join(', ');
   }
   if (typeof answer?.['noul'] === 'number') {
     return `yes ${percent(answer['noul'])}`;
@@ -1313,8 +1319,8 @@ function LmResponse({ value }: { value: JsonObject }) {
                       ? 'knowledge edit'
                       : kind === 'name'
                         ? 'remembered name'
-                        : kind}{' '}
-              · {String(operation['localId'] ?? index + 1)}
+                        : kind}
+              , {String(operation['localId'] ?? index + 1)}
             </span>
             <p className="ol-prose">{description ?? 'Details unavailable; inspect raw record.'}</p>
             {target != null && <p className="ol-caption">Target: {String(target)}</p>}
@@ -1425,7 +1431,7 @@ function LmSummary({ call, trigger }: { call: IntelligenceCall; trigger?: string
                 `≤ ${valueText(path(call.input, 'maxOutputTokens'))} output tokens`,
             ]
               .filter(Boolean)
-              .join(' · ')}
+              .join(', ')}
           </Labeled>
         )}
         {valueText(context?.['selectedFamily']) && (
@@ -1538,7 +1544,7 @@ function RetrievalSummary({ retrieval }: { retrieval: Retrieval }) {
               {valueText(retrieval.conversation['compactorVersion'])}
             </Labeled>
             <Labeled label="Permitted speech">
-              {valueText(retrieval.conversation['permittedTurns'])} turns ·{' '}
+              {valueText(retrieval.conversation['permittedTurns'])} turns,{' '}
               {valueText(retrieval.conversation['permittedBytes'])} bytes
             </Labeled>
             <Labeled label="Model context">
@@ -1546,11 +1552,11 @@ function RetrievalSummary({ retrieval }: { retrieval: Retrieval }) {
               {valueText(retrieval.conversation['maxBytes'])} bytes
             </Labeled>
             <Labeled label="Recent verbatim speech">
-              {valueText(retrieval.conversation['recentTurns'])} turns ·{' '}
+              {valueText(retrieval.conversation['recentTurns'])} turns,{' '}
               {valueText(retrieval.conversation['recentBytes'])} bytes
             </Labeled>
             <Labeled label="Summary">
-              {valueText(retrieval.conversation['summaryBytes'])} bytes · coverage{' '}
+              {valueText(retrieval.conversation['summaryBytes'])} bytes, coverage{' '}
               {valueText(retrieval.conversation['throughAwarenessSequence']) ?? 'none'}
             </Labeled>
             <Labeled label="Compaction calls">
@@ -1583,7 +1589,7 @@ function RetrievalSummary({ retrieval }: { retrieval: Retrieval }) {
         </Labeled>
         <Labeled label="Optional candidates">{retrieval.candidates.length}</Labeled>
         <Labeled label="Jev judgments">
-          {judged} · {retrieval.attentionStatus ?? 'Status unavailable'}
+          {judged}, {retrieval.attentionStatus ?? 'Status unavailable'}
         </Labeled>
         <Labeled label="Optional entries selected">{selected}</Labeled>
         <Labeled label="Configured vector store">
@@ -1619,7 +1625,7 @@ function RetrievalSummary({ retrieval }: { retrieval: Retrieval }) {
                   <strong>{String(candidate['kind'] ?? candidate['id'])}</strong>
                   <small>{String(candidate['text'] ?? candidate['id'])}</small>
                 </span>
-                <span>{Number(candidate['score']).toFixed(3)}</span>
+                <span>{formatDisplayNumber(Number(candidate['score']))}</span>
               </li>
             ))}
           </ol>
@@ -1753,7 +1759,7 @@ function BillingDetails({ value }: { value: unknown }) {
                     {String(usage?.['output_tokens'] ?? '?')} out
                   </Labeled>
                   <Labeled label="Reporting status">
-                    {valueText(usage?.['completeness']) ?? 'Not reported'} ·{' '}
+                    {valueText(usage?.['completeness']) ?? 'Not reported'},{' '}
                     {valueText(usage?.['provider_cost_status']) ?? 'Cost status unknown'}
                   </Labeled>
                 </dl>
@@ -1871,14 +1877,14 @@ function DecisionAccounting({ call }: { call: IntelligenceCall }) {
                 <small>{label(key)}</small>
                 <span>
                   {Number(group?.['requests'] ?? 0)}{' '}
-                  {Number(group?.['requests']) === 1 ? 'request' : 'requests'} · size{' '}
+                  {Number(group?.['requests']) === 1 ? 'request' : 'requests'}, size{' '}
                   {Number(group?.['inputBytes'] ?? 0).toLocaleString()} input +{' '}
-                  {Number(group?.['schemaBytes'] ?? 0).toLocaleString()} schema/questions · tokens{' '}
+                  {Number(group?.['schemaBytes'] ?? 0).toLocaleString()} schema/questions, tokens{' '}
                   {String(group?.['inputTokens'] ?? 0)} in / {String(group?.['outputTokens'] ?? 0)}{' '}
                   out ({String(group?.['reasoningTokens'] ?? 0)} reasoning)
-                  {group?.['usageMissing'] ? ' · some usage not reported' : ''}
+                  {group?.['usageMissing'] ? ', some usage not reported' : ''}
                   {limit &&
-                    ` · limits: ${String(limit['requestsPerDecision'])} requests, ${usd(limit['decisionUsd'])}`}
+                    `, limits: ${String(limit['requestsPerDecision'])} requests, ${usd(limit['decisionUsd'])}`}
                 </span>
               </span>
               <span className="ol-jev-result">
@@ -2252,8 +2258,8 @@ function Stage({
             <StatusIcon status={outcomeKind(failure ? 'failed' : call.status, call.disposition)} />
             <span className="ol-stage-heading">
               <strong>{stageTitle(call)}</strong>
-              <span className="ol-stage-peek ol-truncate">Input · {stageInput(call)}</span>
-              <span className="ol-stage-peek ol-truncate">Output · {stageResult(call)}</span>
+              <span className="ol-stage-peek ol-truncate">Input: {stageInput(call)}</span>
+              <span className="ol-stage-peek ol-truncate">Output: {stageResult(call)}</span>
             </span>
           </summary>
         </Preview>
@@ -2280,8 +2286,8 @@ function Stage({
               <StatusIcon status={outcomeKind(context.status, context.disposition)} />{' '}
               {context.kind === 'Action context'
                 ? 'Action options and retrieval'
-                : stageTitle(context)}{' '}
-              · {stageResult(context)}
+                : stageTitle(context)}
+              , {stageResult(context)}
             </summary>
             <p className="ol-caption ol-diagnostic-id">Stage ID: {context.id}</p>
             <CopyValue label="Copy input" value={context.input} />{' '}
@@ -2294,7 +2300,7 @@ function Stage({
             <Button
               size="sm"
               variant="quiet"
-              disabled={loadingBilling}
+              busy={loadingBilling}
               onPress={async () => {
                 setLoadingBilling(true);
                 setBillingError('');
@@ -2313,11 +2319,7 @@ function Stage({
                 }
               }}
             >
-              {loadingBilling
-                ? 'Fetching billing…'
-                : remote === undefined
-                  ? 'Fetch billing details'
-                  : 'Refresh billing details'}
+              {remote === undefined ? 'Fetch billing details' : 'Refresh billing details'}
             </Button>
           </div>
         )}
@@ -2339,7 +2341,7 @@ function Stage({
           label={`Show ${call.kind} request and response JSON`}
           onPress={() =>
             showJson({
-              title: `${call.kind} · request and response`,
+              title: `${call.kind}, request and response`,
               value: remote === undefined ? call : { ...call, providerDetails: remote },
             })
           }
@@ -2427,7 +2429,7 @@ function TraceDetail({
                 label="Show full request and response JSON"
                 onPress={() =>
                   showJson({
-                    title: `${detail.root.actorName ?? 'World agent'} · full request and response`,
+                    title: `${detail.root.actorName ?? 'World agent'}, full request and response`,
                     value: { root: detail.root, stages: detail.children, providerDetails: remote },
                   })
                 }
@@ -2457,7 +2459,7 @@ function TraceDetail({
             <Labeled label="Child stages">{detail.children.length}</Labeled>
             <Labeled label="Recorded cost">
               {row.costIncomplete && row.knownCostUsd === 0
-                ? 'Unknown · usage unreported'
+                ? 'Unknown, usage unreported'
                 : `$${row.knownCostUsd.toFixed(6)}${row.costIncomplete ? ' + unreported usage' : ''}`}
             </Labeled>
             <Labeled label="Route">
@@ -2468,14 +2470,14 @@ function TraceDetail({
               {outcomeLabels[outcomeKind(detail.root.status, detail.root.disposition)]}
               {detail.root.disposition &&
                 !outcomeLabels[detail.root.disposition] &&
-                ` · ${humanize(detail.root.disposition)}`}
+                `, ${humanize(detail.root.disposition)}`}
             </Labeled>
             {rootMessage && <Labeled label="Outcome detail">{rootMessage}</Labeled>}
             {level1 && (
               <Labeled label="Level-1 selection">
-                {humanize(String(level1['kind']))} · {humanize(String(level1['reason']))}
+                {humanize(String(level1['kind']))}, {humanize(String(level1['reason']))}
                 {valueText(level1['escalationBlocked']) &&
-                  ` · escalation blocked: ${humanize(String(level1['escalationBlocked']))}`}
+                  `, escalation blocked: ${humanize(String(level1['escalationBlocked']))}`}
               </Labeled>
             )}
             {typeof coalesced === 'number' && coalesced > 0 && (
@@ -2507,7 +2509,7 @@ function TraceDetail({
           ))}
         </>
       )}
-      {!detail && !error && <p>Loading request…</p>}
+      <LoadingIndicator active={!detail && !error} label="Loading request" />
     </div>
   );
 }
@@ -2534,7 +2536,7 @@ function TraceRow({ row, onSelect }: { row: Row; onSelect(row: Row): void }) {
         : 'ui.inview');
   return (
     <Preview
-      title={`${row.actorName ?? 'World agent'} · recorded request`}
+      title={`${row.actorName ?? 'World agent'}, recorded request`}
       value={
         <>
           <dl className="ol-preview-facts">
@@ -2649,12 +2651,15 @@ export function Diagnostics({
       );
       if (id !== generation.current || currentReadKey.current !== readKey || !active.current)
         return;
-      if (peek && !result.ok) {
+      if (!result.ok || result.worldId !== worldId) {
+        // An explicit refusal is different from a broken refresh connection.
+        // Never keep private records visible after their reader refuses access.
         setRows([]);
+        setRowsKey(readKey);
+        setMore(false);
+        setError(result.message ?? 'Diagnostics unavailable.');
         return;
       }
-      if (!result.ok || result.worldId !== worldId)
-        throw new Error(result.message ?? 'Diagnostics unavailable.');
       // A reader can focus a row while an automatic reply is pending. Preserve
       // that page until they deliberately refresh it, just as at poll admission.
       if (peek || (mode === 'follow' && panel.current?.contains(document.activeElement))) {
@@ -2667,16 +2672,15 @@ export function Diagnostics({
       setError('');
       setNewActivity(false);
     } catch (refreshError) {
-      if (
-        id === generation.current &&
-        currentReadKey.current === readKey &&
-        active.current &&
-        !peek
-      ) {
-        setRows([]);
-        setRowsKey(readKey);
-        setMore(false);
-        setError(String(refreshError));
+      if (id === generation.current && currentReadKey.current === readKey && active.current) {
+        const revoked = refreshError instanceof AccessError;
+        if (revoked || rowsKey !== readKey) {
+          setRows([]);
+          setRowsKey(readKey);
+          setMore(false);
+        }
+        // An interrupted read must not erase an already permitted history page.
+        if (!peek || revoked) setError(String(refreshError));
       }
     } finally {
       if (readAbort.current === controller) readAbort.current = null;
@@ -2781,12 +2785,12 @@ export function Diagnostics({
             else void refresh();
           }}
         >
-          New activity · show newest
+          New activity, show newest
         </Button>
       )}
       <details>
         <summary>
-          Filter records{Object.values(filters).some(Boolean) ? ' · filters applied' : ''}
+          Filter records{Object.values(filters).some(Boolean) ? ', filters applied' : ''}
         </summary>
         <form
           className="ol-diagnostic-filters"
@@ -2844,7 +2848,12 @@ export function Diagnostics({
         Recorded triggers and stages. Costs are estimates; missing usage stays unknown. Inspection
         never reruns inference.
       </p>
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <p role="alert">
+          {error}
+          {currentRows.length ? ' The previous records remain visible.' : ''}
+        </p>
+      )}
       {currentRows.map((row) => (
         <TraceRow key={row.id} row={row} onSelect={onSelect} />
       ))}
@@ -2853,11 +2862,7 @@ export function Diagnostics({
           Records {offset + 1}–{offset + currentRows.length} on this retained history page.
         </p>
       )}
-      {currentLoading && (
-        <p role="status" className="ol-caption">
-          Loading triggers…
-        </p>
-      )}
+      <LoadingIndicator active={currentLoading} label="Loading triggers" />
       {!currentRows.length && !error && !currentLoading && <p>No matching retained triggers.</p>}
       {currentRaw && visible && <RawJsonPanel raw={currentRaw} onClose={() => setRaw(null)} />}
     </div>

@@ -11,10 +11,11 @@ export function observeHudLayout(
 ): () => void {
   const obstacles = [
     ...root.querySelectorAll<HTMLElement>(
-      '.ol-survival, .ol-clock-position, .ol-timebar, .ol-time-settings, .ol-world-controls, .ol-qa, .ol-camera, .ol-panel, .ol-caption-gap, .ol-subject-picking, .ol-world-composer',
+      '.ol-survival, .ol-current-work, .ol-clock-position, .ol-timebar, .ol-time-settings, .ol-world-controls, .ol-qa, .ol-camera, .ol-panel, .ol-caption-gap, .ol-subject-picking, .ol-world-composer',
     ),
   ];
   const controls = root.querySelector<HTMLElement>('.ol-world-controls');
+  const leftRail = root.querySelector<HTMLElement>('.ol-rail-left');
   let previous: ScreenRect[] = [];
   const measure = () => {
     const origin = canvas.getBoundingClientRect();
@@ -50,8 +51,15 @@ export function observeHudLayout(
     previous = next;
     publish(next);
   };
-  // The same measurement owner docks panels below the variable-height condition card.
+  // Only the compact status/clock positions use these measurements. Reading
+  // panels and centered launcher rails never depend on current work height.
   const observer = new ResizeObserver((entries) => {
+    const rail = entries.find((change) => change.target === leftRail);
+    if (rail)
+      root.style.setProperty(
+        '--left-rail-height',
+        `${rail.borderBoxSize[0]?.blockSize ?? leftRail!.offsetHeight}px`,
+      );
     const entry = entries.find((change) => change.target === condition);
     if (entry)
       root.style.setProperty(
@@ -67,11 +75,14 @@ export function observeHudLayout(
     measure();
   });
   for (const element of obstacles) observer.observe(element);
+  if (leftRail) observer.observe(leftRail);
   observer.observe(canvas);
   root.addEventListener('animationend', measure);
+  root.addEventListener('ol-panel-moved', measure);
   measure();
   return () => {
     observer.disconnect();
     root.removeEventListener('animationend', measure);
+    root.removeEventListener('ol-panel-moved', measure);
   };
 }

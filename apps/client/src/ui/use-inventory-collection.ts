@@ -7,6 +7,7 @@ import { post } from '../api';
 export function useInventoryCollection({
   initialId,
   scope,
+  displayOwner,
   revisionKey,
   visible,
   connected,
@@ -15,6 +16,7 @@ export function useInventoryCollection({
 }: {
   initialId: string;
   scope: string;
+  displayOwner: string;
   revisionKey: string;
   visible: boolean;
   connected: boolean;
@@ -33,6 +35,7 @@ export function useInventoryCollection({
   const paginationContext = JSON.stringify([scope, revisionKey, availability.revision]);
   const cursor = location.context === paginationContext ? location.cursor : undefined;
   const key = JSON.stringify([
+    displayOwner,
     scope,
     location.id,
     cursor,
@@ -44,6 +47,10 @@ export function useInventoryCollection({
   ]);
   const [result, setResult] = useState<{
     key: string;
+    locationId: string;
+    query: string;
+    displayOwner: string;
+    rootId: string;
     page?: ContainerPage;
     error?: string;
   }>();
@@ -67,12 +74,20 @@ export function useInventoryCollection({
             if (page.ok && !page.breadcrumbs.some((entry) => entry.id === expectedRootId)) {
               setResult({
                 key,
+                locationId: location.id,
+                displayOwner,
+                rootId: expectedRootId,
+                query,
                 error: 'This container moved. Open it again from its current location.',
               });
               return;
             }
             setResult({
               key,
+              locationId: location.id,
+              displayOwner,
+              rootId: expectedRootId,
+              query,
               ...(page.ok
                 ? { page }
                 : { error: page.message ?? 'These contents are unavailable.' }),
@@ -80,10 +95,20 @@ export function useInventoryCollection({
           })
           .catch((error: unknown) => {
             if (!controller.signal.aborted && currentReadKey.current === key)
-              setResult({
+              setResult((previous) => ({
                 key,
+                locationId: location.id,
+                displayOwner,
+                rootId: expectedRootId,
+                query,
+                ...(previous?.displayOwner === displayOwner &&
+                previous.rootId === expectedRootId &&
+                previous.locationId === location.id &&
+                previous.query === query
+                  ? { page: previous.page }
+                  : {}),
                 error: error instanceof Error ? error.message : 'These contents are unavailable.',
-              });
+              }));
           });
       },
       query ? 150 : 0,
@@ -94,11 +119,24 @@ export function useInventoryCollection({
     };
   }, [key, available]);
   const current = available && result?.key === key ? result : undefined;
+  // Quiet pause and same-owner refresh suspend actions, not the player's reading place.
+  // Control renewal rotates executable read scope but keeps this private display owner.
+  // The Inventory owner remounts on account/character/timeline changes. A refused read,
+  // changed container or revoked root removes these rows immediately.
+  const displayed =
+    !blockedReason &&
+    result?.displayOwner === displayOwner &&
+    result.rootId === expectedRootId &&
+    result.locationId === location.id &&
+    result.query === query
+      ? result
+      : undefined;
   return {
     location: { id: location.id, cursor },
     query,
-    page: current?.page,
-    error: current?.error,
+    page: displayed?.page,
+    current: !!current?.page && !current.error,
+    error: current?.error ?? displayed?.error,
     loading: available && !current,
     available,
     blockedReason,
@@ -118,7 +156,7 @@ export function useInventoryCollection({
       setRefreshNumber((value) => value + 1);
     },
     next() {
-      if (current?.page?.next)
+      if (current?.page?.next && !current.error)
         setLocation((old) => ({
           id: old.id,
           cursor: current.page?.next,

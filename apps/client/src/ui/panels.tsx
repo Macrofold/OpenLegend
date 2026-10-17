@@ -1,16 +1,14 @@
 import { inventoryCommandStorageKey } from '../inventory-command-record';
 import { ItemTrade } from './item-trade';
 import { OutingStatus } from './outing-status';
-import { namePhrase } from '@open-legend/language';
 import { GodCharacterActions, type GodCharacterControls } from './god-character-actions';
 import { playerEntity } from '../entity-view';
 import { UsageRemaining } from './usage-remaining';
 import { ActionAttempts } from './action-attempts';
 import { RecipeDetails } from './recipe-details';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { MemoryHistory } from './memory-history';
 import { ActivityHistory } from './activity-history';
-import { ActivityEntries, type ActivityEntry } from './camp-activity';
 import { Button as AriaButton, Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
 import type { ActionOption, ApiResult, EntityView, GameView } from '@open-legend/protocol';
 import {
@@ -123,7 +121,7 @@ export function Crafting({
                 <span className="ol-caption">
                   {recipe.name}
                   {!recipe.actions.some((action) => action.enabled)
-                    ? ' · Missing requirements'
+                    ? ' (missing requirements)'
                     : ''}
                 </span>
               </span>
@@ -171,19 +169,15 @@ export function EntityDetail({
   view,
   connected,
   command,
-  talk,
-  openContainer,
-  openActivity,
   godControls,
+  actionBrowser,
 }: {
   entity: EntityView;
   view: GameView;
   connected: boolean;
   command(a: ActionOption): Promise<ApiResult>;
-  talk(id: string): void;
-  openContainer(entity: EntityView): void;
-  openActivity(entry: ActivityEntry): void;
   godControls?: GodCharacterControls;
+  actionBrowser: ReactNode;
 }) {
   return (
     <>
@@ -193,12 +187,12 @@ export function EntityDetail({
           {entity.contents.map((item) => (
             <li key={item.id}>
               {item.name} × {item.quantity}
-              {!item.portable ? ' · Not portable' : ''}
+              {!item.portable ? ' (not portable)' : ''}
             </li>
           ))}
         </ul>
       )}
-      <Tag>{entity.status}</Tag>
+      {entity.status && <Tag>{entity.status}</Tag>}
       {!!entity.attributes?.length && <Condition attributes={entity.attributes} />}
       {entity.quantity !== undefined && <p>{entity.quantity} available</p>}
       {!!entity.traits?.length && (
@@ -206,36 +200,7 @@ export function EntityDetail({
           <Traits traits={entity.traits} />
         </Section>
       )}
-      {entity.canTalk && (
-        <Button icon="action.talk" onPress={() => talk(entity.id)}>
-          Talk to {namePhrase(entity, 'definite')}
-        </Button>
-      )}
-      {entity.storage && (
-        <Button
-          variant="primary"
-          icon="ui.inventory"
-          disabled={!connected}
-          onPress={() => openContainer(entity)}
-        >
-          Open {entity.name}
-        </Button>
-      )}
-      <ActivityEntries
-        view={view}
-        targetId={entity.id}
-        connected={connected}
-        onOpen={openActivity}
-      />
-      <Actions
-        actions={
-          entity.trade
-            ? entity.actions.filter((action) => action.command.type !== 'handover')
-            : entity.actions
-        }
-        command={command}
-        connected={connected}
-      />
+      {actionBrowser}
       {entity.trade && (
         <ItemTrade
           key={entity.trade.scope}
@@ -269,7 +234,6 @@ export function Character({
   workEntry,
   chooseActionSubject,
   clearActionSubject,
-  openInventory,
   visible = true,
 }: {
   view: GameView;
@@ -284,7 +248,6 @@ export function Character({
   workEntry?: number;
   chooseActionSubject?(): void;
   clearActionSubject?(): void;
-  openInventory?(): void;
   visible?: boolean;
 }) {
   const [section, setSection] = useState('condition');
@@ -335,19 +298,9 @@ export function Character({
             </div>
             {!view.player.alive && <p>This character cannot act right now.</p>}
           </Section>
-          <Section title="Available responses">
-            <Actions
-              actions={view.player.actions.filter((action) => action.command.type !== 'cancel')}
-              command={command}
-              connected={connected}
-            />
-            {!view.player.actions.some((action) => action.command.type !== 'cancel') && (
-              <p className="ol-caption">No direct response is offered in this condition.</p>
-            )}
-          </Section>
           {openActivity && view.player.activity && (
             <Button variant="quiet" onPress={openActivity}>
-              Task · {view.player.activity.name} · {view.player.activity.status}
+              Task: {view.player.activity.name} ({view.player.activity.status})
             </Button>
           )}
         </TabPanel>
@@ -397,17 +350,6 @@ export function Character({
                 ))}
               </Section>
             )}
-            <Section title="Actions available to you">
-              <Actions
-                actions={view.player.actions.filter((action) => action.command.type !== 'cancel')}
-                command={command}
-                connected={connected}
-              />
-              <p className="ol-caption">
-                Select something in the world to see its actions. Belongings and known recipes keep
-                their actions with the item or output.
-              </p>
-            </Section>
             <details className="ol-character-record-detail">
               <summary>Actions and learned activities</summary>
               <ActivityHistory key={view.historyEpoch} actorId={view.player.id} owned />
@@ -430,11 +372,6 @@ export function Character({
               <p>No item is equipped.</p>
             )}
             <p className="ol-caption">Compare or change your equipped items in Inventory.</p>
-            {openInventory && (
-              <Button icon="ui.inventory" onPress={openInventory}>
-                Open inventory
-              </Button>
-            )}
           </Section>
         </TabPanel>
         <TabPanel id="record" shouldForceMount className="ol-character-page">
@@ -445,7 +382,6 @@ export function Character({
           )}
           <Section title="Traits">
             <Traits traits={view.player.traits} />
-            <p className="ol-caption">Starting dispositions, with no mechanical bonuses.</p>
           </Section>
           <Section title="Memories">
             <MemoryHistory
@@ -460,7 +396,7 @@ export function Character({
       </Tabs>
       {godControls && (
         <details className="ol-character-record-detail">
-          <summary>God mode · Character controls</summary>
+          <summary>Character controls (God mode)</summary>
           <GodCharacterActions
             entity={playerEntity(view)}
             connected={connected}
@@ -526,7 +462,7 @@ export function AiSettings({ view }: { view: GameView }) {
       </Section>
       <Section title="Monthly agent allowances">
         <h3 className="ol-heading">
-          ${b.limitUsd.toFixed(2)} per agent · {b.period ?? 'current month'}
+          ${b.limitUsd.toFixed(2)} per agent ({b.period ?? 'current month'})
         </h3>
         <p>
           Total spent ${b.spentUsd.toFixed(4)}
@@ -548,7 +484,7 @@ export function AiSettings({ view }: { view: GameView }) {
       <details>
         <summary>Execution details</summary>
         <p>
-          {ai.usage.llmCalls} language model calls · {ai.usage.jevCalls} Jev calls
+          {ai.usage.llmCalls} language model calls; {ai.usage.jevCalls} Jev calls
           <br />
           {ai.usage.inputTokens} input / {ai.usage.outputTokens} output tokens
           <br />

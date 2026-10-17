@@ -1,3 +1,4 @@
+import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import {
   useCallback,
   useContext,
@@ -9,7 +10,7 @@ import {
   type FormEvent,
 } from 'react';
 import { ClockOffsetContext, clockParts } from './event-time';
-import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
+import { Modal, ModalOverlay } from 'react-aria-components';
 import type {
   ApiResult,
   AttributeView,
@@ -404,7 +405,7 @@ export function PersonCreationModal({
       onOpenChange={(open) => !open && close()}
     >
       <Modal className="ol-modal">
-        <Dialog className="ol-person-dialog" aria-label="Create person">
+        <LoadingDialog className="ol-person-dialog" aria-label="Create person">
           <form onSubmit={(event) => void submit(event)}>
             <header className="ol-modal-head">
               <div>
@@ -444,7 +445,7 @@ export function PersonCreationModal({
               </Button>
             </footer>
           </form>
-        </Dialog>
+        </LoadingDialog>
       </Modal>
     </ModalOverlay>
   );
@@ -546,7 +547,7 @@ function MemoryEditor({
             <IconButton icon="ui.close" label="Close JSON editor" onPress={() => select('')} />
           </div>
           {current.json === undefined ? (
-            <p className="ol-json-loading">Loading JSON…</p>
+            <LoadingIndicator active label="Loading JSON" className="ol-json-loading" />
           ) : (
             <JsonDraft
               key={current.id}
@@ -1426,7 +1427,7 @@ export function WorldEventsEditor({ close }: { close(): void }) {
                       />
                     </div>
                     {current.json === undefined ? (
-                      <p className="ol-json-loading">Loading JSON…</p>
+                      <LoadingIndicator active label="Loading JSON" className="ol-json-loading" />
                     ) : (
                       <JsonDraft
                         key={current.id}

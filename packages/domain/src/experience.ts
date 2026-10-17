@@ -48,6 +48,8 @@ export const EXPERIENCE_LIMITS = {
   historyDays: 30,
 } as const;
 export interface Awareness {
+  /** Names and identities admitted at this occurrence; later knowledge cannot rewrite them. */
+  references?: Array<{ id: string; label: string; role: 'actor' | 'target' }>;
   /** Non-speech payload permitted at occurrence time; never rebuilt from raw history. */
   eventData?: NonNullable<WorldEvent['data']>;
   /** Exact observable facts learned at encounter/inspection time, not generated prose. */

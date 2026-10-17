@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../design-system/loading';
 import { useId, useRef, type DragEvent } from 'react';
 import type { InventoryItemView } from '@open-legend/protocol';
 import { Button, Icon, symbol } from '../design-system/components';
@@ -47,6 +48,10 @@ export function InventoryCollection({
   const searchId = useId();
   const search = useRef<HTMLInputElement>(null);
   const { page, loading, error } = state;
+  const collectionTitle =
+    side === 'belongings' && (page?.breadcrumbs.length ?? 1) === 1
+      ? title
+      : (page?.container.name ?? title);
   return (
     <section
       className="ol-inventory-collection"
@@ -65,8 +70,10 @@ export function InventoryCollection({
       onDrop={onDrop}
     >
       <header className="ol-inventory-collection-header">
-        <h3 className="ol-heading">{page?.container.name ?? title}</h3>
-        {page?.container.location && <p className="ol-caption">{page.container.location}</p>}
+        <h3 className="ol-heading">{collectionTitle}</h3>
+        {page?.container.location && !(side === 'belongings' && page.breadcrumbs.length === 1) && (
+          <p className="ol-caption">{page.container.location}</p>
+        )}
         {page && page.breadcrumbs.length > 1 && (
           <nav aria-label={`${title} path`} className="ol-inventory-breadcrumbs">
             {page.breadcrumbs.map((entry) => (
@@ -88,7 +95,7 @@ export function InventoryCollection({
           </p>
         )}
         <div className="ol-inventory-search">
-          <label htmlFor={searchId}>Search {page?.container.name ?? title}</label>
+          <label htmlFor={searchId}>Search {collectionTitle}</label>
           <div>
             <input
               ref={search}
@@ -114,11 +121,15 @@ export function InventoryCollection({
         </div>
       </header>
       <div className="ol-inventory-grid-scroll">
-        {!state.available && (
+        {!state.available && !page && (
           <p role="status">{state.blockedReason ?? 'Reconnect to read these belongings.'}</p>
         )}
         {state.notice && <p role="status">{state.notice}</p>}
-        {loading && <p role="status">Reading contents…</p>}
+        <LoadingIndicator
+          active={loading}
+          label="Reading inventory contents"
+          className="ol-inventory-refreshing"
+        />
         {error && <p role="alert">{error}</p>}
         <ul className="ol-inventory-grid" aria-label={`${title} items`}>
           {page?.items.map((item) => (
@@ -181,6 +192,9 @@ export function InventoryCollection({
                       {item.availableQuantity} available; reserved remainder stays
                     </span>
                   )}
+                {item.individual && !item.equipped && !item.container && (
+                  <span className="ol-inventory-cell-state">Individual object</span>
+                )}
                 {item.equipped && <span className="ol-inventory-cell-state">Equipped</span>}
                 {item.container && <span className="ol-inventory-cell-state">Container</span>}
               </button>
@@ -199,7 +213,7 @@ export function InventoryCollection({
       </div>
       <footer className="ol-inventory-collection-footer">
         {page?.next && (
-          <Button size="sm" variant="quiet" disabled={busy || loading} onPress={state.next}>
+          <Button size="sm" variant="quiet" disabled={busy || !state.current} onPress={state.next}>
             Next contents
           </Button>
         )}

@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../design-system/loading';
 import { useEffect, useRef, useState } from 'react';
 import type {
   RelationshipNode,
@@ -307,7 +308,7 @@ export function WorldInspection({
           {error} Refresh the selection or restart the search if its source changed.
         </p>
       )}
-      {busy && <p role="status">Reading current records…</p>}
+      <LoadingIndicator active={busy} label="Reading current records" />
       {resultsStale && (
         <p role="status">Condition definitions changed. Search again for current results.</p>
       )}

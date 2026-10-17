@@ -28,7 +28,7 @@ export function Journal({
   return (
     <div className="ol-journal">
       <SegmentedControl
-        label="Journal section"
+        label="Character records section"
         value={section}
         onChange={setSection}
         options={[

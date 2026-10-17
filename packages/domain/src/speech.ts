@@ -1,4 +1,4 @@
-import { namePhrase, personalPronoun, type Named } from '@open-legend/language';
+import { namePhrase, personalPronoun, validName, type Named } from '@open-legend/language';
 import { worldPosition } from './spatial-state.js';
 import { observerName, recognizesSubject } from './worlds/base/knowledge.js';
 import { hasMemory } from './living.js';
@@ -15,6 +15,8 @@ export interface PerceivedSpeech {
   intelligibility: 'none' | 'partial' | 'clear';
   segments: SpeechSegment[];
   speaker: (Omit<Named, 'name'> & { entityId: string; nameAtTime: string }) | null;
+  /** The recipient as identified at the occurrence, never resolved from a later name. */
+  recipient?: (Omit<Named, 'name'> & { entityId: string; nameAtTime: string }) | null;
   delivery: SpeechVolume | null;
   direction: { sector: number; elevation: 'above' | 'level' | 'below' } | null;
   listenerPosition: Position;
@@ -153,6 +155,15 @@ export function perceiveSpeech(
       ? intendedId
       : undefined;
   const addressed = !self && perceivedRecipient === observer.id;
+  if (perceivedRecipient) {
+    const name = observerName(world, observer.id, perceivedRecipient);
+    speech.recipient = {
+      entityId: perceivedRecipient,
+      nameAtTime: name.name,
+      nameForm: name.nameForm,
+      indefiniteArticle: name.indefiniteArticle,
+    };
+  }
   const targetId = self
     ? event.targetId
     : event.targetId === perceivedRecipient
@@ -203,6 +214,7 @@ export type EventEvidence = Pick<
   Awareness,
   | 'actorId'
   | 'eventData'
+  | 'references'
   | 'eventType'
   | 'text'
   | 'content'
@@ -221,12 +233,40 @@ export function validateEventEvidence(value: unknown): asserts value is EventEvi
     throw new Error('Invalid committed observer facts.');
   const evidence = value as Partial<EventEvidence>;
   if (
+    evidence.references !== undefined &&
+    (!Array.isArray(evidence.references) ||
+      evidence.references.length > 2 ||
+      new Set(evidence.references.map((ref) => ref?.role)).size !== evidence.references.length ||
+      evidence.references.some(
+        (ref) =>
+          !ref ||
+          typeof ref.id !== 'string' ||
+          !ref.id ||
+          typeof ref.label !== 'string' ||
+          !ref.label.trim() ||
+          (ref.role !== 'actor' && ref.role !== 'target') ||
+          ref.id !== (ref.role === 'actor' ? evidence.sourceId : evidence.targetId),
+      ))
+  )
+    throw new Error('Invalid occurrence-time participant references.');
+  if (
     typeof evidence.eventType !== 'string' ||
     !/^[a-z][a-z0-9_.:-]{0,63}$/.test(evidence.eventType)
   )
     throw new Error('Invalid committed observer event type.');
   if (evidence.eventType === 'speech') {
     if (!evidence.speech) throw new Error('Speech is missing its committed listener perspective.');
+    const recipient = evidence.speech.recipient;
+    if (
+      recipient != null &&
+      (typeof recipient !== 'object' ||
+        Array.isArray(recipient) ||
+        typeof recipient.entityId !== 'string' ||
+        !recipient.entityId ||
+        recipient.entityId !== evidence.intendedRecipientId ||
+        !validName({ ...recipient, name: recipient.nameAtTime }))
+    )
+      throw new Error('Invalid occurrence-time speech recipient.');
   } else if (
     !evidence.eventData ||
     typeof evidence.eventData !== 'object' ||
@@ -241,7 +281,11 @@ export function validateEventEvidence(value: unknown): asserts value is EventEvi
   )
     throw new Error('Event is missing valid committed observer facts.');
 }
-export type ActorEvent = WorldEvent & { speech?: PerceivedSpeech; modality: Awareness['modality'] };
+export type ActorEvent = WorldEvent & {
+  speech?: PerceivedSpeech;
+  modality: Awareness['modality'];
+  references?: Awareness['references'];
+};
 export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence): ActorEvent {
   if (event.type === 'speech' && !evidence.speech)
     throw new Error('Speech is missing its committed listener perspective.');
@@ -258,6 +302,7 @@ export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence)
     text: evidence.text,
     audience: [evidence.actorId],
     modality: evidence.modality,
+    ...(evidence.references?.length ? { references: evidence.references } : {}),
     ...(evidence.exposure ? { exposure: evidence.exposure } : {}),
     ...(evidence.sourceId ? { actorId: evidence.sourceId } : {}),
     ...(evidence.targetId ? { targetId: evidence.targetId } : {}),

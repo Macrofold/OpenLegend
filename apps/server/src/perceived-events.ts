@@ -1,4 +1,10 @@
-import { projectEventEvidence, type ActorEvent, type WorldEvent } from '@open-legend/domain';
+import { formatDisplayNumber } from '@open-legend/language';
+import {
+  projectEventEvidence,
+  type ActorEvent,
+  type WorldEvent,
+  type EventPresentationPolicy,
+} from '@open-legend/domain';
 import type {
   PerceivedEventsPage,
   PublicEvent,
@@ -28,7 +34,11 @@ export function worldEventSourceReference(
 }
 
 /** Presentation never receives raw source text, origins or hidden subject IDs. */
-export function publicEvent(event: ActorEvent): PublicEvent {
+export function publicEvent(
+  event: ActorEvent,
+  presentation?: EventPresentationPolicy,
+  observerId?: string,
+): PublicEvent {
   const change = event.type === 'attribute-changed' ? event.data : undefined;
   const attributeChange =
     change &&
@@ -43,9 +53,70 @@ export function publicEvent(event: ActorEvent): PublicEvent {
           before: change['before'],
           after: change['after'],
           unit: change['unit'],
+          ...(typeof change['attributeName'] === 'string' ? { name: change['attributeName'] } : {}),
+          ...(typeof change['attributeMeaning'] === 'string'
+            ? { meaning: change['attributeMeaning'] }
+            : {}),
+          ...(typeof change['causeLabel'] === 'string' ? { cause: change['causeLabel'] } : {}),
+          ...(change['changeKind'] === 'health' ? { kind: 'health' as const } : {}),
+          ...(typeof change['causeMeaning'] === 'string'
+            ? { causeMeaning: change['causeMeaning'] }
+            : {}),
         }
       : undefined;
+  const references: NonNullable<PublicEvent['references']> = [...(event.references ?? [])];
+  if (event.speech?.speaker)
+    references.push({
+      id: event.speech.speaker.entityId,
+      label: event.speech.speaker.nameAtTime,
+      role: 'actor',
+    });
+  if (event.speech?.recipient)
+    references.push({
+      id: event.speech.recipient.entityId,
+      label: event.speech.recipient.nameAtTime,
+      role: 'target',
+    });
+  // Render only facts already granted to this observer. Older wording may be noisy,
+  // but a missing cause must never be filled from today's body or world state.
+  const subject =
+    event.actorId === observerId
+      ? 'I'
+      : references.find((reference) => reference.role === 'actor')?.label;
+  let text = event.text;
+  // Only these native movement records have this coordinate suffix. Do not round
+  // arbitrary prose, quoted speech, names or IDs by scanning all event text.
+  if (
+    !event.speech &&
+    (event.type === 'moved' ||
+      (event.type === 'action-started' &&
+        (event.data?.['actionType'] === 'move' || event.data?.['actionType'] === 'assemble')))
+  )
+    text = text.replace(
+      /((?:started moving|moved) to )(-?\d+(?:\.\d+)?(?:e[+-]?\d+)?), (-?\d+(?:\.\d+)?(?:e[+-]?\d+)?)\.$/i,
+      (_match, prefix: string, x: string, z: string) =>
+        `${prefix}${formatDisplayNumber(Number(x))}, ${formatDisplayNumber(Number(z))}.`,
+    );
+  if (attributeChange && subject && attributeChange.name) {
+    const delta = attributeChange.after - attributeChange.before;
+    const amount = formatDisplayNumber(Math.abs(delta), {
+      integer: attributeChange.kind === 'health',
+    });
+    const result =
+      attributeChange.kind === 'health' && delta < 0
+        ? `took ${amount} damage`
+        : `${delta < 0 ? 'lost' : 'gained'} ${amount} ${attributeChange.name.toLowerCase()}`;
+    text = `${subject[0]?.toUpperCase()}${subject.slice(1)} ${result}${attributeChange.cause ? ` from ${attributeChange.cause.toLowerCase()}` : ''}.`;
+  }
   return {
+    ...(presentation
+      ? {
+          presentation: Object.hasOwn(presentation.types, event.type)
+            ? presentation.types[event.type]
+            : presentation.fallback,
+        }
+      : {}),
+    ...(references.length ? { references } : {}),
     ...(event.type === 'expression' &&
     event.data?.['descriptive'] === true &&
     event.data?.['mechanical'] === false
@@ -55,7 +126,7 @@ export function publicEvent(event: ActorEvent): PublicEvent {
     id: event.id,
     time: event.at,
     type: event.type,
-    text: event.text,
+    text,
     modality: event.modality,
     ...(event.actorId ? { actorId: event.actorId } : {}),
     ...(event.targetId ? { targetId: event.targetId } : {}),
@@ -71,7 +142,18 @@ type Cursor = {
   query?: string;
   watermark: Position;
   before: Position;
+  direction: 'older' | 'newer';
+  filter: string;
 };
+export interface PerceivedEventOptions {
+  type?: string;
+  category?: string;
+  showAll?: boolean;
+  cursor?: string;
+  limit?: number;
+  q?: string;
+  at?: number;
+}
 const validPosition = (p: Position) =>
   p &&
   Number.isSafeInteger(p.order) &&
@@ -89,6 +171,7 @@ export async function initializePerceivedEventIndexes(db: SqlDatabase): Promise<
   await db.exec(`
     CREATE INDEX IF NOT EXISTS history_perspective_order ON history_perspectives(world_id,actor_id,position,event_id);
     CREATE INDEX IF NOT EXISTS history_perspective_type_order ON history_perspectives(world_id,actor_id,event_type,position,event_id);
+    CREATE INDEX IF NOT EXISTS history_perspective_time ON history_perspectives(world_id,actor_id,((payload::jsonb->>'time')::double precision),position,event_id);
     CREATE INDEX IF NOT EXISTS history_perspective_peer_order ON history_perspectives(world_id,actor_id,speech_peer_id,position,event_id) WHERE speech_peer_id IS NOT NULL;
     CREATE INDEX IF NOT EXISTS history_perspective_response_order ON history_perspectives(world_id,actor_id,position,event_id) WHERE response_action;
     CREATE INDEX IF NOT EXISTS history_perspective_source_response_order ON history_perspectives(world_id,actor_id,source_id,position,event_id) WHERE response_action;
@@ -117,14 +200,23 @@ export async function readPerceivedEvents(
   worldId: string,
   actorId: string,
   scope: string,
-  options: { type?: string; cursor?: string; limit?: number; q?: string },
+  options: PerceivedEventOptions,
   sourceScope = scope,
   corrections?: Record<string, string>,
+  presentation?: EventPresentationPolicy,
 ): Promise<PerceivedEventsPage> {
   const type = options.type ?? 'all';
   const terms = searchTerms(options.q);
   const query = terms ? digest(terms) : undefined;
+  const filter = digest([options.category ?? 'all', options.showAll ?? false, presentation]);
   if (!/^[a-z][a-z0-9_.:-]{0,63}$/.test(type)) throw new HistoryCursorError('Invalid event type.');
+  if (
+    options.category &&
+    !['all', 'speech', 'actions', 'conflict', 'body', 'observations'].includes(options.category)
+  )
+    throw new HistoryCursorError('Invalid event category.');
+  if (options.at !== undefined && (!Number.isFinite(options.at) || options.at < 0))
+    throw new HistoryCursorError('Invalid event time.');
   let cursor: Cursor | undefined;
   if (options.cursor) {
     try {
@@ -134,9 +226,11 @@ export async function readPerceivedEvents(
         cursor.version !== 1 ||
         cursor.scope !== scope ||
         cursor.type !== type ||
+        cursor.filter !== filter ||
         (cursor.query ?? '') !== (query ?? '') ||
         !validPosition(cursor.watermark) ||
-        !validPosition(cursor.before)
+        !validPosition(cursor.before) ||
+        !['older', 'newer'].includes(cursor.direction)
       )
         throw new Error();
     } catch {
@@ -149,17 +243,53 @@ export async function readPerceivedEvents(
   const position = perspectiveField('order', 'p');
   const eventType = perspectiveField('type', 'p');
   const field = (name: string) => `(e.payload::jsonb->>'${name}')`;
-  // Private thoughts, plans and diagnostics do not become world events. Own sensed body/contact
-  // episodes are permitted observations, even though their acquisition is receiver-private.
-  const where =
-    `p.world_id=? AND p.actor_id=? AND (${field('scope')}='external' OR ${field('type')} IN ('encounter','contact','attribute-concern','attribute-changed'))` +
-    (type === 'all' ? '' : ` AND ${eventType}=?`);
-  const args: unknown[] = [worldId, actorId, ...(type === 'all' ? [] : [type])];
+  let where = `p.world_id=? AND p.actor_id=? AND (${field('scope')}='external' OR ${field('type')} IN ('encounter','contact','attribute-concern','attribute-changed'))`;
+  const args: unknown[] = [worldId, actorId];
+  if (type !== 'all') {
+    where += ` AND ${eventType}=?`;
+    args.push(type);
+  }
+  if (presentation && options.category && options.category !== 'all') {
+    const mapped = Object.keys(presentation.types);
+    const included = mapped.filter((key) => presentation.types[key]!.category === options.category);
+    const clauses: string[] = [];
+    if (included.length) {
+      clauses.push(`${eventType} IN (${included.map(() => '?').join(',')})`);
+      args.push(...included);
+    }
+    if (presentation.fallback.category === options.category) {
+      clauses.push(
+        mapped.length ? `${eventType} NOT IN (${mapped.map(() => '?').join(',')})` : 'TRUE',
+      );
+      args.push(...mapped);
+    }
+    where += ` AND (${clauses.join(' OR ') || 'FALSE'})`;
+  }
+  if (presentation && !options.showAll) {
+    // Select before paging/search so omitted routine rows cannot bury meaningful events.
+    const displayed = Object.keys(presentation.types).filter(
+      (key) => presentation.types[key]!.displayToPlayer === true,
+    );
+    const clauses: string[] = [];
+    if (displayed.length) {
+      clauses.push(`${eventType} IN (${displayed.map(() => '?').join(',')})`);
+      args.push(...displayed);
+    }
+    if (presentation.fallback.displayToPlayer === true) {
+      const mapped = Object.keys(presentation.types);
+      clauses.push(
+        mapped.length ? `${eventType} NOT IN (${mapped.map(() => '?').join(',')})` : 'TRUE',
+      );
+      args.push(...mapped);
+    }
+    where += ` AND (${clauses.join(' OR ') || 'FALSE'})`;
+  }
   const join =
     'history_perspectives p JOIN history_events e ON e.world_id=p.world_id AND e.id=p.event_id';
-  // One read snapshot: a search's matches and the bodies loaded for them must agree.
   const snapshot = db.readTransaction?.bind(db) ?? db.transaction.bind(db);
   return snapshot(async () => {
+    type Row = Record<string, unknown>;
+    const at = (row: Row): Position => ({ order: Number(row['position']), id: String(row['id']) });
     let watermark = cursor?.watermark;
     if (!watermark) {
       const row = await db
@@ -168,36 +298,49 @@ export async function readPerceivedEvents(
         )
         .get(...args);
       if (!row) return { events: [] };
-      watermark = { order: Number(row['position']), id: String(row['id']) };
+      watermark = at(row);
     }
-    // The scalar ceiling bounds the range before tuple tie-breaking.
-    const boundary = (before: Position | undefined) =>
+    let direction = cursor?.direction ?? 'older';
+    let anchor: Position | undefined;
+    if (!cursor && options.at !== undefined) {
+      // Time seeks use an actor-scoped expression index. They do not deserialize or scan the world's history.
+      const row = await db
+        .prepare(
+          `SELECT ${position} AS position,p.event_id AS id FROM ${join} WHERE ${where} AND (p.payload::jsonb->>'time')::double precision<=? ORDER BY (p.payload::jsonb->>'time')::double precision DESC,${position} DESC,p.event_id DESC LIMIT 1`,
+        )
+        .get(...args, options.at);
+      anchor = row ? at(row) : undefined;
+      if (!anchor) direction = 'newer';
+    }
+    const ascending = direction === 'newer';
+    const order = ascending ? 'ASC' : 'DESC';
+    const boundary = (edge: Position | undefined) =>
       ` AND ${position}<=? AND (${position},p.event_id)<=(?,?)` +
-      (before ? ` AND ${position}<=? AND (${position},p.event_id)<(?,?)` : '');
-    const positions = (before: Position | undefined) => [
+      (edge
+        ? ` AND (${position},p.event_id)${ascending ? '>' : '<'}(?,?)`
+        : anchor
+          ? ` AND (${position},p.event_id)<=(?,?)`
+          : '');
+    const positions = (edge: Position | undefined) => [
       watermark.order,
       watermark.order,
       watermark.id,
-      ...(before ? [before.order, before.order, before.id] : []),
+      ...(edge ? [edge.order, edge.id] : anchor ? [anchor.order, anchor.id] : []),
     ];
-    type Row = Record<string, unknown>;
-    const at = (row: Row): Position => ({ order: Number(row['position']), id: String(row['id']) });
     let rows: Row[], last: Row | undefined, scanLimited: boolean;
     if (terms) {
-      // A search examines at most SEARCH_SCAN_ROWS rows per request and matches only the
-      // viewer's perspective text, never raw event payloads (docs/limits/hearing-and-speech.md#hr06--history-paging-and-growth).
       ({
         matched: rows,
         last,
         scanLimited,
       } = await scanMatches<Row>(
         (after, count) => {
-          const before = after ? at(after) : cursor?.before;
+          const edge = after ? at(after) : cursor?.before;
           return db
             .prepare(
-              `SELECT ${position} AS position,p.event_id AS id,coalesce(p.payload::jsonb->>'text','') AS text FROM ${join} WHERE ${where}${boundary(before)} ORDER BY ${position} DESC,p.event_id DESC LIMIT ?`,
+              `SELECT ${position} AS position,p.event_id AS id,coalesce(p.payload::jsonb->>'text','') AS text FROM ${join} WHERE ${where}${boundary(edge)} ORDER BY ${position} ${order},p.event_id ${order} LIMIT ?`,
             )
-            .all(...args, ...positions(before), count);
+            .all(...args, ...positions(edge), count);
         },
         (row) => matchesSearch(terms, String(row['text'])),
         limit,
@@ -224,28 +367,37 @@ export async function readPerceivedEvents(
     } else {
       rows = await db
         .prepare(
-          `SELECT ${position} AS position,p.event_id AS id,e.payload,p.payload AS perspective FROM ${join} WHERE ${where}${boundary(cursor?.before)} ORDER BY ${position} DESC,p.event_id DESC LIMIT ?`,
+          `SELECT ${position} AS position,p.event_id AS id,e.payload,p.payload AS perspective FROM ${join} WHERE ${where}${boundary(cursor?.before)} ORDER BY ${position} ${order},p.event_id ${order} LIMIT ?`,
         )
         .all(...args, ...positions(cursor?.before), limit + 1);
       scanLimited = false;
     }
     const page = rows.slice(0, limit);
-    const cursorAt = (row: Row): Cursor => ({
-      version: 1,
-      scope,
-      type,
-      ...(query ? { query } : {}),
-      watermark,
-      before: at(row),
-    });
-    const next: Cursor | undefined =
-      rows.length > limit
-        ? cursorAt(page.at(-1)!)
-        : scanLimited && last
-          ? cursorAt(last)
-          : undefined;
+    const encode = (edge: Position, nextDirection: 'older' | 'newer') =>
+      Buffer.from(
+        JSON.stringify({
+          version: 1,
+          scope,
+          type,
+          filter,
+          ...(query ? { query } : {}),
+          watermark,
+          before: edge,
+          direction: nextDirection,
+        } satisfies Cursor),
+      ).toString('base64url');
+    const moreAt = rows.length > limit ? page.at(-1) : scanLimited ? last : undefined;
+    const continuing = moreAt ? encode(at(moreAt), direction) : undefined;
+    const chronological = ascending ? page : [...page].reverse();
+    const low = chronological[0],
+      high = chronological.at(-1);
+    const newerEdge = high ? at(high) : (anchor ?? cursor?.before);
+    const hasNewer =
+      newerEdge &&
+      (newerEdge.order < watermark.order ||
+        (newerEdge.order === watermark.order && newerEdge.id !== watermark.id));
     return {
-      events: page.reverse().map((row) => {
+      events: chronological.map((row) => {
         const event = JSON.parse(String(row['payload'])) as WorldEvent;
         const perspective = JSON.parse(String(row['perspective'])) as StorySource;
         const projected = projectEventEvidence(event, perspective.evidence);
@@ -259,12 +411,19 @@ export async function readPerceivedEvents(
                 corr ? `${perspective.revision}:corrected:${corr}` : perspective.revision,
               )
             : undefined;
-        return {
-          ...publicEvent(projected),
-          ...(source ? { source } : {}),
-        };
+        return { ...publicEvent(projected, presentation, actorId), ...(source ? { source } : {}) };
       }),
-      ...(next ? { nextCursor: Buffer.from(JSON.stringify(next)).toString('base64url') } : {}),
+      ...(ascending
+        ? {
+            ...(low && cursor ? { nextCursor: encode(at(low), 'older') } : {}),
+            ...(continuing ? { newerCursor: continuing } : {}),
+          }
+        : {
+            ...(continuing ? { nextCursor: continuing } : {}),
+            ...((cursor || options.at !== undefined) && hasNewer
+              ? { newerCursor: encode(newerEdge, 'newer') }
+              : {}),
+          }),
       ...(scanLimited ? { scanLimited } : {}),
     };
   });

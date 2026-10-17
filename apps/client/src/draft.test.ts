@@ -19,7 +19,7 @@ function memoryStorage(initial: Array<[string, string]> = []) {
 describe('local composer draft', () => {
   it('restores exact text in its selected mode, then removes a cleared draft', () => {
     const { data, storage } = memoryStorage();
-    const key = composerDraftKey('private-owner', 'invention', null);
+    const key = composerDraftKey('private-owner', 'act', null);
     const draft = { text: '  Could we make a sling?\n', revision: 'edit-1' };
     saveDraft(key, draft, storage);
     expect(readDraft(key, storage)).toEqual(draft);
@@ -28,9 +28,9 @@ describe('local composer draft', () => {
     expect(data.size).toBe(0);
   });
 
-  it('keeps recipients, private owners and invention separate without choosing a person', () => {
+  it('keeps recipients, private owners and action drafts separate without choosing a person', () => {
     const { data, storage } = memoryStorage();
-    const key = composerDraftKey('owner-a', 'chat', 'person-a');
+    const key = composerDraftKey('owner-a', 'speak', 'person-a');
     const draft = {
       text: 'What do you think?',
       revision: 'edit-1',
@@ -39,11 +39,11 @@ describe('local composer draft', () => {
     saveDraft(key, draft, storage);
     expect(readDraft(key, storage)).toEqual(draft);
     for (const other of [
-      composerDraftKey('owner-a', 'chat', 'person-b'),
-      composerDraftKey('owner-b', 'chat', 'person-a'),
-      composerDraftKey('owner-a', 'invention', 'person-a'),
-      composerDraftKey('owner-a', 'chat', null),
-      composerDraftKey(null, 'chat', 'person-a'),
+      composerDraftKey('owner-a', 'speak', 'person-b'),
+      composerDraftKey('owner-b', 'speak', 'person-a'),
+      composerDraftKey('owner-a', 'act', 'person-a'),
+      composerDraftKey('owner-a', 'speak', null),
+      composerDraftKey(null, 'speak', 'person-a'),
     ])
       expect(readDraft(other, storage)).toEqual(emptyDraft());
     saveDraft(null, draft, storage);
@@ -51,8 +51,8 @@ describe('local composer draft', () => {
   });
 
   it('clears private composer drafts for every recipient and owner on access replacement', () => {
-    const firstKey = composerDraftKey('owner-a', 'chat', 'person-a')!;
-    const secondKey = composerDraftKey('owner-b', 'invention', null)!;
+    const firstKey = composerDraftKey('owner-a', 'speak', 'person-a')!;
+    const secondKey = composerDraftKey('owner-b', 'act', null)!;
     const { data, storage } = memoryStorage([
       [firstKey, JSON.stringify({ text: 'First private draft', revision: 'edit-1' })],
       [secondKey, JSON.stringify({ text: 'Second private draft', revision: 'edit-2' })],
@@ -69,8 +69,8 @@ describe('local composer draft', () => {
     '{"text":"Missing revision"}',
     '{"text":"Wrong item","revision":"edit-1","item":{}}',
   ])('rejects a malformed current record without reading another draft: %s', (saved) => {
-    const key = composerDraftKey('owner-a', 'chat', 'person-a')!;
-    const otherKey = composerDraftKey('owner-a', 'chat', 'person-b')!;
+    const key = composerDraftKey('owner-a', 'speak', 'person-a')!;
+    const otherKey = composerDraftKey('owner-a', 'speak', 'person-b')!;
     const { storage } = memoryStorage([
       [key, saved],
       [otherKey, JSON.stringify({ text: 'Another person', revision: 'edit-1' })],

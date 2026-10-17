@@ -36,14 +36,14 @@ export const DEFAULT_ATTRIBUTES: AttributeDefinition[] = [
   },
   {
     id: 'wilderness:fullness',
-    version: 1,
+    version: 2,
     implementation: 'number-v1',
     name: 'Food',
     disclosure: 'owner',
     presentation: { icon: 'meter.food', color: 'meter.food' },
     critical: { compare: { operator: 'lessThanOrEqual', value: 20, rounding: 'nearest-integer' } },
     editorCritical: { compare: { operator: 'lessThan', value: 30, rounding: 'none' } },
-    schema: { kind: 'number', min: 0, max: 100, initial: 100, unit: '%' },
+    schema: { kind: 'number', min: 0, max: 100, initial: 100, unit: '' },
     meaning:
       'Fullness measures nourishment; lower means hungrier. Edible food restores fullness. At zero, lack of nourishment periodically damages health and can kill this body.',
     condition: {
@@ -66,14 +66,14 @@ export const DEFAULT_ATTRIBUTES: AttributeDefinition[] = [
   },
   {
     id: 'wilderness:energy',
-    version: 1,
+    version: 2,
     implementation: 'number-v1',
     name: 'Energy',
     disclosure: 'owner',
     presentation: { icon: 'meter.energy', color: 'meter.energy' },
     critical: { compare: { operator: 'lessThanOrEqual', value: 20, rounding: 'nearest-integer' } },
     editorCritical: { compare: { operator: 'lessThan', value: 25, rounding: 'none' } },
-    schema: { kind: 'number', min: 0, max: 100, initial: 85, unit: '%' },
+    schema: { kind: 'number', min: 0, max: 100, initial: 85, unit: '' },
     concern: {
       below: 25,
       text: '{subject.subject} {subject.verb:be} exhausted.',

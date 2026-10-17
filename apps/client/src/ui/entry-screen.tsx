@@ -1,4 +1,5 @@
 import { Button } from '../design-system/components';
+import { LoadingIndicator } from '../design-system/loading';
 import type { WorldCreationHostStatus } from '@open-legend/protocol';
 import { EntryNotice } from './entry-notice';
 import './entry-screen.css';
@@ -45,14 +46,7 @@ export function EntryScreen({ status, onRetry }: { status: EntryStatus; onRetry:
               </p>
             </>
           ) : loading ? (
-            <>
-              <h2>
-                {retryLabel === 'Check access again' ? 'Checking your access…' : 'Connecting…'}
-              </h2>
-              <p>
-                Your character or permitted World operations will open when the connection is ready.
-              </p>
-            </>
+            <LoadingIndicator active={loading} label="Connecting to your world" />
           ) : status.kind === 'creation-host' ? (
             <>
               <h2>

@@ -4,29 +4,8 @@
   gap: var(--space-3);
   min-width: 0;
 }
-.ol-construction p {
+.ol-root .ol-building-workspace p {
   margin: 0;
-}
-.ol-construction-coordinates {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3);
-}
-.ol-construction-coordinates label {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-}
-.ol-construction-coordinates input {
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  background: var(--surface-raised);
-  color: inherit;
-  border: 1px solid var(--line);
-  border-radius: var(--control-radius);
-  padding: var(--space-2);
 }
 .ol-construction input:focus-visible {
   outline: 2px solid Highlight;
@@ -37,9 +16,94 @@
 }
 .ol-construction .ol-btn {
   height: auto;
-  min-height: var(--control-md);
   max-width: 100%;
   padding-block: var(--space-2);
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+.ol-building-workspace {
+  min-width: 0;
+}
+.ol-building-catalogue {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: var(--space-3);
+}
+.ol-building-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  background: var(--surface-raised);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.ol-building-tile:hover,
+.ol-building-tile[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--surface-hover);
+}
+.ol-building-tile:focus-visible {
+  outline: 2px solid Highlight;
+  outline-offset: 2px;
+}
+.ol-building-tile strong {
+  font-size: var(--text-item-title-size);
+}
+.ol-building-tile span {
+  color: var(--ink-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.ol-building-illustration {
+  display: block;
+  width: 100%;
+  height: 120px;
+}
+.ol-placement-controls {
+  padding: var(--space-3);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: var(--space-2);
+}
+.ol-placement-controls p {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+.ol-building-materials {
+  border-block: 1px solid var(--line);
+  padding-block: var(--space-3);
+}
+.ol-building-materials summary {
+  cursor: pointer;
+  padding-block: var(--space-1);
+}
+.ol-building-materials[open] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ol-building-existing > summary {
+  cursor: pointer;
+  color: var(--ink-muted);
+  padding-block: var(--space-2);
+}
+.ol-building-existing[open] {
+  display: grid;
+  gap: var(--space-2);
+}
+.ol-building-details > summary {
+  cursor: pointer;
+  color: var(--ink-muted);
+}
+.ol-building-details[open] {
+  display: grid;
+  gap: var(--space-2);
 }

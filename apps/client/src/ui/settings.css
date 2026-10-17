@@ -67,6 +67,19 @@
   display: grid;
   gap: var(--space-4);
 }
+.ol-game-brand {
+  display: grid;
+  gap: var(--space-2);
+  text-align: center;
+}
+.ol-game-brand :is(h1, p) {
+  margin: 0;
+}
+.ol-game-brand h1 {
+  font-size: 24px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
 .ol-game-menu .ol-section > .ol-btn {
   inline-size: 100%;
   justify-content: flex-start;

@@ -3,7 +3,7 @@ import type {
   WorldAgentQuestionAnswer,
   WorldAgentReply,
 } from '@open-legend/protocol';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Checkbox,
   CheckboxGroup,
@@ -120,6 +120,13 @@ export function WorldAgentQuestionCard({
   // A winning answer from another tab is shown as accepted, never overwritten by our draft.
   const editing = editingRequested && editingAnswerId === question.answer?.id;
   const working = useRef(false);
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -154,7 +161,7 @@ export function WorldAgentQuestionCard({
     writeLocal(recordKey('draft'), next);
   }
   async function act(work: () => Promise<void>) {
-    if (working.current) return;
+    if (working.current || !alive.current) return;
     working.current = true;
     setBusy(true);
     setError('');
@@ -162,11 +169,13 @@ export function WorldAgentQuestionCard({
     try {
       await work();
     } catch (error) {
-      setError(message(error));
+      if (alive.current) setError(message(error));
     } finally {
       working.current = false;
-      setBusy(false);
-      onChanged();
+      if (alive.current) {
+        setBusy(false);
+        onChanged();
+      }
     }
   }
   async function send(saved?: Pending) {
@@ -198,6 +207,9 @@ export function WorldAgentQuestionCard({
           digest: question.digest,
           ...value,
         });
+        // Closing or changing access leaves the original answer retained for its
+        // next authorized inspection; a late reply cannot reopen the old session.
+        if (!alive.current) return;
         if (!reply.ok) {
           if (['authoring-request', 'invalid-input'].includes(reply.code)) {
             setNotice(reply.message);

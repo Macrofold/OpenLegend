@@ -1,5 +1,5 @@
 import { person } from './narration.js';
-import { namePhrase } from '@open-legend/language';
+import { namePhrase, formatDisplayNumber } from '@open-legend/language';
 import { activeActivity, connectActivityState } from './action-experience.js';
 import { seesEntity } from './perception.js';
 import { observerDescription } from './worlds/base/knowledge.js';
@@ -142,6 +142,8 @@ export function recordHealthChange(
   before: number,
   cause: string,
   events: WorldEvent[],
+  causeLabel?: string,
+  causeMeaning?: string,
 ): void {
   const actor = entity.actor!;
   const definition = world.moduleManifest.definitions.find(
@@ -166,13 +168,14 @@ export function recordHealthChange(
     'attribute-changed',
     {
       parts: [
-        person(entity, 'possessive'),
-        ` ${definition.name} changed from ${beforeValue}${definition.schema.kind === 'number' ? definition.schema.unit : ''} to ${after}${definition.schema.kind === 'number' ? definition.schema.unit : ''}.`,
+        person(entity, 'subject'),
+        ` ${after < beforeValue ? 'took' : 'recovered'} ${formatDisplayNumber(Math.abs(after - beforeValue), { integer: definition.nativeHealth?.precision === 'whole-points' })} ${after < beforeValue ? 'damage' : definition.name.toLowerCase()}.`,
       ],
     },
     entity,
     undefined,
     {
+      changeKind: 'health',
       attributeId: definition.id,
       definitionVersion: definition.version,
       attributeRevision: actor.body!.revision,
@@ -180,6 +183,10 @@ export function recordHealthChange(
       after,
       unit: definition.schema.kind === 'number' ? definition.schema.unit : '',
       cause,
+      ...(causeLabel ? { causeLabel } : {}),
+      ...(causeMeaning ? { causeMeaning } : {}),
+      attributeName: definition.name,
+      ...(definition.meaning ? { attributeMeaning: definition.meaning } : {}),
     },
     definition.disclosure === 'public' ? 'external' : 'private',
   );
@@ -191,11 +198,13 @@ export function commitHealthChange(
   rawDelta: number,
   cause: string,
   events: WorldEvent[],
+  causeLabel?: string,
+  causeMeaning?: string,
 ): { before: number; after: number } {
   const before = entity.actor!.health;
   setBodyHealth(world, entity.actor!, before + rawDelta);
   reconcileBody(world, entity, events, cause);
-  recordHealthChange(world, entity, before, cause, events);
+  recordHealthChange(world, entity, before, cause, events, causeLabel, causeMeaning);
   return { before, after: entity.actor!.health };
 }
 /** Simultaneous effects aggregate before clamping. Caller supplies native authority, never prose. */

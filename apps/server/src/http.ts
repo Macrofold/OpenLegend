@@ -1,11 +1,12 @@
 import { recoverPlayerAction } from './action-request-recovery.js';
+import { recoverHumanRequest } from './human-request-recovery.js';
 import { constructionPlanSchema } from './construction.js';
 import { WorkLane, OverloadError } from './work-lane.js';
 import { foundationCapabilities } from './foundation-capabilities.js';
 import { continuitySubjects, continuityView } from './continuity-view.js';
 import { memoryHistory } from './memory-history.js';
 import { knownPlaces, inspectKnownPlace, knownPlaceReference } from './known-places.js';
-import { validEncounterExposure } from '@open-legend/domain';
+import { validEncounterExposure, selectedEventPresentation } from '@open-legend/domain';
 import { commitmentPage } from './commitment-view.js';
 import {
   AuthorityError,
@@ -85,7 +86,7 @@ import { readConfig, type AppConfig } from './config.js';
 import { PostgresDatabase } from './postgres.js';
 import { SqlGameRepository, digest } from './store.js';
 import { WorldService, commandInputSchema, requestIdSchema } from './world-service.js';
-import { projectPatch, projectView } from './view.js';
+import { projectPatch, projectView, ViewChangedError } from './view.js';
 import type { GameSaveCatalog, GameView } from '@open-legend/protocol';
 import { actionCatalogue, ActionCatalogueUnavailable } from './action-catalogue.js';
 import {
@@ -158,6 +159,7 @@ const actionContext = z
     catalogue: z.boolean().optional(),
     targetId: requestIdSchema.optional(),
     itemId: requestIdSchema.optional(),
+    inventoryGroup: z.string().min(1).max(4096).optional(),
     destinationId: requestIdSchema.optional(),
     quantity: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
     position: z
@@ -551,11 +553,26 @@ async function initializeGameServer(
         channels.set(key, (channel = { scope, patches: new Map(), bytes: 0 }));
       }
       if (channel.view?.revision === service.version) return channel.view;
-      const next = await timed('public.projection', () =>
-        projectView(service, director.executionSource, scope),
-      );
+      const prepare = () =>
+        timed('public.projection', () => projectView(service, director.executionSource, scope));
+      let next: GameView;
+      try {
+        next = await prepare();
+      } catch (error) {
+        if (!(error instanceof ViewChangedError)) throw error;
+        // A correction during storage reads is ordinary invalidation, not a disk failure.
+        // Retry this read once, within its original scope; never revive revoked authority.
+        service.assertScope(scope);
+        next = await prepare();
+      }
       service.assertScope(scope);
       if (channel.view) {
+        // An older reader must jump to current evidence, not replay private patches
+        // prepared before a correction/forgetting boundary on its way there.
+        if (channel.view.historyEpoch !== next.historyEpoch) {
+          channel.patches.clear();
+          channel.bytes = 0;
+        }
         const patch = projectPatch(channel.view, next);
         if (patch) {
           const message = `event: patch\ndata: ${JSON.stringify(patch)}\n\n`;
@@ -586,7 +603,9 @@ async function initializeGameServer(
     }
     if (state.blocked) return;
     const channel = channels.get(scopeKey(state.scope));
-    if (!channel?.view) return;
+    // Drain callbacks can run while a replacement projection is still awaiting storage.
+    // Never serve an already-prepared private view after its evidence was revoked.
+    if (!channel?.view || channel.view.historyEpoch !== service.historyEpoch) return;
     while (state.revision !== channel.view.revision) {
       const patch = channel.patches.get(state.revision);
       const message = patch?.message ?? `event: reset\ndata: ${JSON.stringify(channel.view)}\n\n`;
@@ -649,7 +668,7 @@ async function initializeGameServer(
             await currentView(state.scope);
             pump(stream);
           } catch (error) {
-            if (error instanceof OverloadError) {
+            if (error instanceof OverloadError || error instanceof ViewChangedError) {
               publishQueued = true;
               continue;
             }
@@ -934,12 +953,26 @@ async function initializeGameServer(
                 .string()
                 .regex(/^[a-z][a-z0-9_.:-]{0,63}$/)
                 .optional(),
+              category: z
+                .enum(['all', 'speech', 'actions', 'conflict', 'body', 'observations'])
+                .optional(),
+              showAll: z
+                .enum(['true', 'false'])
+                .transform((value) => value === 'true')
+                .optional(),
+              at: z.coerce.number().finite().nonnegative().optional(),
               cursor: z.string().max(2048).optional(),
               limit: z.coerce.number().int().min(1).max(100).optional(),
               q: z.string().max(200).optional(),
             })
             .strict()
             .parse(Object.fromEntries(url.searchParams));
+          if (options.showAll) {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            responseCapability = 'inspect';
+            service.assertScope(scope, 'inspect');
+          }
           if (!store.history)
             return send(response, 503, { message: 'History repository unavailable.' });
           const epoch = `${service.timelineId}:${service.historyEpoch}:${scopeKey(scope)}`;
@@ -953,8 +986,10 @@ async function initializeGameServer(
             options,
             sourceEpoch,
             corrections,
+            selectedEventPresentation(service.world),
           );
           await assertHistoryRead(scope, epoch);
+          if (options.showAll) service.assertScope(scope, 'inspect');
           return send(response, 200, page);
         }
         if (request.method === 'GET' && url.pathname === '/api/history') {
@@ -1419,6 +1454,7 @@ async function initializeGameServer(
                   targetId: requestIdSchema.optional(),
                   mode: z.enum(['enqueue', 'replace', 'interrupt']),
                   slots: intentSlotsSchema.optional(),
+                  expression: z.literal(true).optional(),
                 })
                 .strict()
                 .parse(body);
@@ -2718,6 +2754,23 @@ async function initializeGameServer(
                 message: value.visible ? 'Present.' : 'Away.',
               });
             }
+            case '/api/chat/receipt':
+            case '/api/inventions/receipt': {
+              const value = z
+                .object({ requestId: requestIdSchema, timeline: requestIdSchema })
+                .strict()
+                .parse(body);
+              return send(
+                response,
+                200,
+                await recoverHumanRequest(
+                  service,
+                  scope,
+                  value,
+                  url.pathname === '/api/chat/receipt' ? 'chat' : 'invention',
+                ),
+              );
+            }
             case '/api/inventions/list': {
               const value = z
                 .object({
@@ -3275,6 +3328,10 @@ async function initializeGameServer(
         // point, so they run fenced in the lane and are ordered after any revocation.
         return [
           '/api/actions',
+          '/api/chat/receipt',
+          '/api/inventions/receipt',
+          '/api/inventions/list',
+          '/api/action-attempt/receipt',
           '/api/saves/list',
           '/api/saves/receipt',
           '/api/saves/load',
@@ -3289,7 +3346,7 @@ async function initializeGameServer(
           ? await dispatch()
           : await service.authorized(scope, required, controlling, dispatch);
       } catch (error) {
-        if (error instanceof OverloadError) {
+        if (error instanceof OverloadError || error instanceof ViewChangedError) {
           response.setHeader('Retry-After', '1');
           return send(response, 503, { ok: false, code: 'busy', message: error.message });
         }

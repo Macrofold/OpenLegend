@@ -1,4 +1,31 @@
-import type { CatalogueAction } from '@open-legend/protocol';
+import type { CatalogueAction, EntityView } from '@open-legend/protocol';
+
+/** Long-lived inspectors refresh when permitted choices change, not for every
+ * walking position, animation, distance label or remaining-time update. The
+ * current projection already owns native eligibility; the client adds no rules. */
+export function actionSubjectKey(subject: EntityView | undefined): string {
+  const choice = (action: EntityView['actions'][number]) => [
+    action.id,
+    action.command,
+    action.enabled,
+  ];
+  return (
+    JSON.stringify(
+      subject && [
+        subject.kind,
+        subject.bodyState,
+        subject.bodyRevision,
+        subject.health,
+        subject.quantity,
+        subject.storage?.revision,
+        subject.canTalk,
+        subject.statusEffects?.map((effect) => effect.id),
+        subject.actions.map(choice),
+        subject.equippedAction && choice(subject.equippedAction),
+      ],
+    ) ?? ''
+  );
+}
 
 /** Text search always visits the entire permitted catalogue, including unavailable
  * rows only when the profile preference allows them. No top-k or paid search. */
@@ -46,7 +73,24 @@ export function retainActionOrder(previous: CatalogueAction[], next: CatalogueAc
         a.label.localeCompare(b.label) ||
         a.id.localeCompare(b.id),
     ),
-  ];
+  ].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
+}
+
+/** Keep still-offered suggestions in their exact slots while the bar owns input.
+ * A retired choice takes a new candidate without moving its surviving neighbors. */
+export function retainSuggestionSlots(
+  previous: readonly (string | undefined)[],
+  candidates: readonly string[],
+  offered: ReadonlySet<string>,
+): (string | undefined)[] {
+  if (!previous.length) return [...candidates];
+  const slots = previous.map((id) => (id && offered.has(id) ? id : undefined));
+  const retained = new Set(slots);
+  const remaining = candidates.filter((id) => !retained.has(id));
+  for (let index = 0; index < slots.length; index++)
+    if (!slots[index]) slots[index] = remaining.shift();
+  // Empty slots preserve the centered bar's width until interaction ends.
+  return slots;
 }
 
 /** Supplied category labels organize exact choices without inventing a second taxonomy. */
@@ -83,7 +127,7 @@ export function actionCommitment(action: CatalogueAction): string | undefined {
     [cost, time]
       .filter((fact) => !!fact)
       .map(([label, value]) => `${label}: ${value}`)
-      .join(' · ') ||
+      .join('; ') ||
     facts.find(([label]) =>
       ['Work', 'Requirements', 'Attack', 'Approach', 'Equipment'].includes(label),
     )?.[1]

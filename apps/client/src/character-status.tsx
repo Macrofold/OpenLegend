@@ -2,6 +2,7 @@ import { namePhrase } from '@open-legend/language';
 import { createRoot, type Root } from 'react-dom/client';
 import type { AttributeView, GameView } from '@open-legend/protocol';
 import { reactionNotice } from './reaction-notices';
+import { formatDisplayNumber } from '@open-legend/language';
 import { captionScope } from './speech-captions';
 type Tone = 'gain' | 'loss' | 'neutral';
 type Entry = {
@@ -154,7 +155,7 @@ export class CharacterStatuses {
       if (delta)
         this.enqueue(
           view.player.id,
-          `${delta > 0 ? '+' : '−'}${Math.abs(delta)} ${after.get(id)?.name ?? before.get(id)!.name}`,
+          `${delta > 0 ? '+' : '−'}${formatDisplayNumber(Math.abs(delta))} ${after.get(id)?.name ?? before.get(id)!.name}`,
           delta > 0 ? 'gain' : 'loss',
         );
     }
@@ -200,7 +201,12 @@ export class CharacterStatuses {
         );
         if (meter)
           this.upsert(event.actorId, `stat:${event.actorId}:${meter.id}:event:${event.id}`, {
-            text: meterChangeText(change.after - change.before, meter.name, change.unit),
+            text: meterChangeText(
+              change.after - change.before,
+              meter.name,
+              change.unit,
+              !!meter.bodyHealth || (meter.max ?? 0) >= 100,
+            ),
             meter: { id: meter.id, version: meter.version },
           });
         continue;
@@ -295,13 +301,14 @@ export class CharacterStatuses {
         const total = (pending && pending.until > now ? pending.value : 0) + delta;
         const until = pending && pending.until > now ? pending.until : now + 4000;
         this.deltas.set(key, { value: total, until });
-        const rounded = Math.round(Math.abs(total) * 100) / 100;
+        const integer = !!meter.bodyHealth || (meter.max ?? 0) >= 100;
+        const rounded = Number(formatDisplayNumber(Math.abs(total), { integer }));
         if (!rounded) {
           this.remove(entity.id, key);
           continue;
         }
         this.upsert(entity.id, key, {
-          text: meterChangeText(total, meter.name, meter.unit),
+          text: meterChangeText(total, meter.name, meter.unit, integer),
         });
         const entry = this.queues.get(entity.id)?.entries.find((entry) => entry.id === key);
         if (entry) entry.expires = until;
@@ -492,7 +499,7 @@ export class CharacterStatuses {
   }
 }
 
-function meterChangeText(delta: number, name: string, unit?: string): string {
-  const amount = Math.round(Math.abs(delta) * 100) / 100 || '<0.01';
-  return `${delta > 0 ? '+' : '−'}${amount}${unit ? `${unit === '%' ? '' : ' '}${unit}` : ''} ${name}`;
+function meterChangeText(delta: number, name: string, unit?: string, integer = false): string {
+  const amount = formatDisplayNumber(Math.abs(delta), { integer });
+  return `${delta > 0 ? '+' : '−'}${amount}${unit && unit !== '%' ? ` ${unit}` : ''} ${name}`;
 }

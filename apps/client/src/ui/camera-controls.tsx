@@ -1,6 +1,5 @@
 import { useId, useRef, useState, type ComponentProps } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
-import type { SpatialLayout } from '@open-legend/spatial';
 import type { PerceptionOptions } from '../world-renderer';
 import { GUIDE_HINTS } from '../perception-field';
 import type { CameraCommand, CameraState } from '../world-camera';
@@ -17,15 +16,13 @@ function CameraButton(props: ComponentProps<typeof IconButton> & { hint?: string
 
 /** Common controls stay visible; orientation options expand without changing the camera; meanings live in docs/spatial-world.md#picking-and-controls. */
 export function CameraControls({
-  levels,
   state,
   send,
   center,
   overlays,
   toggleOverlay,
 }: {
-  levels: SpatialLayout['levels'];
-  state: Pick<CameraState, 'projection' | 'levelId' | 'rotationLocked' | 'following'>;
+  state: Pick<CameraState, 'projection' | 'rotationLocked' | 'following'>;
   send(command: CameraCommand): void;
   center(): void;
   overlays: PerceptionOptions;
@@ -49,13 +46,13 @@ export function CameraControls({
       <CameraButton
         icon="ui.recenter"
         label="Center on player"
-        hint="Center on player · Home"
+        hint="Center on player (Home)"
         onPress={center}
       />
       <CameraButton
         icon="ui.follow"
         label="Follow player"
-        hint={`Follow player · ${state.following ? 'on' : 'off'}. Drag to stop following.`}
+        hint={`Follow player: ${state.following ? 'on' : 'off'}. Pan to stop following.`}
         pressed={state.following}
         onPress={() => send({ type: 'follow' })}
       />
@@ -77,35 +74,26 @@ export function CameraControls({
           onPress={() => toggleOverlay('hearing')}
         />
       </span>
-      <AriaButton
-        ref={optionsButton}
-        className="ol-btn ol-camera-more"
-        data-variant="quiet"
-        data-size="sm"
-        aria-expanded={expanded}
-        aria-controls={advancedId}
-        onPress={() => setExpanded((value) => !value)}
-      >
-        <Icon name="ui.settings" size={16} />
-        <span>Camera options</span>
-      </AriaButton>
-      {levels.length > 0 && (
-        <select
-          aria-label="Focus level"
-          value={state.levelId ?? ''}
-          onChange={(event) => {
-            const level = levels.find((entry) => entry.id === event.target.value);
-            send({ type: 'level', id: level?.id ?? null, y: level?.focusY ?? 0 });
-          }}
+      <TextTooltip text="Camera settings">
+        <AriaButton
+          ref={optionsButton}
+          className="ol-btn ol-camera-more"
+          data-variant="quiet"
+          data-size="sm"
+          aria-expanded={expanded}
+          aria-controls={advancedId}
+          aria-label="Camera settings"
+          onPress={() => setExpanded((value) => !value)}
         >
-          <option value="">All levels</option>
-          {levels.map((level) => (
-            <option key={level.id} value={level.id}>
-              {level.name}
-            </option>
-          ))}
-        </select>
-      )}
+          <span className="ol-camera-settings-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+              <path d="M3 5h4l2-2h5l2 2h3v10H3Z" />
+              <circle cx="11" cy="10" r="3" />
+            </svg>
+            <Icon name="ui.settings" size={14} />
+          </span>
+        </AriaButton>
+      </TextTooltip>
       <div
         id={advancedId}
         className="ol-camera-advanced"
@@ -147,8 +135,8 @@ export function CameraControls({
           label="Perspective view"
           hint={
             state.projection === 'orthographic'
-              ? 'Orthographic · switch to perspective'
-              : 'Perspective · switch to orthographic'
+              ? 'Orthographic (switch to perspective)'
+              : 'Perspective (switch to orthographic)'
           }
           pressed={state.projection === 'perspective'}
           onPress={() => send({ type: 'projection' })}
@@ -162,7 +150,7 @@ export function CameraControls({
         <CameraButton
           icon="ui.camera-help"
           label="Camera help"
-          hint="Right-drag to rotate and tilt; Shift + right-drag or middle-drag to pan; scroll to zoom. With the world focused: arrows rotate/tilt, Page Up/Down changes floor, Home centers on you. P pauses/resumes; Shift + ] speeds up; Shift + [ slows down. Panning or choosing a floor stops following."
+          hint="Right-drag to rotate and tilt; Shift + right-drag or middle-drag to pan; scroll to zoom. With the world focused: arrows rotate/tilt, Shift + arrows pan, Home centers on you. Hold Option to see character-visible things through scenery. Command-click uses an object’s main action. P pauses/resumes; Shift + ] speeds up; Shift + [ slows down. Panning stops following."
         />
       </div>
     </Toolbar>

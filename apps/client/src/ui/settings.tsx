@@ -9,14 +9,14 @@ import './settings.css';
 
 export function Settings({
   view,
+  section,
+  setSection,
   theme,
   setTheme,
   scale,
   setScale,
   reduce,
   setReduce,
-  captionsEnabled,
-  setCaptionsEnabled,
   captionsPaused,
   setCaptionsPaused,
   captionReadingScale,
@@ -28,14 +28,14 @@ export function Settings({
   browseActions,
 }: {
   view: GameView;
+  section: string;
+  setSection(value: string): void;
   theme: string;
   setTheme(value: string): void;
   scale: number;
   setScale(value: number): void;
   reduce: boolean;
   setReduce(value: boolean): void;
-  captionsEnabled: boolean;
-  setCaptionsEnabled(value: boolean): void;
   captionsPaused: boolean;
   setCaptionsPaused(value: boolean): void;
   captionReadingScale: number;
@@ -47,7 +47,11 @@ export function Settings({
   browseActions(opener: HTMLElement): void;
 }) {
   return (
-    <Tabs className="ol-settings" defaultSelectedKey="reading">
+    <Tabs
+      className="ol-settings"
+      selectedKey={section === 'policy' && !view.godMode ? 'reading' : section}
+      onSelectionChange={(key) => setSection(String(key))}
+    >
       <Button
         onPress={(event) => {
           if (event.target instanceof HTMLElement) browseActions(event.target);
@@ -62,7 +66,7 @@ export function Settings({
         {view.godMode && <Tab id="policy">World permissions</Tab>}
       </TabList>
       <TabPanel id="reading" shouldForceMount className="ol-settings-page">
-        <p className="ol-setting-scope">This device · changes apply immediately</p>
+        <p className="ol-setting-scope">This device, changes apply immediately</p>
         <Section title="Appearance">
           <label>
             Interface theme
@@ -94,14 +98,7 @@ export function Settings({
           </label>
         </Section>
         <Section title="Speech captions">
-          <label>
-            <input
-              type="checkbox"
-              checked={captionsEnabled}
-              onChange={(e) => setCaptionsEnabled(e.target.checked)}
-            />{' '}
-            Show speech captions
-          </label>
+          <p>Heard speech appears in the world and remains available in Events.</p>
           <label>
             <input
               type="checkbox"
@@ -126,7 +123,7 @@ export function Settings({
           </label>
           <p className="ol-caption">
             Caption countdowns control how long speech stays on screen. The world keeps moving
-            unless you pause it. Heard speech remains available in World Events.
+            unless you pause it. Heard speech remains available in Events.
           </p>
         </Section>
       </TabPanel>
@@ -137,7 +134,7 @@ export function Settings({
           setShadowQuality={setShadowQuality}
         />
         <Section title="Performance display">
-          <p className="ol-setting-scope">This device · changes apply immediately</p>
+          <p className="ol-setting-scope">This device, changes apply immediately</p>
           <label>
             <input
               type="checkbox"
@@ -157,12 +154,12 @@ export function Settings({
           <p>
             Click ground to walk. Click an object to look closer. Right-click or Control-click for
             its actions. In view offers a readable list of the objects your character can currently
-            see.
+            see. Command-click uses the object's preferred action.
           </p>
           <p>
             Open a container from that object. Your belongings and its contents stay together while
-            you move items. Describe an action is available from Character when you want to express
-            an intention in your own words.
+            you move items. Shift + A opens Act when you want to express an intention in your own
+            words.
           </p>
           <p>
             When choosing a subject, click the intended object or use In view. Choosing only
@@ -175,25 +172,27 @@ export function Settings({
             Left-drag does not pan or act on release.
           </p>
           <p>
-            With the world canvas focused, use Left / Right to rotate, Up / Down to tilt, Page Up /
-            Page Down to change the focused level, and Home to recenter. The camera toolbar also
-            provides these controls. Sight and Hearing show the permitted range guides.
+            With the world canvas focused, use Left / Right to rotate, Up / Down to tilt, Shift +
+            arrows to pan, and Home to recenter. Hold Option to make things your character can see
+            visible through obstructing scenery. Sight and Hearing show the permitted range guides.
           </p>
         </Section>
         <Section title="Keyboard shortcuts">
           <dl className="ol-shortcut-list">
             {[
               ['I', 'Inventory'],
-              ['C', 'Crafting'],
+              ['C', 'Craft'],
               ['K', 'Character'],
-              ['J', 'Journal'],
+              ['J', 'Events'],
+              ['Shift + S', 'Speak'],
+              ['Shift + A', 'Act'],
               ['T', 'Use the equipped item on a target'],
               ['V', 'In view'],
               ['W', 'Create'],
               ['1–3', 'Pinned shortcuts'],
               ['P', 'Pause or resume the world'],
               ['Shift + ] / [', 'Faster / slower world time'],
-              ['Escape', 'Cancel a choice, go back or close the active panel'],
+              ['Escape', 'Cancel the current choice first; otherwise open or close Game'],
             ].map(([key, purpose]) => (
               <div key={key}>
                 <dt>{key}</dt>
@@ -203,7 +202,7 @@ export function Settings({
           </dl>
           <p className="ol-caption">
             Typing and choosing text with an input method take priority over game shortcuts. Enter
-            sends conversation text; Shift + Enter adds a new line.
+            sends the text you are writing; Shift + Enter adds a new line.
           </p>
         </Section>
         <Section title="Leaving and returning">
@@ -215,12 +214,12 @@ export function Settings({
           </p>
           <p>
             Game provides account access, checkpoints when permitted, and the separate World
-            operations page. Checkpoints are deliberate snapshots; the save status on your character
-            card reports the live world's persistence.
+            operations page. Checkpoints are deliberate snapshots. Game reports save status; a save
+            failure also remains visible on your character card.
           </p>
         </Section>
         <Section title="Credits">
-          <p>Open Legend · AGPL-3.0-only</p>
+          <p>Open Legend, AGPL-3.0-only</p>
           <details>
             <summary>Icon and font credits</summary>
             <p>
@@ -229,7 +228,7 @@ export function Settings({
                 target="_blank"
                 rel="noreferrer"
               >
-                Game-icons.net · CC BY 3.0
+                Game-icons.net, CC BY 3.0
               </a>
               . Silhouettes adapted to inherit interface color.
             </p>

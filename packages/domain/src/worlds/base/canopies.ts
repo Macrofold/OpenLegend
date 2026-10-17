@@ -164,7 +164,7 @@ export const CANOPY_ITEMS: Record<string, ItemDefinition> = {
   canopy_tall_post: {
     id: 'canopy_tall_post',
     version: 1,
-    name: 'Tall canopy post · 2.40 m',
+    name: 'Tall canopy post (2.40 m)',
     description:
       'One actual 2.40 metre upright, with two qualified sockets for a light weather covering.',
     portable: true,
@@ -175,7 +175,7 @@ export const CANOPY_ITEMS: Record<string, ItemDefinition> = {
   canopy_post: {
     id: 'canopy_post',
     version: 1,
-    name: 'Light canopy post · 2.30 m',
+    name: 'Light canopy post (2.30 m)',
     description:
       'A 2.30 metre upright, with two qualified binding sockets for light weather coverings.',
     portable: true,

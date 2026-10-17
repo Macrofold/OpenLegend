@@ -63,19 +63,15 @@ test('scoped React action search, contextual facts and known unavailable choices
     await expect(gather).toHaveAttribute('aria-disabled', 'true');
     await page.keyboard.press('Escape');
     await page.locator('#world').click({ button: 'right', position: { x: 900, y: 700 } });
-    await expect(page.locator('#contextTitle')).toHaveText(
+    await expect(menu.locator('.ol-picker-head strong')).toHaveText(
       game.service.world.presentation!.locationName,
     );
     await search.fill('walk');
     await expect(menu.getByRole('button', { name: /Walk here/ })).toHaveCount(0);
-    // Walking belongs to primary click. The authored evasive step stays visible,
-    // with its real pause blocker, when searching known contextual choices.
+    // Walking belongs to primary click. Evade remains a native action but is
+    // intentionally absent from the player's contextual action browser.
     await search.fill('evade');
-    await expect(menu.locator('[data-catalogue-action]')).toHaveCount(1);
-    await expect(menu.locator('[data-catalogue-action="evade:point"]')).toHaveAttribute(
-      'aria-disabled',
-      'true',
-    );
+    await expect(menu.locator('[data-catalogue-action]')).toHaveCount(0);
     expect(errors).toEqual([]);
     expect(paid).toEqual([]);
   } finally {

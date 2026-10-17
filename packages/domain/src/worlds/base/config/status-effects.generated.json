@@ -1,5 +1,5 @@
 {
-  "revision": 1,
+  "revision": 3,
   "clockOffsetHours": 8,
   "namedTimes": { "dawn": 6, "dusk": 18 },
   "definitions": [
@@ -123,6 +123,8 @@
       "actions": {
         "activate": "Sleep",
         "deactivate": "Wake Up",
+        "activateIcon": "ui.night",
+        "deactivateIcon": "ui.day",
         "allowOther": true,
         "activateOther": false
       },
@@ -279,7 +281,8 @@
       "id": "wilderness:starvation",
       "type": "statusEffect",
       "target": "$subject",
-      "label": "Starvation",
+      "label": "Hunger",
+      "meaning": "With no food remaining, the body loses 3% of its maximum health every five game minutes. Eating restores food and stops starvation.",
       "lifecycleCause": "needs",
       "enabled": true,
       "requires": {
@@ -343,6 +346,7 @@
       "type": "statusEffect",
       "target": "$subject",
       "label": "Exhaustion",
+      "meaning": "Staying awake with no energy costs 1% of maximum health every five game minutes. Rest restores energy.",
       "lifecycleCause": "needs",
       "enabled": true,
       "requires": {

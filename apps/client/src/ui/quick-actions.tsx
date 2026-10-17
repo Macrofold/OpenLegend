@@ -14,6 +14,7 @@ import {
 } from '../design-system/components';
 import { useLocal } from './storage';
 import { uiOwnsShortcut } from './keyboard';
+import { retainSuggestionSlots } from '../action-browser';
 import './character-actions.css';
 
 /** Group only genuine, permitted native actions using the installed world's own
@@ -43,7 +44,7 @@ export function gatherQuickActions(view: GameView): ActionOption[] {
   return [...nearest.values()].map(({ action, source }) => ({
     ...action,
     id: action.shortcut!.id,
-    label: `${action.shortcut!.label} · ${source.name}`,
+    label: `${action.shortcut!.label} — ${source.name}`,
     icon: action.shortcut!.icon ?? action.icon,
   }));
 }
@@ -71,7 +72,7 @@ export function QuickActions({
   const bar = useRef<HTMLDivElement>(null);
   const reviewPanel = useRef<HTMLDivElement>(null);
   const reviewOpener = useRef<HTMLElement | null>(null);
-  const suggestionIds = useRef<string[]>([]);
+  const suggestionIds = useRef<(string | undefined)[]>([]);
   const labelId = useId();
   const gate = !connected
     ? 'Reconnect to act.'
@@ -84,7 +85,7 @@ export function QuickActions({
       item.actions.map((action) => ({
         ...action,
         icon: action.icon ?? item.icon,
-        label: `${action.label} · ${item.name}`,
+        label: `${action.label} — ${item.name}`,
       })),
     ),
     ...view.entities.flatMap((entity) =>
@@ -93,12 +94,12 @@ export function QuickActions({
         .map((action) => ({
           ...action,
           icon: action.icon ?? entity.icon,
-          label: `${action.label} · ${entity.name}`,
+          label: `${action.label} — ${entity.name}`,
         })),
     ),
     ...gatherQuickActions(view),
     ...view.recipes.flatMap((recipe) =>
-      recipe.actions.map((action) => ({ ...action, label: `${action.label} · ${recipe.name}` })),
+      recipe.actions.map((action) => ({ ...action, label: `${action.label} — ${recipe.name}` })),
     ),
   ];
   const options = [...new Map(native.map((action) => [action.id, action])).values()].map(
@@ -146,20 +147,20 @@ export function QuickActions({
         .map((action) => [action.id, action]),
     ).values(),
   ].slice(0, 3);
-  if (!bar.current?.matches(':hover') && !bar.current?.contains(document.activeElement))
-    suggestionIds.current = candidates.map((action) => action.id);
-  const suggested = suggestionIds.current.map(
-    (id) =>
-      options.find((action) => action.id === id) ?? {
-        id,
-        label: 'Suggestion no longer available',
-        enabled: false,
-        reason: 'This suggestion is no longer available. Choose another action.',
-        icon: 'ui.lock',
-        description: undefined,
-        run: () => {},
-      },
-  );
+  // Preserve positions under the pointer while an action still exists. A retired
+  // action must free its slot immediately (for example Sleep becoming Wake up).
+  // Ranking changes do not move a valid choice under the pointer; retired choices
+  // cannot stay pinned merely because the pointer or keyboard focus remains here.
+  const candidateIds = candidates.map((action) => action.id);
+  suggestionIds.current =
+    bar.current?.matches(':hover') || bar.current?.contains(document.activeElement)
+      ? retainSuggestionSlots(
+          suggestionIds.current,
+          candidateIds,
+          new Set(options.map((action) => action.id)),
+        )
+      : candidateIds;
+  const suggested = suggestionIds.current.map((id) => options.find((option) => option.id === id));
   const reviewedNative = review
     ? view.entities
         .flatMap((entity) => entity.actions)
@@ -230,36 +231,45 @@ export function QuickActions({
             <div className="ol-qa-section">
               <span className="ol-qa-heading">Suggestions</span>
               <div className="ol-qagroup">
-                {suggested.map((action) => (
-                  <div key={action.id} className="ol-qa-wrap">
-                    <TextTooltip
-                      text={[action.label, action.description, action.reason]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    >
-                      <AriaButton
-                        className="ol-qa"
-                        data-kind="suggested"
-                        aria-label={action.label}
-                        aria-disabled={!action.enabled}
-                        onPress={() =>
-                          action.enabled
-                            ? action.run()
-                            : setReason(action.reason ?? 'Unavailable now.')
-                        }
+                {suggested.map((action, index) =>
+                  action ? (
+                    <div key={index} className="ol-qa-wrap">
+                      <TextTooltip
+                        text={[action.label, action.description, action.reason]
+                          .filter(Boolean)
+                          .join(' — ')}
                       >
-                        <Icon name={action.icon} fallbackLabel={action.label} size={24} />
-                      </AriaButton>
-                    </TextTooltip>
-                  </div>
-                ))}
+                        <AriaButton
+                          className="ol-qa"
+                          data-kind="suggested"
+                          aria-label={action.label}
+                          aria-disabled={!action.enabled}
+                          onPress={() =>
+                            action.enabled
+                              ? action.run()
+                              : setReason(action.reason ?? 'Unavailable now.')
+                          }
+                        >
+                          <Icon name={action.icon} fallbackLabel={action.label} size={24} />
+                        </AriaButton>
+                      </TextTooltip>
+                    </div>
+                  ) : (
+                    <span
+                      key={index}
+                      className="ol-qa"
+                      aria-hidden="true"
+                      style={{ visibility: 'hidden' }}
+                    />
+                  ),
+                )}
               </div>
             </div>
             <span className="ol-qadivider" />
           </>
         )}
         <div className="ol-qa-section">
-          <span className="ol-qa-heading">Shortcuts · 1–3</span>
+          <span className="ol-qa-heading">Shortcuts — 1–3</span>
           <div className="ol-qagroup">
             {pins.map((id, index) => {
               const action = options.find((option) => option.id === id);
@@ -274,7 +284,7 @@ export function QuickActions({
                       action
                         ? [action.label, action.description, action.reason]
                             .filter(Boolean)
-                            .join(' · ')
+                            .join(' — ')
                         : id
                           ? 'Pinned action unavailable; assignment retained.'
                           : 'Assign a shortcut'
@@ -350,7 +360,7 @@ export function QuickActions({
                 id: action.id,
                 label: action.label,
                 icon: action.icon,
-                description: [action.description, action.reason].filter(Boolean).join(' · '),
+                description: [action.description, action.reason].filter(Boolean).join(' — '),
               })),
             ]}
             onChange={(value) => {

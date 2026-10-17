@@ -1,0 +1,133 @@
+# World-first player experience
+
+| Status      | Current progress                                                                                                                                            | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Compact HUD review fixes preserve tasks through Game, keep work review reachable and respect authored units; the parent speech decision and CI remain open. | 2026-10-17   |
+
+Implementation-aligned update: **2026-10-17 02:45 UTC** (second review of inspection entrypoints, responsive Game focus restoration and current-work tooltip activation).
+
+## Purpose and authority
+
+The player should see, hear, inspect, make and place things in the world without navigating an administrative representation of the engine. This project supersedes the older conversation-panel, Journal-filter, nested In view inspection and coordinate-entry construction designs wherever explicitly stated below. Existing gameplay, permissions, hearing, resource use and durable request recovery remain authoritative.
+
+This is the complete scope of Mike's October 16 request, including the four supplied screenshots. Approval includes implementation. The [technical design](player-experience-overhaul-tech-design.md) owns implementation stages and responsibilities; [UIUX19](../maintainers/ui-ux.md#uiux19) owns completion tracking. It is not complete after a first styling pass.
+
+## Shared interaction contract
+
+- Every surface names the player's object and immediate task. Known actor, target and position come from selection and pointing. Ordinary players never enter XYZ coordinates, raw IDs or implementation parameters to place an object. Numeric coordinates belong only in explicitly labeled developer/God tools.
+- A panel has stable navigation, one clear content region and a reachable action area. Loading, refresh, right-click, pause and responsive changes do not replace the panel with unrelated placeholders or shift controls under the pointer.
+- Quiet pause preserves the already-authorized scene and readable panels with input disabled. Actual identity, world, timeline or permission loss clears private content. Old displayed information never authorizes a command.
+- Shared buttons, menus, action rows, object names, mechanic explanations, dialogs and typography have one component owner. Portals receive the same spacing and theme. The entire interface is inspected for missing padding, unreadable density, oversized labels, blank badges, inconsistent navigation and unnecessary motion.
+- Repeated information is quiet. Use space, line breaks and clear labels rather than middle-dot separators in player-facing UI. Long technical details open deliberately; costs, blockers, errors and consequences remain available before commitment.
+
+Ordinary reads and action buttons share a 500 ms visual loading delay: no flash of placeholder text for fast work, a spinner for longer waits, and immediate protection against duplicate submission. Controls keep their labels and positions. Inventory Controls opens an anchored popover. Filters, navigation and commands have distinct styling. Ordinary numbers use at most two decimal places; Health uses whole numbers at every body maximum; needs and other numeric meters whose maximum is at least 100 also use whole numbers. Food is a value, not a percentage. Exact facts, editable input and real costs keep their required precision.
+
+## Speaking and hearing
+
+Speaking is an action in the world. A compact Speak input replaces the player conversation window. It has a recipient when deliberately addressed, the existing volume control, explicit Send and cancel/hide. Right-click Speak uses the chosen person; speaking without a recipient addresses the surrounding scene. Drafts survive hiding, pause and temporary connection loss. Speaking remains available when AI configuration or allowance prevents a generated reply; that native choice is made before sending and never retries a refused or uncertain paid request as duplicate speech. Native conversation participation and independently selected replies remain; removing a transcript window does not remove response admission or request recovery. Each addressed draft retains its own pending reply and recovery controls. Checking an old reply reads the original request, even when other activity has pushed it out of the recent display; it never repeats the spoken words or buys another reply.
+
+Every heard utterance is presented visually. On-screen speakers have plain readable text above their heads. Directed speech has a smaller `To Ada:` line above the quoted words, using only the recipient identity the listener perceived. Partially understood speech contains only the permitted fragments and explicit gaps; a faint voice never reveals unheard words. Camera movement does not change hearing or grant speaker identity.
+
+When a source projects outside the usable screen, its text appears along a bounded circle/ellipse centered on the camera's screen, with an outward direction arrow. A source inside the screen remains overhead even when the camera is away from the player character. Labels stay inside the usable viewport, avoid control regions, and remain readable through camera pan/orbit/zoom. Competing utterances queue rather than silently disappearing. Dense simultaneous speech has a visible route to the exact missed/heard Events entries; finite screen space is not permission to delete history.
+
+**Accepted shortcuts:** Shift+S opens Speak; Shift+A opens Act. Text editing, composition and active overlays keep ownership of those keys. **Pending narrow decision:** whether unidentified audible sources may disclose approximate source location for correctly camera-relative arrows. Existing exact/partial speech privacy remains until that decision is resolved.
+
+## One Events history
+
+The player rail says **Events**, replacing Journal and the conversation transcript destination. It opens one history of what this character perceived, not a god view of everything that happened. Physical actions and speech share chronological ordering, so an attack and the words after it remain understandable together.
+
+- Default **All** shows meaningful experiences. **Speech**, **Actions**, **Conflict**, **Body** and **Observations** narrow that same history; use categories actually supported by the admitted event meaning, not English-string guessing. Each event family explicitly opts in through **Display to player**, false by default. Movement, inspection, participation bookkeeping and trivial ambient observations stay hidden. God mode alone provides **Show all events**, still limited to the character’s permitted history. Nothing is deleted from canonical evidence to declutter the player view.
+- Dates separate days with a centered day label and horizontal rules. Entries omit repetitive 'Recorded event' labels. Small time labels appear above the first entry and when at least ten game minutes have elapsed since the preceding displayed event, or at a day boundary. Exact day/time remains available on hover/focus and in entry detail.
+- Speech uses quotes and a small speech icon. Actions, attacks, observations and bodily consequences use their meaningful authored icon or a neutral semantic fallback. Color is supplementary.
+- **Jump to time** is always visible, with **Latest** beside its heading and aligned Day, Time and Jump controls below. Search has its own consistent-height row; narrow panels keep the category filters on a horizontally scrollable row. Latest keeps its label; a separate quiet notice indicates newly available entries. The selected interval and missing/retained coverage are honest; paging remains bounded and can continue before/after the chosen point. New entries do not steal the reading position.
+- Describe the occurrence and cause: `Mike took 3 damage from hunger`, when both identity and cause are actually known. Before/after values belong in details. Never fabricate a cause or reveal a hidden person to improve copy. Names link to the same permitted person/object profile used elsewhere. Names mentioned inside quoted speech or freeform action prose are not automatically treated as known people merely because their spelling matches an event participant. A disappeared or no-longer-visible person opens only authorized remembered information, or explains why current inspection is unavailable.
+- Mechanic terms reuse one accessible explanation component and authored description everywhere, including meters, Events and inspection. Hover/focus explains hunger without copying its rules into each component.
+- Promises, story/background and known places retain their capabilities in the primary **Character records** destination; they are not misleading event-category filters. God-only raw event editing remains separate.
+
+## Inventory that stays in place
+
+Opening inventory has one stable `Your belongings` heading. It does not briefly become a full-screen cover or rename itself to `Mike, carried by you`. Right-click opens the item menu without clearing the collection behind it. Inspection can enrich the selected detail without replacing the grid. Pausing leaves the selected item, scroll, search and layout visible; returning refreshes safely without showing a false disconnected message.
+
+Equivalent cords and materials appear as one visual stack with an honest total. Equivalence includes all relevant observable/mechanical differences; identical labels alone are insufficient. Native material origins, condition, ownership, grants and exact individual identities remain intact. Quantity actions resolve exact eligible units through authoritative inventory operations, never by erasing provenance or silently replacing a selected unique item. Move and Drop can resolve quantities across eligible members of the visual group. Offer and item-use actions still operate on one selected physical stack; Offer’s All/Half presets use that stack’s eligible quantity, not the combined displayed total. Meaningfully different objects remain distinguishable, with individual detail where needed.
+
+## One inspection and action vocabulary
+
+In view remains a list. Clicking an entry highlights the object and opens the same independent inspection panel as left-clicking the world or choosing Look closer. It does not replace the In view list with a nested page. Several object panels may remain open; each is draggable on desktop, has its own close action, and raises when selected again. Narrow layouts retain accessible panel switching without discarding selection. Hidden inspectors stop requesting actions; returning checks current availability before enabling their commands.
+
+The inspection panel shows name, description, relevant known condition/details and an **Actions** section. That section reuses the right-click menu's search, useful immediate choices, category groups, exact command rows and blocking explanations. No empty status pill. Right-click remains a compact contextual accelerator; inspection is the persistent detailed version, not a second action implementation.
+
+**Evade is absent from every right-click menu.** Native evasion and supported non-menu execution remain available. A future deliberate evade binding/quick-action design is tracked separately; it is not part of this overhaul or permission to delete the mechanic.
+
+## Creation with understandable destinations
+
+**Create** is ordinary character invention: stable **Invent / Recipes / Requests** navigation. It does not switch between dropdown and tabs according to content. Recipes are searchable compact rows/tiles with identity, brief purpose, relevant availability and Craft; choosing Details reveals the complete method, inputs, outputs and limitations. Requests show a concise intent/status/next action, with technical validation behind detail. A missing submission acknowledgement retains the exact original invention request. Check original invention reads its recorded outcome under current permission, including after a same-character reconnect; editing the idea cannot silently replace an unresolved paid request. An absent record permits an explicit resend of the retained original request, not a new identity; checking alone never resubmits. The [recovery contract](../world-agent-runtime.md#ordinary-invention-request-recovery) and [existing bounds](../limits/inventions.md#ir01--ordinary-invention-browser-recovery) own its details.
+
+**World editor** is a separate God-mode destination, chat first. The same streamed conversation and typed inline questions remain. A fixed **Chat / Saved changes** row sits above the content; session choice and spending detail are quiet options. Proposed work appears as concise contextual cards with clear Review/Apply actions through existing exact approval. The chat is not buried under an administrative dashboard.
+
+**Inspect world** is a separate God-mode destination, not a Create subtab. Inspection and destructive change review retain their existing authorization.
+
+Every invention dialog has a padded heading/body/footer and spaced wrapping buttons. Similar-search failure states what the player can do, with Retry secondary, Continue without search primary, Cancel quiet. The long explanation and raw provider status do not become a wall of text or imply a retry already occurred.
+
+## Building in the scene
+
+Build opens a drawer of illustrated available construction choices. Each tile names the result, shows its shape, and exposes material requirements/shortfalls before commitment. The images are original/rendered from the supported shape; reference-game art is not shipped. Installed world definitions decide available forms and materials. Do not invent a Lean-to if the installed world only supports its actual sloped-cover arrangement; name the supported result clearly.
+
+Selecting a tile enters placement mode: a translucent shape preview follows the pointed supported surface. Rotate left/right via visible buttons and keyboard; Escape/Cancel exits without spending or walking. Primary click chooses that exact position and commits through current native construction admission after a fresh check. While checking, retain the preview and lock duplicate placement. An invalid result stays visible with its reason and can be repositioned. Camera pan/orbit remains available and never places on drag release. A visible Place control provides a non-pointer commitment route to the same selected preview.
+
+Pointing or clicking at an opaque obstruction or another position without a visible supported surface retains the last draft, turns its preview amber and says **Choose a visible supported surface.** Build here and Enter cannot submit the old location until a valid surface is selected again. Keyboard movement can recover from the retained draft location. Pointer movement does not invalidate a construction request already being submitted.
+
+Default materials are proposed from eligible carried stock, with concise costs and an optional **Materials** disclosure for meaningful substitutions. Four post dropdowns and four binding dropdowns are not the primary workflow. Choosing a different material changes the preview/check and requires current admission. Existing structure extension, covering replacement/lowering, dismantling, reclaim, rest and invitation remain accessible from the structure and clearly named controls, without XYZ fields. A completed or stopped operation can be chosen again for that same structure. Failed or timed-out material/preview reads withdraw confirmation, retain the selected plan and explain the failure beside the action. A superseded or deliberately cancelled read merely requires a fresh check; it is not a failed gameplay action. Hiding cancels read-only checks so reopening can check again, but does not cancel construction already admitted by the game. [Construction read bounds](../limits/editable-shelters.md#sh-l12--growth-and-required-query-admission) retain the current deadlines.
+
+Construction remains time-taking character work with physical reach, permissions and partial results; a click places the plan and starts real work, not a God-mode instant object. Stop preserves completed parts under the existing rules. Missing ingredients, out-of-reach sites, obstacles and disconnected control receive usable explanations.
+
+## Camera and sight guides
+
+Camera settings uses one compact compound camera/settings icon with an accessible name and tooltip. Rotation/tilt/projection controls stay in its popover; the toolbar no longer reserves a long text button. With the world focused, Shift + arrows pans the camera through the same presentation-only operation as mouse panning; ordinary arrows retain rotation/tilt and placement arrows retain movement of the building preview.
+
+Hover outlines prepare once per submitted graphics frame, avoiding accumulated draw callbacks when frames are skipped. Same-owner narration refresh retains the current passage without clearing/replaying it; actual private-history invalidation still clears it. Investigate the supplied angular spikes around walls in the sight guide. Improve the presentation sampling/outline at obstacle boundaries without claiming the approximate visual guide is exact sensing. Do not reveal undisclosed geometry, smooth across real hidden regions, or change character vision to fix a drawing. Check wall corners, ramp/deck heights and moving origin in the actual renderer.
+
+## Acceptance journeys
+
+| Journey                        | Required observable result                                                                              |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| Speak to Ada                   | Compact input, directed recipient, heard reply overhead, matching Events entry; no transcript window    |
+| Partial hearing                | Only permitted words, clear gaps, no hidden name or unheard content                                     |
+| Detached camera                | On-screen source overhead; offscreen heard source indicated within screen; no hearing change            |
+| Read a day's events            | Meaningful mixed chronology, day separators, sparse time labels, full detail, filters and time jump     |
+| Pause with inventory open      | Same title, selected item, grid and scroll stay visible; no action while inactive                       |
+| Right-click a cord             | No background grid flash; grouped quantity and exact permitted operation                                |
+| Inspect two objects            | In view list stays; two reusable draggable inspectors; shared action search/categories                  |
+| Invent with search unavailable | Padded readable dialog, clear primary action, retained draft, no automatic paid retry                   |
+| Browse three recipes           | Compact useful summaries; only requested details expand                                                 |
+| Author a world change          | Separate stable chat destination, streamed reply, inline choice, explicit review/apply                  |
+| Place a shelter                | Illustrated tile, live ghost, rotate, click to start; no coordinate form                                |
+| Failed placement               | Clear reason, retained preview/draft, no materials consumed or duplicate request                        |
+| Camera/sight                   | Compact settings button; no spurious outline spikes while preserving actual occlusion                   |
+| Whole interface                | All current surface groups audited, relevant screens captured desktop/narrow/enlarged and bugs repaired |
+
+## Maintained records
+
+- Implementation: [UIUX19](../maintainers/ui-ux.md#uiux19).
+- Limits and constraints: [Interface inventory](../limits/interface.md), [UI tuning](../limits/ui-ux.md).
+- Technical design: [World-first implementation](player-experience-overhaul-tech-design.md).
+- Related contracts: [Hearing](../hearing-and-speech.md), [perceived Events](../perceived-world-events.md), [inventory](../ui-ux/inventory.md), [spatial interaction](../spatial-world.md).
+
+## Accepted pointer and HUD follow-up — October 16, 2026
+
+Panel tooltips have a readable background and anchor their lower corner near the pointer, choosing the side with usable space and flipping/clamping at viewport edges. Keyboard focus retains an equivalent anchored explanation. Object hover starts after 200 ms with a fast fade. A category with one action shows that action directly. Pausing never invents loading; real delayed loading is centered within its owning content panel without replacing retained content.
+
+Side launchers center vertically in the viewport; current work cannot move or shrink panels. The compact condition summary and separate collapsible Current work panel stay at the upper left, above the centered desktop launcher rail, not beside it. They fit the available height, scroll exceptional overflow and stay beneath launchers/other panels in stacking order. Narrow layouts reserve clock space and use the existing horizontal launcher strip when vertical room is insufficient. Sleep/wake suggestions retain the actual action's icon and identity. While the shortcut bar has hover or keyboard focus, replacements occupy their original slots; empty slots preserve the bar’s width until interaction ends. Character traits have a clear heading and hover/focus descriptions; no generic Available responses or action list belongs in Character. Redundant cross-links to global destinations are removed while their sole primary destinations remain accessible.
+
+Command-click performs the first prioritized object-specific action, excluding generic inspection/navigation. Characters default to Speak; a character or creature actively attacking/targeting the player, as currently perceived, instead offers Attack through the same native action/confirmation path. Before starting an implicit shortcut command, the server checks that the same exact action remains preferred. A changed choice is refused without substitution; explicit menu choices and separately confirmed lethal attacks retain their existing admission. The hand cursor indicates Command mode. No hidden hostility, historical attack or unavailable response silently triggers a different destructive action. Held Option temporarily reveals the objects the character can presently see through camera-side scenery/upper floors; it does not reveal unknown objects or alter physical sight, collision or action permissions. Right-click identifies an Option-revealed object before restoring normal presentation and opening its menu. Releasing the key or losing input ownership restores normal presentation. Ordinary level selectors are removed.
+
+Implementation status at **2026-10-17 00:46 UTC**: this follow-up is implemented through the existing shared controls, action catalogue, renderer and world-authored presentation owners. Character records has its own primary launcher. [Focused verification](../verification/player-experience-overhaul.md#pointer-actions-and-stable-hud--october-17-2026) covers stable walking layouts, tooltip readability, delayed/paused loading, Sleep/Wake and Command-click. Held Option input/privacy checks and actual held-key rendering beneath a deck pass for the recorded scene. This does not close the parent speech decision or normal CI gate.
+
+Review reconciliation at **2026-10-17 01:06 UTC**: the corrected shortcut slots, revealed-object right-click, exact chosen attack and delayed-command behavior pass their focused native/browser checks. Existing camera verification now follows the accepted controls. [Review evidence](../verification/player-experience-overhaul.md#requested-correction-review--0106-utc) records the findings, fixes and remaining CI limit.
+
+## Accepted compact HUD correction — October 17, 2026
+
+Remove the play-screen logo, successful-save label, duplicate location, routine “In the world” text and always-visible need-condition sentences. Preserve save errors, recovery access and exceptional character participation/death feedback. The current permitted location appears immediately below Day/time, replacing the generic time subtitle. It names the nearest authored place whose landmark the character currently sees within its authored area; ties are deterministic. Outside such a place it shows the authored world name, not the fixed opening location. Pause/navigation-preparation feedback remains distinct. Current work keeps its actual activity name and a complete Review button in its header, including while collapsed. Only an additional explanation needs a disclosure; a plain action has no empty disclosure. Long names use the shared opaque hover/focus explanation.
+
+Hovering or keyboard-focusing a read-only need bar shows a compact opaque explanation: name/current value, range, the authored current condition, then a separated muted explanation of the mechanic. Unknown values remain unknown. Every meter retains its authored unit, including percentages when a world requests them; the bundled Food meter is unitless. Editing controls retain native numeric inputs and the same authored help; the interface does not calculate new hunger laws.
+
+Escape first dismisses a transient choice, popup or modal that owns it; otherwise it opens/closes Game without discarding ordinary retained panels. Game overlays existing work without consuming its layout space. Closing Game restores the previously selected inspection and keyboard focus when that control is still available; reopening a Game menu hidden by a responsive layout remembers the current task's control. Choosing another task, including directly inspecting a permitted object in the world, dismisses Game. Rejected inspection does not change navigation. Game contains Open Legend branding, the authored world name, existing game/account tools, Controls and an explicitly unavailable Encyclopedia button. Controls opens the existing help tab; no encyclopedia is implemented. Losing access to a selected World permissions tab falls back to Appearance & reading rather than a blank Settings panel. The bundled starting world's authored name is **The Wilderness**, distinct from **The first clearing** location. Existing saves/custom worlds retain their authored names; this display correction does not reset them.

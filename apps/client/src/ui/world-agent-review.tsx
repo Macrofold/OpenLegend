@@ -1,10 +1,11 @@
+import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import type {
   WorldAgentReviewView,
   WorldAgentPlanView,
   WorldCreationOperationView,
 } from '@open-legend/protocol';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
+import { Modal, ModalOverlay } from 'react-aria-components';
 import { Button, Tag } from '../design-system/components';
 import { post, privateDraftScope, worldCreationOperation } from '../api';
 import { WorldAgentPreparationDetails } from './world-agent-work-details';
@@ -387,7 +388,7 @@ export function WorldAgentReview({
           }
         }}
       >
-        <Dialog
+        <LoadingDialog
           ref={dialog}
           className="ol-person-dialog ol-agent-work-review"
           aria-label={
@@ -408,16 +409,16 @@ export function WorldAgentReview({
             </h2>
             {review && (
               <p className="ol-caption">
-                Revision {review.draft.revision} · {review.plan.status}
+                Revision {review.draft.revision}, {review.plan.status}
               </p>
             )}
           </div>
           <div className="ol-agent-work-review-body">
-            {!review && !error && <p role="status">Loading exact review…</p>}
+            <LoadingIndicator active={!review && !error} label="Loading exact review" />
             {review && (
               <>
                 <Tag>
-                  {worldAgentKindLabel[review.draft.kind]} · revision {review.draft.revision} ·{' '}
+                  {worldAgentKindLabel[review.draft.kind]}, revision {review.draft.revision},{' '}
                   {review.plan.status}
                 </Tag>
                 <p>{review.draft.intent}</p>
@@ -711,7 +712,7 @@ export function WorldAgentReview({
               {review?.plan.removal ? 'Hide review' : 'Close review'}
             </Button>
           </div>
-        </Dialog>
+        </LoadingDialog>
       </Modal>
     </ModalOverlay>
   );

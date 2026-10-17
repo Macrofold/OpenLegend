@@ -1,0 +1,241 @@
+.ol-world-events .ol-world-event-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+.ol-world-events .ol-thread {
+  gap: 0.2rem;
+  padding-block: 0.25rem;
+}
+.ol-world-events .ol-thread-entry {
+  gap: 0;
+}
+.ol-event-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.ol-event-time-jump {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  border-block: 1px solid var(--line);
+  margin-block: 0.65rem;
+  padding-block: 0.65rem;
+  gap: var(--space-2, 0.5rem);
+}
+.ol-event-time-jump label {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+}
+.ol-event-time-jump input[type='number'] {
+  width: 5rem;
+}
+.ol-event-day {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.9rem;
+  margin: 0.7rem 0 0.3rem;
+  font-weight: 600;
+}
+.ol-event-day::before,
+.ol-event-day::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: var(--line);
+}
+.ol-world-event {
+  position: relative;
+  padding: 0.3rem 2rem 0.3rem 0.3rem;
+  min-height: 1.75rem;
+}
+.ol-event-clock {
+  display: block;
+  font-size: 0.73rem;
+  opacity: 0.65;
+  margin: 0 0 0.15rem;
+}
+.ol-world-event-line {
+  display: flex;
+  align-items: start;
+  gap: 0.5rem;
+}
+.ol-world-event-line > .ol-icon-wrap {
+  flex: 0 0 auto;
+  margin-top: 0.2rem;
+  opacity: 0.7;
+}
+.ol-world-events .ol-world-event-line > p {
+  margin: 0;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+.ol-world-events .ol-world-event-detail {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 0.8rem;
+}
+.ol-world-events .ol-world-event-detail[open] {
+  margin: 0.35rem 0 0 1.5rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--line);
+}
+.ol-world-event-detail .ol-world-event-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block: 0.6rem;
+}
+.ol-world-events .ol-world-event-detail p {
+  margin-block: 0.4rem;
+}
+.ol-inline-reference {
+  display: inline;
+  border: 0;
+  border-radius: 0.15rem;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-underline-offset: 0.15em;
+}
+.ol-inline-reference:hover {
+  text-decoration-color: currentColor;
+}
+.ol-speech-caption-recipient,
+.ol-speech-direction-label {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  margin-bottom: 0.2rem;
+}
+.ol-speech-direction-label[hidden] {
+  display: none;
+}
+
+.ol-world-item-mention {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+}
+
+.ol-world-events .ol-event-search {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: nowrap;
+  margin-block: 0.5rem 0;
+}
+.ol-event-search .ol-search {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.ol-event-search input {
+  width: 100%;
+  min-width: 0;
+}
+.ol-event-options {
+  display: flex;
+  justify-content: end;
+  margin-block: 0.25rem;
+}
+.ol-event-options .ol-event-show-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+}
+.ol-world-event-detail > summary {
+  opacity: 0.65;
+  cursor: pointer;
+  position: absolute;
+  right: 0;
+  top: 0.35rem;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.3rem;
+  list-style: none;
+}
+.ol-world-event-detail > summary::-webkit-details-marker {
+  display: none;
+}
+.ol-world-event-detail > summary:hover,
+.ol-world-event-detail > summary:focus-visible,
+.ol-world-event-detail[open] > summary {
+  opacity: 1;
+  background: var(--surface-hover);
+}
+
+.ol-event-time-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-basis: 100%;
+}
+.ol-event-time-heading .ol-event-time-label {
+  margin-inline-end: auto;
+}
+.ol-event-time-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.ol-event-time-jump .ol-field-control {
+  height: var(--control-height);
+  min-height: var(--control-height);
+  box-sizing: border-box;
+}
+.ol-event-time-jump input[type='time'] {
+  min-inline-size: 7.25rem;
+}
+.ol-world-events .ol-event-search .ol-search {
+  height: var(--control-height);
+  box-sizing: border-box;
+  padding-block: 0;
+}
+.ol-event-search .ol-search input {
+  height: 100%;
+  min-height: 0;
+  padding-block: 0;
+}
+.ol-event-new {
+  font-size: 0.75rem;
+  align-self: center;
+}
+
+.ol-event-loading-slot {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 1rem;
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (max-width: 600px) {
+  .ol-world-event-controls {
+    min-width: 0;
+  }
+  .ol-event-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
+    padding-block: 2px;
+  }
+  .ol-event-filters > button {
+    flex: 0 0 auto;
+  }
+}

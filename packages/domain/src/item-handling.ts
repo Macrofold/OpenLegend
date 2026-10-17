@@ -240,13 +240,33 @@ export function dropItems(
   quantity: number,
   events: WorldEvent[],
 ): string | null {
-  const reason = dropItemReason(world, actor, itemId, quantity);
-  if (reason) return reason;
-  const item = itemFor(world, itemId)!;
+  return dropSelectedItems(world, actor, [{ itemId, quantity }], events);
+}
+/** One chosen drop can contain several retained physical origins. */
+export function dropSelectedItems(
+  world: WorldState,
+  actor: Entity,
+  sources: ReadonlyArray<{ itemId: string; quantity: number }>,
+  events: WorldEvent[],
+): string | null {
+  for (const source of sources) {
+    const reason = dropItemReason(world, actor, source.itemId, source.quantity);
+    if (reason) return reason;
+  }
+  const quantities = new Map<string, number>();
+  for (const source of sources) {
+    const definitionId = itemFor(world, source.itemId)!.definitionId;
+    quantities.set(definitionId, (quantities.get(definitionId) ?? 0) + source.quantity);
+  }
   const surfaceId = worldSupport(actor)!;
-  const pile = pileAt(world, { ...worldPosition(actor), surfaceId });
+  let pileId: string;
   try {
-    atomicObjects(world, (candidate) => moveLot(candidate, item.id, pile.id, quantity, 'drop'));
+    pileId = atomicObjects(world, (candidate) => {
+      const pile = pileAt(candidate, { ...worldPosition(actor), surfaceId });
+      for (const source of sources)
+        moveLot(candidate, source.itemId, pile.id, source.quantity, 'drop', sources.length === 1);
+      return pile.id;
+    });
   } catch (error) {
     if (error instanceof WorkBudgetError) throw error;
     return error instanceof Error ? error.message : 'Item transfer unavailable.';
@@ -257,13 +277,14 @@ export function dropItems(
     'items-dropped',
     subjectNarration(
       actor,
-      `dropped ${quantity} ${world.itemDefinitions[item.definitionId]!.name}.`,
+      `dropped ${[...quantities].map(([id, amount]) => `${amount} ${world.itemDefinitions[id]!.name}`).join(', ')}.`,
     ),
     actor,
-    pile.id,
+    pileId,
   );
   return null;
 }
+
 export interface GodItemRequest {
   id: string;
   definitionId: string;

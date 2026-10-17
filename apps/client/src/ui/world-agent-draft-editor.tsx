@@ -1,3 +1,4 @@
+import { formatDisplayNumber } from '@open-legend/language';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   WorldAgentExactDraftView,
@@ -559,7 +560,7 @@ export function WorldAgentDraftEditor({
       aria-label={`Edit saved ${subject}`}
     >
       <h4>
-        Edit {subject} · based on revision {base.revision}
+        Edit {subject}, based on revision {base.revision}
       </h4>
       <p className="ol-caption">
         Changes stay on this device until Save creates a new revision. Native preview and Save use
@@ -698,7 +699,7 @@ export function WorldAgentDraftEditor({
             <div key={fact.id}>
               <dt>{fact.label}</dt>
               <dd>
-                {fact.value}
+                {typeof fact.value === 'number' ? formatDisplayNumber(fact.value) : fact.value}
                 {fact.unit && ` ${fact.unit}`}
               </dd>
             </div>

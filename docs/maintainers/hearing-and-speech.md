@@ -37,16 +37,18 @@ The [scale/startup continuation](../verification/three-times-scene-performance.m
 
 ### HE03 — Caption and lifetime UI
 
-- [x] Renderer-owned React overlay, semantic speech icon, pure progress ring and real-time presentation clock. Volume controls, hide/pause/reading preferences and reduced-motion progress are delivered.
+- [x] Renderer-owned React overlay, semantic speech icon, pure progress ring and real-time presentation clock. Volume controls, pause/reading preferences and reduced-motion progress are delivered. The 2026-10-16 interface keeps speech captions always enabled.
 - [x] Authorized current sprite anchors, coarse listener bearings, neutral fallback, bounded active/pending/per-speaker queues, fitted-visible reading time, chunk counters, deduplication and 60-second hidden residence.
 - [x] Scope includes authorization, actor, world, timeline and history epoch. Restore/reconnect/initial history do not replay old captions. Unknown voices never become identified through later visibility.
 
 ### HE04 — Comprehensive player World Events
 
-- [x] Read-only panel below Journal with exact-type filters, including all-conversation Speech and receiver-private encounters/contact/body sensations. Private thoughts, plans, diagnostics and narration stay excluded.
+- [x] Read-only Events panel replaces the separate player conversation and Journal event feed, with world-mapped All/Speech/Actions/Conflict/Body/Observations categories, optional ambient activity, sparse times, day separators and indexed day/time navigation. Private thoughts, plans, diagnostics and narration stay excluded.
 - [x] Existing actor perspectives supply indexed keyset pages with a high watermark and scope/filter/epoch-bound cursor. Read responses fence authority and history changes after awaits. Revisions notify only affected observers.
 - [x] Aborted stale fetches, immediate keyed clearing, memoized rows and deduplicated older pages. Opening history never acquires evidence or replays captions.
 - [x] [Batch 08 (`MY02`/`MY04`)](parallel-batch-08-the-missing-belonging.md) adds `POST /api/world-events/sources` with observer-bound `PublicEvent.source` (`WorldEventSourceReference`) references and a read-only two-source comparison tray (`Compare as Source A` / `Compare as Source B`), side-by-side desktop (`520px` wide rail) and stacked mobile/short-viewport layouts, `Back to source` navigation, live `Corrected`/`Forgotten` in-place refresh and `Escape` focus restoration ([verification](../verification/parallel-batch-08-the-missing-belonging.md)).
+
+The [2026-10-16 world-first review](../verification/hearing-main-integration.md#world-first-events-and-speech--october-16-2026) records the new recipient labels, native cause privacy, real native HTTP speech, bidirectional history and 20,000-perspective time-index check. Browser integration belongs to [UIUX19](ui-ux.md#uiux19); this does not close HE05’s broader qualification.
 
 ### HE05 — Runtime and performance qualification
 
@@ -67,7 +69,7 @@ Earlier [initial/review records](../verification/hearing-runtime-and-reviews.md#
 [DG18's crowd/scene product expansion](../projects/attention-and-scenes-feature-spec.md) and [PS04](product-scalability.md#ps04--coherent-scenes-and-limited-attention) now provide a concrete future consumer for prospective aggregate/gist evidence. Its attended first gathering reuses current exact speech. HE05 still owns this feature's unperformed dense/audience/accessibility qualification; this design does not reopen delivered HE01–HE04 or enable a noise, voice-recognition or timed-speech law.
 
 - [ ] Measure stable-cache population churn before adding aging; admitted entries persist until their map is collected/replaced, and overflow remains exact.
-- [ ] Use registry-provided type metadata when an event-family catalogue exists; the current finite menu does not restrict the server's All view.
+- [x] Selected-world presentation metadata now maps types to semantic categories/icons and ambient inclusion (2026-10-16). Unmapped types use the world policy’s fallback; the ordinary menu never limits retained evidence.
 - [ ] Resolve [D66](../../archive/05-project/open-decisions.md#d66--re-authoring-committed-speech) before implementing dedicated speech re-authoring. Generic text rewrites remain rejected.
 - [x] Add an authorized caption overflow/gap notice through the common EPR/SSE owner. Delivered 2026-09-28: the caption overlay counts dropped or never-shown perceived speech (queue overflow, expiry, hidden tab, reset/reconnect snapshot) from the authorized `GameView.events` projection and the existing SSE reset signal, with no new transport or server counter; the HUD notice opens World Events on Speech. Recovery is through history by design; live captions are never replayed. [Evidence](../verification/player-clarity-ui.md#caption-gap-notice); remaining full-game accessibility qualification stays in HE05.
 - [ ] Qualify long open panels before adding DOM windowing. Explicit older-page loading currently accumulates rows without a global DOM cap.

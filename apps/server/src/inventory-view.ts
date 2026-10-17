@@ -1,3 +1,4 @@
+import { inventoryDisplayGroups, inventoryGroupToken } from './inventory-groups.js';
 import { isEquipped, equipmentConflicts } from '@open-legend/domain';
 import { nativeCommandKind } from './native-command-kind.js';
 import {
@@ -208,8 +209,9 @@ export function inventoryAccess(
   };
 }
 
-/** Live pages restart on any inventory/custody revision. Search scans at most 200
- * permitted children; a continuation is returned even when that window has no match.
+/** Live pages restart on any inventory/custody revision. Preparing display groups is
+ * full-container work, cached by current contents and exact member change evidence.
+ * Search scans at most 200 groups (or exact merge targets); an empty window continues.
  * With `mergeSourceId`, the same windows list only lots that source can merge into,
  * across the whole container rather than the displayed page (docs/limits/objects.md#qu05).
  * Stale-page and access refusals use the readable 400 refusal so players see their
@@ -257,50 +259,16 @@ export function containerPage(
       throw new HistoryCursorError('Contents or access changed. Refresh this container.');
     after = cursor.after;
   }
-  const page = contentsQuery(world, containerId, scopeKey(scope), after);
-  if (page.status !== 'complete')
-    throw new Error('Contents are temporarily unavailable. Refresh before continuing.');
-  const items: ItemInstance[] = [],
-    children = page.values;
-  let scanned = 0,
-    next: string | undefined;
-  for (const id of sourceBlocked ? [] : children) {
-    if (scanned === 200 || items.length === 40) {
-      next = Buffer.from(
-        JSON.stringify({
-          scope: scopeKey(scope),
-          containerId,
-          revision,
-          rootRevision,
-          query,
-          source,
-          after,
-        }),
-      ).toString('base64url');
-      break;
-    }
-    scanned++;
-    after = id;
-    const item = itemFor(world, id);
-    if (
-      item &&
-      (source
-        ? mergeTargetAvailable(world, scope.actorId, source, item.id)
-        : !query ||
-          world.itemDefinitions[item.definitionId]!.name.toLocaleLowerCase().includes(query))
-    )
-      items.push(item);
-  }
-  return {
+  const response = (items: InventoryItemView[], next?: string): ContainerPage => ({
     ok: true,
     container: {
       id: containerId,
       ...observerName(world, scope.actorId, entity.id),
       location: containerLocation(service, scope, containerId),
       revision,
-      ...(entity.container ? { restricted: !!entity.container.access } : {}),
       ...(entity.container
         ? {
+            restricted: !!entity.container.access,
             load: entity.container.load,
             capacity: world.itemDefinitions[entity.container.definitionPin.id]!.container!.capacity,
           }
@@ -314,9 +282,138 @@ export function containerPage(
         ...observerName(world, scope.actorId, parent.id),
         revision: parent.inventoryRevision ?? 0,
       })),
-    items: inventoryItemsView(service, scope, items),
+    items,
     ...(next ? { next } : {}),
-  };
+  });
+  const continuation = (last: string) =>
+    Buffer.from(
+      JSON.stringify({
+        scope: scopeKey(scope),
+        containerId,
+        revision,
+        rootRevision,
+        query,
+        source,
+        after: last,
+      }),
+    ).toString('base64url');
+  if (!source) {
+    const groups = inventoryDisplayGroups(world, containerId);
+    const previous = after ? groups.findIndex((entry) => entry.ids[0] === after) : -1;
+    // Material state can regroup a member without changing its custody revision.
+    // A vanished page anchor is stale, never permission to silently repeat page one.
+    if (after && previous < 0)
+      throw new HistoryCursorError('Contents changed. Refresh this container.');
+    const start = previous + 1;
+    const selected: typeof groups = [];
+    let examined = 0,
+      next: string | undefined;
+    for (let index = start; index < groups.length; index++) {
+      if (examined === 200 || selected.length === 40) {
+        next = continuation(after);
+        break;
+      }
+      const group = groups[index]!;
+      after = group.ids[0]!;
+      examined++;
+      const item = itemFor(world, after)!;
+      if (
+        !query ||
+        world.itemDefinitions[item.definitionId]!.name.toLocaleLowerCase().includes(query)
+      )
+        selected.push(group);
+    }
+    const representatives = selected.map(
+      (group) =>
+        itemFor(
+          world,
+          group.ids.find(
+            (id) =>
+              !inventoryWorkReason(world, scope.actorId, id) &&
+              !isEquipped(world, scope.actorId, id) &&
+              availableItemQuantity(world, id) > 0,
+          ) ?? group.ids[0]!,
+        )!,
+    );
+    const projected = inventoryItemsView(service, scope, representatives);
+    const items = projected.map((item, index) => {
+      const group = selected[index]!;
+      if (group.ids.length === 1) return item;
+      const token = inventoryGroupToken(
+        world,
+        scope.actorId,
+        containerId,
+        group,
+        service.timelineId,
+      );
+      const availableQuantity = group.ids.reduce(
+        (total, id) =>
+          total +
+          (inventoryWorkReason(world, scope.actorId, id) || isEquipped(world, scope.actorId, id)
+            ? 0
+            : availableItemQuantity(world, id)),
+        0,
+      );
+      // A quantity choice is available if one unit can be dropped. Admission checks the
+      // chosen total, including the existing native 16-object operation allowance.
+      const drop = service.previewCommand(
+        { type: 'drop', itemId: item.id, inventoryGroup: token, quantity: 1 },
+        scope.actorId,
+      );
+      const active = canUseInventory(service, scope);
+      return {
+        ...item,
+        quantity: group.quantity,
+        availableQuantity,
+        group: {
+          token,
+          members: group.ids.length,
+          representativeQuantity: item.quantity,
+          representativeAvailableQuantity: item.availableQuantity ?? 0,
+        },
+        actions: item.actions
+          .filter((action) => action.command.type !== 'split-item')
+          .map((action) =>
+            action.command.type === 'drop'
+              ? {
+                  ...action,
+                  enabled: active && drop.ok,
+                  command: {
+                    ...action.command,
+                    inventoryGroup: token,
+                    quantity: availableQuantity,
+                  },
+                  reason: !active
+                    ? service.paused
+                      ? 'Resume the world to act.'
+                      : 'Current character control is required.'
+                    : !drop.ok
+                      ? drop.message
+                      : undefined,
+                }
+              : action,
+          ),
+      };
+    });
+    return response(items, next);
+  }
+  const page = contentsQuery(world, containerId, scopeKey(scope), after);
+  if (page.status !== 'complete')
+    throw new Error('Contents are temporarily unavailable. Refresh before continuing.');
+  const items: ItemInstance[] = [];
+  let scanned = 0,
+    next: string | undefined;
+  for (const id of sourceBlocked ? [] : page.values) {
+    if (scanned === 200 || items.length === 40) {
+      next = continuation(after);
+      break;
+    }
+    scanned++;
+    after = id;
+    const item = itemFor(world, id);
+    if (item && mergeTargetAvailable(world, scope.actorId, source, item.id)) items.push(item);
+  }
+  return response(inventoryItemsView(service, scope, items), next);
 }
 
 function containerLocation(service: WorldService, scope: RequestScope, id: string): string {
@@ -328,7 +425,7 @@ function containerLocation(service: WorldService, scope: RequestScope, id: strin
     .filter((entry) => entry.container && canAccessContainer(world, scope.actorId, entry.id))
     .reverse()
     .map((entry) => observerDescription(world, scope.actorId, entry.id));
-  const path = enclosing.length ? `In ${enclosing.join(' › ')} · ` : '';
+  const path = enclosing.length ? `In ${enclosing.join(' › ')}, ` : '';
   if (rootId === scope.actorId) return `${path}Carried by you`;
   if (root.actor && !root.remains)
     return `${path}Carried by ${observerDescription(world, scope.actorId, rootId, 'definite')}`;
@@ -336,7 +433,7 @@ function containerLocation(service: WorldService, scope: RequestScope, id: strin
     effectivePosition(world, scope.actorId),
     effectivePosition(world, id),
   );
-  return `${path}On the ground · ${separation.toFixed(1)} m away`;
+  return `${path}On the ground, ${separation.toFixed(1)} m away`;
 }
 
 const destinationCursorSchema = z
@@ -579,7 +676,7 @@ export function inventoryDestinationPage(
         ? { name: 'My possessions', nameForm: 'proper' as const }
         : observerName(world, scope.actorId, id)),
       location: recipient
-        ? 'Nearby person · offer requires their acceptance'
+        ? 'Nearby person, offer requires their acceptance'
         : containerLocation(service, scope, id),
       revision: target.inventoryRevision ?? 0,
       kind: recipient ? 'recipient' : 'container',

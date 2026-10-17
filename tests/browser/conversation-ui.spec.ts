@@ -78,12 +78,14 @@ test('owner conversation grows from one line and shows message-local pending and
     await page.goto(`http://127.0.0.1:${address.port}`);
     await enterGame(page);
     await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
-    await page.locator('.ol-rail').getByRole('button', { name: 'Create', exact: true }).click();
-    await page.getByRole('button', { name: 'New conversation', exact: true }).first().click();
+    await page.getByRole('button', { name: 'Game', exact: true }).click();
+    await page.getByRole('button', { name: 'World editor', exact: true }).click();
     await page.getByRole('button', { name: 'Start conversation', exact: true }).click();
     const input = page.getByRole('textbox', { name: 'Message to World Agent', exact: true });
     await expect(input).toBeVisible();
-    const sessionDetails = page.getByLabel('Session details and owner spending', { exact: true });
+    const sessionDetails = page
+      .locator('#world-editorPanel')
+      .getByRole('button', { name: 'Options', exact: true });
     const refresh = page.getByRole('button', { name: 'Refresh this session', exact: true });
     const initial = await input.boundingBox();
     await input.fill('First line\nSecond line');
@@ -99,7 +101,7 @@ test('owner conversation grows from one line and shows message-local pending and
     await sessionDetails.click();
     await expect(page.getByText('The clearing feels ready for change.')).toBeVisible();
     await expect(page.getByRole('status', { name: 'Waiting for a reply' })).toBeHidden();
-    // Hidden retained Work can describe completed proposals; visible completion text is forbidden.
+    // Hidden retained Saved changes can describe completed proposals; visible completion text is forbidden.
     await expect(page.getByText(/completed/i).filter({ visible: true })).toHaveCount(0);
 
     response = { ok: false, code: 'failed', message: 'Technical failure details.' };

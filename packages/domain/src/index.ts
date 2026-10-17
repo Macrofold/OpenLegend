@@ -1,5 +1,10 @@
 export * from './world-creation.js';
 export * from './world-composition.js';
+export type {
+  EventCategory,
+  EventPresentation,
+  EventPresentationPolicy,
+} from './event-presentation.js';
 export * from './social-policy.js';
 export * from './ranged-policy.js';
 export * from './native-command-contracts.js';
@@ -187,7 +192,7 @@ export {
   type MeleeProfile,
 } from './strikes.js';
 
-export { isConversationEvent } from './events.js';
+export { canonicalJson, isConversationEvent } from './events.js';
 
 export * from './knowledge.js';
 export * from './worlds/base/knowledge.js';

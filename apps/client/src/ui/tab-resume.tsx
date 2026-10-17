@@ -1,4 +1,5 @@
-import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
+import { LoadingDialog } from '../design-system/loading';
+import { Modal, ModalOverlay } from 'react-aria-components';
 import { Button } from '../design-system/components';
 import './tab-resume.css';
 
@@ -19,7 +20,7 @@ export function TabResumeDialog({
   return (
     <ModalOverlay className="ol-root ol-modal-overlay" isOpen isKeyboardDismissDisabled>
       <Modal className="ol-modal ol-tab-resume">
-        <Dialog aria-label={title} className="ol-person-dialog">
+        <LoadingDialog aria-label={title} className="ol-person-dialog">
           <header className="ol-modal-head">
             <h2 className="ol-heading">{title}</h2>
           </header>
@@ -46,7 +47,7 @@ export function TabResumeDialog({
               Resume Here
             </Button>
           </footer>
-        </Dialog>
+        </LoadingDialog>
       </Modal>
     </ModalOverlay>
   );
