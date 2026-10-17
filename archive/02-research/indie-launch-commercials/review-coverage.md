@@ -1,117 +1,134 @@
-# Launch research — complete case review and evidence map
+# Launch research — case review and evidence map
 
 | Status | Current progress | Last updated |
 |---|---|---|
-| Completed dossier reread | All 64 existing dossiers were reread in full and mapped to the synthesis; external verification is targeted and explicitly bounded below. | 2026-10-16 |
+| Completed corpus review | All 64 dossiers have a documented full reread and principle mapping, with decision-specific relevance and source limits governing their use. | 2026-10-17 |
 
-[Collection](README.md) · [Principles](learnings.md) · [Execution guide](execution-playbook.md)
+[Collection](README.md) · [Principles](learnings.md) · [Execution guide](execution-playbook.md) · [Operating brief](execution-brief.md)
 
 ## What this review establishes
 
-The review used **Macrofold/OpenLegend**, branch `research/indie-launch-commercial-dossiers`, at commit `65190b646d0b9ca1a8565b37a62673e923e2f064`. It covered the complete text of **62 game dossiers and two platform/service dossiers**, not just their titles or summaries. All rows below are checked for that full reread. The original source registers remain in the dossiers; this map identifies what each contributes to the recommendations and what it cannot establish.
+The complete dossier reread on October 16, 2026 used **Macrofold/OpenLegend**, branch `research/indie-launch-commercial-dossiers`, at `65190b646d0b9ca1a8565b37a62673e923e2f064`. It covered the full text of **62 game dossiers and two platform/service dossiers**. Checked rows below record that reread, not a fresh financial audit or a claim to have independently reopened every original video, campaign update or external link. Individual dossiers retain source registers and access limits.
 
-This is not a new interview program, an independent financial audit, a replay of the games, or a fresh opening of every historical external link. Historical outcomes remain attached to their measured periods. A source read in October 2026 about a 2015 launch does not become a 2026 lifetime-sales statement. Existing incomplete video, campaign-update and follower-history access remains incomplete unless specifically corrected.
+Historical outcomes remain attached to their measured periods. Reading a 2015 postmortem in 2026 does not make it a 2026 lifetime-sales statement. No original interviews for this project, private analytics or game playtesting are claimed.
 
-The main learnings existed before this review. Their earlier sequence was a useful outline, but lacked sufficiently concrete work products and go/rework/stop decisions. The execution guide now owns that operational detail. The existing [business plan](../../06-marketing/business-plan.md), rather than the predominance of Steam games in this sample, supplies Open Legend's current working commercial direction.
+The [gameplay priority](../../../docs/repertoires/gameplay-priorities.md) supplies the intended Open Legend player experience. The [business plan](../../06-marketing/business-plan.md) supplies commercial hypotheses and accepted entitlement directions; neither the case count nor the prevalence of Steam launches proves that managed subscriptions, Steam or Kickstarter are the best first offer.
+
+## How to weight the evidence
+
+A checked dossier is coverage, not a vote for a recommendation. Judge relevance and source strength separately for each decision.
+
+| Dimension | Comparison to make |
+|---|---|
+| Player activity | Genre, intended session, reason to play and repeat value; an observer tool is not automatically comparable to a survival-adventure. |
+| Business model | Premium purchase, subscription, freemium, paid development, commissions, grants and venture finance create different economics. |
+| Team resources | Earlier games, professional skills, reusable technology, family support, contractors, publishers and parent companies qualify a small-core label. |
+| Distribution and era | Browser/direct sales, historical portals, Steam, consoles and Roblox supply different access and discovery; old platform mechanics may no longer apply. |
+| Service burden | Finite single-player content, asynchronous opposition, synchronous population and a hosted creation platform impose different continuing obligations. |
+| Measurement quality | Original dated record versus recollection, estimate or secondary preservation; actual observation window, denominator and missing costs. |
+
+Use **directly relevant**, **useful contrast** or **boundary/outlier** for the question being asked, with a short reason—not a fabricated universal score. Minecraft, RimWorld and Valheim can inform experiments with invention, consequence, sandbox activity or shareable play, while differing materially in presentation and service costs. Pawnbarian and shapez inform playable browser distribution without proving subscriptions. The hosted-world offer lacks a closely matched causal comparison in this archive; Roblox and Rec Room are service-burden boundaries, not proof of its viability or failure.
+
+Keep three layers explicit: **recorded observation** (what happened or was reported), **participant explanation** (why the developer thinks it happened), and **our inference** (what it suggests testing). Extensive promotion plus poor sales does not isolate bad positioning, insufficient reach, weak play or price; likewise a game's growth after a festival does not isolate the festival's effect. Strong confidence in accounting distinctions is different from confidence in a sales mechanism.
+
+Cross-check preferred recommendations against negative and conflicting cases. Compare phase transitions within a game before comparing different games. Treat related Grey Alien and TrampolineTales histories as related observations, not independent replications. Missing information remains unknown; lack of tracked conversion is neither proof of no influence nor permission to claim all untracked purchases.
 
 ## Principle key
 
-P1: public artifact and timing. P2: inherited audience and distribution. P3: representative playable experience. P4: active community and population. P5: delivery/support readiness. P6: money and sustainability. P7: specialists and publishers. P8: recovery and later growth. P9: market/platform fit. P10: financing sufficiency. P11: scope, reuse and founder capacity. P12: measurement, uncertainty and responsible growth. These refer to the numbered sections of [the synthesis](learnings.md), not independently proven causal laws.
+P1: public artifact, appeal and creative exploration. P2: audiences and deliberate distribution. P3: representative play and distinct validation tests. P4: purposeful community and population. P5: delivery, service quality and readiness. P6: money, offer preference and sustainability. P7: specialists and publishers. P8: recovery and later growth. P9: market/platform fit. P10: financing sufficiency. P11: economical scope and founder capacity. P12: measurement and responsible growth. These map to the numbered [principles](learnings.md), not independently proven causal laws.
 
-## Original success cases — 22 reread
+## Commercial success cases — 22 reread
 
-| Read | Case | Contribution to principles | Boundary or counterexample retained |
+| Read | Case | Contribution | Boundary or counterexample |
 |---|---|---|---|
-| [x] | [FTL](games/ftl-faster-than-light.md) | P1, P7, P10: playable external validation, campaign, beta and founder-led publicity; specialist help. | Successful fundraising did not make promotion free or establish a universal campaign formula. |
-| [x] | [Hollow Knight](games/hollow-knight.md) | P1, P7, P10: prototype-led funding, later programmer and dedicated marketing assistance. | Final visual quality must not be backdated to crowdfunding; dates and scope changed. |
-| [x] | [Undertale](games/undertale.md) | P1, P2, P10: a public demo plus prior creative/community work before crowdfunding. | Short demo production did not imply equally short full-game delivery. |
-| [x] | [Shovel Knight](games/shovel-knight.md) | P6, P10, P11: experienced team, campaign success and meaningful sales alongside unpaid production time. | A multiple of the fundraising goal did not eliminate cash strain or stretch-goal obligations. |
-| [x] | [Factorio](games/factorio.md) | P1, P4, P7: public playable development, recurring communication and community expertise. | Indiegogo, direct sales, Steam and 1.0 were distinct; later workforce was not the founding team. |
-| [x] | [RimWorld](games/rimworld.md) | P1, P2, P10: systems demonstrations, public discussion, fundraising and paid iteration. | Successful sales preceded 1.0; forum posts are not unique community members. |
-| [x] | [Stardew Valley](games/stardew-valley.md) | P1, P7, P11: long production, public communication and historical publisher help. | Current self-publishing attribution does not erase launch assistance or make four years a required preparation period. |
-| [x] | [Balatro](games/balatro.md) | P2, P3, P7: small initial audience, revised demo design, relevant creators and publisher support. | Publisher contact came around 183 wishlists, not only after a huge following; commercial success did not make the workload healthy. |
-| [x] | [Bunny Park](games/bunny-park.md) | P2, P6, P11: compact second game, recognizable niche, streaming and purchased music. | Six weeks excludes earlier learning; reported revenue is not profit or a normal-hours wage. |
-| [x] | [Core Defense](games/core-defense.md) | P3, P4, P8: prototype community, demo, paid launch and learning after Coregrounds. | Later DLC/mobile difficulties remain; success of the new game is not recovery of the old service. |
-| [x] | [Escape Simulator](games/escape-simulator.md) | P4, P7, P9: selected outsourcing, peer promotion and player-created rooms. | Small project core sat inside a larger experienced studio; players and wishlists are not a conversion ratio. |
-| [x] | [Mortal Glory](games/mortal-glory.md) | P2, P6, P11: affordable scoped production and targeted creator contact alongside a day job. | Sales exceeding prelaunch wishlists disprove a literal conversion calculation, not the usefulness of wishlists. |
-| [x] | [Pawnbarian](games/pawnbarian.md) | P2, P3, P9: free browser exposure, iteration and relevant communities. | Browser plays are not deduplicated people; personal affordability does not establish another founder's salary. |
-| [x] | [shapez](games/shapez.md) | P2, P3, P9: accessible sampling and a message tailored to an adjacent audience. | Existing web-development experience and non-Steam discovery distinguish its low wishlist count. |
-| [x] | [Slay the Spire](games/slay-the-spire.md) | P3, P4, P8: experienced testers and repeated Early Access improvement. | The later board-game Kickstarter did not finance the original video game. |
-| [x] | [SNKRX](games/snkrx.md) | P2, P4, P8: modest prelaunch following, creator-led postlaunch growth and community delegation. | Low prelaunch interest was not destiny; creator dislike of community work is a capacity constraint, not a moral failing. |
-| [x] | [The First Tree](games/the-first-tree.md) | P1, P7, P11: visual promotion, prior production skills, assets and specialist port work. | Some numerical evidence comes from talk-attendee notes; it is not an audited cash ledger. |
-| [x] | [Valheim](games/valheim.md) | P2, P4, P7: publisher relationship began during the solo stage; beta and later small-team launch. | Breakout sales created roadmap/support pressure; later organization is not the original solo budget. |
-| [x] | [Vampire Survivors](games/vampire-survivors.md) | P2, P8, P11: small public product, distribution changes and later discovery. | Earlier weak mobile results did not settle the PC outcome; staffing expanded after success. |
-| [x] | [Choo-Choo Charles](games/choo-choo-charles.md) | P1, P2, P7: dated starting audience, strong visible proposition and a narrow art commission. | Existing subscribers preceded the reveal; later viral reach is not a reproducible prediction or profit statement. |
-| [x] | [Lethal Company](games/lethal-company.md) | P2, P3, P4: earlier games, journals, small tests and rapid public adoption. | Widely circulated unit totals are estimates; Patreon income, concurrent players and copies remain separate. |
-| [x] | [Among Us](games/among-us.md) | P2, P4, P8: multiple discovery events, early support work and a much later breakout. | Dedicated game social account and community hire followed the breakout; waiting alone is not a recovery strategy. |
+| [x] | [FTL](games/ftl-faster-than-light.md) | P1, P7, P10: playable external validation, campaign, beta and specialists. | Funding did not make founder publicity work free or establish a universal formula. |
+| [x] | [Hollow Knight](games/hollow-knight.md) | P1, P7, P10: prototype, funding and staged programming/marketing help. | Final polish cannot be backdated to crowdfunding; scope and dates changed. |
+| [x] | [Undertale](games/undertale.md) | P1, P2, P10: demo and previous creative/community work. | A short sample did not imply equally short full delivery. |
+| [x] | [Shovel Knight](games/shovel-knight.md) | P6, P10, P11: experienced team, funding, sales and unpaid time. | Exceeding the funding goal did not eliminate strain or stretch-goal obligations. |
+| [x] | [Factorio](games/factorio.md) | P1, P4, P7: public development, recurring communication and community expertise. | Indiegogo, direct sales, Steam and 1.0 were different events; later staff were not the founding team. |
+| [x] | [RimWorld](games/rimworld.md) | P1, P2, P10: systems demonstrations, forum, funding and paid iteration. | Sales preceded 1.0; forum posts are not unique people. |
+| [x] | [Stardew Valley](games/stardew-valley.md) | P1, P7, P11: long development and public communication with publisher help. | Current publishing credit does not erase historical assistance or make four years mandatory. |
+| [x] | [Balatro](games/balatro.md) | P1, P2, P3, P7: hobby exploration, small beta audience, changed demo and creator/publisher support. | Contact around 183 wishlists rebuts a mandatory huge starting audience; partnership uplift is not isolated. |
+| [x] | [Bunny Park](games/bunny-park.md) | P2, P6, P11: compact second game, streaming, niche and bought music. | Six weeks excludes earlier learning; revenue is not profit or a normal-hours wage. |
+| [x] | [Core Defense](games/core-defense.md) | P3, P4, P8: playable community, demo, paid release and learning after Coregrounds. | Later DLC/mobile setbacks remain; a different successful game is not service recovery. |
+| [x] | [Escape Simulator](games/escape-simulator.md) | P4, P7, P9: specialist promotion, peer contacts and room creation. | Small core inside a larger experienced studio; wishlists/players are not a conversion ratio. |
+| [x] | [Mortal Glory](games/mortal-glory.md) | P2, P6, P11: bounded production and relevant creators alongside employment. | Sales beyond launch wishlists are not greater-than-100% wishlist conversion. |
+| [x] | [Pawnbarian](games/pawnbarian.md) | P2, P3, P9: browser sampling, iteration and relevant communities. | Play counts are not unique buyers; one founder's affordability is not another's salary. |
+| [x] | [shapez](games/shapez.md) | P2, P3, P9: accessible sampling and an audience-specific pitch. | Prior web experience and external players qualify the low wishlist count. |
+| [x] | [Slay the Spire](games/slay-the-spire.md) | P3, P4, P8: expert testers and repeated public iteration. | The later board-game campaign did not fund the original video game. |
+| [x] | [SNKRX](games/snkrx.md) | P2, P4, P8: modest start, later creators and community delegation. | A quiet opening was not destiny; creator discoveries were not guaranteed. |
+| [x] | [The First Tree](games/the-first-tree.md) | P1, P7, P11: visual promotion, skills, assets and porting help. | Some figures come from attendee notes, not an audited ledger. |
+| [x] | [Valheim](games/valheim.md) | P2, P4, P7: solo-stage publisher, beta and small-core launch. | Success created support pressure; later organization is not the original budget. |
+| [x] | [Vampire Survivors](games/vampire-survivors.md) | P2, P8, P11: public play, distribution change and discovery. | Earlier mobile weakness did not determine PC results; staffing expanded after success. |
+| [x] | [Choo-Choo Charles](games/choo-choo-charles.md) | P1, P2, P7: dated initial audience, visible attraction and art commission. | Existing subscribers and later virality do not establish repeatable growth or profit. |
+| [x] | [Lethal Company](games/lethal-company.md) | P2, P3, P4: earlier releases, journals, tests and accelerating adoption. | Widely quoted units are estimates; Patreon, concurrency and purchases differ. |
+| [x] | [Among Us](games/among-us.md) | P2, P4, P8: multiple discoveries and support demands before a later breakout. | Dedicated game account/hire followed growth; waiting alone is not a recovery mechanism. |
 
-## Original unsuccessful periods — 20 reread
+## Unsuccessful outcome periods — 20 reread
 
-| Read | Case | Contribution to principles | Boundary or counterexample retained |
+| Read | Case | Contribution | Boundary or counterexample |
 |---|---|---|---|
-| [x] | [Airscape](games/airscape-the-fall-of-gravity.md) | P1, P3, P6: years of publicity, awards and outside help without sufficient commercial demand. | Not a no-marketing case; attractive imagery and demanding play may address different audiences. |
-| [x] | [Basingstoke](games/basingstoke.md) | P2, P6, P7: existing mailing audience and purchased PR alongside weak labor returns. | Large list, impressions and visits did not establish willing buyers; publisher/agency complaints are attributed. |
-| [x] | [Coregrounds](games/coregrounds.md) | P4, P7, P10: community recruitment and public beta did not secure sustainable multiplayer population. | Devoted early fans existed; their number and availability were insufficient for that service. |
-| [x] | [Crumbling World](games/crumbling-world.md) | P3, P5, P6: substantial promotion, an unrepresentative alpha and release problems. | The alpha omitted the defining crumbling mechanic; financial totals and causal explanations remain qualified. |
-| [x] | [Dynasty Feud](games/dynasty-feud.md) | P4, P7, P12: giveaway registrations sharply exceeded actual play and concurrency. | Agency distribution and strategic audience validation are different responsibilities. |
-| [x] | [Echoes](games/echoes-nova-box.md) | P1, P8, P12: late store preparation and small later improvements in presentation/results. | A large percentage increase from a tiny base is not proof of financial recovery. |
-| [x] | [Haunts](games/haunts-the-manse-macabre.md) | P4, P7, P10: concept-selection community and funded production depended on continuing specialist availability. | Initial studio fundraising and later successful game campaign were different; refund/rescue intentions are not completion. |
-| [x] | [Knife To Meet You](games/knife-to-meet-you.md) | P2, P3, P12: enormous creator reach accompanied few associated purchases. | Observational association is not a tracked individual funnel; later full-release economics remain unknown. |
-| [x] | [Legend of Labot](games/legend-of-labot-the-golden-pearl.md) | P1, P2, P8: very late public exposure followed by support and another distribution opportunity. | Zero downloads was an initial snapshot, not lifetime demand; a Steam listing is not proof of rescue. |
-| [x] | [Limit Theory](games/limit-theory.md) | P1, P5, P10: funded ambition, public technical progress and staffing expansion without finished delivery. | Backer playability came after crowdfunding; source release did not fulfill the full game promise. |
-| [x] | [Midora](games/midora.md) | P5, P7, P10: funding target and platform/tool commitments exceeded secured delivery capacity. | Future beta/port promises were not delivered builds; later unread update metadata remains acknowledged. |
-| [x] | [Monkey Labour](games/monkey-labour.md) | P6, P8, P11: small scope, labor-intensive promotion and a weak additional storefront. | Compact production alone did not assure cost recovery; a hypothetical professional valuation is not actual cash spent. |
-| [x] | [Neon Climber](games/neon-climber.md) | P3, P6, P12: delayed acquisition/retention testing after publisher interest. | Booth interest did not validate mobile economics; its CPI/retention figures are not universal thresholds. |
-| [x] | [PONCHO](games/poncho.md) | P1, P7, P10: art-community recruitment and playable crowdfunding followed by publisher-assisted delivery. | A demo did not guarantee funding; a later publishing contract did not repair the failed campaign retroactively. |
-| [x] | [Rock Paper SHIFT](games/rock-paper-shift.md) | P1, P6, P11: bounded shipping goal met, financial goal not met. | Short production also limited discovery time; friends' purchases cannot be counted as wishlist conversions. |
-| [x] | [Sunset](games/sunset.md) | P6, P8, P10: failed commercial expectations followed by debt repayment and subsidy-inclusive break-even. | Recovery by August 2015 did not reverse the decision to leave the intended commercial model. |
-| [x] | [The Black Glove](games/the-black-glove.md) | P1, P7, P10: professional credits and visible support insufficient for the stated production budget. | Pledges below goal were not collected money; later publisher demo was not a public campaign demo. |
-| [x] | [The Flock](games/the-flock.md) | P3, P4, P5: publicity and enjoyable short tests did not prove repeat play or reliable launch. | Official service-finance failure is stronger evidence than a guessed review-to-sales estimate. |
-| [x] | [Unwritten](games/unwritten-that-which-happened.md) | P7, P10, P11: funded preproduction vulnerable to cash and key-person circumstances. | Family/personal disruption cannot fairly be reduced to weak promotion or insufficient effort. |
-| [x] | [Where the Water Tastes Like Wine](games/where-the-water-tastes-like-wine.md) | P3, P7, P11: late whole-game testing, editorial coordination and extensive paid collaborators. | Zero founder receipts did not mean zero gross revenue; artistic achievement and commercial return differ. |
+| [x] | [Airscape](games/airscape-the-fall-of-gravity.md) | P1, P3, P6: years of publicity and outside help without adequate sales. | Promotion occurred; its effectiveness and the creator's causal diagnosis are separate questions. |
+| [x] | [Basingstoke](games/basingstoke.md) | P2, P6, P7: mailing audience, PR spending and weak labor return. | A large list and traffic did not establish buyers; contractor complaints remain attributed. |
+| [x] | [Coregrounds](games/coregrounds.md) | P4, P7, P10: community recruitment and public beta. | Devoted players existed without sufficient population to sustain the service. |
+| [x] | [Crumbling World](games/crumbling-world.md) | P3, P5, P6: promotion, unrepresentative alpha and release problems. | The defining mechanic was absent early; figures and causal explanations stay qualified. |
+| [x] | [Dynasty Feud](games/dynasty-feud.md) | P4, P7, P12: registrations versus play and concurrency. | PR distribution and strategic audience validation are different work. |
+| [x] | [Echoes](games/echoes-nova-box.md) | P1, P8, P12: compressed prelaunch and small later improvements. | Large percentage growth from a tiny base is not financial recovery. |
+| [x] | [Haunts](games/haunts-the-manse-macabre.md) | P4, P7, P10: concept participation, funded game and critical labor loss. | Two different campaigns; rescue/refund intentions are not fulfilled delivery. |
+| [x] | [Knife To Meet You](games/knife-to-meet-you.md) | P2, P3, P12: large creator reach with few associated purchases. | Observational sequence is not linked-user attribution; later full-release economics unknown. |
+| [x] | [Legend of Labot](games/legend-of-labot-the-golden-pearl.md) | P1, P2, P8: late exposure, support and another distribution opportunity. | Zero was an initial snapshot; a later Steam listing is not proof of rescue. |
+| [x] | [Limit Theory](games/limit-theory.md) | P1, P5, P10: funded ambition, technical progress and eventual nondelivery. | Backer play came after funding; source release was not the promised finished game. |
+| [x] | [Midora](games/midora.md) | P5, P7, P10: commitments versus secured funding and labor. | Promised beta/ports were not delivered builds; later unread metadata remains acknowledged. |
+| [x] | [Monkey Labour](games/monkey-labour.md) | P6, P8, P11: compact scope, promotion labor and weak desktop extension. | Smallness did not ensure return; hypothetical valuation is not cash expenditure. |
+| [x] | [Neon Climber](games/neon-climber.md) | P3, P6, P12: relevant economic tests postponed after publisher interest. | Booth interest did not validate mobile costs/retention; no universal thresholds follow. |
+| [x] | [PONCHO](games/poncho.md) | P1, P7, P10: art recruitment, playable campaign and publisher-assisted release. | A demo did not guarantee funds; later publishing did not make that campaign successful. |
+| [x] | [Rock Paper SHIFT](games/rock-paper-shift.md) | P1, P6, P11: shipping goal met but financial goal missed. | Short production constrained discovery time; friends' purchases are not wishlist conversion. |
+| [x] | [Sunset](games/sunset.md) | P6, P8, P10: commercial disappointment, then subsidy-inclusive break-even. | Debt repayment by August 2015 did not restore the intended commercial model. |
+| [x] | [The Black Glove](games/the-black-glove.md) | P1, P7, P10: credits and publicity insufficient for the required budget. | Unsuccessful pledges were not collected; later publisher demo was not a campaign-day public build. |
+| [x] | [The Flock](games/the-flock.md) | P3, P4, P5: attention and event play without reliable sustained operation. | Official funding/service failure is stronger than guessed sales from reviews. |
+| [x] | [Unwritten](games/unwritten-that-which-happened.md) | P7, P10, P11: funded preproduction exposed to money and key-person circumstances. | Personal/family disruption cannot be reduced to laziness or insufficient promotion. |
+| [x] | [Where the Water Tastes Like Wine](games/where-the-water-tastes-like-wine.md) | P3, P7, P11: late whole-game tests and extensive editorial/production coordination. | Zero founder receipts did not mean zero gross; artistic and financial value differ. |
 
-## Original mixed cases — 2 reread
+## Additional mixed financial cases — 2 reread
 
-| Read | Case | Contribution to principles | Boundary or counterexample retained |
+| Read | Case | Contribution | Boundary or counterexample |
 |---|---|---|---|
-| [x] | [Lemma](games/lemma.md) | P1, P3, P6: public alphas, failed funding, substantial creator coverage and a completed release. | Cash receipts still did not fund another similarly sized game; founder opportunity cost is not another cash invoice. |
-| [x] | [I Am Overburdened](games/i-am-overburdened.md) | P1, P2, P11: sustained development posting and outreach with limited early sales. | Public activity is not automatically qualified demand; shipping pressure displaced release communication. |
+| [x] | [Lemma](games/lemma.md) | P1, P3, P6: public alphas, failed campaign, coverage and paid delivery. | Early return could not fund a similar next game; opportunity cost is not a second cash invoice. |
+| [x] | [I Am Overburdened](games/i-am-overburdened.md) | P1, P2, P11: sustained posting/outreach with weak early return. | Public activity is not qualified demand; shipping pressure displaced release communication. |
 
-## Expansion — 20 reread
+## Phase-specific and platform cases — 20 reread
 
-| Read | Case | Contribution to principles | Boundary or counterexample retained |
+| Read | Case | Contribution | Boundary or counterexample |
 |---|---|---|---|
-| [x] | [The Ember Guardian](games/the-ember-guardian.md) | P3, P5, P6, P7: demo discovery, founder-time relief, campaign alignment and launch regressions. | Supplied transcript has chronology/transcription conflicts; creator-defined net and planned ad spending are not a complete ledger. |
-| [x] | [Only Way is Down](games/only-way-is-down.md) | P2, P3, P6: large watchable reach, real purchases, weaker fit and inadequate livelihood. | Neither an invisible failure nor established lifetime profit; cute visuals did not promise relaxed play. |
-| [x] | [Maze Mice](games/maze-mice.md) | P6, P7, P8: improved full-release trajectory and selected-budget recovery. | Disclosed PR expense and founder programming were excluded from the celebratory budget. |
-| [x] | [What's the Password?](games/whats-the-password.md) | P1, P6, P11: small external budget, relevant event timing and inherited outreach relationships. | Early cash surplus and later mixed reception coexist; low wishlist count is not a new universal cutoff. |
-| [x] | [Luck be a Landlord](games/luck-be-a-landlord.md) | P2, P8, P12: repeated creator relationships, full release and later platforms. | An unprofitable convention is an activity-level result, not failure of the whole game. |
-| [x] | [Minecraft](games/minecraft.md) | P1, P4, P9: usable public experiment, paid iteration and player-created material. | 1.0 followed substantial sales; later enormous reach did not arise from a permanently solo organization. |
-| [x] | [Roblox platform](games/roblox-platform.md) | P4, P6, P9: creation/publication/use loop and early recruited testers. | Platform revenue, operating loss, creator currency and creator income measure different businesses. |
-| [x] | [Adopt Me!](games/adopt-me.md) | P4, P8, P9: product additions and events after launch, then specialist staffing. | Later social millions and a large team cannot be backdated to the two-founder beginning. |
-| [x] | [Welcome to Bloxburg](games/welcome-to-bloxburg.md) | P2, P4, P9: intentionally quiet early release followed by player sharing. | A small first day was not necessarily failure; later free-entry economics remain unresolved. |
-| [x] | [Spooky Bonus](games/spooky-bonus.md) | P6, P9, P11: efficient repeat production and strong non-Steam fit. | High project-level hourly return excludes earlier technology/skills; modest Steam sales did not erase portal success. |
-| [x] | [Regency Solitaire](games/regency-solitaire.md) | P6, P9, P12: overall success with comparatively weak Steam contribution. | Studio salaries are not game-only profit; removed absolute figures stay unknown. |
-| [x] | [Shadowhand](games/shadowhand.md) | P6, P7, P11: more ambitious production, publicity and launch sales with disappointing labor return. | Comparison against another game's Steam-only receipts is not comparison against its whole business. |
-| [x] | [Brigador](games/brigador.md) | P3, P8, P9: changed introduction, relaunch, localization and later funding capacity. | Revenue funding another game without reserves is not financial security; effects are not isolated. |
-| [x] | [Eastshade](games/eastshade.md) | P1, P3, P7, P9: early writing, meaningful playtests, later trailer and selected outsourcing. | Leaving Lyndow was a separate game, not the demo; strong PC business did not assure strong console sales. |
-| [x] | [Descenders](games/descenders.md) | P4, P7, P8: useful prerelease community activities and continued growth. | Already successful at launch; subscription access did not necessarily displace purchases, but the causal effect is unproven. |
-| [x] | [Spilled!](games/spilled.md) | P1, P7, P10: pre-campaign demo/audience followed by funded technical-art work. | Final polish was partly funded afterward; the campaign target was not all prior labor and living costs. |
-| [x] | [Backpack Battles](games/backpack-battles.md) | P3, P4, P9: repeated free play, localization, regional creators and cross-promotion. | Weekly work was demanding; asynchronous opponents differ from simultaneous server population. |
-| [x] | [A Short Hike](games/a-short-hike.md) | P2, P7, P11: prior public work, commissioning, bounded delivery and later expansion. | Commissioning and awards establish neither disclosed fees nor full-cost profit. |
-| [x] | [Rec Room platform](games/rec-room-platform.md) | P4, P6, P9: in-game community formation and community hiring, then unsustainable service economics. | Large funding and user totals did not establish profitability; exported data is not a working replacement service. |
-| [x] | [BattleBit Remastered](games/battlebit-remastered.md) | P3, P4, P5: scheduled tests, revised audience fit, huge early sales and later delivery/communication difficulties. | Resumed testing is not a completed overhaul or evidence of recovered sales; later profit is unknown. |
+| [x] | [The Ember Guardian](games/the-ember-guardian.md) | P3, P5, P6, P7: sampling, publisher time relief, expectation alignment and regressions. | Supplied transcript has chronology conflicts; net and planned ads do not form a complete ledger. |
+| [x] | [Only Way is Down](games/only-way-is-down.md) | P2, P3, P6: watchable reach, real sales, weak fit and inadequate livelihood. | Neither invisibility nor proven lifetime profit; cute appearance did not imply relaxed play. |
+| [x] | [Maze Mice](games/maze-mice.md) | P6, P7, P8: improved full release and selected-budget recovery. | PR expenditure and founder programming were excluded from that budget. |
+| [x] | [What's the Password?](games/whats-the-password.md) | P1, P6, P11: small expense, event timing and inherited outreach. | Cash surplus and later mixed reception coexist; its wishlist count is not a universal cutoff. |
+| [x] | [Luck be a Landlord](games/luck-be-a-landlord.md) | P2, P8, P12: repeated creator relationships, full release and ports. | One unprofitable event is not the whole game's result. |
+| [x] | [Minecraft](games/minecraft.md) | P1, P4, P9: usable experiment, paid iteration and player-created sharing. | Full release followed sales; later scale was not permanently solo or today's platform context. |
+| [x] | [Roblox platform](games/roblox-platform.md) | P4, P6, P9: creation/publication/use and recruited early testers. | Platform revenue, loss, virtual currency and creator earnings are different measures. |
+| [x] | [Adopt Me!](games/adopt-me.md) | P4, P8, P9: product additions, events and specialist staffing. | Later millions of followers and staff cannot be backdated to two founders. |
+| [x] | [Welcome to Bloxburg](games/welcome-to-bloxburg.md) | P2, P4, P9: restrained opening followed by player sharing. | A small first day can be deliberate; later free-entry economics unresolved. |
+| [x] | [Spooky Bonus](games/spooky-bonus.md) | P6, P9, P11: efficient repeat production and strong non-Steam demand. | Hourly estimate excludes earlier technology; modest Steam performance did not erase portal success. |
+| [x] | [Regency Solitaire](games/regency-solitaire.md) | P6, P9, P12: overall success with weak relative Steam contribution. | Studio salaries are not game-only profit; removed figures remain unknown. |
+| [x] | [Shadowhand](games/shadowhand.md) | P6, P7, P11: greater scope, sales and publicity with poor early labor return. | Another game's Steam-only receipts are not its entire business. |
+| [x] | [Brigador](games/brigador.md) | P3, P8, P9: revised introduction, relaunch, localization and next-project finance. | Next-project income without reserves is not security; separate intervention effects unmeasured. |
+| [x] | [Eastshade](games/eastshade.md) | P1, P3, P7, P9: early writing, coherent tests, later trailer and selected specialists. | Leaving Lyndow was separate, not a demo; PC success did not guarantee console results. |
+| [x] | [Descenders](games/descenders.md) | P4, P7, P8: community activity, successful release and continued growth. | Not a failed-launch rescue; subscription access and purchases coexisted without isolated causal proof. |
+| [x] | [Spilled!](games/spilled.md) | P1, P7, P10: demo/audience before funding, then art specialization. | Some polish followed crowdfunding; goal was not all prior labor/living costs. |
+| [x] | [Backpack Battles](games/backpack-battles.md) | P3, P4, P9: repeated free play, regional discovery and bundles. | Weekly delivery cost effort; asynchronous opposition differs from simultaneous server needs. |
+| [x] | [A Short Hike](games/a-short-hike.md) | P2, P7, P11: experience, public work, commissioning and bounded delivery. | Awards and commissioning do not disclose fees or full-cost profit. |
+| [x] | [Rec Room platform](games/rec-room-platform.md) | P4, P6, P9: in-game community, community hire and unsustainable service economics. | Huge funding/audience is not profit; exported data is not an operating replacement service. |
+| [x] | [BattleBit Remastered](games/battlebit-remastered.md) | P3, P4, P5: scheduled tests, changed fit, major early sales and later delivery pressure. | Resumed testing is not a finished overhaul or verified recovered sales. |
 
-## External verification in this review
+## External verification scope
 
-Current platform claims were checked against Valve's original [visibility](https://partner.steamgames.com/doc/marketing/visibility), [wishlists](https://partner.steamgames.com/doc/marketing/wishlist), [Playtest](https://partner.steamgames.com/doc/features/playtest), [Next Fest](https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest), [Early Access](https://partner.steamgames.com/doc/store/earlyaccess), [release process](https://partner.steamgames.com/doc/store/releasing), [UTM analytics](https://partner.steamgames.com/doc/marketing/utm_analytics) and [content survey](https://partner.steamgames.com/doc/gettingstarted/contentsurvey) documentation on October 16, 2026. These are dated checks, not permanent guarantees. The execution guide records the relevant requirements without turning platform minima into marketing targets.
+The historical October 16 review opened Sunset's [recovery account](https://tale-of-tales.com/Sunset/blog/index.php/2015/08/21/three-months-after-sunset-and-beyond/) and Slug Disco's [May 2025 signing announcement](https://slugdisco.com/kingdom-like-base-builder-game-the-ember-guardian-joins-slug-disco/). Indexed original text was retrieved for [LocalThunk's timeline](https://localthunk.com/blog/balatro-timeline-3aarh) and [Maze Mice's budget](https://blog.trampolinetales.com/maze-mice-is-now-profitable-budget-breakdown/) where direct access was inconsistent. Rec Room's original notices were surfaced, with direct closure-page access limited. No complete refund, shutdown-accounting or lifetime-sales audit follows from those checks.
 
-Kickstarter's original [funding-goal guidance](https://updates.kickstarter.com/how-to-set-the-right-funding-goal-for-your-kickstarter-campaign/) was read for minimum delivery sufficiency, all-or-nothing funding and budgeting. No tax rate, legal contract or campaign outcome is predicted for Mike.
+On **October 17, 2026**, the platform references in the [execution guide](execution-playbook.md#current-platform-source-register) were checked against official Valve visibility, wishlists, Playtest, Next Fest, Early Access, release, UTM analytics and content-survey documentation, plus Kickstarter's funding-goal guidance. These checks establish the described current rules/tools, not acceptance or guaranteed featuring for Open Legend. Recheck when making an actual platform or funding commitment.
 
-Targeted case refreshes: [Sunset's original recovery post](https://tale-of-tales.com/Sunset/blog/index.php/2015/08/21/three-months-after-sunset-and-beyond/) and [Slug Disco's May 2025 signing statement](https://slugdisco.com/kingdom-like-base-builder-game-the-ember-guardian-joins-slug-disco/) were opened. Original indexed text was recovered for [LocalThunk's timeline](https://localthunk.com/blog/balatro-timeline-3aarh) and [Maze Mice's budget](https://blog.trampolinetales.com/maze-mice-is-now-profitable-budget-breakdown/); direct requests were not consistently accessible. Rec Room's original closure/export notices were surfaced in search, while direct closure-page access returned an authorization error. This review does not claim fresh independent confirmation of every completed refund or shutdown event.
+## Use and maintenance
 
-## Review consequences and unresolved limits
+The principles retain conflicts as well as preferred mechanisms: public demos can help or fail, small scope can succeed or disappoint, a quiet start can grow, and a large audience can be costly to serve. Managed-world pricing and subscriptions require direct customer and operating evidence rather than an inference from unrelated premium games.
 
-The synthesis now makes financing sufficiency and founder capacity explicit, includes low-prelaunch-demand successes without treating them as forecasts, and retains compact failures as counterexamples to scope reduction alone. The execution guide preserves the hosted-world pilot in the working business plan rather than replacing it with Steam/Kickstarter sequencing. Sunset's index summary is corrected to show the recovery already documented in its dossier. Existing well-qualified dossier histories are retained rather than rewritten merely to change their review date.
-
-No reliable universal video cadence, Discord membership requirement, wishlist launch threshold, advertising return, publisher uplift or lifetime-value estimate emerges from these cases. Funding, reach, play, purchases, renewals and continued delivery require separate evidence. The archive cannot establish causal success rates, and related Grey Alien or TrampolineTales cases are not independent replications. Historical limits remain in each source register; the review map records coverage, not imagined completeness.
+Use the archive to identify the next experiment and the cost of being wrong. Add focused research when it could change a decision or reconcile contradictory material, not merely to increase the number of dossiers. Keep historical windows and incomplete source access explicit; current follower totals cannot fill missing histories. No universal video cadence, Discord size, wishlist threshold, advertising return, publisher uplift or industry probability of success is established.

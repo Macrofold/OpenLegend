@@ -1,132 +1,127 @@
-# Indie launch, community and commercial dossiers
+# Indie launch, community and commercial research
 
-| Research status | Progress | Last updated |
+| Status | Current progress | Last updated |
 |---|---|---|
-| Full collection review and execution guidance completed | All 64 dossiers reread: 62 games and 2 platform/service cases, consolidated into twelve principles, a gated execution guide and a case-by-case coverage map. | 2026-10-16 |
+| Completed research documentation | 64 dossiers support twelve principles, a weighted evidence map, detailed execution guidance and a short operating brief; Open Legend customer and release qualification remain separate work. | 2026-10-17 |
 
 ## Start here
 
 | Document | Purpose |
 |---|---|
-| [Main learnings and principles](learnings.md) | What the cases support, common pitfalls, conflicting examples, confidence limits and the best current recommendation. |
-| [Open Legend execution guide](execution-playbook.md) | Concrete work products, go/rework/stop gates, test and outreach proposals, hiring decisions, metrics and separate hosted-pilot, Steam and crowdfunding routes. |
-| [Complete review coverage](review-coverage.md) | All 64 reread cases, the principle each informs, important qualifications and the actual scope of external source refreshes. |
-| [Existing business plan](../../06-marketing/business-plan.md) | Current working hosted-world objective and packaging/cost hypotheses; the execution guide does not silently replace these with Steam-first assumptions. |
+| [Execution brief](execution-brief.md) | One-page operating view: current hypothesis, evidence, uncertainty, next experiment, commitment limit and decision afterward |
+| [Main learnings and principles](learnings.md) | Cross-case conclusions and counterexamples, centered on distinctive player appeal and appropriately weighted evidence |
+| [Detailed execution guide](execution-playbook.md) | Parallel game, audience and business work; separate tests; deliberate promotion; offer comparison; hiring; qualification and postlaunch decisions |
+| [Case review and evidence weighting](review-coverage.md) | Every dossier's contribution and limits, decision-specific relevance, source quality and verification scope |
+| [Business plan](../../06-marketing/business-plan.md) | Commercial objectives, managed-world candidate, offer comparison, accepted entitlement directions and illustrative cost assumptions |
 
-The dossiers below own detailed histories and source registers. This remains separate from [game-design inspiration](../game-inspiration/); research interpretations do not change accepted gameplay or implementation specifications. Completed research documents are not evidence that player tests, commercial gates, billing or a release have been completed.
+The collection contains **62 game histories and two platform/service histories**, separate from [game-design inspiration](../game-inspiration/). The [gameplay priority](../../../docs/repertoires/gameplay-priorities.md) owns Open Legend's intended survival-adventure. Hosting and payment serve that experience; their suitability must be tested rather than inferred from the number of Steam or crowdfunding successes in the archive.
 
-The initial October 15 collection contained 44 games: 22 successes, 20 unsuccessful outcomes and 2 mixed cases. Mike's October 16 request added broader phase-specific comparisons and authorized synthesis. The expansion added **18 games and 2 platforms/services**, including his supplied **The Ember Guardian** transcript. The subsequent full-case review strengthened the principles and made the execution sequence operational. The original cohorts are preserved below; cases are not forced into a misleading lifetime success/failure binary.
+Dossiers own detailed timelines, measurements, interpretations and source registers. The principles explain what to learn; the detailed guide owns experiments and commitment criteria; the brief keeps the next decision visible. Completed documentation does not establish a completed game, playtest, paid offer or market validation.
 
 ## Scope and reading conventions
 
-The initial collection meets the requested minimum of 20 successful games and 20 unsuccessful cases, prioritizing solo developers and core teams smaller than ten. A small core team is not the same as a small total production: publishers, outsourced studios, freelancers, platform partners and inherited audiences are recorded separately. Some historical headcounts remain unverified, notably Midora and The Black Glove; they are not silently presented as confirmed under-ten or solo precedents. The expansion also includes explicit small-origin, later-large-organization exceptions. Roblox and Rec Room are platform/service cases, not additional standalone games.
+The collection includes 22 documented successful games, 20 games with documented unsuccessful outcome periods, two additional mixed financial outcomes and 20 further phase-specific comparisons. These groups are navigation, not a representative statistical sample or a permanent verdict about each game. Some later recoveries belong within the same dossier, not as duplicate cases counted toward both minimums.
 
-Outcome labels refer to a stated period and dimension:
+Solo developers and cores below ten are emphasized. A small core is not necessarily a small total production: publishers, contractors, parent studios and inherited audiences are identified separately. Some early headcounts remain unverified, notably Midora and The Black Glove. Escape Simulator's small project core sat inside a larger company. Roblox and Rec Room are platform/service comparisons; mature organizations and audiences are not backdated to their small origins.
 
-- **Success:** documented sales, revenue, commercial rankings or an explicit successful commercial outcome. The original cohort includes modest products and major breakouts; awards and positive reviews alone are insufficient. Success does not automatically establish audited profitability.
-- **Unsuccessful outcome:** documented weak discovery, failed fundraising, poor sales, unsustainable returns or stalled/canceled funded delivery. These are different failure modes, identified in the table and dossier, not a judgment of artistic quality. Sunset's later financial repair is explicitly retained.
-- **Mixed or phase-specific:** completion, reception, launch sales, later returns and sustainability point in different directions. The two original mixed cases do not count toward either minimum. An eventual recovery is not also counted as a second unsuccessful game: Among Us belongs only to the original success cohort here. A Short Hike's commissioning and recognition are documented without claiming verified profit.
+**Success** requires documented commercial results or a clearly attributed outcome, not awards alone, and does not automatically mean audited profit. **Unsuccessful periods** include poor discovery, failed funding, weak sales, unsustainable returns and stalled funded delivery; these are different dimensions. **Mixed/phase-specific cases** preserve changes between funding, release, reception, later sales and sustainable work. A Short Hike's commissioning and recognition do not establish an undisclosed profit ledger.
 
-Dossiers distinguish **documented facts**, **attributed explanations**, **case-specific interpretation**, and **not established**. The last term means the reviewed public sources do not establish the answer; it does not mean the activity never happened. No private analytics, new developer interviews conducted for this project, purchased data or game playtesting are represented here. Mike's supplied transcript is identified as such; it is not represented as an independently watched video or audited financial statement.
+Separate documented records, participant explanations, our inferences and unavailable evidence. “Not established” means the reviewed sources do not answer, not that the activity never happened. Historical source access is described in the dossier; Mike's Ember Guardian transcript is a supplied developer account, not an independently watched video or audited statement.
 
-Historical follower counts, Discord membership, conversion rates, paid-media spending and hiring contracts are especially incomplete. Present-day follower/review counts are not backdated to launch. Backers, wishlists, downloads, paid copies, concurrent players, gross revenue, developer receipts and profit remain different quantities. Currency amounts retain the source currency. Kickstarter periods use the campaign's displayed dates and duration where recoverable; timezone-dependent dates in retrospective articles can differ by one day. Failed-campaign pledges are not reported as money collected.
+Backers, wishlists, downloads, paid units, concurrent players, gross revenue, developer receipts and profit remain distinct. Current followers and reviews are not launch snapshots. Reported currency stays in its source unit; failed Kickstarter pledges are not money collected. Dates can differ by timezone, and a first verified public touchpoint is not necessarily the first-ever post. A trailer does not prove an unrestricted demo existed. A source-code release is not automatically a completed game.
 
-Each dossier records the earliest **verified** public touchpoint, not necessarily the first-ever post. A trailer does not prove that a public downloadable demo existed. Kickstarter metadata can remain readable when the original description or updates do not; access limits are recorded rather than filled with remembered details. A funded but canceled game is not mislabeled as a failed fundraising campaign, and a later source-code release is not automatically completed delivery.
+No original interviews conducted for this project, private analytics, purchased datasets or playtesting are claimed. The case reread covered all 64 dossiers on October 16, 2026; external refreshes were targeted, not a new audit of every lifetime outcome. The evidence map records that scope and current use. Related Grey Alien and TrampolineTales histories are not independent statistical replications. The archive establishes neither a success rate nor a universal posting, wishlist or community-size threshold.
 
-## Expansion: phase-specific histories — 20 cases
+## Phase-specific, recovery and platform comparisons — 20 cases
 
-A checked row means the available evidence was read and the dossier written, not that every requested metric is public. All rows were additionally reread in the [full review](review-coverage.md). These are purposefully varied comparisons, not a random statistical sample. The three TrampolineTales games and three Grey Alien games are related studio histories, not independent observations of the same claimed effect.
+A checked row means source evidence was read and a dossier written; all 64 dossiers also have full reread coverage in the evidence map. It does not mean every requested private or historical metric was available.
 
 | Read and written | Case | Type | Main comparison |
 |---|---|---|---|
-| [x] | [The Ember Guardian](games/the-ember-guardian.md) | Game | User-supplied first-release account; demo discovery, later publisher partnership, launch regressions and first-month take-home versus gross. |
-| [x] | [Only Way is Down](games/only-way-is-down.md) | Game | Large video reach, meaningful paid sales, weaker reception and insufficient full-time livelihood in the reported period. |
-| [x] | [Maze Mice](games/maze-mice.md) | Game | Reported production-budget recovery excludes an unsuccessful PR purchase and founder labor. |
-| [x] | [What's the Password?](games/whats-the-password.md) | Game | Small cash budget and early recovery; event timing, inherited creator relationships and later mixed reception. |
-| [x] | [Luck be a Landlord](games/luck-be-a-landlord.md) | Game | Successful Early Access-to-full-release growth; an unprofitable later event did not make the whole game unsuccessful. |
-| [x] | [Minecraft](games/minecraft.md) | Game | Rough public playable, paid alpha/beta growth before full release, then a much larger content and distribution ecosystem. |
-| [x] | [Roblox](games/roblox-platform.md) | Platform | Small founding team, creation-driven community, later substantial infrastructure and distinct platform/creator economics. |
-| [x] | [Adopt Me!](games/adopt-me.md) | Game on Roblox | Two-founder origin, major later product additions, event-driven activity and substantial post-breakout staffing. |
-| [x] | [Welcome to Bloxburg](games/welcome-to-bloxburg.md) | Game on Roblox | Deliberately quiet first release, creator/player sharing and later studio expansion; subsequent free-access economics unresolved. |
-| [x] | [Spooky Bonus](games/spooky-bonus.md) | Game | Strong casual-market return with reused skills/technology; comparatively modest later Steam performance. |
-| [x] | [Regency Solitaire](games/regency-solitaire.md) | Game | Successful overall business despite comparatively weak Steam sales; customers reached through other channels. |
-| [x] | [Shadowhand](games/shadowhand.md) | Game | Respectable launch comparison but disappointing early labor return; later wishlist growth and conversions separated. |
-| [x] | [Brigador](games/brigador.md) | Game | Weak initial period, improved relaunch/localization and later receipts sufficient for another project, without a large reserve. |
-| [x] | [Eastshade](games/eastshade.md) | Game | Strong creator-reported total result alongside disappointing console sales; long public development and selected outsourced services. |
-| [x] | [Descenders](games/descenders.md) | Game | Purposeful prerelease Discord activity, strong launch and later purchases alongside subscription distribution. |
-| [x] | [Spilled!](games/spilled.md) | Game | Public demo and dated social audience before Kickstarter; funded technical-art hiring and subsequent successful sales. |
-| [x] | [Backpack Battles](games/backpack-battles.md) | Game | Substantial free-demo play before paid release; repeated updates, regional discovery and publisher cross-promotion. |
-| [x] | [A Short Hike](games/a-short-hike.md) | Game | Prior public work, commissioning and bounded scope; successful delivery and recognition without an established profit ledger. |
-| [x] | [Rec Room](games/rec-room-platform.md) | Platform/service | Six-person origin, large community and venture funding, then admitted unsustainable economics and June 2026 shutdown. |
-| [x] | [BattleBit Remastered](games/battlebit-remastered.md) | Game | Years of coordinated testing, major early sales, then communication/major-update delays and renewed testing; later profit unknown. |
+| [x] | [The Ember Guardian](games/the-ember-guardian.md) | Game | Supplied first-release account; demo discovery, publisher help, launch regressions and first-month net versus gross |
+| [x] | [Only Way is Down](games/only-way-is-down.md) | Game | Large viewing reach, meaningful sales, weaker reception and insufficient full-time livelihood in the reported period |
+| [x] | [Maze Mice](games/maze-mice.md) | Game | Selected-budget recovery excludes disclosed PR spending and founder labor |
+| [x] | [What's the Password?](games/whats-the-password.md) | Game | Small cash budget, early recovery, relevant event and existing creator contacts; later mixed reception |
+| [x] | [Luck be a Landlord](games/luck-be-a-landlord.md) | Game | Successful Early Access-to-full-release growth with an unprofitable later promotional event |
+| [x] | [Minecraft](games/minecraft.md) | Game | Usable public experiment, paid alpha/beta growth before full release and a much larger later ecosystem |
+| [x] | [Roblox](games/roblox-platform.md) | Platform | Small origin, creation-driven community and distinct platform/creator economics at later scale |
+| [x] | [Adopt Me!](games/adopt-me.md) | Game on Roblox | Two-founder origin, product additions, event activity and substantial later staffing |
+| [x] | [Welcome to Bloxburg](games/welcome-to-bloxburg.md) | Game on Roblox | Deliberately quiet start, player/creator sharing and later expansion; free-access economics unresolved |
+| [x] | [Spooky Bonus](games/spooky-bonus.md) | Game | Strong casual-market return using prior skills/technology; comparatively modest Steam results |
+| [x] | [Regency Solitaire](games/regency-solitaire.md) | Game | Overall commercial success despite relatively weak Steam contribution |
+| [x] | [Shadowhand](games/shadowhand.md) | Game | Respectable sales but weak early labor return; wishlist growth and later conversion separated |
+| [x] | [Brigador](games/brigador.md) | Game | Weak start, improved release/localization and later next-project funding without substantial reserves |
+| [x] | [Eastshade](games/eastshade.md) | Game | Strong reported overall result, disappointing console debut and selected outside services |
+| [x] | [Descenders](games/descenders.md) | Game | Purposeful prerelease community, strong launch and purchases alongside subscription distribution |
+| [x] | [Spilled!](games/spilled.md) | Game | Public demo/audience before Kickstarter, funded technical-art work and later successful sales |
+| [x] | [Backpack Battles](games/backpack-battles.md) | Game | Repeated free-demo play, regional creator discovery and publisher cross-promotion before paid success |
+| [x] | [A Short Hike](games/a-short-hike.md) | Game | Prior work, commissioning, bounded delivery and recognition; profit undisclosed |
+| [x] | [Rec Room](games/rec-room-platform.md) | Platform/service | Six-person origin, substantial funding/community, admitted unsustainable economics and documented 2026 closure |
+| [x] | [BattleBit Remastered](games/battlebit-remastered.md) | Game | Years of coordinated tests, major early sales and later delivery/communication problems with renewed testing |
 
-## Original successful outcomes — 22 games
+## Documented commercial successes — 22 games
 
-The linked dossier owns the detailed evidence, dates and qualifications.
-
-| Read and written | Game | Outcome and evidence focus |
+| Read and written | Game | Evidence focus |
 |---|---|---|
-| [x] | [Among Us](games/among-us.md) | Modest initial monetization followed by the 2020 breakout; early usage records, creator exposure and post-breakout community hiring. |
-| [x] | [Balatro](games/balatro.md) | Commercial breakout; public demo, creator discovery and publishing context. |
-| [x] | [Bunny Park](games/bunny-park.md) | Modest creator-reported commercial success; compact second Steam game, development streaming and audience continuity. |
-| [x] | [Choo-Choo Charles](games/choo-choo-charles.md) | Breakout reveal and strong Steam debut; dated starting audience, wishlist growth and capsule-art commission. |
-| [x] | [Core Defense](games/core-defense.md) | Successful commercial follow-up; prelaunch demo and discovery sequence, distinct from Coregrounds. |
-| [x] | [Escape Simulator](games/escape-simulator.md) | Successful small-studio launch; demo, audience-building and release evidence. |
-| [x] | [Factorio](games/factorio.md) | Crowdfunding and sustained commercial growth; playable development and community communication. |
-| [x] | [FTL: Faster Than Light](games/ftl-faster-than-light.md) | Two founders plus specialists; competition demos, Kickstarter, beta and Steam; founder PR workload. |
-| [x] | [Hollow Knight](games/hollow-knight.md) | Prototype-led crowdfunding and substantial sales; two founders, later programmer, external audio/PR and dedicated pre-release marketing. |
-| [x] | [Lethal Company](games/lethal-company.md) | Major Early Access success; earlier games and videos, development journals, testing and accelerating player adoption. |
-| [x] | [Mortal Glory](games/mortal-glory.md) | Solo commercial success; development scope, launch activity and reported results. |
-| [x] | [Pawnbarian](games/pawnbarian.md) | Small-team commercial success; playable iteration, audience and release record. |
-| [x] | [RimWorld](games/rimworld.md) | Crowdfunding followed by sustained sales; public development and growing production capacity. |
-| [x] | [shapez](games/shapez.md) | Commercial success; accessible playable exposure and distribution. |
-| [x] | [Shovel Knight](games/shovel-knight.md) | Successful crowdfunding and release; established skills, campaign preparation and production costs. |
-| [x] | [Slay the Spire](games/slay-the-spire.md) | Small-team breakout through Early Access; iteration, creator exposure and audience growth. |
-| [x] | [SNKRX](games/snkrx.md) | Successful compact solo-led release; public-development and creator-discovery sequence. |
-| [x] | [Stardew Valley](games/stardew-valley.md) | Major solo-origin success; long development, public communication and publisher assistance. |
-| [x] | [The First Tree](games/the-first-tree.md) | Solo-led commercial success; visual promotion, existing skills and outside assets. |
-| [x] | [Undertale](games/undertale.md) | Successful crowdfunding and major release; demo maturity and pre-existing creative/community context. |
-| [x] | [Valheim](games/valheim.md) | Small-core-team Early Access breakout; prior playable work, publishing and release growth. |
-| [x] | [Vampire Survivors](games/vampire-survivors.md) | Solo-origin breakout; early distribution, discovery and post-success staffing. |
+| [x] | [Among Us](games/among-us.md) | Modest initial monetization, repeated discovery and later breakout; community staffing followed growth |
+| [x] | [Balatro](games/balatro.md) | Small beta audience, demo iteration, creator discovery and publisher support |
+| [x] | [Bunny Park](games/bunny-park.md) | Compact second Steam game, development streaming, purchased music and audience continuity |
+| [x] | [Choo-Choo Charles](games/choo-choo-charles.md) | Dated reveal audience and wishlist growth; focused art commission |
+| [x] | [Core Defense](games/core-defense.md) | Successful different product after Coregrounds; demo and launch sequence with later setbacks |
+| [x] | [Escape Simulator](games/escape-simulator.md) | Small core inside an experienced studio, specialist promotion and community-created rooms |
+| [x] | [Factorio](games/factorio.md) | Crowdfunding/direct sales, playable development, sustained communication and later Steam release |
+| [x] | [FTL: Faster Than Light](games/ftl-faster-than-light.md) | Competition demos, crowdfunding, beta, specialists and founder PR workload |
+| [x] | [Hollow Knight](games/hollow-knight.md) | Prototype, funding, staged programming/audio/marketing help and substantial sales |
+| [x] | [Lethal Company](games/lethal-company.md) | Earlier games/videos, development journals, small tests and accelerating adoption |
+| [x] | [Mortal Glory](games/mortal-glory.md) | Compact solo production, targeted outreach, purchased assets and reported cash/labor figures |
+| [x] | [Pawnbarian](games/pawnbarian.md) | Browser sampling, community discovery and later commercial evidence |
+| [x] | [RimWorld](games/rimworld.md) | Illustrated systems, early forum, specialist recruitment, funding and sales before 1.0 |
+| [x] | [shapez](games/shapez.md) | Browser-to-Steam distribution, community-specific pitch and paid/organic creator coverage |
+| [x] | [Shovel Knight](games/shovel-knight.md) | Experienced collaborators, campaign and release success with unpaid time and obligations |
+| [x] | [Slay the Spire](games/slay-the-spire.md) | Expert testers and public Early Access iteration before sustained sales |
+| [x] | [SNKRX](games/snkrx.md) | Small launch audience, postlaunch creator discovery and community-work choices |
+| [x] | [Stardew Valley](games/stardew-valley.md) | Long solo-origin development, visible unfinished work and historical publisher help |
+| [x] | [The First Tree](games/the-first-tree.md) | Visual promotion, prior skills, licensed assets and porting support |
+| [x] | [Undertale](games/undertale.md) | Public demo, prior creative relationships, crowdfunding and later specialists |
+| [x] | [Valheim](games/valheim.md) | Solo-stage publisher relationship, small-core launch and immediate support pressure |
+| [x] | [Vampire Survivors](games/vampire-survivors.md) | Early playable distribution, creator discovery and post-success staffing |
 
-## Original unsuccessful outcomes — 20 games
+## Documented unsuccessful outcome periods — 20 games
 
-These are twenty distinct games, not twenty claims of permanent commercial failure. A weak initial period, failed campaign and undelivered funded project remain explicitly different outcomes; later recovery is included when established.
+These are not twenty claims of permanent financial failure. The dossier's period and dimension control the interpretation.
 
-| Read and written | Game | Outcome and evidence window |
+| Read and written | Game | Outcome window and distinction |
 |---|---|---|
-| [x] | [Airscape: The Fall of Gravity](games/airscape-the-fall-of-gravity.md) | Documented poor commercial launch; publicity and reception distinguished from sales. |
-| [x] | [Basingstoke](games/basingstoke.md) | Inadequate financial return through January 2020 despite prior products, a mailing audience and PR expenditure. |
-| [x] | [Coregrounds](games/coregrounds.md) | Failed crowdfunding and unsustainable multiplayer service after its 2018 release. |
-| [x] | [Crumbling World](games/crumbling-world.md) | Creator-reported commercial disappointment; development and launch effort versus results. |
-| [x] | [Dynasty Feud](games/dynasty-feud.md) | 2017 first-month sales shortfall; beta registrations sharply exceeded active participation. |
-| [x] | [Echoes — Nova-box remaster](games/echoes-nova-box.md) | Weak 2024 remaster sales in the later staff account; identity and evidence window explicitly bounded. |
-| [x] | [Haunts: The Manse Macabre](games/haunts-the-manse-macabre.md) | Game campaign funded in 2012; production then stalled as programming capacity and money disappeared. |
-| [x] | [Knife To Meet You](games/knife-to-meet-you.md) | Unsuccessful 2021 Early Access promotion and creator conversion; later 2024 full release is retained. |
-| [x] | [Legend of Labot: The Golden Pearl](games/legend-of-labot-the-golden-pearl.md) | Zero downloads at the reported initial itch.io launch; later Steam release, lifetime outcome unknown. |
-| [x] | [Limit Theory](games/limit-theory.md) | 2012 campaign funded; canceled in 2018. The 2022 source release was not the promised finished game. |
-| [x] | [Midora](games/midora.md) | 2014 campaign funded; funding/delivery failure in 2015–2016. Later unread update metadata is not ignored. |
-| [x] | [Monkey Labour](games/monkey-labour.md) | Documented mobile commercial shortfall; production and acquisition economics. |
-| [x] | [Neon Climber](games/neon-climber.md) | Creator-described 2020 mobile commercial failure; acquisition and retention tests after lengthy development. |
-| [x] | [PONCHO](games/poncho.md) | Failed campaign, then publisher-assisted release; unsuccessful developer returns through January 2017. |
-| [x] | [Rock Paper SHIFT](games/rock-paper-shift.md) | Unsuccessful small commercial release, although the creator achieved the goal of shipping. |
-| [x] | [Sunset](games/sunset.md) | Poor 2015 launch; later subsidy-inclusive break-even and debt repayment, without resuming the intended commercial model. |
-| [x] | [The Black Glove](games/the-black-glove.md) | Kickstarter missed its target in 2014; later publisher pursuit did not prevent shelving in 2015. |
-| [x] | [The Flock](games/the-flock.md) | Poor 2015 multiplayer commercial result; official developer statement records subsequent funding exhaustion. |
-| [x] | [Unwritten: That Which Happened](games/unwritten-that-which-happened.md) | Successful 2013 campaign followed by missed delivery and stalled production by January 2014. |
-| [x] | [Where the Water Tastes Like Wine](games/where-the-water-tastes-like-wine.md) | Documented commercial shortfall; publisher and wide collaborator network distinguished from the small core. |
+| [x] | [Airscape: The Fall of Gravity](games/airscape-the-fall-of-gravity.md) | Poor 2015 commercial launch despite substantial publicity and outside help |
+| [x] | [Basingstoke](games/basingstoke.md) | Insufficient return through January 2020 despite prior audience and PR spending |
+| [x] | [Coregrounds](games/coregrounds.md) | Failed campaign and unsustainable multiplayer service after 2018 release |
+| [x] | [Crumbling World](games/crumbling-world.md) | Reported 2020 sales disappointment, unrepresentative early alpha and release defects |
+| [x] | [Dynasty Feud](games/dynasty-feud.md) | 2017 first-month shortfall; registrations far exceeded actual participation |
+| [x] | [Echoes — Nova-box remaster](games/echoes-nova-box.md) | Weak 2024 remaster results in later staff account; small subsequent improvement |
+| [x] | [Haunts: The Manse Macabre](games/haunts-the-manse-macabre.md) | Successful game campaign followed by lost programming capacity and stalled delivery |
+| [x] | [Knife To Meet You](games/knife-to-meet-you.md) | Poor 2021 Early Access promotion/conversion; later 2024 full release retained |
+| [x] | [Legend of Labot: The Golden Pearl](games/legend-of-labot-the-golden-pearl.md) | Initial zero-download snapshot followed by further publicity and Steam release; lifetime return unknown |
+| [x] | [Limit Theory](games/limit-theory.md) | 2012 funding, 2018 cancellation and 2022 source release rather than finished game |
+| [x] | [Midora](games/midora.md) | Funded campaign, 2015–2016 funding/delivery failure; unread later update metadata acknowledged |
+| [x] | [Monkey Labour](games/monkey-labour.md) | Mobile cost-recovery shortfall and weak desktop extension |
+| [x] | [Neon Climber](games/neon-climber.md) | Creator-described 2020 mobile failure with late acquisition/retention testing |
+| [x] | [PONCHO](games/poncho.md) | Failed campaign, publisher-assisted release and disappointing developer return through January 2017 |
+| [x] | [Rock Paper SHIFT](games/rock-paper-shift.md) | Small commercial shortfall despite successful completion goal |
+| [x] | [Sunset](games/sunset.md) | Poor launch, later subsidy-inclusive break-even/debt repayment, intended business model discontinued |
+| [x] | [The Black Glove](games/the-black-glove.md) | Failed 2014 funding and 2015 shelving despite publisher pursuit |
+| [x] | [The Flock](games/the-flock.md) | Poor multiplayer launch and official later admission of funding/service failure |
+| [x] | [Unwritten: That Which Happened](games/unwritten-that-which-happened.md) | Successful funding followed by missed delivery and stalled production by January 2014 |
+| [x] | [Where the Water Tastes Like Wine](games/where-the-water-tastes-like-wine.md) | Early commercial shortfall with extensive outside contributors; artistic achievement separate |
 
-## Original additional mixed outcomes — 2 games
+## Additional mixed financial outcomes — 2 games
 
-| Read and written | Game | Why it is kept separate |
+| Read and written | Game | Why it is distinct |
 |---|---|---|
-| [x] | [I Am Overburdened](games/i-am-overburdened.md) | Successful completion and favorable reception, but costs unrecovered in the January 2018 account; documented early posts and creator outreach. |
-| [x] | [Lemma](games/lemma.md) | Public alphas, failed Kickstarter and completed paid release; early revenue did not fund another similarly sized game. |
+| [x] | [I Am Overburdened](games/i-am-overburdened.md) | Completed and favorably received, but costs unrecovered in the January 2018 account |
+| [x] | [Lemma](games/lemma.md) | Public alphas, failed crowdfunding and completed paid release; early return could not finance another similar game |
 
-## Dossier structure and evidence limits
+## Maintenance
 
-Each game includes its outcome and evidence window; origin and team; development/public-exposure timeline; crowdfunding or other financing; channel-by-channel community evidence; launch, reception and commercial results; collaborators/publishing/marketing; bounded positive and negative observations; and unresolved evidence with a source register. Where a requested field is unavailable, the dossier identifies the gap rather than manufacturing an answer.
+Each dossier covers origin, team, development/public exposure, financing, channel histories, release and results, collaborations, interpretations and unavailable evidence. Source registers distinguish original records, recollections, estimates, contemporary reporting and partially accessible material. Preserve source dates and definitions rather than guessing missing followers, contract details or lifetime results.
 
-Sources are linked beside claims and listed with author/organization, date where established, source type and purpose. Developer recollections and marketing claims are attributed. Reviewers' opinions are reception evidence, not independent financial audits. Restricted, missing and partially indexed sources are described accordingly; no claim is made that every linked old build, video or campaign update could be opened in full. The full-case reread is not a claim that every external link was independently reopened or every lifetime outcome updated.
-
-This is a deliberately selected comparison set, subject to survivorship, disclosure and retrospective-reporting bias. It is not a representative sample from which a success rate can be calculated. Historical promotion routes and platform mechanisms are not automatically current policy. The [main learnings](learnings.md) separate recurring observations, counterexamples, current platform documentation and proposed implications for Open Legend; the [execution guide](execution-playbook.md) translates them into bounded next decisions.
+Weight each case for the specific question; never average these selected successes/failures into an industry probability. Add a targeted research task when it could change a decision or resolve contradictory evidence, not merely to enlarge the archive. Keep the principles, execution documents and commercial assumptions consistent while leaving historical case evidence intact.
