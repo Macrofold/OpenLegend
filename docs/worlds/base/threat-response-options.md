@@ -75,7 +75,28 @@ After that counterattack, further conduct remains a real contextual choice: she 
 
 Model choice is stochastic. A finite evaluation can establish a release acceptance result, not guarantee all future completions. Retain all predeclared baseline runs and failed comparisons; do not reroll until a counterattack appears or treat fixture selection as autonomous behavior. The technical design defines the ordinary-path evidence and contrasting characters required for qualification.
 
-## 5. Future repertoire, deliberately not first delivery
+## 5. First-delivery commitments and reconsideration tuning
+
+The following are selected, adjustable world defaults. They are not engine constants or observed performance results. Use the existing finite activity/plan and installed observed-condition owners. A purpose ID is descriptive selection metadata on that admitted work, not a parallel psychological goal store. A larger personal objective, if the person chooses one, remains an ordinary `ActorGoal`.
+
+| Selected term | Default and exact meaning |
+| --- | --- |
+| A counterattack | One admitted strike with its exact target life and method, including disclosed automatic approach where supported. After the actual result, reconsider before another strike. No auto-repeat or hidden attack queue is added in this delivery. |
+| Visible pursuit | An explicitly selected approach/follow or approach-and-one-strike composition, ending no later than 600 game seconds after selection or at the boundary 30 m from its selected starting anchor, whichever occurs first. Keep current native movement, reach and recovery rules. The parameter and boundary are shown before choice. Another chase needs another actual choice. |
+| Lost sight | Native sight-dependent following/approach stops immediately under its owning rule. The person may separately choose the exact last-seen destination. The deadline/anchor does not reset when following is interrupted or restored. |
+| Last-seen search | One movement to one personally recorded point, subject to the same original selected pursuit deadline/anchor if it continues that commitment. Arrival without reacquisition ends it. No radius search, hidden-coordinate update or automatic return route is supplied. |
+| Hold a place | A selected reachable point and a 600-game-second maximum commitment. A guard is still its actual single-contact/time-limited action. Holding supplies no repeated attacks or guards. Actual selected action results and material changes remain decision boundaries. |
+| Deliberately assess/wait | A chosen review deadline no later than 120 game seconds after selection, or an earlier relevant cue. It does not poll all threats every tick or call the model periodically after the commitment ends. |
+| Range-band hysteresis | Enter the strike-relevant band at the actual selected method's admitted reach. Report leaving that band after distance exceeds that reach by 0.75 m continuously for 12 game seconds. At selection with no method, use the shortest currently available direct strike's actual reach; if none exists, use current feasible displacement/observation facts and do not invent an attack range. |
+| Movement/occlusion stabilization | For an already known opponent's departure, lost sight or ceased preparation, coalesce a paid reconsideration until the changed observation has remained true for 12 game seconds. The native action and preview become invalid immediately when their prerequisites fail. A new hit, newly perceived attack or other immediately urgent danger bypasses this stabilization. |
+| Repeated identical cue | Emit once per meaningful condition transition and source revision. Another footstep or another scheduler poll is not a new opportunity. A genuinely new blow/attempt remains new evidence even before the earlier decision finishes. |
+| Review admission | No universal combat cooldown is added. A genuinely new urgent opportunity enters existing scheduling immediately; pending ordinary changes for that actor coalesce. The already selected action can continue while an unrelated decision waits only while its native prerequisites and chosen conditions remain valid. |
+
+At the current 60:1 clock, 600 game seconds is 10 normal-speed real seconds, 120 is 2 seconds, and 12 is 0.2 seconds. Pausing stops these deadlines; speed changes follow game time; restoration resumes remaining time without real-time catch-up. The independent Command-click recent-hostility preference happens to use the same initial 600-game-second duration, but it is a different owner and must not extend a pursuit, force an appraisal, authorize attack or erase a feeling when it expires.
+
+The one-strike default deliberately leaves renewed aggression as a character choice. A future finite exchange of several strikes may be supplied as an explicitly chosen bounded composition if measurement shows that reconsidering after every strike is too slow or costly. It must preserve the chosen purpose, maximum attempts/deadline, observed stop conditions and current native validation. It is not installed by this first catalogue or silently substituted when the provider is slow.
+
+## 6. Future repertoire, deliberately not first delivery
 
 Retain motives such as disarming without killing, restraining, protecting offspring, defending a herd/pack, negotiated surrender, intimidation that succeeds, vengeance over long periods, social reputation, witness reports, institutional arrest, coordinated rescue and learned combat habits as repertoire material. Each needs its own installed capabilities, evidence and authority before it is an executable option. Long-term relationship dynamics are explicitly deferred. They should reuse existing personal evidence and interpretation, not be implied by the short threat episode or by a universal hostility meter.
 

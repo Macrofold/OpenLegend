@@ -4,23 +4,24 @@
 
 **Scope:** these records track assessment and incorporation into the 35 learning topics. They do not replace per-game or world research ledgers, certify that a source dossier is complete, allocate features, or record implementation progress. Building or reviewing the framework is distinct from filling its guides.
 
-## Current snapshot — October 14, 2026
+## Current snapshot — October 17, 2026
 
-The focused intelligence/simulation pass uses published `Macrofold/OpenLegend` main at `0c12398e32e7c9578e18de07bbe79d39b4827208` as its source base and writes to `research/intelligent-simulation-2026-10-14`. Earlier structural-review provenance is retained below. Counts are recomputed from the matrices and inventory, not a second per-source status list.
+The focused intelligence/simulation pass retains published `Macrofold/OpenLegend` main at `0c12398e32e7c9578e18de07bbe79d39b4827208` as its source base. The October 17 combat-response pass inspected four existing dossiers at `0eb7358f251d1ab706592ccb6e9829e98c729fe9` plus their named primary sources. This update changes only their COMBAT cells; earlier source, structural-review and NPC provenance remains intact. Counts come from the actual matrices and inventory, not a second per-source status list.
 
 | Measure | State |
 | --- | --- |
-| Topic pages | 35: 30 unfilled synthesis shells, the NPC guide with a completed focused intelligence/simulation pass, and FUN, CREATE, DISCOVERY and PRODUCTION routes to existing research. |
+| Topic pages | 35: 29 unfilled synthesis shells, the NPC guide's focused intelligence/simulation pass, the COMBAT guide's focused four-source pass, and FUN, CREATE, DISCOVERY and PRODUCTION routes to existing research. |
 | Game/case sources | 176 stable keys: 167 roster subjects, the unnumbered EVE Online essay case and eight new unnumbered topic-only subjects. |
 | Available game/case sources | 150 original dossier files and ten scoped sources: EVE Online plus nine topic-only dossiers. Availability is not full research certification. |
 | Queued game sources | 16 of G150–G166 remain queued; G159 now has a focused dossier. No claim about unpublished branch work. |
-| Game matrix | 176 × 35 = 6,160 cells: 4,932 U, 526 W, 672 X and 30 I. |
+| Game matrix | 176 × 35 = 6,160 cells: 4,928 U, 526 W, 672 X and 34 I. |
 | NPC column | 30 scoped incorporations, 130 U and 16 W. The focused pass does not complete every source or all relationship subtopics. |
+| COMBAT column | Four scoped incorporations, 155 U and 17 W; broader combat research remains open. |
 | World matrix | Unchanged: 29 listed world dossiers × 35 = 1,015 cells: 903 U and 112 X. |
-| New incorporation | Thirty dated source-to-NPC assessments link exact source scopes and stable lessons. No other topic or world cell is advanced by this pass. |
+| New incorporation | Thirty source-to-NPC assessments and four source-to-COMBAT assessments link exact scopes and stable lessons. The October 17 pass changes no other topic or world cell. |
 | Existing owners | X retains unreconciled evidence, not an assertion that earlier learning is absent. |
 
-The corrected game matrix was byte-checked against a locally validated expected document before publication: blob `9c090e25e3fb106c48cd7679b4a3f3d5cd0e9f46`, published in commit `02966e0bae31482b1f5d06191a687506f82c2593`. The check preserved the baseline's exact bytes before applying only 22 existing NPC changes and eight new rows, then verified 176 unique keys, 35 unique topic columns, equal row widths and valid codes. This is a document-integrity check, not a runtime test.
+The October 14 game matrix was byte-checked against a locally validated expected document before publication: blob `9c090e25e3fb106c48cd7679b4a3f3d5cd0e9f46`, published in commit `02966e0bae31482b1f5d06191a687506f82c2593`. The check preserved the baseline's exact bytes before applying only 22 existing NPC changes and eight new rows, then verified 176 unique keys, 35 unique topic columns, equal row widths and valid codes. This is a document-integrity check, not a runtime test.
 
 Update this snapshot from the actual matrices when coverage changes. Do not inflate completion by calling a source available, by citing a summary, or by adding a research heading. A structural review may read source material to improve questions without completing the relevant source-to-topic assessment.
 
@@ -87,7 +88,7 @@ Edit only the intended source/topic cells and evidence records; preserve other t
 
 ## Verification and remaining work
 
-The framework review delivered the source/goal review, organized topic set, skeletons, template and tracking. The subsequent intelligence/simulation pass fills NPC at its declared 30-source scope and adds general research. Thirty other shells remain unfilled; four existing owners require scoped coverage reconciliation. The NPC guide's wider source and relationship coverage is not complete. World essays were read for structural coverage, not falsely marked incorporated into each new guide.
+The framework review delivered the source/goal review, organized topic set, skeletons, template and tracking. The subsequent intelligence/simulation pass fills NPC at its declared 30-source scope and adds general research. The October 17 pass fills COMBAT only for four selected sources and questions. Twenty-nine other shells remain unfilled; four existing owners require scoped coverage reconciliation. The NPC guide's wider source and relationship coverage is not complete. World essays were read for structural coverage, not falsely marked incorporated into each new guide.
 
 Check unique source keys and topic columns, valid codes, equal row widths, expected source identities, preserved existing cell meanings, working local paths/anchors and the actual affected diff. These are documentation checks, not game execution, fresh verification of every inherited fact, or a whole-archive audit. Check results belong in the handoff or focused review record, not fabricated assessment entries.
 
@@ -96,6 +97,10 @@ Check unique source keys and topic columns, valid codes, equal row widths, expec
 Use the [template](main-topic-template.md) for actual scoped proposals. Their ND identity and design disposition remain in [Future work needing design](../../../../docs/maintainers/needs-design.md), with reciprocal topic and eventual feature-spec/technical-design links. The technical design defines modules; the existing focused maintainer tracker owns implementation progress. No new ND entries are allocated by a topic or source-coverage row.
 
 Research headings do not count as registered features. Completing a design does not complete research incorporation, runtime delivery, player evidence or a whole project. Keep the existing rules for design authorization, spending, privacy and accepted world/engine boundaries.
+
+## October 17 focused combat-response incorporation
+
+The [COMBAT guide](combat-and-encounters.md) and [four assessment records](assessment-records.md#combat-pass--october-17-2026) incorporate scoped evidence from Rain World, Kenshi, Final Fantasy XIV and Old School RuneScape. The matrix changes exactly those four COMBAT cells from U to I. No game identity, other topic, NPC assessment or fictional-world cell changes. The guide stays In progress because the wider combat topic has not been surveyed. Its selected ND11/ND13 design handoff is separate from runtime acceptance.
 
 ## Historical initialization and corrections
 

@@ -2,13 +2,13 @@
 
 These are the OpenLegend bundled world’s lifecycle policies, not universal engine laws. Departure/return, inactive protection and physical remains are implemented. Current actor identity/revival remains in [Architecture](../../architecture.md#actor-means-any-living-being); delivery and broader acceptance remain under BW13–BW15 and MP01/MP04.
 
-Current physical aftermath is now implemented: every actual death leaves a body, with authored rotting and removal deadlines, preserved identity and ground custody for belongings. [Survival](survival.md#death-and-remains) owns this behavior. Player death/reincarnation and the first territorial encounter are now implemented; broader PvP/indirect harm, ghost/summoning and ordinary NPC revival remain targets.
+Current physical aftermath is now implemented: every actual death leaves a body, with authored rotting and removal deadlines, preserved identity and ground custody for belongings. [Survival](survival.md#death-and-remains) owns this behavior. Player death/reincarnation and the first territorial encounter are implemented. [CTR01](../../maintainers/combat-and-threat-responses.md) now designs direct human PvP and projectile collateral; broader indirect hazards, ghost/summoning and ordinary NPC revival remain separate targets.
 
 ## Product-scalability integration target
 
 The accepted [product direction](../../product-scalability/participation-and-protection.md) extends the design of the bounded pre-exit interaction phase: a supported already-engaged conflict can continue coarsely, with permitted-evidence warnings and an honest return to its actual aftermath. It must not become either instant logout immunity or indefinite retention by repeated attackers. The first stag now uses detailed native combat during a saved simulated fade; general coarse/background integration remains unimplemented work in [PS05](../../maintainers/product-scalability.md), coordinated with BW13 and MP04; [PS-D01](../../../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns remaining episode and fairness decisions. The existing exit/protection contract below remains controlling until that work is delivered.
 
-Recoverable human death with half-type possession retention and corpse recovery is current; cooperative play and explicit PvP participation remain the broader bundled-world direction, with ordinary direct PvP still denied. Other authored worlds may choose different supported aftermaths. Specified background-harm protection must also cover the state inherited on detailed arrival; it does not automatically protect every NPC or building. The target for protected personal/guild domains needs explicit access and damage rules before it changes the current property policy below.
+Recoverable human death with half-type possession retention and corpse recovery is current. Ordinary direct PvP is still denied by current code; the [selected human-conflict revision](#human-conflict-and-recovery) removes that denial and the former separate mode/area enrollment prerequisite for this world. Other authored worlds may choose different supported participation and aftermath policies. Specified background-harm protection must also cover the state inherited on detailed arrival; it does not automatically protect every NPC or building. The target for protected personal/guild domains needs explicit access and damage rules before it changes the current property policy below.
 
 ## Human logout and return
 
@@ -20,7 +20,11 @@ After exit, the human character is inactive and protected from bodily harm and s
 
 ## Human conflict and recovery
 
-Cooperative play is the default. Harmful player-versus-player actions require explicit participation in a clearly identified mode or area, enforced by action admission rather than a warning alone. Human death is recoverable without permanent character loss; Mike selected death/reincarnation with a random half of carried item types retained, the remainder lootable at the corpse, and removable death scars. The one-minute-distance campfire respawn, exact custody partition, new-life continuity and treatment are current in [Player Death](player-death.md). Broader rescue/incapacitation, public PvP opt-in and other conflict modes still need design; no new recovery cooldown is selected for this slice.
+**Current runtime:** direct human-issued attacks on another player are denied. **Selected October 17, 2026; implementation CTR01:** this bundled world permits ordinary deliberate human PvP and actual bodily projectile collateral, without a separate consent mode, duel enrollment, faction flag or protected-area prerequisite. This reverses the former cooperative-only admission direction. The world may support cooperation without making active players physically immune to one another. A different world may install a different supported combat policy.
+
+Native admission still requires an authorized controlling issuer, an available physical performer, valid exact target/life and installed action, and current physical/participation checks. Exact human orders cannot disguise their issuer by naming an NPC performer. A voluntary helper's independently chosen act remains their own choice; the request itself grants no control or guaranteed help. Melee and unreleased ranged commands revalidate at their ordinary boundaries. Released projectiles instead follow [actual contact consequences](ranged-counterplay.md#selected-contact-consequences), not a reusable human targeting permission.
+
+Human death remains recoverable without permanent character loss: a random half of carried item types is retained, the remainder is lootable at the corpse, and death scars can be treated. The one-minute-distance campfire respawn, exact custody partition, new-life continuity and treatment are current in [Player Death](player-death.md). The vulnerable departure interval and fully inactive protection remain unchanged. Do not add an automatic PvP cooldown, invulnerability period, safe zone or forced hostility state as part of this design. Broader rescue/incapacitation, dedicated conflict modes, background fairness, legal/social consequences and nonprojectile indirect hazards remain separately scoped work.
 
 Buildings and other world property are **not protected merely because their owner is offline**. The long-term building/property protection policy is TBD; do not infer protection from the human body's inactive state.
 
@@ -36,9 +40,9 @@ Perceived connected melee blows and admitted projectile impacts carry authored i
 
 **Implemented common permission October 9, 2026, integrated in current main as checked October 14; independent hostile choice remains unqualified.** Mike explicitly allows hostile NPCs to fight and kill other NPCs, including Ada, under the existing death rules. An ordinary NPC has no immunity because it is familiar, friendly or accompanying a player. Autonomous NPC attacks use normal body, observation, action, participation and injury requirements; they do not wait for a human final-blow modal. A human's deliberately selected attack retains its exact review even when a supported command names another performer.
 
-This extends eligibility for the new humanoid opponents, not the stag's authored target-selection behavior. It does not make every NPC hostile or tell a character whom to attack. Direct player-versus-player harm remains denied, inactive humans remain protected, and the current vulnerable departure interval and player recovery are unchanged. High-level voluntary help leaves the helper's individual actions independently chosen; it is not remote control or blanket permission for an exact attack.
+This extends eligibility for the new humanoid opponents, not the stag's authored target-selection behavior. It does not make every NPC hostile or tell a character whom to attack. Current direct PvP denial is superseded as a target by the selected [human-conflict revision](#human-conflict-and-recovery); inactive humans remain protected, and the vulnerable departure interval and player recovery are unchanged. High-level voluntary help leaves the helper's individual actions independently chosen; it is not remote control or blanket permission for an exact attack.
 
-NPC death remains persistent with ordinary corpse/identity history and no automatic return. Ghosts and ordinary difficult revival remain separate unimplemented targets. This decision does not authorize raids on homes, property damage, new collateral harm or settle broader deliberate luring/background fairness. [Decision record](../../../archive/05-project/open-decisions.md#batch-06--npc-combat-participation); [scoped CF01/CF04 delivery](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md).
+NPC death remains persistent with ordinary corpse/identity history and no automatic return. Ghosts and ordinary difficult revival remain separate unimplemented targets. The earlier NPC-participation decision did not authorize new collateral harm; Mike's October 17 [projectile revision](ranged-counterplay.md#selected-contact-consequences) now selects that expansion. Raids, generalized property destruction and broader deliberate-luring/background fairness remain separate. [Earlier decision record](../../../archive/05-project/open-decisions.md#batch-06--npc-combat-participation); [scoped CF01/CF04 delivery](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md).
 
 ## Deliberate lethal consequences
 
@@ -52,9 +56,10 @@ The original design-only PG05 proposal was superseded by Mike's October 4 runtim
 
 ## Maintained records
 
-- Implementation: [Feature tasks](../../maintainers/base-world.md).
+- Implementation: [Feature tasks](../../maintainers/base-world.md), [combat and threat responses](../../maintainers/combat-and-threat-responses.md).
 - Limits and constraints: [Bundled-world defaults inventory](../../limits/base-world.md).
 
 ## Accepted player danger and death revision
 
 Mike's selected observational danger, half-type corpse loss, one-minute campfire return, continuity/scars, final-blow review and simulated five-second fade are implemented in [Player Danger](player-danger.md), [Player Death](player-death.md) and the [encounter](first-threat-encounter.md). They replace enrollment, possession-preserving collapse and automatic retreat. The [decision record](../../../archive/05-project/open-decisions.md#pg05--proposed-first-encounter-choices) retains the scoped choices and broader unresolved laws.
+
