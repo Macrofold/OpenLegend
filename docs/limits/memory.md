@@ -6,6 +6,14 @@ Values describe the stated baseline, not approved future targets. Entries marked
 
 Implementation starting points: [experience.ts](../../packages/domain/src/experience.ts), [memory-repository.ts](../../apps/server/src/memory-repository.ts), [cognition-maintenance.ts](../../apps/server/src/cognition-maintenance.ts).
 
+## SSP-M01 — Stable recognition and known names
+
+**Proposed — accepted SPK target; runtime not delivered. Restrictiveness: Medium — deliberate base-world simplification.** A supported visible encounter or first audible linguistic voice exposure establishes or reuses the same stable subject association, including an unseen speaker with no intelligible words. Reliable recognition preserves it across departure, return and save/load without requiring prior familiarity, a known name, a naming operation or conversation membership. The observer sees a permitted exact reference and known/unknown label, not a global name or hidden current position. Current episode-only recognition and its 30-second grace remain implemented until cutover; encounter recording bounds stay separate. Physical face/voice analysis, disguise and mistaken identity are later world-owned rules. Unsupported source associations remain unavailable, and deliberately forgotten/revoked associations follow their owner instead of being restored from raw IDs. The ordinary nonlinguistic animal's sound-source restriction remains separate. This chooses practical recognition continuity while avoiding a biometric simulation. [Base-world policy](../worlds/base/knowledge.md#identity-and-recognition), [technical design](../projects/speech-and-social-perception-tech-design.md) and [SPK](../maintainers/speech-and-social-perception.md).
+
+## SSP-M02 — Structured experience is the semantic source
+
+**Proposed — accepted SPK target; partial foundations exist. Restrictiveness: Medium — selected complete-source transport boundary; semantic fidelity/privacy are invariants.** Full structured observer-permitted experience survives supported memory adapters, SQL hydration, context preparation, indexing, compaction, consolidation and reflection/dream inputs. Human-facing wording is derived through shared functions, never the sole semantic source. Preserve supplied exact participant/recipient roles, quantities/units, source/time/order, acquisition, identity/name distinctions and uncertainty; unknown fields are not filled from privileged truth. A summary needs retained structured evidence or a faithful structured representation with resolvable sources, not merely links to already lossy display strings. Speech summaries and automatic compaction require the native-derived structural attribution manifest and indexed support described in the technical design; its full size counts toward existing bounds. Missing or oversized attribution does not permit a prose-only fallback. Optional summaries can remain unselected while smaller relevant sources are used, without blocking complete mandatory evidence. The rule applies to speech and other supported experience families, without a new writable mind or per-field dictionary for all world mechanics. Existing row/byte/request limits bound work; overflow defers/refuses instead of silently discarding promised facts. Existing explicit forgetting/decay/privacy rules still govern genuine detail retirement, so this creates no unlimited lifetime-retention promise. [Memory contract](../memory-architecture.md#structured-permitted-experience) and [SPK](../maintainers/speech-and-social-perception.md) own end-to-end acceptance. DG23's later reinterpretation remains independent.
+
 ## LA007
 
 **Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
@@ -103,6 +111,8 @@ The former 512-raw-record preselection is bypassed by repository-backed recall. 
 [Implementation starting point](../../apps/server/src/recall.ts).
 
 Original finding and recommendation superseded by the merged implementation; the ID remains stable.
+
+**Accepted SPK integration:** The current complete-group guarantee is replaced by bounded automatic actor context: exact mandatory causes, an existing valid summary and recent exact suffix, with older relevant sources selected through scoped recall before hydration. Complete retained history remains available; it is not all required on each turn. Optional compaction/recall unavailability does not block a response that has complete mandatory evidence. [SPK](../maintainers/speech-and-social-perception.md) owns cutover; this row keeps the current SQL evidence.
 
 ## LA015
 
@@ -558,6 +568,8 @@ Conversation/required/correction preparation allows 8,192 unique sources and 4 M
 
 **Reason / tradeoff:** Keep ordinary decisions from materializing arbitrary history while preserving all durable evidence. Conversation context now uses [actor-scoped compaction](narration.md#la236); metadata admission and uncovered-body hydration retain these safety bounds, so an oversized cold preparation still fails explicitly. Optional top-result limits do not bound exact search. [Owner](../memory-architecture.md#retrieval-preparation-admission).
 
+**Accepted SPK integration:** Replace mandatory Conversation membership as a selector/cache dependency while retaining these admission bounds, complete mandatory source preparation and source/privacy revision validation. Select automatic and optional source sets before hydration; their bounded context does not require every retained utterance or an all-history metadata scan. An existing valid summary and recent exact suffix can support the response while optional older recall/compaction is unavailable. Structured source bodies and their semantic renderings both fit the applicable preparation path; a concise display sentence is not permission to drop selected meaning. [SSP-M02](#ssp-m02--structured-experience-is-the-semantic-source) and [SPK](../maintainers/speech-and-social-perception.md) own the stronger target; no new numeric allowance is selected.
+
 ## MH05
 
 **Changed · Restrictiveness: Safe for awareness; Too liberal for remaining personal-memory growth.**
@@ -639,6 +651,8 @@ The creator memory editor accepts up to 32,768 characters per personal summary (
 ## EC-L05 — Complete meaning within bounded transformations
 
 **Proposed · Restrictiveness: preserve meaning before accepting output.** Reuse existing source preparation, publication and supported output envelopes. Current consolidation preparation is 128 sources / 512 KiB per repository batch; grouping must not lose relevant chronology, uncertainty, distinct consequential incidents or protected commitments merely to fit it. No weekly full-life reread is added. A larger required episode needs the existing admitted continuation or an explicit deferred result. Repeating an interpretation never manufactures independent historical support. Owner: CR06/EC03/EC06; [MH04](#mh04) remains the distinct general retrieval bound.
+
+SPK's [structured source preservation](#ssp-m02--structured-experience-is-the-semantic-source) is a selected prerequisite/consumer correction, not delivery of DG23's subjective reinterpretation, dream transformation or integrated character-quality acceptance.
 
 ## EC-L06 — Dependency closure and private ownership
 
