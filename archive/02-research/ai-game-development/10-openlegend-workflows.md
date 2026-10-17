@@ -168,17 +168,17 @@ Assign the defect to its cause: art, layout, control, world rules, asset export,
 
 The following is a proposed checklist for a substantial production trial. Reuse an existing project record where it already holds this information.
 
-| Field | What to record |
-| --- | --- |
-| Player outcome | The action, understanding or feeling this work improves |
-| Starting point | Relevant repository revision, current owner, reproducible scene/state |
-| Creative constraints | Approved references, identities, palette/material/rig or voice family |
-| Chosen route | Existing asset, procedural recipe, generation or manual finishing; why |
-| Tool identity | Exact relevant model, application and skill/helper revision |
-| Work and cost | Preparation, attempts, correction time, paid work and final accepted outputs |
-| Acceptance evidence | Actual exports, complete-client views and relevant interactions |
-| Failure and recovery | What went wrong, how it was repaired, any remaining qualification limit |
-| Reuse | Source assets, settings and the next variation that tests repeatability |
+| Field                | What to record                                                               |
+| -------------------- | ---------------------------------------------------------------------------- |
+| Player outcome       | The action, understanding or feeling this work improves                      |
+| Starting point       | Relevant repository revision, current owner, reproducible scene/state        |
+| Creative constraints | Approved references, identities, palette/material/rig or voice family        |
+| Chosen route         | Existing asset, procedural recipe, generation or manual finishing; why       |
+| Tool identity        | Exact relevant model, application and skill/helper revision                  |
+| Work and cost        | Preparation, attempts, correction time, paid work and final accepted outputs |
+| Acceptance evidence  | Actual exports, complete-client views and relevant interactions              |
+| Failure and recovery | What went wrong, how it was repaired, any remaining qualification limit      |
+| Reuse                | Source assets, settings and the next variation that tests repeatability      |
 
 This record need not become a new database or a large form. Its purpose is to preserve the few facts that let another session repeat and improve the work.
 
@@ -187,4 +187,3 @@ This record need not become a new database or a large form. Its purpose is to pr
 Begin with the inventory/scene baseline because it directly addresses Mike's concern, then choose the procedure that addresses the most consequential gap in the current playable loop. The prop, animation, material and character procedures are selectable work, not serial prerequisites. Independent authoring or asset work can proceed in parallel when its inputs are clear.
 
 Use compatible reference skills whenever they help the chosen task. Add a new bridge or recurring automation when it solves observed repeated work; use a second family member when the claim being tested is broad reuse. An engine port or self-hosted model operation needs its own measured product or production reason. This approach applies the research's strongest finding: useful references, editable reuse and real review can improve the game while producing evidence for larger choices.
-

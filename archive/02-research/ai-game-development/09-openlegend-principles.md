@@ -150,13 +150,12 @@ The research supports this pattern across traditional procedural production, new
 
 ## Adoption map
 
-| Proposed principle group | Immediate place to apply it | Evidence needed before broader adoption |
-| --- | --- | --- |
-| Player outcome, concrete art direction, real review | One polished adventure and inventory slice | Useful play, coherent scene, working interactions, visible improvement |
-| Reuse, editable sources, narrow skills | One material family, prop/icon pair and compatible animation | Repeatable accepted export and cheaper second variation |
-| Task-specific models and persistent character tests | Small authoring and roleplay comparison | Valid outputs preferred by reviewers with acceptable latency/correction cost |
-| Offline/live separation and accepted-output economics | Existing asset/provider production records | Complete costs, failure behavior, honest fallback and qualified delivery |
-| Engine and optimization decisions | Current PlayCanvas slice | A named measured limitation before a port or new infrastructure |
+| Proposed principle group                              | Immediate place to apply it                                  | Evidence needed before broader adoption                                      |
+| ----------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| Player outcome, concrete art direction, real review   | One polished adventure and inventory slice                   | Useful play, coherent scene, working interactions, visible improvement       |
+| Reuse, editable sources, narrow skills                | One material family, prop/icon pair and compatible animation | Repeatable accepted export and cheaper second variation                      |
+| Task-specific models and persistent character tests   | Small authoring and roleplay comparison                      | Valid outputs preferred by reviewers with acceptable latency/correction cost |
+| Offline/live separation and accepted-output economics | Existing asset/provider production records                   | Complete costs, failure behavior, honest fallback and qualified delivery     |
+| Engine and optimization decisions                     | Current PlayCanvas slice                                     | A named measured limitation before a port or new infrastructure              |
 
 The [workflows](10-openlegend-workflows.md) turn these principles into concrete task sequences. The [evaluation plan](11-evaluation-and-adoption.md) defines how to decide whether the proposed changes actually help.
-

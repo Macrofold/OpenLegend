@@ -52,12 +52,12 @@ Godot is a credible option with shipped games, not a fallback for unsuccessful d
 
 Its strongest relevant advantages are integrated visual authoring and game-oriented resources:
 
-| Area | What Godot supplies | Why it could matter to OpenLegend |
-| --- | --- | --- |
-| Interface authoring | Reusable Theme resources with fonts, icons, colors, style boxes, and live preview of controls and states. | A designer can inspect an inventory family inside one editor. This is an authoring advantage, not a guarantee of better illustration or hierarchy. |
-| Animation | AnimationPlayer resources plus AnimationTree state machines, blend trees, blend spaces, and one-shot playback. | Complex authored character motion can be reviewed and adjusted visually. Good imported rigs and clip contracts remain necessary. |
-| Scene composition | The scene/node model and reusable imported scenes used by the animation and UI workflows. | An editor-centered team can organize authored scenes without expressing every placement in application code. |
-| Agent integration | Community tools can launch projects, operate on scenes, and inspect errors. | Helpful if Godot becomes the chosen authoring environment; tool availability alone does not pay migration cost. |
+| Area                | What Godot supplies                                                                                            | Why it could matter to OpenLegend                                                                                                                  |
+| ------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Interface authoring | Reusable Theme resources with fonts, icons, colors, style boxes, and live preview of controls and states.      | A designer can inspect an inventory family inside one editor. This is an authoring advantage, not a guarantee of better illustration or hierarchy. |
+| Animation           | AnimationPlayer resources plus AnimationTree state machines, blend trees, blend spaces, and one-shot playback. | Complex authored character motion can be reviewed and adjusted visually. Good imported rigs and clip contracts remain necessary.                   |
+| Scene composition   | The scene/node model and reusable imported scenes used by the animation and UI workflows.                      | An editor-centered team can organize authored scenes without expressing every placement in application code.                                       |
+| Agent integration   | Community tools can launch projects, operate on scenes, and inspect errors.                                    | Helpful if Godot becomes the chosen authoring environment; tool availability alone does not pay migration cost.                                    |
 
 Sources: [Theme editor](https://docs.godotengine.org/en/stable/tutorials/ui/gui_using_theme_editor.html), [AnimationTree](https://docs.godotengine.org/en/stable/tutorials/animation/animation_tree.html), [Godot MCP source](https://github.com/Coding-Solo/godot-mcp), [tooling review](04-skills-and-tooling.md).
 
@@ -112,4 +112,3 @@ Only if that exposes an important unresolved constraint should a Godot prototype
 A switch becomes credible if that experiment shows a material, persistent authoring or product benefit that outweighs the replacement work, or if the intended distribution changes to favor native applications. A switch remains unsupported if its only evidence is catalog coverage, model-generated screenshots, star counts, a different game's successful launch, or frustration with one unart-directed UI attempt.
 
 The proposed immediate choice is to improve the workflow in the engine we have. The tool survey supplies concrete ways to do that without turning an art and usability problem into an unmeasured engine rewrite.
-

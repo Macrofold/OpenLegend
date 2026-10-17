@@ -64,3 +64,4 @@ These links point to sources actually reviewed in the research. Further specific
 Recheck providers before integration, pricing, procurement or public claims. Pin actual library/model versions after selecting them. Recheck browser-export limitations against the chosen engine release rather than treating a rolling stable page as a permanent contract. Retain an experiment's exact configuration with its results.
 
 The [research backlog](../05-project/research-backlog.md) tracks access questions, experiments, and evidence needed for decisions. Unreadable/dynamic information is identified where relevant; it has not been filled in with guessed prices or features.
+
