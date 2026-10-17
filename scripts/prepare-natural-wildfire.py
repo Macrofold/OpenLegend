@@ -33,7 +33,7 @@ INPUTS = {
 }
 ATTRIBUTION = ('Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, '
     'https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf '
-    'walk retained; quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. '
+    'walk retained with a closed loop; quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. '
     'These derivative assets remain CC BY-SA 3.0.')
 
 
@@ -73,6 +73,32 @@ def standing_idle(rig):
     return action
 
 
+def close_walk_loop(rig, source):
+    """The supplied last walk key differs from the first. Blend three final
+    source frames into the first pose, then bake one exact cyclic action."""
+    scene = bpy.context.scene
+    previous = rig.animation_data.action
+    duration = math.ceil(source.frame_range[1])
+    poses = []
+    rig.animation_data.action = source
+    for frame in range(duration+1):
+        scene.frame_set(frame)
+        poses.append({b.name: b.matrix_basis.copy() for b in rig.pose.bones})
+    action = bpy.data.actions.new('Run')
+    rig.animation_data.action = action
+    for frame, pose in enumerate(poses):
+        scene.frame_set(frame)
+        blend = max(0, (frame-duration+3)/3)
+        blend = blend*blend*(3-2*blend)
+        for bone in rig.pose.bones:
+            bone.matrix_basis = pose[bone.name].lerp(poses[0][bone.name], blend)
+            for channel in ('location', 'rotation_quaternion', 'scale'):
+                bone.keyframe_insert(channel, frame=frame, group=bone.name)
+    rig.animation_data.action = previous
+    scene.frame_set(0)
+    return action
+
+
 def prepare(sources, family):
     export_family = 'woodland-wolf' if family == 'wolf' else 'natural-'+family
     group = 'source-'+export_family
@@ -90,7 +116,7 @@ def prepare(sources, family):
             idle.name = 'Idle'
             with bpy.data.libraries.load(str(sources/'wolf-walk-converted.blend'), link=False) as (original, loaded):
                 loaded.actions = original.actions
-            run = loaded.actions[0]
+            run = close_walk_loop(rig, loaded.actions[0])
             # The renderer's Run state means moving. Use the source walk for
             # ordinary travel rather than a gallop played at walking speed.
             run.name = 'Run'

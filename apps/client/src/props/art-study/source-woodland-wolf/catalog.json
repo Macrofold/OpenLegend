@@ -1,10 +1,10 @@
 {
   "group": "source-woodland-wolf",
   "sourceFile": "art-direction/assets/source-study/source-woodland-wolf.blend",
-  "sourceSha256": "19c5b4272111906fa39744db04a987d1ee7a68ee762095f323c94bb200d18180",
+  "sourceSha256": "7210bf9445bf55f31bb5c8d690332bb1d4a599b3df5d60e21c3facb133126bb5",
   "recipe": {
     "path": "scripts/prepare-natural-wildfire.py",
-    "sha256": "beae3ab44b980fbedbd56e4af5ad9870f86668149c31ece27cdd719a80fc3ea0"
+    "sha256": "310188cc9477d25f81c10d06b93c62e3ecc9c0260ebebef7a96d37ecf759d9c0"
   },
   "helpers": {
     "art_study_common.py": "056aacf5dd656c0300ad02e0ee5f628237f203998f99a598be5102d3f0508869",
@@ -141,10 +141,10 @@
           256
         ]
       ],
-      "sha256": "d2514ba91269f0a09f299c21c4e34b326d1e3472c32ed292eee43602b833200e",
-      "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf walk retained; quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0.",
+      "sha256": "13466f69fad7a4c12c2beb6edf676f0c9af36a46563b1a55fe759bdc7cb39cd8",
+      "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf walk retained with a closed loop; quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0.",
       "animatedFile": "woodland-wolf-clear-motion.glb",
-      "animatedSha256": "69c94283662f266f0073db7a68dc84ce8af575ec430b68b21aafb6a2eff50c6c"
+      "animatedSha256": "114a4f68a75657c7a35c77db42c2d5234a585a2f4b09a6a0367fda59733d55d6"
     },
     {
       "id": "woodland-wolf-quiet",
@@ -174,10 +174,10 @@
           256
         ]
       ],
-      "sha256": "eaec1bb0b57d9328db6efd797c9c2479c2b51b15bb1a7aa4b41a6011182e38a2",
-      "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf walk retained; quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0.",
+      "sha256": "1fad5acfdf4ac11970d11fea8afa4f115e042b10e97a0012eeffa4a9713e1a44",
+      "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf walk retained with a closed loop; quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0.",
       "animatedFile": "woodland-wolf-quiet-motion.glb",
-      "animatedSha256": "c848df5e58847f46a8d8af99af2d8c1b02e549d69ce25be49f92fa6fd53c355e"
+      "animatedSha256": "95f7231842091a883cc4158af23adad0770ed963805a402328f514a6cbe07125"
     },
     {
       "id": "woodland-wolf-weathered",
@@ -207,10 +207,10 @@
           256
         ]
       ],
-      "sha256": "ef4cbf4ea2430a45bc36c666b7ff73c166344c74c55de6c369ef93705df52972",
-      "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf walk retained; quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0.",
+      "sha256": "6eae679d1e19f5b6c2bdbb62ea30baddb8174091d2431cf4c7890db58f32d5f9",
+      "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf walk retained with a closed loop; quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0.",
       "animatedFile": "woodland-wolf-weathered-motion.glb",
-      "animatedSha256": "98e4ae9a858fd1422f37b67d09e8fd2216fda21b3a49ef9f224c56fd73f2d653"
+      "animatedSha256": "0bb58f6d476e7e4eee8f208211f5631c1f95b8a65aa386e1f43f9a8a315ba1a6"
     }
   ],
   "controls": [
@@ -242,8 +242,8 @@
           256
         ]
       ],
-      "sha256": "4769f4357805cab819093bec0f20f4057c5512e8400bc4f1f9f6c455e94f4938",
-      "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf walk retained; quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0."
+      "sha256": "111cc459e1031a15a0a1c9638a82cd28a1f75e10c6778da66ff2913dd438dc35",
+      "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf walk retained with a closed loop; quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0."
     }
   ]
 }
