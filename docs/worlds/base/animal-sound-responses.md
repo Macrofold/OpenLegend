@@ -14,7 +14,7 @@ The installed native response profile remains the single policy selection. Its c
 
 An animal either continues its current behavior or enters/updates that shared alarm. Alarm produces actual escape movement, alert settling or a truthful blocked condition. A skittish deer can flee when it hears you; a calmer animal can continue. Sound does not automatically classify its speaker as an attacker, change relationships or supply a psychological feeling.
 
-This replaces the earlier SPK design for model-selected animal hold, approach, retreat and separate sound flight. Mike's later native-animal decision favors efficient simulation with many animals. Distinct curiosity approaches, deliberate listening holds, hiding, richer instincts and exceptional cognitive creatures remain future repertoire. The ordinary alert settling already provides a stationary aftermath without another timed hold action. Do not describe continued activity as an investigation that never happened.
+Distinct curiosity approaches, deliberate listening holds, hiding, richer instincts and exceptional cognitive creatures remain future repertoire. Ordinary alert settling provides a stationary aftermath without another timed hold action. Continued activity must not be described as an investigation that never happened.
 
 ## Profile values and consumers
 
@@ -85,7 +85,7 @@ With no locatable danger, entering escaping still chooses one ordinary finite lo
 
 Use the native animal owner's complete danger set, species speeds, reachable refuges, repeated-leg selection, flight/territorial integration, exact physical safety crossings, blocked retries and continuous-safe duration. That owner remains the only source of escape distances and timers; speech does not copy or redefine them.
 
-A duplicate acoustic pattern does not renew settling. A genuinely new qualifying cue can reset it through ordinary intake. A trapped animal remains truthfully blocked and follows that owner's bounded review rules; a fixed elapsed speech-flight timer cannot declare it calm while unsafe. The previous SPK separate 128.755-second sound-flight stop and 120-second hold with a 1–300-second range are superseded design proposals, never delivered behavior.
+A duplicate acoustic pattern does not renew settling. A genuinely new qualifying cue can reset it through ordinary intake. A trapped animal remains truthfully blocked and follows that owner's bounded review rules; a fixed elapsed speech-flight timer cannot declare it calm while unsafe.
 
 Busy, moving, perched and airborne animals can acquire sound. Their actual movement owner decides when an admissible change can occur. Dead or perception-blocked bodies acquire no new conscious sound. This slice adds no sound waking or sound damage; existing bodily-contact and rest interruption rules remain authoritative.
 

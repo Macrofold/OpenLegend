@@ -2,13 +2,13 @@
 
 ## Status and ownership
 
-**Selected design complete; runtime implementation has not started.** This tracker owns the implementation of ordinary ambient/directed speech, reliable recipient awareness and recognition, complete permitted experience, shared natural presentation, dialogue without membership, uniform freeform AI availability and animal acoustic responses. Design-document review is recorded under SPK00. All runtime acceptance remains unchecked until supported by actual evidence.
+**Selected design complete; runtime implementation has not started.** This tracker owns the implementation of ordinary ambient/directed speech, reliable recipient awareness and recognition, complete permitted experience, shared natural presentation, dialogue without membership, uniform freeform AI availability and animal acoustic responses. SPK00 is the completed design milestone. All runtime acceptance remains unchecked until supported by actual evidence.
 
 Design owners: [feature specification](../projects/speech-and-social-perception-feature-spec.md) and [technical design](../projects/speech-and-social-perception-tech-design.md). [Feature scenarios SP-A01–SP-A28](../projects/speech-and-social-perception-feature-spec.md#acceptance-scenarios) are the behavior acceptance owner; reference them rather than duplicating their scenario table here. Current cross-project contracts remain in [Hearing and speech](../hearing-and-speech.md), [Narration and conversations](../narration-and-conversations.md), [Memory architecture](../memory-architecture.md) and the bundled world's [Knowledge](../worlds/base/knowledge.md) and [native acoustic policy](../worlds/base/animal-sound-responses.md).
 
 Limits: [Narration](../limits/narration.md), [Hearing](../limits/hearing-and-speech.md), [Memory](../limits/memory.md), and the reused [Cognition](../limits/cognition.md) / [Native work](../limits/native-work.md) inventories. An accepted design is a target. It does not establish runtime delivery, measured model quality, capacity, human enjoyment or permission for paid trials.
 
-Initial source review used `Macrofold/OpenLegend`, GitHub `refs/heads/main`, `465ace1e8d7ee94a267e762d2d93970de17b2ed0`; integration review refreshed the same ref at `0eb7358f251d1ab706592ccb6e9829e98c729fe9`. Preserve its compact world composer, captions, shared Events history, exact request recovery and world-owned event presentation. Do not recreate removed Talk transcript components or hooks. Before implementation, reconcile the actual selected development base and refresh affected callers. Do not treat the source-owner map as proof that later code has no additional consumers.
+Preserve the compact world composer, captions, shared Events history, exact request recovery and world-owned event presentation. Do not recreate removed Talk transcript components or hooks. Before implementation, reconcile the selected development base and inspect its affected callers; the source-owner map does not establish an exhaustive list of current consumers.
 
 ## Design disposition and existing work
 
@@ -22,7 +22,7 @@ The selected ordinary-speech/social-perception slice of [ND16](needs-design.md#n
 
 ## Execution order
 
-Use the same semantic owner for a mutation, its dependent updates and its derived invalidation. Current producer/consumer/schema changes form one current-format contract; do not publish a mixed interpretation of the old and new target fields. Internal checkpoint commits can be unfinished if labeled, but no stage may be called delivered while a required caller or storage path still uses the replaced meaning.
+Use the same semantic owner for a mutation, its dependent updates and its derived invalidation. Current producer/consumer/schema changes form one current-format contract; do not publish a mixed interpretation of the old and new target fields. A stage is delivered only when all required callers and storage paths use the selected meaning.
 
 | Work  | Depends on                                                                    | Deliverable and acceptance boundary                                                                        |
 | ----- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
@@ -43,17 +43,15 @@ SPK10 is a cross-stage obligation, not permission to postpone serializers or val
 
 ## SPK00 — Complete the selected design and reconcile its owners
 
-- [x] Capture Mike's decisions: one optional addressee; audible receipt without sight; stable recognition separate from names; no ordinary enrollment or semantic reply field; NPC ambient/directed choice; shared no-AI gate; quiet labels without the middle dot; full experience distinct from presentation; and animal hearing/reactions now.
-- [x] Inspect the current producers and downstream perception, memory, consolidation, context, UI, availability, animal and recovery consumers; distinguish defects/old behavior from accepted targets.
-- [x] Produce distinct feature/technical files, concrete stages, owner mappings, field meanings, privacy boundaries, failure behavior, trial tuning and scenario acceptance.
-- [x] Reconcile affected canonical docs, UI guidance, limits and existing trackers; keep useful history and broader unresolved work rather than closing whole parent projects.
-- [x] Finish complete affected-diff review, internal-link/anchor checks, new-separator check and changed-document formatting; commit every task-owned documentation change through the authorized repository workflow.
+- [x] Specify one optional addressee, audible recipient awareness, recognition separate from names, optional NPC speech, shared freeform availability, natural presentation, full structured experience and native animal hearing/reactions.
+- [x] Identify the producers and downstream perception, memory, consolidation, context, UI, availability, animal and recovery consumers, with explicit current-behavior and target distinctions.
+- [x] Define feature/technical contracts, implementation stages, owner mappings, field meanings, privacy boundaries, failure behavior and provisional tuning.
+- [x] Align canonical specifications, UI guidance, limits and related task ownership while retaining broader unresolved work.
+- [x] Map all 28 acceptance scenarios to concrete implementation tasks and validate document formatting and references.
 
-**Initial documentation evidence, October 17, 2026:** reviewed the full affected documentation diff, then the narrow integration against main at `0eb7358f251d1ab706592ccb6e9829e98c729fe9`. Preserved the newer world composer, Events, participant references and event-display policy while reconciling the paired design, canonical owners and trackers. All 302 newly added relative links resolve, including their anchors; added lines contain no middle-dot character or conflict markers. All 22 changed documents pass the repository's Prettier 3.6.2 configuration. SP-A01–SP-A28 are defined and mapped to implementation work. These are documentation checks only; runtime scenarios, live model behavior and performance have not been exercised by this design task. Task changes are committed on `codex/speech-perception-design-20261016`.
+**Design validation:** the [reviewed design's CI checks](https://github.com/Macrofold/OpenLegend/actions/runs/39052133086) passed at `3defc5a993f8a7114275a15b1e8e50a62dd45bd4`. Runtime, browser, live-model and capacity qualification remain pending.
 
-**Requested design review, October 17, 2026:** corrected the later native-animal policy conflict, the actual zero-word direct-call dispatch gates, bystander disclosure and communication-reference lifetime, exact-support versus qualified-summary use, surface naming, person-history filters and persistent draft behavior. Reconciled concrete gathering/attention requirements and NC/PS04 dependencies, and removed unused persisted group associations. Ordinary animal reactions now depend on the relevant pinned CTR03–CTR04 native seam, with richer repertoire explicitly deferred; no runtime acceptance was closed. The resulting 25-document change has 313 added relative links with valid targets/anchors, 28 unique acceptance scenarios mapped to concrete implementation tasks, no new middle-dot separators or conflict markers, and passing pinned Prettier 3.6.2 formatting. No runtime, browser, live-model or capacity qualification was performed.
-
-**Exit:** the implementation can follow the selected contracts without inventing product decisions or interpreting display text as memory. The final design check closes only SPK00, not any task below. This task contains no runtime or paid-model verification requirement.
+**Exit:** the implementation can follow the selected contracts without inventing product decisions or interpreting display text as memory. Design completion closes only SPK00; SPK01–SPK11 own implementation and qualification.
 
 ## SPK01 — One authoritative utterance and observer-specific speech evidence
 
@@ -171,7 +169,7 @@ SPK10 is a cross-stage obligation, not permission to postpone serializers or val
 - [ ] Keep native pattern state through return to routine until expiry. Repetition must not reset safe time, allocate another route, replace movement or draw RNG; expiry/restoration alone must not replay intake. Distinct actual bodily dangers/attacks remain effective.
 - [ ] Implement continue versus shared alarm only. Start/resume/review the existing episode according to its current phase and actual interruption capability; reuse complete perceived dangers, reachable refuge selection, native speeds, exact safety crossings and continuous-safe settling.
 - [ ] Apply the canonical heard-away preference only after actual danger/geometry safety within the one route comparator. Never invent an unseen source point/distance/identity. Null bearing uses supported heading/order; no locatable danger still allows one real refuge leg; unsafe arrivals and blocked routes follow the shared continuation.
-- [ ] Preserve one movement writer across ordinary travel, flight, territorial actions, injury, sleep/incapacity, falling and acoustic/attack ordering. Remove the old proposed independent hold/escape command and fixed sound-flight stop from implementation plans; richer curiosity/listening repertoire remains deferred.
+- [ ] Preserve one movement writer across ordinary travel, flight, territorial actions, injury, sleep/incapacity, falling and acoustic/attack ordering. Sound reactions use that controller's safety and settling conditions; richer curiosity/listening repertoire remains deferred.
 - [ ] Preserve exact cue/profile/life, pattern, alarm/refuge/proposal and movement ownership through current save/load, pending navigation, source removal and controller/body changes. Existing native behavior and sound reactions work through provider outage; player freeform availability remains separately enforced.
 - [ ] Exercise SP-A19–SP-A24 and SP-A26 through actual native policy, movement/obstruction, flight/territorial priority and restore. Demonstrate threshold contrasts, words/addressee invariance, A/B/A/B, novel bands/exact expiry, self exclusion, second-human danger, null localization, safe-duration completion and trapped behavior.
 - [ ] Record **zero animal model calls** for detection, response selection and continuation. Native fixtures can qualify deterministic policy/execution; running-game plausibility and dense CPU/memory/navigation costs still require the matching evidence under SPK11.
@@ -202,14 +200,14 @@ SPK10 is a cross-stage obligation, not permission to postpone serializers or val
 - [ ] Fence delayed decisions/previews/reads by actual principal, controlled actor, world/timeline, source revisions and relevant body/action generations. Use current authority after awaits; a source/job link is not semantic reply intent or permission.
 - [ ] Preserve immutable committed speech and exact native effect/receipt identity across timeout, disconnect, save/restore and recovery. Paid reservations/accounting retain their independent owner; no automatic paid retry or invented reply.
 - [ ] Handle actor/source disappearance, expiry, forgetting/correction, missing current profile and changed control explicitly. Native alarm retains the permitted cue needed for continuation despite optional sensory expiry; the pattern map survives return to routine until idle expiry. Restore neither renews safe time nor replays alarm/RNG. Current body/controller loss retires old control without hidden source tracking.
-- [ ] Follow the root development policy: one current format, no legacy API aliases, old-save readers, migrations, version-suffixed replacements or compatibility fixtures. A development-state replacement, if later necessary and authorized, is reported; this design task replaces no save.
+- [ ] Follow the root development policy: one current format, no legacy API aliases, old-save readers, migrations, version-suffixed replacements or compatibility fixtures. Report any development-state replacement performed under that policy.
 - [ ] Exercise SP-A14–SP-A18, SP-A21–SP-A23 and SP-A26–SP-A28 across current save/load and delayed publication, including the actual PostgreSQL source/summary/attribution path and current command receipts.
 
 **Exit:** no new record or late operation can lose, duplicate, misattribute or disclose speech/animal evidence through persistence or changed authority. All applicable checks accompany the feature slice that needs them.
 
 ## SPK11 — Integrated qualification and final reconciliation
 
-**Depends on:** all runtime tasks above. Follow the repository's verification and spending policy when implementation is actually authorized. This design does not dispatch providers or increase any budget. Do not substitute newly written mirror tests for exercising the actual changed downstream paths.
+**Depends on:** all runtime tasks above. Follow the repository's verification and spending policy for implementation qualification. Exercise the actual changed downstream paths; tests that mirror implementation do not establish their behavior.
 
 - [ ] Review the complete affected implementation diff and current producer/consumer search. Check one authoritative field meaning, no ordinary membership assumptions, no display-only memory handoff, no name-based identity merge, no hidden-source lookup and no memory gate on hearing.
 - [ ] Run appropriate existing static/build/schema checks and focused existing runtime tests. Add automated cases only where the repository policy or a concrete high-risk invariant requires them; document exact revision/environment and what each check actually establishes.

@@ -8,7 +8,7 @@ This is the implementation design for the [feature specification](speech-and-soc
 
 This pair selects the ordinary speech, recognition and animal sound-response slice of [ND16 — Hearing and communication beyond direct-path speech](../maintainers/needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech), whose existing source topic is [deliberate hearing extension boundaries](../hearing-and-speech.md#12-deliberate-extension-boundaries). The SPK01–SPK11 modules below implement that selected ND16 slice and its required memory/presentation integration; other registered hearing expansions keep their existing owners and disposition.
 
-Initial source inspection used Macrofold/OpenLegend main at commit **465ace1e8d7ee94a267e762d2d93970de17b2ed0**; targeted integration review refreshed affected owners against **0eb7358f251d1ab706592ccb6e9829e98c729fe9**. This design extends that revision's compact WorldComposer, captions, perceived Events reader and occurrence-time participant references. No runtime, browser, live-model or performance result is claimed by this design. Existing evidence linked by persistent specifications qualifies its recorded implementation and workload only.
+The integration extends the compact WorldComposer, captions, perceived Events reader and occurrence-time participant references. Existing verification evidence applies only to its recorded implementation and workload.
 
 ## 1. Design conclusion and source findings
 
@@ -28,7 +28,7 @@ The concrete gaps requiring coordinated work are:
 
 ### The consolidation defect being repaired
 
-The inspected path is: speechDescription writes a personal sentence without the recipient; awarenessMemory and SQL hydration put that sentence in MemoryRecord.summary; maintenanceBatch selects only the generic memory; consolidationRequests sends its text and limited metadata. ExperienceSummary then retains prose and source/entity IDs. Later generic summary recall does not traverse those IDs to restore speaker/addressee roles.
+The current consolidation path is: speechDescription writes a personal sentence without the recipient; awarenessMemory and SQL hydration put that sentence in MemoryRecord.summary; maintenanceBatch selects only the generic memory; consolidationRequests sends its text and limited metadata. ExperienceSummary then retains prose and source/entity IDs. Later generic summary recall does not traverse those IDs to restore speaker/addressee roles.
 
 The stronger current-conversation path does not close that gap. A newest-speech retention pool, a source that has not yet consolidated, or wording that happens to name the recipient can mask it. The repair is to carry the complete selected perceived experience through every transformation, not to add another prompt reminder to a text-only input.
 
@@ -406,7 +406,7 @@ Keep one existing conversation-context preparation owner, now defined by actor/s
 
 ### Compaction remains a derived read
 
-Reuse current context-byte, source-row, hydration-byte and paid-compaction admission, including a recent exact suffix and an older derived summary. The inspected ceilings are 24,000 bytes of automatic dialogue context, at most 6,000 summary bytes within that allowance, 24,000 input bytes per compaction call, at most eight compaction calls, and the shared preparation limits of 8,192 rows and 4 MiB. These are request/work bounds, not an entitlement to fill every allowance or a retention cap. The remaining full decision budget can make the available dialogue allowance smaller.
+Reuse current context-byte, source-row, hydration-byte and paid-compaction admission, including a recent exact suffix and an older derived summary. Current ceilings are 24,000 bytes of automatic dialogue context, at most 6,000 summary bytes within that allowance, 24,000 input bytes per compaction call, at most eight compaction calls, and the shared preparation limits of 8,192 rows and 4 MiB. These are request/work bounds, not an entitlement to fill every allowance or a retention cap. The remaining full decision budget can make the available dialogue allowance smaller.
 
 Source selection precedes hydration. Derive/index linguistic eligibility and payload-size metadata through the existing source mutation owner so the actor-scoped ordered query does not parse every historical payload to find its recent suffix. Replace the history conversation join with actor/source eligibility and exact keys. Qualify the actual query plan; a result LIMIT alone does not prove bounded visited work.
 
@@ -498,7 +498,7 @@ NPCs and players use the same optional addressee concept. Ambient NPC speech mus
 
 ## 10. Animal sound and cognition integration
 
-**Ordinary animals use native control, with no model cognition.** Mike's later animal decision replaces this section's former AI-driven animal choices. Hearing remains independent of cognition; people keep their separately designed AI decisions. The [bundled acoustic policy](../worlds/base/animal-sound-responses.md) owns exact profile bindings, values, repetition rules, directional preference and deferred repertoire.
+**Ordinary animals use native control, with no model cognition.** Hearing remains independent of cognition; people keep their separately designed AI decisions. The [bundled acoustic policy](../worlds/base/animal-sound-responses.md) owns exact profile bindings, values, repetition rules, directional preference and deferred repertoire.
 
 ### Existing owners and integration dependency
 
@@ -515,7 +515,7 @@ The selected [native animal design](https://github.com/Macrofold/OpenLegend/blob
 | Navigation, flight, territorial, body/status and temporal owners | Preserve the native animal design's actual safety, interruption, pending preparation, motion and settling semantics.                      |
 | Record/public projection/current-format owners                   | Support sensory-only speech exposure, independent expiry, permitted generic presentation and coherent restore.                            |
 
-No animal ActorWork/AiDirector admission, provider queue, mind construction, paid opportunity/considered revision, new `embodied-response` command or `Action.embodiedResponse` payload is selected. The old separate hold/flight proposal is superseded; the one native controller supplies continuation, escape, alert settling and blocked behavior.
+Ordinary animal reactions require no ActorWork/AiDirector admission, provider queue, mind construction or paid opportunity/considered revision. The one native controller supplies continuation, escape, alert settling and blocked behavior without a separate sound-specific command or action payload.
 
 ### Sound-only evidence and current-format validation
 
@@ -664,7 +664,7 @@ The dependency order below defines coherent integration cuts. The tracker owns t
 | Animal behavior            | Actual sound-only evidence reaches the native profile; skittish and calmer bindings yield real escape or continuation, repeated patterns preserve useful work, and shared safety/restore holds with zero animal model calls.                                                                                              |
 | Privacy and cost           | Unknown identities and unheard text remain unknown, old generations cannot publish, and total measured preparation/provider/queue cost covers the complete episode.                                                                                                                                                       |
 
-Prefer focused existing checks and suitable native/browser scenarios under [Verification](../../.agents/rules/verification.md). Do not add tests that merely mirror implementation. Live-model evaluation requires separately authorized execution and the shared spending ceiling; it is not authorized or performed by this documentation-only task. Fixtures, source inspection and static checks cannot establish spontaneous character quality.
+Prefer focused existing checks and suitable native/browser scenarios under [Verification](../../.agents/rules/verification.md). Do not add tests that merely mirror implementation. Live-model evaluation requires authorized execution within the shared spending ceiling. Fixtures, source inspection and static checks cannot establish spontaneous character quality.
 
 ## 14. Decisions, tradeoffs and expansion boundaries
 
@@ -672,7 +672,7 @@ The accepted simplifications are deliberate: one optional addressee, reliable di
 
 The main tradeoff is that richer structured source input costs more preparation and model bytes than a sentence. Selection before hydration, shared preparation, derived rendering and existing compaction manage that cost without deleting meaning. The implementation must measure whether the complete experience fits existing allowances; this design does not purchase that answer through invented benchmarks or silently larger limits.
 
-The removed membership model previously provided convenient grouping and freshness checks. Its replacement must preserve their useful effects through actual actor/source dependencies. A new hidden membership approximation would retain complexity without the accepted behavior.
+Actor/source dependencies must preserve useful grouping and freshness checks without requiring ordinary conversation membership.
 
 No unresolved product decision is required to implement this selected baseline. Provisional gameplay tuning and broader capacity/behavioral qualification remain explicitly unmeasured work in the existing limits and implementation records; they do not authorize silent behavioral substitutions.
 
