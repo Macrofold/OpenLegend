@@ -2,13 +2,23 @@
 
 | Research status | Progress | Last updated |
 | --- | --- | --- |
-| Completed desk research; comparative performance unmeasured | Assesses native Godot as an open-engine option and distinguishes its more limited web export. | 2026-10-15 |
+| Desk research expanded; comparative performance and productivity unmeasured | Adds adoption/community and AI-tooling analysis while retaining native/web capability distinctions and the browser-first delivery sequence. | 2026-10-17 |
 
 ## Position in the shortlist
 
-Godot is the strongest native candidate in this assessment that combines a permissively licensed engine, integrated game authoring, modern native rendering and practical runtime content APIs. This makes it particularly relevant to Open Legend's current licensing and authored-world goals. It does **not** establish that it outperforms Unity or Unreal for a large animated crowd.
+Godot is a leading native candidate in this assessment that combines a permissively licensed engine, integrated game authoring, modern native rendering and practical runtime content APIs. This makes it particularly relevant to Open Legend's current licensing and authored-world goals. It does **not** establish that it outperforms Unity or Unreal for a large animated crowd, or that a port is the next assignment.
 
-The research uses stable Godot 4 documentation accessed on October 15, 2026. Stable documentation is a moving target; a prototype must pin an exact engine release and renderer. Do not transfer old Godot 3 claims, old Godot 4 web restrictions or current Forward+ capabilities indiscriminately between versions and targets.
+The [selected first-player milestone](../../../docs/maintainers/first-player-milestone.md) remains browser-first. The expanded [Godot community and AI-development research](../godot-community-and-ai-2026.md) strengthens the reasons to consider a bounded production-workflow comparison when justified. It separates popularity, actual integration mechanisms and measured agent results rather than assuming an AI-driven adoption boom proves the best engine for this game.
+
+The original capability review used Godot 4 stable documentation accessed October 15, 2026. The October 17 follow-up distinguishes the stable 4.7 line from the October 15 announcement of 4.8 beta 1. Pin the exact engine release, renderer and add-ons in a trial; do not silently promote beta improvements to stable support. Stable documentation is a moving target, and old Godot 3, earlier Godot 4 and current native/web claims are not interchangeable.
+
+## Community and AI-assisted production
+
+The separate community report is the owner of adoption figures, source dates and their limitations. It finds credible growth signals but no reliable estimate of how much growth AI caused. Tool builders now expose project editing and, in some integrations, runtime screenshots, input and inspection. These can support a more complete agent feedback loop than code generation alone, but no local tool qualification or matched productivity comparison was performed.
+
+Godot's upstream contribution policy is also materially different from the policies of independent AI-tool authors. Restrictions on AI-generated upstream submissions and official community communication must not be misrepresented as a general ban on developers using AI in their own games. Conversely, an AI-heavy workflow does not grant permission to send unreviewed generated contributions upstream.
+
+For Open Legend, measure time and human effort to an accepted, visually inspected and maintainable change. Count tool setup, version failures, review, exported behavior and regressions. Include a fairly equipped browser baseline and relevant Unity automation. Editor control is a development permission, not authority that the game's NPCs or player-facing World Agent should inherit. See [the full evidence and comparison criteria](../godot-community-and-ai-2026.md).
 
 ## Performance and hardware
 
@@ -26,15 +36,15 @@ Threading exists, but the active scene tree is not generally safe to modify from
 
 Godot's three renderer choices serve different budgets. **Forward+** targets more advanced desktop scenes; **Mobile** uses a reduced modern rendering path; **Compatibility** targets broader/older hardware and the web. The modern paths use Vulkan, Direct3D 12 or Metal where supported; Compatibility uses OpenGL/WebGL. Switching can require visual changes. [Renderer overview](https://docs.godotengine.org/en/stable/tutorials/rendering/renderers.html).
 
-Advanced global illumination, reflections and volumetric effects must be checked against the selected renderer. Importantly, the current comparison includes glow and screen-space ambient occlusion in Compatibility; older blanket descriptions omitting them are outdated. This does not make Compatibility equivalent to Forward+ or enable every compute-based effect on the web.
+Advanced global illumination, reflections and volumetric effects must be checked against the selected renderer. Importantly, the comparison inspected for the capability review includes glow and screen-space ambient occlusion in Compatibility; older blanket descriptions omitting them are outdated. This does not make Compatibility equivalent to Forward+ or enable every compute-based effect on the web.
 
-For Open Legend, native Godot can plausibly supply attractive stylized 3D, lit animated characters and richer effects than the current client. “Plausibly” refers to documented capabilities, not a verified quality/performance result. The prototype must include our distinctive overlapping sprites/meshes, readable shadows, editable construction, camera cutaways and dense captions, rather than only a conventional corridor demo.
+For Open Legend, native Godot can plausibly supply attractive stylized 3D, lit animated characters and richer effects than the current client. “Plausibly” refers to documented capabilities, not a verified quality/performance result. A prototype must include the actual required mixture of sprites/meshes, readable shadows, editable construction, camera visibility behavior and dense captions, rather than only a conventional corridor demo.
 
 Godot is not being recommended as a substitute for every specialized high-end Unreal feature. A project requiring a Nanite-like content workflow or a deeply integrated cinematic character stack should compare the actual production burden rather than assume open source implies equivalent tooling.
 
 ## Web export is a separate, narrower route
 
-Current Godot 4 web export uses **WebGL 2 and Compatibility**, not Forward+ or a WebGPU backend. Godot 4 C# projects cannot currently export to the web through the documented route. Single-threaded export avoids some deployment requirements, while multithreaded export needs appropriate hosting support. [Web export](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html).
+The documented Godot 4 web export uses **WebGL 2 and Compatibility**, not Forward+ or a WebGPU backend. Godot 4 C# projects cannot export to the web through that documented route. Single-threaded export avoids some deployment requirements, while multithreaded export needs appropriate hosting support. [Web export](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html).
 
 Therefore, adopting Godot native does not promise a feature-identical browser client from the same scenes. A reduced browser edition would need its own quality and package qualification. If advanced browser rendering is the non-negotiable goal, web-native PlayCanvas or Babylon.js can be stronger choices than Godot's web target.
 
@@ -76,12 +86,12 @@ This is a real drawback relative to choosing an established commercial-engine co
 
 The [MIT license](https://godotengine.org/license/) avoids an engine royalty or a mandatory commercial editor subscription. The engineering bill remains: performance work, content tools, specialist support, platform ports, testing and maintenance. Paying a porting provider or maintaining a custom engine extension can exceed a commercial engine's license fee.
 
-Source access improves the ability to investigate and fix problems, but also transfers responsibility when the project depends on its own patches. Avoid an early broad fork unless a specific required capability demonstrates the need. An open engine is a strategic control advantage, not a claim of zero support cost.
+Source access improves the ability to investigate and fix problems, but also transfers responsibility when the project depends on its own patches. Avoid an early broad fork unless a specific required capability demonstrates the need. An open engine is a strategic control advantage, not a claim of zero support cost. Add-on licenses, provider costs and telemetry are independent of the engine's terms.
 
 ## When Godot wins—and what could defeat the case
 
-Choose Godot native when an open, controllable engine, runtime-created content and a capable integrated editor are important, and the required visual scale can be achieved without depending on a proprietary high-end stack. It is a credible fit for a stylized, simulation-rich native Open Legend client.
+Choose Godot native when an open, controllable engine, runtime-created content and a capable integrated editor are important, and the required visual scale can be achieved without depending on a proprietary high-end stack. It is a credible fit for a stylized, simulation-rich native Open Legend client if that route is selected.
 
-Its case weakens when the actual workload requires extensive custom optimization to match another engine, a hard console deadline depends on unavailable integration, or production needs demand tools that would take too much work to build. Its web export is not the leading choice for a WebGPU-forward browser product.
+Its case weakens when the actual workload requires extensive custom optimization to match another engine, a hard console deadline depends on unavailable integration, or production needs demand tools that would take too much work to build. Its web export is not the leading choice for a WebGPU-forward browser product. An agent integration that generates quickly but leaves disproportionate manual repair is not a demonstrated productivity advantage.
 
-**Research judgment:** Godot native is the leading policy-compatible native candidate and the recommended first native trial. That recommendation is conditional on a representative performance and live-creation test; it is not a claim of benchmark victory or an authorization to migrate. A failed trial should change the recommendation, not lower the required experience to protect the engine choice.
+**Research judgment:** Godot remains the leading policy-compatible native candidate, now with a more substantial AI-production case to evaluate. The [reconciled assessment](../open-legend-assessment.md) makes the browser playable milestone first and any native comparison conditional on a named advantage. Neither community growth nor an engine capability list proves benchmark victory or authorizes migration. A failed trial should change the recommendation, not lower the required experience to protect the engine choice.
