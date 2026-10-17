@@ -6,14 +6,14 @@ The purpose is to create recognizable things and expressive people that particip
 
 ## Choose the representation before the tool
 
-| Need | Useful route | Stages that can be omitted |
-| --- | --- | --- |
-| An existing thing already has suitable approved art | Inspect and integrate exact reuse | New concept, generation and unnecessary source reconstruction |
-| A familiar object differs in supported material or parts | Compose a compatible family and finish | Whole-object generation; rigging when the result is rigid |
-| A new rigid silhouette matters | Concept when useful → model → material → export → working object | Concept image when direct modeling communicates the form adequately |
-| A person can use a known compatible body and rig | Identity/outfit design → fit parts → reuse or create motions → export → action bindings | New body generation and new rig creation |
-| A genuinely different articulated form is needed | Body/behavior study → source geometry → family-appropriate rig → motion → qualification | Automatic assumption that a humanoid rig or clip will fit |
-| A final sprite or illustrated icon fully serves the use | Editable 2D source → required directions/states → game representation | Mesh, skinning and 3D export |
+| Need                                                     | Useful route                                                                            | Stages that can be omitted                                          |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| An existing thing already has suitable approved art      | Inspect and integrate exact reuse                                                       | New concept, generation and unnecessary source reconstruction       |
+| A familiar object differs in supported material or parts | Compose a compatible family and finish                                                  | Whole-object generation; rigging when the result is rigid           |
+| A new rigid silhouette matters                           | Concept when useful → model → material → export → working object                        | Concept image when direct modeling communicates the form adequately |
+| A person can use a known compatible body and rig         | Identity/outfit design → fit parts → reuse or create motions → export → action bindings | New body generation and new rig creation                            |
+| A different articulated form is needed                   | Body/behavior study → source geometry → family-appropriate rig → motion → qualification | Automatic assumption that a humanoid rig or clip will fit           |
+| A final sprite or illustrated icon fully serves the use  | Editable 2D source → required directions/states → game representation                   | Mesh, skinning and 3D export                                        |
 
 Camera compatibility remains an existing requirement. A fixed-angle sprite is insufficient for views it does not describe; a model with an attractive front can still fail from the back or above. Reuse the accepted camera and appearance-family decisions in [world presentation](../world-presentation.md) and [3D appearance families](../projects/3d-pixel-art-appearance-families.md). A production convenience does not silently restrict the camera.
 
@@ -173,15 +173,15 @@ Preserve the source body, rig, material family, clips, export settings and accep
 
 ## Repair map and downstream effects
 
-| Finding | Repair owner | Dependent work to revisit |
-| --- | --- | --- |
-| Weak identity at normal camera distance | Silhouette, proportions, outfit/material contrast | World representation, portrait/icon agreement and poses that hide key features |
-| Wrong scale or attachment location | Source transforms and canonical grip/pivot | Ground contact, held view, selected body/equipment fits and export |
-| Fused parts or unusable openings | Source geometry or candidate supplier | Materials/UVs, articulation and any depiction of use |
-| Bad deformation | Geometry, skin weights or rig | Affected clips, garment fits and runtime bounds |
-| Sliding or mistimed contact | Motion, retargeting or its native-timing integration | Transition, effect/audio timing and relevant actions |
-| Correct source but broken runtime view | Export and renderer consumption | Final artifacts, actual game poses and loading/replacement behavior |
-| Repeated variants lose identity | Shared brief, references or family controls | Variant generation and cross-representation review |
+| Finding                                 | Repair owner                                         | Dependent work to revisit                                                      |
+| --------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Weak identity at normal camera distance | Silhouette, proportions, outfit/material contrast    | World representation, portrait/icon agreement and poses that hide key features |
+| Wrong scale or attachment location      | Source transforms and canonical grip/pivot           | Ground contact, held view, selected body/equipment fits and export             |
+| Fused parts or unusable openings        | Source geometry or candidate supplier                | Materials/UVs, articulation and any depiction of use                           |
+| Bad deformation                         | Geometry, skin weights or rig                        | Affected clips, garment fits and runtime bounds                                |
+| Sliding or mistimed contact             | Motion, retargeting or its native-timing integration | Transition, effect/audio timing and relevant actions                           |
+| Correct source but broken runtime view  | Export and renderer consumption                      | Final artifacts, actual game poses and loading/replacement behavior            |
+| Repeated variants lose identity         | Shared brief, references or family controls          | Variant generation and cross-representation review                             |
 
 ## Maintained records
 

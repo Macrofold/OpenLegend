@@ -148,4 +148,3 @@ Clearly distinguish existing functionality from future concepts such as richer c
 
 - Implementation: [Feature tasks](maintainers/TODO.md).
 - Limits and constraints: [Authoring and presentation inventory](limits/interface.md).
-

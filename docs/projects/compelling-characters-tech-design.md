@@ -88,4 +88,3 @@ For comparative work, preserve complete required identity, source-specific permi
 - Implementation: [CE01–CE05](../maintainers/character-experience.md), with [AG06/AG07/AG12](../maintainers/agent-agency.md) and [CR12](../maintainers/cognition-redesign.md); existing DG23 owns broader personality development.
 - Limits and constraints: [CG14 authorship boundary](../limits/cognition.md#cg14--character-authorship-and-personal-evidence), [memory/cognition limits](../limits/cognition.md), [feeling limits](../limits/feelings.md). No new numerical runtime bound is introduced.
 - Evidence: [PG02 report](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices), historical trials remain distinct from the new content and expanded world.
-

@@ -77,12 +77,12 @@ Durable requests, stages, artifact metadata, candidate validation reports, publi
 
 The [offline production route](../production-workflows/assets-and-animation.md) supplies authored, procedural or generated candidates to these same owners. Preserve the connection between the selected identity, editable source and reviewed runtime export. A successful authoring viewport or provider response is an intermediate result; the consumer needs the actual exported geometry, materials, rig/clip coverage and current-game evidence appropriate to the selected family.
 
-| Handoff information | Existing destination and use |
-| --- | --- |
-| Selected form, meaningful parts and authorized references | AppearanceDefinition identity/source lineage and the existing art-study record; keeps dependent views consistent |
+| Handoff information                                                        | Existing destination and use                                                                                                                       |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Selected form, meaningful parts and authorized references                  | AppearanceDefinition identity/source lineage and the existing art-study record; keeps dependent views consistent                                   |
 | Editable geometry/material graph, fitted parts, rig or clips actually used | Source-artifact metadata or study source locations, with meaningful tool/source revisions; supports a later repair without reconstructing identity |
-| Exported runtime bytes and conversion settings | Artifact digests, processing-profile identity and RepresentationManifest dependencies; lets the consumer inspect what it will load |
-| Required views, states, attachments and the observed result | Existing family compatibility and candidate-validation records; separates covered cases from unperformed qualification |
+| Exported runtime bytes and conversion settings                             | Artifact digests, processing-profile identity and RepresentationManifest dependencies; lets the consumer inspect what it will load                 |
+| Required views, states, attachments and the observed result                | Existing family compatibility and candidate-validation records; separates covered cases from unperformed qualification                             |
 
 This is a handoff requirement for the selected production work, not a new universal authoring schema, public manifest payload or asset-management service. A small study can keep its source links and review notes in the established [art record](../maintainers/art-direction.md); runtime intake retains only the metadata and dependencies its actual consumer requires. Editable DCC projects and private references do not become client downloads merely because a runtime asset derives from them.
 
@@ -181,4 +181,3 @@ Provider observations and their limitations are in the [pipeline design](3d-pixe
 [V3D01–V3D12](../maintainers/3d-pixel-art.md) identify concrete owners and small end-to-end slices. First prove a licensed rigid asset and a same-identity swap through the real client before introducing paid generation. Prove a human equipment case and a genuinely different nonhuman assembly before broadening the family abstraction. Defer standalone services, generalized authoring languages, sophisticated crowd skinning, and arbitrary procedural topology until a measured consumer requires them.
 
 Verification uses the [scenario matrix](3d-pixel-art-validation.md), focused existing checks, actual browser interaction, disposable PostgreSQL worlds for stateful work, and separately authorized live provider trials. Documentation-only work requires content/link/diff review, not game execution. General pipeline, family, provider and device acceptance remains open. The separate mercenary pilot has scoped native/browser/performance evidence; reuse it only where the same contract, asset and workload assumptions hold, without promoting it to general pipeline acceptance.
-

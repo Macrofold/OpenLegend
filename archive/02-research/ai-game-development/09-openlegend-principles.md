@@ -154,12 +154,12 @@ Ask what the player chose to try, whether an invention changed their approach or
 
 ## Adoption map
 
-| Proposed principle group                              | Immediate place to apply it                                  | Evidence needed before broader adoption                                      |
-| ----------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| Proposed principle group                              | Immediate place to apply it                                  | Evidence needed before broader adoption                                           |
+| ----------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------- |
 | Player outcome, concrete art direction, real review   | The selected worthwhile activity and its relevant surfaces   | Useful play, a valued consequence, coherent presentation and working interactions |
-| Reuse, editable sources, narrow skills                | One material family, prop/icon pair and compatible animation | Repeatable accepted export and cheaper second variation                      |
-| Task-specific models and persistent character tests   | Small authoring and roleplay comparison                      | Valid outputs preferred by reviewers with acceptable latency/correction cost |
-| Offline/live separation and accepted-output economics | Existing asset/provider production records                   | Complete costs, failure behavior, honest fallback and qualified delivery     |
-| Engine and production capability decisions            | A representative current or newly valuable production task   | Evidence of a material capability or full-workflow gain, including change cost |
+| Reuse, editable sources, narrow skills                | One material family, prop/icon pair and compatible animation | Repeatable accepted export and cheaper second variation                           |
+| Task-specific models and persistent character tests   | Small authoring and roleplay comparison                      | Valid outputs preferred by reviewers with acceptable latency/correction cost      |
+| Offline/live separation and accepted-output economics | Existing asset/provider production records                   | Complete costs, failure behavior, honest fallback and qualified delivery          |
+| Engine and production capability decisions            | A representative current or newly valuable production task   | Evidence of a material capability or full-workflow gain, including change cost    |
 
 The [reusable routes](../../../docs/production-workflows/README.md) connect ideas, sources, tool operations, working game content and revision. The [research applications](10-openlegend-workflows.md) illustrate their use in specific tasks. The [evaluation plan](11-evaluation-and-adoption.md) defines comparisons that can resolve remaining tool choices while reusing the existing player-experience and character-evaluation owners.

@@ -153,4 +153,3 @@ The finite check distributions, retry examples and expected completion times wer
 - Existing scalability work and constraints: [PS tracker](../maintainers/product-scalability.md) and [product-scalability limits](../limits/product-scalability.md).
 - Individual specifications link the focused owners and inventories for their remaining features.
 - Technical design: originally deferred by Mike's request. The later selected shelter, continuing-life and attention counterparts are linked above; their completed writing does not close wider design or runtime work.
-

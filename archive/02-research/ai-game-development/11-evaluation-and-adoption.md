@@ -166,14 +166,14 @@ A useful asset unit-cost calculation divides attributable total cost by accepted
 
 ## Adoption decisions and stopping rules
 
-| Result                                                                                                                   | Appropriate action                                                                                         |
-| ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| Clear improvement in the defined task, preserved hard requirements, acceptable correction/operating cost                 | Adopt that narrow use; record the chosen version, inputs and acceptance evidence                           |
-| Attractive outputs but repeated repair or integration failure                                                            | Keep as a concept/candidate tool or stop the trial; do not call it production ready                        |
-| Comparable quality with lower total work                                                                                 | Prefer the simpler maintainable route, accounting for setup and recurring costs                            |
-| Small or inconsistent preference gap                                                                                     | Retain the incumbent and the useful reference/asset improvements; gather more only if the decision matters |
-| A credible engine or tooling alternative offers a valuable capability or material reduction in complete authoring work | Compare a representative result, including delivery, revision, integration and transition cost            |
-| New output family or changed model/version invalidates relevant evidence                                                 | Recheck the affected qualification, reusing valid existing evidence elsewhere                              |
+| Result                                                                                                                 | Appropriate action                                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Clear improvement in the defined task, preserved hard requirements, acceptable correction/operating cost               | Adopt that narrow use; record the chosen version, inputs and acceptance evidence                           |
+| Attractive outputs but repeated repair or integration failure                                                          | Keep as a concept/candidate tool or stop the trial; do not call it production ready                        |
+| Comparable quality with lower total work                                                                               | Prefer the simpler maintainable route, accounting for setup and recurring costs                            |
+| Small or inconsistent preference gap                                                                                   | Retain the incumbent and the useful reference/asset improvements; gather more only if the decision matters |
+| A credible engine or tooling alternative offers a valuable capability or material reduction in complete authoring work | Compare a representative result, including delivery, revision, integration and transition cost             |
+| New output family or changed model/version invalidates relevant evidence                                               | Recheck the affected qualification, reusing valid existing evidence elsewhere                              |
 
 The research recommends no automatic engine migration, global provider switch, mass skill installation or custom model-training project. Those decisions require evidence about the concrete task that would justify their ongoing cost.
 

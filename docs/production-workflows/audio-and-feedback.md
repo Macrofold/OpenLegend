@@ -12,15 +12,15 @@ Use sound, motion, visual effects and interface feedback together to make play e
 
 **Produce:** a short feedback map identifying what deserves a cue, the purpose of each cue, the authoritative event or permitted state that drives it, and the stage that owns timing.
 
-| Moment, where supported by the current action | Purpose of feedback | What must remain distinguishable |
-| --- | --- | --- |
-| Input accepted for processing | Reassure the player that the control responded | Submission is not a completed game action |
-| Action actually begins | Communicate commitment, effort or preparation | Beginning differs from waiting, refusal and later interruption |
-| Ongoing movement or work | Convey rhythm, material contact or continuing effort | A decorative loop does not prove progress or success |
-| Supported contact or impact | Make the result readable and give it appropriate weight | Anticipated contact and committed outcome can differ |
-| Completion | Make a useful result apparent | Completion follows the actual result, including partial outcomes where supported |
-| Refusal, interruption or failure | Help the player understand and recover | Do not reuse success feedback for an unsuccessful attempt |
-| Aftermath | Give consequence room to register | Quiet, recovery and changed surroundings can matter as much as another effect |
+| Moment, where supported by the current action | Purpose of feedback                                     | What must remain distinguishable                                                 |
+| --------------------------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Input accepted for processing                 | Reassure the player that the control responded          | Submission is not a completed game action                                        |
+| Action actually begins                        | Communicate commitment, effort or preparation           | Beginning differs from waiting, refusal and later interruption                   |
+| Ongoing movement or work                      | Convey rhythm, material contact or continuing effort    | A decorative loop does not prove progress or success                             |
+| Supported contact or impact                   | Make the result readable and give it appropriate weight | Anticipated contact and committed outcome can differ                             |
+| Completion                                    | Make a useful result apparent                           | Completion follows the actual result, including partial outcomes where supported |
+| Refusal, interruption or failure              | Help the player understand and recover                  | Do not reuse success feedback for an unsuccessful attempt                        |
+| Aftermath                                     | Give consequence room to register                       | Quiet, recovery and changed surroundings can matter as much as another effect    |
 
 Use only rows relevant to the selected task. This table is a production aid, not a new state machine or timing contract. The actual action owner supplies the facts. If a requested synchronized effect needs a new event or mechanical timing capability, return that question to its existing owner before presenting it as implemented.
 
@@ -98,16 +98,16 @@ For a selected runtime implementation, measure the entire exchange, including re
 
 After the action works, create only variations with a purpose: reducing fatiguing repetition, differentiating real materials, preserving a person's identity across moods, or giving an important moment a distinct sound. Keep the common family recognizable. Random pitch, timing or intensity changes should not imply a different event or destroy the action's reading.
 
-| Problem in play | Return to | Recheck |
-| --- | --- | --- |
-| Contact feels weak despite correct mechanics | Motion weight, timing alignment and effect envelope | Actual contact/recovery, nearby sound and repeated use |
-| An action looks or sounds completed before it is | Event binding and technical/native outcome distinction | Pending, failed, interrupted and completed paths |
-| Speech is hard to understand | Voice source, mix balance or delivery artifacts | The same words in representative scene activity |
-| Repetition becomes irritating | Source variation and cue selection | Repeated ordinary actions and prolonged scene use |
-| Different cues are indistinguishable | Palette and intended information hierarchy | Player recognition and nearby competing signals |
-| A cancelled action keeps making noise or effects | Playback/effect lifetime owner | Cancellation, replacement, removal and relevant scene teardown |
-| A voice reveals unavailable identity or words | Permitted source selection and media contract | Unidentified/partial listeners and changed access |
-| A complete track cannot transition with play | Source arrangement or selected playback design | Actual entry, loop and exit behavior; no promised adaptive system without implementation |
+| Problem in play                                  | Return to                                              | Recheck                                                                                  |
+| ------------------------------------------------ | ------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| Contact feels weak despite correct mechanics     | Motion weight, timing alignment and effect envelope    | Actual contact/recovery, nearby sound and repeated use                                   |
+| An action looks or sounds completed before it is | Event binding and technical/native outcome distinction | Pending, failed, interrupted and completed paths                                         |
+| Speech is hard to understand                     | Voice source, mix balance or delivery artifacts        | The same words in representative scene activity                                          |
+| Repetition becomes irritating                    | Source variation and cue selection                     | Repeated ordinary actions and prolonged scene use                                        |
+| Different cues are indistinguishable             | Palette and intended information hierarchy             | Player recognition and nearby competing signals                                          |
+| A cancelled action keeps making noise or effects | Playback/effect lifetime owner                         | Cancellation, replacement, removal and relevant scene teardown                           |
+| A voice reveals unavailable identity or words    | Permitted source selection and media contract          | Unidentified/partial listeners and changed access                                        |
+| A complete track cannot transition with play     | Source arrangement or selected playback design         | Actual entry, loop and exit behavior; no promised adaptive system without implementation |
 
 Record the final source, accepted export and actual binding together. A repeated error can justify a narrow preparation preset, asset check or instruction. Preserve all relevant unperformed qualification in its existing tracker instead of treating the production recipe itself as evidence of a finished player experience.
 

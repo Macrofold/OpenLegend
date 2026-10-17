@@ -47,7 +47,7 @@ A persistent OpenLegend resident has additional requirements: distinct short dia
 
 ### What about image, 3D, motion and audio models?
 
-Select them independently from the language director. The proposed image comparison is GPT Image 2.5 versus Nano Banana 2.1 on a coherent item family. Tripo and current Meshy routes are candidates for bounded 3D trials. Shared rigs, clips and procedural adjustment remain the starting point for motion; NVIDIA Kimodo is a specific offline constrained-motion lead. Open image, geometry and character models deserve later trials where control or repeated volume justifies their operating work.
+Select them independently from the language director. The proposed image comparison is GPT Image 2.5 versus Nano Banana 2.1 on a coherent item family. Tripo and current Meshy routes are candidates for bounded 3D trials. Shared rigs, clips and procedural adjustment remain the starting point for motion; NVIDIA Kimodo is a specific offline constrained-motion lead. Open image, geometry and character models deserve focused trials when distinctive output, control, adaptation or repeated use justify their operating work.
 
 These are candidate selections based on capabilities and fit, not measured OpenLegend quality rankings. [Asset and audio dossier](07-image-3d-and-audio-models.md).
 
@@ -59,23 +59,23 @@ The Project Tomorrow creator explicitly used procedural techniques without AI. H
 
 ## Complete document map
 
-| Document                                                                | Purpose                                                                                       |
-| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| [01 — Context and method](01-context-and-method.md)                     | Current project facts, baseline, research questions and evidence standards                    |
-| [02 — Developer case studies](02-developer-case-studies.md)             | Attributed workflows, shipped/research/prototype distinctions, reputation and transfer limits |
-| [03 — Procedural art and animation](03-procedural-art-and-animation.md) | Material graphs, smart surfaces, modular props, vegetation, motion and lighting               |
-| [04 — Skills and tooling](04-skills-and-tooling.md)                     | Actual instructions/helpers, 27 candidates, dependencies and compatibility findings           |
-| [05 — Engine choice](05-playcanvas-godot-and-engine-choice.md)          | Catalog omission, current client, Godot/Unity/Unreal tradeoffs and migration criteria         |
-| [06 — Stories and characters](06-models-for-stories-and-characters.md)  | Current provider evidence, authoring, roleplay, memory, open models and evaluation            |
-| [07 — Images, 3D and audio](07-image-3d-and-audio-models.md)            | Separate specialist models, output contracts, rigging, motion, voice and production cost      |
-| [08 — UI production](08-ui-quality-and-production.md)                   | Competing explanations of UI quality and controlled design/art/implementation comparisons     |
-| [09 — Principles](09-openlegend-principles.md)                          | Fourteen justified recommendations with project fit, evidence and limits                      |
-| [10 — Workflows](10-openlegend-workflows.md)                            | Ten selectable procedures for delivering useful game work                                     |
-| [11 — Evaluation](11-evaluation-and-adoption.md)                        | Proposed sample tasks, acceptance, accounting and adoption decisions                          |
-| [12 — Supplied sources](12-supplied-examples-and-community.md)          | All starting links, transcript reconstruction, cost/reputation caveats and Reddit trails      |
-| [13 — Sources and coverage](13-source-register-and-coverage.md)         | Coverage matrix, credibility rules, limits and the source index                               |
+| Document                                                                  | Purpose                                                                                        |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| [01 — Context and method](01-context-and-method.md)                       | Current project facts, baseline, research questions and evidence standards                     |
+| [02 — Developer case studies](02-developer-case-studies.md)               | Attributed workflows, shipped/research/prototype distinctions, reputation and transfer limits  |
+| [03 — Procedural art and animation](03-procedural-art-and-animation.md)   | Material graphs, smart surfaces, modular props, vegetation, motion and lighting                |
+| [04 — Skills and tooling](04-skills-and-tooling.md)                       | Actual instructions/helpers, 27 candidates, dependencies and compatibility findings            |
+| [05 — Engine choice](05-playcanvas-godot-and-engine-choice.md)            | Catalog omission, current client, Godot/Unity/Unreal tradeoffs and migration criteria          |
+| [06 — Stories and characters](06-models-for-stories-and-characters.md)    | Current provider evidence, authoring, roleplay, memory, open models and evaluation             |
+| [07 — Images, 3D and audio](07-image-3d-and-audio-models.md)              | Separate specialist models, output contracts, rigging, motion, voice and production cost       |
+| [08 — UI production](08-ui-quality-and-production.md)                     | Competing explanations of UI quality and controlled design/art/implementation comparisons      |
+| [09 — Principles](09-openlegend-principles.md)                            | Fourteen justified recommendations with project fit, evidence and limits                       |
+| [10 — Workflows](10-openlegend-workflows.md)                              | Ten selectable procedures for delivering useful game work                                      |
+| [11 — Evaluation](11-evaluation-and-adoption.md)                          | Proposed sample tasks, acceptance, accounting and adoption decisions                           |
+| [12 — Supplied sources](12-supplied-examples-and-community.md)            | All starting links, transcript reconstruction, cost/reputation caveats and Reddit trails       |
+| [13 — Sources and coverage](13-source-register-and-coverage.md)           | Coverage matrix, credibility rules, limits and the source index                                |
 | [14 — Review and design integration](14-review-and-design-integration.md) | Critique, changes, creative opportunities and the map into maintained production/design owners |
-| [Source metadata](sources.json)                                         | Machine-readable identities, URLs, dates, evidence types, supported claims and limits         |
+| [Source metadata](sources.json)                                           | Machine-readable identities, URLs, dates, evidence types, supported claims and limits          |
 
 This README and the fourteen numbered dossiers form the fifteen-document research collection. The five production-handbook documents are maintained separately under `docs/production-workflows/`. The detailed dossiers intentionally separate observed practice from OpenLegend recommendations so future decisions can cite a specific reason rather than inherit an unsupported slogan.
 

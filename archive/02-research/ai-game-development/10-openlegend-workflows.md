@@ -4,13 +4,13 @@
 
 The [principles](09-openlegend-principles.md) explain the reasoning. The examples below retain useful task details and tool candidates from this research. Select the relevant example after choosing the experience or production opportunity; their numbering is not a delivery order.
 
-| Reusable route | Examples in this document | What the route connects |
-| --- | --- | --- |
-| [Shared production approach](../../../docs/production-workflows/README.md) | Task framing and final review | Desired result, current owners, creative exploration, production, inspection and revision |
-| [Assets and animation](../../../docs/production-workflows/assets-and-animation.md) | Material families, prop/icon delivery and character actions | An idea and its function through editable sources, compatible exports and a usable entity |
-| [Scenes and interfaces](../../../docs/production-workflows/scenes-and-interfaces.md) | Inventory and scene population | Visual intent, spatial/interaction structure, coherent art and the complete client |
-| [Characters and play](../../../docs/production-workflows/characters-and-play.md) | Encounter authoring, resident comparison and playable revision | A worthwhile situation and person through independent choice, actual consequence and another encounter |
-| [Audio and feedback](../../../docs/production-workflows/audio-and-feedback.md) | Sound cues and character voices | An actual action or utterance through fitting sound, presentation and the player's experience |
+| Reusable route                                                                       | Examples in this document                                      | What the route connects                                                                                |
+| ------------------------------------------------------------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| [Shared production approach](../../../docs/production-workflows/README.md)           | Task framing and final review                                  | Desired result, current owners, creative exploration, production, inspection and revision              |
+| [Assets and animation](../../../docs/production-workflows/assets-and-animation.md)   | Material families, prop/icon delivery and character actions    | An idea and its function through editable sources, compatible exports and a usable entity              |
+| [Scenes and interfaces](../../../docs/production-workflows/scenes-and-interfaces.md) | Inventory and scene population                                 | Visual intent, spatial/interaction structure, coherent art and the complete client                     |
+| [Characters and play](../../../docs/production-workflows/characters-and-play.md)     | Encounter authoring, resident comparison and playable revision | A worthwhile situation and person through independent choice, actual consequence and another encounter |
+| [Audio and feedback](../../../docs/production-workflows/audio-and-feedback.md)       | Sound cues and character voices                                | An actual action or utterance through fitting sound, presentation and the player's experience          |
 
 The [existing playability questions](../../../docs/projects/five-product-feature-specs.md#playability-gates) determine whether a production improvement helps the game. Technical asset acceptance, an appealing screenshot and lower cost each supply different evidence.
 
@@ -189,7 +189,7 @@ The following is a proposed checklist for a substantial production trial. Reuse 
 | Tool identity        | Exact relevant model, application and skill/helper revision                  |
 | Work and cost        | Preparation, attempts, correction time, paid work and final accepted outputs |
 | Acceptance evidence  | Actual exports, complete-client views and relevant interactions              |
-| Experience judgment  | What became worth doing or caring about, observed tradeoffs and uncertainty |
+| Experience judgment  | What became worth doing or caring about, observed tradeoffs and uncertainty  |
 | Failure and recovery | What went wrong, how it was repaired, any remaining qualification limit      |
 | Reuse                | Source assets, settings and the next variation that tests repeatability      |
 

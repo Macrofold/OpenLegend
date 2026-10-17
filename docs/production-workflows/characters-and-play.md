@@ -25,13 +25,13 @@ flowchart TD
 
 Each step should preserve something useful for the next: a clear intention, editable content, actual supported behavior or evidence of what happened. A concept rehearsal may finish with a decision to simplify or abandon an idea. A production task finishes at the complete delivery scope selected for it; a successful rehearsal does not satisfy an agreed live-game requirement.
 
-| What moves between steps | Useful content | Existing home |
-| --- | --- | --- |
-| Experience and premise | What becomes worth doing; relevant people, possibilities and stakes | Selected project scope; [repertoire foundation](../repertoires/design-foundation.md) |
-| Editable person and situation | Authored identity, world facts, permitted knowledge, clues and supported opportunities | World/content owners; [character authorship](../projects/compelling-characters-feature-spec.md#character-authorship-and-changing-personality) |
-| Working content and presentation | Actual objects, places and available actions, with fitting appearance and feedback | Native feature owners; [assets](assets-and-animation.md), [scenes](scenes-and-interfaces.md), [audio](audio-and-feedback.md) |
-| Chosen actions and consequences | What participants actually attempted, did, perceived and later recalled | Action, agency, [memory](../memory-architecture.md) and [conversation](../narration-and-conversations.md) owners |
-| Review and next revision | Observations, technical defects, creative strengths, burdens and remaining uncertainty | Existing project/tracker and [verification](../verification.md) records |
+| What moves between steps         | Useful content                                                                         | Existing home                                                                                                                                 |
+| -------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Experience and premise           | What becomes worth doing; relevant people, possibilities and stakes                    | Selected project scope; [repertoire foundation](../repertoires/design-foundation.md)                                                          |
+| Editable person and situation    | Authored identity, world facts, permitted knowledge, clues and supported opportunities | World/content owners; [character authorship](../projects/compelling-characters-feature-spec.md#character-authorship-and-changing-personality) |
+| Working content and presentation | Actual objects, places and available actions, with fitting appearance and feedback     | Native feature owners; [assets](assets-and-animation.md), [scenes](scenes-and-interfaces.md), [audio](audio-and-feedback.md)                  |
+| Chosen actions and consequences  | What participants actually attempted, did, perceived and later recalled                | Action, agency, [memory](../memory-architecture.md) and [conversation](../narration-and-conversations.md) owners                              |
+| Review and next revision         | Observations, technical defects, creative strengths, burdens and remaining uncertainty | Existing project/tracker and [verification](../verification.md) records                                                                       |
 
 These are handoff contents, not a new runtime schema, mandatory database or parallel task register. Reuse the records already maintained by the selected project.
 
@@ -77,7 +77,7 @@ For an invention, distinguish the player's idea, an admitted definition or metho
 
 The [asset route](assets-and-animation.md) develops the object's form and motion. The [scene/interface route](scenes-and-interfaces.md) makes opportunities discoverable. The [audio/feedback route](audio-and-feedback.md) helps the player understand and feel an actual action. Preserve one coherent identity across the world, belongings, equipment and relevant character presentation.
 
-If a promising experience needs a genuinely missing capability, identify that gap and its value through the existing feature-design owner. Exploration is allowed to reveal worthwhile new work. Complete the design questions that work depends on before implementing it; an agent must not invent an undocumented executor or silently choose a new world rule.
+If a promising experience needs a missing capability, identify that gap and its value through the existing feature-design owner. Exploration is allowed to reveal worthwhile new work. Complete the design questions that work depends on before implementing it; an agent must not invent an undocumented executor or silently choose a new world rule.
 
 **Useful output:** content the player and resident can actually interact with, with its current limits clear. General population simulation, arbitrary anatomy or a universal narrative system need not become prerequisites for a selected small experience.
 
@@ -114,16 +114,16 @@ Apply the [existing playability questions](../projects/five-product-feature-spec
 
 Observe real behavior and ask for the player's interpretation without coaching them toward the intended answer. A technically new object may feel like ordinary crafting; a precise callback may feel like a generic quest line. Record those gaps as design evidence. Conversely, a familiar reliable action or a contented quiet moment is not a failure of novelty.
 
-| Observed issue or opportunity | Revise through the relevant owner |
-| --- | --- |
-| The situation is coherent but nobody wants to engage | Reconsider attraction, possibilities, stakes or payoff in the selected content/design |
-| The player has an intention but cannot discover how to act | Improve current interaction presentation, context and action discovery |
-| A supported action works but feels weak or unclear | Coordinate animation, sound, visual response and controls around the actual action |
-| A resident sounds generic or exists only to help | Review the person's present life, interests and authored identity; inspect actual available opportunities |
-| A resident repeats work or misremembers an outcome | Inspect actual knowledge, chosen activity, result selection and continuation before adding more biography |
-| An unexpected lawful approach is enjoyable | Preserve its useful behavior and investigate how to make that possibility discoverable |
-| A consequence exists only in records | Improve how the permitted result becomes encounterable in the world or later interaction |
-| A candidate is better but more expensive | Record the experience gain and complete cost; select the supported tradeoff for this task |
+| Observed issue or opportunity                              | Revise through the relevant owner                                                                         |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| The situation is coherent but nobody wants to engage       | Reconsider attraction, possibilities, stakes or payoff in the selected content/design                     |
+| The player has an intention but cannot discover how to act | Improve current interaction presentation, context and action discovery                                    |
+| A supported action works but feels weak or unclear         | Coordinate animation, sound, visual response and controls around the actual action                        |
+| A resident sounds generic or exists only to help           | Review the person's present life, interests and authored identity; inspect actual available opportunities |
+| A resident repeats work or misremembers an outcome         | Inspect actual knowledge, chosen activity, result selection and continuation before adding more biography |
+| An unexpected lawful approach is enjoyable                 | Preserve its useful behavior and investigate how to make that possibility discoverable                    |
+| A consequence exists only in records                       | Improve how the permitted result becomes encounterable in the world or later interaction                  |
+| A candidate is better but more expensive                   | Record the experience gain and complete cost; select the supported tradeoff for this task                 |
 
 Keep evidence proportional to the claim. A script can verify an action path; a fixture cannot prove independent choice; a short player session cannot establish long-term retention. Record complete episode cost and scope alongside the separate experience judgment. Reuse the relevant [verification report](../verification.md) and focused tracker rather than creating a new scoring system or committing generated logs and captures by default.
 
@@ -133,7 +133,7 @@ Keep evidence proportional to the claim. A script can verify an action path; a f
 
 **A person with an ordinary afternoon.** The [compelling-character design](../projects/compelling-characters-feature-spec.md) already describes identity, social contact, enjoyment, meaningful repetition and chosen solitude. Use its relevant complete episode to connect the authored person to actual action and later conduct. The [character-experience tracker](../maintainers/character-experience.md) retains open integrated quality; do not reset delivered foundations or claim a whole life from one successful exchange.
 
-**A useful invented object with a personal consequence.** The [existing invention scenarios](../invention-scenarios.md) and [gameplay priorities](../repertoires/gameplay-priorities.md) provide the starting scope. A selected exercise can connect a genuinely admitted invention to practical use and a person's informed response. The ordinary method stays available, the resident keeps their own choice, and the specific object or reaction is not preordained by this guide.
+**A useful invented object with a personal consequence.** The [existing invention scenarios](../invention-scenarios.md) and [gameplay priorities](../repertoires/gameplay-priorities.md) provide the starting scope. A selected exercise can connect a accepted invention to practical use and a person's informed response. The ordinary method stays available, the resident keeps their own choice, and the specific object or reaction is not preordained by this guide.
 
 ## Research rationale and maintained ownership
 

@@ -183,4 +183,3 @@ The [completed mercenary pilot](completed/mercenary-scene-pilot.md) processes on
 After the native artifact/publication pipeline works, use one explicitly bounded approved trial: a supported rigid invention with a distinctive appearance and known physical constraints. Produce an approved 2D representation, then a matching model, display the transition in the real client, reload, and reuse it on a compatible second instance without generation. Include a rejected candidate or failed stage and a removed initiating object.
 
 Report useful-asset success rate, identity defects, total provider/compute cost including unsuccessful work, planning and validation overhead, time to fallback/sprite/model, human correction time, artifact size, import cost, and remaining state coverage. Separate fixture correctness from live provider quality. Broader generated characters, animals, and constructions remain independently gated.
-

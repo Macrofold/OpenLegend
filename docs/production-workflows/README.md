@@ -35,15 +35,15 @@ The diagram shows useful dependencies, not a mandatory waterfall. A rough mesh c
 
 ## Choose the route
 
-| Wanted result | Production route | Existing behavior and progress owners |
-| --- | --- | --- |
-| A recognizable object, tool, container, furnishing or equipped item | [Assets and animation: rigid objects](assets-and-animation.md#rigid-objects-and-equipment) | [World presentation](../world-presentation.md), [persistent objects](../maintainers/persistent-objects.md), [V3D04](../maintainers/3d-pixel-art.md#v3d04--rigid-parts-materials-and-construction-visuals) |
-| An expressive person or creature that moves and uses compatible equipment | [Assets and animation: articulated entities](assets-and-animation.md#articulated-people-and-creatures) | [Art studies](../maintainers/art-direction.md), [V3D05–V3D06](../maintainers/3d-pixel-art.md#v3d05--rigged-character-and-equipment-family), [character direction](../projects/compelling-characters-feature-spec.md) |
-| A distinctive, readable place with related surfaces, vegetation and purposeful light | [Scenes and interfaces: places](scenes-and-interfaces.md#places-materials-and-lighting) | [Creative brief](../../art-direction/final-board/creative-brief.md), [spatial world](../spatial-world.md), [world presentation](../world-presentation.md) |
-| A coherent game interface around a real player decision | [Scenes and interfaces: UI](scenes-and-interfaces.md#art-directed-working-interfaces) | [UI brief](../ui-design-brief.md), [interaction handbook](../ui-ux/README.md), [UIUX](../maintainers/ui-ux.md) |
-| A person, situation or encounter that offers meaningful choices and later consequences | [Characters and play](characters-and-play.md) | [Gameplay priorities](../repertoires/gameplay-priorities.md), current character, action, invention and authored-world owners |
-| An action that feels clear, responsive and consequential through motion, sound and visual feedback | [Audio and feedback](audio-and-feedback.md) | [World presentation](../world-presentation.md), [hearing](../hearing-and-speech.md), [narration](../narration-and-conversations.md) |
-| A player invention whose appearance improves during play | [Runtime invention art](../invention-art-pipeline.md) and its [proposed production design](../projects/3d-pixel-art-asset-pipeline.md) | [INV-12](../maintainers/inventions-and-world-evolution.md#inv-12--progressive-in-game-art-and-compatible-publication), [V3D07–V3D10](../maintainers/3d-pixel-art.md#v3d07--durable-2d-art-during-play) |
+| Wanted result                                                                                      | Production route                                                                                                                       | Existing behavior and progress owners                                                                                                                                                                                |
+| -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A recognizable object, tool, container, furnishing or equipped item                                | [Assets and animation: rigid objects](assets-and-animation.md#rigid-objects-and-equipment)                                             | [World presentation](../world-presentation.md), [persistent objects](../maintainers/persistent-objects.md), [V3D04](../maintainers/3d-pixel-art.md#v3d04--rigid-parts-materials-and-construction-visuals)            |
+| An expressive person or creature that moves and uses compatible equipment                          | [Assets and animation: articulated entities](assets-and-animation.md#articulated-people-and-creatures)                                 | [Art studies](../maintainers/art-direction.md), [V3D05–V3D06](../maintainers/3d-pixel-art.md#v3d05--rigged-character-and-equipment-family), [character direction](../projects/compelling-characters-feature-spec.md) |
+| A distinctive, readable place with related surfaces, vegetation and purposeful light               | [Scenes and interfaces: places](scenes-and-interfaces.md#places-materials-and-lighting)                                                | [Creative brief](../../art-direction/final-board/creative-brief.md), [spatial world](../spatial-world.md), [world presentation](../world-presentation.md)                                                            |
+| A coherent game interface around a real player decision                                            | [Scenes and interfaces: UI](scenes-and-interfaces.md#art-directed-working-interfaces)                                                  | [UI brief](../ui-design-brief.md), [interaction handbook](../ui-ux/README.md), [UIUX](../maintainers/ui-ux.md)                                                                                                       |
+| A person, situation or encounter that offers meaningful choices and later consequences             | [Characters and play](characters-and-play.md)                                                                                          | [Gameplay priorities](../repertoires/gameplay-priorities.md), current character, action, invention and authored-world owners                                                                                         |
+| An action that feels clear, responsive and consequential through motion, sound and visual feedback | [Audio and feedback](audio-and-feedback.md)                                                                                            | [World presentation](../world-presentation.md), [hearing](../hearing-and-speech.md), [narration](../narration-and-conversations.md)                                                                                  |
+| A player invention whose appearance improves during play                                           | [Runtime invention art](../invention-art-pipeline.md) and its [proposed production design](../projects/3d-pixel-art-asset-pipeline.md) | [INV-12](../maintainers/inventions-and-world-evolution.md#inv-12--progressive-in-game-art-and-compatible-publication), [V3D07–V3D10](../maintainers/3d-pixel-art.md#v3d07--durable-2d-art-during-play)               |
 
 Offline production creates the source assets and reviewed families that a runtime system can reuse. Runtime generation additionally needs the existing accounting, cancellation, permitted reference, compatibility and publication machinery. This handbook supplies no substitute for those contracts. A successful offline study does not establish live generation or arbitrary asset intake.
 
@@ -51,15 +51,15 @@ Offline production creates the source assets and reviewed families that a runtim
 
 Place the brief in the existing art-study record, project design or task record that already owns the work. Small improvements need only the relevant fields; do not create a second tracking system or a form for every edit.
 
-| Brief field | Useful content |
-| --- | --- |
-| Player experience | What the player should notice, feel, decide or do; why the result matters in the current game |
-| Existing facts | Current object/person/place identity, supported behavior, permitted knowledge and the specification that owns each |
-| Creative intent | Distinctive shape, material, personality, atmosphere or interaction; approved references and features to preserve |
-| Delivery context | Normal camera/view distance, lighting, UI size, poses, interactions and representations actually needed |
-| Starting assets | Exact reusable sources, compatible parts, rigs, materials, clips and known limitations |
-| Selected route | Why reuse, procedural work, generation, manual authoring or a combination fits this case |
-| Working evidence | Reproducible scene or UI state; the actual build, export and source revisions being compared |
+| Brief field       | Useful content                                                                                                          |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Player experience | What the player should notice, feel, decide or do; why the result matters in the current game                           |
+| Existing facts    | Current object/person/place identity, supported behavior, permitted knowledge and the specification that owns each      |
+| Creative intent   | Distinctive shape, material, personality, atmosphere or interaction; approved references and features to preserve       |
+| Delivery context  | Normal camera/view distance, lighting, UI size, poses, interactions and representations actually needed                 |
+| Starting assets   | Exact reusable sources, compatible parts, rigs, materials, clips and known limitations                                  |
+| Selected route    | Why reuse, procedural work, generation, manual authoring or a combination fits this case                                |
+| Working evidence  | Reproducible scene or UI state; the actual build, export and source revisions being compared                            |
 | Useful completion | What works in play, what makes the result appealing, and the specific variation or revision needed to demonstrate reuse |
 
 The brief should be concrete enough for independent contributors to produce compatible work. It does not need to settle every brushstroke. For a hypothetical new lantern appearance, it might pin the silhouette, handle, scale and supported carrying state while leaving surface wear open. Whether it emits game light is a separate native fact; a painted glow cannot decide that behavior.
@@ -68,7 +68,7 @@ Use the [creative brief](../../art-direction/final-board/creative-brief.md), [re
 
 ## Explore before expanding a family
 
-Allow cheap alternatives when the visual idea, interaction or emotional purpose is unresolved. Compare genuinely different choices: a recognizable broad silhouette against a detail-heavy one, a warm inhabited camp against a visually empty one, or two ways to communicate an item's use. Favor alternatives that answer a decision over a large batch of nearly identical generations.
+Allow cheap alternatives when the visual idea, interaction or emotional purpose is unresolved. Compare distinct choices: a recognizable broad silhouette against a detail-heavy one, a warm inhabited camp against a visually empty one, or two ways to communicate an item's use. Favor alternatives that answer a decision over a large batch of nearly identical generations.
 
 Choose a coherent direction before expensive dependent work or broad duplication. An approved example should show the complete relevant context: the object beside a person, the animated body at game scale, the interface over the world, or the place with its actual paths and light. A final portrait is not the visual target for every tiny world figure.
 
@@ -93,16 +93,16 @@ Keep the editable sources in the established art workspace or repository locatio
 
 ## Revise the responsible source
 
-| Observed problem | Return to | Recheck affected dependents |
-| --- | --- | --- |
-| The thing offers no worthwhile choice or feels redundant | Player purpose, encounter or gameplay design | Brief, behavior, cues, art emphasis and associated rewards |
-| Shape or identity is wrong | Concept and source geometry/art | Dependent textures, attachments, rig fit, icons and other identity views |
-| Appearance implies the wrong function | Brief and existing mechanic/appearance owner | Geometry cues, animations, labels and supported interactions |
-| Materials look noisy or wrong under light | Material source, UVs or lighting setup according to the observed cause | Exported maps and relevant scene-light comparisons |
-| Feet slide or a held item jumps | Clip, rig, attachment or transition source | Affected actions, body/equipment combinations and export |
-| Art looks right in the editor but fails in the game | Export profile and actual renderer consumption | Final runtime bytes, loading, scale, materials and resource behavior |
-| An interface is attractive but confusing | Information hierarchy or interaction owner | Whole task, keyboard/focus, live state and surrounding world control |
-| A resident gives a weak or false reply | Character intent, supplied evidence, model behavior or delivery as diagnosed | The affected interaction and later consequences, rather than indiscriminate extra history |
+| Observed problem                                         | Return to                                                                    | Recheck affected dependents                                                               |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| The thing offers no worthwhile choice or feels redundant | Player purpose, encounter or gameplay design                                 | Brief, behavior, cues, art emphasis and associated rewards                                |
+| Shape or identity is wrong                               | Concept and source geometry/art                                              | Dependent textures, attachments, rig fit, icons and other identity views                  |
+| Appearance implies the wrong function                    | Brief and existing mechanic/appearance owner                                 | Geometry cues, animations, labels and supported interactions                              |
+| Materials look noisy or wrong under light                | Material source, UVs or lighting setup according to the observed cause       | Exported maps and relevant scene-light comparisons                                        |
+| Feet slide or a held item jumps                          | Clip, rig, attachment or transition source                                   | Affected actions, body/equipment combinations and export                                  |
+| Art looks right in the editor but fails in the game      | Export profile and actual renderer consumption                               | Final runtime bytes, loading, scale, materials and resource behavior                      |
+| An interface is attractive but confusing                 | Information hierarchy or interaction owner                                   | Whole task, keyboard/focus, live state and surrounding world control                      |
+| A resident gives a weak or false reply                   | Character intent, supplied evidence, model behavior or delivery as diagnosed | The affected interaction and later consequences, rather than indiscriminate extra history |
 
 Distinguish a new creative direction from a repair that preserves the current one. Preserve useful earlier accepted results. If a material adjustment leaves identity and geometry unchanged, there is no reason to regenerate the body. If geometry does change, do not pretend old skinning, collision fit or thumbnails remain valid without checking the actual impact.
 

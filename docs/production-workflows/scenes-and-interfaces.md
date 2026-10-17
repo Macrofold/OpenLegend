@@ -136,7 +136,7 @@ Test at actual slot size, including the smallest intended use. Preserve text, qu
 
 **Produce:** a working screen using shared tokens and semantic components. React Aria's interaction primitives can retain correct labels, keyboard behavior and focus while OpenLegend supplies appearance. The implementation agent should have the visual target and a way to inspect the actual result.
 
-Where a genuinely new shared role is needed, add it to the existing component/token owner. Avoid copying palette values or creating a one-off component family that makes later screens diverge. Preserve object identity and the same native action route when an operation is reachable from multiple views.
+Where a new shared role is needed, add it to the existing component/token owner. Avoid copying palette values or creating a one-off component family that makes later screens diverge. Preserve object identity and the same native action route when an operation is reachable from multiple views.
 
 **Useful result:** a real populated screen close to its visual target, with live controls and data. A visually faithful static mockup remains an intermediate artifact.
 
