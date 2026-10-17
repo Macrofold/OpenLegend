@@ -2,7 +2,7 @@
 
 [Research library](../README.md) · [Ten full dossiers and completion record](../research-progress-mobile-2026-10-17.md) · [Research requirements](../research-requirements.md)
 
-**Research date: October 17, 2026. Status: substantive synthesis checkpoint.** The ten underlying dossiers are complete. The financial comparison, source-budget reconciliation and final affected-document review are being integrated into this essay. This is research for OpenLegend, not an implementation or monetization decision.
+**Research date: October 17, 2026. Status: complete within the evidence limits below.** The ten underlying dossiers and this synthesis have received mechanics, commercial, source-scope and document review. This is research for OpenLegend; implementation and monetization decisions remain separate.
 
 ## The question the comparison needs to answer
 

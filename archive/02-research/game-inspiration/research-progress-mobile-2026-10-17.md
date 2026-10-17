@@ -4,7 +4,7 @@
 
 ## Scope and execution
 
-**Status: In progress. Last updated: 2026-10-17.** Mike requested five notable successful and five unsuccessful mobile games, full mechanics/commercial research, and an explanation of Umamusume's reported $2.5 billion. This ledger owns only G168–G177. Earlier research, G150–G166's unstarted full passes, and packet-wide preservation gates retain their existing owners and status.
+**Status: Complete within the recorded evidence limits. Last updated: 2026-10-17.** Mike requested five notable successful and five unsuccessful mobile games, full mechanics/commercial research, and an explanation of Umamusume's reported $2.5 billion. This ledger owns only G168–G177. Earlier research, G150–G166's unstarted full passes, and packet-wide preservation gates retain their existing owners and status.
 
 **Repository and branch:** `Macrofold/OpenLegend`, `research/mobile-successes-and-failures-20261017`, created from GitHub `main` at `727ea785d5618f3281e5bf5b739c29d226247c18`. Edits are prepared in `/workspace/scratch/38aac85bce64/OpenLegend-research` and committed through the GitHub connector. No runtime changes or purchases are included.
 
@@ -25,16 +25,20 @@ Subjects are processed one at a time. Mechanics, business and reception research
 | G176 | [Final Fantasy VII: The First Soldier](dossiers/final-fantasy-vii-the-first-soldier.md) | Unsuccessful service | Completed       | [Full dossier commit](https://github.com/Macrofold/OpenLegend/commit/fd05f9201e1e74c0eeed3664f1b1f9342a30c43d); eight Styles, seven worked combat situations, breeding and private-room workflows, five independent reviews plus supplementary coverage, scoped business evidence and R15. |
 | G177 | [Durango: Wild Lands](dossiers/durango-wild-lands.md)                                   | Unsuccessful service | Completed       | [Full dossier commit](https://github.com/Macrofold/OpenLegend/commit/6d9fa2b1e9b1e99cdc94de0468f0347b2e29c592); twelve skill families, seven worked mechanics situations, six written reviews, native creation and offline preservation, scoped commerce and R15.                          |
 
-## Active work and completion criteria
+## Completion and evidence boundaries
 
-**All ten subjects are reviewed and committed.** [Cross-case synthesis](essays/mobile-success-failure-and-umamusume.md), final navigation integration and the complete affected-document review are in progress.
+**All ten subjects are reviewed and committed.** The [cross-case synthesis](essays/mobile-success-failure-and-umamusume.md) answers the Umamusume question, compares dated commercial evidence and develops research questions for OpenLegend. Its mechanics and commercial reviews are complete, and README links both this ledger and the essay.
 
 Completion requires substantive R01–R14 coverage, the R15 applicability decision, amended economic/enjoyment/lore/creation analysis, five substantive independent written reviews where available (or a documented search/access limit), direct player testimony where accessible, source/internal-link review and a committed dossier. Publisher shutdown reasons stay separate from causal hypotheses.
 
-After the ten dossiers, complete the cross-case synthesis answering the Umamusume question, qualify financial comparisons, integrate navigation, inspect the complete affected diff, verify links/formatting and commit remaining changes. No broader library audit or gameplay implementation is included.
+The ten dossiers contain **52 counted substantial written assessments**, with access, authorship and version boundaries recorded individually. Each meets the five-assessment gate; Apex and Durango each include six. Minecraft Earth's assessments concern beta/early-access builds, and Durango distinguishes direct full-body reads from complete indexed bodies. Supplementary or excluded perspectives are not silently counted as independent reviews.
 
 ## Verification and preservation
 
 The recorded base tree contains no full dossier for these ten subjects. The existing [mobile/recent-games supplement](references/fun-research-expansion-mobile-and-recent.md) covers other selected games and remains preserved. Earlier roster identities and their owners remain in place. Detailed source access and financial uncertainty belong in each dossier.
 
-Completion claims apply only to the individually completed subject rows above. Document review is distinguished from actual gameplay; no firsthand play or watched footage is claimed without evidence.
+The complete affected scope comprises **15 research documents: 12 added and three modified**. The remote comparison and base-file inspection found no deleted files or runtime changes. All 167 pre-existing roster rows are unchanged; G168–G177 extend the inventory to 177 without renumbering. README and roster counts agree, and earlier requirements and authorization boundaries remain preserved.
+
+The link check covered 320 relative-link occurrences across the 15 affected documents, with no missing targets or locally available anchors. The thirteen pre-existing remote-only anchor occurrences were resolved through read-only retrieval of their three target documents. The new manuscripts received Markdown formatting checks and a scan for temporary retrieval IDs and unfinished drafting markers. Financial review preserved dates, store/platform coverage, gross/net distinctions, franchise/company boundaries and conflicting estimate series. Mechanics review checked the synthesis against the dossier evidence and corrected banner-expiry timing and alternate-trainee wording.
+
+Completion applies only to this ten-subject assignment and its synthesis. Document review is distinguished from actual gameplay; no firsthand play or watched footage is claimed without evidence. No runtime tests were needed for these research-only changes. The dossiers retain unavailable source bodies, unverified reconstruction, missing commercial data and other access limits explicitly; completion does not convert those limits into verified facts.
