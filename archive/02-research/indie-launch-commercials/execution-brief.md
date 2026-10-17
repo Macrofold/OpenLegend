@@ -1,41 +1,35 @@
 # Open Legend — execution brief
 
-| Status | Current progress | Last updated |
-|---|---|---|
-| Ready to use | The working hypothesis and next experiment are defined; current-build qualification, player evidence and actual spending limits must be recorded before dependent commitments. | 2026-10-17 |
-
-[Detailed execution guide](execution-playbook.md) · [Principles](learnings.md) · [Evidence map](review-coverage.md)
+**Next-work owner:** [first-playable tracker](../../../docs/maintainers/first-playable-validation.md). [Required world](../../../docs/worlds/base/playable-openings.md#first-playable-game-target) · [Playtest plan](../../../docs/projects/first-playable-playtest-plan.md) · [Offer decision](../../../docs/projects/initial-commercial-offer-decision-brief.md) · [Execution guide](execution-playbook.md) · [Principles](learnings.md) · [Evidence map](review-coverage.md).
 
 ## The bet
 
-A compact survival-adventure can be worth choosing because the player can invent a practical alternative, meet someone with independent aims, and encounter the consequences again. Exploration, opposition, useful rewards, progression, crafting and building make that premise enjoyable to play. This follows the [gameplay priority](../../../docs/repertoires/gameplay-priorities.md), not a claim that every target is already delivered.
+A browser survival-adventure can be worth choosing because the player builds a defensible home from an empty-handed start, forms relationships with independent people, invents useful alternatives and carries meaningful consequences into another adventure. Deliver a manageable amount of unusually good Open Legend play, not an engine demonstration or a generic game that postpones its identity.
 
-**Aim:** a small amount of unusually good Open Legend play, not an engine demonstration or a generic game that postpones its identity. Hosting, storefront and payment model serve that experience; they do not define it.
+The world specification owns the complete experience; [gameplay priorities](../../../docs/repertoires/gameplay-priorities.md) governs selection. A partial test may produce useful learning without fulfilling the whole target. Hosting and payment serve the game, not the reverse.
 
-## Working evidence and uncertainty
+## Evidence and uncertainty
 
-| Item | Current position |
+| Question | Evidence needed |
 |---|---|
-| Strongest external evidence | The case archive supports representative play, relevant distribution, costed delivery and bounded specialist work; it does not prove demand for Open Legend. |
-| Biggest product uncertainty | Will intended players enjoy the distinctive decisions and voluntarily seek another session after novelty? |
-| Biggest commercial uncertainty | Which feasible purchase offer do those players prefer, and can it sustain the experience and founder effort? Managed private worlds are one candidate, not a proven winner. |
-| Current-build evidence | Use the existing implementation and verification owners to identify what can be tested now; no fresh playtest is claimed here. |
-| Commitment limit | Record Mike's actual cash ceiling, available hours and review point before dependent spending or scope commitments. No values are assumed. |
+| Do players value the game beyond novelty? | Unassisted meaningful choices, worthwhile payoff, character/camp preferences and voluntary continuing play |
+| What must be delivered next? | The actual build's missing experience and its existing design/implementation owners |
+| Does interest extend beyond a friendly group? | Relevant people acting on truthful gameplay material, with recruitment source and denominator |
+| Which browser offer is worth buying and sustainable? | Realistic preference/terms comparisons and costs for the same quality of play, followed by authorized commercial evidence |
+| How much should be committed? | The actual approved time/cash envelope, obligations, largest uncertainty and review decision |
 
-## Next experiment: three tracks in parallel
+The case archive informs these questions; it does not establish demand for Open Legend.
 
-**Game:** select the smallest connected adventure supported by the integrated build. Test an understandable known approach and a useful non-canned invention route, with a character's independent response and a consequence that can be encountered again. Observe a small group without coaching; distinguish usability problems from weak enjoyment. Record freely chosen return or another approach, not only praise. A suggested starting batch is 6–10 people, not a market-size test.
+## Next work in parallel
 
-**Audience:** show a truthful short clip of that activity and its payoff to relevant players. Ask what they expect and provide a real next step. Prepare a small checked creator shortlist and an opt-in contact route. Scale deliberate outreach when several relevant audiences respond, without requiring a daily content schedule.
+**Game:** FPV01 selects a worthwhile test on a pinned build. Complete its missing design and implementation in existing owners, qualify the session, observe and improve. Keep the complete first-playable requirements open until accounted for; do not wait for every subsystem before learning from an honest useful slice.
 
-**Business:** compare the hosted offer with the strongest feasible alternative using the same intended experience. Record price/usage expectations, likely costs, support burden and platform constraints. Check generated-content/service requirements early. Do not build multiple billing systems or collect money merely to investigate the alternatives.
+**Audience:** prepare representative material and relevant contacts under FPV05. Recruit with authorization/readiness. Observe comprehension, enjoyment and return value separately; broaden relevant outreach when evidence supports it rather than repeating identical tiny tests indefinitely.
+
+**Business:** CO01 compares the managed-world candidate with a credible browser-feasible alternative. Investigate the same game promise, access terms, costs and support before substantial billing investment. CO05 tests the selected offer after adoption and delivery qualification.
 
 ## Decision afterward
 
-**Advance** when the activity is understandable and rewarding, voluntary behavior supports further play, and the next commitment fits resources. Increase distribution deliberately when audience results repeat. Payment and service-readiness evidence remain separate.
+Advance a specific commitment when evidence and capacity support it. Rework the largest limiting problem: comprehension, attraction, reliability, effort/payoff, missing capability, reach, terms or cost. Pause dependent exposure/spending at the agreed limit or for material privacy, accounting or integrity risks; existing participant/customer obligations remain separate.
 
-**Rework** the largest diagnosed gap: comprehension, attraction, repeat value, reach, purchase terms or delivery cost. Keep the creative direction; feedback is evidence, not a feature referendum.
-
-**Pause the dependent commitment** when the experiment limit is reached without supporting evidence, or known privacy, spending or data-integrity risks would harm participants. Fulfill existing customer obligations separately from decisions about further expansion.
-
-Record each result as: **build and audience → observation with numerator/denominator → competing explanation → next decision**. The detailed guide owns criteria and tools; this brief is the current operating view, not another gameplay roadmap.
+Use **build and audience → observation with denominator → competing explanation → next decision**. Actual status belongs in FPV and CO, not another research backlog.

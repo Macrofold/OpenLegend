@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 17, 2026 — Define the complete first-playable survival adventure
+
+The [bundled-world target](worlds/base/playable-openings.md#first-playable-game-target) requires an empty-handed survival start, useful natural materials and known crafting, a player-built defensible camp, four or five differentiated initially friendly people, voluntary cooperation, and roaming animal and human danger. [Selection policy](repertoires/gameplay-priorities.md) and [coverage](repertoires/coverage.md) now preserve those requirements while allowing useful partial tests; supplied equipment, prebuilt camps and individual demonstrations do not establish complete acceptance. Existing combat, speech, privacy and development-save decisions remain controlling.
+
+[FPV](maintainers/first-playable-validation.md) and the [playtest plan](projects/first-playable-playtest-plan.md) coordinate remaining design, delivery and distinct evidence for correctness, independent behavior, enjoyment and return value. [CO01](maintainers/commercial-offers.md) and its [decision brief](projects/initial-commercial-offer-decision-brief.md) compare credible browser offers before adopting terms. These documents select targets and procedures, not implemented capabilities, completed player tests, prices or permission to recruit, spend or sell.
+
 ## October 17, 2026 — Decision benchmark and asynchronous Luna Low fallback
 
 The completed [4,000-question comparison](verification/decision-api-benchmark.md) separates correct/answered accuracy, partial-credit points, factual contradictions, coverage, latency and cost. Authoritative stock is supplied by the engine; models choose how to act. The [results index](benchmarks/README.md) links the current corpus, complete known-miss comparison and runtime evidence without preserving superseded comparison drafts.
