@@ -10,6 +10,20 @@ The useful question behind the quoted $2.5 billion is how a game can remain wort
 
 Our working explanation for Umamusume is that character attachment, repeated improvement, persistent ownership and renewed goals can reinforce each other. The dossiers document the relevant mechanisms; the strength of each mechanism's contribution to revenue remains an inference. Public spending estimates cannot tell us how much income came from affection for a character, competitive ambition, convenience, an expiring offer or another motive. The final comparison therefore distinguishes the observable product from the proposed explanation of its results.
 
+## Why the parts fit together in Umamusume
+
+The game gives its numerical goals personal stakes. Its Main Story starts with a threatened Team Sirius and Mejiro McQueen helping rebuild it. Rice Shower pursues unbeaten Mihono Bourbon; Winning Ticket brings a Derby dream; Silence Suzuka struggles when chasing results displaces her joy in running. These are particular ambitions and relationships that can make a result mean more than its reward. They do not establish how attached every player becomes. [Official Main Story](https://umamusume.jp/contents/game/mainstory/part1/).
+
+The URA career makes preparation a sequence of tradeoffs. Trainees have different aptitudes and goals. Training raises attributes and skill points, but low energy risks injury. Bonds improve training opportunities; a summer camp rewards arriving prepared. Race schedules and suitable skills constrain the plan, and the career can be attempted again. These are the current overview's rules, not a claim that every later addition existed at launch. [Official URA overview](https://umamusume.jp/contents/game/scenario/ura/).
+
+The account connects those attempts. Previously trained runners contribute inheritance; support cards offer different training effects, and duplicates strengthen them. Trained teams compete in Team Stadium. Collection can therefore affect preparation across many careers: a support may improve future possibilities, while another trainee offers a different person to develop. This distinguishes acquiring a reusable trainee from producing a particular trained runner. [Official system overview](https://umamusume.jp/contents/game/system/).
+
+Separate Scouts offer trainees and support cards. Featured-item exchanges require 200 banner-specific points; unused points become Clovers. [Dated Scout explanation](https://www.destructoid.com/umamusume-pretty-derby-pity-system-explained/).
+
+The proposed commercial connection is straightforward: **attachment supplies a reason to care; preparation makes the outcome feel partly earned; retained possessions can make another attempt and another acquisition relevant.** A disappointing result can suggest a different plan, while a satisfying result can validate the time spent learning. A purchase can be attractive because of what the player hopes to do with it afterward. This is an interpretation of how the documented systems fit together, not a measured decomposition of revenue.
+
+That interpretation also has limits. Unclear outcomes can make another attempt feel arbitrary. An obligation to repeat can crowd out curiosity. A technically retained possession can have little practical value. Revenue establishes that substantial spending occurred; it does not establish that every player enjoyed the repetition, that purchases were necessary for enjoyment, or that any one mechanism would succeed in another game.
+
 ## A large total can come from very different audiences
 
 ### The quoted milestone needs a geographic label
