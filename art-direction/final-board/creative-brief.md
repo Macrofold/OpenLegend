@@ -12,12 +12,13 @@ Beautiful dimensional pixel art with believable real-world proportions, expressi
 
 ## The practical brief
 
-- Give the wilderness layered terrain, vegetation and atmospheric depth, without making permanent gloom the default.
+- Give the wilderness layered terrain, vegetation and atmospheric depth. The October 16 owner feedback calls for a more grounded survival mood: sunshine and joy coexist with darkness, brutality and desperation. Weathered materials and readable deep shade replace uniformly bright, happy presentation; permanent gloom is still not the target.
 - Make body shape, clothing, hair, skin tone and carried equipment readable at gameplay distance. Use profiles and close views for richer face and material detail.
 - Preserve natural head/body proportions, varied believable builds, organic plants and animals, and practical object scale/construction. Improve framing and authored features to achieve readability instead of enlarging heads or shortening bodies.
 - Let campfires, water and shadows connect people to their surroundings. Compose light around an identifiable source and preserve readable values.
 - Add meaningful lived-in objects, not uniform visual noise. Use fine detail where it describes identity, material or use.
 - Keep human scale, environment scale and close-up scale explicit when evaluating artwork. A large portrait or promotional illustration is not a runtime feasibility result.
+- Give small tools and animals finer fixed pixel density where it preserves identity. Check their actual screen footprint before adding detail, and keep all dated comparisons in the [study archive](../studies/README.md). Poly Haven is an endorsed source starting point; anatomy and construction still need visual review.
 
 ## Favorites and their contributions
 

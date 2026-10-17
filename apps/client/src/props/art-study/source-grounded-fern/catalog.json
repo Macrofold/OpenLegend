@@ -1,10 +1,10 @@
 {
   "group": "source-grounded-fern",
   "sourceFile": "art-direction/assets/source-study/source-grounded-fern.blend",
-  "sourceSha256": "0492f90b2ccab5a2465943d373acbd447768b9072b26b468b8102963091f241a",
+  "sourceSha256": "89e7670e7a73976cb1ab3896bcf50bfe3e7a804e78ea0a98638b8140cace48f1",
   "recipe": {
     "path": "scripts/prepare-grounded-study.py",
-    "sha256": "748d6d19da8a45f313e772a833d65db07488acd374e649fb88bbcab6c835df9b"
+    "sha256": "7a99b1aec9a4a8fad01e6721af2721c25fadbfb25756ab0453c4128b2dd648f5"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
@@ -60,7 +60,7 @@
       "family": "grounded-fern",
       "label": "Poly Haven fern",
       "variant": "clear",
-      "description": "Natural source form with retained material details, quiet highlights and fine fixed paint.",
+      "description": "Natural source form with retained albedo detail and quiet highlights; fixed-density pixel rendering.",
       "recommended": true,
       "file": "grounded-fern-clear.glb",
       "bounds": {
@@ -81,14 +81,6 @@
         [
           512,
           512
-        ],
-        [
-          1024,
-          1024
-        ],
-        [
-          1024,
-          1024
         ]
       ],
       "sha256": "94c9260bb3786143f4476bb554374c0248449f525f9b5e428decf92802e66fbf",
@@ -120,14 +112,6 @@
         [
           256,
           256
-        ],
-        [
-          1024,
-          1024
-        ],
-        [
-          1024,
-          1024
         ]
       ],
       "sha256": "fd9e34e81bbae0fb71ed57db5d1bea6e4fede957accc1925b54cd06033fe82ab",
@@ -159,14 +143,6 @@
         [
           256,
           256
-        ],
-        [
-          1024,
-          1024
-        ],
-        [
-          1024,
-          1024
         ]
       ],
       "sha256": "993ba1239d76eb7ac26173d1dd54d9c0b5ae6a79702bae2f5a918493af607c41",

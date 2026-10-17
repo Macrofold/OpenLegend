@@ -1,10 +1,10 @@
 {
   "group": "source-grounded-chest",
   "sourceFile": "art-direction/assets/source-study/source-grounded-chest.blend",
-  "sourceSha256": "4ebd7d5f4ebacb0d5a6c5871e572686638bac447442cc46e3236b181e84a464f",
+  "sourceSha256": "e58ecd16501d8ca084c428390a14ba925b320dee2182f1c55e66b9051f7ba61a",
   "recipe": {
     "path": "scripts/prepare-grounded-study.py",
-    "sha256": "748d6d19da8a45f313e772a833d65db07488acd374e649fb88bbcab6c835df9b"
+    "sha256": "7a99b1aec9a4a8fad01e6721af2721c25fadbfb25756ab0453c4128b2dd648f5"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
@@ -60,7 +60,7 @@
       "family": "grounded-chest",
       "label": "Poly Haven chest",
       "variant": "clear",
-      "description": "Natural source form with retained material details, quiet highlights and fine fixed paint.",
+      "description": "Natural source form with retained albedo detail and quiet highlights; fixed-density pixel rendering.",
       "recommended": true,
       "file": "grounded-chest-clear.glb",
       "bounds": {
@@ -81,17 +81,9 @@
         [
           512,
           512
-        ],
-        [
-          1024,
-          1024
-        ],
-        [
-          1024,
-          1024
         ]
       ],
-      "sha256": "06e3a51e9371b41c5b71295188c171a31dfa1367161b11408bcc9eab0e96a96f",
+      "sha256": "258e02f22ae83fbe949353f2601d7f462dc39b8dacf345371124922be4e81df8",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/treasure_chest; normalized and adapted by OpenLegend."
     },
     {
@@ -120,17 +112,9 @@
         [
           256,
           256
-        ],
-        [
-          1024,
-          1024
-        ],
-        [
-          1024,
-          1024
         ]
       ],
-      "sha256": "6f663285ec2aad0c615978e51b889fdc219c57f90ecae641ea57c17114914aa8",
+      "sha256": "b59d1b701fe9af44c0284c426439cbc3bba3db87f4992a35e23c42003e77431f",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/treasure_chest; normalized and adapted by OpenLegend."
     },
     {
@@ -159,17 +143,9 @@
         [
           256,
           256
-        ],
-        [
-          1024,
-          1024
-        ],
-        [
-          1024,
-          1024
         ]
       ],
-      "sha256": "92e2e60ccaa392a81c57938b74aa22f542264415af3d982dda5cb859efe8d881",
+      "sha256": "e0da0020d52eb9020205ad861588aecb55eb6c7deb0fe50e72f0e352291227a2",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/treasure_chest; normalized and adapted by OpenLegend."
     }
   ],
@@ -210,7 +186,7 @@
           1024
         ]
       ],
-      "sha256": "d62d4fe5b26e3544ac14d84a86fd92d1129ff3f58f63f141411a7485cda15b28",
+      "sha256": "1e317f22741c3a81e5c294ad43bff2798d8d6015b8037f074f18e34fa78567f8",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/treasure_chest; normalized and adapted by OpenLegend."
     }
   ]

@@ -1,10 +1,10 @@
 {
   "group": "source-grounded-deadwood",
   "sourceFile": "art-direction/assets/source-study/source-grounded-deadwood.blend",
-  "sourceSha256": "113ea2070141284b58e58883c65c55c00ed94343260c479c082948a39ea42478",
+  "sourceSha256": "c1adf745c40e4c23772c55a56e0e502853921ca10cccdca9a1d113f9766f9e6e",
   "recipe": {
     "path": "scripts/prepare-grounded-study.py",
-    "sha256": "748d6d19da8a45f313e772a833d65db07488acd374e649fb88bbcab6c835df9b"
+    "sha256": "7a99b1aec9a4a8fad01e6721af2721c25fadbfb25756ab0453c4128b2dd648f5"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
@@ -60,38 +60,30 @@
       "family": "grounded-deadwood",
       "label": "Poly Haven dead trunk",
       "variant": "clear",
-      "description": "Natural source form with retained material details, quiet highlights and fine fixed paint.",
+      "description": "Natural source form with retained albedo detail and quiet highlights; fixed-density pixel rendering.",
       "recommended": true,
       "file": "grounded-deadwood-clear.glb",
       "bounds": {
         "min": [
-          -1.050036,
-          0.000239,
+          -1.049735,
+          0.000337,
           -0.095058
         ],
         "max": [
-          1.049512,
+          1.049671,
           0.199473,
-          0.095466
+          0.09535
         ]
       },
       "triangles": 12000,
-      "vertices": 7180,
+      "vertices": 5999,
       "textureSizes": [
         [
           512,
           512
-        ],
-        [
-          1024,
-          1024
-        ],
-        [
-          1024,
-          1024
         ]
       ],
-      "sha256": "0a004fcf1a4880b52919ea31ea232f9e2f665253678a89492e9f01df626c9bd0",
+      "sha256": "a8ceda193b97d82663601719d488d1375d6faf54d7ed06a2f9ec798736e4edfe",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/dead_tree_trunk; normalized and adapted by OpenLegend."
     },
     {
@@ -104,33 +96,25 @@
       "file": "grounded-deadwood-quiet.glb",
       "bounds": {
         "min": [
-          -1.050036,
-          0.000239,
+          -1.049735,
+          0.000337,
           -0.095058
         ],
         "max": [
-          1.049512,
+          1.049671,
           0.199473,
-          0.095466
+          0.09535
         ]
       },
       "triangles": 12000,
-      "vertices": 7180,
+      "vertices": 5999,
       "textureSizes": [
         [
           256,
           256
-        ],
-        [
-          1024,
-          1024
-        ],
-        [
-          1024,
-          1024
         ]
       ],
-      "sha256": "7704928e7be961c6595617c8c8e9ccc0f2ed7a2fff41565c82a6ef06f992be39",
+      "sha256": "f9a0c78db08c886fd9fa0c14a15093605492619e68c828eb4df523432402d11c",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/dead_tree_trunk; normalized and adapted by OpenLegend."
     },
     {
@@ -143,33 +127,25 @@
       "file": "grounded-deadwood-weathered.glb",
       "bounds": {
         "min": [
-          -1.050036,
-          0.000239,
+          -1.049735,
+          0.000337,
           -0.095058
         ],
         "max": [
-          1.049512,
+          1.049671,
           0.199473,
-          0.095466
+          0.09535
         ]
       },
       "triangles": 12000,
-      "vertices": 7180,
+      "vertices": 5999,
       "textureSizes": [
         [
           256,
           256
-        ],
-        [
-          1024,
-          1024
-        ],
-        [
-          1024,
-          1024
         ]
       ],
-      "sha256": "82f6f0c7818fd9bec0638282f674f7567b6e431197a240ea2cb317826f9016f6",
+      "sha256": "df46b7d67af58bae9c4447fc4d6570bc45f3fefcbff27cbc30505dfb458e1087",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/dead_tree_trunk; normalized and adapted by OpenLegend."
     }
   ],

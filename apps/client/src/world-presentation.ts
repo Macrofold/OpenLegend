@@ -221,7 +221,7 @@ export class WorldPresentation {
         : [pc.PIXELFORMAT_111110F, pc.PIXELFORMAT_RGBA16F, pc.PIXELFORMAT_RGBA32F];
     this.frame.bloom.intensity = survival ? 0.018 : restrained ? 0.045 : 0.025;
     this.frame.grading.saturation = survival ? 0.88 : restrained ? 1.02 : 1.05;
-    this.frame.grading.contrast = survival ? 1.06 : 1;
+    this.frame.grading.contrast = survival ? 1.03 : 1;
     this.frame.grading.brightness = restrained ? 1.025 : 1;
     this.frame.update();
     // Compare a shared scene grid through the existing compositor. Captions
@@ -557,11 +557,12 @@ export class WorldPresentation {
     this.sun.setRotation(this.sunRotation.setFromDirections(pc.Vec3.UP, this.sunDirection));
     if (this.survivalAtmosphere)
       this.app.scene.ambientLight.set(
-        0.13 + 0.19 * daylight,
-        0.17 + 0.20 * daylight,
-        0.24 + 0.16 * daylight,
+        0.35 + 0.05 * daylight,
+        0.4 + 0.04 * daylight,
+        0.5 - 0.02 * daylight,
       );
-    else this.app.scene.ambientLight.set(
+    else
+      this.app.scene.ambientLight.set(
         0.5 + 0.08 * daylight,
         0.56 + 0.06 * daylight,
         0.68 - 0.06 * daylight,

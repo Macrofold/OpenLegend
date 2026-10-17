@@ -24,6 +24,7 @@ const sources = new Map<string, PropSource>([
   ),
 ]);
 for (const [key, asset] of studyAssets) if (!asset.animationUrl) sources.set(key, asset);
+sources.set('grounded', studyAssets.get('study:grounded-chest-clear')!);
 export const propDimensions = (appearance: string) => sources.get(appearance);
 
 /** Offline prepared props. The scene owns fallback, reveal and semantic picking;
@@ -60,7 +61,8 @@ export class ScenePropResources {
         'Scene prop · ' + variant,
         depleted && source.depletedUrl ? source.depletedUrl : source.url,
       ),
-      (material) => this.prepare(material, needsFinePixels(source.width, source.height, source.depth)),
+      (material) =>
+        this.prepare(material, needsFinePixels(source.width, source.height, source.depth)),
       () => this.actors.delete(actor),
       onReady,
     );

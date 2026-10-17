@@ -12,6 +12,7 @@ from pathlib import Path
 import sys
 
 import bpy
+import bmesh
 import numpy as np
 
 sys.dont_write_bytecode = True
@@ -52,7 +53,19 @@ def prepare(sources, subject):
         source_study.normalize(objects, height, span)
         if variant != 'source':
             meshes = [o for o in objects if o.type == 'MESH']
-            total = sum(len(o.data.polygons) for o in meshes)
+            if family in ('boulder', 'deadwood'):
+                # Imported seams can duplicate coincident vertices and prevent
+                # useful simplification. UVs remain per corner; this tiny weld
+                # joins the source surface without shrinking its silhouette.
+                for obj in meshes:
+                    mesh = bmesh.new()
+                    mesh.from_mesh(obj.data)
+                    bmesh.ops.remove_doubles(mesh, verts=list(mesh.verts), dist=0.00001)
+                    mesh.to_mesh(obj.data)
+                    mesh.free()
+            for obj in meshes:
+                obj.data.calc_loop_triangles()
+            total = sum(len(o.data.loop_triangles) for o in meshes)
             for obj in meshes:
                 if total > target:
                     modifier = obj.modifiers.new('Preserve silhouette within study geometry budget', 'DECIMATE')
@@ -62,6 +75,9 @@ def prepare(sources, subject):
                 if family in ('boulder', 'deadwood'):
                     for polygon in obj.data.polygons:
                         polygon.use_smooth = True
+            for obj in meshes:
+                obj.data.calc_loop_triangles()
+            assert sum(len(o.data.loop_triangles) for o in meshes) <= target, 'Study triangle budget exceeded'
             materials = {m for o in meshes for m in o.data.materials if m}
             images = {}
             for material in materials:
@@ -104,14 +120,23 @@ def prepare(sources, subject):
                         images[original] = image
                     node.image = images[original]
                     node.interpolation = 'Linear'
+                # Omit abandoned normal/ORM branches from the editable variant
+                # too, so catalog texture accounting matches the exported GLB.
+                for node in list(material.node_tree.nodes):
+                    if node.type == 'TEX_IMAGE' and not any(
+                        link.to_node == shader and link.to_socket.name in ('Base Color', 'Alpha')
+                        for socket in node.outputs for link in socket.links
+                    ):
+                        material.node_tree.nodes.remove(node)
         descriptions = {
             'source': 'Normalized original Poly Haven geometry and materials; source control, not pixel-finished art.',
-            'clear': 'Natural source form with retained material details, quiet highlights and fine fixed paint.',
+            'clear': 'Natural source form with retained albedo detail and quiet highlights; fixed-density pixel rendering.',
             'quiet': 'Natural source form with grouped earth colors and restrained fine texture.',
             'weathered': 'Weathered material study with muted color and softer worn highlights.',
         }
         asset, placement = export_asset(objects, output, 'grounded-'+family+'-'+variant,
-            'grounded-'+family, label, variant, descriptions[variant], variant=='clear',
+            'grounded-'+family, label, variant, descriptions[variant],
+            variant == ('quiet' if family == 'boulder' else 'clear'),
             'Poly Haven, CC0, https://polyhaven.com/a/'+subject+'; normalized and adapted by OpenLegend.')
         placement.location.x = index*3
         (controls if variant=='source' else assets).append(asset)

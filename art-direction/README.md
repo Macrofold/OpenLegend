@@ -4,6 +4,8 @@ This folder is the shared home for visual references, feedback, decisions, and f
 
 ## Start here
 
+**Preserved iterations:** [Study archive](studies/README.md) contains the recovered earlier screenshots/videos and the current small-detail/grounded-lighting comparisons. Current direction includes survival, weathering and emotional range alongside sunlight and warmth; preserve readable darkness and avoid uniformly cheerful presentation.
+
 **Required direction:** [Current visual requirements](decisions.md#current-visual-requirements--october-16-2026) — beautiful dimensional pixel art with believable real-world proportions; explicitly reject visibly low-poly 3D, blocky/Lego-like, cutesy and small-body/big-head art. Read this before sourcing assets, writing concepts or interpreting older reference ratings. [Grounded creator shortlist](research/3d-pixel-worlds/grounded-asset-creators.md) records promising sources and their untested limits.
 
 **Current study:** [Source-based starting-world review and evidence](../docs/verification/source-based-starting-study.md) — 41 families, original mercenary, actual scene/light/motion comparisons and preserved alternatives. Creator acceptance remains open.

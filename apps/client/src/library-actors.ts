@@ -57,7 +57,8 @@ export class LibraryActors {
       source,
       this.presentation,
       this.camera,
-      (material) => this.prepare(material, needsFinePixels(source.width, source.height, source.width)),
+      (material) =>
+        this.prepare(material, needsFinePixels(source.width, source.height, source.width)),
       () => this.actors.delete(actor),
     );
     this.actors.add(actor);

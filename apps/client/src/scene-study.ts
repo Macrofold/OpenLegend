@@ -69,7 +69,7 @@ function treatment(): ArtTreatment {
     atmosphere: select('world-atmosphere').value as ArtTreatment['atmosphere'],
     surfaceArt: route === 'control' ? 'plain' : 'rigid',
     environment: 'study',
-    prop: 'banded',
+    prop: 'grounded',
     vegetation: 'still',
     cloth: 'settled',
     actionFixture: action,
@@ -203,6 +203,7 @@ function update(now: number): void {
           place: stop().label,
           light: select('world-light').value,
           route: select('route').value,
+          atmosphere: select('world-atmosphere').value,
           viewport: [canvas.clientWidth, canvas.clientHeight],
           shadowQuality: select('world-shadows').value,
           stagedMotion: motion,
@@ -291,21 +292,23 @@ button('fire').onclick = () => {
   button('fire').setAttribute('aria-pressed', String(fire));
   publish();
 };
-button('capture').onclick = () =>
-  capture.image(
-    'openlegend-' + stop().id + '-' + select('world-light').value + '-' + select('route').value,
-  );
+const captureName = () =>
+  [
+    'openlegend',
+    stop().id,
+    select('world-light').value,
+    select('route').value,
+    select('world-atmosphere').value,
+  ].join('-');
+button('capture').onclick = () => capture.image(captureName());
 button('record').onclick = () => {
   // Orbit comparisons begin from the same camera, so recorded alternatives
   // can be played together without unrelated angular offsets.
   if (orbit) setCamera();
-  button('record').disabled = capture.record(
-    'openlegend-' + stop().id + '-' + select('world-light').value + '-' + select('route').value,
-    (message) => {
-      button('record').disabled = false;
-      status.textContent = message;
-    },
-  );
+  button('record').disabled = capture.record(captureName(), (message) => {
+    button('record').disabled = false;
+    status.textContent = message;
+  });
   if (button('record').disabled) status.textContent = 'Recording 8 seconds…';
 };
 button('measure').onclick = () => {

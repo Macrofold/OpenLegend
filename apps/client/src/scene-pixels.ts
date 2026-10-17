@@ -7,10 +7,13 @@ export const needsFinePixels = (width: number, height: number, depth: number): b
   Math.max(width, height, depth) <= 1.6;
 
 export function markPixelDetail(material: pc.StandardMaterial, device: pc.GraphicsDevice): void {
-  const output = material.shaderChunks.glsl.get('outputAlphaPS') ??
+  const output =
+    material.shaderChunks.glsl.get('outputAlphaPS') ??
     pc.ShaderChunks.get(device).get('outputAlphaPS')!;
-  material.shaderChunks.glsl.set('outputAlphaPS',
-    output + '\n#if LIT_BLEND_TYPE == NONE\n gl_FragColor.a = 0.5;\n#endif\n');
+  material.shaderChunks.glsl.set(
+    'outputAlphaPS',
+    output + '\n#if LIT_BLEND_TYPE == NONE\n gl_FragColor.a = 0.5;\n#endif\n',
+  );
 }
 
 /** The opaque HDR alpha channel is unused by the ordinary world. Tag scenery

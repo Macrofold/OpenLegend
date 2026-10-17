@@ -41,7 +41,7 @@ export interface ArtTreatment {
   vegetation: 'still' | 'smooth' | 'held';
   atmosphere: 'baseline' | 'restrained' | 'survival';
   effects: 'direct' | 'buffer';
-  prop: 'authored' | 'generated' | 'carved' | 'banded' | 'cache';
+  prop: 'authored' | 'generated' | 'carved' | 'banded' | 'cache' | 'grounded';
   actionFixture: boolean;
 }
 export const baselineArt: Readonly<ArtTreatment> = Object.freeze({
@@ -83,7 +83,7 @@ export const candidateArt: Readonly<ArtTreatment> = Object.freeze({
   atmosphere: 'survival',
   subjectDetail: 'small',
   motion: 'held12',
-  prop: 'banded',
+  prop: 'grounded',
   surfaceArt: 'rigid',
   cloth: 'settled',
   surfaceEdges: 'filtered',
@@ -274,7 +274,7 @@ export function mountArtControls(
     vegetation: ['still', 'smooth', 'held'],
     atmosphere: ['survival', 'restrained', 'baseline'],
     effects: ['direct', 'buffer'],
-    prop: ['carved', 'banded', 'cache', 'authored', 'generated'],
+    prop: ['grounded', 'carved', 'banded', 'cache', 'authored', 'generated'],
   };
   const controls = new Map<keyof ArtTreatment, HTMLSelectElement>();
   const labels: Record<string, string> = {

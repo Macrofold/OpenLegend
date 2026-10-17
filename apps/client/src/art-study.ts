@@ -193,7 +193,13 @@ export class ArtStudy {
       target.addEventListener(event, handler, { signal: this.events.signal });
     for (const id of ['subject', 'versions']) on(element(id), 'change', () => void this.show());
     const captureName = () =>
-      'openlegend-asset-' + [subject.value.replace(':', '-'), ...['versions', 'light', 'framing', 'pixel-treatment'].map(id => element<HTMLSelectElement>(id).value)].join('-');
+      'openlegend-asset-' +
+      [
+        subject.value.replace(':', '-'),
+        ...['versions', 'light', 'framing', 'pixel-treatment'].map(
+          (id) => element<HTMLSelectElement>(id).value,
+        ),
+      ].join('-');
     on(element('save-image'), 'click', () => {
       this.invalidate();
       this.capture.image(captureName());
@@ -349,8 +355,13 @@ export class ArtStudy {
     });
     this.invalidate();
   }
-  private prepare(node: pc.Entity, materials: Map<pc.StandardMaterial, pc.StandardMaterial>, asset: Choice): void {
-    const fine = needsFinePixels(...asset.bounds.max.map((v, i) => v - asset.bounds.min[i]!) as [number, number, number]);
+  private prepare(
+    node: pc.Entity,
+    materials: Map<pc.StandardMaterial, pc.StandardMaterial>,
+    asset: Choice,
+  ): void {
+    const { min, max } = asset.bounds;
+    const fine = needsFinePixels(max[0]! - min[0]!, max[1]! - min[1]!, max[2]! - min[2]!);
     for (const component of node.findComponents('render')) {
       if (!(component instanceof pc.RenderComponent)) continue;
       for (const mesh of component.meshInstances) {
