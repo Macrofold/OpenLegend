@@ -35,14 +35,16 @@ This is an evaluation decomposition, not a proposal for six additional autonomou
 
 ### Current creative-writing preference
 
-Arena's creative-writing board, dated 15 October 2026 when checked, placed the following two entries at the top. The Gemini entry was explicitly preliminary. These are human-preference ratings from that evaluation setting; the overlapping intervals do not support declaring a clear winner. [Arena creative-writing leaderboard](https://arena.ai/leaderboard/chat/text/creative-writing).
+Arena's creative-writing board was dated 15 October 2026 when checked. The table shows its two leading entries and selected current OpenAI entries, not the complete ranking. These are human-preference ratings; High and Max are provider-specific settings, not equal computation budgets. [Arena creative-writing leaderboard](https://arena.ai/leaderboard/chat/text/creative-writing).
 
 | Entry | Displayed rating | Displayed uncertainty | Votes |
 | --- | ---: | ---: | ---: |
 | Claude Opus 5.5, High | 1519 | ±15 | 1,945 |
 | Gemini 4 Argon, High, preliminary | 1516 | ±19 | 1,057 |
+| GPT-6.1 Sol, Max | 1458 | ±17 | 1,419 |
+| GPT-6 Astra, Max | 1450 | ±12 | 2,718 |
 
-This supports giving both an audition. It does not establish which produces better survival-adventure dialogue, a more coherent character after a long absence, a more readable item tooltip, or better native action proposals. Preferences can reward fluency, elaborate prose, or agreeable responses that have little value in a fast game interaction. It also says nothing about the quality of the image generator an agent happens to call.
+The displayed ratings favor Claude and Gemini over these selected OpenAI entries, with non-overlapping displayed intervals between those groups. Claude versus Gemini remains unresolved because their intervals overlap and Argon is preliminary. This supports prioritizing Claude/Gemini for creative-authoring auditions. It does not establish OpenLegend character fidelity, UI quality, latency, or the performance of the actual configured incumbent. Preference can reward eloquence or verbosity that does not help a fast game interaction.
 
 ### Useful benchmarks and research methods
 

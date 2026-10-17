@@ -86,7 +86,7 @@ The research supports this pattern across traditional procedural production, new
 
 **Evidence.** The audit found useful official PlayCanvas and React Aria skills, a version-gated runtime inspector, a concrete Substance Designer adapter, and a Material Maker bridge whose central operations are still stubs. Actual source inspection changed the recommendation. [Skills dossier](04-skills-and-tooling.md).
 
-**Application and limit.** Prove a skill on one task and a second representative output. Preserve a short useful instruction after a recurring error. An “official” badge does not guarantee compatibility, and a popular repository is not a substitute for an accepted result. Do not install overlapping bridges without a distinct need.
+**Application and limit.** Before broadly adopting a recurring production workflow, verify a second representative output. Simple reference skills do not need a separate production trial. Preserve a short useful instruction after a recurring error. An “official” badge does not guarantee compatibility, and a popular repository is not a substitute for an accepted result. Do not install overlapping bridges without a distinct need.
 
 ## 9. Preserve native authority while using AI for interpretation and expression
 
@@ -116,7 +116,7 @@ The research supports this pattern across traditional procedural production, new
 
 **Evidence.** The asset and voice APIs expose distinct output and timing stages. Runtime character examples and provider claims do not eliminate downstream validation, audio preparation or context selection. [Assets/audio](07-image-3d-and-audio-models.md), [case studies](02-developer-case-studies.md).
 
-**Application and limit.** Establish offline production quality before introducing a live dependency. Respect the project's existing retry, budget and cancellation rules. Faster drafts are useful, but a partially correct result must not be presented as a completed world action.
+**Application and limit.** Reuse already-qualified paths. For a new generation dependency or output family, establish offline production quality before introducing live delivery. Respect the project's existing retry, budget and cancellation rules. Faster drafts are useful, but a partially correct result must not be presented as a completed world action.
 
 ## 12. Measure total accepted-output cost and revision effort
 
@@ -126,7 +126,7 @@ The research supports this pattern across traditional procedural production, new
 
 **Evidence.** The supplied demo's cache-heavy usage and sponsored access illustrate accounting confounds. Vendor case studies rarely disclose full rejection and finishing costs. [Seed audit](12-supplied-examples-and-community.md), [production evidence](02-developer-case-studies.md).
 
-**Application and limit.** Use accepted assets or accepted player moments as the denominator; show correction minutes separately if labor has no agreed dollar valuation. A workflow with zero acceptable outputs has not achieved a cheap unit cost. Do not disguise uncertain measurements with a precise return-on-investment estimate.
+**Application and limit.** Within a defined repeated task or equivalent slice, use accepted assets or accepted player moments as the denominator; do not combine scenes of different scope into one unit count. Show correction minutes separately if labor has no agreed dollar valuation. A workflow with zero acceptable outputs has not achieved a cheap unit cost. Do not disguise uncertain measurements with a precise return-on-investment estimate.
 
 ## 13. Optimize the observed bottleneck and preserve what is already valuable
 
@@ -159,3 +159,4 @@ The research supports this pattern across traditional procedural production, new
 | Engine and optimization decisions | Current PlayCanvas slice | A named measured limitation before a port or new infrastructure |
 
 The [workflows](10-openlegend-workflows.md) turn these principles into concrete task sequences. The [evaluation plan](11-evaluation-and-adoption.md) defines how to decide whether the proposed changes actually help.
+

@@ -90,6 +90,8 @@ Give the incumbent agent and one challenger the same current repository revision
 
 Measure whether the result fits the brief, remains coherent, is readable at target size, preserves behavior, and needs less correction. Record elapsed time, human editing, failed iterations and external tool charges. A screen that wins a still-image vote but breaks interaction has not won the complete task.
 
+A separate optional comparison can test visual-design judgment itself: give candidates the same brief, constraints and assets, allow each to propose a composition, and use one fixed implementation path to render those designs. Label it separately from the fixed-exemplar implementation test, which deliberately holds the main design decisions constant.
+
 ### Experiment B: asset production
 
 Keep the screen and item list fixed. Compare the existing art workflow with one or two specialized generators using equivalent references. Inspect silhouette recognition, consistency across the family, transparent edges, small-size readability, editable/reproducible output and correction time. The language director may stay constant.

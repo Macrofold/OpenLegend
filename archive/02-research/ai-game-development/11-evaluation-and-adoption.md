@@ -34,7 +34,7 @@ The suggested sample sizes below are **starting designs**, not a statistical gua
 
 Use one representative populated inventory with real data. Prepare a fixed brief and complete-screen exemplar. For the **art comparison**, use roughly eight actual item examples spanning relevant shapes/materials, then compare the current art route with GPT Image 2.5 and Nano Banana 2.1 where those services are authorized and available. Keep reference quality and output requirements equivalent.
 
-For the **agent comparison**, give the incumbent and one challenger the same approved art kit, design handoff, current repository state and interaction requirements. An AI design tool may help create the handoff, but record that stage and hold it constant in the implementation comparison.
+For the **implementation-agent comparison**, give the incumbent and one challenger the same approved art kit, design handoff, current repository state and interaction requirements. An AI design tool may help create the handoff, but record that stage and hold it constant in the implementation comparison. This isolates execution of a design, not the ability to originate a better one. If design judgment remains the question, add a separate brief-to-composition audition with the same constraints/assets and one fixed implementation path for the resulting designs.
 
 Review in a blinded order where practical. Score family consistency, item recognition, hierarchy, readability and fidelity to the brief. Independently check behavior: selection, equipment, quantities, long names, unavailable art, pending/rejected operations, changes while the panel is open, focus and return to world control.
 
@@ -64,7 +64,7 @@ Keep the brief, reference quality, required parts, camera and material constrain
 
 **Decision:** select by accepted outputs and required repair. A route that frequently fuses important parts or fails the output contract can stop early. Record rejected assets rather than repeatedly sampling until a lucky example wins.
 
-**Deliverables:** candidate and accepted files, source lineage, concrete defect list and total cost/time. [3D assessment](07-image-3d-and-audio-models.md).
+**Deliverables:** candidate and accepted files, source lineage, concrete defect list and total cost/time. If installation or representation replacement is included, check a failed/delayed load and a reload preserve the object, its current state and adequate fallback under the existing publication contract. [3D assessment](07-image-3d-and-audio-models.md), [appearance owner](../../../docs/invention-art-pipeline.md).
 
 ### Trial D: one character action and a second compatible case
 
@@ -88,7 +88,7 @@ For authoring, use a few real briefs: a person with conflicting concerns, an enc
 
 For runtime behavior, a suggested initial design is about twenty fixed-context situations per candidate, spanning the scenario categories in the [narrative dossier](06-models-for-stories-and-characters.md). Repeat the difficult or unstable cases. Then use a few short closed-loop sessions to observe how choices compound. A longer persistence test should target a candidate that first passes the shorter validity checks; this avoids paying for a lengthy session that repeats an already disqualifying failure.
 
-Keep invalid actions, forbidden knowledge, fabricated memories and policy violations outside the aesthetic score. Among valid responses, judge distinct voice, concision, plausible agency and meaningful invitation to play. Include both earned personality change and circumstances where change would be ungrounded.
+Keep invalid actions, forbidden knowledge, fabricated memories and policy violations outside the aesthetic score, while retaining all attempts in the validity denominator. Among valid responses, judge distinct voice, concision, plausible agency and meaningful invitation to play. Include both earned personality change and circumstances where change would be ungrounded. For a candidate reaching closed-loop evaluation, include a supported proposal with a native accepted or rejected outcome, a subsequent response and a revisit; intended or rejected actions must not become remembered successes.
 
 **Decision:** adopt for the demonstrated role. A strong story author need not become every ordinary speech route. Open-model serving becomes a later comparison if a measured need for control, adaptation or recurring economics justifies its operating work.
 
@@ -162,7 +162,7 @@ A useful unit-cost calculation divides attributable total cost by accepted compa
 | Attractive outputs but repeated repair or integration failure | Keep as a concept/candidate tool or stop the trial; do not call it production ready |
 | Comparable quality with lower total work | Prefer the simpler maintainable route, accounting for setup and recurring costs |
 | Small or inconsistent preference gap | Retain the incumbent and the useful reference/asset improvements; gather more only if the decision matters |
-| A specific engine capability remains a material blocker after the current slice is improved | Run the same slice in Godot and compare the full delivery workflow |
+| A measured engine capability blocks an important part of the slice and no adequate current-stack solution is established | Investigate that constraint with the same slice in Godot; include the full delivery workflow |
 | New output family or changed model/version invalidates relevant evidence | Recheck the affected qualification, reusing valid existing evidence elsewhere |
 
 The research recommends no automatic engine migration, global provider switch, mass skill installation or custom model-training project. Those decisions require evidence about the concrete task that would justify their ongoing cost.
@@ -172,3 +172,4 @@ The research recommends no automatic engine migration, global provider switch, m
 The requested desk research, source appraisal, project mapping, skills audit, comparative model assessment and proposed production procedures are the deliverable. The unrun experiments above are the necessary next evidence for adoption; they are explicitly outside the completed research's claims.
 
 The immediate value is already concrete: a better first production target, specific compatible skills to inspect, credible model/asset challengers, known weak leads to avoid, and tests that distinguish an impressive demonstration from a workflow that helps build OpenLegend.
+
