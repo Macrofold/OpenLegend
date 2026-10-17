@@ -4,13 +4,11 @@
 | ----------- | -------------------------------------------------------------- | ------------ |
 | In progress | Design complete; implementation and qualification remain open. | 2026-10-17   |
 
-## Design baseline and work plan
+## Design baseline and integration
 
-Repository `Macrofold/OpenLegend`, refreshed `main` at `0eb7358f251d1ab706592ccb6e9829e98c729fe9`; design branch `codex/combat-reactions-and-animal-escape-20261017`. The [feature specification](combat-and-threat-responses-feature-spec.md) records Mike's accepted scope. This task changes documentation only: estimated executable logic change in this branch is **zero**. Future implementation crosses domain, world policy, server cognition and player controls and therefore needs staged integration and separate runtime qualification.
+The implementation baseline is `Macrofold/OpenLegend` main at `0eb7358f251d1ab706592ccb6e9829e98c729fe9`. The [feature specification](combat-and-threat-responses-feature-spec.md) defines the accepted scope; [repertoire scope](combat-and-threat-responses-repertoire-review.md) relates it to broader possibilities. Implementation crosses domain mechanics, world policy, server cognition and player controls, so delivery requires staged integration and separate runtime qualification.
 
-The design traces existing owners, specifies physical/contact authority, records native animal policy, defines actor-permitted evidence and appraisal, binds both Decision API stages and extends the implemented contextual controls. The [repertoire review](combat-and-threat-responses-repertoire-review.md) records every repertoire's scope and relevant entries without promoting all alternatives into obligations. The selected design-register portions, focused tasks, world contracts, limits and significant decision history share these decisions.
-
-No game or provider experiments are run for this design. Additional Jev cost is **$0**, cumulative task total **$0**. Implementation must measure actual calls, receipts, latency and costs; a claimed faster model is not evidence of faster complete reactions.
+Implementation must measure actual calls, receipts, latency and costs. A faster model alone does not establish faster complete reactions.
 
 ## Existing owners and change boundaries
 
@@ -53,7 +51,7 @@ CTR identifiers name delivery responsibilities, not new packages, services or on
 | [ND13](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization): stable opponent-specific Command-click               | CTR02, CTR09, CTR10 | [COMBAT ND13](../../archive/02-research/game-inspiration/synthesis/combat-and-encounters.md#nd13--predictable-opponent-specific-quick-actions). Designed here; general ranking/counting, remapping and other input/device extensions remain separate.      |
 | Supporting immediate character/animal behavior                                                                                                                      | CTR03–CTR08, CTR10  | Reuse DG02/CE and existing native actors. This does not complete ND06 ecology/generations or ND04/DG23 long-term character and relationship change.                                                                                                        |
 
-The [feature specification](combat-and-threat-responses-feature-spec.md) owns player journeys and why these choices serve the game. The [42-file repertoire review](combat-and-threat-responses-repertoire-review.md) records changed and retained ideas. Current physical implementation remains the baseline until each selected module actually ships.
+The [feature specification](combat-and-threat-responses-feature-spec.md) owns player journeys and why these choices serve the game. The [repertoire scope](combat-and-threat-responses-repertoire-review.md) identifies the selected contributions and future possibilities. Current physical implementation remains the baseline until each selected module actually ships.
 
 ## Performance questions answered before implementation
 
@@ -447,19 +445,7 @@ The first implementation has no unanswered product question that blocks these mo
 
 Later owner decisions remain explicit and do not block this slice: richer material destruction/penetration; additional animal ecology/cognition; long-term relationship and legal consequences; broader indirect hazards/background conflict fairness; explicit repeat-attack or team tactics; and any expansion of the initial perception or locomotion capabilities. The selected no-PvP-enrollment rule is settled for this world, not deferred back to those later questions.
 
-If a required native condition or supported API cannot implement the exact declared behavior, record the concrete missing computation in CTR's owning module and add the smallest compatible capability. Do not silently narrow coverage, force Ada, drop dangers, substitute an automatic reflex or mark the module complete from a fixture. This design authorizes implementation planning; this documentation task does not claim runtime delivery.
-
-## Documentation review and verification — October 17, 2026
-
-This is a documentation-only design at the pinned main revision above. The branch changes 90 documentation/research files, including seven new design/contract/tracker files, and no runtime code or package configuration.
-
-Independent content reviews covered the physical/world-policy and Command contracts, native animal continuation and person-decision/appraisal contracts, the complete changed repertoire text, scoped register dispositions and all affected consumer notes. Concrete corrections include separate hostile/movement revisions, overlapping attack membership, exact social/held-aim/default precedence, own versus incoming retention, source-attributed collateral after departure, precise safety and near-passage timing, small visible refuge frontiers, rest/exhaustion, RNG callback order, post-appraisal stage-two revisions, self-feedback suppression, one appraisal write per stacking key and separate native versus durable-intake cursors.
-
-The architecture review also resolves concrete execution ambiguities in place: shared prepared choices retain semantic purposes and transitions; additive evidence cannot perpetually cancel a valid response; recognition precedes reuse of pair history; animal profile continuity and anonymous-danger expiry are exact; ranged approach no longer derives from universal animal speed. A route-blocked animal can settle after actual danger clears, relevance preserves uncertainty, and observed attack cues preserve a valid known-opponent Speak override. The earliest connected paths now qualify independent Ada behavior and usable hunting before unrelated breadth. These corrections add no runtime implementation or new gameplay subsystem.
-
-The [repertoire review](combat-and-threat-responses-repertoire-review.md#verification-and-evidence-limits) owns the final formatting, link, catalogue and research-matrix check results, actual semantic-reading scope and retained classifications. Existing maintainer checkbox states remain unchanged; the new CTR tracker separates completed design preparation from unchecked implementation gates.
-
-These checks establish document consistency and reviewability. They do not establish runtime correctness, successful animal navigation, independent Ada behavior, provider latency, population capacity, browser usability or enjoyment. The CTR10 gates above remain open. No game/provider experiment ran: additional Jev cost **$0**, cumulative task total **$0**.
+If a required native condition or supported API cannot implement the exact declared behavior, record the concrete missing computation in CTR's owning module and add the smallest compatible capability. Do not silently narrow coverage, force Ada, drop dangers, substitute an automatic reflex or mark the module complete from a fixture. Implementation and runtime qualification remain open in the tracker.
 
 ## Maintained records
 

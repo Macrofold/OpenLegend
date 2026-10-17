@@ -1,10 +1,10 @@
 # Combat and threat responses
 
-**Selected design complete, October 17, 2026; implementation and qualification not started.** Mike selected efficient native animal escape, world-enabled PvP and collateral, personality-grounded Ada retaliation, complete cognition choices, generalized appraisal, two-stage prepared response options, precise reconsideration and predictable contextual combat controls. The [feature specification](../projects/combat-and-threat-responses-feature-spec.md) and [technical design](../projects/combat-and-threat-responses-tech-design.md) own the complete contract. This branch changes documentation only.
+**Selected design complete, October 17, 2026; implementation and qualification not started.** The selected scope is efficient native animal escape, world-enabled PvP and collateral, personality-grounded Ada retaliation, complete cognition choices, generalized appraisal, two-stage prepared response options, precise reconsideration and predictable contextual combat controls. The [feature specification](../projects/combat-and-threat-responses-feature-spec.md) and [technical design](../projects/combat-and-threat-responses-tech-design.md) own the complete contract.
 
 ## Delivery sequence
 
-Every CTR item below is **Designed; implementation not started**. A checked design task does not satisfy a native, independent-character, interface or playability gate. Implement at the existing owners and keep each admitted path usable; avoid separately shipping a new policy while an old caller still enforces the opposite one.
+Every CTR item below is **Designed; implementation not started**. Design completion does not satisfy a native, independent-character, interface or playability gate. Implement at the existing owners and keep each admitted path usable; avoid separately shipping a new policy while an old caller still enforces the opposite one.
 
 | ID    | Delivery                                                     | Dependencies                                                   | Completion evidence                                                                                                                     |
 | ----- | ------------------------------------------------------------ | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
@@ -26,14 +26,6 @@ CTR01 and CTR05 can begin together. CTR03–CTR04 and CTR06–CTR08 can proceed 
 - As soon as actual personal evidence, complete choices, appraisal, the two-stage route and minimum harm/result intake work together, run the already selected twelve Ada baselines, real-time repeated-assault/punch-and-run comparison and complete reaction timings. This early gate does not depend on finished bird/species integration, Command-click continuity or the two-slot scheduling migration. The required independent choice and 900-game-second baseline window stay unchanged.
 - As soon as the first grounded animal profile works through actual combat, run an ordinary hunt through harvesting, cooking and eating with obtainable supplies. Compare the existing contact/ranged offers, visible preparation, near-passage motion changes and actual misses/range loss before completing every species integration. Useful escape alone does not pass this gate.
 - Use failures to repair the affected shared path before broadening it. Do not manufacture a passing character choice, weaken animal perception/speeds or add automatic repeat attacks to hide latency. Other independent work can proceed. Reuse valid early evidence at final integration; rerun the affected cases when later changes invalidate it. Final CTR10 still covers the complete native, character, browser, density and continuation requirements.
-
-## Completed design preparation
-
-- [x] Trace current main at `0eb7358f251d1ab706592ccb6e9829e98c729fe9`, including the already implemented Command-click path.
-- [x] Select the world policies, behavior, option catalogue, numeric tuning, ownership, persistence, refusal and meaningful failure cases.
-- [x] Separate ordinary native animals from independent humanlike cognition; require actual voluntary Ada retaliation in the finite baseline.
-- [x] Assign implementation modules and distinct acceptance gates; preserve broader relationship, ecology, recovery and control work.
-- [x] Reconcile the selected ND11/ND13 portions and review repertoire coverage in the [review record](../projects/combat-and-threat-responses-repertoire-review.md).
 
 ## CTR01 — World permission and actual contact
 
@@ -143,11 +135,9 @@ These cases qualify the shared owners changed by CTR05/CTR07/CTR08. Use existing
 
 Qualify changed ordinary routing alongside the two-call threat route, including empty/no-intervention, deliberate continuation, uncertainty, native refusal, partial component acceptance and actual provider failure. Their existing meanings and spending rules remain distinct. Broader AG/AC/CR acceptance stays with those trackers; this matrix is the single owner of the selected cross-consumer regression requirement.
 
-No runtime, browser or provider work has been run for this design: additional Jev cost **$0**, cumulative task total **$0**.
-
 ## Maintained records
 
-- Scope and mechanics: [Feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire review](../projects/combat-and-threat-responses-repertoire-review.md).
+- Scope and mechanics: [Feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire scope](../projects/combat-and-threat-responses-repertoire-review.md).
 - Concrete restrictions: [Combat/threat limits](../limits/combat-and-threat-responses.md), [base world](../limits/base-world.md), [ranged/evasion](../limits/parallel-batch-06-rivals-and-contested-ground.md), [feelings](../limits/feelings.md), [UI tuning](../limits/ui-ux.md).
 - Design dispositions: [ND11](needs-design.md#nd11--human-conflictrecovery-and-npc-ghost-continuity), [ND13](needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization).
 - Related delivery: [Base world](base-world.md), [Batch 06](parallel-batch-06-rivals-and-contested-ground.md), [character experience](character-experience.md), [cognition](cognition-redesign.md), [UI/UX](ui-ux.md).

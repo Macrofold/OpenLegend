@@ -197,7 +197,7 @@ Unremovable processes and overbroad static estimates consume capacity; local def
 
 ### C15
 
-**Selected current gameplay change, October 17; design complete, implementation open.** Mike now allows direct human PvP and actual bodily projectile collateral in the bundled world. Current source already obtains target admission from installed body policy; the former claim of a universal kernel ban was stale. [MP13](../limits/multiplayer.md#mp13), [CTR limits](../limits/combat-and-threat-responses.md#removed-or-superseded-policies) and the [world profiles](../worlds/base/lifecycle-and-protection.md#human-conflict-and-recovery) own current/selected truth.
+**Selected bundled-world policy: design complete, implementation open.** Direct human PvP and actual bodily projectile collateral are allowed by the selected design. Current target admission uses installed body policy. [MP13](../limits/multiplayer.md#mp13), [CTR limits](../limits/combat-and-threat-responses.md#removed-or-superseded-policies) and the [world profiles](../worlds/base/lifecycle-and-protection.md#human-conflict-and-recovery) own current/selected truth.
 
 [CTR01–CTR02/CTR09/CTR10](combat-and-threat-responses.md) owns the complete change and qualification across admission, released contact, observation, review and shortcuts. No separate opt-in mode is a prerequisite in this world. Keep this candidate open until that implementation is complete; preserve inactive protection, exact authority and other-world policy support.
 

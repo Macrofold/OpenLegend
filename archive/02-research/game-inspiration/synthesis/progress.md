@@ -6,7 +6,7 @@
 
 ## Current snapshot — October 17, 2026
 
-The focused intelligence/simulation pass retains published `Macrofold/OpenLegend` main at `0c12398e32e7c9578e18de07bbe79d39b4827208` as its source base and `research/intelligent-simulation-2026-10-14` as its original work branch. The October 17 combat-response pass inspected four existing dossiers at `0eb7358f251d1ab706592ccb6e9829e98c729fe9` plus their named primary sources. This update changes only their COMBAT cells; earlier source, structural-review and NPC provenance remains intact. Counts come from the actual matrices and inventory, not a second per-source status list.
+The focused intelligence/simulation pass retains published `Macrofold/OpenLegend` main at `0c12398e32e7c9578e18de07bbe79d39b4827208` as its source base and `research/intelligent-simulation-2026-10-14` as its original work branch. The combat-response synthesis uses four existing dossiers at `0eb7358f251d1ab706592ccb6e9829e98c729fe9` plus their named primary sources; its exact scope and provenance are in the [assessment records](assessment-records.md#combat-pass--october-17-2026). Counts come from the actual matrices and inventory, not a second per-source status list.
 
 | Measure                     | State                                                                                                                                                                                                       |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -18,7 +18,7 @@ The focused intelligence/simulation pass retains published `Macrofold/OpenLegend
 | NPC column                  | 30 scoped incorporations, 130 U and 16 W. The focused pass does not complete every source or all relationship subtopics.                                                                                    |
 | COMBAT column               | Four scoped incorporations, 155 U and 17 W; broader combat research remains open.                                                                                                                           |
 | World matrix                | Unchanged: 29 listed world dossiers × 35 = 1,015 cells: 903 U and 112 X.                                                                                                                                    |
-| New incorporation           | Thirty source-to-NPC assessments and four source-to-COMBAT assessments link exact scopes and stable lessons. The October 17 pass changes no other topic or world cell.                                      |
+| New incorporation           | Thirty source-to-NPC assessments and four source-to-COMBAT assessments link exact scopes and stable lessons.                                                                                                |
 | Existing owners             | X retains unreconciled evidence, not an assertion that earlier learning is absent.                                                                                                                          |
 
 The October 14 game matrix was byte-checked against a locally validated expected document before publication: blob `9c090e25e3fb106c48cd7679b4a3f3d5cd0e9f46`, published in commit `02966e0bae31482b1f5d06191a687506f82c2593`. The check preserved the baseline's exact bytes before applying only 22 existing NPC changes and eight new rows, then verified 176 unique keys, 35 unique topic columns, equal row widths and valid codes. This is a document-integrity check, not a runtime test.
@@ -100,7 +100,7 @@ Research headings do not count as registered features. Completing a design does 
 
 ## October 17 focused combat-response incorporation
 
-The [COMBAT guide](combat-and-encounters.md) and [four assessment records](assessment-records.md#combat-pass--october-17-2026) incorporate scoped evidence from Rain World, Kenshi, Final Fantasy XIV and Old School RuneScape. The matrix changes exactly those four COMBAT cells from U to I. No game identity, other topic, NPC assessment or fictional-world cell changes. The guide stays In progress because the wider combat topic has not been surveyed. Its selected ND11/ND13 design handoff is separate from runtime acceptance.
+The [COMBAT guide](combat-and-encounters.md) and [four assessment records](assessment-records.md#combat-pass--october-17-2026) incorporate scoped evidence from Rain World, Kenshi, Final Fantasy XIV and Old School RuneScape. The guide stays In progress because the wider combat topic has not been surveyed. Its selected ND11/ND13 design handoff is separate from runtime acceptance.
 
 ## Historical initialization and corrections
 

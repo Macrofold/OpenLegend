@@ -2,7 +2,7 @@
 
 ## Combat and immediate threat responses
 
-[Combat and threat responses](combat-and-threat-responses.md) owns CTR01–CTR10: selected world PvP/collateral, native animal refuge escape, complete busy-context choices, personal threat appraisal, two-stage voluntary response, exact reconsideration and stable per-opponent Command-click. The [feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire review](../projects/combat-and-threat-responses-repertoire-review.md) and [limits](../limits/combat-and-threat-responses.md) are complete design preparation. Runtime and independent acceptance remain open; ND11/ND13 are closed only for their explicitly covered design portions.
+[Combat and threat responses](combat-and-threat-responses.md) owns CTR01–CTR10: selected world PvP/collateral, native animal refuge escape, complete busy-context choices, personal threat appraisal, two-stage voluntary response, exact reconsideration and stable per-opponent Command-click. The [feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire scope](../projects/combat-and-threat-responses-repertoire-review.md) and [limits](../limits/combat-and-threat-responses.md) are complete design preparation. Runtime and independent acceptance remain open; ND11/ND13 are closed only for their explicitly covered design portions.
 
 ## Intelligent individuals and efficient simulation
 
