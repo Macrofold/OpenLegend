@@ -2,6 +2,7 @@ import * as pc from 'playcanvas';
 import { BundledModels } from './bundled-models';
 import generatedChestUrl from './props/generated-chest.glb?url';
 import { ArtMaterials } from './art-treatment';
+import { isFoliageMaterialName, prepareFoliageLight } from './environment-art';
 import { studyAssets } from './study-assets';
 import carved from './props/art-study/source-chests/chest-carved-lid.glb?url';
 import banded from './props/art-study/source-chests/chest-banded-lid.glb?url';
@@ -76,6 +77,11 @@ export class ScenePropResources {
     const material = new ShadowMaterial(this.sun).copy(source);
     setVisibilityStencil(material, ordinaryStencil);
     this.art.prepare(material);
+    if (isFoliageMaterialName(source.name)) {
+      material.twoSidedLighting = false;
+      prepareFoliageLight(material, this.app.graphicsDevice);
+      material.specularityFactor = 0.04;
+    }
     if (fine) markPixelDetail(material, this.app.graphicsDevice);
     material.update();
     this.prepared.set(source, material);

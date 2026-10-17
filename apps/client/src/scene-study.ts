@@ -80,8 +80,16 @@ function treatment(): ArtTreatment {
             : 'shared',
     atmosphere: select('world-atmosphere').value as ArtTreatment['atmosphere'],
     surfaceArt: route === 'control' ? 'plain' : 'rigid',
-    groundPalette: select('world-foliage').value === 'open' ? 'understory' : 'woodland',
-    environment: select('world-foliage').value === 'open' ? 'canopy' : 'study',
+    assetSources: select('world-assets').value as ArtTreatment['assetSources'],
+    groundPalette: ['natural', 'open'].includes(select('world-foliage').value)
+      ? 'understory'
+      : 'woodland',
+    environment:
+      select('world-foliage').value === 'natural'
+        ? 'natural'
+        : select('world-foliage').value === 'open'
+          ? 'canopy'
+          : 'study',
     foliageLight: select('world-foliage').value === 'original' ? 'original' : 'diffuse',
     prop: 'grounded',
     vegetation: 'still',
@@ -219,6 +227,7 @@ function update(now: number): void {
           route: select('route').value,
           atmosphere: select('world-atmosphere').value,
           foliage: select('world-foliage').value,
+          assetSources: select('world-assets').value,
           viewport: [canvas.clientWidth, canvas.clientHeight],
           shadowQuality: select('world-shadows').value,
           stagedMotion: motion,
@@ -272,6 +281,7 @@ for (const id of [
   'world-motion',
   'world-atmosphere',
   'world-foliage',
+  'world-assets',
 ])
   select(id).onchange = () => scene.setArtTreatment(treatment());
 select('world-framing').onchange = setCamera;
@@ -319,6 +329,7 @@ const captureName = () =>
     select('route').value,
     select('world-atmosphere').value,
     select('world-foliage').value,
+    select('world-assets').value,
     select('world-density').value,
   ].join('-');
 button('capture').onclick = () => capture.image(captureName());

@@ -4,6 +4,11 @@ import { random } from './art';
 
 export type EnvironmentSurface = 'foliage' | 'bark' | 'stone' | 'ground' | 'masonry' | 'timber';
 
+/** Material names retained by the finite imported plant sources. Keep the
+ * inspector and prop renderer consistent with offline scenery classification. */
+export const isFoliageMaterialName = (name: string): boolean =>
+  /leav|leaf|twigs|shrub|grass|fern/i.test(name);
+
 /** Thin foliage gathers diffuse sky light across a cluster of leaves. Keep
  * direct shadows and real cutouts; no emissive fill or camera-facing normal.
  * Prepare after ArtMaterials so solid-object light bands are bypassed here. */

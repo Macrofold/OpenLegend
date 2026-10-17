@@ -1,6 +1,6 @@
 import * as pc from 'playcanvas';
 import { ArtMaterials, candidateArt } from './art-treatment';
-import { prepareFoliageLight } from './environment-art';
+import { isFoliageMaterialName, prepareFoliageLight } from './environment-art';
 import { BundledModels, destroyModelApplication } from './bundled-models';
 import { CAMERA_FOV_DEGREES, initialCamera } from './world-camera';
 import { installLocomotion } from './model-animation';
@@ -17,6 +17,7 @@ interface StudyAsset {
   description: string;
   recommended: boolean;
   file: string;
+  fileGroup?: string;
   animatedFile?: string;
   bounds: { min: number[]; max: number[] };
   triangles: number;
@@ -61,7 +62,7 @@ const choices: Choice[] = Object.values(catalogs).flatMap((catalog) =>
   ].map((asset) => ({
     ...asset,
     historical: !catalog.group.startsWith('source-'),
-    url: modelUrls[`./props/art-study/${catalog.group}/${asset.file}`]!,
+    url: modelUrls[`./props/art-study/${asset.fileGroup ?? catalog.group}/${asset.file}`]!,
     motionUrl: asset.animatedFile
       ? modelUrls[`./props/art-study/${catalog.group}/${asset.animatedFile}`]
       : undefined,
@@ -373,7 +374,7 @@ export class ArtStudy {
           material = source.clone();
           // The source leaf cards carry deliberately shaped canopy normals.
           // Reversing them on their backs makes a rotating crown flash dark.
-          if (source.name.startsWith('Leaves')) material.twoSidedLighting = false;
+          if (isFoliageMaterialName(source.name)) material.twoSidedLighting = false;
           for (const texture of [material.diffuseMap, material.normalMap, material.opacityMap]) {
             if (!texture) continue;
             texture.magFilter = pc.FILTER_NEAREST;
@@ -381,7 +382,7 @@ export class ArtStudy {
             texture.mipmaps = true;
           }
           this.art.prepare(material);
-          if (asset.family === 'grounded-conifer' && /twigs/i.test(source.name)) {
+          if (isFoliageMaterialName(source.name)) {
             prepareFoliageLight(material, this.app.graphicsDevice);
             material.specularityFactor = 0.04;
           }

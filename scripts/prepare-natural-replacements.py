@@ -9,6 +9,7 @@ import hashlib
 import importlib.util
 import json
 import math
+import shutil
 from pathlib import Path
 import sys
 
@@ -36,6 +37,8 @@ SUBJECTS = {
     'broadleaf': ('tree_small_02', 'Woodland broadleaf', 5.1, 4.6, None),
     'birch': ('tree_small_02', 'Pale-barked woodland tree', 5.8, 3.5, None),
     'shrub': ('shrub_02', 'Woodland shrub', .9, 1.5, 'shrub_02_b'),
+    'leafy-shrub': ('shrub_04', 'Leafy woodland shrub', .9, 1.5, None),
+    'leafy-berries': ('shrub_04', 'Leafy berry thicket', 1.05, 1.4, None),
     'berry-bush': ('shrub_02', 'Berry thicket', 1.05, 1.4, 'shrub_02_a'),
     'grass': ('grass_medium_01', 'Meadow grass', .44, .6, 'grass_medium_01_mid_b_LOD0'),
     'reeds': ('grass_medium_01', 'Riverside stems', 1, .75, 'grass_medium_01_tall_a_LOD0'),
@@ -114,13 +117,14 @@ def legacy_materials(objects, family):
             obj.data.uv_layers.remove(obj.data.uv_layers[-1])
         if obj.data.uv_layers:
             obj.data.uv_layers.active_index = 0
-    for material in {m for o in objects for m in o.data.materials if m}:
-        name = material.name.lower().split('.')[0]
+    converted = {}
+    for original in {m for o in objects for m in o.data.materials if m}:
+        name = original.name.lower().split('.')[0]
+        # Fresh Principled graphs avoid old render-engine-specific output
+        # nodes. Keeping a legacy output silently exported untextured glTF.
+        material = bpy.data.materials.new(f'{family} {name} albedo')
         material.use_nodes = True
         shader = material.node_tree.nodes.get('Principled BSDF')
-        for node in list(material.node_tree.nodes):
-            if node.type not in ('BSDF_PRINCIPLED', 'OUTPUT_MATERIAL'):
-                material.node_tree.nodes.remove(node)
         image_name = 'bow01D' if family in ('bow', 'arrow') else (
             'doe-'+name if family == 'deer' and name in ('body', 'head') else
             'deer-antlers.png' if name == 'antlers' else name)
@@ -132,9 +136,34 @@ def legacy_materials(objects, family):
             node = material.node_tree.nodes.new('ShaderNodeTexImage')
             node.image = image
             material.node_tree.links.new(node.outputs['Color'], shader.inputs['Base Color'])
+        elif name != 'eye':
+            raise ValueError(f'Missing packed albedo for {family} {name}')
+        converted[original] = material
+    for obj in objects:
+        for slot in obj.material_slots:
+            slot.material = converted[slot.material]
 
 
-def simplify_tree(objects, family):
+def tree_uvs(objects):
+    # The source uses a second UV set only on branches. Consolidating per face
+    # preserves all three source materials while avoiding unused per-leaf UVs.
+    # This also keeps the exact geometry control below the repository file cap.
+    for obj in objects:
+        if obj.type != 'MESH' or len(obj.data.uv_layers) != 2:
+            continue
+        first, second = obj.data.uv_layers
+        for polygon in obj.data.polygons:
+            if 'branches' in obj.data.materials[polygon.material_index].name:
+                for loop in polygon.loop_indices:
+                    first.data[loop].uv = second.data[loop].uv
+        obj.data.uv_layers.remove(second)
+        for material in obj.data.materials:
+            for node in material.node_tree.nodes:
+                if node.type == 'UVMAP':
+                    node.uv_map = first.name
+
+
+def simplify_tree(objects, family, variant):
     """Retain whole source leaves, then simplify each material separately.
 
     Uniform decimation of the full crown erases foliage before bark. Select a
@@ -164,12 +193,12 @@ def simplify_tree(objects, family):
         if any(face.material_index not in leaf_slots for vertex in component for face in vertex.link_faces):
             continue
         number += 1
-        if number % 16:
+        if number % {'clear':6, 'quiet':8, 'weathered':16}[variant]:
             remove.extend(component)
         else:
             center = sum((v.co for v in component), Vector())/len(component)
             for vertex in component:
-                vertex.co = center+(vertex.co-center)*2.4
+                vertex.co = center+(vertex.co-center)*(2.2 if variant == 'clear' else 2.4)
     bmesh.ops.delete(mesh, geom=remove, context='VERTS')
     bmesh.ops.remove_doubles(mesh, verts=list(mesh.verts), dist=.00001)
     mesh.to_mesh(obj.data)
@@ -200,8 +229,41 @@ def simplify_tree(objects, family):
     bpy.context.view_layer.update()
 
 
+def arrange_leafy_shrub(objects, variant):
+    # shrub_04 contains four specimens laid out for an asset sheet. Keep whole
+    # connected pieces from its mature right-hand plant, then compose real
+    # source stems around one foot instead of importing the demonstration row.
+    obj = objects[0]
+    mesh = bmesh.new()
+    mesh.from_mesh(obj.data)
+    remaining = set(mesh.verts)
+    remove = []
+    for start in mesh.verts:
+        if start not in remaining:
+            continue
+        stack = [start]; remaining.remove(start); component = []
+        while stack:
+            vertex = stack.pop(); component.append(vertex)
+            for edge in vertex.link_edges:
+                other = edge.other_vert(vertex)
+                if other in remaining:
+                    remaining.remove(other); stack.append(other)
+        if sum(v.co.x for v in component)/len(component) < -.08:
+            remove.extend(component)
+    bmesh.ops.delete(mesh, geom=remove, context='VERTS')
+    mesh.to_mesh(obj.data); mesh.free()
+    count = {'clear':3, 'quiet':2, 'weathered':1}[variant]
+    for index in range(1, count):
+        branch = obj.copy(); branch.data = obj.data.copy()
+        branch.rotation_euler.z += index*2.2
+        branch.location.x += .012*index
+        bpy.context.collection.objects.link(branch)
+        objects.append(branch)
+    bpy.context.view_layer.update()
+
+
 def foliage_normals(objects, family):
-    if family not in ('broadleaf', 'birch', 'shrub', 'berry-bush', 'grass', 'reeds', 'dry-fiber'):
+    if family not in ('broadleaf', 'birch', 'shrub', 'berry-bush', 'leafy-shrub', 'leafy-berries', 'grass', 'reeds', 'dry-fiber'):
         return
     for obj in objects:
         if obj.type != 'MESH':
@@ -223,6 +285,9 @@ def import_static(sources, family, subject, selector):
     if subject == 'archery':
         with bpy.data.libraries.load(str(sources/'archery-source.blend'), link=False) as (_, loaded):
             loaded.objects = [selector]
+            # Legacy Blender textures are not linked through current nodes, so
+            # appending only the mesh omits this packed source albedo.
+            loaded.images = ['bow01D']
         objects = loaded.objects
         for obj in objects:
             bpy.context.collection.objects.link(obj)
@@ -248,10 +313,28 @@ def prepare_static(sources, family):
     # Independent scenes keep the original high-detail tree out of each edited
     # variant's memory/export. The retained catalog uses a packed staged blend.
     for variant in FINISHES:
+        if family == 'birch' and variant == 'source':
+            original = json.loads((output.parent/'source-natural-broadleaf/catalog.json').read_text())['controls'][0]
+            controls.append({**original, 'id':'natural-birch-source', 'family':'natural-birch',
+                'label':label, 'fileGroup':'source-natural-broadleaf'})
+            continue
         bpy.ops.wm.read_factory_settings(use_empty=True)
         objects = import_static(sources, family, subject, selector)
-        if variant != 'source' and family in ('broadleaf', 'birch'):
-            simplify_tree(objects, family)
+        if family in ('leafy-shrub', 'leafy-berries') and variant != 'source':
+            arrange_leafy_shrub(objects, variant)
+        if family in ('broadleaf', 'birch'):
+            tree_uvs(objects)
+            if variant != 'source':
+                simplify_tree(objects, family, variant)
+                for obj in objects:
+                    for material in obj.data.materials:
+                        shader = material.node_tree.nodes.get('Principled BSDF')
+                        for link in list(shader.inputs['Alpha'].links):
+                            material.node_tree.links.remove(link)
+                        shader.inputs['Alpha'].default_value = 1
+                        # Leaves are actual geometry; the source's BLEND flag
+                        # has no alpha artwork and introduces needless sorting.
+
         # Use evaluated source extents: archery objects can carry rotations
         # whose local dimensions disagree with their actual exported envelope.
         if family in ('sword', 'knife', 'arrow'):
@@ -290,19 +373,23 @@ def prepare_static(sources, family):
                             rgba[:, :3] = (.34+value[:, None]*.55)*np.array([1, 1.02, .96])
                             node.image.pixels.foreach_set(rgba.ravel())
                             node.image.pack()
-        fruit = resources.berries(objects, FINISHES.index(variant)-1) if family == 'berry-bush' and variant != 'source' else []
+        fruit = resources.berries(objects, FINISHES.index(variant)-1) if family in ('berry-bush', 'leafy-berries') and variant != 'source' else []
         source = ('yd, CC0, https://opengameart.org/content/archery-set' if subject == 'archery' else 'Poly Haven, CC0, https://polyhaven.com/a/'+subject)
         description = ('Normalized original geometry and albedo; source control.' if variant == 'source' else
             {'clear':'Retained natural form and readable source color, restrained highlights.',
              'quiet':'Grouped, muted woodland color with restrained fine texture.',
              'weathered':'Worn, lower-saturation material variation on the same natural form.'}[variant])
+        if family in ('leafy-shrub', 'leafy-berries'):
+            description += ' Retained mature source stems composed into one rooted clump; three, two or one stem sets.'
+        if family in ('broadleaf', 'birch') and variant != 'source':
+            description += ' Whole source leaves retained in full, open or sparse crown groupings.'
         if family == 'birch':
             description += ' Authored slender, pale-barked adaptation of a broadleaf source; not a scanned birch.'
         if family == 'reeds':
             description += ' Tall grass source used for the existing riverside fiber clump.'
         identity = 'natural-'+family+'-'+variant
         asset, root = export_asset(objects+fruit, output, identity, 'natural-'+family, label, variant, description,
-            variant == ('quiet' if family in ('broadleaf', 'birch', 'shrub', 'grass') else 'clear'), source)
+            variant == ('quiet' if family in ('broadleaf', 'birch', 'shrub', 'leafy-shrub', 'grass') else 'clear'), source)
         if fruit:
             # A separate fruit-free export preserves the same woody/leaf geometry.
             depleted, _ = export_asset(objects, output, identity+'-depleted', 'natural-'+family, label, variant, description, False, source)
@@ -323,6 +410,7 @@ def prepare_static(sources, family):
                     obj.location.x += index*max(2, span or 2)
     if subject == 'archery':
         records = [json.loads((sources/'archery-download.json').read_text())]
+        shutil.copyfile(sources/'archery-source.blend', ROOT/'art-direction/assets/source-study/yd-archery-source.blend')
     else:
         records = [entry for entry in json.loads((sources/'download-manifest.json').read_text()) if entry['asset'] == subject]
         for record in records:

@@ -44,7 +44,7 @@ def add(data,appearance,path,family='study'):
                 normals/=np.linalg.norm(normals,axis=1)[:,None]
                 source=model['materials'][primitive['material']];pbr=source.get('pbrMetallicRoughness',{})
                 key='study-'+hashlib.sha256((str(path.relative_to(ROOT))+str(primitive['material'])).encode()).hexdigest()[:12]
-                material={'baseColor':pbr.get('baseColorFactor',[1,1,1,1]),'alphaCutoff':source.get('alphaCutoff',.5) if source.get('alphaMode')=='MASK' else 0,'doubleSided':source.get('doubleSided',False),'canopyNormals':any(word in source.get('name','').lower() for word in ['leav','leaf','grass','fern','twigs'])}
+                material={'baseColor':pbr.get('baseColorFactor',[1,1,1,1]),'alphaCutoff':source.get('alphaCutoff',.5) if source.get('alphaMode')=='MASK' else 0,'doubleSided':source.get('doubleSided',False),'canopyNormals':any(word in source.get('name','').lower() for word in ['leav','leaf','grass','fern','twigs','shrub'])}
                 if 'baseColorTexture' in pbr:
                     pixels,digest=image(pbr['baseColorTexture']['index'])
                     if max(pixels.size)>128:
