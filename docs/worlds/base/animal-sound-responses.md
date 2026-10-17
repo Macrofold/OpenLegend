@@ -4,9 +4,9 @@
 
 ## One existing animal controller
 
-This extends the selected [native animal response owner](https://github.com/Macrofold/OpenLegend/blob/ff68a9b4035bff08025af7b0b579fe2316ed1263/docs/worlds/base/animal-responses.md) and its [CTR03–CTR04 execution design](https://github.com/Macrofold/OpenLegend/blob/ff68a9b4035bff08025af7b0b579fe2316ed1263/docs/projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04). Those exact sources are on the separate documentation branch `codex/combat-reactions-and-animal-escape-20261017`; they are a design dependency, not a claim of integrated runtime. The generic-noise exclusion in that design is narrowed here: personally detected ordinary speech now supplies a selected native alarm input. Other noises require an actual admitted emitter; this does not silently enable footsteps or impact sound.
+This extends the selected [native animal response owner](animal-responses.md) and its [CTR03–CTR04 execution design](../../projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04). Those designs are documented here; their native controller remains an implementation dependency, not integrated runtime. The generic-noise exclusion in that design is narrowed here: personally detected ordinary speech now supplies a selected native alarm input. Other noises require an actual admitted emitter; this does not silently enable footsteps or impact sound.
 
-SPK08 depends on the relevant CTR03–CTR04 installed controller, perception, movement, species-profile and continuation seams. If that implementation is unavailable, the acoustic adapter remains pending. Do not introduce temporary duplicate escape state or import unrelated combat/PvP/appraisal work to satisfy the dependency. Reconcile this reference to the canonical owner when the designs integrate.
+SPK08 depends on the relevant CTR03–CTR04 installed controller, perception, movement, species-profile and continuation seams. If that implementation is unavailable, the acoustic adapter remains pending. Do not introduce temporary duplicate escape state or import unrelated combat/PvP/appraisal work to satisfy the dependency.
 
 The installed native response profile remains the single policy selection. Its controller owns routine, escaping, settling and blocked behavior, permitted danger estimates, current cue/cause, refuge, pending proposal generation and exact movement reference. Navigation, flight, body, status and lifecycle keep their existing authority. This acoustic extension adds no second controller, action family, path, fear meter or model scheduler.
 
@@ -14,7 +14,7 @@ The installed native response profile remains the single policy selection. Its c
 
 An animal either continues its current behavior or enters/updates that shared alarm. Alarm produces actual escape movement, alert settling or a truthful blocked condition. A skittish deer can flee when it hears you; a calmer animal can continue. Sound does not automatically classify its speaker as an attacker, change relationships or supply a psychological feeling.
 
-This replaces the earlier SPK design for model-selected animal hold, approach, retreat and separate sound flight. Mike's later native-animal decision favors efficient simulation with many animals. Distinct curiosity approaches, deliberate listening holds, hiding, richer instincts and exceptional cognitive creatures remain future repertoire. The ordinary alert settling already provides a stationary aftermath without another timed hold action. Do not describe continued activity as an investigation that never happened.
+Distinct curiosity approaches, deliberate listening holds, hiding, richer instincts and exceptional cognitive creatures remain future repertoire. Ordinary alert settling provides a stationary aftermath without another timed hold action. Continued activity must not be described as an investigation that never happened.
 
 ## Profile values and consumers
 
@@ -85,7 +85,7 @@ With no locatable danger, entering escaping still chooses one ordinary finite lo
 
 Use the native animal owner's complete danger set, species speeds, reachable refuges, repeated-leg selection, flight/territorial integration, exact physical safety crossings, blocked retries and continuous-safe duration. That owner remains the only source of escape distances and timers; speech does not copy or redefine them.
 
-A duplicate acoustic pattern does not renew settling. A genuinely new qualifying cue can reset it through ordinary intake. A trapped animal remains truthfully blocked and follows that owner's bounded review rules; a fixed elapsed speech-flight timer cannot declare it calm while unsafe. The previous SPK separate 128.755-second sound-flight stop and 120-second hold with a 1–300-second range are superseded design proposals, never delivered behavior.
+A duplicate acoustic pattern does not renew settling. A genuinely new qualifying cue can reset it through ordinary intake. A trapped animal remains truthfully blocked and follows that owner's bounded review rules; a fixed elapsed speech-flight timer cannot declare it calm while unsafe.
 
 Busy, moving, perched and airborne animals can acquire sound. Their actual movement owner decides when an admissible change can occur. Dead or perception-blocked bodies acquire no new conscious sound. This slice adds no sound waking or sound damage; existing bodily-contact and rest interruption rules remain authoritative.
 
@@ -101,6 +101,6 @@ Distinct listening/curiosity/hiding choices, richer animal recognition, learning
 
 ## Maintained records
 
-- Implementation and dependencies: [SPK07–SPK08](../../maintainers/speech-and-social-perception.md) and the pinned [CTR03–CTR04 tracker](https://github.com/Macrofold/OpenLegend/blob/ff68a9b4035bff08025af7b0b579fe2316ed1263/docs/maintainers/combat-and-threat-responses.md#ctr03--one-native-animal-response-owner).
+- Implementation and dependencies: [SPK07–SPK08](../../maintainers/speech-and-social-perception.md) and the [CTR03–CTR04 tracker](../../maintainers/combat-and-threat-responses.md#ctr03--one-native-animal-response-owner).
 - Limits: [hearing and animal response inventory](../../limits/hearing-and-speech.md#ssp-h02--sound-reactions-without-autobiographical-memory).
 - Integration: [speech technical design](../../projects/speech-and-social-perception-tech-design.md#10-animal-sound-and-cognition-integration) and [hearing contract](../../hearing-and-speech.md#selected-animal-hearing-and-choices--accepted-target).
