@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 17, 2026 — Integrate ten mobile-game studies and comparative findings
+
+The [mobile research ledger](../archive/02-research/game-inspiration/research-progress-mobile-2026-10-17.md) records completed dossiers for G168–G177 within their source, edition and access limits. The [comparative essay](../archive/02-research/game-inspiration/essays/mobile-success-failure-and-umamusume.md) connects enjoyable activities, attachment, creation and continuing value to possible OpenLegend experiences, while separating dated spending estimates, publisher explanations and commercial inferences. Ended services are not treated as proof of a specific financial loss or design cause.
+
+The research library, roster, existing essays and [design foundation](repertoires/design-foundation.md) now link these findings. The [source atlas](repertoires/source-atlas.md) distinguishes its original numbered coverage from later additions. These are research and design perspectives, not selected new gameplay, a platform or monetization change, or player-tested commercial conclusions; unrelated research and implementation gates remain open.
+
 ## October 17, 2026 — Select Open Legend language and elevator pitches
 
 Mike selected audience-specific game, ambition and engine descriptions, two elevator pitches, three taglines and a dense genre descriptor. [Language, communication and elevator pitches](../archive/06-marketing/language-and-elevator-pitches.md) preserves the fourteen selections and explains how systemic rules, emergent outcomes and generative invention differ. The guide makes the autonomous-inhabitant, invention and lasting-consequence combination easy to communicate while keeping the game and creator propositions clear.

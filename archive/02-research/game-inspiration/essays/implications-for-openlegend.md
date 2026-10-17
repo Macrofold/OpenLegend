@@ -1,5 +1,7 @@
 ## 9. Implications for OpenLegend
 
+**Selection:** the [current gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md) own selection: enjoyable adventure, useful invention, independent character choice and persistent consequence belong in connected play from the start. Apply the numbered priorities below within that connected experience. The [mobile comparison](mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity) explores positive possibilities for action, discovery and expressive creation.
+
 ### 9.1 Choose a first player promise that does not require explaining the engine
 
 My recommended opening promise is:

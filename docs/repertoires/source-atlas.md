@@ -4,9 +4,9 @@
 
 ## Method and limits
 
-This atlas gives an individual design takeaway, caution and destination for **all 148 numbered game subjects and all 29 fictional worlds**. It synthesizes dossier interaction cases, mechanics, reception/criticism and transfer discussions, together with the related thematic research. It is not a claim that every citation in every dossier was independently reopened, that every inherited research gate is complete, or that these new ideas have been tested with players.
+This atlas gives an individual design takeaway, caution and destination for **the original 148 numbered game subjects, G01–G148, and all 29 fictional worlds**. It synthesizes dossier interaction cases, mechanics, reception/criticism and transfer discussions, together with the related thematic research. It is not a claim that every citation in every dossier was independently reopened, that every inherited research gate is complete, or that these new ideas have been tested with players.
 
-The [research roster](../../archive/02-research/game-inspiration/research-roster.md) contains 148 subjects. The eighteen survival dossiers G131–G148 are now present in this checkout and included below. The [research progress ledger](../../archive/02-research/game-inspiration/research-progress.md) owns research completion and audit status; this proposal synthesis does not close its separate acceptance gates.
+The [research roster](../../archive/02-research/game-inspiration/research-roster.md) owns subject identities, including later additions outside the numbered atlas entries below. The eighteen survival dossiers G131–G148 are included here. The [research progress ledger](../../archive/02-research/game-inspiration/research-progress.md) and later scoped ledgers own research completion and audit status; this proposal synthesis does not close their separate acceptance gates.
 
 The takeaways are interpretations. The cautions include both source-reported friction and our design implications; they do not assert that all reviewers agreed, that a complaint remains true in every version, or that a mechanic caused commercial success. Consult the linked dossier for editions, named reviews, access limitations, examples and primary evidence. Broad reception comparisons cannot rank the popularity of individual mechanics from these purposive samples. Historical, proposed and shipped systems retain their distinctions.
 
@@ -1557,6 +1557,8 @@ These primary-author or estate-published sources were consulted on September 27,
 **New catalogue:** [technology](technology.md)
 
 ## Additional studies and navigation
+
+**Mobile studies, G168–G177:** the [positive experience map](../../archive/02-research/game-inspiration/essays/mobile-success-failure-and-umamusume.md#what-all-ten-games-can-contribute) links all ten dossiers; its [OpenLegend interpretations](../../archive/02-research/game-inspiration/essays/mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity) connect the findings to the current design foundation. The [mobile ledger](../../archive/02-research/game-inspiration/research-progress-mobile-2026-10-17.md) owns completion.
 
 These studies deepen the numbered game and world dossiers without renumbering the current game roster. Their source-specific evidence remains in the research library; the catalogue entries link them where a lesson was actually incorporated.
 

@@ -12,6 +12,8 @@ The [research roster](../research-roster.md) owns subject identities. The topic-
 
 Later roster additions are outside this G01–G148 review; their own progress ledgers retain their status.
 
+The [ten-game mobile comparison, G168–G177](mobile-success-failure-and-umamusume.md#what-all-ten-games-can-contribute), provides a positive experience map and [concrete OpenLegend interpretations](mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity). Both successful games and closed services contribute possibilities for enjoyable play. That synthesis owns the commercial comparisons and evidence for G168–G177; this document owns the general fun principles and the G01–G148 review.
+
 The corpus was taken from a branch beginning at GitHub main commit `7a576214fbb9891b2e9f742db56bbeccaa3a58a1`. This review inspected relevant dossier mechanics, interpretations, worked situations and limitations. It did **not** replay 148 games, rerun their original research passes, independently verify every external source, or turn constructed examples into observed sessions. Existing facts retain their version, audience and source boundaries. The 22 selected video categories/entries are a supplemental account, not 22 newly completed dossiers.
 
 The [foundations paper](../references/fun-engagement-and-compulsion-research.md) separately records selected primary research on motivation, meaningful entertainment, playtime and the clinical boundary. It distinguishes published findings from our design interpretations. The principles below are comparative hypotheses and recommendations: recurring cases make them useful to investigate, not universal causal laws or statistically ranked effects.
