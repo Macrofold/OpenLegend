@@ -18,4 +18,70 @@ The exact contact-injury/prevention report is participant-private; observers rec
 
 ## Accepted lethal-action direction
 
-Human-issued supported strikes/hunts/shot releases require [one exact potentially lethal attack confirmation](player-danger.md#final-blow-confirmation), and the [territorial stag](first-threat-encounter.md) uses an explicitly granted natural-contact profile through the same attack owner. Player death uses [corpse/half-type/scar continuity](player-death.md); NPC and animal deaths persist without ordinary revival. Broader human PvP, attributed indirect harm and rescue remain BW14/D07, and NPC ghosts/ordinary revival remain BW15. These are installed world choices rather than universal strike laws.
+Human-issued supported strikes/hunts/shot releases currently require [one exact potentially lethal attack confirmation](player-danger.md#final-blow-confirmation), and the [territorial stag](first-threat-encounter.md) uses an explicitly granted natural-contact profile through the same attack owner. Player death uses [corpse/half-type/scar continuity](player-death.md); NPC and animal deaths persist without ordinary revival. The October 17 selected revision permits human PvP and actual projectile collateral under [world participation](lifecycle-and-protection.md#human-conflict-and-recovery) and [contact consequences](ranged-counterplay.md#selected-contact-consequences); implementation remains CTR01. Broader indirect hazards, rescue and property policy remain BW14/D07; NPC ghosts/ordinary revival remain BW15. These are installed world choices rather than universal strike laws.
+
+## Selected threat and encounter continuity
+
+**Selected October 17, 2026; not yet implemented.** The [combat-response project](../../projects/combat-and-threat-responses-feature-spec.md) extends the current physical actions and Command-click implementation. A short encounter concerns particular physical participants and personally available evidence. It is not a global combat flag, moral judgement, relationship score or permission to act.
+
+### Separate facts the player can understand
+
+| Fact | What establishes it | What it does not imply |
+| --- | --- | --- |
+| Selected or hovered person | Local inspection or pointer input | An attack, a warning to that person, or hostility. |
+| My chosen attack | My successfully admitted exact attack/aim command | A hit, repeated attacks, or another person's awareness. |
+| An observed attack directed at me | Personally exposed preparation, approach, release or contact directed at this physical body | Knowledge of a private plan, another target's danger or an unseen shooter's identity. |
+| A recent hostile occurrence | An observed directed attempt, including a miss or shield interception, or a known source of injury | Permanent aggression or the character's chosen reaction. |
+| Someone has withdrawn | Personally observed cessation/separation or loss of sight | Surrender, forgiveness, certainty that they are safe, or permission to pursue. |
+| My feeling or chosen purpose | My admitted appraisal or independent decision | A publicly readable target lock or an automatic attack. |
+
+Maintain these facts per ordered pair of exact physical lives. Several opponents can be relevant at once. Ada attacking a wolf does not make her an attacker of Mike; Mike selecting Ada does not alarm her. Unknown-source impact can create urgent personal danger without naming a nearby innocent person. The person may interpret motive or accident through cognition; native evidence never labels someone evil or guilty.
+
+### Recent-hostility grace
+
+The bundled world selects **600 game seconds**, ten real seconds at its normal60:1 clock, of contextual continuity after the last personally observed hostile occurrence or the observed end of an active directed attack. An ongoing personally observed attack or one's own admitted current attack remains current regardless of that deadline. A new observed attempt, miss, block or hit renews the relevant pair; ordinary proximity, hovering, merely thinking about retaliation and repeated reads do not. A lost-sight transition starts the grace from the last time the directed activity was actually known; it does not keep refreshing an invisible attacker.
+
+Use simulation time. Pause freezes the interval; faster playback consumes it faster; server downtime spends none. The literal600 lives in the installed world profile, not the client or generic scheduler. It is a presentation/short-term encounter parameter, not an emotional decay duration, pursuit budget, human participation permission or final-blow authorization.
+
+On expiry, retire the short-lived action preference when no current attack or explicitly selected still-valid commitment retains it. Keep ordinary remembered evidence and appraisals under their own retention. Ending this encounter never wipes a grudge; a grudge alone never permanently turns every conversation shortcut into Attack.
+
+### Contextual action decision table
+
+The existing installed context-action catalogue remains the sole source of action priority, label, tool and exact bindings. Its ordinary stable ordering breaks ties. The Command shortcut, object actions and keyboard-accessible equivalent use that same answer.
+
+| Current personally available situation for this target | Primary contextual action |
+| --- | --- |
+| Berry bush with an ordinary useful gathering action | Gather the authored resource. |
+| Ordinary living person, no current/recent pair conflict and no own offensive commitment | Speak, opening an editable draft. |
+| Visible person currently attacking me, or with a recent observed hostile occurrence against me | A current exact feasible attack; retain the selected attack method when still supported. |
+| My current attack or recently admitted attack on that person | Continue to prefer that exact attack method for this pair; a click still requests one action. |
+| My held aim at this exact life with its claimed ammunition | Release that held shot, with any required review; never silently exchange it for another tool or target. |
+| Combat preference still applies but the chosen attack is temporarily blocked by recovery, work commitment or range policy | Show the same attack as disabled with its actual blocker; do not fall through to Speak or automatically queue it. |
+| A different person attacks someone else | Ordinary contextual action unless my own admitted purpose establishes involvement; merely witnessing their fight is not a counterattack command. |
+| Target is no longer currently perceived | No new live-target attack shortcut. Remembered context can explain loss of sight without revealing a position. |
+| Target dies, leaves physical participation, changes physical life, or becomes otherwise unavailable | Invalidate the attack preview and expose only the appropriate current body's ordinary actions. |
+
+When entering a pair's combat preference without a retained method, prefer an already held compatible ordinary contact weapon, then a granted unarmed strike. Do not automatically equip a different weapon, draw ammunition or choose a lethal method merely because it has a larger numeric priority. If only a supported ranged attack is available, show its exact tool, ammunition and preparation explicitly before it can become the shortcut. The installed profile may choose a different default; all surfaces consume the same selection. Explicit full-menu choice remains available for every admitted alternative.
+
+An attack that normally includes approach must say **Approach and strike…** when approach is necessary and permitted. Prefer no undisclosed pursuit. One Command-click means one admitted action: key/button holding does not repeat and recovery clicks do not form a queue. An explicit future repeat-attack feature would require its own selected commitment and cancellation controls.
+
+### Predictable gestures and ending intent
+
+Capture the exact displayed target/life, action, tool/ammunition and applicable preferred-choice identity at primary-button down. If any consequential binding or the meaning of the preferred action changes before release/serialized admission, refuse the old shortcut and refresh its explanation. Never turn a displayed Speak into an attack, a displayed punch into a shot, or an attack on one body into an attack on its successor. The implemented preferred-choice guard and receipt recovery already supply this foundation; extend them rather than add a second command path. Explicit lethal confirmation remains an independently reviewed exact intention.
+
+Releasing Command ends only the shortcut overlay; changing selection ends only inspection. Neither changes world conduct. An ordinary move away ends unreleased work through existing replacement rules but can leave recent hostile context for a later counterattack. An explicit **Stop attacking this person** ends one's future offensive commitment and retained offensive method; it cannot recall released flight, erase recovery, hide actual incoming hostility or make the other person peaceful. The full menu can deliberately open Speak during recent hostility. Retain that deliberate social override until the next fresh personally observed hostile occurrence or an explicit new attack, so the interface does not fight the player's decision to talk. This override belongs to that controller and pair, not to the target's mind.
+
+Expiry alone changes the default on the next fresh preview; it never substitutes an action under a held gesture. Withdrawal, words of surrender or a claimed accident can be evidence for a new decision, but do not grant automatic damage immunity. Any materially changed visible body state invalidates the old shortcut before another damaging action. The player can still choose an allowed explicit action after reviewing the new situation.
+
+### Character and animal responses
+
+The [personal response catalogue](threat-response-options.md) defines flexible chosen purposes and Ada's required self-defense baseline. [Psychological reactions](psychological-reactions.md) owns the source-linked feeling profile. A purpose can end or change when the aggressor leaves, when a strike resolves or when the person's own situation changes; [CTR08](../../maintainers/combat-and-threat-responses.md) specifies exactly which meaningful transitions wake a decision. No UI grace timer chooses Ada's behavior.
+
+The [native animal response profile](animal-responses.md) instead supplies efficient multi-danger escape, retained refuges and species movement, with no model calls. An animal may classify all perceived humans as possible danger during alarm without accusing all of them of attacking it. Territorial action and escape share one physical owner.
+
+## Maintained records
+
+- Implementation: [Action capabilities](../../maintainers/action-capabilities.md), [batch06](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md), and [CTR01–CTR10](../../maintainers/combat-and-threat-responses.md).
+- Limits: [Base-world combat](../../limits/base-world.md), [ranged/evasion](../../limits/parallel-batch-06-rivals-and-contested-ground.md), and [threat-response limits](../../limits/combat-and-threat-responses.md).
+- Design: [Feature specification](../../projects/combat-and-threat-responses-feature-spec.md), [technical design](../../projects/combat-and-threat-responses-tech-design.md).
+

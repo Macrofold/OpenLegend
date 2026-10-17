@@ -1,10 +1,10 @@
-# Compact personal reactions — proposed wilderness profile
+# Compact personal reactions — selected wilderness profiles
 
 | Status      | Current progress                                                                                                                         | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The first numerical reaction profile is selected for design; installation, runtime integration and behavioral qualification remain open. | 2026-10-15   |
+| In progress | The joy pilot and interpreted threat reactions are designed; installation, runtime integration and behavioral qualification remain open. | 2026-10-17   |
 
-**Selected design, not installed behavior.** A person may privately experience joy after interpreting something they actually perceived or recalled, without composing a thought or saying anything. This profile is the smallest first consumer of the [continuing-life reaction contract](../../projects/continuing-lives-tech-design.md#55-numerical-personal-reactions-without-required-prose). It describes fictional character state, not measured human psychology. Existing fear/discomfort, grief, calm and restlessness behavior remains unchanged until a separately admitted definition change says otherwise.
+**Selected design, not installed behavior.** A person may privately experience a feeling after interpreting something they actually perceived or recalled, without composing a thought or saying anything. The joy pilot remains the smallest independent consumer of the [continuing-life reaction contract](../../projects/continuing-lives-tech-design.md#55-numerical-personal-reactions-without-required-prose). The October 17 [threat-response design](../../projects/combat-and-threat-responses-tech-design.md) also selects a contextual replacement for automatic hit-to-fear arithmetic. These are fictional character models, not measured human psychology. Current runtime fear/discomfort, grief, calm and restlessness behavior is unchanged by this documentation; the scoped target below supersedes only the automatic fear rule when CTR06 is implemented.
 
 ## Selected first profile
 
@@ -27,6 +27,69 @@ These are adjustable authored hypotheses for a first end-to-end trial. They deli
 The pilot's own feeling creation/change/result, its numerical read/display and the resulting reaction wake are not new independent stimuli for that same feeling. Derived notifications retain the original permitted cause through existing aliases and cannot refresh or recursively stack joy. This is a native source check, with no extra classification call.
 
 A hypothetical thanking encounter illustrates the difference from a reward script: a tired person may interpret the same words as welcome appreciation, insincerity or an interruption. The output may be joy of a chosen intensity, no joy, or another separately supported reaction. There is no rule mapping the word “thanks,” a successful trade or a shared outing to points. The current actor's private knowledge matters; the speaker cannot assign the listener's amount.
+
+## Interpreted threat reactions
+
+### Selected scope and existing owners
+
+Mike selected this extension on October 17, 2026. Replace the wilderness rule that derives fear solely from damage divided by maximum health, including the separately routed known-shooter projectile case. Native injury, pain, body-condition evidence and urgency remain immediate physical facts. They do not wait for a model. The selected appraisal layer decides what those facts mean to this individual. A frightening miss, visible threatened violence, uncertainty about an unseen source, a chance of escape or another person's withdrawal can matter even with zero health loss.
+
+Reuse `AppraisalDefinition`, `changeAppraisal`, exact source bindings, target stacking, current-format records and the immediate-operation integration already selected for joy. Do not add a global fear total, aggression meter, psychological need bar, independent appraisal daemon or second episode-history store. The [threat option profile](threat-response-options.md) owns possible purposes; current goals/plans own the person's accepted commitment. A feeling alone never authorizes an action.
+
+The first threat profile installs interpreted **fear** and **anger** for eligible autonomous memory-capable people. Fear concerns possible harm; anger concerns perceived opposition, harm or violated values. Both may coexist. Neither is a probability of attacking. Pain/discomfort remains the existing bodily experience; this design does not turn ordinary physical sensation into a paid judgment. Joy remains optional and independently deliverable. Grief, calm, restlessness, broader social needs and permanent personality development retain their separate owners and scope.
+
+### Appraisal questions and source binding
+
+Each relevant decision supplies the complete accepted identity, current body and abilities, actual work at stake, current purpose, known alternatives, personally available threat facts and the current cause-linked feelings. The shared world rubric asks the model to consider:
+
+| Dimension | Actor-specific question and evidence boundary |
+| --- | --- |
+| Stakes | What could this event cost this person, physically or in something they value? Current body damage is evidence, not the complete meaning. |
+| Cause and intent | What did this person actually perceive, what do they infer, and what remains unknown? An identified attacker, a suspicious person and an unseen impact are different facts. |
+| Control and alternatives | What can this body currently do, which actions or exits are feasible, and what costs or recovery constrain them? Confidence is personal interpretation, not authority to invent a route or skill. |
+| Appraised opposition | Does this person interpret the conduct as deliberate opposition, accident, an understandable mistake or uncertain intent? The source's private mind is unavailable. |
+| Current commitment and values | How does this affect a currently chosen purpose, valued person/place, bodily autonomy or actual unfinished work? No goal or relationship is generated merely to justify a reaction. |
+| Change since the last judgment | What new permitted evidence materially changes the interpretation? Re-reading, elapsed provider time, the feeling's own notification and repeated paraphrase are not new external occurrences. |
+
+These dimensions are prompt/question meaning, not six new stored meters. The model need not write an explanation or score every dimension. A finite question asks for the supported feeling amount or no change using this rubric; another asks whether each supplied purpose is relevant. Batch independent questions in the **first of the two threat decision stages**. Stage two then receives the admitted feeling results and independently chooses an action. Do not multiply emotion combinations by every tactic, and do not add a third appraisal-only call.
+
+Every offered operation binds a personally eligible new source occurrence or an exact supported remembered source, its revision, a permitted subject or no identified subject, the installed policy pin and the prior active record revision where supplied. Known-opponent fear/anger uses that opponent as subject. Unidentified danger uses no guessed person; its cause still says what was felt or observed. Present all still-relevant current threats when judging an unidentified-danger interpretation so that the latest small cue cannot erase other danger by accidental omission.
+
+### Selected initial values
+
+| Meaning | Fear | Anger |
+| --- | --- | --- |
+| Installed identity | `wilderness:fear`, revised selected definition installed together with removal of automatic fear producers | `wilderness:anger`, selected new definition |
+| Scale | Dimensionless intensity 0–1; 0 means no active fear in this record, 0.25 mild, 0.5 moderate, 0.75 strong, 1 the strongest represented fear | Same amount vocabulary, explicitly describing anger rather than attack probability |
+| Finite choices | No change; create a fresh source-bound interpretation at 0.25, 0.5, 0.75 or 1; resolve an exact supplied active record | Same |
+| Stacking | Existing target stacking: one active interpretation of this family for each personally identified subject, plus a targetless interpretation where appropriate | Same; not added to fear or to another subject's anger |
+| Decline without a new interpretation | Existing linear decay, 0.25 intensity per game hour, notification boundaries 0.5, 0.2 and 0 | Existing linear decay, 0.125 intensity per game hour, notification boundaries 0.5, 0.2 and 0 |
+| Interpretation lifetime | A newly accepted independently supported interpretation anchors its own curve; a read, duplicate source or no-change answer never refreshes it | Same |
+| Immediate and reflection eligibility | Immediate source-bound choice enabled; optional reflection uses the same native restrictions | Same |
+
+These values are game tuning hypotheses. At the current 60:1 clock, fear 0.5 would naturally fade in two real minutes and anger 0.5 in four, unless the person forms a genuinely new interpretation or resolves the record. The time-based control preference in the combat design is independent and much shorter. Changing speed or pausing uses game-time semantics; there is no wall-time catch-up after reopening. No claim of realistic human hormone timing is made.
+
+The selected value is an **absolute current interpretation**, not an increment based on another hit. Supply the current value and still-relevant circumstances when judging a new occurrence. The model may choose a larger value after repeated deliberate blows, a lower value after seeing a credible escape, or no change. A later small injury must not automatically replace strong fear with `small damage / maxHealth`. Native admission enforces source and scale correctness, not an invented monotonic emotion law.
+
+Use the existing target-stacking create operation for a genuinely new cause. It resolves that family's preceding active interpretation while retaining its exact historical outcome and deduplication tombstone. Its new occurrence/operation identity distinguishes a real reassessment from replay. This avoids a new write family solely for combat. The earlier source and value remain historical evidence, never a second active record. A lower interpretation must still be selected; neither target departure nor a deadline mechanically lowers anger. Exact resolution is also a personal choice, not forgiveness or relationship repair.
+
+Reframing the same decaying record retains the existing prohibition on changing intensity or restarting its curve. Recalling the same blow, seeing an unchanged countdown, processing the same coalesced cue twice, or the feeling-change event waking attention cannot create another record or renew its lifetime. The binder checks the original occurrence through current/cold outcomes. A newly perceived withdrawal or a materially distinct later occurrence may support a new interpretation; a generic encounter label or regenerated summary cannot manufacture one. If no exact new source exists, retain the current feeling or offer permitted resolution/reframe, rather than synthesizing a cause.
+
+### Immediate context and continuity
+
+Both model stages receive current admitted intensity **with its meaning**, subject/cause, relevant lifetime and observation uncertainty. The present `decisionFeelings` label-only projection is insufficient for this target. Use shared personal rendering, so the affected person receives “my” body experience and the correct actor/subject roles; another observer never receives private numerical state. A person may be visibly frightened without disclosing their private amount, and an aggressive action does not prove anger.
+
+If stage one commits a feeling and stage two fails, the feeling remains a real accepted private result; the character has not chosen a physical action. A fresh relevant occurrence can later trigger a new ordinary decision. Preserve the stage-one receipt, charged requests and explicit stage-two failure. No automatic paid fallback, inferred attack, fictional thought or rollback of an independently accepted feeling occurs. A stale source, lost authority or changed definition refuses the affected update before publication.
+
+No generic character prompt says “always fight,” “maximize survival,” or “please the player.” The shared world prompt supplies truthful embodied stakes, the possibility of fear and action coexisting, and the distinction between stopping immediate danger and pursuing another objective. An individual's values determine how to use them. The [Ada requirement](threat-response-options.md#4-initial-ada-disposition-and-required-behavior) must be met through her authored assertiveness, actual context and free selection; other people remain allowed to withdraw or interpret the same event differently.
+
+### Qualification and definition changes
+
+CTR06 must show native harm/urgency before model completion; fear from a credible zero-damage attack when independently selected; different fear/anger/no-change outcomes from different coherent people; coexisting fear and anger; lower, higher and unchanged interpretations with source evidence; exact scale in later choice; and no compulsory violence. Verify repeated same-source processing, cold duplicate lookup, simultaneous known and unknown sources, different target lives, correction/forgetting during both calls, permission loss, source correction, decay, pause and current-format reopen.
+
+The new world definition and removal of automatic fear producers are one coordinated change. Do not leave old damage-created fear running alongside interpreted fear or retain a hidden generic fallback. Current development installs/writers/readers/validators change together; old development-save migration is out of scope. Live replacement/removal still obeys the current immutable-pin restriction for retained records. This design does not authorize rewriting historical meanings in an existing world or applying a new scale to old numbers. Character seed changes likewise affect newly authored worlds; accepted saved personalities are not silently reset.
+
+This threat slice changes the fear baseline deliberately; the independent joy pilot's “baseline feelings unchanged” acceptance below still applies when testing joy alone. The integrated combat qualification must instead demonstrate the specified replacement. Report native correctness, independently chosen behavior and player enjoyment separately. No runtime, provider or player evidence is supplied by these documents.
 
 ## Installation, vocabulary and removal
 
@@ -52,6 +115,7 @@ Revisit the vocabulary, available amounts, rate and notification bands when that
 
 ## Maintained records
 
-- Implementation: [CE02/CE03/CE05](../../maintainers/character-experience.md), [intelligent-simulation delivery mapping](../../maintainers/intelligent-simulation.md) and the existing [appraisal owner](../../maintainers/actor-model.md#advanced-emotional-state-foundation); ACT09 process authoring remains separate.
+- Implementation: [CTR06–CTR08 threat reactions](../../maintainers/combat-and-threat-responses.md), [CE02/CE03/CE05](../../maintainers/character-experience.md), [intelligent-simulation delivery mapping](../../maintainers/intelligent-simulation.md) and the existing [appraisal owner](../../maintainers/actor-model.md#advanced-emotional-state-foundation); ACT09 process authoring remains separate.
 - Limits and constraints: [FL21–FL23](../../limits/feelings.md#fl21--compact-numerical-personal-reactions) and existing [cognition](../../limits/cognition.md), [memory](../../limits/memory.md) and [AI execution](../../limits/ai-execution.md) admission.
 - Related contract/design: [continuing-life behavior](../../projects/continuing-lives-feature-spec.md#166-compact-personal-reactions-can-change-a-feeling), [technical integration](../../projects/continuing-lives-tech-design.md#55-numerical-personal-reactions-without-required-prose), [current social feelings](social.md#feelings) and [compelling-character episodes](../../projects/compelling-characters-feature-spec.md#complete-behavioral-flows).
+

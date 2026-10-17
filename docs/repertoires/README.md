@@ -6,6 +6,8 @@
 
 These are proposals, not installed capabilities, approved implementation commitments or fixed world canon. [Architecture](../architecture.md), [maintainer work](../maintainers/README.md) and [verification](../verification.md) own delivered behavior, task status and evidence. No playtest or measured improvement in enjoyment is asserted here.
 
+The October 17 [combat-response design](../projects/combat-and-threat-responses-feature-spec.md) selects a small connected application of these options: consequential contact, credible wildlife escape, independent personal self-defense and readable controls. [Combat's selection note](combat-rescue.md#selected-combat-response-design) points to the paired design and delivery owner. The repertoire retains richer ecology, psychology, relationships, rescue and alternate-world possibilities without making them prerequisites or claiming they are implemented.
+
 Use [design foundation](design-foundation.md) for motives, resistance and consequences; [25 worked situations](combinations.md) for connected examples; and the [source atlas](source-atlas.md#catalogue-source-revisions) for research and pinned expansion revisions. The earlier 148-game/28-world foundation corpus is not the whole expanded research set: retained ledgers also include D&D studies and a 29th world dossier. Discovery, mastery, creation, beauty, relationships, ambition, conflict and loss all remain available. [World tone and scope](design-foundation.md#world-tone-and-scope) governs presentation, including mature subjects or a PG audience.
 
 ## Catalogue map
