@@ -21,6 +21,7 @@ AGPL-3.0-only is selected for the repository; [LICENSING.md](../../LICENSING.md)
 | [Execution brief](../02-research/indie-launch-commercials/execution-brief.md) | One-page operating view: current hypothesis, evidence, uncertainty, next experiment, commitment limit and decision afterward |
 | [Detailed execution guide](../02-research/indie-launch-commercials/execution-playbook.md) | Parallel game/audience/business work, different tests, deliberate promotion, selected-offer qualification and conditional Steam/crowdfunding routes |
 | [Commercial principles](../02-research/indie-launch-commercials/learnings.md) | Twelve principles and counterexamples, with a 64-case evidence map weighted by relevance and source quality |
+| [Game production workflows](../../docs/production-workflows/README.md) | Turn an idea into a playable, art-directed result; use actual integrated play to support representative demonstrations, while player enjoyment, audience response and payment retain separate evidence |
 | [Business plan](business-plan.md) | Operating goals, managed-world candidate, offer comparison, accepted entitlement directions, cost controls and limits of the illustrative economics |
 | [Positioning and copy](positioning-and-copy.md) | Player-facing promise, audience hypotheses, draft copy and separate authoring/developer demonstrations |
 | [Ideas, channels and experiments](ideas-channels-and-experiments.md) | Candidate promotional material, source targeting and measurements for actual player and commercial questions |
@@ -38,3 +39,4 @@ Make substantial reveals, demos and releases deliberate while keeping routine co
 Keep the open platform useful independently and identify separately licensed content/services. Preserve accepted creator examples, including the magic-tree spell whose definition can be refined to restrict use; these remain authoring demonstrations subject to actual support, not claims that arbitrary requests instantly become working mechanics.
 
 Background and scope: [business ideation](../04-ideation/business-and-future-directions.md), [capability lifecycle](../03-design-proposals/generative-capability-lifecycle.md), [Macrofold workflows](../03-design-proposals/macrofold-ai-workflows-and-world-state.md), and [C01–C10 source summary](../00-source/open-source-and-community-followups.md).
+

@@ -17,6 +17,14 @@ The absolute source links are intentionally specific to Mike's computer and work
 
 Reference repository documentation by repository-relative path, including from the local art workspace READMEs. Active file locations must use the stable art workspace, never a temporary Codex worktree or visualization directory. Old visualization aliases only preserve earlier links; they are not the source locations to record for future work.
 
+## Reusable production methods
+
+The [production handbook](../production-workflows/README.md) owns reusable development methods: [objects, bodies and animation](../production-workflows/assets-and-animation.md), [scenes, material recipes, lighting and interfaces](../production-workflows/scenes-and-interfaces.md), and [sound, motion and effects](../production-workflows/audio-and-feedback.md). Use a route for a particular study without treating every optional stage as required. Early visual exploration can discover a stronger idea while a rough playable version tests what the player can actually do.
+
+Keep the brief, chosen references, editable source location, relevant tool/model versions, useful export settings and reviewed in-game result together in the existing study record. Record the visual or player-experience reason for the selection and the remaining repair work. For generated or third-party inputs, retain the source and applicable use terms. Large source assets continue to live in the established art workspace; a new asset database is not required by this guidance.
+
+When a body, material, camera treatment or animation changes, identify the exports and views that need checking again. Develop a useful variation before treating a recipe as a production family. A coherent identity and an expressive action can justify the work even when the route does not reduce production time. [V3D](3d-pixel-art.md) continues to own technical family qualification and progressive appearances.
+
 ## Active studies
 
 | Study             | Progress owner                       | Current state                                                                              | Next art decision                                                                                                                              |
@@ -28,3 +36,4 @@ Reference repository documentation by repository-relative path, including from t
 Give each new study one record under `art/` with its intent, source/viewer/Blender links, completed milestones, specific feedback, remaining art decisions and references to technical owners. Do not duplicate the V3D/SW/PF task bodies or treat successful integration as art approval.
 
 Use `<study>/study/` for the active editable work and `<study>/snapshots/<date>-rN/` for immutable milestone packages. For a milestone, record the art revision, matching game commit when integrated, review result and remaining limitations. Update the study record when Mike accepts or rejects an artistic choice; reconcile any broader direction change in the existing creative brief/decision owner. Preserve earlier useful comparisons and provenance.
+

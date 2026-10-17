@@ -10,6 +10,8 @@ The product goal is real dimensionality with detailed pixel-art output and progr
 
 ## Ownership and parent tracking
 
+The [offline production handbook](../production-workflows/README.md) supplies reusable creation and revision methods for the studies and families below. Its [asset and animation route](../production-workflows/assets-and-animation.md) connects editable source work to the existing feature, technical, intake and qualification documents. [Art-direction progress](art-direction.md) owns study records; this tracker retains task order, runtime delivery and technical acceptance. Researching a tool or completing an attractive source asset does not close a V3D gate.
+
 This is a focused child tracker for the proposed 3D appearance pipeline. [SW13](spatial-world.md#sw13--invention-and-generated-art-integration) owns generated-art/spatial integration, SW18 owns presentation semantics and visual qualification, and SW19/PF retain full-stack scaling. [INV-3.4 and INV-4.6/4.9](inventions-and-world-evolution.md) own invention presentation and confirmed conjuring/coordination. INV-5 owns mechanical revision/activation and INV-8 owns invention portability. [INV-12](inventions-and-world-evolution.md#inv-12--progressive-in-game-art-and-compatible-publication) owns staged art delivery under [the runtime art contract](../invention-art-pipeline.md); V3D07–V3D10 supply its proposed 3D-pipeline implementation, not another publication or spending authority. [PO](persistent-objects.md) remains the owner of real items, equipment placement, containers and custody. EWF owns new trusted family capability integration.
 
 Use these task IDs for appearance-specific deliverables and link evidence back to the relevant parent. Do not duplicate whole parent task bodies or mark an entire SW/INV/PO task complete because one renderer case passes. Same-version save integrity, privacy, funding, and lifecycle are required in every affected slice rather than deferred to a final hardening phase.
@@ -155,3 +157,4 @@ D24 retains art-production direction, D09/R01 retain device/performance selectio
 ## Verification status for this documentation change
 
 The baseline was read through the GitHub connector, including root/routed guidance, current presentation/spatial contracts, art-direction brief, runtime/procedural art, invention tracker, public entity view, renderer boundary and pinned PlayCanvas package. Public engine/glTF/provider documentation informs the proposed adapter boundaries with stated limitations. No application run, browser art comparison, paid execution, or runtime performance qualification was performed for this design-only task. Content/link/diff review of the completed documentation package is the applicable verification, not a runtime pass.
+

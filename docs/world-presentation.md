@@ -120,6 +120,8 @@ A clipped multi-receiver blob/decal is a fallback for low-end quality or art tha
 
 ## Boundaries and extension
 
+For creation of the material, geometry, motion and lighting inputs consumed here, follow the [scene production route](production-workflows/scenes-and-interfaces.md#places-materials-and-lighting) and [asset and animation route](production-workflows/assets-and-animation.md). They explain editable sources, useful variation and review through the actual camera. This document remains the owner of current presentation behavior; production recipes must be evaluated under these lighting, depth, perception and resource boundaries.
+
 The renderer consumes authorized plain views and presentation settings. Authored terrain definitions select supported ground/earth/liquid rendering styles and colors; the scene and operations overview read that same projected table instead of assigning meaning to bundled tile names. An unchanged terrain table does not force a rebuild when control is renewed. PlayCanvas classes, GPU handles and shaders stay in the client. Recast and Rapier do not solve lighting, alpha depth or this reveal policy. Current sprites, simple meshes and the trusted bundled animated mercenary coexist. Arbitrary generated GLB loading, general skinning/normal generation and compatible representation upgrades remain SW-owned future work. The bundled model fences late loads and owns its own replacement resources. No image generation is needed for camera rotation or native movement.
 
 Current facts are in [Architecture](architecture.md#spatial-world-foundation); current evidence is in [Recast integration](verification/recast-integration.md). The [maintainer tracker](maintainers/spatial-world.md#sw18--world-presentation-delivery) distinguishes implemented approximations from unqualified graphics behavior and future features.
@@ -129,3 +131,4 @@ Current facts are in [Architecture](architecture.md#spatial-world-foundation); c
 - Implementation: [SW18](maintainers/spatial-world.md#sw18--world-presentation-delivery).
 - Limits and constraints: [VP01](limits/interface.md#vp01).
 - Related design: [Shadow-quality feature](projects/shadow-quality-feature-spec.md) and [technical design](projects/shadow-quality-tech-design.md).
+

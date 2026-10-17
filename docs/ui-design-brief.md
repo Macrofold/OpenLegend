@@ -42,6 +42,14 @@ Use **Lucide** for utility symbols such as close, back, search and settings. Use
 - Resolve world-authored symbols through the trusted semantic catalogue. A supplied resource symbol may combine with the native gathering badge; the client must not guess content identity from an item identifier. New invented content receives an immediate readable fallback. Any later bespoke-artwork capability must not block mechanics or be implied by a pending decoration. See the [invention lifecycle](../archive/03-design-proposals/generative-capability-lifecycle.md#symbolic-presentation-for-every-new-action-and-item).
 - Prioritize readability over decoration. Include keyboard navigation, visible focus, reduced-motion behavior and UI scaling.
 
+## Production and visual comparison
+
+Use the [interface production route](production-workflows/scenes-and-interfaces.md#art-directed-working-interfaces) to move from a player's task through composition, a coherent art kit, implementation and review in the real shared panels. Explore with actual content, including long names, quantities, unavailable actions and simultaneous panels. World items and their interface depictions should share a recognizable design where a bespoke depiction is available; a family of unrelated attractive icons is not a complete interface treatment.
+
+When comparing AI-assisted methods, distinguish three questions: the quality of generated artwork under a common brief; the quality of a proposed composition with common artwork and content; and faithful implementation with the layout, artwork and interaction specification held fixed. This separates illustration, design judgment and execution. Record the actual model, tools, references and human corrections. The [UI research](../archive/02-research/ai-game-development/08-ui-quality-and-production.md) explains why a polished public demonstration cannot isolate the model or engine as the cause.
+
+Judge the result by whether the player recognizes things, understands the next choice and enjoys inhabiting the game, alongside readability, accessibility and correct behavior. Repair the responsible source—art, composition, theme or component—and then inspect its affected states in context. Current [interface coverage](ui-ux/interface-coverage.md) and [UIUX work](maintainers/ui-ux.md) retain delivery and observation status; this method does not establish that the redesigned interface has passed fresh player review.
+
 ## Interaction direction to preserve and refine
 
 - The compact upper-left summary names the controlled character and presents permitted authored condition attributes above the left launcher buttons. Current location sits beneath Day/time. Need status and meaning appear in structured hover/focus details, not persistent paragraphs. Branding and routine save status belong in Game, opened by unconsumed Escape; actual save failures remain visible. Current work appears in a separate collapsible panel below the summary, above the desktop buttons and behind other panels; its body scrolls within the available space. Starting or ending work must not move launcher rails or shrink open workspaces. Selecting the character opens Condition; reviewing work opens Capabilities without forcing the intention composer. A completed activity retained in history does not mean the character is still working.
@@ -140,3 +148,4 @@ Clearly distinguish existing functionality from future concepts such as richer c
 
 - Implementation: [Feature tasks](maintainers/TODO.md).
 - Limits and constraints: [Authoring and presentation inventory](limits/interface.md).
+

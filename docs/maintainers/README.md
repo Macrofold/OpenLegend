@@ -1,5 +1,9 @@
 # Maintainer work index
 
+## Game production methods
+
+[Production workflows](../production-workflows/README.md) connect ideas to editable art, working assets, animation, scenes, interfaces, character situations and coordinated feedback. The [research review and design map](../../archive/02-research/ai-game-development/14-review-and-design-integration.md) explain the evidence and OpenLegend-specific creative opportunities; [remaining preparation](needs-design.md#ai-assisted-game-production-research-and-design-integration) maps choices into existing owners. Art studies, V3D/INV, CE, UIUX and playability work retain their task and acceptance records.
+
 ## Speech and social perception
 
 [Speech and social perception](speech-and-social-perception.md) owns the selected ordinary speech replacement through SPK00–SPK11: one optional addressee, audible recipient awareness without sight, reliable recognition separate from names, full structured remembered experience, shared natural presentation, dialogue without membership, consistent freeform AI availability and actual animal sound responses. The [feature specification](../projects/speech-and-social-perception-feature-spec.md) and [technical design](../projects/speech-and-social-perception-tech-design.md) are designed; runtime implementation and qualification remain open. The covered ordinary-speech slice of ND16 is marked designed, while NC/HE/CR/CE and broader hearing/media work retain their own remaining acceptance.
@@ -194,3 +198,4 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 This file is navigation only. Task state belongs in focused trackers, current subsystem status in implementation status, verification evidence in the linked topic reports, open choices in open decisions, and history in the documentation changelog.
 
 Editable knowledge is tracked in [CR13](cognition-redesign.md#cr13--editable-knowledge-documents); bundled naming and recognition in [BW08–BW09](base-world.md).
+
