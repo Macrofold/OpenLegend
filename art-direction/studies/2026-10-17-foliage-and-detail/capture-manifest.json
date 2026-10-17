@@ -1,0 +1,181 @@
+{
+  "recordedAt": "2026-10-17T01:44:00Z",
+  "files": [
+    {
+      "file": "after-camp-day.png",
+      "bytes": 808452,
+      "sha256": "28a37879c69dcd7d24700992fc47a9355dfb549cf2834d6e8c92a3086e45ee58",
+      "dimensions": [
+        1231,
+        468
+      ]
+    },
+    {
+      "file": "after-lookout-dusk.png",
+      "bytes": 666384,
+      "sha256": "aad5d5cd38747d6de97844e6f2d6e54fcde77bd332bdc049f29fde40c3444d08",
+      "dimensions": [
+        1231,
+        468
+      ]
+    },
+    {
+      "file": "before-camp-day.png",
+      "bytes": 767181,
+      "sha256": "ff20d37189891d50cd44ca0e3a6287ab752d933cd1e6918121aae6799fecad76",
+      "dimensions": [
+        1231,
+        468
+      ]
+    },
+    {
+      "file": "bird-balanced.png",
+      "bytes": 15952,
+      "sha256": "e8ef0027331998ca0d4510a8c04d224f47e8611df260e9f4961a6ca365627e8e",
+      "dimensions": [
+        1233,
+        450
+      ]
+    },
+    {
+      "file": "chest-balanced.png",
+      "bytes": 54882,
+      "sha256": "effac18fb9f956849dbf87dc075470f9e28d98b9a1a492cda51f71c61b9bff44",
+      "dimensions": [
+        1233,
+        450
+      ]
+    },
+    {
+      "file": "chest-coarse-control.png",
+      "bytes": 15340,
+      "sha256": "625a0f4d7c8e852354cc5af29f4d3e7388e155655f4c371859b1c5907997036d",
+      "dimensions": [
+        1233,
+        450
+      ]
+    },
+    {
+      "file": "chest-previous-fine.png",
+      "bytes": 124362,
+      "sha256": "6a3470567045251f43a1ce0d7169f651507804f1ddd82eb0ad83dbae47ea50e6",
+      "dimensions": [
+        1233,
+        450
+      ]
+    },
+    {
+      "file": "final-camp-day.png",
+      "bytes": 809632,
+      "sha256": "17b05185c3a1372bd366ef674f74b52fa134b13f9f59c5ab19fd8d30cc9db11e",
+      "dimensions": [
+        1231,
+        468
+      ]
+    },
+    {
+      "file": "final-camp-low-sun.png",
+      "bytes": 748654,
+      "sha256": "b19873b13cd1ce57f1964f8cb55eaef77fdd1160976b8dc5d1ca853e4e6de315",
+      "dimensions": [
+        1231,
+        468
+      ]
+    },
+    {
+      "file": "final-camp-motion.webm",
+      "bytes": 2572264,
+      "sha256": "9676fb92337167494c1d1b3041d5adcf35496cdb8103b3cfd138b051a30e6586"
+    },
+    {
+      "file": "final-lookout-dusk.png",
+      "bytes": 668242,
+      "sha256": "e924b9d264647295462286d96e55afc4d5d1f9bed9fb04f5560757287e732e37",
+      "dimensions": [
+        1231,
+        468
+      ]
+    },
+    {
+      "file": "final-woodland-close-perspective.png",
+      "bytes": 626802,
+      "sha256": "9d0830982b83112753491bb49f3f7db8fe7922ceee5954b004a2f66f2c6420df",
+      "dimensions": [
+        1231,
+        468
+      ]
+    },
+    {
+      "file": "fir-first-rejected-thinned-needles.png",
+      "bytes": 794155,
+      "sha256": "39359446ea1566d18b264336b8742467c2f82359c00699cd152674845bec3fc1",
+      "dimensions": [
+        1231,
+        468
+      ]
+    },
+    {
+      "file": "fir-original-source-control.png",
+      "bytes": 72634,
+      "sha256": "953e715b4af2fa44e1fc1f13e27e5758c575db6376a7fd98fb98ea4b2448ac5d",
+      "dimensions": [
+        1233,
+        450
+      ]
+    },
+    {
+      "file": "fir-rear-perspective.png",
+      "bytes": 76629,
+      "sha256": "30a0a4222f9cf3917f5acb23d5ddb307fb1c518cdb2a609ff2ce81751aaf3379",
+      "dimensions": [
+        1233,
+        450
+      ]
+    },
+    {
+      "file": "fir-second-rejected-dark-atlas.png",
+      "bytes": 147271,
+      "sha256": "274cff1c914b7b9aca5129c57ed404be8fed210a9a04388b0139c2d1725ce17b",
+      "dimensions": [
+        1233,
+        450
+      ]
+    },
+    {
+      "file": "fir-three-finishes-before-final-export.png",
+      "bytes": 170037,
+      "sha256": "4387e5cf90089c001a312562958a27daee044de3306ae6750088f2bd72209ff0",
+      "dimensions": [
+        1233,
+        450
+      ]
+    },
+    {
+      "file": "fir-three-finishes.png",
+      "bytes": 171306,
+      "sha256": "40dadc761722e5a8168e8f2419813d1c32b2dd8ae698abc80dbb33126239733c",
+      "dimensions": [
+        1233,
+        450
+      ]
+    },
+    {
+      "file": "matched-old-camp.png",
+      "bytes": 767181,
+      "sha256": "82913474cf85f0504a7e6c1cbe2d91ca4fb62e20b86e56ebb4ea6273e8c0d3c4",
+      "dimensions": [
+        1231,
+        468
+      ]
+    },
+    {
+      "file": "soft-light-old-crowns.png",
+      "bytes": 747718,
+      "sha256": "ec197cc8aee8c9764bd32eb9fdc4eae59bfbcba84d9fc6132274f313ea122890",
+      "dimensions": [
+        1231,
+        468
+      ]
+    }
+  ]
+}

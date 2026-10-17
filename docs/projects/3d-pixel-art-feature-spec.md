@@ -1,8 +1,8 @@
 # Progressive 3D pixel art — feature specification
 
-| Status      | Current progress                                                                                                                        | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Small-subject detail, grounded lighting and Poly Haven studies are delivered; bear access and broader visual qualification remain open. | 2026-10-17   |
+| Status      | Current progress                                                                                                                       | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Coarser detail, open fir branches and softer foliage lighting are delivered; bear access and broader visual qualification remain open. | 2026-10-17   |
 
 **Detail/foliage revision — 2026-10-17 01:33 UTC:** the current comparison uses 30/60 samples per metre, replaces solid-sheet conifers with a source-guided Poly Haven fir, softens leaf lighting, varies fixed greens and reduces false-looking pale ground/bark patches. Three fir finishes, their source, the preceding tree/light treatments and finer density are preserved. This supersedes the preceding 40/120 choice under Mike’s latest feedback. [The scoped evidence](../verification/small-subject-art-and-atmosphere.md#coarser-detail-and-open-foliage--october-17-2026) records the artistic approximation and costs; world dimensions, cover, placement and saves are unchanged.
 

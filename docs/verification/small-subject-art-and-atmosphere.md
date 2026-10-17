@@ -1,5 +1,7 @@
 # Small-subject detail and grounded atmosphere
 
+**Current follow-up:** [Coarser detail and open foliage](#coarser-detail-and-open-foliage--october-17-2026) supersedes the 40/120 detail choice below. The earlier delivery, measurements and rejected choices remain historical evidence.
+
 Recorded October 17, 2026 UTC on `codex/starting-scene-pixel-art`, task baseline `c30bf2758`, in `/Users/mzw/.codex/worktrees/415f/OpenLegend`. The explicit development base remains local `codex/mercenary-original-refinement@1438ea13749d4acc7a852843d8677f687dbdd931` in `https://github.com/Macrofold/OpenLegend.git`; no branch/worktree switch, rebase, merge or push occurred. This implements the independent parts of the [feedback iteration](../projects/3d-pixel-art-first-scene-plan.md#small-subject-clarity-and-survival-atmosphere--october-16-2026); replacement-bear acquisition remains blocked on source access.
 
 ## Decisions and actual delivery
@@ -46,3 +48,42 @@ A formerly indexed WildMesh download was deleted. The [current 13.6k animated de
 ## Verification
 
 All sixteen new GLBs passed embedded-resource, SHA-256, exact exported triangle-count and finite-vertex checks. Four editable-source/recipe hashes match their catalogs. All 331 historical archive size/hash checks passed. Blender 5.2.2 LTS imported/exported the sources locally with automatic scripts/network disabled; browser imports supplied the actual rendered inspection. After the immediate-relighting correction, `pnpm typecheck` and `pnpm build` both passed. Browser inspection confirmed the bright→survival atmosphere changes immediately on the held lookout view, the source control remains available, and the same chest gains construction detail when switching from shared to fine density. The whole affected runtime/recipe/documentation diff was reviewed. Pinned formatting and local Markdown target checks passed; capture and source hashes were verified. No broad game/database/provider suite was run because native behavior and persistence were unchanged. No claim of arbitrary context-loss or lower-end-device qualification is made.
+
+## Coarser detail and open foliage — October 17, 2026
+
+Recorded 2026-10-17 01:44 UTC, baseline `89e94a3b8`, same branch/checkout and explicit development base above. Mike found the preceding detail too fine, pale patches misleading, and tree crowns opaque/flat with excessive self-shadow. This finite revision is implemented; broader art acceptance and the separately blocked bear replacement remain open.
+
+### Changes and diagnosis
+
+- Ordinary density changes from **40 to 30 samples/metre**, and small subjects from **120 to 60**. The existing compositor uses a 2× allowance instead of 3×; there is no additional geometry pass or per-object capture. Previous choices remain available. Adult/mercenary dimensions and all native world rules remain unchanged.
+- The old pine used solid green sheets: light adjustments alone could not open the crown. [Poly Haven Fir Sapling Medium](https://polyhaven.com/a/fir_sapling_medium), CC0, supplies real branches and gaps. Three finishes and a normalized original are retained; quiet is the current conifer choice. Blind triangle reduction lost needles, and the next atlas-based attempt produced black bleed. Both failures are archived. Final preparation retains/broadens whole needle groups, paints fixed greens and uses fixed canopy normals, with no camera-dependent repainting.
+- Leaf materials use a wrapped diffuse response and stronger ambient contribution while retaining ordinary shadow visibility. This approximates the light gathered by a leaf cluster; it is not physical subsurface scattering or simulated light transmission. Other existing crown forms receive grouped greens. Broadleaf/birch geometry remains the previous source, with its remaining form limitations.
+- Pale patches had several contributors. Birch paint had nearly white plateaus; repeated ground-color contrast resembled illumination. Both are subdued. The metalness material workflow ignored the old specular-RGB setting, so its effective specularity factor is now restrained. This correction alone did not remove the pale bark, which is why the paint was corrected too. The whole scene was not simply darkened.
+
+The four new GLBs total **30,142,976 bytes**, including the 24,607,284-byte original control. Each finished fir contains **30,000 triangles**; the original contains **420,822**. The scene compiler bakes texture transforms and joins compatible live/dead bark after their UV transforms, retaining two material parts per fir. Color, shadows and camera-obstruction tests share the prepared positions/indices and applicable source alpha. Distinct material identities preserve both tree comparisons when loaded together. All preparation is offline; runtime uses the existing shared meshes, instancing, material and shadow owners.
+
+The source-study collection now has **46 families, 138 alternatives, 43 original controls, 25 editable Blender files and 223 GLBs / 303,206,132 bytes**. These are separately selected assets, not simultaneous gameplay residency. No new dependency, provider, save, gameplay placement, collision, body-size or authorization change occurred. Additional settled, reserved and uncertain external spending are each $0; the task remains within Mike's $25 authorization.
+
+### Visual and implementation checks
+
+[This round's archive](../../art-direction/studies/2026-10-17-foliage-and-detail/README.md) retains 20 captures, including previous/B/C comparisons, all three finishes, original/rear views, chest density choices, bird close view, final daylight/low sun/dusk and an eight-second moving camp. The final fir has separated boughs rather than solid tiers; fixed greens remain attached in the inspected front/rear directions. The balanced chest retains latch/band construction with larger pixels. Bird close detail is reduced and normal-game footprint remains display-limited. Recorded orbit frames retain sampled silhouette/shadow changes: this is not a universal no-shimmer claim.
+
+Actual in-app WebGL2 checks exercised treatment switching, orthographic/perspective and closer framing, renderer reload, overlapping woodland scenery and light changes. No warning/error console entries appeared in the final inspected scene. Existing source-alpha/camera-obstruction/shadow consumers were reviewed together; the new needle gaps use geometry rather than a separate transparency trick.
+
+All four final exports passed exact hashes, embedded-resource, finite position/normal, normal-length, triangle-count and index-bound checks. Source/recipe/helper/editable-file hashes match; all eight acquired source files and compiled-output provenance match. Compiled shapes have finite arrays, valid material/texture references and existing normalized caller-owned envelopes. Fir geometry uses two parts; previous/current material keys do not collide. Both changed Python files pass syntax parsing. `pnpm typecheck` and `pnpm build` pass; the existing large-chunk build warning remains. Changed-file formatting, local documentation links, capture hashes and the complete affected code/documentation diff were checked. No unrelated native-game/database/provider suite was run.
+
+### Final matched moving-scene cost
+
+Two sequential ten-second windows used the same M1 Pro/32 GiB WebGL2 session, DPR2 capped to render DPR1, **1231×468** framebuffer, Economy shadows, ordinary orthographic camera (zoom 5.5/pitch 0.68), daylight, staged walking, slow orbit, 36 presented entities and 1,250 scenery records. All assets were ready; the separate inspector and offline exports/build were finished. Both tree choices were warm in the shared scene cache.
+
+| Measurement                             | Previous 40/120 + original trees |     Current 30/60 + open fir |
+| --------------------------------------- | -------------------------------: | ---------------------------: |
+| Completed interval samples / duration   |                778 / 10,010.1 ms |            634 / 10,019.0 ms |
+| Frame median / p95 / p99 / max          |     14.9 / 18.2 / 24.8 / 50.0 ms | 16.6 / 25.3 / 26.6 / 57.2 ms |
+| CPU update median / p95                 |                     1.3 / 3.3 ms |                 1.3 / 3.2 ms |
+| CPU render submission median / p95      |                     5.8 / 6.9 ms |                 5.5 / 6.1 ms |
+| Summed GPU passes median / p95          |             6.1165 / 8.943708 ms |      8.406125 / 11.198416 ms |
+| Submitted draws median / p95            |                        672 / 682 |                    671 / 680 |
+| Counted texture + vertex + index memory |                107,258,028 bytes |            107,258,028 bytes |
+
+Both windows had zero unrendered tail. Memory includes both cached alternatives and is not an isolated per-choice comparison. GPU pass sums are not wall-clock frame duration. Combining redundant bark parts removed the preliminary extra draws, but the open fir still adds geometry cost: about **2.29 ms more median GPU time** in these samples. Sequential timing variation prevents a universal causal/performance claim. The current p95 **does not qualify uninterrupted 60 Hz**. Denser forests, cold loading, lower-end devices and arbitrary-view motion stability remain broader qualification gaps; the saved results do not close them.

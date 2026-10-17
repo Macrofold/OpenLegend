@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## October 17, 2026 — Coarser detail and open foliage
+
+Mike’s feedback supersedes the preceding fine 40/120-samples-per-metre choice with 30/60, broader green groups, more diffuse leaf lighting and real gaps between fir branches. Updated the existing art owners, presentation/specification/plan, limits, tracker and [dated evidence](verification/small-subject-art-and-atmosphere.md#coarser-detail-and-open-foliage--october-17-2026). The Poly Haven fir retains three finishes and its original source; all meaningful captures, including rejected reductions, are archived. Recorded the extra geometry/GPU cost without claiming strict 60 Hz or universal motion stability. Existing instructions already route this work to the relevant guidance; no AGENTS/skill duplication or world-rule change.
+
 ## October 16, 2026 — Grounded proportions and explicit art exclusions
 
 Mike clarified that [beautiful dimensional pixel art requires believable real-world proportions](../art-direction/decisions.md#current-visual-requirements--october-16-2026), excluding visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art. This supersedes broader cartoon-style permission and the previous Bitgem/KayKit/Polytope/Synty sourcing recommendation; Quaternius remains respected for its own style without being the target. Reconciled the creative brief, reference board, concept prompts, active art specifications, acceptance rubric, acquisition notes and historical entry points. Existing artwork, provenance and measured evidence remain unchanged.
