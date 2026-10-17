@@ -1,8 +1,8 @@
-# Harry Potter: Wizards Unite — research checkpoint (G173)
+# Harry Potter: Wizards Unite — full-game dossier (G173)
 
 [Library](../README.md) · [Roster](../research-roster.md#october-17-mobile-successes-and-unsuccessful-services) · [Research status](../research-progress-mobile-2026-10-17.md) · [Research requirements](../research-requirements.md)
 
-**Research status: incomplete substantive checkpoint, October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
+**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
 
 ## Game, mechanics and player-created content
 
@@ -13,6 +13,8 @@ The player walks through a real-world map to discover Traces, then attempts to f
 Normal spell casting is a short motor task rather than selecting arbitrary magic from a deck. The player follows a prescribed glyph quickly and accurately; the timing bar and tracing performance contribute to the Fair, Good, Great or Masterful result. An accurate but slow gesture therefore need not receive the highest grade. A cast grade describes execution, rather than a guarantee that every target will be returned. [GamesRadar, July 19, 2019; full casting guide body read](https://www.gamesradar.com/how-to-cast-spells-harry-potter-wizards-unite-masterful-great-good-fair/)
 
 The encounter's threat indicator communicates difficulty. Its fiction gives the gesture a concrete purpose: Hagrid can be trapped in a spider web, while a cyclone carries a Daily Prophet newspaper. A resisted spell allows another attempt at the cost of more Spell Energy. The visible creature or object and its obstructing magic are different entities, even when contemporary guides use their names inconsistently. [SuperCheats, June 25, 2019; full Confoundables guide body read](https://www.supercheats.com/wizards-unite-walkthrough-guide/how-to-defeat-confoundables)
+
+Departure is a separate risk from resistance: the Foundable can leave and end that opportunity. Later Departure Denial lessons addressed that escape risk specifically. [Official SOS Training description](https://www.harrypotter.com/news/harry-potter-wizards-unite-unlocks-more-magical-powers-with-new-sos-training-lessons-and-spells)
 
 **Oddities** change the action and scheduling problem. Their purple Traces lead to fights with health bars and defensive responses instead of the ordinary return-quality ladder. Some appearances depend on environmental and temporal conditions; werewolves are associated with the full moon. The historical guide's fixed local-hour simplifications and launch-only species count should not be generalized across latitude, season or later additions. [iMore, 2019; full Oddities guide body read](https://www.imore.com/how-to-find-oddities-harry-potter-wizards-unite)
 
@@ -28,17 +30,19 @@ The account combines Wizard level, collection ranks, profession investment and l
 
 #### Combat professions
 
-At level 6, players choose a profession and can later change freely. Purchased lessons remain in their original tree, so switching does not create a fully trained second role. Profession strengths make choosing foes and supporting others meaningful. [GosuNoob, June 24, 2019; full guide body read](https://www.gosunoob.com/harry-potter-wizards-unite/professions-auror-magizoologist-professor/)
+Professions unlock at level 6. Switching is free, but unlocked lessons remain in their original trees. [GosuNoob, June 24, 2019; full guide body read](https://www.gosunoob.com/harry-potter-wizards-unite/professions-auror-magizoologist-professor/)
 
-| Profession        | Functional identity and named capabilities                                                                                                                            |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Auror**         | Strong against Dark Forces; Weakening Hex reduces a foe's power, while Focus Charm transfers a combat resource to a teammate.                                         |
-| **Magizoologist** | Strong against Beasts; healing and Revive support teammates, while Bravery improves performance against Elite foes.                                                   |
-| **Professor**     | Strong against Curiosities; Protection improves defense, Proficiency helps the team exploit favorable matchups, and Deterioration damages a hexed foe through combat. |
+| Profession        | Functional identity and named capabilities                                                                                                                                                      |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Auror**         | Strong against Dark Forces, weak against Beasts; Weakening Hex reduces a foe's power, while Focus Charm transfers a combat resource to a teammate.                                              |
+| **Magizoologist** | Strong against Beasts, weak against Curiosities; healing and Revive support teammates, while Bravery improves performance against Elite foes.                                                   |
+| **Professor**     | Strong against Curiosities, weak against Dark Forces; Protection improves defense, Proficiency helps the team exploit favorable matchups, and Deterioration damages a hexed foe through combat. |
 
-These are asymmetric lesson choices and combat roles, not three cosmetic identities. [GosuNoob profession ability inventory](https://www.gosunoob.com/harry-potter-wizards-unite/professions-auror-magizoologist-professor/)
+[GosuNoob profession ability inventory](https://www.gosunoob.com/harry-potter-wizards-unite/professions-auror-magizoologist-professor/)
 
 Lesson purchases required **Scrolls**, **Spell Books** (red books), or **Restricted Section Books** depending on the node. Combat and login rewards were among the documented Spell Book sources. Wizard XP and profession advancement were separate: a higher account level did not automatically purchase a lesson. A scarce book could consequently delay a specific capability even when the player had accumulated other resources. [Twinfinite, updated September 3, 2019; full guide body read, excluding its loose difficulty and rarity generalizations](https://twinfinite.net/guides/harry-potter-wizards-unite-how-to-get-red-books-what-they-do/)
+
+Scrolls were earned through daily tasks and collection reward chests, then consumed on profession skills. Consequently, routine returns supplied incremental combat development, while book requirements could remain a separate gate. [Twinfinite, June 25, 2019; full Scrolls guide body read](https://twinfinite.net/guides/harry-potter-wizards-unite-scrolls-how-get-what-do/)
 
 #### SOS Training
 
@@ -46,9 +50,9 @@ Second-year **SOS Training** expanded improvement beyond combat professions. Mas
 
 ### 3. Fortresses: cooperative Wizarding Challenges
 
-Fortresses provide timed PvE encounters, playable alone or with up to five participants. Players select a chamber and Runestone; collection-family ranks supply corresponding stones, connecting outdoor collection to combat admission and reward selection. In a duel, the player holds the wand reticle over the foe's target, traces an attack, then responds to incoming attacks with the defensive gesture. Stamina determines survival. Turns need not alternate evenly; offensive casts spend Spell Energy. Healing Potions can extend an attempt. [Nick Tylwalk, TouchArcade, June 28, 2019; full guide body read](https://toucharcade.com/2019/06/28/harry-potter-wizards-unite-fortress-guide-everything-you-need-to-beat-wizarding-challenges/)
+Fortresses provide timed PvE encounters, playable alone or with up to five participants. Players select a chamber and Runestone; collection-family ranks supply corresponding stones, connecting outdoor collection to combat admission and reward selection. In a duel, the player holds the wand reticle over the foe's target, traces an attack, then responds to incoming attacks with **Protego**. Stamina determines survival. Turns need not alternate evenly; offensive casts spend Spell Energy. Healing Potions can extend an attempt. [Nick Tylwalk, TouchArcade, June 28, 2019; full guide body read](https://toucharcade.com/2019/06/28/harry-potter-wizards-unite-fortress-guide-everything-you-need-to-beat-wizarding-challenges/)
 
-Strategic Spells operate outside the individual duel, affecting allies or foes from the shared chamber view. They spend **Focus**, replenished by defeated enemies, rather than the ordinary casting supply. Higher chambers and stone choices increase the undertaking; choosing an appropriate opponent and helping another participant serve the shared deadline. [TouchArcade Fortress guide](https://toucharcade.com/2019/06/28/harry-potter-wizards-unite-fortress-guide-everything-you-need-to-beat-wizarding-challenges/)
+Strategic Spells operate outside the individual duel, affecting allies or foes from the shared chamber view. Their **Focus** costs vary by ability; defeated foes replenish Focus, a resource distinct from ordinary casting supply. Higher chambers and stone choices increase the undertaking; choosing an appropriate opponent and helping another participant serve the shared deadline. [TouchArcade Fortress guide](https://toucharcade.com/2019/06/28/harry-potter-wizards-unite-fortress-guide-everything-you-need-to-beat-wizarding-challenges/)
 
 Each foe has one duelist at a time. A player can support a teammate indirectly without entering that same fight. Reaching zero Stamina produces a knockout and revival countdown while the chamber clock continues; revival restores health, but waiting consumes the group's remaining time. Failing to clear the required enemies before the deadline loses the challenge. The cited launch guide contains a misleading implication that one stone admits the whole party; this account does not adopt that claim. [Gadget Hacks, June 21, 2019; full Fortress guide body read](https://smartphones.gadgethacks.com/how-to/team-up-with-friends-raid-fortresses-harry-potter-wizards-unite-0199496/)
 
@@ -87,7 +91,7 @@ The launch recipes and numerical strengths were later affected by training and t
 
 ### 6. Late-game Adversaries and Lethal encounters
 
-The December 2020 **Adversaries** feature introduced chains of increasingly difficult enemies, rather than a single ordinary return. Each defeated stage provided rewards; health restored between opponents, but losing or leaving a fight ended the sequence. The last foe awarded more. Rewards included XP, Challenge XP, Defence Against the Dark Arts Books and Registry fragments. Level 15 gated participation, while completing an original profession lesson plan opened advanced combat training. Exstimulo and Wit-Sharpening effects could be combined in these fights. The announcement separated initially available Feared foes from Lethal encounters promised for later; it is not evidence that Bellatrix or Voldemort were playable in December 2020. [Wizards Unite team announcement reproduced by DigitalChumps, December 8, 2020; full announcement body read](https://digitalchumps.com/2020/12/08/familiar-villains-and-foes-make-it-to-harry-potter-wizards-unite/)
+The December 2020 **Adversaries** feature introduced chains of increasingly difficult enemies, rather than a single ordinary return. **Edible Dark Marks** were consumables that summoned Adversaries onto the map. Each defeated stage provided rewards; health restored between opponents, but losing or leaving a fight ended the sequence. The last foe awarded more. Rewards included XP, Challenge XP, Defence Against the Dark Arts Books and Registry fragments. Level 15 gated participation, while completing an original profession lesson plan opened advanced combat training. Exstimulo and Wit-Sharpening effects could be combined in these fights. The announcement separated initially available Feared foes from Lethal encounters promised for later; it is not evidence that Bellatrix or Voldemort were playable in December 2020. [Wizards Unite team announcement reproduced by DigitalChumps, December 8, 2020; full announcement body read](https://digitalchumps.com/2020/12/08/familiar-villains-and-foes-make-it-to-harry-potter-wizards-unite/)
 
 Contemporary player analysis documents an additional preparation decision: upgraded Exstimulo effects retained remaining uses between encounters, allowing one strong potion to contribute to successive fights. Wit-Sharpening applied to the eligible Adversary rather than every preceding guard, making when to combine effects consequential. The author explicitly analyzed Feared encounters; those damage comparisons are not universal Lethal rules. [k1platinum, December 26, 2020; complete player analysis read in English automatic translation](https://note.com/k1platinum/n/n62ee5e0b913e?hl=en)
 
@@ -103,13 +107,15 @@ Daily Assignments offered a short recurring checklist. In the January 2020 rules
 
 The **1920s Wizarding World Convergence** was a real late-service collection system. September 2021 coverage describes the prior month's debut and a further event. Special one-kilometer Portmanteaus opened locations leading to a random return encounter; success supplied its fragment, with a separate chance at a page's additional Portkey reward. Newt's Menagerie, Circus Arcanus and Paris Street linked the loop to Fantastic Beasts. Unkeyed special Portmanteaus disappeared after their event deadline. The guide also reports contemporary Adventure Sync problems, so the intended walking feature should not be mistaken for reliable operation on every device. [GoGames, September 11, 2021; full German player guide read](https://gogames.news/archiv/harry-potter-wizards-unite-news-de/das-1920er-event-im-september-2021/)
 
+The November 2 wind-down changes increased map Energy, ingredients and daily rewards, made Master Notes reduce brewing by 50%, removed daily caps on sending and opening Gifts, and doubled 1920s fragment rewards. These temporary final-service conditions differ from launch-era supply and pacing. [Publisher closing notice reproduced in full by Pokémon Blog; body read](https://pokemonblog.com/2021/11/02/niantic-confirms-that-its-pokemon-go-inspired-game-harry-potter-wizards-unite-will-officially-close-on-january-31-2022-and-will-be-removed-from-app-stores-on-december-6-2021/)
+
 ### 8. Seven constructed interactions
 
 These are analytical examples assembled from documented rules, not accounts of sessions played during this research.
 
 1. **A good gesture is only one part of a return.** A player finds web-trapped Hagrid, executes the supplied trace, and receives resistance. Retrying consumes another cast's resources. If repeated attempts are no longer worth the player's remaining supply, stopping preserves what has not yet been spent but does not award the missing return. This illustrates why execution feedback and encounter outcome must be distinguishable. [Confoundables rule basis](https://www.supercheats.com/wizards-unite-walkthrough-guide/how-to-defeat-confoundables)
 
-2. **A cooperative fight is also resource routing.** An Auror sends Focus to a Professor, enabling support rather than spending everything on personal attacks. A Magizoologist can heal or revive a teammate while the group assigns favorable foes. This plan depends on the relevant lessons being unlocked; merely switching profession before the fight does not supply another role's purchased tree. [Profession and named capability basis](https://www.gosunoob.com/harry-potter-wizards-unite/professions-auror-magizoologist-professor/)
+2. **A cooperative fight is also resource routing.** An Auror sends Focus to a Professor, enabling a team buff. The group chooses favorable foes while a Magizoologist heals or revives a teammate. The plan requires the relevant lessons; changing profession alone does not unlock another role's capabilities. [Profession and named capability basis](https://www.gosunoob.com/harry-potter-wizards-unite/professions-auror-magizoologist-professor/)
 
 3. **Harvest timing can defeat otherwise successful crafting.** A player plants Snowdrop for its one-hour growth cycle and coordinates Energy contributions for more yield. They must return while the mature ingredient is available: the documented collection window was thirty minutes. Choosing the day-long Leaping Toadstool instead changes tomorrow's route. A finished timer alone does not put the crop into the planter's Vault. [Greenhouse timing and shared harvest basis](https://www.supercheats.com/wizards-unite-walkthrough-guide/how-to-use-greenhouses)
 
@@ -383,6 +389,23 @@ All access below occurred on **17 October 2026**. Reviews R1–R5 above contain 
 
 **Optional viewing routes, not viewed evidence.** IGN's [24 minutes of launch gameplay](https://www.youtube.com/watch?v=Odv4OR24S_s), indexed **20 June 2019**, and [video review](https://www.youtube.com/watch?v=pO6vX32RV5Y), indexed **28 June 2019**, offer routes for inspecting the map-to-encounter transition, gesture timing, menus and sound. Only titles, dates and listings were inspected here; no visual or audio claim rests on watching them. Compare those launch recordings with dated later-system documentation before describing the final game.
 
-## Completion work remaining
+## Requirement coverage and preservation
 
-The latest substantive research is preserved here while remaining mechanics, narrative, creation and source integration are completed. The assembled document still requires its final requirement coverage, factual and link review. It is not yet a completed R01–R15 dossier; the scoped ledger records the actual subject status.
+| Requirement          | Substantive coverage                                                                                                             |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| R01                  | Player promise, exact game identity, release and version boundaries in the game and commercial sections.                         |
+| R02–R03              | Major mechanics inventory, named resources, capabilities, compatibility and worked situations.                                   |
+| R04                  | Fictional economy, permanent versus temporary progress, time costs, failure and restart boundaries.                              |
+| R05                  | Constructed multi-system situations with conditions, actions, outcomes and limitations.                                          |
+| R06                  | Character roles, authored behavior, social systems, multiplayer or explicit absences.                                            |
+| R07                  | Art, sound, controls, interface, feedback and production evidence; firsthand device testing not claimed.                         |
+| R08                  | Fiction, named characters/institutions and narrative connections to actual play.                                                 |
+| R09–R10              | Production, release sequence, iteration, distribution, marketing and qualified discovery hypotheses.                             |
+| R11                  | Dated financial metrics, platform/territory definitions, estimate method and missing cost/profit evidence.                       |
+| R12                  | Five substantive independent written reviews where accessible, contrasting player testimony, enjoyment and abandonment analysis. |
+| R13                  | Explicitly labeled transferable research hypotheses, dependencies and counterexamples.                                           |
+| R14                  | Adjacent sources, annotated access/version limits, reading/viewing routes, navigation and this map.                              |
+| R15                  | Dated modding applicability finding and conditional investigation in the mechanics or commercial/creation section.               |
+| October 13 amendment | Commercial outcome; reasons to enjoy, return or leave; fictional economy; meaningful lore; actual creator capabilities.          |
+
+This subject had no earlier full dossier at the recorded branch base. Existing mobile reference studies, game dossiers and their historical evidence remain intact. Source observations are distinguished from interpretation and constructed examples. No gameplay, purchases, account modifications or uninspected video content are presented as firsthand evidence. The linked research ledger owns completion and commit status, including any remaining review work.
