@@ -182,6 +182,8 @@ Shadows use actual receiver geometry, an approved model or simpler shadow-only p
 
 ## 9. Persistence, publication, and privacy
 
+The [game asset-storage design](game-asset-storage-tech-design.md) now owns buckets, keys, manifests versus file identity, environment promotion, library/study separation, exact URLs and local cache. Its [feature contract](game-asset-storage-feature-spec.md) preserves all meaningful iterations outside Git; [AS work](../maintainers/game-asset-storage.md) supplies storage portions of V3D02/V3D10. This is the proposed storage mechanism; current rendering remains separate and the general publication service is not implemented.
+
 Keep immutable artifact bytes and manifests in the durable art store, with database metadata, rights, dependency pins, and publication/binding revisions. A saved current world references exact approved versions and cosmetic identity, not expiring provider URLs or `latest`. Portable exports retain the permitted dependency closure. Derived GPU state is never saved.
 
 Follow the [current-format save owner](../save-and-load.md) and [development save policy](../../AGENTS.md#development-save-policy): no old-save migration or legacy reader is part of this project. Same-version restore validates required references and can use a compatible approved visual fallback when bytes are temporarily unavailable; it may not silently replace mechanical state. Local derived resources can be rebuilt without paid generation. Real external reservations and uncertain jobs remain in the operational ledger and are not rewound with fictional time.

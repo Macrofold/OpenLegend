@@ -1,8 +1,8 @@
 # Progressive 3D pixel art — generation and publication pipeline
 
-| Status      | Current progress                                                                                                                                      | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The finite source-based study is implemented; grounded art requirements are clarified, while creator acceptance and the broader pipeline remain open. | 2026-10-17   |
+| Status      | Current progress                                                                                                                         | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The finite source-based study is implemented and external storage is specified; creator acceptance and the broader pipeline remain open. | 2026-10-17   |
 
 **Art direction — October 16, 2026:** beautiful dimensional pixel art must retain believable real-world proportions. Visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art is rejected under the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026). This is the bundled world’s artistic target, not a universal engine constraint.
 
@@ -146,6 +146,8 @@ Client subscribers follow the [safe handoff protocol](3d-pixel-art-tech-design.m
 Support explicit visual rollback to a retained approved version through a new guarded publication. Do not mutate already published bytes in place or use a mutable `latest.glb` as saved identity. A model can be approved for one state/view/family but ineligible for another.
 
 ## 8. Storage, reuse, privacy, and portable packs
+
+The [asset-storage specification](game-asset-storage-feature-spec.md) and [S3/reference architecture](game-asset-storage-tech-design.md) own physical organization, world/engine revision scope, runtime versus source/study collections, local cache, durable HTTPS links and migration out of Git. [AS01–AS08](../maintainers/game-asset-storage.md) implements that shared boundary; this pipeline retains production stages, rights, compatibility and paid-operation semantics. No external store or migration is claimed implemented by the finite study.
 
 Store immutable runtime artifacts, required source evidence, manifests, digests, validation reports, provenance, rights, and dependency pins in the existing database/artifact-store boundary. Provider-hosted URLs and execution workspaces are transit, not durable world storage. Retain exact source references or a reproducible authorized recipe where permitted; record when license or retention restrictions prevent keeping a source.
 

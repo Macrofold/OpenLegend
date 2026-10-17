@@ -1,12 +1,14 @@
 # Production deployment — technical design
 
-| Status      | Current progress                                                                                                        | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The hosting proposal and playbook are prepared; deployment, provider qualification and capacity acceptance remain open. | 2026-10-16   |
+| Status      | Current progress                                                                                                              | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Hosting remains proposed; the accepted external asset-storage design is reconciled and deployment qualification remains open. | 2026-10-17   |
 
 **Status: recommendation, researched 1–2 October 2026; not implemented or capacity-certified.** Auth0 is selected by Mike. Runtime baseline: [`b9a08a05`](https://github.com/Macrofold/OpenLegend/commit/b9a08a05b45edbda31154ad40bccd03c69c21cdd); the production branch at `ca804cc8` was reviewed for this update. Read the [feature specification](production-deployment-feature-spec.md) for promises, the [checklist](../maintainers/production-deployment.md) for delivery order, and the [implementation playbook](production-deployment-playbook.md) for packaging, commands, CI/CD and release procedures.
 
 ## 1. Decision
+
+Mike selected S3/CloudFront for substantial game/source/study assets, with exact references and tiny-only Git media. The [asset feature specification](game-asset-storage-feature-spec.md) and [storage architecture](game-asset-storage-tech-design.md) own bucket/key organization, world/engine/version scope, local cache, hosted studies and migration. Other infrastructure recommendations retain their proposed, unqualified status.
 
 **Prefer AWS for the first deployment: ordinary ECS Fargate On-Demand, RDS PostgreSQL with pgvector, Auth0, and S3/CloudFront. Keep the current Node/React/PlayCanvas stack and HTTP/SSE protocol. Buy no GPUs.** This is a modest operational-fit recommendation, not evidence that AWS is cheaper, faster or more scalable than GCP. Fargate supplies a managed persistent-container starting point without requiring Kubernetes or a game-server SDK. The application must still implement safe ownership, recovery and deployment.
 
@@ -121,9 +123,11 @@ A CDN speeds static delivery, not the authoritative interaction across continent
 
 **Identity, exact versions, rights, dependencies, validation and publication receipts:** PostgreSQL metadata through the existing appearance/art owners.
 
-**Engine/import scripts, small authored manifests, essential fallback art:** Git. Local downloaded library files live in an ignored cache.
+**Engine/import scripts, small authored manifests/version pins and explicitly tiny fallback/UI art:** Git, under [AST01](../limits/game-asset-storage.md#ast01--git-and-bootstrap-assets). Local downloaded files use a shared cache outside worktrees; substantial generated scenery JSON follows the same external-asset policy as models/textures.
 
-**First vertical slice:** publish a rights-approved mercenary runtime bundle; create its exact asset/version manifest; resolve it through authorized server metadata; load from the CDN with cache/fallback; verify a clean checkout and a clean browser; then stop adding large runtime binaries to Git. No history rewrite or deletion of current art is authorized here.
+**First runtime vertical slice:** publish a rights-approved mercenary runtime bundle; create its exact asset/version manifest; resolve it through authorized server metadata; load from the CDN with cache/fallback; verify a clean checkout and a clean browser. [AS01–AS08](../maintainers/game-asset-storage.md) supplies shared storage, selective materialization, separate study hosting and staged migration. Stop adding substantial media to Git now; existing tracked art is removed only after archive/link/restore checks. No history rewrite or deletion is authorized by this proposal.
+
+Use the [canonical physical layout](game-asset-storage-tech-design.md#2-physical-storage-and-accounts): durable private library and separate study buckets, isolated nonproduction/production runtime buckets, intake and a separately controlled recovery destination. Packs organize authored worlds and engine presentation; immutable file identities enable reuse without a bucket per world or file copies per engine version. Intentional promotion/archive/recovery copies have receipts. The [URL contract](game-asset-storage-tech-design.md#5-url-and-repository-contract) replaces workstation/provider paths with verified permanent references during migration; no temporary URL is a saved identity. These are specified targets, not deployed resources.
 
 Use the existing narrow **GLB/glTF 2.0** profile. Pin **glTF Transform** for inspection/deduplication/texture preparation and **Khronos glTF Validator** for structural checks; neither replaces semantic/rights review. Qualify Basis/KTX2 texture output and Draco compression against the installed PlayCanvas loader and target devices before enabling them. Do not blindly use a tool's Meshopt/default optimization preset when the client extension/decoder path is unverified. Ship required decoder/WASM versions with the approved release. Compressed download size is not decoded CPU/GPU memory usage. [13] [26] [27] [28]
 

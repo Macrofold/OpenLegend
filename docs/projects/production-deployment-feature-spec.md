@@ -2,9 +2,11 @@
 
 | Status      | Current progress                                                                                                        | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The hosting proposal and playbook are prepared; deployment, provider qualification and capacity acceptance remain open. | 2026-10-16   |
+| In progress | Hosting remains proposed; the external asset-storage requirements are agreed and deployment qualification remains open. | 2026-10-17   |
 
-**Status: researched proposal, updated 2 October 2026. Auth0 is Mike's selected authentication provider; the other platform choices below are recommendations, not deployed infrastructure.** This package authorizes no runtime change, provisioning, purchase, migration, or paid execution.
+**Status: researched proposal. Auth0 and S3/CloudFront asset storage are selected by Mike; remaining platform choices are recommendations, not deployed infrastructure.** This package authorizes no runtime change, provisioning, purchase, migration, or paid execution.
+
+The [game asset-storage specification](game-asset-storage-feature-spec.md) owns production/development asset delivery, reusable world/engine content, source libraries, preserved studies and exact documentary URLs. The production release consumes that design: players fetch qualified permitted assets, developers fetch selected local dependencies, and substantial source/study media stays outside Git and player builds. [AS work](../maintainers/game-asset-storage.md) supplies the shared implementation; PD05 retains hosted-game acceptance.
 
 ## Purpose
 

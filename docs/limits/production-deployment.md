@@ -1,6 +1,6 @@
 # Production deployment limits and constraints
 
-**Runtime baseline: main `b9a08a05`; research updated 2 October 2026.** This inventory owns discretionary deployment choices, not duplicate gameplay constants. All new choices are **Proposed** except the user's Auth0 selection; none establishes measured capacity. [Design](../projects/production-deployment-tech-design.md), [feature contract](../projects/production-deployment-feature-spec.md), [playbook](../projects/production-deployment-playbook.md), [PD work](../maintainers/production-deployment.md).
+**Runtime baseline: main `b9a08a05`; research updated 2 October 2026, asset direction reconciled October 17.** This inventory owns discretionary deployment choices, not duplicate gameplay constants. Choices remain **Proposed** except Mike's Auth0 and S3/CloudFront asset-storage selections; none establishes measured capacity. [AST01–AST08](game-asset-storage.md) owns storage organization, Git/cache/retention choices and unqualified storage work. [Design](../projects/production-deployment-tech-design.md), [feature contract](../projects/production-deployment-feature-spec.md), [playbook](../projects/production-deployment-playbook.md), [PD work](../maintainers/production-deployment.md).
 
 ## DEP01 — Initial placement
 

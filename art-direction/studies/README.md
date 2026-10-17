@@ -2,6 +2,8 @@
 
 Every recoverable earlier capture is preserved here, including rejected work. Original review packages and filenames are unchanged. Source assets and alternate exports remain in their existing catalogs.
 
+**Storage:** future substantial study files belong in the separate durable S3 study collection, using exact model/source/media references and permanent iteration URLs. [The study directory contract](../../docs/projects/game-asset-storage-tech-design.md#43-study-archive) defines organization; [AS03/AS05](../../docs/maintainers/game-asset-storage.md) owns publication and migration. The local links below describe current files, not a completed cloud archive. Preserve them until verified hosted replacements and recovery exist; do not replace them with hypothetical URLs or add more large Git snapshots.
+
 [Current deer stride and wolf forepaws](2026-10-17-grounded-animal-gaits/comparison.html) · [Earlier animal, shrub, arrow and light correction](2026-10-17-animal-and-prop-corrections/comparison.html) · [Previous natural-source replacement study](2026-10-17-natural-replacements/comparison.html) · [Previous foliage and coarser-detail comparison](2026-10-17-foliage-and-detail/README.md) · [Previous detail and atmosphere study](2026-10-17-detail-and-atmosphere/README.md) · [Historical file checksums](archive-through-2026-10-16/archive-manifest.json)
 
 Archived October 17, 2026 UTC: 331 files, 214,545,633 bytes. This is the set recovered from the prior study directory; it cannot recover earlier UI states that were never captured. Marketing/reference images remain third-party reference material, not licensed runtime assets.

@@ -1,8 +1,10 @@
 # Open Legend — art direction
 
-This folder is the shared home for visual references, feedback, decisions, and future art assets. Created September 19, 2026 during an open exploration of pixel art, 2.5D presentation, sprites, and concept art. The collection is independent of engine and platform choices.
+This folder is the shared home for visual direction, feedback, decisions and references to art. Created September 19, 2026 during an open exploration of pixel art, 2.5D presentation, sprites, and concept art. The collection is independent of engine and platform choices.
 
 ## Start here
+
+**Asset storage:** substantial models, editable sources, reference media and study captures belong in the external library/study/runtime collections specified by the [asset storage feature](../docs/projects/game-asset-storage-feature-spec.md) and [S3/URL design](../docs/projects/game-asset-storage-tech-design.md). Git retains direction, recipes, small pins and verified hosted links. [AS01–AS08](../docs/maintainers/game-asset-storage.md) tracks the unimplemented migration; current local assets/links remain preserved until real destinations and recovery are verified. Before hosting reference art, check its permitted storage/distribution audience.
 
 **Preserved iterations:** [Study archive](studies/README.md) contains the recovered earlier screenshots/videos and the current small-detail/grounded-lighting comparisons. Current direction includes survival, weathering and emotional range alongside sunlight and warmth; preserve readable darkness and avoid uniformly cheerful presentation.
 
@@ -16,7 +18,7 @@ This folder is the shared home for visual references, feedback, decisions, and f
 
 **October 14 research:** [Building a dimensional pixel-art world](research/3d-pixel-worlds/README.md) · [34-image local gallery](research/3d-pixel-worlds/gallery.md). Garbage Country, The Last Night, EthrA, REPLACED and the supplied technical references are compared with source evidence, rendering explanations and a proposed generative-art workflow.
 
-**Art in progress:** [Maintainer art-direction index](../docs/maintainers/art-direction.md) · [Mercenary study](../docs/maintainers/art/mercenary.md). Editable studies live in [OpenLegend-art](/Users/mzw/Documents/ChatGPT/OpenLegend-art/README.md); this repository folder retains the creative brief, references and feedback.
+**Art in progress:** [Maintainer art-direction index](../docs/maintainers/art-direction.md) · [Mercenary study](../docs/maintainers/art/mercenary.md). Historical editable work includes [OpenLegend-art](/Users/mzw/Documents/ChatGPT/OpenLegend-art/README.md) and the current repository source files. AS05 inventories both before replacing their references with verified hosted revisions; neither a workstation directory nor this code repository is the long-term asset store.
 
 **Final selection:** [Creative inspiration board](final-board/index.html) · [Creative brief](final-board/creative-brief.md)
 

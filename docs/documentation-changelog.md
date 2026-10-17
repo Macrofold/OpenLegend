@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 17, 2026 — External asset library, delivery and study archives
+
+Mike selected S3/CloudFront for substantial assets, tiny-only code-repository media, permanent documentary URLs and reference reuse with deliberate copies across study, environment and recovery boundaries. The [paired feature specification](projects/game-asset-storage-feature-spec.md) and [technical design](projects/game-asset-storage-tech-design.md) define world/engine ownership, bucket/key structure, versions, access, publication, local development, study preservation, recovery and staged migration. [AS01–AS08](maintainers/game-asset-storage.md) and [AST01–AST08](limits/game-asset-storage.md) own delivery and discretionary limits.
+
+This supersedes preserving every large art iteration as a Git binary, while retaining the obligation to preserve the art itself. Reconciled deployment, art-pipeline, study navigation and agent routing by linking one directory/URL owner rather than copying its contract. Existing files and local links remain until migration verifies real hosted destinations and restoration. No cloud resources, asset transfers/deletions, history rewrite or runtime qualification were performed by this design task.
+
 ## October 17, 2026 — Select Open Legend language and elevator pitches
 
 Mike selected audience-specific game, ambition and engine descriptions, two elevator pitches, three taglines and a dense genre descriptor. [Language, communication and elevator pitches](../archive/06-marketing/language-and-elevator-pitches.md) preserves the fourteen selections and explains how systemic rules, emergent outcomes and generative invention differ. The guide makes the autonomous-inhabitant, invention and lasting-consequence combination easy to communicate while keeping the game and creator propositions clear.

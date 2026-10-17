@@ -224,6 +224,8 @@ Remaining within V3D01.12/.13 visual/performance acceptance: review rectangular 
 
 **Owners:** protocol, server appearance/storage, client asset intake. **Depends on:** V3D01 for the target profile; technical fixture work can precede final style approval.
 
+The accepted [asset-storage/reference design](../projects/game-asset-storage-tech-design.md) and [AS01–AS07](game-asset-storage.md) supply shared S3/catalog/cache/study/migration implementation. V3D02 keeps appearance/compatibility/save acceptance; do not implement another blob store or treat AS completion as closure of this entire item.
+
 - [ ] Introduce the smallest AppearanceDefinition/RepresentationManifest/VisualBinding contract and family compatibility data needed by one real consumer, extending the current `EntityView.appearance` seam. Keep provider and PlayCanvas types out of shared/domain data.
 - [ ] Implement exact scoped lookup, immutable metadata/bytes, digests, reference rights, dependency closure and publication revisions through current repositories and artifact-store adapters. Enforce A3D01–A3D05/A3D09/A3D10 before enabling imported content.
 - [ ] Admit one trusted GLB and sprite, reject malformed/oversized/uncontrolled external dependencies, and persist exact references through the current-format save owner. No legacy save reader or paid regeneration on restore.

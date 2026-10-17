@@ -1,12 +1,14 @@
 # Production deployment — implementation playbook
 
-| Status      | Current progress                                                                                            | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The deployment design is documented; the application has not been deployed through this proposed procedure. | 2026-10-16   |
+| Status      | Current progress                                                                                                      | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The deployment procedure incorporates the agreed asset-storage layout; cloud execution and qualification remain open. | 2026-10-17   |
 
 **Design only, researched 2 October 2026.** This is the execution companion to the [technical design](production-deployment-tech-design.md), not deployed infrastructure. The Dockerfile, CDK application, deployment workflows, release-specific maintenance gate and asset publisher described below still need implementation. Commands are reviewed examples, not evidence that they ran. [PD01–PD12](../maintainers/production-deployment.md) owns tasks and acceptance; this document owns the deployment procedure, not another checklist.
 
 The release-specific write gate remains future work. Existing [maintenance controls](completed/multiplayer-entry-maintenance.md) already pause ordinary play and retain the notice across restart; reuse that owner rather than rebuilding maintenance.
+
+[AS01–AS08](../maintainers/game-asset-storage.md) supplies shared asset storage, study delivery and migration work; deployment keeps the procedure and acceptance owned here.
 
 ## 1. Build the smallest complete deployment
 
@@ -169,6 +171,8 @@ Retain one release record from source to deployment: source commit, image digest
 
 Start with curated mercenary delivery, not a complete AI art factory. The [art contract](../invention-art-pipeline.md) retains semantic validation, rights, fallbacks and save pins. This sequence supplies its production storage and tooling.
 
+Use the [asset storage directory and publication contract](game-asset-storage-tech-design.md#4-s3-directory-contract), not a second deployment-specific folder convention. Before running upload commands, bind verified account/region/bucket/domain configuration and destination access policy. Library/study preservation and selective local fetch may precede full world hosting. Runtime promotion verifies the exact destination dependency closure; dev/preview/staging/production selections are records at the release owner, not mutable S3 `latest` files. Study and source files remain separate from player output. Publication is committed only after the bytes/manifests are verified and protected from cleanup.
+
 **Curated publication:** retain source/provenance privately, produce a bounded runtime bundle, inspect it with pinned glTF Transform and Khronos validation, test the actual PlayCanvas loader, upload immutable bytes, verify checksums, then atomically publish the authorized metadata/binding. Never publish the database pointer before its dependencies exist. Reuse textures/rigs; measure download, decode, upload-to-GPU and steady VRAM separately. An optimized file is not automatically a correctly rigged or mechanically faithful character.
 
 A minimal upload primitive for one already-approved public GLB is below. The bucket remains origin-private behind CloudFront OAC; the public cache policy is appropriate only for content approved for public distribution. Restricted content needs its own viewer authorization/cache policy. This is **not** the missing manifest/rights publisher. [C10]
@@ -178,12 +182,14 @@ A minimal upload primitive for one already-approved public GLB is below. The buc
 : "${ASSET_FILE:?Set the validated GLB path}"
 HASH="$(shasum -a 256 "$ASSET_FILE" | awk '{print $1}')"
 aws s3api put-object --bucket "$ASSET_BUCKET" \
-  --key "runtime/sha256/$HASH.glb" --body "$ASSET_FILE" \
+  --key "public/blobs/sha256/${HASH:0:2}/$HASH" --body "$ASSET_FILE" \
   --content-type model/gltf-binary --checksum-algorithm SHA256 \
   --if-none-match '*' --cache-control 'public,max-age=31536000,immutable'
 ```
 
 On an existing-key response, verify the stored SHA-256 and metadata before treating it as an idempotent success; an ETag is not universally the file's SHA-256. Other failures remain failures. Publish a new manifest revision through expected-version checks. Do not use `s3 sync --delete` on the live library. A bad new asset rolls back its binding, not the game database. Preserve every dependency pinned by retained saves, active worlds or released packs.
+
+The command is a Bash-compatible illustrative single-file upload, not the complete publisher. Preserve source/library/study/release pins and active upload claims, record intentional cross-boundary copies, and rehearse restoration using the [recovery contract](game-asset-storage-tech-design.md#9-retention-backups-and-withdrawal). [AS05](../maintainers/game-asset-storage.md#as05--inventory-preservation-and-repository-migration) verifies real hosted URLs and fresh-checkout use before tracked media removal; AS08 requires a separately approved history-rewrite plan. No bucket-wide pruning is a deployment cleanup step.
 
 **Generated publication:** add private quarantine and an asynchronous conversion/review worker only after the curated path passes. Use a small source queue with durable job/attempt IDs; do not run Blender, untrusted decoders or arbitrary asset fetches inside the simulation process. Disable executable/scripted asset behavior and arbitrary external references; bound compressed/decoded size, CPU, memory, output count and elapsed work. A model-supplied URL must not reach internal services or cloud metadata. Reconcile unknown provider completion before another paid attempt.
 
