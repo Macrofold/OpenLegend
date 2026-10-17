@@ -87,8 +87,8 @@ Contract: [interpreted threat reactions](../worlds/base/psychological-reactions.
 
 Contract: [technical stages](../projects/combat-and-threat-responses-tech-design.md#stage-one-situation-relevance-and-independent-appraisals) and the canonical [24-purpose catalogue](../worlds/base/threat-response-options.md).
 
-- [ ] Install request-local purpose/subject/role bindings, native feasibility and source-bound appraisal questions. The first cheap Decision API call decides situation relevance; it is not replaced with native filtering or a fixed top-N list.
-- [ ] Preserve all relevant and uncertain complete bindings; expose no-change/continue and temporary blockers honestly. The second call sees admitted appraisal state through a valid postcommit snapshot and chooses one fully grounded response.
+- [ ] Install request-local purpose/subject/role bindings, native feasibility and source-bound appraisal questions. The first cheap Decision API call uses one existing three-option Choice question per purpose instance for uncertain/relevant/irrelevant, with the technical contract's identical insertion/canonical handle order. Do not use the binary relevance decoder, native filtering alone or a fixed top-N list; ordinary noncombat relevance stays unchanged.
+- [ ] Preserve all relevant and uncertain complete bindings; expose no-change/continue and temporary blockers honestly. Qualify an explicitly uncertain subject/role surviving into the second call and exact ties agreeing through direct Jev and Macrofold. The second call sees admitted appraisal state through a valid postcommit snapshot and chooses one fully grounded response.
 - [ ] Include exact finite utterances and recipients for speech options; no hidden third generation call or unsupported simultaneous speech/physical action. One offensive option authorizes one real strike, not a permanent attack loop.
 - [ ] Reserve/account both stages through the existing owner. Qualify invalid/partial responses, uncertain relevance, stale source/action, accepted appraisal followed by failed choice, exact receipt recovery and changed authority after every wait.
 

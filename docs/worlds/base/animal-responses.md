@@ -60,10 +60,10 @@ These are animal comfort distances, not universal weapon ranges or invulnerabili
 
 An alarm has three physical situations, all owned by one episode:
 
-| Situation | Native response                                                                                                             | Condition for leaving it                                                                                 |
-| --------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Escaping  | Keep a valid route to a chosen refuge; prefer increasing separation from the complete danger set.                           | Reach a supported, clear stopping location and have no current qualifying attack preparation/passage.    |
-| Settling  | Stop ordinary roaming, remain visibly alert and continue local danger checks.                                               | Remain continuously clear for **240 game seconds**, with no fresh attack evidence; then end the episode. |
+| Situation | Native response                                                                                                             | Condition for leaving it                                                                                    |
+| --------- | --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Escaping  | Keep a valid route to a chosen refuge; prefer increasing separation from the complete danger set.                           | Reach a supported, clear stopping location and have no current qualifying attack preparation/passage.       |
+| Settling  | Stop ordinary roaming, remain visibly alert and continue local danger checks.                                               | Remain continuously clear for **240 game seconds**, with no fresh attack evidence; then end the episode.    |
 | Blocked   | Stay in a physically legal position or take an admitted improving route; retain alarm and show the actual blocked response. | A meaningful change permits a usable route or establishes the current supported position as a clear refuge. |
 
 At the normal base-world **60 game seconds per real second**, 240 game seconds is four real seconds. Pause freezes the interval. Faster simulation changes its real duration normally. A wall-clock timeout, number of rendering frames or number of Decision API completions must not determine when an animal calms.
