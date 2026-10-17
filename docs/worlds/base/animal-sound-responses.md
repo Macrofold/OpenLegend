@@ -20,12 +20,12 @@ This replaces the earlier SPK design for model-selected animal hold, approach, r
 
 Extend the animal's existing installed response profile with `soundAlarmMinimumBand`, a nonnegative integer or null. Null means the animal can hear but this acoustic policy does not initiate alarm. A threshold selects native reaction only; the installed hearing sense independently determines detection.
 
-| Authored binding | Initial value | Meaning |
-| --- | --- | --- |
-| Ordinary hare, deer and bird | 0 | Any actually detected external sound can startle a skittish animal. |
-| Ordinary wolf and bear | 2 | Modest detected sound can be ignored; a sufficiently stronger cue can startle. |
-| Territorial stag | null | Hearing does not replace the existing territorial warning/attack/withdrawal decision. |
-| Explicit nonreactive contrast fixture | null | Detection remains independent of whether a native response is installed. |
+| Authored binding                      | Initial value | Meaning                                                                               |
+| ------------------------------------- | ------------- | ------------------------------------------------------------------------------------- |
+| Ordinary hare, deer and bird          | 0             | Any actually detected external sound can startle a skittish animal.                   |
+| Ordinary wolf and bear                | 2             | Modest detected sound can be ignored; a sufficiently stronger cue can startle.        |
+| Territorial stag                      | null          | Hearing does not replace the existing territorial warning/attack/withdrawal decision. |
+| Explicit nonreactive contrast fixture | null          | Detection remains independent of whether a native response is installed.              |
 
 Use `acousticChangeBandDb = 6`, `sensoryLifetimeSeconds = 900` and `acousticPatternIdleSeconds = 900` as the initial authored acoustic values. Raw evidence lifetime and pattern idle lifetime are separate meanings even though their initial durations match. Starting species retain the current 0 dB SPL hearing floor and applicable 28-metre sight baseline through their actual sense definitions. These are provisional game settings, not biological calibration.
 
@@ -104,4 +104,3 @@ Distinct listening/curiosity/hiding choices, richer animal recognition, learning
 - Implementation and dependencies: [SPK07–SPK08](../../maintainers/speech-and-social-perception.md) and the pinned [CTR03–CTR04 tracker](https://github.com/Macrofold/OpenLegend/blob/ff68a9b4035bff08025af7b0b579fe2316ed1263/docs/maintainers/combat-and-threat-responses.md#ctr03--one-native-animal-response-owner).
 - Limits: [hearing and animal response inventory](../../limits/hearing-and-speech.md#ssp-h02--sound-reactions-without-autobiographical-memory).
 - Integration: [speech technical design](../../projects/speech-and-social-perception-tech-design.md#10-animal-sound-and-cognition-integration) and [hearing contract](../../hearing-and-speech.md#selected-animal-hearing-and-choices--accepted-target).
-

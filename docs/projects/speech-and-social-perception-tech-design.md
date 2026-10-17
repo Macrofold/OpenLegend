@@ -53,7 +53,7 @@ For the bundled world, a detector capable of linguistic social perception reliab
 | Narrative preparation           | Narrator, narration source/history preparation                                                                             | Supply the same complete selected permitted experience and optional shared prose; preserve existing story selection, audience and privacy.                       |
 | Speech context and compaction   | Conversation-context module and memory repository                                                                          | Retain one actor-scoped heard-speech stream without authoritative group membership.                                                                              |
 | Long-term consolidation         | Memory-consolidation, cognition-maintenance, domain experience                                                             | Supply complete selected sources and retain revisioned provenance and attributed meaning.                                                                        |
-| Autonomous decisions            | Actor work, AiDirector and cognition policy for people; installed native response owner for ordinary animals | Preserve natural human silence; ordinary animal acoustic reactions require no model calls and use one native movement owner. |
+| Autonomous decisions            | Actor work, AiDirector and cognition policy for people; installed native response owner for ordinary animals               | Preserve natural human silence; ordinary animal acoustic reactions require no model calls and use one native movement owner.                                     |
 | Presentation                    | Domain event-presentation policy; protocol; publicEvent; WorldComposer, SpeechCaptions, PerceivedEventText and WorldEvents | Reuse installed category/icon/log inclusion and the existing UI routes; add shared permitted speech attribution without restoring the removed player transcript. |
 | Recovery                        | WorldService, command/response receipts, save/load and current-format validators                                           | Preserve exact occurrence/job identity, private evidence, external accounting and generation fences.                                                             |
 
@@ -155,13 +155,13 @@ A bystander can know that audible speech was directed elsewhere while not knowin
 
 Use this event-time addressee-disclosure table for the selected ordinary linguistic policy. The hearing detector and the speaker are evaluated independently; prior recognition alone does not reveal a hidden third-party recipient.
 
-| Observer and exposure | Addressing and permitted target |
-| --- | --- |
-| Speaker's self-authored record | Preserve its own selected target, including self-address, independently of delivery. |
-| Actual addressee audibly detects speech | Directed, with the observer's own targetId; no sight or intelligible-word gate. |
+| Observer and exposure                                                                        | Addressing and permitted target                                                                                                |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Speaker's self-authored record                                                               | Preserve its own selected target, including self-address, independently of delivery.                                           |
+| Actual addressee audibly detects speech                                                      | Directed, with the observer's own targetId; no sight or intelligible-word gate.                                                |
 | Another listener audibly detects speech and can see the intended recipient at the occurrence | Directed, with that legitimately visible recipient's identity and observer-permitted label. Seeing the speaker is unnecessary. |
-| Another listener audibly detects speech but cannot see the intended recipient | Directed with no target binding, even if that listener knew the recipient earlier. |
-| Speech is only seen, or not detected at all | Seen-only has no addressing fact; an undetected listener receives no record. |
+| Another listener audibly detects speech but cannot see the intended recipient                | Directed with no target binding, even if that listener knew the recipient earlier.                                             |
+| Speech is only seen, or not detected at all                                                  | Seen-only has no addressing fact; an undetected listener receives no record.                                                   |
 
 The projection supplies this mechanical direction cue; it neither edits the literal spoken words nor teaches a name. Do not add a separate model inference, eye-contact test or hidden-entity lookup for it.
 
@@ -259,12 +259,12 @@ NarrationPerspective contains an optional selfId and a read-only map from permit
 
 Select that label context once at the surface boundary, using the same shared resolver:
 
-| Surface | Label context |
-| --- | --- |
-| Events, participant-filtered occurrence history and historical evidence | Saved labels known at that occurrence. |
-| Current person display and composer recipient | Current observer-permitted labels for the same recognized identity. |
-| Active speech caption | Its committed occurrence's permitted labels; later naming never restarts the caption or changes utterance identity. |
-| Model evidence | Preserve occurrence-time label facts explicitly; current permitted person handles may also supply a current name without rewriting those facts. |
+| Surface                                                                 | Label context                                                                                                                                   |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Events, participant-filtered occurrence history and historical evidence | Saved labels known at that occurrence.                                                                                                          |
+| Current person display and composer recipient                           | Current observer-permitted labels for the same recognized identity.                                                                             |
+| Active speech caption                                                   | Its committed occurrence's permitted labels; later naming never restarts the caption or changes utterance identity.                             |
+| Model evidence                                                          | Preserve occurrence-time label facts explicitly; current permitted person handles may also supply a current name without rewriting those facts. |
 
 This selects existing presentation context; it adds no user-facing toggle, alias history or second naming service.
 
@@ -426,6 +426,8 @@ An actual required-source set that cannot fit still produces the existing explic
 
 The existing personal speech/history stream remains ordered and pageable through the perceived Events reader. Retained participant-filtered backend history is a read filter over the viewer's actual evidence, not a private channel or a requirement to restore the removed player conversation panel. It includes correctly scoped utterances involving that individual according to the query's documented filter and never adds earlier unheard dialogue because the viewer later spoke to them.
 
+The exact person-filter predicate is permitted sourceId equals the selected person OR permitted targetId equals that person, evaluated only on retained viewer-owned speech experience. Include actually overheard utterances involving the person; exclude mere names in quotations, raw-event-only targets and another observer's evidence. A matching seen-only cue remains labeled seen-only. Learning a name or later seeing a recipient does not retroactively fill a missing target binding. Derive the participant index from those same permitted fields at the source mutation owner.
+
 Keep exact source/participant indexing and continuation cursors. Do not scan every person's history to build a people menu. Preserve bottom-following, explicit new-content notification, anchor-preserving older-page loads and current receipt reconciliation.
 
 ### Source-bound decision ownership and early text
@@ -490,6 +492,8 @@ The shared source presentation feeds overhead captions and the perceived Events 
 
 Changing destination does not rewrite or move an already sent utterance. Draft keys include owner, world/timeline, mode and selected target; ambient speech has its own key. Keep the existing exact-draft-revision clearing, same-send recovery, IME behavior, accessible labels, focus isolation and reading position.
 
+A successful send clears only its submitted draft revision, retaining the selected recipient for later speech. Changing or clearing that recipient switches to the destination's own draft, including the separate ambient draft; it never transfers unsent text or silently submits it. Current recipient labels use the shared current-person naming context from section 6.
+
 NPCs and players use the same optional addressee concept. Ambient NPC speech must remain available in schemas and final native admission, even if a particular response is likely to address the person who spoke.
 
 ## 10. Animal sound and cognition integration
@@ -502,14 +506,14 @@ At pinned main, [base bodies](../../packages/domain/src/worlds/base/bodies.ts) a
 
 The selected [native animal design](https://github.com/Macrofold/OpenLegend/blob/ff68a9b4035bff08025af7b0b579fe2316ed1263/docs/projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04) is a separate unmerged documentation dependency at `ff68a9b4035bff08025af7b0b579fe2316ed1263` on `codex/combat-reactions-and-animal-escape-20261017`. Its CTR03–CTR04 controller owns the complete perceived danger set, reachable refuges, continuous-safe settling, species speeds and one movement/flight continuation. Its original generic-noise exclusion is narrowed by this acoustic design. SPK08 requires that relevant native seam to be implemented and jointly qualified; it does not require unrelated PvP/appraisal work, authorize a merge of that branch, or claim current runtime availability.
 
-| Owner | Required change |
-| --- | --- |
-| Domain acoustics/perception | Select every eligible hearing receiver independently of memory and language; reuse one listener-local contact. |
-| Speech/events/awareness | Retain one observer/event record with the permitted sound and/or linguistic payload; never emit an animal-specific copy of the utterance. |
-| Installed native response profile and body/spawn consumers | Extend the one selected profile with its acoustic reaction policy; preserve native control and disabled cognitive capabilities. |
-| Existing native animal controller | Consume a new qualifying cue once; update the existing pattern map/alarm and delegate actual movement to its current owner. |
-| Navigation, flight, territorial, body/status and temporal owners | Preserve the native animal design's actual safety, interruption, pending preparation, motion and settling semantics. |
-| Record/public projection/current-format owners | Support sensory-only speech exposure, independent expiry, permitted generic presentation and coherent restore. |
+| Owner                                                            | Required change                                                                                                                           |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Domain acoustics/perception                                      | Select every eligible hearing receiver independently of memory and language; reuse one listener-local contact.                            |
+| Speech/events/awareness                                          | Retain one observer/event record with the permitted sound and/or linguistic payload; never emit an animal-specific copy of the utterance. |
+| Installed native response profile and body/spawn consumers       | Extend the one selected profile with its acoustic reaction policy; preserve native control and disabled cognitive capabilities.           |
+| Existing native animal controller                                | Consume a new qualifying cue once; update the existing pattern map/alarm and delegate actual movement to its current owner.               |
+| Navigation, flight, territorial, body/status and temporal owners | Preserve the native animal design's actual safety, interruption, pending preparation, motion and settling semantics.                      |
+| Record/public projection/current-format owners                   | Support sensory-only speech exposure, independent expiry, permitted generic presentation and coherent restore.                            |
 
 No animal ActorWork/AiDirector admission, provider queue, mind construction, paid opportunity/considered revision, new `embodied-response` command or `Action.embodiedResponse` payload is selected. The old separate hold/flight proposal is superseded; the one native controller supplies continuation, escape, alert settling and blocked behavior.
 
@@ -649,16 +653,16 @@ The dependency order below defines coherent integration cuts. The tracker owns t
 
 ### Evidence that must distinguish wiring from behavior
 
-| Layer                      | Required demonstration                                                                                                                                                                               |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Source and native evidence | A real utterance occurred; the source retained exact intention/words, each actual detector received only its allowed facts, and the full required audience/evidence committed together.              |
-| Shared presentation        | The same structured record renders correctly for self, addressee, known bystander, unknown bystander and unseen known voice; quoted pronouns stay literal and no new middle-dot attribution appears. |
-| Delayed memory | Directed and overheard speech retains roles through cold hydration, consolidation, recall and restore. A mixed-recipient summary with supplied, omitted and unavailable exact support yields supported attribution, qualified gist or an actual required-source refusal respectively; unnamed identities remain distinct. |
-| Natural cognition          | Matched personalities/current activities can lead to conversation, action, clarification or silence; a fixture selecting a reply proves wiring only.                                                 |
-| No membership              | Interleaved speech among several people remains correctly heard/attributed without joins/merges; panel closure and other speech do not revoke independent work or preview authority incorrectly.     |
-| Availability/recovery      | Every player Speak/Speak-to/Act entry point agrees on unavailable AI; receipt recovery still reports an earlier committed send without repeating it.                                                 |
-| Animal behavior            | Actual sound-only evidence reaches the native profile; skittish and calmer bindings yield real escape or continuation, repeated patterns preserve useful work, and shared safety/restore holds with zero animal model calls. |
-| Privacy and cost           | Unknown identities and unheard text remain unknown, old generations cannot publish, and total measured preparation/provider/queue cost covers the complete episode.                                  |
+| Layer                      | Required demonstration                                                                                                                                                                                                                                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source and native evidence | A real utterance occurred; the source retained exact intention/words, each actual detector received only its allowed facts, and the full required audience/evidence committed together.                                                                                                                                   |
+| Shared presentation        | The same structured record renders correctly for self, addressee, known bystander, unknown bystander and unseen known voice; quoted pronouns stay literal and no new middle-dot attribution appears.                                                                                                                      |
+| Delayed memory             | Directed and overheard speech retains roles through cold hydration, consolidation, recall and restore. A mixed-recipient summary with supplied, omitted and unavailable exact support yields supported attribution, qualified gist or an actual required-source refusal respectively; unnamed identities remain distinct. |
+| Natural cognition          | Matched personalities/current activities can lead to conversation, action, clarification or silence; a fixture selecting a reply proves wiring only.                                                                                                                                                                      |
+| No membership              | Interleaved speech among several people remains correctly heard/attributed without joins/merges; panel closure and other speech do not revoke independent work or preview authority incorrectly.                                                                                                                          |
+| Availability/recovery      | Every player Speak/Speak-to/Act entry point agrees on unavailable AI; receipt recovery still reports an earlier committed send without repeating it.                                                                                                                                                                      |
+| Animal behavior            | Actual sound-only evidence reaches the native profile; skittish and calmer bindings yield real escape or continuation, repeated patterns preserve useful work, and shared safety/restore holds with zero animal model calls.                                                                                              |
+| Privacy and cost           | Unknown identities and unheard text remain unknown, old generations cannot publish, and total measured preparation/provider/queue cost covers the complete episode.                                                                                                                                                       |
 
 Prefer focused existing checks and suitable native/browser scenarios under [Verification](../../.agents/rules/verification.md). Do not add tests that merely mirror implementation. Live-model evaluation requires separately authorized execution and the shared spending ceiling; it is not authorized or performed by this documentation-only task. Fixtures, source inspection and static checks cannot establish spontaneous character quality.
 
