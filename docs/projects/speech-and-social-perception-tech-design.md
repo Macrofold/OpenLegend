@@ -121,7 +121,7 @@ For linguistic speech, the selected shape is:
 | Location | Selected meaning and change |
 | --- | --- |
 | Awareness.actorId | Memory/sensory owner. This identifies the perspective, not the utterance speaker. |
-| Awareness.sourceId | Sole stored permitted speaker identity when visible recognition or supported voice recognition supplies that association; otherwise absent. |
+| Awareness.sourceId | Sole stored permitted speaker identity. Ordinary base-world face/voice exposure establishes or reuses this canonical person association immediately, including first contact with an unseen audible speaker. Absence is reserved for a genuinely unsupported or indistinguishable source under a different applicable sensory policy. |
 | Awareness.targetId | Sole stored permitted intended-addressee identity when known. For speech addressed to the observer, this is the observer's own ID. An unknown third-party addressee stays unbound. |
 | PerceivedSpeech.addressing | For self or heard linguistic experience, required ambient or directed distinction. Directed speech with no known targetId remains “directed to someone else,” not ambient. Seen-only experience stores null because it acquired no addressing fact. |
 | PerceivedSpeech.speaker | Saved permitted speaker label/grammar at occurrence, without another independently writable entity ID. Null means attribution was not available. |
@@ -141,19 +141,19 @@ For a hearing detector using the selected linguistic policy, detected directed s
 
 Detection still gates acquisition. If nothing was heard and only visible lip movement was observed, the viewer gets a speaking cue without the guaranteed heard-address relationship. A totally unheard addressed utterance creates no remote inbox entry or cognition opportunity for its intended target.
 
-Represent that boundary as a discriminated PerceivedSpeech shape. A seen-only record has perception: seen, addressing: null, intelligibility: none, no heard segments, no addressee label and no speech targetId. It may retain a legitimately visible speaker association. A self or heard linguistic record always has addressing: ambient or directed, even when intelligibility is none and every acoustic fragment is unintelligible. Ambient records have no addressee binding. Heard directed-to-self records bind the observer's own targetId; directed records with an unidentified third-party addressee retain directed with no target identity. Validate these combinations on construction and current-format import. Null denotes an unacquired visual-only fact, not uncertainty about an audibly detected directed utterance.
+Represent that boundary as a discriminated PerceivedSpeech shape. A seen-only record has perception: seen, addressing: null, intelligibility: none, segments: [], addressee: null and no speech targetId. It may retain a legitimately visible speaker association. A self or heard linguistic record always has addressing: ambient or directed, even when intelligibility is none and every acoustic fragment is unintelligible. Ambient records have no addressee binding. Heard directed-to-self records bind the observer's own targetId; directed records with an unidentified third-party addressee retain directed with no target identity. Validate these combinations on construction and current-format import. Null denotes an unacquired visual-only fact, not uncertainty about an audibly detected directed utterance.
 
 A bystander can know that audible speech was directed elsewhere while not knowing that addressee's identity. The projection withholds the hidden name, current position and physical action reference. The policy does not upgrade an animal's sound evidence into human language; [animal integration](#10-animal-sound-and-cognition-integration) owns that distinction.
 
 ## 5. Reliable individual identity and separate names
 
-The accepted base-world rule resolves supported later sightings and voice encounters to the same canonical person. Recognition is exact and persistent under that policy; it does not expire because an ordinary perception episode ended.
+The accepted base-world rule binds an ordinary recognizable person's face or detected linguistic voice to that person's canonical identity immediately, including the first encounter. It reuses that identity on subsequent face/voice exposure. A first unseen direct call with no understood words still establishes the source association. No earlier conversation, introduction, learned name or visual match is required. Recognition is exact and persistent under that policy; it does not expire because an ordinary perception episode ended.
 
 Reuse observer identity/knowledge ownership. An encountered individual can have a recognition association with an empty givenName. Naming, writing a subject note and completing a conversation are not prerequisites. Perception episodes remain useful for actual contact, movement and stale current-body bindings, but no longer decide whether a person has forgotten who a known individual is.
 
 Changes through [base knowledge](../../packages/domain/src/worlds/base/knowledge.ts), [entity references](../../apps/server/src/entity-references.ts), [knowledge context](../../apps/server/src/knowledge-context.ts) and [recall](../../apps/server/src/recall.ts) must establish all of the following:
 
-- A source seen earlier and heard later uses the existing individual association. Its voice may be known while its location is not.
+- A first permitted face/voice exposure creates the observer/subject association with an empty givenName when no name was learned. Later sightings or voices reuse that same association, including across the two sense modalities. Its identity can be known while its appearance, name and present location are not.
 - A recognized unnamed person remains individually distinct in raw memory, summaries, optional retrieval and delayed context. Generic species grouping cannot combine two supported distinct individuals merely because neither has a name.
 - Preferred names remain observer-owned labels. Duplicate names, aliases, later introductions and renaming do not change the canonical subject or existing relationships.
 - A spoken self-introduction remains a communicated claim. The selected policy can learn it from actual eligible heard words and a supported source association; the old visibility-only acceptance must not block a recognized unseen voice.
@@ -165,6 +165,8 @@ Changes through [base knowledge](../../packages/domain/src/worlds/base/knowledge
 - Explicit forgetting/correction and current privacy overlays continue revoking the relevant recognition/knowledge associations through the existing owner. They are not undone by save/load or a stale source record.
 
 Opaque model handles may remain observer-scoped, but their recognized-person association must no longer depend on the current encounter token. Use the existing complete identity key/encoding and collision handling. Do not build a second identity registry or expose database IDs as display names.
+
+For the ordinary linguistic-person baseline, an unnamed or unseen voice is therefore not an unbound speaker. It has a distinct permitted sourceId and a usable observer-scoped person handle; generic wording such as “an unfamiliar voice” does not merge its identity with another voice. Missing source bindings remain representable for other installed sensory policies that genuinely do not distinguish a source, and for evidence that never acquired such an association. This extension point must not reintroduce uncertainty about who addressed an ordinary listener. Nonlinguistic animal sound uses its separately specified visible-source association rule and does not inherit ordinary people's face/voice recognition.
 
 A future world may select uncertain recognition, disguise or different communication. That is an extension of the installed recognition/perception policy, not an unfinished prerequisite for this accepted reliable baseline.
 
@@ -233,7 +235,7 @@ NarrationPerspective contains an optional selfId and a read-only map from permit
 
 SpeechPresentation contains acquisition, speakerLabel, directionLabel or null, the read-only exact SpeechSegment sequence, personalText and accessibilityText. The segment sequence comes directly from the permitted payload; heard text stays literal and gaps stay gaps. A seen-only view has no quotation or direction label. A heard but unintelligible addressed view can still say that someone spoke to me without inventing words. The explicit purpose selects personal I/me wording, compact caption wording that can use you, or neutral permitted-name wording through the shared grammar. It never changes participant identity or quotation content. For personal memory, first person is the evidence owner; a different permitted reader receives that owner attribution rather than silently treating the reader as the experiencer. A caption can use compact attribution fields without changing the underlying roles. The protocol carries this view beside its existing permitted occurrence/reconciliation reference; it does not add hidden spatial anchoring.
 
-ExperienceModelBindings contains a request-local source handle bound externally to the complete source key/revision, the evidence-owner perspective, and a read-only canonical-ID-to-permitted-model-reference map prepared by the existing entity-reference owner. An unknown participant remains unknown. A known required identity without a valid prepared binding is an explicit preparation inconsistency, not an invitation to query world truth.
+ExperienceModelBindings contains a request-local source handle bound externally to the complete source key/revision, the evidence-owner perspective, and a read-only canonical-ID-to-permitted-model-reference map prepared by the existing entity-reference owner. A genuinely unbound participant under another supported sensory policy remains unbound. The selected ordinary person's detected voice already carries a source identity even when its name is unknown. A required acquired identity without a valid prepared binding is an explicit preparation inconsistency, not an invitation to query world truth or downgrade it to an anonymous species label.
 
 ModelExperienceEvidence preserves the existing awareness | memory | summary discriminator and all task-permitted semantic fields of that selected source, including exact speech fragments, acquisition, participant/direction relationships, quantities and units, uncertainty, corrections and derived-summary coverage. Only explicitly typed reference positions are remapped. The projector must not search-and-replace ID-like text inside quotations, personal notes or other literal source strings. Technical generation/receipt/source authority remains in server bindings. The result may include the shared rendered prose for readability, but a consumer receives the structured value as well.
 
@@ -530,7 +532,7 @@ Keep recognition/name knowledge, full perceived source bodies, summaries and lin
 Current-format validation checks:
 
 - Required speaker and exact optional target references for the source's supported lifetime.
-- Permitted speech roles and ambient/directed consistency; self uses the actual source/owner IDs.
+- Permitted speech roles and ambient/directed consistency; self uses the actual source/owner IDs. Seen-only records require null addressing and no addressee/quotation, while self/heard linguistic records require the acquired ambient/directed distinction.
 - Sound-only records contain no forbidden speech payload.
 - Heard segment/intelligibility/acquisition combinations and finite authored acoustic quantities.
 - Complete source key/revision ownership and summary source coverage.
@@ -589,7 +591,7 @@ Avoid paying once for every detector/event. Native continuation is free of model
 
 ## 13. Integration sequence and required evidence
 
-The dependency order below defines coherent integration cuts. The tracker owns tasks, checkbox state and completion criteria.
+The dependency order below defines coherent integration cuts. The tracker owns tasks, checkbox state and completion criteria. The feature specification owns the observable [SP-A01–SP-A28 acceptance scenarios](speech-and-social-perception-feature-spec.md#acceptance-scenarios); the evidence below identifies which technical layers must support them.
 
 1. **SPK01–SPK04: evidence, world policy, shared presentation and durable memory.** Establish one field meaning and full source transport before adapting model prose. Qualify self, directed, ambient, unheard, unintelligible, unnamed and cold/consolidated records through actual producers and readers.
 2. **SPK05 and SPK10: source-owned dialogue and restoration.** Replace every membership-dependent consumer while preserving compaction, exact actor/source ownership, history, provisional disclosure and independent physical cooperation. Remove obsolete state only with current serializers/validators/callers updated together.

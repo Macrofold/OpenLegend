@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | The selected behavior is designed; implementation and behavioral qualification remain in SPK01–SPK11. | 2026-10-16 |
+| In progress | The selected behavior is designed; implementation and behavioral qualification remain in SPK01–SPK11. | 2026-10-17 |
 
 ## Purpose and design status
 
@@ -10,7 +10,7 @@ People should be able to say something into the world, or say it to one particul
 
 The resulting experience must remain intelligible later. A character can remember that the same unfamiliar person spoke to them, then recognize that person on a later encounter, without having learned their name. Logs should say things such as `Ada said to me: “The bridge is closed.”` Stored facts, memories and AI preparation retain the full permitted event experience behind that sentence; the sentence is a presentation of those facts, never their replacement.
 
-This pair records Mike's selected ordinary-speech design and brings forward the relevant slice of [ND16](../maintainers/needs-design.md#nd16--hearing-speech-and-indirect-sensory-propagation). The authoritative behavior owners are [Hearing and speech](../hearing-and-speech.md), [Narration and conversations](../narration-and-conversations.md), [Memory architecture](../memory-architecture.md) and the bundled world's [recognition and names](../worlds/base/knowledge.md). Those owners distinguish accepted targets from the inspected runtime. This document explains the selected project, playable outcomes and acceptance scenarios. It does not claim that the new behavior already works.
+This pair records Mike's selected ordinary-speech design and brings forward the relevant slice of [ND16](../maintainers/needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech). The authoritative behavior owners are [Hearing and speech](../hearing-and-speech.md), [Narration and conversations](../narration-and-conversations.md), [Memory architecture](../memory-architecture.md) and the bundled world's [recognition and names](../worlds/base/knowledge.md). Those owners distinguish accepted targets from the inspected runtime. This document explains the selected project, playable outcomes and acceptance scenarios. It does not claim that the new behavior already works.
 
 The inspected implementation baseline is `Macrofold/OpenLegend`, GitHub `refs/heads/main`, commit `465ace1e8d7ee94a267e762d2d93970de17b2ed0`. Existing conversation membership, visibility-dependent addressing and memory-dependent hearing are replacement targets. Prior verification of those mechanisms remains historical evidence, not verification of this design.
 
@@ -43,11 +43,11 @@ A bystander may know that speech was directed while lacking a permitted identity
 
 ### Recognizing a person is different from knowing a name
 
-The bundled world selects reliable face/voice recognition for ordinary recognizable people. A stable person identity can therefore associate today's perceived person with the person encountered before. No separate face-recognition score, probabilistic matching service or uncertain “maybe that was you” mechanic is required for this version.
+The bundled world selects reliable face/voice recognition for ordinary recognizable people. A first supported sighting or audible human speech exposure establishes that person's stable association; later encounters reuse it, including an unseen first call or a call with no intelligible words. A stable person identity therefore associates today's perceived person with the person encountered before. No prior familiarity, introduction, face-recognition score, probabilistic matching service or uncertain “maybe that was you” mechanic is required for this version.
 
-Recognition requires a legitimate exposure through a supported sense. A stable database identifier is the implementation's continuity key; it is not a user-visible name and is not a source of extra knowledge. If the world's projection associates a perceived voice with a known person, that person may be a valid communication reference even while unseen. Their present coordinates, possessions and physical reach do not follow from that recognition. Generic acoustic direction is not exact body location.
+Recognition requires a legitimate exposure through a supported sense. A stable database identifier is the implementation's continuity key; it is not a user-visible name and is not a source of extra knowledge. For ordinary linguistic listeners, the selected policy associates the detected human voice with its canonical speaker immediately, even if that person's name is unknown and their body has never been seen. That person can be a valid communication reference while unseen. Their present coordinates, possessions and physical reach do not follow from that recognition. Generic acoustic direction is not exact body location.
 
-Before introduction, the player and NPC can use an observer-appropriate label such as “the unfamiliar woman” or an already assigned nickname. Two unnamed people remain two identities, even if the available descriptions sound alike. Two people called Ada also remain distinct. Later learning a name changes how current presentation can refer to the same person; it does not rewrite the original words or pretend the name was known at the earlier time. Remembered labels and knowledge at the time remain available in the structured experience.
+Before introduction, the player and NPC can use an observer-appropriate label such as “the unfamiliar woman,” “an unfamiliar voice” or an already assigned nickname. An unnamed voice remains a bound individual, not an unidentified-source mechanic. Where multiple unnamed people/voices need differentiation, the shared label resolver uses permitted descriptions or a local ordinal such as “the first voice” and “the other voice,” without creating a new true name or showing a database key. Two unnamed people remain two identities, even if the available descriptions sound alike. Two people called Ada also remain distinct. Later learning a name changes how current presentation can refer to the same person; it does not rewrite the original words or pretend the name was known at the earlier time. Remembered labels and knowledge at the time remain available in the structured experience.
 
 ### Participation is a choice made in the world
 
@@ -90,8 +90,8 @@ The following examples are target output, using hypothetical utterances:
 | Ada speaks without an addressee | Ada said: “The rain is getting worse.” |
 | Observer overhears Ada address Ben | Ada said to Ben: “Bring the rope.” |
 | Ada directs speech at an unidentified third party | Ada said to someone: “Wait there.” |
-| An unrecognized speaker addresses the observer and words are heard | Someone said to me: “Are you all right?” |
-| An unrecognized speaker addresses the observer but words are indistinct | Someone called to me, but I could not make out the words. |
+| An unseen speaker whose name is unknown addresses the observer and words are heard | Someone said to me: “Are you all right?” |
+| An unseen speaker whose name is unknown addresses the observer but words are indistinct | Someone called to me, but I could not make out the words. |
 | A familiar unnamed person speaks again | The remembered observer-appropriate label is reused for that person, without exposing a database ID. |
 
 Logs written as the player's personal account use “I/me.” A control or caption can use “you,” and a neutral account can use a known name. Those are deliberate render modes, not conflicting stored identities. Do not replace pronouns inside the quoted utterance: Ada saying “I am cold” remains Ada's literal words in every view. Render quotes and unusual text safely as text, including markup-like characters and line breaks, without changing their meaning or letting them become formatting instructions.
@@ -125,7 +125,6 @@ For an ordinary nonlinguistic animal, a person's speech is an acoustic occurrenc
 The project must audit the existing speech and exposed sound-emission routes so supported acoustic events reach eligible receivers consistently. It does not invent microphone capture, recorded voice playback, new propagation physics or a universal sound for every action. Existing actions acquire new sound only through a separately defined, installed sound-producing rule.
 
 ### A complete reaction, including stopping
-
 
 The bundled world's configured cognitive animals use the same bounded AI work and native action machinery as other cognitive actors, with preparation that does not require human memories. Their authored disposition and current body/activity shape the choices. A startled skittish animal can choose to flee; a calm or occupied animal can keep doing what it was doing; another can pause or move toward an interesting sound. These are real supported choices, not prose that says “the deer ran away” while its body remains still.
 
@@ -165,7 +164,7 @@ The scenarios below are the feature acceptance owner. The implementation tracker
 | --- | --- | --- |
 | SP-A01 | Player speaks without selecting anyone near several people. | One ambient utterance; each eligible listener receives its own exposure; no inferred addressee, enrollment or compulsory reply. |
 | SP-A02 | Player selects Ada and speaks within Ada's and Ben's hearing. | One directed utterance; Ada knows she is addressed; Ben hears according to his senses; caption remains on player with a quiet, permitted addressee label. |
-| SP-A03 | Ada hears the player address her while the speaker is unseen. | Ada knows she is addressed without a sight check; source recognition follows legitimate voice evidence; no exact hidden position is supplied. |
+| SP-A03 | Ada hears the player address her while the speaker is unseen. | Ada knows she is addressed without a sight check; speaker identity is associated immediately from that detected voice even on first contact, while name and exact hidden position remain unknown. |
 | SP-A04 | Ada detects a direct call but cannot understand its words. | Addressed role survives, missed words remain absent and clarification is a valid response; no raw event reconstruction. |
 | SP-A05 | Ada is out of range, cannot hear, or is otherwise ineligible under the world's current sense rules. | No remote addressed notification or words; if the utterance was admitted, its intended target remains recorded independently of delivery. |
 | SP-A06 | Bystander hears a directed utterance with an unidentified third-party recipient. | Directed-other remains distinguishable from ambient; only permitted recipient identity/label is shown; no hidden name/position is fetched. |

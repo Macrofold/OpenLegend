@@ -1,6 +1,6 @@
 # Documentation changelog
 
-## October 16, 2026 — Design ordinary speech, social perception and animal hearing
+## October 17, 2026 — Design ordinary speech, social perception and animal hearing
 
 Mike selected [one optional addressee or ambient speech](projects/speech-and-social-perception-feature-spec.md), with the same physical hearing for both. An audible linguistic recipient knows they are addressed without seeing the speaker or understanding all the words. The bundled world's [recognition policy](worlds/base/knowledge.md) associates supported later face/voice exposure with the same individual while names remain separately learned. These accepted targets replace visibility/word-dependent address attribution and encounter-only ordinary recognition; they do not grant unheard words, secret names or an unseen body's current position.
 
