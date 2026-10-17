@@ -8,7 +8,7 @@ Design owners: [feature specification](../projects/speech-and-social-perception-
 
 Limits: [Narration](../limits/narration.md), [Hearing](../limits/hearing-and-speech.md), [Memory](../limits/memory.md), and the reused [Cognition](../limits/cognition.md) / [Native work](../limits/native-work.md) inventories. An accepted design is a target. It does not establish runtime delivery, measured model quality, capacity, human enjoyment or permission for paid trials.
 
-The source-reviewed baseline is `Macrofold/OpenLegend`, GitHub `refs/heads/main`, `465ace1e8d7ee94a267e762d2d93970de17b2ed0`. Before implementation, reconcile the actual selected development base and refresh affected callers. Do not treat the source-owner map as proof that later code has no additional consumers.
+Initial source review used `Macrofold/OpenLegend`, GitHub `refs/heads/main`, `465ace1e8d7ee94a267e762d2d93970de17b2ed0`; integration review refreshed the same ref at `0eb7358f251d1ab706592ccb6e9829e98c729fe9`. Preserve its compact world composer, captions, shared Events history, exact request recovery and world-owned event presentation. Do not recreate removed Talk transcript components or hooks. Before implementation, reconcile the actual selected development base and refresh affected callers. Do not treat the source-owner map as proof that later code has no additional consumers.
 
 ## Design disposition and existing work
 
@@ -47,9 +47,9 @@ SPK10 is a cross-stage obligation, not permission to postpone serializers or val
 - [x] Inspect the current producers and downstream perception, memory, consolidation, context, UI, availability, animal and recovery consumers; distinguish defects/old behavior from accepted targets.
 - [x] Produce distinct feature/technical files, concrete stages, owner mappings, field meanings, privacy boundaries, failure behavior, trial tuning and scenario acceptance.
 - [x] Reconcile affected canonical docs, UI guidance, limits and existing trackers; keep useful history and broader unresolved work rather than closing whole parent projects.
-- [x] Finish complete affected-diff review, internal-link/anchor checks, new-separator check and changed-document formatting; commit every task-owned documentation change through the authorized repository workflow.
+- [ ] Finish complete affected-diff review, internal-link/anchor checks, new-separator check and changed-document formatting; commit every task-owned documentation change through the authorized repository workflow.
 
-**Documentation evidence, October 17, 2026:** reviewed the complete affected documentation diff and reconciled the paired design, canonical owners and trackers. All 288 newly added relative links resolve, including their anchors; added lines contain no middle-dot character. All 22 changed documents pass the repository's Prettier 3.6.2 configuration. SP-A01–SP-A28 are defined and mapped to implementation work. These are documentation checks only; runtime scenarios, live model behavior and performance have not been exercised by this design task. Task changes are committed on `codex/speech-perception-design-20261016`.
+**Documentation evidence, October 17, 2026:** reviewed the complete original affected documentation diff and reconciled the paired design, canonical owners and trackers. The final integration review against the newly advanced main is in progress; repeat only affected document checks before closing the checkbox above. All 288 newly added relative links resolve, including their anchors; added lines contain no middle-dot character. All 22 changed documents pass the repository's Prettier 3.6.2 configuration. SP-A01–SP-A28 are defined and mapped to implementation work. These are documentation checks only; runtime scenarios, live model behavior and performance have not been exercised by this design task. Task changes are committed on `codex/speech-perception-design-20261016`.
 
 **Exit:** the implementation can follow the selected contracts without inventing product decisions or interpreting display text as memory. The final design check closes only SPK00, not any task below. This task contains no runtime or paid-model verification requirement.
 

@@ -12,7 +12,7 @@ The resulting experience must remain intelligible later. A character can remembe
 
 This pair records Mike's selected ordinary-speech design and brings forward the relevant slice of [ND16](../maintainers/needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech). The authoritative behavior owners are [Hearing and speech](../hearing-and-speech.md), [Narration and conversations](../narration-and-conversations.md), [Memory architecture](../memory-architecture.md) and the bundled world's [recognition and names](../worlds/base/knowledge.md). Those owners distinguish accepted targets from the inspected runtime. This document explains the selected project, playable outcomes and acceptance scenarios. It does not claim that the new behavior already works.
 
-The inspected implementation baseline is `Macrofold/OpenLegend`, GitHub `refs/heads/main`, commit `465ace1e8d7ee94a267e762d2d93970de17b2ed0`. Existing conversation membership, visibility-dependent addressing and memory-dependent hearing are replacement targets. Prior verification of those mechanisms remains historical evidence, not verification of this design.
+Initial source inspection used `Macrofold/OpenLegend`, GitHub `refs/heads/main`, commit `465ace1e8d7ee94a267e762d2d93970de17b2ed0`; the design was reconciled with the same ref at `0eb7358f251d1ab706592ccb6e9829e98c729fe9` after the world composer and Events interface landed. Preserve that current interface: compact Speak/Act, world captions and the shared perceived Events history. This project does not reinstate a separate player Talk transcript. Existing backend conversation membership, visibility-dependent addressing and memory-dependent hearing remain replacement targets. Prior verification of those mechanisms remains historical evidence, not verification of this design.
 
 ## Maintained records
 
@@ -100,7 +100,7 @@ Current name presentation may improve as the observer learns more, while a histo
 
 ### History without a social membership object
 
-A person's history can collect the viewer's retained experiences involving that exact person, with chronological order, paging and links to permitted sources. The general log can show speech among other events. Neither view is proof that all displayed people participated socially, and neither can fetch other people's private memories to complete a transcript.
+The existing Events history can filter the viewer's retained experiences involving one exact person, with chronological order, paging and links to permitted sources. Its general view shows speech among other perceived events under the installed event-display policy. This organization stays inside the shared Events surface; it does not require restoring a separate Talk transcript. Neither view is proof that all displayed people participated socially, and neither can fetch other people's private memories to complete a transcript.
 
 AI preparation can select a bounded set of relevant, permitted dialogue sources, faithful older summaries and the appropriate recent exact speech. It does not need a Conversation identifier to find them. Full retained source experiences remain available for authorized recall. “Full experience” means every permitted field of a selected source; it does not mean unboundedly sending every lifetime utterance on every decision. Missing, forgotten, stale or out-of-scope evidence must remain missing, with ordinary source/eligibility handling rather than an omniscient fallback.
 
