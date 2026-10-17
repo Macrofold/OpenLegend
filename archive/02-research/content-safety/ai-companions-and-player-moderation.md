@@ -1,6 +1,6 @@
 # AI companions and player moderation
 
-**Research reviewed: 2026-10-16.** This is a U.S.-focused, source-backed research record, not a legal opinion or a complete state-law survey. The [accepted character policy](../../../../docs/agent-content-and-companion-safety.md) is the normative owner; this document explains its legal context and product reasoning. [Adult-content law, ratings and distribution](adult-content-law-ratings-and-distribution.md) covers the related obscenity, minors, store and provider questions.
+**Research reviewed: 2026-10-16.** This is a U.S.-focused, source-backed research record, not a legal opinion or a complete state-law survey. The [accepted character policy](../../../docs/agent-content-and-companion-safety.md) is the normative owner; this document explains its legal context and product reasoning. [Adult-content law, ratings and distribution](adult-content-law-ratings-and-distribution.md) covers the related obscenity, minors, store and provider questions.
 
 ## Why game characters need a separate assessment
 
@@ -75,7 +75,7 @@ These are product decisions and implementation targets, not additional universal
 
 Before public use, resolve the actual launch states/audience, statutory coverage and operative dates, approved age-assurance method, provider/payment terms, disclosures, crisis protocols, reporting/preservation, privacy and enabled media surfaces. Then qualify the real prompt and delivery paths, including multilingual attempts, long conversations, imports, memory reuse, model changes and streaming failures. A passing test sample is evidence for its tested conditions, not proof against every possible attack.
 
-[Production deployment](../../../../docs/maintainers/production-deployment.md) retains **PD07, PD08 and PD10** as the existing open owners. This research does not close their acceptance or certify that any safety system is implemented.
+[Production deployment](../../../docs/maintainers/production-deployment.md) retains **PD07, PD08 and PD10** as the existing open owners. This research does not close their acceptance or certify that any safety system is implemented.
 
 ## Sources and retrieval limits
 
