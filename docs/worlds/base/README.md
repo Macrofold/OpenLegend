@@ -20,6 +20,8 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Body, senses and survival](survival.md)
 - [Recover from harm](recovery-and-care.md) — DG21's proposed short camp recovery and separately selectable field dressing/help; uses the current death/scar rules as its baseline; ordinary recovery and care remain proposed.
 - [Combat](combat.md)
+- [Native animal alarm and refuge](animal-responses.md) — selected model-free multi-danger escape, species movement and continuous safety; CTR03–CTR04 implementation remains open.
+- [Personal threat-response options](threat-response-options.md) — selected 24-purpose two-stage repertoire, interpreted state and required independent Ada counterattack; CTR05–CTR08 and actual behavioral qualification remain open.
 - [First optional threat encounter](first-threat-encounter.md)
 - [Ranged tools, aim and evasion](ranged-counterplay.md) and [Broken Watchpost](contested-watchpost.md) — integrated combat mechanics and finite contested content; full independent-character and combined encounter acceptance remain open under CF01–CF05.
 - [Player danger and leaving the world](player-danger.md)

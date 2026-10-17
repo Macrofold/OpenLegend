@@ -132,4 +132,3 @@ The priority hypothesis is that readable opposition and persistent stakes earn a
 - Limits and constraints: [batch 06 inventory](../limits/parallel-batch-06-rivals-and-contested-ground.md).
 - Mechanisms and dependencies: [technical design](parallel-batch-06-rivals-and-contested-ground-tech-design.md).
 - One complete implementation prompt: [prompt document](parallel-batch-06-rivals-and-contested-ground-prompts.md).
-

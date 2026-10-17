@@ -88,7 +88,6 @@ Keep stable IDs, a canonical policy link, the reason to revisit, a concrete trig
 
 **Decision authority:** Mike for danger/recovery policy changes; engineers may tune within explicitly delegated scope with recorded reasons. No new warning or recovery exception is automatically activated.
 
-
 ## RP08 — Immediate threat responses and contextual continuity
 
 **Selected October 17, 2026; runtime pending.** [The combat-response design](../projects/combat-and-threat-responses-feature-spec.md) and its world profiles select native animal refuge escape, actual-contact projectiles, direct player conflict, interpreted human responses and stable opponent-specific quick actions. [CTR01–CTR10](combat-and-threat-responses.md) owns delivery; the [limits inventory](../limits/combat-and-threat-responses.md) identifies finite choices and unbounded growth dimensions.

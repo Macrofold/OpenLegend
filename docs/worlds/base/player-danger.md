@@ -39,4 +39,3 @@ The admitted release authorizes one physical projectile under the [selected cont
 - Implementation: [BW14](../../maintainers/base-world.md#accepted-lifecycle-and-protection-delivery), [CTR01](../../maintainers/combat-and-threat-responses.md), [MP04](../../maintainers/multiplayer.md#mp041--participation-and-bounded-exit-contract), [DG07/ND11](../../maintainers/needs-design.md#dg07--human-participation-and-recoverable-conflict).
 - Limits and constraints: [FT04–FT07](../../limits/base-world.md#ft04--proposed-human-risk-and-recovery), [multiplayer](../../limits/multiplayer.md), [native work](../../limits/native-work.md).
 - Related contract/design: [feature specification](../../projects/completed/player-danger-feature-spec.md), [technical design](../../projects/completed/player-danger-tech-design.md), [verification](../../verification/first-threat-encounter.md), [D07/PS-D01](../../../archive/05-project/open-decisions.md#pg05--proposed-first-encounter-choices).
-

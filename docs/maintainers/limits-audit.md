@@ -254,4 +254,3 @@ Small independent geometry bounds can obstruct regional-world growth; avoid gues
 ## Remaining historical assessments
 
 Older Replace/Expand/Review advice stays next to each original entry for LA02–LA03. It is not automatically high priority. Ordinary page/cache/buffer defaults stay inventory-only unless they hide accessible information or measured work escapes their envelope. Known completed changes are not reopened. Recheck current callers before claiming a legacy limit affects live play, and rerank when a dormant consumer becomes reachable.
-

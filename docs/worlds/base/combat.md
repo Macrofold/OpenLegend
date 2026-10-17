@@ -26,14 +26,14 @@ Human-issued supported strikes/hunts/shot releases currently require [one exact 
 
 ### Separate facts the player can understand
 
-| Fact | What establishes it | What it does not imply |
-| --- | --- | --- |
-| Selected or hovered person | Local inspection or pointer input | An attack, a warning to that person, or hostility. |
-| My chosen attack | My successfully admitted exact attack/aim command | A hit, repeated attacks, or another person's awareness. |
-| An observed attack directed at me | Personally exposed preparation, approach, release or contact directed at this physical body | Knowledge of a private plan, another target's danger or an unseen shooter's identity. |
-| A recent hostile occurrence | An observed directed attempt, including a miss or shield interception, or a known source of injury | Permanent aggression or the character's chosen reaction. |
-| Someone has withdrawn | Personally observed cessation/separation or loss of sight | Surrender, forgiveness, certainty that they are safe, or permission to pursue. |
-| My feeling or chosen purpose | My admitted appraisal or independent decision | A publicly readable target lock or an automatic attack. |
+| Fact                              | What establishes it                                                                                | What it does not imply                                                                |
+| --------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Selected or hovered person        | Local inspection or pointer input                                                                  | An attack, a warning to that person, or hostility.                                    |
+| My chosen attack                  | My successfully admitted exact attack/aim command                                                  | A hit, repeated attacks, or another person's awareness.                               |
+| An observed attack directed at me | Personally exposed preparation, approach, release or contact directed at this physical body        | Knowledge of a private plan, another target's danger or an unseen shooter's identity. |
+| A recent hostile occurrence       | An observed directed attempt, including a miss or shield interception, or a known source of injury | Permanent aggression or the character's chosen reaction.                              |
+| Someone has withdrawn             | Personally observed cessation/separation or loss of sight                                          | Surrender, forgiveness, certainty that they are safe, or permission to pursue.        |
+| My feeling or chosen purpose      | My admitted appraisal or independent decision                                                      | A publicly readable target lock or an automatic attack.                               |
 
 Maintain these facts per ordered pair of exact physical lives. Several opponents can be relevant at once. Ada attacking a wolf does not make her an attacker of Mike; Mike selecting Ada does not alarm her. Unknown-source impact can create urgent personal danger without naming a nearby innocent person. The person may interpret motive or accident through cognition; native evidence never labels someone evil or guilty.
 
@@ -49,15 +49,15 @@ Incoming evidence and my own offensive preference have separate deadlines. My ac
 
 The existing installed context-action catalogue remains the sole source of action priority, label, tool and exact bindings. The Command shortcut, object actions and keyboard-accessible equivalent use that same answer. Evaluate the following rows **in order; the first applicable row chooses the action family**. Within that family, the installed stable ordering breaks exact-method ties. A temporary blocker is evaluated after family selection and never causes fallback to a different family.
 
-| Priority | Current personally available situation for this target | Primary contextual action |
-| --- | --- | --- |
-| 1 | Target dies, leaves physical participation, changes physical life, is no longer currently perceived or is otherwise unavailable to the old binding | Invalidate the old preview. Offer only currently permitted actions for the actual observed object/body, if any; no remembered live-target attack or hidden position. |
-| 2 | A deliberate Speak override for this controller and pair still matches the latest hostile-evidence revision | Speak, opening an editable draft. Ordinary movement, the existing grace deadline and an already known attack do not revoke this choice. |
-| 3 | My held aim at this exact life with its claimed ammunition, without that override | Release that held shot, with any required review; never Aim again or silently change tool/target. |
-| 4 | This visible person has a current/recent observed attack directed at me, or I retain my own admitted offensive preference for this pair | Prefer the retained exact attack method when supported; otherwise select the disclosed world default below. One click requests one action. |
-| 5 | Berry bush with an ordinary useful gathering action | Gather the authored resource. |
-| 6 | Ordinary living person without an applicable earlier row | Speak, opening an editable draft. Merely seeing this person attack somebody else does not create a directed attack against me. |
-| 7 | Another object or available action family | Use the existing installed ordinary contextual ranking. |
+| Priority | Current personally available situation for this target                                                                                             | Primary contextual action                                                                                                                                            |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1        | Target dies, leaves physical participation, changes physical life, is no longer currently perceived or is otherwise unavailable to the old binding | Invalidate the old preview. Offer only currently permitted actions for the actual observed object/body, if any; no remembered live-target attack or hidden position. |
+| 2        | A deliberate Speak override for this controller and pair still matches the latest hostile-evidence revision                                        | Speak, opening an editable draft. Ordinary movement, the existing grace deadline and an already known attack do not revoke this choice.                              |
+| 3        | My held aim at this exact life with its claimed ammunition, without that override                                                                  | Release that held shot, with any required review; never Aim again or silently change tool/target.                                                                    |
+| 4        | This visible person has a current/recent observed attack directed at me, or I retain my own admitted offensive preference for this pair            | Prefer the retained exact attack method when supported; otherwise select the disclosed world default below. One click requests one action.                           |
+| 5        | Berry bush with an ordinary useful gathering action                                                                                                | Gather the authored resource.                                                                                                                                        |
+| 6        | Ordinary living person without an applicable earlier row                                                                                           | Speak, opening an editable draft. Merely seeing this person attack somebody else does not create a directed attack against me.                                       |
+| 7        | Another object or available action family                                                                                                          | Use the existing installed ordinary contextual ranking.                                                                                                              |
 
 After choosing an attack/release family, a temporary recovery, work, range or ammunition-claim blocker keeps that exact action visible and disabled with its actual reason; no automatic queue or fallback to Speak. If there is no currently supported attack method, show the combat action as unavailable and expose the ordinary full menu. A permanently invalid retained method may be replaced only by the disclosed default in a fresh preview; an already held gesture remains stale. A separately chosen protective purpose may establish my own involvement only through its actual admitted offensive action, not by witnessing a fight alone.
 
@@ -84,4 +84,3 @@ The [native animal response profile](animal-responses.md) instead supplies effic
 - Implementation: [Action capabilities](../../maintainers/action-capabilities.md), [batch 06](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md), and [CTR01–CTR10](../../maintainers/combat-and-threat-responses.md).
 - Limits: [Base-world combat](../../limits/base-world.md), [ranged/evasion](../../limits/parallel-batch-06-rivals-and-contested-ground.md), and [threat-response limits](../../limits/combat-and-threat-responses.md).
 - Design: [Feature specification](../../projects/combat-and-threat-responses-feature-spec.md), [technical design](../../projects/combat-and-threat-responses-tech-design.md).
-

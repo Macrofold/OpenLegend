@@ -6,18 +6,18 @@
 
 Every CTR item below is **Designed; implementation not started**. A checked design task does not satisfy a native, independent-character, interface or playability gate. Implement at the existing owners and keep each admitted path usable; avoid separately shipping a new policy while an old caller still enforces the opposite one.
 
-| ID | Delivery | Dependencies | Completion evidence |
-| --- | --- | --- | --- |
-| CTR01 | Authored attack permission and actual projectile contact | Existing physical combat | All admission paths honor the installed profile; actual contact injures exactly once; participation and release review remain coherent. |
-| CTR02 | Personal, per-opponent encounter evidence | CTR01 event/contact semantics | Known/unknown attribution, active/recent/own intent, separate movement changes, exact deadlines and replay/restore remain correct. |
-| CTR03 | Native animal response owner and route execution | CTR01–CTR02 evidence seams | One controller and one movement owner; complete local danger scoring, finite preparation and saved continuation. |
-| CTR04 | Bundled animal profile and speed | CTR03 | Every ordinary species, bird flight and territorial withdrawal consumes the selected profile without model calls. |
-| CTR05 | Complete response context and prospective work transitions | Existing availability/control owners; CTR02 for threat context | Busy actors retain relevant choices; rejected transitions do not interrupt or spend. |
-| CTR06 | Personally interpreted threat appraisals | CTR02, CTR05 | Supported source-linked feelings carry actual values and retain deduplication, privacy and revision semantics. |
-| CTR07 | Prepared relevance then voluntary choice | CTR05–CTR06 | Two accounted stages, exact purpose/subject/action bindings, finite speech and truthful unavailable/stale outcomes. |
-| CTR08 | Meaningful reconsideration and urgent scheduling | CTR02, CTR07 | Exact transition wakes, finite commitments and isolated actor/job concurrency with no lost evidence. |
-| CTR09 | Existing Command-click combat continuity | CTR01–CTR02, CTR05 availability | Stable visible action/target, pair-specific grace and explicit offense/social override through the same server guard. |
-| CTR10 | Complete qualification and delivered-document reconciliation | Delivered CTR01–CTR09 paths | Native correctness, independent Ada behavior, browser journeys and measured latency/cost/playability pass separately. |
+| ID    | Delivery                                                     | Dependencies                                                   | Completion evidence                                                                                                                     |
+| ----- | ------------------------------------------------------------ | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| CTR01 | Authored attack permission and actual projectile contact     | Existing physical combat                                       | All admission paths honor the installed profile; actual contact injures exactly once; participation and release review remain coherent. |
+| CTR02 | Personal, per-opponent encounter evidence                    | CTR01 event/contact semantics                                  | Known/unknown attribution, active/recent/own intent, separate movement changes, exact deadlines and replay/restore remain correct.      |
+| CTR03 | Native animal response owner and route execution             | CTR01–CTR02 evidence seams                                     | One controller and one movement owner; complete local danger scoring, finite preparation and saved continuation.                        |
+| CTR04 | Bundled animal profile and speed                             | CTR03                                                          | Every ordinary species, bird flight and territorial withdrawal consumes the selected profile without model calls.                       |
+| CTR05 | Complete response context and prospective work transitions   | Existing availability/control owners; CTR02 for threat context | Busy actors retain relevant choices; rejected transitions do not interrupt or spend.                                                    |
+| CTR06 | Personally interpreted threat appraisals                     | CTR02, CTR05                                                   | Supported source-linked feelings carry actual values and retain deduplication, privacy and revision semantics.                          |
+| CTR07 | Prepared relevance then voluntary choice                     | CTR05–CTR06                                                    | Two accounted stages, exact purpose/subject/action bindings, finite speech and truthful unavailable/stale outcomes.                     |
+| CTR08 | Meaningful reconsideration and urgent scheduling             | CTR02, CTR07                                                   | Exact transition wakes, finite commitments and isolated actor/job concurrency with no lost evidence.                                    |
+| CTR09 | Existing Command-click combat continuity                     | CTR01–CTR02, CTR05 availability                                | Stable visible action/target, pair-specific grace and explicit offense/social override through the same server guard.                   |
+| CTR10 | Complete qualification and delivered-document reconciliation | Delivered CTR01–CTR09 paths                                    | Native correctness, independent Ada behavior, browser journeys and measured latency/cost/playability pass separately.                   |
 
 CTR01 and CTR05 can begin together. CTR03–CTR04 and CTR06–CTR08 can proceed independently once their shared evidence/availability contracts are installed. CTR09 consumes those shared projections rather than creating another attack catalogue. A partial implementation must retain an explicit current/selected distinction and cannot enable a half-migrated world policy.
 
@@ -58,7 +58,7 @@ Contract: [native execution](../projects/combat-and-threat-responses-tech-design
 
 ## CTR04 — Species profiles, sleep and special locomotion
 
-Contract: the canonical [animal profile](../worlds/base/animal-responses.md); its concrete limitations remain in [BW12](../limits/base-world.md#bw12).
+Contract: the canonical [animal profile](../worlds/base/animal-responses.md); its concrete limitations remain in [BW12](../limits/base-world.md#bw12--remains-and-native-escape).
 
 - [ ] Bind every existing ordinary species to authored travel/escape speeds and the selected all-danger clearance, retention, safety duration, cadence and candidate policy. Apply existing injury/scar/capability adjustments once.
 - [ ] Replace routine position jumps with admitted timed movement. Integrate alarm with the existing world restorative-rest predicates while preserving actual exhaustion and incapacity.

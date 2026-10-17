@@ -1,7 +1,7 @@
 # Continuing lives — chosen work, attention and later conduct
 
-| Status      | Current progress                                                                                                                                                   | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Status      | Current progress                                                                                                                                    | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Continuation and compact reactions are designed with a scoped threat-response extension; runtime delivery and behavioral qualification remain open. | 2026-10-17   |
 
 [Feature specification](continuing-lives-feature-spec.md) · [Research design follow-up](../maintainers/needs-design.md#intelligent-individuals-and-efficient-simulation-research-derived-design-follow-up) · [Design/delivery mapping](../maintainers/intelligent-simulation.md).
@@ -265,4 +265,3 @@ The numerical-reaction slice has four implementation steps, each preserving the 
 - Numerical-reaction policy and limits: [proposed joy profile](../worlds/base/psychological-reactions.md), [FL21–FL23](../limits/feelings.md#fl21--compact-numerical-personal-reactions) and the current [appraisal foundation](completed/appraisal-social-continuity-tech-design.md).
 - Behavior: [Continuing lives](continuing-lives-feature-spec.md), [compelling characters](compelling-characters-feature-spec.md), [experience-shaped characters](experience-shaped-characters-feature-spec.md), [memory architecture](../memory-architecture.md), [action experience](../action-experience.md) and [save/continuation](../save-and-load.md#continuation-and-identity).
 - Conditional authored service: [Prepared wilderness community](../worlds/base/continuing-communities.md); the proposal remains distinct from the combined standard main-world starting content.
-

@@ -60,11 +60,11 @@ These are animal comfort distances, not universal weapon ranges or invulnerabili
 
 An alarm has three physical situations, all owned by one episode:
 
-| Situation | Native response | Condition for leaving it |
-| --- | --- | --- |
-| Escaping | Keep a valid route to a chosen refuge; prefer increasing separation from the complete danger set. | Reach a supported, clear stopping location and have no current qualifying attack preparation/passage. |
-| Settling | Stop ordinary roaming, remain visibly alert and continue local danger checks. | Remain continuously clear for **240 game seconds**, with no fresh attack evidence; then end the episode. |
-| Blocked | Stay in a physically legal position or take an admitted improving route; retain alarm and show the actual blocked response. | A meaningful geometry/danger change or the bounded blocked-review deadline produces a usable option. |
+| Situation | Native response                                                                                                             | Condition for leaving it                                                                                 |
+| --------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Escaping  | Keep a valid route to a chosen refuge; prefer increasing separation from the complete danger set.                           | Reach a supported, clear stopping location and have no current qualifying attack preparation/passage.    |
+| Settling  | Stop ordinary roaming, remain visibly alert and continue local danger checks.                                               | Remain continuously clear for **240 game seconds**, with no fresh attack evidence; then end the episode. |
+| Blocked   | Stay in a physically legal position or take an admitted improving route; retain alarm and show the actual blocked response. | A meaningful geometry/danger change or the bounded blocked-review deadline produces a usable option.     |
 
 At the normal base-world **60 game seconds per real second**, 240 game seconds is four real seconds. Pause freezes the interval. Faster simulation changes its real duration normally. A wall-clock timeout, number of rendering frames or number of Decision API completions must not determine when an animal calms.
 
@@ -125,14 +125,14 @@ The same movement owner predicts and executes the chosen path. Movement distance
 
 Replace the current universal `animalFleeTilesPerSecond = 0.055` with the selected locomotion profile. Coordinates are metres and values are **metres per game second**, despite the older implementation's `Tiles` identifier. Normal-speed equivalents below use the existing 60:1 world clock exactly once.
 
-| Initial profile | Ordinary travel, m/game second | Escape, m/game second | Escape at normal speed | Reason for this gameplay starting point |
-| --- | ---: | ---: | ---: | --- |
-| Hare | 0.055 | 0.24 | 14.4 m/s, 51.8 km/h | A small, fast fleeing animal should escape a person over a short open chase; within the broad capacity suggested by jackrabbit sprint examples. |
-| Deer | 0.07 | 0.20 | 12.0 m/s, 43.2 km/h | Clear speed advantage without using a reported maximum as constant routine travel. |
-| Wolf | 0.08 | 0.22 | 13.2 m/s, 47.5 km/h | Fast short withdrawal; ordinary travel is much slower than escape. |
-| Bear | 0.06 | 0.20 | 12.0 m/s, 43.2 km/h | Large animals must not become slow pursuit targets simply because they look heavy. |
-| Bird, grounded fallback | 0.04 | 0.075 | 4.5 m/s, 16.2 km/h | A grounded bird does not receive implausible mammal sprinting to compensate for missing flight coverage. |
-| Bird, admitted escape flight | Existing flight profile's ordinary cruise | 0.25 | 15.0 m/s, 54.0 km/h | Initial fictional woodland-bird tuning; requires an actually admitted flight route and body clearance. |
+| Initial profile              |            Ordinary travel, m/game second | Escape, m/game second | Escape at normal speed | Reason for this gameplay starting point                                                                                                         |
+| ---------------------------- | ----------------------------------------: | --------------------: | ---------------------: | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hare                         |                                     0.055 |                  0.24 |    14.4 m/s, 51.8 km/h | A small, fast fleeing animal should escape a person over a short open chase; within the broad capacity suggested by jackrabbit sprint examples. |
+| Deer                         |                                      0.07 |                  0.20 |    12.0 m/s, 43.2 km/h | Clear speed advantage without using a reported maximum as constant routine travel.                                                              |
+| Wolf                         |                                      0.08 |                  0.22 |    13.2 m/s, 47.5 km/h | Fast short withdrawal; ordinary travel is much slower than escape.                                                                              |
+| Bear                         |                                      0.06 |                  0.20 |    12.0 m/s, 43.2 km/h | Large animals must not become slow pursuit targets simply because they look heavy.                                                              |
+| Bird, grounded fallback      |                                      0.04 |                 0.075 |     4.5 m/s, 16.2 km/h | A grounded bird does not receive implausible mammal sprinting to compensate for missing flight coverage.                                        |
+| Bird, admitted escape flight | Existing flight profile's ordinary cruise |                  0.25 |    15.0 m/s, 54.0 km/h | Initial fictional woodland-bird tuning; requires an actually admitted flight route and body clearance.                                          |
 
 For comparison, the current ordinary person moves at **0.11 m/game second**, or **6.6 m/s** at normal speed, before injury/scars. This project changes animal profiles, not the person's whole locomotion design. Keep the existing body injury and scar factors exactly once. Escape speed is a policy mode, not an additional multiplier applied again by prediction or animation. Current evasion retains its own admitted speed. A body unable to move does not obtain motion from a positive profile speed.
 

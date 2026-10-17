@@ -271,4 +271,3 @@ Configured account/character IDs: **100 characters maximum**.
 **Reason / tradeoff:** Bound serialized request/record fields and validation work; exact length is a chosen envelope, not a population limit.
 
 [Implementation starting point](../../apps/server/src/authority.ts).
-

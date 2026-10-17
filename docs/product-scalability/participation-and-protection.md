@@ -55,7 +55,9 @@ Recommended lifecycle:
 | Encounter resolved or safe exit reached | Apply the world's ordinary absentee/exit policy rather than initiating unlimited new adventures                         |
 | Player returns                          | Restore control at the actual resulting location and condition, with a truthful account of outcomes the player may know |
 
-Death is not necessarily followed by respawn in every authored world. Worlds choose revival, recovery, reincarnation, permanent death, or another supported aftermath. The [bundled world](../worlds/base/lifecycle-and-protection.md#human-conflict-and-recovery) retains its accepted recoverable human death and default possession preservation; this suite does not replace that policy with permanent death. Returning after a lethal encounter must respect the selected world rule rather than replaying the fight or restoring the pre-logout state.
+Death is not necessarily followed by respawn in every authored world. Worlds choose revival, recovery, reincarnation, permanent death, or another supported aftermath. The [bundled world](../worlds/base/lifecycle-and-protection.md#human-conflict-and-recovery) retains its implemented recoverable human death, random half-of-distinct-types possession retention, separately lootable corpse and removable scars; this suite does not replace that policy with permanent death. Returning after a lethal encounter must respect the selected world rule rather than replaying the fight or restoring the pre-logout state.
+
+The selected October 17 [direct-conflict extension](../projects/combat-and-threat-responses-feature-spec.md) permits human PvP and actual projectile-contact harm in that world without separate mode enrollment; CTR01 owns implementation. It preserves current exposed departure and fully inactive protection rather than selecting this suite's broader standing-defense or background-encounter targets. These broader choices remain open.
 
 ## 6. Limit absentee control and disconnection unfairness
 

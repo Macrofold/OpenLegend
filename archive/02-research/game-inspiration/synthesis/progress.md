@@ -8,18 +8,18 @@
 
 The focused intelligence/simulation pass retains published `Macrofold/OpenLegend` main at `0c12398e32e7c9578e18de07bbe79d39b4827208` as its source base and `research/intelligent-simulation-2026-10-14` as its original work branch. The October 17 combat-response pass inspected four existing dossiers at `0eb7358f251d1ab706592ccb6e9829e98c729fe9` plus their named primary sources. This update changes only their COMBAT cells; earlier source, structural-review and NPC provenance remains intact. Counts come from the actual matrices and inventory, not a second per-source status list.
 
-| Measure | State |
-| --- | --- |
-| Topic pages | 35: 29 unfilled synthesis shells, the NPC guide's focused intelligence/simulation pass, the COMBAT guide's focused four-source pass, and FUN, CREATE, DISCOVERY and PRODUCTION routes to existing research. |
-| Game/case sources | 176 stable keys: 167 roster subjects, the unnumbered EVE Online essay case and eight new unnumbered topic-only subjects. |
-| Available game/case sources | 150 original dossier files and ten scoped sources: EVE Online plus nine topic-only dossiers. Availability is not full research certification. |
-| Queued game sources | 16 of G150–G166 remain queued; G159 now has a focused dossier. No claim about unpublished branch work. |
-| Game matrix | 176 × 35 = 6,160 cells: 4,928 U, 526 W, 672 X and 34 I. |
-| NPC column | 30 scoped incorporations, 130 U and 16 W. The focused pass does not complete every source or all relationship subtopics. |
-| COMBAT column | Four scoped incorporations, 155 U and 17 W; broader combat research remains open. |
-| World matrix | Unchanged: 29 listed world dossiers × 35 = 1,015 cells: 903 U and 112 X. |
-| New incorporation | Thirty source-to-NPC assessments and four source-to-COMBAT assessments link exact scopes and stable lessons. The October 17 pass changes no other topic or world cell. |
-| Existing owners | X retains unreconciled evidence, not an assertion that earlier learning is absent. |
+| Measure                     | State                                                                                                                                                                                                       |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Topic pages                 | 35: 29 unfilled synthesis shells, the NPC guide's focused intelligence/simulation pass, the COMBAT guide's focused four-source pass, and FUN, CREATE, DISCOVERY and PRODUCTION routes to existing research. |
+| Game/case sources           | 176 stable keys: 167 roster subjects, the unnumbered EVE Online essay case and eight new unnumbered topic-only subjects.                                                                                    |
+| Available game/case sources | 150 original dossier files and ten scoped sources: EVE Online plus nine topic-only dossiers. Availability is not full research certification.                                                               |
+| Queued game sources         | 16 of G150–G166 remain queued; G159 now has a focused dossier. No claim about unpublished branch work.                                                                                                      |
+| Game matrix                 | 176 × 35 = 6,160 cells: 4,928 U, 526 W, 672 X and 34 I.                                                                                                                                                     |
+| NPC column                  | 30 scoped incorporations, 130 U and 16 W. The focused pass does not complete every source or all relationship subtopics.                                                                                    |
+| COMBAT column               | Four scoped incorporations, 155 U and 17 W; broader combat research remains open.                                                                                                                           |
+| World matrix                | Unchanged: 29 listed world dossiers × 35 = 1,015 cells: 903 U and 112 X.                                                                                                                                    |
+| New incorporation           | Thirty source-to-NPC assessments and four source-to-COMBAT assessments link exact scopes and stable lessons. The October 17 pass changes no other topic or world cell.                                      |
+| Existing owners             | X retains unreconciled evidence, not an assertion that earlier learning is absent.                                                                                                                          |
 
 The October 14 game matrix was byte-checked against a locally validated expected document before publication: blob `9c090e25e3fb106c48cd7679b4a3f3d5cd0e9f46`, published in commit `02966e0bae31482b1f5d06191a687506f82c2593`. The check preserved the baseline's exact bytes before applying only 22 existing NPC changes and eight new rows, then verified 176 unique keys, 35 unique topic columns, equal row widths and valid codes. This is a document-integrity check, not a runtime test.
 
@@ -29,17 +29,17 @@ Update this snapshot from the actual matrices when coverage changes. Do not infl
 
 `coverage.csv` is the sole per-game/per-topic status table. `world-coverage.csv` is the sole per-fictional-world/per-topic table, using the same topic columns and status codes. Their source kinds are distinct; neither is a duplicate status owner for the other. `subjects.csv` owns game identities and availability; world keys resolve to the corresponding file in the world library. Assessment records own evidence, not a second current status list.
 
-| Code | Meaning | Required evidence |
-| --- | --- | --- |
-| U | Unassessed for this particular topic | No incorporation is claimed. A candidate route, title or metadata read does not advance the status. |
-| W | Waiting for an available dossier or scoped source | Identify the unavailable source and its location/status. Not a finding of irrelevance or permission to start unrelated research. |
-| X | Existing or branch-owned coverage not yet reconciled | Inspect the actual owner and its source trail before assigning a research outcome. |
-| R | Review in progress | A record names the source revision, sections being reviewed and remaining scope. |
-| A | Assessed; relevant evidence identified but not incorporated | A record describes findings, counterevidence and the intended destination. |
-| I | Incorporated into the substantive topic synthesis | A record links the exact source revision/sections and stable destination lesson anchors; the agreed source scope for this pair has been addressed and reviewed. |
-| N | Assessed; no material contribution or intentionally excluded | A record gives the reviewed scope and reason. Absence can itself supply a counterexample; do not blanket-exclude by genre or source medium. |
-| B | Blocked after beginning review | A record states the evidence/access gap, partial work and next action. |
-| S | Needs refresh | A record names changed source material, affected lessons and review still needed; preserve earlier evidence. |
+| Code | Meaning                                                      | Required evidence                                                                                                                                               |
+| ---- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| U    | Unassessed for this particular topic                         | No incorporation is claimed. A candidate route, title or metadata read does not advance the status.                                                             |
+| W    | Waiting for an available dossier or scoped source            | Identify the unavailable source and its location/status. Not a finding of irrelevance or permission to start unrelated research.                                |
+| X    | Existing or branch-owned coverage not yet reconciled         | Inspect the actual owner and its source trail before assigning a research outcome.                                                                              |
+| R    | Review in progress                                           | A record names the source revision, sections being reviewed and remaining scope.                                                                                |
+| A    | Assessed; relevant evidence identified but not incorporated  | A record describes findings, counterevidence and the intended destination.                                                                                      |
+| I    | Incorporated into the substantive topic synthesis            | A record links the exact source revision/sections and stable destination lesson anchors; the agreed source scope for this pair has been addressed and reviewed. |
+| N    | Assessed; no material contribution or intentionally excluded | A record gives the reviewed scope and reason. Absence can itself supply a counterexample; do not blanket-exclude by genre or source medium.                     |
+| B    | Blocked after beginning review                               | A record states the evidence/access gap, partial work and next action.                                                                                          |
+| S    | Needs refresh                                                | A record names changed source material, affected lessons and review still needed; preserve earlier evidence.                                                    |
 
 I can represent a counterexample, disagreement or carefully scoped absence; it need not endorse a rule. Merely mentioning a source, quoting a passage or adding a bibliography entry is not incorporation. Reading one excerpt does not establish completion of all relevant source coverage.
 
@@ -66,13 +66,13 @@ A full topical pass is complete only for an explicit source snapshot and scope, 
 
 Game keys are dossier basenames without `.md`; titles and G numbers are navigation labels. Edition boundaries belong to the roster and dossiers. Paired games stay separate where rostered, and a supplemental case never silently becomes a full-game study.
 
-| Game availability code | Meaning |
-| --- | --- |
-| M | Dossier exists under `../dossiers/<game_key>.md` on the inspected main baseline. Availability is not a new quality or completion certification. |
-| T | A scoped source is available, not a completed full-game dossier. Current sources are EVE Online in the [creator-content essay](../essays/player-created-content-modding-and-marketplaces.md) and the nine topic-only files in the [intelligence/simulation inventory](../research-progress-intelligent-simulation-2026-10-14.md). Assessment remains limited to the actual evidence. |
-| P | Rostered/queued subject with no available scoped dossier on the inspected snapshot. The [expansion ledger](../research-progress-expansion-2026-10-13.md) and current roster retain wider research authorization/status. |
-| E | Available only on an explicitly inspected external branch/snapshot; record its exact route. No current row needs this code after Songs of Syx merged. |
-| C | Contextual candidate whose actual source is not yet available; record the gap. No current row needs this code after the Starfield/EVE sources became available. |
+| Game availability code | Meaning                                                                                                                                                                                                                                                                                                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| M                      | Dossier exists under `../dossiers/<game_key>.md` on the inspected main baseline. Availability is not a new quality or completion certification.                                                                                                                                                                                                                                      |
+| T                      | A scoped source is available, not a completed full-game dossier. Current sources are EVE Online in the [creator-content essay](../essays/player-created-content-modding-and-marketplaces.md) and the nine topic-only files in the [intelligence/simulation inventory](../research-progress-intelligent-simulation-2026-10-14.md). Assessment remains limited to the actual evidence. |
+| P                      | Rostered/queued subject with no available scoped dossier on the inspected snapshot. The [expansion ledger](../research-progress-expansion-2026-10-13.md) and current roster retain wider research authorization/status.                                                                                                                                                              |
+| E                      | Available only on an explicitly inspected external branch/snapshot; record its exact route. No current row needs this code after Songs of Syx merged.                                                                                                                                                                                                                                |
+| C                      | Contextual candidate whose actual source is not yet available; record the gap. No current row needs this code after the Starfield/EVE sources became available.                                                                                                                                                                                                                      |
 
 **Current identities:** Songs of Syx remains G149; Starfield remains G167; Shadows of Doubt retains G159; EVE Online remains unnumbered and scoped. All 168 inherited keys are preserved. The eight new keys are unnumbered rather than assigned guessed roster numbers. Original Creatures is not substituted for Creatures 3 or Docking Station. The earlier duplicate G149 was resolved by the merged source work, not by inventing a new assignment during this review.
 

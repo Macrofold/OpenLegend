@@ -1,7 +1,7 @@
 # Continuing NPC lives — product and behavior specification
 
-| Status      | Current progress                                                                                                                                            | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                                                | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Continuing activity and compact reactions are designed and linked to the threat-response extension; runtime and broader life/service qualification remain open. | 2026-10-17   |
 
 **Status: detailed design, expanded October 15, 2026.** This specification expands the accepted continuing-world direction into reviewable product behavior, including the selected compact numerical-reaction contract in §16.6. It does not claim the behavior is implemented, approve paid execution, change the bundled world's human protection, or settle commercial prices. The requested [technical design](continuing-lives-tech-design.md) maps continuation, attention, evidence and personal-reaction refinements to existing owners; service adoption remains separate.
@@ -626,4 +626,3 @@ Acceptance requires one silent numerical reaction through ordinary cognition, a 
 - Research refinements and delivery mapping: [technical design](continuing-lives-tech-design.md), [intelligent-simulation tracking](../maintainers/intelligent-simulation.md) and [shared constraints](../limits/intelligent-simulation.md); existing CE/AG/AE/CR/PS owners remain authoritative.
 - Parent design: [product-scalability feature specification](product-scalability-feature-spec.md) and existing [technical design](product-scalability-tech-design.md). The finite service remains a proposal, separate from its independently useful attended refinements.
 - Package scope and progress: [five-specification plan](five-product-feature-specs.md).
-

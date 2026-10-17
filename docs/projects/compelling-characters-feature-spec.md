@@ -1,7 +1,7 @@
 # Compelling characters — integrated product and behavior specification
 
-| Status      | Current progress                                                                                                                            | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                    | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Bounded PG02 behavior is delivered and Ada's independent combat response is designed; broader character qualification remains open. | 2026-10-17   |
 
 **Accepted product direction, October 3, 2026; proposed delivery choices.** Mike requires multidimensional characters whose embodied experience, inner life, attention, choices and consequences work together. This is a product-design assignment, not permission to implement or run paid experiments. The October 4 owner clarification is developed in the [scoped technical design](compelling-characters-tech-design.md); broader psychological mechanics remain deferred. Existing implemented foundations and their unfinished acceptance retain their recorded status.
@@ -394,4 +394,3 @@ The selected vocabulary, represented pressures, satisfaction/recovery rules, mix
 - Behavioral evaluation: [AG12](../maintainers/agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized), [CR12](../maintainers/cognition-redesign.md#cr12--acceptance-and-tokenlatency-evidence) and [R24](../../archive/05-project/research-backlog.md#r24--p1--agency-continuity-optionality-and-actor-method-fidelity).
 - Limits and constraints: [CG12](../limits/cognition.md#cg12), [FL19](../limits/feelings.md#fl19), and their existing shared inventories.
 - Related product scope: [Continuing lives](continuing-lives-feature-spec.md), [DG02](../maintainers/needs-design.md#dg02--one-resident-who-follows-through) and [perspective rationale](../../archive/03-design-proposals/character-experience-and-inner-life.md).
-

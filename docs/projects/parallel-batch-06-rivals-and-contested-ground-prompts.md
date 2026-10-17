@@ -45,4 +45,3 @@ Completion means all CF01–CF05 acceptance and the ordinary-player encounter ar
 
 Keep the feature spec, technical design, Batch 06 tracker, limits and prompt status synchronized. Follow the technical design's Documentation and parent reconciliation table to update every overlapping canonical specification and maintainer criterion, including action capabilities/experience, world content, agency/character experience, spatial work, invention launcher scope, physical custody, and the scoped AV01–AV03/PX03–PX04 consumers. Preserve broader unfulfilled parent criteria. Record evidence under the existing documentation policy. When the entire agreed project and required checks are complete, mark it completed and move its project documents with repaired references as AGENTS.md requires.
 ```
-

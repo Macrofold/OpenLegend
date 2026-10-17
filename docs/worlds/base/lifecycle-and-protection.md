@@ -62,4 +62,3 @@ The original design-only PG05 proposal was superseded by Mike's October 4 runtim
 ## Accepted player danger and death revision
 
 Mike's selected observational danger, half-type corpse loss, one-minute campfire return, continuity/scars, final-blow review and simulated five-second fade are implemented in [Player Danger](player-danger.md), [Player Death](player-death.md) and the [encounter](first-threat-encounter.md). They replace enrollment, possession-preserving collapse and automatic retreat. The [decision record](../../../archive/05-project/open-decisions.md#pg05--proposed-first-encounter-choices) retains the scoped choices and broader unresolved laws.
-

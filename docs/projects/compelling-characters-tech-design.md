@@ -1,7 +1,7 @@
 # Compelling characters — authorship, evidence and perspective design
 
-| Status      | Current progress                                                                                                                      | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                                 | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
 | In progress | PG02's bounded evidence path is qualified and the independent combat-response extension is designed; broader character reliability remains open. | 2026-10-17   |
 
 [Feature contract](compelling-characters-feature-spec.md#character-authorship-and-changing-personality) · [CE implementation and acceptance](../maintainers/character-experience.md) · [Memory contract](../memory-architecture.md) · [Agency contract](../agent-agency.md).
@@ -88,4 +88,3 @@ Required reads are actor-scoped and batched through existing retrieval/cache and
 - Implementation: [CE01–CE05](../maintainers/character-experience.md), with [AG06/AG07/AG12](../maintainers/agent-agency.md) and [CR12](../maintainers/cognition-redesign.md); existing DG23 owns broader personality development.
 - Limits and constraints: [CG14 authorship boundary](../limits/cognition.md#cg14--character-authorship-and-personal-evidence), [memory/cognition limits](../limits/cognition.md), [feeling limits](../limits/feelings.md). No new numerical runtime bound is introduced.
 - Evidence: [PG02 report](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices), historical trials remain distinct from the new content and expanded world.
-

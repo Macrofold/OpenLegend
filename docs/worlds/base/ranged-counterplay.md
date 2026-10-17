@@ -75,4 +75,3 @@ Visible body condition reports the installed meter's name, projected value and b
 - Implementation: [CF02/CF03](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md) and [CTR01](../../maintainers/combat-and-threat-responses.md).
 - Limits: [RC01–RC07](../../limits/parallel-batch-06-rivals-and-contested-ground.md).
 - Mechanisms: [batch 06 technical design](../../projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md).
-

@@ -42,14 +42,14 @@ The first threat profile installs interpreted **fear** and **anger** for eligibl
 
 Each relevant decision supplies the complete accepted identity, current body and abilities, actual work at stake, current purpose, known alternatives, personally available threat facts and the current cause-linked feelings. The shared world rubric asks the model to consider:
 
-| Dimension | Actor-specific question and evidence boundary |
-| --- | --- |
-| Stakes | What could this event cost this person, physically or in something they value? Current body damage is evidence, not the complete meaning. |
-| Cause and intent | What did this person actually perceive, what do they infer, and what remains unknown? An identified attacker, a suspicious person and an unseen impact are different facts. |
-| Control and alternatives | What can this body currently do, which actions or exits are feasible, and what costs or recovery constrain them? Confidence is personal interpretation, not authority to invent a route or skill. |
-| Appraised opposition | Does this person interpret the conduct as deliberate opposition, accident, an understandable mistake or uncertain intent? The source's private mind is unavailable. |
-| Current commitment and values | How does this affect a currently chosen purpose, valued person/place, bodily autonomy or actual unfinished work? No goal or relationship is generated merely to justify a reaction. |
-| Change since the last judgment | What new permitted evidence materially changes the interpretation? Re-reading, elapsed provider time, the feeling's own notification and repeated paraphrase are not new external occurrences. |
+| Dimension                      | Actor-specific question and evidence boundary                                                                                                                                                     |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stakes                         | What could this event cost this person, physically or in something they value? Current body damage is evidence, not the complete meaning.                                                         |
+| Cause and intent               | What did this person actually perceive, what do they infer, and what remains unknown? An identified attacker, a suspicious person and an unseen impact are different facts.                       |
+| Control and alternatives       | What can this body currently do, which actions or exits are feasible, and what costs or recovery constrain them? Confidence is personal interpretation, not authority to invent a route or skill. |
+| Appraised opposition           | Does this person interpret the conduct as deliberate opposition, accident, an understandable mistake or uncertain intent? The source's private mind is unavailable.                               |
+| Current commitment and values  | How does this affect a currently chosen purpose, valued person/place, bodily autonomy or actual unfinished work? No goal or relationship is generated merely to justify a reaction.               |
+| Change since the last judgment | What new permitted evidence materially changes the interpretation? Re-reading, elapsed provider time, the feeling's own notification and repeated paraphrase are not new external occurrences.    |
 
 These dimensions are prompt/question meaning, not six new stored meters. The model need not write an explanation or score every dimension. A finite question asks for the supported feeling amount or no change using this rubric; another asks whether each supplied purpose is relevant. Batch independent questions in the **first of the two threat decision stages**. Stage two then receives the admitted feeling results and independently chooses an action. Do not multiply emotion combinations by every tactic, and do not add a third appraisal-only call.
 
@@ -59,15 +59,15 @@ Within one threat pipeline, prepare at most one question and admit at most one w
 
 ### Selected initial values
 
-| Meaning | Fear | Anger |
-| --- | --- | --- |
-| Installed identity | `wilderness:fear`, revised selected definition installed together with removal of automatic fear producers | `wilderness:anger`, selected new definition |
-| Scale | Dimensionless intensity 0–1; 0 means no active fear in this record, 0.25 mild, 0.5 moderate, 0.75 strong, 1 the strongest represented fear | Same amount vocabulary, explicitly describing anger rather than attack probability |
-| Finite choices | No change; create a fresh source-bound interpretation at 0.25, 0.5, 0.75 or 1; resolve an exact supplied active record | Same |
-| Stacking | Existing target stacking: one active interpretation of this family for each personally identified subject, plus a targetless interpretation where appropriate | Same; not added to fear or to another subject's anger |
-| Decline without a new interpretation | Existing linear decay, 0.25 intensity per game hour, notification boundaries 0.5, 0.2 and 0 | Existing linear decay, 0.125 intensity per game hour, notification boundaries 0.5, 0.2 and 0 |
-| Interpretation lifetime | A newly accepted independently supported interpretation anchors its own curve; a read, duplicate source or no-change answer never refreshes it | Same |
-| Immediate and reflection eligibility | Immediate source-bound choice enabled; optional reflection uses the same native restrictions | Same |
+| Meaning                              | Fear                                                                                                                                                          | Anger                                                                                        |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Installed identity                   | `wilderness:fear`, revised selected definition installed together with removal of automatic fear producers                                                    | `wilderness:anger`, selected new definition                                                  |
+| Scale                                | Dimensionless intensity 0–1; 0 means no active fear in this record, 0.25 mild, 0.5 moderate, 0.75 strong, 1 the strongest represented fear                    | Same amount vocabulary, explicitly describing anger rather than attack probability           |
+| Finite choices                       | No change; create a fresh source-bound interpretation at 0.25, 0.5, 0.75 or 1; resolve an exact supplied active record                                        | Same                                                                                         |
+| Stacking                             | Existing target stacking: one active interpretation of this family for each personally identified subject, plus a targetless interpretation where appropriate | Same; not added to fear or to another subject's anger                                        |
+| Decline without a new interpretation | Existing linear decay, 0.25 intensity per game hour, notification boundaries 0.5, 0.2 and 0                                                                   | Existing linear decay, 0.125 intensity per game hour, notification boundaries 0.5, 0.2 and 0 |
+| Interpretation lifetime              | A newly accepted independently supported interpretation anchors its own curve; a read, duplicate source or no-change answer never refreshes it                | Same                                                                                         |
+| Immediate and reflection eligibility | Immediate source-bound choice enabled; optional reflection uses the same native restrictions                                                                  | Same                                                                                         |
 
 These values are game tuning hypotheses. At the current 60:1 clock, fear 0.5 would naturally fade in two real minutes and anger 0.5 in four, unless the person forms a genuinely new interpretation or resolves the record. The time-based control preference in the combat design is independent and much shorter. Changing speed or pausing uses game-time semantics; there is no wall-time catch-up after reopening. No claim of realistic human hormone timing is made.
 
@@ -124,4 +124,3 @@ Revisit the vocabulary, available amounts, rate and notification bands when that
 - Implementation: [CTR06–CTR08 threat reactions](../../maintainers/combat-and-threat-responses.md), [CE02/CE03/CE05](../../maintainers/character-experience.md), [intelligent-simulation delivery mapping](../../maintainers/intelligent-simulation.md) and the existing [appraisal owner](../../maintainers/actor-model.md#advanced-emotional-state-foundation); ACT09 process authoring remains separate.
 - Limits and constraints: [FL21–FL23](../../limits/feelings.md#fl21--compact-numerical-personal-reactions) and existing [cognition](../../limits/cognition.md), [memory](../../limits/memory.md) and [AI execution](../../limits/ai-execution.md) admission.
 - Related contract/design: [continuing-life behavior](../../projects/continuing-lives-feature-spec.md#166-compact-personal-reactions-can-change-a-feeling), [technical integration](../../projects/continuing-lives-tech-design.md#55-numerical-personal-reactions-without-required-prose), [current social feelings](social.md#feelings) and [compelling-character episodes](../../projects/compelling-characters-feature-spec.md#complete-behavioral-flows).
-
