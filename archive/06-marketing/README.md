@@ -1,40 +1,40 @@
 # Marketing workspace
 
-Started September 19, 2026, from the side conversation about open source, creator-owned worlds and building mechanics through play.
+| Status | Current progress | Last updated |
+|---|---|---|
+| Internal planning and draft copy | Player-facing positioning, parallel execution and commercial hypotheses are aligned; no campaign, paid offer or numerical market target is adopted by these documents. | 2026-10-17 |
 
-**Status: internal planning and draft copy.** AGPL-3.0-only is now selected and applied to the repository; see [LICENSING.md](../../LICENSING.md). The user accepted directions for creator worlds, both subscription models, mechanics packs, patron recognition, contributor participation, and a creator fund. Exact prices, allocations, benefits, and implementation remain open. No campaign, sale, grant program, token, or game feature has launched. These later product directions do not expand the first playable milestone.
+## Player experience and commercial purpose
 
-## Core idea to explore
+**Create a world by playing it. Share what you discover.**
 
-**Create a world by playing it.**
+Lead with a compelling Open Legend survival-adventure: explore, confront an obstacle, invent a practical alternative, meet someone with independent aims and encounter the consequences again. The [playable-game priority](../../docs/repertoires/gameplay-priorities.md) owns that intended experience. A hosting arrangement does not turn it into an observer simulation, and engine possibilities do not substitute for something enjoyable now.
 
-Accepted companion line: **Share what you discover.**
+Player enjoyment, authoring interest, developer contributions and willingness to pay for managed worlds are related but different questions. Test game, audience and business in parallel. Managed private worlds are a concrete offer to compare with a feasible alternative, not a model proven by the game-launch archive. Prices, costs, benefits, allocations and actual operating commitments remain open.
 
-A creator enters their world, tries an interaction, and helps define a reusable mechanic. They can inspect the resulting definition, revise it directly or with AI, and decide where it is available. The world retains those mechanics and can develop differently as its inhabitants encounter them.
-
-The concrete example supplied by the user is a magic tree spell: cast it while playing, find it in a list of created mechanics, then revise its definition so only a mage can use it. This is an authoring vision, not a claim that arbitrary requests currently become functioning game systems instantly.
+AGPL-3.0-only is selected for the repository; [LICENSING.md](../../LICENSING.md) owns the terms. Accepted directions for creator worlds, subscriptions, mechanics packs, patron recognition, contribution and a creator fund remain available without becoming prerequisites for the first game. These plans do not claim that commercial operations or future features are implemented.
 
 ## Documents
 
-| Document | Contents |
+| Document | Purpose |
 |---|---|
-| [Business plan](business-plan.md) | Paid hosted-world launch, proposed pricing, bounded operating costs, early customers, and profitability milestones for a sustainable side project |
-| [Positioning and copy](positioning-and-copy.md) | Audiences, value proposition, draft homepage copy, taglines, creator experience and demo storyboard |
-| [Ideas, channels and experiments](ideas-channels-and-experiments.md) | Campaign concepts, candidate channels, sequence, lightweight message tests and measures |
-| [Open platform and private worlds](open-platform-and-private-worlds.md) | AGPL engine direction, private world content, optional mechanic libraries, creator control, and licensing boundaries |
-| [Creator economy and mechanics packs](creator-economy-and-mechanics-packs.md) | Standalone premium games, platform subscription allocation, hosting, pack marketplace and compatibility |
-| [Patrons, contributors and world history](patrons-contributors-and-world-history.md) | Membership tiers, engravings, dragon dedications, transfers, voting, and creator grants |
-| [Tokens and community funding](tokens-and-community-funding.md) | Preserved exploration of NFTs, portability, repeat issuance, community investment and speculative tokens; no launch selected |
+| [Execution brief](../02-research/indie-launch-commercials/execution-brief.md) | One-page operating view: current hypothesis, evidence, uncertainty, next experiment, commitment limit and decision afterward |
+| [Detailed execution guide](../02-research/indie-launch-commercials/execution-playbook.md) | Parallel game/audience/business work, different tests, deliberate promotion, selected-offer qualification and conditional Steam/crowdfunding routes |
+| [Commercial principles](../02-research/indie-launch-commercials/learnings.md) | Twelve principles and counterexamples, with a 64-case evidence map weighted by relevance and source quality |
+| [Business plan](business-plan.md) | Operating goals, managed-world candidate, offer comparison, accepted entitlement directions, cost controls and limits of the illustrative economics |
+| [Positioning and copy](positioning-and-copy.md) | Player-facing promise, audience hypotheses, draft copy and separate authoring/developer demonstrations |
+| [Ideas, channels and experiments](ideas-channels-and-experiments.md) | Candidate promotional material, source targeting and measurements for actual player and commercial questions |
+| [Open platform and private worlds](open-platform-and-private-worlds.md) | AGPL engine direction, private world content, optional libraries, creator control and licensing boundaries |
+| [Creator economy and mechanics packs](creator-economy-and-mechanics-packs.md) | Premium games, platform subscription allocation, hosting, pack marketplace and compatibility |
+| [Patrons, contributors and world history](patrons-contributors-and-world-history.md) | Recognition, dedications, transfers, voting and creator grants |
+| [Tokens and community funding](tokens-and-community-funding.md) | Preserved exploratory funding concepts; no token launch selected |
 
 ## Working principles
 
-- Demonstrate one persistent, editable mechanic before promising an entire universe of possibilities.
-- Distinguish ordinary player actions from creator authority; owning one world does not grant powers in another.
-- Lead player-facing messaging with what people can do and experience. Put Macrofold infrastructure details in developer-facing material.
-- Keep the open platform useful on its own. Clearly identify separately licensed packs and services.
-- Treat creator income, audience demand and channel effectiveness as hypotheses until measured.
-- Keep mockups, staged concepts, edited waiting time and actual gameplay distinguishable in demonstrations.
+Demonstrate a complete enjoyable activity with a real instance of the premise before promising a universe of possibilities. Keep ordinary player abilities separate from creator authority. Show truthful gameplay, disclose important waits/limits and label concepts. Use technical explanations for developer audiences rather than relying on them to sell the player experience.
 
-Related background: [business ideation](../04-ideation/business-and-future-directions.md), [capability lifecycle](../03-design-proposals/generative-capability-lifecycle.md), [Macrofold workflows](../03-design-proposals/macrofold-ai-workflows-and-world-state.md).
+Make substantial reveals, demos and releases deliberate while keeping routine content work sustainable. Measure usability, voluntary enjoyment, broader demand and actual payment separately. Treat cost coverage, founder income and studio growth as different objectives. Qualified repeated response should justify deliberate expansion, not permanent small-test mode.
 
-User direction and status distinctions: [C01–C10 source summary](../00-source/open-source-and-community-followups.md).
+Keep the open platform useful independently and identify separately licensed content/services. Preserve accepted creator examples, including the magic-tree spell whose definition can be refined to restrict use; these remain authoring demonstrations subject to actual support, not claims that arbitrary requests instantly become working mechanics.
+
+Background and scope: [business ideation](../04-ideation/business-and-future-directions.md), [capability lifecycle](../03-design-proposals/generative-capability-lifecycle.md), [Macrofold workflows](../03-design-proposals/macrofold-ai-workflows-and-world-state.md), and [C01–C10 source summary](../00-source/open-source-and-community-followups.md).

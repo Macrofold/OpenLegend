@@ -1,67 +1,87 @@
 # Marketing ideas, channels and experiments
 
-Status: **untested hypotheses**, September 19, 2026. No outreach, posts, accounts, ad purchases or campaigns are authorized or performed by this document. Candidate channels reflect the proposed experience, not verified acquisition performance.
+| Status | Current progress | Last updated |
+|---|---|---|
+| Untested hypotheses | Candidate material and measures distinguish player appeal, authoring interest and commercial preference; no outreach, accounts, ads or public promises are performed or authorized here. | 2026-10-17 |
+
+[Execution brief](../02-research/indie-launch-commercials/execution-brief.md) · [Detailed guide](../02-research/indie-launch-commercials/execution-playbook.md) · [Positioning](positioning-and-copy.md)
 
 ## Campaign ideas
 
+Lead with an enjoyable activity under the [gameplay priority](../../docs/repertoires/gameplay-priorities.md), not a feature list. The examples below are concepts to qualify against the actual build; they do not adopt new world laws or assert delivered behavior.
+
 | Idea | Material to show | What the viewer should understand |
 |---|---|---|
-| One interaction becomes a rule | The magic-tree sequence from request to saved mechanic | Creation happens during play and has a persistent result |
-| One sentence changes a mechanic | Add “only mages can cast this,” then test both characters | Definitions remain editable after creation |
-| Two worlds, one difference | Equivalent starting worlds, one with a new magic/resource rule | Selected mechanics can lead to different histories |
-| A world's family tree | A starter template branches into several curated worlds | Worlds inherit chosen foundations and develop independently |
-| Follow an invention | Create a tool, learn it, reuse it, and observe supported effects on daily life | A new capability changes activities beyond its first demonstration |
-| Creator's workshop | A small hosted session in which a creator refines one world idea | The interface supports understandable iteration, including failed attempts |
-| The mechanic behind the moment | Pair a gameplay clip with the exact definition that produced it | Behavior is grounded in inspectable rules |
+| One obstacle, more than one useful approach | A readable challenge, a known method and a genuinely supported invented alternative | Choice and practical invention can change how the player succeeds |
+| A person with their own purpose | A resident or rival acts, accepts or refuses, and later responds to something they actually observed | Characters are not scripted agreement machines or omniscient narrators |
+| A consequence worth returning for | A reward, useful method or relationship outcome affects another activity | Persistence produces interesting play, not merely stored text |
+| A place worth exploring and using | A destination, opposition or discovery, useful reward and improvement to gear or home | The adventure has attractive activities and payoff alongside its distinctive systems |
+| Another run, another approach | Voluntary repeat play using an alternative tactic or invention | Continued interest can come from choice and consequences rather than compulsory daily chores |
 
-“Two worlds” comparisons are demonstrations, not controlled claims about real societies. Record relevant initial conditions and avoid attributing every difference to one mechanic when stochastic events and model responses also changed.
+Art, motion and sound should communicate why the activity is attractive as well as how it works. Disclose important waits and limitations; distinguish actual behavior from concept footage or edited time. Do not imply that every imagined solution or character reaction is already supported.
+
+### Authoring and developer demonstrations
+
+These preserve useful creator directions without making authoring interest the default proxy for demand for the adventure.
+
+| Idea | Material to show | What the viewer should understand |
+|---|---|---|
+| One interaction becomes a rule | Magic-tree request through a saved, reusable mechanic | Authorized creation during play can have a persistent result |
+| One sentence changes a mechanic | Add “only mages can cast this,” then test qualifying and nonqualifying characters | Definitions remain editable, with visible enforced consequences |
+| Two worlds, one difference | Equivalent starting worlds with one selected rule changed | Chosen mechanics can lead to different histories |
+| A world's family tree | A starter template branches into curated worlds | Worlds can inherit chosen foundations and develop independently |
+| Follow an invention | Create, learn, reuse and observe supported consequences | A capability matters beyond its first demonstration |
+| Creator's workshop | A small hosted authoring session, including failed attempts | The interface supports understandable iteration |
+| The mechanic behind the moment | Gameplay paired with the exact definition responsible | The behavior is inspectable rather than unexplained narration |
+
+“Two worlds” is a demonstration, not a controlled claim about real societies. Record initial conditions and do not attribute every difference to one rule when randomness and model responses also vary. Creator authority remains separate from character abilities and knowledge.
 
 ## Candidate channels
 
 | Channel | Suitable material | First small experiment | Useful measure |
 |---|---|---|---|
-| Short video on YouTube, TikTok or Instagram | One clear before/after mechanic | Test two edits of the same working demonstration | Qualified demo visits and understanding, alongside completion rate |
-| Longer YouTube videos and development logs | Full authoring session and later consequences | A transparent creator walkthrough | Viewers who request access and return to use it |
-| Sandbox/simulation creators and game masters | A private session around their own world idea | Invite a small relevant group after a playable slice exists | Successful creation, repeat use and specific feedback |
-| Relevant communities, forums and Discord groups | Concrete progress, technical explanation and playable tests | Participate according to each community's rules and share useful evidence | Thoughtful feedback and retained testers, not post volume |
-| GitHub and developer communities after an open release | Runnable starter world, schemas, small extension examples | A documented mechanic contribution exercise | Successful setup and completed useful contributions |
-| A project site and opt-in update list | A coherent demo, development status and creator examples | A simple page with a real next step | Signups that become active testers |
+| Short-form video | Actual choice, attraction and payoff | Compare two truthful presentations of the same playable moment | Relevant access/demo actions and expectation match, not only views |
+| Longer videos and devlogs | A whole activity, later consequence or substantive improvement | A transparent play session or focused development explanation | People who request access and voluntarily play again |
+| Relevant game creators | The adventure's demonstrated attraction | A manually checked batch based on coverage of comparable play | Coverage, qualified visitors/players and repeated response, with attribution limits |
+| Communities, forums and Discord groups | Useful progress and specific playable questions | Participate under local rules and invite an appropriate test | Informative feedback and returning testers, not post volume |
+| Project site and opt-in updates | Coherent promise, build status and actual next action | A simple page plus a working invitation | Signups becoming actual participants |
+| Worldbuilders and game masters | Qualified creator examples | A separate small authoring session | Useful creation, repeat authoring and preferences for that offer |
+| GitHub and developer communities | Runnable open project and focused contribution examples | A bounded contribution/setup exercise | Successful setup and useful contributions, not consumer demand |
 
-Prioritize a strong demonstration, a small set of hands-on creators, and a place to follow progress. Paid acquisition and broad press outreach should follow evidence that viewers understand the product and testers return.
+Game, audience and business experiments can overlap. Routine posting should be affordable; reveals, demos, appropriate festivals and release deserve coordinated preparation. Increase relevant outreach when responses repeat rather than waiting for a magic follower count. Broad promotion or paid scaling should not amplify known misleading, broken or unaffordable conditions. Advertising, when approved, begins as a bounded experiment; organic work also consumes founder time.
 
 ## Message experiments
 
-**A — Create a world by playing it.** Show the magic-tree sequence. Ask viewers to explain what was created and whether it will work again.
+**Player appeal:** test a concrete adventure description—explore, find an obstacle, invent a practical alternative and encounter a later consequence. Ask what activity the viewer expects, why it interests them and what they would compare it with.
 
-**B — Worlds that evolve under your rules.** Show a creator choosing a mechanic and later consequences. Check whether viewers expect a scripted cutscene or an ongoing simulation.
+**Distinctive promise:** **Create a world by playing it. Share what you discover.** Pair the line with actual useful invention and consequence, not a claim of arbitrary instant game creation.
 
-**C — Your world, your rules, your community.** Show a hosted creator world with invited players. Check interest in managing a community separately from interest in playing alone.
+**Authoring:** **Worlds that evolve under your rules.** Show authorized rule selection and supported consequences. Separate interest in editing from interest in the ordinary character experience.
 
-These are qualitative tests first. Record the source, wording, demo version and audience for each. Do not infer market size or price acceptance from a few enthusiastic comments.
+**Managed worlds:** **Your world, your rules, your community.** Explain proposed access, service and ownership boundaries. Compare preferences for managing a community with playing alone and with the strongest feasible alternative offer. Do not assume subscription preference from enthusiasm for the phrase.
+
+These are qualitative tests first. Record audience, wording, build and source. A few encouraging comments do not establish market size, a selected price or a viable hosted business.
 
 ## Measures that connect marketing to the product
 
-- Can a new viewer describe the intended experience without being told the architecture?
-- Can a tester create one supported mechanic, find it again, change a rule and verify the change?
-- Does the tester return to the same world after the novelty of the first generation wears off?
-- Do creators invite others, and do those guests return?
-- What is the actual AI/infrastructure cost per successful creator session and retained hosted world?
-- Do potential hosts want continued operation enough to pay, and what do they expect that payment to cover?
+| Evidence layer | Question |
+|---|---|
+| Attraction | Can a viewer explain why they would choose this instead of an existing alternative? |
+| Usability | Can a newcomer understand a goal, act and read the consequence without coaching? |
+| Enjoyment | Does the actual activity produce rewarding decisions, payoff and voluntary further play? |
+| Broader demand | Do additional relevant audiences respond and participate, rather than one friendly cohort? |
+| Offer preference | Do plausible customers prefer realistic terms, and does approved actual payment support their stated interest? |
+| Delivery | Do normal and costly sessions remain enjoyable, responsive and affordable to support? |
+| Authoring, when tested | Can a creator make a supported mechanic, find/refine it and verify reuse under the right permissions? |
 
-Distinguish views, visits, signups, activated creators and retained paying hosts. The useful funnel is discovery → understanding → first creation → later return → sustainable hosting.
+Views, visits, signups, active players, authors, buyers and eligible renewals are different populations. Do not force every player through authoring or a hosting subscription to count as interested. Track actual repeat behavior appropriate to the promise; a satisfying finite game need not produce daily return.
 
-## Packaging hypotheses to explore later
+Combine source-tagged links, timing, player reports and repeated experiments. Change one important element where practical; disclose simultaneous changes. Missing attribution does not make measurement worthless or permit assigning every sale to a favored channel. The [execution guide](../02-research/indie-launch-commercials/execution-playbook.md#working-measurement-and-evidence-record) owns the common experiment format and operational criteria.
 
-The open starter library could help self-hosters and creators get a complete basic world running. The official hosted world, separately licensed advanced packs, private managed worlds and creator support are different products that need clear descriptions. A subscriber should know whether a purchase provides access, a downloadable pack, editing rights, hosting, or a combination.
+## Packaging hypotheses and execution
 
-Both creator-world memberships and a platform subscription allocation are accepted product directions; pricing and payout policies remain open. Premium worlds may sell standalone access without the platform subscription. Do not advertise income until eligibility, costs, attribution and payment arrangements are defined and tested. See [creator economy and packs](creator-economy-and-mechanics-packs.md), [patrons and the creator fund](patrons-contributors-and-world-history.md), and existing [business ideation](../04-ideation/business-and-future-directions.md).
+The [business plan](business-plan.md#compare-feasible-offers) owns the offer comparison. A purchase may provide a playable game, continuing service, private hosting, editing rights or a separately licensed pack; descriptions must say which. Investigate feasibility and platform restrictions before substantial billing or public promises, without building several product variants simply to ask what customers prefer.
 
-## A small launch sequence
+Creator-world memberships and platform subscription allocation remain accepted directions with open pricing and payout choices. Premium worlds may offer standalone access without the platform subscription. Do not advertise creator income before its eligibility, costs and payment arrangements are defined and tested. See [creator economy and packs](creator-economy-and-mechanics-packs.md), [patrons and creator fund](patrons-contributors-and-world-history.md), and [business ideation](../04-ideation/business-and-future-directions.md).
 
-1. Record one working creator loop and test whether the central message is understood.
-2. Let a small group author their own mechanics and revisit their worlds; use observed failures to improve the experience.
-3. Publish a clearly scoped playable release with the selected AGPL core policy and explicitly licensed starter content.
-4. Test managed-world packaging with actual compute costs and creator support requirements.
-5. Expand discovery and creator monetization after repeat use exists.
-
-No numerical growth targets or channel budget are selected yet. Keep the first marketing promise close to what the first playable release can demonstrate.
+Use the [execution brief](../02-research/indie-launch-commercials/execution-brief.md) for the next experiment and the detailed guide for commitment decisions. The working rhythm is a connected playable improvement, relevant public evidence and offer/cost investigation in parallel. No channel budget, release date, exact conversion target or purchase model is adopted by this idea list.

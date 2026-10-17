@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 17, 2026 — Consolidate indie-launch research and commercial hypotheses
+
+The [commercial research collection](../archive/02-research/indie-launch-commercials/README.md) preserves 62 game histories and two platform/service histories, a full-corpus review map, twelve synthesis principles, and detailed and short execution guides. Historical observations, participant explanations and product inferences remain distinct; the collection establishes neither an industry success rate nor demand for Open Legend.
+
+The [marketing workspace](../archive/06-marketing/README.md) now connects the intended survival-adventure to parallel game, audience and business experiments. Managed private worlds remain an offer to compare with a feasible alternative; existing entitlement directions are preserved, while prices, customer demand, spending limits and launch qualification remain open. This consolidates research and planning rather than launching a campaign, selecting a paid offer or authorizing implementation or spending.
+
 ## October 17, 2026 — Design ordinary speech, social perception and animal hearing
 
 Mike selected [one optional addressee or ambient speech](projects/speech-and-social-perception-feature-spec.md), with the same physical hearing for both. An audible linguistic recipient knows they are addressed without seeing the speaker or understanding all the words. The bundled world's [recognition policy](worlds/base/knowledge.md) associates supported later face/voice exposure with the same individual while names remain separately learned. These accepted targets replace visibility/word-dependent address attribution and encounter-only ordinary recognition; they do not grant unheard words, secret names or an unseen body's current position.
