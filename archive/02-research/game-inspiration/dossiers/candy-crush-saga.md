@@ -1,8 +1,8 @@
-# Candy Crush Saga — research checkpoint (G171)
+# Candy Crush Saga — full-game dossier (G171)
 
 [Library](../README.md) · [Roster](../research-roster.md#october-17-mobile-successes-and-unsuccessful-services) · [Research status](../research-progress-mobile-2026-10-17.md) · [Research requirements](../research-requirements.md)
 
-**Research status: incomplete substantive checkpoint, October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
+**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
 
 ## Game, mechanics and player-created content
 
@@ -21,7 +21,22 @@ This is a sequence of authored puzzle layouts with variable board outcomes, not 
 | Five in a straight line         | Color Bomb    | Swap with a plain candy to remove that color.           |
 | Four in a square                | Fish          | Current help describes a targeted obstacle/candy clear. |
 
-These are board-created tools as well as possible booster effects. Their existence does not imply that each consumes inventory whenever created through play. Swapping specials together creates combinations, including Striped/Wrapped and Color Bomb pairs. [King, Creating and combining Special Candies; current body read](https://candycrush.zendesk.com/hc/en-us/articles/211939685-Creating-and-combining-Special-Candies)
+These tools can be made through board matches without consuming booster inventory. [King, Creating and combining Special Candies; current body read](https://candycrush.zendesk.com/hc/en-us/articles/211939685-Creating-and-combining-Special-Candies)
+
+Special pairings let players exchange setup effort for a larger effect:
+
+| Pair                    | Effect and planning significance                                                                            |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Striped + Striped       | A crossing row and column; useful when one stripe alone faces the wrong way.                                |
+| Striped + Wrapped       | A broader cross of rows and columns.                                                                        |
+| Wrapped + Wrapped       | An enlarged area-blast sequence around the pair.                                                            |
+| Color Bomb + Striped    | A distributed striped-candy attack, making the partner's color distribution relevant.                       |
+| Color Bomb + Wrapped    | An amplified wrapped-candy explosion combination.                                                           |
+| Color Bomb + Color Bomb | Board-wide candy clearance; existing multi-layer or indestructible obstacles still require their own rules. |
+
+King's current summary supports the mixed and Color Bomb combinations. The older fan guide supplies the basic same-type stripe interaction; its obsolete Color Bomb/Wrapped explanation and disputed radius claims are excluded. A retrieved original-player discussion corroborates repeated paired-Wrapped blasts, but its full page could not be opened, so exact blast dimensions are not claimed. [King current combination help; body read](https://candycrush.zendesk.com/hc/en-us/articles/211939685-Creating-and-combining-Special-Candies); [Candy Crush Cheats, November 11, 2013; body read, limited historical use](https://www.candycrush-cheats.com/article/special-candy-combinations); [Original-player combination discussion; indexed excerpt only](https://www.reddit.com/r/candycrush/comments/rbdezj/)
+
+The newer Fish mechanic has its own version boundary. King's dedicated page confirms square creation and still documents a Star Tournament issue requiring an older level to be played first after opening the game; it does not promise a fix date. [King Fish rules and known issue; full body read](https://candycrush.zendesk.com/hc/en-us/articles/25385670407709-Learn-all-about-the-Fish) In a player-maintained 2025 guide, the May corrections report Fish/Striped and Fish/Wrapped delivering the partner's effect to a target, and Fish/Fish producing three fish. Those dated observations support the interaction family, not a guarantee of perfectly optimal targeting on every current board. [christinewupp and MannyFae, procedural posts including May 2025 corrections; relevant body passages read](https://community.king.com/en/candy-crush-saga/discussion/490397/how-to-make-the-most-of-the-new-jelly-fish-2025)
 
 The standard matching rule has a current cohort exception. King is testing direct tap activation of specials alongside swipe activation; combinations still use swaps. Players in that test can trigger an isolated special instead of first constructing its ordinary matching setup. The dedicated help article still says availability is limited, so this is not treated as a universal change or a launch mechanic. [King, New ways to tap and swipe Special Candies; body read](https://candycrush.zendesk.com/hc/en-us/articles/36873468198429-New-ways-to-tap-and-swipe-Special-Candies)
 
@@ -38,13 +53,73 @@ The pre-level screen states the objectives and eligible boosters. Hard, Super Ha
 
 All four dedicated rule bodies were read. The current Dragon terminology is retained rather than silently describing every delivery level with historical ingredient names.
 
-### 3. Boosters and persistence — initial checkpoint
+### 3. Board geometry, blockers and reusable tools
 
-Boosters may be earned or bought with Gold Bars. Pre-game boosters alter the opening board or allowance; in-level tools intervene after seeing the situation; extra moves can extend an attempt after its original allowance. Pre-game selections can remain selected across retries, so checking the screen matters when conserving inventory. Available booster choices differ by level. [King, What are Boosters?; body read](https://candycrush.zendesk.com/hc/en-us/articles/360000750998-What-are-Boosters)
+Blockers do different jobs rather than merely adding hit points. Frosting consumes adjacent matches or blasts; Chocolate spreads into playable space; Licorice Locks immobilize contents, whereas movable Licorice Swirls interrupt blasts. Honey traps candies but permits matching them. Sugar Chests require keys. Licorice Shells yield Color Bombs when broken. Cake Bomb slices reward repeated adjacent/special hits; Fish Bobbers are indestructible generators activated by specials. Crystal Candy conceals matchable contents, while layered Citrus Chew requires successive clearance. Magic Mixers produce obstacles: destroying one can be a mistake when its output supplies an order. The player must distinguish obstruction, containment, production and reward conversion. [King blocker inventory; full body read](https://candycrush.zendesk.com/hc/en-us/articles/360000754717-Which-Blockers-can-I-find-in-the-game)
+
+Geometry also determines which interactions are possible:
+
+| Board element    | Operational consequence                                                                                                                                                                                                                                                      |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Candy Cane Fence | Indestructible boundaries block swaps, matches and falling across the fence, while special-candy effects can cross it. [King fence rules; body read](https://candycrush.zendesk.com/hc/en-us/articles/360000702085-What-s-a-Candy-Cane-Fence)                                |
+| Rainbow Twist    | Layered pieces form linked chains. Removing one piece collapses its chain; hitting the weakest accessible link can outperform spreading damage. [King twist rules; body read](https://candycrush.zendesk.com/hc/en-us/articles/360003345718-How-does-the-Rainbow-Twist-work) |
+| Sour Skulls      | Successive hits move the skull between pedestals; the next destination is telegraphed. Preparing access to that location matters. [King skull rules; body read](https://candycrush.zendesk.com/hc/en-us/articles/360014543298-What-are-the-Sour-Skulls)                      |
+| Candy Cobra      | Charging it makes it traverse to a basket, clear its path and create a new row across a gap. Clearance can change the board's connectivity. [King cobra rules; body read](https://candycrush.zendesk.com/hc/en-us/articles/4408919311121-How-does-the-Candy-Cobra-work)      |
+| Mall-O-Matic     | A multi-tile blocker retracts as layers disappear and allows blast effects through it. [King Mall-O-Matic rules; body read](https://candycrush.zendesk.com/hc/en-us/articles/33411889915805-What-s-the-Mall-O-Matic-blocker)                                                 |
+
+Conveyors, portals and dispensers complicate ordinary downward gravity. A detailed player explanation of level 9606 describes a conveyor bringing Color Bombs together, toffee blocking portal access, and clearing receiving space so dragons can pass through. This is a dated-layout observation, not a guarantee that every current account receives that precise board. The useful general lesson is to trace source, transport and destination before deciding where clearance matters. [MannyFae's accepted King Community answer; complete thread body read, player testimony](https://community.king.com/en/candy-crush-saga/discussion/508258/anybody-on-level-9606)
+
+The Candy Frog is a reusable board tool. Feeding it twelve candies of its color charges it; the glowing frog can then be placed elsewhere to clear an area, excluding placement directly on blockers. It does not fall with ordinary candies. A Color Bomb removing the frog's color can feed it remotely. This adds a charge-and-reposition decision to ordinary matching. [King, How does the Frog work?; body read](https://candycrush.zendesk.com/hc/en-us/articles/8600135708317-How-does-the-Frog-work)
+
+### 4. Boosters, scarce resources and persistence
+
+Boosters may be earned or bought with Gold Bars. Pre-game boosters alter the opening board or allowance; in-level tools intervene after seeing the situation; extra moves can extend an attempt after its original allowance. Pre-game selections can remain selected across retries, so checking the screen matters when conserving inventory; Free Switch interventions do not spend a move. Available booster choices differ by level. [King, What are Boosters?; body read](https://candycrush.zendesk.com/hc/en-us/articles/360000750998-What-are-Boosters)
 
 The current booster-save rule is materially different from older device-local advice. With the game backed up and logged into a King account, boosters synchronize across devices and survive reinstalling. King warns that the first migration has a per-booster transfer limit; subsequent collection is saved normally. The article does not publish that transfer cap in its body, so no numeric cap is invented. [King, Your boosters are now saved to your account; body read](https://candycrush.zendesk.com/hc/en-us/articles/38840349973277-Your-boosters-are-now-saved-to-your-account)
 
-### 4. Constructed situations — initial checkpoint
+Useful booster roles are distinct: a Lollipop Hammer removes a selected candy; Free Switch exchanges neighbors without requiring a match; Striped Brush creates an oriented stripe; Coconut Wheel rolls and produces stripes; Lucky Candy transforms into an order-relevant item; a UFO delivers three Wrapped Candies and detonates them; Party Booster clears the board and triggers additional specials. Choosing a precise intervention after inspecting the board differs from buying stronger opening conditions. The catalog is broader than the choices offered on every level or account. [King booster types; body read](https://candycrush.zendesk.com/hc/en-us/articles/211320729-What-types-of-Boosters-are-available)
+
+Ordinary timed boosters automatically supply their opening benefit on eligible levels throughout a real-time window, survive failed levels and can stack additional duration of the same type. Their clocks continue during absence. [King timed-booster rules; full body read](https://candycrush.zendesk.com/hc/en-us/articles/360002352858-What-are-timed-Boosters)
+
+The **Super Charger/Super Color Bomb** is a timed, streak-linked modifier, not another permanent inventory candy. It adds an extra blast to the first three Color Bombs used in a level after the required wins activate it. Either losing a level or reaching its timer ends the benefit. This creates a continuing reason to preserve wins beyond a single board. [King Super Charger; full body read](https://candycrush.zendesk.com/hc/en-us/articles/29840120645405--Super-Charger-Super-Color-Bomb)
+
+Lives govern attempts rather than moves within an attempt. The normal heart capacity is five; failure consumes a life, and one regenerates every thirty minutes. A failed attempt offers continuation with extra moves or a retry using a new life. Friends can send lives without sacrificing their own supply. The fundamental recovery decision is therefore to extend the current position, replay, request help, or wait. [King life rules; body read](https://candycrush.zendesk.com/hc/en-us/articles/360000750878-How-do-lives-work)
+
+The gift mailbox is a separate capacity: current help describes up to 200 stored lives and accepting twenty per day, with a daily counter. These limits should not be confused with the five ordinary hearts. [King stored/gifted lives; body read](https://candycrush.zendesk.com/hc/en-us/articles/5468771286429-How-many-lives-can-I-store-and-use)
+
+Unlimited Lives removes the attempt shortage for a displayed duration, but its clock starts immediately and continues while the game is closed. This is temporary access to retries, not unlimited moves or automatic level completion. [King Unlimited Lives; body read](https://candycrush.zendesk.com/hc/en-us/articles/7332093991069-How-do-Unlimited-Lives-work)
+
+**Retention and loss have several scopes.** A retry asks the player to solve the level again; already spent consumables are not a reusable character build. Map completion persists between attempts, while particular event streaks, contribution records and timed benefits follow their own rules below. Gold Bars, booster stock, hearts, event points and collection duplicates serve different purposes; points on a leaderboard are not automatically exchangeable for Gold. The commercial section describes paid products and offer eligibility; exact shop prices and ad availability should not be inferred from the basic puzzle rules.
+
+### 5. Map progression, races, teams and collections
+
+Passing successive authored levels advances through map episodes; at least one star is needed to move onward. Content is extended, and platforms can receive it at different times. At the available map's end, the **Star Tournament** supplies a Wednesday-to-Tuesday star leaderboard while new levels are prepared. Its levels do not count toward Weekly Contest progress; new content reopens map progression. Reaching the frontier therefore changes the available reward loop rather than completing a fixed-length campaign forever. [King end-of-map and Star Tournament rules; full body read](https://candycrush.zendesk.com/hc/en-us/articles/360007248018-Why-don-t-I-have-more-levels-to-play-on-the-map)
+
+**Episode Race** compares progress through an episode with other players around similar map positions and rewards placement with items such as Gold Bars or boosters. It adds urgency to ordinary level completion, but this description does not assume synchronized, real-time play on one shared board. [King Episode Race; body read](https://candycrush.zendesk.com/hc/en-us/articles/360001846038--Episode-Race)
+
+The current **Caramel Cup** test temporarily changes the race/reward structure for eligible players with a Champions streak: its three rounds require first place to advance. The underlying Champions streak is preserved and resumes afterward. Reward variation between accounts can therefore reflect a documented event cohort rather than a universally changed payout. [King Episode Race Gold Bars/Caramel Cup explanation; body read](https://candycrush.zendesk.com/hc/en-us/articles/39124873373981-Episode-Race-Gold-Bars-Why-didn-t-I-get-the-usual-amount-of-Gold-Bars)
+
+**Candy Royale** requires consecutive first-attempt wins within its timer. Survivors split the Gold jackpot; a sole survivor receives it all. Losing a life breaks the required streak. The current help says players cannot opt out. Its screenshot's seven-level/500-Gold example is not treated as an invariant requirement or payout. [King Candy Royale; full body read](https://candycrush.zendesk.com/hc/en-us/articles/4404903647517--Candy-Royale)
+
+Other **leaderboard events** count specified candies or collectibles and may use qualifying rounds, different level weighting and changing ranks. Eligibility depends on progress, device, country, version or tests; every event is not simultaneously available to everyone. This separates the underlying match puzzle from the competition's scoring and qualification wrapper. [King leaderboard-event rules; body read](https://candycrush.zendesk.com/hc/en-us/articles/39040841526685-How-do-leaderboard-events-work)
+
+**Candy Teams** adds persistent social organization. Players create a named team with symbol, color and description, choosing public joining or private approval, or find an existing group through search/invitations. Leaving during a team event forfeits its progress and rewards; a new team's next event is the next participation opportunity. Thirty days' inactivity can remove members and replace an inactive leader. The feature requires sufficient progression and is still described as gradually distributed. [King Candy Teams; full body read](https://candycrush.zendesk.com/hc/en-us/articles/34612008106653-What-is-Candy-Teams)
+
+**Team Quest** turns level wins into progress toward three shared milestones, with harder or first-attempt wins adding bonuses; contributors qualify for rewards and the leading contributor gets an extra benefit. [King Team Quest; body read](https://candycrush.zendesk.com/hc/en-us/articles/34614687627549--Team-Quest) **Team Clash** instead ranks teams by win-derived points, with participation needed for rewards. A personal reward track is rolling out alongside team standings. Offline contributions do not synchronize into this event. These systems create cooperation through aggregated individual play, not simultaneous control of another player's candies. [King Team Clash; body read](https://candycrush.zendesk.com/hc/en-us/articles/34615452887965--Team-Clash)
+
+**Candy Pins** supplies collection progression independent of clearing the next board. Packs come from rewards such as events and Episode Race; nine pins complete a set. Five rarity categories include Sweetonium. Duplicates become Pin Sparks for Spark Chests, while the timed Pin Swap uses the Trading Post's available exchange pool and cooldowns. Completing sets gives boosters; completing the seasonal collection before expiry earns larger rewards and a Trophy Pin retained in the Trophy Room. Collection, duplicate conversion and event completion are different goals. [King Candy Pins; full mechanics body read](https://candycrush.zendesk.com/hc/en-us/articles/25219182745373--Candy-Pins)
+
+**Daily Stamps** provides one task stamp per day, progressing a card toward a chest containing rewards such as timed boosters. Its help also marks gradual availability. This makes a short successful return valuable even when the player is not pursuing a whole episode or a leaderboard session. [King Daily Stamps; full body read](https://candycrush.zendesk.com/hc/en-us/articles/28189843882013--Daily-Stamps)
+
+#### Current version and event boundaries
+
+The live **Spooky Season runs October 12–November 9, 2026**. Its Halloween Horde uses Saga Adventure levels to rescue characters; its themed collection has 81 pins across nine sets. The announced Gold Heist starts **October 26**, after this dossier's cutoff: purple-candy collection feeds three rounds ending November 5. It is a scheduled upcoming competition, not one already played or completed as of October 17. These are temporary objectives around the base puzzle rather than a separate permanent combat system. [King Spooky Season; dated event body read in full](https://candycrush.zendesk.com/hc/en-us/articles/39875640883613--Spooky-Season)
+
+King's June 12, 2026 testing update also discusses Sweet Leagues, a collection-and-promotion competition, timed multipliers and bonus-move offer experiments. It reports changes to Hand Switch availability for some players. Together with the separate tap-activation notice, this means old videos or another player's booster menu need not exactly reproduce a current account. No universal launch or payout is assigned to a test. [QueenB, official King Community testing post; main announcement body read](https://community.king.com/en/candy-crush-saga/discussion/585144/new-in-testing-in-candy-crush-saga/p1)
+
+The strategic transition is from learning legal matches to managing interacting constraints: access through geometry, special construction, target-specific clearance and scarce interventions, followed by event timing and competing progression incentives. That is an analysis of the documented rules, not a claim that a particular player's losses are predetermined or that purchasing changes hidden odds.
+
+### 6. Six constructed situations
 
 These are analytical examples, not reports of personal play.
 
@@ -52,9 +127,21 @@ These are analytical examples, not reports of personal play.
 
 2. **Open a productive rainbow route.** Two Rainbow Rapids routes remain. The player identifies a blocker shared by a narrow approach and concentrates hits there. Clearing it allows the flow to advance; unrelated blockers can remain intact. They then reassess the second route instead of continuing to clear the largest visible cluster. Success depends on connected flow, so clearing a visually impressive area can be strategically irrelevant. [Rainbow path rules](https://candycrush.zendesk.com/hc/en-us/articles/360008932258-Game-Modes-Rainbow-Rapids)
 
-### Checkpoint access and remaining work
+3. **Use the frog to cross a divided board.** A remote cluster resists local matching. The player uses a Color Bomb to remove enough candies of the frog’s color to complete its twelve-candy charge, then places it on an eligible candy space near the target. Its clearance opens the area. The next decision is whether to recharge it for remaining targets; a blocker tile is not a valid destination. [Frog charge and placement rules](https://candycrush.zendesk.com/hc/en-us/articles/8600135708317-How-does-the-Frog-work)
 
-All citations above are current first-party King support bodies. Exact launch dates, the fuller combo/board/blocker inventory, five-life/refill rules, races and team events, event resets and four additional worked cases remain to be integrated. Current-test availability and immutable level-count claims require separate treatment. This checkpoint is not the final completed mechanics inventory.
+4. **Attack across a fence instead of trying to swap through it.** A needed target sits across an indestructible Candy Cane Fence. An apparent adjacent match cannot be assembled across that boundary. The player constructs and activates a special on the accessible side whose effect crosses the fence, then checks the cleared compartment for a new legal move. The fence remains; the successful action changes the candies rather than removing the board boundary. [Fence movement and effect rules](https://candycrush.zendesk.com/hc/en-us/articles/360000702085-What-s-a-Candy-Cane-Fence)
+
+5. **Exploit a chain's weak link.** A Rainbow Twist chain contains pieces with unequal remaining layers. Instead of distributing matches across its length, the player concentrates hits on an accessible nearly-cleared piece. Removing it collapses the connected chain, opening a larger region for falling candies. They then reassess the new matches rather than continuing the old plan. The result depends on actual chain membership; a separate nearby chain needs its own solution. [Rainbow Twist linkage rules](https://candycrush.zendesk.com/hc/en-us/articles/360003345718-How-does-the-Rainbow-Twist-work)
+
+6. **Separate retry time from a protected streak.** A player activates Unlimited Lives while pursuing Candy Royale. They can afford repeated attempts during that real-time window, but a failed level still breaks Royale's first-attempt requirement. Before using a scarce intervention, they compare saving the current streak with accepting a fresh attempt; after losing, unlimited hearts do not restore the lost streak. Closing the app also does not pause the unlimited-life clock. [Royale failure condition](https://candycrush.zendesk.com/hc/en-us/articles/4404903647517--Candy-Royale); [Unlimited Lives timer](https://candycrush.zendesk.com/hc/en-us/articles/7332093991069-How-do-Unlimited-Lives-work)
+
+### 7. Creation boundary and evidence record
+
+The verified current mobile mechanics document authored levels and configurable social identity; they do not establish a general player-facing level editor, scripting language, upload/test/publish pipeline or asset-import tool. Team naming and the bounded seasonal composition discussed in the context section should not be mistaken for unrestricted puzzle authoring. External modification applicability and permissions are treated separately in R15. No freeform AI dialogue, persistent character simulation or user-created rules engine is evidenced here.
+
+**Source register and limits.** The adjacent King Zendesk links are primary support articles, with each cited substantive body read on October 17, 2026. The combination section separately flags its historical fan guide and indexed-only player corroboration. Most expose no reliable publication date; their current text establishes documented behavior at access, not the launch date of each mechanic. The Spooky Season article explicitly supplies its 2026 interval. QueenB's testing announcement is first-party dated test documentation. MannyFae's accepted answer is an individual player's procedural account, separately identified from official support. Its board-specific instructions are not generalized into a fixed contemporary level walkthrough.
+
+The inventory covers major action, geometry, progression, event and resource families rather than every numbered level or cosmetic event variant. King documents different cohorts and feature eligibility, so exact current level layouts, rewards, sale prices, gift tests and unexposed randomization remain account-dependent or unverified. These notes do not infer them from anecdotes. No hands-on session, expenditure, hidden telemetry or executable inspection was performed.
 
 ### Fiction, seasonal authorship and bounded music creation
 
@@ -66,6 +153,176 @@ In a September 2026 interview, lead artist Silvia Toma and principal artist Emil
 
 **Interpretation:** recognizable characters and an easy-to-understand seasonal problem can give another set of boards a purpose without requiring complex plot choices. Limited music choices also show a small form of creative expression that is accessible within an existing game. For OpenLegend, the research question is whether the player's actions visibly advance an understandable situation or personal creation. Adding narrative labels to an unchanged chore would not by itself demonstrate that connection. The story evidence here comes from publisher and artist accounts; community fan fiction and another Candy title's expanded cosmology are not treated as this game's delivered story.
 
-## Completion work remaining
+## Commercial results, production and distribution
 
-The latest substantive research is preserved here while remaining mechanics, narrative, creation and source integration are completed. The assembled document still requires its final requirement coverage, factual and link review. It is not yet a completed R01–R15 dossier; the scoped ledger records the actual subject status.
+### Commercial result and measurement boundaries
+
+| Observation and date                                                                    | What the number actually covers                                                                                 | Interpretation and source                                                                                                                                                                                                        |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **$3.91 billion estimated cumulative gross mobile revenue**, through September 2018     | Sensor Tower's historical Store Intelligence estimate for **Candy Crush Saga**; not a current all-channel total | Establishes substantial standalone monetization early in the game's life. [C01](https://sensortower.com/blog/candy-crush-revenue-september-2018)                                                                                 |
+| **More than $20 billion lifetime revenue and five billion downloads**, September 2023   | Conservatively, the **Candy Crush franchise**; see source conflict below                                        | Gross/net treatment and channel coverage unspecified; not Saga payers or profit. [C02](https://www.king.com/corporate-and-media/posts/press-releases/celebrating-20-years-of-gaming-excellence-kings-milestone-journey/)         |
+| **$1.01 billion estimated IAP revenue in 2025**, **+3%** year over year                 | AppMagic's _Mobile Market Landscape 2026_, p.33; Saga, App Store and Google Play                                | China coverage is iOS only; web shops and alternative monetization excluded. [C03](https://appmagic.rocks/files/view/upload/Reports/EN_MobileMarkeLandscape2026.pdf)                                                             |
+| **$2.785 billion segment net revenue; $1.121 billion segment operating income**, FY2022 | **King segment**, across its portfolio, in Activision Blizzard's results                                        | Segment accounting excludes specified expenses; neither figure measures Saga's profit. [C10](https://investor.activision.com/news-releases/news-release-details/activision-blizzard-announces-fourth-quarter-and-2022-financial) |
+
+The original publisher announcement's headline assigns $20 billion to _Saga_, but its body assigns both milestones to the **franchise**. King's present web version consistently says franchise. This dossier retains that broader scope because the original publisher source is internally inconsistent. [C02a](https://investor.activision.com/node/36276)
+
+AppMagic derives estimates from app-chart positions, rather than publishing King's accounts. [C03](https://appmagic.rocks/files/view/upload/Reports/EN_MobileMarkeLandscape2026.pdf) Mobilegamer specifies that this AppMagic series excludes Apple/Google's 30% and advertising; it is **net store IAP**, not consumer gross spending. [C03a](https://mobilegamer.biz/the-top-grossing-mobile-games-of-2025/)
+
+**Estimation decision:** do not combine historical gross spending, recent net-store estimates, franchise milestones and company accounts. No comparable dataset with channel shares and cumulative history was obtained to support a new October 2026 all-platform Saga total. Downloads are not necessarily unique people and cannot establish payer conversion. Development, acquisition, ongoing operations and title-level profit remain undisclosed in the sources checked; assigning King's segment margin to Saga would create false precision.
+
+The company also reported roughly 20% year-over-year growth in **Saga's in-game net bookings in each quarter of 2022**, attributing it to live operations and acquisition. That is management's explanation, not a controlled decomposition of the causes. Its segment operating measure excludes items including share-based compensation, acquisition-related amortization and certain restructuring costs, further limiting any title-profit inference. [C10](https://investor.activision.com/news-releases/news-release-details/activision-blizzard-announces-fourth-quarter-and-2022-financial)
+
+### Distribution and continuing production
+
+Co-creator Sebastian Knutsson describes the original Candy Crush as a short browser experience without sufficient progression. Moving to Facebook added a journey map and social comparison; the team then underestimated how long the mobile audience would persist. That history supports a distinction between creating a satisfying puzzle and building a service around it. It does not establish an initial development budget or a repeatable formula for making a billion-dollar game. [C11](https://apps.apple.com/us/iphone/story/id1462263204)
+
+The mobile game carried an existing social-game audience onto phones. King's November 2012 iOS announcement described synchronized Facebook progress, scores, leaderboards and virtual goods, and advertised 125 levels. Existing players could retain progress while adding convenient sessions away from a computer. The same announcement's Android launch projection is a forecast, not proof of its eventual date. [C04](https://pressreleases.triplepointpr.com/2012/11/15/king-coms-top-10-facebook-game-candy-crush-saga-now-available-on-mobile/) King joined Microsoft/Xbox with the Activision Blizzard acquisition completed on 13 October 2023. [C12](https://news.xbox.com/en-us/2023/10/13/xbox-activision-blizzard/)
+
+Maintaining that service requires more than manufacturing interchangeable boards. In Microsoft's May 2026 report of a GDC panel, King's Eva Ryott described two years of refactoring before implementing the 2×2 Fish feature. Its introduction involved approximately 60,000 adjustments across about 18,000 levels; qualitative feedback and behavioral data exposed cases where the fish selected unsatisfying targets. This documents technical debt, extensive rebalance work and the difficulty of changing a familiar game. It does not disclose the team's budget or prove that the change raised revenue. [C05](https://developer.microsoft.com/en-us/games/articles/2026/05/art-and-science-of-evergreen-games-minecraft-candy-crush/)
+
+**Interpretation:** familiar rules reduce relearning while constraining redesign: changes must satisfy established expectations. A large catalog remains a balancing obligation, so long-term success requires continued design and engineering investment. The existing game is a maintained product, not a finished asset producing effortless returns.
+
+King president Tjodolf Sommestad described focus groups, player panels, community feedback and A/B tests in a 2022 interview. He treated observed behavior and stated preferences as complementary evidence, with design judgment still necessary. He also identified the return of player-selected advertising as a commercial milestone. This documents an iterative operating process; it does not disclose experiment effects or justify treating every difficult board as deliberately personalized to extract payment. [C13](https://www.pocketgamer.com/candy-crush-saga/tjodolf-sommestad-10-year-interview/)
+
+### What a customer pays for
+
+The central commercial object is **another chance at progress**: consumable assistance can change the next attempt or continue the current one, while time-limited reward paths attach additional value to repeated wins. The detailed mechanics section supplies individual booster effects, lives and retry rules. Offers should be described as observed product families, not a universal catalog: account, platform, region and event availability can differ.
+
+**Gold Bars, lives and assistance.** Gold Bars purchase boosters that can also be earned through play. [C14](https://candycrush.zendesk.com/hc/en-us/articles/360000750998-What-are-Boosters) Google Play's editorial explains buying more lives with Gold Bars, buying those bars in the shop, and purchasing bundles containing time-limited Unlimited Lives. The latter buys a window for repeated attempts rather than permanent unlimited access. [C15](https://play.google.com/store/apps/editorial?hl=en_US&id=mc_editorialevergreen_post_install_candy_crush_saga_more_lives_fcp) King's support page also documents a Gold-Bar purchase to continue a board after running out of moves. [C16](https://candycrush.zendesk.com/hc/en-us/articles/11430595709597-I-can-t-buy-Extra-Moves-with-my-Gold-Bars)
+
+The observed US Apple catalog lists XS Gold Bars **$1.99**, Extra Moves **$0.99**, Extra Lives **$0.99**, and Lollipop Hammer **$1.99**. These are catalog examples; an account's current checkout was not tested. [C17](https://apps.apple.com/us/app/candy-crush-saga/id553834731)
+
+**Piggy Bank.** Stars from completed levels fill a bank; King's help page says the player must then buy its contents to release the Gold Bars. A player may purchase once the offer is ready or continue filling it until its cap, after which further accumulation stops; opening enables another cycle. This is a conditional purchase offer, not free currency automatically owed after winning. The ownership and completion framing is a plausible reason to consider the offer, not demonstrated incremental spending. [C06](https://candycrush.zendesk.com/hc/en-us/articles/115004465069-What-is-the-Piggy-Bank)
+
+**Season Pass.** Wins advance a time-limited free reward track; purchasing Gold Pass unlocks a richer track while retaining progression requirements. Buying later makes already earned paid-track tiers claimable, rather than immediately awarding every pictured reward. Rewards must be collected before the path expires. Some versions also provide Bonus Deals that exchange tokens for consumables; King explicitly says the feature and its variants are not available to every player. This combines a purchase decision with an obligation to return and finish the track. [C07](https://candycrush.zendesk.com/hc/en-us/articles/7897323489693--Season-Pass)
+
+**Rewarded advertising.** King's CommunityTeam says video ads are not permanent or universal: different groups receive them at different times, and rewards can include lives, boosters or other items. A player therefore cannot assume another person's ad-funded route exists on their account. The official explanation does **not** establish the common allegation that making any purchase permanently removes ads. Commercially, advertising can monetize attention without requiring that viewer to buy an item. [C18](https://community.king.com/en/candy-crush-saga/discussion/505046/why-don-039-t-i-see-video-ads-in-my-game-here-s-what-you-need-to-know)
+
+**External payment route.** King's gift cards redeem into a selected game's Gold Bars and are restricted by country/currency compatibility. [C19](https://kingcare.zendesk.com/hc/en-us/articles/12524327557533-Gift-cards-FAQ) Its redemption site advertises 10% more bars against equivalent non-discounted, non-time-limited in-game purchases. This is a defined comparator, not a guarantee against every promotional bundle. [C20](https://store.king.com/)
+
+The design inference is that failure, near-completion and existing progress create moments in which assistance has clear immediate utility. Free rewards and event currency let players experience that utility before buying. However, spending is not required to label a session worthwhile: clearing a difficult board through planning or persistence is itself a reward. The commercial tension is that the same friction which makes assistance useful can also exhaust patience; the reception section is needed to distinguish the intended loop from players' reports of unfairness.
+
+### Marketing and player communication
+
+The six-part **Crush & Tell** video series, released from October 2025 through January 2026, featured developers discussing player questions. In a March 2026 interview, general manager Paula Ingvar described it as a way to connect the team with players and stimulate useful internal discussion. It is evidence of ongoing community and product communication; audience exposure and positive comments do not establish a paid acquisition return or explain a particular revenue change. [C08](https://www.pocketgamer.biz/how-a-candy-crush-video-series-triggered-an-incredibly-valuable-feedback-loop/)
+
+Microsoft's August 2026 KitKat case study documents another commercial layer: rewarded videos, interactive ads and branded retail products surrounding a 40-market partnership. It reports a 29-percentage-point ad-recall lift measured across five markets. This is the seller's campaign case study, with limited public methodology; impressions are not unique people, and brand-recall lift is not Saga revenue. The partnership nevertheless establishes that the audience has value to outside advertisers as well as to King's item business. [C21](https://about.ads.microsoft.com/en/resources/discover/case-studies/kitkat-and-candy-crush-saga-success-story)
+
+### R15 applicability — external creation exists; popularity unestablished
+
+The screen searched for custom-level editors, mod catalogs and restoration projects, then read the repositories rather than treating generic cheat-download results as a creative ecosystem. **CandyCrushLevelEditor** was archived in July 2025 because it merged into **CandyCrushForever**; calling it simply abandoned would miss that successor. The old README describes importing/exporting level JSON and compatibility limits, including no mobile support. [C22](https://github.com/metrokitten/CandyCrushLevelEditor)
+
+The successor combines a visual editor and player: create a board, press Play to test it, and use a level code to load a design. Its player requires Flash/SWF compatibility and the authors explicitly disclaim affiliation with King. Its visible one star and one fork are weak public reach indicators, not a player census. [C23](https://github.com/metrokitten/CandyCrushForever) **MysticCCS/CandyCrushSaga** separately restores the old Facebook/King.com Flash version by mocking API responses locally; its README says social APIs are not recreated and play is intended to be offline. This is archival restoration, not evidence of modification support in today's mobile service. [C24](https://github.com/MysticCCS/CandyCrushSaga)
+
+**Applicability decision: uncertain — popularity is not established.** These are genuine external creation and preservation efforts, so “no mods exist” is false. However, the checked material provides no reliable adoption, active creator, content-catalog or current-mobile compatibility evidence sufficient to trigger a full popular-mod-community profile. No project was installed or run. Their practical design lesson is narrower: a testable editor can expose board construction as play, while legacy runtime dependence separates a fan tool from a supported player-creation service. The mechanics section documents native seasonal creation separately.
+
+### Annotated sources
+
+- **C01 — Sensor Tower, October 2018.** Original historical title estimate; explicitly gross, not current lifetime.
+- **C02/C02a — King and Activision, 27 September 2023.** Versions of one announcement; publisher headline/body scope conflict.
+- **C03/C03a — AppMagic 2026 report and Mobilegamer, 13 January 2026.** Original annual table and scope; secondary fee clarification only.
+- **C04 — King's launch release via its PR agency, 15 November 2012.** Primary historical product and cross-device distribution claims.
+- **C05 — Microsoft GameDev, 14 May 2026.** First-party account of named King leaders' production presentation; no disclosed title costs.
+- **C06/C07 — King Help Center, read 17 October 2026.** Current product rules, with availability and collection conditions.
+- **C08 — PocketGamer.biz, 18 March 2026.** Original interview with Saga's general manager; communication rationale, not independently measured conversion.
+- **C10 — Activision Blizzard, 6 February 2023.** Company results: dated title bookings growth and separate portfolio segment accounts.
+- **C11/C12 — Apple creator interview; Xbox Wire, 13 October 2023.** Production recollection and acquisition completion respectively.
+- **C13 — Pocket Gamer, 14 November 2022.** Original president interview about testing and ads; historical operating practice.
+- **C14–C16 — King Help and Google Play editorial.** Purchase functions; exact offers remain account-sensitive.
+- **C17 — Apple US listing, read 17 October 2026.** Public catalog, not checkout verification.
+- **C18 — King CommunityTeam.** Official availability statement distinguished from player allegations in replies.
+- **C19/C20 — King gift-card help and redemption site.** External currency channel and offer comparator.
+- **C21 — Microsoft Advertising, 18 August 2026.** First-party campaign report; brand measures, not title economics.
+- **C22–C24 — Creator repositories, read 17 October 2026.** Tool functions, succession and runtime limits; insufficient popularity evidence.
+
+## Reception, enjoyment and criticism
+
+### Five substantive mobile reviews
+
+The accounts below are independently authored, not five independent corporate owners: Pocket Gamer and 148Apps belong to the same displayed network. They assess actual play rather than merely repeating store descriptions. Exact installed builds and devices are stated only where verified.
+
+#### 1. Matt Wales — Pocket Gamer, 4 December 2012
+
+[Candy Crush Saga review](https://www.pocketgamer.com/candy-crush-saga/review/). Full body read. Explicitly reviews the iOS version with 155 stages then available; device/build and highest level reached are unstated. The current page also carries an Android tag.
+
+Wales finds familiar matching becoming more imaginative through special candies, irregular grids, changing objectives and unpredictable drops. Clearing jelly or moving ingredients requires more than grabbing any visible match. His objection is how lives interrupt the puzzle activity: a game for spare moments becomes unavailable when the player wants it. He treats most consumable purchases as optional, while questioning why someone should tolerate the interruption when other puzzlers compete for that time. This praises the puzzles while criticizing their delivery.
+
+#### 2. Jennifer Allen — 148Apps, 21 November 2012
+
+[Candy Crush Saga review](https://www.148apps.com/bubble-witch-saga/candy-crush-saga-review/). Full body read; mobile launch period, current iOS/Android tags, exact tested device/build unstated. The misleading Bubble Witch URL/category does not change the article's subject.
+
+Allen values deliberate planning over rapid matching. Restricted moves, awkward board shapes, jelly clearance and ingredient delivery create a sequence of distinct problems. She describes the difficulty increase as stimulating and personally found it easy enough to remain on the free route despite tempting purchases. Limited lives still mean breaks after repeated failure, and she would have welcomed more introductory free power-ups. Her account counters the claim that every early player experienced coercive spending: she noticed the offer and the inconvenience without deciding payment was necessary. It does not establish free completion of today's levels.
+
+#### 3. tokyo_nights — Nine Over Ten, 17 December 2012
+
+[Candy Crush Saga (iOS): A Case For Not Paying To Win](https://www.nineoverten.com/2012/12/17/candy-crush-saga-ios-game-review-a-case-for-not-paying-to-win/). Full firsthand review read; credited handle rather than verified legal name. iOS; device/build unstated; discusses the author's wife progressing beyond level 25 and their shared challenge.
+
+The couple makes refusal to purchase a voluntary competition: who can advance farther without paying? Near misses make extra lives and power-ups attractive, but withholding purchases encourages closer planning. The author finds overcoming that difficulty exhilarating despite the pauses. Their satisfaction depends on accepting the self-imposed constraint; it does not imply that the same barrier is welcome to someone seeking uninterrupted relaxation. The article's pay-to-win language is its interpretation, not a technical finding that all progress requires cash.
+
+#### 4. Tim Morris — Manhattan Digest, 19 April 2013
+
+[Candy Crush Saga review](https://www.manhattandigest.com/2013/04/19/candy-crush-saga/). Full body read. Smartphone play through level 35; article lists iOS, Android and Facebook, but exact tested device/build are unstated. Morris estimates spending roughly $10 on lives.
+
+Coworkers' progress initially attracts him. He then appreciates sensible objectives layered onto matching, yet resents repeated prompts, depleted lives and a friend-request/payment gate after level 35. Wanting to overcome a frustrating challenge makes him purchase more attempts even while disliking the business model. He suspects unfavorable drops are commercially motivated; that suspicion is not evidence of manipulated individual outcomes. This review is especially useful because enjoyment, criticism and actual reported spending coexist. Its prices, permanent-upgrade offers and episode gate are historical observations, not verified current products or rules.
+
+#### 5. Chris Morris — Common Sense Media, last updated 9 October 2025
+
+[Candy Crush Saga app review](https://www.commonsensemedia.org/app-reviews/candy-crush-saga). Full authored assessment and supporting analysis read. Device list covers iOS/Android; details still show version 1.05 and a 7 January 2013 release-date field. This field is not used as the game's launch date. Original publication is unverified; the metadata does not establish a 2025 retest.
+
+Morris recognizes engaging variations, move selection and perseverance, but finds the purchase prompts and later difficulty objectionable, particularly for children. He also dislikes Facebook pressure despite participation being optional. His assertion that later stages are nearly impossible without assistance is a critic's judgment, not a universal solvability test. The account shows how perceived difficulty can change the meaning of a booster from optional assistance to an expected expense. Its dated economic descriptions must not override present reward systems or the contrary experiences above.
+
+### Additional launch comparison
+
+[Jim Squires, Gamezebo](https://www.gamezebo.com/reviews/candy-crush-saga-review/), **14 April 2012**, full body read: explicitly the Facebook launch with 65 boards, not mobile testing. The date is visible in the publisher's [indexed archive](https://www.gamezebo.com/platform/ios/page/1989/), though that archive failed direct opening. Squires praises thoughtful objective-based play and considers the contemporary lives system unobtrusive for short sessions. However, rapidly appearing hints irritate him because a possible match is often not the best move. This reinforces the distinction between showing an available action and helping someone reason about the puzzle. His inability to find a booster shop describes that early build.
+
+### Contrasting player accounts
+
+The following are actual displayed posts, read in full; they are deliberately contrasting examples, not a representative sample. Device/build and payment totals remain unknown unless specified. Store ordering was not established as a stable most-helpful ranking.
+
+- [Google Play, US](https://play.google.com/store/apps/details?id=com.king.candycrushsaga): **Lindsey Baker, 2 September 2026**, shown with 14 helpful votes, wants straightforward matching and finds the intervening challenges/pop-ups overwhelming. She announces an intention to uninstall and perceives payment as necessary; the latter is not proof of rigged outcomes. **Michael Chappell, 12 September 2026**, 12 helpful votes, reports a payment-related hang followed by a restart and lost attempt. This is an unverified reliability complaint, not a confirmed account of how checkout is programmed.
+- [Apple App Store, US](https://apps.apple.com/us/app/candy-crush-saga/id553834731?see-all=reviews): **Giometta Castadiva, 25 January 2024**, reports reaching beyond level 10,000, still loving the game, but deciding to leave as repeated paid continuations undermine enjoyment. Her explanations about deliberate manipulation and company motives are personal beliefs.
+- [Apple App Store, UK](https://apps.apple.com/gb/app/candy-crush-saga/id553834731?see-all=reviews): **Georgia Pow, 30 July 2018**, describes daily enjoyment, returning after a break, family help and anticipation of new levels, alongside resentment that a new relative received better introductory benefits. **Sapphiric, 5 October 2020**, describes brief returns for daily gifts followed by abandoning play for something else; numerous entry pop-ups and weak late-game interest outweigh a liked booster feature. Neither historical feature complaint is assumed current.
+- [King Community, 2026 strategy discussion](https://community.king.com/en/candy-crush-saga/discussion/585073/tips-on-how-to-beat-candy-crush-in-2026-without-spending-money): **p1ll3r11** reports greater enjoyment after giving up the need to preserve a win streak, while still finishing an episode and earning Gold Bars. **christinewupp** reports succeeding without purchases across accounts by budgeting rewards. The thread is indexed to March 2026; individual comment dates were not exposed in the rendered body. These are player experiences, not official guarantees. The author's sweeping claims about predetermined outcomes and manipulated opponents were not adopted as mechanics facts.
+
+### R07 — presentation, control and accessibility
+
+Wales describes swiping sweets into matches: the immediate input is small and familiar, while objective selection and future drops create the reasoning burden. Squires' hint criticism identifies an interface tradeoff: highlighting a legal move may interrupt planning without explaining why that move helps. These observations belong to the reviewed early versions.
+
+[Puching Zhang, aNewDomain, “Is it Worth the Hype?”](https://anewdomain.net/candy-crush-saga-is-it-worth-the-hype/), full critical body read, date/device/build unverified: dislikes the cutout characters, disconnected story and soundtrack, while still finding the challenging matching compelling. This is a contrary aesthetic response, not a present soundtrack assessment. No audio was heard in this research pass. Modern art and music production are covered by the accompanying primary-source research.
+
+[King's visual-accessibility guide](https://kingcare.zendesk.com/hc/en-us/articles/4453967759389-Accessibility-visual-options), relevant body and written subtitles read, undated: recommends device-level zoom, contrast and color filters, using Saga examples. Those are operating-system facilities, not evidence that every account has an equivalent in-game setting.
+
+[QueenB's settings-menu test announcement](https://community.king.com/en/candy-crush-saga/discussion/496702/were-testing-a-new-settings-menu-what-do-you-think/p1), full announcement read, date not exposed in rendered text: describes in-game move-hint, flashing-effect and grayscale options, plus bass, balance and mono audio controls. The inspected post explicitly limits the new look to 50% of players. Treat it as documented testing; universal current availability and individual accessibility outcomes were not verified.
+
+### Fun, return and departure: research interpretation
+
+The common positive mechanism is a small action with a legible objective and room to improve the choice. Narrow failures can create a fresh plan, as the no-spend couple describes, or invite another paid attempt, as Tim Morris reports. That difference depends on the player's goal, available time and interpretation of failure. These accounts do not establish a numerical conversion rate or a diagnosis of addiction.
+
+Long-term play also acquires goals outside the immediate puzzle: keeping pace with relatives, reaching another milestone, managing a reward budget or preserving a streak. The community player's relief after dropping the streak is revealing: a reward structure can remain motivating after its most demanding obligation is abandoned. Conversely, daily-gift visits can continue when the underlying interest has faded. Returning is therefore not sufficient evidence of enjoyment.
+
+For OpenLegend, investigate whether failure leaves a comprehensible next experiment; whether optional assistance preserves satisfaction in solving; and whether progress, streaks or event rewards make a player's chosen session easier to enjoy or harder to end. These are research questions, not instructions to copy life limits, paid continuations or promotional interruptions.
+
+### Access limits and historical boundaries
+
+The five numbered reviews and additional written critiques were read as bodies. Common Sense Media's AI-generated audience summary was excluded. [Eurogamer's 2013 essay route](https://www.eurogamer.net/games-of-2013-candy-crush-saga) failed; a PCMag search was blocked by robots. Neither counts toward the review gate. No Steam review population was substituted. Store media and a [2025 iPad gameplay/review video](https://www.youtube.com/watch?v=3IuY3qYtodY) are viewing routes only; video metadata was located, but no footage was watched. Historical level counts, ticket gates, prices, music and introductory rewards must remain attached to their dates. Current mechanics and offer availability belong to the separately verified mechanics/commercial sections.
+
+## Requirement coverage and preservation
+
+| Requirement          | Substantive coverage                                                                                                             |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| R01                  | Player promise, exact game identity, release and version boundaries in the game and commercial sections.                         |
+| R02–R03              | Major mechanics inventory, named resources, capabilities, compatibility and worked situations.                                   |
+| R04                  | Fictional economy, permanent versus temporary progress, time costs, failure and restart boundaries.                              |
+| R05                  | Constructed multi-system situations with conditions, actions, outcomes and limitations.                                          |
+| R06                  | Character roles, authored behavior, social systems, multiplayer or explicit absences.                                            |
+| R07                  | Art, sound, controls, interface, feedback and production evidence; firsthand device testing not claimed.                         |
+| R08                  | Fiction, named characters/institutions and narrative connections to actual play.                                                 |
+| R09–R10              | Production, release sequence, iteration, distribution, marketing and qualified discovery hypotheses.                             |
+| R11                  | Dated financial metrics, platform/territory definitions, estimate method and missing cost/profit evidence.                       |
+| R12                  | Five substantive independent written reviews where accessible, contrasting player testimony, enjoyment and abandonment analysis. |
+| R13                  | Explicitly labeled transferable research hypotheses, dependencies and counterexamples.                                           |
+| R14                  | Adjacent sources, annotated access/version limits, reading/viewing routes, navigation and this map.                              |
+| R15                  | Dated modding applicability finding and conditional investigation in the mechanics or commercial/creation section.               |
+| October 13 amendment | Commercial outcome; reasons to enjoy, return or leave; fictional economy; meaningful lore; actual creator capabilities.          |
+
+This subject had no earlier full dossier at the recorded branch base. Existing mobile reference studies, game dossiers and their historical evidence remain intact. Source observations are distinguished from interpretation and constructed examples. No gameplay, purchases, account modifications or uninspected video content are presented as firsthand evidence. The linked research ledger owns completion and commit status, including any remaining review work.
