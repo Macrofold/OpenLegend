@@ -43,9 +43,9 @@ Contract: [physical attack/contact](../projects/combat-and-threat-responses-tech
 Contract: [personal evidence](../projects/combat-and-threat-responses-tech-design.md#observer-scoped-encounter-evidence--ctr02) and [world encounter continuity](../worlds/base/combat.md#selected-threat-and-encounter-continuity).
 
 - [ ] Install one exact observer-life/other-life evidence owner with admitted causes, current observed attack tokens, historical observation, own accepted offense and the selected deadline. Anonymous harm stays anonymous.
-- [ ] Distinguish hostile-evidence revision from observed movement revision. Meaningful closing/withdrawal can wake cognition but cannot renew hostility or clear a deliberate Speak override.
-- [ ] Expose directed attack preparation consistently across existing physical methods, only when personally observable. Supply actor-local indexes and time-bound invalidation; remove whole-world projectile scans from the contextual preference path.
-- [ ] Qualify simultaneous opponents, harmless selection, third-party witnessing, unknown attribution, exact expiry without movement, stale completion tokens, control/life loss, correction/removal, replay and current-format continuation.
+- [ ] Distinguish hostile-evidence revision from observed movement revision. Meaningful closing/withdrawal can wake cognition but cannot renew hostility or clear a deliberate Speak override. Retain the minimal pair/preference while that override remains valid even after ordinary grace expiry; retire it only under its actual invalidation/authority/life rules.
+- [ ] Expose directed attack preparation consistently across existing physical methods under the [world phase/exposure table](../worlds/base/combat.md#readable-attack-cues). Keep approach/private intent undisclosed, exact targets personally exposed, and animation descriptors target-free. Reacquiring the same known preparation/aim restores observed activity without inventing hostility or clearing Speak. Supply actor-local indexes and time-bound invalidation; remove whole-world projectile scans from the contextual preference path.
+- [ ] Qualify simultaneous opponents, harmless selection/approach, third-party witnessing, an archer with a hidden target, two nearly aligned potential targets, known-aim reappearance after Speak/grace expiry, fresh release, unknown attribution, exact expiry without movement, stale completion tokens, control/life loss, correction/removal, replay and current-format continuation.
 
 ## CTR03 — One native animal response owner
 

@@ -48,6 +48,8 @@ Natural-strike definitions are validated installed world data; equipped profiles
 
 The server projects an active strike's animation kind, progress and horizontal direction, and explicit `null` on completion/cancellation. Null is essential for merged player deltas: JSON omits undefined values and would otherwise leave the previous animation attached. The descriptor exposes neither private plans nor target identity.
 
+**Selected target, implementation pending CTR02:** the bundled world's [readable attack cues](worlds/base/combat.md#readable-attack-cues) separately expose an actually committed preparation/aim/release relation through personally permitted activity/event observation. Seeing the performer alone cannot disclose a hidden target, and approach/private future intent provides no directed cue. Keep that observer-scoped relation out of the generic animation descriptor and raw client action state. Player quick actions, cognition and native animal alarm consume the same admitted evidence; this does not change physical timing or damage.
+
 Equipped strikes project their tool and authoritative wind-up/recovery phase. Recovery uses the attacker’s public heading rather than tracking an unseen escaping target. The same cached arm frames show the swing and return; bespoke knife artwork remains outside this slice.
 
 The renderer uses cached pixel-sprite frames that replace the character's hanging arm with a bent guard, extension and contact pose. It faces the sprite toward the target's screen direction and uses a 180ms visual recovery to return to idle after the authoritative descriptor clears. Pausing freezes presentation. There are no separate arm/fist meshes. Rendering never applies damage, predicts success or controls completion.
