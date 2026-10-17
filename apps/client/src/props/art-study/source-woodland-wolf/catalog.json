@@ -122,25 +122,12 @@
       "recommended": false,
       "file": "woodland-wolf-clear.glb",
       "bounds": {
-        "min": [
-          -0.159024,
-          -0.0,
-          -0.715639
-        ],
-        "max": [
-          0.159024,
-          0.96,
-          0.715639
-        ]
+        "min": [-0.159024, -0.0, -0.715639],
+        "max": [0.159024, 0.96, 0.715639]
       },
       "triangles": 4176,
       "vertices": 2142,
-      "textureSizes": [
-        [
-          256,
-          256
-        ]
-      ],
+      "textureSizes": [[256, 256]],
       "sha256": "13466f69fad7a4c12c2beb6edf676f0c9af36a46563b1a55fe759bdc7cb39cd8",
       "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf walk retained with a closed loop; quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0.",
       "animatedFile": "woodland-wolf-clear-motion.glb",
@@ -155,25 +142,12 @@
       "recommended": true,
       "file": "woodland-wolf-quiet.glb",
       "bounds": {
-        "min": [
-          -0.159024,
-          -0.0,
-          -0.715639
-        ],
-        "max": [
-          0.159024,
-          0.96,
-          0.715639
-        ]
+        "min": [-0.159024, -0.0, -0.715639],
+        "max": [0.159024, 0.96, 0.715639]
       },
       "triangles": 4176,
       "vertices": 2142,
-      "textureSizes": [
-        [
-          256,
-          256
-        ]
-      ],
+      "textureSizes": [[256, 256]],
       "sha256": "1fad5acfdf4ac11970d11fea8afa4f115e042b10e97a0012eeffa4a9713e1a44",
       "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf walk retained with a closed loop; quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0.",
       "animatedFile": "woodland-wolf-quiet-motion.glb",
@@ -188,25 +162,12 @@
       "recommended": false,
       "file": "woodland-wolf-weathered.glb",
       "bounds": {
-        "min": [
-          -0.159024,
-          -0.0,
-          -0.715639
-        ],
-        "max": [
-          0.159024,
-          0.96,
-          0.715639
-        ]
+        "min": [-0.159024, -0.0, -0.715639],
+        "max": [0.159024, 0.96, 0.715639]
       },
       "triangles": 4176,
       "vertices": 2142,
-      "textureSizes": [
-        [
-          256,
-          256
-        ]
-      ],
+      "textureSizes": [[256, 256]],
       "sha256": "6eae679d1e19f5b6c2bdbb62ea30baddb8174091d2431cf4c7890db58f32d5f9",
       "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf walk retained with a closed loop; quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0.",
       "animatedFile": "woodland-wolf-weathered-motion.glb",
@@ -223,25 +184,12 @@
       "recommended": false,
       "file": "woodland-wolf-source.glb",
       "bounds": {
-        "min": [
-          -0.167701,
-          -0.0,
-          -0.714554
-        ],
-        "max": [
-          0.167701,
-          0.96,
-          0.714554
-        ]
+        "min": [-0.167701, -0.0, -0.714554],
+        "max": [0.167701, 0.96, 0.714554]
       },
       "triangles": 696,
       "vertices": 378,
-      "textureSizes": [
-        [
-          256,
-          256
-        ]
-      ],
+      "textureSizes": [[256, 256]],
       "sha256": "111cc459e1031a15a0a1c9638a82cd28a1f75e10c6778da66ff2913dd438dc35",
       "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf walk retained with a closed loop; quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0."
     }

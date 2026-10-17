@@ -31,32 +31,15 @@
       "recommended": false,
       "file": "woodland-stag-clear.glb",
       "bounds": {
-        "min": [
-          -0.462358,
-          0.0,
-          -0.85344
-        ],
-        "max": [
-          0.462358,
-          1.949999,
-          0.85344
-        ]
+        "min": [-0.462358, 0.0, -0.85344],
+        "max": [0.462358, 1.949999, 0.85344]
       },
       "triangles": 4924,
       "vertices": 2521,
       "textureSizes": [
-        [
-          512,
-          512
-        ],
-        [
-          512,
-          512
-        ],
-        [
-          512,
-          512
-        ]
+        [512, 512],
+        [512, 512],
+        [512, 512]
       ],
       "sha256": "0c84f50988e5e4419e30bf677462c7df0e921b19820442675531153f4c511e98",
       "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/old-deer-male; source skin and idle retained; four-beat walk, materials and export naming adapted by OpenLegend.",
@@ -72,32 +55,15 @@
       "recommended": true,
       "file": "woodland-stag-quiet.glb",
       "bounds": {
-        "min": [
-          -0.462358,
-          0.0,
-          -0.85344
-        ],
-        "max": [
-          0.462358,
-          1.949999,
-          0.85344
-        ]
+        "min": [-0.462358, 0.0, -0.85344],
+        "max": [0.462358, 1.949999, 0.85344]
       },
       "triangles": 4924,
       "vertices": 2521,
       "textureSizes": [
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ]
+        [256, 256],
+        [256, 256],
+        [256, 256]
       ],
       "sha256": "be6b389977438d5522e273b5e09981c021b3e53429cc64e5d556f9960bf3f1cf",
       "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/old-deer-male; source skin and idle retained; four-beat walk, materials and export naming adapted by OpenLegend.",
@@ -113,32 +79,15 @@
       "recommended": false,
       "file": "woodland-stag-weathered.glb",
       "bounds": {
-        "min": [
-          -0.462358,
-          0.0,
-          -0.85344
-        ],
-        "max": [
-          0.462358,
-          1.949999,
-          0.85344
-        ]
+        "min": [-0.462358, 0.0, -0.85344],
+        "max": [0.462358, 1.949999, 0.85344]
       },
       "triangles": 4924,
       "vertices": 2521,
       "textureSizes": [
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ],
-        [
-          256,
-          256
-        ]
+        [256, 256],
+        [256, 256],
+        [256, 256]
       ],
       "sha256": "6dfc59120d92448bd890f1e650a721c8f6bc187004ae8a64343572715b3e11f6",
       "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/old-deer-male; source skin and idle retained; four-beat walk, materials and export naming adapted by OpenLegend.",
@@ -156,32 +105,15 @@
       "recommended": false,
       "file": "woodland-stag-source.glb",
       "bounds": {
-        "min": [
-          -0.462358,
-          0.0,
-          -0.85344
-        ],
-        "max": [
-          0.462358,
-          1.949999,
-          0.85344
-        ]
+        "min": [-0.462358, 0.0, -0.85344],
+        "max": [0.462358, 1.949999, 0.85344]
       },
       "triangles": 4924,
       "vertices": 2521,
       "textureSizes": [
-        [
-          1024,
-          1024
-        ],
-        [
-          1024,
-          1024
-        ],
-        [
-          1024,
-          1024
-        ]
+        [1024, 1024],
+        [1024, 1024],
+        [1024, 1024]
       ],
       "sha256": "e75847034c294526fb863d1b840f3936278d7bc150fade3dc73451ab79a1d021",
       "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/old-deer-male; source skin and idle retained; four-beat walk, materials and export naming adapted by OpenLegend."
