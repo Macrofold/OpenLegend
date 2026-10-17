@@ -26,9 +26,9 @@ Unity 6.6 supports **parallel Burst-compiled jobs on the web** with Burst 1.8.26
 
 This is not permission to assume arbitrary desktop C# threading or native plugins work in a browser. Unity's [web technical limitations](https://docs.unity3d.com/6000.6/Documentation/Manual/webgl-technical-overview.html) retain managed-thread, socket, audio and ahead-of-time compilation differences. Deployment must account for shared-memory isolation requirements and the consequences for embedding and third-party resources.
 
-The inspected [render-pipeline matrix](https://docs.unity3d.com/6000.6/Documentation/Manual/render-pipelines-feature-comparison.html) lists WebGPU support for URP as experimental and does not support HDRP on WebGL or WebGPU. Do not promise an HDRP desktop scene as a browser export, or treat an experimental graphics path as already qualified for our hardware matrix.
+The [Unity 6.3 matrix](https://docs.unity3d.com/6000.3/Documentation/Manual/render-pipelines-feature-comparison.html) labels URP WebGPU experimental, whereas the inspected [6.6 matrix](https://docs.unity3d.com/6000.6/Documentation/Manual/render-pipelines-feature-comparison.html) lists support without that label. **Do not carry the older experimental label into a 6.6 assessment.** HDRP remains unsupported on both WebGL and WebGPU in that matrix. Supported backend status is not proof that Open Legend's custom materials, hardware matrix or performance targets have been qualified.
 
-**Assessment:** Unity web is worth considering when Unity's authoring workflow or shared native/web content has substantial value. It is not an obvious performance-only replacement for a web-native engine. Download/startup cost, interoperation with a rich HTML interface, threading prerequisites and renderer differences must be compared directly.
+**Assessment:** Unity web is worth considering when Unity's authoring workflow or shared native/web content has substantial value. Its newer threading and WebGPU support strengthen that case. It is still not an automatic performance-only replacement for a web-native engine. Download/startup cost, interoperation with a rich HTML interface, hosting prerequisites and renderer differences must be compared directly.
 
 ## Rendering and special effects
 

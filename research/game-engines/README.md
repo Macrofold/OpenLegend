@@ -48,3 +48,9 @@ The evidence is primary-source desk research plus selected source inspection. Of
 The browser is not inherently limited to one CPU thread or low-resolution 3D. Unity 6.6 documents parallel Burst jobs and a newer WebGPU support position than older Unity web advice. Current Godot Compatibility includes effects missing from some older comparisons, while its web target still differs substantially from native. Current Unreal Nanite includes skeletal support. The old Unity Runtime Fee is not a current charge. Sources and exact qualifications are in the linked dossiers.
 
 These corrections do not imply every feature works everywhere or that a new backend automatically speeds up Open Legend. A fair decision still needs the required scene, hardware, controls, runtime-content path and legal arrangement to be tested together.
+
+## Delivery review and tooling limits
+
+The authored content was reviewed for source support, version-sensitive claims, consistent recommendations, distinction between hypothetical and measured quantities, and relative-link destinations. GitHub's comparison against the recorded base confirms that the change is confined to the 18 new Markdown research files; no existing game code or policy was changed.
+
+The repository-pinned Prettier 3.6.2 check was not run: the formatter was not available in this environment, container network access failed, and attempts to obtain the pinned package through the available download path were blocked. Formatting qualification therefore remains unverified; no passing formatter or CI result is claimed. Game runtime tests were not run for this documentation-only change. Comparative engine, device, controller and legal qualification remain separate future work as described above.
