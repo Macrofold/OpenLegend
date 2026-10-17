@@ -480,8 +480,8 @@ export class WorldPresentation {
     binding.spriteSize[1] = height;
     for (let i = 0; i < binding.meshes.length; i++) {
       const mi = binding.meshes[i]!;
-      // Floor focus disables the source hierarchy. PlayCanvas recreates its
-      // skin when it returns, so borrowed copies must follow the current skin.
+      // PlayCanvas can recreate a skin when its source component is re-enabled.
+      // Borrowed copies must follow the current skin without owning its lifetime.
       const original = binding.sourceMeshes[i]!;
       if (mi.skinInstance !== original.skinInstance) mi.skinInstance = original.skinInstance;
       mi.visible = !selected && binding.strength > 0.01;
