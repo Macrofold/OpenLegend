@@ -181,7 +181,7 @@ Read [requirements](research-requirements.md), [earlier research progress](resea
 | G174 | Minecraft Earth | `minecraft-earth.md` | Added October 17, 2026: unsuccessful service comparison. Released early-access AR collection/building/adventures and June 2021 shutdown; distinguish phone play from Minecraft and pandemic explanation from other hypotheses. |
 | G175 | Apex Legends Mobile | `apex-legends-mobile.md` | Added October 17, 2026: unsuccessful service comparison. Separate mobile battle royale, touch controls, progression, exclusive content and May 2023 shutdown; do not import console/PC rules or finances. |
 | G176 | Final Fantasy VII: The First Soldier | `final-fantasy-vii-the-first-soldier.md` | Added October 17, 2026: unsuccessful service comparison. Mobile battle royale with FFVII fiction, guns, styles, materia, monsters and January 2023 closure; distinct from Ever Crisis and mainline FFVII. |
-| G177 | Durango: Wild Lands | `durango-wild-lands.md` | Added October 17, 2026: unsuccessful service comparison. Mobile survival MMO, skills, crafting, islands, clans, land and December 2019 closure; distinguish original live service from retained construction-only features. |
+| G177 | Durango: Wild Lands | `durango-wild-lands.md` | Added October 17, 2026: unsuccessful service comparison. Mobile survival MMO, skills, crafting, islands, clans, land and December 2019 closure; distinguish original live service from retained offline island and creation modes. |
 
 These rows preserve the complete earlier 47-subject commitment and every subsequent requested addition through G177. Incidental inspirations inside a source are not silently counted as completed dossiers or substituted for a requested subject. If recovery identifies another actual requested case, add it explicitly without deleting one of these. Inspect the full earlier material and the applicable mechanics study before each authorized pass; research missing categories rather than duplicating complete existing sections.
 
@@ -244,3 +244,4 @@ Each subject receives an independent R01–R14 pass and conditional R15 screen. 
 ## Supplementary tabletop research
 
 [D&D 2024](dossiers/dungeons-and-dragons-2024.md) and [D&D v.3.5](dossiers/dungeons-and-dragons-3-5.md) are distinct additional tabletop subjects, tracked by the [D&D research hub](games/dungeons-and-dragons.md#evidence-and-completion-status). They do not replace or renumber the existing G01–G167 slots. Related adjudication, SRD and worldbuilding studies are supporting material with their own evidence limits.
+
