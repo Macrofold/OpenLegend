@@ -2,40 +2,38 @@
 
 | Status | Current progress | Last updated |
 |---|---|---|
-| Ready to use | The working hypothesis and next experiment are defined; current-build qualification, player evidence and actual spending limits must be recorded before dependent commitments. | 2026-10-17 |
+| Ready to use | Required first-playable content and an operational plan are connected to the maintainer workflow; actual design gaps, integration, player evidence and adopted commercial terms remain tracked work. | 2026-10-17 |
 
-[Detailed execution guide](execution-playbook.md) · [Principles](learnings.md) · [Evidence map](review-coverage.md)
+**Actionable next work:** [first-playable tracker](../../../docs/maintainers/first-playable-validation.md) → [playtest plan](../../../docs/projects/first-playable-playtest-plan.md). [Required world](../../../docs/worlds/base/playable-openings.md#first-playable-game-target) · [Offer decision brief](../../../docs/projects/initial-commercial-offer-decision-brief.md) · [Detailed execution guide](execution-playbook.md) · [Principles](learnings.md) · [Evidence map](review-coverage.md).
 
 ## The bet
 
-A compact survival-adventure can be worth choosing because the player can invent a practical alternative, meet someone with independent aims, and encounter the consequences again. Exploration, opposition, useful rewards, progression, crafting and building make that premise enjoyable to play. This follows the [gameplay priority](../../../docs/repertoires/gameplay-priorities.md), not a claim that every target is already delivered.
+A survival-adventure can be worth choosing because a player starts empty-handed, learns to survive, crafts and builds a defensible camp into a home, develops relationships with differentiated people, invents practical alternatives and encounters lasting consequences. Animal danger and distant hostile people create opportunities for conflict, trade, cooperation or escape; their camp contact arises through actual independent activity, not scripted waves.
 
-**Aim:** a small amount of unusually good Open Legend play, not an engine demonstration or a generic game that postpones its identity. Hosting, storefront and payment model serve that experience; they do not define it.
+The [gameplay priority](../../../docs/repertoires/gameplay-priorities.md) and existing world specification own that required experience. This brief does not redefine it or claim it is fully delivered. A useful partial test can run earlier without becoming the whole first playable.
 
-## Working evidence and uncertainty
+**Aim:** a manageable amount of unusually good Open Legend play, not an engine demonstration or a generic game that postpones its identity. Hosting and payment serve that experience; the current distribution direction remains browser-only.
+
+## Evidence and uncertainty
 
 | Item | Current position |
 |---|---|
-| Strongest external evidence | The case archive supports representative play, relevant distribution, costed delivery and bounded specialist work; it does not prove demand for Open Legend. |
-| Biggest product uncertainty | Will intended players enjoy the distinctive decisions and voluntarily seek another session after novelty? |
-| Biggest commercial uncertainty | Which feasible purchase offer do those players prefer, and can it sustain the experience and founder effort? Managed private worlds are one candidate, not a proven winner. |
-| Current-build evidence | Use the existing implementation and verification owners to identify what can be tested now; no fresh playtest is claimed here. |
-| Commitment limit | Record Mike's actual cash ceiling, available hours and review point before dependent spending or scope commitments. No values are assumed. |
+| External evidence | The case archive informs representative play, distribution and costed delivery; it does not prove demand for Open Legend. |
+| Product uncertainty | Will people value the survival/camp, character and invention choices and voluntarily seek another session beyond novelty? |
+| Delivery uncertainty | Which required building, resource, cooperation and roaming behaviors still need detailed design or implementation in the actual integrated build? The tracker owns that check. |
+| Commercial uncertainty | Which realistic browser-feasible offer do intended players prefer, and can it support the experience and founder effort? Managed worlds are one candidate, not a proven winner. |
+| Commitment limit | Record actual approved spending, time and review point before dependent commitments; no values are inferred. |
 
-## Next experiment: three tracks in parallel
+## Next work in parallel
 
-**Game:** select the smallest connected adventure supported by the integrated build. Test an understandable known approach and a useful non-canned invention route, with a character's independent response and a consequence that can be encountered again. Observe a small group without coaching; distinguish usability problems from weak enjoyment. Record freely chosen return or another approach, not only praise. A suggested starting batch is 6–10 people, not a market-size test.
+**Game:** FPV01 establishes the actual build and maps gaps against the existing world specification. FPV02 completes only missing detailed design in existing owners; FPV03/FPV04 integrate and qualify the selected test. Test survival from nothing, a built camp and meaningful character/invention/conflict journeys without substituting prepared kits or forced choices.
 
-**Audience:** show a truthful short clip of that activity and its payoff to relevant players. Ask what they expect and provide a real next step. Prepare a small checked creator shortlist and an opt-in contact route. Scale deliberate outreach when several relevant audiences respond, without requiring a daily content schedule.
+**Audience:** prepare truthful player-facing material, a real next action and relevant contacts under FPV05. Recruit only with approval/readiness. FPV06–FPV08 observe, diagnose and retest; the plan separates usability, voluntary enjoyment, broader demand and payment evidence. Strong repeated response justifies deliberate wider outreach, not endless identical tiny tests.
 
-**Business:** compare the hosted offer with the strongest feasible alternative using the same intended experience. Record price/usage expectations, likely costs, support burden and platform constraints. Check generated-content/service requirements early. Do not build multiple billing systems or collect money merely to investigate the alternatives.
+**Business:** CO01 uses the offer decision brief alongside game learning. Compare the same honest playable promise, access/usage terms, costs and support within the browser direction. Do not build multiple billing systems or take payment merely to investigate preference. CO05 tests the selected offer only after adoption and required delivery.
 
 ## Decision afterward
 
-**Advance** when the activity is understandable and rewarding, voluntary behavior supports further play, and the next commitment fits resources. Increase distribution deliberately when audience results repeat. Payment and service-readiness evidence remain separate.
+Advance the named next commitment when the evidence supports it and resources fit. Rework the largest diagnosed gap: comprehension, attraction, repeat value, missing mechanics, reach, terms or cost. Pause dependent exposure/spending for exhausted limits or material privacy, accounting and integrity risks. Existing participant/customer obligations remain separate from expansion decisions.
 
-**Rework** the largest diagnosed gap: comprehension, attraction, repeat value, reach, purchase terms or delivery cost. Keep the creative direction; feedback is evidence, not a feature referendum.
-
-**Pause the dependent commitment** when the experiment limit is reached without supporting evidence, or known privacy, spending or data-integrity risks would harm participants. Fulfill existing customer obligations separately from decisions about further expansion.
-
-Record each result as: **build and audience → observation with numerator/denominator → competing explanation → next decision**. The detailed guide owns criteria and tools; this brief is the current operating view, not another gameplay roadmap.
+Record **build and audience → observation with denominator → competing explanation → next decision**. Full first-playable closure belongs to FPV09, not this summary. Actual task status lives in the maintainers; the research archive is supporting evidence, not another backlog.
