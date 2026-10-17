@@ -96,11 +96,9 @@ A proposed root **leth** can refer to sheltering light in an old language, while
 
 ## Fifteen people to meet
 
-**Cast defaults: Play, High, Small/Compose** biographies. Ordinary behavioral consequences need **Moderate/Extend**; transformation, dragon embodiment and magical work need their admitted **Large/New** families. Neither profession nor species fixes a person's moral arc.
+**Cast defaults: Play, High, Small/Compose** biographies. Ordinary behavioral consequences need **Moderate/Extend**; transformation, dragon embodiment and magical work need their admitted **Large/New** families. These people have lives and relationships beyond the player. Some are possible companions; others employ, teach, compete with, obstruct or simply get to know a visitor. Their histories below are authored facts unless explicitly identified as a song, claim, rumor or unresolved belief. Public knowledge is narrower: introductions, witnesses, possessions and records reveal different parts. Neither profession nor species fixes a person's moral arc.
 
 This is a world roster, not fifteen mandatory companions or simultaneous quest givers. The finite opening below selects seven active characters; the remaining encounters can be small town scenes or later adventures.
-
-**Cast defaults: Play, High, Small/Compose** biographies. Ordinary behavioral consequences need **Moderate/Extend**; transformation, dragon embodiment and magical work need their admitted **Large/New** families. These people have lives and relationships beyond the player. Some are possible companions; others employ, teach, compete with, obstruct or simply get to know a visitor. Their histories below are authored facts unless explicitly identified as a song, claim, rumor or unresolved belief. Public knowledge is narrower: introductions, witnesses, possessions and records reveal different parts.
 
 | Person                                                                                           | Role and reach                                                                              | An encounter grounded in their life                                                                 |
 | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |

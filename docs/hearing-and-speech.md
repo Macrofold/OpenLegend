@@ -97,6 +97,8 @@ The generic acoustic result supports the accepted SPK target for native animal s
 
 ## 4. Speech volume and admission
 
+The selected [shared speech-composition contract](narration-and-conversations.md#admission-ordering-and-memory) brings human-entered, authored-choice and generated utterances through this same native boundary; authored-choice integration remains open in CTR. Selecting or generating words grants neither additional hearing reach nor different audience authority.
+
 Use `whisper | normal | shout` as the initial player/agent delivery modes. They resolve through an installed source profile; an LLM may choose a supported mode, not an arbitrary source level, listener list, range, or private scope.
 
 Volume is already part of the existing talk operation and native speech admission, not another command family. The following describes the **current runtime fields**, before the SPK cutover to one optional addressee and ambient NPC speech. The [SPK technical design](projects/speech-and-social-perception-tech-design.md) owns that accepted contract and coordinated caller changes. The strict model operation also supplies nullable `selfIntroduction` under [the naming contract](entity-names.md), while native callers may omit that optional claim:

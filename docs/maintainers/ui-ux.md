@@ -318,6 +318,8 @@ FRL05's concrete remaining storage case is the Work view's retained Prepare requ
 
 ## UIUX19
 
+**Selected combat follow-up, October 17 — design complete, implementation open.** The implemented Command-click path remains the foundation. [CTR02/CTR09/CTR10](combat-and-threat-responses.md) owns opponent-specific observed/own intent, ten-normal-second grace, deliberate Speak/Stop and stable pointer-down action identity through the same catalogue/guard. The [combat-response pair](../projects/combat-and-threat-responses-tech-design.md#contextual-action-integration--ctr09) owns this extension; the [world table](../worlds/base/combat.md#contextual-action-decision-table) owns priority and tuning. Existing UIUX19 checkboxes do not qualify these newly selected behaviors.
+
 **World-first player experience, October 16.** Mike authorizes implementation of the [feature specification](../projects/player-experience-overhaul-feature-spec.md) and [technical design](../projects/player-experience-overhaul-tech-design.md), superseding earlier player conversation windows, Journal categories, nested In view inspection and coordinate-entry construction. Earlier observations remain historical evidence, not proof these reported regressions are fixed.
 
 - [ ] Heard speech is always represented in the world, with permitted partial words, directed recipient labels, camera-relative presentation and reliable Events recovery; replace the player transcript with compact Speak.

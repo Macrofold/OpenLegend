@@ -10,6 +10,8 @@ The bundled world's action families (gather, prepare, craft, cook, fish, harvest
 
 Balance values stay with their owners ([survival](survival.md), [combat](combat.md)). Older native adapters still contain some wording and item literals of their own; those are listed as remaining work in the [base-world tracker](../../maintainers/base-world.md).
 
+**Selected native animal change, runtime pending — CTR03–CTR04:** the [animal response contract](animal-responses.md) replaces the current shared flee-speed/steering adapter with installed native response and species locomotion profiles. Escape and ordinary wandering use one actual locomotion owner; movement prediction, energy work, sensory crossings and projectile contact read the same trajectory and speed. Airborne birds remain with the flight owner, including finite escape landings; territorial stag withdrawal delegates to the shared response without changing its antler timings or pursuit pace. This is coded world policy with no animal Decision API calls. It is not implemented by adding competing family facts or writing positions from a second controller.
+
 Gathering choices use this world's authored description and the same best compatible carried-tool yield as native gathering, capped by the observed remaining supply. A learned technique or an uncarried tool does not increase the advertised yield. When a large inventory is shown as a page, choices identify the yield supported by the inspected possessions and disclose that omitted carried tools may change the final result; preparing choices does not rescan all possessions.
 
 ## Player-facing weapon commitments
@@ -29,6 +31,8 @@ A currently visible living body switches that shortcut to an attack when either 
 The exact attack already chosen by the player takes precedence, then an equipped weapon, then other offered attacks. A prepared manual aim instead selects **Shoot** for that exact aim and target; it never releases at another clicked object. A temporarily unavailable preferred attack shows its native reason rather than changing to speech or selecting another weapon. A shortcut begins one chosen attempt, never an automatic repeated-attack loop, and lethal review remains required when native admission requests it.
 
 Menu preparation checks the two selected bodies and, only when needed, scans current projectiles once. Incoming-shot attribution reuses the bounded resident awareness tail with its existing recognition guard; it does not load historical memories or build menus every frame. [Verification](../../verification/player-experience-overhaul.md) distinguishes the small native scene from population-scale qualification.
+
+**Selected continuation, runtime pending — CTR02/CTR09:** [Combat and threat responses](../../projects/combat-and-threat-responses-feature-spec.md) extends this current shortcut with exact observer-scoped, per-opponent recent danger and own offensive preference. The selected grace preserves a relevant attack response after current targeting ends; ordinary observations and hover do not renew it. Complete permitted evidence replaces the current whole-projectile menu scan. Exact displayed-choice validation, one finite attempt, real admission and explicit social choice remain required. The paired technical design owns the selected deadlines and refresh rules; the paragraphs above describe the current baseline.
 
 ## Installed action meaning
 

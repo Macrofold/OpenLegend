@@ -1,5 +1,9 @@
 # Maintainer work index
 
+## Combat and immediate threat responses
+
+[Combat and threat responses](combat-and-threat-responses.md) owns CTR01–CTR10: selected world PvP/collateral, native animal refuge escape, complete busy-context choices, personal threat appraisal, two-stage voluntary response, exact reconsideration and stable per-opponent Command-click. The [feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire scope](../projects/combat-and-threat-responses-repertoire-review.md) and [limits](../limits/combat-and-threat-responses.md) are complete design preparation. Runtime and independent acceptance remain open; ND11/ND13 are closed only for their explicitly covered design portions.
+
 ## Speech and social perception
 
 [Speech and social perception](speech-and-social-perception.md) owns the selected ordinary speech replacement through SPK00–SPK11: one optional addressee, audible recipient awareness without sight, reliable recognition separate from names, full structured remembered experience, shared natural presentation, dialogue without membership, consistent freeform AI availability and actual animal sound responses. The [feature specification](../projects/speech-and-social-perception-feature-spec.md) and [technical design](../projects/speech-and-social-perception-tech-design.md) are designed; runtime implementation and qualification remain open. The covered ordinary-speech slice of ND16 is marked designed, while NC/HE/CR/CE and broader hearing/media work retain their own remaining acceptance.

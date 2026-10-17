@@ -1,8 +1,8 @@
 # Compelling characters — authorship, evidence and perspective design
 
-| Status      | Current progress                                                                                                                      | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Unified outcome memories, native perspective and quiet reflection are qualified for PG02; broader character reliability remains open. | 2026-10-16   |
+| Status      | Current progress                                                                                                                                 | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | PG02's bounded evidence path is qualified and the independent combat-response extension is designed; broader character reliability remains open. | 2026-10-17   |
 
 [Feature contract](compelling-characters-feature-spec.md#character-authorship-and-changing-personality) · [CE implementation and acceptance](../maintainers/character-experience.md) · [Memory contract](../memory-architecture.md) · [Agency contract](../agent-agency.md).
 
@@ -65,6 +65,12 @@ The disposition-only Ada independently finished cord work and chose native hare-
 Keep authored history, current self-understanding, current dispositions, fleeting body/appraisals, accepted beliefs and operational goals distinct. Existing creator edits are explicit edits, not fictional experiences. New worlds use the authored seed; same-version restoration preserves accepted current data. A removed camp or changed possessions updates world state/knowledge, not an immutable biography assertion. An earlier camp experience can remain historical memory. Do not invent such an experience when moving a transient sentence out of biography.
 
 Personality development should use the existing accepted identity/understanding and appraisal owners, with actual permitted experience as support and explicit creator authority where applicable. The absence of a complete automatic personality-development mechanism is tracked in CE/DG23; this design grants no new background model loop or arbitrary trait effects. A chosen temporary intention belongs to goals/plans. Scenario-seeded intentions remain explicitly labeled author interventions, not autonomous motivation.
+
+## October 17 combat-response integration
+
+The [combat technical design](combat-and-threat-responses-tech-design.md) owns the new CTR05–CTR08 changes: complete prospective action transitions while busy, interpreted source-linked fear/anger, two-stage relevance then personal choice, and exact observed-change/finite-purpose reconsideration. Reuse this project's unified required experience and shared personal perspective. Do not duplicate the result narrative or replace the complete identity with a combat prompt. The original PG02 slice's no-additional-call claims describe that delivered slice, not the separately selected two-call threat route.
+
+[Ada's selected baseline](../worlds/base/threat-response-options.md#4-initial-ada-disposition-and-required-behavior) now requires an independently selected and actually begun counterattack in the ordinary able/identified/feasible unprovoked-punch situation. Her assertiveness is authored content with general meaning; native mechanisms remain indifferent to her name. CTR10 retains strict ordinary-path acceptance, unsuccessful cases and separate capability/uncertainty controls. A fixture or forced command proves only admission/physics, and repeated generation until a preferred answer appears cannot qualify the character. Existing PG02 observations remain historical evidence of their exact situations, not combat evidence. Long-term personality/relationship change remains outside this extension.
 
 ## Delivery stages, verification and limits
 

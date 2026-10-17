@@ -161,7 +161,7 @@ The completed [feature specification](../projects/completed/multiplayer-authorit
 
 - [x] Commit safe action interruption, inactive participation and one departure event together; project fade/removal only to witnesses through normal EPR evidence.
 - [x] Remove inactive humans from bodily hazard/depletion/action/spatial participation without deleting identity, history or possessions. Preserve detached world-property behavior.
-- [x] Keep human-targeted harmful admission cooperative/denied unless actual BW14 opt-in semantics are implemented; a modal or role name is insufficient.
+- [x] Delivered the then-selected base-world denial of human-issued player attacks through common admission; a modal or role name alone supplies no attack permission. **Selected supersession October 17:** [CTR01](combat-and-threat-responses.md#ctr01--world-permission-and-actual-contact) permits direct PvP and actual projectile contact in this world without separate opt-in enrollment; its implementation and qualification remain unchecked there. Fully inactive protection and exact authority remain controlling.
 
 **Dependencies:** MP04.1; BW13 and relevant body/spatial owners. **Exit:** onlookers can notice departure, non-witnesses receive no account or location leak, and protected inactivity does not pause the whole shared world or protect buildings.
 

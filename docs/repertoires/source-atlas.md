@@ -58,6 +58,10 @@ These primary-author or estate-published sources were consulted on September 27,
 - [Sanderson's Second Law](https://www.brandonsanderson.com/blogs/blog/sandersons-second-law): limitations can make a power dramatically useful. This motivates finite sources, range and consequences rather than a generic unlimited magic resource.
 - [Sanderson's Third Law](https://www.brandonsanderson.com/blogs/blog/sandersons-third-law-of-magic): develop implications of existing powers before continually adding new ones. This motivates one magical transfer supporting cooking, shelter, diplomacy and rescue. These are an author's heuristics, not universal laws of fiction or game design.
 
+## Combat-response research
+
+The [combat-response synthesis](../../archive/02-research/game-inspiration/synthesis/combat-and-encounters.md) compares native creature behavior, purposeful pursuit, targeting displays and attack defaults in **Rain World, Kenshi, Final Fantasy XIV and Old School RuneScape**. It informs native animal escape, purposeful human responses and predictable interaction controls in the [selected combat-response design](../projects/combat-and-threat-responses-feature-spec.md). The guide and assessment records own the source revisions, evidence limits and unresolved questions. Research incorporation does not qualify implementation.
+
 ## Games
 
 ### G01–G20

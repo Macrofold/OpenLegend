@@ -2,6 +2,8 @@
 
 **October 14, 2026.** Review baseline: `docs/game-learning-synthesis-map` at `405aa6457e985a16a9e3129e0e7a0a6f74bae649`. [Topic map](README.md) · [Adaptable main-topic template](main-topic-template.md) · [Future work needing design](../../../../docs/maintainers/needs-design.md).
 
+This is the historical review at the stated 30-topic baseline. The later 35-topic framework and focused NPC/COMBAT incorporation are recorded in the [current topic map](README.md) and [progress owner](progress.md). Statements below about empty guides or registers describe that earlier structural review, not their later status.
+
 ## Verdict
 
 The 30 topics are a useful first taxonomy, but the original headings alone were not sufficient assurance of OpenLegend coverage. They covered conventional systems well while leaving several central ambitions too implicit: characters acting for themselves, peaceful activities worth doing for their own sake, stealth and deception, bodily and generational life, world change during absence, and events becoming contested history and lore. These are gaps in the **research questions and organization**, not findings that the corresponding runtime features are missing.

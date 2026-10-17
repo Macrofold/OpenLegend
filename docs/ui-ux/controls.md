@@ -8,6 +8,8 @@ For ordinary play, first identify the world object and immediate intention. Open
 
 The control guidance below applies after that interaction is chosen. A well-built combobox cannot make a routine nearby-container selector the right game flow. Forms remain appropriate for explicit settings, creator editing and genuinely complex decisions. They are not the default presentation of gameplay capability schemas. [Screenshot-backed research](research.md#game-interface-screenshot-atlas)
 
+The selected [combat-sensitive Command gesture](world-interaction.md#selected-combat-sensitive-command-action) extends the current shortcut, with exact pointer-down identity, ordered context, visible blockers and deliberate Speak/Stop. Reuse existing keyboard/focus and cancellation primitives; a modifier is not authority to switch an already displayed action or bypass text/modal ownership. Numeric continuity and attack preference belong to the installed world profile. This extension remains unimplemented under CTR09.
+
 ## Choose the semantic control first
 
 | Player intent                                   | Preferred pattern                                                                            | Avoid                                                                   |

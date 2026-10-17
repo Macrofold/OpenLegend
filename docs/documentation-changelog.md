@@ -1,5 +1,13 @@
 # Documentation changelog
 
+## October 17, 2026 — Physical conflict and purposeful threat responses
+
+The accepted bundled-world design permits direct human PvP and injury to the body a projectile actually contacts, replacing cooperative-only admission and harmless non-target interception. Current player recovery and fully inactive protection remain; released projectiles receive final human review at release. The [feature specification](projects/combat-and-threat-responses-feature-spec.md) and [technical design](projects/combat-and-threat-responses-tech-design.md) distinguish these targets from current runtime behavior.
+
+Ordinary animals use native escape to reachable refuges, all perceived dangers and species-specific movement without model calls. Humanlike threat responses use complete relevant choices, personal appraisal and a relevance-then-choice strategy, with independent Ada counterattack and finite pursuit as acceptance requirements. Shared [choice preparation](action-capabilities.md#prepared-choices-and-prospective-work-transitions) and [deliberation](../archive/07-technical-architecture/agent-agency-runtime.md#25-shared-deliberation-and-prepared-choices) also serve ordinary work, speech and player actions while retaining each caller's authority and decision costs. Contextual combat controls use opponent-specific evidence.
+
+[CTR01–CTR10](maintainers/combat-and-threat-responses.md) owns implementation and separate mechanical, character, browser and playability qualification, including early independent Ada and hunt-to-meal cases. Two-stage latency, native population capacity and [starting tuning](limits/combat-and-threat-responses.md) remain unmeasured. The selected ND11/ND13 portions are designed; [broader repertoire possibilities](projects/combat-and-threat-responses-repertoire-review.md) retain their separate scope and dependencies.
+
 ## October 17, 2026 — Integrate ten mobile-game studies and comparative findings
 
 The [mobile research ledger](../archive/02-research/game-inspiration/research-progress-mobile-2026-10-17.md) records completed dossiers for G168–G177 within their source, edition and access limits. The [comparative essay](../archive/02-research/game-inspiration/essays/mobile-success-failure-and-umamusume.md) connects enjoyable activities, attachment, creation and continuing value to possible OpenLegend experiences, while separating dated spending estimates, publisher explanations and commercial inferences. Ended services are not treated as proof of a specific financial loss or design cause.

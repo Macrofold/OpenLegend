@@ -227,6 +227,8 @@ Direct player speech retains explicit interactive priority. It must not also enq
 
 A reaction opportunity can be handled natively, coalesced, delayed, explicitly declined, or routed to reasoning. It is not a model request until durable admission and spending checks succeed.
 
+The [shared agency deliberation contract](../archive/07-technical-architecture/agent-agency-runtime.md#25-shared-deliberation-and-prepared-choices) consumes this intake for task, social, threat and other compatible choices. It owns the selected strategy and decision lifetime, not another queue or source envelope. Exact internally produced results already consumed within a decision cannot immediately restart it; later independent evidence and native outcomes retain this owner's normal eligibility and cursors.
+
 ### Extend ActorWork instead of replacing the scheduler
 
 Feed actor IDs and reason-specific revisions from accepted changes into `ActorWork.wake` or an equivalent typed update. Replace broad `telemetryRevision` dependence and full per-poll input reconstruction with explicit invalidations where coverage is proven.

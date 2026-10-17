@@ -2,22 +2,22 @@
 
 [Topic map](README.md) · [Game coverage](coverage.csv) · [World coverage](world-coverage.csv) · [Record requirements](progress.md) · [Structural source/goal review](source-and-goal-map.md).
 
-The October 14, 2026 intelligence/simulation pass contributes 30 scoped NPC assessments below. Other source/topic cells remain unassessed, awaiting sources or historical coverage as recorded in their matrices. Earlier essays are not discarded or automatically credited. Reading sources for the framework's structural review remains distinct from substantive incorporation.
+The October 14, 2026 intelligence/simulation pass contributes 30 scoped NPC assessments below. The October 17 combat-response pass adds four scoped COMBAT assessments. Other source/topic cells remain unassessed, awaiting sources or historical coverage as recorded in their matrices. Earlier essays are not discarded or automatically credited. Reading sources for the framework's structural review remains distinct from substantive incorporation.
 
 ## Record structure for authorized work
 
 Preserve game record identities as `<TOPIC>--<game_key>`. Use `<TOPIC>--world--<world_key>` for a fictional-world record so similarly named game and world sources remain distinct. Keep dated revision notes beneath the stable heading. These are formats, not allocated examples.
 
-| Field | Required content |
-| --- | --- |
-| Identity | Source kind, stable game/world key and topic code; unambiguous roster label, edition or fictional continuity where applicable. |
-| Assessment | Date and reviewer; actual inspected scope, not merely a located file or summary. |
-| Source evidence | Dossier/chapter/supplement paths, exact commit/blob revisions, sections or ranges, underlying links and access limits; supporting essays may be cited alongside the actual source. |
-| Evidence type | Distinguish documented rules, player testimony, literary interpretation, developer intent, product goals, runtime observations and economic estimates. Identify shared underlying sources rather than count summaries as independent corroboration. |
-| Contribution | Concrete interaction or relevant fictional case, supporting and contrary material, possible explanation, confidence and applicability; a world scene alone does not prove a playable activity enjoyable. |
-| Destination | Owning guide and stable lesson/section anchors; explain how the source supports, qualifies or contradicts the comparison rather than merely appearing in a bibliography. |
-| Exclusion or blocker | Specific rationale for N, or exact missing evidence and next action for B/W/S. |
-| Review and publication | Source-to-destination and diff checks actually performed; incorporation commit when known, without inventing a future/self hash. |
+| Field                  | Required content                                                                                                                                                                                                                                    |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Identity               | Source kind, stable game/world key and topic code; unambiguous roster label, edition or fictional continuity where applicable.                                                                                                                      |
+| Assessment             | Date and reviewer; actual inspected scope, not merely a located file or summary.                                                                                                                                                                    |
+| Source evidence        | Dossier/chapter/supplement paths, exact commit/blob revisions, sections or ranges, underlying links and access limits; supporting essays may be cited alongside the actual source.                                                                  |
+| Evidence type          | Distinguish documented rules, player testimony, literary interpretation, developer intent, product goals, runtime observations and economic estimates. Identify shared underlying sources rather than count summaries as independent corroboration. |
+| Contribution           | Concrete interaction or relevant fictional case, supporting and contrary material, possible explanation, confidence and applicability; a world scene alone does not prove a playable activity enjoyable.                                            |
+| Destination            | Owning guide and stable lesson/section anchors; explain how the source supports, qualifies or contradicts the comparison rather than merely appearing in a bibliography.                                                                            |
+| Exclusion or blocker   | Specific rationale for N, or exact missing evidence and next action for B/W/S.                                                                                                                                                                      |
+| Review and publication | Source-to-destination and diff checks actually performed; incorporation commit when known, without inventing a future/self hash.                                                                                                                    |
 
 Do not duplicate current status here: the relevant game/world matrix owns it. Quoted passages without a contribution to the topic's comparisons do not qualify as I. Candidate reading routes and current-design lookup links are not assessment records.
 
@@ -152,3 +152,41 @@ Unnumbered; topic-only. [Dossier and creator papers](../dossiers/versu.md). Arch
 ### NPC--shadows-of-doubt
 
 G159, previously queued; topic-only, not a completed whole-game pass. [Dossier and complete 2018 prototype devblog](../dossiers/shadows-of-doubt.md). Supports [NPC-L002](characters-companions-and-relationships.md#npc-l002), [L006](characters-companions-and-relationships.md#npc-l006) and [L012](characters-companions-and-relationships.md#npc-l012): batched routines, exceptional replanning and witness evidence connect efficiency to discoverable history. The later shipped controller was not verified; lying was future work in the inspected prototype.
+
+## COMBAT pass — October 17, 2026
+
+Reviewer: ChatGPT. The four existing dossiers below were inspected at `Macrofold/OpenLegend` commit `0eb7358f251d1ab706592ccb6e9829e98c729fe9`; each blob and actual scope is recorded separately. Named official webpages were retrieved on October 17, 2026. Dossier summaries and their underlying reports are one evidence chain, not independent confirmation.
+
+This is a scoped four-source comparison of creature escape, tactical pursuit, targeting displays and attack defaults. It is not a whole-game re-review or complete COMBAT survey. The [COMBAT guide](combat-and-encounters.md) remains In progress. Matrix status is maintained only in [coverage.csv](coverage.csv). No gameplay, proprietary controller inspection, live character decision, latency benchmark or player study was performed.
+
+### COMBAT--rain-world
+
+**Identity and scope:** G123, Rain World, developer-described creature systems in the September 25, 2025 interview. [Dossier](../dossiers/rain-world.md), blob `bf30fd9c24638b0ee2dee7dda479a61bbd45cc8e`: combat/evasion and stealth/perception subsections, worked cases 1–8, and the creature-AI portion of R06. The separate full-version, population, DLC and commercial claims were not requalified.
+
+**Evidence and contribution:** The [Unity developer interview](https://unity.com/blog/exploring-procedural-design-rain-world) describes configurable creature relationship/priority modules and deliberate intervention when emergent outcomes undermined intended behavior. This supports [COMBAT-L002](combat-and-encounters.md#combat-l002): modest native policies can produce varied encounters without model cognition. The broad food web is a contrasting larger system, not a prerequisite for OpenLegend escape.
+
+**Evidence limits:** Native modular behavior does not prove our destination scoring, species speeds, bounded cost or player enjoyment. Dossier tales about creature interactions are context, not new measurements. The developer account does not establish that every animal acts realistically.
+
+### COMBAT--kenshi
+
+**Identity and scope:** G36, Kenshi. [Dossier](../dossiers/kenshi.md), blob `9cb529e1f2d0574398a9dc42aa1e52063af59233`: individual capability/group control, people/factions and animals, and worked case H about escape amid other groups. The [official February 27, 2018 experimental 0.98.0 notes](https://lofigames.com/2100-2/) were read specifically for Hold, sight-limited participation and the friendly-fire shooting-skill entry.
+
+**Evidence and contribution:** The historical notes distinguish fighting within reach from pursuing away from a post. They support [COMBAT-L003](combat-and-encounters.md#combat-l003) and the comparison of physical firing risk with tactical intention. The dossier qualifies optimistic third-party rescue as uncertain, reinforcing that nearby other actors are not guaranteed safety.
+
+**Evidence limits:** The guide explicitly labels the patch experimental and historical. The dossier's later behavior-control vocabulary is not treated as a current implementation of every old label; no present AI algorithm, retaliation timer or universal projectile rule was inferred.
+
+### COMBAT--final-fantasy-xiv
+
+**Identity and scope:** G91, Final Fantasy XIV. [Dossier](../dossiers/final-fantasy-xiv.md), blob `b55c902686a71ad63ce90ceabb4dff72fe0ef656`: everyday action vocabulary, roles/combat structure and presentation/interface. The [official HUD guide](https://na.finalfantasyxiv.com/uiguide/know/know-hud/hud-name.html) was read for target, target's interaction partner, focus, action progress and enmity displays.
+
+**Evidence and contribution:** These are distinct documented interface meanings, supporting [COMBAT-L001](combat-and-encounters.md#combat-l001). The guide's enmity explanation is retained as the source game's mechanic, while OpenLegend's per-opponent evidence and own offensive intention are explicitly our proposed composition.
+
+**Evidence limits:** No FFXIV hidden AI, current numerical formula, complete encounter or proprietary source code was audited. Borrowing separable presentation does not justify exposing private NPC intentions or installing an enmity score.
+
+### COMBAT--old-school-runescape
+
+**Identity and scope:** G49, Old School RuneScape. [Dossier](../dossiers/old-school-runescape.md), blob `b9c0b8fc11781e90f3ec6f943cb7342c77604464`: §§3–5 (interaction, inventory and combat) and §15 (interface). The [October 22, 2025 official defaults announcement](https://secure.runescape.com/m=news/grid-master-rewards-poll--new-player-improvements?oldschool=1) was read for its player-attack and NPC-attack defaults.
+
+**Evidence and contribution:** Deliberately different default interaction access supports [COMBAT-L004](combat-and-encounters.md#combat-l004). The source is a counterexample to copying the entire category rule: OpenLegend's independently acting resident is also a normal conversation partner, so being an NPC is not sufficient grounds for a default attack.
+
+**Evidence limits:** The dated announcement does not prove a present account's settings, universal auto-retaliation behavior or a particular grace period. Broader OSRS combat details were context and were not independently rechecked as new current facts. The inference is limited to input design.

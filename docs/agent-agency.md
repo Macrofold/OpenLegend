@@ -51,6 +51,14 @@ Speech can therefore be an external-action subtype in the domain without losing 
 
 A character is allowed to be mistaken or dishonest. “I built a bow” can be a lie in dialogue; it cannot become a `crafted` receipt or create an item. A belief about another character is not that character's private state. The engine validates the authority and consequences of an operation, not the objective truth of every fictional thought.
 
+### Shared deliberation, different ways to choose
+
+**Accepted extension; runtime integration and qualification remain open.** Task deliberation, action choice and speech choice use the same permitted situation, optional operation composition and authoritative admission. The [shared runtime contract](../archive/07-technical-architecture/agent-agency-runtime.md#25-shared-deliberation-and-prepared-choices) owns preparation and the lifetime of a decision; [prepared action choices](action-capabilities.md#prepared-choices-and-prospective-work-transitions) preserve exact actions and their consequences for current work. Combat is a demanding first consumer of those contracts, alongside ordinary work and conversation.
+
+The chosen method of deliberation can differ. An already selected native activity continues without inference; a person can select a supplied action without generating language; an unresolved intention or warranted reply can use the existing generated operation composition. The selected threat profile uses relevance/appraisal followed by choice. It does not make those two calls, a generated purpose, or a preliminary category decision compulsory for every situation.
+
+A hungry person reconsidering gathering, a person replying while doing compatible work, and a person responding to an assault all retain current commitments, permitted evidence and truthful alternatives. Each can continue, deliberately change supported work, or produce no new intervention. A chosen task's actual success, failure, changed terms or due review condition returns through existing intake. No new combat, hunger, conversation or interruption planner is created, and available capabilities do not prescribe the person's priorities. [Caller authority](engine-and-world-boundaries.md#shared-callers-distinct-authority) keeps direct human control, native creatures and the out-of-world authoring assistant distinct.
+
 ## 3. Goals are useful structure, not the whole mind
 
 Use **goal** in player-facing language and **intention** when it helps distinguish maintained pursuit from passing desire. These refer to the same operational record, not two databases.

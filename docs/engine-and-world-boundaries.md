@@ -230,6 +230,19 @@ A thought does not automatically change matter. A supported telekinetic mechanic
 
 General model knowledge may supply hypotheses under the agency policy. Hypotheses are not fabricated observations, learned techniques, hidden-registry access, or executable mechanics. This architecture introduces no new mandatory technology-era or intelligence gate.
 
+### Shared callers, distinct authority
+
+Shared mechanics do not require identical minds, permissions or decision procedures. Each caller uses the applicable existing owners with its actual scope and provenance:
+
+| Caller                                | Choice and permitted information                                                                                                                   | Shared execution boundary                                                                                                                                          |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Human controlling a character         | The human selects an exact offer or supplies intent using the character's permitted world view. An exact choice needs no model deliberation.       | Ordinary invocation, current control and mechanical admission, work transitions and receipts; human provenance remains intact.                                     |
+| Embodied autonomous character         | The installed controller uses that character's permitted evidence and granted cognitive capabilities.                                              | The same supported action owners, with optional private/communicative operations under [agency](agent-agency.md). Thought does not grant an effect.                |
+| Native creature or machine controller | Installed native policy uses its declared inputs and capabilities; autobiographical memory, goals, speech and paid cognition are optional.         | Applicable movement, resource and effect owners; no second writer or implied human body.                                                                           |
+| Out-of-world authoring assistant      | Separately granted investigation and authoring access, as defined by [World Agent scope](world-agent-runtime.md#2-world-agent-versus-inhabitants). | Existing inspection, definition, approval and mutation owners. Broader read access grants neither actor knowledge nor unrestricted writes, spending or disclosure. |
+
+Transport and presentation adapt these owners; they do not create another capability registry, permission system or execution path. [Prepared choices](action-capabilities.md#prepared-choices-and-prospective-work-transitions) preserve ordinary action meaning across applicable callers without making every caller use the character's decision pipeline.
+
 ## 9. A ladder of power, not a new taxonomy
 
 Use the existing [G0–G3 classification](../archive/07-technical-architecture/declarations-and-evolution.md#generation-levels-and-executable-references):

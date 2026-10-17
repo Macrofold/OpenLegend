@@ -34,7 +34,7 @@ noita,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 caves-of-qud,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 outer-wilds,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 garrys-mod,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
-kenshi,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
+kenshi,X,X,U,U,U,U,U,I,U,U,U,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 project-zomboid,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 lethal-company,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 scribblenauts,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
@@ -47,7 +47,7 @@ against-the-storm,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,
 core-keeper,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 peak,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 runescape,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
-old-school-runescape,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
+old-school-runescape,X,X,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 runescape-dragonwilds,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 dragon-age-origins,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 dragon-age-ii,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
@@ -89,7 +89,7 @@ final-fantasy-x,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,
 final-fantasy-xi,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 final-fantasy-xii,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 final-fantasy-xiii,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
-final-fantasy-xiv,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
+final-fantasy-xiv,X,X,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 final-fantasy-xv,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 final-fantasy-xvi,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 warcraft-orcs-and-humans,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
@@ -121,7 +121,7 @@ dishonored-2,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U
 starsector,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 battle-brothers,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 cataclysm-dark-days-ahead,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
-rain-world,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
+rain-world,X,X,U,U,U,U,U,I,U,U,U,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 persona-5-royal,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 xcom-2,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 crusader-kings-iii,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
