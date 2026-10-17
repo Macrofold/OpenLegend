@@ -1,8 +1,10 @@
 # Progressive 3D pixel art — feature specification
 
-| Status      | Current progress                                                                                                           | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Animal, shrub, arrow and ground-light corrections are delivered; bear access and broader visual qualification remain open. | 2026-10-17   |
+| Status      | Current progress                                                                                     | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Deer stride and wolf forepaws are refined; bear access and broader visual qualification remain open. | 2026-10-17   |
+
+Deer/stag travel uses the correct four-foot sequence, fixed-length leg articulation, distinct front/rear bends and continuous foot velocity through contact. Wolf travel preserves source timing and wrist rotation with fixed foreleg lengths and a neutral toe shape. Source anatomy, sizes, finishes and runtime ownership remain unchanged. The [gait study](../../art-direction/studies/2026-10-17-grounded-animal-gaits/comparison.html) preserves exported/editable sources and moving comparisons; [evidence and limits](../verification/natural-source-replacements.md#deer-stride-and-wolf-forepaws--october-17-2026) remain distinct from creator acceptance and broader action/device qualification.
 
 The bundled scene uses source-based models and a shared pixel treatment, with 30 samples per metre for larger subjects and 60 for small details. The original mercenary retains his anatomy and identity at 2.035 m beside 1.85 m adults; closer camera framing does not resize physical bodies. New devices use Economy shadows. Rendered pixel sampling is not permanent cubic geometry, and changing the camera can change projected coverage.
 

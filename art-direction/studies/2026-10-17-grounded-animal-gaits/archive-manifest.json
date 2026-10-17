@@ -1,0 +1,216 @@
+{
+  "captured": "2026-10-17",
+  "baseline": "dc20b4c97",
+  "files": [
+    {
+      "file": "README.md",
+      "bytes": 3237,
+      "sha256": "1d8465743dfbc23cf2f968c0c8a0d840041358c397da88ff7a3ac32d0c2412d7"
+    },
+    {
+      "file": "comparison.html",
+      "bytes": 7411,
+      "sha256": "30386201845b89a27d36e5f8544f7435e5f6474397bb7e338ef9354b5f7d3b68"
+    },
+    {
+      "file": "media/doe-final-front.webm",
+      "bytes": 1442430,
+      "sha256": "a1740a24351d1fbc73cdb689166df505fc83609985f071ca226eff892b9cb64a"
+    },
+    {
+      "file": "media/doe-final-idle.png",
+      "bytes": 66166,
+      "sha256": "5b57e3d3de9d6683077a3fec15643225037dbfc72f1a371b8682b7396a7352c5"
+    },
+    {
+      "file": "media/doe-final-side.webm",
+      "bytes": 1475507,
+      "sha256": "96cda91b4bfb8bd27915d3591154595f39dbbf5e667358582cc833b379fdfa85"
+    },
+    {
+      "file": "media/doe-grounded-quarter.webm",
+      "bytes": 1124883,
+      "sha256": "57ed655c3c26943d39d04ba5d30a7e9738c65242debcc5a084dba31774917c1a"
+    },
+    {
+      "file": "media/doe-grounded-side.webm",
+      "bytes": 1571738,
+      "sha256": "d0ceed3b12516a39a5dcfe315febd98f1502d2e9e362d031d31b3b5c254c4eb9"
+    },
+    {
+      "file": "media/doe-refined-side.webm",
+      "bytes": 1404529,
+      "sha256": "e5ddff67aaf01d39d1d373afd1a4babfd6ca8218dd7da07a88159a5565f4b716"
+    },
+    {
+      "file": "media/stag-final-quarter.webm",
+      "bytes": 630388,
+      "sha256": "db0ed19fefd0f4d2ff9c0fb39c7a63b532ac8bf6e826dc267fb05e73e2184b80"
+    },
+    {
+      "file": "media/stag-final-side.webm",
+      "bytes": 800327,
+      "sha256": "be42a1e91f34b5f8d93a4c710b88e602c87aee86c59f8675371420d8404029e8"
+    },
+    {
+      "file": "media/wolf-final-side.webm",
+      "bytes": 2551503,
+      "sha256": "3f136be997a2227a51986650805017ba3ee996fcb9619b324537e1faa438a23b"
+    },
+    {
+      "file": "media/wolf-final-three-coats.webm",
+      "bytes": 2549916,
+      "sha256": "845e235c8b55923032b2eb5a345f0b84c954e11b923b46b35cdfffa201c7f443"
+    },
+    {
+      "file": "media/wolf-rigid-offset-trial.webm",
+      "bytes": 929412,
+      "sha256": "ca919113862f21501b77d2e9b8e74fd87604afa7828cf447d21292ac0fb8a53c"
+    },
+    {
+      "file": "media/wolf-stable-paw-side.webm",
+      "bytes": 2438435,
+      "sha256": "5d0e6a413fdf6177b7e6f1de655635398ad65377c2714c552f989059c99a606b"
+    },
+    {
+      "file": "media/woodland-final.webm",
+      "bytes": 1404025,
+      "sha256": "992a1fe638384cffb2a9e0778737450082593fac798a67d2695cc28925f84e30"
+    },
+    {
+      "file": "previous-assets/source-woodland-doe/catalog.json",
+      "bytes": 4903,
+      "sha256": "73856a90e2e7b896856a21b32b74b0e35bf92775ede5bd87799fb676c308128c"
+    },
+    {
+      "file": "previous-assets/source-woodland-doe/woodland-doe-clear-motion.glb",
+      "bytes": 995852,
+      "sha256": "b5397e1e9b2fc2b1aa92c837c47f566b28ecc80aed4ddd54ed874080fc04ff95"
+    },
+    {
+      "file": "previous-assets/source-woodland-doe/woodland-doe-clear.glb",
+      "bytes": 867960,
+      "sha256": "7d63e6aec6b234ba2edbbdab9827d434e72b061214443a784aa2a7c30d50b2f4"
+    },
+    {
+      "file": "previous-assets/source-woodland-doe/woodland-doe-quiet-motion.glb",
+      "bytes": 398632,
+      "sha256": "6640196d16a4bb2fec17dbfcb193a359a9117a7f1367dd838be9ffc3e6c9953b"
+    },
+    {
+      "file": "previous-assets/source-woodland-doe/woodland-doe-quiet.glb",
+      "bytes": 270736,
+      "sha256": "16ae9b20ae0b262fc39bc6d81bf65a7af6a62a8cd7a2d306a786ff4a6e9933e3"
+    },
+    {
+      "file": "previous-assets/source-woodland-doe/woodland-doe-source.glb",
+      "bytes": 2784132,
+      "sha256": "a12d244feb31ef562c786630b06f533da29465af6037c1d6ba75bee6076a2fa6"
+    },
+    {
+      "file": "previous-assets/source-woodland-doe/woodland-doe-weathered-motion.glb",
+      "bytes": 394192,
+      "sha256": "1506601bd989b2c7ba6b82c2f201127ac8c5c726409bec89aa8fc375b40c0988"
+    },
+    {
+      "file": "previous-assets/source-woodland-doe/woodland-doe-weathered.glb",
+      "bytes": 266296,
+      "sha256": "85280fb4f7844987b6da9d8f9683d7dc2a8071a4fa17153ab43dca139e35c59e"
+    },
+    {
+      "file": "previous-assets/source-woodland-doe.blend",
+      "bytes": 4187731,
+      "sha256": "0075c0c34acfe6db4c459643a8b5f4a2fe69118f0f6ddb357718a0542632de2d"
+    },
+    {
+      "file": "previous-assets/source-woodland-stag/catalog.json",
+      "bytes": 5004,
+      "sha256": "bcee5a9ab3820ded1657a7294351350054c5ca39c06cba110bbc928c76a60d42"
+    },
+    {
+      "file": "previous-assets/source-woodland-stag/woodland-stag-clear-motion.glb",
+      "bytes": 1096856,
+      "sha256": "28bdeb7d36610281e0f07096a30aea8b10781c5610ee87a56457712ab9b5f23a"
+    },
+    {
+      "file": "previous-assets/source-woodland-stag/woodland-stag-clear.glb",
+      "bytes": 963024,
+      "sha256": "0c84f50988e5e4419e30bf677462c7df0e921b19820442675531153f4c511e98"
+    },
+    {
+      "file": "previous-assets/source-woodland-stag/woodland-stag-quiet-motion.glb",
+      "bytes": 445504,
+      "sha256": "9bb1c50e355a507dc033279e8902cc83886af66492d0918bd28407645d0a9267"
+    },
+    {
+      "file": "previous-assets/source-woodland-stag/woodland-stag-quiet.glb",
+      "bytes": 311816,
+      "sha256": "be6b389977438d5522e273b5e09981c021b3e53429cc64e5d556f9960bf3f1cf"
+    },
+    {
+      "file": "previous-assets/source-woodland-stag/woodland-stag-source.glb",
+      "bytes": 3213548,
+      "sha256": "e75847034c294526fb863d1b840f3936278d7bc150fade3dc73451ab79a1d021"
+    },
+    {
+      "file": "previous-assets/source-woodland-stag/woodland-stag-weathered-motion.glb",
+      "bytes": 440980,
+      "sha256": "2e71b41b032f2b73f23a77e8839d2d690022ae9207301362f5cf0fc6164f9b2c"
+    },
+    {
+      "file": "previous-assets/source-woodland-stag/woodland-stag-weathered.glb",
+      "bytes": 307292,
+      "sha256": "6dfc59120d92448bd890f1e650a721c8f6bc187004ae8a64343572715b3e11f6"
+    },
+    {
+      "file": "previous-assets/source-woodland-stag.blend",
+      "bytes": 4797927,
+      "sha256": "445cff57b07008d4e81b21666a1f73d8db15c43ce869cf5cf23fbe1685a4bea1"
+    },
+    {
+      "file": "previous-assets/source-woodland-wolf/catalog.json",
+      "bytes": 10547,
+      "sha256": "88d31f9c7cb7f7f407e2ed05adc106bebf77d14ff7c4a7a94bbdb6b91801c9f9"
+    },
+    {
+      "file": "previous-assets/source-woodland-wolf/woodland-wolf-clear-motion.glb",
+      "bytes": 426432,
+      "sha256": "114a4f68a75657c7a35c77db42c2d5234a585a2f4b09a6a0367fda59733d55d6"
+    },
+    {
+      "file": "previous-assets/source-woodland-wolf/woodland-wolf-clear.glb",
+      "bytes": 281136,
+      "sha256": "13466f69fad7a4c12c2beb6edf676f0c9af36a46563b1a55fe759bdc7cb39cd8"
+    },
+    {
+      "file": "previous-assets/source-woodland-wolf/woodland-wolf-quiet-motion.glb",
+      "bytes": 375072,
+      "sha256": "95f7231842091a883cc4158af23adad0770ed963805a402328f514a6cbe07125"
+    },
+    {
+      "file": "previous-assets/source-woodland-wolf/woodland-wolf-quiet.glb",
+      "bytes": 229772,
+      "sha256": "1fad5acfdf4ac11970d11fea8afa4f115e042b10e97a0012eeffa4a9713e1a44"
+    },
+    {
+      "file": "previous-assets/source-woodland-wolf/woodland-wolf-source.glb",
+      "bytes": 239420,
+      "sha256": "111cc459e1031a15a0a1c9638a82cd28a1f75e10c6778da66ff2913dd438dc35"
+    },
+    {
+      "file": "previous-assets/source-woodland-wolf/woodland-wolf-weathered-motion.glb",
+      "bytes": 351772,
+      "sha256": "0bb58f6d476e7e4eee8f208211f5631c1f95b8a65aa386e1f43f9a8a315ba1a6"
+    },
+    {
+      "file": "previous-assets/source-woodland-wolf/woodland-wolf-weathered.glb",
+      "bytes": 206472,
+      "sha256": "6eae679d1e19f5b6c2bdbb62ea30baddb8174091d2431cf4c7890db58f32d5f9"
+    },
+    {
+      "file": "previous-assets/source-woodland-wolf.blend",
+      "bytes": 1846098,
+      "sha256": "7210bf9445bf55f31bb5c8d690332bb1d4a599b3df5d60e21c3facb133126bb5"
+    }
+  ]
+}

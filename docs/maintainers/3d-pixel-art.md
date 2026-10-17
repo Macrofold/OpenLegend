@@ -216,6 +216,8 @@ Remaining within V3D01.12/.13 visual/performance acceptance: review rectangular 
 
 **October 17, 2026 01:25 EDT — reported animal/prop/light defects corrected:** the earlier head/motion acceptance was invalidated by Mike's screenshots. Mesh/joint naming, bounding travel, wolf stretching idle/loop, cloned bush tiers, arrow fletching and false ground-light bands now have preserved corrections and three options per changed family. Approved trees are unchanged. [Actual correction checks and frame costs](../verification/natural-source-replacements.md#animal-prop-and-light-correction--october-17-2026) replace the earlier motion claim; V3D01.12/.13 artistic/stability/performance gates and the bear gap remain open.
 
+**October 17, 2026 02:05 EDT — deer stride / wolf paw refinement:** Mike's new feedback supersedes the preceding motion acceptance. The offline recipes now correct deer footfall order and leg bend/length constraints, plus the source wolf's animated foreleg stretching and toe curl. All three coats remain, prior exported/editable assets are preserved, and runtime geometry/joint/channel counts stay unchanged. [Focused gait evidence](../verification/natural-source-replacements.md#deer-stride-and-wolf-forepaws--october-17-2026) and the [moving comparisons](../../art-direction/studies/2026-10-17-grounded-animal-gaits/comparison.html) own this bounded revision; existing broader V3D01.12/.13 gates remain open.
+
 ## V3D02 — Immutable appearance and artifact foundation
 
 **Owners:** protocol, server appearance/storage, client asset intake. **Depends on:** V3D01 for the target profile; technical fixture work can precede final style approval.

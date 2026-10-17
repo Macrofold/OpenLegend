@@ -13,7 +13,7 @@ import shutil
 import sys
 
 import bpy
-from mathutils import Quaternion
+from mathutils import Matrix, Quaternion, Vector
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -33,7 +33,7 @@ INPUTS = {
 }
 ATTRIBUTION = ('Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, '
     'https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf '
-    'walk retained with a closed loop; quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. '
+    'walk timing retained with a closed loop; rigid foreleg offsets, stable paws, quiet standing idle, materials and silhouette smoothing adapted by OpenLegend. '
     'These derivative assets remain CC BY-SA 3.0.')
 
 
@@ -83,7 +83,19 @@ def close_walk_loop(rig, source):
     rig.animation_data.action = source
     for frame in range(duration+1):
         scene.frame_set(frame)
-        poses.append({b.name: b.matrix_basis.copy() for b in rig.pose.bones})
+        pose = {b.name: b.matrix_basis.copy() for b in rig.pose.bones}
+        # The source walk animates joint translations, lengthening the wrist
+        # to toe distance by over 2x during swing. Keep its rotations/timing,
+        # but articulated forelegs must retain their rest joint offsets.
+        for bone in rig.pose.bones:
+            if bone.name.startswith(('FrontLeg', 'FrontToe')):
+                # The source also folds the toe through almost a right angle.
+                # Keep each paw's neutral toe shape; the wrist still rotates
+                # with the original walk, so the whole paw can lift and roll.
+                rotation = Quaternion() if bone.name.startswith('FrontToe') else bone.rotation_quaternion
+                pose[bone.name] = Matrix.LocRotScale(Vector(),
+                    rotation.normalized(), Vector((1, 1, 1)))
+        poses.append(pose)
     action = bpy.data.actions.new('Run')
     rig.animation_data.action = action
     for frame, pose in enumerate(poses):

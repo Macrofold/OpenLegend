@@ -1,8 +1,8 @@
 # Dimensional pixel art — restyle the existing starting scene
 
-| Status      | Current progress                                                                                                           | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Animal, shrub, arrow and ground-light corrections are delivered; bear access and broader visual qualification remain open. | 2026-10-17   |
+| Status      | Current progress                                                                                     | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Deer stride and wolf forepaws are refined; bear access and broader visual qualification remain open. | 2026-10-17   |
 
 **Art direction — October 16, 2026:** beautiful dimensional pixel art must retain believable real-world proportions. Visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art is rejected under the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026). This is the bundled world’s artistic target, not a universal engine constraint.
 
@@ -15,6 +15,16 @@ The earlier documentation request delivered the agreed direction, design and tas
 The documentation snapshot was `/Users/mzw/.codex/worktrees/415f/OpenLegend`, `codex/mercenary-original-refinement` at `ab0de7555`. Mike subsequently explicitly authorized V3D01.1–V3D01.12 implementation through integration, experiments and final review, preserving the existing playable scene and progress. The earlier planning-only statements describe those earlier document tasks.
 
 ## Replace the remaining Quaternius selections — October 16, 2026 EDT
+
+### Repair deer stride and wolf forepaws — October 17, 2026
+
+Mike rejects the current doe/stag walk as spider-like and the wolf forepaw deformation as boneless; retain the otherwise acceptable wolf gait. Work starts at `dc20b4c97` in the same checkout/branch and explicit local base recorded below. No missing base commits or reconciliation are required.
+
+Plan: inspect complete source/exported stride cycles, joint constraints, foot trajectories and skin weights; correct the offline animation/weight owners; preserve the prior exports and captures; regenerate all three coats; inspect side/front/quarter motion and planted/swing phases in the actual renderer, then update evidence/current specs and commit. Expected scope is 150–300 executable lines in the existing two Blender recipes, with moderate visual risk. Trees, lighting, scale, pixels, gameplay travel and runtime rendering stay unchanged. Completion requires credible articulated legs and forepaws throughout looping motion, not merely matching first/last keys.
+
+Performance: cost grows with source vertices and sampled offline frames; runtime still uses shared clips and GPU skinning. Bake corrections once into current assets; only regenerated assets invalidate existing load caches. Compare exported bone/vertex/channel counts and bytes, confirm no additional recurring runtime calculations, and verify actual browser playback. No broad benchmark is needed unless the correction changes that workload. Preserve three finish choices and dated before/after motion evidence. No external paid work is planned.
+
+**Gait correction delivery — 2026-10-17 02:09 EDT / 06:09 UTC:** corrected footfall order, fixed leg lengths/bend planes and smooth foot-contact velocity for deer/stag; retained wolf gait timing while removing foreleg stretching and excessive toe curl. All three coats, previous exports/editable sources and trials are preserved. [The focused evidence](../verification/natural-source-replacements.md#deer-stride-and-wolf-forepaws--october-17-2026) records actual export/joint/browser checks and unchanged runtime workload; [the gallery](../../art-direction/studies/2026-10-17-grounded-animal-gaits/comparison.html) presents the moving comparisons. Broader production/creator gates remain separate.
 
 ### Correct the rejected animal, shrub, arrow and light results — October 17, 2026 EDT
 

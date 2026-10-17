@@ -13,6 +13,7 @@ import shutil
 import sys
 
 import bpy
+from mathutils import Matrix, Vector
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -22,68 +23,95 @@ natural = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(natural)
 
 
-def walking_action(rig):
-    """Author a four-beat walk through the source rig's planted-foot controls.
+def grounded_actions(rig, source_idle):
+    """Bake the source idle and a rigid, sagittal-plane four-beat walk.
 
-    Its supplied Run is a leaping bound, unsuitable for ordinary world travel.
-    Keep source anatomy/weights and idle; bake this finite gait at export time.
+    The old foot-control pass left conflicting one-/two-bone IK constraints
+    with inconsistent pole settings active. It also reversed the footfall order.
+    Solve each two-segment leg offline with a fixed bend side and bone lengths;
+    keep the original idle's evaluated poses before removing those constraints.
     """
     scene = bpy.context.scene
-    original_action = rig.animation_data.action
+    rig.animation_data.action = source_idle
+    idle_poses = []
+    for frame in range(round(source_idle.frame_range[0]), round(source_idle.frame_range[1])+1):
+        scene.frame_set(frame)
+        idle_poses.append({b.name: b.matrix.copy() for b in rig.pose.bones})
     scene.frame_set(0)
-    basis = {b.name: b.matrix_basis.copy() for b in rig.pose.bones}
-    matrices = {b.name: b.matrix.copy() for b in rig.pose.bones}
+    base = {b.name: b.matrix.copy() for b in rig.pose.bones}
+    joints = {b.name: (b.head.copy(), b.tail.copy()) for b in rig.pose.bones}
+    for bone in rig.pose.bones:
+        for constraint in list(bone.constraints):
+            bone.constraints.remove(constraint)
+
+    def bake(name, poses):
+        action = bpy.data.actions.new(name)
+        rig.animation_data.action = action
+        for frame, pose in enumerate(poses):
+            scene.frame_set(frame)
+            for bone in rig.pose.bones:
+                parent = bone.parent
+                bone.rotation_mode = 'QUATERNION'
+                bone.matrix_basis = bone.bone.convert_local_to_pose(
+                    pose[bone.name], bone.bone.matrix_local,
+                    parent_matrix=pose[parent.name] if parent else Matrix.Identity(4),
+                    parent_matrix_local=parent.bone.matrix_local if parent else Matrix.Identity(4),
+                    invert=True)
+                for channel in ('location', 'rotation_quaternion', 'scale'):
+                    bone.keyframe_insert(channel, frame=frame, group=bone.name)
+        return action
+
+    idle = bake('Idle', idle_poses)
     feet = [('Backleg_L', 0), ('Frontleg_L', .25),
             ('Backleg_R', .5), ('Frontleg_R', .75)]
-    controls = {}
-    for leg, phase in feet:
-        ankle = rig.pose.bones[leg+'.001']
-        control = next(c.subtarget for c in ankle.constraints if c.type == 'IK')
-        controls[leg] = control
-        # One source controller extends below the reachable ankle. Start from
-        # the evaluated ankle, not that unreachable target, to avoid snapping.
-        matrices[control].translation = ankle.tail
-    action = bpy.data.actions.new('Woodland four-beat walk')
-    rig.animation_data.action = action
     duration = round(scene.render.fps * 1.4)
+    poses = []
     for frame in range(duration+1):
-        scene.frame_set(frame)
-        for bone in rig.pose.bones:
-            bone.rotation_mode = 'QUATERNION'
-            bone.matrix_basis = basis[bone.name]
-        for name in ('IK-Hip', 'IK-Backbone', 'IK-Head'):
-            pose = matrices[name].copy()
-            pose.translation.z += -.08 + .018*math.cos(frame/duration*math.tau*2)
-            rig.pose.bones[name].matrix = pose
+        pose = {name: matrix.copy() for name, matrix in base.items()}
+        body_offset = Vector((0, 0, -.06 + .008*math.cos(frame/duration*math.tau*2)))
+        for matrix in pose.values():
+            matrix.translation += body_offset
         for leg, phase in feet:
-            t = (frame/duration + phase) % 1
-            stance = .66
+            # Positive phase is a later touchdown: hind, same-side fore,
+            # opposite hind, opposite fore. Feet sweep rearward in stance.
+            t = (frame/duration - phase) % 1
+            stance = .72
             if t < stance:
                 travel, lift = t/stance-.5, 0
             else:
                 swing = (t-stance)/(1-stance)
-                travel = .5-(3*swing*swing-2*swing*swing*swing)
+                # Match the planted foot's velocity at lift-off/touchdown;
+                # zero-velocity easing made every step hesitate at contact.
+                slope = (1-stance)/stance
+                travel = .5+slope*swing-(3+3*slope)*swing**2+(2+2*slope)*swing**3
                 lift = math.sin(math.pi*swing)**2
-            pose = matrices[controls[leg]].copy()
-            pose.translation.y += travel*.88
-            pose.translation.z += lift*.25
-            rig.pose.bones[controls[leg]].matrix = pose
-        bpy.context.view_layer.update()
-        for leg, _ in feet:
-            toe = rig.pose.bones[leg+'.002']
-            pose = matrices[toe.name].copy()
-            pose.translation = toe.head
-            toe.matrix = pose
-        for bone in rig.pose.bones:
-            for channel in ('location', 'rotation_quaternion', 'scale'):
-                bone.keyframe_insert(channel, frame=frame, group=bone.name)
-    # Idle does not key every controller. Restore the source baseline so the
-    # authored walk cannot leak its final foot/body offsets into that clip.
-    rig.animation_data.action = original_action
-    for bone in rig.pose.bones:
-        bone.matrix_basis = basis[bone.name]
+            root = joints[leg][0]+body_offset
+            ankle = joints[leg+'.002'][0]+Vector((0, travel, lift*.32))
+            upper = (joints[leg][1]-joints[leg][0]).length
+            lower = (joints[leg+'.001'][1]-joints[leg+'.001'][0]).length
+            axis = ankle-root
+            distance = axis.length
+            if not abs(upper-lower) < distance < upper+lower:
+                raise ValueError(f'Unreachable {leg} at walk frame {frame}')
+            axis.normalize()
+            along = (upper*upper-lower*lower+distance*distance)/(2*distance)
+            # Carpi fold forward; hind hocks fold rearward. The thin lower
+            # segments must not all bend like four copies of a hind leg.
+            bend = Vector((0, -1 if leg.startswith('Front') else 1, 0))
+            bend = (bend-axis*bend.dot(axis)).normalized()
+            middle = root+axis*along+bend*math.sqrt(max(0, upper*upper-along*along))
+            for name, start, end in [(leg, root, middle), (leg+'.001', middle, ankle)]:
+                original = joints[name][1]-joints[name][0]
+                rotation = original.rotation_difference(end-start) @ base[name].to_quaternion()
+                pose[name] = Matrix.LocRotScale(start, rotation, base[name].to_scale())
+            # Hooves keep their source shape/orientation instead of curling
+            # under themselves; their ankle joint carries the swing clearance.
+            pose[leg+'.002'].translation = ankle
+        poses.append(pose)
+    walk = bake('Run', poses)
+    rig.animation_data.action = idle
     scene.frame_set(0)
-    return action
+    return idle, walk
 
 
 def prepare(sources, species):
@@ -110,7 +138,7 @@ def prepare(sources, species):
         idle = bpy.data.actions['Idle.000']
         rig.animation_data.action = idle
         bpy.context.scene.frame_set(0)
-        run = walking_action(rig)
+        idle, run = grounded_actions(rig, idle)
         rig.animation_data.action = idle
         bpy.context.scene.frame_set(0)
         meshes = [o for o in objects if o.type == 'MESH']
@@ -123,7 +151,7 @@ def prepare(sources, species):
                 polygon.use_smooth = True
         natural.source_study.normalize(objects, height)
         identity = family+'-'+variant
-        attribution = 'Deer by CDmir / TinyWorlds, CC0, '+url+'; source skin and idle retained; four-beat walk, materials and export naming adapted by OpenLegend.'
+        attribution = 'Deer by CDmir / TinyWorlds, CC0, '+url+'; source skin and evaluated idle retained; rigid-leg four-beat walk, materials and export naming adapted by OpenLegend.'
         asset, root = export_asset(objects, output, identity, family, 'Woodland doe · corrected rig' if species == 'deer' else 'Woodland stag · corrected rig', variant,
             'Source anatomy and eyes, '+('original albedo control.' if variant == 'source' else variant+' coat finish with fixed-density pixel rendering.'), variant == 'quiet', attribution)
         if variant != 'source':
