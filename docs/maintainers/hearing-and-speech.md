@@ -4,6 +4,8 @@
 
 HE01–HE04 deliver [hearing and speech](../hearing-and-speech.md), [timed UI](../timed-ui.md) and [Perceived World Events](../perceived-world-events.md). HE05 separates current integration evidence from broader acceptance. This feature uses existing EPR/NC/SW/CR/PF, authority, history and memory owners; it does not introduce another event system or scheduler.
 
+**Accepted SPK design, October 17, 2026; implementation pending:** [speech and social perception](../projects/speech-and-social-perception-feature-spec.md) selects unambiguous direct addressing for an audible recipient without sight, reliable identity with names separate, ordinary exchanges without joins/merges, and native sound reactions independent of autobiographical memory or speech capability. The [technical design](../projects/speech-and-social-perception-tech-design.md) and [SPK tracker](speech-and-social-perception.md) own this coordinated change, including recipient cues and full structured evidence through memory. HE01–HE04's checked foundations remain historical/delivered facts; HE05's wider acoustic, density, accessibility and provider acceptance remains open. [SSP-H01/SSP-H02](../limits/hearing-and-speech.md#ssp-h01--received-direct-addressing) record the changed eligibility boundaries. Physical voice analysis, timed media, waking and richer room acoustics are not prerequisites.
+
 ## Current integration
 
 The source `feat/hearing-speech-captions` at `c4379246` is preserved as `codex/hearing-before-main-20260926`. Its final feature tree was consolidated, then rebased in `codex/hearing-ready-for-main` onto main `45210d41`, including native actions and the latest scene/cognition/persistence improvements. `codex/hearing-main-integration` preserves the earlier squash. The [integration plan](../projects/hearing-main-integration.md) and [current evidence](../verification/hearing-main-integration.md) own reconciliation and validation details. That integration did not rewrite remote source history. It is now merged into local main as `61437608`.
@@ -28,6 +30,8 @@ The [scale/startup continuation](../verification/three-times-scene-performance.m
 - [x] Preserve participation, life, sleep and capability gates, visual-only cues and distinct self-expression. Geometry caches retain useful admitted entries and evaluate overflow exactly.
 
 ### HE02 — Speech admission and durable listener evidence
+
+The accepted SPK target supersedes the current sight/intelligible-word prerequisites specifically for the audible addressee's received-address role, and carries structured permitted roles through every memory/consolidation consumer. It does not grant unintelligible words, bypass acoustic reach or revoke the checked fragment/privacy foundations below. New implementation and round-trip acceptance live only in SPK.
 
 - [x] Carry volume through player/model schemas, native admission, retries, receipts and fallback. Commit one event plus stable listener capsules; intended recipients do not grant acoustic access.
 - [x] Use scoped evidence in history, context, recall, Narrator, reaction routing and public projection. Require original intelligible evidence before interactive decisions, including actor-scoped cold hydration from main; never match raw text to recover a trigger.
@@ -75,7 +79,7 @@ Earlier [initial/review records](../verification/hearing-runtime-and-reviews.md#
 - [ ] Apply dispatch/publication and byte-batch qualification to other derived writers, especially invention retrieval, under CR/INV. Oversized optional records need an explicit semantic-chunking policy rather than truncation.
 - [ ] Qualify Intl segmentation across heterogeneous runtimes before deterministic replay of newly admitted speech across them. Stored fragments never reroll.
 
-Rooms/portals, frequency bands, physical speech duration/overlap, voice recognition, language comprehension and native noise effects remain deliberately outside v1. [Limits](../limits/hearing-and-speech.md) records current choices and absent bounds; no acceptance checkbox closes merely because code or a specification exists.
+Rooms/portals, frequency bands, physical speech duration/overlap, physical voice-recognition analysis, language comprehension and new sound-triggered injury/waking remain deliberately outside v1. Reliable identity and native animal sound-reaction intake are now selected SPK work; do not leave them deferred behind optional media or a general noise simulation. [Limits](../limits/hearing-and-speech.md) records current choices and absent bounds; no acceptance checkbox closes merely because code or a specification exists.
 
 ## HE06 — Attributed correction
 
@@ -101,3 +105,4 @@ Rooms/portals, frequency bands, physical speech duration/overlap, voice recognit
 - [ ] **HE07.6 — Complete growth and lifecycle accounting.** Bound synthesis/capture requests, admitted variants, connections, queued age/bytes and transient media storage through existing owners. Measure cold/warm synthesis, actual emitted and delivered duration, transcription, egress, retained text and overload. No unattended background media generation, silent listener truncation, permanent audio cache or new inference cadence; current-format restore and erasure invalidate stale media without recreating paid attempts.
 
 **Exit:** the selected stage improves a real exchange, remains fully playable through text, and preserves actual evidence, privacy, current authority and spending across its ordinary and failure journeys. HE07.1–HE07.3 can finish before timed speech or raw voice. Optional private calls are NC23, independently of a full acoustics catalogue.
+

@@ -6,6 +6,14 @@ Values describe the stated baseline, not approved future targets. Entries marked
 
 Implementation starting points: [experience.ts](../../packages/domain/src/experience.ts), [memory-repository.ts](../../apps/server/src/memory-repository.ts), [cognition-maintenance.ts](../../apps/server/src/cognition-maintenance.ts).
 
+## SSP-M01 — Stable recognition and known names
+
+**Proposed — accepted SPK target; runtime not delivered. Restrictiveness: deliberate base-world simplification.** Reliable recognition binds a legitimately associated individual to the same stable subject across departure, return and save/load without requiring a known name, a naming operation or conversation membership. The observer sees a permitted exact reference and known/unknown label, not a global name or hidden current position. Current episode-only recognition and its 30-second grace remain implemented until cutover; encounter recording bounds stay separate. Physical face/voice analysis, disguise and mistaken identity are later world-owned rules. Unknown/unassociated sources remain unknown, and deliberately forgotten/revoked associations follow their owner instead of being restored from raw IDs. This chooses practical recognition continuity while avoiding a biometric simulation. [Base-world policy](../worlds/base/knowledge.md#identity-and-recognition), [technical design](../projects/speech-and-social-perception-tech-design.md) and [SPK](../maintainers/speech-and-social-perception.md).
+
+## SSP-M02 — Structured experience is the semantic source
+
+**Proposed — accepted SPK target; partial foundations exist. Restrictiveness: preserve permitted meaning before accepting transformations.** Full structured observer-permitted experience survives supported memory adapters, SQL hydration, context preparation, indexing, compaction, consolidation and reflection/dream inputs. Human-facing wording is derived through shared functions, never the sole semantic source. Preserve supplied exact participant/recipient roles, quantities/units, source/time/order, acquisition, identity/name distinctions and uncertainty; unknown fields are not filled from privileged truth. A summary needs retained structured evidence or a faithful structured representation with resolvable sources, not merely links to already lossy display strings. The rule applies to speech and other supported experience families, without a new writable mind or per-field dictionary for all world mechanics. Existing row/byte/request limits bound work; overflow defers/refuses instead of silently discarding promised facts. Existing explicit forgetting/decay/privacy rules still govern genuine detail retirement, so this creates no unlimited lifetime-retention promise. [Memory contract](../memory-architecture.md#structured-permitted-experience) and [SPK](../maintainers/speech-and-social-perception.md) own end-to-end acceptance. DG23's later reinterpretation remains independent.
+
 ## LA007
 
 **Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
@@ -558,6 +566,8 @@ Conversation/required/correction preparation allows 8,192 unique sources and 4 M
 
 **Reason / tradeoff:** Keep ordinary decisions from materializing arbitrary history while preserving all durable evidence. Conversation context now uses [actor-scoped compaction](narration.md#la236); metadata admission and uncovered-body hydration retain these safety bounds, so an oversized cold preparation still fails explicitly. Optional top-result limits do not bound exact search. [Owner](../memory-architecture.md#retrieval-preparation-admission).
 
+**Accepted SPK integration:** Replace mandatory Conversation membership as a selector/cache dependency while retaining complete actor-permitted source preparation, these admission bounds and source/privacy revision validation. Structured source bodies and their semantic renderings must both fit the applicable preparation path; a concise display sentence is not permission to drop the structure. [SSP-M02](#ssp-m02--structured-experience-is-the-semantic-source) and [SPK](../maintainers/speech-and-social-perception.md) own the stronger target; no new numeric allowance is selected.
+
 ## MH05
 
 **Changed · Restrictiveness: Safe for awareness; Too liberal for remaining personal-memory growth.**
@@ -640,6 +650,8 @@ The creator memory editor accepts up to 32,768 characters per personal summary (
 
 **Proposed · Restrictiveness: preserve meaning before accepting output.** Reuse existing source preparation, publication and supported output envelopes. Current consolidation preparation is 128 sources / 512 KiB per repository batch; grouping must not lose relevant chronology, uncertainty, distinct consequential incidents or protected commitments merely to fit it. No weekly full-life reread is added. A larger required episode needs the existing admitted continuation or an explicit deferred result. Repeating an interpretation never manufactures independent historical support. Owner: CR06/EC03/EC06; [MH04](#mh04) remains the distinct general retrieval bound.
 
+SPK's [structured source preservation](#ssp-m02--structured-experience-is-the-semantic-source) is a selected prerequisite/consumer correction, not delivery of DG23's subjective reinterpretation, dream transformation or integrated character-quality acceptance.
+
 ## EC-L06 — Dependency closure and private ownership
 
 **Proposed inherited requirement · Restrictiveness: complete affected evidence, growing work remains exposed.** All interpretations remain actor-owned and source-sensitive; human private text is not creator-visible by default. No new private growth log, hidden trait evidence or external memory authority. Current correction/forgetting may conservatively clear all affected nonprotected self-understanding, notes and appraisals rather than prove selective retention. [MH07](#mh07)/C21 retain uncapped affected-dependency work; a small output is no proof of bounded invalidation. Old jobs, saves and dream material cannot restore forgotten detail. Owner: CR/ACT privacy, EC03 and DG25.
@@ -651,3 +663,4 @@ The creator memory editor accepts up to 32,768 characters per personal summary (
 ## EC-L08 — Presentation and full-cost qualification
 
 **Proposed · Restrictiveness: concise existing surfaces.** No growth panel, permanent change badge, automatic confession or extra notification count is required. Use existing permitted self-understanding, subject notes and short thought presentation; the current 1–3 thoughts, twenty-word presentation and latest-100 thought history remain their separate owners. A callback must concern actual supported activity. Bounded pages do not bound lifetime search, active context size, all history or queued work. EC04/CE05/CR12 qualify delayed voluntary conduct and total cost before optional expansion; numerical targets await the developmental baseline, not this documentation task.
+

@@ -2,6 +2,8 @@
 
 The base world uses editable notepads for current understanding and observer-assigned given names for individuated subjects. [Engine knowledge](../../knowledge.md) owns document validation, references, persistence and privacy; [Memory architecture](../../memory-architecture.md) owns experiential memory and cognition integration.
 
+The accepted [speech and social perception feature specification](../../projects/speech-and-social-perception-feature-spec.md) and [technical design](../../projects/speech-and-social-perception-tech-design.md) replace the current episode-limited recognition rule with reliable recognition of legitimately associated individuals, keeping names separate. [SPK](../../maintainers/speech-and-social-perception.md) owns implementation; the target below is not a claim that the runtime already reconnects an unknown person's later encounters.
+
 ## Notepads
 
 `packages/domain/src/worlds/base/config/knowledge.yaml` is the authored policy source. Its generated JSON stays beside it; the domain reads generated data without filesystem or YAML I/O. `knowledge.policy: editable-notepads` selects the bundled native policy. `knowledge.maxCharacters.general` is **5,000** and `knowledge.maxCharacters.subject` is **1,000**. They count Unicode code points. Changing these definitions cannot bypass engine request/storage limits.
@@ -14,6 +16,16 @@ Immediate cognition may propose optional `note` and `name` operations. Reflectio
 
 ## Identity and recognition
 
+### Accepted stable recognition target
+
+The base world uses stable individual identity as its ordinary recognition simplification. Once permitted perception legitimately associates an individual with an observer's subject reference, the observer can recognize that same individual on a later supported encounter without knowing its name. Leaving sight, closing Talk or speaking to someone else does not erase that binding. Recognition does not depend on conversational enrollment, a paid naming decision or creating a subject notepad. Preserve it through save/load and ordinary memory/context transformations while its source and identity policy remain valid.
+
+Keep three facts separate: the actual subject's stable engine identity, the observer's permitted reference to that subject, and the observer's known or chosen name. Cognition uses a scoped exact reference with a permitted label such as “a person”; recognizing that person does not disclose the global entity name. Repeated species labels can refer to distinct people without name matching. A later name or introduction attaches to the existing recognized subject, preserving its earlier experiences and their event-time labels. Current labels may change without rewriting old quotations or pretending the name was known earlier.
+
+This is a world-owned reliable-recognition rule, not a biometric face/voice model or universal perfect knowledge. A reference does not grant a hidden current position, unseen activity, ownership of an unidentified voice or another observer's knowledge. The [hearing contract](../../hearing-and-speech.md#received-direct-addressing--accepted-target) lets an audible recipient know it was addressed without sight; source identification remains a separate permitted fact. Unknown sources remain unknown until legitimately associated. Other worlds can supply supported disguise, mistaken identity or recognition rules through the existing perception/identity owner. [SSP-M01](../../limits/memory.md#ssp-m01--stable-recognition-and-known-names) records the selected simplification and its current-runtime gap.
+
+### Current delivered binding
+
 `observerIdentity.policy: observer-given-names` selects the bundled naming behavior. `givenName` is the observer's preferred individual label, limited to 120 characters as a short label, not additional prose storage. Ada may call someone “the beggar” while Mike calls the same person “Tomas.” Accepting an introduction may update the preferred given name. Its canonical subject association preserves earlier memories; no global entity rename or unbounded alias list is required.
 
 Merely seeing “a beggar” or “a deer” does not individuate or name it. Unnamed or name-unknown actors have bare canonical observer labels such as “person” and “deer,” with a species and a scoped exact reference. Profiles show “a person” or “a deer”; compact menus use bare labels; prose chooses its article through the shared [naming contract](../../entity-names.md). An explicitly assigned name “Deer” is still a name. Self-name comes from the actor's authored identity; other global entity names are not revealed by visibility. Deliberate naming or creation of a subject pad establishes an individual record.
@@ -22,12 +34,19 @@ The first recognition policy supports **uninterrupted observed encounters and ex
 
 Targeted teaching, attacks and gestures keep the target's global name out of their shared event text. When an actor witnesses one, the event owner writes that actor's own target label into its stored perspective: a learned name, a species label, or “me” for the target itself. Later name learning does not rewrite what the actor originally witnessed. Words inside attributed quotations are preserved. The same perspective feeds World Events, conversation presentation, memory search and cognition.
 
-This is intentional v1 specificity: the policy lives in `packages/domain/src/worlds/base/knowledge.ts`, separate from generic documents. A future recognition consumer—faces, voice, distinguishing marks, disguise, mistaken identity, or another world's identity rules—extends/replaces this binding policy through the perception owner. Current continuity does not claim visual recognition or perfect identity tracking. No plugin loader or knowledge-graph framework is introduced.
+This is the current v1 specificity: the policy lives in `packages/domain/src/worlds/base/knowledge.ts`, separate from generic documents. SPK replaces its episode-only recognition restriction with the accepted stable rule above. Physical faces/voice analysis, distinguishing marks, disguise, mistaken identity and other worlds' identity rules remain separate consumers of the perception owner. Current continuity does not claim visual recognition or perfect identity tracking. No plugin loader or knowledge-graph framework is introduced.
 
 ## Spoken introductions
 
 Generated speech includes nullable `talk.selfIntroduction`: the exact name or preferred label the speaker explicitly introduces in that utterance. It is a communicated claim, potentially an alias, not the speaker's authoritative global name. Mentions of other people, quotations and ordinary self-descriptions are not introductions. The same generation supplies this annotation; no second model call or English-pattern parser is needed.
 
-Committed speech carries the annotation in its event. The base-world reception policy accepts it for actual listeners who can see the speaker and have a supported current identity binding. It uses the normal observer-name mutation, including for player-controlled listeners who do not run autonomous cognition. Repeated identical introductions do not advance revisions. An invalid, oversized or absent-from-speech annotation is discarded without rejecting speech. Unheard or unidentified speakers cannot reveal an entity's name; introduction metadata does not bypass the recognition rules above.
+Committed speech carries the annotation in its event. The **current** base-world reception policy accepts it for actual listeners who can see the speaker and have a supported current identity binding. The accepted SPK target instead uses the listener's permitted stable source association and actually understood introduction; sight is not a universal additional prerequisite. It uses the normal observer-name mutation, including for player-controlled listeners who do not run autonomous cognition. Repeated identical introductions do not advance revisions. An invalid, oversized or absent-from-speech annotation is discarded without rejecting speech. Unheard or unidentified speakers cannot reveal an entity's name; introduction metadata does not bypass recognition or supply missing words.
 
 The public entity and conversation labels update from the listener's knowledge. A private `name` operation changes the acting observer's labels and is not a way to introduce oneself to another actor. Historical speech without an introduction annotation remains unchanged; a fresh supported introduction can teach the name. Raw player speech remains ordinary text, which NPC cognition can interpret through its existing observer-name operation.
+
+## Maintained records
+
+- Implementation: [cognition](../../maintainers/cognition-redesign.md) and the accepted [SPK target](../../maintainers/speech-and-social-perception.md).
+- Limits: [knowledge and memory](../../limits/memory.md), including [stable recognition](../../limits/memory.md#ssp-m01--stable-recognition-and-known-names), and the current [encounter policy](../../limits/cognition.md#cg10).
+- Related design: [speech and social perception feature specification](../../projects/speech-and-social-perception-feature-spec.md) and [technical design](../../projects/speech-and-social-perception-tech-design.md).
+

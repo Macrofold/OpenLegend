@@ -8,6 +8,22 @@ Implementation starting points: [story-selection.ts](../../packages/domain/src/s
 
 Private NPC preview constraints are owned by [NPV01](interface.md#npv01--private-npc-reply-preview). Provisional Talk text does not enter speech, memory, caption or conversation records; these still require final native admission and actual listener projection. [NP05 evidence](../verification/npc-reply-preview.md) distinguishes private early reading from committed speech. No narration retention or audience policy changed.
 
+## SSP-N01 — One optional addressee
+
+**Proposed — accepted SPK target; runtime not delivered. Restrictiveness: deliberate first scope.** Ordinary speech has one speaker and either one intended addressee or none. Multiple explicit addressees are deferred; ambient speech can still be heard and answered by many actors. Refuse an unsupported multi-target submission rather than inventing group membership, selecting one silently or duplicating the utterance. The restriction keeps a clear first interaction without capping the acoustic audience. Expand only through a selected multiple-addressee use. [Speech contract](../narration-and-conversations.md#player-speak-and-descriptive-act), [SPK feature specification](../projects/speech-and-social-perception-feature-spec.md) and [implementation tracker](../maintainers/speech-and-social-perception.md).
+
+## SSP-N02 — Ordinary exchanges without membership
+
+**Proposed removal — accepted SPK target; current lifecycle remains implemented. Restrictiveness: removes an unnecessary social restriction.** Ordinary Speak, Speak-to and NPC speech no longer require Conversation joining, merging, a single active group or timed group departure. Opening/closing a reading view is presentation, not social consent. Genuine private-channel, travel, activity and agreement consent remain with those mechanics. Preserve actor-permitted context, chronological paging, exact recent speech and faithful older summaries through source-linked selection; group removal cannot silently erase history or grant earlier unheard words. LA180/LA181 retain current lifecycle evidence until cutover. No replacement authoritative semantic grouping engine or lifetime-history scan is selected. [Lifecycle target](../narration-and-conversations.md#6-durable-conversation-lifecycle) and [SPK](../maintainers/speech-and-social-perception.md).
+
+## SSP-N03 — No semantic reply linkage
+
+**Proposed — accepted SPK target. Restrictiveness: deliberate simpler meaning.** Do not add semantic `replyTo` or require a conversation ID on every speech occurrence. A response can relate to several remarks, a physical event or a broader context. Retain exact operational source-event/request identity for dispatch ownership, stale-result validation, provenance, preview and duplicate-response prevention; those bindings do not assert a fictional single-parent reply relationship. Optional derived history grouping is rebuildable and never grants awareness or controls ordinary action lifetime. The separately proposed attributed-correction relationship retains its own product authority. [Technical design](../projects/speech-and-social-perception-tech-design.md) and [SPK](../maintainers/speech-and-social-perception.md).
+
+## SSP-N04 — Shared player composition availability
+
+**Proposed — accepted SPK target; runtime not delivered. Restrictiveness: explicit product gate.** Disable committing all three player composition paths—Speak, Speak-to and freeform descriptive Act—while the shared character AI service is unavailable, even when a particular speech could be stored natively. Preserve editable drafts, state the unavailable service and recheck availability at submission. Recovery never auto-sends a retained draft. This intentionally removes the current ambient/non-NPC bypass so player-authored interaction has one understood availability rule. It is not an acoustic law, a claim that every listener must answer, or a reason to stop unrelated native simulation; cognition, memory maintenance and other feature budgets retain their own admission. [Composition contract](../narration-and-conversations.md#player-speak-and-descriptive-act) and [SPK](../maintainers/speech-and-social-perception.md) own implementation and qualification.
+
 ## Selected DG15 product proposal
 
 [After you left](../projects/story-perspectives-feature-spec.md) proposes one optional historical external perspective. SP01–SP08 are unimplemented product choices; they do not change the current LA/NR baseline below. [NC20](../maintainers/narration-and-conversations.md#nc20--optional-after-you-left-perspective) owns the consumer through existing NC execution, privacy and history work. Correct source authority and accounting are invariants, not limits that may be relaxed to obtain more stories.
@@ -194,6 +210,8 @@ Original recommendation: **Keep**.
 
 The playing browser reports presence every 5 wall-clock seconds. Conversation inactivity defaults to 1,800 game seconds, configurable from 60 to 86,400; paused worlds do not accrue simulated inactivity. These are separate clocks and consumers.
 
+**Accepted target disposition:** SSP-N02 removes ordinary conversation inactivity/departure semantics; browser presence keeps its independent connection owner. This row remains current-source/historical evidence until the SPK cutover, not a target lifetime for the new exchange context.
+
 **Reason / tradeoff:** Review connection traffic and conversation lifetime separately so a useful conversation does not end merely because a timing default is too short.
 
 [Implementation source](../../apps/server/src/config.ts).
@@ -207,6 +225,8 @@ Original recommendation: **Review**.
 **Source-checked · Restrictiveness: Safe.**
 
 A disconnected participant retains membership for 60 wall-clock seconds by default, configurable from 5 to 600 seconds, before native departure.
+
+**Accepted target disposition:** SSP-N02 removes ordinary membership and this conversation-specific disconnect grace. Actual access, body, timeline and connection policies remain independently authoritative. Runtime removal is still SPK implementation work.
 
 **Reason / tradeoff:** Keep time for brief reconnects while ensuring abandoned conversations eventually close.
 
@@ -268,6 +288,8 @@ Conversation metadata admission retains the existing 8,192-row boundary, and unc
 **Reason / tradeoff:** Bound model context and paid cold preparation while preserving durable evidence and actor hearing. The initial split leaves most space for recent exact wording and favors recall within the older summary. Live qualification rejected nano cleanup after drift and the mini route after invented disagreements in overheard dialogue; it uses the configured complex reasoning route at low effort. Rolling prose can still lose detail; repeated old-topic or attribution failures are the trigger to evaluate source-backed segments/retrieval behind the existing owner, not to widen disclosure or hide missing evidence. These are initial qualified examples, not optimal allocations or universal model-quality guarantees.
 
 **Assessment:** Keep the bounded projection; tune the split/model from continuity traces. Expand cold rebuild only with a bounded continuation strategy and spending evidence. There was no prior runtime compaction allocation to remove; the earlier full-transcript admission failure is replaced by on-demand compaction, with explicit capacity failures retained.
+
+**Accepted SPK integration:** Preserve these bounded preparation, exact-suffix, required-source and honest-failure guarantees while replacing mandatory social-group selection/cache identity. The new design selects no larger model allowance, new lifetime cap or per-utterance paid summary. Structured permitted evidence, including speaker/addressee roles, must survive compaction and remain resolvable under [SSP-M02](memory.md#ssp-m02--structured-experience-is-the-semantic-source); earlier grammatical qualification alone does not establish that stronger end-to-end contract. [SPK](../maintainers/speech-and-social-perception.md) owns this coordinated consumer change.
 
 [Canonical behavior](../narration-and-conversations.md#model-facing-conversation-compaction) · [Design](../projects/completed/conversation-compaction-tech-design.md) · [Evidence](../verification/conversation-compaction.md#conversation-compaction) · [NC14–NC17](../maintainers/narration-and-conversations.md).
 
@@ -336,3 +358,4 @@ The [DG33 proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.m
 ## CA-L06 — Existing paid and private-source owners
 
 **Proposed · Restrictiveness: shared bounded admission.** Two-human call control needs no model; optional dictation/synthesis uses existing spending with actual outstanding and uncertain costs. A future NPC participant needs NC22.6's restricted human-private derivatives, safe human takeover and its existing complete actor budget, without a call-specific paid loop. Current blocks/device revocations, authority and real accounting remain current across supported fictional restore. The first service has no recording archive or all-world presence directory.
+

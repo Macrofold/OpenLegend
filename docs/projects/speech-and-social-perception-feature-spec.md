@@ -1,0 +1,199 @@
+# Speech and social perception — feature specification
+
+| Status | Current progress | Last updated |
+| --- | --- | --- |
+| In progress | The selected behavior is designed; implementation and behavioral qualification remain in SPK01–SPK11. | 2026-10-16 |
+
+## Purpose and design status
+
+People should be able to say something into the world, or say it to one particular person, without entering a separate social session. Others hear according to their senses and the world's acoustics. An addressed person knows the words are meant for them when they detect the speech, even if they cannot see the speaker. Every eligible listener can decide whether the moment deserves attention, speech, another action or no response. An animal can hear a voice and react without understanding language or possessing a human-style life history.
+
+The resulting experience must remain intelligible later. A character can remember that the same unfamiliar person spoke to them, then recognize that person on a later encounter, without having learned their name. Logs should say things such as `Ada said to me: “The bridge is closed.”` Stored facts, memories and AI preparation retain the full permitted event experience behind that sentence; the sentence is a presentation of those facts, never their replacement.
+
+This pair records Mike's selected ordinary-speech design and brings forward the relevant slice of [ND16](../maintainers/needs-design.md#nd16--hearing-speech-and-indirect-sensory-propagation). The authoritative behavior owners are [Hearing and speech](../hearing-and-speech.md), [Narration and conversations](../narration-and-conversations.md), [Memory architecture](../memory-architecture.md) and the bundled world's [recognition and names](../worlds/base/knowledge.md). Those owners distinguish accepted targets from the inspected runtime. This document explains the selected project, playable outcomes and acceptance scenarios. It does not claim that the new behavior already works.
+
+The inspected implementation baseline is `Macrofold/OpenLegend`, GitHub `refs/heads/main`, commit `465ace1e8d7ee94a267e762d2d93970de17b2ed0`. Existing conversation membership, visibility-dependent addressing and memory-dependent hearing are replacement targets. Prior verification of those mechanisms remains historical evidence, not verification of this design.
+
+## Maintained records
+
+- Implementation, dependencies and remaining acceptance: [Speech and social perception tasks](../maintainers/speech-and-social-perception.md), SPK00–SPK11. This is the sole owner of new task bodies.
+- Mechanism and exact source-owner map: [Technical design](speech-and-social-perception-tech-design.md).
+- Limits and constraints: [Narration](../limits/narration.md), [Hearing and speech](../limits/hearing-and-speech.md), [Memory](../limits/memory.md), with existing [Cognition](../limits/cognition.md) and [Native work](../limits/native-work.md) bounds reused.
+- Related work: [Character experience](../maintainers/character-experience.md), [Cognition redesign](../maintainers/cognition-redesign.md), [Attention and scenes](attention-and-scenes-feature-spec.md) and [Continuing lives](continuing-lives-feature-spec.md). A speech event may affect these systems; it does not deliver their whole remaining scope.
+
+## Selected behavior
+
+### One utterance, one optional addressee
+
+Ambient Speak means “I say these words aloud.” It creates one speech event with a speaker and no explicit addressee. No proximity rule, open panel, last interlocutor or AI expectation silently supplies an addressee. A question to the room remains ambient unless the speaker explicitly selects one person.
+
+Speak-to means “I say these words aloud to this person.” Right-clicking a person and choosing the offered Speak-to action selects that person for the composer. The player can see and clear the selection. Submission carries exactly that selection into the speech record. This first version supports one selected person or nobody; multi-recipient addressing remains a later extension, not an array the first implementation must partly support.
+
+Both forms use the same emission and hearing rules. Directed speech does not become private, extend audible range, bypass a wall or become a guaranteed reply. It still appears above the speaker when that caption is legitimately visible, and everyone capable of detecting it can have their own experience. Other actors are free to answer, interrupt, react silently or ignore it. The same ambient/directed distinction is available to NPC decisions.
+
+A direct address is an intention, not successful delivery. If Ada has left audible range before the player speaks, the committed utterance still records the player's intended recipient if the target remained valid at admission; Ada acquires no speech experience. If the selected reference itself has become invalid or unauthorized, submission gives the normal understandable failure, keeps the draft and does not silently redirect to another person or convert it to ambient speech. Target validation and the availability of a communication reference follow the technical design; a body click does not grant permanent remote communication.
+
+### Detecting speech and understanding words are separate
+
+For a language-capable person who audibly detects an utterance addressed to them, “this was addressed to me” is mechanically certain. It does not require seeing the speaker, seeing a mouth move, seeing their own body from another observer's viewpoint, or hearing enough words to reconstruct the message. This is the deliberately simple equivalent of a clear call for that person. Do not infer that the utterance literally contained their name, or teach anyone a name that was not actually learned.
+
+An addressed listener can hear an indistinct call, know that it addresses them and ask “What did you say?” Their experience must not contain missed words. A listener who detects nothing receives neither the words nor an addressed notification. Deafness, an unavailable sense, the world's hearing conditions and any existing unconsciousness rules remain effective. This project does not implement waking from sound or remote mind-to-mind communication.
+
+A bystander may know that speech was directed while lacking a permitted identity for its recipient. Represent that distinction faithfully: “Ada said to someone: …” is different from “Ada said: …”. When the bystander's evidence permits the recipient's identity, retain it. Do not look up the true target's private name or hidden body just to fill in a label. The guarantee that the recipient knows they are addressed does not grant every bystander omniscient knowledge of that recipient.
+
+### Recognizing a person is different from knowing a name
+
+The bundled world selects reliable face/voice recognition for ordinary recognizable people. A stable person identity can therefore associate today's perceived person with the person encountered before. No separate face-recognition score, probabilistic matching service or uncertain “maybe that was you” mechanic is required for this version.
+
+Recognition requires a legitimate exposure through a supported sense. A stable database identifier is the implementation's continuity key; it is not a user-visible name and is not a source of extra knowledge. If the world's projection associates a perceived voice with a known person, that person may be a valid communication reference even while unseen. Their present coordinates, possessions and physical reach do not follow from that recognition. Generic acoustic direction is not exact body location.
+
+Before introduction, the player and NPC can use an observer-appropriate label such as “the unfamiliar woman” or an already assigned nickname. Two unnamed people remain two identities, even if the available descriptions sound alike. Two people called Ada also remain distinct. Later learning a name changes how current presentation can refer to the same person; it does not rewrite the original words or pretend the name was known at the earlier time. Remembered labels and knowledge at the time remain available in the structured experience.
+
+### Participation is a choice made in the world
+
+Ordinary dialogue has no join, leave or merge operation, no mandatory membership roster and no restriction to one active conversation. Hearing something does not enroll a person. Looking at someone or opening their history does not enroll either participant. Walking away changes what can be heard and done; it need not close a social object. Disconnecting changes player presence through its existing owner, not who supposedly belongs to a conversation.
+
+There are still real people, exact utterances, remembered exchanges, ongoing activities and explicit commitments. The UI can arrange these for reading. An NPC can attend to Ada while another nearby person speaks, switch attention, address the room, answer a bystander, continue working, or decline to engage. Removing a membership object must preserve access to useful prior dialogue and any separately accepted cooperation; a promise does not disappear when its participants stop speaking.
+
+No authoritative “this answers utterance X” field is introduced. If two people ask questions and someone says “yes,” a character interprets the available evidence or asks for clarification. A provider operation may still be linked to the exact utterance that caused the computer to prepare an AI decision, so retries, cancellation, diagnostics and provisional output remain safe. That operational link must never be presented to a character as proof of the speaker's semantic intent or consent.
+
+### Natural responsiveness without mandatory replies
+
+Addressed speech is a clear piece of decision evidence, not a command to talk. A plausible response can be a spoken answer, a gesture or another supported action, a private numerical/psychological reaction where installed, continued work, hesitation or deliberate silence. Personality, present concerns, relationships, remembered experience, the content actually understood and the installed world rules inform the decision. An ambient greeting is more inviting than muttering about a stone; neither guarantees every nearby NPC starts a conversation.
+
+The AI must be able to distinguish “I was addressed,” “I overheard someone address another person,” “I heard undirected speech,” “I heard a voice but missed the words” and “I myself said this.” The decision's source material includes who said what and the available addressing evidence. Do not ask the model to recover those distinctions by parsing an abbreviated display sentence.
+
+The response system must permit no spoken output and must not manufacture one to satisfy a chat request. An unavailable or failed AI decision is a computer outcome, not evidence that the NPC chose silence, ignored the player or felt a particular emotion. Meaningful behavioral qualification must examine both excessive conversation starts and missed reasonable opportunities across different dispositions.
+
+## Player experience and shared presentation
+
+### Composer and availability
+
+Ambient Speak, Speak-to and freeform Act share one player-facing availability rule: when there is no usable AI service for this authored interaction, these freeform controls are disabled with an understandable reason. Apply the same decision at the application boundary, including keyboard shortcuts, alternate action menus and direct requests; a disabled button alone is insufficient. Ordinary installed actions that do not require that service keep their existing availability.
+
+Temporary busyness is distinguishable from unavailability. Existing admission and queue policy decides whether the player waits or retries; this project adds no automatic paid retry and no private bypass through a different speech path. Keep typed text and the selected addressee during a failure, disconnection or rejected admission, subject to the existing player's draft/privacy lifetime. Recovering availability never sends the draft automatically.
+
+Check known availability before committing a new player utterance or starting a freeform act. If a provider unexpectedly fails after a properly admitted utterance has already become an event, preserve the utterance and every real listener's experience. Retrying the same submitted request must recover its receipt without speaking again. A deliberate new submission is a new utterance. Other characters hearing the first utterance is not contingent on an AI reply succeeding.
+
+### Above-head speech and readable logs
+
+The caption belongs to the speaker. A quiet label such as `To Ada` or `You → Ada` shows directed speech where the observer may know that label; it does not move the speech to the recipient or draw a compulsory connecting line. Keep the spoken text dominant. Provide the same addressing meaning to assistive technology; do not rely only on an arrow, placement, color or hover. Never use the middle-dot character as a separator in the new speech presentation.
+
+The structured event model and its display are explicitly different representations. Shared presentation functions accept permitted speech experience, perspective, naming context and presentation purpose. They own participant grammar, address wording, partial-hearing wording and safe literal quotation. UI components select layout, visual emphasis and supported density; they do not each implement their own speaker/addressee decision table. Client and server consumers use the same meaning and grammar rules through a shared, renderer-independent owner.
+
+The following examples are target output, using hypothetical utterances:
+
+| Observer's experience | Suitable personal-log wording |
+| --- | --- |
+| Ada speaks to the observer | Ada said to me: “The bridge is closed.” |
+| Observer speaks to Ada | I said to Ada: “Which way should I go?” |
+| Ada speaks without an addressee | Ada said: “The rain is getting worse.” |
+| Observer overhears Ada address Ben | Ada said to Ben: “Bring the rope.” |
+| Ada directs speech at an unidentified third party | Ada said to someone: “Wait there.” |
+| An unrecognized speaker addresses the observer and words are heard | Someone said to me: “Are you all right?” |
+| An unrecognized speaker addresses the observer but words are indistinct | Someone called to me, but I could not make out the words. |
+| A familiar unnamed person speaks again | The remembered observer-appropriate label is reused for that person, without exposing a database ID. |
+
+Logs written as the player's personal account use “I/me.” A control or caption can use “you,” and a neutral account can use a known name. Those are deliberate render modes, not conflicting stored identities. Do not replace pronouns inside the quoted utterance: Ada saying “I am cold” remains Ada's literal words in every view. Render quotes and unusual text safely as text, including markup-like characters and line breaks, without changing their meaning or letting them become formatting instructions.
+
+Current name presentation may improve as the observer learns more, while a historical-evidence view can retain the name/description known then. Neither mode mutates the remembered facts. An unknown, forgotten or no-longer-permitted participant must not fall back to a private true name or raw ID. Empty or missing words are different from an empty record and must not be reconstructed from another listener's experience.
+
+### History without a social membership object
+
+A person's history can collect the viewer's retained experiences involving that exact person, with chronological order, paging and links to permitted sources. The general log can show speech among other events. Neither view is proof that all displayed people participated socially, and neither can fetch other people's private memories to complete a transcript.
+
+AI preparation can select a bounded set of relevant, permitted dialogue sources, faithful older summaries and the appropriate recent exact speech. It does not need a Conversation identifier to find them. Full retained source experiences remain available for authorized recall. “Full experience” means every permitted field of a selected source; it does not mean unboundedly sending every lifetime utterance on every decision. Missing, forgotten, stale or out-of-scope evidence must remain missing, with ordinary source/eligibility handling rather than an omniscient fallback.
+
+## Memory and later consequences
+
+The original speech event establishes the world's event identity, speaker, selected addressee if any and emitted content. Each observer's experience establishes what that observer detected, understood and recognized, including whether the speech addressed them. Both are structured; they have different authority. An NPC's ordinary memories and decisions use its own permitted experience, not the global event as a shortcut.
+
+The complete retained experience must survive hot memory, durable storage, cold retrieval, paging, save/load, recall, summarization, consolidation and later decision preparation. Keep exact source identities and revisions so a derived summary can be traced to the right actor's real source material. Do not collapse an experience into a generic memory row containing only a sentence and a speaker label. Relevant temporal, perception, participant, addressing and causal/provenance information remain accessible in their existing owners.
+
+A summary is a derived recollection. It can say that Ada warned the observer, but it must retain the source relationship and must not turn several speakers' utterances into one invented speaker/addressee record. Quoted content, observation, interpretation and uncertainty stay distinguishable. Later paraphrases and repeated retellings are not new direct witnesses. The model receives complete permitted structured meaning for selected experiences plus optional readable prose, not only the prose and not hidden world truth.
+
+An inaccessible or deliberately forgotten source cannot reappear through a stale summary, cached caption, recalled display string or unfinished provider operation. The existing correction, forgetting, source-dependency and authority rules apply to the new references and their derived views. This project wires those consumers correctly; it does not design a different forgetting policy or rewrite history when a new interpretation is formed.
+
+## Animals and other sound receivers
+
+### Sound first, language only where supported
+
+An actor that can hear can receive sound evidence even if it cannot speak, has no autobiographical-memory component, has no inner-world component and is controlled through native animal behavior. Eligibility follows the installed sense and actual sound exposure. Giving an animal hearing must not create a human mind record merely to satisfy a filter.
+
+For an ordinary nonlinguistic animal, a person's speech is an acoustic occurrence. Its permitted evidence can include detection time, loudness/intensity, rough direction and a legitimately observed source association. It must not include the speech's words, human addressee relation, hidden true name, private intent or an exact unseen body location. An authored creature that actually understands language uses the corresponding installed capability; no “animal” string check overrides it.
+
+The project must audit the existing speech and exposed sound-emission routes so supported acoustic events reach eligible receivers consistently. It does not invent microphone capture, recorded voice playback, new propagation physics or a universal sound for every action. Existing actions acquire new sound only through a separately defined, installed sound-producing rule.
+
+### A complete reaction, including stopping
+
+
+The bundled world's configured cognitive animals use the same bounded AI work and native action machinery as other cognitive actors, with preparation that does not require human memories. Their authored disposition and current body/activity shape the choices. A startled skittish animal can choose to flee; a calm or occupied animal can keep doing what it was doing; another can pause or move toward an interesting sound. These are real supported choices, not prose that says “the deer ran away” while its body remains still.
+
+The initial executable repertoire is deliberately small: continue the current behavior; briefly hold still and attend; approach or retreat through ordinary movement when a valid destination is available; or escape using the existing body-clearance-aware steering. No head-turn animation, pack coordination, taming, social bond system or new species simulation is required. An AI-selected hold/escape is admitted, owns its active action, can be interrupted and ends through native rules. Existing attack protection remains separately effective.
+
+A heard-only source supplies a bearing for an appropriate response, never a secretly looked-up enemy position. Visible/recognized sources can supply only their legitimately observed position and the current authority of that observation. Escape must settle after a finite calming interval, including when blocked; holding must expire. Ordinary movement, collision, activity priorities and route failure still apply. An animal cannot run through an obstacle because a speech reaction asked it to flee.
+
+Every detected utterance keeps its own occurrence identity during permitted retention. Repeated equivalent chatter can be represented as the same continuing acoustic situation for deciding whether another AI opportunity is useful, without merging away events. A meaningful new sound, intensity change or source situation may justify a new decision opportunity; merely incrementing a repetition count must not trigger a fresh decision through another generic path. Coalescing opportunities does not turn speech into a fixed flight script, suppress the actual experience or create a parallel AI queue.
+
+Sensory evidence and short holds use explicit simulation-time units. The initial world-authored trial values and boundary behavior live in [the hearing limits inventory](../limits/hearing-and-speech.md), with their consumer bindings and qualification in the technical design. They are tuning proposals, not measured realism and not universal engine constants. Animal sound evidence can expire without manufacturing long-term autobiographical memory; if a creature's installed capabilities support richer memory, those owners can retain it normally.
+
+During AI unavailability, existing native body effects, movement, wandering and attack escape continue. An animal does not acquire an invented “decided to ignore” memory because no decision could run. A finished hold, trapped escape, source departure, world pause, save/restore, actor removal and late AI result must each leave one coherent active behavior, without restoring duplicate work or applying a choice to the wrong animal.
+
+## Engine and world ownership
+
+The engine owns stable identities, optional explicit direction as supported event data, observer-scoped experience, shared typed transport/persistence, safe scheduling/action execution and reusable presentation grammar. It must be possible to implement the ordinary world without special ad hoc fields scattered across every UI or AI consumer.
+
+The installed world owns whether and how creatures hear, recognize people, understand language, speak, express disposition and act on sound, together with the relevant tuning, vocabulary and offered actions. The bundled world selects the simple addressing and reliable-recognition behavior described here. Another world can omit speech/hearing for a creature or install materially different supported policies. Engine reuse does not make the bundled world's acoustics or psychology a universal physical law.
+
+World definitions must actually reach all affected consumers: player menus and descriptions, NPC offered actions, hearing calculations, memory eligibility, sense-only preparation, limits and restore validation. The technical design includes a contrasting hearing configuration and a creature that hears without speaking or remembering to expose hidden hard-coded assumptions. An unused configuration field is not successful world ownership.
+
+## Scope boundaries and resolved choices
+
+This project replaces ordinary Conversation membership while retaining genuine dialogue evidence, private history, narration provenance, bounded summary preparation, exact operational ownership and explicit cooperation records. Provider chat sessions, World Agent conversations and optional remote messaging/calling have their own purposes and are outside that removal. Do not delete an unrelated type merely because its name contains “conversation.”
+
+The selected scope includes one addressee, deterministic recipient awareness after audible detection, reliable ordinary recognition separated from names, ambient/directed NPC speech, consistent no-AI freeform admission, shared prose, complete permitted memory and actual animal acoustic responses. None of these is deferred to optional speech media.
+
+Later extensions include multiple addressees, uncertainty about being addressed, disguises and unreliable recognition, new voice/tone or language simulations, waking from sound, microphone/audio delivery, remote/private channels and pack-level animal behavior. Existing optional designs remain linked in their own trackers. They must not become hidden prerequisites or sneak into the first implementation.
+
+No blocking product question remains for this selected design. The detailed trial values are explicit engineering/world-authoring choices to qualify, not an unasked product decision or a claim of optimal behavior. Mike's agreement to document the design is not runtime implementation authorization.
+
+## Acceptance scenarios
+
+The scenarios below are the feature acceptance owner. The implementation tracker assigns them to concrete changes and records evidence; it must not check them merely because the design describes them. Fixture checks can establish data and admission correctness. Natural reply selectivity, animal plausibility and readability additionally need the matching live/browser or human observations required by the repository's verification policy, with limits reported honestly.
+
+| ID | Setup and action | Required observable outcome |
+| --- | --- | --- |
+| SP-A01 | Player speaks without selecting anyone near several people. | One ambient utterance; each eligible listener receives its own exposure; no inferred addressee, enrollment or compulsory reply. |
+| SP-A02 | Player selects Ada and speaks within Ada's and Ben's hearing. | One directed utterance; Ada knows she is addressed; Ben hears according to his senses; caption remains on player with a quiet, permitted addressee label. |
+| SP-A03 | Ada hears the player address her while the speaker is unseen. | Ada knows she is addressed without a sight check; source recognition follows legitimate voice evidence; no exact hidden position is supplied. |
+| SP-A04 | Ada detects a direct call but cannot understand its words. | Addressed role survives, missed words remain absent and clarification is a valid response; no raw event reconstruction. |
+| SP-A05 | Ada is out of range, cannot hear, or is otherwise ineligible under the world's current sense rules. | No remote addressed notification or words; if the utterance was admitted, its intended target remains recorded independently of delivery. |
+| SP-A06 | Bystander hears a directed utterance with an unidentified third-party recipient. | Directed-other remains distinguishable from ambient; only permitted recipient identity/label is shown; no hidden name/position is fetched. |
+| SP-A07 | An unnamed recognizable stranger returns after a prior meeting, then introduces themselves. | Memories remain attached to the same person before and after naming; old words and knowledge-at-the-time are preserved. |
+| SP-A08 | Two unnamed people or two people called Ada appear in remembered speech. | Stable participants remain distinct across display, retrieval, summaries and action references; no name-based merge or raw-ID label. |
+| SP-A09 | NPC decides to speak ambiently, address one person, act without speech, or remain silent. | All four outcomes are representable; ambient output never inherits a stale target; silence is not a fabricated chat failure response. |
+| SP-A10 | Two nearby exchanges overlap and a bystander interjects or walks away. | Useful permitted dialogue remains available without join/merge/leave, forced enrollment, one-active membership or time-gap social boundaries. |
+| SP-A11 | Two people ask questions and someone says “yes.” | No semantic reply or consent is assigned from the provider job's source link; the actor can infer cautiously or clarify. |
+| SP-A12 | View the same speech in personal log, caption, person history and accessible text. | Shared role grammar yields suitable I/me/you/named wording, literal quoted speech and consistent direction; no middle-dot separator or schema dump. |
+| SP-A13 | Speech contains quotes, pronouns, markup-like text, line breaks or incomplete heard words. | Safe literal content and truthful partial-hearing wording in every view; no quoting/parsing drift or concealed words recovered from display. |
+| SP-A14 | A speech experience moves through storage, cold recall, consolidation, a summary and a later decision. | Full permitted structured experience and exact scoped source/revision relationships survive; no display-only substitute or misleading single-source summary roles. |
+| SP-A15 | A source is forgotten, corrected, removed or no longer available to this observer while a derived view or AI operation exists. | Existing dependency/eligibility rules invalidate or qualify affected views and late work; hidden or stale meaning is not resurrected from world truth. |
+| SP-A16 | AI is known unavailable before ambient Speak, Speak-to or freeform Act through any player entry point. | All three are consistently unavailable; no new speech/act is committed; reason and draft are retained; recovery does not auto-submit. |
+| SP-A17 | An admitted speech event commits and its subsequent AI decision fails; the same request is retried. | The real utterance and listeners' experiences remain exactly once; receipt recovery does not repeat speech or invent the NPC's decision. |
+| SP-A18 | A target becomes invalid, the player changes controlled actor, or a result arrives after the relevant world/presence changed. | Existing authority checks reject stale work without retargeting, leaking another actor's history or applying duplicate effects. |
+| SP-A19 | A hearing animal has no speech, autobiographical memory or inner-world component. | It receives only permitted sound evidence and can enter the supported cognition path without inventing a human memory component. |
+| SP-A20 | A calm, occupied and skittish animal hear different relevant utterances/sounds. | Choices can differ with actual evidence/disposition; fixture/native outcomes execute correctly and qualified live behavior avoids universal speech-to-flight or all-animals-talk logic. |
+| SP-A21 | An animal hears an unseen source, flees and encounters obstacles or is trapped. | Movement uses permitted bearing/last observed data and ordinary clearance; it settles in finite time without hidden coordinates or an endless escape restart. |
+| SP-A22 | Equivalent chatter repeats while an animal attends or escapes, followed by a meaningful new sound. | Each occurrence is retained as specified, ordinary repetitions coalesce decision opportunities, and meaningful change can be noticed without duplicate wake paths or unlimited restarts. |
+| SP-A23 | Hold/escape runs through pause, save/load, expiry, source departure, actor removal and AI outage. | One coherent native action and cleanup path; no duplicate decision/effect; ordinary native operation continues and unavailability is not a chosen reaction. |
+| SP-A24 | Install a materially different hearing profile and a creature that hears without language. | Real hearing/offer/preparation/restore consumers obey the selected definitions; no human memory or base-world constant silently overrides them. |
+| SP-A25 | A busy location creates many listeners and a long retained speech history. | Complete accepted occurrences and permitted selected sources remain correct; shared work bounds, paging, compaction and explicit overload behavior prevent silent loss or repeated full-history preparation. |
+| SP-A26 | Save and restore the new current format, including recalled speech, summaries and pending supported native work. | Current identities, references, actor scope and continuation are valid; no legacy alias/migration or ordinary Conversation membership is required. |
+| SP-A27 | Inspect World Agent/provider conversations and a separately accepted cooperative commitment after ordinary dialogue removal. | Their independent functionality, authority and useful source evidence remain intact; UI grouping grants no social or execution permission. |
+| SP-A28 | Compare player logs with two NPCs that heard different words and knew different names. | Each sees its own permitted experience, naturally rendered; presentation, memory preparation and recall never combine private perspectives into an omniscient transcript. |
+
+## Staged capabilities
+
+First establish authoritative speech direction, permitted perception and stable recognition so a direct unseen call has one correct meaning everywhere. Then carry that complete experience through shared presentation, memory and source-linked summaries. Replace ordinary membership only when actor-scoped history, decision preparation, preview ownership and independent commitments have complete replacements. Align player/NPC submissions and all visible surfaces with the same meaning and availability rules.
+
+Animal delivery starts with sense-only exposure, then adds shared cognition and the executable finite actions that make a sound response real. Current-format persistence, cancellation and late-result handling cross all stages and cannot be postponed past a stage that publishes those records. Final integrated qualification exercises the whole scenarios above and reconciles existing trackers without claiming unrelated character-life, media or large-scale evidence complete. Exact dependencies and implementation exit criteria remain in [SPK](../maintainers/speech-and-social-perception.md).
