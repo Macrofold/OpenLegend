@@ -27,15 +27,14 @@ import {
   decodeUsage,
   usdToMicroUsd,
   microUsdToUsd,
-  parseNonnegativeSafeInteger,
-  sumSafeIntegers,
+  macrofoldInferenceEvidence,
+  captureMacrofoldRunUsage,
   type AiClient,
   type AiReceipt,
   type AiResult,
   type GenerateRequest,
   type JudgeRequest,
   type JudgeValue,
-  type TokenUsage,
   type JsonValue,
 } from '@open-legend/ai';
 import type { WorldService } from './world-service.js';
@@ -248,41 +247,7 @@ function terminalEvidence(
     result['final'] !== true
   )
     throw new InvalidData('Macrofold terminal identity could not be verified.');
-  if (execution === 'inference') {
-    const inference = object(result['inference']);
-    const outcome = inference['outcome'];
-    const providerOutcome = inference['provider_outcome'];
-    if (
-      typeof outcome !== 'string' ||
-      ![
-        'value',
-        'unknown',
-        'refused',
-        'invalid_output',
-        'failed',
-        'uncertain',
-        'stale_input',
-      ].includes(outcome) ||
-      typeof providerOutcome !== 'string' ||
-      !['not_invoked', 'responded', 'uncertain'].includes(providerOutcome)
-    )
-      throw new InvalidData('Unsupported Macrofold inference outcome.');
-    const expectedStatus = ['value', 'unknown', 'refused', 'stale_input'].includes(outcome)
-      ? 'succeeded'
-      : 'failed';
-    const completionUncertain =
-      outcome === 'uncertain' ||
-      providerOutcome === 'uncertain' ||
-      (!['cancelled', 'timed_out'].includes(String(status['status'])) &&
-        status['status'] !== expectedStatus);
-    return {
-      completionUncertain,
-      uninvokedInferenceChargeUsd:
-        !completionUncertain && status['kind'] === 'inference' && providerOutcome === 'not_invoked'
-          ? microUsdToUsd(status['cost_micro_usd'])
-          : undefined,
-    };
-  }
+  if (execution === 'inference') return macrofoldInferenceEvidence(run, status, result);
   const nativeOutcomes: Record<string, string> = {
     succeeded: 'success',
     failed: 'failure',
@@ -1012,109 +977,15 @@ export class MacrofoldBackend implements AiClient {
     privateContent = false,
     uninvokedInferenceChargeUsd?: number,
   ): Promise<void> {
-    if (!receipt.providerRequestId) return;
-    // A model-body invoice alone cannot establish the complete attributable
-    // BYOK bill. Missing/truncated rows retain the admitted reserve.
-    if (billingMode === 'byok') delete receipt.estimatedCostUsd;
-    try {
-      const query = new URLSearchParams({
-        from: receipt.startedAt,
-        to: new Date().toISOString(),
-        run_id: receipt.providerRequestId,
-        limit: '100',
-      });
-      const page = object(
-        await (privateContent ? this.privateApi : this.api).request(
-          `/v1/billing/usage?${query}`,
-          undefined,
-          undefined,
-          signal,
-        ),
-      );
-      if (page['next_cursor'] !== null || !Array.isArray(page['data']) || page['data'].length > 100)
-        return;
-      const entries = page['data'].map(object);
-      if (
-        entries.some(
-          (entry) =>
-            entry['run_id'] !== receipt.providerRequestId ||
-            typeof entry['kind'] !== 'string' ||
-            !['model', 'tool', 'compute', 'storage'].includes(entry['kind']),
-        )
-      )
-        return;
-      const models = entries
-        .filter((e) => e['kind'] === 'model')
-        .map((e) => object(e['model_usage']));
-      const integer = parseNonnegativeSafeInteger;
-      // Exact terminal inference evidence can prove no provider invoice is due.
-      // A usable Run charge and complete usage are still needed: an empty page
-      // can precede the billing rows for an already-recorded platform charge.
-      // docs/ai-providers.md#receipts-outcomes-and-accounting
-      if (
-        (!models.length && uninvokedInferenceChargeUsd === undefined) ||
-        models.some((m) => m['completeness'] !== 'complete' || m['provisional'] !== false)
-      )
-        return;
-      const usages: TokenUsage[] = [];
-      for (const model of models) {
-        const usage = decodeUsage({
-          usage: {
-            input_tokens: integer(model['input_tokens']),
-            output_tokens: integer(model['output_tokens']),
-            input_tokens_details: {
-              cached_tokens:
-                model['cached_input_tokens'] == null
-                  ? 0
-                  : (integer(model['cached_input_tokens']) ?? NaN),
-              cache_write_tokens:
-                model['cache_write_input_tokens'] == null
-                  ? 0
-                  : (integer(model['cache_write_input_tokens']) ?? NaN),
-            },
-          },
-        });
-        if (!usage) return;
-        usages.push(usage);
-      }
-      const total = (key: keyof TokenUsage) =>
-        sumSafeIntegers(usages.map((usage) => usage[key] ?? 0));
-      const input = total('inputTokens'),
-        output = total('outputTokens');
-      const cached = total('cachedInputTokens'),
-        written = total('cacheWriteInputTokens');
-      if (
-        input === undefined ||
-        output === undefined ||
-        cached === undefined ||
-        written === undefined
-      )
-        return;
-      receipt.usage = {
-        inputTokens: input,
-        outputTokens: output,
-        cachedInputTokens: cached,
-        cacheWriteInputTokens: written,
-      };
-      if (billingMode === 'byok') {
-        const charges = [
-          ...models.map((m) => integer(m['reported_micro_usd']) ?? NaN),
-          ...entries
-            .filter((e) => e['kind'] !== 'model')
-            .map((e) => integer(e['charged_micro_usd']) ?? NaN),
-        ];
-        const total = sumSafeIntegers(charges);
-        const cost = total === undefined ? undefined : microUsdToUsd(String(total));
-        if (
-          cost !== undefined &&
-          (uninvokedInferenceChargeUsd === undefined || cost >= uninvokedInferenceChargeUsd)
-        )
-          receipt.estimatedCostUsd = cost;
-      }
-    } catch {
-      // Missing reporting permission or delayed usage leaves the reserve intact.
-    }
+    await captureMacrofoldRunUsage(
+      privateContent ? this.privateApi : this.api,
+      receipt,
+      signal,
+      billingMode,
+      uninvokedInferenceChargeUsd,
+    );
   }
+
   private nativeWorkerId(): string {
     const id = this.service.config.macrofoldWorkerId;
     if (!id)

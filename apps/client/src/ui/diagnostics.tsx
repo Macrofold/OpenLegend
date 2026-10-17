@@ -17,6 +17,7 @@ import type {
   AuthoredAppraisalRequest,
   GodMindView,
   IntelligenceCall,
+  DecisionInspection,
   MindSubject,
   MindSubjectPage,
 } from '@open-legend/protocol';
@@ -29,6 +30,14 @@ import { Button, Icon, IconButton, Section, Tag } from '../design-system/compone
 import './creator-workspaces.css';
 
 type JsonObject = Record<string, unknown>;
+const decisionMoney = (value: number) =>
+  value > 0 && value < 0.01 ? '<$0.01' : `$${value.toFixed(2)}`;
+const decisionSeconds = (value: number | null) =>
+  value === null
+    ? 'Not recorded'
+    : value > 0 && value < 10
+      ? '<0.01 s'
+      : `${(value / 1000).toFixed(2)} s`;
 
 // Whole-percent rounding can put a displayed rating on the wrong side of its threshold.
 const probabilityFormat = new Intl.NumberFormat('en-US', {
@@ -2365,6 +2374,7 @@ function TraceDetail({
       children: IntelligenceCall[];
       coverage: string;
       responseSummary?: string;
+      decision?: DecisionInspection;
     } | null>(null),
     [error, setError] = useState(''),
     [remote, setRemote] = useState<Record<string, unknown>>({});
@@ -2444,6 +2454,31 @@ function TraceDetail({
               {detail.root.trigger ?? detail.root.kind}
             </Labeled>
             <Labeled label="Actor">{detail.root.actorName ?? 'World agent'}</Labeled>
+            {detail.decision && (
+              <>
+                {detail.decision.reason && (
+                  <Labeled label="Why Luna was requested">{detail.decision.reason}</Labeled>
+                )}
+                <Labeled label="Immediate behavior">
+                  {detail.decision.immediate} · {decisionSeconds(detail.decision.immediateMs)}
+                </Labeled>
+                <Labeled label="Eventual result">
+                  {detail.decision.final} · {decisionSeconds(detail.decision.totalMs)}
+                </Labeled>
+                <Labeled label="Cost of the whole decision">
+                  {decisionMoney(detail.decision.estimatedCostUsd)} estimated charges;{' '}
+                  {decisionMoney(detail.decision.heldUsd)} still reserved.
+                  {` ${detail.decision.attempts} calls; ${detail.decision.unpricedAttempts} with unfinished usage or cost.`}
+                </Labeled>
+                {detail.decision.reason && (
+                  <Labeled label="Reconsideration timing">
+                    Queue {decisionSeconds(detail.decision.queueMs)}; preparation{' '}
+                    {decisionSeconds(detail.decision.preparationMs)};
+                    {` request and delivery ${decisionSeconds(detail.decision.providerMs)}; receipt recorded ${decisionSeconds(detail.decision.accountingMs)} after dispatch.`}
+                  </Labeled>
+                )}
+              </>
+            )}
             {response && <Labeled label="Proposed response">{response}</Labeled>}
             <Labeled label="Trace ID">
               <span className="ol-diagnostic-id">{detail.root.id}</span>

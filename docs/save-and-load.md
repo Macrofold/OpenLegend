@@ -211,6 +211,12 @@ The abandoned future must not remain visible as current world history, actor kno
 
 Independent database records do not change this requirement. Capture and restore unloaded regions, cold memory/evidence, definitions and pending native work with the same coherent cut as active entities. The current timeline/writer fence is installed outside the rewindable payload; old jobs, cursors, vectors and callbacks must validate it even when restored source IDs/revisions happen to match. The [production model](../archive/07-technical-architecture/production-data-model.md#timeline-and-authority-fencing) owns those storage references.
 
+## Decision fallback records
+
+Enabled decision fallback stores one operational root with independently declared answer groups. Native response effects, group completion, receipts and the original considered-evidence position commit together. Nonfinancial attempt links identify which existing financial reservation and bounded execution slot belong to that root; the operational backup catalog includes them. Restart ends unfinished gameplay proposals without dispatching an unsent child or replaying a recorded request. Unknown remote completion retains its execution slot and financial exposure; a completed call with unknown price frees execution capacity but retains money. Restore changes timeline/generation, so earlier results cannot publish into the replacement world. [Current provider contract](ai-providers.md#decision-escalation) and [qualification evidence](verification/decision-escalation.md) own details.
+
+Installed appraisal definitions now require an explicit `decision` permission independently of reflection. Current-format admission validates it; no older-definition conversion or save migration is added.
+
 ## External work, privacy and shared authority
 
 The world creator and authorized OpenLegend system administrators may save and load that world through the game service. Ordinary participants have no world-rewind permission. Validate the principal and world scope on both request and installation, and record the administrative operation. This permission does not grant inspection of human-private content or authority to rewind external accounting. Shared restoration uses a coordinated complete world cut; it cannot roll back one player's side of a shared trade alone.

@@ -157,15 +157,14 @@ describe('durable character decision admission', () => {
         }
       });
       const scheduling = maintenance.tick(false);
-      await Promise.race([
-        started.promise,
-        scheduling.then(() => {
-          throw new Error('Scheduling returned before the held admission write.');
-        }),
-      ]);
+      // Shared execution queues admission asynchronously; tick must not wait for
+      // another class's remote work. The actual admission still needs cancellation fencing.
+      await scheduling;
+      await started.promise;
       const stopped = ending === 'close' ? maintenance.close() : maintenance.cancel();
       released.resolve();
       await scheduling;
+      await maintenance['dispatching'];
       await stopped;
       expect(jobs).not.toHaveBeenCalled();
       expect(maintenance['active']).toBeNull();

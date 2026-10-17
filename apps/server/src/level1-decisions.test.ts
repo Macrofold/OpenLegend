@@ -743,6 +743,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
               plan: null,
               note: null,
               name: null,
+              appraise: null,
             },
           ],
         }),

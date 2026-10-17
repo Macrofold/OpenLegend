@@ -28,13 +28,13 @@ export interface NoulQuestion {
 export type JudgmentQuestion = ChoiceQuestion | ScoreQuestion | NoulQuestion;
 export type TypedQuestionMap = Record<string, JudgmentQuestion>;
 export type JudgmentAnswer =
-  | { type: 'choice'; choice: string; probabilities: Record<string, number>; confidence: number }
+  | { type: 'choice'; choice: string; probabilities: Record<string, number>; confidence?: number }
   | {
       type: 'score';
       score: number;
       legend: Record<string, string>;
       probabilities: Record<string, number>;
-      confidence: number;
+      confidence?: number;
     }
   | { type: 'noul'; noul: number };
 
@@ -58,7 +58,7 @@ export interface GenerateRequest extends RequestControl {
   /** Private execution progress, never serialized into a model request. */
   onProgress?: (progress: GenerationProgress) => void;
   model?: string;
-  reasoningEffort?: 'none' | 'low' | 'high';
+  reasoningEffort?: 'none' | 'low' | 'medium' | 'high';
   actorScope?: string;
   execution?: 'fast' | 'complex' | 'full';
   /** Diagnostic task category; domain policy and instructions remain caller-owned. */
@@ -129,8 +129,23 @@ export interface AiReceipt {
   dispatched: boolean;
   completionUncertain: boolean;
   httpStatus?: number;
+  /** Sanitized provider error identifiers; raw messages and bodies are never retained. */
+  providerErrorCode?: string;
+  providerErrorType?: string;
+  /** Provider minimum wait reported by Retry-After, in milliseconds; no retry is implied. */
+  retryAfterMs?: number;
+  providerRateLimit?: {
+    remainingRequests?: number;
+    remainingTokens?: number;
+    resetRequestsMs?: number;
+    resetTokensMs?: number;
+  };
   usage?: TokenUsage;
   estimatedCostUsd?: number;
+  /** Provider-reported cost amount when supplied separately from usage-based estimates; settlement may differ. */
+  providerReportedCostUsd?: number;
+  /** Exact supplied question IDs individually refused by a native decision provider. */
+  questionRefusals?: string[];
 }
 
 export type AiResult<T> =

@@ -147,6 +147,7 @@ function operation(localId: string, fields: Partial<Record<Kind, unknown>>) {
     plan: null,
     note: null,
     name: null,
+    appraise: null,
     ...fields,
   };
 }

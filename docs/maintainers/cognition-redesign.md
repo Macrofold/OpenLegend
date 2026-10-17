@@ -302,6 +302,90 @@ Required companion cases: [context evaluation](../../archive/07-technical-archit
 
 Owner: maintainers across modules. Depends on: CR01–CR11. Exit evidence: reproducible fixtures plus explicitly labeled live receipts and remaining limitations; none obtained by this documentation task.
 
+### DB01 — Synthetic decision API comparison
+
+**Completed for the agreed benchmark scope; status reviewed 2026-10-17.** [Final project scope](../projects/completed/decision-api-benchmark.md) · [Results index](../benchmarks/README.md).
+
+- [x] Deliver 4,000 scored questions in 724 scenes plus eighty separate structured-generation tasks, informed by every repertoire catalogue. Include large histories, twenty hypothetical meters, injury/permission constraints, structured feelings, mood/order/fact variants and explicit future-world labels. [Current audit](../verification/decision-benchmark-audit.md).
+- [x] Support native Jev/Microsoft through Macrofold, native Luna Decisions, ordinary Luna low/medium/high, and exact Muse Spark 1.3 Contributor through OpenRouter. Preserve native choice/rating semantics, partial refusals, managed/BYOK binding, single submission and current transport limits.
+- [x] Use strict grounded prompts/schemas, authenticated input/model/source identities, durable single-writer journals, conservative shared accounting and quota stops. Reporting is offline; uncertainty and failed attempts remain financial evidence. No automatic paid retry or input truncation.
+- [x] Grade every current question for accepted answers and partial-credit points; preserve ties and source-based reasons. Add the narrower factual-error check with an explicit checked denominator. Round ordered ratings to the nearest category, keep probabilities continuous and supply authoritative inventory from the engine.
+- [x] Complete all feasible seven-model requests and all eighty generation tasks per generative model. Jev and ordinary Luna cover all 4,000; native Luna refuses one question; Microsoft and Spark retain disclosed size limits. Preserve the first usable answer for each unchanged complete input. [Final metrics and spending](../verification/decision-api-benchmark.md).
+- [x] Complete source/transport/grading/accounting review and the requested Spark Contributor review. Reconstruct accounting once, update after durable writes, export bounded rows and retain useful current experiments. Superseded fixed-corpus controllers are retired; reusable repeat/new-experiment workflows remain in the [harness](../../scripts/decision-benchmark/README.md).
+- [ ] Before substantially expanding the corpus, reevaluate eager construction of every scene/view at import against the selected host memory target. Prefer constructing selected views and sharing immutable history if retained memory becomes excessive. This is an offline growth constraint, not an unfinished fix to the current corpus.
+
+The bounded benchmark does not close CR12/CE requirements for natural behavior, real retrieval, sustained character lives or deployment capacity. Subjective references remain authored and include twenty-one disclosed post-run broadenings; neither fixtures nor model agreement establishes human validation.
+
+## Decision escalation
+
+**Implemented and enabled by default at Mike’s explicit request; broader qualification in progress, October 17, 2026.** The [feature specification](../projects/decision-escalation-feature-spec.md) and [technical design](../projects/decision-escalation-tech-design.md) describe one funded Luna Low attempt for an unresolved character decision. [Current behavior and task-input inventory](../ai-providers.md#decision-escalation), [limits](../limits/ai-execution.md#decision-escalation-limits) and [actual verification](../verification/decision-escalation.md) distinguish delivered code from unmet quality, lifecycle and deployment gates. DB01 is complete within its documented capacity limits; CH01 planning remains separate. Default activation follows Mike’s explicit request; fixture success does not establish release quality.
+
+### DE01 — Native checks and explicit escalation eligibility
+
+- [x] Prepare the requested design pair from current source and benchmark evidence; distinguish deterministic calculations, forbidden choices, subjective quality and provider failures.
+- [x] Review the design for implementation ambiguity; specify state transitions, atomic writes, output shapes, failure classification, scheduling, validity guards, explicit appraisal permission and concrete acceptance examples.
+- [x] Reconcile the narrow enabled-server escalation policy with current AI/verification guidance and provider/action contracts; preserve transport single-submit behavior, generation-disabled operation and existing spending ceilings.
+- [x] Inventory every mutable task input with its exact/snapshot-tolerant/native-only classification and guard owner; implement the specified answered/abstained envelope and typed rejection/deferred outcomes. Compute authoritative quantities/rules natively and prevent invalid offers where possible. Record exact, actor-safe rejection reasons without benchmark keys or prose truth guesses.
+- [x] Bind one root opportunity, allowed reason, current policy and unresolved operation group. Preserve native continue and existing semantic escalation; do not reinterpret suitability as calibrated correctness.
+
+Exit: an installed action-selection case, a meaningful rejection and a materially different world-rule fixture use the same boundaries; no new universal injury/emotion law or alternate executor.
+
+### DE02 — One funded asynchronous Luna Low attempt
+
+Depends on DE01 and existing CR01/CR02 accounting/admission.
+
+- [x] Add the explicit `gpt-6-luna` / low / direct Responses binding through the existing typed client and price catalogue, independently of the ordinary Macrofold route. Carry low effort and the dedicated output allowance through existing deliberation accounting without changing ordinary routes. Refuse unavailable/disabled/unpriced operation without silently switching model or billing mode.
+- [x] Implement the single-root child state machine, compare-and-set admission, attempt links, indexed recovery and atomic world-effect/group-outcome commit. Include prior preparation and uncertainty in the same root/account totals. Bind direct pricing even with Macrofold configured; never reset request allowance across urgent refreshes or child IDs.
+- [x] Release the immediate decision slot after a durably recorded immediate disposition; bound both ongoing primary requests and shared background work through the specified slot owner, without holding a transaction, blocking simulation or cancelling another actor's funded opportunity.
+- [x] Rebuild required permitted evidence with the explicit no-paid-preparation mode, bind exact choices and use the specified structured envelope. No extra summaries, embeddings, grounding, tools, mind-file writes or recursive repair.
+
+Exit: one useful native choice can follow the stronger result through ordinary admission; simultaneous foreground work progresses, capacity failures are explicit, and any second escalation for the same opportunity is refused.
+
+Implementation: the direct-route transport/schema fixture passes and native choices publish through the existing response owner. Runtime defaults to apply for the configured primary origin, with explicit opt-out and existing credential/price/funding checks. Actual Low access and bounded gameplay progress are recorded in the October 17 live checks; fixtures alone establish neither.
+
+### DE03 — Freshness, independent effects and recovery
+
+Depends on DE02; consumes existing response/appraisal, memory, save/load and authority owners.
+
+- [x] Check source/privacy, relevant intent/body/rule/time dependencies and current action prerequisites before publication. Preserve unrelated changes; reject incompatible ones and already resolved operations.
+- [x] Qualify cancellation, pause, restart, restoration, actor/control loss, duplicate completion, uncertain dispatch, late billing and failed durable writes. Restart ends unfinished roots, including unsent children; reconcile recorded executions without replay/publication. Retain uncertain execution capacity separately from unpriced completed work.
+- [x] Integrate supported task consumers: independent ratings, optional relevance, bound feeling proposals and conversation responses. Preserve required memory coverage and avoid one repair call per memory. A conversation needing generation gets one appropriate response request rather than decision repair plus duplicate reply generation.
+- [x] Preserve independently committed speech/actions, appraisal occurrence/time and exactly-once emotional effects. A failed sub-operation cannot replay the successful components or reinterpret missing support as success.
+- [x] Add the specified actor-private decision-appraisal operation and installed `decision` permission through definition admission, source/schema bindings, current-format validation and native response/appraisal owners. Keep bundled definitions initially disabled for this consumer; qualify an explicitly opted-in fixture. Preserve commit-time creation and existing decay, with no backdating or reflection-permission shortcut.
+
+Exit: complete native/fixture race and lifecycle scenarios pass through actual callers; unsupported consumers are explicitly excluded rather than implied by a generic schema.
+
+Controlled-client evidence covers fault rollback, duplicate completion, current-source rejection, restoration, pause, interrupted-reservation recovery and late receipts. It establishes lifecycle/accounting behavior, not live model quality; [verification](../verification/decision-escalation.md#native-and-browser-verification).
+
+### DE04 — Inspectable outcomes and bounded load
+
+Depends on DE02/DE03; extends the existing cognition inspector and performance owners.
+
+- [x] Link the original decision and higher attempt, explain the actual escalation reason and interim behavior, and distinguish model proposal, native admission and committed result. Inspection performs no inference and respects current private-data permissions.
+- [x] Record intake, preparation, queue, usable-answer, commit and accounting times; aggregate costs without treating missing prices as zero. Preserve ordinary conversation dots/drafts and existing failure presentation.
+- [x] Measure native progress, foreground latency, retained context bytes, query work and overload at the workloads in the technical design, including concentrated events and growing retained receipts. The final 16-configuration bounded profile records five completed workloads, ten timeouts and one busy refusal; it does not qualify the dense workload's requested speed. No increased concurrency is enabled.
+
+Exit: the full path remains bounded and truthful when providers are slow, unavailable or financially uncertain; review actual browser consumers when changed. A timely deferral is never reported as a correct answer.
+
+The private HTTP check and all three visible-browser journeys pass, including actual delayed NPC conversation, readable failure and preservation of the player's newer draft. Delivery timing uses confirmation after saving, verified with a simulated 1.50-second save acknowledgement. The final continuous-clock profile and actual query plans record bounds, progress and overload, including failed capacity targets. Representative deployment responsiveness remains a broader production-release gate; see [measured limits](../verification/decision-escalation.md#load-and-storage-observations).
+
+### DE05 — Actual escalation benchmark and controlled activation
+
+Depends on DE01–DE04 for runtime claims; offline experiment design can begin after DE01. Reuse DB01 tooling without changing its historical comparison.
+
+- [x] Freeze new prompts, runtime-visible escalation triggers and six new authored episode families (48 correlated views). Final independent validation must not treat those variants as separate episodes. Keep answer keys outside routing; test correct initial answers as well as failures and plausible emotional alternatives.
+- [x] Run native-plus-fast and actual higher-attempt comparisons under separately confirmed available account credit and one explicit aggregate cap. The final 48-case live policy run answered and delivered all 48 correctly, with no escalation triggered; separate native Luna response/appraisal checks exercised the stronger route. Preserve the failed runs separately. This is completed execution, not a demonstrated quality gain.
+- [x] Compare six fallback configurations on all 267 recorded Jev misses, with the 59 native calculations separated from judgment questions. Supporting studies cover 48 independent single-question scenarios and five exact-input repeats on seven observed misses. Preserve abstentions, large-context failures, first usable answers and every financial obligation. [Measured comparisons](../benchmarks/decision-fallback-models.md).
+- [x] Bind Luna Low consistently for dispatch, policy identity, reservation and diagnostics. Preserve background scheduling and verify simulation progress while its answer is pending. [Current binding](../projects/decision-escalation-tech-design.md#model-binding-and-transport).
+- [x] Implement one plain-language comparison for correct/answered, points, coverage, corrections, regressions, unnecessary or declined escalation, detected/unflagged errors, timely correct answers, delayed usefulness, latency tails and full root costs. Retain rejected/late interpretable proposals and report invalid committed gameplay effects as unassessed in the scoped-judgment experiment, with native consumer checks separate. Actual values and their measured scope remain in the linked reports.
+- [x] Enable Low by default for the configured primary origin at Mike’s request; retain explicit off/observe configuration and credential, price, root/account and deadline admission. Verify real browser conversations and a deliberately delayed actual Luna answer with native human movement. [Live gameplay evidence and setup limits](../verification/decision-escalation.md#live-gameplay-with-luna-low) retain Macrofold’s external schema failure and three primary-preparation deadline refusals; no runtime guard was relaxed.
+- [ ] Complete human review for emotional appropriateness and character consistency. Enable optional confidence/margin policies only after held-out calibration; inspect all severe regressions.
+- [x] Qualify disabled, funded diagnostic-only and capped active modes through the real native consumers. Disabled made zero calls; diagnostic-only obtained a Luna answer with zero effects; active committed speech and created/updated an opted-in feeling. The 48-case live batch delivered all 12 immediate-only choices correctly within one second. Dense deployment capacity remains unqualified; Mike separately authorized current default activation.
+
+The live runtime-policy comparison delivered all 48 answers correctly and triggered no fallback, so it demonstrates no positive quality gain. Native response/appraisal and delayed Low gameplay checks establish integration separately. Current financial obligations remain in the [accounting report](../verification/decision-escalation.md#spending-and-evidence), not duplicated here.
+
+Exit: the bounded policy demonstrates useful improvement without stale, duplicate or unauthorized effects and without hidden overload. Human character review, natural primary-failure integration and representative deployment responsiveness remain [release qualification requirements](../verification/decision-escalation.md#remaining-release-qualification). Explicit default activation does not establish those results.
+
 ## Later harness extensions
 
 Future increments after CR12's core acceptance; these do not expand CR01–CR11 or require a harness for ordinary speech. Existing CR07–CR08 own multi-turn reflection and publication. The following tasks own character-side behavior; INV tasks own creator investigation and mechanical authoring.

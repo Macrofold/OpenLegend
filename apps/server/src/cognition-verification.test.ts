@@ -21,6 +21,7 @@ import {
   type TypedQuestionMap,
 } from '@open-legend/ai';
 import { AiDirector } from './ai-director.js';
+import { CognitionExecution } from './cognition-execution.js';
 import type { AppConfig } from './config.js';
 import { WorldService } from './world-service.js';
 import type { IntelligenceLog } from './intelligence-log.js';
@@ -164,6 +165,7 @@ function talk(context: string, text: string) {
         requiresAccepted: [],
         note: null,
         name: null,
+        appraise: null,
         talk: {
           text,
           addresseeEntityId: speaker(context),
@@ -345,10 +347,12 @@ async function harness(
         },
       }
     : fake;
-  const director = new AiDirector(service, client, () => now);
+  const execution = new CognitionExecution(store, () => now);
+  const director = new AiDirector(service, client, () => now, undefined, execution);
   const log = (director as unknown as { log: IntelligenceLog }).log;
   cleanup.push(async () => {
     await director.close();
+    execution.close();
     await store.close();
   });
   const reflectionKey = `reflection-queue:${service.world.id}:${NPC_ID}`;
@@ -362,6 +366,14 @@ async function harness(
     reflectionKey,
     reflectionRow: `reflection-queued:${service.world.id}:${NPC_ID}`,
     npcResponses: () => calls.generations.filter((request) => request.task === 'npc_response'),
+    async confirmCompletion(requestId: string, provider: 'jev' | 'openai') {
+      // Independent outcome specimens can proceed only after the simulated provider
+      // confirms the preceding unknown execution ended. Unpriced cost remains accounted for.
+      expect(await execution.primaryAvailable()).toBe(false);
+      await store.settle(requestId, receipt(requestId, provider, { estimatedCostUsd: undefined }));
+      await execution.reconcile(store);
+      expect(await execution.primaryAvailable()).toBe(true);
+    },
     async chat(id: string, text: string): Promise<JobRecord> {
       const result = await director.submit('chat', id, text, NPC_ID);
       expect(result.ok, result.message).toBe(true);
@@ -886,9 +898,10 @@ describe(
         expect(trace).toMatchObject({ route: 'level2', status: 'failed', disposition: kind });
         const charged = (await h.spent()) - spent;
         // Unknown completion keeps the generation reservation charged; the others settle their receipts.
-        if (kind === 'uncertain')
+        if (kind === 'uncertain') {
           expect(charged).toBeGreaterThanOrEqual(decisionAllowance(h.config, 'openai'));
-        else expect(charged).toBeLessThan(0.01);
+          await h.confirmCompletion(h.npcResponses().at(-1)!.requestId, 'openai');
+        } else expect(charged).toBeLessThan(0.01);
       }
       expect(h.npcResponses()).toHaveLength(generationOutcomes.length);
 
@@ -904,9 +917,10 @@ describe(
         expect(job.result).toEqual({ disposition: kind });
         expect(await h.trace(job.id)).toMatchObject({ status: 'failed', disposition: kind });
         const charged = (await h.spent()) - spent;
-        if (kind === 'uncertain')
+        if (kind === 'uncertain') {
           expect(charged).toBeGreaterThanOrEqual(decisionAllowance(h.config, 'jev'));
-        else expect(charged).toBeLessThan(0.01);
+          await h.confirmCompletion(routeRequest(h, job.id)!.requestId, 'jev');
+        } else expect(charged).toBeLessThan(0.01);
       }
       expect(h.npcResponses()).toHaveLength(generationOutcomes.length);
       delete h.state.judge;
@@ -1082,6 +1096,8 @@ describe(
       for (const kind of FAILURES) {
         h.state.generate = (request) => failure(request.requestId, 'openai', kind);
         await record(kind, await h.chat(`coverage-${kind}`, `Fixture ${kind}.`));
+        if (kind === 'uncertain')
+          await h.confirmCompletion(h.npcResponses().at(-1)!.requestId, 'openai');
       }
       const wait = deferred<AiResult<unknown>>();
       const started = deferred<GenerateRequest>();

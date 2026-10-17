@@ -1,5 +1,6 @@
 import { recoverPlayerAction } from './action-request-recovery.js';
 import { recoverHumanRequest } from './human-request-recovery.js';
+import { CognitionExecution } from './cognition-execution.js';
 import { constructionPlanSchema } from './construction.js';
 import { WorkLane, OverloadError } from './work-lane.js';
 import { foundationCapabilities } from './foundation-capabilities.js';
@@ -431,7 +432,15 @@ async function initializeGameServer(
   await autosaves.initialize();
   const navigation = new NavigationCoordinator(service);
   onFailure(() => navigation.close());
-  let director = new AiDirector(service, options.aiClient, options.now);
+  const cognitionExecution = new CognitionExecution(store, options.now);
+  onFailure(() => cognitionExecution.close());
+  let director = new AiDirector(
+    service,
+    options.aiClient,
+    options.now,
+    undefined,
+    cognitionExecution,
+  );
   onFailure(() => director.close());
   let loadingSave = false;
   const worldTools = new WorldToolService(service);
@@ -1688,7 +1697,13 @@ async function initializeGameServer(
                 return send(response, 200, { ok: true, message: 'Saved world loaded and paused.' });
               } finally {
                 if (drained) {
-                  director = new AiDirector(service, options.aiClient, options.now);
+                  director = new AiDirector(
+                    service,
+                    options.aiClient,
+                    options.now,
+                    undefined,
+                    cognitionExecution,
+                  );
                   mcp = makeMcp();
                   agentRuns.resume();
                 }
@@ -2505,6 +2520,7 @@ async function initializeGameServer(
               const { id } = z.object({ id: requestIdSchema }).strict().parse(body);
               if (!(await service.mayInspectCall(id, scope))) throw new AuthorityError('forbidden');
               const details = await traceDetails(store, id, service.world);
+              if (!(await service.mayInspectCall(id, scope))) throw new AuthorityError('forbidden');
               return send(response, details ? 200 : 404, { ok: !!details, details });
             }
             case '/api/god/intelligence-details': {
@@ -3516,6 +3532,7 @@ async function initializeGameServer(
     await stage('Background admission', () => thinking, 0.2);
     await stage('Checkpoint drain', () => autosaves.close(), 0.3);
     await stage('AI director', () => director.close(), 0.2);
+    cognitionExecution.close();
     await stage('Publication', () => publicationDone, 0.1);
     await stage('Navigation', () => navigation.close(), 0.1);
     // Intake stopped when shutdown began; let already admitted requests finish first.

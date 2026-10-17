@@ -14,7 +14,9 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 import type { WorldService } from './world-service.js';
-import type { AppraisalProposal } from './cognition-contracts.js';
+import type { DecisionAppraisalProposal, AppraisalProposal } from './cognition-contracts.js';
+import { decisionAppraisalSchema } from './cognition-contracts.js';
+import { z } from 'zod';
 
 /** Feelings are the actor's interpretation, not knowledge of somebody else's mind.
  * A missing target does not mean that the accepted feeling has an unknown cause.
@@ -43,12 +45,14 @@ export function decisionFeelings(world: WorldState, actorId: string): string {
 
 /** One request's source/subject/appraisal capabilities. Generated output can select
  * supplied handles, never fabricate canonical sources, pins or another actor's state. */
-export async function bindReflectionAppraisals(
+async function bindAppraisals(
   service: WorldService,
   actorId: string,
   jobId: string,
   evidenceIds: string[],
   subjects: Record<string, string>,
+  purpose: 'reflection' | 'decision',
+  triggerEvidenceId?: string,
 ) {
   await service.flush();
   const world = service.world,
@@ -62,7 +66,10 @@ export async function bindReflectionAppraisals(
     selected.map((entry, index) => [
       `cause${index + 1}`,
       {
-        kind: 'remembered',
+        kind:
+          purpose === 'decision' && entry.awareness && entry.memory.eventId === triggerEvidenceId
+            ? 'perceived-event'
+            : 'remembered',
         actorId,
         sourceId: entry.memory.id,
         sourceVersion: entry.revision,
@@ -73,23 +80,35 @@ export async function bindReflectionAppraisals(
       },
     ]),
   );
+  const worldId = world.id;
+  const appraisalState = world.appraisals?.[actorId];
+  const installed = world.moduleManifest.appraisals;
+  const knowledgeRevision = world.knowledgeRevisions?.[actorId];
+  const ownerAccount = world.authorship.playerAccountIds[actorId];
+  const permitted = (definition: NonNullable<typeof installed>['definitions'][number]) =>
+    purpose === 'decision' ? definition.decision : definition.reflection;
   const records = new Map(
     activeAppraisals(world, actorId).map((value, index) => [`feeling${index + 1}`, value]),
   );
+  const recordDefinitions = new Map(
+    [...records].map(([handle, record]) => [
+      handle,
+      appraisalDefinition(world, record.definitionPin),
+    ]),
+  );
   const definitions = new Map(
     (world.moduleManifest.appraisals?.definitions ?? [])
-      .filter((definition) => definition.reflection)
+      .filter(permitted)
       .map((definition, index) => [`policy${index + 1}`, definition]),
   );
   const proof = selected.map((entry) => ({ id: entry.memory.id, revision: entry.revision }));
   const sourcesCurrent = async () =>
     generation === service.generation &&
-    world.id === service.world.id &&
-    world.appraisals?.[actorId] === service.world.appraisals?.[actorId] &&
-    world.moduleManifest.appraisals === service.world.moduleManifest.appraisals &&
-    world.knowledgeRevisions?.[actorId] === service.world.knowledgeRevisions?.[actorId] &&
-    world.authorship.playerAccountIds[actorId] ===
-      service.world.authorship.playerAccountIds[actorId] &&
+    worldId === service.world.id &&
+    appraisalState === service.world.appraisals?.[actorId] &&
+    installed === service.world.moduleManifest.appraisals &&
+    knowledgeRevision === service.world.knowledgeRevisions?.[actorId] &&
+    ownerAccount === service.world.authorship.playerAccountIds[actorId] &&
     (!scope || !repository || (await repository.current(scope, proof)));
   if (!(await sourcesCurrent()))
     throw new Error('Appraisal sources changed during context preparation.');
@@ -98,7 +117,7 @@ export async function bindReflectionAppraisals(
   const bindings: AppraisalBindings = {
     sources: [...sources.values()],
     subjects: Object.values(subjects),
-    reflection: true,
+    ...(purpose === 'decision' ? { decision: true } : { reflection: true }),
   };
   let createIds: string[] = [];
   const current = async () => {
@@ -106,7 +125,7 @@ export async function bindReflectionAppraisals(
     if (createIds.length) {
       if (!service.store.records) return false;
       bindings.priorOutcomes = await service.store.records.appraisalOutcomes(
-        world.id,
+        worldId,
         actorId,
         createIds,
       );
@@ -117,6 +136,18 @@ export async function bindReflectionAppraisals(
   return {
     current,
     bindings,
+    valueSchema(handle: string) {
+      const definition = definitions.get(handle) ?? recordDefinitions.get(handle);
+      if (!definition) throw new Error('The supplied appraisal definition is unavailable.');
+      const variants = decisionAppraisalSchema.options[0].shape.value.options;
+      // Match each installed feeling's kind and scale before asking the model.
+      // Native admission still owns whether the proposal is warranted and current.
+      return definition.value.kind === 'scaled'
+        ? variants[1].extend({
+            value: z.number().finite().min(definition.value.min).max(definition.value.max),
+          })
+        : variants[0];
+    },
     context: {
       feelings: [...records].map(([handle, record]) => ({
         handle,
@@ -126,7 +157,10 @@ export async function bindReflectionAppraisals(
         value: record.value,
         lifetime: record.lifetime,
         coverage: record.coverage,
-        editable: !!appraisalDefinition(world, record.definitionPin)?.reflection,
+        editable: (() => {
+          const definition = recordDefinitions.get(handle);
+          return !!definition && permitted(definition);
+        })(),
       })),
       policies: [...definitions].map(([handle, definition]) => ({
         handle,
@@ -144,7 +178,7 @@ export async function bindReflectionAppraisals(
     resolve(proposals: AppraisalProposal[]): AppraisalChange[] {
       const changes: AppraisalChange[] = proposals.map((proposal) => {
         const existing = proposal.appraisal ? records.get(proposal.appraisal) : undefined;
-        const record = existing && appraisalById(world, actorId, existing.id);
+        const record = existing && appraisalById(service.world, actorId, existing.id);
         if (proposal.kind === 'resolve') {
           if (
             !record ||
@@ -161,8 +195,8 @@ export async function bindReflectionAppraisals(
         const definition =
           proposal.kind === 'create'
             ? proposal.policy && definitions.get(proposal.policy)
-            : record && appraisalDefinition(world, record.definitionPin);
-        if (!source || !definition || !definition.reflection)
+            : record && appraisalDefinition(service.world, record.definitionPin);
+        if (!source || !definition || !permitted(definition))
           throw new Error('The appraisal source or policy was not supplied.');
         const value =
           definition.value.kind === 'qualitative'
@@ -196,7 +230,7 @@ export async function bindReflectionAppraisals(
       });
       createIds = changes.flatMap((change) => {
         if (change.kind !== 'create') return [];
-        const definition = appraisalDefinition(world, change.definitionPin)!;
+        const definition = appraisalDefinition(service.world, change.definitionPin)!;
         return [
           appraisalCreationIdentity(
             actorId,
@@ -208,6 +242,89 @@ export async function bindReflectionAppraisals(
         ];
       });
       return changes;
+    },
+  };
+}
+
+export function bindReflectionAppraisals(
+  service: WorldService,
+  actorId: string,
+  jobId: string,
+  evidenceIds: string[],
+  subjects: Record<string, string>,
+) {
+  return bindAppraisals(service, actorId, jobId, evidenceIds, subjects, 'reflection');
+}
+
+export async function bindDecisionAppraisals(
+  service: WorldService,
+  actorId: string,
+  jobId: string,
+  evidenceIds: string[],
+  subjects: Record<string, string>,
+  triggerEvidenceId?: string,
+) {
+  const ids = [...new Set([...(triggerEvidenceId ? [triggerEvidenceId] : []), ...evidenceIds])];
+  const bound = await bindAppraisals(
+    service,
+    actorId,
+    jobId,
+    ids,
+    subjects,
+    'decision',
+    triggerEvidenceId,
+  );
+  return {
+    ...bound,
+    schema: (() => {
+      const policies = bound.context.policies.map((policy) => policy.handle);
+      const causes = bound.context.sources.map((source) => source.handle);
+      const feelings = bound.context.feelings
+        .filter((feeling) => feeling.editable)
+        .map((feeling) => feeling.handle);
+      const variants: z.ZodType<DecisionAppraisalProposal>[] = [];
+      if (causes.length) {
+        for (const policy of policies)
+          variants.push(
+            decisionAppraisalSchema.options[0].extend({
+              definition: z.literal(policy),
+              source: z.enum(causes),
+              target: z.enum(Object.keys(subjects)).nullable(),
+              value: bound.valueSchema(policy),
+            }),
+          );
+        for (const feeling of feelings)
+          variants.push(
+            decisionAppraisalSchema.options[1].extend({
+              appraisal: z.literal(feeling),
+              source: z.enum(causes),
+              value: bound.valueSchema(feeling),
+            }),
+          );
+      }
+      if (feelings.length)
+        variants.push(decisionAppraisalSchema.options[2].extend({ appraisal: z.enum(feelings) }));
+      return variants.length ? z.union(variants) : undefined;
+    })(),
+    resolveDecision(proposals: DecisionAppraisalProposal[]) {
+      return bound.resolve(
+        proposals.map((proposal) => {
+          const existing =
+            'appraisal' in proposal
+              ? bound.context.feelings.find((feeling) => feeling.handle === proposal.appraisal)
+              : undefined;
+          return {
+            kind: proposal.kind,
+            appraisal: 'appraisal' in proposal ? proposal.appraisal : null,
+            expectedRevision: existing?.revision ?? null,
+            policy: proposal.kind === 'create' ? proposal.definition : null,
+            source: 'source' in proposal ? proposal.source : null,
+            subject: proposal.kind === 'create' ? proposal.target : null,
+            value:
+              'value' in proposal && proposal.value.kind === 'scaled' ? proposal.value.value : null,
+          };
+        }),
+      );
     },
   };
 }

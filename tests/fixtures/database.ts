@@ -37,6 +37,8 @@ export const readConfig = (env: NodeJS.ProcessEnv = {}) =>
   applicationConfig({
     OPEN_LEGEND_DATABASE_URL: 'postgresql://localhost/fixture_injected_repository',
     AI_BUDGET_USD: '0',
+    // Unrelated fixtures opt out; activation checks use the application reader directly.
+    DECISION_ESCALATION_JSON: '{"mode":"off","origins":[],"reasons":[]}',
     // A fixture generation key must not enable the separate live embedding worker.
     OPENAI_EMBEDDING_API_KEY: '',
     ...env,

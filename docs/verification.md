@@ -1,6 +1,11 @@
 # Verification
 
 - [World-first player experience](verification/player-experience-overhaul.md) — current speech/Events, inspection, creation, visual placement and shared UI audit; actual browser evidence, controlled local provider presentation and remaining decisions are distinguished. [Inventory and inspection evidence](verification/player-experience-inventory.md) owns grouped-stock authority and reader continuity.
+- [Decision fallback](verification/decision-escalation.md): enabled Luna Low fallback, native/fixture/browser evidence, live gameplay verification and retained load/provider limitations.
+
+- [Benchmark results index](benchmarks/README.md) — full decision-model comparison, fallback candidate studies, repeated answers, corpus critique and separate live-gameplay checks.
+- [Decision model benchmark](verification/decision-api-benchmark.md) — 4,000 scored questions, 80 separate structured-output tasks, seven model configurations, and plain-language explanations of answer quality, failed requests, latency and cost.
+- [Decision benchmark corpus audit](verification/decision-benchmark-audit.md) — full original critique, realistic context expansion, compound long-memory cases and remaining judgment limits.
 
 - [Imported interface implementation review](verification/ui-implementation-review.md) — full source/design audit, equipment consequences, draft/focus/privacy repairs, original-request retention and scoped browser/native evidence.
 

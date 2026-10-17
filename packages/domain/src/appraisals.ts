@@ -49,6 +49,7 @@ export interface AppraisalDefinition {
     | { kind: 'decays'; perHour: number; bands: number[] }
     | { kind: 'condition-sustained' };
   reflection: boolean;
+  decision: boolean;
 }
 export interface AppraisalPolicy {
   definitions: AppraisalDefinition[];
@@ -149,6 +150,7 @@ export interface AppraisalBindings {
   sources: readonly AppraisalEvidence[];
   subjects: readonly string[];
   reflection?: boolean;
+  decision?: boolean;
   /** Exact scoped repository outcomes, checked in the current publication lane. */
   completeCreates?: readonly string[];
   priorOutcomes?: Readonly<Record<string, Appraisal>>;
@@ -203,6 +205,7 @@ export function validateAppraisalPolicy(policy: AppraisalPolicy | undefined): vo
         'value',
         'lifetime',
         'reflection',
+        'decision',
       ]) ||
       !isSafeRecordId(definition.id) ||
       ids.has(definition.id) ||
@@ -214,6 +217,7 @@ export function validateAppraisalPolicy(policy: AppraisalPolicy | undefined): vo
       definition.label.length > 80 ||
       !['cause', 'target'].includes(definition.stacking) ||
       typeof definition.reflection !== 'boolean' ||
+      typeof definition.decision !== 'boolean' ||
       !Array.isArray(definition.causes) ||
       !definition.causes.length ||
       new Set(definition.causes).size !== definition.causes.length ||
@@ -272,11 +276,11 @@ export function validateAppraisalPolicy(policy: AppraisalPolicy | undefined): vo
         throw new Error('Invalid explicit appraisal decay.');
     } else throw new Error('Unsupported appraisal lifetime.');
     if (
-      definition.reflection &&
+      (definition.reflection || definition.decision) &&
       (definition.stacking !== 'cause' ||
         definition.causes.some((kind) => kind !== 'remembered' && kind !== 'perceived-event'))
     )
-      throw new Error('Reflection cannot install internal native processes.');
+      throw new Error('AI interpretation cannot install internal native processes.');
   }
 }
 function valuesFor(world: WorldState, actorId: string): Record<string, Appraisal> {
@@ -583,6 +587,7 @@ export function changeAppraisal(
     if (
       !definition ||
       (bindings.reflection && !definition.reflection) ||
+      (bindings.decision && !definition.decision) ||
       !sourceAllowed(world, actorId, change.source, bindings) ||
       (change.targetId !== null &&
         (!bindings.subjects.includes(change.targetId) ||
@@ -619,7 +624,8 @@ export function changeAppraisal(
     !definition ||
     record.revision !== change.expectedRevision ||
     record.state !== 'active' ||
-    (bindings.reflection && !definition.reflection)
+    (bindings.reflection && !definition.reflection) ||
+    (bindings.decision && !definition.decision)
   )
     return outcome(false, 'stale-appraisal', 'The appraisal changed or is unavailable.');
   if (change.kind === 'reframe') {

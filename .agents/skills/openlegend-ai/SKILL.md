@@ -2,7 +2,7 @@
 name: openlegend-ai
 description: >-
   Implement, review or diagnose character decisions, Jev/TypeSafe, LLM prompts, embeddings,
-  cognition context, model outputs or provider execution across OpenLegend.
+  cognition context, model outputs, provider execution or model-evaluation corpora, grading and comparisons.
 ---
 
 # Work through the existing AI boundary
@@ -27,9 +27,11 @@ For Jev, inspect [shared question rubrics](../../../apps/server/src/jev-question
 
 Apply [purpose-based validation](../../../AGENTS.md#validate-only-for-a-concrete-purpose) when decoding provider decisions; [provider behavior](../../../docs/ai-providers.md#provider-behavior-and-limits) owns selection and rating semantics.
 
-For generation, align prompt, runtime schema, decoder and consumers. Structured output and streamed partial parsing do not establish semantic truth or authorize effects; retain final validation and current-state admission. Do not invent a provider capability or conflate speech, thought and action merely because they share one response.
+For generation, align prompt, runtime schema, decoder and consumers. When offered capabilities require different value kinds or ranges, bind each capability to its own schema; an independent capability enum and value union can permit unusable combinations. Exercise enabled consumers through the actual configured transport as well as injected model fixtures, so schema-dialect, binding and pricing checks are covered. Structured output and streamed partial parsing do not establish semantic truth or authorize effects; retain final validation and current-state admission. Do not invent a provider capability or conflate speech, thought and action merely because they share one response.
 
-Trace cancellation, timeout, invalid output, replay, stale context and partial/uncertain completion through accounting. Missing usage is not free execution. No automatic paid retry/fallback or fabricated response. Use the [verification/spending policy](../../rules/verification.md); fixtures cannot prove live quality, latency or calibration.
+For model-evaluation corpora, grading or comparisons, read the existing harness's [grading and fairness contract](../../../scripts/decision-benchmark/README.md#grading-and-fairness) before changing questions, references or reports. Keep expected answers and grading rationale outside model inputs. Freeze inputs/references before execution; retain original predictions/scores and disclose source-based post-run amendments separately. Keep related variants in one split. Report full-workload coverage alongside common-answered quality, separating service/capacity failures, refusals and unattempted work from reasoning errors. Distinguish strict legality, subjective references and calibration; supplied hypothetical laws do not become engine rules.
+
+For provider transport or receipt-recovery changes, read [Receipts, outcomes, and accounting](../../../docs/ai-providers.md#receipts-outcomes-and-accounting). Trace cancellation, timeout, invalid output, replay, stale context and partial/uncertain completion through accounting. Keep the original deadline across execution and result observation, reject late values even if transport cancellation is ignored, and bound cancellation cleanup separately. Missing usage is not free execution. Transports submit once; never fabricate a response. The only implemented automatic higher-model request is the explicitly configured [server decision-escalation policy](../../../docs/ai-providers.md#decision-escalation). Read that contract when changing escalation, shared model scheduling, delayed publication or receipt reconciliation; retain its origin/reason, authority, deadline and funding limits. Use the [verification/spending policy](../../rules/verification.md); fixtures cannot prove live quality, latency or calibration.
 
 For request admission, cancellation or preemption, read [admission and cancellation](../../../docs/ai-providers.md#admission-and-cancellation), including its authority and continuation links, before changing callers or replacement behavior.
 

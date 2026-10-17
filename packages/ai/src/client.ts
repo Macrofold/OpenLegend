@@ -1,3 +1,5 @@
+import { captureHttpErrorDiagnostics, captureResponseRateLimits } from './http-diagnostics.js';
+import { readResponseBody } from './http-response.js';
 import {
   compileSchema,
   decodeJudge,
@@ -56,47 +58,6 @@ function validEndpoint(endpoint: string): boolean {
   }
 }
 
-async function readBody(
-  response: Response,
-  maxBytes: number,
-  signal: AbortSignal,
-): Promise<string> {
-  const declared = response.headers.get('content-length');
-  if (declared && Number(declared) > maxBytes) {
-    void response.body?.cancel().catch(() => undefined);
-    throw new InvalidData('response_too_large');
-  }
-  if (!response.body) throw new InvalidData('empty_response');
-  const reader = response.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let bytes = 0;
-  const cancel = () => {
-    void reader.cancel().catch(() => undefined);
-  };
-  signal.addEventListener('abort', cancel, { once: true });
-  try {
-    while (true) {
-      if (signal.aborted) throw new OutcomeError('uncertain', 'request_aborted', true);
-      const chunk = await reader.read();
-      if (chunk.done) break;
-      bytes += chunk.value.byteLength;
-      if (bytes > maxBytes) {
-        cancel();
-        throw new InvalidData('response_too_large');
-      }
-      chunks.push(chunk.value);
-    }
-    try {
-      return new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, bytes));
-    } catch {
-      throw new InvalidData('invalid_response_encoding');
-    }
-  } finally {
-    signal.removeEventListener('abort', cancel);
-    reader.releaseLock();
-  }
-}
-
 function httpError(status: number): OutcomeError {
   if (status === 401 || status === 403)
     return new OutcomeError('unavailable', 'provider_credentials_rejected');
@@ -112,7 +73,7 @@ function httpError(status: number): OutcomeError {
 
 /** Server-only transport boundary. It does not schedule, retry, reserve budgets, or authorize world changes. */
 export function createAiClient(config: AiClientConfig = {}): AiClient {
-  const timeoutMs = limit(config.timeoutMs, 20_000, 120_000);
+  const timeoutMs = limit(config.timeoutMs, 20_000, 300_000);
   const maxRequestBytes = limit(config.maxRequestBytes, 500_000, 1_048_576);
   const maxResponseBytes = limit(config.maxResponseBytes, 262_144, 2_097_152);
   const maxOutputTokens = limit(config.maxOutputTokens, 2048, 16_384);
@@ -168,6 +129,7 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const controller = new AbortController();
     let callerCancelled = false;
+    let httpFailure: OutcomeError | undefined;
     const externalAbort = () => {
       callerCancelled = true;
       controller.abort();
@@ -209,11 +171,12 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
       const aborted = new Promise<never>((_, reject) => {
         const rejectAbort = () =>
           reject(
-            new OutcomeError(
-              callerCancelled ? 'cancelled' : 'uncertain',
-              callerCancelled ? 'caller_cancelled' : 'deadline_exceeded',
-              receipt.dispatched,
-            ),
+            httpFailure ??
+              new OutcomeError(
+                callerCancelled ? 'cancelled' : 'uncertain',
+                callerCancelled ? 'caller_cancelled' : 'deadline_exceeded',
+                receipt.dispatched,
+              ),
           );
         controller.signal.addEventListener('abort', rejectAbort, { once: true });
         if (controller.signal.aborted) rejectAbort();
@@ -237,13 +200,15 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
           throw new OutcomeError('uncertain', 'late_response', true);
         }
         receipt.httpStatus = response.status;
+        captureResponseRateLimits(receipt, response.headers);
         const traceId = response.headers.get('x-request-id');
         if (traceId && /^[\w.:-]{1,256}$/.test(traceId)) receipt.providerRequestId = traceId;
         if (!response.ok) {
-          void response.body?.cancel().catch(() => undefined);
-          throw httpError(response.status);
+          httpFailure = httpError(response.status);
+          await captureHttpErrorDiagnostics(response, receipt, controller.signal, maxResponseBytes);
+          throw httpFailure;
         }
-        const raw = await readBody(response, maxResponseBytes, controller.signal);
+        const raw = await readResponseBody(response, maxResponseBytes, controller.signal);
         if (controller.signal.aborted)
           throw new OutcomeError(
             callerCancelled ? 'cancelled' : 'uncertain',

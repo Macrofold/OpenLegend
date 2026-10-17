@@ -1,3 +1,4 @@
+import { changeAppraisal, type AppraisalChange, type AppraisalBindings } from './appraisals.js';
 import { accessiblePossession } from './object-access.js';
 import { subjectNarration, presentVerb, person } from './narration.js';
 import { namePhrase } from '@open-legend/language';
@@ -44,7 +45,7 @@ import { getOwn, isSafeRecordId } from './records.js';
 import { current, isDraft } from 'immer';
 import { appendSnapshot, appendedEventCount, cloneValue, draftWorld } from './draft.js';
 import { executeCommand, nativeOperationAvailable, SIMULATION_RULES } from './kernel.js';
-import { appendMemory, canonicalJson, emit, finish, outcome } from './events.js';
+import { appendMemory, canonicalJson, contentLabel, emit, finish, outcome } from './events.js';
 import { seesEntity } from './perception.js';
 import { distance, hasLineOfSight } from './spatial.js';
 import type { Command, Outcome, Transition, WorldState } from './types.js';
@@ -52,6 +53,7 @@ import type { ActivityNode, ActivityPredicate } from './action-experience.js';
 import { reconcileOutings } from './outings.js';
 
 export interface ResponseOperation {
+  appraise?: AppraisalChange | null;
   note?: KnowledgeEdit | null;
   name?: GivenNameEdit | null;
   localId: string;
@@ -122,7 +124,7 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
     return false;
   if (new TextEncoder().encode(JSON.stringify(value)).length > RESPONSE_LIMITS.bytes) return false;
   const ids = new Set<string>();
-  const fields = ['talk', 'act', 'think', 'goal', 'plan', 'note', 'name'] as const;
+  const fields = ['talk', 'act', 'think', 'goal', 'plan', 'note', 'name', 'appraise'] as const;
   for (const op of value.operations) {
     if (
       !op ||
@@ -137,7 +139,7 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
       op.requiresAccepted.some((id) => !ids.has(id)) ||
       fields.some(
         (field) =>
-          (!['note', 'name'].includes(field) && !(field in op)) ||
+          (!['note', 'name', 'appraise'].includes(field) && !(field in op)) ||
           (op[field] != null && (typeof op[field] !== 'object' || Array.isArray(op[field]))),
       ) ||
       fields.filter((field) => op[field] != null).length !== 1
@@ -349,6 +351,7 @@ export function commitActorResponse(
   expectedEncounters?: Record<string, string>,
   evidenceIds: string[] = [],
   knowledgeReferences: Record<string, string> = {},
+  appraisalBindings?: AppraisalBindings,
 ): Transition {
   const reject = (message: string): Transition => ({
     world: input,
@@ -372,6 +375,7 @@ export function commitActorResponse(
     expectedEncounters,
     evidenceIds,
     knowledgeReferences,
+    ...(appraisalBindings ? { appraisalBindings } : {}),
   });
   const prior = getOwn(input.responseReceipts ?? {}, id);
   if (prior) {
@@ -478,6 +482,22 @@ export function commitActorResponse(
         'dependency-rejected',
         'An admission dependency was rejected.',
       );
+      continue;
+    }
+    if (op.appraise) {
+      const appraisalEvents: import('./types.js').WorldEvent[] = [];
+      components[localId] = appraisalBindings?.decision
+        ? changeAppraisal(
+            world,
+            actorId,
+            op.appraise,
+            'appraisal-response-' + contentLabel(canonicalJson([id, localId])),
+            appraisalBindings,
+            appraisalEvents,
+          )
+        : outcome(false, 'appraisal-rejected', 'Decision appraisal changes are unavailable.');
+      for (const event of appraisalEvents) event.data = { ...event.data, responseId: id };
+      events.push(...appraisalEvents);
       continue;
     }
     const goalRef = (ref: string | null): string | null | undefined => {

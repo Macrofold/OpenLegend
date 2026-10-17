@@ -1,5 +1,7 @@
 import type { WorldState } from '@open-legend/domain';
-import type { IntelligenceCall } from '@open-legend/protocol';
+import type { IntelligenceCall, DecisionInspection } from '@open-legend/protocol';
+import type { JobRecord } from './store.js';
+import { sumRequestCosts } from './cognition-budget.js';
 import type { DiagnosticAccess, GameRepository } from './store.js';
 
 function record(value: unknown): Record<string, unknown> | undefined {
@@ -62,6 +64,7 @@ function responseParts(calls: IntelligenceCall[]): { label: string; text: string
         ['plan', 'Plan'],
         ['note', 'Knowledge edit'],
         ['name', 'Given name'],
+        ['appraise', 'Feeling proposal'],
       ]) {
         const part = record(op?.[key!]);
         if (part)
@@ -233,11 +236,85 @@ export async function traceDetails(store: GameRepository, id: string, world?: Wo
   if (!stored) return null;
   const root = presentation(normalizeRoot(stored), world);
   const children = await store.diagnosticStages([id], true);
+  const job = await store.getJob(id);
+  const decision = job?.decision ? await inspectDecision(store, job, children) : undefined;
   return {
     root,
+    decision,
     responseSummary: responseSummary(children),
     children: children.sort((a, b) => a.startedAt.localeCompare(b.startedAt)),
     coverage:
       'Retained diagnostic records only; the periodic 1,000-record target includes trigger roots and stages, and failed captures may be unavailable.',
+  };
+}
+
+async function inspectDecision(
+  store: GameRepository,
+  job: JobRecord,
+  stages: IntelligenceCall[],
+): Promise<DecisionInspection> {
+  const delivery = (phase: 'immediate' | 'final') => {
+    const output = stages.find((stage) => stage.id === `${job.id}:delivered:${phase}`)?.output;
+    return output &&
+      typeof output === 'object' &&
+      'elapsedMs' in output &&
+      typeof output.elapsedMs === 'number'
+      ? output.elapsedMs
+      : undefined;
+  };
+  const state = job.decision!,
+    child = state.higher;
+  const attempts = await store.decisionAttempts(job.id);
+  const pending = attempts.filter(
+    (attempt) =>
+      !attempt.receipt ||
+      (attempt.receipt.dispatched &&
+        (attempt.receipt.completionUncertain || attempt.receipt.estimatedCostUsd === undefined)),
+  );
+  const reason = child
+    ? {
+        'semantic-escalation': 'The first decision requested deeper reasoning.',
+        abstained: 'The first decision did not find a suitable answer.',
+        'native-rejection': 'The game rejected the proposed operation.',
+        'invalid-output': 'The first model returned an unusable structured answer.',
+        'route-unavailable': 'The fast model could not accept this request.',
+      }[child.reason]
+    : undefined;
+  const duration = (start?: number, finish?: number) =>
+    start === undefined || finish === undefined ? null : Math.max(0, finish - start);
+  return {
+    ...(reason ? { reason } : {}),
+    immediate: {
+      pending: 'Waiting for the fast answer',
+      acted: 'An operation was admitted',
+      continued: 'Existing behavior continued',
+      deferred: 'The immediate choice was deferred',
+    }[state.immediate.kind],
+    final:
+      state.phase !== 'closed'
+        ? child
+          ? 'Waiting for reconsideration'
+          : 'Waiting for the original decision'
+        : Object.values(state.groups).every((group) => group.state === 'resolved')
+          ? child?.state === 'finished'
+            ? 'Resolved by the fallback model'
+            : state.immediate.kind === 'deferred'
+              ? 'Resolved by the original model after the immediate deadline'
+              : 'Resolved by the original model'
+          : `Ended with unresolved work: ${state.end?.replaceAll('-', ' ') ?? 'partial response'}`,
+    immediateMs: delivery('immediate') ?? null,
+    totalMs: delivery('final') ?? null,
+    queueMs: duration(child?.eligibleAt, child?.startedAt),
+    preparationMs: duration(child?.startedAt, child?.reservedAt),
+    providerMs: duration(child?.dispatchedAt, child?.returnedAt),
+    accountingMs: duration(child?.dispatchedAt, child?.accountedAt),
+    estimatedCostUsd: sumRequestCosts(
+      attempts
+        .filter((attempt) => attempt.receipt && !attempt.receipt.completionUncertain)
+        .map((attempt) => attempt.receipt!.estimatedCostUsd ?? 0),
+    ),
+    heldUsd: sumRequestCosts(pending.map((attempt) => attempt.reservedUsd)),
+    unpricedAttempts: pending.length,
+    attempts: attempts.length,
   };
 }

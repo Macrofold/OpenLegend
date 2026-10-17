@@ -260,14 +260,14 @@ export async function buildConversationContext(input: {
       corrections: state.experience?.corrections?.[actorId] ?? {},
     });
   const privacyRevision = privacy(world);
-  let checkedWorld = world;
+  let checkedWorld = new WeakRef(world);
   const assertCurrent = () => {
     signal.throwIfAborted();
     if (service.generation !== generation)
       throw new Error('World restored during conversation compaction.');
     // WorldService publishes immutable snapshots. Repeated SQL awaits need fresh
     // cancellation checks, but an unchanged world needs no repeated rendering/hash.
-    if (service.world !== checkedWorld) {
+    if (service.world !== checkedWorld.deref()) {
       if (privacy(service.world) !== privacyRevision)
         throw new Error('Conversation disclosure changed during compaction.');
       if (expectedPerspective !== perspective(service.world, actorId, perspectiveIds))
@@ -277,7 +277,7 @@ export async function buildConversationContext(input: {
         sourceDigest(residentSources(service.world, conversationId), sequence) !== expectedSources
       )
         throw new Error('Conversation sources changed during compaction.');
-      checkedWorld = service.world;
+      checkedWorld = new WeakRef(service.world);
     }
   };
   const check = async (

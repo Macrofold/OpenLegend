@@ -1,5 +1,13 @@
 # Documentation changelog
 
+## October 17, 2026 — Decision benchmark and asynchronous Luna Low fallback
+
+The completed [4,000-question comparison](verification/decision-api-benchmark.md) separates correct/answered accuracy, partial-credit points, factual contradictions, coverage, latency and cost. Authoritative stock is supplied by the engine; models choose how to act. The [results index](benchmarks/README.md) links the current corpus, complete known-miss comparison and runtime evidence without preserving superseded comparison drafts.
+
+The server permits one separately funded **Luna Low** fallback by default for the configured primary origin. Low is selected for its measured latency/quality tradeoff. Native simulation and compatible character work continue during the wait; current authority, evidence and world rules still control publication. Exact-once effects, shared financial/execution limits and uncertain-call recovery remain mandatory. Explicit off and observation modes are available. Decision-time feeling changes require installed permission, initially disabled in bundled definitions.
+
+[Gameplay verification](verification/decision-escalation.md) demonstrates delayed Low replies alongside continued world and character movement. It does not qualify human character quality, a positive runtime-policy improvement or dense-world capacity. [Current contracts](ai-providers.md#decision-escalation), [limits](limits/ai-execution.md#decision-escalation-limits) and [DE01–DE05](maintainers/cognition-redesign.md#decision-escalation) own those distinctions.
+
 ## October 17, 2026 — Physical conflict and purposeful threat responses
 
 The accepted bundled-world design permits direct human PvP and injury to the body a projectile actually contacts, replacing cooperative-only admission and harmless non-target interception. Current player recovery and fully inactive protection remain; released projectiles receive final human review at release. The [feature specification](projects/combat-and-threat-responses-feature-spec.md) and [technical design](projects/combat-and-threat-responses-tech-design.md) distinguish these targets from current runtime behavior.
@@ -13,6 +21,10 @@ Ordinary animals use native escape to reachable refuges, all perceived dangers a
 The [mobile research ledger](../archive/02-research/game-inspiration/research-progress-mobile-2026-10-17.md) records completed dossiers for G168–G177 within their source, edition and access limits. The [comparative essay](../archive/02-research/game-inspiration/essays/mobile-success-failure-and-umamusume.md) connects enjoyable activities, attachment, creation and continuing value to possible OpenLegend experiences, while separating dated spending estimates, publisher explanations and commercial inferences. Ended services are not treated as proof of a specific financial loss or design cause.
 
 The research library, roster, existing essays and [design foundation](repertoires/design-foundation.md) now link these findings. The [source atlas](repertoires/source-atlas.md) distinguishes its original numbered coverage from later additions. These are research and design perspectives, not selected new gameplay, a platform or monetization change, or player-tested commercial conclusions; unrelated research and implementation gates remain open.
+
+## October 17, 2026 — Shared local Macrofold lifecycle
+
+Mike explicitly authorized development agents to ensure local Macrofold is running when their task needs it. The [local setup procedure](live-ai-setup.md#local-macrofold-server-lifecycle), required from root guidance and the benchmark instructions, now requires existing-server discovery and reuse before creating one, ascending free-port selection from 3210, coordinated startup and registered shared use. Cleanup preserves externally owned servers and defers shutdown of an agent-created server until its final user finishes; caller-specific addresses avoid changing other agents' configuration. This replaces the previous assumption that Mike must already have started the service. Paid-call authorization and accounting remain separate.
 
 ## October 17, 2026 — Consolidate indie-launch research and commercial hypotheses
 

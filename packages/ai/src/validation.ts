@@ -130,8 +130,15 @@ export function decodeJudge(data: unknown, questions: TypedQuestionMap): JudgeVa
   for (const [id, q] of Object.entries(questions)) {
     const answer = data.answers[id];
     if (!record(answer) || answer.type !== q.type) throw new InvalidData('invalid_answer_type');
+    // Native decision models can omit confidence. Preserve that absence; only
+    // callers requiring a separate confidence measure should abstain for it.
+    const confidence =
+      Object.hasOwn(answer, 'confidence') && finite(answer.confidence)
+        ? answer.confidence
+        : undefined;
+    if (q.type !== 'noul' && Object.hasOwn(answer, 'confidence') && confidence === undefined)
+      throw new InvalidData(`invalid_${q.type}_answer`);
     if (q.type === 'choice') {
-      if (!finite(answer.confidence)) throw new InvalidData('invalid_choice_answer');
       const distribution = probabilities(answer.probabilities, Object.keys(q.criteria));
       // Select from offered choices; preserve raw scores, with the first offered winning ties.
       const choice = Object.keys(q.criteria).reduce((best, key) =>
@@ -141,19 +148,18 @@ export function decodeJudge(data: unknown, questions: TypedQuestionMap): JudgeVa
         type: 'choice',
         choice,
         probabilities: distribution,
-        confidence: answer.confidence,
+        ...(confidence === undefined ? {} : { confidence }),
       };
     } else if (q.type === 'score') {
       const keys = q.criteria.map((_, index) => String(index));
-      if (!finite(answer.score) || !finite(answer.confidence))
-        throw new InvalidData('invalid_score_answer');
+      if (!finite(answer.score)) throw new InvalidData('invalid_score_answer');
       const distribution = probabilities(answer.probabilities, keys);
       answers[id] = {
         type: 'score',
         score: answer.score,
         legend: Object.fromEntries(q.criteria.map((label, index) => [String(index), label])),
         probabilities: distribution,
-        confidence: answer.confidence,
+        ...(confidence === undefined ? {} : { confidence }),
       };
     } else {
       if (!finite(answer.noul)) throw new InvalidData('invalid_noul_answer');

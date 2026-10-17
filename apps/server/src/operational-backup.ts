@@ -32,6 +32,7 @@ export const OPERATION_TABLES = [
   ...MEMORY_CACHE_TABLES,
   'attempt_scopes',
   'attempt_budgets',
+  'cognition_attempt_links',
   ...WORLD_AGENT_TABLES,
   ...AUTHORITY_TABLES,
   ...CREATION_TARGET_TABLES,

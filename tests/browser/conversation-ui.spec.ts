@@ -77,7 +77,8 @@ test('owner conversation grows from one line and shows message-local pending and
   try {
     await page.goto(`http://127.0.0.1:${address.port}`);
     await enterGame(page);
-    await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
+    // Cold software rendering can outlive the normal five-second assertion bound.
+    await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true', { timeout: 20_000 });
     await page.getByRole('button', { name: 'Game', exact: true }).click();
     await page.getByRole('button', { name: 'World editor', exact: true }).click();
     await page.getByRole('button', { name: 'Start conversation', exact: true }).click();

@@ -1,4 +1,23 @@
 export { createAiClient } from './client.js';
+export {
+  createOpenAiDecisionClient,
+  openAiDecisionInput,
+  decodeOpenAiDecision,
+} from './openai-decisions.js';
+export {
+  createMacrofoldDecisionClient,
+  createMacrofoldGenerationClient,
+  macrofoldInferenceEvidence,
+  captureMacrofoldRunUsage,
+} from './macrofold-decision.js';
+export type {
+  MacrofoldDecisionConfig,
+  MacrofoldDecisionModel,
+  MacrofoldDecisionRequest,
+  MacrofoldGenerationConfig,
+  MacrofoldGenerationRequest,
+  MacrofoldBillingMode,
+} from './macrofold-decision.js';
 export { JsonObjectStream } from './json-stream.js';
 export { consumeEventStream } from './event-stream.js';
 export { captureModelPrices, estimateCostUsd, modelTokenPrices } from './usage.js';
@@ -31,3 +50,5 @@ export {
   decodeJudge,
   decodeUsage,
 } from './validation.js';
+
+export { OpenAiRateGate } from './rate-gate.js';

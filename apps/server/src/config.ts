@@ -1,3 +1,8 @@
+import {
+  DECISION_MODEL,
+  decisionEscalationConfigSchema,
+  defaultDecisionEscalation,
+} from './decision-state.js';
 import { z } from 'zod';
 import { accountBindingSchema } from './authority.js';
 import { readMcpConfig } from './mcp-config.js';
@@ -87,6 +92,9 @@ function numberSetting(
 
 /** Trusted operator configuration. Secrets and arbitrary endpoints never come from the browser. */
 export function readConfig(env: NodeJS.ProcessEnv = process.env) {
+  const macrofoldKey = env['MACROFOLD_API_KEY'] ?? '';
+  const macrofoldJevModel = env['MACROFOLD_JEV_MODEL'] ?? 'typesafe/jev-1.13';
+  const jevModel = env['JEV_MODEL'] ?? 'jev-1.13.0';
   const databaseUrl = env['OPEN_LEGEND_DATABASE_URL']?.trim() ?? '';
   try {
     const url = databaseUrl ? new URL(databaseUrl) : undefined;
@@ -136,7 +144,27 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
       1000,
     ),
   });
-  const llmModelPrices = modelPricesSetting(env['OPENAI_MODEL_PRICES_JSON'], llmModel, llmPrices);
+  // Standard short-context rates checked 2026-10-17; fallback admission is at most 100 KB.
+  // An explicit operator catalogue owns its entries; missing models still fail closed.
+  // https://developers.openai.com/api/docs/pricing
+  const catalogue =
+    env['OPENAI_MODEL_PRICES_JSON'] ??
+    JSON.stringify(
+      llmModel === DECISION_MODEL
+        ? []
+        : [
+            {
+              model: DECISION_MODEL,
+              prices: {
+                inputUsdPerMillion: 0.1,
+                outputUsdPerMillion: 0.5,
+                cachedInputUsdPerMillion: 0.01,
+                cacheWriteInputUsdPerMillion: 0.125,
+              },
+            },
+          ],
+    );
+  const llmModelPrices = modelPricesSetting(catalogue, llmModel, llmPrices);
   // Standard embedding rate checked 2026-10-04. Explicit catalogue ownership wins;
   // custom/unknown models never inherit it. docs/ai-providers.md#configuration-and-interface
   const embeddingModelPrices = llmModelPrices.some(
@@ -305,6 +333,11 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     exitGraceMs: numberSetting(env, 'OPEN_LEGEND_EXIT_GRACE_SECONDS', 15, 1, 60) * 1000,
     budgetUsd: numberSetting(env, 'AI_BUDGET_USD', 50, 0, 100),
     jevOnly: env['AI_JEV_ONLY'] === 'true',
+    decisionEscalation: env['DECISION_ESCALATION_JSON']
+      ? decisionEscalationConfigSchema.parse(JSON.parse(env['DECISION_ESCALATION_JSON']))
+      : defaultDecisionEscalation(
+          macrofoldKey ? `macrofold/${macrofoldJevModel}` : `jev/${jevModel}`,
+        ),
     // Absence preserves the world's authored timeout; this records only an explicit override.
     conversationInactivitySeconds:
       env['CONVERSATION_INACTIVITY_SECONDS'] === undefined
@@ -320,11 +353,11 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     llmReserveUsd: numberSetting(env, 'LLM_CALL_RESERVE_USD', 0.08, 0.000001, 10),
     aiTimeoutMs: numberSetting(env, 'AI_TIMEOUT_SECONDS', 35, 5, 120) * 1000,
     macrofoldUrl: env['MACROFOLD_BASE_URL'] ?? 'http://localhost:3210',
-    macrofoldKey: env['MACROFOLD_API_KEY'] ?? '',
+    macrofoldKey,
     macrofoldBillingMode,
     // Connection IDs select credentials already stored in Macrofold, not raw keys.
     macrofoldProviderConnectionId: env['MACROFOLD_PROVIDER_CONNECTION_ID'] ?? '',
-    macrofoldJevModel: env['MACROFOLD_JEV_MODEL'] ?? 'typesafe/jev-1.13',
+    macrofoldJevModel,
     macrofoldJevConnectionId:
       env['MACROFOLD_JEV_CONNECTION_ID'] || env['MACROFOLD_PROVIDER_CONNECTION_ID'] || '',
     macrofoldModel: env['MACROFOLD_MODEL'] ?? DEFAULT_MACROFOLD_MODEL,
@@ -344,7 +377,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     macrofoldTimeoutSeconds: numberSetting(env, 'MACROFOLD_TIMEOUT_SECONDS', 300, 5, 300),
     jevKey: env['TYPESAFE_API_KEY'] ?? env['JEV_API_KEY'] ?? '',
     llmKey: env['OPENAI_API_KEY'] ?? '',
-    jevModel: env['JEV_MODEL'] ?? 'jev-1.13.0',
+    jevModel,
     llmModel,
     jevPrices: {
       inputUsdPerMillion: numberSetting(env, 'JEV_INPUT_USD_PER_MILLION', 0.042, 0, 1000),

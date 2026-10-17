@@ -1,4 +1,6 @@
 import { isEquipped } from '@open-legend/domain';
+import { AsyncLocalStorage } from 'node:async_hooks';
+import type { CognitionExecution, ExecutionLease } from './cognition-execution.js';
 import { personalPronoun } from '@open-legend/language';
 import { MemoryPreparationError, RETRIEVAL_ROWS, RETRIEVAL_BYTES } from './memory-repository.js';
 import { stimulusSalience, STIMULUS_POLICY } from '@open-legend/domain';
@@ -414,13 +416,21 @@ export class RecallService {
   private observedMemoryRevision = -1;
   private indexQueued = false;
   private indexWork: Promise<void> = Promise.resolve();
-  private readonly indexController = new AbortController();
+  private indexController = new AbortController();
   private closed = false;
   private indexFailure: string | undefined;
+  private indexSlotId?: string;
+  private indexActors: string[] = [];
+  private indexGeneration?: string;
+  private readonly executionOwner = new AsyncLocalStorage<{
+    rootId: string;
+    lease: ExecutionLease;
+  }>();
   constructor(
     private service: WorldService,
     private log: IntelligenceLog,
     client?: EmbeddingClient,
+    private readonly execution?: CognitionExecution,
   ) {
     const c = service.config;
     this.embeddings =
@@ -434,6 +444,11 @@ export class RecallService {
         timeoutMs: c.aiTimeoutMs,
       });
     this.unsubscribe = service.subscribe(() => {
+      if (service.paused) this.indexController.abort();
+      else if (this.indexController.signal.aborted && !this.closed) {
+        this.indexController = new AbortController();
+        void this.indexWork.then(() => this.scheduleMemoryIndex());
+      }
       const revision = service.store.memories?.publicationRevision ?? -1;
       if (revision === this.observedMemoryRevision) return;
       this.observedMemoryRevision = revision;
@@ -442,16 +457,73 @@ export class RecallService {
     this.scheduleMemoryIndex();
   }
 
+  withExecution<T>(rootId: string, lease: ExecutionLease, operation: () => Promise<T>): Promise<T> {
+    return this.executionOwner.run({ rootId, lease }, operation);
+  }
+  private attemptLink(stage: string) {
+    const owner = this.executionOwner.getStore();
+    return owner
+      ? {
+          rootJobId: owner.rootId,
+          category: 'preparation' as const,
+          stage,
+          executionClass: 'background' as const,
+        }
+      : undefined;
+  }
+
   private scheduleMemoryIndex(): void {
     if (
       this.closed ||
       this.indexQueued ||
       !this.service.store.vectors ||
       !this.service.config.embeddingKey ||
-      this.service.config.budgetUsd <= 0
+      this.service.config.budgetUsd <= 0 ||
+      this.service.paused
     )
       return;
     this.indexQueued = true;
+    if (this.execution) {
+      const id = `memory-index-admission:${randomUUID()}`;
+      this.indexSlotId = id;
+      this.indexWork = new Promise<void>((resolve) => {
+        const at = this.execution!.timestamp();
+        const accepted = this.execution!.enqueue({
+          id,
+          actorId: 'world-agent',
+          kind: 'maintenance',
+          urgency: 0,
+          eligibleAt: at,
+          dispatchBy: at + 2000,
+          metadataBytes: Buffer.byteLength(id) + 128,
+          start: async (lease) => {
+            this.indexSlotId = undefined;
+            let more = false;
+            try {
+              more = await this.withExecution(id, lease, () => this.indexMemories());
+            } catch {
+              this.indexFailure =
+                'Memory indexing interrupted; the original spending remains recorded.';
+            } finally {
+              this.indexQueued = false;
+              resolve();
+            }
+            if (more && !lease.uncertainCompletion) this.scheduleMemoryIndex();
+          },
+          declined: async () => {
+            this.indexQueued = false;
+            this.indexSlotId = undefined;
+            resolve();
+          },
+        });
+        if (!accepted) {
+          this.indexQueued = false;
+          this.indexSlotId = undefined;
+          resolve();
+        }
+      });
+      return;
+    }
     this.indexWork = this.indexWork
       .then(async () => {
         while (this.indexQueued && !this.closed) {
@@ -473,8 +545,26 @@ export class RecallService {
   ): Promise<AiResult<number[][]>> {
     const admitted = await this.service.publishRecall(async () => {
       const valid = await current();
-      if (valid && !this.closed && !request.signal?.aborted)
+      const owner = this.executionOwner.getStore();
+      if (
+        valid &&
+        !this.closed &&
+        !this.service.paused &&
+        !request.signal?.aborted &&
+        !owner?.lease.uncertainCompletion
+      ) {
+        if (owner) {
+          try {
+            if (!(await this.service.store.markDecisionDispatch(request.requestId)))
+              throw new Error('Embedding dispatch was already claimed.');
+          } catch (error) {
+            // The write may have committed despite a lost acknowledgement.
+            owner.lease.uncertain();
+            throw error;
+          }
+        }
         return { result: this.embeddings.embed(request) };
+      }
       const now = new Date().toISOString();
       const cancelled: AiResult<number[][]> = {
         outcome: 'cancelled',
@@ -495,19 +585,32 @@ export class RecallService {
       };
       return { result: Promise.resolve(cancelled) };
     });
-    return admitted.result;
+    try {
+      const result = await admitted.result;
+      if (result.receipt.completionUncertain) this.executionOwner.getStore()?.lease.uncertain();
+      return result;
+    } catch (error) {
+      this.executionOwner.getStore()?.lease.uncertain();
+      throw error;
+    }
   }
 
-  private async indexMemories(): Promise<void> {
+  private async indexMemories(): Promise<boolean> {
+    const controller = this.indexController;
     const repository = this.service.store.memories;
     const generation = this.service.generation;
     const head = await this.service.store.records?.head();
-    if (!repository || !head || generation !== this.service.generation) return;
+    if (!repository || !head || generation !== this.service.generation) return false;
     const config = this.service.config;
     const model = { model: config.embeddingModel, dimensions: config.embeddingDimensions };
-    const actors = Object.values(this.service.world.entities)
-      .filter((entity) => entity.actor?.controller === 'npc')
-      .map((entity) => entity.id);
+    if (!this.indexActors.length || this.indexGeneration !== generation) {
+      this.indexActors = Object.values(this.service.world.entities)
+        .filter((entity) => entity.actor?.controller === 'npc')
+        .map((entity) => entity.id)
+        .sort();
+      this.indexGeneration = generation;
+    }
+    const actors = this.indexActors;
     // One batch per actor per round prevents a long-lived actor monopolizing the index budget.
     while (actors.length && !this.closed) {
       const actorId = actors.shift()!;
@@ -544,6 +647,9 @@ export class RecallService {
             config.embeddingReserveUsd,
             Math.max(0, config.budgetUsd - interactiveAllowance(config)),
             actorId,
+            undefined,
+            undefined,
+            this.attemptLink('memory-index'),
           ),
       );
       if (!admitted) continue; // A denied actor must not starve the next actor.
@@ -555,15 +661,15 @@ export class RecallService {
             {
               requestId,
               texts: batch.map((source) => source.memory.summary),
-              signal: this.indexController.signal,
+              signal: controller.signal,
             },
             current,
           ),
       );
       await this.service.store.settle(requestId, result.receipt);
-      if (result.outcome !== 'value') return;
+      if (result.outcome !== 'value') return false;
       await this.service.publishRecall(async () => {
-        if (this.closed || this.indexController.signal.aborted || !(await current())) return;
+        if (this.closed || controller.signal.aborted || !(await current())) return;
         await repository.putVectors(
           scope,
           model,
@@ -574,8 +680,12 @@ export class RecallService {
           })),
         );
       });
+      // Finish this finite actor round before rebuilding membership. Re-adding a
+      // successful actor forever would hide newly created NPCs during a backlog.
+      if (this.execution) return true;
       actors.push(actorId);
     }
+    return false;
   }
 
   private recallCurrent(
@@ -629,6 +739,7 @@ export class RecallService {
     signal: AbortSignal,
     budgetCeiling: number,
     preparation?: CognitionPreparation,
+    mode: 'ordinary' | 'native-only' = 'ordinary',
   ): Promise<AttentionCandidate[]> {
     const generation = this.service.generation;
     const repository = this.service.store.memories;
@@ -667,6 +778,7 @@ export class RecallService {
           ? 'cached query'
           : 'structured fallback: query embedding unavailable';
     if (
+      mode !== 'native-only' &&
       count > 300 &&
       !vector &&
       this.service.store.vectors &&
@@ -682,6 +794,9 @@ export class RecallService {
           config.embeddingReserveUsd,
           budgetCeiling,
           actorId,
+          undefined,
+          undefined,
+          this.attemptLink('memory-query'),
         )
       ) {
         const result = await this.log.run(
@@ -749,6 +864,7 @@ export class RecallService {
     this.closed = true;
     this.unsubscribe();
     this.indexController.abort();
+    if (this.indexSlotId) await this.execution?.cancel(new Set([this.indexSlotId]));
     await this.indexWork;
   }
   async select(
@@ -762,6 +878,7 @@ export class RecallService {
     budgetCeiling = this.service.config.budgetUsd,
     optionalByteBudget = Number.MAX_SAFE_INTEGER,
     immediateContext: Record<string, unknown> = {},
+    mode: 'ordinary' | 'native-only' = 'ordinary',
   ) {
     const config = this.service.config;
     const generation = this.service.generation;
@@ -871,7 +988,8 @@ export class RecallService {
     const additions: { id: string; revision: string; vector: number[] }[] = [];
     if (semanticPool.length && vectors && (missing.length || !cachedQuery)) {
       const id = `${jobId}:embeddings`;
-      if (!config.embeddingKey) embeddingStatus = 'unavailable: no embedding credentials';
+      if (mode === 'native-only') embeddingStatus = 'native-only: cached evidence';
+      else if (!config.embeddingKey) embeddingStatus = 'unavailable: no embedding credentials';
       else if (
         !(await this.service.store.reserve(
           id,
@@ -879,6 +997,9 @@ export class RecallService {
           config.embeddingReserveUsd,
           budgetCeiling,
           actorId,
+          undefined,
+          undefined,
+          this.attemptLink('recall-embeddings'),
         ))
       )
         embeddingStatus = 'deferred: spending cap';
@@ -1014,20 +1135,23 @@ export class RecallService {
           },
           Object.entries(candidateTexts),
         );
-        const judged = Object.keys(request.questions).length
-          ? await judge(request)
-          : { answers: {} };
+        const judged =
+          mode !== 'native-only' && Object.keys(request.questions).length
+            ? await judge(request)
+            : { answers: {} };
         for (const [i, c] of boundedFinalists.entries()) {
           const answer = judged.answers[`c${i}`];
           c.attention = answer;
           // Retrieval favors recall: confidence is not P(relevant), and ambiguity
           // must not erase useful or contradictory evidence. Native admission
           // remains responsible for any later action.
-          c.selected = attentionIncludes(answer);
+          c.selected = mode === 'native-only' ? true : attentionIncludes(answer);
           c.reason = !request.questions[`c${i}`]
             ? 'omitted: judgment token budget'
             : c.selected
-              ? 'Jev included'
+              ? mode === 'native-only'
+                ? 'Native bounded coverage'
+                : 'Jev included'
               : 'Jev excluded or uncertain';
         }
         attentionStatus = 'completed';

@@ -1,4 +1,11 @@
 import { resolveInventoryGroup } from './inventory-groups.js';
+import {
+  decisionClaimCurrent,
+  finishDecisionPublication,
+  type DecisionPublication,
+} from './decision-publication.js';
+import { DecisionClaimLost } from './decision-state.js';
+import { decisionPolicyDigest } from './decision-task.js';
 import { assemblyView } from './construction.js';
 import { reconcileConstructionAuthority } from '@open-legend/domain';
 import { endsCoachingConsent, endsOutingConsent } from '@open-legend/domain';
@@ -1321,7 +1328,12 @@ export class WorldService {
         this.notify(false);
         return false;
       }
-      if (error instanceof AuthorityError || error instanceof OverloadError) throw error;
+      if (
+        error instanceof AuthorityError ||
+        error instanceof OverloadError ||
+        error instanceof DecisionClaimLost
+      )
+        throw error;
       this.storageError =
         'The save could not be committed. Simulation is paused; restart after resolving storage access.';
       this.notify(false);
@@ -3387,60 +3399,110 @@ export class WorldService {
     responseJobId?: string,
     validateSources?: (world: WorldState) => Promise<boolean>,
     command?: Command,
+    decision?: DecisionPublication,
   ): Promise<ApiResult> {
-    return this.mutate(async () => {
-      await this.ready;
+    try {
+      return await this.mutate(async () => {
+        await this.ready;
 
-      // Durable job admission outlives the hot domain receipt window. Check inside
-      // the same mutation lane as commit (docs/architecture.md#actor-agency-foundation).
-      if (responseJobId) {
-        const job = await this.store.getJob(responseJobId);
+        // Durable job admission outlives the hot domain receipt window. Check inside
+        // the same mutation lane as commit (docs/architecture.md#actor-agency-foundation).
         if (
-          !job ||
-          (!this.world.responseReceipts?.[responseJobId] &&
-            job.status !== 'generating' &&
-            !(job.responseReady && ['queued', 'judging'].includes(job.status)))
+          decision &&
+          !decisionClaimCurrent(
+            await this.store.getJob(decision.rootJobId),
+            decision,
+            this.world,
+            this.timelineId,
+            this.generation,
+            decisionPolicyDigest(this.config),
+          )
         )
           return {
             ok: false,
-            code: 'retired-response',
-            message:
-              'This response identity is retired or was never admitted; no effects were applied.',
+            code: 'stale-publication',
+            message: 'This decision is no longer pending.',
           };
-      }
-      if (validateSources && !(await validateSources(this.world)))
-        return {
-          ok: false,
-          code: 'stale-publication',
-          message: 'Publication sources or authority changed.',
-        };
-      // Deliberate inspection records permitted facts at frozen time. Other reasons
-      // for holding the writer still apply (docs/ui-ux/world-interaction.md#paused-game-tabs).
-      if (this.paused && !this.commandWhileManuallyPaused(command))
-        return { ok: false, code: 'paused', message: 'Resume the world before acting.' };
-      const result = operation(this.world);
-      const receipt = gameplay ? { ...gameplay, result: result.outcome } : undefined;
-      // A rejected/stale background transition with no effects has nothing to save.
-      // Explicit commands and response jobs still need their durable outcome/receipt.
-      if (result.world === this.world && !receipt && !responseJobId && !result.invalidatedMemoryIds)
+        if (responseJobId && !decision) {
+          const job = await this.store.getJob(responseJobId);
+          if (
+            !job ||
+            (!this.world.responseReceipts?.[responseJobId] &&
+              job.status !== 'generating' &&
+              !(job.responseReady && ['queued', 'judging'].includes(job.status)))
+          )
+            return {
+              ok: false,
+              code: 'retired-response',
+              message:
+                'This response identity is retired or was never admitted; no effects were applied.',
+            };
+        }
+        if (validateSources && !(await validateSources(this.world)))
+          return {
+            ok: false,
+            code: 'stale-publication',
+            message: 'Publication sources or authority changed.',
+          };
+        // Deliberate inspection records permitted facts at frozen time. Other reasons
+        // for holding the writer still apply (docs/ui-ux/world-interaction.md#paused-game-tabs).
+        if (this.paused && !this.commandWhileManuallyPaused(command))
+          return { ok: false, code: 'paused', message: 'Resume the world before acting.' };
+        const admissionWorld = this.world;
+        const result = operation(admissionWorld);
+        const receipt = gameplay ? { ...gameplay, result: result.outcome } : undefined;
+        // A rejected/stale background transition with no effects has nothing to save.
+        // Explicit commands and response jobs still need their durable outcome/receipt.
+        if (
+          result.world === this.world &&
+          !receipt &&
+          !responseJobId &&
+          !decision &&
+          !result.invalidatedMemoryIds
+        )
+          return { ...result.outcome };
+        const world = receipt
+          ? updateWorld(result.world, (draft) => {
+              delete draft.commandReceipts[receipt.id];
+            })
+          : result.world;
+        if (
+          !(await this.commit(
+            { ...this.saved, world },
+            result.invalidatedMemoryIds,
+            'append',
+            undefined,
+            receipt,
+            undefined,
+            decision
+              ? {
+                  operationalChange: () =>
+                    finishDecisionPublication(
+                      this.store,
+                      decision,
+                      world,
+                      admissionWorld,
+                      this.timelineId,
+                      this.generation,
+                      result.outcome,
+                      () => decisionPolicyDigest(this.config),
+                    ),
+                }
+              : undefined,
+          ))
+        )
+          return { ok: false, code: 'storage', message: this.storageError! };
+        if (decision) {
+          decision.deliveredAt = decision.now();
+          decision.deliveredElapsedMs = Math.max(0, performance.now() - decision.startedMonotonic!);
+        }
         return { ...result.outcome };
-      const world = receipt
-        ? updateWorld(result.world, (draft) => {
-            delete draft.commandReceipts[receipt.id];
-          })
-        : result.world;
-      if (
-        !(await this.commit(
-          { ...this.saved, world },
-          result.invalidatedMemoryIds,
-          'append',
-          undefined,
-          receipt,
-        ))
-      )
-        return { ok: false, code: 'storage', message: this.storageError! };
-      return { ...result.outcome };
-    });
+      });
+    } catch (error) {
+      if (error instanceof DecisionClaimLost)
+        return { ok: false, code: 'stale-publication', message: error.message };
+      throw error;
+    }
   }
 
   async preparedNavigation(

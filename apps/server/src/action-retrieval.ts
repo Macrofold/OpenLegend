@@ -18,6 +18,7 @@ export async function retrieveActions(
   candidates: CandidateAction[],
   signal: AbortSignal,
   ready: () => Promise<void>,
+  nativeOnly = false,
 ) {
   const fallback = (status: string) => ({
     candidates: [...candidates]
@@ -33,6 +34,7 @@ export async function retrieveActions(
       status: 'complete library; no retrieval needed',
       eligible: candidates.length,
     };
+  if (nativeOnly) return fallback('native bounded coverage; additional paid retrieval disabled');
   const { config, store } = service;
   const vectors = store.vectors;
   if (!vectors || !config.embeddingKey)

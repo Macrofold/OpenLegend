@@ -267,6 +267,7 @@ export async function prepareDecision(
   attempt = 0,
   triggerEvidenceId?: string,
   compact?: ConversationGenerate,
+  mode: 'ordinary' | 'native-only' = 'ordinary',
 ) {
   await service.flushMemorySources(actorId);
   const world = service.world;
@@ -393,6 +394,7 @@ export async function prepareDecision(
     signal,
     budgetCeiling,
     preparation,
+    mode,
   );
   const availableMemoryIds = new Set([
     ...candidates.flatMap((candidate) => candidate.sourceIds ?? [candidate.id]),
@@ -598,6 +600,7 @@ export async function prepareDecision(
         agency: requiredContext['agency'],
         ...(observed.contacts.length ? { contacts: requiredContext['contacts'] } : {}),
       },
+      mode,
     )
     .catch((error: unknown) => {
       signal.throwIfAborted();
@@ -622,20 +625,16 @@ export async function prepareDecision(
       .filter((candidate) => candidate.kind === 'memory' || candidate.kind === 'conversation')
       .flatMap((candidate) => candidate.entityIds),
   );
+  const rememberedEpisodes = new Map(
+    [...rememberedSubjects].map((id) => [id, world.perceptionEpisodes?.[actorId]?.[id] ?? null]),
+  );
   const validatePrepared = async (flush = true) => {
     await conversation.validate(flush, sources);
     // Attention/generation can outlive an unnamed person's observation. Historical
     // source revisions cannot authorize rebinding that old account to a new exposure.
     // docs/memory-architecture.md#personal-perspective-and-acquisition
     for (const id of rememberedSubjects)
-      if (
-        !subjectReferenceCurrent(
-          service.world,
-          actorId,
-          id,
-          world.perceptionEpisodes?.[actorId]?.[id] ?? null,
-        )
-      )
+      if (!subjectReferenceCurrent(service.world, actorId, id, rememberedEpisodes.get(id) ?? null))
         throw new Error('A remembered participant changed observation; discard stale context.');
     // The same fence runs after generation: a newly completed action is material
     // evidence even when none of the previously selected memory records changed.

@@ -271,4 +271,80 @@ describe('fixture: cognition vertical slice', () => {
     expect(requests.filter((r) => r.path === '/v1/workspaces')).toHaveLength(1);
     expect(native[0]!.key).not.toBe(native[1]!.key);
   });
+
+  it.each(['inference', 'native_agent'])(
+    'routes native Microsoft judgments through the game backend and verifies Run kind %s',
+    async (kind) => {
+      const s = await service();
+      s.config.macrofoldJevModel = 'microsoft/microsoft-decision-1';
+      s.config.macrofoldBillingMode = 'managed';
+      const bodies: unknown[] = [];
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (input: string, init: RequestInit) => {
+          const path = new URL(input).pathname;
+          if (path === '/v1/inferences') {
+            bodies.push(JSON.parse(String(init.body)));
+            return Response.json({
+              run_id: 'judgment-run',
+              urls: {
+                status: '/v1/runs/judgment-run',
+                result: '/v1/runs/judgment-run/result',
+              },
+            });
+          }
+          if (path === '/v1/runs/judgment-run')
+            return Response.json({
+              id: 'judgment-run',
+              kind,
+              status: 'succeeded',
+              cost_micro_usd: '5',
+            });
+          if (path === '/v1/runs/judgment-run/result')
+            return Response.json({
+              run_id: 'judgment-run',
+              final: true,
+              inference: {
+                outcome: 'value',
+                provider_outcome: 'responded',
+                model_revision: 'microsoft/microsoft-decision-1-20261009',
+                value: {
+                  answers: { noticed: { type: 'noul', noul: 0.95 } },
+                  usage: { input_tokens: 100, output_tokens: 1 },
+                },
+              },
+            });
+          if (path === '/v1/billing/usage') return Response.json({ data: [], next_cursor: null });
+          throw new Error(`Unexpected judgment fixture path ${path}`);
+        }),
+      );
+      const state = { observation: 'I watched Mara give me the promised berry.' };
+      const questions = {
+        noticed: { type: 'noul' as const, instructions: 'Did I observe the berry transfer?' },
+      };
+      const result = await new MacrofoldBackend(s).judge({
+        requestId: `judgment-${kind}`,
+        state,
+        questions,
+      });
+      expect(bodies).toEqual([
+        expect.objectContaining({
+          model_binding: {
+            provider: 'openrouter',
+            model: 'microsoft/microsoft-decision-1',
+            billing_mode: 'managed',
+          },
+          input: { state, questions },
+          limits: expect.objectContaining({ max_output_tokens: 1024 }),
+        }),
+      ]);
+      expect(result.outcome).toBe(kind === 'inference' ? 'value' : 'uncertain');
+      if (kind === 'inference')
+        expect(result.receipt).toMatchObject({
+          estimatedCostUsd: 0.000005,
+          completionUncertain: false,
+        });
+      else expect(result.receipt).toMatchObject({ completionUncertain: true });
+    },
+  );
 });

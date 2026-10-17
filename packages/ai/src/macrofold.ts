@@ -111,6 +111,7 @@ export class MacrofoldTransport {
     if (body !== undefined && !operationId) throw new Error('Mutation requires an operation ID.');
     const control = signal ?? AbortSignal.timeout(30_000);
     control.throwIfAborted();
+    // Direct inference executes immediately; Macrofold rejects asynchronous admission.
     const response = await this.transport(url.href, {
       method: body === undefined ? 'GET' : 'POST',
       redirect: 'error',
@@ -119,14 +120,6 @@ export class MacrofoldTransport {
         'Content-Type': 'application/json',
         ...(matchVersion === undefined ? {} : { 'If-Match': JSON.stringify(matchVersion) }),
         ...(operationId ? { 'Idempotency-Key': operationId } : {}),
-        // Queue bounded inference at the provider; the caller already polls the
-        // accepted Run and preserves its original deadline and cancellation. Streaming
-        // delivers directly and cannot be combined with asynchronous admission.
-        ...(body !== undefined &&
-        path === '/v1/inferences' &&
-        !(body && typeof body === 'object' && 'stream' in body && body.stream === true)
-          ? { Prefer: 'respond-async' }
-          : {}),
       },
       ...(body === undefined ? {} : { body: serialize(body, 500_000) }),
       signal: control,

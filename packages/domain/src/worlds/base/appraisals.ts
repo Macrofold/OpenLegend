@@ -14,6 +14,7 @@ export const BASE_APPRAISAL_POLICY: AppraisalPolicy = {
       stacking: 'target' as const,
       value: { kind: 'scaled' as const, min: 0, max: 1 },
       lifetime: { kind: 'decays' as const, perHour: 0.25, bands: [0.5, 0.2, 0] },
+      decision: false,
       reflection: false,
     })),
     {
@@ -25,6 +26,7 @@ export const BASE_APPRAISAL_POLICY: AppraisalPolicy = {
       stacking: 'cause',
       value: { kind: 'qualitative' },
       lifetime: { kind: 'persistent' },
+      decision: false,
       reflection: true,
     },
     // Separate admission policy preserves existing experience-linked grief pins.
@@ -37,6 +39,7 @@ export const BASE_APPRAISAL_POLICY: AppraisalPolicy = {
       stacking: 'cause',
       value: { kind: 'qualitative' },
       lifetime: { kind: 'persistent' },
+      decision: false,
       reflection: false,
     },
     {
@@ -48,6 +51,7 @@ export const BASE_APPRAISAL_POLICY: AppraisalPolicy = {
       stacking: 'cause',
       value: { kind: 'qualitative' },
       lifetime: { kind: 'condition-sustained' },
+      decision: false,
       reflection: false,
     },
     {
@@ -59,6 +63,7 @@ export const BASE_APPRAISAL_POLICY: AppraisalPolicy = {
       stacking: 'cause',
       value: { kind: 'qualitative' },
       lifetime: { kind: 'expires', seconds: 30 },
+      decision: false,
       reflection: false,
     },
   ],

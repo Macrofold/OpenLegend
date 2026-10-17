@@ -3,7 +3,8 @@ import { testRepository } from '../../../tests/fixtures/database.js';
 import { editWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { allItems, createItemLot, itemFor } from '@open-legend/domain';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { seedDecisionInspection } from '../../../tests/fixtures/decision-inspection.js';
 import { createGameServer } from './http.js';
 import { readConfig } from '../../../tests/fixtures/database.js';
 
@@ -31,6 +32,46 @@ async function start(godMode = false) {
 }
 
 describe('local HTTP boundary', () => {
+  it('E36 shows paired decision details only while inspection remains authorized', async () => {
+    const { game, post } = await start(true),
+      id = await seedDecisionInspection(game.service);
+    const allowed = await post('/api/god/trigger', { id });
+    expect(allowed.status).toBe(200);
+    expect((await allowed.json()).details.decision).toMatchObject({
+      reason: 'The first model returned an unusable structured answer.',
+      final: 'Resolved by the fallback model',
+      estimatedCostUsd: 0.001,
+      heldUsd: 0,
+      attempts: 1,
+    });
+    const original = game.service.store.getJob.bind(game.service.store);
+    let entered!: () => void, release!: () => void;
+    const waiting = new Promise<void>((done) => {
+        entered = done;
+      }),
+      gate = new Promise<void>((done) => {
+        release = done;
+      });
+    vi.spyOn(game.service.store, 'getJob').mockImplementationOnce(async (key) => {
+      const job = await original(key);
+      entered();
+      await gate;
+      return job;
+    });
+    const reading = post('/api/god/trigger', { id });
+    await waiting;
+    try {
+      await game.service.store.authority!.revokeSession(
+        game.service.localScope.sessionId,
+        Date.now(),
+      );
+    } finally {
+      release();
+    }
+    const denied = await reading;
+    expect([401, 403]).toContain(denied.status);
+    expect(await denied.text()).not.toContain('Resolved by the fallback model');
+  });
   it('gates private mind inspection on god mode, owner session, origin and strict input', async () => {
     const ordinary = await start();
     expect((await ordinary.post('/api/god/mind', { actorId: NPC_ID })).status).toBe(403);

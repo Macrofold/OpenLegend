@@ -1157,6 +1157,21 @@ export interface MindSubjectPage {
 }
 
 /** Owner-only debugging payload; never included in GameView or public event streams. */
+export interface DecisionInspection {
+  reason?: string;
+  immediate: string;
+  final: string;
+  immediateMs: number | null;
+  totalMs: number | null;
+  queueMs: number | null;
+  preparationMs: number | null;
+  providerMs: number | null;
+  accountingMs: number | null;
+  estimatedCostUsd: number;
+  heldUsd: number;
+  unpricedAttempts: number;
+  attempts: number;
+}
 export interface IntelligenceCall {
   ownerAccountId?: string;
   parentId?: string;

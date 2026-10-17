@@ -1,4 +1,6 @@
+import { undispatchedReceipt } from './decision-state.js';
 import { normalizeReceiptCost } from '@open-legend/ai';
+import { CognitionExecution, type ExecutionLease } from './cognition-execution.js';
 import { acquiredActivities, ACTIVITY_SYNTAX } from '@open-legend/domain';
 import type { TypedQuestionMap } from '@open-legend/ai';
 import { bindReflectionAppraisals } from './appraisal-context.js';
@@ -67,6 +69,10 @@ export class CognitionMaintenance {
   private budgetActor = 'world-agent';
   private active: AbortController | null = null;
   private pending: Promise<void> | null = null;
+  private queuedId?: string;
+  private dispatching?: Promise<void>;
+  private executionLease?: ExecutionLease;
+  private budgetJob?: string;
   private activeAdmission: {
     actorId: string;
     generation: string;
@@ -84,9 +90,10 @@ export class CognitionMaintenance {
     private log: IntelligenceLog,
     private recall: RecallService,
     private now = Date.now,
+    private execution?: CognitionExecution,
   ) {
     this.unsubscribe = service.subscribe(() => {
-      if (service.paused) this.active?.abort();
+      if (service.paused) this.cancel();
     });
   }
   private key(actorId: string) {
@@ -194,7 +201,14 @@ export class CognitionMaintenance {
     }
   }
   private async schedule(interactiveBusy: boolean): Promise<void> {
-    if (this.scheduling || this.active || this.stopped || this.service.paused || interactiveBusy)
+    if (
+      this.scheduling ||
+      this.active ||
+      this.queuedId ||
+      this.stopped ||
+      this.service.paused ||
+      interactiveBusy
+    )
       return;
     this.scheduling = true;
     try {
@@ -488,6 +502,48 @@ export class CognitionMaintenance {
     generation: string,
     execute: (controller: AbortController) => Promise<void>,
   ) {
+    if (this.execution && reason !== 'activity-learning') {
+      const id = `maintenance-admission-${randomUUID()}`;
+      this.queuedId = id;
+      const at = this.now();
+      const accepted = this.execution.enqueue({
+        id,
+        actorId,
+        kind: 'maintenance',
+        urgency: 0,
+        eligibleAt: at,
+        dispatchBy: at + 2000,
+        metadataBytes: Buffer.byteLength(id) + Buffer.byteLength(actorId) + 128,
+        start: async (lease) => {
+          this.queuedId = undefined;
+          this.executionLease = lease;
+          const work = (async () => {
+            await this.startNow(actorId, reason, generation, execute);
+            await this.pending;
+          })();
+          this.dispatching = work;
+          try {
+            await work;
+          } finally {
+            if (this.dispatching === work) this.dispatching = undefined;
+            this.executionLease = undefined;
+          }
+        },
+        declined: async () => {
+          if (this.queuedId === id) this.queuedId = undefined;
+        },
+      });
+      if (!accepted) this.queuedId = undefined;
+      return;
+    }
+    await this.startNow(actorId, reason, generation, execute);
+  }
+  private async startNow(
+    actorId: string,
+    reason: string,
+    generation: string,
+    execute: (controller: AbortController) => Promise<void>,
+  ) {
     if (
       this.stopped ||
       generation !== this.service.generation ||
@@ -551,6 +607,7 @@ export class CognitionMaintenance {
     execute: (job: JobRecord) => Promise<void>,
   ) {
     const id = `maintenance-${randomUUID()}`;
+    this.budgetJob = id;
     this.budgetActor = actorId;
     const job: JobRecord = {
       id,
@@ -593,7 +650,11 @@ export class CognitionMaintenance {
     };
     await this.log.save(root);
     try {
-      await this.log.withTrigger(id, async () => await execute(job));
+      await this.log.withTrigger(id, () =>
+        this.executionLease
+          ? this.recall.withExecution(id, this.executionLease, () => execute(job))
+          : execute(job),
+      );
       job.status = 'completed';
       job.message = 'Maintenance accepted.';
     } catch (error) {
@@ -619,13 +680,35 @@ export class CognitionMaintenance {
     beforeDispatch?: () => Promise<void>,
   ): Promise<T> {
     const c = this.service.config;
-    if (this.service.paused || this.active?.signal.aborted)
+    if (
+      this.service.paused ||
+      this.active?.signal.aborted ||
+      this.executionLease?.uncertainCompletion
+    )
       throw new Error('Maintenance canceled.');
     this.assertAdmission();
     const amount = decisionAllowance(c, provider, model);
     // Leave one interactive request allowance untouched by background admission.
     const ceiling = Math.max(0, c.budgetUsd - interactiveAllowance(c));
-    if (!(await this.service.store.reserve(id, provider, amount, ceiling, this.budgetActor)))
+    if (
+      !(await this.service.store.reserve(
+        id,
+        provider,
+        amount,
+        ceiling,
+        this.budgetActor,
+        undefined,
+        undefined,
+        this.execution
+          ? {
+              rootJobId: this.budgetJob!,
+              category: 'preparation',
+              stage: 'maintenance',
+              executionClass: 'background',
+            }
+          : undefined,
+      ))
+    )
       throw new Error('Background allowance exhausted.');
     try {
       await beforeDispatch?.();
@@ -635,26 +718,23 @@ export class CognitionMaintenance {
     } catch (error) {
       // Admission can change while the reservation is persisted. This receipt proves
       // no dispatch; completed/uncertain provider receipts retain normal accounting.
-      const at = new Date(this.now()).toISOString();
-      await this.service.store.settle(id, {
-        requestId: id,
-        provider,
-        requestedModel: 'not-dispatched',
-        model: 'not-dispatched',
-        modelVersionStatus: 'unavailable',
-        contextDigest: digest({ id }),
-        startedAt: at,
-        completedAt: at,
-        latencyMs: 0,
-        dispatched: false,
-        completionUncertain: false,
-        estimatedCostUsd: 0,
-      });
+      await this.service.store.settle(id, undispatchedReceipt(id, provider, this.now()));
       throw error;
     }
-    const result = await execute();
-    result.receipt = normalizeReceiptCost(result.receipt);
-    await this.service.store.settle(id, result.receipt);
+    let result: AiResult<T>;
+    try {
+      if (this.execution && !(await this.service.store.markDecisionDispatch(id)))
+        throw new Error('Maintenance dispatch was already claimed.');
+      result = await execute();
+      result.receipt = normalizeReceiptCost(result.receipt);
+      if (result.receipt.completionUncertain) this.executionLease?.uncertain();
+      await this.service.store.settle(id, result.receipt);
+    } catch (error) {
+      // A lost dispatch or settlement acknowledgement must retain the shared
+      // execution slot until its durable receipt can establish completion.
+      this.executionLease?.uncertain();
+      throw error;
+    }
     if (result.outcome !== 'value') throw new Error(`${result.outcome}: ${result.reason}`);
     if (this.service.paused || this.active?.signal.aborted)
       throw new Error('Maintenance canceled before publication.');
@@ -1063,12 +1143,17 @@ export class CognitionMaintenance {
   }
   cancel(): void {
     this.active?.abort();
+    if (this.queuedId) void this.execution?.cancel(new Set([this.queuedId]));
   }
   async close() {
     this.stopped = true;
     this.active?.abort();
+    if (this.queuedId) await this.execution?.cancel(new Set([this.queuedId]));
     this.unsubscribe();
     await this.schedulingTask;
+    // Queued work can still be saving admission before pending model work exists.
+    // Drain this owner's callback, never another character's shared execution.
+    await this.dispatching;
     await this.pending;
   }
 }

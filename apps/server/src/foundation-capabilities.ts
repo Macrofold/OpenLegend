@@ -53,6 +53,7 @@ export function foundationCapabilities(world: WorldState) {
       value: definition.value,
       lifetime: definition.lifetime,
       reflection: definition.reflection,
+      decision: definition.decision,
     })),
     work: {
       version: WORK_LIMITS.version,

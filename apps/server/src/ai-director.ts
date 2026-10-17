@@ -1,5 +1,27 @@
+import { undispatchedReceipt } from './decision-state.js';
 import { playerActionIdentity } from './action-request-recovery.js';
 import { humanRequestId } from './human-request-id.js';
+import { CognitionExecution } from './cognition-execution.js';
+import { DecisionEscalator } from './decision-escalator.js';
+import { prepareReconsideration, knownDecisionResponse } from './decision-preparation.js';
+import {
+  DECISION_LIMITS,
+  DECISION_MODEL,
+  decisionRoot,
+  endDecision,
+  type DecisionState,
+  type DecisionReason,
+} from './decision-state.js';
+import {
+  decisionOrigin,
+  decisionPolicyDigest,
+  permitsEscalation,
+  level1EscalationReason,
+  decisionFailureReason,
+} from './decision-task.js';
+import { decisionValidity } from './decision-validity.js';
+import { recordDecisionTiming, type DecisionPublication } from './decision-publication.js';
+import { bindDecisionAppraisals } from './appraisal-context.js';
 import { namePhrase } from '@open-legend/language';
 import { normalizeReceiptCost } from '@open-legend/ai';
 import {
@@ -158,6 +180,13 @@ const judgeMeter = (
   },
 });
 interface Running {
+  immediateTimer?: ReturnType<typeof setTimeout>;
+  expiryTimer?: ReturnType<typeof setTimeout>;
+  receipt?: import('@open-legend/ai').AiReceipt;
+  failure?: { outcome: string; reason: string };
+  handedOff?: boolean;
+  validity?: string;
+  invalidated?: boolean;
   /** Per-decision accounting and level limits; absent for non-decision jobs. */
   ledger?: DecisionLedger;
   /** The resolved level-1 outcome, kept with any later failure of its escalation. */
@@ -179,7 +208,9 @@ interface Running {
   supersession?: { attempt: number; interruptions: ResponseInterruption[] };
 }
 const choice = (answer: JudgmentAnswer | undefined) =>
-  answer && 'choice' in answer && answer.confidence >= 0.55 ? answer.choice : null;
+  answer && 'choice' in answer && typeof answer.confidence === 'number' && answer.confidence >= 0.55
+    ? answer.choice
+    : null;
 interface ThoughtSchedule {
   fingerprint: string;
   at: number;
@@ -197,6 +228,7 @@ export class AiDirector {
   readonly replyPreviews: NpcReplyPreviews;
   private running: Running | null = null;
   private pendingWork = new Set<Promise<void>>();
+  private activeRuns = new Set<Running>();
   private admissionTail: Promise<unknown> = Promise.resolve();
   private admission<T>(operation: () => Promise<T>): Promise<T> {
     const next = this.admissionTail.then(operation);
@@ -215,6 +247,9 @@ export class AiDirector {
   private log: IntelligenceLog;
   private recall: RecallService;
   private maintenance: CognitionMaintenance;
+  private readonly execution: CognitionExecution;
+  private readonly ownsExecution: boolean;
+  private readonly escalator: DecisionEscalator;
   readonly narrator: Narrator;
   readonly macrofold: MacrofoldBackend;
 
@@ -225,6 +260,7 @@ export class AiDirector {
     readonly executionSource: Exclude<DeclarationProvenance['source'], 'supplied-proposal'> = client
       ? 'test-fixture'
       : 'live-model',
+    execution?: CognitionExecution,
   ) {
     const config = service.config;
     const log = (this.log = new IntelligenceLog(service.store));
@@ -250,7 +286,17 @@ export class AiDirector {
             })),
     );
     this.narrator = new Narrator(service, this.client, log);
-    this.recall = new RecallService(service, log);
+    this.ownsExecution = !execution;
+    this.execution = execution ?? new CognitionExecution(service.store, now);
+    this.recall = new RecallService(service, log, undefined, this.execution);
+    this.escalator = new DecisionEscalator(
+      service,
+      this.execution,
+      log,
+      (job, signal) => prepareReconsideration(service, this.recall, job, signal),
+      client,
+      now,
+    );
     this.maintenance = new CognitionMaintenance(
       service,
       this.client,
@@ -258,10 +304,25 @@ export class AiDirector {
       log,
       this.recall,
       now,
+      this.execution,
     );
     this.replyPreviews = new NpcReplyPreviews(service);
     this.unsubscribe = service.subscribe(() => {
       this.replyPreviews.recheck();
+      for (const active of this.activeRuns)
+        if (
+          active.job.decision &&
+          (service.paused ||
+            service.generation !== active.generation ||
+            (service.world.entities[active.job.decision.actorId]?.actor?.physicalLife ?? 0) !==
+              active.job.decision.physicalLife ||
+            (active.validity &&
+              active.validity !== decisionValidity(service.world, active.job.decision.actorId)) ||
+            (active.job.authority && !service.currentScope(active.job.authority, 'play', true)))
+        ) {
+          active.invalidated = !service.paused;
+          active.controller.abort();
+        }
       const run = this.running;
       if (run?.job.authority && !service.currentScope(run.job.authority, 'play', true)) {
         run.cancelReason = 'Control or access changed.';
@@ -536,6 +597,16 @@ export class AiDirector {
    */
   private async prepareResponseAdmission(run: Running): Promise<void> {
     this.current(run);
+    if (run.job.decision) {
+      const saved = await this.service.store.mutateDecision(run.job.id, async (job) =>
+        job.decision!.phase !== 'closed' && job.decision!.groups['q0']?.attemptId === job.id
+          ? { ...job, responseReady: true }
+          : undefined,
+      );
+      if (!saved) throw new StopJob('stale', 'Another completion already owns this decision.');
+      run.job = saved;
+      return;
+    }
     run.job = { ...run.job, responseReady: true };
     await this.service.store.putJob(run.job);
   }
@@ -1173,7 +1244,7 @@ export class AiDirector {
     result?: unknown,
   ): Promise<void> {
     const terminal = ['completed', 'failed', 'cancelled', 'stale'].includes(status);
-    run.job = {
+    const updated = {
       ...run.job,
       status,
       message,
@@ -1182,7 +1253,52 @@ export class AiDirector {
         : {}),
       ...(result !== undefined ? { result } : {}),
     };
-    await this.service.store.putJob(run.job);
+    if (run.job.decision) {
+      let immediateChanged = false;
+      const saved = await this.service.store.mutateDecision(run.job.id, async (current) => {
+        if (current.decision!.phase === 'closed' || run.handedOff) return undefined;
+        immediateChanged = terminal && current.decision!.immediate.kind === 'pending';
+        const disposition =
+          result && typeof result === 'object' && 'disposition' in result
+            ? result.disposition
+            : undefined;
+        const failure =
+          disposition === 'capacity' ||
+          disposition === 'budget-exhausted' ||
+          disposition === 'expired' ||
+          disposition === 'uncertain' ||
+          disposition === 'context-exceeded'
+            ? disposition
+            : disposition === 'invalid'
+              ? 'invalid-output'
+              : 'provider-failed';
+        const decision = terminal
+          ? endDecision(
+              current.decision!,
+              status === 'cancelled'
+                ? 'cancelled'
+                : status === 'stale'
+                  ? 'stale'
+                  : status === 'failed'
+                    ? failure
+                    : 'abstained',
+              this.now(),
+            )
+          : current.decision!;
+        if (terminal && decision.cursor && decision.generation === this.service.generation)
+          await this.service.store.consumeDecisionCursor(decision.cursor);
+        return { ...current, ...updated, decision };
+      });
+      run.job = saved ?? (await this.service.store.getJob(run.job.id)) ?? run.job;
+      if (saved && terminal) {
+        const at = this.now();
+        if (immediateChanged) await recordDecisionTiming(this.log, run.job, 'immediate', at);
+        await recordDecisionTiming(this.log, run.job, 'final', at);
+      }
+    } else {
+      run.job = updated;
+      await this.service.store.putJob(run.job);
+    }
     const scope = run.job.request.invention;
     if (
       terminal &&
@@ -1242,13 +1358,28 @@ export class AiDirector {
   }
 
   private current(run: Running): string {
+    const decision = run.job.decision;
+    if (
+      decision &&
+      (this.now() >= decision.usefulUntilWall ||
+        performance.now() >= decision.usefulUntilMonotonic ||
+        decision.policyDigest !== decisionPolicyDigest(this.service.config) ||
+        decision.timelineId !== this.service.timelineId ||
+        (decision.usefulUntilSim !== undefined &&
+          this.service.world.simTime >= decision.usefulUntilSim))
+    )
+      throw new StopJob(
+        'stale',
+        'This decision expired or its approved model settings changed.',
+        'expired',
+      );
     if (
       this.stopped ||
       run.controller.signal.aborted ||
-      (this.service.paused && run.job.kind === 'thought')
+      (this.service.paused && (run.job.kind === 'thought' || !!decision))
     )
       throw new StopJob(
-        'cancelled',
+        run.invalidated ? 'stale' : 'cancelled',
         run.cancelReason ??
           (this.stopped
             ? 'This request was cancelled when the server closed.'
@@ -1307,7 +1438,11 @@ export class AiDirector {
     return actorId;
   }
 
-  private async begin(job: JobRecord, onCompleted?: () => Promise<void>): Promise<void> {
+  private async begin(
+    job: JobRecord,
+    onCompleted?: () => Promise<void>,
+    cursor?: DecisionState['cursor'],
+  ): Promise<void> {
     // Invalid/busy requests cannot discard another mind's funded decision.
     // Reflection cleanup remains asynchronous once admission has actually succeeded.
     // docs/ai-providers.md#admission-and-cancellation
@@ -1318,6 +1453,39 @@ export class AiDirector {
       startedAt: this.now(),
       queueLatencyMs: Math.max(0, this.now() - job.createdAt),
     };
+    const actorId = this.selectedActorId(job);
+    if (
+      (job.kind === 'chat' || job.kind === 'thought') &&
+      actorId &&
+      permitsEscalation(this.service.config)
+    ) {
+      const acceptedAt = this.now();
+      const cause = job.triggerEvidenceId ?? job.playerSpeechEventId;
+      job.decision = decisionRoot({
+        jobId: job.id,
+        worldId: this.service.world.id,
+        timelineId: this.service.timelineId,
+        generation: this.service.generation,
+        actorId,
+        physicalLife: this.service.world.entities[actorId]?.actor?.physicalLife ?? 0,
+        cause: cause ? { kind: 'event', id: cause } : { kind: 'intent', id: job.id },
+        originalWatermark:
+          cursor && typeof cursor.value === 'object' && cursor.value && 'watermark' in cursor.value
+            ? Number(cursor.value.watermark)
+            : 0,
+        urgency: cause
+          ? ((this.service.world.experience?.awareness[actorId] ?? []).find(
+              (entry) => entry.eventId === cause,
+            )?.urgency ?? 0)
+          : 0,
+        ...(cursor ? { cursor } : {}),
+        acceptedAt,
+        groups: { q0: job.kind === 'chat' ? 'response' : 'choice' },
+        origin: decisionOrigin(this.service.config),
+        policyDigest: decisionPolicyDigest(this.service.config),
+        limits: levelLimits(this.service.config),
+      });
+    }
     const run: Running = {
       job,
       controller: new AbortController(),
@@ -1329,9 +1497,48 @@ export class AiDirector {
     if (job.kind === 'chat') run.playerSpeechEventId = job.playerSpeechEventId;
     if (run.playerSpeechEventId) job.playerSpeechEventId = run.playerSpeechEventId;
     this.running = run;
-    await this.service.store.putJob(job);
+    this.activeRuns.add(run);
+    try {
+      await this.service.store.putJob(job);
+    } catch (error) {
+      this.activeRuns.delete(run);
+      if (this.running === run) this.running = null;
+      throw error;
+    }
     this.service.notify();
-    const actorId = this.selectedActorId(job);
+    if (job.decision) {
+      run.immediateTimer = setTimeout(
+        () => {
+          void this.deferImmediate(run).catch(() => {
+            this.service.storageError = 'A decision deferral could not be saved.';
+          });
+        },
+        Math.max(
+          1,
+          Math.min(
+            job.decision.fastPublishBy - this.now(),
+            job.decision.fastPublishByMonotonic - performance.now(),
+          ),
+        ),
+      );
+      run.expiryTimer = setTimeout(
+        () => {
+          run.controller.abort();
+          void this.escalator.end(job.id, 'expired').catch(() => {
+            this.service.storageError = 'An expired decision could not be saved.';
+          });
+        },
+        Math.max(
+          1,
+          Math.min(
+            job.decision.usefulUntilWall - this.now(),
+            job.decision.usefulUntilMonotonic - performance.now(),
+          ),
+        ),
+      );
+      run.immediateTimer.unref();
+      run.expiryTimer.unref();
+    }
     await this.log.save({
       id: job.id,
       kind: 'Semantic trigger',
@@ -1362,7 +1569,7 @@ export class AiDirector {
     const pending = this.log
       .withTrigger(job.id, async () => await this.process(run))
       .then(async () => {
-        if (run.job.status !== 'completed' || !onCompleted) return;
+        if (run.job.decision || run.job.status !== 'completed' || !onCompleted) return;
         try {
           await onCompleted();
         } catch (error) {
@@ -1377,6 +1584,7 @@ export class AiDirector {
         this.log.withTrigger(job.id, async () => {
           const known = error instanceof StopJob;
           const cancelled = run.controller.signal.aborted;
+          if (await this.escalateFailure(run, error)) return;
           if (run.job.request.invention)
             run.job.invention = {
               ...run.job.invention,
@@ -1418,6 +1626,9 @@ export class AiDirector {
         }),
       )
       .finally(async () => {
+        this.activeRuns.delete(run);
+        if (run.immediateTimer) clearTimeout(run.immediateTimer);
+        if (run.expiryTimer) clearTimeout(run.expiryTimer);
         this.replyPreviews.end(run.job.id);
         try {
           if (this.running === run) {
@@ -1452,6 +1663,70 @@ export class AiDirector {
         }
       });
     this.pendingWork.add(pending);
+  }
+
+  private async deferImmediate(run: Running): Promise<void> {
+    const saved = await this.service.store.mutateDecision(run.job.id, async (job) => {
+      const state = job.decision!;
+      if (state.phase === 'closed' || state.immediate.kind !== 'pending') return undefined;
+      if (state.cursor && state.generation === this.service.generation)
+        await this.service.store.consumeDecisionCursor(state.cursor);
+      return {
+        ...job,
+        decision: {
+          ...state,
+          phase: 'waiting-primary',
+          immediate: { kind: 'deferred', at: this.now() },
+        },
+        message:
+          'The immediate choice was deferred; any later answer must still pass current game checks.',
+      };
+    });
+    if (saved) {
+      const at = this.now();
+      run.job = saved;
+      await recordDecisionTiming(this.log, run.job, 'immediate', at);
+    }
+    if (this.running === run) this.running = null;
+    this.service.notify();
+  }
+
+  private async handoff(run: Running, reason: DecisionReason, response = false): Promise<boolean> {
+    if (!run.job.decision || run.controller.signal.aborted || run.receipt?.completionUncertain)
+      return false;
+    const handedOff = await this.escalator.enqueue(run.job.id, reason, response);
+    if (handedOff) {
+      run.handedOff = true;
+      run.job = (await this.service.store.getJob(run.job.id)) ?? run.job;
+    }
+    return handedOff;
+  }
+
+  private async escalateFailure(run: Running, error: unknown): Promise<boolean> {
+    if (!run.job.decision || run.cancelReason || run.controller.signal.aborted || run.supersession)
+      return false;
+    if (
+      run.receipt?.completionUncertain &&
+      (await this.escalator.awaitPrimary(run.job.id, run.receipt.requestId, run.validity))
+    ) {
+      run.handedOff = true;
+      run.job = (await this.service.store.getJob(run.job.id)) ?? run.job;
+      return true;
+    }
+    const outcome =
+      error instanceof StopJob
+        ? error.outcome
+        : error instanceof InvalidData
+          ? 'invalid'
+          : undefined;
+    const reason = outcome
+      ? decisionFailureReason(
+          outcome,
+          run.failure?.reason ?? (error instanceof Error ? error.message : ''),
+          run.receipt,
+        )
+      : undefined;
+    return !!reason && this.handoff(run, reason, run.job.kind === 'chat');
   }
 
   /** Explicit player requests survive a simulation pause. Never start another paid
@@ -1506,99 +1781,173 @@ export class AiDirector {
     dispatch: (requestId: string) => Promise<AiResult<T>>,
     meter?: Meter,
   ): Promise<T> {
-    if (this.service.paused && run.job.request.invention?.mode !== 'workshop')
-      await this.awaitResume(run);
-    const actorId = this.current(run);
-    const id = `${run.job.id}:${suffix}`;
-    const config = this.service.config;
-    // Conservative bounds use request UTF-8 bytes as an upper token proxy, plus output ceiling.
-    // Exact provider invoices remain external; custom prices must match the selected model.
-    const reserve = decisionAllowance(config, provider, meter?.model);
-    // A decision's own level work stays within that level's per-decision limits.
-    // docs/limits/cognition.md#cg08
-    const category =
-      meter?.category ?? (/classify|interpret/.test(suffix) ? 'grounding' : 'preparation');
-    const admitted = run.ledger?.admit(category, meter?.level, reserve);
-    if (admitted && !admitted.ok)
-      throw new StopJob(
-        'failed',
-        `${admitted.reason} No further paid request was sent.`,
-        'budget-exhausted',
-      );
     if (
-      !(await this.service.store.reserve(
-        id,
-        provider,
-        reserve,
-        config.budgetUsd,
-        actorId,
-        undefined,
-        inventionAttemptBudget(this.service, run.job.request.invention),
-      ))
+      run.job.decision &&
+      (this.now() >= run.job.decision.fastPublishBy ||
+        performance.now() >= run.job.decision.fastPublishByMonotonic)
     )
       throw new StopJob(
         'failed',
-        'Your usage allowance is used up. Existing actions and learned recipes still work.',
-        'budget-exhausted',
+        'No new immediate inference was started after the one-second boundary.',
+        'expired',
       );
-    run.ledger?.record({
-      requestId: id,
-      stage: suffix,
-      category,
-      ...(meter?.level ? { level: meter.level } : {}),
-      provider,
-      size: meter?.size ?? { instructions: 0, context: 0, schema: 0 },
-      reservedUsd: reserve,
-    });
-    await this.update(
-      run,
-      provider === 'jev' ? 'judging' : 'generating',
-      provider === 'jev'
-        ? 'Jev is checking the bounded route.'
-        : run.job.kind === 'invention'
-          ? 'Generating a new material-and-mechanism definition.'
-          : run.job.kind === 'action'
-            ? 'Interpreting the requested action.'
-            : 'Preparing a detailed decision. This may take about a minute.',
-    );
-    const result = await dispatch(id);
-    const accountingStartedAt = new Date().toISOString();
-    result.receipt = normalizeReceiptCost(result.receipt);
-    await this.service.store.settle(id, result.receipt);
-    run.ledger?.settle(id, result.receipt, result.outcome);
-    await this.log.record(
-      `${id}:accounting`,
-      'Accounting',
-      { provider, requestId: result.receipt.requestId },
-      { settled: true, receipt: result.receipt },
-      accountingStartedAt,
-    );
-    if (result.outcome !== 'value' && run.job.request.invention)
-      run.job.invention = {
-        ...run.job.invention,
-        code: result.receipt.completionUncertain ? 'uncertain' : result.outcome,
+    const lease = await this.execution.primary();
+    if (!lease)
+      throw new StopJob('failed', 'The primary model execution slot is occupied.', 'capacity');
+    let reservedId: string | undefined,
+      dispatchIntent = false,
+      completed = false;
+    try {
+      if (this.service.paused && run.job.request.invention?.mode !== 'workshop')
+        await this.awaitResume(run);
+      const actorId = this.current(run);
+      const id = `${run.job.id}:${suffix}`;
+      const config = this.service.config;
+      // Conservative bounds use request UTF-8 bytes as an upper token proxy, plus output ceiling.
+      // Exact provider invoices remain external; custom prices must match the selected model.
+      const reserve = decisionAllowance(config, provider, meter?.model);
+      // A decision's own level work stays within that level's per-decision limits.
+      // docs/limits/cognition.md#cg08
+      const category =
+        meter?.category ?? (/classify|interpret/.test(suffix) ? 'grounding' : 'preparation');
+      const admitted = run.ledger?.admit(category, meter?.level, reserve);
+      if (admitted && !admitted.ok)
+        throw new StopJob(
+          'failed',
+          `${admitted.reason} No further paid request was sent.`,
+          'budget-exhausted',
+        );
+      const reserveAttempt = async () => {
+        if (
+          !(await this.service.store.reserve(
+            id,
+            provider,
+            reserve,
+            config.budgetUsd,
+            actorId,
+            undefined,
+            inventionAttemptBudget(this.service, run.job.request.invention),
+            {
+              rootJobId: run.job.id,
+              category,
+              ...(meter?.level ? { level: meter.level } : {}),
+              stage: suffix,
+              executionClass: 'primary',
+            },
+          ))
+        )
+          throw new StopJob(
+            'failed',
+            'Your usage allowance is used up. Existing actions and learned recipes still work.',
+            'budget-exhausted',
+          );
       };
-    if (
-      result.outcome === 'value' &&
-      this.service.paused &&
-      run.job.request.invention?.mode !== 'workshop'
-    )
-      await this.awaitResume(run, true);
-    if (run.cancelReason) throw new StopJob('cancelled', run.cancelReason);
-    // Surface actual provider failures even when an explicit request is paused.
-    if (result.outcome === 'value' || !this.service.paused || run.job.kind === 'thought')
-      this.current(run);
-    if (result.outcome !== 'value')
-      throw new StopJob(
-        result.outcome === 'cancelled' ? 'cancelled' : 'failed',
-        `${provider === 'jev' ? 'Jev' : 'Language model'} returned ${result.outcome}: ${result.reason}. No world effect or automatic retry followed.`,
-        // An adapter may report a dispatched, unknown completion as failed; the receipt decides.
-        result.outcome !== 'cancelled' && result.receipt.completionUncertain
-          ? 'uncertain'
-          : result.outcome,
+      if (run.job.decision && provider === 'openai' && meter?.model === DECISION_MODEL) {
+        const direct = await this.service.store.mutateDecision(run.job.id, async (job) => {
+          if (job.decision!.phase === 'closed' || job.decision!.higherEntitlement !== 'available')
+            return undefined;
+          await reserveAttempt();
+          return { ...job, decision: { ...job.decision!, higherEntitlement: 'used-direct' } };
+        });
+        if (!direct)
+          throw new StopJob(
+            'failed',
+            'The higher-model allowance was already used.',
+            'budget-exhausted',
+          );
+        run.job = direct;
+      } else await reserveAttempt();
+      reservedId = id;
+      run.ledger?.record({
+        requestId: id,
+        stage: suffix,
+        category,
+        ...(meter?.level ? { level: meter.level } : {}),
+        provider,
+        size: meter?.size ?? { instructions: 0, context: 0, schema: 0 },
+        reservedUsd: reserve,
+      });
+      await this.update(
+        run,
+        provider === 'jev' ? 'judging' : 'generating',
+        provider === 'jev'
+          ? 'Jev is checking the bounded route.'
+          : run.job.kind === 'invention'
+            ? 'Generating a new material-and-mechanism definition.'
+            : run.job.kind === 'action'
+              ? 'Interpreting the requested action.'
+              : 'Preparing a detailed decision. This may take about a minute.',
       );
-    if (provider === 'openai') run.generatedBy = result.receipt.model;
-    return result.value;
+      this.current(run);
+      if (run.job.decision) {
+        if (
+          this.now() >= run.job.decision.fastPublishBy ||
+          performance.now() >= run.job.decision.fastPublishByMonotonic
+        )
+          throw new StopJob('failed', 'The immediate dispatch deadline passed.', 'expired');
+      }
+      dispatchIntent = true;
+      if (!(await this.service.store.markDecisionDispatch(id))) {
+        throw new StopJob('failed', 'This model request already has dispatch intent.', 'uncertain');
+      }
+      const result = await dispatch(id);
+      const accountingStartedAt = new Date().toISOString();
+      result.receipt = normalizeReceiptCost(result.receipt);
+      await this.service.store.settle(id, result.receipt);
+      completed = true;
+      run.receipt = result.receipt;
+      run.failure =
+        result.outcome === 'value' ? undefined : { outcome: result.outcome, reason: result.reason };
+      if (result.receipt.completionUncertain) lease?.uncertain();
+      if (result.receipt.completionUncertain)
+        throw new StopJob(
+          'failed',
+          'The original provider execution is still uncertain; no world effect or second request was allowed.',
+          'uncertain',
+        );
+      run.ledger?.settle(id, result.receipt, result.outcome);
+      await this.log.record(
+        `${id}:accounting`,
+        'Accounting',
+        { provider, requestId: result.receipt.requestId },
+        { settled: true, receipt: result.receipt },
+        accountingStartedAt,
+      );
+      if (result.outcome !== 'value' && run.job.request.invention)
+        run.job.invention = {
+          ...run.job.invention,
+          code: result.receipt.completionUncertain ? 'uncertain' : result.outcome,
+        };
+      if (
+        result.outcome === 'value' &&
+        this.service.paused &&
+        run.job.request.invention?.mode !== 'workshop'
+      )
+        await this.awaitResume(run, true);
+      if (run.cancelReason) throw new StopJob('cancelled', run.cancelReason);
+      // Surface actual provider failures even when an explicit request is paused.
+      if (result.outcome === 'value' || !this.service.paused || run.job.kind === 'thought')
+        this.current(run);
+      if (result.outcome !== 'value')
+        throw new StopJob(
+          result.outcome === 'cancelled' ? 'cancelled' : 'failed',
+          `${provider === 'jev' ? 'Jev' : 'Language model'} returned ${result.outcome}: ${result.reason}. No world effect or automatic retry followed.`,
+          // An adapter may report a dispatched, unknown completion as failed; the receipt decides.
+          result.outcome !== 'cancelled' && result.receipt.completionUncertain
+            ? 'uncertain'
+            : result.outcome,
+        );
+      if (provider === 'openai') run.generatedBy = result.receipt.model;
+      return result.value;
+    } finally {
+      if (reservedId && !dispatchIntent)
+        await this.service.store.settle(
+          reservedId,
+          undispatchedReceipt(reservedId, provider, this.now()),
+        );
+      if (dispatchIntent && !completed) lease?.uncertain();
+      lease?.release();
+    }
   }
 
   /** Translate the one binding chosen by `resolveLevel1` into an ordinary response for the
@@ -1607,18 +1956,7 @@ export class AiDirector {
     prepared: Awaited<ReturnType<typeof prepareDecision>>,
     selected: string,
   ): ActorResponse {
-    if (prepared.binding.actions[selected] === null) return { operations: [] };
-    // Choosing a new alternative interrupts the chosen plan. The separately
-    // offered continue option leaves its remaining work untouched.
-    const mode = prepared.replaceChosenPlan ? 'replace' : 'enqueue';
-    return actionResponse({
-      kind: 'known',
-      mode,
-      actionId: selected,
-      verb: null,
-      targetEntityId: null,
-      description: null,
-    });
+    return knownDecisionResponse(prepared, selected);
   }
 
   private async generate<T>(
@@ -1746,6 +2084,7 @@ export class AiDirector {
     } catch (error) {
       const supersession = run.supersession;
       if (
+        !run.job.decision &&
         attempt === 0 &&
         supersession?.attempt === attempt &&
         !run.cancelReason &&
@@ -1774,18 +2113,23 @@ export class AiDirector {
     interruptionEvidenceIds: string[],
   ): Promise<void> {
     const actorId = this.current(run);
+    if (!(await this.execution.primaryAvailable()))
+      throw new StopJob(
+        'failed',
+        'The fast model is still executing an earlier request; this opportunity was deferred without preparing more model input.',
+        'capacity',
+      );
     // An urgent refresh decides again; an earlier attempt's level-1 outcome no longer applies.
     run.level1 = undefined;
     // A known spending shortfall cannot produce a decision. Skip retrieval and its
     // source flushes; the paid call still performs the authoritative reservation.
     // Display totals are invalidated by accounting writes and month rollover.
-    const { budget } = await this.service.store.usage(this.service.config.budgetUsd);
-    const account = budget.accounts?.[actorId];
     if (
-      (account?.spentUsd ?? 0) +
-        (account?.reservedUsd ?? 0) +
-        decisionAllowance(this.service.config, 'jev') >
-      budget.limitUsd
+      !(await this.service.store.budgetAvailable(
+        actorId,
+        decisionAllowance(this.service.config, 'jev'),
+        this.service.config.budgetUsd,
+      ))
     )
       throw new StopJob(
         'failed',
@@ -1879,11 +2223,14 @@ export class AiDirector {
       speech,
       attempt,
       triggerEvidenceId,
-      this.service.config.jevOnly
+      this.service.config.jevOnly || run.job.decision
         ? undefined
         : (request, operation) => this.generate<unknown>(run, request, operation),
+      run.job.decision ? 'native-only' : 'ordinary',
     );
     this.current(run);
+    const validity = run.job.decision ? decisionValidity(this.service.world, actorId) : undefined;
+    run.validity = validity;
     await this.log.record(
       `${run.job.id}:attempt:${attempt}:context`,
       'Context and retrieval',
@@ -1898,6 +2245,11 @@ export class AiDirector {
           ? run.supersession.interruptions
           : this.responseInterruptions(actorId, prepared.awarenessSequence);
       if (!interruptions.length) return false;
+      if (run.job.decision)
+        throw new StopJob(
+          'stale',
+          'New urgent evidence superseded this decision; no duplicate inference was purchased.',
+        );
       await this.retrySupersededResponse(
         run,
         speech,
@@ -1954,6 +2306,7 @@ export class AiDirector {
           await this.awaitResume(run);
           this.current(run);
         },
+        !!run.job.decision,
       );
       this.current(run);
       return { prepared: { ...refreshed, actionCandidates: retrieval.candidates }, retrieval };
@@ -2107,6 +2460,15 @@ export class AiDirector {
       });
     if (await retryForUrgentAwareness()) return;
     if (!route || !Object.hasOwn(criteria, route) || route === 'native') {
+      if (
+        route !== 'native' &&
+        (await this.handoff(
+          run,
+          selectedRoute && !Object.hasOwn(criteria, selectedRoute) ? 'invalid-output' : 'abstained',
+          speech,
+        ))
+      )
+        return;
       run.responseWatch = undefined;
       await this.update(
         run,
@@ -2121,6 +2483,7 @@ export class AiDirector {
       );
       return;
     }
+    if (route !== 'level1' && (await this.handoff(run, 'semantic-escalation', true))) return;
     let requestedActivity: ActorResponse | undefined;
     const chosenFamily = requestFamilies.get(route);
     if (chosenFamily) {
@@ -2251,6 +2614,8 @@ export class AiDirector {
         startedAt,
       );
       if (level1.outcome.kind === 'defer') {
+        const reason = level1EscalationReason(level1.outcome);
+        if (reason && (await this.handoff(run, reason, speech))) return;
         run.responseWatch = undefined;
         await this.update(run, 'completed', level1Message(level1.outcome), {
           disposition: 'deferred',
@@ -2261,6 +2626,8 @@ export class AiDirector {
         return;
       }
       if (level1.outcome.kind === 'escalate') {
+        const reason = level1EscalationReason(level1.outcome);
+        if (reason && (await this.handoff(run, reason, speech))) return;
         executedRoute = `level${level1.outcome.level}`;
         if (ratedBase) {
           const offered = await offerRated(ratedBase, actionAnswers);
@@ -2288,6 +2655,18 @@ export class AiDirector {
       executedRoute === 'level1' || requestedActivity
         ? { enabled: false, policyRevision: 0, schema: z.null(), instructions: '', context: '' }
         : await prepareActorInvention(this.service, actorId);
+    const appraisals = this.service.world.moduleManifest.appraisals?.definitions.some(
+      (definition) => definition.decision,
+    )
+      ? await bindDecisionAppraisals(
+          this.service,
+          actorId,
+          run.job.id,
+          prepared.binding.evidenceIds ?? evidenceIds,
+          prepared.entityReferences,
+          triggerEvidenceId,
+        )
+      : undefined;
     const baseSchema = boundResponseSchema(
       Object.keys(prepared.entityReferences),
       Object.keys(prepared.binding.actions),
@@ -2298,12 +2677,13 @@ export class AiDirector {
       Object.keys(prepared.binding.knowledgeReferences ?? {}),
       namedClockTimes(this.service.world),
       activityRequestDescriptors(this.service.world),
+      appraisals?.schema,
     );
     const schema = actorInvention.enabled
       ? baseSchema.extend({ invention: actorInvention.schema })
       : baseSchema;
     const instructions = `${RESPONSE_INSTRUCTIONS} ${actorInvention.instructions}`;
-    const context = `${prepared.prompt}\n${actorInvention.context}`;
+    const context = `${prepared.prompt}\n${actorInvention.context}${appraisals ? '\nPermitted feeling proposals: ' + JSON.stringify(appraisals.context) : ''}`;
     // Private proposal context shares the existing total bound; it does not buy a larger prompt.
     if (Buffer.byteLength(instructions) + Buffer.byteLength(context) > CONTEXT_BYTE_LIMIT)
       throw new ContextBudgetError();
@@ -2318,6 +2698,7 @@ export class AiDirector {
     // Only the measured direct-inference route gets a disclosure grant. Other
     // generation callers and full harnesses keep their existing completed values.
     const preview =
+      !run.job.decision &&
       !requestedActivity &&
       executedRoute !== 'level1' &&
       run.job.kind === 'chat' &&
@@ -2347,7 +2728,7 @@ export class AiDirector {
               const operation = previewSpeechOperation(baseSchema.shape.operations.element, value);
               return operation
                 ? (resolveResponseEntities(
-                    { operations: [operation] },
+                    { operations: [(({ appraise: _appraise, ...rest }) => rest)(operation)] },
                     prepared.entityReferences,
                     prepared.binding.knowledgeReferences,
                     activityRequestDescriptors(this.service.world),
@@ -2461,11 +2842,21 @@ export class AiDirector {
           const parsed = schema.parse(value);
           // Provider schemas describe fields; cross-field admission rules still need validation.
           // docs/architecture.md#actor-agency-foundation
-          if (!validResponseEnvelope({ operations: parsed.operations }))
+          const changes =
+            appraisals?.resolveDecision(
+              parsed.operations.flatMap((op) => (op.appraise ? [op.appraise] : [])),
+            ) ?? [];
+          let next = 0;
+          const operations = parsed.operations.map(({ appraise, ...op }) => {
+            if (appraise && !appraisals)
+              throw new Error('This route did not bind feeling proposals.');
+            return { ...op, ...(appraise ? { appraise: changes[next++] } : {}) };
+          });
+          if (!validResponseEnvelope({ operations }))
             throw new Error(
               'Invalid decision envelope: use exactly one non-null operation kind per entry, unique localIds and dependencies on earlier entries only.',
             );
-          return parsed;
+          return { ...parsed, operations };
         },
         { id: `${run.job.id}:attempt:${attempt}:parse` },
       )
@@ -2524,10 +2915,32 @@ export class AiDirector {
     await this.prepareResponseAdmission(run);
     const commitStartedAt = new Date().toISOString();
     preview?.admitting();
+    const root = run.job.decision ? await this.service.store.getJob(run.job.id) : undefined;
+    const publication: DecisionPublication | undefined = root?.decision
+      ? {
+          rootJobId: root.id,
+          expectedRevision: root.decision.revision,
+          attemptId: root.id,
+          receiptId: root.id,
+          final: false,
+          now: this.now,
+          groups: {
+            q0: {
+              operations: nativeReply.operations.map((op) => op.localId),
+              continued: level1?.outcome.kind === 'continue',
+            },
+          },
+        }
+      : undefined;
     const commit = () =>
       this.service.transition(
         (world) => {
           this.current(run);
+          if (validity && validity !== decisionValidity(world, actorId))
+            throw new StopJob(
+              'stale',
+              'The character’s relevant circumstances changed before this answer arrived.',
+            );
           return commitActorResponse(
             world,
             run.job.id,
@@ -2540,14 +2953,17 @@ export class AiDirector {
             prepared.binding.entityEpisodes,
             prepared.binding.evidenceIds,
             prepared.binding.knowledgeReferences,
+            appraisals?.bindings,
           );
         },
         undefined,
         run.job.id,
         async () => {
           await prepared.validateConversation(false);
-          return true;
+          return !appraisals || (await appraisals.current());
         },
+        undefined,
+        publication,
       );
     const authorizedCommit = () =>
       run.job.authority
@@ -2558,6 +2974,24 @@ export class AiDirector {
       await this.awaitResume(run, true);
       if (await retryForUrgentAwareness()) return;
       result = await authorizedCommit();
+    }
+    if (publication?.deliveredAt !== undefined) {
+      if (root?.decision?.immediate.kind === 'pending')
+        await recordDecisionTiming(
+          this.log,
+          run.job,
+          'immediate',
+          publication.deliveredAt,
+          publication.deliveredElapsedMs,
+        );
+      if (publication.closed)
+        await recordDecisionTiming(
+          this.log,
+          run.job,
+          'final',
+          publication.deliveredAt,
+          publication.deliveredElapsedMs,
+        );
     }
     const receipt = this.service.world.responseReceipts?.[run.job.id];
     await preview?.settle();
@@ -2571,6 +3005,12 @@ export class AiDirector {
       { ...result, components: receipt?.components },
       commitStartedAt,
     );
+    if (
+      !result.ok &&
+      !Object.values(receipt?.components ?? {}).some((part) => part.ok) &&
+      (await this.handoff(run, 'native-rejection', speech))
+    )
+      return;
     // Deliberate continuation is an admitted level-1 choice, not a generic empty reply.
     const continued = result.ok && level1?.outcome.kind === 'continue';
     await this.update(
@@ -2746,6 +3186,8 @@ export class AiDirector {
           world.simTime,
           (id) =>
             world.entities[id]?.actor?.controller === 'npc' &&
+            !this.escalator.hasActor(id) &&
+            ![...this.activeRuns].some((run) => run.job.decision?.actorId === id) &&
             !world.entities[id]?.actor?.incapacitated &&
             this.thoughtInputs.visible(id) !== undefined,
         )
@@ -3025,6 +3467,16 @@ export class AiDirector {
               generation,
             );
           },
+          {
+            key,
+            value: {
+              fingerprint,
+              at: this.now(),
+              watermark: Math.min(snapshotWatermark, this.service.durable.nextId),
+              attemptedOpportunity: opportunity,
+              ...(review.key ? { reviewKey: review.key } : {}),
+            },
+          },
         );
         const trace = this.log.get(id);
         if (trace)
@@ -3081,11 +3533,14 @@ export class AiDirector {
 
   async idle(): Promise<void> {
     while (this.pendingWork.size) await Promise.all([...this.pendingWork]);
+    await this.execution.idle();
   }
   async close(): Promise<void> {
     this.stopped = true;
     this.replyPreviews.close();
     this.running?.controller.abort();
+    for (const run of this.activeRuns) run.controller.abort();
+    await this.escalator.close();
     this.unsubscribe();
     await this.admissionTail;
     await Promise.allSettled([...this.pendingWork]);
@@ -3093,5 +3548,6 @@ export class AiDirector {
     await this.maintenance.close();
     await this.narrator.close();
     await this.log.close();
+    if (this.ownsExecution) this.execution.close();
   }
 }

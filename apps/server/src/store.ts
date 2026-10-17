@@ -1,3 +1,12 @@
+import {
+  readDecisionState,
+  undispatchedReceipt,
+  endDecision,
+  type DecisionState,
+  type DecisionAttemptLink,
+  type LinkedDecisionAttempt,
+  type ExecutionClass,
+} from './decision-state.js';
 import type { ConstructionPermission } from '@open-legend/domain';
 import {
   usdToMicroUsd,
@@ -47,6 +56,13 @@ import {
 import type { AiReceipt } from '@open-legend/ai';
 import type { AiJobView, PlayerProfile, PlayerPreferencePatch } from '@open-legend/protocol';
 
+export const COGNITION_PENDING_EXECUTIONS_SQL =
+  "SELECT DISTINCT l.execution_class FROM attempts a JOIN cognition_attempt_links l ON l.attempt_id=a.id WHERE a.status IN ('reserved','uncertain') AND l.dispatch_intent AND (a.receipt IS NULL OR (a.receipt::jsonb ->> 'completionUncertain')='true')";
+// Keep the link lookup dependent on each unfinished attempt. Without the bounded
+// lateral lookup, stale statistics can scan all completed links during recovery.
+export const COGNITION_UNSENT_ATTEMPTS_SQL =
+  "SELECT a.id,a.provider FROM attempts a JOIN LATERAL (SELECT 1 FROM cognition_attempt_links l WHERE l.attempt_id=a.id AND NOT l.dispatch_intent LIMIT 1) l ON true WHERE a.status='reserved' ORDER BY a.id LIMIT 50";
+
 export interface DiagnosticAccess {
   accountId: string;
   actorIds: string[];
@@ -93,6 +109,7 @@ export interface SavedWorld {
 }
 
 export interface JobRecord extends AiJobView {
+  decision?: DecisionState;
   authority?: RequestScope;
   responseReady?: boolean;
   diagnosticTrigger?: string;
@@ -252,6 +269,22 @@ export interface GameRepository extends WorldStore {
   getSpeechJob(eventId: string): Promise<JobRecord | undefined>;
   getSpeechJobs(eventIds: string[]): Promise<Map<string, JobRecord>>;
   putJob(job: JobRecord): Promise<void>;
+  mutateDecision(
+    id: string,
+    change: (job: JobRecord) => Promise<JobRecord | undefined>,
+  ): Promise<JobRecord | undefined>;
+  consumeDecisionCursor(cursor: NonNullable<DecisionState['cursor']>): Promise<void>;
+  activeDecision(
+    worldId: string,
+    timelineId: string,
+    actorId: string,
+    except: string,
+  ): Promise<boolean>;
+  decisionAttempts(rootJobId: string): Promise<LinkedDecisionAttempt[]>;
+  occupiedDecisionSlots(): Promise<ExecutionClass[]>;
+  onSettlement(listener: () => void): () => void;
+  budgetAvailable(actorId: string, amountUsd: number, ceilingUsd: number): Promise<boolean>;
+  markDecisionDispatch(attemptId: string): Promise<boolean>;
   claimInventionContinuation(job: JobRecord, parentId: string): Promise<boolean>;
   recentJobs(limit?: number): Promise<JobRecord[]>;
   inventionJobs(
@@ -268,6 +301,7 @@ export interface GameRepository extends WorldStore {
     actorId?: string,
     reuse?: 'compute-allocation',
     budget?: AttemptBudget,
+    decision?: DecisionAttemptLink,
   ): Promise<boolean>;
   attemptBudget(budgetId: string): Promise<AttemptBudgetSnapshot>;
   attemptReceipt(id: string): Promise<AiReceipt | undefined>;
@@ -282,6 +316,25 @@ export interface GameRepository extends WorldStore {
  * simulated timeline, so reopening a save cannot repeat or erase provider usage.
  */
 export class SqlGameRepository implements GameRepository {
+  private readonly settlementListeners = new Set<() => void>();
+  onSettlement(listener: () => void): () => void {
+    this.settlementListeners.add(listener);
+    return () => this.settlementListeners.delete(listener);
+  }
+  private async exposure(actorId: string): Promise<bigint> {
+    const date = new Date();
+    const start = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1);
+    const row = await this.db
+      .prepare(
+        "SELECT COALESCE(SUM(spent + CASE WHEN status = 'reserved' THEN reserved ELSE 0 END), 0) AS total FROM attempts a LEFT JOIN attempt_scopes s ON s.attempt_id=a.id WHERE a.created_at>=? AND (s.actor_id=? OR s.actor_id IS NULL)",
+      )
+      .get(start, actorId);
+    return exposureTotal(row?.['total'] ?? 0);
+  }
+  async budgetAvailable(actorId: string, amountUsd: number, ceilingUsd: number): Promise<boolean> {
+    await this.ready;
+    return (await this.exposure(actorId)) + BigInt(micro(amountUsd)) <= BigInt(micro(ceilingUsd));
+  }
   readonly creationTargets: CreationTargetRepository;
   readonly commands: CommandReceipts;
   readonly authority: AuthorityRepository;
@@ -493,11 +546,24 @@ export class SqlGameRepository implements GameRepository {
       CREATE INDEX IF NOT EXISTS jobs_speech_event ON jobs ((payload::jsonb #>> '{playerSpeechEventId}')) WHERE (payload::jsonb #>> '{kind}') = 'chat';
       CREATE INDEX IF NOT EXISTS jobs_inventor_timeline ON jobs ((payload::jsonb #>> '{request,invention,worldId}'), (payload::jsonb #>> '{request,invention,actorId}'), (payload::jsonb #>> '{request,invention,timelineId}'), created_at, id);
       CREATE INDEX IF NOT EXISTS jobs_unfinished ON jobs(id) WHERE (payload::jsonb #>> '{status}') IN ('queued','judging','generating');
+      CREATE UNIQUE INDEX IF NOT EXISTS decision_actor_active ON jobs
+        ((payload::jsonb #>> '{decision,worldId}'), (payload::jsonb #>> '{decision,timelineId}'), (payload::jsonb #>> '{decision,actorId}'))
+        WHERE (payload::jsonb #>> '{decision,higher,state}') IN ('queued','preparing','reserved','dispatched');
+      CREATE INDEX IF NOT EXISTS decision_unfinished ON jobs(id)
+        WHERE (payload::jsonb #>> '{decision,phase}') IN ('immediate','waiting-primary','higher');
       CREATE TABLE IF NOT EXISTS attempts (
         id TEXT PRIMARY KEY, provider TEXT NOT NULL, status TEXT NOT NULL,
         reserved BIGINT NOT NULL CHECK (reserved >= 0), spent BIGINT NOT NULL DEFAULT 0 CHECK (spent >= 0),
         receipt TEXT, created_at BIGINT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS cognition_attempt_links (
+        attempt_id TEXT PRIMARY KEY REFERENCES attempts(id), root_job_id TEXT NOT NULL,
+        category TEXT NOT NULL, level INTEGER, stage TEXT NOT NULL,
+        execution_class TEXT NOT NULL CHECK(execution_class IN ('primary','background')),
+        dispatch_intent BOOLEAN NOT NULL DEFAULT false
+      );
+      CREATE INDEX IF NOT EXISTS cognition_attempt_root ON cognition_attempt_links(root_job_id,attempt_id);
+      CREATE INDEX IF NOT EXISTS attempts_unsettled ON attempts(id) WHERE status IN ('reserved','uncertain');
       CREATE INDEX IF NOT EXISTS attempts_created ON attempts(created_at,id);
       CREATE TABLE IF NOT EXISTS attempt_scopes (attempt_id TEXT PRIMARY KEY, actor_id TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS attempt_budgets (attempt_id TEXT PRIMARY KEY, budget_id TEXT NOT NULL);
@@ -847,7 +913,9 @@ export class SqlGameRepository implements GameRepository {
             });
         for (const [id, result] of historyProjection?.restore ? [] : outcomes) {
           const job = await this.getJob(id);
-          if (job)
+          // Decision groups are finished by the same transaction's operational owner.
+          // A response receipt can cover only one group, not the entire root.
+          if (job && !job.decision)
             await this.putJob({
               ...job,
               status: result.ok ? 'completed' : 'failed',
@@ -989,7 +1057,10 @@ export class SqlGameRepository implements GameRepository {
     await this.ready;
 
     const row = await this.db.prepare('SELECT payload FROM jobs WHERE id = ?').get(id);
-    return row ? (JSON.parse(String(row['payload'])) as JobRecord) : undefined;
+    if (!row) return undefined;
+    const job = JSON.parse(String(row['payload'])) as JobRecord;
+    if (job.decision) job.decision = readDecisionState(job.decision);
+    return job;
   }
 
   async getSpeechJob(eventId: string): Promise<JobRecord | undefined> {
@@ -1027,6 +1098,106 @@ export class SqlGameRepository implements GameRepository {
       )
       .get(job.id, job.fingerprint, JSON.stringify(job), job.createdAt, job.status);
     if (!written) throw new Error('A request ID cannot be reused with different input.');
+  }
+
+  /** One transaction owns root changes, child funding and cursor consumption. */
+  async consumeDecisionCursor(cursor: NonNullable<DecisionState['cursor']>): Promise<void> {
+    const previous = await this.getIntegration(cursor.key);
+    const original = cursor.value;
+    if (!original || typeof original !== 'object' || Array.isArray(original))
+      throw new Error('Invalid decision cursor.');
+    const current =
+      previous && typeof previous === 'object' && !Array.isArray(previous) ? previous : {};
+    const watermark = (value: object) =>
+      'watermark' in value && typeof value.watermark === 'number' ? value.watermark : 0;
+    // A late completion/restart may consume its original evidence, never rewind a newer cursor.
+    const at = (value: object) => ('at' in value && typeof value.at === 'number' ? value.at : 0);
+    const newer =
+      watermark(current) > watermark(original) ||
+      (watermark(current) === watermark(original) && at(current) > at(original))
+        ? current
+        : original;
+    await this.putIntegration(cursor.key, {
+      ...newer,
+      watermark: Math.max(watermark(original), watermark(current)),
+    });
+  }
+
+  async mutateDecision(
+    id: string,
+    change: (job: JobRecord) => Promise<JobRecord | undefined>,
+  ): Promise<JobRecord | undefined> {
+    await this.ready;
+    return this.db.transaction(async () => {
+      const row = await this.db.prepare('SELECT payload FROM jobs WHERE id=? FOR UPDATE').get(id);
+      if (!row) return undefined;
+      const current = JSON.parse(String(row['payload'])) as JobRecord;
+      if (!current.decision) return undefined;
+      current.decision = readDecisionState(current.decision);
+      const next = await change(current);
+      if (!next?.decision) return undefined;
+      if (next.id !== current.id || next.fingerprint !== current.fingerprint)
+        throw new Error('Decision identity cannot change.');
+      next.decision = { ...next.decision, revision: current.decision.revision + 1 };
+      await this.putJob(next);
+      return next;
+    });
+  }
+
+  async activeDecision(
+    worldId: string,
+    timelineId: string,
+    actorId: string,
+    except: string,
+  ): Promise<boolean> {
+    await this.ready;
+    // Called inside the root transaction: serialize competing roots for this actor
+    // before checking the unique active-child constraint.
+    await this.db
+      .prepare('SELECT pg_advisory_xact_lock(hashtextextended(?,0))')
+      .get(JSON.stringify([worldId, timelineId, actorId]));
+    return !!(await this.db
+      .prepare(
+        "SELECT id FROM jobs WHERE (payload::jsonb #>> '{decision,worldId}')=? AND (payload::jsonb #>> '{decision,timelineId}')=? AND (payload::jsonb #>> '{decision,actorId}')=? AND (payload::jsonb #>> '{decision,higher,state}') IN ('queued','preparing','reserved','dispatched') AND id<>? LIMIT 1",
+      )
+      .get(worldId, timelineId, actorId, except));
+  }
+
+  async decisionAttempts(rootJobId: string): Promise<LinkedDecisionAttempt[]> {
+    await this.ready;
+    const rows = await this.db
+      .prepare(
+        'SELECT l.*,a.provider,a.reserved,a.receipt FROM cognition_attempt_links l JOIN attempts a ON a.id=l.attempt_id WHERE l.root_job_id=? ORDER BY a.created_at,a.id',
+      )
+      .all(rootJobId);
+    return rows.map((row) => ({
+      attemptId: String(row['attempt_id']),
+      rootJobId: String(row['root_job_id']),
+      category: row['category'] as DecisionAttemptLink['category'],
+      ...(row['level'] === null
+        ? {}
+        : { level: Number(row['level']) as DecisionAttemptLink['level'] }),
+      stage: String(row['stage']),
+      executionClass: row['execution_class'] as ExecutionClass,
+      provider: row['provider'] as LinkedDecisionAttempt['provider'],
+      reservedUsd: microUsdToUsd(String(row['reserved']))!,
+      ...(row['receipt'] ? { receipt: JSON.parse(String(row['receipt'])) as AiReceipt } : {}),
+    }));
+  }
+
+  async occupiedDecisionSlots(): Promise<ExecutionClass[]> {
+    await this.ready;
+    const rows = await this.db.prepare(COGNITION_PENDING_EXECUTIONS_SQL).all();
+    return rows.map((row) => row['execution_class'] as ExecutionClass);
+  }
+
+  async markDecisionDispatch(attemptId: string): Promise<boolean> {
+    await this.ready;
+    return !!(await this.db
+      .prepare(
+        'UPDATE cognition_attempt_links SET dispatch_intent=true WHERE attempt_id=? AND NOT dispatch_intent RETURNING attempt_id',
+      )
+      .get(attemptId));
   }
 
   async claimInventionContinuation(job: JobRecord, parentId: string): Promise<boolean> {
@@ -1107,6 +1278,7 @@ export class SqlGameRepository implements GameRepository {
     actorId = 'world-agent',
     reuse?: 'compute-allocation',
     budget?: AttemptBudget,
+    decision?: DecisionAttemptLink,
   ): Promise<boolean> {
     await this.ready;
     const amount = micro(amountUsd);
@@ -1121,8 +1293,6 @@ export class SqlGameRepository implements GameRepository {
       actorId.length > 160
     )
       throw new Error('Invalid spending reservation.');
-    const monthStart = new Date();
-    const start = Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth(), 1);
     const accepted = await this.db.transaction(async () => {
       const existing = await this.db
         .prepare('SELECT provider,reserved FROM attempts WHERE id = ?')
@@ -1140,11 +1310,7 @@ export class SqlGameRepository implements GameRepository {
       )
         return true;
       if (existing) throw new Error('Attempt already admitted; do not dispatch it again.');
-      const row = await this.db
-        .prepare(
-          "SELECT COALESCE(SUM(spent + CASE WHEN status = 'reserved' THEN reserved ELSE 0 END), 0) AS total FROM attempts a LEFT JOIN attempt_scopes s ON s.attempt_id=a.id WHERE a.created_at>=? AND (s.actor_id=? OR s.actor_id IS NULL)",
-        )
-        .get(start, actorId);
+      const actorExposure = await this.exposure(actorId);
       // This is an additional cap over the same attempt ledger, not another wallet.
       // docs/architecture.md#invention-workshop-tools
       if (budget) {
@@ -1166,7 +1332,7 @@ export class SqlGameRepository implements GameRepository {
         )
           return false;
       }
-      if (exposureTotal(row?.['total'] ?? 0) + BigInt(amount) > BigInt(ceiling)) {
+      if (actorExposure + BigInt(amount) > BigInt(ceiling)) {
         return false;
       }
       await this.db
@@ -1177,6 +1343,19 @@ export class SqlGameRepository implements GameRepository {
       await this.db.prepare('INSERT INTO attempt_scopes VALUES (?,?)').run(id, actorId);
       if (budget)
         await this.db.prepare('INSERT INTO attempt_budgets VALUES (?,?)').run(id, budget.id);
+      if (decision)
+        await this.db
+          .prepare(
+            'INSERT INTO cognition_attempt_links(attempt_id,root_job_id,category,level,stage,execution_class) VALUES (?,?,?,?,?,?)',
+          )
+          .run(
+            id,
+            decision.rootJobId,
+            decision.category,
+            decision.level ?? null,
+            decision.stage,
+            decision.executionClass,
+          );
       return true;
     });
     if (accepted) this.usageCache = undefined;
@@ -1231,6 +1410,11 @@ export class SqlGameRepository implements GameRepository {
           JSON.stringify(receipt),
           id,
         );
+      const notify = () => {
+        for (const listener of this.settlementListeners) listener();
+      };
+      if (this.db.afterCommit) this.db.afterCommit(notify);
+      else notify();
     });
     this.usageCache = undefined;
   }
@@ -1239,6 +1423,48 @@ export class SqlGameRepository implements GameRepository {
   async recoverInterruptedWork(): Promise<void> {
     await this.ready;
 
+    for (;;) {
+      const rows = await this.db
+        .prepare(
+          "SELECT id FROM jobs WHERE (payload::jsonb #>> '{decision,phase}') IN ('immediate','waiting-primary','higher') ORDER BY id LIMIT 50",
+        )
+        .all();
+      if (!rows.length) break;
+      for (const row of rows)
+        await this.mutateDecision(String(row['id']), async (job) => {
+          const state = job.decision!;
+          if (
+            state.cursor &&
+            (await this.getIntegration(`world-timeline:${state.worldId}`)) === state.timelineId
+          )
+            await this.consumeDecisionCursor(state.cursor);
+          return {
+            ...job,
+            status: 'stale',
+            decision: endDecision(state, 'restart', Date.now()),
+            message: 'Interrupted thinking ended after restart; no request or action was repeated.',
+            completedAt: Date.now(),
+          };
+        });
+    }
+    // A committed absence of dispatch intent is positive proof under the single-submit protocol.
+    // Persist that proof as a receipt too: otherwise private root-cost readers would
+    // still report an unknown bill after the financial owner released the reservation.
+    for (;;) {
+      const unsent = await this.db.prepare(COGNITION_UNSENT_ATTEMPTS_SQL).all();
+      if (!unsent.length) break;
+      await this.db.transaction(async () => {
+        for (const row of unsent)
+          await this.settle(
+            String(row['id']),
+            undispatchedReceipt(
+              String(row['id']),
+              row['provider'] as AiReceipt['provider'],
+              Date.now(),
+            ),
+          );
+      });
+    }
     await this.db.exec(
       "UPDATE attempts SET status='uncertain', spent=reserved WHERE status='reserved'",
     );
@@ -1410,6 +1636,7 @@ export class SqlGameRepository implements GameRepository {
   }
 
   async close(): Promise<void> {
+    this.settlementListeners.clear();
     await this.ready.catch(() => undefined);
     try {
       await this.saves.close();

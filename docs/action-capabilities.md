@@ -366,7 +366,7 @@ Keep internal and projected reasons separate. A blocked route need not reveal an
 
 ### 7.3 Semantic retries are not native continuation
 
-A schema error or provider failure does not authorize an automatic paid repair loop. Preserve the existing paid-work policy. A deterministic unpaid recheck after an actual dependency change can reuse the accepted intent under its existing authority. An explicitly needed new semantic decision uses the normal scheduler and budget, not an unbounded resolver recursion.
+A schema error or provider failure does not authorize an automatic paid repair loop. The explicitly configured [server decision-fallback policy](ai-providers.md#decision-escalation) may admit one higher-model proposal for supported unresolved work; transport adapters and other callers still submit once. Preserve existing native admission and the shared spending policy. A deterministic unpaid recheck after an actual dependency change can reuse the accepted intent under its existing authority. An explicitly needed new semantic decision uses the normal scheduler and budget, not an unbounded resolver recursion.
 
 ## 8. Native activity composition
 

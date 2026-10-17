@@ -374,6 +374,231 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
     expect(JSON.stringify(result)).not.toContain('private details');
   });
 
+  it('retains temporary rate-limit evidence without raw messages, retries or assumed zero cost', async () => {
+    const fetcher = vi.fn<FetchTransport>(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: {
+              code: 'rate_limit_exceeded',
+              type: 'tokens',
+              message: 'private prompt and fixture-secret',
+            },
+          }),
+          {
+            status: 429,
+            headers: {
+              'retry-after': '1.25',
+              'x-ratelimit-remaining-requests': '0',
+              'x-ratelimit-remaining-tokens': '1200',
+              'x-ratelimit-reset-requests': '1m2.5s',
+              'x-ratelimit-reset-tokens': '500ms',
+            },
+          },
+        ),
+    );
+    const result = await createAiClient({
+      openai: { apiKey: 'fixture-secret' },
+      fetch: fetcher,
+    }).generate(generation);
+    expect(result).toMatchObject({
+      outcome: 'unavailable',
+      reason: 'provider_rate_limited',
+      receipt: {
+        httpStatus: 429,
+        providerErrorCode: 'rate_limit_exceeded',
+        providerErrorType: 'tokens',
+        retryAfterMs: 1250,
+        dispatched: true,
+        completionUncertain: false,
+        providerRateLimit: {
+          remainingRequests: 0,
+          remainingTokens: 1200,
+          resetRequestsMs: 62500,
+          resetTokensMs: 500,
+        },
+      },
+    });
+    expect(result.receipt.usage).toBeUndefined();
+    expect(result.receipt.estimatedCostUsd).toBeUndefined();
+    expect(JSON.stringify(result)).not.toMatch(/private prompt|fixture-secret/);
+    expect(fetcher).toHaveBeenCalledOnce();
+  });
+
+  it('distinguishes an exhausted quota from temporary throttling using only its error identifier', async () => {
+    const fetcher = vi.fn<FetchTransport>(async () =>
+      response(
+        {
+          error: {
+            code: 'insufficient_quota',
+            type: 'insufficient_quota',
+            message: 'private billing details',
+          },
+        },
+        429,
+      ),
+    );
+    const result = await createAiClient({ openai: { apiKey: 'fixture' }, fetch: fetcher }).generate(
+      generation,
+    );
+    expect(result.receipt).toMatchObject({
+      providerErrorCode: 'insufficient_quota',
+      providerErrorType: 'insufficient_quota',
+    });
+    expect(result.outcome).toBe('unavailable');
+    expect(result.receipt.retryAfterMs).toBeUndefined();
+    expect(result.receipt.estimatedCostUsd).toBeUndefined();
+    expect(JSON.stringify(result)).not.toContain('private billing');
+    expect(fetcher).toHaveBeenCalledOnce();
+  });
+
+  it('preserves rate-limit headers on successful responses for future admission pacing', async () => {
+    const result = await createAiClient({
+      openai: { apiKey: 'fixture' },
+      fetch: async () =>
+        new Response(JSON.stringify(generateResponse()), {
+          headers: {
+            'x-ratelimit-remaining-requests': '19',
+            'x-ratelimit-remaining-tokens': '0',
+            'x-ratelimit-reset-tokens': '1h2m3.5s',
+          },
+        }),
+    }).generate(generation);
+    expect(result.outcome).toBe('value');
+    expect(result.receipt.providerRateLimit).toMatchObject({
+      remainingRequests: 19,
+      remainingTokens: 0,
+      resetTokensMs: 3723500,
+    });
+    expect(result.receipt.providerErrorCode).toBeUndefined();
+  });
+
+  it.each(['future', 'past'] as const)('parses Retry-After HTTP dates: %s', async (direction) => {
+    const now = Date.UTC(2026, 9, 15, 23, 0, 0);
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(now);
+    try {
+      const result = await createAiClient({
+        openai: { apiKey: 'fixture' },
+        fetch: async () =>
+          new Response('{}', {
+            status: 429,
+            headers: {
+              'retry-after': new Date(now + (direction === 'future' ? 5000 : -5000)).toUTCString(),
+            },
+          }),
+      }).generate(generation);
+      expect(result.receipt.retryAfterMs).toBe(direction === 'future' ? 5000 : 0);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it('omits unsafe error identifiers and malformed rate headers without changing the HTTP outcome', async () => {
+    const result = await createAiClient({
+      openai: { apiKey: 'fixture' },
+      fetch: async () =>
+        new Response(
+          JSON.stringify({
+            error: {
+              code: 'a'.repeat(129),
+              type: 'Authorization Bearer fixture-secret',
+              message: 'private message',
+            },
+          }),
+          {
+            status: 429,
+            headers: {
+              'retry-after': 'untrusted',
+              'x-ratelimit-remaining-requests': '-1',
+              'x-ratelimit-remaining-tokens': '9007199254740992',
+              'x-ratelimit-reset-requests': '1s private',
+              'x-ratelimit-reset-tokens': 'a'.repeat(129),
+            },
+          },
+        ),
+    }).generate(generation);
+    expect(result).toMatchObject({ outcome: 'unavailable', reason: 'provider_rate_limited' });
+    expect(result.receipt.providerErrorCode).toBeUndefined();
+    expect(result.receipt.providerErrorType).toBeUndefined();
+    expect(result.receipt.retryAfterMs).toBeUndefined();
+    expect(result.receipt.providerRateLimit).toBeUndefined();
+    expect(JSON.stringify(result)).not.toMatch(/private message|fixture-secret|untrusted/);
+  });
+
+  it.each(['malformed-json', 'oversized', 'invalid-utf8'] as const)(
+    'bounds unreadable HTTP error diagnostics: %s',
+    async (defect) => {
+      const body =
+        defect === 'malformed-json'
+          ? '<html>private message</html>'
+          : defect === 'oversized'
+            ? JSON.stringify({ error: { code: 'insufficient_quota', message: 'x'.repeat(8192) } })
+            : new Uint8Array([255, 254]);
+      const result = await createAiClient({
+        openai: { apiKey: 'fixture' },
+        fetch: async () =>
+          new Response(body, {
+            status: 429,
+            headers: { 'retry-after': '7' },
+          }),
+      }).generate(generation);
+      expect(result).toMatchObject({
+        outcome: 'unavailable',
+        reason: 'provider_rate_limited',
+        receipt: { retryAfterMs: 7000 },
+      });
+      expect(result.receipt.providerErrorCode).toBeUndefined();
+      expect(result.receipt.usage).toBeUndefined();
+    },
+  );
+
+  it('does not shorten a valid long minimum wait or admit unsafe numerical metadata', async () => {
+    const result = await createAiClient({
+      openai: { apiKey: 'fixture' },
+      fetch: async () =>
+        new Response('{}', {
+          status: 429,
+          headers: {
+            'retry-after': '172800',
+            'x-ratelimit-reset-requests': '48h',
+            'x-ratelimit-reset-tokens': '999999999999999999999d',
+          },
+        }),
+    }).generate(generation);
+    expect(result.receipt.retryAfterMs).toBe(172800000);
+    expect(result.receipt.providerRateLimit?.resetRequestsMs).toBe(172800000);
+    expect(result.receipt.providerRateLimit?.resetTokensMs).toBeUndefined();
+  });
+
+  it('preserves a known 429 refusal if the diagnostic body stalls past the deadline', async () => {
+    const cancel = vi.fn();
+    const result = await createAiClient({
+      openai: { apiKey: 'fixture' },
+      timeoutMs: 15,
+      fetch: async () =>
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(new TextEncoder().encode('{'));
+            },
+            cancel,
+          }),
+          { status: 429, headers: { 'retry-after': '10' } },
+        ),
+    }).generate(generation);
+    expect(result).toMatchObject({
+      outcome: 'unavailable',
+      reason: 'provider_rate_limited',
+      receipt: {
+        httpStatus: 429,
+        retryAfterMs: 10000,
+        completionUncertain: false,
+      },
+    });
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(result.receipt.estimatedCostUsd).toBeUndefined();
+  });
+
   it('times out even when the transport ignores AbortSignal', async () => {
     const result = await createAiClient({
       jev: { apiKey: 'fixture' },

@@ -21,8 +21,9 @@ export function generationAllowance(
   inputTokens = 500_000,
   outputTokens = 8192,
   minimumUsd = Math.max(0.25, config.llmReserveUsd),
+  transport: 'openai' | 'macrofold' = config.macrofoldKey ? 'macrofold' : 'openai',
 ): number {
-  if (config.macrofoldKey) return config.macrofoldRunUsd;
+  if (transport === 'macrofold') return config.macrofoldRunUsd;
   const models = model
     ? [model]
     : [config.llmModel, config.miniModel, config.complexModel, config.summaryModel];
@@ -60,7 +61,7 @@ export function decisionAllowance(
   );
 }
 /** Each request rounds separately at reservation; adding raw USD can lose headroom. */
-function sumAllowances(allowances: readonly number[]): number {
+export function sumRequestCosts(allowances: readonly number[]): number {
   const total = sumSafeIntegers(allowances.map((amount) => usdToMicroUsd(amount) ?? NaN));
   const usd = total === undefined ? undefined : microUsdToUsd(String(total));
   if (usd === undefined) throw new Error('Decision allowance exceeds safe arithmetic.');
@@ -71,12 +72,12 @@ export function interactiveAllowance(config: AppConfig): number {
   const judgment = decisionAllowance(config, 'jev');
   // Strict typed-only operation cannot spend on generation or embeddings. Holding
   // those allowances would starve eligible idle learning despite available funds.
-  if (config.jevOnly) return sumAllowances([judgment, judgment, judgment]);
+  if (config.jevOnly) return sumRequestCosts([judgment, judgment, judgment]);
   // The eventual route is not selected yet: hold the most expensive configured model.
   const generation = config.macrofoldKey
     ? config.macrofoldRunUsd
     : generationAllowance(config, undefined, 120_000);
-  return sumAllowances([
+  return sumRequestCosts([
     generation,
     generation,
     judgment,
@@ -107,7 +108,7 @@ export interface LevelLimits {
   visibleOutputBytes: number;
   /** Effort is forwarded; reasoning tokens beyond the allowance are reported, not refunded:
    * no current adapter exposes a separate hard reasoning cap. */
-  reasoning: { effort: 'none' | 'low' | 'high' | 'xhigh'; allowanceTokens: number };
+  reasoning: { effort: 'none' | 'low' | 'medium' | 'high' | 'xhigh'; allowanceTokens: number };
   toolRounds: number;
   /** Paid requests of this level's own work per decision. A runaway-loop stop, deliberately well
    * above current use (3 Jev requests and 1 generation per attempt, at most 2 attempts) so later
@@ -126,7 +127,7 @@ export function levelLimits(config: AppConfig): Record<CognitionLevel, LevelLimi
   const requestAllowance = (requestsPerDecision: number, reserveUsd: number) => {
     return {
       requestsPerDecision,
-      decisionUsd: sumAllowances(Array.from({ length: requestsPerDecision }, () => reserveUsd)),
+      decisionUsd: sumRequestCosts(Array.from({ length: requestsPerDecision }, () => reserveUsd)),
     };
   };
   const generative = (level: 2 | 3 | 4): LevelLimits => ({
@@ -235,7 +236,7 @@ export class DecisionLedger {
     this.entries.push(entry);
   }
 
-  settle(requestId: string, receipt: AiReceipt, outcome: string): void {
+  settle(requestId: string, receipt: AiReceipt, outcome?: string): void {
     const entry = this.entries.find((e) => e.requestId === requestId);
     if (!entry) return;
     // Missing usage or uncertain completion is not free: the reservation stays charged.
