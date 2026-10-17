@@ -4,9 +4,11 @@
 
 ## The central recommendation
 
-Organize production around **a small, convincing player experience**, supported by coherent references, reusable assets and native rules. Let AI accelerate the parts that benefit from generation or interpretation. Give it reliable ways to inspect and revise the real result. Measure how much accepted game experience this produces, including the correction work.
+Organize production around **a small, convincing player experience**, supported by coherent references, reusable assets and native rules. Use AI to explore worthwhile possibilities, produce the parts that benefit from generation or interpretation, and inspect and revise the real result. Judge the resulting experience separately from its reliability and complete production cost.
 
 The research supports this pattern across traditional procedural production, newer AI asset workflows and current agent UI practice. It supports it more strongly than a universal claim about the best model, engine or number of agents.
+
+The [reusable production workflows](../../../docs/production-workflows/README.md) carry these findings from an idea through useful game content and revision. The project's existing [playability questions](../../../docs/projects/five-product-feature-specs.md#playability-gates) and [repertoire design foundation](../../../docs/repertoires/design-foundation.md) own the desired experiences. Reliable, coherent output may still fail to create curiosity, mastery, expression, companionship or a reason to return. Conversely, a more expressive action or memorable person may justify greater production cost. The research supplies methods for pursuing those ambitions; it does not replace them with an output-volume target.
 
 ## 1. Make a useful player experience the unit of progress
 
@@ -18,15 +20,17 @@ The research supports this pattern across traditional procedural production, new
 
 **Application and limit.** An illustrative slice could connect acquiring a useful resource, facing a readable threat, making a supported invention and returning to a resident whose response reflects what happened. This is a proposed exercise, not an accepted new quest or a rigid script. Small scope should preserve the core premise, not postpone it indefinitely.
 
+Ask what the player chose to try, whether an invention changed their approach or expressed their intention, and what a particular person or consequence made them want to do next. A technically new object and an accurate callback can still feel ordinary. Use the existing playability questions to investigate that gap, including legitimate choices to use a known method, leave an encounter or enjoy a quiet activity. No one scene has to demonstrate every source of enjoyment.
+
 ## 2. Make the visual target concrete before multiplying output
 
-**Proposed principle.** Use an approved complete scene or screen, a small coherent reference family and explicit visual roles. Close decisions about silhouette, value, palette, material, typography and density before producing many variants.
+**Proposed principle.** Explore meaningfully different visual or interaction directions when the choice is unresolved, then select a complete scene or screen, a coherent reference family and explicit visual roles. Resolve the relevant silhouette, value, palette, material, typography and density before scaling the selected family.
 
 **Why it fits OpenLegend.** The project already has a hybrid pixel-art direction and UI design system. The missing production input may be an enforceable exemplar and coherent art family, not another prose style document. A detailed world and sharp interface also need different visual treatment. [Art direction](../../../docs/maintainers/art-direction.md), [UI brief](../../../docs/ui-design-brief.md).
 
 **Evidence.** Coherent's documented UI experiments and Scenario's named customer accounts attribute consistency to shared design/style inputs. The WoW transcript describes extensive reference preparation. These differ in maturity, but converge on a useful method. [UI dossier](08-ui-quality-and-production.md), [developer cases](02-developer-case-studies.md).
 
-**Application and limit.** Review one populated inventory and one representative gameplay scene before expanding their families. An exemplar should settle decisions, not require literal imitation of another game's artwork. Do not treat one attractive screenshot as proof of interaction or motion quality.
+**Application and limit.** Review the selected family's representative screen or scene before expanding it. For an inventory, that means real items and interactions; for a character, it includes expressive movement at game scale. During exploration, an art idea can suggest a better interaction and an interaction can reveal a better silhouette. Reconcile the final appearance and behavior with their existing owners. An exemplar should preserve OpenLegend's identity, not require literal imitation of another game's artwork. Do not treat one attractive screenshot as proof of interaction or motion quality.
 
 ## 3. Reuse a coherent recipe before generating another unrelated asset
 
@@ -78,7 +82,7 @@ The research supports this pattern across traditional procedural production, new
 
 **Application and limit.** Share a small brief, exact baseline, output contract and acceptance evidence. Separate file or asset ownership where possible. Keep dependent edits and stateful application mutations sequential. Escalate concurrency only when actual throughput improves; do not copy “ten agents” as a production law.
 
-## 8. Adopt narrow skills that solve observed friction
+## 8. Adopt narrow skills that enable useful work
 
 **Proposed principle.** Inspect a skill's real instructions, dependencies, helper scripts, compatibility and side effects. Prefer first-party operating guidance where available; adapt it to local rules.
 
@@ -86,7 +90,7 @@ The research supports this pattern across traditional procedural production, new
 
 **Evidence.** The audit found useful official PlayCanvas and React Aria skills, a version-gated runtime inspector, a concrete Substance Designer adapter, and a Material Maker bridge whose central operations are still stubs. Actual source inspection changed the recommendation. [Skills dossier](04-skills-and-tooling.md).
 
-**Application and limit.** Before broadly adopting a recurring production workflow, verify a second representative output. Simple reference skills do not need a separate production trial. Preserve a short useful instruction after a recurring error. An “official” badge does not guarantee compatibility, and a popular repository is not a substitute for an accepted result. Do not install overlapping bridges without a distinct need.
+**Application and limit.** Select a skill for a concrete production opportunity, including a valuable capability we have not yet exercised. Verify reuse with another representative output when broad reuse is the claim. Simple reference skills do not need a separate production trial. Preserve a short useful instruction after a recurring error. An “official” badge does not guarantee compatibility, and a popular repository is not a substitute for an accepted result. Do not install overlapping bridges without a distinct need.
 
 ## 9. Preserve native authority while using AI for interpretation and expression
 
@@ -100,13 +104,13 @@ The research supports this pattern across traditional procedural production, new
 
 ## 10. Judge characters by perspective, agency and development across time
 
-**Proposed principle.** Test a resident's voice and choices across ordinary conversation, disagreement, uncertainty, failure, absence and changed circumstances. Reward appropriate change grounded in actual experience.
+**Proposed principle.** Judge a resident's voice and choices across a coherent episode: ordinary conversation, curiosity, enjoyment, disagreement, solitude, uncertainty, failure and changed circumstances where relevant. Reward appropriate continuity and change grounded in actual experience.
 
 **Why it fits OpenLegend.** The game calls for authored people with their own concerns, not interchangeable assistants or permanently fixed scripts. Expressive dialogue matters, but private-information leakage, invented history and unearned certainty can damage the experience even when the prose is excellent. [Character direction](../../../docs/projects/compelling-characters-feature-spec.md), [memory owner](../../../docs/memory-architecture.md).
 
 **Evidence.** Ubisoft's iterative character work and primary persona/multi-turn research motivate broader tests than a single charming answer. Current leaderboards do not identify the winner for OpenLegend's combined requirements. [Character-model dossier](06-models-for-stories-and-characters.md).
 
-**Application and limit.** Compare equal permitted evidence and response budgets. Use hard validity checks followed by blind human preference. Test mature scenes within the accepted scope as well as ordinary ones. Do not import a benchmark's preference for verbosity, agreeableness or explicit escalation as our objective.
+**Application and limit.** Reuse the [complete character episodes](../../../docs/projects/compelling-characters-feature-spec.md#complete-behavioral-flows) and [existing episode comparison](../../../docs/projects/intelligent-simulation-evaluation-feature-spec.md#the-episode-not-the-preferred-answer). Compare equal permitted evidence and complete budgets. Keep validity separate from human judgments of what made this particular person interesting, amusing, challenging or worth knowing. Test mature scenes within the accepted scope as well as ordinary ones. Do not import a benchmark's preference for verbosity, agreeableness or explicit escalation as our objective.
 
 ## 11. Separate offline production from live player delivery
 
@@ -126,17 +130,17 @@ The research supports this pattern across traditional procedural production, new
 
 **Evidence.** The supplied demo's cache-heavy usage and sponsored access illustrate accounting confounds. Vendor case studies rarely disclose full rejection and finishing costs. [Seed audit](12-supplied-examples-and-community.md), [production evidence](02-developer-case-studies.md).
 
-**Application and limit.** Within a defined repeated task or equivalent slice, use accepted assets or accepted player moments as the denominator; do not combine scenes of different scope into one unit count. Show correction minutes separately if labor has no agreed dollar valuation. A workflow with zero acceptable outputs has not achieved a cheap unit cost. Do not disguise uncertain measurements with a precise return-on-investment estimate.
+**Application and limit.** Use accepted comparable assets as the denominator for a repeated asset task. For play, report the complete cost of a specified episode alongside its separate experience judgment; do not count unequal player moments as interchangeable units. Hold the intended quality and experience constant when claiming savings, and report a quality gain when greater spending buys a worthwhile improvement. Show correction minutes separately if labor has no agreed dollar valuation. A workflow with zero acceptable outputs has not achieved a cheap unit cost. Do not disguise uncertain measurements with a precise return-on-investment estimate.
 
-## 13. Optimize the observed bottleneck and preserve what is already valuable
+## 13. Choose tools for concrete player or production gains
 
-**Proposed principle.** Identify the limiting task or measured runtime cost before adding an optimization system, engine migration or training project.
+**Proposed principle.** A substantial tool or platform change should resolve a material limitation, reduce complete production effort, or enable a valuable form of play or expression that the current route makes impractical. Identify the claimed gain and investigate it at an appropriate scope.
 
-**Why it fits OpenLegend.** The project already has a working browser/TypeScript presentation and substantial custom behavior. A client rewrite has an opportunity cost against the next enjoyable slice. At the same time, maintaining the current stack is not an ideological commitment if a concrete product requirement defeats it.
+**Why it fits OpenLegend.** The project already has a working browser/TypeScript presentation and substantial custom behavior. A client rewrite has an opportunity cost against the next enjoyable slice. An alternative can nevertheless earn consideration through a substantial authoring advantage or a new creative possibility; the current stack need not be completely incapable of the result.
 
 **Evidence.** Official engine documents show real capabilities and platform restrictions, while the skills catalog's Godot default reflects its own coverage. Embark's learned animation illustrates how much specialist effort can sit behind a compelling demonstration. [Engine assessment](05-playcanvas-godot-and-engine-choice.md), [developer cases](02-developer-case-studies.md).
 
-**Application and limit.** Keep PlayCanvas now; compare the same slice in Godot if a material unresolved constraint warrants it. Use pooling, batching, baking or compression when evidence identifies their benefit. A large world's scale is not itself a reason to rebuild its infrastructure.
+**Application and limit.** Keep PlayCanvas as the current production baseline. Compare an appropriate representative task in Godot if a credible capability or full-workflow gain warrants the investigation; include integration and migration costs before adopting a change. Use pooling, batching, baking or compression when evidence identifies their benefit. Keep exploratory capability work distinct from optimization and from permanent adoption. A large world's scale is not itself a reason to rebuild its infrastructure.
 
 ## 14. Turn repeated learning into a small durable production record
 
@@ -152,10 +156,10 @@ The research supports this pattern across traditional procedural production, new
 
 | Proposed principle group                              | Immediate place to apply it                                  | Evidence needed before broader adoption                                      |
 | ----------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| Player outcome, concrete art direction, real review   | One polished adventure and inventory slice                   | Useful play, coherent scene, working interactions, visible improvement       |
+| Player outcome, concrete art direction, real review   | The selected worthwhile activity and its relevant surfaces   | Useful play, a valued consequence, coherent presentation and working interactions |
 | Reuse, editable sources, narrow skills                | One material family, prop/icon pair and compatible animation | Repeatable accepted export and cheaper second variation                      |
 | Task-specific models and persistent character tests   | Small authoring and roleplay comparison                      | Valid outputs preferred by reviewers with acceptable latency/correction cost |
 | Offline/live separation and accepted-output economics | Existing asset/provider production records                   | Complete costs, failure behavior, honest fallback and qualified delivery     |
-| Engine and optimization decisions                     | Current PlayCanvas slice                                     | A named measured limitation before a port or new infrastructure              |
+| Engine and production capability decisions            | A representative current or newly valuable production task   | Evidence of a material capability or full-workflow gain, including change cost |
 
-The [workflows](10-openlegend-workflows.md) turn these principles into concrete task sequences. The [evaluation plan](11-evaluation-and-adoption.md) defines how to decide whether the proposed changes actually help.
+The [reusable routes](../../../docs/production-workflows/README.md) connect ideas, sources, tool operations, working game content and revision. The [research applications](10-openlegend-workflows.md) illustrate their use in specific tasks. The [evaluation plan](11-evaluation-and-adoption.md) defines comparisons that can resolve remaining tool choices while reusing the existing player-experience and character-evaluation owners.
