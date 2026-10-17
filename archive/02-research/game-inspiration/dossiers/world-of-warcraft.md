@@ -6,6 +6,8 @@
 
 **Preservation:** this expansion-roster subject has no game-specific predecessor in the original `games/` or `mechanics/` collection on this branch. Those owners remain unchanged. This pass retains and extends checkpoints `edbe9d8` and `a8801c7`, including their account/character boundaries, housing examples, reception disagreement and source-access qualifications. The separate packet-wide preservation audit is not certified here.
 
+**Separate service study:** [World of Warcraft: Forever — G178](world-of-warcraft-forever.md) owns the full October 17 prelaunch research. This dossier retains the general WoW comparison and its September capture; its original five reviews and player accounts do not establish Forever reception.
+
 ## 1. Player promise and the versions being compared
 
 WoW offers several overlapping identities: an adventurer inhabiting a large fantasy geography, a specialist needed by a group, a collector, a crafter, a competitor and now a house designer. Those are not necessarily successive stages in which raiding supersedes everything else. **Research interpretation:** its most important design problem is making those purposes coexist without making every available purpose feel compulsory.
@@ -372,3 +374,4 @@ All accessed **September 26, 2026**. Many official WoW direct opens returned err
 | R14 | Opening preservation statement, §12–14: routes, sources, version/access limits and coverage. |
 
 The completion review checked substantive coverage, source-link/anchor consistency and checkpoint preservation. It corrected stale flight and crafting assumptions, kept migrated review dates separate from original publication, and distinguished current retail from previews and Classic services. Source ID S45 is unused; numbering gaps do not indicate an omitted requirement. This is a completed documented research pass, not a personal gameplay test, a universal patch-stat certification or completion of the separate packet-wide gates.
+
