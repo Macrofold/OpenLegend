@@ -40,7 +40,7 @@ A production report describes concept work, choreography, motion capture and cut
 
 The five successful cases were selected for commercial scale or endurance; the other five were selected because their released online services ended. These labels describe outcomes, not the quality of every activity inside a game. The cases differ in audience, genre, period, geography, distribution and production commitments. Use them to develop better possibilities and comparisons, rather than to rank mechanics by revenue.
 
-The middle column provides a reading route into existing evidence. The final column is our proposed OpenLegend interpretation, not a claim that the reference already delivered that experience or that the proposal will succeed.
+The first column provides a reading route into existing evidence. The final column is our proposed OpenLegend interpretation, not a claim that the reference already delivered that experience or that the proposal will succeed.
 
 | Game and evidence route                                                                                                                                                                                                            | Positive experience to study                            | Perspective to carry forward                                                                                                                                      |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -77,6 +77,8 @@ The answers should remain specific to the intended audience. A design that requi
 The [current selection policy](../../../../docs/repertoires/gameplay-priorities.md#the-game-we-need-to-be-able-to-play) calls for a complete, enjoyable adventure with a real early instance of useful invention, independent character choice and persistent consequence. Those qualities belong in connected play from the start. The [design foundation](../../../../docs/repertoires/design-foundation.md#how-systems-produce-a-situation) supplies a broader range of motives, including curiosity, mastery, possession, affection, power, beauty, humor and conflict.
 
 Our strongest proposed direction is **an adventure in which the player's chosen method changes both what they can do and what happens among particular people and places**. Its appeal needs to be visible in play: a clever maneuver, a surprising discovery, a hard-won object, an expressive creation or a rival's understandable response. The engine's breadth earns its place by making those experiences possible.
+
+The distinctive bet is a useful invention beyond the world's prewritten answers, combined with characters whose own purposes can change the outcome. These ten commercial contrasts do not establish market uniqueness. Judge a proposed situation alongside the [existing systemic, narrative and creative comparisons](../../../../docs/repertoires/design-foundation.md#what-the-research-actually-makes-available), and ask what additional experience OpenLegend makes possible and why someone would prefer it. Breadth of possibility matters when a player can recognize and enjoy the difference.
 
 ### Four positive design perspectives
 

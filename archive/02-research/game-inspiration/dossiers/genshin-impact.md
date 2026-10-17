@@ -6,6 +6,8 @@
 
 ## Game, mechanics and player-created content
 
+**Positive reading route:** start with [exploration](#exploration-is-region-specific), [worked combat interactions](#worked-interactions-combat-and-preparation) and [contrasting player accounts](#direct-player-testimony-opposing-reasons-to-explore-or-stop). Read these together to examine curiosity, a self-chosen detour and learning to use capabilities well. The interpretation for OpenLegend is to connect an appealing destination with enjoyable ways to reach and investigate it; the dated inventory below preserves which version supports each example.
+
 ### Version and persistent account structure
 
 Scope extends through **7.1, A Rekviem for the Underworld**, released September 23, 2026, across the publisher's current PC, PlayStation 5, Xbox Series and mobile service. This includes Snezhnaya, Lunar/Stellar reaction systems and official stage creation, rather than freezing the inventory at the 2020 launch. The Games Press wrapper date conflicts with the September 12 date inside the release; the dated release body is used. [HoYoverse 7.1 release](https://www.gamespress.com/zh-CN/Genshin-Impact-Version-71-Launches-September-23-as-Forces-Gather-in-Sn).

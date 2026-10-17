@@ -337,6 +337,8 @@ The following observations come from written evidence, not a hands-on audiovisua
 
 The evidence suggests separating four motivations when studying return behavior: wanting a particular creature, improving a collection, joining known people and discovering something on an outing. They can coexist without being interchangeable. A player who returns for a friend may tolerate a weak encounter; another can enjoy collecting alone while rejecting organized battle schedules. Conversely, an activity's existence is not sufficient evidence that a player can participate in it.
 
+**Positive perspective for OpenLegend:** design an excursion around something worth noticing, a reason to choose a path and the possibility of a particular find. A possession might matter through its use, appearance or the story of obtaining it. A shared outing can also become valuable through what people do together. These are proposed design opportunities drawn from the distinctions above, not requirements to add a collection system. Study whether the player enjoyed exploring, remembers the discovery and values the company or possession afterward. A pleasant completed outing is useful evidence even when it creates no immediate desire to repeat it.
+
 Three bounded hypotheses follow. They are questions for research, not implementation instructions:
 
 1. **Collection autonomy:** Would people return more willingly when they can name goals they deliberately skip? Compare satisfaction with collection progress and participation frequency. R5 motivates this question.
