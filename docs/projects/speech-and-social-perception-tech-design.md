@@ -2,9 +2,11 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | Detailed design is complete; implementation has not started. | 2026-10-16 |
+| In progress | Detailed design is complete; implementation has not started. | 2026-10-17 |
 
 This is the implementation design for the [feature specification](speech-and-social-perception-feature-spec.md). The accepted target changes ordinary speech, recognition, experience preparation and conversation coordination together. It does not describe delivered runtime behavior. Implementation, dependencies and unsatisfied acceptance belong to [SPK00–SPK11](../maintainers/speech-and-social-perception.md), not this document.
+
+This pair selects the ordinary speech, recognition and animal sound-response slice of [ND16 — Hearing and communication beyond direct-path speech](../maintainers/needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech), whose existing source topic is [deliberate hearing extension boundaries](../hearing-and-speech.md#12-deliberate-extension-boundaries). The SPK01–SPK11 modules below implement that selected ND16 slice and its required memory/presentation integration; other registered hearing expansions keep their existing owners and disposition.
 
 Source inspection used Macrofold/OpenLegend main at commit **465ace1e8d7ee94a267e762d2d93970de17b2ed0**. No runtime, browser, live-model or performance result is claimed by this design. Existing evidence linked by persistent specifications qualifies its recorded implementation and workload only.
 
@@ -48,6 +50,7 @@ For the bundled world, a detector capable of linguistic social perception reliab
 | Wording and participant grammar | Language package and domain narration; server/client projections | One pure rendering path with explicit roles, observer labels and literal quotation spans. |
 | Source persistence | Existing records/history/memory repositories | Preserve whole source bodies and complete source keys; derived text and indexes never replace evidence. |
 | Decision preparation | Decision context, response context, recall and knowledge context | Use full selected permitted experiences; derive self/addressed/overheard meaning before models receive them. |
+| Narrative preparation | Narrator, narration source/history preparation | Supply the same complete selected permitted experience and optional shared prose; preserve existing story selection, audience and privacy. |
 | Speech context and compaction | Conversation-context module and memory repository | Retain one actor-scoped heard-speech stream without authoritative group membership. |
 | Long-term consolidation | Memory-consolidation, cognition-maintenance, domain experience | Supply complete selected sources and retain revisioned provenance and attributed meaning. |
 | Autonomous decisions | Actor work, AiDirector, cognition policy, native command admission | Preserve natural silence and support capability-based animal decisions without mandatory speech or prose. |
@@ -239,7 +242,7 @@ ExperienceModelBindings contains a request-local source handle bound externally 
 
 ModelExperienceEvidence preserves the existing awareness | memory | summary discriminator and all task-permitted semantic fields of that selected source, including exact speech fragments, acquisition, participant/direction relationships, quantities and units, uncertainty, corrections and derived-summary coverage. Only explicitly typed reference positions are remapped. The projector must not search-and-replace ID-like text inside quotations, personal notes or other literal source strings. Technical generation/receipt/source authority remains in server bindings. The result may include the shared rendered prose for readability, but a consumer receives the structured value as well.
 
-All these functions are deterministic and side-effect free given their inputs. They perform no fetching, embedding, paid inference or recording. The caller owns selection, permission preparation and current-source validation; the source mutation owner owns persistence and derived indexes. Provider JSON construction, attention, final decisions, memory consolidation and compaction use experienceForModel instead of inventing separate reduced evidence shapes. Each UI uses speechPresentation rather than a separate directed-speech phrase function.
+All these functions are deterministic and side-effect free given their inputs. They perform no fetching, embedding, paid inference or recording. The caller owns selection, permission preparation and current-source validation; the source mutation owner owns persistence and derived indexes. Provider JSON construction, attention, final decisions, Narrator preparation, memory consolidation and compaction use experienceForModel instead of inventing separate reduced evidence shapes. Each UI uses speechPresentation rather than a separate directed-speech phrase function.
 
 
 ### Structured evidence is primary; prose is a view
@@ -252,7 +255,7 @@ The server's internal binding retains canonical IDs, record kind, source revisio
 
 Prose may accompany a structured source where it helps reading, but it is generated by the shared renderer and cannot become the sole evidence supplied to a consumer that needs the record. Do not serialize full unrelated WorldState or use a raw global WorldEvent as a substitute for a missing observer record.
 
-Attention, immediate response generation, appraisal, optional knowledge editing, conversation compaction and long-term consolidation share these source and presentation primitives. Each task selects only needed sources through its existing bounded owner. Complete source content does not mean every character receives every past experience in every call.
+Attention, immediate response generation, appraisal, optional knowledge editing, Narrator preparation, conversation compaction and long-term consolidation share these source and presentation primitives. Narrator receives each selected recipient-permitted ExperienceEntry with optional shared prose and local handles instead of awareness text alone; its existing story selection, recipient scope, privacy and publication authority remain unchanged. Each task selects only needed sources through its existing bounded owner. Complete source content does not mean every character receives every past experience in every call.
 
 ### Roles in decision preparation
 
@@ -278,6 +281,7 @@ The coordinated stored/transport changes are:
 | Maintenance sources obtained by selected.map(entry => entry.memory) | The complete selected entries with scoped references, source revisions and preparation coverage. Do not downcast at the maintenance handoff. |
 | Consolidation request text plus small metadata | The complete task-permitted source projection and optional shared-renderer prose, with an opaque request-local source handle bound to its complete native key. |
 | ExperienceSummary.sourceIds containing untyped IDs | A sources collection of typed source-kind, native ID and exact revision references. World and actor come from the owning summary partition; cross-scope transport includes that scope explicitly. |
+| Summary text with source IDs but no structural attribution | A required native-derived attribution manifest and indexed exact source coverage, projected structurally by every selected-summary consumer as specified below. |
 | Summary coverage and invalidation indexes | Index those complete scoped references. Direct derivation may reference an earlier summary; leaf provenance is derived through retained permitted lineage, never a separately writable competing source list. |
 | Protected-source preparation | Retain the complete original ExperienceEntry in the existing hot/cold source store and its required binding. A retained summary wrapper must resolve that source when full protected evidence is required; a shortened generic sentence is insufficient. |
 
@@ -303,11 +307,42 @@ An existing summary is honestly identified as derived. Revising it does not auth
 
 The summarizer receives source-local handles generated from complete server bindings. It cannot manufacture entity identities, broaden its audience, invent a participant or change another actor's mind. Its refusal, invalid output, oversized output or incomplete coverage leaves prior records intact. No automatic paid repair call is added.
 
+### Structural attribution in every selected summary
+
+A summary containing represented speech must carry more than prose and source IDs. Add a required native-derived attribution manifest to ExperienceSummary and to the existing automatic speech-compaction artifact. An empty manifest explicitly means its selected sources contain no speech; absence is not a valid way to bypass attribution. The manifest is a revisioned projection of the observer's source records, never model-authored speaker/addressee truth.
+
+The native experience/consolidation owner derives the manifest from the exact accepted source group. For a raw speech source it uses speechRoles and the permitted PerceivedSpeech fields. For an existing summary it consumes that summary's already validated manifest and indexed coverage, without rehydrating all of its lifetime leaves. The compaction owner uses the same derivation on its admitted source prefix. Model prose remains derived interpretation; its manifest provides independent structured participant evidence.
+
+The stored manifest contains its exact input/coverage digest and read-only attribution groups. Each group has:
+
+| Field | Derived meaning |
+| --- | --- |
+| speakerId and targetId, when bound | Only the observer-permitted participant identities, never a lookup of the global event. |
+| addressing and observerRelation | The source's ambient/directed/seen-only distinction and self/addressed/overheard/ambient/seen relation. |
+| acquisition and intelligibility | How those speech facts were acquired and whether words were absent, partial or clear. |
+| firstAt, lastAt and sourceCount | The event-time range and number of distinct supported original occurrences in this attribution group. Reusing the same occurrence through several summaries does not increment that count. A later actual retelling is a distinct speech occurrence, but does not become a new firsthand witness of the recounted event. |
+| supportKey | A deterministic group key bound to the exact scoped original-source coverage in the existing summary-source dependency index. It is not a semantic reply relationship. |
+
+Coalesce only equivalent participant/acquisition/role tuples. Two recognized unnamed speakers remain different groups. An unbound source or addressee under another supported sensory policy stays explicitly unbound; aggregation does not assert that several unidentified sources are one individual. A summary of Ada addressing the owner and the owner addressing Ben therefore retains two structural relationships even when its prose is a single paragraph.
+
+Extend the existing summary-source index with the attribution-group key and exact scoped source kind/ID/revision coverage. This index is generated by the same native commit as the manifest; it is not separately writable social data. Merge child coverage by complete original source identity/revision so several derived summaries of the same speech cannot manufacture distinct occurrences. A new retelling has its own utterance identity and heard-claim status; do not merge its event by text similarity or count it as independent firsthand evidence of what it describes. The manifest can group many equivalent turns without serializing every source key into each model prompt. Exact original perceived experiences remain accessible through the support key's actor-scoped, pageable source expansion.
+
+During consolidation, prepare per-input native attribution before dispatch. After the model returns its proposed source group, validate coverage and derive that group's manifest deterministically from the prepared inputs. Persist text, typed sources, manifest and dependency rows atomically. The model cannot substitute its own identities, add a recipient, or select a different observer's evidence. Source grouping does not make a paraphrase's claimed semantics mechanically true; the record still marks it as derived.
+
+When experienceForModel receives a selected summary, it must include the complete manifest alongside the summary text and useful coverage. It projects participants to the same permitted model references as ordinary speech and binds each supportKey to an opaque request-local source handle. This gives the model structural who-to-whom and observer-role evidence immediately; it does not require the model to guess that meaning from entity IDs or prose. The shared summary presentation may describe those groups, but its wording does not replace the manifest.
+
+If the task requires exact quotation, a specific episode, a material qualification not contained in the summary, or resolution of ambiguity between grouped sources, the existing required-source preparation expands the relevant support key through the observer-owned index before model dispatch. It applies the same row, byte, source-revision, privacy and generation admission as other source reads. It never expands every lifetime leaf merely because a summary was selected, and never reconstructs the source from WorldEvent. The model must not treat a group-level source handle as proof of an exact quotation it was not supplied.
+
+The complete manifest counts toward stored/prepared payload accounting. Before paid work, bound the selected inputs and their possible native attribution through existing source/compaction allowances; split or defer a consolidation batch if needed without retiring its originals. Exact coverage union/deduplication uses the indexed metadata in bounded maintenance preparation, not a fresh lifetime-leaf scan during each model turn. At recall, a summary whose complete manifest cannot fit remains unselected while smaller relevant sources can be retrieved. There is no silent manifest truncation or text-only summary fallback. A missing or stale optional manifest excludes that optional summary; a required summary/source that cannot be prepared produces the honest required-context failure.
+
+Source correction, forgetting, erasure or a source revision change invalidates every affected manifest and parent coverage through the same dependency index. Rebuild a missing derived manifest only from still-permitted retained source records or validated child manifests, with bounded work; otherwise keep it unavailable. Restore preserves the coherent text/source/manifest cut and rebuildable index, then applies current privacy and generation fences. A remembered source ID alone cannot resurrect a revoked relationship.
+
+
 ### Ordinary recall and embeddings
 
 Generic recall receives the same full source object. It derives source/addressee wording from structured roles before attention or model inclusion. A current heard-speech source, cold speech source and source returned through a protected/required lookup must not have different semantics.
 
-Summaries retain their source coverage and attributed meaning through later recall. A list of untyped referenced entities is not an adequate replacement for the claim that one person addressed another.
+Summaries retain their source coverage and native-derived structural attribution manifest through later recall. A list of untyped referenced entities, typed source IDs alone, or a prompt asking prose to preserve roles is not an adequate replacement for the claim that one person addressed another.
 
 Index source-stable permitted content, not transient location, temporary reference tokens or somebody's private current global name. When semantic embeddings use a textual serialization, derive it from the complete source, including important speaker/addressee/acquisition relationships and exact relevant facts. Preserve existing separation between source persistence, embedding readiness and attention selection.
 
@@ -465,15 +500,32 @@ There is no new cap on acquired utterances or actually audible listeners. Requir
 
 An accepted action copies its minimal permitted cause and stopping conditions into the native binding. Expiring optional sensory records therefore does not erase an action's ability to finish or create permanent animal recollection.
 
+### Direction and intensity arithmetic
+
+Extract and reuse the existing native directional projection in `speech.ts` for both speech and generic sound. For the event-time source-minus-listener vector `(dx, dy, dz)`, let `h = hypot(dx, dz)`. A horizontal direction is available exactly when `h >= max(0.25, abs(dy))`; otherwise direction is `null`. When available, `sector = (round(atan2(dz, dx) / (pi / 4)) + 8) % 8`, using the existing JavaScript rounding rule. The eight sectors are world-axis bearings: 0 is +x, 2 is +z, 4 is −x and 6 is −z. Elevation is `above` for `dy > 2`, `below` for `dy < -2`, and `level` otherwise. These are the existing HR05 directional restrictions; extract one helper instead of creating separately editable animal thresholds. Listener orientation does not rotate the saved sector. A primarily vertical/near-coincident sound remains unlocalized, and a null direction never supplies an escape heading.
+
+Use the exact finite `clarityMarginDb` returned by the native acoustic calculation: received level minus the greater of background and listener hearing floor. For detected sound, define `band = floor((clarityMarginDb - acousticPolicy.thresholdsDb.detect) / profile.acousticChangeBandDb)`. The selected profile width is 6 dB. With the base detect threshold of zero, band 0 is `[0, 6)`, band 1 `[6, 12)`, and so on; an exact upper boundary belongs to the next band. There is no extra rounding, epsilon, hysteresis or actor-specific hidden threshold. A profile width must be finite and greater than zero. Undetected/nonfinite contact never enters this calculation. Native physical detail remains separate from language intelligibility and model qualitative wording.
+
 ### Attention without one paid thought per sentence
 
 Reuse one ActorWork ticket for each configured cognitive actor. The cognitive subset of the current participant/component index supplies the roster, including supported native-controlled animals. Do not discover actors by scanning all historical minds on each sound. Human/player-controlled bodies are not granted autonomous takeover.
 
-Compare a normalized perceived acoustic scene, not event text or hidden emitter identity. The selected change inputs are an associated source's current observation episode or an anonymous bearing sector, a **6 dB received-margin band**, and the current response's relevant stimulus. A first scene, new perceived source/sector, or changed direction/intensity band creates an opportunity. Equivalent repeated utterances update deterministic repetition count and latest time without buying a new decision for each sentence. Anonymous sounds sharing a sector remain unresolved identities.
+Store compact actor-local `soundAttention` bookkeeping under the existing actor/evidence owner, with `opportunityRevision`, `consideredRevision`, the captured evidence watermark and a map of active acoustic signatures. This is an index of sensed evidence and decision coverage, not another transcript, individual-recognition registry or autobiographical store.
 
-Save the scene baseline, opportunity revision/considered identity and expiry as actor-local bookkeeping linked to retained sensory evidence. This is attention coalescing, not a parallel transcript or learned habituation. Only the normalized opportunity revision enters the sound-related ActorWork wake input. Raw sensory insertion, latest-time/repetition changes and the generic human new-memory/new-speech path must not independently wake the animal again.
+The signature is the canonical tuple `(permittedAssociation, direction, band)`. `permittedAssociation` is the actor's legitimately associated source observation episode, or the literal `anonymous` when no association was acquired. `direction` is the exact permitted `(sector, elevation)` pair above or `unlocalized`. Encode this tuple with the shared canonical structured-key encoder, not ambiguous concatenation. Never use a hidden emitter ID to distinguish anonymous keys. Two anonymous sounds with the same permitted tuple remain one unresolved perceptual bucket even if the engine knows they came from different bodies. Different bands/sectors can coexist without claiming that they are distinct individuals.
 
-Baseline expiry permits a later newly acquired scene to count as new; expiry itself schedules no thought. Restoration or capacity loss cannot silently forget a considered opportunity and buy duplicate work. Existing bodily changes, current goal/state changes and actual action-result triggers retain their own pathways. No new universal actor cooldown is introduced.
+Each map entry stores its signature, `firstAt`, `latestAt`, `expiresAt`, repetition count and latest permitted evidence reference. Each detected occurrence still has its own separate Awareness record. Process admitted occurrences in their existing deterministic source order:
+
+1. Remove entries with `expiresAt <= acquisitionAt`. Removal does not increment an opportunity revision or request work.
+2. Record the new distinct actor/event experience with its own fixed `expiresAt = acquisitionAt + sensoryLifetimeSeconds`.
+3. If the new signature is absent, insert it and increment `opportunityRevision`; the actor's existing single work ticket coalesces all such additions before preparation.
+4. If the signature is already present, increment its repetition count and update `latestAt`, latest evidence reference and `expiresAt = acquisitionAt + sensoryLifetimeSeconds`. Do not increment the opportunity revision. A new repeat never extends any older individual event record's expiry.
+
+The selected sensory lifetime is 900 simulation seconds. At the exact expiry boundary a newly detected identical signature is a new opportunity; absent a new acquisition, expiry itself produces none. Alternating A/B/A/B from two visible source episodes therefore adds A and B once, then refreshes their entries. Anonymous alternating intensity bands likewise retain both buckets and do not toggle a singleton scene on every utterance. Returning to an already active acoustic pattern is deliberately coalesced within its idle window, even if the most recent individual utterance had a different pattern. This is the disclosed first-policy tradeoff; qualify missed useful change and admitted work separately rather than inventing a debounce timer during implementation.
+
+Raw row insertion, repetition counts, latest times and expiry housekeeping must not also enter the generic human new-memory/new-speech wake route. Current body/goal/action-result triggers retain their existing distinct pathways, while the owned response's changing heading, urgency or remaining time does not manufacture a new sound signature. Repeated sound cannot renew an accepted flee action. Saving preserves map entries, absolute expiries and considered/opportunity identity; rebuilding a receiver index never resets them or replays a sound onset.
+
+This policy adds no universal actor cooldown. Returning to a still-active perceptual pattern is coalesced as specified; actor bodily/goal/action changes keep their independently owned triggers.
 
 Prepare the common bounded recent trigger set, currently eight recent triggering sources, and an honest deterministic coverage summary of remaining retained scene evidence. Count/time/intensity/direction coverage says what was grouped; it is not a fabricated complete individual source list. Preserve required injury and current response causes. Capture the acquired-evidence watermark before awaits and acknowledge only that snapshot. Required sources that do not fit cause explicit deferral rather than an unsupported claim that everything was considered.
 
@@ -487,9 +539,7 @@ The profile and shared instructions describe executable choices without prescrib
 
 ### Executable choices and one native continuation owner
 
-Add the narrow installed embodied-response command that exposes chosen hold/escape through the existing animal behavior owner. This bridge is new implementation scope. Its native binding contains the selected supported operation, complete permitted evidence key/revision, actor physical-life binding, current profile pin, expected active-action/response generation, and the admitted hold deadline or escape stimulus. It accepts neither arbitrary listener sets nor provider-authored hidden positions or paths.
-
-Represent a chosen hold/escape in the actor's ordinary active action with a typed response payload. Existing plan/cancel/result ownership controls replacement and completion. Refactor advanceAnimal's active-action exclusion only to advance that exact owned response; unrelated actions still exclude ordinary animal locomotion. Do not leave two movement writers.
+The first supported repertoire is continue, a stationary hold, a finite approach/retreat through ordinary move, or chosen escape. The exact native binding below makes those choices executable without another movement owner.
 
 | Choice | Admitted effect and stopping rule |
 | --- | --- |
@@ -497,13 +547,42 @@ Represent a chosen hold/escape in the actor's ordinary active action with a type
 | Pause to attend | Stop interruptible locomotion at a legal boundary, hold stationary and suppress routine wander. Base default is 120 simulation seconds, valid selected duration 1–300 seconds. Expiry releases hold and resumes routine without requiring a paid call. The pause supplies no sight/hearing or stealth bonus. |
 | Approach | Use ordinary move toward a currently permitted last observed position, or a short body-local step along the heard bearing. Normal route/clearance admission applies. It cannot follow an unseen live source automatically. |
 | Retreat | Use ordinary move to a supported local point away from an observed source or opposite the heard bearing, with existing four-metre local probe extent and normal movement speed. Completion stops the finite move; repeating it needs a new valid choice. |
-| Flee | Start the supported local escape continuation using existing clearance-aware steering. Reuse the current 16 direction probes, four-metre lookahead/four clearance samples, nine-metre safety-distance tuning where relevant, and the owning calm-time rule. Hearing alone never starts this state. |
+| Flee | Start the supported local escape continuation using existing clearance-aware steering. Reuse the current 16 direction probes and four-metre lookahead/four clearance samples, with the finite chosen-response lifetime specified below. Hearing alone never starts this state. |
 
 Only offer operations the actual body, profile and current action can execute. An unlocalized sound does not manufacture a movement destination; continuation and a hold may remain possible. A blocked route can yield a truthful refusal or stationary outcome. No animation or narration may claim flight that did not occur.
 
-Extend the escape stimulus to distinguish last observed position from heard bearing at an acquisition pose/time. Observed-source updates require actual permitted subsequent perception. A heard-bearing escape scores clearance and progress opposite that direction; it never reads the hidden source's coordinates or distance. Its urgency decays with the existing calm-time constant from the accepted choice. Only a new accepted choice renews sound-linked flight; another equivalent utterance does not reset its timer. Even a trapped animal can settle without the nonexistent hidden-distance safety condition keeping it in permanent flight.
+#### Exact native command and action binding
 
-Existing attack-triggered escape retains its native priority, evidence and safety/decay policy. A cognitive hold/approach cannot erase noninterruptible bodily protection. Any permitted replacement uses the same cancel/replace owner and preserves its actual terminal cause. When a move, hold or escape finishes, ordinary native behavior resumes without a required paid decision.
+Add `embodied-response` to the finite domain `Command` and `ActionType` unions, backed by a trusted installed activity host and a narrow domain adapter (proposed owner `packages/domain/src/embodied-response.ts`, base profile/meaning in `packages/domain/src/worlds/base/animal-response.ts`). The host participates in `nativeCommandSupported`, ordinary action meaning, `isPhysicalCommand`/`isActivityCommand`, availability preview, command/response admission, activity receipts, cancellation and current-format validation. It installs hold/escape only; continue produces no command and approach/retreat remain ordinary move. This explicitly requires a new adapter, not merely exposing existing native candidates.
+
+The provider-facing route keeps the current offered `actionId` selection. The model receives neither coordinates it did not perceive nor writable native effect state. The prepared action dictionary owns this new command shape:
+
+| Command field | Required contract |
+| --- | --- |
+| `id`, `actorId`, optional `purpose` | Existing command envelope and action/response identity rules. |
+| `type` | Exactly `embodied-response`. |
+| `operation` | Exactly `hold` or `escape`. |
+| `binding.profilePin` | Exact installed response profile selected for this body. |
+| `binding.actorLife` | Captured `actor.physicalLife ?? 0`, not the continuing person ID or birth time. |
+| `binding.expectedActionId` | Captured current active-action ID or null; checked before permitted replacement. Existing `expectedPlan`/response generation remains owned by the outer response admission, not a second plan counter. |
+| `binding.cause` | Observer-owned `awareness:<eventId>` source key, exact source revision and acquisition time; optional separately bound visual-exposure reference when an observed point is used. The shared prepared work owns the immutable permitted source body. |
+| `durationSeconds` | Hold only: finite within the pinned 1–300 second range; omission resolves once to the 120 second default at native binding. Escape rejects this field. |
+| `binding.stimulus` | Escape only: the native discriminated stimulus below. Hold needs no localized direction and has no stimulus field. |
+
+The prepared binding is created by the shared native context/response owner, never accepted as proof from a provider or public command JSON. Final admission matches it to that actor's owned immutable prepared source snapshot, verifies the source revision/authority and current profile/life/control, and uses the existing plan-generation fence. The current public decoder rejects a supplied trusted `binding`; a supported request compiler, if used, resolves actor-permitted source references through that same native binder. No new signed-token registry or animal work service is needed. An expired optional sensory row does not erase an already owned prepared snapshot, but it also grants no new unbound request access to the expired source. Record this threading explicitly in the shared response input type and current-format job validator.
+
+The escape stimulus is exactly one of:
+
+- `heard-bearing`: `{ kind, sector, elevation, acquiredAt, listenerPosition }`, all copied from that bound sound record. Derive away heading from the sector centre plus pi. It has no source ID, source coordinate or inferred distance.
+- `observed-position`: `{ kind, position, observedAt, sourceId, sourceEpisode, sourceLife }`, copied from the separately permitted visual observation in the prepared input. A remembered acoustic bearing cannot be relabelled as this form. Subsequent native tracking may update that point only from actual permitted sight of the same recognized encounter/physical life.
+
+`Action.embodiedResponse` is the single saved continuation state. Common fields are `kind`, `profilePin`, `actorLife`, the minimal permitted `cause`, and `startedAt`. Hold adds absolute `endsAt = startedAt + admittedDurationSeconds`. Escape adds the discriminated stimulus, `escapeHeading: number | null`, absolute `reviewAt` and absolute `endsAt`. Ordinary action `id`, stage, activity/plan identity and result ownership remain unchanged. For these actions, `remainingSeconds` is a projection of `max(0, endsAt - simTime)`; generic action integration must not decrement it a second time. There is no second independently writable sound-flight state in AnimalComponent.
+
+For sound-chosen escape, initial urgency is 1 and at time `t` it is `exp(-(t - startedAt) / escape.calmSeconds)`. The absolute stop is `startedAt + escape.calmSeconds * log(1 / escape.settledDanger)`. With existing base values 40 and 0.04, this is approximately 128.755 simulation seconds. Use the exact expression and shared TIME_EPSILON boundary handling, not the rounded number as another tuning constant. This finite rule applies to either chosen sound stimulus, so an obsolete last-seen point cannot trap the animal in permanent flight. Actual sight may update steering, not silently restart the accepted sound-flight lifetime. Existing attack-triggered urgency, safety distance and protection remain in their separate native attack owner and can preempt the chosen response through ordinary cancellation.
+
+Refactor the existing animal escape scorer to accept the single currently owned escape state. For bearing stimulus, separation is progress along the allowed away unit vector divided by the existing lookahead; clearance/continuity and native movement speed retain their existing owner. For observed position, retain the current permitted point-based separation score. Reuse the 16 directions, four-metre lookahead and four clearance samples. Review at admission and then at the current one-clearance-sample travel interval, `lookAheadMetres / clearanceSamples / nativeMovementSpeed(world, actor, true)`; a zero speed admits no travel and the finite stop still occurs. A blocked search keeps null heading, not fictional movement.
+
+`kernel` and `temporal-boundaries` must schedule the earlier review/stop boundary and route this exact active action once through the adapter. Refactor the current `advanceAnimal` active-action exclusion only for this response; unrelated actions continue excluding native animal locomotion. Do not depend on an idle-only ambient roster to tick the newly active action, and do not run generic move integration alongside escape steering. At hold/escape completion or cancellation, end the ordinary action/activity with its actual terminal reason and release suppression; ordinary agency continuation or native wandering resumes without a paid stop decision. Restoring the saved action preserves its absolute times, source evidence and native owner, without a new admission or another response choice.
 
 ### Outage, source loss and restoration
 
@@ -515,9 +594,13 @@ Recheck life, control, physical-body and current capability at capture, dispatch
 
 Save sensory entries and absolute expiries, scene baseline/watermark/opportunity identity, exact profile pins and accepted native hold/escape direction/deadlines in the coherent snapshot. Restore rebuilds acoustic indexes and changes external generation. It neither replays sound onset nor regenerates a decision. Expired optional evidence remains unavailable; an immutable input already owned by admitted work retains its purpose-limited binding, subject to current result authority and relevance.
 
-Current-format validators cover finite acoustic values, valid sectors and expiry ordering, profile existence, retention/payload consistency, source/owner binding, physical life and action ownership, and deadlines within the pinned profile. Native source removal is handled by historical evidence/action semantics, not a fallback lookup of an unrelated live entity. The [hearing limits inventory](../limits/hearing-and-speech.md) records the new provisional values and their owners; existing escape quantities remain owned by their current base-world definitions.
+Current-format validators cover finite acoustic values, valid sectors and expiry ordering, profile existence, retention/payload consistency, source/owner binding, physical life and action ownership, and deadlines within the pinned profile. Native source removal is handled by historical evidence/action semantics, not a fallback lookup of an unrelated live entity. The hearing inventory owns [sensory retention](../limits/hearing-and-speech.md#ssp-h03--short-sensory-retention-and-complete-detection), [scene coalescing](../limits/hearing-and-speech.md#ssp-h04--acoustic-scene-coalescing), [admitted choice bounds](../limits/hearing-and-speech.md#ssp-h05--admitted-animal-choice-bounds), and [profiles/native continuation](../limits/hearing-and-speech.md#ssp-h06--animal-profiles-and-native-continuation); existing escape quantities remain owned by their current base-world definitions.
 
 The animal qualification must show actual admitted pause/movement/flight and subsequent stopping, contrasting dispositions including continuation, repeated-cue coalescing, hidden-source invariance, outage/restore behavior and the real cost of a dense audible scene. A fixture that selects flee only proves action wiring; spontaneous behavior quality requires separately authorized live-model evidence.
+
+### Precision qualification
+
+SPK07 verifies sector boundaries/null localization, bands exactly at detect/6/12 dB boundaries, anonymous hidden-source invariance, alternating known and anonymous signatures, independent fixed event expiry versus repeat-renewed idle expiry, exact-boundary renewal, and no expiry-only or restored-onset thought. SPK08 verifies the actual command schema/binder, stale life/plan/action/profile refusal, both escape-stimulus forms, one movement writer, trapped stopping at the derived native boundary, native attack preemption, no repetition renewal, and restoration mid-hold/mid-flight. Scripted selected actions establish wiring; they are not evidence that a live model spontaneously behaves realistically.
 
 ## 11. Authority, lifecycle and current-format restoration
 
@@ -535,7 +618,7 @@ Current-format validation checks:
 - Permitted speech roles and ambient/directed consistency; self uses the actual source/owner IDs. Seen-only records require null addressing and no addressee/quotation, while self/heard linguistic records require the acquired ambient/directed distinction.
 - Sound-only records contain no forbidden speech payload.
 - Heard segment/intelligibility/acquisition combinations and finite authored acoustic quantities.
-- Complete source key/revision ownership and summary source coverage.
+- Complete source key/revision ownership, summary source coverage and the required derived attribution manifest for every represented speech summary.
 - Retention class and required sensory expiry semantics.
 - Any retained native animal response state and its actual body/action owner.
 - Absence of obsolete ordinary membership and duplicate recipient fields.
@@ -554,7 +637,7 @@ This project changes repeated native recipient handling, history selection, mode
 
 | Required question | Selected answer |
 | --- | --- |
-| What makes cost grow? | Audible/visible detector density per utterance; utterance rate; actor-owned retained source count/bytes; source and name revisions; active sensory records; simultaneous eligible decisions; complete shared-source and observer projections; transcript rows mounted by each viewer. |
+| What makes cost grow? | Audible/visible detector density per utterance; utterance rate; actor-owned retained source count/bytes; attribution groups and exact dependency coverage; source and name revisions; active sensory records; simultaneous eligible decisions; complete shared-source and observer projections; transcript rows mounted by each viewer. |
 | What preparation is shared? | One source word segmentation and acoustic policy lookup per utterance; conservative receiver candidate selection; immutable source facts across detectors; request-scoped actor/source hydration and participant-label/reference maps; the existing derived actor speech compaction; unchanged installed body/action definitions. |
 | What invalidates reuse? | Source/observer movement and sensing revisions for new contact, installed acoustics/language/recognition changes, source edits and privacy revocation, actor life/participation, name/reference revisions, new selected speech, current work changes, request/control/generation changes and applicable simulation-time expiry. |
 | How is the complete operation measured? | End-to-end send admission → candidate/contact evaluation → evidence/receipt commit → hot/cold preparation → attention/generation/consolidation → final native publication → permitted browser update; count visited candidates, SQL rows/buffers/statements, hydrated/serialized bytes, provider calls/tokens/charges, queue delay, CPU/heap/RSS and visible response latency. |
@@ -629,6 +712,7 @@ No unresolved product decision is required to implement this selected baseline. 
 - Implementation: [Speech and social perception, SPK00–SPK11](../maintainers/speech-and-social-perception.md).
 - Limits and constraints: [Hearing and speech](../limits/hearing-and-speech.md), [Memory](../limits/memory.md), [Narration](../limits/narration.md), [Cognition](../limits/cognition.md), [AI execution](../limits/ai-execution.md) and [Native work](../limits/native-work.md).
 - Related design: [Feature specification](speech-and-social-perception-feature-spec.md).
+- Source registration: [ND16](../maintainers/needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech) and its [hearing extension source topic](../hearing-and-speech.md#12-deliberate-extension-boundaries).
 - Canonical contracts: [Hearing and speech](../hearing-and-speech.md), [Narration and conversations](../narration-and-conversations.md), [Memory architecture](../memory-architecture.md), [Knowledge](../knowledge.md), [Identity](../identity-and-references.md), [Save/load](../save-and-load.md), [Engine/world boundaries](../engine-and-world-boundaries.md) and [Performance](../performance.md).
 - Bundled policy and character integration: [Observer knowledge](../worlds/base/knowledge.md), [Embodied survival](../worlds/base/survival.md), [Character feature specification](compelling-characters-feature-spec.md) and [Character technical design](compelling-characters-tech-design.md).
 
