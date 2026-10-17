@@ -16,7 +16,7 @@
 
 [The completed product assignment for groups 31–35](../projects/completed/product-design-groups-31-35.md) follows groups 26–30. [Generations and family life](generations-and-family-life.md) owns DG31’s independent adult-family proposal under ACT/BW and PS. Mike selected adult players, non-explicit presentation with optional sex, and browser-only delivery for now. The family product design is prepared; technical work, runtime and measured qualification remain in their existing owners.
 
-DG33’s [product proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.md) adds two independent optional families: [BW15.1–BW15.6](base-world.md#dg33--voluntary-spirits-and-ordinary-revival) covers a willing known spirit and separately earned ordinary revival; [EWF10T.1–EWF10T.4](extensible-world-foundation.md#dg33--deliberate-telepathic-messages) coordinates deliberate telepathic messages. Their [profile](../worlds/base/extraordinary-minds-and-afterlife.md) and [MIND limits](../limits/extraordinary-minds-and-afterlife.md) retain proposed scope and values; no new tracker, harm policy, clock or capacity claim is created.
+DG33’s [product proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.md) adds two independent optional families: [BW15.1–BW15.6](base-world.md#dg33--voluntary-spirits-and-ordinary-revival) covers a willing known spirit and separately earned ordinary revival; [EWF10T.1–EWF10T.4](extensible-world-foundation.md#dg33--deliberate-telepathic-messages) coordinates deliberate telepathic messages. Their [profile](../worlds/base/extraordinary-minds-and-afterlife.md) and [MIND limits](../limits/extraordinary-minds-and-afterlife.md) retain proposed scope; runtime and qualification remain open.
 
 DG32 uses [INV-20.5g–l](inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions) for useful shared equipment, exact keeper authority, accepted claims and return without a present keeper. The [product proposal](../projects/shared-equipment-and-institutions-feature-spec.md) keeps association membership optional and first lending unsecured; actual property consumers and qualification remain open.
 
@@ -30,13 +30,13 @@ DG35's [completed platform and offline decision brief](../projects/completed/pla
 
 DG28 uses [published packs and creator revenue](published-packs-and-creator-revenue.md) under INV-8/EWF11/PD10. Its free portability proof, curated listing, paid acquisition and creator allocation/payout stages remain independently scoped; no marketplace or grants become prerequisites for useful free reuse.
 
-DG29 uses [participants and world travel](participants-and-world-travel.md), with existing PS05–PS08 and the product-scalability inventory. A worthwhile small visit and coherent return precede any broader advertised capacity or federation.
+DG29 uses [participants and world travel](participants-and-world-travel.md) under PS05–PS08, with the existing product-scalability inventory. A worthwhile small visit and coherent return precedes any broader advertised capacity or federation.
 
 DG30 uses [creator funding and contributor governance](creator-fund-and-contributor-governance.md), with actual operating-budget, rights and platform-authority adoption separate from the product proposal. A finite manual round can finish before grant or voting software.
 
 ## Product design groups 21–25
 
-[The sequential five-group assignment](../projects/completed/product-design-groups-21-25.md) extends the first design branch. [Recovery and care](recovery-and-care.md) supplies DG21’s focused consumer; [INV-20.5a–f](inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) now covers DG22’s commissions and optional advances/associations. [EC01–EC06](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) now covers DG23's revisable outlook, older reinterpretation and independent extensions. These are product proposals, with adoption, technical work, implementation and gameplay qualification remaining distinct. That design assignment records its inspected source; current delivery state remains in the focused trackers.
+[The sequential five-group assignment](../projects/completed/product-design-groups-21-25.md) extends the first design branch. [Recovery and care](recovery-and-care.md) supplies DG21’s focused consumer; [INV-20.5a–f](inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) now covers DG22’s commissions and optional advances/associations. [EC01–EC06](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) now covers DG23's revisable outlook, older reinterpretation and independent optional extensions. These are product proposals, with adoption, technical work, implementation and gameplay qualification remaining distinct. That design assignment records its inspected source; current delivery state remains in the focused trackers.
 
 [NC22](narration-and-conversations.md#nc22--authored-world-asynchronous-text) now covers DG24's optional private text journey, with existing MP/CR/data consumer obligations and no parallel authority or cognition checklist. The first complete two-human journey precedes NPC correspondence and optional calls.
 
@@ -158,7 +158,7 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 
 ## Reviewed World Agent writes
 
-[Structured invention questions](../projects/completed/invention-questions-feature-spec.md) and [technical design](../projects/completed/invention-questions-tech-design.md) specify inline choices/free text, durable human answers and explicit continuation without idle paid waiting. [WW24–WW30](world-agent-writes.md#structured-invention-questions) record completed bounded native, browser and live acceptance, including the final initial-size diagnostic, under INV-2.3/INV-21; broader deployment and release gates remain.
+[Structured invention questions](../projects/completed/invention-questions-feature-spec.md) and [technical design](../projects/completed/invention-questions-tech-design.md) specify inline choices/free text, durable human answers and explicit continuation without idle paid waiting. [WW24–WW30](world-agent-writes.md) record completed bounded native, browser and live acceptance, including the final initial-size diagnostic, under INV-2.3/INV-21; broader deployment and release gates remain.
 
 [World Agent context and invention loop](../projects/completed/world-agent-context/README.md) provides compact source-backed mechanics/context, YAML templates and medium-effort execution. [WW17–WW23](world-agent-writes.md#context-and-invention-loop-design) track the implemented finite foundation and its qualification beneath INV-21, preserving existing live-harness gates.
 
