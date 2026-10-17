@@ -97,6 +97,8 @@ The generic acoustic result may later support native danger, startle, stealth, s
 
 ## 4. Speech volume and admission
 
+The selected [shared speech-composition contract](narration-and-conversations.md#admission-ordering-and-memory) brings human-entered, authored-choice and generated utterances through this same native boundary; authored-choice integration remains open in CTR. Selecting or generating words grants neither additional hearing reach nor different audience authority.
+
 Use `whisper | normal | shout` as the initial player/agent delivery modes. They resolve through an installed source profile; an LLM may choose a supported mode, not an arbitrary source level, listener list, range, or private scope.
 
 Volume is already part of the existing talk operation and native speech admission, not another command family. These are its speech fields; the strict model operation also supplies nullable `selfIntroduction` under [the naming contract](entity-names.md), while native callers may omit that optional claim:

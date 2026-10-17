@@ -12,6 +12,8 @@ This project follows Mike's October 17 decisions. It extends the implemented phy
 
 Native code may implement an authored world's animal policy. The engine supplies shared physical execution, perception, evidence, decision scheduling and admission. The bundled world chooses danger categories, escape preferences, speeds, harm rules, personality content and response repertoires. Another coherent world may make different choices without rewriting engine consumers.
 
+The reusable decision architecture belongs to [agency](../agent-agency.md#shared-deliberation-different-ways-to-choose) and [action capabilities](../action-capabilities.md#prepared-choices-and-prospective-work-transitions). Ordinary task changes, optional speech and defense share exact choices, work consequences, admission and actual results. Combat selects its particular purposes, appraisal and two-call strategy. Human shortcuts stay direct, ordinary animals stay native, and a character can still choose an ordinary action without generating a thought or goal. The first delivery must demonstrate this reuse through the [shared-contract qualification cases](../maintainers/combat-and-threat-responses.md#shared-contract-qualification).
+
 ## Accepted outcomes
 
 1. Released projectiles apply the selected world's contact-damage law to the body or material they actually contact. An unintended living interceptor is not immune merely because it was not the selected target.
@@ -21,7 +23,7 @@ Native code may implement an authored world's animal policy. The engine supplies
 5. In the ordinary, feasible, unprovoked attack scenario, Ada must independently choose and attempt a physical counterattack. Authored personality, present evidence, feelings and the available choices must produce that response. A name-specific retaliation branch or a scripted biography instruction cannot satisfy acceptance.
 6. Busy characters receive relevant threats, context and feasible response choices. Existing work is not a reason to hide attacks or defense; the chosen response explicitly retains, replaces or interrupts work through its existing owner.
 7. A generalized, source-linked appraisal process replaces the crude damage-to-fear mapping for this response path. No new universal survival maximizer or collection of compulsory needs bars is required.
-8. Humanlike characters use a prepared repertoire: a cheap Decision API stage selects situation-relevant options, then a second stage chooses what the character actually does. Native feasibility precedes both; it does not substitute for the first semantic decision.
+8. Humanlike characters use a prepared repertoire for this threat-response profile: a cheap Decision API stage selects situation-relevant options, then a second stage chooses what the character actually does. Native feasibility precedes both; it does not substitute for the first semantic decision.
 9. Meaningful changes, including an aggressor withdrawing, leaving effective reach or disappearing, trigger reconsideration. Neither automatic pursuit nor silent permanent pursuit follows from being attacked.
 10. Selection and hovering remain harmless. Command-click uses exact, disclosed action intent and per-opponent evidence, including a short recent-hostility grace period, without exposing hidden intentions.
 

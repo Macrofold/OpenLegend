@@ -65,6 +65,10 @@ Universal decision composition and operational goal/plan behavior are defined in
 
 ### Admission, ordering and memory
 
+**Selected shared extension; authored-choice integration and qualification remain open.** Human-entered words, a selected complete authored utterance and generated words use the same native speech admission, emission, audience/hearing, recognition, conversation and personal-evidence owners. Their preparation and actual cost differ. The [shared deliberation contract](../archive/07-technical-architecture/agent-agency-runtime.md#25-shared-deliberation-and-prepared-choices) determines whether choosing supplied words or generating language is warranted; it adds no mandatory separate decision about whether to speak. An exact authored utterance needs no wording-generation call. An ordinary generated reply remains part of the existing optional operation composition.
+
+Speech can accompany supported ongoing work without implicitly replacing it. Preserve the exact utterance, permitted addressee, delivery mode and actual component dependencies through admission; a failed independent physical request need not erase valid speech. Saying something does not execute quoted commands, establish that a listener heard or agreed, or satisfy another person's task. [Speech admission](hearing-and-speech.md#4-speech-volume-and-admission) owns the physical communication rules.
+
 The [agency admission and receipts contract](../archive/07-technical-architecture/agent-agency-runtime.md#4-admission-ordering-and-physical-execution) owns independent rejection, cancellation, exactly-once experience, action-stage identity and recovery. Conversation generation and event-time speech audiences remain additional speech-specific bindings. Reflection presentation stays separate from recallable intentional thought; this section is a forwarding anchor, not a second response schema.
 
 ## 4. Expressive and mechanical actions
