@@ -12,18 +12,18 @@ Subjects are processed one at a time. Mechanics, business and reception research
 
 ## Subject status
 
-| ID | Subject | Outcome category | Research status | Evidence / commit |
-| --- | --- | --- | --- | --- |
-| G168 | Umamusume: Pretty Derby | Success | In progress | Mechanics, reviews and original spending evidence under investigation. |
-| G169 | Genshin Impact | Success | Not started | Awaiting the preceding subject's completed commit. |
-| G170 | Clash of Clans | Success | Not started | Awaiting the preceding subject's completed commit. |
-| G171 | Candy Crush Saga | Success | Not started | Awaiting the preceding subject's completed commit. |
-| G172 | Pokémon GO | Success | Not started | Awaiting the preceding subject's completed commit. |
-| G173 | Harry Potter: Wizards Unite | Unsuccessful service | Not started | Awaiting the preceding subject's completed commit. |
-| G174 | Minecraft Earth | Unsuccessful service | Not started | Awaiting the preceding subject's completed commit. |
-| G175 | Apex Legends Mobile | Unsuccessful service | Not started | Awaiting the preceding subject's completed commit. |
-| G176 | Final Fantasy VII: The First Soldier | Unsuccessful service | Not started | Awaiting the preceding subject's completed commit. |
-| G177 | Durango: Wild Lands | Unsuccessful service | Not started | Awaiting the preceding subject's completed commit. |
+| ID   | Subject                                                       | Outcome category     | Research status | Evidence / commit                                                                                                                      |
+| ---- | ------------------------------------------------------------- | -------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| G168 | [Umamusume: Pretty Derby](dossiers/umamusume-pretty-derby.md) | Success              | In progress     | Substantive mechanics, business and five-review draft recorded; latest Japanese scenario coverage and final source/link review remain. |
+| G169 | Genshin Impact                                                | Success              | Not started     | Awaiting the preceding subject's completed commit.                                                                                     |
+| G170 | Clash of Clans                                                | Success              | Not started     | Awaiting the preceding subject's completed commit.                                                                                     |
+| G171 | Candy Crush Saga                                              | Success              | Not started     | Awaiting the preceding subject's completed commit.                                                                                     |
+| G172 | Pokémon GO                                                    | Success              | Not started     | Awaiting the preceding subject's completed commit.                                                                                     |
+| G173 | Harry Potter: Wizards Unite                                   | Unsuccessful service | Not started     | Awaiting the preceding subject's completed commit.                                                                                     |
+| G174 | Minecraft Earth                                               | Unsuccessful service | Not started     | Awaiting the preceding subject's completed commit.                                                                                     |
+| G175 | Apex Legends Mobile                                           | Unsuccessful service | Not started     | Awaiting the preceding subject's completed commit.                                                                                     |
+| G176 | Final Fantasy VII: The First Soldier                          | Unsuccessful service | Not started     | Awaiting the preceding subject's completed commit.                                                                                     |
+| G177 | Durango: Wild Lands                                           | Unsuccessful service | Not started     | Awaiting the preceding subject's completed commit.                                                                                     |
 
 ## Active work and completion criteria
 
