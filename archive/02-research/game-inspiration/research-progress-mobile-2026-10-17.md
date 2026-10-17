@@ -37,4 +37,4 @@ After the ten dossiers, complete the cross-case synthesis answering the Umamusum
 
 The recorded base tree contains no full dossier for these ten subjects. The existing [mobile/recent-games supplement](references/fun-research-expansion-mobile-and-recent.md) covers other selected games and remains preserved. Earlier roster identities and their owners remain in place. Detailed source access and financial uncertainty belong in each dossier.
 
-New dossier completion is not yet claimed. Document review will be distinguished from actual gameplay; no firsthand play or watched footage will be invented.
+Completion claims apply only to the individually completed subject rows above. Document review is distinguished from actual gameplay; no firsthand play or watched footage is claimed without evidence.

@@ -137,7 +137,7 @@ Durability is a central cost: multiple native mods may conflict; Android game up
 
 The work is community-maintained, with donation/support links and contributor attribution, rather than an official royalty marketplace. Source-code availability does not release Cygames' assets or every translation under an open license. UmaTL describes restrictions on its own data and requests support for ongoing labor. [Legacy maintainer account and usage terms](https://github.com/noccu/umamusu-translate).
 
-**Transfer and limit:** OpenLegend can learn from separating translated presentation from underlying rules, previewing a complete interaction before publication, crediting distinct tool and content authors, and budgeting for update breakage. The demonstrated native injection and extracted game assets are not a security or rights model to copy. This research grants no implementation authorization and does not change the repository's generated-content or compatibility policies.
+**Transfer and limit:** OpenLegend can learn from separating translated presentation from underlying rules, previewing a complete interaction before publication, crediting distinct tool and content authors, and budgeting for update breakage. The demonstrated native injection and extracted game assets are not a security or rights model to copy. This research grants no implementation authorization and does not change the [current root policies](../../../../AGENTS.md), including the repository's generated-content and compatibility boundaries.
 
 ### Source register and uncertainty
 
