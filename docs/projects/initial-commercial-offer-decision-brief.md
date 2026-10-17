@@ -2,67 +2,65 @@
 
 | Status | Current progress | Last updated |
 |---|---|---|
-| In progress | Offer-comparison steps and decision criteria are prepared; player preference, measured delivery economics and adopted commercial terms remain open under CO01. | 2026-10-17 |
+| In progress | Player preference, measured delivery economics and adopted commercial terms remain open under CO01. | 2026-10-17 |
 
-**Work owner:** [CO01](../maintainers/commercial-offers.md), linked through ND22 and ND26. **Inputs:** [business assumptions](../../archive/06-marketing/business-plan.md), [first-playable target](../worlds/base/playable-openings.md#first-playable-game-target), [player-learning plan](first-playable-playtest-plan.md), and existing [customer-offer specification](customer-and-supporter-offers-feature-spec.md). This is a decision brief, not another billing-system specification or permission to sell.
+**Work owner:** [CO01](../maintainers/commercial-offers.md), linked through ND22 and ND26. **Inputs:** [business assumptions](../../archive/06-marketing/business-plan.md), [required experience](../worlds/base/playable-openings.md#first-playable-game-target), [player-learning plan](first-playable-playtest-plan.md) and [customer-offer specification](customer-and-supporter-offers-feature-spec.md).
 
 ## The decision
 
-Choose a feasible first offer that players value and that can sustainably deliver the actual survival-building adventure. Distinguish the experience, access/payment arrangement and distribution. A playable camp, independent people, useful invention and conflict are the product promise; a subscription is one possible way to support it, not the genre or a research-proven winner.
+Select one feasible offer that players value and that can sustain delivery of the actual game. Keep the experience, access/payment arrangement and distribution distinct. Browser delivery is selected; a subscription is a candidate funding arrangement, not the genre or a proven winner.
 
-Managed private worlds remain the concrete candidate developed in the business plan. Compare them with the strongest plausible **browser-feasible** alternative for the same experience before substantial packaging/billing investment. Browser delivery is the current selected direction; this brief does not reopen platform/offline design, authorize Steam preparation or promise a native paid game. Preserve future platform options under their existing decision owner.
-
-Candidate categories for investigation are an owner-paid managed private world, individual access to an operated browser game, or a bounded paid access/service bundle. These are not adopted products or a requirement to implement all three. Identify the strongest feasible comparison using existing capabilities and player expectations. Never compare a fully costed subscription with an imaginary unlimited alternative.
+Compare the business plan's owner-paid managed private world with the strongest credible browser-feasible alternative for the same playable promise. Alternatives may include individual access to an operated game or a bounded paid access/service bundle. Investigate at least two credible arrangements; this does not require implementing multiple products or reopening native/offline distribution.
 
 ## Steps
 
 ### 1. Define the customer and business objective
 
-Record whose need the offer serves: someone primarily playing the adventure, hosting friends, or authoring a world. Distinguish supporters of Mike from customers buying the experience. Retain the founder's constraints around existing work and avoiding indefinite subsidy, but obtain the actual approved time/cash ceiling and review point before dependent commitments.
+Identify whether the customer primarily wants to play, host friends or author a world, and distinguish game purchases from patron support. State whether the next test addresses operating-cost coverage, useful side income, founder livelihood or studio growth. Obtain the actual time/cash envelope and review point before dependent commitments.
 
-State which objective the next test addresses: covering operating costs, useful side income, a founder livelihood or a growing studio. The hosted proposal's ten renewing customers is an initial operating milestone only, not a universal launch target or a salary. Do not invent a replacement income goal without Mike's decision.
+The hosted proposal's ten renewing customers is an early operating milestone, not a salary or a universal criterion for other offers. Preserve the founder's constraints around existing work and avoiding indefinite subsidy without inventing an income target.
 
 ### 2. Define the same honest playable promise
 
-Use the named build and scope from first-playable preparation. List what customers can do, where their camp/history persists, who can join, which AI-dependent features are included, and which current limitations affect enjoyment. Do not sell unimplemented walls, roaming packs, alliances, future expansions, unlimited invention or indefinite unattended life as current benefits.
+Use the named build and scope from first-playable preparation. Explain available activities, camp/history retention, who can join, AI-dependent benefits and limitations that affect enjoyment. A sample and a paid offer should represent the same underlying activity. Do not sell unimplemented content, unlimited invention or indefinite unattended operation as current benefits.
 
-A generous first sample and the purchased game should describe the same underlying activity. Authoring privileges, invention allowances, hosting and ordinary access remain distinct benefits. Previously accepted entitlement directions are preserved without forcing all customers to purchase all products.
+Keep ordinary access, hosting, authoring and invention allowances distinct. Preserve accepted entitlement directions without requiring every customer to buy every product. The [offer owner](../maintainers/commercial-offers.md) retains those product commitments.
 
 ### 3. Compare at least two credible arrangements
 
 | Dimension | Required comparison |
 |---|---|
-| Player reason to pay | Why this arrangement is useful beyond liking the idea, and which realistic alternative the player would otherwise choose |
-| Actual terms | Upfront/recurring price hypothesis, included access/service, extra charges, participant rights and how the allowance is understood without token accounting during play |
-| Continued value | What happens at cancellation, expiration, funding exhaustion or provider outage; what can still be played or retrieved |
-| Experience integrity | Whether survival, camp building, social agency and useful invention remain enjoyable at the offered limits; cheap operation alone is insufficient |
-| Real costs | Typical and costly play, idle/persistent storage, model work, payments/refunds where applicable, support and founder effort |
-| Delivery readiness | Browser access, authentication, privacy, actual operator capability, recovery, content/service boundaries and enabled-feature gates |
-| Downside exposure | Existing obligations, likely refunds/support, unspent prepaid balances and what a failed experiment would still require us to deliver |
-| Evidence | Observed behavior, stated preference, measured costs and guesses identified separately with a date and cohort |
+| Reason to pay | The customer's desired activity and realistic alternative, beyond interest in the idea |
+| Terms | Upfront/recurring price hypothesis, included service, extra charges, participant rights and understandable allowance boundaries |
+| Continuation | Cancellation, expiration, funding exhaustion, outages, retained work and retrieval |
+| Experience | Whether the same survival/camp, social and invention play remains worthwhile at the proposed limits |
+| Costs | Typical and expensive play, idle/storage costs, model work, payments/refunds, support and founder time |
+| Readiness | Actual browser access, operator capability, privacy, recovery and enabled-feature requirements |
+| Downside | Existing obligations, refunds/support, prepaid balances and remaining service exposure if the test stops |
+| Evidence | Dated observed behavior, stated preference, measured costs and assumptions identified separately |
 
-Use existing technical specifications and PD/INV accounting owners to identify feasibility. No new billing framework, duplicated ledger, multi-product implementation or cloud purchase is necessary to prepare the comparison. Constrain promises to what can be qualified under current policy; resolve consequential actual terms before dependent design or implementation.
+Cost every candidate's actual promise. A finite purchase can still create continuing service costs; a recurring charge does not guarantee sufficient margin. Use existing PD/INV/billing owners to assess feasibility rather than create another ledger or buy infrastructure for an unselected offer.
 
 ### 4. Gather appropriate evidence
 
-Begin with understandable offer descriptions and interviews with plausible players, clearly labeled as proposals. Ask what they believe payment buys, whether the terms obstruct play, what they compare it with, and why they would decline. Interviews can reject bad assumptions but do not establish paid conversion.
+Start with clearly labeled offer proposals and plausible players. Ask what they believe payment buys, which limits obstruct play, what they would choose instead and why they would decline. Interviews can expose misunderstanding or reject assumptions; they do not establish paid conversion.
 
-Measure the cost of the same quality of play people experienced. Existing tool calls, infrastructure receipts and support observations should retain their precise accounting boundaries. No paid provider experiment runs without its own authorization and cap. Prepare conservative, expected and stronger scenarios with explicit assumptions, rather than treating the old $39/$10/$150 illustration as measured economics.
+Measure costs for the same quality and scope of play being evaluated. Retain the boundaries of provider usage, infrastructure receipts and support observations. Apply existing authorization and cost controls to any live experiment. Compare conservative, expected and stronger scenarios with explicit assumptions; historical illustrations are not measured economics.
 
-Actual payment or eligible renewal evidence follows only after an approved deliverable and the corresponding customer lifecycle are ready. Distinguish customer purchases from patron contributions, cash from earned revenue, and operating surplus from founder compensation/development recovery. Avoid double-subtracting fees or using future sales as cash already available.
+Actual payment or eligible renewal evidence follows approval of a deliverable offer and its customer lifecycle. Distinguish game purchases from patron contributions, cash from earned revenue, prepaid liabilities from free funds, and operating surplus from founder compensation/development recovery. Include expensive usage and failure/refund exposure, not only average successful sessions.
 
 ### 5. Recommend one next test, not a full business rollout
 
-Summarize the preferred candidate, strongest alternative, evidence favoring each, the unresolved question most likely to change the decision, actual exposure limit and the next authorized test. A valid conclusion can be to improve player value before choosing an offer. Strong evidence should justify a deliberate next commitment, not permanent avoidance of a real market test.
+State the preferred candidate, strongest alternative, evidence for each, uncertainty most likely to reverse the choice, next test and maximum exposure. Improving the game's value before choosing an offer is a valid outcome; promising evidence can also justify a deliberate market test rather than endless interviews.
 
-After Mike adopts an offer and operating profile, CO01 records the terms, relevant existing technical design is completed, and CO02/CO03 plus applicable PD gates govern delivery. CO05 uses renewal criteria only for a recurring offer; a finite or differently packaged offer needs appropriate purchase, satisfaction, continued-service and cost evidence. Do not close a commercial task from a successful first charge alone.
+After Mike adopts the offer and operating profile, CO01 records actual terms; the relevant technical design, CO02/CO03 and PD requirements govern delivery. CO05 evaluates renewals for recurring offers and appropriate purchase, satisfaction, continued-service and cost measures for other arrangements. A first successful charge is not completed commercial acceptance.
 
 ## Required decision record
 
-Record: intended customer and desired activity; compared offers with the same current promise; actual price/access/usage hypotheses; cost and service evidence; sample/source limits; business/time objective; recommended test; maximum exposure; necessary operator/permission decisions; and a proceed/rework/pause condition. CO01 owns the accepted result and outstanding decisions, not a parallel tracker in this brief.
+Record the customer/activity; compared offers with the same current promise; price/access/usage hypotheses; cost and service evidence; sample/source limits; business/time objective; recommended test; maximum exposure; unresolved operator/permission decisions; and an advance/rework/pause condition. Keep the accepted result and remaining work under CO01 rather than maintaining a second tracker here.
 
 ## Scope boundaries and references
 
-[Production deployment](../maintainers/production-deployment.md) owns enabled-feature readiness, access and recovery. [Commercial offers](../maintainers/commercial-offers.md) owns customer lifecycle work; [billing/entitlements](../../archive/07-technical-architecture/billing-and-usage-reporting.md) owns accounting semantics. [Existing platform decision](completed/platform-and-offline-decision-brief.md) and ND34 retain conditional future alternatives. Real-user continuity still requires the explicit owner decision under [development compatibility](../../AGENTS.md#development-save-policy).
+[Production deployment](../maintainers/production-deployment.md) owns access, recovery and enabled-feature readiness. [Commercial offers](../maintainers/commercial-offers.md) owns customer lifecycle work; [billing/entitlements](../../archive/07-technical-architecture/billing-and-usage-reporting.md) owns accounting. The [platform decision](completed/platform-and-offline-decision-brief.md) retains conditional future alternatives. Real-user continuity follows the [development save policy](../../AGENTS.md#development-save-policy).
 
-No provider, payment price, signup date, legal conclusion, public campaign or spending commitment is selected here. This document is complete as a comparison procedure; the decision project remains In progress until its actual evidence and adoption are recorded. It neither reduces the required first-playable experience nor replaces existing entitlement designs.
+This procedure does not adopt prices, providers, service promises or public launch commitments. Player testing, offer investigation and selling have different readiness and authorization requirements.
