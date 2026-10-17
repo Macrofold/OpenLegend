@@ -1,8 +1,10 @@
 # Progressive 3D pixel art — visual and operational qualification
 
-| Status      | Current progress                                                                                                                                     | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The study and requested code review have source, moving-scene and failure/lifetime evidence; creator acceptance and wider qualification remain open. | 2026-10-16   |
+| Status      | Current progress                                                                                                                   | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The new art comparisons have scoped source/browser/performance evidence; bear access and broader visual qualification remain open. | 2026-10-17   |
+
+**Feedback verification — 2026-10-17 00:47 UTC:** [The detail/atmosphere report](../verification/small-subject-art-and-atmosphere.md) records source hashes/geometry, preserved matched stills and motion, complete-frame measurements and their limits. Bear acquisition remains blocked; display-limited tiny subjects, universal motion stability and broader device qualification are not accepted by these scoped checks.
 
 **Art direction — October 16, 2026:** beautiful dimensional pixel art must retain believable real-world proportions. Visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art is rejected under the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026). This is the bundled world’s artistic target, not a universal engine constraint.
 

@@ -1,10 +1,12 @@
 # Progressive 3D pixel art — technical design
 
-| Status      | Current progress                                                                                                                     | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | The finite study and requested code review reuse existing owners; the broader pipeline and production qualification remain proposed. | 2026-10-16   |
+| Status      | Current progress                                                                                                         | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Existing rendering/resource owners support the finite art increment; the broader pipeline architecture remains proposed. | 2026-10-17   |
 
 **Art target:** the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026) require believable proportions and beautiful dimensional pixel art while rejecting visibly low-poly, blocky and cutesy styles. This updates the selected world’s artistic constraints; the proposed engine architecture below is unchanged.
+
+**Used for this bounded implementation/review: 2026-10-17 00:47 UTC.** Existing rendering/resource owners were retained; the broader proposed architecture was not implemented.
 
 **Last consulted for art-direction reconciliation: 2026-10-16 23:12 UTC; prior specification/guidance audit: 2026-10-16 11:21 UTC; previously used during implementation/review: 2026-10-16 11:00 UTC.** The broader architecture below remains a proposal; the finite implementation and its deviations are recorded in the [current feature specification](3d-pixel-art-feature-spec.md) and [source-based study evidence](../verification/source-based-starting-study.md).
 

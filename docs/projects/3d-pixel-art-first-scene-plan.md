@@ -1,8 +1,8 @@
 # Dimensional pixel art — restyle the existing starting scene
 
-| Status      | Current progress                                                                                                                          | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The authorized study and requested code review are implemented; creator acceptance and documented visual/initial-load limits remain open. | 2026-10-16   |
+| Status      | Current progress                                                                                                                        | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Small-subject detail, grounded lighting and Poly Haven studies are delivered; bear access and broader visual qualification remain open. | 2026-10-17   |
 
 **Art direction — October 16, 2026:** beautiful dimensional pixel art must retain believable real-world proportions. Visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art is rejected under the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026). This is the bundled world’s artistic target, not a universal engine constraint.
 
@@ -25,6 +25,8 @@ Estimated executable scope: 250–450 changed lines across offline preparation, 
 Performance answers: cost grows with framebuffer area/sample taps, visible source geometry/materials and loaded textures. Reuse the existing final compositor, prepared materials, shared model resources and scene batching; do not introduce per-object render targets. Recompute pixel uniforms only through the existing camera/settings owner and prepare source materials once per asset; changing an asset/profile invalidates only its corresponding resources. Measure completed frames, draws and counted GPU memory in matched camp views, with camera motion and small-subject edges inspected separately. Offline decimation and texture grouping retain silhouette and useful features; more source detail alone is not acceptance.
 
 Verification: inspect the actual exported/reimported assets and source provenance, archive hash checks, matched saved before/after stills and motion, actual study controls in the browser, focused failure/restoration checks for changed paths, pinned formatting, TypeScript/build checks and full affected-diff review. No paid provider dispatch is planned. Current source studies and pending broader crowd/device/production-art qualification remain separate.
+
+**Iteration reconciliation — 2026-10-17 00:47 UTC:** archive recovery, finer small-subject rendering, grounded light comparisons, four Poly Haven families with three finishes/source controls, crate integration and measured scene comparison are delivered. [The new report](../verification/small-subject-art-and-atmosphere.md) owns evidence and limitations. A commercially reusable bear candidate was found but cannot be downloaded before Sketchfab sign-in; the noncommercial animated demo was excluded. Bear import, finishing and integration remain unfinished within this iteration. Broader visual acceptance remains separately open. The existing source models and all meaningful captured alternatives are retained.
 
 ## Proposed replacement study — October 16, 2026
 

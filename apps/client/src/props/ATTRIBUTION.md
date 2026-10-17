@@ -33,7 +33,6 @@ Kenney [Survival Kit](https://kenney.nl/assets/survival-kit), CC0, supplies ches
 
 The owner-supplied mercenary remains a separate concept-to-Meshy source with unqualified production rights; no new provider upload or generation occurred. First-party modifications retain AGPL-3.0-only licensing without replacing the applicable upstream asset licenses. The [source-study instructions](../../../../art-direction/assets/source-study/README.md) and individual catalogs distinguish tools, references, sources and derivatives.
 
-
 # Poly Haven natural-source study
 
 Downloaded October 17, 2026 UTC under [Poly Haven's CC0 asset license](https://polyhaven.com/license): [Treasure Chest](https://polyhaven.com/a/treasure_chest) and [Boulder 01](https://polyhaven.com/a/boulder_01), Rico Cilliers; [Fern 02](https://polyhaven.com/a/fern_02), Rob Tuytel / Rico Cilliers; [Dead Tree Trunk](https://polyhaven.com/a/dead_tree_trunk), Rob Tuytel. Original normalized controls and three derivatives per family remain available. OpenLegend selects a single fern specimen, normalizes scale, reduces geometry, removes fine normal/specular response, and prepares three albedo finishes. These credits do not claim endorsement. The [acquisition manifest](../../../../art-direction/assets/source-study/polyhaven-sources.json), individual `source-grounded-*` catalogs and editable Blender sources retain exact provenance. First-party code and upstream asset rights remain distinct.

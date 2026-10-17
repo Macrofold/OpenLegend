@@ -138,7 +138,13 @@ Selection, read-through and outlines share the sampled color/depth figure. Displ
 
 ## A3D19 — First-scene experiment profiles
 
-### Current source-based study envelope — October 16, 2026
+### Current detail and atmosphere increment — October 17, 2026 UTC
+
+[This increment](../verification/small-subject-art-and-atmosphere.md) selects **40 samples/metre ordinary / 120 small**, with display-resolution limits and a once-per-source **1.6 m maximum normalized extent** classification. The existing resolve retains an opaque alpha tag in RGBA16F (RGBA32F fallback); this adds no geometry pass or per-object target. The matched 1231×468 moving camp counts **104,481,556 bytes** versus **101,413,496 bytes** for shared density, about **3.07 MB more**. Frame median/p95/p99/max are **16.0/17.5/24.6/25.8 ms** versus **16.0/18.6/25.8/42.6 ms** in sequential warm controls; these observations do not prove faster rendering or qualify strict 60 Hz/cold startup/other hardware.
+
+The collection adds **four families, twelve derivatives, four source controls and four editable sources**, bringing it to **45 families / 135 alternatives / 42 controls / 24 Blends / 219 GLBs / 273,063,156 bytes**. Chosen derivatives have **13,996 chest / 9,000 boulder / 2,384 fern / 12,000 fallen-log triangles**, with **256² or 512² albedo**. Source controls retain greater geometry/textures for comparison and are not gameplay defaults. Only the chest is adopted into the existing crate presentation; nature candidates remain inspection options. Three-way comparison does not imply simultaneous game loading or final style acceptance. The bear remains pending source access. Historical controls below remain scoped to their original profile.
+
+### Previous source-based study envelope — October 16, 2026
 
 The [current study](../verification/source-based-starting-study.md) retains **41 families / 123 alternatives / 38 source controls / 20 editable Blender files**, with **203 runtime GLBs / 250,322,196 bytes** including 39 additional animated and three depleted exports. This is a preserved study collection, not a simultaneous load or general asset-admission limit. Selected sources load on demand; current/pending inspector owners release retired models/materials, with independent parser resource identity. Scene actor geometry/materials/clips share per source; only visible poses vary. Selected static scenery shares five templates/eight materials/eight textures across existing spatial patches and 1,250 records, without splitting groups by cosmetic per-instance seeds.
 

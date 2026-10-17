@@ -365,6 +365,7 @@ export class WildernessScene implements WorldRenderer {
       style.surfaceArt !== this.artSettings.surfaceArt;
     const replaceProp = style.prop !== this.artSettings.prop;
     const replaceHares = style.hareArt !== this.artSettings.hareArt;
+    const relight = style.atmosphere !== this.artSettings.atmosphere;
     this.artSettings = { ...style };
     this.artMaterials.update(style);
     this.libraryScenery?.setTreatment(style);
@@ -386,6 +387,12 @@ export class WildernessScene implements WorldRenderer {
     }
     this.mercenary?.setArtTreatment(style);
     this.presentation.setArtTreatment(style);
+    if (relight && this.view)
+      this.presentation.lighting(
+        this.view,
+        [...this.actors.values()].map((entry) => entry.view),
+      );
+    this.app.renderNextFrame = true;
     for (const texture of this.textures) {
       if ([...this.environmentTiles.values()].includes(texture)) continue;
       texture.mipmaps = style.filtering === 'mip';

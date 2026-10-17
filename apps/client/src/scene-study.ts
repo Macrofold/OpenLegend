@@ -251,10 +251,7 @@ select('place').onchange = () => {
 };
 select('world-light').onchange = publish;
 for (const id of ['route', 'mercenary', 'world-density', 'world-motion', 'world-atmosphere'])
-  select(id).onchange = () => {
-    scene.setArtTreatment(treatment());
-    if (id === 'world-atmosphere') publish();
-  };
+  select(id).onchange = () => scene.setArtTreatment(treatment());
 select('world-framing').onchange = setCamera;
 select('world-shadows').onchange = () =>
   scene.setShadowQuality(select('world-shadows').value as 'detailed' | 'economy');

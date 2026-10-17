@@ -1,8 +1,10 @@
 # Progressive 3D pixel art — feature specification
 
-| Status      | Current progress                                                                                                                                   | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The source-based study and requested code review are implemented; creator acceptance, initial-load and wider production qualification remain open. | 2026-10-16   |
+| Status      | Current progress                                                                                                                        | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Small-subject detail, grounded lighting and Poly Haven studies are delivered; bear access and broader visual qualification remain open. | 2026-10-17   |
+
+**Feedback implementation — 2026-10-17 00:47 UTC:** [Small-subject detail and grounded atmosphere](../verification/small-subject-art-and-atmosphere.md) records the 40/120-samples-per-metre comparison, alpha-capable target cost, current Poly Haven chest, four source families and preserved media. Normal body dimensions remain unchanged; the bear replacement awaits authenticated source download. Survival mood includes both warmth/joy and darkness/hardship, with readable shadows. This supersedes the previous uniform-density/bright profile without accepting every existing asset or claiming universal motion stability.
 
 **Art direction — October 16, 2026:** beautiful dimensional pixel art must retain believable real-world proportions. Visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art is rejected under the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026). This is the bundled world’s artistic target, not a universal engine constraint.
 

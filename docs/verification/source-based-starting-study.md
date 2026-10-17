@@ -2,6 +2,8 @@
 
 Recorded 2026-10-16 10:15 UTC. This report covers the authorized replacement study on `codex/starting-scene-pixel-art`, task baseline `d74cbcf7dc6bae4dcd466c62e2598101d15e8bb9`, in `/Users/mzw/.codex/worktrees/415f/OpenLegend`. The explicitly selected development base remains `codex/mercenary-original-refinement@1438ea13749d4acc7a852843d8677f687dbdd931` in `https://github.com/Macrofold/OpenLegend.git`. This continuation made no branch/worktree switch, rebase, merge or push and did not modify the main checkout.
 
+**Later increment — October 17, 2026 UTC:** [Small-subject detail and grounded atmosphere](small-subject-art-and-atmosphere.md) supersedes the uniform-density/bright profile and adds four Poly Haven families. The measurements and counts below remain the October 16 historical baseline. [All recovered media are now preserved in the repository](../../art-direction/studies/README.md).
+
 ## Delivered study and review access
 
 The [visual review](/Users/mzw/.codex/visualizations/2026/10/14/01a13c97-90bf-78b0-a29b-97faf364c8d2/source-based-study/index.html) leads with actual rendered locations, matched motion, calibrated scale, retained references, clearly labeled composition annotations and all source/variant comparisons. Its [written review](/Users/mzw/.codex/visualizations/2026/10/14/01a13c97-90bf-78b0-a29b-97faf364c8d2/source-based-study/REVIEW.md) explains every working selection. Earlier rejected art and captures remain preserved. The local HTML package was assembled and its files/links inspected; browser automation denied its file URL, so no rendered-HTML review is claimed. The actual engine pages and their captures were inspected directly in the in-app browser.
