@@ -538,7 +538,7 @@ The scheduler for immediate AI responses runs only one interactive or spontaneou
 
 **Selected target, October 17, 2026 — implementation open:** [CTR08](../projects/combat-and-threat-responses-tech-design.md#bounded-urgent-concurrency) permits at most **two immediate pipelines per world**, at most **one per actor**, and at most **one ordinary pipeline**. The second capacity is available for urgent threat response; two urgent pipelines may use both slots. Retain the existing shared monetary/request/provider ceilings, fair coalesced queue and serialized native publication. Each actor/job owns its exact cancellation, reservations, captured evidence and completion handle; an old callback cannot clear another run. This replaces the earlier unselected-concurrency direction for the named threat consumer, not the current single-slot runtime or the need for measured fairness and latency. [CTR-L03](combat-and-threat-responses.md#ctr-l03--two-stage-work-and-urgent-capacity) records the selected bound and its complete-path qualification.
 
-**Reason / tradeoff:** Measure wait times and improve fairness before adding a bounded amount of parallel work; do not create unlimited paid concurrency.
+**Reason / tradeoff:** The current shared slot bounds concurrent work but can delay an urgent reaction behind an unrelated provider call. The selected target limits that wait with bounded concurrency; qualification must measure actual queue delay, fairness and complete cost while retaining shared admission and serialized native effects.
 
 [Implementation starting point](../../apps/server/src/ai-director.ts).
 

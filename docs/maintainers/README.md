@@ -1,5 +1,9 @@
 # Maintainer work index
 
+## Combat and immediate threat responses
+
+[Combat and threat responses](combat-and-threat-responses.md) owns CTR01–CTR10: selected world PvP/collateral, native animal refuge escape, complete busy-context choices, personal threat appraisal, two-stage voluntary response, exact reconsideration and stable per-opponent Command-click. The [feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire review](../projects/combat-and-threat-responses-repertoire-review.md) and [limits](../limits/combat-and-threat-responses.md) are complete design preparation. Runtime and independent acceptance remain open; ND11/ND13 are closed only for their explicitly covered design portions.
+
 ## Intelligent individuals and efficient simulation
 
 [The research-to-design map](intelligent-simulation.md) connects all nine new refinements to four feature/technical pairs and existing character, agency, social, performance and scalability owners. Mike selected exact calculated progress, compact background exchanges and numerical psychological reactions with optional description. All nine selected designs are complete; implementation and behavioral/capacity evidence remain open. This is coordination and design coverage, not another runtime backlog or a new priority ranking.
@@ -190,3 +194,4 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 This file is navigation only. Task state belongs in focused trackers, current subsystem status in implementation status, verification evidence in the linked topic reports, open choices in open decisions, and history in the documentation changelog.
 
 Editable knowledge is tracked in [CR13](cognition-redesign.md#cr13--editable-knowledge-documents); bundled naming and recognition in [BW08–BW09](base-world.md).
+

@@ -8,6 +8,8 @@ For ordinary play, first identify the world object and immediate intention. Open
 
 The control guidance below applies after that interaction is chosen. A well-built combobox cannot make a routine nearby-container selector the right game flow. Forms remain appropriate for explicit settings, creator editing and genuinely complex decisions. They are not the default presentation of gameplay capability schemas. [Screenshot-backed research](research.md#game-interface-screenshot-atlas)
 
+The selected [combat-sensitive Command gesture](world-interaction.md#selected-combat-sensitive-command-action) extends the current shortcut, with exact pointer-down identity, ordered context, visible blockers and deliberate Speak/Stop. Reuse existing keyboard/focus and cancellation primitives; a modifier is not authority to switch an already displayed action or bypass text/modal ownership. Numeric continuity and attack preference belong to the installed world profile. This extension remains unimplemented under CTR09.
+
 ## Choose the semantic control first
 
 | Player intent                                   | Preferred pattern                                                                            | Avoid                                                                   |
@@ -124,3 +126,4 @@ Reuse placement/dismissal behavior rather than patching each menu with z-index e
 The modal defines the eligible interaction boundary; **within it, the active child layer handles dismissal before its parent**. Moving focus into a child popover must not close the parent dialog. Escape dismisses one eligible layer; an outside gesture has one owner across start and release. Global/capture listeners must respect the focused or event-target dialog before handling Escape; a child's later handler cannot protect it from an earlier listener. Identify actual modality from the pinned library's rendered behavior, not an assumed `aria-modal` attribute alone. Adobe's overlay source explicitly manages these cases. [S04](research.md#s04)
 
 A world click consumed to dismiss a picker must not become movement. Wheel interaction with its scrollable results must not zoom the camera. Reuse shared input ownership rather than scattered suppression handlers. This does not mean every ordinary non-modal popover must swallow an intentional click on another UI control: document that component's contract separately from the protected world-action boundary. [World contract](world-interaction.md#one-owner-for-each-gesture)
+

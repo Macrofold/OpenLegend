@@ -15,6 +15,10 @@ The developer authorized the inventory migration and this follow-up source inspe
 
 This file owns audit lifecycle and candidate ranking. Linked focused trackers own implementation detail and acceptance; no duplicate checklist is created. [RP03–RP05](revisitable-policies.md) retain authority/review triggers for history, exact recall, account and native-work policies. Remove completed candidate rows here and update their permanent inventory records. Ordinary page sizes, cache sizes, UI durations, timeouts and authored balance remain inventory-only unless evidence motivates a change.
 
+## Selected threat-response work
+
+The October 17 [CTR design](../projects/combat-and-threat-responses-tech-design.md) allocates concrete replacements for current one-threat escape, busy action omission, automatic fear, single immediate decision slot and missing contextual continuity. Their canonical numerical/growth entries are [BW12](../limits/base-world.md#bw12--remains-and-native-escape), [FL24](../limits/feelings.md#fl24--interpreted-threat-reactions) and [CTR-L01–CTR-L06](../limits/combat-and-threat-responses.md). [CTR01–CTR10](combat-and-threat-responses.md) owns implementation and meaningful evidence; C06's broader reflection-prefix issue remains distinct from the selected complete threat-context consumer. No benchmark or blanket increase of unrelated limits is claimed.
+
 ## Ranking method
 
 - **P1 — ordinary play soon:** reachable through normal supported actions/populations, with a whole-world stall/stop, player refusal or broken common workflow. Investigate/fix these first.
@@ -193,11 +197,9 @@ Unremovable processes and overbroad static estimates consume capacity; local def
 
 ### C15
 
-**P3. Future product policy: a world intentionally supports PvP.** An unavailable mechanic, not degradation of currently supported cooperative play.
+**Selected current gameplay change, October 17; design complete, implementation open.** Mike now allows direct human PvP and actual bodily projectile collateral in the bundled world. Current source already obtains target admission from installed body policy; the former claim of a universal kernel ban was stale. [MP13](../limits/multiplayer.md#mp13), [CTR limits](../limits/combat-and-threat-responses.md#removed-or-superseded-policies) and the [world profiles](../worlds/base/lifecycle-and-protection.md#human-conflict-and-recovery) own current/selected truth.
 
-Move the cooperative PvP default into authored policy; keep it disabled in the bundled world until product rules are chosen.
-
-A hard-coded universal strike ban prevents other coherent worlds; no request here enables PvP. [MP13](../limits/multiplayer.md#mp13) · [Work](multiplayer.md)
+[CTR01–CTR02/CTR09/CTR10](combat-and-threat-responses.md) owns the complete change and qualification across admission, released contact, observation, review and shortcuts. No separate opt-in mode is a prerequisite in this world. Keep this candidate open until that implementation is complete; preserve inactive protection, exact authority and other-world policy support.
 
 ## Expand
 
@@ -252,3 +254,4 @@ Small independent geometry bounds can obstruct regional-world growth; avoid gues
 ## Remaining historical assessments
 
 Older Replace/Expand/Review advice stays next to each original entry for LA02–LA03. It is not automatically high priority. Ordinary page/cache/buffer defaults stay inventory-only unless they hide accessible information or measured work escapes their envelope. Known completed changes are not reopened. Recheck current callers before claiming a legacy limit affects live play, and rerank when a dormant consumer becomes reachable.
+

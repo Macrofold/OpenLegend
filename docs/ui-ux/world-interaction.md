@@ -26,6 +26,14 @@ When an activity has ended and no work remains, its retained result is **Last ta
 
 These paths are implemented, with actual observations and their limits in the [game-interaction verification report](../verification/game-interaction-redesign.md). Complete native HTTP/PostgreSQL and J16 qualification remain open; source inspection alone does not establish full world-input, interruption or privacy acceptance.
 
+## Selected combat-sensitive Command action
+
+**Design complete, October 17; implementation pending CTR09.** Extend the existing Command-click preview and serialized preferred-choice check through the same contextual catalogue. The [ordered world table](../worlds/base/combat.md#contextual-action-decision-table) distinguishes ordinary Gather/Speak, current/recent personally observed attack, own offensive intention, exact held-shot release, deliberate Speak override and invalid/blocked targets. Its ten-normal-second continuity is an authored simulation-time rule, not a UI constant, permanent combat flag or emotional state.
+
+Capture the displayed exact target life, action and tool at pointer-down. Recheck that binding at release/admission; changed meaning is stale, never an undisclosed damaging substitute. Recovery keeps the disclosed action disabled; one click does not enqueue repeat attacks. **Approach and strike…** states a real approach. **Stop attacking this person** clears only one's own future offensive commitment and retained method/deadline through its scoped work owner; incoming threats, costs and released effects remain. A deliberate Speak override has explicit priority until fresh hostile evidence or a new admitted attack. Ordinary movement/hover cannot renew hostility or revoke it.
+
+The [feature journeys](../projects/combat-and-threat-responses-feature-spec.md#physical-conflict-and-player-control-journeys) and [CTR09/CTR10](../maintainers/combat-and-threat-responses.md#ctr09--predictable-contextual-attack) own the complete extension and browser acceptance. Current pointer, text-focus, modal, receipt, pause and exact lethal-review owners remain controlling. Selection alone never tells another actor that it has been attacked.
+
 ## One owner for each gesture
 
 Determine ownership from the event origin and active interaction scope. A modal excludes background interaction; **inside that permitted scope, the active child popup/control handles its interaction before the parent**. Without a modal, active UI or a captured gesture is resolved before eligible world input. A dialog must not close when Escape was meant for its child combobox. Reuse shared primitives, not competing global listeners. Adobe's overlay source demonstrates explicit top-layer and child-scope handling. [S04](research.md#s04)
@@ -140,3 +148,4 @@ When the same player resumes, preserve their deliberate camera position and inve
 ### Speak and Act text bar
 
 Self-click offers Speak and Act, without Talk or Look closer. Other objects offer Act aimed at the exact clicked object; equipment choices belong in inventory. The centered bottom text bar uses a speech-bubble or hand icon, explicit Send behavior, Enter/Shift+Enter and IME handling, and Escape closes only that bar while retaining its draft. Speak includes a horizontal Whisper/Normal/Shout snapping slider with keyboard operation. Act visibly explains its descriptive-only current behavior. [The speech and expression owner](../narration-and-conversations.md#player-speak-and-descriptive-act) defines effects, perception and failure handling.
+

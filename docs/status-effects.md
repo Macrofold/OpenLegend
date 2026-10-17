@@ -18,6 +18,14 @@ Conditions compose nonempty `all`/`any` groups. A `compare` names a target, regi
 
 Awake resource expenditure can be a separate definition with conditional negative rates; it is not implicit behavior of the runtime. Dream eligibility belongs to cognition policy, which names an effect definition and an elapsed-time minimum. It is not a status-effect operation.
 
+### Selected native-response extension
+
+**Designed, runtime pending — October 17, 2026.** [CTR03–CTR04](maintainers/combat-and-threat-responses.md) adds one finite readonly `field` option, `nativeResponseActive`, for the [selected animal/rest contract](worlds/base/animal-responses.md#ordinary-rest-and-exhausted-rest). The current field list above remains the implemented baseline. The new field reads the installed native controller's exact current-life response episode; it does not save another status or numeric attribute. It returns false for a resolved entity/world with no installed response family/episode, with no bundled fallback. An unresolved target remains inapplicable under the current condition semantics.
+
+Implementation must update field validation/evaluation, dependency preparation and affected status scheduling/indexes together. Response start/end, controller/profile changes and physical-life replacement invalidate the corresponding derived result; unrelated world edits do not. This field introduces no independent clock or fixed-point loop. Existing status participation, complete-work admission and current-format integrity remain authoritative.
+
+The world selects when that fact prevents ordinary rest and when a newly admitted danger dispatches an authored `perceived-danger` interruption. The existing `interruptStatusEffects`/`deactivateStatusEffect` owner performs the ending, releases actual work, records the normal transition and retains the configured cooldown. Generic code does not infer sleep, fear or an animal from the field name or reason. Duplicate/retained evidence and resource regeneration cannot replay the edge interruption. The [bundled sleep document](worlds/base/sleep.md#selected-native-alarm-rest-rule) records selected world behavior separately from current runtime support.
+
 ## Targets and attributes
 
 An instance belongs to an **entity**, not an actor component. `$subject` is that entity; `$source` and `$actionTarget` are explicit entity IDs bound when the instance is admitted. Automatic activation binds all three to the receiving entity. Manual command admission binds the source to the acting entity and the action target to the selected subject. Trusted domain compositions may bind a different action target, allowing an effect attached to one object to change another object's value. Those bindings are saved, not dynamically selected every tick. There is no global entity query or arbitrary object-path writer.

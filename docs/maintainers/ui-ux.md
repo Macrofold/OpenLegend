@@ -318,6 +318,8 @@ FRL05's concrete remaining storage case is the Work view's retained Prepare requ
 
 ## UIUX19
 
+**Selected combat follow-up, October 17 — design complete, implementation open.** The implemented Command-click path remains the foundation. [CTR02/CTR09/CTR10](combat-and-threat-responses.md) owns opponent-specific observed/own intent, ten-normal-second grace, deliberate Speak/Stop and stable pointer-down action identity through the same catalogue/guard. The [combat-response pair](../projects/combat-and-threat-responses-tech-design.md#contextual-action-integration--ctr09) owns this extension; the [world table](../worlds/base/combat.md#contextual-action-decision-table) owns priority and tuning. Existing UIUX19 checkboxes do not qualify these newly selected behaviors.
+
 **World-first player experience, October 16.** Mike authorizes implementation of the [feature specification](../projects/player-experience-overhaul-feature-spec.md) and [technical design](../projects/player-experience-overhaul-tech-design.md), superseding earlier player conversation windows, Journal categories, nested In view inspection and coordinate-entry construction. Earlier observations remain historical evidence, not proof these reported regressions are fixed.
 
 - [ ] Heard speech is always represented in the world, with permitted partial words, directed recipient labels, camera-relative presentation and reliable Events recovery; replace the player transcript with compact Speak.
@@ -346,3 +348,4 @@ The **2026-10-17 01:39 UTC** compact-HUD correction replaces the earlier beside-
 The **2026-10-17 02:06 UTC** [compact-HUD review](../verification/player-experience-overhaul.md#compact-hud-review--october-17-2026) fixes Game displacing existing panels or losing an inspection, short-screen work-review clipping, suppressed authored percentage units and unavailable Settings-tab selection. Focused native/component/browser checks pass; no additional current-place disclosure or cache defect was found. The parent speech decision and CI remain open.
 
 The **2026-10-17 02:45 UTC** [second compact-HUD review](../verification/player-experience-overhaul.md#second-compact-hud-review--october-17-2026) closes missed direct-inspection navigation, focus restoration after responsive hiding of Game, and plain current-work tooltip activation. Actual navigation checks and production-browser journeys pass; no additional finding remains in this review's scope. Parent completion gates are unchanged.
+

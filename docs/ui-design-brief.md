@@ -8,6 +8,8 @@ The October 16 [world-first redesign](projects/player-experience-overhaul-featur
 
 Shared inventory and Character presentation use the installed world's supported capabilities. Base, touch-demo and reservoir-demo presets exist independently of theme selection. World/location/time labels, item/entity/action symbols and grouped-shortcut labels now come from authored presentation; shared UI code no longer derives wilderness verbs or symbols from item and creature identifiers. Preparation wording and input recognition belong to the bundled world. The clockwork presets now install a trusted recharge activity using the existing replenishment mechanism, while the bundled base world retains its own activity hosts. This is an actual alternate task presentation, not a general external-world loader, new electricity model or multi-slot equipment system. The [portability correction](verification/game-interaction-redesign.md#world-portability-correction) and current verification distinguish that finite support from broader acceptance.
 
+**Selected combat follow-up, October 17; implementation pending:** [the combat-response design](projects/combat-and-threat-responses-feature-spec.md) extends current Command-click with per-opponent observed/own intent, short game-time continuity, deliberate Speak/Stop, exact held-shot release and stable gestures. The [world table](worlds/base/combat.md#contextual-action-decision-table) owns priority; the [interaction chapter](ui-ux/world-interaction.md#selected-combat-sensitive-command-action) owns the control journey. Do not implement another global combat toggle or hardcode animal/person response into the interface.
+
 ## World presentation ownership
 
 [World presentation](world-presentation.md) owns the accepted continuous right-drag orbit/pitch, Shift + right-drag or middle-drag pan, mixed sprite/mesh depth, default illumination, projected shadows and configurable local character-visible read-through. These are presentation settings, not extra bodily perception. Follow that owner where older camera-binding or unlit-art directions conflict; SW18 retains visual qualification and further art work.
@@ -140,3 +142,4 @@ Clearly distinguish existing functionality from future concepts such as richer c
 
 - Implementation: [Feature tasks](maintainers/TODO.md).
 - Limits and constraints: [Authoring and presentation inventory](limits/interface.md).
+
