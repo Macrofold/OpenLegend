@@ -14,12 +14,6 @@ The [mobile research ledger](../archive/02-research/game-inspiration/research-pr
 
 The research library, roster, existing essays and [design foundation](repertoires/design-foundation.md) now link these findings. The [source atlas](repertoires/source-atlas.md) distinguishes its original numbered coverage from later additions. These are research and design perspectives, not selected new gameplay, a platform or monetization change, or player-tested commercial conclusions; unrelated research and implementation gates remain open.
 
-## October 17, 2026 — Select Open Legend language and elevator pitches
-
-Mike selected audience-specific game, ambition and engine descriptions, two elevator pitches, three taglines and a dense genre descriptor. [Language, communication and elevator pitches](../archive/06-marketing/language-and-elevator-pitches.md) preserves the fourteen selections and explains how systemic rules, emergent outcomes and generative invention differ. The guide makes the autonomous-inhabitant, invention and lasting-consequence combination easy to communicate while keeping the game and creator propositions clear.
-
-The [marketing index](../archive/06-marketing/README.md) and [positioning page](../archive/06-marketing/positioning-and-copy.md) link to this wording owner. Existing endorsed positioning and useful earlier alternatives are retained; the selected tagline now uses “Your imagination, your consequences.” Audience guidance is editorial, and the selected language describes project direction rather than establishing shipped capability, measured scale or new gameplay requirements.
-
 ## October 17, 2026 — Consolidate indie-launch research and commercial hypotheses
 
 The [commercial research collection](../archive/02-research/indie-launch-commercials/README.md) preserves 62 game histories and two platform/service histories, a full-corpus review map, twelve synthesis principles, and detailed and short execution guides. Historical observations, participant explanations and product inferences remain distinct; the collection establishes neither an industry success rate nor demand for Open Legend.

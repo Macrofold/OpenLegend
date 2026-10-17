@@ -1,12 +1,12 @@
 # Positioning and copy — create a world by playing it
 
-| Status                                           | Current progress                                                                                                                                    | Last updated |
-| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Selected language linked; concepts remain drafts | The language guide records Mike’s selected copy; audience hypotheses and demonstration concepts remain distinct from qualified public-build claims. | 2026-10-17   |
+| Status                               | Current progress                                                                                                                              | Last updated |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Selected language and draft concepts | The language guide supplies selected copy; audience hypotheses and demonstration concepts remain distinct from qualified public-build claims. | 2026-10-17   |
 
 The wording is untested and not trademark-cleared. [Gameplay priorities](../../docs/repertoires/gameplay-priorities.md) own the intended player experience; [business assumptions](business-plan.md) own offer choices. This page supplies message candidates, not new runtime promises.
 
-[Language, communication and elevator pitches](language-and-elevator-pitches.md) owns Mike’s selected descriptions, pitches and taglines from October 17, 2026, with audience guidance and terminology explanations. Use that guide for selected wording; this page retains the broader positioning hypothesis, earlier draft alternatives and demonstration concepts.
+[Language, communication and elevator pitches](language-and-elevator-pitches.md) provides the selected descriptions, pitches and taglines, with audience guidance and terminology explanations. Use that guide for selected wording; this page covers the broader positioning hypothesis, copy candidates and demonstration concepts.
 
 ## Positioning hypothesis
 
@@ -54,11 +54,10 @@ A separate patronage message is **“Help bring this world into existence, and b
 
 ## Tagline candidates
 
-Mike’s current [selected taglines](language-and-elevator-pitches.md#selected-taglines) are recorded in the language guide. The earlier candidates below remain brainstorming history, except for the separately endorsed “Create a world by playing it. Share what you discover.” Use the selected wording for new copy; in particular, Mike chose “your consequences” in place of the earlier “with consequences” variant.
+Use the [selected taglines](language-and-elevator-pitches.md#selected-taglines) in the language guide for current copy. “Create a world by playing it. Share what you discover.” is also endorsed. The other candidates below are optional language for particular messages and audiences.
 
 - Create a world by playing it. Share what you discover.
 - Play an idea into existence.
-- Your imagination, with consequences.
 - Invent a way forward.
 - Make the rules. Meet what follows. — creator-focused, with authority made explicit.
 - Invent a spell. Shape a world. — only for a demonstrated supported magic setting.
