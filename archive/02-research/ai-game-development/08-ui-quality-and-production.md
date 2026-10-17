@@ -6,7 +6,7 @@
 
 The research does not establish that OpenAI is inherently unable to produce a strong game interface, that Claude is universally better at game design, or that React prevents a convincing inventory. It does establish that **art inputs, visual decisions, implementation, and feedback are separate contributors**. The supplied WoW-style demonstration changes all of them simultaneously. Its result is a good reason to study its production process and audition alternatives, not a controlled model comparison.
 
-OpenLegend should first give its existing browser interface a coherent, approved family of art and a repeatable review loop. Then compare agents on the same representative screen. This is the cheapest experiment that directly addresses Mike's concern while retaining useful work regardless of which model wins.
+OpenLegend should first give its existing browser interface a coherent, approved family of art and a repeatable review loop. Then compare agents on the same representative screen. This is a small experiment that directly addresses Mike's concern while retaining useful work regardless of which model wins.
 
 The distinction is practical: an item illustration, an ornamental frame, a selected-slot treatment, a readable name, and a working drag interaction are different deliverables. Asking one agent to invent and implement all of them from a broad adjective such as “beautiful” leaves many important decisions open.
 
@@ -30,7 +30,7 @@ These sources answer the capability question. They do not establish our frame-ti
 
 ## A particularly relevant AI production account
 
-Coherent Labs' September 2026 experiments include eight RPG screens built from a shared visual handoff. The team reports coherent composition but also placeholder illustrations, untested localization and game-load performance, small visual errors, token drift, and a surrounding dashboard interaction broken by an otherwise working screen. It is a vendor's prototype report, not a shipped AI-authored UI benchmark. [Three UI experiments](https://guide.coherent-labs.com/building-with-ai/experiments/three-uis-with-an-agent/).
+Coherent Labs' September 2026 experiments include eight RPG screens built from artboards and a shared visual handoff created with Claude Design, then implemented by an agent. This is a useful example of separating AI-assisted design from implementation; it does not identify the underlying model's independent contribution. The report describes coherent composition but also placeholder illustrations, untested localization and game-load performance, small visual errors, token drift, and a surrounding dashboard interaction broken by an otherwise working screen. It is a vendor's prototype report, not a shipped AI-authored UI benchmark. [Three UI experiments](https://guide.coherent-labs.com/building-with-ai/experiments/three-uis-with-an-agent/).
 
 Its supporting documentation describes explicit visual decisions, agent-accessible renderer documentation, and checks of the real result. It also warns that a technically functional interface can remain visually inconsistent. [Design input](https://guide.coherent-labs.com/building-with-ai/design-first/), [toolchain overview](https://guide.coherent-labs.com/building-with-ai/overview/).
 
@@ -76,7 +76,7 @@ The kit should enrich existing components and tokens. When a token or component 
 4. **Produce a small coherent asset family.** Use approved existing art, deterministic drawing, procedural variation, or a specialized image tool according to the need. Generate alternatives within a budget, preserve the inputs, and select by in-game usefulness.
 5. **Implement one populated screen.** Reuse the current interaction components and design system. Keep real data and semantics, including actual item operations and truthful status.
 6. **Inspect the complete client.** Compare the intended and actual composition at the same size. Check long names, missing artwork, selected items, keyboard focus, narrow layouts, and scenery behind the panel.
-7. **Exercise the surrounding game.** Open and close the panel, resume movement, interact with the world, and verify pointer/focus behavior. A screen is not complete if it traps input or hides information needed for play.
+7. **Exercise the surrounding game.** Open and close the panel, resume movement, interact with the world, and verify pointer/focus behavior. Change inventory/world state while the panel remains open; inspect pending and rejected actions, and verify equipped appearance matches the actual authoritative outcome. A screen is not complete if it traps input, presents a stale success, or hides information needed for play.
 8. **Check the packaged result when relevant.** Asset paths, fonts, CSS transformation and build behavior can differ from development. Coherent's documented packaged-build failure illustrates why evidence from the deployed artifact matters; the specific unsupported CSS shorthand was a Gameface restriction, not a browser rule. [Verification account](https://guide.coherent-labs.com/building-with-ai/verifying-ai-output/).
 9. **Preserve what worked.** Keep the visual exemplar, canonical component changes, asset sources, exact reproduction state and brief repair notes. Turn a repeated error into a narrow check or instruction after observing it.
 
@@ -105,3 +105,4 @@ If the improved browser slice still exposes a material constraint, reproduce the
 Evidence that a challenger repeatedly produces substantially better accepted screens under controlled inputs would justify using it for that task. Evidence that an asset generator reliably preserves item identity and style with lower correction cost would justify adopting that asset workflow. A measured browser limitation that blocks an important product requirement could justify an engine investigation.
 
 Until those tests are run, the supported conclusion is narrower and actionable: **make the visual target concrete, supply coherent art, and review the real screen as part of development.** The current research does not identify a universal design-model winner or show that React must be replaced.
+
