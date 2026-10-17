@@ -66,7 +66,7 @@ This matters directly to Mike's UI question. A screen composed from deliberate i
 
 ### What the reported numbers mean
 
-The following are transcript claims, not an audited bill or reproduced benchmark.
+The following are transcript claims, not an audited bill or reproduced benchmark. The roughly $2,175–$2,200 estimate values language-model token usage at API rates; it is not a total production cost including asset credits, preparation and human work.
 
 | Reported quantity | Correct interpretation | What should not be inferred |
 | --- | --- | --- |
@@ -138,3 +138,4 @@ The supplied material consistently points toward reference preparation, speciali
 It does not turn every community claim into fact. The dossier preserves missing build access, sponsorship, unverified economics, prototype status and untested adaptations. It also avoids the opposite mistake: discarding a useful method merely because the creator is early in development.
 
 For OpenLegend, the adoption question is concrete: can this method improve a representative player experience with less total work while preserving the game's visual identity, native rules and independent characters? The [principles](09-openlegend-principles.md), [working procedures](10-openlegend-workflows.md), and [evaluation plan](11-evaluation-and-adoption.md) turn that question into reviewable next steps.
+
