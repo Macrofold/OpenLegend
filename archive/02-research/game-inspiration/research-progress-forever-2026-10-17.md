@@ -13,9 +13,9 @@
 | Dimension | Current coverage | Remaining work |
 | --- | --- | --- |
 | Identity and prior findings | Independent Forever scope; initial official design and contrasting player accounts retained in the dossier. | Reconcile newest beta and launch boundaries. |
-| R01–R08: gameplay, world, situations and presentation | Official system and class sources being examined. | Complete mechanics, lore, audiovisual account and worked interactions. |
-| R09–R11: design/production, distribution and commercial evidence | Official product terms and developer interviews being examined. | Complete production process, price/value, financial evidence search and economic judgment. |
-| R12: criticism, community, enjoyment and return | Direct beta accounts retained; substantive press previews being read. | Complete comparative review table and counterevidence, with exact play/date limits. |
+| R01–R08: gameplay, world, situations and presentation | Nine class toolkits, race eligibility, Legacy and PvP progression drafted from dedicated official sources. | Complete world/lore, remaining activities, audiovisual account and worked interactions; review current beta changes. |
+| R09–R11: design/production, distribution and commercial evidence | Product/access comparison, financial-evidence table and production/design-process account drafted. | Review source support, price qualifications and commercial/production source budgets. |
+| R12: criticism, community, enjoyment and return | Six substantive beta press accounts, two limited demos and contrasting direct player accounts incorporated. | Complete loop/replay/abandonment synthesis, review surfaces, trust/PvP counterevidence and source register. |
 | R13: OpenLegend synthesis | Initial interpretation present. | Complete reusable lessons, dependencies, alternatives and links to the relevant synthesis owners. |
 | R14: sourcing, preservation and navigation | G178 registered; G97 and library linked. | Consolidate annotated sources, review coverage and validate changed links. |
 | R15: creator tools and modding | Active Forever addon ecosystem identified. | Complete authoring workflow, composition, distribution, incentives and authority limits. |
