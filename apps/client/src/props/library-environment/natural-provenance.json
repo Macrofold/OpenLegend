@@ -1,0 +1,33 @@
+{
+  "recipe": "scripts/prepare-study-scenery.py",
+  "recipeSha256": "000ffac6e4818fa705a3a120803aa4f0e586bf0fd4686255ee1261eb98b0b515",
+  "sources": [
+    {
+      "path": "apps/client/src/props/art-study/source-natural-broadleaf/catalog.json",
+      "sha256": "490ac1e758302f4ad88ba74c5246bbf3eca51ed07639c6b19a7d081f417a1e02"
+    },
+    {
+      "path": "apps/client/src/props/art-study/source-natural-birch/catalog.json",
+      "sha256": "d0a3f8bf5bc2500a45ede2e33170d251a44fb7b9c9cc6ca10bf9602ae17b0ef3"
+    },
+    {
+      "path": "apps/client/src/props/art-study/source-grounded-conifer/catalog.json",
+      "sha256": "0a506227e973ee69aebbb3048d30e3778a2b7a41e75bd7355c30daadf86a1fe3"
+    },
+    {
+      "path": "apps/client/src/props/art-study/source-natural-leafy-shrub/catalog.json",
+      "sha256": "a318e16eaf306ed3b97dd38d22a22c5c132b7347a4eb49330819cf55d6960780"
+    },
+    {
+      "path": "apps/client/src/props/art-study/source-natural-grass/catalog.json",
+      "sha256": "9391024ddf02c9cd5ad3b22062168f1cb0da9c2ea825a6f869f11b7db3fd8f2e"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "scenery-natural.json",
+      "bytes": 23128550,
+      "sha256": "f6de7a0d8658db7b9b5e13badbcb91fc3d4b90f7f58015406482c037de0adfa3"
+    }
+  ]
+}

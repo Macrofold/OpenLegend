@@ -1,15 +1,16 @@
 {
   "group": "source-natural-shrub",
   "sourceFile": "art-direction/assets/source-study/source-natural-shrub.blend",
-  "sourceSha256": "a4a09ffce33b8f251bbfb194bef178998d6bd85be16918cdacb8ff7f6f6a6218",
+  "sourceSha256": "a14f67be55f6357aa5f9cd7e642beeff6685ab2fcbf36582069105880ab108ff",
   "recipe": {
     "path": "scripts/prepare-natural-replacements.py",
-    "sha256": "8c5e24992be84e6a1291290f77251dee385f80736a1829acca44897a8a38c65f"
+    "sha256": "c99bcc3575b404c96eb88f675f7e418967e9070bae9dfa36d6f0cb1310b16f0b"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
     "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
-    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581",
+    "prepare-resource-study.py": "cf0705e9e6cc2bc3a8489b1f5b8ee01878aea90d4b928c09a1e6eddfc19ebc42"
   },
   "sources": [
     {

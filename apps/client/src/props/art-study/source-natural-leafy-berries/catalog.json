@@ -1,0 +1,200 @@
+{
+  "group": "source-natural-leafy-berries",
+  "sourceFile": "art-direction/assets/source-study/source-natural-leafy-berries.blend",
+  "sourceSha256": "a8629a6eded59d0bf5b87e13a7306f3a66f7bb6da2099abe65a9bb01936f98f7",
+  "recipe": {
+    "path": "scripts/prepare-natural-replacements.py",
+    "sha256": "c99bcc3575b404c96eb88f675f7e418967e9070bae9dfa36d6f0cb1310b16f0b"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581",
+    "prepare-resource-study.py": "cf0705e9e6cc2bc3a8489b1f5b8ee01878aea90d4b928c09a1e6eddfc19ebc42"
+  },
+  "sources": [
+    {
+      "url": "https://polyhaven.com/a/shrub_04",
+      "license": "CC0",
+      "files": [
+        {
+          "asset": "shrub_04",
+          "file": "shrub_04_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/shrub_04/shrub_04_1k.gltf",
+          "bytes": 2882,
+          "sha256": "782832cbc57e96686b78c6ef9df6234c25f564f78421c8ed4bd42c3631f5aeae"
+        },
+        {
+          "asset": "shrub_04",
+          "file": "textures/shrub_04_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_04/shrub_04_nor_gl_1k.jpg",
+          "bytes": 449241,
+          "sha256": "200d791e0474495bfc876ba1c289dade669c6a5b124647c55bc840a875f6b51c"
+        },
+        {
+          "asset": "shrub_04",
+          "file": "textures/shrub_04_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_04/shrub_04_diff_1k.jpg",
+          "bytes": 373350,
+          "sha256": "0b0fa0a474753d13f3093858cea79d0de05da1e6a0c5d6e181cd351080980b6c"
+        },
+        {
+          "asset": "shrub_04",
+          "file": "textures/shrub_04_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_04/shrub_04_arm_1k.jpg",
+          "bytes": 332957,
+          "sha256": "d1085df021928b29b0f38dde7e58e9a2e304c4e8d838e390b37cf57f8aa492e8"
+        },
+        {
+          "asset": "shrub_04",
+          "file": "shrub_04.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/shrub_04/shrub_04.bin",
+          "bytes": 749084,
+          "sha256": "cb442c39682e54cc63f912aa78ab17a03566f947a61adbbbaaa6473166744f01"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "natural-leafy-berries-clear",
+      "family": "natural-leafy-berries",
+      "label": "Leafy berry thicket",
+      "variant": "clear",
+      "description": "Retained natural form and readable source color, restrained highlights. Retained mature source stems composed into one rooted clump; three, two or one stem sets.",
+      "recommended": true,
+      "file": "natural-leafy-berries-clear.glb",
+      "bounds": {
+        "min": [
+          -0.409961,
+          0.0,
+          -0.358823
+        ],
+        "max": [
+          0.409258,
+          1.05,
+          0.358823
+        ]
+      },
+      "triangles": 16008,
+      "vertices": 12345,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "ac8d89ff90e748e5d6a555e0825509bd21bd570df95a1e9ca710108fc484bb4d",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_04",
+      "depletedFile": "natural-leafy-berries-clear-depleted.glb",
+      "depletedSha256": "237b63794350a947e4725506bbb69d09a6a3f2ea49ac7c851c0c65407d262cd7"
+    },
+    {
+      "id": "natural-leafy-berries-quiet",
+      "family": "natural-leafy-berries",
+      "label": "Leafy berry thicket",
+      "variant": "quiet",
+      "description": "Grouped, muted woodland color with restrained fine texture. Retained mature source stems composed into one rooted clump; three, two or one stem sets.",
+      "recommended": false,
+      "file": "natural-leafy-berries-quiet.glb",
+      "bounds": {
+        "min": [
+          -0.384605,
+          0.0,
+          -0.358823
+        ],
+        "max": [
+          0.379774,
+          1.05,
+          0.358823
+        ]
+      },
+      "triangles": 10720,
+      "vertices": 8256,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "b9aebadb6973a8f956b963a232f80418c04359f3763358d5af981163712f109f",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_04",
+      "depletedFile": "natural-leafy-berries-quiet-depleted.glb",
+      "depletedSha256": "57da17bb6d90bcad8a1a2936794fe2cf5d3f32f7a0725113d6d7624a5d978bbc"
+    },
+    {
+      "id": "natural-leafy-berries-weathered",
+      "family": "natural-leafy-berries",
+      "label": "Leafy berry thicket",
+      "variant": "weathered",
+      "description": "Worn, lower-saturation material variation on the same natural form. Retained mature source stems composed into one rooted clump; three, two or one stem sets.",
+      "recommended": false,
+      "file": "natural-leafy-berries-weathered.glb",
+      "bounds": {
+        "min": [
+          -0.35925,
+          0.0,
+          -0.358823
+        ],
+        "max": [
+          0.35029,
+          1.05,
+          0.358823
+        ]
+      },
+      "triangles": 6008,
+      "vertices": 4479,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "54f44ed5c835e360223c0694ed6ea7956ebbb3ec4c42cff1dd99ff5d8d90a5b4",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_04",
+      "depletedFile": "natural-leafy-berries-weathered-depleted.glb",
+      "depletedSha256": "2baedbd81963d2e65d0decdfe3e54a2786a82b70d548717ae6e676692aab46e3"
+    }
+  ],
+  "controls": [
+    {
+      "id": "natural-leafy-berries-source",
+      "family": "natural-leafy-berries",
+      "label": "Leafy berry thicket",
+      "variant": "source",
+      "description": "Normalized original geometry and albedo; source control. Retained mature source stems composed into one rooted clump; three, two or one stem sets.",
+      "recommended": false,
+      "file": "natural-leafy-berries-source.glb",
+      "bounds": {
+        "min": [
+          -0.7,
+          0.0,
+          -0.17521
+        ],
+        "max": [
+          0.7,
+          0.525758,
+          0.17521
+        ]
+      },
+      "triangles": 27327,
+      "vertices": 18285,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "0f041805270e1c55835ac3f95c740549758c3d5c70973e519ecb039e769dc7ae",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_04"
+    }
+  ]
+}

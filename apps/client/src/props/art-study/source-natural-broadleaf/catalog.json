@@ -1,15 +1,16 @@
 {
   "group": "source-natural-broadleaf",
   "sourceFile": "art-direction/assets/source-study/source-natural-broadleaf.blend",
-  "sourceSha256": "63f7c979e62b061c1669b7a38ca368a5038ee1e8a87f5c3df5fa910664d3df03",
+  "sourceSha256": "9d17235dab227f27736c710cf679534e8a916bd0652544d35f63c9bbe3aec470",
   "recipe": {
     "path": "scripts/prepare-natural-replacements.py",
-    "sha256": "8c5e24992be84e6a1291290f77251dee385f80736a1829acca44897a8a38c65f"
+    "sha256": "c99bcc3575b404c96eb88f675f7e418967e9070bae9dfa36d6f0cb1310b16f0b"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
     "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
-    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581",
+    "prepare-resource-study.py": "cf0705e9e6cc2bc3a8489b1f5b8ee01878aea90d4b928c09a1e6eddfc19ebc42"
   },
   "sources": [
     {
@@ -102,23 +103,23 @@
       "family": "natural-broadleaf",
       "label": "Woodland broadleaf",
       "variant": "clear",
-      "description": "Retained natural form and readable source color, restrained highlights.",
+      "description": "Retained natural form and readable source color, restrained highlights. Whole source leaves retained in full, open or sparse crown groupings.",
       "recommended": false,
       "file": "natural-broadleaf-clear.glb",
       "bounds": {
         "min": [
-          -1.558507,
+          -1.585544,
           0.0,
           -2.3
         ],
         "max": [
-          1.558507,
-          4.901098,
+          1.585544,
+          4.886513,
           2.3
         ]
       },
       "triangles": 34441,
-      "vertices": 39566,
+      "vertices": 64643,
       "textureSizes": [
         [
           512,
@@ -133,7 +134,7 @@
           512
         ]
       ],
-      "sha256": "b6bbe264935d8e48d628f86b255c7f0914da7966dfc5920c5769f7c303654660",
+      "sha256": "9e4802090fee442eb5643b73f63647f1d6a8739d47c61c7de3eefdfa3a304c2a",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/tree_small_02"
     },
     {
@@ -141,23 +142,23 @@
       "family": "natural-broadleaf",
       "label": "Woodland broadleaf",
       "variant": "quiet",
-      "description": "Grouped, muted woodland color with restrained fine texture.",
+      "description": "Grouped, muted woodland color with restrained fine texture. Whole source leaves retained in full, open or sparse crown groupings.",
       "recommended": true,
       "file": "natural-broadleaf-quiet.glb",
       "bounds": {
         "min": [
-          -1.558507,
+          -1.553428,
           0.0,
           -2.3
         ],
         "max": [
-          1.558507,
-          4.901098,
+          1.553428,
+          4.885125,
           2.3
         ]
       },
       "triangles": 34441,
-      "vertices": 39566,
+      "vertices": 57986,
       "textureSizes": [
         [
           256,
@@ -172,7 +173,7 @@
           256
         ]
       ],
-      "sha256": "d2f0beeb06c3ebd011ac073657ba87a1e09fb7350854dd359edaa52e529fca17",
+      "sha256": "e1becbbb02c9fa95e0cfe77dd903f1bd52eb234c307b6a71b76aa4021101b603",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/tree_small_02"
     },
     {
@@ -180,7 +181,7 @@
       "family": "natural-broadleaf",
       "label": "Woodland broadleaf",
       "variant": "weathered",
-      "description": "Worn, lower-saturation material variation on the same natural form.",
+      "description": "Worn, lower-saturation material variation on the same natural form. Whole source leaves retained in full, open or sparse crown groupings.",
       "recommended": false,
       "file": "natural-broadleaf-weathered.glb",
       "bounds": {
@@ -211,7 +212,7 @@
           256
         ]
       ],
-      "sha256": "5f78f0e398180484e9aee312f8be7ab7d0c45c351ea41ac8794118410c4376ef",
+      "sha256": "6b713f986bb1db91d76b3f8cd1c9606d4e845ea83095e86acd2596aec02e72eb",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/tree_small_02"
     }
   ],
@@ -276,7 +277,7 @@
           1024
         ]
       ],
-      "sha256": "3fdd96e7d0f31595dfc89165d3cc8e3a8888205e063955acb51de8014605d64a",
+      "sha256": "d64e8615c35140da8c8db77a76aab28db568886b05c266d1631453e31d36dce7",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/tree_small_02"
     }
   ]

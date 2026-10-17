@@ -1,15 +1,16 @@
 {
   "group": "source-natural-shield",
   "sourceFile": "art-direction/assets/source-study/source-natural-shield.blend",
-  "sourceSha256": "adcca8b81058742b3ad087e9c3e662ddb77874dfb3f1efbc2c3b9b126af5d3dc",
+  "sourceSha256": "33fc4c03da0e8873c21280a7a591bca7a5bdc7fd1be5de8e5e3d83fb141bcae8",
   "recipe": {
     "path": "scripts/prepare-natural-replacements.py",
-    "sha256": "8c5e24992be84e6a1291290f77251dee385f80736a1829acca44897a8a38c65f"
+    "sha256": "c99bcc3575b404c96eb88f675f7e418967e9070bae9dfa36d6f0cb1310b16f0b"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
     "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
-    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581",
+    "prepare-resource-study.py": "cf0705e9e6cc2bc3a8489b1f5b8ee01878aea90d4b928c09a1e6eddfc19ebc42"
   },
   "sources": [
     {
@@ -108,7 +109,7 @@
           512
         ]
       ],
-      "sha256": "cb5e85c4faeccbee08126fa895f3e3833abe006e039ecb9d056e9cb15abf695b",
+      "sha256": "f184d7741b043505b615f008252be219580f11c7ce065e1f335981653b7df2b2",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/kite_shield"
     },
     {
@@ -143,7 +144,7 @@
           256
         ]
       ],
-      "sha256": "adca4bf527182a0da84920b7f0e74abc7da9e5fbbec9cb46db07827cb3bbf1fd",
+      "sha256": "82a9b21ddf30e38c4498f43b379e45bcf1c63ce0ba0cd62a96c2ded88e7d5772",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/kite_shield"
     },
     {
@@ -178,7 +179,7 @@
           256
         ]
       ],
-      "sha256": "0d2afda4bb2571827af3d4eac07e19b09a0e61111b2a85d2f1a5a14bd7ff8a8b",
+      "sha256": "b0316550670b5923cb3b8e9b8ba89634a161c426bdb5f1dcbb79f9a10ccc3468",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/kite_shield"
     }
   ],

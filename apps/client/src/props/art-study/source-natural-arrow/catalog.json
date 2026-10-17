@@ -1,15 +1,16 @@
 {
   "group": "source-natural-arrow",
   "sourceFile": "art-direction/assets/source-study/source-natural-arrow.blend",
-  "sourceSha256": "0e87ecfa0cea5955629136982cb633721da6dfb50c5d7f03943bee244856949a",
+  "sourceSha256": "5a0a3af16845f38d261f0605f7596bc34e8d3160374d65e278814f90b3663ed3",
   "recipe": {
     "path": "scripts/prepare-natural-replacements.py",
-    "sha256": "8c5e24992be84e6a1291290f77251dee385f80736a1829acca44897a8a38c65f"
+    "sha256": "c99bcc3575b404c96eb88f675f7e418967e9070bae9dfa36d6f0cb1310b16f0b"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
     "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
-    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581",
+    "prepare-resource-study.py": "cf0705e9e6cc2bc3a8489b1f5b8ee01878aea90d4b928c09a1e6eddfc19ebc42"
   },
   "sources": [
     {
@@ -47,8 +48,13 @@
       },
       "triangles": 56,
       "vertices": 38,
-      "textureSizes": [],
-      "sha256": "dea743288cd0562359aab683e37d273bef0a016858ff1fcdad1bab8017df7987",
+      "textureSizes": [
+        [
+          256,
+          512
+        ]
+      ],
+      "sha256": "f82b9f2be50500451c47f66ba5b1666ab3c936f3a8da527cbc4d249a0b9f8e2e",
       "source": "yd, CC0, https://opengameart.org/content/archery-set"
     },
     {
@@ -73,8 +79,13 @@
       },
       "triangles": 56,
       "vertices": 38,
-      "textureSizes": [],
-      "sha256": "3f1876f33df47a54f493b89c04af4edf62f8c3097bba8a8da161e791490aa7bc",
+      "textureSizes": [
+        [
+          128,
+          256
+        ]
+      ],
+      "sha256": "4f916e911cdd9f350725ec99c3f1c9fe896e7d31d59f8d2d52d37aa8b5008584",
       "source": "yd, CC0, https://opengameart.org/content/archery-set"
     },
     {
@@ -99,8 +110,13 @@
       },
       "triangles": 56,
       "vertices": 38,
-      "textureSizes": [],
-      "sha256": "bd588c87b984f36f190ff9f4975accf60d3fab71884eb043572358970a8609b2",
+      "textureSizes": [
+        [
+          128,
+          256
+        ]
+      ],
+      "sha256": "dd85556d8f6e2cb6a008768b3574b59b4b6e59757b587ab836332570bc080f9e",
       "source": "yd, CC0, https://opengameart.org/content/archery-set"
     }
   ],
@@ -127,8 +143,13 @@
       },
       "triangles": 56,
       "vertices": 38,
-      "textureSizes": [],
-      "sha256": "471767a6d95e69eb4e945f7196204722f228fe084db5332269fdc20a7ebdc7ae",
+      "textureSizes": [
+        [
+          512,
+          1024
+        ]
+      ],
+      "sha256": "c06f4e3d524d177ec31209336d57912c5bcef31bbb63561d986a213a4420db8a",
       "source": "yd, CC0, https://opengameart.org/content/archery-set"
     }
   ]

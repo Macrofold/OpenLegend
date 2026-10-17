@@ -56,7 +56,9 @@ const sourceUrls = import.meta.glob<string>(
     import: 'default',
   },
 );
-const sourceFiles = new Map(Object.values(catalogs).map((catalog) => [catalog.group, catalog.sourceFile]));
+const sourceFiles = new Map(
+  Object.values(catalogs).map((catalog) => [catalog.group, catalog.sourceFile]),
+);
 const choices: Choice[] = Object.values(catalogs).flatMap((catalog) =>
   [
     ...catalog.assets,
@@ -72,7 +74,9 @@ const choices: Choice[] = Object.values(catalogs).flatMap((catalog) =>
   })),
 );
 const replacedIds = new Set(Object.keys(selections));
-const retainedFamilies = new Set(choices.filter((asset) => replacedIds.has('study:' + asset.id)).map((asset) => asset.family));
+const retainedFamilies = new Set(
+  choices.filter((asset) => replacedIds.has('study:' + asset.id)).map((asset) => asset.family),
+);
 const layout: Record<string, { label: string; position: readonly number[] }> = studyLayout;
 function element<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;

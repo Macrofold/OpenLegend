@@ -29,7 +29,7 @@ def prepare(sources):
         bpy.ops.wm.open_mainfile(filepath=str(sources/'sintel_backpack.blend'), load_ui=False, use_scripts=False)
         if bpy.context.object and bpy.context.object.mode != 'OBJECT':
             bpy.ops.object.mode_set(mode='OBJECT')
-        objects = [o for o in bpy.context.scene.objects if o.type == 'MESH' and not o.hide_render]
+        objects = [o for o in bpy.context.scene.objects if o.type == 'MESH' and o.visible_get() and not o.hide_render]
         for obj in objects:
             world = obj.matrix_world.copy()
             obj.parent = None
@@ -37,24 +37,36 @@ def prepare(sources):
         for obj in list(bpy.data.objects):
             if obj not in objects:
                 bpy.data.objects.remove(obj, do_unlink=True)
-        converted = {}
+        converted, surfaces = {}, {}
         for old in {m for o in objects for m in o.data.materials if m}:
+            file = ('quilt' if 'quilt' in old.name else 'backpack')+'&accessories_C.jpeg'
+            if file in surfaces:
+                converted[old] = surfaces[file]
+                continue
             material = bpy.data.materials.new(old.name+' export')
             material.use_nodes = True
             shader = material.node_tree.nodes.get('Principled BSDF')
             node = material.node_tree.nodes.new('ShaderNodeTexImage')
-            file = ('quilt' if 'quilt' in old.name else 'backpack')+'&accessories_C.jpeg'
             node.image = bpy.data.images.load(str(sources/file), check_existing=True)
             node.image.pack()
+            uv = material.node_tree.nodes.new('ShaderNodeUVMap')
+            uv.uv_map = 'UVMap'
+            material.node_tree.links.new(uv.outputs['UV'], node.inputs['Vector'])
             material.node_tree.links.new(node.outputs['Color'], shader.inputs['Base Color'])
             shader.inputs['Roughness'].default_value = .9
             shader.inputs['Specular IOR Level'].default_value = .08
             converted[old] = material
+            surfaces[file] = material
         for obj in objects:
             for slot in obj.material_slots:
-                slot.material = converted[slot.material]
+                if slot.material:
+                    slot.material = converted[slot.material]
             while len(obj.data.uv_layers) > 1:
                 obj.data.uv_layers.remove(obj.data.uv_layers[-1])
+            if obj.data.uv_layers:
+                obj.data.uv_layers[0].name = 'UVMap'
+                obj.data.uv_layers.active_index = 0
+                obj.data.uv_layers[0].active_render = True
             for modifier in list(obj.modifiers):
                 if modifier.type == 'MESH_DEFORM':
                     obj.modifiers.remove(modifier)

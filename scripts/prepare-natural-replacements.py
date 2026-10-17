@@ -445,6 +445,7 @@ def prepare_static(sources, family):
     catalog_path = output/'catalog.json'
     catalog = json.loads(catalog_path.read_text())
     catalog['controls'] = controls
+    catalog['helpers']['prepare-resource-study.py'] = digest(ROOT/'scripts/prepare-resource-study.py')
     # Compression changes the saved source hash, so record the actual final file.
     editable = ROOT/catalog['sourceFile']
     bpy.ops.wm.save_as_mainfile(filepath=str(editable), compress=True)
