@@ -4,13 +4,13 @@
   "sourceSha256": "b119d1717d007a70fe92fd22a1a3811b0fca47b70a4011eea6839c6f2df76524",
   "recipe": {
     "path": "scripts/prepare-natural-deer.py",
-    "sha256": "c2cc910ea649742305bbfc4126e229194756d4bb5eba1766ea30533723f6dafb"
+    "sha256": "471fbd4b566dc3f3601669126e115762a4188997469347e07644ac5fdf2d6eca"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
     "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
     "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581",
-    "prepare-natural-replacements.py": "c99bcc3575b404c96eb88f675f7e418967e9070bae9dfa36d6f0cb1310b16f0b"
+    "prepare-natural-replacements.py": "beeba80520a4a0799ffdcc96d56c939b008e8d0d1a5d234c82e3612e7911ae91"
   },
   "sources": [
     {
@@ -58,10 +58,10 @@
           512
         ]
       ],
-      "sha256": "3b0f9678ad72c1a317caabc1f0ea7800aa5ae42200e87de7ed4c7217adf5845b",
+      "sha256": "2ca10f243427232d897fdbefc61959095f8bf3104b7dc50e834ab123e0390b4f",
       "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/old-deer-male; source skin and Idle/Run motion retained, materials adapted by OpenLegend.",
       "animatedFile": "natural-stag-clear-motion.glb",
-      "animatedSha256": "c7f4aca99c5dfde626aa8991244cf127d97381927725168ad606adac699877ce"
+      "animatedSha256": "5658e713a8740e7388b4ba0d18e7a5952ce4086b2d295e26b5332aad1f4c9442"
     },
     {
       "id": "natural-stag-quiet",
@@ -99,10 +99,10 @@
           256
         ]
       ],
-      "sha256": "57805c4036d43791e307e55ad3e26b72fa2d230c2ba705de316c0923f05f7af1",
+      "sha256": "0bb47d57b964ba5da579612549a7365f953b162f7380187244a3ca2eb4b1dd12",
       "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/old-deer-male; source skin and Idle/Run motion retained, materials adapted by OpenLegend.",
       "animatedFile": "natural-stag-quiet-motion.glb",
-      "animatedSha256": "836603881609f572735741f8916303bf40c01b1a586cc1873341a47b32f1e497"
+      "animatedSha256": "e9c150ec8ee94d8902bc486b8d167e65135f17747cb5d8ba500c6f0f7dcd0005"
     },
     {
       "id": "natural-stag-weathered",
@@ -140,10 +140,10 @@
           256
         ]
       ],
-      "sha256": "083cea56cd1adc8c16b80b92421f74ab74101021fe55e2903fe97cd73e2c8f32",
+      "sha256": "85c2505858babc0a88cf0ed9b67fe7bae095d3b9c25a6f4368fb9e5671a00fdd",
       "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/old-deer-male; source skin and Idle/Run motion retained, materials adapted by OpenLegend.",
       "animatedFile": "natural-stag-weathered-motion.glb",
-      "animatedSha256": "a88e6fde3af2c7c3e48a5f7e2a2b0595d3b23e52cf567953ceb8b72ba2249618"
+      "animatedSha256": "372f8f2d68ae1eeaad8e964430fa8139cc107d88e0943d50a4a8e72542ecd0ea"
     }
   ],
   "controls": [
@@ -183,7 +183,7 @@
           1024
         ]
       ],
-      "sha256": "def4892760f25d64787249321dd7b04080d2fb1a70596296c31b0d3a9a193cb1",
+      "sha256": "ee1745f6156d77f592fc77b9bd2591a222dd85e3d68ebc854282af3a2a933135",
       "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/old-deer-male; source skin and Idle/Run motion retained, materials adapted by OpenLegend."
     }
   ]

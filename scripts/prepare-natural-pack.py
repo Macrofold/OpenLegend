@@ -121,6 +121,7 @@ def prepare(sources):
     bpy.ops.wm.save_as_mainfile(filepath=str(editable), compress=True)
     catalog['sourceSha256'] = natural.digest(editable)
     catalog_path.write_text(json.dumps(catalog, indent=2)+'\n')
+    natural.finish_catalog(catalog_path)
     retained = ROOT/'art-direction/assets/source-study/sintel-pack-originals'
     retained.mkdir(exist_ok=True)
     for file in ['original.zip', 'download.json', 'BLENDSWAP_LICENSE.txt']:

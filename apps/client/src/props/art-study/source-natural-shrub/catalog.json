@@ -4,7 +4,7 @@
   "sourceSha256": "a14f67be55f6357aa5f9cd7e642beeff6685ab2fcbf36582069105880ab108ff",
   "recipe": {
     "path": "scripts/prepare-natural-replacements.py",
-    "sha256": "c99bcc3575b404c96eb88f675f7e418967e9070bae9dfa36d6f0cb1310b16f0b"
+    "sha256": "beeba80520a4a0799ffdcc96d56c939b008e8d0d1a5d234c82e3612e7911ae91"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
@@ -84,7 +84,7 @@
           512
         ]
       ],
-      "sha256": "b74b2a0113c9eecaefd3bb95e4205479690dff8808a9cfba6ac3a6263ceb9d2b",
+      "sha256": "be736f60f891b1e551a84febfb436b8def205f1b4d572f3ba7314e8fad564d66",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_02"
     },
     {
@@ -115,7 +115,7 @@
           256
         ]
       ],
-      "sha256": "7b8b60b4f4231a3454d2098af18f5b714b6ba2fa5d73bec392e909000298d01c",
+      "sha256": "f8de123d8d828e3347ccac1fc6f895826f81a120b040461ac3271e24b6cec723",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_02"
     },
     {
@@ -146,7 +146,7 @@
           256
         ]
       ],
-      "sha256": "85507981272afb40e13dbb47b51d1591f164c7dae65d0d9237054bf66107f532",
+      "sha256": "702552fb23d3b356e10eb7ebb87b2f4eb0f91eec3e04d702dbfbd9e11279b2d7",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_02"
     }
   ],
@@ -187,7 +187,7 @@
           1024
         ]
       ],
-      "sha256": "2954f5b712781a9db7411b95892886c1f692419a28e43a25d38d159058fda5c0",
+      "sha256": "d90dcaf28041ff124c55cef47ec804523be186bd0313f13c801668f3fbc0a744",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_02"
     }
   ]

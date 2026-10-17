@@ -4,7 +4,7 @@
   "sourceSha256": "d7dcef1a3d63923e816947c11023343adb75335ebe61758360dc153b490bea53",
   "recipe": {
     "path": "scripts/prepare-natural-replacements.py",
-    "sha256": "c99bcc3575b404c96eb88f675f7e418967e9070bae9dfa36d6f0cb1310b16f0b"
+    "sha256": "beeba80520a4a0799ffdcc96d56c939b008e8d0d1a5d234c82e3612e7911ae91"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
@@ -84,7 +84,7 @@
           512
         ]
       ],
-      "sha256": "c0342d709c4f6c38287f1dd98c2048c240ef9b588619c99d2017b90745048a48",
+      "sha256": "b64cac4ec163b883f0943cc5dd3e75b3ec0e5a4a6b6202da83265dae808e9135",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/antique_estoc"
     },
     {
@@ -115,7 +115,7 @@
           256
         ]
       ],
-      "sha256": "511d97cea147a30c624684980e02d14d20d6d88cfc0f240a1743c652897dd69c",
+      "sha256": "14cf5c5f60f633dcba1ef0914d0e4410e1e0a883f0974a58ada11b9d15da21f7",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/antique_estoc"
     },
     {
@@ -146,7 +146,7 @@
           256
         ]
       ],
-      "sha256": "1e4dedb7e8f3074ee606e17bd31529455c60e183844545d61d2941cfe4baec3b",
+      "sha256": "c88df4177ab9bc4e4d9707245450c30dc951c3a16c66c963c8d5dbfa546493dc",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/antique_estoc"
     }
   ],
@@ -187,7 +187,7 @@
           1024
         ]
       ],
-      "sha256": "e1e7b9ae41a80935644f14154002908fe62dc5f93ae463d14624b757ec8b63d6",
+      "sha256": "ada5bb15d726dddfa7560c1086a0effd01fa14f1e12b832e068e961edd805b0a",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/antique_estoc"
     }
   ]

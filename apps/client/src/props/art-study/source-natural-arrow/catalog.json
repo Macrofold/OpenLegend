@@ -4,7 +4,7 @@
   "sourceSha256": "5a0a3af16845f38d261f0605f7596bc34e8d3160374d65e278814f90b3663ed3",
   "recipe": {
     "path": "scripts/prepare-natural-replacements.py",
-    "sha256": "c99bcc3575b404c96eb88f675f7e418967e9070bae9dfa36d6f0cb1310b16f0b"
+    "sha256": "beeba80520a4a0799ffdcc96d56c939b008e8d0d1a5d234c82e3612e7911ae91"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
@@ -54,7 +54,7 @@
           512
         ]
       ],
-      "sha256": "f82b9f2be50500451c47f66ba5b1666ab3c936f3a8da527cbc4d249a0b9f8e2e",
+      "sha256": "3fc4f5ae76d0d4222506de0ef14437b1e0ed8e59693c79877ad6cff9bcfc949a",
       "source": "yd, CC0, https://opengameart.org/content/archery-set"
     },
     {
@@ -85,7 +85,7 @@
           256
         ]
       ],
-      "sha256": "4f916e911cdd9f350725ec99c3f1c9fe896e7d31d59f8d2d52d37aa8b5008584",
+      "sha256": "f3d2e11f615fd5c501de39287c7ae58f7d9725fb8fa5472a03b3c7a9a415e2ae",
       "source": "yd, CC0, https://opengameart.org/content/archery-set"
     },
     {
@@ -116,7 +116,7 @@
           256
         ]
       ],
-      "sha256": "dd85556d8f6e2cb6a008768b3574b59b4b6e59757b587ab836332570bc080f9e",
+      "sha256": "42637795ce80b264dd64fff4ba63ad296d0a70f186bedbd3c1db889ed15db2c3",
       "source": "yd, CC0, https://opengameart.org/content/archery-set"
     }
   ],
@@ -149,7 +149,7 @@
           1024
         ]
       ],
-      "sha256": "c06f4e3d524d177ec31209336d57912c5bcef31bbb63561d986a213a4420db8a",
+      "sha256": "5714730639f6d6268be085cd31cea9ce31fabc1a201b07faff36f81b8a4894aa",
       "source": "yd, CC0, https://opengameart.org/content/archery-set"
     }
   ]

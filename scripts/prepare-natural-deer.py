@@ -102,6 +102,7 @@ def prepare(sources, species):
     bpy.ops.wm.save_as_mainfile(filepath=str(editable), compress=True)
     catalog['sourceSha256'] = natural.digest(editable)
     catalog_path.write_text(json.dumps(catalog, indent=2)+'\n')
+    natural.finish_catalog(catalog_path)
     # Retain the precise licensed input, rather than only its download link.
     retained = ROOT/'art-direction/assets/source-study'/('cdmir-'+species+'-source.blend')
     shutil.copyfile(source, retained)

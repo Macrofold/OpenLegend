@@ -4,11 +4,11 @@
   "sources": [
     {
       "path": "apps/client/src/props/art-study/source-natural-broadleaf/catalog.json",
-      "sha256": "490ac1e758302f4ad88ba74c5246bbf3eca51ed07639c6b19a7d081f417a1e02"
+      "sha256": "1232787e4c985187844dee423e15f49836abc44ca4aac21776de09f4fc91369c"
     },
     {
       "path": "apps/client/src/props/art-study/source-natural-birch/catalog.json",
-      "sha256": "d0a3f8bf5bc2500a45ede2e33170d251a44fb7b9c9cc6ca10bf9602ae17b0ef3"
+      "sha256": "bc27e5c0930932fce0d9610208c53a4a5b2e9044b8a2707f9c9e7eef02f4d79c"
     },
     {
       "path": "apps/client/src/props/art-study/source-grounded-conifer/catalog.json",
@@ -16,11 +16,11 @@
     },
     {
       "path": "apps/client/src/props/art-study/source-natural-leafy-shrub/catalog.json",
-      "sha256": "a318e16eaf306ed3b97dd38d22a22c5c132b7347a4eb49330819cf55d6960780"
+      "sha256": "6c33b354f74ab5bef3e13a8201e4dc2623a05b86162f51e5da4c19027a91a436"
     },
     {
       "path": "apps/client/src/props/art-study/source-natural-grass/catalog.json",
-      "sha256": "9391024ddf02c9cd5ad3b22062168f1cb0da9c2ea825a6f869f11b7db3fd8f2e"
+      "sha256": "a01ea1b510c8bcb471a5e005b8d9f425838a46eb88dd6dd549f8c11cc18ddbf2"
     }
   ],
   "outputs": [

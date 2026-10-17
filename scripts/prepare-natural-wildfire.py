@@ -139,6 +139,7 @@ def prepare(sources, family):
     bpy.ops.wm.save_as_mainfile(filepath=str(editable), compress=True)
     catalog['sourceSha256'] = natural.digest(editable)
     catalog_path.write_text(json.dumps(catalog, indent=2)+'\n')
+    natural.finish_catalog(catalog_path)
     retained = ROOT/'art-direction/assets/source-study/wildfire-originals'
     for file in ['manifest.json', *[entry['file'] for entry in manifest['files']]]:
         destination = retained/file

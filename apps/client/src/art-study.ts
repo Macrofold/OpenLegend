@@ -591,6 +591,9 @@ export class ArtStudy {
         const description = document.createElement('p');
         description.textContent = asset.description;
         card.append(description);
+        const credit = document.createElement('p');
+        credit.textContent = asset.source;
+        card.append(credit);
         const facts = document.createElement('small');
         facts.textContent = `${(asset.bounds.max[1]! - asset.bounds.min[1]!).toFixed(2)} m tall · ${asset.triangles.toLocaleString()} triangles · ${asset.textureSizes.map((size) => size.join('×')).join(', ')} fixed paint`;
         card.append(facts);

@@ -1,0 +1,684 @@
+{
+  "catalogs": 19,
+  "alternatives": 57,
+  "filesChecked": 91,
+  "selectionMappings": 20,
+  "checks": [
+    "source, recipe, helper and output SHA256",
+    "three alternatives and original control per family",
+    "embedded images/buffers",
+    "finite float attributes and animation data",
+    "valid triangle indices and material UV bindings",
+    "normalized four-weight skins",
+    "Idle and Run in moving exports",
+    "copyright in every GLB",
+    "files below 100 MiB",
+    "all retained/replacement selection IDs resolve"
+  ],
+  "files": [
+    {
+      "file": "apps/client/src/props/art-study/source-natural-arrow/natural-arrow-clear.glb",
+      "bytes": 20436,
+      "triangles": 56,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-arrow/natural-arrow-quiet.glb",
+      "bytes": 10148,
+      "triangles": 56,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-arrow/natural-arrow-weathered.glb",
+      "bytes": 9856,
+      "triangles": 56,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-arrow/natural-arrow-source.glb",
+      "bytes": 90704,
+      "triangles": 56,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-backpack/natural-backpack-clear.glb",
+      "bytes": 11712,
+      "triangles": 42,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-backpack/natural-backpack-quiet.glb",
+      "bytes": 10268,
+      "triangles": 42,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-backpack/natural-backpack-weathered.glb",
+      "bytes": 10104,
+      "triangles": 42,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-backpack/natural-backpack-source.glb",
+      "bytes": 13276,
+      "triangles": 42,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-berry-bush/natural-berry-bush-clear.glb",
+      "bytes": 548472,
+      "triangles": 8598,
+      "materials": 2,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-berry-bush/natural-berry-bush-clear-depleted.glb",
+      "bytes": 512588,
+      "triangles": 7590,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-berry-bush/natural-berry-bush-quiet.glb",
+      "bytes": 283292,
+      "triangles": 8310,
+      "materials": 2,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-berry-bush/natural-berry-bush-quiet-depleted.glb",
+      "bytes": 257392,
+      "triangles": 7590,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-berry-bush/natural-berry-bush-weathered.glb",
+      "bytes": 291468,
+      "triangles": 8598,
+      "materials": 2,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-berry-bush/natural-berry-bush-weathered-depleted.glb",
+      "bytes": 255580,
+      "triangles": 7590,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-berry-bush/natural-berry-bush-source.glb",
+      "bytes": 2064324,
+      "triangles": 7590,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-birch/natural-birch-clear.glb",
+      "bytes": 2213040,
+      "triangles": 34441,
+      "materials": 3,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-birch/natural-birch-quiet.glb",
+      "bytes": 2096432,
+      "triangles": 34441,
+      "materials": 3,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-birch/natural-birch-weathered.glb",
+      "bytes": 1609416,
+      "triangles": 34441,
+      "materials": 3,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-broadleaf/natural-broadleaf-source.glb",
+      "bytes": 90085800,
+      "triangles": 2062487,
+      "materials": 3,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-bow/natural-bow-clear.glb",
+      "bytes": 28708,
+      "triangles": 432,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-bow/natural-bow-quiet.glb",
+      "bytes": 18420,
+      "triangles": 432,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-bow/natural-bow-weathered.glb",
+      "bytes": 18128,
+      "triangles": 432,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-bow/natural-bow-source.glb",
+      "bytes": 98976,
+      "triangles": 432,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-broadleaf/natural-broadleaf-clear.glb",
+      "bytes": 2239752,
+      "triangles": 34441,
+      "materials": 3,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-broadleaf/natural-broadleaf-quiet.glb",
+      "bytes": 2103600,
+      "triangles": 34441,
+      "materials": 3,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-broadleaf/natural-broadleaf-weathered.glb",
+      "bytes": 1617188,
+      "triangles": 34441,
+      "materials": 3,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-broadleaf/natural-broadleaf-source.glb",
+      "bytes": 90085800,
+      "triangles": 2062487,
+      "materials": 3,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-deer/natural-deer-clear.glb",
+      "bytes": 867936,
+      "triangles": 4784,
+      "materials": 3,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-deer/natural-deer-clear-motion.glb",
+      "bytes": 992204,
+      "triangles": 4784,
+      "materials": 3,
+      "animations": [
+        "Idle",
+        "Run"
+      ]
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-deer/natural-deer-quiet.glb",
+      "bytes": 270712,
+      "triangles": 4784,
+      "materials": 3,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-deer/natural-deer-quiet-motion.glb",
+      "bytes": 394984,
+      "triangles": 4784,
+      "materials": 3,
+      "animations": [
+        "Idle",
+        "Run"
+      ]
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-deer/natural-deer-weathered.glb",
+      "bytes": 266272,
+      "triangles": 4784,
+      "materials": 3,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-deer/natural-deer-weathered-motion.glb",
+      "bytes": 390544,
+      "triangles": 4784,
+      "materials": 3,
+      "animations": [
+        "Idle",
+        "Run"
+      ]
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-deer/natural-deer-source.glb",
+      "bytes": 2784108,
+      "triangles": 4784,
+      "materials": 3,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-dry-fiber/natural-dry-fiber-clear.glb",
+      "bytes": 220140,
+      "triangles": 340,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-dry-fiber/natural-dry-fiber-quiet.glb",
+      "bytes": 62888,
+      "triangles": 340,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-dry-fiber/natural-dry-fiber-weathered.glb",
+      "bytes": 60180,
+      "triangles": 340,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-dry-fiber/natural-dry-fiber-source.glb",
+      "bytes": 2501384,
+      "triangles": 340,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-grass/natural-grass-clear.glb",
+      "bytes": 316736,
+      "triangles": 1257,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-grass/natural-grass-quiet.glb",
+      "bytes": 99748,
+      "triangles": 1257,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-grass/natural-grass-weathered.glb",
+      "bytes": 97340,
+      "triangles": 1257,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-grass/natural-grass-source.glb",
+      "bytes": 2538700,
+      "triangles": 1257,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-knife/natural-knife-clear.glb",
+      "bytes": 140600,
+      "triangles": 2736,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-knife/natural-knife-quiet.glb",
+      "bytes": 112812,
+      "triangles": 2736,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-knife/natural-knife-weathered.glb",
+      "bytes": 112436,
+      "triangles": 2736,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-knife/natural-knife-source.glb",
+      "bytes": 2567444,
+      "triangles": 2736,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-leafy-berries/natural-leafy-berries-clear.glb",
+      "bytes": 807352,
+      "triangles": 16008,
+      "materials": 2,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-leafy-berries/natural-leafy-berries-clear-depleted.glb",
+      "bytes": 771464,
+      "triangles": 15000,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-leafy-berries/natural-leafy-berries-quiet.glb",
+      "bytes": 387168,
+      "triangles": 10720,
+      "materials": 2,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-leafy-berries/natural-leafy-berries-quiet-depleted.glb",
+      "bytes": 361264,
+      "triangles": 10000,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-leafy-berries/natural-leafy-berries-weathered.glb",
+      "bytes": 239176,
+      "triangles": 6008,
+      "materials": 2,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-leafy-berries/natural-leafy-berries-weathered-depleted.glb",
+      "bytes": 203284,
+      "triangles": 5000,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-leafy-berries/natural-leafy-berries-source.glb",
+      "bytes": 2574596,
+      "triangles": 27327,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-leafy-shrub/natural-leafy-shrub-clear.glb",
+      "bytes": 771452,
+      "triangles": 15000,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-leafy-shrub/natural-leafy-shrub-quiet.glb",
+      "bytes": 361252,
+      "triangles": 10000,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-leafy-shrub/natural-leafy-shrub-weathered.glb",
+      "bytes": 203272,
+      "triangles": 5000,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-leafy-shrub/natural-leafy-shrub-source.glb",
+      "bytes": 2574588,
+      "triangles": 27327,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-reeds/natural-reeds-clear.glb",
+      "bytes": 276948,
+      "triangles": 290,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-reeds/natural-reeds-quiet.glb",
+      "bytes": 59956,
+      "triangles": 290,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-reeds/natural-reeds-weathered.glb",
+      "bytes": 57548,
+      "triangles": 290,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-reeds/natural-reeds-source.glb",
+      "bytes": 2499036,
+      "triangles": 290,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-shield/natural-shield-clear.glb",
+      "bytes": 380480,
+      "triangles": 10306,
+      "materials": 2,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-shield/natural-shield-quiet.glb",
+      "bytes": 323112,
+      "triangles": 10306,
+      "materials": 2,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-shield/natural-shield-weathered.glb",
+      "bytes": 321832,
+      "triangles": 10306,
+      "materials": 2,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-shield/natural-shield-source.glb",
+      "bytes": 3818836,
+      "triangles": 10306,
+      "materials": 2,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-shrub/natural-shrub-clear.glb",
+      "bytes": 449688,
+      "triangles": 5242,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-shrub/natural-shrub-quiet.glb",
+      "bytes": 194496,
+      "triangles": 5242,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-shrub/natural-shrub-weathered.glb",
+      "bytes": 192684,
+      "triangles": 5242,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-shrub/natural-shrub-source.glb",
+      "bytes": 2001436,
+      "triangles": 5242,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-stag/natural-stag-clear.glb",
+      "bytes": 963000,
+      "triangles": 4924,
+      "materials": 4,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-stag/natural-stag-clear-motion.glb",
+      "bytes": 1093664,
+      "triangles": 4924,
+      "materials": 4,
+      "animations": [
+        "Idle",
+        "Run"
+      ]
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-stag/natural-stag-quiet.glb",
+      "bytes": 311792,
+      "triangles": 4924,
+      "materials": 4,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-stag/natural-stag-quiet-motion.glb",
+      "bytes": 442308,
+      "triangles": 4924,
+      "materials": 4,
+      "animations": [
+        "Idle",
+        "Run"
+      ]
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-stag/natural-stag-weathered.glb",
+      "bytes": 307268,
+      "triangles": 4924,
+      "materials": 4,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-stag/natural-stag-weathered-motion.glb",
+      "bytes": 437784,
+      "triangles": 4924,
+      "materials": 4,
+      "animations": [
+        "Idle",
+        "Run"
+      ]
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-stag/natural-stag-source.glb",
+      "bytes": 3213524,
+      "triangles": 4924,
+      "materials": 4,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-sword/natural-sword-clear.glb",
+      "bytes": 272900,
+      "triangles": 8246,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-sword/natural-sword-quiet.glb",
+      "bytes": 242788,
+      "triangles": 8246,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-sword/natural-sword-weathered.glb",
+      "bytes": 242180,
+      "triangles": 8246,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-sword/natural-sword-source.glb",
+      "bytes": 2528132,
+      "triangles": 8246,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-travel-pack/natural-travel-pack-clear.glb",
+      "bytes": 851556,
+      "triangles": 22598,
+      "materials": 2,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-travel-pack/natural-travel-pack-quiet.glb",
+      "bytes": 817388,
+      "triangles": 22598,
+      "materials": 2,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-travel-pack/natural-travel-pack-weathered.glb",
+      "bytes": 816504,
+      "triangles": 22598,
+      "materials": 2,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-travel-pack/natural-travel-pack-source.glb",
+      "bytes": 7412632,
+      "triangles": 69417,
+      "materials": 2,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-wolf/natural-wolf-clear.glb",
+      "bytes": 281096,
+      "triangles": 4176,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-wolf/natural-wolf-clear-motion.glb",
+      "bytes": 635544,
+      "triangles": 4176,
+      "materials": 1,
+      "animations": [
+        "Idle",
+        "Run"
+      ]
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-wolf/natural-wolf-quiet.glb",
+      "bytes": 229732,
+      "triangles": 4176,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-wolf/natural-wolf-quiet-motion.glb",
+      "bytes": 584184,
+      "triangles": 4176,
+      "materials": 1,
+      "animations": [
+        "Idle",
+        "Run"
+      ]
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-wolf/natural-wolf-weathered.glb",
+      "bytes": 206432,
+      "triangles": 4176,
+      "materials": 1,
+      "animations": []
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-wolf/natural-wolf-weathered-motion.glb",
+      "bytes": 560884,
+      "triangles": 4176,
+      "materials": 1,
+      "animations": [
+        "Idle",
+        "Run"
+      ]
+    },
+    {
+      "file": "apps/client/src/props/art-study/source-natural-wolf/natural-wolf-source.glb",
+      "bytes": 239380,
+      "triangles": 696,
+      "materials": 1,
+      "animations": []
+    }
+  ]
+}

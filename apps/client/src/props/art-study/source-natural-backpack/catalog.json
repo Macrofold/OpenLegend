@@ -4,13 +4,13 @@
   "sourceSha256": "875c1cc526a37a20757e1a702efaef86df6bfd268098b57ca67469c750797591",
   "recipe": {
     "path": "scripts/prepare-natural-wildfire.py",
-    "sha256": "e951ba83cfec199295548a2a73a80c016a664b131390f0d704f60a28e858ef1b"
+    "sha256": "463d62c799147589d09e8898a3d2e3058dccbd1657d6371f4379ab739859c58e"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
     "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
     "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581",
-    "prepare-natural-replacements.py": "c99bcc3575b404c96eb88f675f7e418967e9070bae9dfa36d6f0cb1310b16f0b"
+    "prepare-natural-replacements.py": "beeba80520a4a0799ffdcc96d56c939b008e8d0d1a5d234c82e3612e7911ae91"
   },
   "sources": [
     {
@@ -129,7 +129,7 @@
           64
         ]
       ],
-      "sha256": "e3401e3f416fb3f2e0f03357e47d0a04e3ec8fb837bb41b6b9c98f0934ab9630",
+      "sha256": "2a09a4c20f70fef0bc73a656a6a6c0fe7683de882b7b7bff9a80516b3a8f702e",
       "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf motion retained, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0."
     },
     {
@@ -160,7 +160,7 @@
           64
         ]
       ],
-      "sha256": "a3f3836be85bbe07fa132353d960f85eb8a823ac326aef027d151d0debd15c95",
+      "sha256": "e3241ed27ba4ab13bfdd46b06b4208f4df27b6084c71a22ebec3ad99f512601f",
       "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf motion retained, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0."
     },
     {
@@ -191,7 +191,7 @@
           64
         ]
       ],
-      "sha256": "19cb4d2ce1babe3f42119a084fe7557e1a904fa6dc2716af5fd8e027c490c2ad",
+      "sha256": "e901f3fb46ba1c479b3a171c086268714bc8e60572134202a135e30b3c3a2ee0",
       "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf motion retained, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0."
     }
   ],
@@ -224,7 +224,7 @@
           64
         ]
       ],
-      "sha256": "ea84bff49df4ff55e44d0b231aa4f14e2b2099cf4ce921511b0d6e670bb2e53d",
+      "sha256": "e9b08e85b956f4c8e6170dbf3c1ff201371e27483a777eec4c6f61c0b2d2090d",
       "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf motion retained, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0."
     }
   ]

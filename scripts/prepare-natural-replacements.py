@@ -10,6 +10,7 @@ import importlib.util
 import json
 import math
 import shutil
+import struct
 from pathlib import Path
 import sys
 
@@ -54,6 +55,31 @@ FINISHES = ['source', 'clear', 'quiet', 'weathered']
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def finish_catalog(path):
+    """Keep attribution with downloadable GLBs, including motion/depletion."""
+    catalog = json.loads(path.read_text())
+    for asset in [*catalog['assets'], *catalog.get('controls', [])]:
+        folder = path.parent.parent/asset.get('fileGroup', path.parent.name)
+        for field, hash_field in [('file', 'sha256'), ('animatedFile', 'animatedSha256'), ('depletedFile', 'depletedSha256')]:
+            if field not in asset:
+                continue
+            file = folder/asset[field]
+            raw = file.read_bytes()
+            size = struct.unpack_from('<I', raw, 12)[0]
+            document = json.loads(raw[20:20+size])
+            document['asset']['copyright'] = asset['source']
+            encoded = json.dumps(document, separators=(',', ':')).encode()
+            encoded += b' '*(-len(encoded)%4)
+            tail = raw[20+size:]
+            file.write_bytes(struct.pack('<4sII', b'glTF', 2, 20+len(encoded)+len(tail))+
+                struct.pack('<I4s', len(encoded), b'JSON')+encoded+tail)
+            asset[hash_field] = digest(file)
+    catalog['recipe']['sha256'] = digest(ROOT/catalog['recipe']['path'])
+    for helper in catalog['helpers']:
+        catalog['helpers'][helper] = digest(ROOT/'scripts'/helper)
+    path.write_text(json.dumps(catalog, indent=2)+'\n')
 
 
 def limit_skin_weights(objects):
@@ -451,6 +477,7 @@ def prepare_static(sources, family):
     bpy.ops.wm.save_as_mainfile(filepath=str(editable), compress=True)
     catalog['sourceSha256'] = digest(editable)
     catalog_path.write_text(json.dumps(catalog, indent=2)+'\n')
+    finish_catalog(catalog_path)
 
 
 if __name__ == '__main__':

@@ -4,13 +4,13 @@
   "sourceSha256": "ca688566e41e00b59739a7bc61f9080ea86034004dbcf38a993a02ea1d889bf5",
   "recipe": {
     "path": "scripts/prepare-natural-deer.py",
-    "sha256": "c2cc910ea649742305bbfc4126e229194756d4bb5eba1766ea30533723f6dafb"
+    "sha256": "471fbd4b566dc3f3601669126e115762a4188997469347e07644ac5fdf2d6eca"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
     "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
     "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581",
-    "prepare-natural-replacements.py": "c99bcc3575b404c96eb88f675f7e418967e9070bae9dfa36d6f0cb1310b16f0b"
+    "prepare-natural-replacements.py": "beeba80520a4a0799ffdcc96d56c939b008e8d0d1a5d234c82e3612e7911ae91"
   },
   "sources": [
     {
@@ -54,10 +54,10 @@
           512
         ]
       ],
-      "sha256": "bb7686228f61e8d6e9ccc1aaa3a2496b692a45230fae2fcbf47c9369e9541789",
+      "sha256": "55a0bf46c1dd5e129f783c99aae48e4cccda1e1de57b01dc6aa943c7fd35609b",
       "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/deer-female; source skin and Idle/Run motion retained, materials adapted by OpenLegend.",
       "animatedFile": "natural-deer-clear-motion.glb",
-      "animatedSha256": "04558bd55a1c3a7e1fd9ca7cc232cc93c27ee48938630dec14d7accc2bf47c1a"
+      "animatedSha256": "3ed6a31495c2027465405589b7514b5b7c4e7e50ce651e00d698b13216736e47"
     },
     {
       "id": "natural-deer-quiet",
@@ -91,10 +91,10 @@
           256
         ]
       ],
-      "sha256": "8e2e55cb7d12e0d39aaffeeca2aaa7c0d6d1ef30341758f8a908af7887c39578",
+      "sha256": "7c759a17d89184e4bc013dacd8779c9451249d10a1ecf4b60ebbe82115198739",
       "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/deer-female; source skin and Idle/Run motion retained, materials adapted by OpenLegend.",
       "animatedFile": "natural-deer-quiet-motion.glb",
-      "animatedSha256": "2f35e8f22ec753a5c9822be320052b7560f42f2749ebee443f00850fee711de8"
+      "animatedSha256": "74f4a92ee6d38abe1fc3490fd9b213558c37d80f5c87576a812f79515f2cf2e5"
     },
     {
       "id": "natural-deer-weathered",
@@ -128,10 +128,10 @@
           256
         ]
       ],
-      "sha256": "b362e694a3b293eab057e159ef042277340baf95b00ad60999935b29f51865bf",
+      "sha256": "c7b182c318d3f9a9149d5319a4f77f1ae7b4227f85e05ca9d2d18ef9259ebd7d",
       "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/deer-female; source skin and Idle/Run motion retained, materials adapted by OpenLegend.",
       "animatedFile": "natural-deer-weathered-motion.glb",
-      "animatedSha256": "5fc1ea9435126a009669b52aa164af2d03bd739ff8180b4dc26c12e584cd185c"
+      "animatedSha256": "7cb8f1332071bf7660d0faa18f40446c8b6b86ee6630f52980dc8def517a38bc"
     }
   ],
   "controls": [
@@ -167,7 +167,7 @@
           1024
         ]
       ],
-      "sha256": "d0b141bde42c5cfad2fa976a427903a8b66e4e580828e950453f8fc0d2328155",
+      "sha256": "42bb74bcfda06c06e49a9738f2444613932b0108ce2bb9be612279c08f97624d",
       "source": "Deer by CDmir / TinyWorlds, CC0, https://opengameart.org/content/deer-female; source skin and Idle/Run motion retained, materials adapted by OpenLegend."
     }
   ]

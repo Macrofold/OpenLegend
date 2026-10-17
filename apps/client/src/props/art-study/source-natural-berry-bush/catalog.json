@@ -4,7 +4,7 @@
   "sourceSha256": "c6ece8706182920de97bf6ef1c8e1a85c4539c5fcbdb4d946c957d405d41c3c3",
   "recipe": {
     "path": "scripts/prepare-natural-replacements.py",
-    "sha256": "c99bcc3575b404c96eb88f675f7e418967e9070bae9dfa36d6f0cb1310b16f0b"
+    "sha256": "beeba80520a4a0799ffdcc96d56c939b008e8d0d1a5d234c82e3612e7911ae91"
   },
   "helpers": {
     "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
@@ -84,10 +84,10 @@
           512
         ]
       ],
-      "sha256": "a1d88e6fdd4fecd81e067ded46621805eb84ec92ec4ff6731f8ed0860df56626",
+      "sha256": "e623fc8d9c0c627faf7c86c7f2c944d09cb8e3d2703f5d96664669a9620c43d8",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_02",
       "depletedFile": "natural-berry-bush-clear-depleted.glb",
-      "depletedSha256": "9eb61185b9d66191c467fe1bf7b63d9d510f8bac8a3add7793785d95d645010c"
+      "depletedSha256": "afe8e91c160916989c8231cddf1bfac5301f6e11d54a1bd2b689c13851eb2a90"
     },
     {
       "id": "natural-berry-bush-quiet",
@@ -117,10 +117,10 @@
           256
         ]
       ],
-      "sha256": "982a68cd9c77e639b385d95c86ed4d66161b64edc0d5d0d7dc869c80308176eb",
+      "sha256": "30a0453a133de1dd0ed576cf520a18296c5e742202f56c829678ea29c294bfc9",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_02",
       "depletedFile": "natural-berry-bush-quiet-depleted.glb",
-      "depletedSha256": "c5417188f34aa6e19e276683352e5b694786e29fa47396fd183ff339ba92ae98"
+      "depletedSha256": "65a71709285b01b091e26ec3edf981bc7a6396cad8b5092fc70a5e8878fe58db"
     },
     {
       "id": "natural-berry-bush-weathered",
@@ -150,10 +150,10 @@
           256
         ]
       ],
-      "sha256": "b8d11129abc3a40493067495049c95c791085f5b9679dadbbcd3df3362bee421",
+      "sha256": "043b75b4f176581d651e3e4785827a81ecb9ad540c476526e774dc6b9547b432",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_02",
       "depletedFile": "natural-berry-bush-weathered-depleted.glb",
-      "depletedSha256": "6a0bc7e671c1f6154bad648307e9cd927ff7c99680fd630a55bd93e7bed70b25"
+      "depletedSha256": "4ea88d661b14f34471da30013bb16d6b96bab338d6f4a9e7e9af512a10cbb7c1"
     }
   ],
   "controls": [
@@ -193,7 +193,7 @@
           1024
         ]
       ],
-      "sha256": "0742c4c9c713aa709ba29a1755639ee0818bd1379f2a50edd75e095dd1b47fb7",
+      "sha256": "a742a88d3a0b897fe7cc281cdf2070c1a8111beb6c17f0f80c30710f173567d1",
       "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_02"
     }
   ]
