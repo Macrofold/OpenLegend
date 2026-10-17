@@ -1,5 +1,9 @@
 # Maintainer work index
 
+## Start here: the selected next delivery
+
+[The first-player milestone](first-player-milestone.md) is the entry point for selecting the next design and implementation work: finish and observe one worthwhile browser session, repair its actual blockers through existing owners, and measure performance and cost in the same experience. It coordinates P1 and ND26/DG03 rather than creating a competing subsystem backlog. Broader designs and numbered assignments below remain available context, not an automatic next-project queue. Native-engine work remains conditional on a named capability, performance or production advantage; [Godot community and AI research](../../research/game-engines/godot-community-and-ai-2026.md) informs that comparison without approving a port.
+
 ## Speech and social perception
 
 [Speech and social perception](speech-and-social-perception.md) owns the selected ordinary speech replacement through SPK00–SPK11: one optional addressee, audible recipient awareness without sight, reliable recognition separate from names, full structured remembered experience, shared natural presentation, dialogue without membership, consistent freeform AI availability and actual animal sound responses. The [feature specification](../projects/speech-and-social-perception-feature-spec.md) and [technical design](../projects/speech-and-social-perception-tech-design.md) are designed; runtime implementation and qualification remain open. The covered ordinary-speech slice of ND16 is marked designed, while NC/HE/CR/CE and broader hearing/media work retain their own remaining acceptance.
@@ -58,7 +62,7 @@ DG30 uses [creator funding and contributor governance](creator-fund-and-contribu
 
 ## Future work needing design
 
-[Future work needing design](needs-design.md) distinguishes remaining design/developer decisions from already-designed implementation and verification. Its [current dispositions](needs-design.md#current-design-dispositions) reconcile all 37 ND entries; [design groups](needs-design.md#ordered-design-groups) retain conditional dependencies and roadmap context rather than a current next-project ranking. It links source research and existing owners, including allocated but unmerged work, so unfinished delivery does not trigger duplicate design. Current selection still follows gameplay priorities and repertoire rankings.
+[Future work needing design](needs-design.md) distinguishes remaining design/developer decisions from already-designed implementation and verification. Its [current dispositions](needs-design.md#current-design-dispositions) reconcile all 37 ND entries; [design groups](needs-design.md#ordered-design-groups) retain conditional dependencies and roadmap context rather than a current next-project ranking. It links source research and existing owners, including allocated but unmerged work, so unfinished delivery does not trigger duplicate design. Current selection follows gameplay priorities and repertoire rankings through the [selected first-player milestone](first-player-milestone.md); preparation of a design alone does not select its implementation next.
 
 ## Five researched product specifications
 
