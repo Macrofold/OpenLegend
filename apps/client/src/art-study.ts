@@ -7,6 +7,7 @@ import { installLocomotion } from './model-animation';
 import { StudyCapture } from './study-capture';
 import { ScenePixels, markPixelDetail, needsFinePixels } from './scene-pixels';
 import studyLayout from './props/art-study/layout.json';
+import selections from './props/art-study/selections.json';
 import './art-study.css';
 
 interface StudyAsset {
@@ -55,6 +56,7 @@ const sourceUrls = import.meta.glob<string>(
     import: 'default',
   },
 );
+const sourceFiles = new Map(Object.values(catalogs).map((catalog) => [catalog.group, catalog.sourceFile]));
 const choices: Choice[] = Object.values(catalogs).flatMap((catalog) =>
   [
     ...catalog.assets,
@@ -66,9 +68,11 @@ const choices: Choice[] = Object.values(catalogs).flatMap((catalog) =>
     motionUrl: asset.animatedFile
       ? modelUrls[`./props/art-study/${catalog.group}/${asset.animatedFile}`]
       : undefined,
-    sourceUrl: sourceUrls[`../../../${catalog.sourceFile}`],
+    sourceUrl: sourceUrls[`../../../${sourceFiles.get(asset.fileGroup ?? catalog.group)}`],
   })),
 );
+const replacedIds = new Set(Object.keys(selections));
+const retainedFamilies = new Set(choices.filter((asset) => replacedIds.has('study:' + asset.id)).map((asset) => asset.family));
 const layout: Record<string, { label: string; position: readonly number[] }> = studyLayout;
 function element<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
@@ -79,7 +83,7 @@ for (const family of new Set(choices.map(subjectKey))) {
   const option = document.createElement('option');
   option.value = family;
   const member = choices.find((choice) => subjectKey(choice) === family)!;
-  option.textContent = `${member.historical ? 'Earlier study · ' : ''}${member.historical ? (layout[member.family]?.label ?? member.label) : member.label}`;
+  option.textContent = `${member.historical ? 'Earlier study · ' : retainedFamilies.has(member.family) ? 'Retained source · ' : ''}${member.historical ? (layout[member.family]?.label ?? member.label) : member.label}`;
   subject.append(option);
 }
 const requested = new URLSearchParams(location.hash.slice(1)).get('subject');
@@ -575,7 +579,9 @@ export class ArtStudy {
           p.className = 'recommendation';
           p.textContent = asset.historical
             ? 'Earlier selection · rejected study'
-            : 'Working selection · under review';
+            : retainedFamilies.has(asset.family)
+              ? 'Previous selection · retained for comparison'
+              : 'Working selection · under review';
           card.append(p);
         }
         const description = document.createElement('p');

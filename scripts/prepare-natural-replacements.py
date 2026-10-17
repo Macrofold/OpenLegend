@@ -56,6 +56,20 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def limit_skin_weights(objects):
+    """Evaluate the same four-weight skin that the runtime glTF will render."""
+    for obj in objects:
+        for vertex in obj.data.vertices:
+            weights = sorted(((g.group, g.weight) for g in vertex.groups if g.weight > 0), key=lambda p:p[1], reverse=True)
+            if len(weights) <= 4:
+                continue
+            total = sum(weight for _, weight in weights[:4])
+            for group_index, _ in weights:
+                obj.vertex_groups[group_index].remove([vertex.index])
+            for group_index, weight in weights[:4]:
+                obj.vertex_groups[group_index].add([vertex.index], weight/total, 'REPLACE')
+
+
 def finish_materials(objects, variant, family):
     """Retain source UV/color distinctions and alpha; remove fine PBR noise."""
     images = {}
@@ -90,6 +104,12 @@ def finish_materials(objects, variant, family):
                 value = rgb @ np.array([.2126, .7152, .0722])
                 saturation = .88 if variant == 'clear' else .75 if variant == 'quiet' else .62
                 rgb[:] = value[:, None] + (rgb-value[:, None])*saturation
+                if family in ('leafy-shrub', 'leafy-berries'):
+                    # The source atlas photographs yellow leaves beside brown
+                    # stems. Retain that variation, but choose living woodland
+                    # greens rather than carrying its pale studio color through.
+                    leaves = rgb[:, 1] > rgb[:, 0]*.92
+                    rgb[leaves] *= np.array([.68, .88, .66])
                 if family == 'dry-fiber':
                     rgb[:] = value[:, None]*np.array([1.12, 1.0, .70])
                 if variant == 'weathered':
@@ -252,6 +272,12 @@ def arrange_leafy_shrub(objects, variant):
             remove.extend(component)
     bmesh.ops.delete(mesh, geom=remove, context='VERTS')
     mesh.to_mesh(obj.data); mesh.free()
+    obj.data.calc_loop_triangles()
+    if len(obj.data.loop_triangles) > 5000:
+        bpy.context.view_layer.objects.active = obj
+        modifier = obj.modifiers.new('Retain leaf outlines within shrub budget', 'DECIMATE')
+        modifier.ratio = 5000/len(obj.data.loop_triangles)
+        bpy.ops.object.modifier_apply(modifier=modifier.name)
     count = {'clear':3, 'quiet':2, 'weathered':1}[variant]
     for index in range(1, count):
         branch = obj.copy(); branch.data = obj.data.copy()

@@ -56,8 +56,10 @@ def add(data,appearance,path,family='study'):
                     data['textures'][texture]={'width':pixels.width,'height':pixels.height,'rgba':list(pixels.tobytes())}
                 data['materials'][key]=material
                 colors=accessor(attributes['COLOR_0']) if 'COLOR_0' in attributes else [[1,1,1,1]]*len(positions)
-                uvs=np.array(accessor(attributes['TEXCOORD_0']) if 'TEXCOORD_0' in attributes else [[0,0]]*len(positions),dtype=float)
-                transform=pbr.get('baseColorTexture',{}).get('extensions',{}).get('KHR_texture_transform',{})
+                color_texture=pbr.get('baseColorTexture',{})
+                transform=color_texture.get('extensions',{}).get('KHR_texture_transform',{})
+                uv_key='TEXCOORD_'+str(transform.get('texCoord',color_texture.get('texCoord',0)))
+                uvs=np.array(accessor(attributes[uv_key]) if uv_key in attributes else [[0,0]]*len(positions),dtype=float)
                 if transform:
                     angle=transform.get('rotation',0);c,s=np.cos(angle),np.sin(angle)
                     uvs=(uvs*np.array(transform.get('scale',[1,1])))@np.array([[c,s],[-s,c]])+np.array(transform.get('offset',[0,0]))
@@ -119,7 +121,7 @@ if __name__=='__main__':
             'tree-broadleaf':('natural-broadleaf','quiet'),
             'tree-birch':('natural-birch','quiet'),
             'tree-conifer':('grounded-conifer','quiet'),
-            'woodland-shrub':('natural-shrub','quiet'),
+            'woodland-shrub':('natural-leafy-shrub','quiet'),
             'meadow-grass':('natural-grass','quiet'),
         }
         paths=[]

@@ -1,9 +1,22 @@
 {
   "study:deer-woodland-doe": "study:natural-deer-quiet",
   "study:stag-branching-antlers": "study:natural-stag-quiet",
-  "study:berry-bush-fruit-groups": "study:natural-berry-bush-clear",
-  "study:berry-bush-low-thicket": "study:natural-berry-bush-quiet",
+  "study:berry-bush-fruit-groups": "study:natural-leafy-berries-clear",
+  "study:berry-bush-low-thicket": "study:natural-leafy-berries-quiet",
   "study:reeds-river-fan": "study:natural-reeds-clear",
   "study:dry-fiber-standing-stems": "study:natural-dry-fiber-clear",
-  "study:sword-broad-tip": "study:natural-sword-clear"
+  "study:sword-broad-tip": "study:natural-sword-clear",
+  "study:wolf-field-grey": "study:natural-wolf-quiet",
+  "study:shield-round-boards": "study:natural-shield-clear",
+  "study:knife-utility": "study:natural-knife-clear",
+  "study:bow-field-bow": "study:natural-bow-clear",
+  "study:arrow-bone-point": "study:natural-arrow-clear",
+  "study:backpack-canvas-pack": "study:natural-travel-pack-quiet",
+  "study:rock-rounded-shoulder": "study:grounded-boulder-quiet",
+  "study:fern-open-fronds": "study:grounded-fern-clear",
+  "study:broadleaf-sheltered-crown": "study:natural-broadleaf-quiet",
+  "study:conifer-sheltered-pine": "study:grounded-conifer-quiet",
+  "study:birch-slender-birch": "study:natural-birch-quiet",
+  "study:shrub-rounded-thicket": "study:natural-leafy-shrub-quiet",
+  "study:grass-broad-tuft": "study:natural-grass-quiet"
 }

@@ -47,19 +47,10 @@ def prepare(sources, species):
         meshes = [o for o in objects if o.type == 'MESH']
         natural.legacy_materials(meshes, species)
         natural.finish_materials(meshes, variant, species)
+        natural.limit_skin_weights(meshes)
         for obj in meshes:
             for polygon in obj.data.polygons:
                 polygon.use_smooth = True
-            # Fit the same four-weight skin that glTF will actually render.
-            for vertex in obj.data.vertices:
-                weights = sorted(((g.group, g.weight) for g in vertex.groups if g.weight > 0), key=lambda p:p[1], reverse=True)
-                if len(weights) <= 4:
-                    continue
-                total = sum(weight for _, weight in weights[:4])
-                for group_index, _ in weights:
-                    obj.vertex_groups[group_index].remove([vertex.index])
-                for group_index, weight in weights[:4]:
-                    obj.vertex_groups[group_index].add([vertex.index], weight/total, 'REPLACE')
         natural.source_study.normalize(objects, height)
         identity = 'natural-'+species+'-'+variant
         attribution = 'Deer by CDmir / TinyWorlds, CC0, '+url+'; source skin and Idle/Run motion retained, materials adapted by OpenLegend.'
