@@ -53,7 +53,7 @@ Contract: [native execution](../projects/combat-and-threat-responses-tech-design
 
 - [ ] Install a single native response family with explicit calm, escape, blocked/preparing and settling meanings. Intake alarm even during movement, flight or physical incapacity without bypassing physical capability.
 - [ ] Evaluate the complete locally perceived danger set, bounded reachable refuge candidates and actual routes through the existing navigation/locomotion owners. Distinguish blocked, unavailable preparation, unseen/out-of-scope terrain and no danger; never call an incomplete query safe.
-- [ ] Commit the chosen destination, saved weighted RNG and movement ownership together. Preserve selected route continuity, exact safety crossings and deadlines, and original last-observed uncertainty; a new impact cannot refresh an unseen source's location.
+- [ ] Commit the chosen destination, saved weighted RNG and movement ownership together. Preserve selected route continuity, exact safety crossings and deadlines, and original last-observed uncertainty; a new impact cannot refresh an unseen source's location. A stationary route-blocked animal whose present supported position becomes clear starts the full settling interval there, without a path request or RNG draw; incomplete evidence and incapacity cannot qualify it.
 - [ ] Save exact alarm causes and once-per-projectile/animal-life near-passage deduplication through the existing projectile/observation owner. Qualify interval partition, replay and restore without new random draws or new alarm events.
 
 ## CTR04 — Species profiles, sleep and special locomotion
