@@ -21,6 +21,8 @@ Follow-up synthesis: [native survival](../03-design-proposals/survival-baseline.
 
 [Content safety, mature storytelling and AI companions](content-safety/README.md) records the October 16 research and accepted non-graphic boundary, including the corrected Steam restriction. The linked policy owns character instructions; launch-specific legal/vendor review and actual safeguards remain open under existing production work.
 
+The [AI game development research collection](ai-game-development/README.md) records the October 17, 2026 follow-up on developer production methods, procedural art, public agent skills, UI design, current game-specific model capabilities and PlayCanvas/Godot. It includes [consolidated principles](ai-game-development/09-openlegend-principles.md), [working procedures](ai-game-development/10-openlegend-workflows.md), an [evaluation plan](ai-game-development/11-evaluation-and-adoption.md) and a [dated source register](ai-game-development/13-source-register-and-coverage.md). These are research recommendations, not an engine migration or adopted provider/tool policy.
+
 ## Selected primary sources by topic
 
 These links point to sources actually reviewed in the research. Further specific pages are cited inline; selection here does not imply every source supports every recommendation.
