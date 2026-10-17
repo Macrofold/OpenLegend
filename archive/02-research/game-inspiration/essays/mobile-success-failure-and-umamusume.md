@@ -16,13 +16,21 @@ The game gives its numerical goals personal stakes. Its Main Story starts with a
 
 The URA career makes preparation a sequence of tradeoffs. Trainees have different aptitudes and goals. Training raises attributes and skill points, but low energy risks injury. Bonds improve training opportunities; a summer camp rewards arriving prepared. Race schedules and suitable skills constrain the plan, and the career can be attempted again. These are the current overview's rules, not a claim that every later addition existed at launch. [Official URA overview](https://umamusume.jp/contents/game/scenario/ura/).
 
-The account connects those attempts. Previously trained runners contribute inheritance; support cards offer different training effects, and duplicates strengthen them. Trained teams compete in Team Stadium. Collection can therefore affect preparation across many careers: a support may improve future possibilities, while another trainee offers a different person to develop. This distinguishes acquiring a reusable trainee from producing a particular trained runner. [Official system overview](https://umamusume.jp/contents/game/system/).
+The account connects those attempts. Previously trained runners contribute inheritance; support cards offer different training effects, and duplicates strengthen them. Trained teams compete in Team Stadium. Collection can therefore affect preparation across many careers: a support may improve future possibilities, while another trainee can offer a different person to develop. This distinguishes acquiring a reusable trainee from producing a particular trained runner. [Official system overview](https://umamusume.jp/contents/game/system/).
 
-Separate Scouts offer trainees and support cards. Featured-item exchanges require 200 banner-specific points; unused points become Clovers. [Dated Scout explanation](https://www.destructoid.com/umamusume-pretty-derby-pity-system-explained/).
+Separate Scouts offer trainees and support cards. Featured-item exchanges require 200 banner-specific points; unused points become Clovers when the banner ends. [Dated Scout explanation](https://www.destructoid.com/umamusume-pretty-derby-pity-system-explained/).
 
 The proposed commercial connection is straightforward: **attachment supplies a reason to care; preparation makes the outcome feel partly earned; retained possessions can make another attempt and another acquisition relevant.** A disappointing result can suggest a different plan, while a satisfying result can validate the time spent learning. A purchase can be attractive because of what the player hopes to do with it afterward. This is an interpretation of how the documented systems fit together, not a measured decomposition of revenue.
 
 That interpretation also has limits. Unclear outcomes can make another attempt feel arbitrary. An obligation to repeat can crowd out curiosity. A technically retained possession can have little practical value. Revenue establishes that substantial spending occurred; it does not establish that every player enjoyed the repetition, that purchases were necessary for enjoyment, or that any one mechanism would succeed in another game.
+
+### Audience, purchases and ongoing production
+
+Music, manga and TV anime preceded the mobile release. [Cygames launch announcement](https://www.cygames.co.jp/en/news/id-22022). That gives a plausible route by which someone could arrive already interested in the characters. It does not supply a measured conversion rate from viewers into players or purchasers.
+
+Players can buy currency for randomized acquisitions. [Developer interview and commercial description](https://www.pocketgamer.biz/umamusume-to-be-honest-we-werent-sure-how-a-game-inspired-by-japanese-horse-racing-culture-would-be-received-overseas/). One interviewed spender described payment as affection and appreciation; this is individual testimony, not a representative payer profile. [Reuters reporting](https://www.nippon.com/en/news/reu20211213KBN2IS00Y/). The third anniversary coincided with a Japanese iOS grossing-chart surge. [Sensor Tower event analysis](https://sensortower.com/ja/blog/umamusume-3rd-anniversary). Together, these observations support investigating how prior attachment, desired acquisitions and renewed occasions interact. They cannot assign revenue shares to those motives or separate an event's many simultaneous changes.
+
+A production report describes concept work, choreography, motion capture and cutscene work behind victory concerts. [Secondary production account](https://www.gamebusiness.jp/article/2023/06/06/21791.html). Presentation is therefore part of the work required to deliver the promise. A commercial explanation needs both sides: why the offer may be valuable to a player, and what the organization must repeatedly produce to sustain that value. The complete title-specific cost account remains unavailable.
 
 ## A large total can come from very different audiences
 
@@ -51,18 +59,18 @@ For the publisher, several further quantities matter: amounts retained after sto
 
 These are selected evidence points, not comparable current lifetime totals. The linked dossiers contain the longer series, source-access records, exclusions and conflicting estimates. Numbers from different rows should not be ranked as if they used one method or period.
 
-| Game                                 | Selected evidence                               | Metric boundary                                                                                                                                                                    |
-| ------------------------------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Umamusume                            | Milestone explained above.                      | Japan and worldwide reports remain separate.                                                                                                                                       |
-| Genshin Impact                       | **$6.4bn**, September 2025.                     | App Store/Google Play player spending. [Source](https://www.pocketgamer.biz/genshin-impact-celebrates-five-years-and-64bn-on-mobile-but-annual-spend-is-down-42/)                  |
-| Clash of Clans                       | **Over $10bn**, February 2024.                  | Publisher-reported title revenue; accounting treatment unspecified. [Source](https://supercell.com/en/news/comfortable-feeling-uncomfortable/)                                     |
-| Candy Crush Saga                     | **$3.91bn**, through September 2018.            | Estimated cumulative gross mobile revenue. [Source](https://sensortower.com/blog/candy-crush-revenue-september-2018)                                                               |
-| Pokémon GO                           | **Over $9bn**, through July 2026.               | Estimated gross App Store/Google Play IAP. [Source](https://sensortower.com/ja/blog/pokemon-go-10th-anniversary-JP)                                                                |
-| Harry Potter: Wizards Unite          | **$39.6m**, October 2022 post-closure analysis. | Estimated lifetime mobile player spending. [Source](https://sensortower.com/blog/harry-potter-mobile-games-1-billion-revenue)                                                      |
-| Minecraft Earth                      | **$516,000**, June 30, 2021.                    | Outlet's lifetime player-spending estimate; underlying estimator unnamed. [Source](https://www.pocketgamer.biz/mojang-confirms-minecraft-earth-is-officially-shutting-down-today/) |
-| Apex Legends Mobile                  | **$37m**, February 2023.                        | Estimated **net bookings** before closure. [Source](https://sensortower.com/blog/ea-loses-the-fight-to-keep-apex-legends-and-battlefield-mobile-live)                              |
-| Final Fantasy VII: The First Soldier | **$3.2m**, October 2022.                        | Pre-closure revenue estimate; gross/net unspecified. [Source](https://mobilegamer.biz/final-fantasy-vii-the-first-soldier-to-close-after-2m-downloads-3-2m-revenue/)               |
-| Durango: Wild Lands                  | **$10.4m**, October 2019.                       | Low-confidence pre-closure revenue estimate; gross/net unresolved. [Source](https://www.droidgamers.com/features/durango-wild-lands-global-profits-crashed-in-just-three-months/)  |
+| Game                                 | Selected evidence                                        | Metric boundary                                                                                                                                                                    |
+| ------------------------------------ | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Umamusume                            | Milestone explained above.                               | Japan and worldwide reports remain separate.                                                                                                                                       |
+| Genshin Impact                       | **At least $6.4bn**, first five years to September 2025. | App Store/Google Play player spending. [Source](https://www.pocketgamer.biz/genshin-impact-celebrates-five-years-and-64bn-on-mobile-but-annual-spend-is-down-42/)                  |
+| Clash of Clans                       | **Over $10bn**, February 2024.                           | Publisher-reported title revenue; accounting treatment unspecified. [Source](https://supercell.com/en/news/comfortable-feeling-uncomfortable/)                                     |
+| Candy Crush Saga                     | **$3.91bn**, through September 2018.                     | Estimated cumulative gross mobile revenue. [Source](https://sensortower.com/blog/candy-crush-revenue-september-2018)                                                               |
+| Pokémon GO                           | **Over $9bn**, through July 2026.                        | Estimated gross App Store/Google Play IAP. [Source](https://sensortower.com/ja/blog/pokemon-go-10th-anniversary-JP)                                                                |
+| Harry Potter: Wizards Unite          | **$39.6m**, October 2022 post-closure analysis.          | Estimated App Store/Google Play lifetime player spending. [Source](https://sensortower.com/blog/harry-potter-mobile-games-1-billion-revenue)                                       |
+| Minecraft Earth                      | **$516,000**, June 30, 2021.                             | Outlet's lifetime player-spending estimate; underlying estimator unnamed. [Source](https://www.pocketgamer.biz/mojang-confirms-minecraft-earth-is-officially-shutting-down-today/) |
+| Apex Legends Mobile                  | **$37m**, February 2023.                                 | Estimated **net bookings** before closure. [Source](https://sensortower.com/blog/ea-loses-the-fight-to-keep-apex-legends-and-battlefield-mobile-live)                              |
+| Final Fantasy VII: The First Soldier | **$3.2m**, October 2022.                                 | Pre-closure revenue estimate; gross/net unspecified. [Source](https://mobilegamer.biz/final-fantasy-vii-the-first-soldier-to-close-after-2m-downloads-3-2m-revenue/)               |
+| Durango: Wild Lands                  | **$10.4m**, October 2019.                                | Low-confidence pre-closure revenue estimate; gross/net unresolved. [Source](https://www.droidgamers.com/features/durango-wild-lands-global-profits-crashed-in-just-three-months/)  |
 
 Candy's later **$20bn** announcement is conservatively a **franchise** milestone. [Publisher](https://www.king.com/corporate-and-media/posts/press-releases/celebrating-20-years-of-gaming-excellence-kings-milestone-journey/). Its deliberately dated standalone figure above should not be mistaken for a current total.
 
@@ -89,6 +97,28 @@ The five successful cases were selected for demonstrated commercial scale or end
 | [Durango: Wild Lands](../dossiers/durango-wild-lands.md)                                   | When does useful specialization create belonging, and when does preparation become a burden?                |
 
 These questions are analytical readings of the documented cases, not claims that one variable explains their outcomes. A familiar brand, elaborate mechanics, positive reviews or a devoted community can all coexist with an ended service. Conversely, a financially successful game can still produce fatigue, frustration or criticism. Enjoyment, continued use, customer spending and profitability should be evaluated separately.
+
+## What the closed services change about the explanation
+
+### Separate an attractive premise from a repeatable reason to stay
+
+The unsuccessful group makes brand recognition an inadequate explanation by itself. Harry Potter, Minecraft, Apex Legends and Final Fantasy VII all supplied recognizable starting points, yet their mobile adaptations ended. That comparison does not estimate the value of a license; it shows that recognition cannot be treated as sufficient evidence of a sustainable service. The relevant question is what a particular adaptation lets the player enjoy after the initial curiosity has passed. [Individual evidence and edition boundaries](../research-progress-mobile-2026-10-17.md#subject-status).
+
+The dates also resist a single external explanation. Wizards Unite's reported commercial slowdown was visible in 2019. [Dated spending evidence](https://www.pocketgamer.biz/harry-potter-wizards-unite-sharp-decline/). Minecraft Earth's publisher cited disrupted movement/cooperation and resource reallocation. [Publisher explanation](https://www.minecraft.net/en-us/article/minecraft-earth-coming-end). The pandemic belongs in the latter account, but cannot explain a pre-pandemic deterioration in the former. Neither observation supplies a complete account of management's alternatives or every player's reason for leaving.
+
+### Useful systems do not establish sufficient demand
+
+Durango is especially relevant to OpenLegend because its dossier records extensive specialization, production, settlement and player creation. Those systems offer concrete ways for possessions and other people to matter. Their presence did not ensure that the online business continued. Its final offline island modes preserved a bounded experience. [Dossier](../dossiers/durango-wild-lands.md); [preservation account](https://www.inven.co.kr/webzine/news/?news=231121).
+
+This makes a better research question than either praising or rejecting complexity in general: which decisions did the complexity enable, which people valued those decisions, and what work had to be sustained around them? The same question applies to a small puzzle and a large simulated world. A count of features cannot substitute for an account of their use.
+
+### Continued delivery has its own failure conditions
+
+Respawn cited shortfalls in content quality, quantity and cadence. [Archived publisher statement](https://devtrackers.gg/apex-legends/p/0a52ffaa-a-development-update-on-apex-legends-mobile). Ateam's cost-recovery evidence is recorded in the financial section above. These are different kinds of evidence from a reviewer's judgment that a match was enjoyable. The game, its operation and its commercial continuation need separate evaluation.
+
+As a matter of business arithmetic, continued operation requires the expected value of future receipts to justify the obligations needed to earn them. A publisher can also consider other uses for the same staff and capital. The public record here does not disclose all of those alternatives. It therefore supports examining production burden and cost recovery without inventing a numerical break-even point or treating a shutdown announcement as a full postmortem.
+
+The strongest cross-case conclusion is that **attachment, persistence, social usefulness and elaborate mechanics are possible contributors, not individually sufficient conditions**. The successful cases supply mechanisms worth understanding; the closed services supply counterexamples that keep the explanation honest.
 
 ## Comparing the promise with the work required
 
@@ -126,4 +156,4 @@ The dossier set includes major mechanics inventories, concrete constructed inter
 
 Written reviews provide situated accounts, often with limited hours or a particular device. Player posts provide reasons someone gives for staying, paying or leaving. Neither is a representative retention study. Publisher and developer statements establish their reported intent or explanation; vendor revenue models estimate defined slices of the market. None alone establishes a causal model of success.
 
-The final essay will retain missing quantities as missing: title-specific profit, complete cost structures, payer distributions, acquisition costs, cohort retention and the financial contribution of individual mechanics cannot be manufactured from the recovered public evidence.
+Missing quantities remain missing: title-specific profit, complete cost structures, payer distributions, acquisition costs, cohort retention and the financial contribution of individual mechanics cannot be manufactured from the recovered public evidence.

@@ -4,6 +4,7 @@
 
 ## Start here
 
+- **[Why Umamusume made billions — mobile successes and unsuccessful services](essays/mobile-success-failure-and-umamusume.md):** the ten-case synthesis connects character attachment, repeated play, purchases and operating costs, with dated financial evidence and research questions for OpenLegend.
 - **[Ten mobile successes and unsuccessful services — G168–G177](research-progress-mobile-2026-10-17.md):** full mechanics, reception and commercial studies of the ten October 17 additions, beginning with Umamusume. The scoped ledger owns actual completion and links each dossier.
 - **[Full 177-subject research roster](research-roster.md):** canonical title/edition list. The seventeen G150–G166 additions are **roster only; research has not started and must wait for Mike's authorization**.
 - **[Research requirements](research-requirements.md):** R01–R14 completion standard, including five written reviews per game and Steam review sampling where applicable. The [October 13 amendment](research-economics-engagement-and-creation.md) explicitly covers revenue estimates and economic outcomes, why play is enjoyable or frustrating, replay/abandonment, fictional economies, deep lore and creator tooling.
@@ -202,3 +203,4 @@ The existing engineering, product, and world-design owners remain authoritative 
 ## Supplementary Dungeons & Dragons studies
 
 The [tabletop research hub](games/dungeons-and-dragons.md) distinguishes the [2024 revision](dossiers/dungeons-and-dragons-2024.md), [v.3.5](dossiers/dungeons-and-dragons-3-5.md), [GM adjudication](mechanics/dungeons-and-dragons-adjudication.md), and [complete-SRD systems study](mechanics/dungeons-and-dragons-srd-systems.md). The related [world dossier](../worldbuilding/worlds/29-dungeons-and-dragons.md) and [planes and lived-magic supplement](../worldbuilding/dungeons-and-dragons-planes-and-lived-magic.md) retain setting, edition and source-access distinctions. These additions do not renumber the existing game roster or claim exhaustive source review.
+
