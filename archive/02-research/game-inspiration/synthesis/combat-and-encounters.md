@@ -78,6 +78,13 @@ The current project owns exact values, modes, failure behavior and acceptance. T
 
 Broader weapon balance, boss composition, tactical-group coordination, stealth/hearing extensions, morale systems, rescue/capture, PvP service fairness and long-term relationships are outside this focused pass. Candidate routes such as [Hades](../dossiers/hades.md), [Elden Ring](../dossiers/elden-ring.md), [XCOM 2](../dossiers/xcom-2.md) and [Battle Brothers](../dossiers/battle-brothers.md) remain unassessed for this guide; linking them grants no incorporation status.
 
+Retain the wider guide's research questions for later passes:
+
+- How do tells, positioning, timing, resources, initiative and teamwork differ across real-time and turn-based encounters, ordinary enemies and bosses? Distinguish demanding mastery from unclear hits, excessive durability, dominant tactics and punishment without a usable response.
+- How do stealth, ambush, hunting, morale, coordinated opposition and NPC-to-NPC hostility create motives and counterplay beyond repeated damage exchanges?
+- Where a studied world supports them, how do killing, restraint, surrender, capture, escape, intimidation and negotiated peace change costs and results? Keep melee/ranged distinctions, useful defense and clear victories visible. An opponent need not accept peace or be redeemable.
+- How do raids, war and contested places connect encounter outcomes to SOCIETY, KNOW and LOSS? ACTION owns general improvisation and SPEECH owns negotiation; COMBAT owns how those attempts meet active opposition. The consequences of defeat and a satisfying stopping point remain distinct questions.
+
 ## Design subtopics
 
 Reuse existing ND identities; these scoped mappings do not close their wider registered work. Design disposition stays in [Future work needing design](../../../../docs/maintainers/needs-design.md), and implementation stays with CTR.

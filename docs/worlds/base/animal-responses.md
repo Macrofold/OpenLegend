@@ -28,6 +28,8 @@ An ordinary animal enters an alarm episode when it personally receives any of th
 
 Existing territorial entry rules may start the stag's territorial episode independently. Generic noises, offspring danger, another animal's cry, grazing proximity, odor and distant combat do not start ordinary alarm in this slice. Their later designs must provide actual supported sensory evidence instead of assuming them from a label.
 
+Near-passage evidence uses only the projectile's actually traversed path before its first stopping contact. It cannot frighten a body beyond a wall the shot already struck. Each projectile/animal-life pair produces at most one passage alarm for that flight; a later impact is a distinct actual consequence, not a duplicate passage. No injury is invented for a near passage.
+
 A fresh qualifying occurrence resets the continuous-clearance clock and marks the current route for review. It does not create a second physical lane, replenish health, renew paid cognition or allocate one durable episode per hit. Repeated evidence from one physical source updates that source's current danger record within the same episode. The committed occurrence remains precise in the event owner.
 
 ## Potential dangers during an alarm
@@ -67,6 +69,8 @@ At the normal base-world **60 game seconds per real second**, 240 game seconds i
 Crossing inside the 15-metre clear boundary resets `clearSince`, including during the final fraction of the four-second interval. Returning inside 12 metres additionally makes the route urgent to review. The gap provides hysteresis for route changes, while the continuous-clearance requirement remains strict. A danger moving between 12 and 15 metres can postpone settling without causing a new destination every frame.
 
 While settling, a person approaching through the 15-metre boundary resumes escape. A fresh attack resumes it immediately even if the attacker is still farther away. Arriving at one refuge does not end alarm by itself. A route can continue through successive refuges until the clear interval succeeds; there is no fixed maximum distance from the original attack and no forced teleport home.
+
+Ending the episode schedules the next ordinary wander after the existing **120–239 game second** rest range, drawing that interval once from saved RNG. Keep the lightweight **0.4-metre** ordinary wander goal and select its heading once when due. Move to it through the same ordinary locomotion owner and profile speed, with real duration and collision checks; do not retain the old instantaneous displacement as a second movement path. No goal points back to the site of the attack merely because that is where the animal started.
 
 ## Refuge selection and movement
 
@@ -147,6 +151,8 @@ Without safe aerial coverage, an airborne bird follows a valid remaining corrido
 Persist the exact policy pin, animal physical life, alarm start/cause references, mode, current danger estimates with original observation times, chosen refuge, current movement ownership reference, next review, `clearSince`, blocked-input signature and any consumed random selection. Paths continue in the existing movement/flight owner; do not add a second authoritative path to animal state. Transient candidate lists, threat-query indexes and navigation meshes are derived and rebuilt as needed.
 
 Validate the current format before installation: finite positions/times, compatible support, correct profile/life references, valid mode-specific fields and a bidirectional match to any active movement owner. A settling animal has a valid `clearSince` no later than the current simulation time; an escaping animal cannot claim settling completion. Historical evidence may outlive its physical source. Old source identities do not authorize new observations. Death ends living response, incapacity/falling suspends movement with its pending alarm retained under the body owner, and explicit compatible restoration resumes without replaying the initiating hit or drawing again. Current development saves follow [the current-format policy](../../save-and-load.md#current-format-validation); this feature adds no legacy reader or migration.
+
+Incapacity or uncontrolled falling clears `clearSince`; time unable to perform the settling response does not complete it. The animal's sensing capability independently determines whether new observations can update its estimates. On regaining supported voluntary motion, review the remaining permitted evidence and choose escape or begin a fresh clear interval. Death clears active control state while source history remains; a later new body life starts without reviving the dead life's alarm.
 
 Ordinary players see permitted physical behavior: fleeing, alert after fleeing, visibly blocked, the current visible path movement and actual injury. They do not see the animal's hidden destination, all retained threats, a telepathic fear percentage or a global red combat label. A creator/developer with the existing appropriate inspection grant may inspect the selected policy, mode, actual route outcome, timer, source evidence and refusal reason. These details make debugging possible without giving animals narrated thoughts.
 

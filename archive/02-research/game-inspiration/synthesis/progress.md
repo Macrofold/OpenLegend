@@ -6,7 +6,7 @@
 
 ## Current snapshot — October 17, 2026
 
-The focused intelligence/simulation pass retains published `Macrofold/OpenLegend` main at `0c12398e32e7c9578e18de07bbe79d39b4827208` as its source base. The October 17 combat-response pass inspected four existing dossiers at `0eb7358f251d1ab706592ccb6e9829e98c729fe9` plus their named primary sources. This update changes only their COMBAT cells; earlier source, structural-review and NPC provenance remains intact. Counts come from the actual matrices and inventory, not a second per-source status list.
+The focused intelligence/simulation pass retains published `Macrofold/OpenLegend` main at `0c12398e32e7c9578e18de07bbe79d39b4827208` as its source base and `research/intelligent-simulation-2026-10-14` as its original work branch. The October 17 combat-response pass inspected four existing dossiers at `0eb7358f251d1ab706592ccb6e9829e98c729fe9` plus their named primary sources. This update changes only their COMBAT cells; earlier source, structural-review and NPC provenance remains intact. Counts come from the actual matrices and inventory, not a second per-source status list.
 
 | Measure | State |
 | --- | --- |
