@@ -1,6 +1,6 @@
 # Source register, coverage and confidence
 
-**Research checked:** 17 October 2026. **Original project baseline:** `0eb7358f251d1ab706592ccb6e9829e98c729fe9`. **Design integration reviewed against:** `334d61a8ba0bffa019e33e9f1d304af8bd3ea6ab`.
+**Research checked:** 17 October 2026. **Original project baseline:** `0eb7358f251d1ab706592ccb6e9829e98c729fe9`. **Project documentation baseline:** `334d61a8ba0bffa019e33e9f1d304af8bd3ea6ab`.
 
 This research uses **195 distinct resource records**. They include individual skill files, API documentation, model cards, papers, developer interviews, store records and community accounts. Multiple records from one company or creator are not independent confirmations. The detailed [machine-readable register](sources.json) records each resource's author, date where established, evidence type, supported claim and limitations. The topical dossiers place citations beside the actual claims.
 
@@ -22,7 +22,7 @@ This research uses **195 distinct resource records**. They include individual sk
 | PlayCanvas versus Godot                  | Actual OpenLegend source/dependency context; current PlayCanvas/Godot/Unity/Unreal docs and real tool scope                | Retain current stack pending a material measured reason to change                                         | Same-slice authoring and browser delivery comparison                         |
 | Testing and overall development          | EA SEED production paper, Play2Code method, live editor/browser skill checks and project guidance                          | Observable actions, reproducible failures, selective automation and human play                            | Whether the slice is engaging and whether AI exploration adds value          |
 
-The review added official ComfyUI graph/API/agent resources and Scenario workflow documentation, bringing the tooling audit to 27 candidates. The [production handbook](../../../docs/production-workflows/README.md) turns the evidence into reusable routes; [review and integration](14-review-and-design-integration.md) records the critique, creative opportunities and existing design owners. Those methods have not been executed as tool qualification.
+The tooling audit covers 27 candidates, including official ComfyUI graph/API/agent resources and Scenario workflow documentation. The [production handbook](../../../docs/production-workflows/README.md) turns the evidence into reusable routes, and [production principles](09-openlegend-principles.md) explain the project-specific recommendations. Tool execution and production qualification remain untested.
 
 General coding leaderboards were deliberately excluded. Historical coding results, generic web-app benchmarks and tutoring quality scores were not used as evidence for game narrative or design superiority. Broad legal/platform policy research was not repeated; the current project owners and concrete tool/output requirements were respected.
 
@@ -32,7 +32,7 @@ The work began with live repository guidance and current project owners, then th
 
 Representative search clusters included AI game-development production accounts; Substance graphs and smart materials; 3D-to-pixel animation; Geometry Nodes agent skills; PlayCanvas/Blender/Godot MCP and skill source; coherent game UI with agents; roleplay/persona/interactive-story evaluation; current image/3D/rigging APIs; runtime NPC latency and memory; and production automated playtesting.
 
-Search results were treated as discovery leads. Important compatibility and capability claims were checked against primary documentation, current API pages or actual files. The skills audit changed recommendations after finding version constraints, renderer-specific rules, paid-provider defaults and unimplemented operations. The model audit checked current names rather than silently replacing the supplied names with older models.
+Search results were treated as discovery leads. Important compatibility and capability claims were checked against primary documentation, current API pages or actual files. Skill suitability depends on version constraints, renderer-specific rules, paid-provider defaults and which operations are implemented. Model names and capabilities are tied to the dated primary sources.
 
 For the project itself, the review distinguished newer canonical owners from older README/archive descriptions. In particular, the delivered mercenary rendering pilot and the recent UI redesign were not confused with the broader proposed art pipeline or older interface layouts. [Context and method](01-context-and-method.md).
 
@@ -68,7 +68,7 @@ These are limits on specific claims, not a reason to discard the research. Each 
 
 Coverage is judged by the user's decision areas, source diversity, actual inspection, contradictory evidence and the specificity of the resulting recommendations. It is not judged by exhausting every search result or accumulating an arbitrary number of links.
 
-The pass followed every supplied starting point; inspected useful tools down to files and endpoint contracts; included both AI and non-AI production; compared studios, independent developers, public mods, papers and vendor accounts; and corrected several initially plausible assumptions. Independent review checked UI/model causality, costs, source dependence, project fit and unnecessary process gates.
+Coverage includes every supplied starting point, useful tool files and endpoint contracts, AI and non-AI production, studios, independent developers, public mods, papers and vendor accounts. The recommendations account for UI/model causality, complete costs, source dependence and project fit.
 
 The unresolved questions are primarily empirical: which assets survive our export/camera constraints, which model produces better valid character work, which visual workflow saves correction, and which complete player loop is enjoyable. More undirected browsing would not resolve those questions. [Evaluation and adoption](11-evaluation-and-adoption.md) supplies bounded next tests.
 
