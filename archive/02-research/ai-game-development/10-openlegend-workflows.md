@@ -62,7 +62,7 @@ Normalize orientation, scale and pivot in the editable source. Apply the approve
 
 **Likely tools:** PlayCanvas GLB inspection/calibration; Blender through one selected execution path; Tripo or Meshy as later candidate suppliers when generation is needed.
 
-**Acceptance evidence:** recognizable function and silhouette, world/icon agreement, valid scale and placement, supported materials, acceptable delivery cost, and no invented mechanical capability.
+**Acceptance evidence:** recognizable function and silhouette, world/icon agreement, valid scale and placement, supported materials, acceptable delivery cost, and no invented mechanical capability. If the trial installs or replaces a representation, also exercise a failed/delayed load and a reload: preserve the same object, current state, adequate fallback and admitted mechanics. An offline asset study does not require a publication test suite.
 
 **Why here:** it isolates the proposed general asset intake from the additional difficulty of skinning and animation. OpenLegend already displays a live character; the useful experiment is repeatable intake and identity, not proving that 3D can appear at all. [Invention-art owner](../../../docs/invention-art-pipeline.md), [asset proposal](../../../docs/projects/3d-pixel-art-asset-pipeline.md).
 
@@ -122,7 +122,7 @@ Use an authoring model to propose and revise dialogue examples, motives, environ
 
 **Inputs:** a permitted evidence snapshot, current person definition, the actual output contract, and a small set of challenging situations.
 
-Begin with fixed-context comparisons so candidates see equivalent evidence. Test a first meeting, a request against the resident's concerns, contradictory hearsay, an unavailable item, another person's secret, failed action, and changed conditions after an absence. Continue with a few closed-loop sessions where the model's earlier responses affect later conversation.
+Begin with fixed-context comparisons so candidates see equivalent evidence. Test a first meeting, a request against the resident's concerns, contradictory hearsay, an unavailable item, another person's secret, failed action, and changed conditions after an absence. Continue with a few closed-loop sessions where earlier responses and actual native outcomes affect later conversation. Include one supported proposal that receives an accepted or rejected native result, followed by a response and revisit; an intended or rejected action must not become a remembered completed event.
 
 Save what context was actually delivered, including the distinction between observation and reported information. When a response fails, identify whether the cause was missing evidence, wrong retrieval, prose quality, persona drift, invalid operation or delivery behavior. Repair the owning stage; do not add more world history indiscriminately.
 
@@ -184,6 +184,7 @@ This record need not become a new database or a large form. Its purpose is to pr
 
 ## Proposed sequence for the next development effort
 
-Begin with the inventory/scene baseline and identify the most consequential quality gap. Produce the corresponding small art family and one complete interaction. In parallel, where independent, prepare a limited character-authoring comparison. Extend the accepted result through one prop and one animation round trip, then prove a second family member.
+Begin with the inventory/scene baseline because it directly addresses Mike's concern, then choose the procedure that addresses the most consequential gap in the current playable loop. The prop, animation, material and character procedures are selectable work, not serial prerequisites. Independent authoring or asset work can proceed in parallel when its inputs are clear.
 
-Only after those steps reveal repeated work should the team add a narrow automation skill or a new authoring bridge. Only after a measured product or authoring limitation should it investigate an engine port or self-hosted model operation. This ordering follows the research's strongest project-specific finding: useful references, editable reuse and real review can improve the game immediately while producing evidence for larger choices.
+Use compatible reference skills whenever they help the chosen task. Add a new bridge or recurring automation when it solves observed repeated work; use a second family member when the claim being tested is broad reuse. An engine port or self-hosted model operation needs its own measured product or production reason. This approach applies the research's strongest finding: useful references, editable reuse and real review can improve the game while producing evidence for larger choices.
+

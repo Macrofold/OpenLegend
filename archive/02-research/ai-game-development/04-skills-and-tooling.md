@@ -44,7 +44,7 @@ These are candidate workflows rather than 25 installations. Several combine neig
 
 **Kind:** first-party skills. **Proposal:** use now as task-specific references.
 
-The actual [build-app](https://github.com/playcanvas/skills/blob/main/skills/build-app/SKILL.md) and [apply-conventions](https://github.com/playcanvas/skills/blob/main/skills/apply-conventions/SKILL.md) skills start from the code's existing surface and lifecycle. [find-examples](https://github.com/playcanvas/skills/blob/main/skills/find-examples/SKILL.md) uses examples from the installed engine's exact version, and [reuse-scripts](https://github.com/playcanvas/skills/blob/main/skills/reuse-scripts/SKILL.md) points to shipped camera, water, sky, picker, outline, and statistics utilities.
+The actual [build-app](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/build-app/SKILL.md) and [apply-conventions](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/apply-conventions/SKILL.md) skills start from the code's existing surface and lifecycle. [find-examples](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/find-examples/SKILL.md) uses examples from the installed engine's exact version, and [reuse-scripts](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/reuse-scripts/SKILL.md) points to shipped camera, water, sky, picker, outline, and statistics utilities.
 
 For OpenLegend, use these before creating another camera, sky, or picking subsystem. Preserve our accepted input mappings and renderer interface. Generic sample physics and application-owned game-state patterns do not override our server authority. The important saving is locating a supported implementation and adapting its public contract, not copying a tutorial scene wholesale.
 
@@ -52,7 +52,7 @@ For OpenLegend, use these before creating another camera, sky, or picking subsys
 
 **Kind:** skills plus offline inspection script. **Proposal:** high-priority pilot.
 
-[inspect-glb](https://github.com/playcanvas/skills/blob/main/skills/inspect-glb/SKILL.md) includes `scripts/inspect.mjs` for geometry, bounds, joints, clips, morphs, and inspection limits. [calibrate-model](https://github.com/playcanvas/skills/blob/main/skills/calibrate-model/SKILL.md) distinguishes an asset's measured support points, visual pivot, scale, and facing from an arbitrary bounding box.
+[inspect-glb](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/inspect-glb/SKILL.md) includes `scripts/inspect.mjs` for geometry, bounds, joints, clips, morphs, and inspection limits. [calibrate-model](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/calibrate-model/SKILL.md) distinguishes an asset's measured support points, visual pivot, scale, and facing from an arbitrary bounding box.
 
 Apply this to one existing mercenary or new prop. Record one calibration, inspect it beside a known-size object, and reuse the result. Do not change bones to compensate for a root placement problem. Compressed-model inspection may need a pinned decoder; its current helper does not support every compression path. A bounds report cannot determine semantic front-facing direction by itself.
 
@@ -60,7 +60,7 @@ Apply this to one existing mercenary or new prop. Record one calibration, inspec
 
 **Kind:** PlayCanvas skill. **Proposal:** high-priority for current/future skinned assets.
 
-[configure-animation](https://github.com/playcanvas/skills/blob/main/skills/configure-animation/SKILL.md) checks real clip and target paths, animation ownership, blend ranges, and sampled non-root joint motion. An advancing playback timer is not proof that a character is moving.
+[configure-animation](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/configure-animation/SKILL.md) checks real clip and target paths, animation ownership, blend ranges, and sampled non-root joint motion. An advancing playback timer is not proof that a character is moving.
 
 This maps directly to mercenary presentation and the staged character pipeline. Use an explicit expected clip list, inspect idle/walk/attack transitions, then review feet, silhouette, and weapon alignment in the actual camera. The server decides that an action happened; animation shows it. The skill does not justify adding a second client combat simulation.
 
@@ -68,7 +68,7 @@ This maps directly to mercenary presentation and the staged character pipeline. 
 
 **Kind:** PlayCanvas lighting/baking skills. **Proposal:** use lighting method now; bake selectively.
 
-[light-scene](https://github.com/playcanvas/skills/blob/main/skills/light-scene/SKILL.md) works through illumination, exposure, environment, shadows, and postprocessing with screenshot feedback. [bake-lighting](https://github.com/playcanvas/skills/blob/main/skills/bake-lighting/SKILL.md) requires appropriate static objects and UVs.
+[light-scene](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/light-scene/SKILL.md) works through illumination, exposure, environment, shadows, and postprocessing with screenshot feedback. [bake-lighting](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/bake-lighting/SKILL.md) requires appropriate static objects and UVs.
 
 OpenLegend needs daytime and nighttime readability across sprites and meshes, driven by its actual public world clock. Establish a small day/night reference set and tune one class of parameter at a time. Blanket baked sunlight is a poor default for movable objects, construction, and a changing sun. Offline asset previews should reveal material defects; they must not substitute a flattering studio render for in-game acceptance.
 
@@ -76,7 +76,7 @@ OpenLegend needs daytime and nighttime readability across sprites and meshes, dr
 
 **Kind:** PlayCanvas skills. **Proposal:** use for specific visible outcomes.
 
-[add-effects](https://github.com/playcanvas/skills/blob/main/skills/add-effects/SKILL.md) distinguishes particles, shader modifications, meshes, and screen effects. [override-shader-chunks](https://github.com/playcanvas/skills/blob/main/skills/override-shader-chunks/SKILL.md) preserves existing lighting, shadows, skinning, and fog instead of rebuilding an entire material.
+[add-effects](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/add-effects/SKILL.md) distinguishes particles, shader modifications, meshes, and screen effects. [override-shader-chunks](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/override-shader-chunks/SKILL.md) preserves existing lighting, shadows, skinning, and fog instead of rebuilding an entire material.
 
 That suits restrained water, dust, fire, highlight, and invention feedback. Reuse emitters where appropriate, and measure first-use compilation hitches. Chunk names and GLSL/WGSL interfaces are version-sensitive: current examples must be checked against OpenLegend's pinned 2.22.2. An effect should represent an observable world outcome, not expose hidden state.
 
@@ -84,7 +84,7 @@ That suits restrained water, dust, fire, highlight, and invention feedback. Reus
 
 **Kind:** PlayCanvas asset/performance skills. **Proposal:** use when measurement identifies a problem.
 
-[load-assets](https://github.com/playcanvas/skills/blob/main/skills/load-assets/SKILL.md) covers container loading and decoder/texture-compression setup. [reduce-draw-calls](https://github.com/playcanvas/skills/blob/main/skills/reduce-draw-calls/SKILL.md) distinguishes fill cost from submission cost and considers hidden rendering, batching, instancing, and spatial organization.
+[load-assets](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/load-assets/SKILL.md) covers container loading and decoder/texture-compression setup. [reduce-draw-calls](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/reduce-draw-calls/SKILL.md) distinguishes fill cost from submission cost and considers hidden rendering, batching, instancing, and spatial organization.
 
 OpenLegend's repeated props and sprite/mesh populations make this relevant. Reduce texture memory or unnecessary draws when the measured scene needs it. Avoid importing universal polygon budgets or merging the entire world into one batch that frustrates visibility and updates. Decoder availability and download overhead belong in the observed result.
 
@@ -92,9 +92,9 @@ OpenLegend's repeated props and sprite/mesh populations make this relevant. Redu
 
 **Kind:** PlayCanvas skills plus browser tooling. **Proposal:** visual method now; runtime inspector gated by version.
 
-[verify-pixels](https://github.com/playcanvas/skills/blob/main/skills/verify-pixels/SKILL.md) requires a controlled camera, state, time, and randomness; first check that the baseline can repeat. It reserves byte-identical expectations for changes that should preserve pixels exactly.
+[verify-pixels](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/verify-pixels/SKILL.md) requires a controlled camera, state, time, and randomness; first check that the baseline can repeat. It reserves byte-identical expectations for changes that should preserve pixels exactly.
 
-[inspect-runtime](https://github.com/playcanvas/skills/blob/main/skills/inspect-runtime/SKILL.md) uses a development inspector hook and requires Engine 2.23+. Our [client manifest](../../../apps/client/package.json) pins 2.22.2, so this is **not immediately compatible**. Do not add a production hook or upgrade merely to follow the skill. Full-screen UI review must capture React DOM alongside the canvas.
+[inspect-runtime](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/inspect-runtime/SKILL.md) uses a development inspector hook and requires Engine 2.23+. Our [client manifest](../../../apps/client/package.json) pins 2.22.2, so this is **not immediately compatible**. Do not add a production hook or upgrade merely to follow the skill. Full-screen UI review must capture React DOM alongside the canvas.
 
 ### 8. PlayCanvas Editor MCP, if we choose an Editor authoring workflow
 
@@ -246,14 +246,14 @@ The newer [Tigertycoon descendant](https://github.com/Tigertycoon/material-maker
 
 | Candidate or temptation | Reason |
 | --- | --- |
-| Installing the entire supplied catalog/router | Its default favors the engine it covers most deeply. OpenLegend already has an engine, project routing, and stronger domain constraints. Select useful discipline files instead. [Router](https://github.com/gamedev-skills/awesome-gamedev-agent-skills/blob/main/router/SKILL.md). |
+| Installing the entire supplied catalog/router | Its default favors the engine it covers most deeply. OpenLegend already has an engine, project routing, and stronger domain constraints. Select useful discipline files instead. [Router](https://github.com/gamedev-skills/awesome-gamedev-agent-skills/blob/0a70cfc64672d512c5b5b6006b5dcb5cf90dbdbd/router/SKILL.md). |
 | [chongdashu/unreal-mcp](https://github.com/chongdashu/unreal-mcp) as a production recommendation | Its README labels it experimental and unsuitable for production; metadata last push was April 2025. It requires an Unreal native editor plugin plus Python. A MIT badge was visible, but a matching license file was not established. |
 | Combining several Blender bridges immediately | Overlapping scene mutation and execution surfaces make the workflow harder to understand. Select one based on the single task's required operations and feedback. |
 | Copying generic physics, save-state, or agent-behavior patterns | They can conflict with OpenLegend's server authority, persisted world, deterministic rules, and permitted observer view. The local [boundaries](../../../docs/engine-and-world-boundaries.md) remain authoritative. |
 | Treating videos or text-to-video as rigged animation | A video is not a reusable skeleton, weight map, animation clip, or engine-tested motion set. Require the actual output contract. |
 | Treating a first-party source as universally compatible | PlayCanvas 2.23 inspector versus our 2.22.2 dependency, Blender-version differences, and Adobe Spectrum versus React Aria demonstrate why exact context matters. |
 
-Audio and model-specific asset generators belong with the separate model/production research. Two additional sources discovered are [ElevenLabs' official text-to-speech skill](https://github.com/elevenlabs/skills/tree/main/text-to-speech) and [NVIDIA Kimodo](https://github.com/nv-tlabs/kimodo) for skeletal motion. They are cross-references, not implementation-qualified candidates in this tooling review.
+Audio and model-specific asset generators belong with the separate model/production research. Two additional sources discovered are [ElevenLabs' official text-to-speech skill](https://github.com/elevenlabs/skills/blob/main/text-to-speech/SKILL.md) and [NVIDIA Kimodo](https://github.com/nv-tlabs/kimodo) for skeletal motion. They are cross-references, not implementation-qualified candidates in this tooling review.
 
 ## Proposed adoption order and evidence
 
