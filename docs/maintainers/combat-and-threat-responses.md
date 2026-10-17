@@ -105,7 +105,7 @@ Contract: [reconsideration and concurrency](../projects/combat-and-threat-respon
 
 Contract: [existing-path integration](../projects/combat-and-threat-responses-tech-design.md#contextual-action-integration--ctr09), [world preference rules](../worlds/base/combat.md#selected-threat-and-encounter-continuity) and existing UI owners.
 
-- [ ] Extend the installed context-action ranking and preferred-choice guard with current/recent observed aggression and own admitted offensive preference. Use the canonical simulation-time grace and controller/pair-local explicit Speak override.
+- [ ] Extend the installed context-action ranking and preferred-choice guard with current/recent observed aggression and own admitted offensive preference. Use the canonical simulation-time grace and controller/pair-local explicit Speak override, admitted through exact revision-bound preference receipts. Stop only the pair's owned unfinished invocation; a late Stop cannot cancel a newer attack or unrelated work.
 - [ ] Preserve berry gathering and ordinary speaking. Choose the already held compatible contact method then unarmed; disclose exact ranged/aim/release and approach meanings without silently equipping or choosing maximum damage.
 - [ ] Capture exact action, target life, tool and command at pointer-down; revalidate the same gesture at commit. Changed preference becomes stale/unavailable, never an undisclosed attack or substitute action. Recovery remains visibly blocked rather than falling back to Speak.
 - [ ] Qualify two opponents, hover/selection, held aim, stop attacking, deliberate Speak, time-only expiry, target death/invisibility, stale inventory, keyboard/text focus and server receipt replay through real browser input.
