@@ -1,6 +1,6 @@
 # Adult content: U.S. law, ratings and distribution
 
-**Research reviewed: 2026-10-16.** This is a U.S.-focused research record, not legal advice, a fifty-state survey, a rating assignment or a distribution approval. Requirements change; obtain a launch-specific legal and vendor review. The accepted OpenLegend policy is maintained in [Agent content and companion safety](../../../..//docs/agent-content-and-companion-safety.md); this research is supporting evidence, not a second policy owner. Companion laws and player moderation are covered in [the companion research](ai-companions-and-player-moderation.md).
+**Research reviewed: 2026-10-16.** This is a U.S.-focused research record, not legal advice, a fifty-state survey, a rating assignment or a distribution approval. Requirements change; obtain a launch-specific legal and vendor review. The accepted OpenLegend policy is maintained in [Agent content and companion safety](../../../docs/agent-content-and-companion-safety.md); this research is supporting evidence, not a second policy owner. Companion laws and player moderation are covered in [the companion research](ai-companions-and-player-moderation.md).
 
 ## Finding and product interpretation
 
@@ -49,7 +49,7 @@ This review does not determine state privacy-law coverage, mandatory reporting i
 
 Preserve mature themes, profanity, romance, consensual non-graphic intimacy and serious discussion of difficult subjects. Do not launch an erotic-chat product, and do not use an 18+ preference, private channel, fictional-world rule or player-supplied age claim to override the boundary. Avoid unnecessary player image/video sharing in the initial scope. The canonical policy defines the operational distinctions rather than using one ambiguous NSFW switch.
 
-Before enabling public conversations, legal review should cover the actual audience and territories, model/provider contracts, companion-chatbot applicability, age-assurance approach, reporting duties, privacy/retention and any media-sharing surface. Ratings review is separate. Implementation and release qualification remain open under **PD07, PD08 and PD10** in [production deployment](../../../../docs/maintainers/production-deployment.md).
+Before enabling public conversations, legal review should cover the actual audience and territories, model/provider contracts, companion-chatbot applicability, age-assurance approach, reporting duties, privacy/retention and any media-sharing surface. Ratings review is separate. Implementation and release qualification remain open under **PD07, PD08 and PD10** in [production deployment](../../../docs/maintainers/production-deployment.md).
 
 ## Sources
 
