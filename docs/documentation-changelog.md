@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 17, 2026 — Integrate mature-content and character-safety requirements
+
+The October 16 accepted [content and companion-safety policy](agent-content-and-companion-safety.md) preserves mature, non-graphic storytelling while excluding graphic interactive sexual roleplay from the initial operated product. Shared trusted character instructions, real-player consent, privacy and truthful service boundaries are accepted requirements; this documentation does not install prompts or qualify runtime safeguards. The tradeoff is less erotic freedom for a clearer mature-game experience and reduced distribution, provider and safety exposure, as recorded in the policy's decision history.
+
+The [dated research](../archive/02-research/content-safety/README.md) separates legal and vendor evidence from product decisions; the [constraint inventory](limits/agent-content-and-companion-safety.md) preserves rationale and reconsideration conditions. The AI workflow now routes relevant character/prompt work to the canonical policy. [PD07, PD08 and PD10](maintainers/production-deployment.md#adult-content-and-companion-safety-release-requirements) retain implementation, operational and launch-review acceptance; none is closed by this integration.
+
 ## October 17, 2026 — Readable pointer help and stable player controls
 
 The implemented pointer/HUD follow-up replaces transparent hover labels with shared opaque, padded, pointer-anchored help and centers one delayed loading indicator in each active panel/dialog. Paused or inactive optional reads no longer imply loading. Single-action categories expose the action directly. Centered launcher rails, the condition summary and collapsible Current work no longer resize one another; quick suggestions retire stale Sleep/Wake choices. Character records has its own launcher, and Character omits repeated action catalogues and unrelated global links.

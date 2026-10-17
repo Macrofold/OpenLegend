@@ -1,6 +1,6 @@
 # Production deployment delivery
 
-**Status: open implementation planning, updated 2 October 2026.** Start with the [technical recommendation](../projects/production-deployment-tech-design.md), [implementation playbook](../projects/production-deployment-playbook.md) and [player/operator specification](../projects/production-deployment-feature-spec.md). Auth0 is selected; infrastructure is proposed. The research and documentation are delivered, but the runtime work below remains open. This documentation does not deploy the game or authorize paid execution.
+**Status: open implementation planning, updated 16 October 2026.** Start with the [technical recommendation](../projects/production-deployment-tech-design.md), [implementation playbook](../projects/production-deployment-playbook.md) and [player/operator specification](../projects/production-deployment-feature-spec.md). Auth0 is selected; infrastructure is proposed. The research and documentation are delivered, but the runtime work below remains open. This documentation does not deploy the game or authorize paid execution.
 
 This is the cross-functional release checklist under [D5/D6](production-data.md), not a replacement for MP/PF/SL/MW/INV/V3D or the scaling branch's SC/SF/LT work. Each PD item coordinates the named owners; close their existing acceptance there and link the evidence here rather than copying task bodies. Limits live in the [deployment inventory](../limits/production-deployment.md). The playbook owns command/lifecycle procedures; do not copy them into a second task list.
 
@@ -37,6 +37,16 @@ This is the cross-functional release checklist under [D5/D6](production-data.md)
 The optional DG27 [commercial-offer consumer](commercial-offers.md) refines PD10 for one owner-paid offer, account allowances, cancellation/recovery and one optional dedication. CO01–CO06 consumes the existing payment, rights and operating gates; product design does not enable sales or close PD10.
 
 The optional DG28 [published-pack and creator-revenue consumer](published-packs-and-creator-revenue.md) stages rights-aware catalog release, acquisition and creator payouts under PD10. Qualify only the enabled commercial features after proven free reuse. Fixed subscriber allocation, pending creator earnings and a marketplace fee are separate from hosting revenue and the conditional DG30 fund.
+
+## Adult-content and companion-safety release requirements
+
+**Accepted October 16, 2026; all implementation and qualification below remain open.** The [canonical character-safety policy](../agent-content-and-companion-safety.md) preserves mature, non-graphic storytelling while excluding graphic interactive sexual roleplay. The [research archive](../../archive/02-research/content-safety/README.md) distinguishes legal duties, vendor restrictions and product judgment; the [constraint inventory](../limits/agent-content-and-companion-safety.md) records the accepted boundaries. Existing adult-player and browser-first decisions remain unchanged.
+
+**PD07** additionally requires the shared trusted safety instructions in every relevant generative character route, compatible persona/context composition, and content admission before the first player-visible output, including streamed previews, narration and memory-derived retellings. Qualify permitted mature dialogue as well as explicit/minor-content refusals, injection through imported personas and memories, model changes and safe failure. A robust prompt is necessary but does not alone close the release gate; no current prompt or runtime safeguard was changed or qualified in this documentation task.
+
+**PD08** owns operational qualification for player reports, mute/block and responsive abuse handling, applicable AI disclosures and crisis-response protocols, tightly scoped staff access and sensitive logging, and counsel-defined child-exploitation reporting/preservation. Review generated NPC content and human-to-human abuse separately, including private material repeated to another audience. Any approved player image/video sharing adds its applicable intimate-image notice/removal process; it is not implicitly part of the initial scope.
+
+**PD10** requires a launch-specific legal and vendor review of the audience/territories, real-player age assurance separately from character ages/preferences, companion-law applicability and operative dates, privacy/retention/deletion exceptions, and selected model, payment and distribution terms. Resolve applicable California 2027 transitions without describing every future child-specific rule as an existing universal requirement. Adult-only terms, a rating, a report button or a private-content toggle do not by themselves establish compliance. No new child audience, provider, media feature or runtime implementation is authorized here.
 
 ## Research record
 
