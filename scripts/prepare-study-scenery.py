@@ -121,7 +121,7 @@ if __name__=='__main__':
             'tree-broadleaf':('natural-broadleaf','quiet'),
             'tree-birch':('natural-birch','quiet'),
             'tree-conifer':('grounded-conifer','quiet'),
-            'woodland-shrub':('natural-leafy-shrub','quiet'),
+            'woodland-shrub':('rooted-shrub','quiet'),
             'meadow-grass':('natural-grass','quiet'),
         }
         paths=[]

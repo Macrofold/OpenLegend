@@ -15,7 +15,7 @@ import bpy
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from art_study_common import ROOT, export_asset
+from art_study_common import ROOT, export_asset, unique_skin_names
 spec = importlib.util.spec_from_file_location('natural', ROOT/'scripts/prepare-natural-replacements.py')
 natural = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(natural)
@@ -24,6 +24,7 @@ INPUTS = {
     'wolf': 'meshes/skeletal/wolf.dae',
     'wolf-idle': 'animation/quadraped/wolf_idle_01.dae',
     'wolf-run': 'animation/quadraped/wolf_run.dae',
+    'wolf-walk': 'animation/quadraped/wolf_walk.dae',
     'backpack': 'meshes/props/m_backpack.dae',
 }
 ATTRIBUTION = ('Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, '
@@ -41,7 +42,8 @@ def convert(sources):
 
 
 def prepare(sources, family):
-    group = 'source-natural-'+family
+    export_family = 'woodland-wolf' if family == 'wolf' else 'natural-'+family
+    group = 'source-'+export_family
     output = ROOT/'apps/client/src/props/art-study'/group
     output.mkdir(parents=True, exist_ok=True)
     assets, controls, stages = [], [], []
@@ -54,10 +56,13 @@ def prepare(sources, family):
             rig = next(o for o in objects if o.type == 'ARMATURE')
             idle = rig.animation_data.action
             idle.name = 'Idle'
-            with bpy.data.libraries.load(str(sources/'wolf-run-converted.blend'), link=False) as (original, loaded):
+            with bpy.data.libraries.load(str(sources/'wolf-walk-converted.blend'), link=False) as (original, loaded):
                 loaded.actions = original.actions
             run = loaded.actions[0]
+            # The renderer's Run state means moving. Use the source walk for
+            # ordinary travel rather than a gallop played at walking speed.
             run.name = 'Run'
+            unique_skin_names(objects, rig)
             bpy.context.scene.frame_set(0)
             # One subdivision rounds shoulders and flanks while keeping the
             # source anatomy, facial artwork and weight-painted source rig.
@@ -88,11 +93,11 @@ def prepare(sources, family):
         if wolf:
             natural.limit_skin_weights(meshes)
         natural.source_study.normalize(objects, .96 if wolf else .48)
-        identity = 'natural-'+family+'-'+variant
-        asset, root = export_asset(objects, output, identity, 'natural-'+family,
-            'Woodland wolf' if wolf else 'Rejected box-shaped pack', variant,
+        identity = export_family+'-'+variant
+        asset, root = export_asset(objects, output, identity, export_family,
+            'Woodland wolf · walking gait' if wolf else 'Rejected box-shaped pack', variant,
             ('Source control.' if variant == 'source' else
-             'Source anatomy, facial coat markings and motion; rounded silhouette, '+variant+' coat.' if wolf else
+             'Source anatomy, facial coat markings and walking gait; rounded silhouette, '+variant+' coat.' if wolf else
              'Source leather and woven cargo pack, '+variant+' material finish.'),
             wolf and variant == 'quiet', ATTRIBUTION)
         if wolf and variant != 'source':
@@ -155,5 +160,5 @@ if __name__ == '__main__':
     if args.convert_collada:
         convert(args.sources)
     else:
-        for family in ['wolf', 'backpack']:
+        for family in ['wolf']:
             prepare(args.sources, family)

@@ -1,0 +1,237 @@
+{
+  "group": "source-woodland-wolf",
+  "sourceFile": "art-direction/assets/source-study/source-woodland-wolf.blend",
+  "sourceSha256": "3b0ed0d6410a6987245139d009984f58438d8858246aa602c56d38c215cb0772",
+  "recipe": {
+    "path": "scripts/prepare-natural-wildfire.py",
+    "sha256": "0831b43d01dd4ab88b8b1a44a906e2e63eaf879ad2b666e8e75d0accf03eb1d5"
+  },
+  "helpers": {
+    "art_study_common.py": "056aacf5dd656c0300ad02e0ee5f628237f203998f99a598be5102d3f0508869",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581",
+    "prepare-natural-replacements.py": "beeba80520a4a0799ffdcc96d56c939b008e8d0d1a5d234c82e3612e7911ae91"
+  },
+  "sources": [
+    {
+      "repository": "https://github.com/0ad/0ad",
+      "commit": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+      "files": [
+        {
+          "file": "LICENSE.txt",
+          "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/LICENSE.txt",
+          "bytes": 1426,
+          "sha256": "ef98babd771c206032e005f3d440a1e610df409d9a9191f03e64deaa4abefbd9"
+        },
+        {
+          "file": "actors/fauna/wolf.xml",
+          "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/fauna/wolf.xml",
+          "bytes": 1758,
+          "sha256": "9deaede42250ab618272c96615af831ab0ff9870ea6940d55938324eb61797a3"
+        },
+        {
+          "file": "actors/props/units/backpack_celt.xml",
+          "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/actors/props/units/backpack_celt.xml",
+          "bytes": 472,
+          "sha256": "e1d1a132465178390e8fa166e9bc29ba1c96b06ffbe9597e3c470dd74320bda8"
+        },
+        {
+          "file": "meshes/skeletal/wolf.dae",
+          "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/skeletal/wolf.dae",
+          "bytes": 123295,
+          "sha256": "481ae8021e7e2624e2c20db01d2b17b89eb488a9749eb92e1952f55e4496cf3a"
+        },
+        {
+          "file": "meshes/props/m_backpack.dae",
+          "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/meshes/props/m_backpack.dae",
+          "bytes": 11599,
+          "sha256": "d430f53f788e15f9dc3d7ed06b10438aa2ed50cdf4c05201eae6526c70ad02ab"
+        },
+        {
+          "file": "animation/quadraped/wolf_idle_01.dae",
+          "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/wolf_idle_01.dae",
+          "bytes": 465223,
+          "sha256": "3ba7316df0b65166bdf9c7a9c412534348a07ab343ddc008fedfe723749f09ba"
+        },
+        {
+          "file": "animation/quadraped/wolf_walk.dae",
+          "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/wolf_walk.dae",
+          "bytes": 455887,
+          "sha256": "0ccba7c59abad7ce1e0a8e03fa1b117e7f828f512447674fcf55bae400e0db06"
+        },
+        {
+          "file": "animation/quadraped/wolf_run.dae",
+          "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/animation/quadraped/wolf_run.dae",
+          "bytes": 291403,
+          "sha256": "c5d23cc991c0a9d27e8b345ebdb17054da1bafcd6eb96f6a439009a36f716840"
+        },
+        {
+          "file": "textures/skins/skeletal/animal_wolf.png",
+          "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/animal_wolf.png",
+          "bytes": 171438,
+          "sha256": "a9d6e547ae10a1a61b8fde1a6718c3b8c84ee9935d85f5d78421fabaf7150861"
+        },
+        {
+          "file": "textures/skins/skeletal/animal_wolf_grey.png",
+          "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/animal_wolf_grey.png",
+          "bytes": 166922,
+          "sha256": "cca1ea8133ae1b51f7e2767b4c68eb7d5cd1c46668774b3e0ce72fb1c989bbb1"
+        },
+        {
+          "file": "textures/skins/skeletal/animal_wolf_white.png",
+          "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/skeletal/animal_wolf_white.png",
+          "bytes": 157415,
+          "sha256": "8a60477509f7cdd916cdb5d759b236db30f2ec485932a46b769487fe23c9d9b7"
+        },
+        {
+          "file": "textures/skins/props/backpack_trader_celt.dds",
+          "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/skins/props/backpack_trader_celt.dds",
+          "bytes": 5616,
+          "sha256": "863dcdf4a6c5e1e3df0a6fd3947ef5c3e5a4c717e5c5f93eb3d21ea60404ec4b"
+        },
+        {
+          "file": "textures/ui/session/portraits/gaia/fauna_wolf.png",
+          "url": "https://raw.githubusercontent.com/0ad/0ad/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/ui/session/portraits/gaia/fauna_wolf.png",
+          "bytes": 29340,
+          "sha256": "398bc60afa6aacf27d2053d740c97e78887fdaa219b46e0310be32d8a6eca97a"
+        }
+      ],
+      "license": "CC BY-SA 3.0",
+      "creator": "Wildfire Games"
+    }
+  ],
+  "assets": [
+    {
+      "id": "woodland-wolf-clear",
+      "family": "woodland-wolf",
+      "label": "Woodland wolf \u00b7 walking gait",
+      "variant": "clear",
+      "description": "Source anatomy, facial coat markings and walking gait; rounded silhouette, clear coat.",
+      "recommended": false,
+      "file": "woodland-wolf-clear.glb",
+      "bounds": {
+        "min": [
+          -0.159024,
+          -0.0,
+          -0.715639
+        ],
+        "max": [
+          0.159024,
+          0.96,
+          0.715639
+        ]
+      },
+      "triangles": 4176,
+      "vertices": 2142,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "94f2b9e967e53502caefbdfc83eb40bcf3b6b76bc4dba60d509d6a5f1097d3f8",
+      "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf motion retained, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0.",
+      "animatedFile": "woodland-wolf-clear-motion.glb",
+      "animatedSha256": "5e58e4b892b4e7539a843f482a36bf5b4883c60b681851706bc9e00654f608c9"
+    },
+    {
+      "id": "woodland-wolf-quiet",
+      "family": "woodland-wolf",
+      "label": "Woodland wolf \u00b7 walking gait",
+      "variant": "quiet",
+      "description": "Source anatomy, facial coat markings and walking gait; rounded silhouette, quiet coat.",
+      "recommended": true,
+      "file": "woodland-wolf-quiet.glb",
+      "bounds": {
+        "min": [
+          -0.159024,
+          -0.0,
+          -0.715639
+        ],
+        "max": [
+          0.159024,
+          0.96,
+          0.715639
+        ]
+      },
+      "triangles": 4176,
+      "vertices": 2142,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "f69fd499f2d704cecb9bd3e651bd1a2ba8861497292c905e45e362e737b4c229",
+      "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf motion retained, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0.",
+      "animatedFile": "woodland-wolf-quiet-motion.glb",
+      "animatedSha256": "fdd9c3854632c0e25b9b578208066f8fc256f93ff109f6d7376877a0746a4283"
+    },
+    {
+      "id": "woodland-wolf-weathered",
+      "family": "woodland-wolf",
+      "label": "Woodland wolf \u00b7 walking gait",
+      "variant": "weathered",
+      "description": "Source anatomy, facial coat markings and walking gait; rounded silhouette, weathered coat.",
+      "recommended": false,
+      "file": "woodland-wolf-weathered.glb",
+      "bounds": {
+        "min": [
+          -0.159024,
+          -0.0,
+          -0.715639
+        ],
+        "max": [
+          0.159024,
+          0.96,
+          0.715639
+        ]
+      },
+      "triangles": 4176,
+      "vertices": 2142,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "411d426870baf9149279c6208b77bf351fbfa92899f6bd14934d61a59d47e28c",
+      "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf motion retained, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0.",
+      "animatedFile": "woodland-wolf-weathered-motion.glb",
+      "animatedSha256": "adaedb57816350c497e7b707ba7545a05cd90f11d42be664b96728dc0df8bf55"
+    }
+  ],
+  "controls": [
+    {
+      "id": "woodland-wolf-source",
+      "family": "woodland-wolf",
+      "label": "Woodland wolf \u00b7 walking gait",
+      "variant": "source",
+      "description": "Source control.",
+      "recommended": false,
+      "file": "woodland-wolf-source.glb",
+      "bounds": {
+        "min": [
+          -0.167701,
+          -0.0,
+          -0.714554
+        ],
+        "max": [
+          0.167701,
+          0.96,
+          0.714554
+        ]
+      },
+      "triangles": 696,
+      "vertices": 378,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "468378016c9c56b1e133341998d3c1e7c715c18f5128b480b2dfdb7b1d6fd999",
+      "source": "Wildfire Games, https://wildfiregames.com/, CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/; source geometry and wolf motion retained, materials and silhouette smoothing adapted by OpenLegend. These derivative assets remain CC BY-SA 3.0."
+    }
+  ]
+}

@@ -276,9 +276,9 @@ def simplify_tree(objects, family, variant):
 
 
 def arrange_leafy_shrub(objects, variant):
-    # shrub_04 contains four specimens laid out for an asset sheet. Keep whole
-    # connected pieces from its mature right-hand plant, then compose real
-    # source stems around one foot instead of importing the demonstration row.
+    # shrub_04 is a row of four separate plants. Choose a different complete
+    # specimen for each alternative; cloning a whole plant around its origin
+    # created repeated tiers, leaves and trunks in the preceding study.
     obj = objects[0]
     mesh = bmesh.new()
     mesh.from_mesh(obj.data)
@@ -294,7 +294,9 @@ def arrange_leafy_shrub(objects, variant):
                 other = edge.other_vert(vertex)
                 if other in remaining:
                     remaining.remove(other); stack.append(other)
-        if sum(v.co.x for v in component)/len(component) < -.08:
+        x = sum((obj.matrix_world @ v.co).x for v in component)/len(component)
+        low, high = {'clear':(.425, 1), 'quiet':(.255, .425), 'weathered':(.085, .255)}[variant]
+        if not low <= x < high:
             remove.extend(component)
     bmesh.ops.delete(mesh, geom=remove, context='VERTS')
     mesh.to_mesh(obj.data); mesh.free()
@@ -304,14 +306,44 @@ def arrange_leafy_shrub(objects, variant):
         modifier = obj.modifiers.new('Retain leaf outlines within shrub budget', 'DECIMATE')
         modifier.ratio = 5000/len(obj.data.loop_triangles)
         bpy.ops.object.modifier_apply(modifier=modifier.name)
-    count = {'clear':3, 'quiet':2, 'weathered':1}[variant]
-    for index in range(1, count):
-        branch = obj.copy(); branch.data = obj.data.copy()
-        branch.rotation_euler.z += index*2.2
-        branch.location.x += .012*index
-        bpy.context.collection.objects.link(branch)
-        objects.append(branch)
+    # A modest spread keeps a shrub silhouette while preserving each source
+    # branch attachment. No independent floating leaf or duplicated stem sets.
+    obj.scale.x *= 1.2
+    obj.scale.y *= 1.15
     bpy.context.view_layer.update()
+
+
+def trim_fletching(objects, variant):
+    """Resize the source's two disconnected feather vanes, leaving the shaft."""
+    width, length = {'clear':(.58, .72), 'quiet':(.46, .62), 'weathered':(.4, .55)}[variant]
+    for obj in objects:
+        mesh = bmesh.new()
+        mesh.from_mesh(obj.data)
+        remaining = set(mesh.verts)
+        while remaining:
+            start = remaining.pop()
+            stack, component = [start], []
+            while stack:
+                vertex = stack.pop()
+                component.append(vertex)
+                for edge in vertex.link_edges:
+                    other = edge.other_vert(vertex)
+                    if other in remaining:
+                        remaining.remove(other)
+                        stack.append(other)
+            # This recorded source has a 26-vertex shaft/tip and two six-vertex
+            # vanes. Reject a different topology rather than shrink its shaft.
+            if len(component) == 26:
+                continue
+            if len(component) != 6:
+                raise ValueError('Unexpected archery feather geometry')
+            nock = max(v.co.z for v in component)
+            for vertex in component:
+                vertex.co.x *= width
+                vertex.co.y *= width
+                vertex.co.z = nock + (vertex.co.z-nock)*length
+        mesh.to_mesh(obj.data)
+        mesh.free()
 
 
 def foliage_normals(objects, family):
@@ -358,7 +390,9 @@ def import_static(sources, family, subject, selector):
 
 def prepare_static(sources, family):
     subject, label, height, span, selector = SUBJECTS[family]
-    group = 'source-natural-'+family
+    export_family = {'leafy-shrub':'rooted-shrub', 'leafy-berries':'rooted-berries',
+                     'arrow':'field-arrow'}.get(family, 'natural-'+family)
+    group = 'source-'+export_family
     output = ROOT/'apps/client/src/props/art-study'/group
     output.mkdir(parents=True, exist_ok=True)
     assets, controls, stages = [], [], []
@@ -374,6 +408,8 @@ def prepare_static(sources, family):
         objects = import_static(sources, family, subject, selector)
         if family in ('leafy-shrub', 'leafy-berries') and variant != 'source':
             arrange_leafy_shrub(objects, variant)
+        if family == 'arrow' and variant != 'source':
+            trim_fletching(objects, variant)
         if family in ('broadleaf', 'birch'):
             tree_uvs(objects)
             if variant != 'source':
@@ -432,19 +468,21 @@ def prepare_static(sources, family):
              'quiet':'Grouped, muted woodland color with restrained fine texture.',
              'weathered':'Worn, lower-saturation material variation on the same natural form.'}[variant])
         if family in ('leafy-shrub', 'leafy-berries'):
-            description += ' Retained mature source stems composed into one rooted clump; three, two or one stem sets.'
+            description += ' One distinct rooted source specimen per option; no duplicated plant layers.'
+        if family == 'arrow' and variant != 'source':
+            description += ' Restrained source feather vanes; shaft and tip retain their original length.'
         if family in ('broadleaf', 'birch') and variant != 'source':
             description += ' Whole source leaves retained in full, open or sparse crown groupings.'
         if family == 'birch':
             description += ' Authored slender, pale-barked adaptation of a broadleaf source; not a scanned birch.'
         if family == 'reeds':
             description += ' Tall grass source used for the existing riverside fiber clump.'
-        identity = 'natural-'+family+'-'+variant
-        asset, root = export_asset(objects+fruit, output, identity, 'natural-'+family, label, variant, description,
-            variant == ('quiet' if family in ('broadleaf', 'birch', 'shrub', 'leafy-shrub', 'grass') else 'clear'), source)
+        identity = export_family+'-'+variant
+        asset, root = export_asset(objects+fruit, output, identity, export_family, label, variant, description,
+            variant == ('quiet' if family in ('broadleaf', 'birch', 'shrub', 'leafy-shrub', 'leafy-berries', 'grass', 'arrow') else 'clear'), source)
         if fruit:
             # A separate fruit-free export preserves the same woody/leaf geometry.
-            depleted, _ = export_asset(objects, output, identity+'-depleted', 'natural-'+family, label, variant, description, False, source)
+            depleted, _ = export_asset(objects, output, identity+'-depleted', export_family, label, variant, description, False, source)
             asset['depletedFile'] = depleted['file']
             asset['depletedSha256'] = depleted['sha256']
         (controls if variant == 'source' else assets).append(asset)

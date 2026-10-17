@@ -1,0 +1,200 @@
+{
+  "group": "source-rooted-berries",
+  "sourceFile": "art-direction/assets/source-study/source-rooted-berries.blend",
+  "sourceSha256": "36c7c74cfc1909c6c0ab5f6aaf7b09cf57820b13a42a91154e2f5a4d28e4ec67",
+  "recipe": {
+    "path": "scripts/prepare-natural-replacements.py",
+    "sha256": "3306a8291ed281aae4078d1b5c3647da8be0cfda1221f8132cbc5257f6eddcd5"
+  },
+  "helpers": {
+    "art_study_common.py": "056aacf5dd656c0300ad02e0ee5f628237f203998f99a598be5102d3f0508869",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581",
+    "prepare-resource-study.py": "cf0705e9e6cc2bc3a8489b1f5b8ee01878aea90d4b928c09a1e6eddfc19ebc42"
+  },
+  "sources": [
+    {
+      "url": "https://polyhaven.com/a/shrub_04",
+      "license": "CC0",
+      "files": [
+        {
+          "asset": "shrub_04",
+          "file": "shrub_04_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/shrub_04/shrub_04_1k.gltf",
+          "bytes": 2882,
+          "sha256": "782832cbc57e96686b78c6ef9df6234c25f564f78421c8ed4bd42c3631f5aeae"
+        },
+        {
+          "asset": "shrub_04",
+          "file": "textures/shrub_04_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_04/shrub_04_nor_gl_1k.jpg",
+          "bytes": 449241,
+          "sha256": "200d791e0474495bfc876ba1c289dade669c6a5b124647c55bc840a875f6b51c"
+        },
+        {
+          "asset": "shrub_04",
+          "file": "textures/shrub_04_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_04/shrub_04_diff_1k.jpg",
+          "bytes": 373350,
+          "sha256": "0b0fa0a474753d13f3093858cea79d0de05da1e6a0c5d6e181cd351080980b6c"
+        },
+        {
+          "asset": "shrub_04",
+          "file": "textures/shrub_04_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_04/shrub_04_arm_1k.jpg",
+          "bytes": 332957,
+          "sha256": "d1085df021928b29b0f38dde7e58e9a2e304c4e8d838e390b37cf57f8aa492e8"
+        },
+        {
+          "asset": "shrub_04",
+          "file": "shrub_04.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/shrub_04/shrub_04.bin",
+          "bytes": 749084,
+          "sha256": "cb442c39682e54cc63f912aa78ab17a03566f947a61adbbbaaa6473166744f01"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "rooted-berries-clear",
+      "family": "rooted-berries",
+      "label": "Leafy berry thicket",
+      "variant": "clear",
+      "description": "Retained natural form and readable source color, restrained highlights. One distinct rooted source specimen per option; no duplicated plant layers.",
+      "recommended": false,
+      "file": "rooted-berries-clear.glb",
+      "bounds": {
+        "min": [
+          -0.420348,
+          0.0,
+          -0.412646
+        ],
+        "max": [
+          0.420348,
+          1.05,
+          0.412646
+        ]
+      },
+      "triangles": 6007,
+      "vertices": 4513,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "8021c38431b3aa69e90c5372a062fedaa35fb98b67eac6e4e6023a28c33367d2",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_04",
+      "depletedFile": "rooted-berries-clear-depleted.glb",
+      "depletedSha256": "2abc284ad0b07f539ed30aa80d5aef6bd6b3cc4b3c0127630dce40738b9840b0"
+    },
+    {
+      "id": "rooted-berries-quiet",
+      "family": "rooted-berries",
+      "label": "Leafy berry thicket",
+      "variant": "quiet",
+      "description": "Grouped, muted woodland color with restrained fine texture. One distinct rooted source specimen per option; no duplicated plant layers.",
+      "recommended": true,
+      "file": "rooted-berries-quiet.glb",
+      "bounds": {
+        "min": [
+          -0.525101,
+          0.0,
+          -0.362639
+        ],
+        "max": [
+          0.525101,
+          1.05,
+          0.362639
+        ]
+      },
+      "triangles": 5720,
+      "vertices": 4032,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "7e8f03d7efb402538ea1b72f5dc49aa8f23b1929d4113d1ff2e721cafef78906",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_04",
+      "depletedFile": "rooted-berries-quiet-depleted.glb",
+      "depletedSha256": "100c0725b0c101f0d8db5c65738fbeeb6ae76ded7cb0a6bcb2887b980bab805e"
+    },
+    {
+      "id": "rooted-berries-weathered",
+      "family": "rooted-berries",
+      "label": "Leafy berry thicket",
+      "variant": "weathered",
+      "description": "Worn, lower-saturation material variation on the same natural form. One distinct rooted source specimen per option; no duplicated plant layers.",
+      "recommended": false,
+      "file": "rooted-berries-weathered.glb",
+      "bounds": {
+        "min": [
+          -0.433128,
+          0.0,
+          -0.483685
+        ],
+        "max": [
+          0.433128,
+          1.05,
+          0.483685
+        ]
+      },
+      "triangles": 6007,
+      "vertices": 4124,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "df95fab18d61d94f14cc60471f6ddc9cebed6eed519e2638b8cbda88dfadd440",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_04",
+      "depletedFile": "rooted-berries-weathered-depleted.glb",
+      "depletedSha256": "f839ad3fa906a20af38d4538b2abdf7adcd812bc2ff4612a553d073e76212895"
+    }
+  ],
+  "controls": [
+    {
+      "id": "rooted-berries-source",
+      "family": "rooted-berries",
+      "label": "Leafy berry thicket",
+      "variant": "source",
+      "description": "Normalized original geometry and albedo; source control. One distinct rooted source specimen per option; no duplicated plant layers.",
+      "recommended": false,
+      "file": "rooted-berries-source.glb",
+      "bounds": {
+        "min": [
+          -0.7,
+          0.0,
+          -0.17521
+        ],
+        "max": [
+          0.7,
+          0.525758,
+          0.17521
+        ]
+      },
+      "triangles": 27327,
+      "vertices": 18285,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "a0c9bb59ac4088f88e85bcf9a53570872f063bf0251d0e8db39d857322805d0b",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/shrub_04"
+    }
+  ]
+}

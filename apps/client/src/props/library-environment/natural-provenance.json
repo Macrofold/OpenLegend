@@ -1,6 +1,6 @@
 {
   "recipe": "scripts/prepare-study-scenery.py",
-  "recipeSha256": "000ffac6e4818fa705a3a120803aa4f0e586bf0fd4686255ee1261eb98b0b515",
+  "recipeSha256": "3fb21ddcf539b1acd4903e1c9c38815bee324a18765eefb6a6320e81cae3dd2f",
   "sources": [
     {
       "path": "apps/client/src/props/art-study/source-natural-broadleaf/catalog.json",
@@ -15,8 +15,8 @@
       "sha256": "0a506227e973ee69aebbb3048d30e3778a2b7a41e75bd7355c30daadf86a1fe3"
     },
     {
-      "path": "apps/client/src/props/art-study/source-natural-leafy-shrub/catalog.json",
-      "sha256": "6c33b354f74ab5bef3e13a8201e4dc2623a05b86162f51e5da4c19027a91a436"
+      "path": "apps/client/src/props/art-study/source-rooted-shrub/catalog.json",
+      "sha256": "793e405b7f8f6383cd3f7e7bec42f3cb75c80bcd5bbb43ad90bbb511dc11ddd3"
     },
     {
       "path": "apps/client/src/props/art-study/source-natural-grass/catalog.json",
@@ -26,8 +26,8 @@
   "outputs": [
     {
       "path": "scenery-natural.json",
-      "bytes": 23128550,
-      "sha256": "f6de7a0d8658db7b9b5e13badbcb91fc3d4b90f7f58015406482c037de0adfa3"
+      "bytes": 22576363,
+      "sha256": "269328ff19d6640f9455c2b4b0618b4a9f420be09997d5f815e8cb9b568725b2"
     }
   ]
 }

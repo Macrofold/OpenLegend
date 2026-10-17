@@ -16,6 +16,19 @@ from mathutils.bvhtree import BVHTree
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def unique_skin_names(objects, rig):
+    """Keep mesh names distinct from joints resolved by PlayCanvas by name.
+
+    A valid glTF can contain a mesh and bone both named Head. PlayCanvas's skin
+    lookup then finds the mesh first and deforms the face with its transform.
+    Preserve bone names used by weights/actions; rename only colliding objects.
+    """
+    bone_names = {bone.name for bone in rig.data.bones}
+    for obj in objects:
+        if obj.name in bone_names:
+            obj.name = 'Render mesh · ' + obj.name
+
+
 def eye_accents(objects, rig, head, eyes, name):
     """Fit restrained eye whites/irises to the source head and attach to its rig.
 
