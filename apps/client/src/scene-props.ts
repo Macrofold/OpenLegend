@@ -8,6 +8,7 @@ import banded from './props/art-study/source-chests/chest-banded-lid.glb?url';
 import cache from './props/art-study/source-chests/chest-plank-cache.glb?url';
 import { ShadowMaterial } from './shadow-material';
 import { ordinaryStencil, setVisibilityStencil } from './visibility-stencil';
+import { markPixelDetail, needsFinePixels } from './scene-pixels';
 
 interface PropSource {
   url: string;
@@ -59,7 +60,7 @@ export class ScenePropResources {
         'Scene prop · ' + variant,
         depleted && source.depletedUrl ? source.depletedUrl : source.url,
       ),
-      (material) => this.prepare(material),
+      (material) => this.prepare(material, needsFinePixels(source.width, source.height, source.depth)),
       () => this.actors.delete(actor),
       onReady,
     );
@@ -67,12 +68,13 @@ export class ScenePropResources {
     return actor;
   }
 
-  private prepare(source: pc.StandardMaterial): pc.StandardMaterial {
+  private prepare(source: pc.StandardMaterial, fine: boolean): pc.StandardMaterial {
     const existing = this.prepared.get(source);
     if (existing) return existing;
     const material = new ShadowMaterial(this.sun).copy(source);
     setVisibilityStencil(material, ordinaryStencil);
     this.art.prepare(material);
+    if (fine) markPixelDetail(material, this.app.graphicsDevice);
     material.update();
     this.prepared.set(source, material);
     return material;

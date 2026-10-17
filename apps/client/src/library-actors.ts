@@ -11,6 +11,7 @@ import { ShadowMaterial } from './shadow-material';
 import { personStencil, setVisibilityStencil } from './visibility-stencil';
 import { studyAssets } from './study-assets';
 import { installLocomotion } from './model-animation';
+import { markPixelDetail, needsFinePixels } from './scene-pixels';
 
 interface ActorSource {
   url: string;
@@ -56,13 +57,13 @@ export class LibraryActors {
       source,
       this.presentation,
       this.camera,
-      (source) => this.prepare(source),
+      (material) => this.prepare(material, needsFinePixels(source.width, source.height, source.width)),
       () => this.actors.delete(actor),
     );
     this.actors.add(actor);
     return actor;
   }
-  private prepare(source: pc.StandardMaterial): pc.StandardMaterial {
+  private prepare(source: pc.StandardMaterial, fine: boolean): pc.StandardMaterial {
     const existing = this.prepared.get(source);
     if (existing) return existing;
     const material = new ShadowMaterial(this.sun).copy(source);
@@ -75,6 +76,7 @@ export class LibraryActors {
       material.diffuseMap.anisotropy = 1;
     }
     this.art.prepare(material);
+    if (fine) markPixelDetail(material, this.app.graphicsDevice);
     material.update();
     this.prepared.set(source, material);
     return material;

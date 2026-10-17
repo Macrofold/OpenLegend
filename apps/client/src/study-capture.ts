@@ -9,7 +9,9 @@ export class StudyCapture {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = name;
+    // Preserve distinct iterations even outside browsers that rename collisions.
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    anchor.download = name.replace(/(\.[^.]+)$/, '-' + stamp + '$1');
     anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }

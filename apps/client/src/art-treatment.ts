@@ -20,7 +20,7 @@ export interface ArtTreatment {
   surfaceArt: 'plain' | 'painted' | 'rigid';
   surfaceEdges: 'sharp' | 'filtered';
   coverage: 'none' | 'msaa4';
-  subjectDetail: 'shared' | 'preserve';
+  subjectDetail: 'shared' | 'preserve' | 'small';
   shadowSampling: 'screen' | 'fixed';
   filtering: 'source' | 'nearest' | 'mip';
   characterFiltering: 'source' | 'nearest' | 'mip';
@@ -39,7 +39,7 @@ export interface ArtTreatment {
   environment: 'baseline' | 'grouped' | 'kenney' | 'quaternius' | 'study';
   groundPalette: 'meadow' | 'woodland';
   vegetation: 'still' | 'smooth' | 'held';
-  atmosphere: 'baseline' | 'restrained';
+  atmosphere: 'baseline' | 'restrained' | 'survival';
   effects: 'direct' | 'buffer';
   prop: 'authored' | 'generated' | 'carved' | 'banded' | 'cache';
   actionFixture: boolean;
@@ -80,7 +80,8 @@ export const candidateArt: Readonly<ArtTreatment> = Object.freeze({
   hareArt: 'field',
   groundPalette: 'woodland',
   vegetation: 'still',
-  atmosphere: 'restrained',
+  atmosphere: 'survival',
+  subjectDetail: 'small',
   motion: 'held12',
   prop: 'banded',
   surfaceArt: 'rigid',
@@ -251,7 +252,7 @@ export function mountArtControls(
     surfaceArt: ['plain', 'painted', 'rigid'],
     surfaceEdges: ['sharp', 'filtered'],
     coverage: ['none', 'msaa4'],
-    subjectDetail: ['shared', 'preserve'],
+    subjectDetail: ['small', 'shared', 'preserve'],
     shadowSampling: ['screen', 'fixed'],
     filtering: ['source', 'nearest', 'mip'],
     characterFiltering: ['source', 'nearest', 'mip'],
@@ -271,7 +272,7 @@ export function mountArtControls(
     environment: ['study', 'baseline', 'grouped', 'kenney', 'quaternius'],
     groundPalette: ['meadow', 'woodland'],
     vegetation: ['still', 'smooth', 'held'],
-    atmosphere: ['baseline', 'restrained'],
+    atmosphere: ['survival', 'restrained', 'baseline'],
     effects: ['direct', 'buffer'],
     prop: ['carved', 'banded', 'cache', 'authored', 'generated'],
   };

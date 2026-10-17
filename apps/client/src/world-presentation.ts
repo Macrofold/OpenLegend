@@ -100,6 +100,7 @@ export interface RevealBinding {
  * docs/world-presentation.md#local-read-through
  */
 export class WorldPresentation {
+  private survivalAtmosphere = false;
   readonly layer: pc.Layer;
   readonly characterLayer: pc.Layer;
   readonly foregroundLayer: pc.Layer;
@@ -207,18 +208,20 @@ export class WorldPresentation {
     };
   }
   setArtTreatment(style: Readonly<ArtTreatment>): void {
+    this.survivalAtmosphere = style.atmosphere === 'survival';
+    const survival = this.survivalAtmosphere;
     const restrained = style.atmosphere === 'restrained';
     this.frame.rendering.renderTargetScale =
       style.sceneGrid === 'half' ? 0.5 : style.sceneGrid === 'third' ? 1 / 3 : 1;
     this.frame.rendering.samples = style.coverage === 'msaa4' ? 4 : 1;
     this.pixels.setTreatment(style.sceneGrid, style.subjectDetail);
     this.frame.rendering.renderFormats =
-      style.subjectDetail === 'preserve'
+      style.subjectDetail !== 'shared'
         ? [pc.PIXELFORMAT_RGBA16F, pc.PIXELFORMAT_RGBA32F]
         : [pc.PIXELFORMAT_111110F, pc.PIXELFORMAT_RGBA16F, pc.PIXELFORMAT_RGBA32F];
-    this.frame.bloom.intensity = restrained ? 0.045 : 0.025;
-    this.frame.grading.saturation = restrained ? 1.02 : 1.05;
-    this.frame.grading.contrast = 1;
+    this.frame.bloom.intensity = survival ? 0.018 : restrained ? 0.045 : 0.025;
+    this.frame.grading.saturation = survival ? 0.88 : restrained ? 1.02 : 1.05;
+    this.frame.grading.contrast = survival ? 1.06 : 1;
     this.frame.grading.brightness = restrained ? 1.025 : 1;
     this.frame.update();
     // Compare a shared scene grid through the existing compositor. Captions
@@ -552,12 +555,18 @@ export class WorldPresentation {
     // PlayCanvas directional rays follow local −Y. Use world orientation so camera
     // motion cannot move the sun; received clock updates also handle pause/load/rewind.
     this.sun.setRotation(this.sunRotation.setFromDirections(pc.Vec3.UP, this.sunDirection));
-    this.app.scene.ambientLight.set(
-      0.5 + 0.08 * daylight,
-      0.56 + 0.06 * daylight,
-      0.68 - 0.06 * daylight,
-    );
-    this.sun.light!.intensity = 1.2 * daylight;
+    if (this.survivalAtmosphere)
+      this.app.scene.ambientLight.set(
+        0.13 + 0.19 * daylight,
+        0.17 + 0.20 * daylight,
+        0.24 + 0.16 * daylight,
+      );
+    else this.app.scene.ambientLight.set(
+        0.5 + 0.08 * daylight,
+        0.56 + 0.06 * daylight,
+        0.68 - 0.06 * daylight,
+      );
+    this.sun.light!.intensity = (this.survivalAtmosphere ? 1.08 : 1.2) * daylight;
     this.sun.enabled = daylight > 0.001;
     const p = view.player.position;
     // Retain illumination from last-permitted fire images when their sources leave sight.

@@ -1,0 +1,217 @@
+{
+  "group": "source-grounded-fern",
+  "sourceFile": "art-direction/assets/source-study/source-grounded-fern.blend",
+  "sourceSha256": "0492f90b2ccab5a2465943d373acbd447768b9072b26b468b8102963091f241a",
+  "recipe": {
+    "path": "scripts/prepare-grounded-study.py",
+    "sha256": "748d6d19da8a45f313e772a833d65db07488acd374e649fb88bbcab6c835df9b"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
+  },
+  "sources": [
+    {
+      "url": "https://polyhaven.com/a/fern_02",
+      "license": "CC0",
+      "files": [
+        {
+          "asset": "fern_02",
+          "file": "fern_02_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/fern_02/fern_02_1k.gltf",
+          "sha256": "33974295ee19670af4877705fc7d91f33f42d6302f0d44a625e072271223031f",
+          "bytes": 6899
+        },
+        {
+          "asset": "fern_02",
+          "file": "textures/fern_02_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_arm_1k.jpg",
+          "sha256": "ebfb5d76ce9cbdaec20bcd22dce9b755f0b1b8650ef29ca13555e3e6961025d7",
+          "bytes": 280359
+        },
+        {
+          "asset": "fern_02",
+          "file": "textures/fern_02_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_diff_1k.jpg",
+          "sha256": "a828a6e7b4c01c826911e2eac4b3afc7457dab7b3b392a31c681ed88b7d50029",
+          "bytes": 315705
+        },
+        {
+          "asset": "fern_02",
+          "file": "textures/fern_02_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_nor_gl_1k.jpg",
+          "sha256": "45bce132c6e96a0864bc89ab5da51361ab3f4afa83a6669ae499ab5ca811f621",
+          "bytes": 367222
+        },
+        {
+          "asset": "fern_02",
+          "file": "fern_02.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/fern_02/fern_02.bin",
+          "sha256": "fe1abb762bcbbc7ad9e86925c8080437a62add257d9280e9142fdc85c226e64c",
+          "bytes": 176176
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "grounded-fern-clear",
+      "family": "grounded-fern",
+      "label": "Poly Haven fern",
+      "variant": "clear",
+      "description": "Natural source form with retained material details, quiet highlights and fine fixed paint.",
+      "recommended": true,
+      "file": "grounded-fern-clear.glb",
+      "bounds": {
+        "min": [
+          -0.55,
+          0.0,
+          -0.496621
+        ],
+        "max": [
+          0.55,
+          0.475338,
+          0.496621
+        ]
+      },
+      "triangles": 2384,
+      "vertices": 1660,
+      "textureSizes": [
+        [
+          512,
+          512
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "94c9260bb3786143f4476bb554374c0248449f525f9b5e428decf92802e66fbf",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/fern_02; normalized and adapted by OpenLegend."
+    },
+    {
+      "id": "grounded-fern-quiet",
+      "family": "grounded-fern",
+      "label": "Poly Haven fern",
+      "variant": "quiet",
+      "description": "Natural source form with grouped earth colors and restrained fine texture.",
+      "recommended": false,
+      "file": "grounded-fern-quiet.glb",
+      "bounds": {
+        "min": [
+          -0.55,
+          0.0,
+          -0.496621
+        ],
+        "max": [
+          0.55,
+          0.475338,
+          0.496621
+        ]
+      },
+      "triangles": 2384,
+      "vertices": 1660,
+      "textureSizes": [
+        [
+          256,
+          256
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "fd9e34e81bbae0fb71ed57db5d1bea6e4fede957accc1925b54cd06033fe82ab",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/fern_02; normalized and adapted by OpenLegend."
+    },
+    {
+      "id": "grounded-fern-weathered",
+      "family": "grounded-fern",
+      "label": "Poly Haven fern",
+      "variant": "weathered",
+      "description": "Weathered material study with muted color and softer worn highlights.",
+      "recommended": false,
+      "file": "grounded-fern-weathered.glb",
+      "bounds": {
+        "min": [
+          -0.55,
+          0.0,
+          -0.496621
+        ],
+        "max": [
+          0.55,
+          0.475338,
+          0.496621
+        ]
+      },
+      "triangles": 2384,
+      "vertices": 1660,
+      "textureSizes": [
+        [
+          256,
+          256
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "993ba1239d76eb7ac26173d1dd54d9c0b5ae6a79702bae2f5a918493af607c41",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/fern_02; normalized and adapted by OpenLegend."
+    }
+  ],
+  "controls": [
+    {
+      "id": "grounded-fern-source",
+      "family": "grounded-fern",
+      "label": "Poly Haven fern",
+      "variant": "source",
+      "description": "Normalized original Poly Haven geometry and materials; source control, not pixel-finished art.",
+      "recommended": false,
+      "file": "grounded-fern-source.glb",
+      "bounds": {
+        "min": [
+          -0.55,
+          0.0,
+          -0.496621
+        ],
+        "max": [
+          0.55,
+          0.475338,
+          0.496621
+        ]
+      },
+      "triangles": 2384,
+      "vertices": 1660,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "f5b6caf3eb032affa18829ebd8515f1b489373476a97b90fc46a0ba64fb6f8de",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/fern_02; normalized and adapted by OpenLegend."
+    }
+  ]
+}

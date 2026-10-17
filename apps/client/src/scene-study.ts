@@ -60,12 +60,13 @@ function treatment(): ArtTreatment {
   return {
     ...candidateArt,
     mercenaryArt: select('mercenary').value as ArtTreatment['mercenaryArt'],
-    sampling: route === 'shared' ? 'screen' : route === 'family' ? '60' : '96',
+    sampling: route === 'shared' || route === 'small' ? 'screen' : route === 'family' ? '60' : '96',
     sceneGrid:
       route === 'control' || route === 'surface'
         ? 'full'
         : (select('world-density').value as ArtTreatment['sceneGrid']),
-    subjectDetail: route === 'family' ? 'preserve' : 'shared',
+    subjectDetail: route === 'family' ? 'preserve' : route === 'small' ? 'small' : 'shared',
+    atmosphere: select('world-atmosphere').value as ArtTreatment['atmosphere'],
     surfaceArt: route === 'control' ? 'plain' : 'rigid',
     environment: 'study',
     prop: 'banded',
@@ -248,8 +249,11 @@ select('place').onchange = () => {
   status.textContent = stop().label;
 };
 select('world-light').onchange = publish;
-for (const id of ['route', 'mercenary', 'world-density', 'world-motion'])
-  select(id).onchange = () => scene.setArtTreatment(treatment());
+for (const id of ['route', 'mercenary', 'world-density', 'world-motion', 'world-atmosphere'])
+  select(id).onchange = () => {
+    scene.setArtTreatment(treatment());
+    if (id === 'world-atmosphere') publish();
+  };
 select('world-framing').onchange = setCamera;
 select('world-shadows').onchange = () =>
   scene.setShadowQuality(select('world-shadows').value as 'detailed' | 'economy');

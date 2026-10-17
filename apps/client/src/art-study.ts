@@ -4,7 +4,7 @@ import { BundledModels, destroyModelApplication } from './bundled-models';
 import { CAMERA_FOV_DEGREES, initialCamera } from './world-camera';
 import { installLocomotion } from './model-animation';
 import { StudyCapture } from './study-capture';
-import { ScenePixels } from './scene-pixels';
+import { ScenePixels, markPixelDetail, needsFinePixels } from './scene-pixels';
 import studyLayout from './props/art-study/layout.json';
 import './art-study.css';
 
@@ -148,6 +148,7 @@ export class ArtStudy {
     this.frame = new pc.CameraFrame(this.app, this.camera.camera!);
     this.frame.rendering.toneMapping = pc.TONEMAP_ACES;
     this.frame.rendering.samples = 4;
+    this.frame.rendering.renderFormats = [pc.PIXELFORMAT_RGBA16F, pc.PIXELFORMAT_RGBA32F];
     this.frame.update();
     this.pixels = new ScenePixels(this.app.graphicsDevice, this.camera.camera!);
     this.sun = new pc.Entity('Shared study daylight', this.app);
@@ -191,7 +192,8 @@ export class ArtStudy {
     const on = (target: EventTarget, event: string, handler: EventListener) =>
       target.addEventListener(event, handler, { signal: this.events.signal });
     for (const id of ['subject', 'versions']) on(element(id), 'change', () => void this.show());
-    const captureName = () => 'openlegend-asset-' + subject.value.replace(':', '-');
+    const captureName = () =>
+      'openlegend-asset-' + [subject.value.replace(':', '-'), ...['versions', 'light', 'framing', 'pixel-treatment'].map(id => element<HTMLSelectElement>(id).value)].join('-');
     on(element('save-image'), 'click', () => {
       this.invalidate();
       this.capture.image(captureName());
@@ -347,7 +349,8 @@ export class ArtStudy {
     });
     this.invalidate();
   }
-  private prepare(node: pc.Entity, materials: Map<pc.StandardMaterial, pc.StandardMaterial>): void {
+  private prepare(node: pc.Entity, materials: Map<pc.StandardMaterial, pc.StandardMaterial>, asset: Choice): void {
+    const fine = needsFinePixels(...asset.bounds.max.map((v, i) => v - asset.bounds.min[i]!) as [number, number, number]);
     for (const component of node.findComponents('render')) {
       if (!(component instanceof pc.RenderComponent)) continue;
       for (const mesh of component.meshInstances) {
@@ -366,6 +369,7 @@ export class ArtStudy {
             texture.mipmaps = true;
           }
           this.art.prepare(material);
+          if (fine) markPixelDetail(material, this.app.graphicsDevice);
           material.update();
           materials.set(source, material);
         }
@@ -443,7 +447,7 @@ export class ArtStudy {
             receiveShadows: true,
           });
           fresh.push(artwork);
-          this.prepare(artwork, materials);
+          this.prepare(artwork, materials, selected[index]!);
           if (selected[index]!.motionUrl) animations.push(installLocomotion(artwork, resource));
           // A single exported mesh may carry its own origin offset. Position a
           // parent so its original model transform (and ground contact) survives.
@@ -672,6 +676,7 @@ export class ArtStudy {
     this.camera.lookAt(target);
     const rect = this.canvas.parentElement!.getBoundingClientRect();
     const density = element<HTMLSelectElement>('pixel-treatment').value;
+    const fine = density === 'small';
     // Use the game's single final resolve. Rendering this inspector directly
     // into a tiny buffer chose coarse texture mips before the final sampling,
     // erasing facial paint that survives in the actual full-detail scene.
@@ -688,14 +693,14 @@ export class ArtStudy {
           ? 'anchored2'
           : density === '30'
             ? 'metres30'
-            : density === '40'
+            : density === '40' || fine
               ? 'metres40'
               : 'metres64',
-      'shared',
+      fine ? 'small' : 'shared',
     );
-    const effective = Math.min(Number(density), pixelsHigh / (2 * height));
+    const effective = Math.min(fine ? 40 : Number(density), pixelsHigh / (2 * height));
     element('pixel-evidence').textContent =
-      `${width} × ${pixelsHigh} source · ${density === 'native' ? 'full display resolution' : `${effective.toFixed(1)} samples/metre · game resolve`} · ${framing === 'game' ? 'current game camera' : 'inspection framing'}`;
+      `${width} × ${pixelsHigh} source · ${density === 'native' ? 'full display resolution' : fine ? '40 samples/metre · small subjects 120 (display limited)' : `${effective.toFixed(1)} samples/metre · game resolve`} · ${framing === 'game' ? 'current game camera' : 'inspection framing'}`;
     this.invalidate();
   }
   private labels(): void {
