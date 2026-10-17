@@ -1,7 +1,7 @@
 {
   "catalogs": 19,
   "alternatives": 57,
-  "filesChecked": 91,
+  "filesChecked": 90,
   "selectionMappings": 20,
   "checks": [
     "source, recipe, helper and output SHA256",
@@ -195,13 +195,6 @@
       "file": "apps/client/src/props/art-study/source-natural-broadleaf/natural-broadleaf-weathered.glb",
       "bytes": 1617188,
       "triangles": 34441,
-      "materials": 3,
-      "animations": []
-    },
-    {
-      "file": "apps/client/src/props/art-study/source-natural-broadleaf/natural-broadleaf-source.glb",
-      "bytes": 90085800,
-      "triangles": 2062487,
       "materials": 3,
       "animations": []
     },
@@ -680,5 +673,6 @@
       "materials": 1,
       "animations": []
     }
-  ]
+  ],
+  "catalogReferencesChecked": 91
 }

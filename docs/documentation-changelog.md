@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## October 17, 2026 — Natural-source replacements
+
+The inventoried current Quaternius selections now use Poly Haven and credited animal/equipment sources, retaining old models, three finishes and original controls. The [source record](../art-direction/assets/source-study/natural-replacements.md) distinguishes CC0, CC BY and CC BY-SA derivatives; the [archive](../art-direction/studies/2026-10-17-natural-replacements/README.md) retains failed as well as selected trials. Reconciled current presentation, feature spec, plan and V3D tracker without changing the 30/60 pixel treatment, dimensions, world mechanics or saves. [Measured cost](verification/natural-source-replacements.md) records the denser foliage tradeoff and preserves the existing bear, startup and wider qualification gaps.
+
 ## October 17, 2026 — Coarser detail and open foliage
 
 Mike’s feedback supersedes the preceding fine 40/120-samples-per-metre choice with 30/60, broader green groups, more diffuse leaf lighting and real gaps between fir branches. Updated the existing art owners, presentation/specification/plan, limits, tracker and [dated evidence](verification/small-subject-art-and-atmosphere.md#coarser-detail-and-open-foliage--october-17-2026). The Poly Haven fir retains three finishes and its original source; all meaningful captures, including rejected reductions, are archived. Recorded the extra geometry/GPU cost without claiming strict 60 Hz or universal motion stability. Existing instructions already route this work to the relevant guidance; no AGENTS/skill duplication or world-rule change.

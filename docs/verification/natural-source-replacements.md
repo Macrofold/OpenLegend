@@ -16,13 +16,13 @@ The mercenary, ordinary adult scale, existing 30/60 samples-per-metre treatment,
 
 Physical Apple M1 Pro, WebGL2, 1231 × 468 framebuffer, pixel ratio 1, Economy shadows, same camp focus/yaw/framing/daylight, staged walking, no orbit for the matched pair. Both source choices had been loaded in the same renderer; the approximately 125 MB count therefore includes retained comparison resources. These are two ten-second samples, not crowd/device qualification.
 
-| Metric | Previous sources | Natural replacements |
-| --- | ---: | ---: |
-| Frame median / p95 | 9.3 / 17.5 ms | 16.6 / 17.6 ms |
-| Frame p99 / maximum | 41.0 / 92.5 ms | 41.4 / 108.0 ms |
-| GPU-pass median / p95 | 7.354 / 11.659 ms | 10.615 / 12.240 ms |
-| Draw median / p95 | 658 / 664 | 713 / 719 |
-| Counted texture + vertex + index bytes | 125,047,302 | 125,050,374 |
+| Metric                                 |  Previous sources | Natural replacements |
+| -------------------------------------- | ----------------: | -------------------: |
+| Frame median / p95                     |     9.3 / 17.5 ms |       16.6 / 17.6 ms |
+| Frame p99 / maximum                    |    41.0 / 92.5 ms |      41.4 / 108.0 ms |
+| GPU-pass median / p95                  | 7.354 / 11.659 ms |   10.615 / 12.240 ms |
+| Draw median / p95                      |         658 / 664 |            713 / 719 |
+| Counted texture + vertex + index bytes |       125,047,302 |          125,050,374 |
 
 The new source geometry costs about **3.26 ms median GPU time and 55 draws** in this matched view. Its frame p95 is similar, but tails remain above a strict 60 Hz budget. This is an explicit visual-quality tradeoff, not a performance improvement. Separate moving-camera evidence is retained; its changing view is not used for the matched comparison. The natural-only cold scene counted 120,954,550 bytes; this is a different cache state, not a directly comparable memory reduction.
 
@@ -30,9 +30,11 @@ Trees are prepared offline from a roughly two-million-triangle source into appro
 
 ## Verification and limits
 
-- TypeScript and production build passed during implementation; final post-review checks are recorded below when complete. The build retains its existing large-chunk warning.
-- Actual inspector views cover all selected source families, multiple coats/finishes and retained choices. The archive includes failures, corrected exports, daylight/firelight scene views, moving wolf footage and matched metrics.
-- Asset audit checks source/recipe/helper/output hashes, all selection references, finite attributes, triangle indices, embedded textures/buffers, valid material UV bindings, normalized skin weights, required clips, attribution and repository file-size limits.
-- Remaining final checks in this record: stag/deer moving review, gathered berries, final source switching/remount, final audit and post-review static checks. These must be completed before this bounded task is marked delivered.
+- Final `pnpm typecheck` and `pnpm build` passed; the build completed in 15.65 seconds with its large-chunk warning. Python AST parsing passed for all four new recipes and the scenery compiler. The full affected executable diff, changed-file formatting and whitespace checks passed.
+- Actual inspector views cover all selected source families, multiple coats/finishes and retained choices. Saved wolf, doe and stag recordings were inspected across changing source Run poses and camera angles, without detached/exploded skin. These short recordings do not qualify every native animal action or establish complete orbit stability.
+- The 90 distinct exported GLBs passed 91 catalog-reference checks (the broadleaf original is shared with pale bark), covering source/recipe/helper/output hashes, all 20 selection mappings, finite attributes, triangle indices, embedded textures/buffers, valid material UV bindings, normalized skin weights, Idle/Run clips, attribution and file-size limits.
+- Actual scene comparisons cover daylight, low sun and dusk, woodland/camp views and gathered berries. All three fruit-free exports retain byte-identical plant surface geometry/attributes while removing the fruit surface. Natural → previous → natural switching was exercised in the same renderer. A clean renderer reload restored all visible animals/props, with five natural scenery templates, no pending source loads, one fire effect source and 120,755,526 counted resource bytes. No browser warnings/errors were reported during that reload inspection. Final credit text was verified after restarting the preview server to clear its cached module.
+
+The archive preserves [all meaningful captures, rejected trials and measurements](../../art-direction/studies/2026-10-17-natural-replacements/README.md). Gallery media/links and archive checksums were checked; its `file://` browser preview was blocked by browser policy, so no rendered-gallery layout pass is claimed. The underlying inspector/scene media were inspected directly. The measured pair is a warm reuse check; the clean reload is a resource/readiness check, not a cold-start latency benchmark. The natural scenery bundle is about 17.54 MB uncompressed / 4.22 MB gzip; cold parsing/loading still belongs to the existing initial-load qualification gap. No automated test suite was added, no game save/database was reset, and no paid provider was called.
 
 The wider bear, arbitrary animation/equipment, renderer/backend/device and population gates retain their existing [V3D owners](../maintainers/3d-pixel-art.md). The current task does not waive them or reclassify them as newly delivered.

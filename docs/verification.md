@@ -1,5 +1,7 @@
 # Verification
 
+[Natural-source replacements](verification/natural-source-replacements.md) records the October 17 replacement of remaining current Quaternius selections, retained alternatives, source credits, actual animation/depletion/reload checks and matched rendering cost.
+
 [Source-based starting-world study](verification/source-based-starting-study.md) records the October 16 replacement: source/variant coverage, actual composed scenes, scale/pixel choices, motion/resource fixes and complete moving-scene device measurements.
 
 - [World and engine boundaries](verification/world-engine-boundaries.md) — all 13 selected-owner fixes, capability omission, contrasting native definitions, PostgreSQL continuation and truthful player presentation.

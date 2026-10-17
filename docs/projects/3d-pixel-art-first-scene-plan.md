@@ -1,8 +1,8 @@
 # Dimensional pixel art — restyle the existing starting scene
 
-| Status      | Current progress                                                                                                                       | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Coarser detail, open fir branches and softer foliage lighting are delivered; bear access and broader visual qualification remain open. | 2026-10-17   |
+| Status      | Current progress                                                                                                               | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Natural-source replacements and preserved comparisons are delivered; bear access and broader visual qualification remain open. | 2026-10-17   |
 
 **Art direction — October 16, 2026:** beautiful dimensional pixel art must retain believable real-world proportions. Visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art is rejected under the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026). This is the bundled world’s artistic target, not a universal engine constraint.
 
@@ -32,7 +32,11 @@ Continue `codex/starting-scene-pixel-art` at `7aee6638c` in `/Users/mzw/.codex/w
 
 **Source/import refinement — 2026-10-16 23:31 EDT.** The Poly Haven broadleaf is a two-million-triangle source, so whole-leaf selection and separate bark/leaf simplification precede runtime import. The slender pale-barked tree reuses that source rather than claiming a scanned birch. Its original control is shared with the broadleaf to avoid duplicate large files. Shrub 04 contains an asset-sheet row: derivatives must select and compose source stems into one rooted clump, while preserving that original control. CDmir's packed legacy materials require fresh exportable material graphs and their actual skin UVs. Source files are opened with scripts disabled.
 
-The wolf and pack search now also evaluates Wildfire Games' publicly downloadable 0 A.D. meshes, source skins and animation clips under CC BY-SA 3.0. Derivatives must retain that license and attribution; acquisition does not establish artistic acceptance. The installed Blender no longer imports their Collada format, so a checksum-verified official Blender 4.2 binary is being acquired temporarily for conversion; no replacement application installation or general runtime importer is planned. Expected executable scope remains under about 1,000 lines. Continue the independent replacements while the earlier Sketchfab sign-in question remains unanswered.
+The wolf and pack search also evaluated Wildfire Games' publicly downloadable 0 A.D. meshes, source skins and animation clips under CC BY-SA 3.0. Derivatives retain that license and attribution; acquisition alone did not establish artistic acceptance. The installed Blender no longer imports their Collada format, so a checksum-verified official Blender 4.2 binary was used temporarily for conversion; no replacement application installation or general runtime importer was added.
+
+**Delivery reconciliation — 2026-10-17 00:18 EDT / 04:18 UTC.** All inventoried current Quaternius selections now have replacements, with old sources retained. Poly Haven provides the vegetation and metal/timber props; CDmir/TinyWorlds provides deer/stag, yd the archery, Wildfire Games the wolf, and Pablo Lizardo/Jarrhead the leather pack. The box-shaped Wildfire pack was rejected after rendering. The final pack uses the credited CC BY 3.0 Sintel source; no Sketchfab sign-in is needed for this replacement task. Nineteen new families retain 57 finishes and original controls, including three comparison-only rejected/alternate families. Existing Poly Haven rock/fern choices cover the remaining inspector selections. The mercenary, 30/60 density, dimensions and world behavior remain unchanged.
+
+[The source record](../../art-direction/assets/source-study/natural-replacements.md), [dated archive](../../art-direction/studies/2026-10-17-natural-replacements/README.md) and [verification](../verification/natural-source-replacements.md) record corrected legacy material/UV conversion, moving animal clips, fruit removal, source switching/reload and measured costs. The matched camp costs about 3.26 ms more median GPU time and 55 draws; it is a quality tradeoff, not strict 60 Hz qualification. This bounded replacement is delivered. The earlier bear, initial-load, arbitrary-view and broader device/art acceptance gates remain open under V3D01.
 
 ## Coarser detail and foliage light — October 17, 2026
 

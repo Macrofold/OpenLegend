@@ -1,8 +1,10 @@
 # Progressive 3D pixel art — feature specification
 
-| Status      | Current progress                                                                                                                       | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Coarser detail, open fir branches and softer foliage lighting are delivered; bear access and broader visual qualification remain open. | 2026-10-17   |
+| Status      | Current progress                                                                                                               | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Natural-source replacements and preserved comparisons are delivered; bear access and broader visual qualification remain open. | 2026-10-17   |
+
+**Source replacement — 2026-10-17 00:18 EDT / 04:18 UTC:** the inventoried current Quaternius scenery, animal, plant and equipment choices are superseded by natural-proportion sources, chiefly Poly Haven with credited animal/archery/pack sources. Nineteen new families retain three finishes and original controls, including rejected comparisons; prior models remain selectable. A finite presentation mapping adopts the selected models without changing saved appearances, world dimensions, gathering or other mechanics. The current 30/60 density, mercenary and survival atmosphere remain. [Sources and licenses](../../art-direction/assets/source-study/natural-replacements.md) and [actual checks/costs](../verification/natural-source-replacements.md) distinguish this delivered replacement from the still-open bear and broader production qualification. The pixel treatment remains source-driven sampled rendering, not permanent cubic geometry.
 
 **Detail/foliage revision — 2026-10-17 01:33 UTC:** the current comparison uses 30/60 samples per metre, replaces solid-sheet conifers with a source-guided Poly Haven fir, softens leaf lighting, varies fixed greens and reduces false-looking pale ground/bark patches. Three fir finishes, their source, the preceding tree/light treatments and finer density are preserved. This supersedes the preceding 40/120 choice under Mike’s latest feedback. [The scoped evidence](../verification/small-subject-art-and-atmosphere.md#coarser-detail-and-open-foliage--october-17-2026) records the artistic approximation and costs; world dimensions, cover, placement and saves are unchanged.
 
