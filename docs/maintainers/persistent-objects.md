@@ -170,7 +170,7 @@ The checked foundation gate below retains its original scope. October 2's PW03/P
 
 - [x] Exercise every acceptance case in the paired docs using disposable worlds and zero provider budget, including opposing nested moves, shared ancestors, cold retired references, active-equipment migration and failed multi-item work.
 - [x] Compare row/quantity/reference/pin totals across commits and both database adapters; inspect browser/network behavior for large and private containers.
-- [x] Measure bounded child lookup, ancestor work, root movement, index rebuild, history residency, save/capture size and contention under PF's mixed workload. Record current behavior in Architecture, actual evidence in Verification and unresolved regression/hosted gates here; retain CI and default no-suite instructions.
+- [x] Measure bounded child lookup, ancestor work, root movement, index rebuild, history residency, save/capture size and contention under PF's mixed workload. Record current behavior in Architecture, actual evidence in Verification and unresolved regression/hosted gates here; retain CI and select future checks under the current [verification policy](../../.agents/rules/verification.md). The original delegated pass deferred automated suites.
 
 **Dependencies:** PO01–PO08. **Exit:** the real tool/bag/stack loops and meaningful failures are evidenced; this does not close arbitrary construction, D6 cross-region transfer or first-release scale qualification.
 

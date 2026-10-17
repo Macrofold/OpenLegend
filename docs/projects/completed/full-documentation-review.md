@@ -1,8 +1,8 @@
 # Full documentation review
 
-| Status    | Current progress                                                                                                              | Last updated |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | The exhaustive audit and requested follow-up review are complete, with corrected summaries and preserved acceptance criteria. | 2026-10-16   |
+| Status    | Current progress                                                                                                                | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | The exhaustive audit and subsequent requested reviews are complete, with current behavior and verification guidance reconciled. | 2026-10-16   |
 
 ## Scope and source
 
@@ -14,7 +14,19 @@ Mike requested exhaustive reconciliation of non-archived documentation, projects
 
 The review originally began at `8005f7c7245cfecec128652efe3ef07926604e0a`. Earlier work is preserved on `docs/full-documentation-review-2026-10-02` and `docs/full-documentation-review-2026-10-03`; the latter's substantive snapshot is `411e1fdf49ee33d10e9a025ed41d90b117d8bf60`. Carry forward only findings that still hold after subsequent implementation and decisions, not obsolete patch text. The former side-branch scalability and deployment plans are now present in main and are reviewed there.
 
-**Current status: Completed — October 16. The first exhaustive audit completed at `f67ff6c2ee7fc2432106f482aa64664d2dd7b42d`; the subsequently requested full review and post-fix passes are complete, with no further actionable documentation issue found. Exact valid original full reads remain explicitly reused evidence, rather than being represented as fresh reads.**
+**Current status: Completed — October 16. The exhaustive audit and subsequent requested reviews have supported dispositions for the complete scope, with no further actionable documentation issue found in the final post-fix pass. Exact valid original full reads remain explicitly reused evidence, rather than being represented as fresh reads.**
+
+## Further requested review — October 16
+
+Review the complete 754-path scope against explicit local `refs/heads/main` at `ce1408691c6e9940939b68439b70d2d7b1f9345f` in `Macrofold/OpenLegend`. That commit integrates the previous audit: its complete Git tree matches both `5ab7723d36e480c71d9d2107f1720bab9cf3b567` and the reviewed `3100c7f617f2e5656fd81f97817c91a6f1691aaf`. The private review branch was rebased onto this local ref without conflicts or content changes; no branch or checkout switch occurred, and no other checkout receives edits. Expected executable logic changes are **zero**.
+
+Independent reviewers cross-check canonical specifications and limits, all project acceptance and filing, and complete maintainer tasks and world rules; the coordinating review covers root/package guidance, repertoires, art, verification and supporting records. Reuse exact valid original full-body and source evidence explicitly, while challenging the accumulated corrections and accepted-requirement mappings through complete resulting-change review and fresh affected sections/source checks. Keep detailed proof outside Git. Risks are incorrect current claims, lost accepted requirements, unsupported completion and evidence used beyond its measured scope.
+
+Fix demonstrated documentation issues at their existing owners, reconcile affected summaries and tasks, then review the full resulting changes again. Preserve accepted requirements, historical evidence and remaining game qualification. Completion requires supported current dispositions for every inventory path, reverse requirement ownership, correct project filing, independent post-fix review, pinned changed-file formatting, separate links/anchors, guidance and whitespace checks, actual-final-commit CI availability inspection, and local commits. Existing game CI gates remain required; this documentation review does not implement all tracked gameplay work.
+
+**Completed October 16:** The further pass reconciled all 754 paths with explicit reuse of still-valid original full-body, source, task and reverse-requirement evidence, plus independent accumulated-change and current affected-section review. It corrected the omitted supported world-opening edit and its separate human Start, the already-supported named-clock stopping time for following, the world index’s missing pointer to the existing coaching-result repair, and obsolete blanket automated-check instructions in their tracker/design consumers. Original dual-database evidence remains historical; current checks use PostgreSQL under the existing verification policy. No accepted gameplay requirement or historical acceptance case was removed.
+
+The complete resulting changes and final filing were reviewed again, with no further actionable documentation finding. Pinned changed-file formatting, guidance, whitespace and separate relative-link/heading checks pass. Existing game defects and broader qualification remain with their current owners. This pass changes no runtime logic, protected policy, dependency or configuration value and ran no game, browser, database or provider experiment. Additional and cumulative Jev cost are **$0**. Final local-commit CI availability is inspected without publishing; no returned check results establish a pass or waive the normal merge gate.
 
 ## Requested follow-up review — October 15
 
@@ -59,7 +71,7 @@ Current alternate-world constructors retain their required canopy/practice defin
 
 The protected development compatibility policy is unchanged. Current-format continuation includes preserving restored human work while the world is paused pending reconnection, then honoring real departure and absence before time advances. Large-vector restoration failures remain open independently of successful plain-history saves. Local committed corrections are the deliverable; publishing, PR updates and merging remain outside this request.
 
-Final closure passes pinned changed-file formatting, guidance, generated configuration, whitespace and the separate repository-wide relative-link/anchor check, including narrowly affected archive references. The reviewed local main remains `8ce0e2a236904b1a343cf6a07227b63e8a1968c1`, an ancestor of the final audit branch. All task-owned changes are locally committed; no executable gameplay logic, dependencies or protected policy changed. Hosted CI on the unpublished local audit head is unavailable; the earlier green base run and newer interface failures retain their own source pins. Inspecting availability does not waive the normal CI merge gate or claim that the final branch passed runtime suites.
+Final closure passes pinned changed-file formatting, guidance, generated configuration, whitespace and the separate repository-wide relative-link/anchor check, including narrowly affected archive references. The reviewed local main remains `8ce0e2a236904b1a343cf6a07227b63e8a1968c1`, an ancestor of the final audit branch. All task-owned changes are locally committed; no executable gameplay logic, dependencies or protected policy changed. The audit’s final-head queries returned no check results; empty responses neither establish a CI pass nor prove that every hosted workflow was absent. The earlier green base run and newer interface failures retain their own source pins. Inspecting availability does not waive the normal CI merge gate or claim that the final branch passed runtime suites.
 
 ## October 6 continuation checkpoint
 

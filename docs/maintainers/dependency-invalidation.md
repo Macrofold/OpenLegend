@@ -165,6 +165,6 @@ exhaustion refuses the complete native step without advancing time. The complete
 
 - [x] Exercise every paired-spec scenario with disposable native/manual checks and zero provider budget. Compare complete optimized membership/order/audience/evidence against an independent complete reference on matched snapshots.
 - [x] Measure old/new scope, empty results, within-cell motion, burst geometry changes, update-during-work, large nested/recurring work, mature history and cold rebuilds through PF's existing counters and matched workloads.
-- [x] Record actual evidence in Verification, delivered behavior in Architecture and remaining query/reaction/cadence/hosted regression gates in their owners. Preserve required CI; do not author/run automated suites under the default delegated workflow.
+- [x] Record actual evidence in Verification, delivered behavior in Architecture and remaining query/reaction/cadence/hosted regression gates in their owners. The original delegated pass deferred automated suites; future check selection follows the current [verification policy](../../.agents/rules/verification.md), with CI mandatory.
 
 **Dependencies:** DI01–DI07. **Exit:** correctness and boundedness are evidenced through real consumers. Lower CPU alone does not close EPR, PF/D5 capacity or D6 regional execution acceptance.

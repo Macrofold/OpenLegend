@@ -153,11 +153,13 @@ not a claim that future mechanics are implemented.
 ### Verification plan and work status
 
 Use disposable worlds and `AI_BUDGET_USD=0`; no provider calls are needed for native
-acceptance. Follow the default prohibition on authoring/running automated suites. Run
+acceptance. Select any new checks under [current Verification](../../../.agents/rules/verification.md#default-delegated-implementation),
+which permits focused existing checks and leaves full suites to CI or explicit requests. Run
 pinned formatting on changed files, TypeScript checks and production build; run config
 checks when authored configuration changes. Exercise representative success/failure
 paths through actual callers with manual/ad-hoc scripts, real browser interaction and
-SQLite/PostgreSQL transaction/recovery drills. Record missing infrastructure as a gap.
+current PostgreSQL transaction/recovery drills. The original SQLite/PostgreSQL
+qualification remains historical evidence below. Record missing infrastructure as a gap.
 
 Use matched cold/warm wilderness, charge, dense objects and mixed-population stress
 inputs on this host. Measure native tails/setup/heap, SQL mutation/commit/query tails,

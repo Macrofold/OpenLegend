@@ -115,6 +115,6 @@ reducing finite supply. Final compound resource/object/authority scenarios, sour
 
 - [x] Run disposable native/manual success and failure scenarios listed in the feature/technical pair with zero provider budget; exercise both then-supported database adapters and representative browser flows when implementation exists. This records the historical foundation checks; current verification uses PostgreSQL only.
 - [x] Measure matched before/after mutation latency, allocations, claim/active-instance counts, queue age and cold/warm behavior within PF's mixed workload. Preserve unresolved capacity failures.
-- [x] Record evidence in Verification, current implementation in Architecture, affected parent status/dependencies and deferred regression tasks here. Do not author/run automated suites under default delegated instructions; keep CI mandatory.
+- [x] Record evidence in Verification, current implementation in Architecture, affected parent status/dependencies and deferred regression tasks here. The original delegated pass deferred automated suites; future check selection follows the current [verification policy](../../.agents/rules/verification.md), with CI mandatory.
 
 **Dependencies:** SC01–SC07. **Exit:** complete scenario evidence and honest remaining limitations. No isolated benchmark, schema or passing compile closes EWF/INV/SL/PF release gates.
