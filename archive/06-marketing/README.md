@@ -1,8 +1,8 @@
 # Marketing workspace
 
-| Status | Current progress | Last updated |
-|---|---|---|
-| Internal planning and draft copy | Player-facing positioning, parallel execution and commercial hypotheses are aligned; no campaign, paid offer or numerical market target is adopted by these documents. | 2026-10-17 |
+| Status                                              | Current progress                                                                                                                                                                        | Last updated |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Selected language, internal planning and draft copy | Mike-selected audience-specific language is recorded alongside positioning and commercial hypotheses; no campaign, paid offer or numerical market target is adopted by these documents. | 2026-10-17   |
 
 ## Player experience and commercial purpose
 
@@ -16,18 +16,19 @@ AGPL-3.0-only is selected for the repository; [LICENSING.md](../../LICENSING.md)
 
 ## Documents
 
-| Document | Purpose |
-|---|---|
-| [Execution brief](../02-research/indie-launch-commercials/execution-brief.md) | One-page operating view: current hypothesis, evidence, uncertainty, next experiment, commitment limit and decision afterward |
+| Document                                                                                  | Purpose                                                                                                                                             |
+| ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Execution brief](../02-research/indie-launch-commercials/execution-brief.md)             | One-page operating view: current hypothesis, evidence, uncertainty, next experiment, commitment limit and decision afterward                        |
 | [Detailed execution guide](../02-research/indie-launch-commercials/execution-playbook.md) | Parallel game/audience/business work, different tests, deliberate promotion, selected-offer qualification and conditional Steam/crowdfunding routes |
-| [Commercial principles](../02-research/indie-launch-commercials/learnings.md) | Twelve principles and counterexamples, with a 64-case evidence map weighted by relevance and source quality |
-| [Business plan](business-plan.md) | Operating goals, managed-world candidate, offer comparison, accepted entitlement directions, cost controls and limits of the illustrative economics |
-| [Positioning and copy](positioning-and-copy.md) | Player-facing promise, audience hypotheses, draft copy and separate authoring/developer demonstrations |
-| [Ideas, channels and experiments](ideas-channels-and-experiments.md) | Candidate promotional material, source targeting and measurements for actual player and commercial questions |
-| [Open platform and private worlds](open-platform-and-private-worlds.md) | AGPL engine direction, private world content, optional libraries, creator control and licensing boundaries |
-| [Creator economy and mechanics packs](creator-economy-and-mechanics-packs.md) | Premium games, platform subscription allocation, hosting, pack marketplace and compatibility |
-| [Patrons, contributors and world history](patrons-contributors-and-world-history.md) | Recognition, dedications, transfers, voting and creator grants |
-| [Tokens and community funding](tokens-and-community-funding.md) | Preserved exploratory funding concepts; no token launch selected |
+| [Commercial principles](../02-research/indie-launch-commercials/learnings.md)             | Twelve principles and counterexamples, with a 64-case evidence map weighted by relevance and source quality                                         |
+| [Business plan](business-plan.md)                                                         | Operating goals, managed-world candidate, offer comparison, accepted entitlement directions, cost controls and limits of the illustrative economics |
+| [Language and elevator pitches](language-and-elevator-pitches.md)                         | Mike-selected descriptions, elevator pitches and taglines; audience guidance and explanations of systemic, emergent and generative gameplay         |
+| [Positioning and copy](positioning-and-copy.md)                                           | Player-facing promise, audience hypotheses, draft copy and separate authoring/developer demonstrations                                              |
+| [Ideas, channels and experiments](ideas-channels-and-experiments.md)                      | Candidate promotional material, source targeting and measurements for actual player and commercial questions                                        |
+| [Open platform and private worlds](open-platform-and-private-worlds.md)                   | AGPL engine direction, private world content, optional libraries, creator control and licensing boundaries                                          |
+| [Creator economy and mechanics packs](creator-economy-and-mechanics-packs.md)             | Premium games, platform subscription allocation, hosting, pack marketplace and compatibility                                                        |
+| [Patrons, contributors and world history](patrons-contributors-and-world-history.md)      | Recognition, dedications, transfers, voting and creator grants                                                                                      |
+| [Tokens and community funding](tokens-and-community-funding.md)                           | Preserved exploratory funding concepts; no token launch selected                                                                                    |
 
 ## Working principles
 
