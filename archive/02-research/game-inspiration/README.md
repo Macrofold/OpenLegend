@@ -4,7 +4,7 @@
 
 ## Start here
 
-- **[Why Umamusume made billions — mobile successes and unsuccessful services](essays/mobile-success-failure-and-umamusume.md):** the ten-case synthesis connects character attachment, repeated play, purchases and operating costs, with dated financial evidence and research questions for OpenLegend.
+- **[Why Umamusume made billions — and what OpenLegend can take forward](essays/mobile-success-failure-and-umamusume.md):** positive experience routes through all ten games, concrete OpenLegend possibilities, commercial interpretation and dated financial evidence. The [OpenLegend section](essays/mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity) connects adventure, invention, independent people, expressive creation and lasting consequences to current project goals.
 - **[Ten mobile successes and unsuccessful services — G168–G177](research-progress-mobile-2026-10-17.md):** full mechanics, reception and commercial studies of the ten October 17 additions, beginning with Umamusume. The scoped ledger owns actual completion and links each dossier.
 - **[Full 177-subject research roster](research-roster.md):** canonical title/edition list. The seventeen G150–G166 additions are **roster only; research has not started and must wait for Mike's authorization**.
 - **[Research requirements](research-requirements.md):** R01–R14 completion standard, including five written reviews per game and Steam review sampling where applicable. The [October 13 amendment](research-economics-engagement-and-creation.md) explicitly covers revenue estimates and economic outcomes, why play is enjoyable or frustrating, replay/abandonment, fictional economies, deep lore and creator tooling.

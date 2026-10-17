@@ -200,7 +200,7 @@ In November 2020, overseas publishing head **Jin Wenyi** described roughly **500
 
 In a **28 November 2023** Canadian statement of claim, Cognosphere described an initial development budget around **$100 million**, plus around **$200 million annually** for updates, expansions and patches. This is a company assertion in litigation, read in Polygon's public document mirror, not a court finding or audited annual cost schedule. The contemporaneous 2020 explanation and later pleading need not use identical cost boundaries. Neither supports automatically multiplying $200 million by every year through 2026 and presenting that result as actual cumulative expense. [C07, paragraph 10](https://www.scribd.com/document/704027216/Genshin-Lawsuit-via-Polygon).
 
-The commercial implication is substantial continuing production exposure: the audience expects new explorable places, story, characters and audiovisual work. The verified budget scale makes a high-spending audience valuable, but unknown marketing, payment, infrastructure, personnel and distribution costs prevent a reliable profit margin. Even comparing one year's mobile gross with a claimed annual development budget mixes accounting bases and omits both income and expenses.
+The commercial implication is substantial continuing production exposure: the audience expects new explorable places, story, characters and audiovisual work. The reported investment scale makes a high-spending audience valuable, but unknown marketing, payment, infrastructure, personnel and distribution costs prevent a reliable profit margin. Even comparing one year's mobile gross with a claimed annual development budget mixes accounting bases and omits both income and expenses.
 
 ### How the product creates reasons to pay
 

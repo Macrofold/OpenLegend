@@ -1,5 +1,7 @@
 ## 9. Implications for OpenLegend
 
+**Current reading context:** this essay preserves earlier research recommendations. The [current gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md) own selection: enjoyable adventure, useful invention, independent character choice and persistent consequence belong in connected play from the start. Read the numbered priorities below as historical emphasis, not a sequence that postpones the distinctive experience. The [later mobile comparison](mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity) supplies further positive possibilities, including action, discovery and expressive creation.
+
 ### 9.1 Choose a first player promise that does not require explaining the engine
 
 My recommended opening promise is:
@@ -102,3 +104,4 @@ My recommended initial mix remains: an overhead, readable world; a few useful an
 The ambition of new senses, goals, spells and reusable constructs should enlarge that experience. The danger is shipping a technically broad reality that gives a player no reason to prefer one decision over another.
 
 Do not turn all three user roles into the same assistant conversation. **Player-character:** acts with limited knowledge and consequences. **Creator:** changes supported rules within authorized scope. **World agent:** helps translate and inspect the creator’s intentions. An embodied inhabitant should not behave like an omniscient authoring assistant, and creator convenience should not silently erase the game’s constraints.
+
