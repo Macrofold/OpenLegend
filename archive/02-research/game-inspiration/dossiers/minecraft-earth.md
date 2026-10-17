@@ -1,8 +1,8 @@
-# Minecraft Earth — research checkpoint (G174)
+# Minecraft Earth — full-game dossier (G174)
 
 [Library](../README.md) · [Roster](../research-roster.md#october-17-mobile-successes-and-unsuccessful-services) · [Research status](../research-progress-mobile-2026-10-17.md) · [Research requirements](../research-requirements.md)
 
-**Research status: incomplete substantive checkpoint, October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
+**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
 
 ## Game, mechanics and player-created content
 
@@ -356,6 +356,23 @@ All access occurred on **17 October 2026**. Exact URLs appear with the correspon
 
 **Viewing route, not viewed evidence.** Minecraft Builders Bureau's [Minecraft Earth: Early Access Review](https://www.youtube.com/watch?v=T7ZCAuPxw3E), indexed **22 October 2019**, is a route for inspecting an early build. Only the title, channel and publication metadata were inspected here. It could help compare placement, scale changes and interface timing against the dated written descriptions, but no audiovisual claim in this dossier is based on having watched it. The linked written evaluations provide the reproducible reading route used for this section.
 
-## Completion work remaining
+## Requirement coverage and preservation
 
-The latest substantive research is preserved here while remaining mechanics, narrative, creation and source integration are completed. The assembled document still requires its final requirement coverage, factual and link review. It is not yet a completed R01–R15 dossier; the scoped ledger records the actual subject status.
+| Requirement          | Substantive coverage                                                                                                             |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| R01                  | Player promise, exact game identity, release and version boundaries in the game and commercial sections.                         |
+| R02–R03              | Major mechanics inventory, named resources, capabilities, compatibility and worked situations.                                   |
+| R04                  | Fictional economy, permanent versus temporary progress, time costs, failure and restart boundaries.                              |
+| R05                  | Constructed multi-system situations with conditions, actions, outcomes and limitations.                                          |
+| R06                  | Character roles, authored behavior, social systems, multiplayer or explicit absences.                                            |
+| R07                  | Art, sound, controls, interface, feedback and production evidence; firsthand device testing not claimed.                         |
+| R08                  | Fiction, named characters/institutions and narrative connections to actual play.                                                 |
+| R09–R10              | Production, release sequence, iteration, distribution, marketing and qualified discovery hypotheses.                             |
+| R11                  | Dated financial metrics, platform/territory definitions, estimate method and missing cost/profit evidence.                       |
+| R12                  | Five substantive independent written reviews where accessible, contrasting player testimony, enjoyment and abandonment analysis. |
+| R13                  | Explicitly labeled transferable research hypotheses, dependencies and counterexamples.                                           |
+| R14                  | Adjacent sources, annotated access/version limits, reading/viewing routes, navigation and this map.                              |
+| R15                  | Dated modding applicability finding and conditional investigation in the mechanics or commercial/creation section.               |
+| October 13 amendment | Commercial outcome; reasons to enjoy, return or leave; fictional economy; meaningful lore; actual creator capabilities.          |
+
+This subject had no earlier full dossier at the recorded branch base. Existing mobile reference studies, game dossiers and their historical evidence remain intact. Source observations are distinguished from interpretation and constructed examples. No gameplay, purchases, account modifications or uninspected video content are presented as firsthand evidence. The linked research ledger owns completion and commit status, including any remaining review work.
