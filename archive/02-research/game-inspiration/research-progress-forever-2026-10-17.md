@@ -12,13 +12,12 @@
 
 | Dimension | Current coverage | Remaining work |
 | --- | --- | --- |
-| Identity and prior findings | Independent Forever scope; initial official design and contrasting player accounts retained in the dossier. | Reconcile newest beta and launch boundaries. |
-| R01–R08: gameplay, world, situations and presentation | Nine class toolkits, race eligibility, Legacy and PvP progression drafted from dedicated official sources. | Complete world/lore, remaining activities, audiovisual account and worked interactions; review current beta changes. |
-| R09–R11: design/production, distribution and commercial evidence | Product/access comparison, financial-evidence table and production/design-process account drafted. | Review source support, price qualifications and commercial/production source budgets. |
-| R12: criticism, community, enjoyment and return | Six substantive beta press accounts, two limited demos and contrasting direct player accounts incorporated. | Complete loop/replay/abandonment synthesis, review surfaces, trust/PvP counterevidence and source register. |
-| R13: OpenLegend synthesis | Initial interpretation present. | Complete reusable lessons, dependencies, alternatives and links to the relevant synthesis owners. |
-| R14: sourcing, preservation and navigation | G178 registered; G97 and library linked. | Consolidate annotated sources, review coverage and validate changed links. |
-| R15: creator tools and modding | Active Forever addon ecosystem identified. | Complete authoring workflow, composition, distribution, incentives and authority limits. |
+| R01–R08 | Full gameplay/world/presentation draft, nine classes, 27 paths, profession and item interactions, eight worked situations and camp example. | Final source-budget and evidence review. |
+| R09–R11 | Product/price boundaries, commercial search record, indeterminate outcome, production history, specific iteration and distribution. | Final shared-source consolidation and review. |
+| R12 | Six substantial beta articles, two limited demos, four experiential essays, 23 community threads and return/abandonment analysis. | Final integrated evidence review. |
+| R13 | Complete Open Legend synthesis with four hypothetical situations, alternatives and prerequisites. | Integrate scoped lessons into existing topical guides and navigation. |
+| R14 | Adjacent citations, reception and commercial registers, prior G97/conversation findings retained. | Add consolidated gameplay annotations, validate all affected links and preservation. |
+| R15 | Addon applicability evidence, representative releases, source-level workflow, persistence, conflicts, governance and incentives. | Final coverage and link review. |
 
 ## Evidence boundaries
 

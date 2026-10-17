@@ -36,7 +36,7 @@ The current ForeverNet README is more precise than its shorter distribution desc
 
 The following is a **constructed workflow** assembled from inspected developer files. It describes how one author could build and distribute a small interface extension; it is not a claim that this study created or released one.
 
-1. **Choose a narrow player purpose.** A readable character display is a manageable learning target. The HelloForever example uses Lua for a draggable frame, a health display, event handling and commands. It handles protected combat values cautiously instead of assuming every value can be inspected or compared. [A08](#a08)
+1. **Choose a narrow player purpose.** A readable character display is a manageable learning target: change the example frame's size or color, open it with `/hf`, drag it and check whether its health display still responds. These are proposed checks, not performed tests. The HelloForever example uses Lua for a draggable frame, a health display, event handling and commands. It handles protected combat values cautiously instead of assuming every value can be inspected or compared. [A08](#a08)
 2. **Describe what the client should load and retain.** Its TOC manifest names supported interfaces, files in load order and account/character saved-variable names. Declaring these is separate from proving persistence works correctly on the chosen beta build. [A09](#a09)
 3. **Build and exercise the actual client integration.** The author's local workflow copies the built addon into the selected client's AddOns directory. Lua changes can be reloaded; manifest changes and new folders have different restart/discovery needs. The documented checks cover case-sensitive names, load order and included resources. This is the author's environment, not a universal installation-path promise. [A10](#a10)
 4. **Package a reproducible version.** The repository's release process defines per-addon versions, checks, tagged automation, packaged dependencies and developer-file exclusions, with GitHub ZIP and CurseForge distribution paths. It documents preparation for publishing; it does not prove that the repository's unfinished examples have been published. [A11](#a11)
@@ -46,6 +46,8 @@ The following is a **constructed workflow** assembled from inspected developer f
 This route requires programming, packaging and debugging. It is substantially different from an ordinary player combining two tools in the fiction and discovering a useful result. Open Legend's early invention goal should not silently require that player to become an addon author.
 
 ## Persistence, dependencies, removal and information boundaries
+
+Leatrix's September 26 changelog records a fix for its minimap enhancement placing Questie quest icons in the minimap button bag. This is a concrete interaction between individually useful extensions. [A16](#a16)
 
 An addon can retain a player's local history without changing the server's authoritative world. The HelloForever source records a specific September 22 beta-build observation: saved values survived a reload in that process but did not restore as expected after a cold restart. This is an author-reported historical issue, not a claim that the problem persists in the October client. It demonstrates why a successful reload alone cannot establish durable storage. [A08](#a08)
 
@@ -69,11 +71,26 @@ Blizzard's ability to restrict addon functions is a meaningful moderation bounda
 
 ## What this contributes to Open Legend
 
+Open Legend's [current authority boundaries](../../../../AGENTS.md#boundaries) and [development-save policy](../../../../AGENTS.md#development-save-policy) continue to govern implementation. This comparison does not create compatibility obligations or authorize generated executable rules.
+
 The strongest transferable idea is **tools that help people remember and cooperate while leaving meaningful action to them**. A player can keep a travel notebook, find a craftsperson or recall an unfinished adventure without automatically learning every secret or executing every transaction. The opportunity needs purpose-specific permissions and a clear distinction between remembered, shared and inferred information.
 
 Three alternatives deserve comparison. A built-in notebook gives ordinary players a supported baseline with limited setup. A programmable interface extension enables specialist tools but adds compatibility and moderation work. A world-authoring tool grants much greater creative power and must explain which rules, histories and other participants it can affect. Omitting one of these is a legitimate scope choice; the existence of WoW addons does not show that all three are necessary at launch.
 
 For a hypothetical Open Legend expedition, a returning player might see the route they actually travelled, the person who offered help and the repair they left unfinished. Another player could share a marked safe crossing with consent. A useful invented hauling device would still have to be built and used in the world, and a character could still decline the request to escort it. This combines memory, cooperation and invention as a research possibility; it asserts no present engine capability or approved implementation.
+
+## R15 coverage map
+
+| Investigation | Substantive section |
+| --- | --- |
+| Applicability and sustained community | Opening finding; dated Forever release evidence |
+| Tools, editable scope and authority | [Creation boundaries](#what-players-can-create-and-where-that-freedom-ends) |
+| Creation-to-play workflow | [Constructed authoring route](#an-evidenced-authoring-route) |
+| Representative works and overhaul | [Project comparison](#representative-works-and-their-limitations) |
+| Composition, persistence and removal | [Dependencies and information boundaries](#persistence-dependencies-removal-and-information-boundaries) |
+| Distribution, rights and governance | [Distribution and moderation](#distribution-incentives-and-moderation) |
+| Creator incentives and support | [Incentives](#distribution-incentives-and-moderation) |
+| Transfer, prerequisites and alternatives | [Open Legend comparison](#what-this-contributes-to-open-legend) |
 
 ## Annotated source register
 
