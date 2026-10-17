@@ -2,191 +2,201 @@
 
 | Status | Current progress | Last updated |
 |---|---|---|
-| Completed research recommendation | An operational sequence is defined from the 64-case review; no player test, spending decision, commercial launch or gate completion is asserted by this document. | 2026-10-16 |
+| Completed research recommendation | Parallel game, audience and business work has concrete experiments and commitment criteria; no player qualification, commercial offer or release is claimed complete. | 2026-10-17 |
 
-[Principles and counterexamples](learnings.md) · [64-case coverage](review-coverage.md) · [Dossiers](README.md) · [Working business plan](../../06-marketing/business-plan.md)
+[One-page operating brief](execution-brief.md) · [Principles](learnings.md) · [Weighted case evidence](review-coverage.md) · [Business and offer assumptions](../../06-marketing/business-plan.md)
 
-## Recommendation and authority
+## Objective and authority
 
-**Recommended sequence: a clear small-world promise → one complete enjoyable experience → unfamiliar-player evidence → focused public demonstrations and reachable testers → a representative, affordable paid offer → a small hosted pilot → renewals and manageable support → selective expansion.** Content sharing and recruiting can proceed alongside development; a large audience is not an entry requirement.
+Make a compact, unmistakably Open Legend adventure worth choosing and returning to. The [gameplay priority](../../../docs/repertoires/gameplay-priorities.md) owns the intended combination of exploration, opposition, useful rewards, progression, crafting and building with practical invention and independent character consequences. The aim is a small amount of unusually good play, not a general simulation demonstration or a generic survival game that postpones its premise.
 
-The existing business plan prioritizes a manageable hosted-world business, enjoyable alone, with a first commercial milestone of **ten renewing customers, positive monthly cash flow and sustainable founder time**. It treats the proposed monthly price and cost assumptions as unvalidated. This guide makes that sequence executable without changing its accepted directions. It does not replace the hosted pilot with a Steam launch merely because most researched examples sold on Steam.
+Keep experience, purchase offer and delivery platform distinct. Managed private worlds are a working commercial candidate, not a conclusion proven by the case archive. Compare that offer with its strongest feasible alternative before committing substantially to billing, packaging or service obligations. The business plan owns offer assumptions and accepted entitlement directions; existing gameplay/specification and maintainer owners govern implementation. This guide is not a second gameplay roadmap.
 
-Mike remains the decision owner. This is a recommendation, not approval to charge customers, engage contractors, buy ads, change game rules, switch engines, promise dates or implement billing. Existing implementation specifications, open-source licensing, privacy, verification and development-save policies remain authoritative. In particular, future release recovery planning is not permission to add legacy-save compatibility during current development.
+Mike owns consequential product, spending, price and launch decisions. Documentation completion does not authorize public promises, ads, hiring, charging customers or changing runtime contracts. Existing licensing, privacy, spending, verification and [development compatibility](../../../AGENTS.md#development-save-policy) rules remain authoritative. No current-build playtest or customer validation was conducted for this guide.
 
-The [business plan](../../06-marketing/business-plan.md) owns commercial objectives and packaging assumptions; [principles](learnings.md) own cross-case conclusions; this guide owns the operational sequence. Use existing feature trackers for any separately authorized implementation. Do not create a second gameplay roadmap from this research.
+## Run three tracks in parallel
 
-## How to use the gates
-
-Begin at the earliest gate for which evidence is missing. Do not rebuild something already demonstrated in the current game. Each cycle records the build, audience, question, cost/time allowance, observation and decision. A gate passes on relevant evidence, not because a date arrived or a famous comparison reached a certain number.
-
-**Go** means the specific next commitment is justified. **Rework** means a bounded correction and retest. **Stop** means pause the dependent spend, promotion or expansion—not necessarily abandon the entire project. None of the gates below is marked passed: this task reviewed research, not the running product or its customers.
-
-## Gate 0 — choose a testable promise and affordable commitment
-
-**Produce:** a one-page validation brief with the intended first player, the experience offered now, what is excluded, the build to test, founder hours available, an approved cash ceiling, a review point, and the next decision the test will inform. Review existing playable work before adding scope.
-
-Start with the business plan's simulation/worldbuilding audience as a hypothesis, not a proven market. Keep player enjoyment distinct from interest in authoring tools or AI technology. An illustrative promise is: **“Shape a small world whose inhabitants remember what happens, then return to discover the consequences.”** It is suitable public copy only to the extent the current build demonstrates it. Test whether prospective players understand it without explanation and what they expect to do.
-
-Choose a small number of genuinely comparable player activities, not only the most famous games. Note their audience, session expectations, purchase model, presentation and complaints. An AI engine, a hosted world and a premium survival game may have different customers. Do not price one solely by another's download count.
-
-**Go:** the next test can fit the available resources and has a falsifiable question. **Rework:** the promise is a list of future systems or requires constant founder explanation. **Stop dependent commitments:** personal spending/time ceilings, required permissions or the offered scope remain undecided. Research and use of existing evidence can continue without guessing those answers.
-
-**Basis:** P1/P6/P9/P11; Regency Solitaire and Eastshade show channel differences; Where the Water Tastes Like Wine shows the cost of assembling a large proposition before testing the complete experience.
-
-## Gate 1 — assemble one complete player experience
-
-**Produce:** a build where a newcomer can enter, understand a useful goal, make a consequential choice, see its result, and reach a satisfying pause or conclusion. For the persistent-world promise, show what returning actually restores. Include the current world's existing mechanics rather than isolated feature demonstrations that never form a playable session.
-
-A suggested observation window is **15–30 minutes**, adjustable to the intended experience; this is a research-test format, not a mandatory game length. A candidate scene could involve a resident reacting later to an earlier intervention. That is an example to verify, not a claim that any imagined interaction already works.
-
-Polish what lets people perceive the value: readable actions, useful feedback, understandable goals, coherent art direction and representative sound. Placeholder quantity matters less than whether placeholders obscure or misrepresent the experience. A feature central to the promise must be in the build; a narration explaining an absent feature is not a substitute.
-
-**Go:** the intended activity works end to end without a developer console or continuous coaching. **Rework:** the interesting part exists only in a prepared clip or disconnected system. **Stop expansion:** adding geography, population, multiplayer or mechanics would multiply an untested problem.
-
-**Basis:** P1/P3/P11; Eastshade's disconnected early demonstrations, Crumbling World's missing defining mechanic, FTL's focused playable proposition and A Short Hike's bounded delivery.
-
-## Gate 2 — observe unfamiliar players, then repeat
-
-**Produce:** short observation records from a small initial batch of relevant newcomers. A practical starting proposal is **6–10 people**, not a statistically sufficient sample or a commercial pass threshold. Use friends for early defects, but distinguish them from people unfamiliar with the interface and people paying mainly to support Mike.
-
-Ask what the pitch led them to expect. Let them play before explaining the solution. Record where they hesitate, misunderstand consequences, become interested, stop, or need help. Ask them afterward to describe a memorable event and whether they would choose to play again. Record actual subsequent return when the experience is intended to recur; an intention stated politely is weaker evidence.
-
-Use both experienced simulation players and less expert members of the intended audience. Specialist testers can expose depth and balance problems; newcomers expose comprehension. A long session caused by confusion, repeated crashes or grinding is not evidence of enjoyment. Completion of a satisfying finite session can be success without daily return.
-
-**Go:** the central promise is understood and observed in more than a rehearsed session, repeated severe blockers have been fixed, and a fresh small group reproduces the improvement. Agree in advance on the behavior that would justify the next test; report the raw numerator and denominator rather than declaring “validated” from a handful of people. **Rework:** players praise the idea but cannot enjoy the present build, or only existing fans can operate it. **Stop broad promotion:** attention would currently direct newcomers into known misleading or broken experiences.
-
-**Basis:** P3/P4/P12; Eastshade's observed tests, Slay the Spire's expert feedback, The Flock's short-event versus repeated-play gap, and Ember Guardian's small trusted cohort versus launch exposure.
-
-## Gate 3 — build a reachable audience around actual play
-
-This can begin during Gates 1–2 with truthful, clearly labeled material. It need not wait for a finished game or require daily videos.
-
-**Produce:** one public destination explaining the current promise; one primary next action such as request a test; a consent-based way to contact interested people; a small portfolio of genuine gameplay clips; and a record of source, message, build and response. A Steam page is an additional destination only if that distribution path is selected and feasible.
-
-Start with a sustainable cadence proposal: **one useful public update per week or per meaningful build**, assembled from work already done. This is a starting workload experiment, not an evidence-derived optimal frequency. Spend less when content production displaces the playable improvement the content needs. A developer diary can build trust and recruit testers without being the largest sales channel.
-
-Show the action, consequence and reason to care before discussing engine architecture. Keep normal waiting time, failures and interface demands visible enough to set honest expectations. Clearly label concept footage, edits and planned behavior. Do not imply unlimited invention, population or autonomous activity from a prepared example.
-
-Recruit where people already discuss the relevant activity, following community rules. Participate and ask focused questions rather than cross-posting the same advertisement everywhere. Keep a small creator shortlist based on actual coverage of comparable play—not subscriber count alone. For an outreach experiment, a manually checked batch of roughly 10–20 relevant contacts is a manageable proposal, not a success benchmark. Explain why the game fits, provide a short clip and a working build/access route, state known limits and recording conditions, and make the request easy to understand. Follow up for a substantive new build or event, not repeatedly without new value. Never imply a key purchases praise.
-
-Open a Discord or equivalent space when there is a recurring activity and an owner: scheduled tests, feedback, player stories or support. Start with few channels and stated response windows. A mailing option can reach people who do not want to join a chat community. Separate active testers from total members. For any synchronous multiplayer experiment, schedule a shared session and measure whether compatible players actually meet; total registrations cannot answer that question.
-
-**Go:** targeted communication repeatedly brings relevant people into actual sessions, and supporting them fits the time budget. **Rework:** views grow but qualified play does not, messages attract the wrong expectations, or the space is inactive. **Stop paid scaling:** the message/build/offer relationship is still unclear. Organic experimentation is not free—record founder time.
-
-**Basis:** P2/P4/P12; Choo-Choo Charles and Spilled! show useful reveals; Mortal Glory and Luck be a Landlord show relevant creator outreach; Knife To Meet You and Only Way is Down show the limits of reach; Descenders gives a community an activity. SNKRX shows that personally operating a large community is not every creator's strength.
-
-## Gate 4 — prove the offer, cost it, and choose help
-
-**Produce:** a representative public sample or invitation build, a draft description of what payment includes, measured typical and costly sessions, a cash plan, and a responsibility list. The sample should contain the experience being sold—not an entertaining but materially different endless mode or a systems showcase with the defining activity omitted.
-
-For hosted worlds, measure actual AI, infrastructure, storage and support costs at ordinary and heavier usage. Identify what pauses when nobody plays, which history remains, what an allowance buys and what happens at its limit. Confirm that normal play remains worthwhile within the affordable offer. Do not sell lifetime hosting, unlimited AI or indefinite unattended activity without a funded and explicitly authorized service commitment.
-
-Keep three accounts: external cash spent/received; economic effort including founder labor and reused work; and cash/obligations available for the next period. Preserve the business plan's proposed price as a hypothesis. Its illustrative costs are not measurements; do not use them to claim break-even today.
-
-**Choose specialist help against a bottleneck:** store/key art when the promise cannot be read visually; a representative audio/art contribution when perception blocks testing; QA when platform/build variety exceeds founder capacity; or community/marketing assistance when delivery work is displaced. Use relevant portfolios, peer references, art communities and professional contact routes; historical Fiverr or named-agency examples are not current vendor endorsements. Obtain a bounded paid trial only under an approved budget. The brief should name outputs, acceptance, revisions, dates, handoff, permitted use/ownership, credit, maintenance and payment. Obtain appropriate professional review for consequential contracts rather than assuming a template resolves them.
-
-Compare self-publishing, individual contractors, an agency and a publisher on actual responsibilities, capacity, references, cash timing, recoupment, revenue share, rights and exit conditions. Balatro and Valheim show that productive publisher conversations can begin before a huge audience; Ember Guardian shows a later partnership chosen partly to protect developer time. Neither timing is mandatory. An agency sending releases is not automatically responsible for positioning or product validation.
-
-**Go:** the current paid promise can be delivered with secured capacity and a credible downside budget. **Rework:** the sample attracts a different audience, the allowance ruins enjoyment, or a quote does not buy the missing responsibility. **Stop signing/spending:** the budget depends on uncommitted future funding or the founder's undefined unlimited labor.
-
-**Basis:** P3/P6/P7/P10; Maze Mice, Shadowhand, Shovel Knight, PONCHO, Spilled!, Haunts and Rec Room.
-
-## Gate 5 — qualify a small paid hosted pilot
-
-This is the **working first commercial track**, not an instruction to charge before the product or billing is ready. Recruit the business plan's proposed **5–10 early paying users** only after an explicit offered scope, price and operating commitment are approved. Distinguish genuine customer use from patronage or personal support.
-
-**Produce:** clear invitation/offer, onboarding, usage and absence explanation, contact route, billing/cancellation information, known limitations, and verified recovery for the actual product offered. Verify representative ordinary and failure situations using the repository's authorized implementation process. This research task itself did not run those checks.
-
-Qualify the same build and configuration people receive. Keep recording-only changes out of it. Check fresh access, loading and returning, meaningful progression, appropriate permission boundaries, different supported machines, costly usage, allowance exhaustion and the intended payment/cancellation behavior. Have a named person handling communication while the developer handles a serious defect. Where staffing is still one person, reduce the admission rate and state realistic support hours.
-
-An urgent patch needs a focused reproduction, an affected-path check and a known recovery choice. Rolling back software does not guarantee that changed customer data can safely be rolled back; make that compatibility decision deliberately under the actual release policy. Do not smuggle legacy-support work into the current development phase.
-
-**Go:** paying participants receive the present advertised experience, costs and support remain inside the approved bounds, and they choose to return. **Rework:** founder coaching is the main product, missing promises create cancellations, or later sessions expose serious defects. **Stop new admissions or promotion:** unresolved privacy, spending, payment or data-loss problems threaten users. Preserve agreed existing-customer obligations while resolving them.
-
-**Basis:** P3/P5/P6; Ember Guardian and Eastshade's update problems; Where the Water Tastes Like Wine's late complete-experience testing; Rec Room's ongoing cost distinction.
-
-## Gate 6 — evaluate renewals before expanding
-
-**Produce:** a cohort review after the offered renewal period, with the number eligible to renew, number renewing, cancellations and reasons, actual repeat play, cash contribution, liabilities, costly-use cases and founder support hours. Do not divide renewals by people who have not reached renewal yet.
-
-The business plan's target of **ten renewing customers** is a small operational milestone, not proof of a broad market. Positive monthly operating cash flow is not founder salary or recovery of development costs. Check whether favorable averages conceal expensive worlds or users who renew mainly to support the creator. Include obligations associated with prepaid balances rather than treating them as costless income.
-
-**Go:** the agreed commercial and time goals hold across relevant usage, and there is a specific reason the next increment of audience or capacity would remain manageable. **Rework:** players like the first session but have no reason to return, the price/allowance is wrong, or serving each new owner adds too much work. **Stop expansion:** additional customers predictably worsen unfunded obligations or require work beyond the founder's ceiling.
-
-Possible next steps are deliberately separate experiments: better onboarding, a requested language, a new creator demonstration, a wider invitation cohort, a selected storefront, or an additional compelling scenario. A marketplace, larger world or social platform is not the default answer to weak repeat value.
-
-**Basis:** P6/P8/P9; Brigador's improved business without reserves, Sunset's financial repair without continuation of its model, and Regency Solitaire's channel-specific results.
-
-## Conditional route A — a Steam release
-
-Use this route only after Mike selects a feasible Steam product and its relationship to hosted service access. A browser-hosted pilot, a paid downloadable game and a service subscription are not automatically the same offer. Resolve how a purchaser gets the advertised value, what requires ongoing service and who pays usage before making a Steam promise.
-
-| Step | Action and decision |
-|---|---|
-| Product page | Publish truthful positioning, gameplay assets, appropriate tags/languages, expected price context and an actionable destination once the product is presentable. Complete account/onboarding prerequisites; do not assume a browser link alone qualifies as the proposed Steam product. |
-| Testing | Consider Steam Playtest for controlled feedback; it uses a separate related app. Do not confuse a test with paid Early Access or with the public demo required for Next Fest. [V3] |
-| Demo | Publish a representative, stable sample with a clear route to the base game. Allow time to learn from new players and creator coverage before concentrating attention. A demo can launch before a festival. |
-| Festival selection | Next Fest permits one participation per title, requires a public base page and playable demo, and requires the game to remain unreleased through the event. Choose readiness and audience opportunity, not simply the nearest date. Follow the selected edition's deadlines. [V4] |
-| Release preparation | Store and build reviews are distinct; the page must be Coming Soon for at least two weeks before release. Account waiting periods and review lead times also need checking. Approval does not itself press the release button. [V5] |
-| AI/content | Complete Valve's content survey accurately, including player-consumed generated content and the safeguards required for live generation. Product acceptance is not established by this research. [V7] |
-| Launch decision | Combine representative player evidence, adequate current value, financing, price fit and release/support readiness. No single wishlist or review-score threshold proves readiness. [V1, V2] |
-| Early Access choice | Sell a build worth its current price, not an unfunded promise; Valve says Early Access is not a crowdfunding mechanism. Distinguish the Early Access debut from a later 1.0 release. [V6] |
-
-Prepare creator access, a compact press kit, accurate launch assets, permitted recording/music use, and release/support responsibilities before announcing a date. An embargo is a coordination choice, not a universal rule: Ember Guardian and Backpack Battles used different approaches. Do not demand favorable reviews, suppress criticism or reward only positive ratings.
-
-Keep comparable figures for the initial period and subsequent months. A useful proposed review rhythm is week one, month one and later 60/90-day checkpoints, adapted to the product; those are evaluation points, not a scheduled automation or an instruction to wait while serious issues remain.
-
-## Conditional route B — Kickstarter or other financing
-
-Use crowdfunding when a clearly defined financing gap and suitable supporter audience exist, not because a campaign is a compulsory marketing stage. FTL, Undertale, Hollow Knight and Spilled! provide preparation examples; Limit Theory, Haunts, Midora and Unwritten show why visible support does not secure completion. PONCHO and The Black Glove show that attractive materials do not guarantee enough pledges.
-
-Before asking for money, produce a minimum deliverable, honest maturity statement, representative proof, remaining work estimate, specialist availability, reward/fulfillment costs, fees, contingency, schedule risks and a communication owner. Kickstarter's goal should allow delivery when only the goal is met; unsuccessful campaigns do not collect their pledges. Its current guidance describes a 5% platform fee and roughly 3–5% payment processing, which must be checked for the actual campaign setup. Obtain qualified tax advice rather than applying an invented universal net percentage. [K1]
-
-Model conservative, expected and stronger funding cases separately. Use reachable prospects and observed interest to estimate support, not total social followers times an arbitrary pledge rate. Explicitly include secured non-campaign resources; do not quietly rely on a future publisher. Keep backer commitments and earned sales from being double-counted.
-
-Do not make ports, an editor, perpetual AI usage or additional content into stretch goals without costing delivery and ongoing support. More funding can add more obligations. Choose a campaign duration and outreach schedule from the actual work and current platform options, not a universal duration inferred from old successes.
-
-**Go:** the minimum funded plan is deliverable, specialist responsibilities are secured, and a plausible audience can be reached. **Rework:** the campaign finances polish on an untested promise, or the goal excludes necessary labor. **Stop launch of the campaign:** merely reaching its displayed goal still leaves the product unable to finish. Publisher discussions may occur earlier or later; they do not themselves close a funding gap.
-
-## Working dashboard and experiment record
-
-Keep a small record that distinguishes the following. Collect only necessary, permission-appropriate information; private world conversations and sensitive player details are not required to measure acquisition. Publish aggregate learnings only with appropriate privacy protection.
-
-| Question | Minimum useful record | Misreading to avoid |
+| Track | Continuing work | Evidence to seek |
 |---|---|---|
-| Did the message reach relevant people? | Source, asset, date, audience, cash spend, founder time, visits and next action. | Views or followers equal customers; all referrals are independent people. |
-| Did people experience the promise? | Build, newcomer/expert cohort, unassisted meaningful action, completion/stopping reason and representative feedback. | Long session or download proves enjoyment. |
-| Did they return or pay? | Actual later use, paid conversion within a defined eligible cohort, renewal cohort and cancellations. | Total purchases divided by prelaunch wishlists is wishlist conversion. |
-| Can we support them? | Serious defects, support hours, time to respond, recovery evidence and costly usage cases. | A few trusted testers qualify every machine, late-game state or update. |
-| Is it viable? | Receipts, refunds, external costs, founder hours, outstanding commitments and usable runway. | Gross sales are take-home; selected-budget recovery is full profitability. |
+| Game | Discover the strongest playable expression of the premise; assemble, observe and improve a complete experience. | Clear attraction, rewarding decisions, meaningful consequences, voluntary repeated play and reliable execution. |
+| Audience | Test the message and presentation, share useful work, recruit relevant players, develop creator relationships and prepare larger promotional moments. | Plausible players understand the promise and act on a real invitation; response repeats beyond one friendly group. |
+| Business | Compare realistic offers and distribution, investigate constraints, price costs and specialist help, then qualify the selected commercial test. | Customers prefer a feasible offer; receipts, obligations and founder effort can support it. |
 
-For hosted operation, calculate **realized contribution = revenue earned for the measured service period − refunds/credits − the actual payment, AI, hosting and other variable delivery costs attributable to that period**, with accounting boundaries recorded. Do not subtract fees already removed from the starting figure. Track cash receipts separately from earned revenue and obligations. Subtract fixed operating costs to assess the operating result; show founder compensation and development-cost recovery separately. Use costly-user scenarios as well as averages.
+These are not three serial approval queues. Small creative, audience and feasibility experiments can run together. A public note need not wait for the whole game, and platform restrictions can be investigated before a demo. Larger commitments depend on the relevant evidence: funding an artist, expanding content, announcing a date, buying ads or admitting paying users ask different questions.
 
-For each experiment, write: **question; competing explanation; audience/build; intervention; cost/time cap; observation period; numerator/denominator; result; next decision**. Change one important element where practical. When festival exposure, demo changes, ads and creator videos overlap, report a combined event rather than assigning all uplift to the favorite channel. Steam UTM reporting covers eligible logged-in visits and a defined conversion window, not every purchase influenced by the promotion. [V8]
+Keep the [brief](execution-brief.md) current: hypothesis, strongest evidence, biggest uncertainty, next experiment, limit and decision afterward. **Go** justifies a named next commitment. **Rework** means a bounded correction and retest. **Pause** stops dependent spending or exposure, not automatically the whole project. Avoid turning the sequence into permanent risk avoidance once evidence supports deliberate growth.
 
-Advertising begins, if at all, as a separately approved bounded test after message and product fit show evidence. Cost per wishlist is not cost per paying retained customer. Do not scale an attractive advertising metric while player satisfaction, refund burden or service margin deteriorates. Avoid coercive scarcity, deceptive countdowns or compulsory daily habits as substitutes for a worthwhile experience.
+## Choose the next experiment
 
-## The next two execution cycles
+Start with existing implemented work and relevant verification records. Define the intended player, current experience, exclusions, build, competing explanation, next decision, cash/time allowance and review point. Unresolved budget or permission questions block their dependent commitments, not research or use of already available evidence.
 
-**Cycle one:** review the current integrated build; fill the Gate 0 brief without inventing unresolved budget/time decisions; identify the smallest complete experience; assemble it under existing implementation authorization; prepare a truthful short demonstration and recruit the first unfamiliar testers. No large trailer campaign, paid ads or platform expansion is required to learn from them.
+Protect a bounded period for creative exploration when the strongest interaction is still being discovered. Observe whether it produces the intended feeling; do not ask a poll to design the game. Within the approved time and spending scope, reversible creative choices do not need a separate validation ceremony. When the experiment limit arrives, decide whether the evidence warrants more work, a different expression of the premise or a pause.
 
-**Cycle two:** observe those sessions, fix the dominant comprehension/enjoyment problems, retest with fresh people, measure representative and costly usage, and publish the useful improvement with a focused invitation. Use the result to decide whether the next commitment is more product work, a defined specialist contribution or preparation of a small paid pilot. Do not declare the business validated merely because the clip performs well.
+Assess three levels of appeal. Can a player explain why this is interesting? Are the actual decisions and outcomes rewarding? Does another approach, challenge or consequence earn another session? Compare against a small set of real alternatives the intended players already enjoy, chosen for similar activity and purchasing context rather than fame alone. Do not substitute an AI label, a long feature list or technical novelty for a reason to choose the game.
 
-The actual cash ceiling, weekly time allowance, review date, offered price/usage terms, selected audience and any Steam/crowdfunding commitment remain decisions for Mike where not already settled in current project owners. They block their dependent spending or launch, not this research guide. The best current recommendation is to earn evidence for the next manageable commitment rather than build the full platform and hope an audience arrives.
+## Game track: one complete experience
+
+**Work product:** a newcomer can enter, understand a worthwhile goal, act, face a meaningful obstacle, receive useful feedback/payoff and stop or continue coherently. Combine what already exists rather than produce isolated system demonstrations.
+
+The canonical gameplay document offers a contested crossing or occupied ruin as an illustrative test. A known approach remains valid; a practical non-canned invention can provide another route. A resident or rival pursues an independent purpose, can refuse, and responds only to what they perceived. A reward, method, access or relationship consequence can matter again. This is an evaluation example, not a newly mandated quest or claim of implementation. Do not force invention as a secret answer or script cooperation to complete the demonstration.
+
+Polish the attraction as well as usability: coherent visual identity, appealing motion and sound, readable actions, understandable goals and expressive outcomes. A feature central to the promise must actually operate; an effect-free animation, generated name or narration about future capability is not sufficient. Small scope should preserve identity rather than remove every difficult element that makes the game distinctive.
+
+**Advance production** when the connected activity works without a developer console or constant coaching and shows a credible payoff. **Rework** disconnected or confusing systems before multiplying them. **Pause scope expansion** when more geography, population, content or simulation merely enlarges an untested problem. A useful creative experiment can precede this complete demonstration, but it is not itself full-game validation.
+
+### Qualify the distinctive experience under real constraints
+
+Record these observations together with the build and actual delivery costs:
+
+| Question | What to observe |
+|---|---|
+| Responsiveness | Whether waiting for a character or invention interrupts a decision or encounter; include ordinary and demanding cases, not only the fastest demonstration. |
+| Real usefulness | Whether a supported invention is realized and changes an activity, stays available for reuse and preserves valid known alternatives. |
+| Character coherence | Whether an independent response follows what the character perceived and wanted, rather than omniscient knowledge or a scripted demonstration outcome. |
+| Continuing consequence | Whether later play actually encounters the relevant result; persistence alone does not prove it remains interesting. |
+| Failure and limits | Whether refusals, failed generation, exhausted allowances and unavailable services are explicit and ordinary play remains worthwhile. |
+| Cost and capacity | Typical and expensive AI, hosting, storage and support demands, with the same quality and usage terms as the offered experience. |
+
+Do not optimize only for a cheap model call or a beautiful prepared clip. The acceptable tradeoff is player value, reliability, latency and cost together. No universal numeric performance target is selected here; use the relevant implementation owners and measured requirements of the tested experience. Investigation of proposed alternatives does not authorize paid calls or a technology switch.
+
+## Test four different things
+
+| Test | Suggested first work product | What it does not establish |
+|---|---|---|
+| Usability | Observe a small group entering and playing without coaching; record expectations, hesitation, action, result and stopping reason. | Market size, lasting enjoyment or willingness to pay. |
+| Enjoyment and repeat value | Provide an optional further session or approach; record what people voluntarily do after the introduction and novelty. | That a friendly or highly selected group represents the market. |
+| Broader demand | Expose truthful material and a real sample/access route to additional relevant audiences; record qualified actions by source. | That views, signups or free use will become payment. |
+| Purchase or renewal | Test approved, realistic terms with an actual deliverable and qualified operations; distinguish customers from supporters. | Long-term profit or scale from a tiny early cohort. |
+
+A starting proposal of **6–10 observed people** and a **15–30 minute initial observation** makes early work manageable; neither is a statistically sufficient sample, pass threshold or mandatory game length. Adapt to the experience. Use friends, experts and newcomers for different questions. Friends are not useful only for defects, but voluntary behavior is stronger than polite encouragement. Expert balance feedback does not replace unfamiliar-player observation.
+
+Ask what the pitch led them to expect, observe before intervening, and ask afterward what was memorable and why they stopped. Requests to play again, another chosen approach or interest in the next build are encouraging signals, not an automatic business verdict. Long sessions caused by confusion, grinding or repeated crashes must not be counted as enjoyment. A finite satisfying session can be success without daily return.
+
+Fix the dominant problem, then test the change with fresh people where practical. Define the expected behavior before the result; keep raw numerator, denominator, selection method and observation window. Distinguish evidence of comprehension from evidence of desirability. Feedback diagnoses the creative direction; it is not a referendum allocating features.
+
+## Audience track: routine communication and deliberate promotional moments
+
+**Work products:** one clear public destination, one primary next action, consent-based follow-up, genuine gameplay material and a source/result record. A weekly useful update or an update per meaningful build is a proposed workload experiment, not an optimal cadence established by the cases. Reuse work already being made. Keep developer explanation separate from player-facing reasons to play.
+
+Show action, choice, consequence and payoff. Preserve the truth of normal waits and limits; label concept footage and materially edited time. Do not imply unlimited invention or population from a prepared example. Artwork, a short trailer and copy should identify the same intended activity. Source targeting matters more than maximizing aggregate reach across unrelated audiences.
+
+| Moment | Preparation | Decision it should inform |
+|---|---|---|
+| First meaningful reveal | Recognizable real footage, clear positioning and a working next action. | Whether the attraction is understood by plausible players. |
+| Representative demo or testing release | Stable sample, expectation match, feedback route and capacity to respond. | Whether people enjoy what they thought they were choosing. |
+| Relevant festival or creator wave | Audience fit, enough testing lead time, press kit, access instructions and support ownership. | Whether the promising response can repeat at wider reach. |
+| Commercial release | Qualified current value, approved offer, accurate assets, coordinated contacts and recovery/support plan. | Whether interest becomes sustainable customer value. |
+| Meaningful postlaunch change | A substantive reason to return or cover the game, not merely an announcement. | Whether a diagnosed problem or new audience opportunity improves the next period. |
+
+Participate in relevant communities under their rules. A practical outreach experiment is a manually checked **10–20 creator/contact batch**, chosen for actual coverage of comparable play rather than subscriber count. Give a concise reason the game fits, short visual evidence, build/access instructions, relevant limitations, recording/music permissions and contact details. Follow up when a substantial improvement or event supplies new value. Free access does not buy praise. Check embargo needs for the actual campaign; the historical cases used different approaches.
+
+Open Discord or an equivalent space for a recurring activity: testing, player stories, creations or support. Start with few channels, response windows and a responsible person. Keep an opt-in mailing route for people who do not want chat. Measure active testers and return separately from members. Concentrate synchronous tests into shared sessions where needed rather than treating registrations as simultaneous opponents. Do not impose those population needs on independently enjoyable play.
+
+**Broaden deliberately** when qualified responses repeat across relevant groups and serving them fits capacity. Expand creator outreach, improve campaign assets and consider a bounded advertising test under an approved budget. Do not wait for perfect attribution or a universal follower count. **Rework** message, sample or source targeting when attention creates the wrong expectations. **Pause scaling** when extra traffic would expose known misleading, broken or economically harmful conditions. Organic promotion also consumes founder time.
+
+## Business track: compare offers before building the commitment
+
+The [business plan](../../06-marketing/business-plan.md) owns actual packaging hypotheses and accepted entitlement directions. Investigate managed worlds alongside the strongest feasible alternative for the intended adventure. Possible categories include a paid game with a sustainable included-service arrangement or a different bounded access offer; their affordability and platform acceptance are not assumed. Do not build several billing systems to conduct this comparison.
+
+Use a short comparison record:
+
+| Dimension | Question for each candidate |
+|---|---|
+| Player value | What experience is purchased, and why would the intended player prefer this arrangement? |
+| Price and access | Upfront versus recurring payment, included service, extra charges, access friction and what happens on cancellation or exhaustion. |
+| Experience integrity | Whether the defining invention/character experience remains useful at those terms, not only a stripped-down cheaper version. |
+| Delivery | Ongoing service, save/history, support, refunds/remedies and cessation obligations. |
+| Economics | Typical and costly usage, realistic receipts, unpaid obligations and founder time at downside and stronger demand. |
+| Distribution feasibility | Store policy, generated-content disclosure, service access/payment, licensing, supported platforms and review requirements. |
+| Evidence | Existing measured facts, customer response and untested assumptions recorded separately. |
+
+Begin with descriptions and interviews clearly labeled as proposed offers. They can reject misunderstandings and poor-fit terms but are weaker than payment. Do not advertise an unavailable checkout or take money for an unqualified product. Once a feasible offer is selected and approved, a small real commercial test can assess commitment. Preferences for subscriptions cannot be inferred from premium-game successes or from our own AI costs.
+
+Define the ambition used to judge the result: operating-cost coverage, manageable side income, founder livelihood and studio growth differ. The hosted proposal's **ten renewing customers** is an early operational milestone only. Its illustrative inputs leave $140 per month before founder compensation and other excluded expenses; they are not measurements or a livelihood target. Actual financial/time goals must be chosen before evaluating success against them.
+
+### Choose specialist help against the bottleneck
+
+Consider visual identity/readability, storefront art, representative audio, QA, editorial or production coordination, community support and marketing as distinct outputs. Use relevant portfolios, professional relationships, peer references, art communities and known contributor work. Historical marketplaces and agencies are examples, not current provider endorsements.
+
+Under an approved budget, use a bounded paid trial and explicit acceptance, revisions, delivery date, source-file handoff, rights/licensing, credit, payment and maintenance. Evaluate reliable communication as well as portfolio quality. Obtain suitable professional advice for consequential legal/tax terms rather than assuming a generic template resolves them.
+
+Compare a contractor, agency and publisher on the exact work removed from the founder, financing, cash timing, recoupment, split, rights, references and exit conditions. Early talks can be useful before a huge following; a later deal can be useful after independent traction. Neither timing is mandatory. Sending press releases is not automatically positioning strategy, and a community contributor is not guaranteed critical-path labor.
+
+### Financial measurement
+
+Keep external cash, economic effort and runway/obligations separate. For a measured service period, realized contribution is revenue earned for that period minus refunds/credits and actual attributable variable payment, AI, hosting and other delivery costs. Do not subtract fees already removed from the starting figure. Keep cash receipts distinct from earned revenue and prepaid obligations; then account for shared fixed costs, founder compensation and development-cost recovery separately.
+
+Record normal and expensive users, workload changes, refund burden and support hours. A small average margin can conceal costly worlds. Do not assume future purchases, uncommitted publishers or customer balances are free cash available to spend. Planned advertising is not actual spend, and cost per wishlist is not cost per retained paying customer.
+
+## Commercial commitment and release qualification
+
+Select the first test from the offer comparison. For managed worlds, the proposed **5–10 paying early users** are a bounded pilot, not a requirement imposed on every possible release route. For a paid game, qualify the current build's value and the chosen distribution. In both cases distinguish users purchasing the experience from people primarily supporting Mike.
+
+Before taking payment, produce the actual approved scope/terms, onboarding, access and cancellation information, usage/absence explanation, contact route, limitations and recovery plan. Exercise the build people receive: entry, progression, returning, permission boundaries, supported hardware, costly scenes, failed generation, allowance exhaustion and applicable billing behavior. Use existing authorized implementation and verification workflows; documentation is not evidence those checks passed.
+
+Keep recording changes out of release configuration. Assign communication and repair responsibilities or reduce the admission rate. Urgent patches need a focused reproduction, an affected-path check and a feasible recovery choice; code rollback and data restoration are different operations. The owner must explicitly resolve the development compatibility policy before real-user compatibility support is introduced. This guide neither waives nor changes that rule.
+
+**Proceed** when the advertised current value, required protections and bounded delivery are demonstrated. **Rework** when coaching, absent promises or unstable late-game conditions dominate. **Pause new admissions or promotion** for material unresolved privacy, spending, payment or data-loss risks. Existing customer obligations remain separate from decisions to grow.
+
+## Conditional Steam route
+
+Investigate feasibility while comparing offers, not only near launch. Confirm what the Steam purchase delivers, what requires continuing service and how players access/pay for it. A browser link alone is not qualification of a Steam product.
+
+| Area | Required planning |
+|---|---|
+| Page and discovery | Publish truthful gameplay, presentation, tags/languages and a Coming Soon page when ready. Set project-specific targets with explicit assumptions, not universal wishlist guarantees. [V1, V2] |
+| Testing | Steam Playtest uses a separate associated app; it is distinct from a public demo and paid Early Access. [V3] |
+| Demo/festival | Next Fest allows one participation per title, a public base page and playable demo, and requires the game to stay unreleased through the event. Choose readiness and audience opportunity; follow that edition's deadlines and allow correction time. [V4] |
+| Release review | Store and build approval are distinct. Coming Soon must be public for at least two weeks before release; check onboarding waiting periods and review lead times. Approved games do not release automatically. [V5] |
+| Early Access | The available build must be worth its current price; Valve distinguishes it from crowdfunding or prepurchase. Separate Early Access and full release in plans and reporting. [V6] |
+| Generated content/services | Disclose player-consumed generated content and live-generation safeguards. Valve's FAQ requires managing external-service access for players and collecting payment through Steam-supported methods. Investigate the actual configuration early; disclosure alone is not acceptance. [V7] |
+
+Do not turn Valve's examples of payment arrangements into an economically safe unlimited-service promise. Preserve reliable player value and actual cost limits when evaluating a candidate offer. Resolve material policy uncertainty with the platform before depending on the route.
+
+Coordinate press/creator assets, keys, accurate known limitations and music/recording rights. Choose an embargo only for a concrete purpose. Do not demand favorable reviews or pressure critics. Review the first week, first month and appropriate later periods; proposed 60/90-day checkpoints are decision intervals, not an automation or a reason to leave serious defects unresolved.
+
+## Conditional crowdfunding route
+
+Use crowdfunding for a real financing gap and suitable supporter audience, not as a mandatory marketing stage. Prepare honest maturity evidence, a minimum deliverable, remaining work, secured specialist capacity, reward fulfillment, fees, contingency, risks and a communication owner. A goal must support delivery when only the goal is met, accounting for explicitly secured non-campaign resources. Kickstarter uses all-or-nothing funding; its guidance describes a 5% platform fee and roughly 3–5% processing, to verify for the actual setup. Obtain qualified tax advice. [K1]
+
+Model downside, expected and stronger support from reachable prospects and observed interest, not arbitrary follower conversion. Keep pledges and eventual earned sales from being counted twice. Do not promise uncosted ports, an editor, lifetime hosting or unlimited AI as stretch goals. Choose campaign timing/duration from the actual preparation and platform options rather than copying a historical winner.
+
+**Proceed** when the minimum funded promise is feasible and the audience can plausibly be reached. **Rework** missing labor or an untested central promise. **Pause the campaign** when hitting the displayed goal still leaves delivery dependent on an uncommitted funder or unlimited unpaid work.
+
+## Postlaunch decisions: satisfaction, money and continuation
+
+For a hosted offer, measure the cohort actually eligible to renew, renewals, cancellations/reasons, voluntary return, earned contribution, obligations, costly cases and founder hours. For a finite paid game, measure satisfaction, purchases, refunds, service/support cost and cash retained; do not impose subscription or daily-retention criteria on a different promise.
+
+Expand for an evidenced reason: additional qualified demand, improved introduction, worthwhile new challenges, a relevant language or selected distribution opportunity. A marketplace, larger world or mass social service is not the default solution to weak player value. A late sales rise is not automatically profit; an early sales decline is not automatically permanent failure.
+
+A recovery experiment needs a diagnosed issue, proposed change, exposure limit and explicit follow-on decision. Do not maintain an indefinite update treadmill hoping for virality. Deliver existing obligations even when optional expansion stops. Strong results justify deliberate growth, not merely another identical tiny test; reevaluate support and costs at the next scale.
+
+## Working measurement and evidence record
+
+| Question | Minimum record | Misleading substitute |
+|---|---|---|
+| Is the attraction understood? | Audience/source, shown asset, expected activity and next action. | Views or technology enthusiasm alone. |
+| Does the game reward play? | Build, choices, comprehension, payoff, voluntary continuation and stopping reasons. | Download or session length alone. |
+| Is there broader demand? | Qualified response across relevant sources with exposure and timing. | Repeated praise from one selected group. |
+| Do people prefer the offer? | Actual terms, eligible cohort, purchases/renewals, refunds and reasons. | Survey intent or supporters' payments as market proof. |
+| Can delivery continue? | Receipts, obligations, actual costs, heavy-use cases, support and founder hours. | Gross receipts or selected-cost recovery. |
+
+Write each experiment as **question; competing explanation; audience/build; intervention; cost/time limit; observation window; numerator/denominator; result; decision**. Change one important variable where practical. Combine tagged links, timing, player reports and repeated observations; imperfect attribution is useful but not causal certainty. Steam UTM analytics includes eligible logged-in activity and a 72-hour conversion window, with known missing tracking. [V8] Do not assign all combined festival/demo/creator/ad uplift to one component or count overlapping audiences as independent people.
+
+Set targets from the actual decision and resources, with conservative assumptions and room for error. Small-sample uncertainty should moderate spending, not prohibit learning. Record aggregate information rather than private world conversations or unnecessary personal data. Preserve ethical player value; false urgency and coercive daily habits are not substitutes for an experience worth returning to.
 
 ## Current platform source register
 
-Checked October 16, 2026. Recheck before committing to a platform event, price or release. These describe platform rules and tools, not guarantees that Open Legend will be accepted or featured.
+Checked October 17, 2026; recheck before actual platform or funding commitments. Historical examples and their individual access limits are in the [evidence map](review-coverage.md).
 
-- **[V1]** [Valve — Visibility](https://partner.steamgames.com/doc/marketing/visibility).
-- **[V2]** [Valve — Wishlists](https://partner.steamgames.com/doc/marketing/wishlist).
-- **[V3]** [Valve — Steam Playtest](https://partner.steamgames.com/doc/features/playtest).
-- **[V4]** [Valve — Steam Next Fest](https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest).
-- **[V5]** [Valve — Release Process](https://partner.steamgames.com/doc/store/releasing).
-- **[V6]** [Valve — Early Access](https://partner.steamgames.com/doc/store/earlyaccess).
-- **[V7]** [Valve — Content Survey](https://partner.steamgames.com/doc/gettingstarted/contentsurvey).
-- **[V8]** [Valve — UTM Analytics](https://partner.steamgames.com/doc/marketing/utm_analytics).
-- **[K1]** [Kickstarter — Funding-goal guidance](https://updates.kickstarter.com/how-to-set-the-right-funding-goal-for-your-kickstarter-campaign/).
+- **[V1] [Valve — Visibility](https://partner.steamgames.com/doc/marketing/visibility)**
+- **[V2] [Valve — Wishlists](https://partner.steamgames.com/doc/marketing/wishlist)**
+- **[V3] [Valve — Steam Playtest](https://partner.steamgames.com/doc/features/playtest)**
+- **[V4] [Valve — Steam Next Fest](https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest)**
+- **[V5] [Valve — Release Process](https://partner.steamgames.com/doc/store/releasing)**
+- **[V6] [Valve — Early Access](https://partner.steamgames.com/doc/store/earlyaccess)**
+- **[V7] [Valve — Content Survey](https://partner.steamgames.com/doc/gettingstarted/contentsurvey)**
+- **[V8] [Valve — UTM Analytics](https://partner.steamgames.com/doc/marketing/utm_analytics)**
+- **[K1] [Kickstarter — Funding-goal guidance](https://updates.kickstarter.com/how-to-set-the-right-funding-goal-for-your-kickstarter-campaign/)**
 
-Historical cases and their individual source registers are linked through the [complete coverage map](review-coverage.md). Operational batch sizes and review intervals in this guide are explicitly proposed experiments, not benchmarks discovered by counting successes.
+Operational sample sizes and cadences are adjustable proposals, not benchmarks derived from the selected case set. Actual price, budget, commercial ambition and unsupported platform assumptions stay open until resolved; their dependent commitments must not be invented.
