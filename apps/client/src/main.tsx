@@ -265,7 +265,7 @@ function App({
   );
   const [shadowQuality, setShadowQuality] = useLocal<ShadowQuality>(
     'open-legend:shadow-quality',
-    'detailed',
+    'economy',
     (v): v is ShadowQuality => v === 'detailed' || v === 'economy',
   );
   const [captionsPaused, setCaptionsPaused] = useLocal(

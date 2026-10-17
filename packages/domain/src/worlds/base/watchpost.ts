@@ -17,8 +17,20 @@ export const WATCHPOST = {
   cacheId: 'watchpost-cache',
   cache: { x: 48, z: 23 },
   occupants: [
-    { id: 'kest', name: 'Kest', position: { x: 47, z: 20 }, identity: KEST_IDENTITY },
-    { id: 'orin', name: 'Orin', position: { x: 50, z: 21 }, identity: ORIN_IDENTITY },
+    {
+      id: 'kest',
+      name: 'Kest',
+      position: { x: 47, z: 20 },
+      identity: KEST_IDENTITY,
+      appearance: 'study:kest-travel-coat',
+    },
+    {
+      id: 'orin',
+      name: 'Orin',
+      position: { x: 50, z: 21 },
+      identity: ORIN_IDENTITY,
+      appearance: 'study:orin-field-tunic',
+    },
   ],
   // Full-height public solid walls. Both openings and the outer retreat remain ordinary ground.
   walls: [
@@ -99,7 +111,7 @@ export function installWatchpost(world: WorldState, makeActor: typeof createActo
     description: WATCHPOST.description,
     placement: worldPlacement(point, point.surfaceId),
     spatial: baseSpatial('object'),
-    appearance: 'crate-mesh',
+    appearance: 'study:chest-plank-cache',
   };
   world.entities[cache.id] = cache;
   const place: PlaceDefinition = {
@@ -117,6 +129,7 @@ export function installWatchpost(world: WorldState, makeActor: typeof createActo
     world.entities[resident.id] = {
       id: resident.id,
       name: resident.name,
+      appearance: resident.appearance,
       nameForm: 'proper',
       kind: 'npc',
       spatial: { ...baseSpatial('person'), heading: Math.PI },

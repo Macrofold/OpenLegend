@@ -1,5 +1,7 @@
 # Reference feedback
 
+**October 16, 2026 clarification:** Mike wants realistic proportions interpreted through beautiful dimensional pixel art and rejects the visible low-poly look, cutesy/blocky assets and small-body/big-head characters. He rejects Bitgem, KayKit, Polytope Studio and Synty as style directions, while recognizing Quaternius as solid for its own style. The latest study looks much better; that praise does not approve every source family. See the [current visual requirements](decisions.md#current-visual-requirements--october-16-2026); earlier ratings remain unchanged.
+
 Round one was reviewed on September 19, 2026: **47 ratings — 13 Like, 12 Maybe, 22 Pass**. A07 / Modern Exteriors is unrated. Check `feedback.json` for the latest original-board feedback.
 
 - [Art-direction synthesis with examples](round-01-analysis.md)

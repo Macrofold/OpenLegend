@@ -6,7 +6,19 @@
 
 - [Speak, descriptive Act and contextual menus](verification/speak-and-act.md) — scoped HTTP/PostgreSQL fixtures, speech volumes, expression-only effects, stale/replay guards and bottom-bar browser interactions.
 
+[Natural-source replacements](verification/natural-source-replacements.md) records the October 17 replacement of remaining current Quaternius selections, retained alternatives, source credits, actual animation/depletion/reload checks and matched rendering cost.
+
+[Source-based starting-world study](verification/source-based-starting-study.md) records the October 16 replacement: source/variant coverage, actual composed scenes, scale/pixel choices, motion/resource fixes and complete moving-scene device measurements.
+
 - [World and engine boundaries](verification/world-engine-boundaries.md) — all 13 selected-owner fixes, capability omission, contrasting native definitions, PostgreSQL continuation and truthful player presentation.
+
+- [Existing starting-scene art revision](verification/starting-scene-pixel-art.md): combined E01–E08 decisions, original scene preservation and integrated device evidence; [character](verification/starting-scene-character.md), [environment](verification/starting-scene-environment.md), [native routes](verification/starting-scene-gameplay.md), [generated prop](verification/generated-prop-coherence.md) and [standalone texel splatting](verification/texel-splatting.md) retain scoped results. Creator review remains open.
+
+[Starting-scene pixel finish and camera stability](verification/starting-scene-pixel-stability.md) records the newly authorized revision after rejection of the first candidate, including single final sampling, object-attached surface artwork and critical moving-artifact comparisons.
+
+[Licensed library art and authored choices](verification/library-art-variants.md) records actual free source downloads, three mercenary/hare alternatives, imported foliage selection, loading cleanup and current art/performance limits.
+
+[Representative Blender pixel-art study](verification/representative-art-study.md) records thirty original alternatives, editable sources, working selections, actual camera/face/coverage review and the finite inspection page’s checks and cost.
 
 This index links recorded checks and measurements by topic. Each report retains its own revision, workload, results and limitations; a passing result for one workload does not establish current release acceptance. The [maintainer index](maintainers/README.md) links the owners of remaining work.
 
@@ -108,7 +120,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 
 [Character visibility and target feedback](verification/character-visibility.md) records scenery-only read-through, protected people, the perceived selected target in front, refused remembered-image clicks and delayed silhouette outlines, including bounded draw/timing and teardown observations.
 
-[Mercenary integration evidence](verification/mercenary-default.md) covers the default additional NPC, fixed character resolution, depth compositing, actual animation/cloth, scoped projection, persistence, failure and resource ownership. The larger generated-art pipeline and crowd/low-end qualification remain open.
+[Mercenary evidence](verification/mercenary-default.md) retains the original sampled-model integration, [rejected first block figure](verification/mercenary-default.md#authored-voxel-iteration--october-14-2026) and [sculpted source-guided replacement](verification/mercenary-default.md#sculpted-source-guided-iteration--october-14-2026), distinguishing art inspection, immutable geometry, walking fit, lighting, selection/depth, fallback and resource ownership. The [original-model refinement](verification/mercenary-default.md#original-model-refinement--october-14-2026) records the later restoration, material/size/cloth decisions and its own corrected browser checks. The later [size/surface-pixel correction](verification/mercenary-default.md#size-and-surface-pixel-correction--october-15-2026) records reduced world proportions, fixed coarse paint and its own texture-ownership checks. [Visible-height and whole-character pixel correction](verification/mercenary-default.md#visible-height-and-whole-character-pixels--october-15-2026) records MER12's measured 94-versus-86 opaque rows, fixed coarse image, camera/picking alignment and scoped motion/resource checks; MER11's visible result was rejected. The larger generated-art pipeline and crowd/low-end qualification remain open.
 
 ## Shadow quality
 

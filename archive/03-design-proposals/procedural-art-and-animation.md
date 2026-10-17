@@ -1,5 +1,7 @@
 # Procedural art, 2D models and pixel density
 
+**Current bundled-world art direction:** the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026) supersede any broader style permission below: beautiful dimensional pixel art with believable real-world proportions; visibly low-poly, blocky, cutesy and big-head/small-body art is rejected. Preserve the historical technical comparisons without treating them as current style endorsements.
+
 ## World presentation ownership
 
 [World presentation](../../docs/world-presentation.md) owns the accepted continuous right-drag orbit/pitch, primary/middle pan, mixed sprite/mesh depth, default illumination, projected shadows and configurable local character-visible read-through. These are presentation settings, not extra bodily perception. Follow that owner where older fixed-camera, unlit-art or right-button-pan directions conflict; SW18 retains visual qualification and further art work.

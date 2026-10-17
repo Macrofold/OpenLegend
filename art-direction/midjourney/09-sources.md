@@ -86,4 +86,4 @@ Reliability, from most to least trustworthy: official docs > Midjourney announce
 | [Repertoire library](../../docs/repertoires/README.md), [Threewater March](../../docs/repertoires/worlds/medieval-survival.md) | The repertoire library and the Threewater March proposal (cast, places, gear) |
 | [Worldbuilding research library](../../archive/02-research/worldbuilding/README.md) | Worldbuilding research context |
 | [Halven Rusk prompts](../prompts/halven-rusk-midjourney.md) | The worked example |
-| 3D pixel-art style bible (Open Legend project doc `claude/art-pipeline/style-bible-3d-pixel.md`, not yet in this repository) | 3D pixel-art decision, palette, pipeline concept rules |
+| [Current visual requirements](../decisions.md#current-visual-requirements--october-16-2026), [house style](07-open-legend-house-style.md) | Believable proportions; beautiful dimensional pixel art; rejection of visibly low-poly, blocky, cutesy and big-head/small-body designs; replaces the obsolete separate style-bible reference |

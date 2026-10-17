@@ -45,6 +45,9 @@ export class CapeCloth {
   private readonly contactRestInverse: pc.Mat4;
   private readonly contactInverse = new pc.Mat4();
   private readonly contactPoint = new pc.Vec3();
+  private readonly previousAttachment = new pc.Mat4();
+  private readonly attachmentInverse = new pc.Mat4();
+  private readonly attachmentDelta = new pc.Mat4();
   private readonly p: pc.Vec3[] = [];
   private readonly previous: pc.Vec3[] = [];
   private readonly rest: pc.Vec3[] = [];
@@ -62,13 +65,22 @@ export class CapeCloth {
   private time = 0;
   private steps = 0;
   private elapsed = 0;
+  private motion: 'flowing' | 'settled' = 'flowing';
+  private frameGapResets = 0;
+  private lastUpdate = performance.now();
   enabled = true;
-  constructor(app: pc.Application, root: pc.Entity) {
+  constructor(
+    app: pc.Application,
+    root: pc.Entity,
+    private readonly displayScale: number,
+  ) {
     const data = clothData;
     this.root = root;
     this.bone = bone(root, 'cape_root');
     if (!this.bone) throw Error('Cape attachment is missing');
     this.torso = bone(root, 'Spine01');
+    // The chest table stays in authored metres; current bone transforms apply
+    // display enlargement after its source-space contact lookup and allowance.
     this.contactRest = new pc.Mat4().set(data.bindMatrices.Spine01);
     this.contactRestInverse = this.contactRest.clone().invert();
     const inverse = new pc.Mat4().set(data.bindMatrices.cape_root).invert();
@@ -121,15 +133,17 @@ export class CapeCloth {
       mesh.setUvs(0, patch.uvs);
       mesh.setIndices(indices);
       mesh.update();
-      const material = at(source.meshInstances, 0).material;
-      if (!(material instanceof pc.StandardMaterial)) throw new Error('Unsupported cape material');
-      material.cull = pc.CULLFACE_NONE;
-      material.twoSidedLighting = true;
-      material.update();
-      const node = new pc.Entity('Simulated ' + patch.name);
+      const material = at(source.meshInstances, 0).material,
+        lining = at(source.meshInstances, 1).material;
+      if (!(material instanceof pc.StandardMaterial) || !(lining instanceof pc.StandardMaterial))
+        throw new Error('Unsupported cape material');
+      const node = new pc.Entity('Simulated ' + patch.name, app);
       app.root.addChild(node);
       node.addComponent('render', {
-        meshInstances: [new pc.MeshInstance(mesh, material, node)],
+        meshInstances: [
+          new pc.MeshInstance(mesh, material, node),
+          new pc.MeshInstance(mesh, lining, node),
+        ],
         castShadows: true,
         receiveShadows: true,
       });
@@ -179,7 +193,7 @@ export class CapeCloth {
           distance = d;
         }
       }
-      this.tethers.push([i, anchor, distance * 1.04]);
+      this.tethers.push([i, anchor, distance * 1.04 * displayScale]);
     }
     const colliders: Array<[string, string, number, number, boolean?]> = [
       ['Hips', 'Spine01', 0.25, 0.215, false],
@@ -201,8 +215,8 @@ export class CapeCloth {
     this.colliders = colliders.map(([a, b, rx, rz, front = true]) => ({
       a: bone(root, a),
       b: bone(root, b),
-      rx,
-      rz,
+      rx: rx * displayScale,
+      rz: rz * displayScale,
       front,
       from: new pc.Vec3(),
       to: new pc.Vec3(),
@@ -217,15 +231,19 @@ export class CapeCloth {
     stiffness: number,
     length = at(this.p, a).distance(at(this.p, b)),
   ) {
-    this.links.push([a, b, length, stiffness]);
+    // Bone transforms already enlarge the particles. These lengths are measured
+    // from authored, unscaled positions before reset places them in the world.
+    this.links.push([a, b, length * this.displayScale, stiffness]);
   }
   reset() {
     this.time = 0;
+    this.lastUpdate = performance.now();
     const m = this.bone.getWorldTransform();
     for (let i = 0; i < this.p.length; i++) {
       m.transformPoint(at(this.rest, i), at(this.p, i));
       at(this.previous, i).copy(at(this.p, i));
     }
+    this.previousAttachment.copy(m);
     this.publish();
   }
   private frontDepth(p: pc.Vec3): number | null {
@@ -295,7 +313,7 @@ export class CapeCloth {
     this.right.copy(this.root.right);
     this.up.copy(this.root.up);
     this.forward.copy(this.root.forward);
-    this.ground = this.root.getPosition().y + 0.035;
+    this.ground = this.root.getPosition().y + 0.035 * this.displayScale;
     // Bone endpoints are constant across all particles and constraint iterations in this step.
     for (const c of this.colliders) {
       c.from.copy(c.a.getPosition());
@@ -321,7 +339,10 @@ export class CapeCloth {
         z = p.z;
       // Heavy wool: dissipate motion; a weak rest-fold force avoids flattening every authored fold.
       p.x += (p.x - old.x) * 0.97 + (this.target.x - p.x) * 1.5 * dt * dt;
-      p.y += (p.y - old.y) * 0.97 + (-9.81 + (this.target.y - p.y) * 1.5) * dt * dt;
+      // Display enlargement preserves the authored drape and timing: all linear
+      // forces, distances and clearances scale together rather than stretching it.
+      p.y +=
+        (p.y - old.y) * 0.97 + (-9.81 * this.displayScale + (this.target.y - p.y) * 1.5) * dt * dt;
       p.z += (p.z - old.z) * 0.97 + (this.target.z - p.z) * 1.5 * dt * dt;
       old.set(x, y, z);
     }
@@ -363,10 +384,45 @@ export class CapeCloth {
         if (!at(this.pinned, i)) this.collide(at(this.p, i), i >= at(this.patches, 2).start);
     }
     this.steps++;
+    // Initial settling also calls step directly, before the normal update path.
+    this.previousAttachment.copy(matrix);
   }
-  update(dt: number, playing: boolean) {
-    if (!playing || !this.enabled) return;
+  private carryWithAttachment(attachment: pc.Mat4): void {
+    if (attachment.equals(this.previousAttachment)) return;
+    this.attachmentInverse.copy(this.previousAttachment).invert();
+    this.attachmentDelta.mul2(attachment, this.attachmentInverse);
+    for (let i = 0; i < this.p.length; i++) {
+      this.attachmentDelta.transformPoint(at(this.p, i), at(this.p, i));
+      this.attachmentDelta.transformPoint(at(this.previous, i), at(this.previous, i));
+    }
+    this.publish();
+    this.previousAttachment.copy(attachment);
+  }
+  update(dt: number, playing: boolean, motion: 'flowing' | 'settled' = 'flowing') {
+    if (!this.enabled) return;
     const start = performance.now();
+    // PlayCanvas caps dt before this owner sees it; the monotonic presentation
+    // clock detects a real suspended-tab gap without advancing world time.
+    const frameGap = dt > 0.25 || start - this.lastUpdate > 250;
+    this.lastUpdate = start;
+    const attachment = this.bone.getWorldTransform();
+    if (motion !== this.motion || frameGap) {
+      // Resume from the current folds without stale velocity after a tab gap or
+      // a comparison switch. Carry both histories before restarting the solver.
+      this.carryWithAttachment(attachment);
+      for (let i = 0; i < this.p.length; i++) at(this.previous, i).copy(at(this.p, i));
+      this.time = 0;
+      if (frameGap) this.frameGapResets++;
+      this.motion = motion;
+    }
+    if (!playing || motion === 'settled') {
+      // The comparison holds settled folds relative to the shoulder attachment;
+      // ordinary pause follows edited travel/heading without advancing fabric.
+      this.carryWithAttachment(attachment);
+      this.previousAttachment.copy(attachment);
+      this.elapsed = 0;
+      return;
+    }
     this.time += Math.min(dt, 0.05);
     let count = 0;
     while (this.time >= 1 / 60 && count++ < 3) {
@@ -375,6 +431,7 @@ export class CapeCloth {
     }
     if (count) this.publish();
     this.elapsed = performance.now() - start;
+    this.previousAttachment.copy(attachment);
   }
   publish() {
     for (const p of this.patches) {
@@ -396,9 +453,12 @@ export class CapeCloth {
   diagnostics() {
     return {
       particles: this.p.length,
+      displayScale: this.displayScale,
       steps: this.steps,
       finite: this.p.every((p) => Number.isFinite(p.x + p.y + p.z)),
       lastStepMs: this.elapsed,
+      motion: this.motion,
+      frameGapResets: this.frameGapResets,
     };
   }
   destroy() {

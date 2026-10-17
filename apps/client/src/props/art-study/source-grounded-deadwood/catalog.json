@@ -1,0 +1,137 @@
+{
+  "group": "source-grounded-deadwood",
+  "sourceFile": "art-direction/assets/source-study/source-grounded-deadwood.blend",
+  "sourceSha256": "c1adf745c40e4c23772c55a56e0e502853921ca10cccdca9a1d113f9766f9e6e",
+  "recipe": {
+    "path": "scripts/prepare-grounded-study.py",
+    "sha256": "7a99b1aec9a4a8fad01e6721af2721c25fadbfb25756ab0453c4128b2dd648f5"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
+  },
+  "sources": [
+    {
+      "url": "https://polyhaven.com/a/dead_tree_trunk",
+      "license": "CC0",
+      "files": [
+        {
+          "asset": "dead_tree_trunk",
+          "file": "dead_tree_trunk_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/dead_tree_trunk/dead_tree_trunk_1k.gltf",
+          "sha256": "8baaf1ff66ba1f79acdceed0dc3797a882990a3abb10b18abe56762f34c26e39",
+          "bytes": 2812
+        },
+        {
+          "asset": "dead_tree_trunk",
+          "file": "textures/dead_tree_trunk_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/dead_tree_trunk/dead_tree_trunk_arm_1k.jpg",
+          "sha256": "0e0f7d64ac4ee3a7e7861a48f4bbd1ec2c026facd8f48b756f6b5d4557af3fd3",
+          "bytes": 724384
+        },
+        {
+          "asset": "dead_tree_trunk",
+          "file": "textures/dead_tree_trunk_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/dead_tree_trunk/dead_tree_trunk_nor_gl_1k.jpg",
+          "sha256": "b7c393204c93f0c67535ff3b5d723b26598f9dbb2b5110b74249ab88189f026f",
+          "bytes": 1053075
+        },
+        {
+          "asset": "dead_tree_trunk",
+          "file": "textures/dead_tree_trunk_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/dead_tree_trunk/dead_tree_trunk_diff_1k.jpg",
+          "sha256": "bc31d7d23db90d90cfb568c583914eeec11b29716b79096818b706a9e3e0216c",
+          "bytes": 713480
+        },
+        {
+          "asset": "dead_tree_trunk",
+          "file": "dead_tree_trunk.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/dead_tree_trunk/dead_tree_trunk.bin",
+          "sha256": "c1ac6b3195246e8647a28eee2fbfdd4712a045c7cf2dcb4f5abcc2d40a446ca6",
+          "bytes": 2293788
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "grounded-deadwood-clear",
+      "family": "grounded-deadwood",
+      "label": "Poly Haven dead trunk",
+      "variant": "clear",
+      "description": "Natural source form with retained albedo detail and quiet highlights; fixed-density pixel rendering.",
+      "recommended": true,
+      "file": "grounded-deadwood-clear.glb",
+      "bounds": {
+        "min": [-1.049735, 0.000337, -0.095058],
+        "max": [1.049671, 0.199473, 0.09535]
+      },
+      "triangles": 12000,
+      "vertices": 5999,
+      "textureSizes": [[512, 512]],
+      "sha256": "a8ceda193b97d82663601719d488d1375d6faf54d7ed06a2f9ec798736e4edfe",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/dead_tree_trunk; normalized and adapted by OpenLegend."
+    },
+    {
+      "id": "grounded-deadwood-quiet",
+      "family": "grounded-deadwood",
+      "label": "Poly Haven dead trunk",
+      "variant": "quiet",
+      "description": "Natural source form with grouped earth colors and restrained fine texture.",
+      "recommended": false,
+      "file": "grounded-deadwood-quiet.glb",
+      "bounds": {
+        "min": [-1.049735, 0.000337, -0.095058],
+        "max": [1.049671, 0.199473, 0.09535]
+      },
+      "triangles": 12000,
+      "vertices": 5999,
+      "textureSizes": [[256, 256]],
+      "sha256": "f9a0c78db08c886fd9fa0c14a15093605492619e68c828eb4df523432402d11c",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/dead_tree_trunk; normalized and adapted by OpenLegend."
+    },
+    {
+      "id": "grounded-deadwood-weathered",
+      "family": "grounded-deadwood",
+      "label": "Poly Haven dead trunk",
+      "variant": "weathered",
+      "description": "Weathered material study with muted color and softer worn highlights.",
+      "recommended": false,
+      "file": "grounded-deadwood-weathered.glb",
+      "bounds": {
+        "min": [-1.049735, 0.000337, -0.095058],
+        "max": [1.049671, 0.199473, 0.09535]
+      },
+      "triangles": 12000,
+      "vertices": 5999,
+      "textureSizes": [[256, 256]],
+      "sha256": "df46b7d67af58bae9c4447fc4d6570bc45f3fefcbff27cbc30505dfb458e1087",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/dead_tree_trunk; normalized and adapted by OpenLegend."
+    }
+  ],
+  "controls": [
+    {
+      "id": "grounded-deadwood-source",
+      "family": "grounded-deadwood",
+      "label": "Poly Haven dead trunk",
+      "variant": "source",
+      "description": "Normalized original Poly Haven geometry and materials; source control, not pixel-finished art.",
+      "recommended": false,
+      "file": "grounded-deadwood-source.glb",
+      "bounds": {
+        "min": [-1.05, 0.0, -0.09551],
+        "max": [1.05, 0.199903, 0.09551]
+      },
+      "triangles": 101802,
+      "vertices": 52593,
+      "textureSizes": [
+        [1024, 1024],
+        [1024, 1024],
+        [1024, 1024]
+      ],
+      "sha256": "b990e7d4b1097a9bbd9dacc5eaa8089a30c266e73aa65e2c52abb7a2e7d5fa3e",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/dead_tree_trunk; normalized and adapted by OpenLegend."
+    }
+  ]
+}

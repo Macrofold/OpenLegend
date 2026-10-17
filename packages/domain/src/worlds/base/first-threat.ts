@@ -30,6 +30,7 @@ export function installFirstThreat(world: WorldState): void {
   const stag: Entity = {
     id: 'territorial-stag',
     name: 'Territorial stag',
+    appearance: 'study:stag-branching-antlers',
     kind: 'animal',
     description:
       'A heavy stag paws the ground around a torn supply cache. Its lowered antlers and restless stance suggest aggression.',
@@ -88,6 +89,7 @@ export function installFirstThreat(world: WorldState): void {
     {
       id: 'stag-cache',
       name: 'Torn woodland cache',
+      appearance: 'study:bundle-tied-bundle',
       kind: 'item-pile',
       description: 'Prepared fibers, cord and stones spill from a torn bundle beside the stag.',
       spatial: baseSpatial('object'),

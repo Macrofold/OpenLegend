@@ -1,4 +1,7 @@
 import * as pc from 'playcanvas';
+import type { ArtTreatment } from './art-treatment';
+import { PixelEffects } from './pixel-effects';
+import { ScenePixels } from './scene-pixels';
 import type { GameView } from '@open-legend/protocol';
 import { sunlightAtHour } from './sunlight';
 import type { ShadowQuality } from './world-renderer';
@@ -8,6 +11,12 @@ import {
   readThroughStencil,
   setVisibilityStencil,
 } from './visibility-stencil';
+
+type CameraTargetImplementation = {
+  _glMsaaDepthBuffer: WebGLRenderbuffer | null;
+  msaaDepthBufferKey?: string;
+  destroy(device: pc.GraphicsDevice): void;
+};
 
 /** Renderer-only approximations. Mechanical bodies, hearing and sight never use these shaders.
  * docs/world-presentation.md#sprite-lighting
@@ -70,7 +79,8 @@ export function lightSprite(material: pc.StandardMaterial, device: pc.GraphicsDe
 }
 
 export interface RevealBinding {
-  sourceMesh?: pc.MeshInstance;
+  sourceMeshes: readonly pc.MeshInstance[];
+  sourceMaterials?: pc.StandardMaterial[];
   meshes: pc.MeshInstance[];
   strength: number;
   frame: pc.StandardMaterial;
@@ -90,6 +100,7 @@ export interface RevealBinding {
  * docs/world-presentation.md#local-read-through
  */
 export class WorldPresentation {
+  private survivalAtmosphere = false;
   readonly layer: pc.Layer;
   readonly characterLayer: pc.Layer;
   readonly foregroundLayer: pc.Layer;
@@ -104,6 +115,12 @@ export class WorldPresentation {
   private readonly sunRotation = new pc.Quat();
   private shadowQuality?: ShadowQuality;
   private readonly frame: pc.CameraFrame;
+  private readonly preparedTargets = new WeakSet<pc.RenderTarget>();
+  private readonly preparedImplementations = new WeakSet<CameraTargetImplementation>();
+  private readonly pixels: ScenePixels;
+  private readonly updatePixels = (): void => this.pixels.update();
+  private effects?: PixelEffects;
+  private readonly effectSources = new Set<pc.RenderComponent>();
   constructor(
     private app: pc.Application,
     private camera: pc.Entity,
@@ -126,13 +143,18 @@ export class WorldPresentation {
       camera.camera!.layers = [...camera.camera!.layers, layer.id];
       sun.light!.layers = [...sun.light!.layers, layer.id];
     }
-    this.setShadowQuality('detailed');
+    this.setShadowQuality('economy');
     // Angular spread, not a world-space blur radius: large values make the
     // blocker search miss small bodies. Keep the sun close to a small disk.
     sun.light!.penumbraSize = 0.015;
     sun.light!.shadowSamples = 16;
     sun.light!.shadowBlockerSamples = 16;
     this.frame = new pc.CameraFrame(app, camera.camera!);
+    const updateFrame = this.frame.update.bind(this.frame);
+    this.frame.update = () => {
+      updateFrame();
+      this.prepareCameraTarget();
+    };
     this.frame.rendering.stencil = true;
     this.frame.rendering.toneMapping = pc.TONEMAP_ACES;
     this.frame.bloom.intensity = 0.025;
@@ -140,6 +162,102 @@ export class WorldPresentation {
     this.frame.grading.enabled = true;
     this.frame.grading.saturation = 1.05;
     this.frame.update();
+    this.pixels = new ScenePixels(app.graphicsDevice, camera.camera!);
+    app.on('prerender', this.updatePixels);
+  }
+  private prepareCameraTarget(): void {
+    const device = this.app.graphicsDevice;
+    if (!(device instanceof pc.WebglGraphicsDevice)) return;
+    const pass = this.camera.camera!.framePasses.find(
+      (pass): pass is pc.FramePassCameraFrame => pass instanceof pc.FramePassCameraFrame,
+    );
+    const scenePass = pass?.scenePass as pc.RenderPass | undefined;
+    const target = scenePass?.renderTarget;
+    if (!target) return;
+    if (!this.preparedTargets.has(target)) {
+      this.preparedTargets.add(target);
+      const resize = target.resize;
+      target.resize = (width, height) => {
+        const previous = target.impl;
+        resize.call(target, width, height);
+        if (target.impl !== previous) this.prepareCameraImplementation(target);
+      };
+    }
+    this.prepareCameraImplementation(target);
+  }
+  private prepareCameraImplementation(target: pc.RenderTarget): void {
+    const device = this.app.graphicsDevice;
+    if (!(device instanceof pc.WebglGraphicsDevice)) return;
+    const implementation = target.impl as CameraTargetImplementation;
+    if (this.preparedImplementations.has(implementation)) return;
+    this.preparedImplementations.add(implementation);
+    const destroy = implementation.destroy;
+    // PlayCanvas 2.22.2 omits deletion of unshared MSAA depth renderbuffers.
+    // Own only this camera target's missing release, including resize and late
+    // layer rebuilds; cached/shared depth retains its engine owner.
+    // docs/verification/starting-scene-pixel-stability.md
+    implementation.destroy = function (destroyDevice) {
+      if (this._glMsaaDepthBuffer && !this.msaaDepthBufferKey) {
+        device.gl.deleteRenderbuffer(this._glMsaaDepthBuffer);
+        this._glMsaaDepthBuffer = null;
+      }
+      destroy.call(this, destroyDevice);
+    };
+  }
+  setArtTreatment(style: Readonly<ArtTreatment>): void {
+    this.survivalAtmosphere = style.atmosphere === 'survival';
+    const survival = this.survivalAtmosphere;
+    const restrained = style.atmosphere === 'restrained';
+    this.frame.rendering.renderTargetScale =
+      style.sceneGrid === 'half' ? 0.5 : style.sceneGrid === 'third' ? 1 / 3 : 1;
+    this.frame.rendering.samples = style.coverage === 'msaa4' ? 4 : 1;
+    this.pixels.setTreatment(style.sceneGrid, style.subjectDetail);
+    this.frame.rendering.renderFormats =
+      style.subjectDetail !== 'shared'
+        ? [pc.PIXELFORMAT_RGBA16F, pc.PIXELFORMAT_RGBA32F]
+        : [pc.PIXELFORMAT_111110F, pc.PIXELFORMAT_RGBA16F, pc.PIXELFORMAT_RGBA32F];
+    this.frame.bloom.intensity = survival ? 0.018 : restrained ? 0.045 : 0.025;
+    this.frame.grading.saturation = survival ? 0.88 : restrained ? 1.02 : 1.05;
+    this.frame.grading.contrast = survival ? 1.03 : 1;
+    this.frame.grading.brightness = restrained ? 1.025 : 1;
+    this.frame.update();
+    // Compare a shared scene grid through the existing compositor. Captions
+    // remain at display resolution and the camera/picking mapping stays intact.
+    const pass = this.camera.camera!.framePasses.find(
+      (pass): pass is pc.FramePassCameraFrame => pass instanceof pc.FramePassCameraFrame,
+    );
+    if (pass) {
+      const sourceFilter =
+        style.sceneGrid.startsWith('pixels') ||
+        style.sceneGrid.startsWith('anchored') ||
+        style.sceneGrid.startsWith('metres')
+          ? pc.FILTER_LINEAR
+          : pc.FILTER_NEAREST;
+      pass.sceneTexture.minFilter = sourceFilter;
+      pass.sceneTexture.magFilter = sourceFilter;
+    }
+    if (style.effects === 'buffer' && !this.effects) {
+      this.effects = new PixelEffects(this.app, this.camera, this.protectionLayer);
+      for (const source of this.effectSources) this.effects.add(source);
+      this.effects.setBuffered(true);
+    } else if (style.effects === 'direct' && this.effects) {
+      this.effects.destroy();
+      this.effects = undefined;
+    }
+  }
+  addEffect(source: pc.RenderComponent): void {
+    this.effectSources.add(source);
+    this.effects?.add(source);
+  }
+  removeEffect(source: pc.RenderComponent): void {
+    this.effects?.remove(source);
+    this.effectSources.delete(source);
+  }
+  effectsDiagnostics() {
+    return this.effects?.diagnostics() ?? { buffered: false, sources: this.effectSources.size };
+  }
+  pixelDiagnostics() {
+    return this.pixels.diagnostics();
   }
   setShadowQuality(quality: ShadowQuality): boolean {
     if (this.shadowQuality === quality) return false;
@@ -167,6 +285,7 @@ export class WorldPresentation {
     m.blendType = pc.BLEND_NORMAL;
     m.opacityDither = pc.DITHER_NONE;
     m.alphaTest = 0.01;
+    m.shaderChunks.version = '2.22';
     m.shaderChunks.glsl.set(
       'opacityPS',
       `
@@ -228,6 +347,7 @@ export class WorldPresentation {
     material: pc.StandardMaterial,
     billboard = false,
     character = false,
+    sourceMeshes = sprite.render?.meshInstances ?? [],
   ): RevealBinding {
     if (billboard && !this.spriteRevealMesh) {
       // Reveal only the front image. A relief's back faces are behind its visible
@@ -238,10 +358,15 @@ export class WorldPresentation {
       );
       this.spriteRevealMesh.incRefCount();
     }
-    const meshes = (sprite.render?.meshInstances ?? []).map((mi) => {
+    const sourceMaterials = billboard
+      ? undefined
+      : sourceMeshes.map((mi) =>
+          mi.material instanceof pc.StandardMaterial ? mi.material : material,
+        );
+    const meshes = sourceMeshes.map((mi, index) => {
       const copy = new pc.MeshInstance(
         billboard ? this.spriteRevealMesh! : mi.mesh,
-        this.revealMaterial(material),
+        this.revealMaterial(sourceMaterials?.[index] ?? material),
         mi.node,
       );
       copy.castShadow = false;
@@ -255,10 +380,16 @@ export class WorldPresentation {
     const layer = character ? this.characterLayer : this.layer;
     layer.addMeshInstances(meshes, true);
     const protection = character
-      ? meshes.map((mesh) => {
-          const copy = new pc.MeshInstance(mesh.mesh, this.protectionMaterial(material), mesh.node);
+      ? meshes.map((mesh, index) => {
+          const copy = new pc.MeshInstance(
+            mesh.mesh,
+            this.protectionMaterial(sourceMaterials?.[index] ?? material),
+            mesh.node,
+          );
           copy.visible = false;
           copy.castShadow = copy.receiveShadow = false;
+          copy.skinInstance = mesh.skinInstance;
+          copy.morphInstance = mesh.morphInstance;
           return copy;
         })
       : undefined;
@@ -267,7 +398,8 @@ export class WorldPresentation {
       meshes,
       layer,
       protection,
-      sourceMesh: sprite.render?.meshInstances[0],
+      sourceMeshes,
+      sourceMaterials,
       strength: 0,
       frame: material,
       lastStrength: 0,
@@ -301,8 +433,12 @@ export class WorldPresentation {
     // once hidden, but always process revocation of a previously visible target immediately.
     const target = authorized && !selected ? strength : 0;
     if (selected && authorized && !binding.foreground) {
-      binding.foreground = binding.meshes.map((mesh) => {
-        const copy = new pc.MeshInstance(mesh.mesh, this.foregroundMaterial(source), mesh.node);
+      binding.foreground = binding.meshes.map((mesh, index) => {
+        const copy = new pc.MeshInstance(
+          mesh.mesh,
+          this.foregroundMaterial(binding.sourceMaterials?.[index] ?? source),
+          mesh.node,
+        );
         copy.castShadow = copy.receiveShadow = false;
         copy.skinInstance = mesh.skinInstance;
         copy.morphInstance = mesh.morphInstance;
@@ -312,9 +448,13 @@ export class WorldPresentation {
       });
       this.foregroundLayer.addMeshInstances(binding.foreground, true);
     }
-    for (const mesh of binding.foreground ?? []) {
+    for (let i = 0; i < (binding.foreground?.length ?? 0); i++) {
+      const mesh = binding.foreground![i]!;
+      const original = binding.sourceMeshes[i]!;
+      if (mesh.skinInstance !== original.skinInstance) mesh.skinInstance = original.skinInstance;
       mesh.visible = authorized && selected;
-      if (source !== binding.frame) mesh.material = this.foregroundMaterial(source);
+      if (!binding.sourceMaterials && source !== binding.frame)
+        mesh.material = this.foregroundMaterial(source);
     }
     if (target === 0 && binding.strength === 0 && !selected) return;
     binding.strength = !authorized
@@ -329,22 +469,34 @@ export class WorldPresentation {
     binding.size[0] = binding.size[2] = Math.max(width * 0.7, 0.1);
     binding.size[1] = Math.max(height * 0.65, 0.1);
     const spriteFoot = (
-      binding.sourceMesh?.getParameter('ol_spriteFoot') as { data?: ArrayLike<number> } | undefined
+      binding.sourceMeshes[0]?.getParameter('ol_spriteFoot') as
+        | { data?: ArrayLike<number> }
+        | undefined
     )?.data;
     binding.foot[0] = spriteFoot?.[0] ?? foot.x;
     binding.foot[1] = spriteFoot?.[1] ?? foot.y;
     binding.foot[2] = spriteFoot?.[2] ?? foot.z;
     binding.spriteSize[0] = width;
     binding.spriteSize[1] = height;
-    for (const mi of binding.meshes) {
+    for (let i = 0; i < binding.meshes.length; i++) {
+      const mi = binding.meshes[i]!;
+      // Floor focus disables the source hierarchy. PlayCanvas recreates its
+      // skin when it returns, so borrowed copies must follow the current skin.
+      const original = binding.sourceMeshes[i]!;
+      if (mi.skinInstance !== original.skinInstance) mi.skinInstance = original.skinInstance;
       mi.visible = !selected && binding.strength > 0.01;
-      if (source !== binding.frame) mi.material = this.revealMaterial(source);
+      if (!binding.sourceMaterials && source !== binding.frame)
+        mi.material = this.revealMaterial(source);
       if (binding.lastStrength !== binding.strength)
         mi.setParameter('ol_revealStrength', binding.strength);
     }
-    for (const mesh of binding.protection ?? []) {
+    for (let i = 0; i < (binding.protection?.length ?? 0); i++) {
+      const mesh = binding.protection![i]!;
+      const original = binding.sourceMeshes[i]!;
+      if (mesh.skinInstance !== original.skinInstance) mesh.skinInstance = original.skinInstance;
       mesh.visible = !selected && binding.strength > 0.01;
-      if (source !== binding.frame) mesh.material = this.protectionMaterial(source);
+      if (!binding.sourceMaterials && source !== binding.frame)
+        mesh.material = this.protectionMaterial(source);
       if (binding.lastStrength !== binding.strength)
         mesh.setParameter('ol_revealStrength', binding.strength);
     }
@@ -379,12 +531,19 @@ export class WorldPresentation {
     // PlayCanvas directional rays follow local −Y. Use world orientation so camera
     // motion cannot move the sun; received clock updates also handle pause/load/rewind.
     this.sun.setRotation(this.sunRotation.setFromDirections(pc.Vec3.UP, this.sunDirection));
-    this.app.scene.ambientLight.set(
-      0.18 + 0.26 * daylight,
-      0.22 + 0.25 * daylight,
-      0.3 + 0.2 * daylight,
-    );
-    this.sun.light!.intensity = 1.2 * daylight;
+    if (this.survivalAtmosphere)
+      this.app.scene.ambientLight.set(
+        0.35 + 0.05 * daylight,
+        0.4 + 0.04 * daylight,
+        0.5 - 0.02 * daylight,
+      );
+    else
+      this.app.scene.ambientLight.set(
+        0.5 + 0.08 * daylight,
+        0.56 + 0.06 * daylight,
+        0.68 - 0.06 * daylight,
+      );
+    this.sun.light!.intensity = (this.survivalAtmosphere ? 1.08 : 1.2) * daylight;
     this.sun.enabled = daylight > 0.001;
     const p = view.player.position;
     // Retain illumination from last-permitted fire images when their sources leave sight.
@@ -393,7 +552,7 @@ export class WorldPresentation {
       Math.hypot(e.position.x - p.x, e.position.y - p.y, e.position.z - p.z) -
       (this.selectedLights.has(e.id) ? 1 : 0);
     const sources = remembered
-      .filter((e) => e.kind === 'station' && e.status.startsWith('Lit'))
+      .filter((e) => e.heat?.lit)
       .sort((a, b) => distance(a) - distance(b) || a.id.localeCompare(b.id))
       .slice(0, this.shadowQuality === 'economy' ? 2 : 8);
     // Retain admitted lights through small distance crossovers; a missing or
@@ -406,7 +565,7 @@ export class WorldPresentation {
         light = new pc.Entity('Observed fire light', this.app);
         light.addComponent('light', {
           type: 'omni',
-          color: new pc.Color(1, 0.47, 0.12),
+          color: new pc.Color(1, 0.64, 0.33),
           intensity: 2.8,
           range: 8,
           // Every illuminating source needs occlusion, or secondary fires light
@@ -429,6 +588,10 @@ export class WorldPresentation {
     }
   }
   destroy(): void {
+    this.app.off('prerender', this.updatePixels);
+    this.pixels.destroy();
+    this.effects?.destroy();
+    this.effectSources.clear();
     this.frame.destroy();
     this.app.scene.layers.remove(this.layer);
     this.app.scene.layers.remove(this.characterLayer);

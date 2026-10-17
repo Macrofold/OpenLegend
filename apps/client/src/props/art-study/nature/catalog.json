@@ -1,0 +1,318 @@
+{
+  "group": "nature",
+  "notes": "Original first-party geometry and explicit opaque pixel paint; AGPL-3.0-only. Closed foliage masses, actual branch gaps and grouped fruits. No imported CC0 geometry, micro-alpha leaves, random paint, runtime pixelation or native-world changes. Natural recommended for rock/broadleaf/bush; open recommended for conifer. Fixed planar UV seams and silhouette sampling still require moving inspection.",
+  "sourceFile": "art-direction/assets/representative-study/nature.blend",
+  "sourceSha256": "10e73f0eda3badf22c41c3c1f4989b3d4e5f51b51c7d5276f4bfbe2fc4d4d8a3",
+  "authoring": {
+    "art_study_common.py": "e5c172762e35dad10f6c8564fe09012d1cd190d8ae5fe1914c98807ac42cf5cb",
+    "prepare-study-nature.py": "5cf21b9a0f54b0f62f46d165b43cca6f0170defb505810db25dabad8824bd612"
+  },
+  "assets": [
+    {
+      "id": "rock-natural",
+      "family": "rock",
+      "label": "Rock \u2014 natural",
+      "variant": "natural",
+      "description": "Quiet connected paint, irregular organic masses and sheltered branch gaps. Natural: one readable worn stone with broad material planes and restrained fissures.",
+      "recommended": true,
+      "file": "rock-natural.glb",
+      "bounds": {
+        "min": [-0.475484, 0.0, -0.411882],
+        "max": [0.638, 0.639468, 0.411882]
+      },
+      "triangles": 68,
+      "vertices": 36,
+      "textureSizes": [[64, 64]],
+      "sha256": "9119cd41b33e1416563bd600ee4c0ba32b6212a8f7bb4dee998c08c760424ea1",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only.",
+      "recommendationReason": "Natural: one readable worn stone with broad material planes and restrained fissures.",
+      "paintPixelsPerMetre": {
+        "stone": 48
+      }
+    },
+    {
+      "id": "broadleaf-natural",
+      "family": "broadleaf",
+      "label": "Broadleaf \u2014 natural",
+      "variant": "natural",
+      "description": "Quiet connected paint, irregular organic masses and sheltered branch gaps. Natural: asymmetric layered boughs preserve fullness without tiny alpha leaves.",
+      "recommended": true,
+      "file": "broadleaf-natural.glb",
+      "bounds": {
+        "min": [-1.77623, 0.0, -1.45982],
+        "max": [1.813181, 4.068159, 1.139278]
+      },
+      "triangles": 1630,
+      "vertices": 843,
+      "textureSizes": [
+        [64, 64],
+        [64, 64]
+      ],
+      "sha256": "79e742aec6e23b56d66b7fd0a1849a43fe93303d5a42e75628429635fd1818c3",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only.",
+      "recommendationReason": "Natural: asymmetric layered boughs preserve fullness without tiny alpha leaves.",
+      "paintPixelsPerMetre": {
+        "foliage": 24,
+        "bark": 48
+      }
+    },
+    {
+      "id": "conifer-natural",
+      "family": "conifer",
+      "label": "Conifer \u2014 natural",
+      "variant": "natural",
+      "description": "Quiet connected paint, irregular organic masses and sheltered branch gaps.",
+      "recommended": false,
+      "file": "conifer-natural.glb",
+      "bounds": {
+        "min": [-1.314361, 0.0, -1.155198],
+        "max": [1.54791, 4.127897, 1.225021]
+      },
+      "triangles": 4414,
+      "vertices": 2271,
+      "textureSizes": [
+        [64, 64],
+        [64, 64]
+      ],
+      "sha256": "8958476146d03a5020fe44afeeae68fca9cf8c23a0047627463d2320d11356b3",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only.",
+      "recommendationReason": null,
+      "paintPixelsPerMetre": {
+        "foliage": 24,
+        "bark": 48
+      }
+    },
+    {
+      "id": "berry-bush-natural",
+      "family": "berry-bush",
+      "label": "Berry Bush \u2014 natural",
+      "variant": "natural",
+      "description": "Quiet connected paint, irregular organic masses and sheltered branch gaps. Natural: readable fruit groups and a rooted silhouette with quiet foliage fields.",
+      "recommended": true,
+      "file": "berry-bush-natural.glb",
+      "bounds": {
+        "min": [-0.669567, 0.0, -0.474526],
+        "max": [0.686184, 1.004065, 0.563085]
+      },
+      "triangles": 2200,
+      "vertices": 1140,
+      "textureSizes": [
+        [16, 16],
+        [64, 64],
+        [64, 64]
+      ],
+      "sha256": "fa83daaffe69bf0d81a0c6c33fec54cb5f126dcd2fee2caada9ab7c4467bcdf1",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only.",
+      "recommendationReason": "Natural: readable fruit groups and a rooted silhouette with quiet foliage fields.",
+      "paintPixelsPerMetre": {
+        "foliage": 24,
+        "bark": 48,
+        "berries": 96
+      }
+    },
+    {
+      "id": "rock-graphic",
+      "family": "rock",
+      "label": "Rock \u2014 graphic",
+      "variant": "graphic",
+      "description": "Broader stepped paint accents and angular interlocking forms; a stronger graphic comparison.",
+      "recommended": false,
+      "file": "rock-graphic.glb",
+      "bounds": {
+        "min": [-0.549732, 0.0, -0.439328],
+        "max": [0.592412, 0.594725, 0.399328]
+      },
+      "triangles": 136,
+      "vertices": 72,
+      "textureSizes": [[64, 64]],
+      "sha256": "9c89157ea99f16a71b409fe2a3ab8029a57deb063ae00227d477f7dba9fb24dd",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only.",
+      "recommendationReason": null,
+      "paintPixelsPerMetre": {
+        "stone": 48
+      }
+    },
+    {
+      "id": "broadleaf-graphic",
+      "family": "broadleaf",
+      "label": "Broadleaf \u2014 graphic",
+      "variant": "graphic",
+      "description": "Broader stepped paint accents and angular interlocking forms; a stronger graphic comparison.",
+      "recommended": false,
+      "file": "broadleaf-graphic.glb",
+      "bounds": {
+        "min": [-1.782157, 0.0, -1.211935],
+        "max": [1.848766, 4.20351, 0.898272]
+      },
+      "triangles": 1390,
+      "vertices": 723,
+      "textureSizes": [
+        [64, 64],
+        [64, 64]
+      ],
+      "sha256": "f48378fdc96bf9d49208ccc9d41daf852a8f98ab93fdc3917b5d4dcb01e32122",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only.",
+      "recommendationReason": null,
+      "paintPixelsPerMetre": {
+        "foliage": 28,
+        "bark": 48
+      }
+    },
+    {
+      "id": "conifer-graphic",
+      "family": "conifer",
+      "label": "Conifer \u2014 graphic",
+      "variant": "graphic",
+      "description": "Broader stepped paint accents and angular interlocking forms; a stronger graphic comparison.",
+      "recommended": false,
+      "file": "conifer-graphic.glb",
+      "bounds": {
+        "min": [-1.314361, 0.0, -1.155198],
+        "max": [1.54791, 4.127897, 1.225021]
+      },
+      "triangles": 3694,
+      "vertices": 1911,
+      "textureSizes": [
+        [64, 64],
+        [64, 64]
+      ],
+      "sha256": "dc930dda6955bd5e9ddc31b6281cac66429ba4d3463a71d48199510d0d408c17",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only.",
+      "recommendationReason": null,
+      "paintPixelsPerMetre": {
+        "foliage": 28,
+        "bark": 48
+      }
+    },
+    {
+      "id": "berry-bush-graphic",
+      "family": "berry-bush",
+      "label": "Berry Bush \u2014 graphic",
+      "variant": "graphic",
+      "description": "Broader stepped paint accents and angular interlocking forms; a stronger graphic comparison.",
+      "recommended": false,
+      "file": "berry-bush-graphic.glb",
+      "bounds": {
+        "min": [-0.707133, 0.0, -0.412684],
+        "max": [0.712341, 0.986028, 0.367285]
+      },
+      "triangles": 1506,
+      "vertices": 783,
+      "textureSizes": [
+        [16, 16],
+        [64, 64],
+        [64, 64]
+      ],
+      "sha256": "0d1abcc70fbf343e43b654dd3c1afaa704c9f897d085c3a5b4bf2970a16672bf",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only.",
+      "recommendationReason": null,
+      "paintPixelsPerMetre": {
+        "foliage": 28,
+        "bark": 48,
+        "berries": 96
+      }
+    },
+    {
+      "id": "rock-open",
+      "family": "rock",
+      "label": "Rock \u2014 open",
+      "variant": "open",
+      "description": "Fewer separated foliage groups, longer exposed branches and a lighter silhouette.",
+      "recommended": false,
+      "file": "rock-open.glb",
+      "bounds": {
+        "min": [-0.68363, 0.0, -0.459688],
+        "max": [0.635723, 0.584908, 0.380129]
+      },
+      "triangles": 204,
+      "vertices": 108,
+      "textureSizes": [[64, 64]],
+      "sha256": "9da0f3d04684715f75e06664d32d825c1ae8d8e9af3c37305ab24947858948ba",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only.",
+      "recommendationReason": null,
+      "paintPixelsPerMetre": {
+        "stone": 48
+      }
+    },
+    {
+      "id": "broadleaf-open",
+      "family": "broadleaf",
+      "label": "Broadleaf \u2014 open",
+      "variant": "open",
+      "description": "Fewer separated foliage groups, longer exposed branches and a lighter silhouette.",
+      "recommended": false,
+      "file": "broadleaf-open.glb",
+      "bounds": {
+        "min": [-1.75806, 0.0, -1.016308],
+        "max": [1.808282, 4.152027, 0.793628]
+      },
+      "triangles": 1344,
+      "vertices": 696,
+      "textureSizes": [
+        [64, 64],
+        [64, 64]
+      ],
+      "sha256": "bd1ad0f3f843e8bc96a0b38876ef1b874211bb194017fb729ba9179ca7caaa5d",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only.",
+      "recommendationReason": null,
+      "paintPixelsPerMetre": {
+        "foliage": 24,
+        "bark": 48
+      }
+    },
+    {
+      "id": "conifer-open",
+      "family": "conifer",
+      "label": "Conifer \u2014 open",
+      "variant": "open",
+      "description": "Fewer separated foliage groups, longer exposed branches and a lighter silhouette. Open: separated evergreen sprays expose branches instead of forming stacked cones.",
+      "recommended": true,
+      "file": "conifer-open.glb",
+      "bounds": {
+        "min": [-1.314361, 0.0, -1.155198],
+        "max": [1.54791, 4.127897, 1.225021]
+      },
+      "triangles": 3592,
+      "vertices": 1848,
+      "textureSizes": [
+        [64, 64],
+        [64, 64]
+      ],
+      "sha256": "065395fb612e998dc51775ac8777521cb3f8bdc05414f2ae00dc3fbe330b9c85",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only.",
+      "recommendationReason": "Open: separated evergreen sprays expose branches instead of forming stacked cones.",
+      "paintPixelsPerMetre": {
+        "foliage": 24,
+        "bark": 48
+      }
+    },
+    {
+      "id": "berry-bush-open",
+      "family": "berry-bush",
+      "label": "Berry Bush \u2014 open",
+      "variant": "open",
+      "description": "Fewer separated foliage groups, longer exposed branches and a lighter silhouette.",
+      "recommended": false,
+      "file": "berry-bush-open.glb",
+      "bounds": {
+        "min": [-0.723331, 0.0, -0.409955],
+        "max": [0.648984, 0.99293, 0.580285]
+      },
+      "triangles": 1650,
+      "vertices": 855,
+      "textureSizes": [
+        [16, 16],
+        [64, 64],
+        [64, 64]
+      ],
+      "sha256": "ce7354e76495de7d5f46c7b2aa198041e7533356777f3b2b406de4d7367e47c6",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only.",
+      "recommendationReason": null,
+      "paintPixelsPerMetre": {
+        "foliage": 24,
+        "bark": 48,
+        "berries": 96
+      }
+    }
+  ]
+}

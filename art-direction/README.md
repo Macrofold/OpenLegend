@@ -4,6 +4,18 @@ This folder is the shared home for visual references, feedback, decisions, and f
 
 ## Start here
 
+**Preserved iterations:** [Study archive](studies/README.md) contains the recovered earlier screenshots/videos and the current small-detail/grounded-lighting comparisons. Current direction includes survival, weathering and emotional range alongside sunlight and warmth; preserve readable darkness and avoid uniformly cheerful presentation.
+
+**Required direction:** [Current visual requirements](decisions.md#current-visual-requirements--october-16-2026) — beautiful dimensional pixel art with believable real-world proportions; explicitly reject visibly low-poly 3D, blocky/Lego-like, cutesy and small-body/big-head art. Read this before sourcing assets, writing concepts or interpreting older reference ratings. [Grounded creator shortlist](research/3d-pixel-worlds/grounded-asset-creators.md) records promising sources and their untested limits.
+
+**Current study:** [Small-subject detail and grounded atmosphere](../docs/verification/small-subject-art-and-atmosphere.md) — 46 families with three alternatives, the original mercenary, actual scene/light/motion comparisons and preserved archives. The earlier [source-based review](../docs/verification/source-based-starting-study.md) remains the baseline. Bear replacement and creator acceptance remain open.
+
+**Agreed scope:** [Starting-scene art revision and revised comprehensive study strategy](../docs/projects/3d-pixel-art-first-scene-plan.md#proposed-replacement-study--october-16-2026) · [Implementation and experiment tasks](../docs/maintainers/3d-pixel-art.md#first-scene-delivery-and-experiment-tasks). Restyle the existing starting scene and retain its broader playtesting content; add demonstration subjects only where needed for a specific art comparison. The procedural study was rejected; its technical delivery does not establish art acceptance.
+
+**Realtime follow-up:** [Pixel rendering and lighting](research/3d-pixel-worlds/realtime-pixel-rendering.md) · [Texel splatting and shimmer](research/3d-pixel-worlds/texel-splatting.md) · [Animation tools and techniques](research/3d-pixel-worlds/animation-tools-and-techniques.md) · [All video links](research/3d-pixel-worlds/video-library.md). The t3ssel8r references shift the leading comparison toward renderer-driven art; painted textures remain useful rather than mandatory everywhere.
+
+**October 14 research:** [Building a dimensional pixel-art world](research/3d-pixel-worlds/README.md) · [34-image local gallery](research/3d-pixel-worlds/gallery.md). Garbage Country, The Last Night, EthrA, REPLACED and the supplied technical references are compared with source evidence, rendering explanations and a proposed generative-art workflow.
+
 **Art in progress:** [Maintainer art-direction index](../docs/maintainers/art-direction.md) · [Mercenary study](../docs/maintainers/art/mercenary.md). Editable studies live in [OpenLegend-art](/Users/mzw/Documents/ChatGPT/OpenLegend-art/README.md); this repository folder retains the creative brief, references and feedback.
 
 **Final selection:** [Creative inspiration board](final-board/index.html) · [Creative brief](final-board/creative-brief.md)
@@ -20,7 +32,7 @@ Round two has 17 new references and three familiar benchmarks. It saves separate
 
 Open `index.html` in a browser. It contains 48 illustrated reference cards: 34 games, six artist/concept studies, and eight sprite or tileset packs. Start Here shows twelve contrasting examples; All exposes the full collection. Search by reference ID, title, or visual theme. Click an image for a larger view, Like/Maybe/Pass, aspect tags, and notes.
 
-Images remain hosted by their sources and require internet access. Original source links remain available if a host stops serving a preview. This is a reference collection, not an offline image archive.
+Images in the original board remain hosted by their sources and require internet access. Original source links remain available if a host stops serving a preview. The separate [October 14 research gallery](research/3d-pixel-worlds/gallery.md) saves its 34 reference images locally with provenance; it does not change the original board's image hosting.
 
 ### Save feedback beside the HTML
 
@@ -48,6 +60,7 @@ API behavior: [Chrome's direct-file saving guide](https://developer.chrome.com/d
 - `feedback.md`: place to record specific user reactions as they arrive.
 - `feedback.json`: live feedback file created when you first click Save and select this folder. Read this file for the latest saved browser feedback.
 - `assets/README.md`: asset organization and acquisition log.
+- `research/3d-pixel-worlds/`: source-backed research, local screenshot gallery, supplied transcripts and proposed rendering/production methods; reference media are not game assets.
 - `midjourney/`: Midjourney prompting guide for painted concept art (versions, prompt writing, parameters, consistency, templates, house style, rights).
 - `prompts/`: per-character Midjourney prompt sets, one file per character, starting with Halven Rusk.
 - `board-template.html` and `build_board.py`: regenerate the board/catalog after changing references. Run `python3 art-direction/build_board.py` from the project root.
@@ -62,7 +75,7 @@ The useful comparison axes are character proportions; pixel density; terrain and
 
 ## Reference scope
 
-Game screenshots and art studies are linked for discussion and inspiration. Reuse rights are not assumed. Asset-pack previews are not production assets; no packs have been downloaded, purchased, or adopted. Source pages and brief license notes are retained for later evaluation. Prices are intentionally omitted because they change.
+Game screenshots and art studies are linked for discussion and inspiration. Reuse rights are not assumed. The original board's asset-pack previews are references; later acquired 3D source packs and exact provenance are indexed in [assets](assets/README.md). Acquisition and provisional integration do not establish a finished or accepted pixel-art result. Prices are intentionally omitted because they change.
 
 Some references show historical promotional art. Those are labeled and do not establish current release status. C05 is explicitly a non-pixel concept painting. Visual descriptions are curatorial observations, not technical claims about rendering pipelines.
 

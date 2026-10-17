@@ -91,11 +91,12 @@ export function installExpeditions(world: WorldState): void {
         'A weathered arrow points toward the raised timber lookout beyond the camp rocks. Its stone ramp rises on the far side: walk around the rocks to reach the foot, then up the ramp. An abandoned equipment bundle and a written clue were left on the deck; their contents may have been taken. This is a direction, not a quest to accept.',
       placement: worldPlacement(EXPEDITION_LOCATIONS.marker, 'terrain'),
       spatial: baseSpatial('object'),
-      appearance: 'crate-mesh',
+      appearance: 'study:marker-worn-post',
     },
     {
       id: 'lookout-equipment',
       name: 'Lookout equipment bundle',
+      appearance: 'study:bundle-rolled-wool',
       kind: 'item-pile',
       description:
         'A weathered ground bundle rests on the abandoned lookout deck. Reach it and inspect its actual remaining contents.',
@@ -113,7 +114,7 @@ export function installExpeditions(world: WorldState): void {
         'An abandoned open workbench stands on the riverbank before the distant reeds. Reach it and inspect the supplies and physical records that actually remain. Nothing here replenishes when opened.',
       placement: worldPlacement(workshop, workshop.surfaceId),
       spatial: baseSpatial('object'),
-      appearance: 'crate-mesh',
+      appearance: 'study:workbench-open-bench',
     },
   ];
   for (const entity of entities) world.entities[entity.id] = entity;

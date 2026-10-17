@@ -1,0 +1,230 @@
+{
+  "description": "Preserved meaningful replacement-study captures, including rejected trials; no historical capture overwritten.",
+  "files": [
+    {
+      "file": "01-doe-first-three.png",
+      "bytes": 65997,
+      "sha256": "66c3c080108fa7a2576525119c6bf04c19db6fa4a48c2f63be3b4452ce23681c"
+    },
+    {
+      "file": "02-berry-three.png",
+      "bytes": 70933,
+      "sha256": "c254f775bb3a291507a5f457209af00fbcbaff796c135cfc0fb098e6b94b4758"
+    },
+    {
+      "file": "03-doe-corrected-uv.png",
+      "bytes": 65997,
+      "sha256": "66c3c080108fa7a2576525119c6bf04c19db6fa4a48c2f63be3b4452ce23681c"
+    },
+    {
+      "file": "04-doe-connected-materials.png",
+      "bytes": 66310,
+      "sha256": "a064f115ccf61ec6783c3f5471e9e9b2428dc7b7a504b6ed210aad850a758afd"
+    },
+    {
+      "file": "05-doe-albedo-restored.png",
+      "bytes": 66387,
+      "sha256": "406ab5708105c3a9ccbff0ea97e9e754ec6163085b2a165d37b53733f35f6bbd"
+    },
+    {
+      "file": "06-broadleaf-three.png",
+      "bytes": 159450,
+      "sha256": "0a44ea9056d217c8f6a4eadcdb475b60a99a2023b579e7273adeacbc5094ffab"
+    },
+    {
+      "file": "07-leafy-berries-three.png",
+      "bytes": 119932,
+      "sha256": "179a6d748ec28db360658d38ece6225995dba4136e46fdb1f97716bf97627587"
+    },
+    {
+      "file": "08-leafy-berries-rooted-clumps.png",
+      "bytes": 128507,
+      "sha256": "6f374a8589762148742f41147ef0bd0e8734b9066c67142ec6a401ab0086f0ae"
+    },
+    {
+      "file": "09-leafy-smooth-diagnostic.png",
+      "bytes": 197284,
+      "sha256": "f2ab24de05464f70d9bd17a455e3e84c28e1e364ec6826b56e22e3137681b6a4"
+    },
+    {
+      "file": "10-wolf-three.png",
+      "bytes": 76936,
+      "sha256": "cd7505fc42545d3447181beaca431ad8cc8399b2496f2997bf7004f9aed6b3ea"
+    },
+    {
+      "file": "11-berry-thicket-greens.png",
+      "bytes": 137623,
+      "sha256": "f074a7c98bbf3d0554bc9d2df24836b96b15ea6b23c3ae442ff97894155164d7"
+    },
+    {
+      "file": "12-broadleaf-final.png",
+      "bytes": 162964,
+      "sha256": "5f07ca0108e0ea46f9d35a21707feb4a8018b0f7403a62e2bc43dfad0b7f307f"
+    },
+    {
+      "file": "13-backpack-three.png",
+      "bytes": 32679,
+      "sha256": "fe5306c39fa08ef9df73d5b3d9489e1d5e2ad73133d2706d3f48ad724f028629"
+    },
+    {
+      "file": "14-leather-pack-three.png",
+      "bytes": 11263,
+      "sha256": "2b39a590fae2a972616b3f844550577bb62b25c7dbed8aaeff8468e854f281d1"
+    },
+    {
+      "file": "15-doe-final.png",
+      "bytes": 76044,
+      "sha256": "d69034fa2cfaf7bb6e121528b3ee1237d428ee607f45c9173ddd17eecbd645fd"
+    },
+    {
+      "file": "16-stag-final.png",
+      "bytes": 45655,
+      "sha256": "c56c57f2d45d06160fb760452cacd715cbcac22d0b94fd2705cd9f93b7b29645"
+    },
+    {
+      "file": "17-estoc-three.png",
+      "bytes": 36222,
+      "sha256": "71f8e6c12e109e94bdb1b58c918887ec4f42f929558e5b51a620e6c9b5a366f3"
+    },
+    {
+      "file": "18-shield-three.png",
+      "bytes": 56357,
+      "sha256": "a8b55cb7d84c8f3f5d484f1e5ee5f66bdf839dfcea7bb83d2813e2e374eb506b"
+    },
+    {
+      "file": "19-pale-bark-three.png",
+      "bytes": 140826,
+      "sha256": "4593f356d0e74e645a30b3f5ecb203d5be0f5ad2853f207f5ad5aa61412bd2db"
+    },
+    {
+      "file": "20-grass-three.png",
+      "bytes": 14655,
+      "sha256": "4f8f154cdd8acea3538949eb4fd74ffd216348fc965b6895de94390761ced655"
+    },
+    {
+      "file": "21-knife-three.png",
+      "bytes": 19112,
+      "sha256": "36a8161c3ae0eec409620d1b4a2576aee127783118d470cf3a50eb30fede90d3"
+    },
+    {
+      "file": "22-bow-three.png",
+      "bytes": 37186,
+      "sha256": "74803ab66556196b867416de70d7c4fbf4dac120b9dcfc7118d5c8b54604d9a4"
+    },
+    {
+      "file": "23-arrow-three.png",
+      "bytes": 21309,
+      "sha256": "db175ccf3592258c0dd2b126c7699d3d3a37a1c37a063094f34bc72c7655fb92"
+    },
+    {
+      "file": "24-shrub-three.png",
+      "bytes": 134672,
+      "sha256": "5f5762293e96b8687dbc7fcb5002c24ea95b9c68d175818383427aa5355f032c"
+    },
+    {
+      "file": "25-riverside-stems.png",
+      "bytes": 17144,
+      "sha256": "adeb1699c5033ea79690a3bbd9874c2c5585f23ed58c6539ce3cda792fc44ebd"
+    },
+    {
+      "file": "26-dry-fiber.png",
+      "bytes": 12629,
+      "sha256": "0626c67066aeb4447e6d4af018a74096fa7728a9da56c29be2d43de2a43772e6"
+    },
+    {
+      "file": "27-wolf-motion.webm",
+      "bytes": 1008779,
+      "sha256": "6b4cd1170b0658ef2e74c7d7ff75961af85d3fa6d68f5f5c2993214aefde21dd"
+    },
+    {
+      "file": "28-camp-natural-day.png",
+      "bytes": 780135,
+      "sha256": "47ca3613bf1626824f684b0c876233abebd3316a552c16b5b8b8294bbca6ba8a"
+    },
+    {
+      "file": "29-natural-motion-metrics.json",
+      "bytes": 11340,
+      "sha256": "fef790a7bd28e14954aa6efb0bab2f0fb28a1a4919c5c076f774e85cc3a0631c"
+    },
+    {
+      "file": "30-retained-orbit-exploratory.json",
+      "bytes": 11368,
+      "sha256": "728548d4e138fe78f5e81f38244207be1c65ac15ca9784e713773b3ce75a9d33"
+    },
+    {
+      "file": "31-retained-matched.json",
+      "bytes": 11233,
+      "sha256": "e87812a523c545a903b69ecc38518eae1033cf9a205f09870c97b53e25940e2b"
+    },
+    {
+      "file": "32-leather-pack-corrected.png",
+      "bytes": 48739,
+      "sha256": "fa20fee3bcff65d6c09f6bb8639661da3d3b64595723e74f4388eaf0a3772492"
+    },
+    {
+      "file": "33-pack-quarter.png",
+      "bytes": 35237,
+      "sha256": "51a21432b582a3ff8b019f9e8cb36d83fd58a796939b673aa714020d58f07e7b"
+    },
+    {
+      "file": "34-natural-matched.json",
+      "bytes": 11204,
+      "sha256": "ea506e492247d0bc4b318b6e57a801030bd6be40e65eb4c1df3229156bece100"
+    },
+    {
+      "file": "35-camp-natural-dusk.png",
+      "bytes": 557225,
+      "sha256": "a88924aa436af33c801ff7cfb236c76fb60f1ea6d95a39b9007386660eb4a418"
+    },
+    {
+      "file": "36-deer-motion.webm",
+      "bytes": 2226472,
+      "sha256": "f08e4d2e02584297494d043b6a4514362bd209c03da6ec928f50ef018e7b21f5"
+    },
+    {
+      "file": "37-stag-motion.webm",
+      "bytes": 1947966,
+      "sha256": "a5795253841e0f2ccc0aa95711e9c3924ec27e86e50a5e8a67cba99b501a8499"
+    },
+    {
+      "file": "38-woodland-natural-day.png",
+      "bytes": 573507,
+      "sha256": "835ca5c7efe75482dbfb65caaaa5c47b7a73bc21c65b3e7316a1b585baa42547"
+    },
+    {
+      "file": "39-berries-full-low-sun.png",
+      "bytes": 740713,
+      "sha256": "94d8608544cacca86af4aff009978bc40889e072526af42f555144e1c623dcd1"
+    },
+    {
+      "file": "40-berries-gathered-low-sun.png",
+      "bytes": 740697,
+      "sha256": "adc91745695133a2c2f0ec41bf36bd652e13d3f74b63637bb11e309fe255a991"
+    },
+    {
+      "file": "41-remounted-natural-metrics.json",
+      "bytes": 11155,
+      "sha256": "84f19485f41deeff0910310da5094de825d1e582ebbd65efc9b69071ac75bd8d"
+    },
+    {
+      "file": "42-remounted-camp.png",
+      "bytes": 780135,
+      "sha256": "47ca3613bf1626824f684b0c876233abebd3316a552c16b5b8b8294bbca6ba8a"
+    },
+    {
+      "file": "README.md",
+      "bytes": 2898,
+      "sha256": "b8f69dc90b093a305968e74471aba831b941f9df15dddb4a5d97952c08b73f9c"
+    },
+    {
+      "file": "asset-audit.json",
+      "bytes": 19467,
+      "sha256": "af18e4c628ff88dc665a088b810460682acb7636ded223add1ddd67da0b7e56c"
+    },
+    {
+      "file": "comparison.html",
+      "bytes": 15283,
+      "sha256": "d1d8d710020790659dee819f60132d71edccf90607aca39578d520e47ae1a044"
+    }
+  ]
+}

@@ -1,0 +1,181 @@
+{
+  "group": "people",
+  "notes": [
+    "Nine original static posed human studies. Named characters are visual proposals, not changed native identities or loadouts.",
+    "One 128x128 nearest-sampled fixed painted atlas per subject/finish; dedicated 64x64 face with 3\u20134 texel grouped cells and deliberate eyes.",
+    "Continuous shaped human geometry with closed thick clothing; no naked mesh underneath. No extra screen-space pixelation or cubic anatomy.",
+    "Mara 1.70m, Tavin 1.78m, Kest armor 1.82m. Static art only: no claim of animation, equipped-item compatibility or physical cloth support.",
+    "One mesh/material per runtime figure. Separate tailored parts remain editable in the Blender source.",
+    "No imported human geometry, reference-game artwork, provider call or unresolved mercenary derivative."
+  ],
+  "sourceFile": "art-direction/assets/representative-study/people.blend",
+  "sourceSha256": "a71de31199f0367d49d4d0185f0b7a05a45b1fe27ea883dc5b78cdb76eb12a3b",
+  "authoring": {
+    "art_study_common.py": "e5c172762e35dad10f6c8564fe09012d1cd190d8ae5fe1914c98807ac42cf5cb",
+    "prepare-study-people.py": "d5e5a5cc6516b588f45d966b95400a472a36a07019eaf9f5c1e5111bf9f7adec"
+  },
+  "assets": [
+    {
+      "id": "mara-quiet",
+      "family": "mara",
+      "label": "Mara Reed",
+      "variant": "quiet",
+      "description": "Patched wool coat, crossed repair satchel and bound hair; visual proposal for the camp mender. Broad quiet paint and restrained seams.",
+      "recommended": false,
+      "file": "mara-quiet.glb",
+      "bounds": {
+        "min": [-0.30099, 0.0, -0.123643],
+        "max": [0.30099, 1.7, 0.182058]
+      },
+      "triangles": 1962,
+      "vertices": 1060,
+      "textureSizes": [[128, 128]],
+      "sha256": "da763ed203fdc43327e1d0572543d1fc14a5ada41e30327286230996fa64f58c",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    },
+    {
+      "id": "mara-crafted",
+      "family": "mara",
+      "label": "Mara Reed",
+      "variant": "crafted",
+      "description": "Patched wool coat, crossed repair satchel and bound hair; visual proposal for the camp mender. Authored stitching, woven groups or open mail clusters.",
+      "recommended": true,
+      "file": "mara-crafted.glb",
+      "bounds": {
+        "min": [-0.30099, 0.0, -0.123643],
+        "max": [0.30099, 1.7, 0.182058]
+      },
+      "triangles": 1962,
+      "vertices": 1060,
+      "textureSizes": [[128, 128]],
+      "sha256": "f7d859debbf7c6931656b9be1e2487e2493d756f531fea5338aae11a9b77e038",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    },
+    {
+      "id": "mara-graphic",
+      "family": "mara",
+      "label": "Mara Reed",
+      "variant": "graphic",
+      "description": "Patched wool coat, crossed repair satchel and bound hair; visual proposal for the camp mender. Bolder edge bands and high-contrast face/material grouping.",
+      "recommended": false,
+      "file": "mara-graphic.glb",
+      "bounds": {
+        "min": [-0.30099, 0.0, -0.123643],
+        "max": [0.30099, 1.7, 0.182058]
+      },
+      "triangles": 1962,
+      "vertices": 1060,
+      "textureSizes": [[128, 128]],
+      "sha256": "4e101fc33883a2fa7d7e4258490a199df9324d171dcd974aa21b18e1ce88c277",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    },
+    {
+      "id": "tavin-quiet",
+      "family": "tavin",
+      "label": "Tavin Vale",
+      "variant": "quiet",
+      "description": "Reed-woven vest, rolled sleeves, belt pouch and travel boots; visual proposal for the camp traveler. Broad quiet paint and restrained seams.",
+      "recommended": false,
+      "file": "tavin-quiet.glb",
+      "bounds": {
+        "min": [-0.320002, 0.0, -0.129462],
+        "max": [0.320002, 1.78, 0.190625]
+      },
+      "triangles": 1842,
+      "vertices": 996,
+      "textureSizes": [[128, 128]],
+      "sha256": "0a735e585f90ba43a767896890e58f59225460a7d10a6510bcffa253e9938234",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    },
+    {
+      "id": "tavin-crafted",
+      "family": "tavin",
+      "label": "Tavin Vale",
+      "variant": "crafted",
+      "description": "Reed-woven vest, rolled sleeves, belt pouch and travel boots; visual proposal for the camp traveler. Authored stitching, woven groups or open mail clusters.",
+      "recommended": true,
+      "file": "tavin-crafted.glb",
+      "bounds": {
+        "min": [-0.320002, 0.0, -0.129462],
+        "max": [0.320002, 1.78, 0.190625]
+      },
+      "triangles": 1842,
+      "vertices": 996,
+      "textureSizes": [[128, 128]],
+      "sha256": "79f2a1c8cd428f82148b809c54e9676b85c147f18fd9c91ac660ac3fa061d22f",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    },
+    {
+      "id": "tavin-graphic",
+      "family": "tavin",
+      "label": "Tavin Vale",
+      "variant": "graphic",
+      "description": "Reed-woven vest, rolled sleeves, belt pouch and travel boots; visual proposal for the camp traveler. Bolder edge bands and high-contrast face/material grouping.",
+      "recommended": false,
+      "file": "tavin-graphic.glb",
+      "bounds": {
+        "min": [-0.320002, 0.0, -0.129462],
+        "max": [0.320002, 1.78, 0.190625]
+      },
+      "triangles": 1842,
+      "vertices": 996,
+      "textureSizes": [[128, 128]],
+      "sha256": "5823ede265dbfb5718f84649a282527575adb2727a862327e59dc60620b5c460",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    },
+    {
+      "id": "armor-quiet",
+      "family": "armor",
+      "label": "Kest \u00b7 armor",
+      "variant": "quiet",
+      "description": "Padded jack, leather shoulder protection and layered mail study; visual proposal for the watchpost traveler. Broad quiet paint and restrained seams.",
+      "recommended": true,
+      "file": "armor-quiet.glb",
+      "bounds": {
+        "min": [-0.331158, 0.0, -0.132371],
+        "max": [0.331158, 1.82, 0.194909]
+      },
+      "triangles": 1922,
+      "vertices": 1040,
+      "textureSizes": [[128, 128]],
+      "sha256": "06c10df0dc3c3f9c43baf75e5ddbd8a5edf2ec0a8a2ee0d0b2734bbc2a5ff53e",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    },
+    {
+      "id": "armor-crafted",
+      "family": "armor",
+      "label": "Kest \u00b7 armor",
+      "variant": "crafted",
+      "description": "Padded jack, leather shoulder protection and layered mail study; visual proposal for the watchpost traveler. Authored stitching, woven groups or open mail clusters.",
+      "recommended": false,
+      "file": "armor-crafted.glb",
+      "bounds": {
+        "min": [-0.331158, 0.0, -0.132371],
+        "max": [0.331158, 1.82, 0.194909]
+      },
+      "triangles": 1922,
+      "vertices": 1040,
+      "textureSizes": [[128, 128]],
+      "sha256": "2e7625a4f52c0effa00ad3844273c1ce11231872e1bff4c28a09cfde1864dec8",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    },
+    {
+      "id": "armor-graphic",
+      "family": "armor",
+      "label": "Kest \u00b7 armor",
+      "variant": "graphic",
+      "description": "Padded jack, leather shoulder protection and layered mail study; visual proposal for the watchpost traveler. Bolder edge bands and high-contrast face/material grouping.",
+      "recommended": false,
+      "file": "armor-graphic.glb",
+      "bounds": {
+        "min": [-0.331158, 0.0, -0.132371],
+        "max": [0.331158, 1.82, 0.194909]
+      },
+      "triangles": 1922,
+      "vertices": 1040,
+      "textureSizes": [[128, 128]],
+      "sha256": "d4d475e03280d65c04ed7bfa7d8ed7340932eff672a7f66b828ae5ac31f54fc1",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    }
+  ]
+}
