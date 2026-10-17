@@ -19,6 +19,8 @@ Follow-up synthesis: [native survival](../03-design-proposals/survival-baseline.
 
 [Agency, cognition and planning](agency-cognition-and-planning.md) collects primary sources and bounded design inferences for optional decisions and persistent native pursuit. Its source-access notes are specific to that review; game behavior and cost remain unmeasured.
 
+[Content safety, mature storytelling and AI companions](content-safety/README.md) records the October 16 research and accepted non-graphic boundary, including the corrected Steam restriction. The linked policy owns character instructions; launch-specific legal/vendor review and actual safeguards remain open under existing production work.
+
 ## Selected primary sources by topic
 
 These links point to sources actually reviewed in the research. Further specific pages are cited inline; selection here does not imply every source supports every recommendation.
