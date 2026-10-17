@@ -58,6 +58,20 @@ Manual pause similarly freezes simulation effects and autonomous scheduling. Ins
 
 Acceleration must not produce an unbounded decision queue. Coalesce stimuli, reuse valid plans and admitted recipes, limit concurrent work, and reduce achieved speed or pause visibly when needed. Basic survival can continue during transient provider delays while the world is running; an unavailable AI service is still a degraded experience, not a completed AI MVP.
 
+## Player-value evidence and next delivery
+
+**October 17, 2026 reconciliation:** the [first-player milestone](../../docs/maintainers/first-player-milestone.md) makes completing and observing this integrated browser experience the next delivery priority. The functional requirements below remain necessary; a successful scripted engineering journey does not alone establish that an unfamiliar player understands or values the game.
+
+Separately record whether unfamiliar players can identify a goal they want to pursue, choose an approach, understand danger or uncertainty and the result, notice a useful invention or independent-character possibility, and voluntarily continue or return. Preserve cases of confusion, indifference, excessive coaching and failure rather than selecting only a successful demonstration. Initial qualitative observations do not estimate population retention or prove commercial demand.
+
+The ordinary solution remains worthwhile; each participant need not invent or cooperate. The evaluation must nevertheless establish that useful non-canned invention and independent, observation-grounded consequences are genuinely available in the complete experience. Do not substitute effect-free narration, force a secret-answer invention puzzle, or prescribe the resident's choice to obtain favorable evidence.
+
+Use the existing intended starting world and delivered activities before creating new mechanics. Link each observed obstacle to its current feature owner. Distinguish comprehension/interaction fixes, weak motivation or payoff, reliability failures and performance/cost problems; adding simulation detail is not a default remedy for any of them.
+
+Measure client frame stalls/loading/memory, server simulation and history work, network response/update costs and actual live-provider latency/spending for the same journey. Report larger or longer-lived workloads separately. Exact hardware, quality and participant decisions belong to the selected execution plan; the conversation's approximate duration and group-size suggestions are not mandatory new limits.
+
+Early supervised observation, hosted invitation-only operation and a paid/public launch retain separate applicable protections and evidence. This update authorizes no outreach, spending, new provider, engine migration or claimed playtest result. The [current platform decision](../../docs/projects/completed/platform-and-offline-decision-brief.md) remains browser-first; a measured client or authoring-workflow advantage can justify a separately selected native comparison.
+
 ## Evidence required for a first playable claim
 
 1. In a real session, the NPC pursues a goal, responds to changing circumstances, converses with the player and later recalls a relevant interaction using its permitted evidence.

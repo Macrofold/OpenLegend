@@ -1,5 +1,9 @@
 # Maintainer work index
 
+## Start here: the selected next delivery
+
+[The first-player milestone](first-player-milestone.md) is the entry point for selecting the next design and implementation work: finish and observe one worthwhile browser session, repair its actual blockers through existing owners, and measure performance and cost in the same experience. It coordinates P1 and ND26/DG03 rather than creating a competing subsystem backlog. Broader designs and numbered assignments below remain available context, not an automatic next-project queue. Native-engine work remains conditional on a named capability, performance or production advantage; [Godot community and AI research](../../research/game-engines/godot-community-and-ai-2026.md) informs that comparison without approving a port.
+
 ## Intelligent individuals and efficient simulation
 
 [The research-to-design map](intelligent-simulation.md) connects all nine new refinements to four feature/technical pairs and existing character, agency, social, performance and scalability owners. Mike selected exact calculated progress, compact background exchanges and numerical psychological reactions with optional description. All nine selected designs are complete; implementation and behavioral/capacity evidence remain open. This is coordination and design coverage, not another runtime backlog or a new priority ranking.
@@ -12,7 +16,7 @@
 
 [The completed product assignment for groups 31–35](../projects/completed/product-design-groups-31-35.md) follows groups 26–30. [Generations and family life](generations-and-family-life.md) owns DG31’s independent adult-family proposal under ACT/BW and PS. Mike selected adult players, non-explicit presentation with optional sex, and browser-only delivery for now. The family product design is prepared; technical work, runtime and measured qualification remain in their existing owners.
 
-DG33’s [product proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.md) adds two independent optional families: [BW15.1–BW15.6](base-world.md#dg33--voluntary-spirits-and-ordinary-revival) covers a willing known spirit and separately earned ordinary revival; [EWF10T.1–EWF10T.4](extensible-world-foundation.md#dg33--deliberate-telepathic-messages) coordinates deliberate telepathic messages. Their [profile](../worlds/base/extraordinary-minds-and-afterlife.md) and [MIND limits](../limits/extraordinary-minds-and-afterlife.md) retain proposed scope; runtime and qualification remain open.
+DG33’s [product proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.md) adds two independent optional families: [BW15.1–BW15.6](base-world.md#dg33--voluntary-spirits-and-ordinary-revival) covers a willing known spirit and separately earned ordinary revival; [EWF10T.1–EWF10T.4](extensible-world-foundation.md#dg33--deliberate-telepathic-messages) coordinates deliberate telepathic messages. Their [profile](../worlds/base/extraordinary-minds-and-afterlife.md) and [MIND limits](../limits/extraordinary-minds-and-afterlife.md) retain proposed scope and values; no new tracker, harm policy, clock or capacity claim is created.
 
 DG32 uses [INV-20.5g–l](inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions) for useful shared equipment, exact keeper authority, accepted claims and return without a present keeper. The [product proposal](../projects/shared-equipment-and-institutions-feature-spec.md) keeps association membership optional and first lending unsecured; actual property consumers and qualification remain open.
 
@@ -26,13 +30,13 @@ DG35's [completed platform and offline decision brief](../projects/completed/pla
 
 DG28 uses [published packs and creator revenue](published-packs-and-creator-revenue.md) under INV-8/EWF11/PD10. Its free portability proof, curated listing, paid acquisition and creator allocation/payout stages remain independently scoped; no marketplace or grants become prerequisites for useful free reuse.
 
-DG29 uses [participants and world travel](participants-and-world-travel.md) under PS05–PS08, with the existing product-scalability inventory. A worthwhile small visit and coherent return precede any broader advertised capacity or federation.
+DG29 uses [participants and world travel](participants-and-world-travel.md), with existing PS05–PS08 and the product-scalability inventory. A worthwhile small visit and coherent return precede any broader advertised capacity or federation.
 
 DG30 uses [creator funding and contributor governance](creator-fund-and-contributor-governance.md), with actual operating-budget, rights and platform-authority adoption separate from the product proposal. A finite manual round can finish before grant or voting software.
 
 ## Product design groups 21–25
 
-[The sequential five-group assignment](../projects/completed/product-design-groups-21-25.md) extends the first design branch. [Recovery and care](recovery-and-care.md) supplies DG21’s focused consumer; [INV-20.5a–f](inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) now covers DG22’s commissions and optional advances/associations. [EC01–EC06](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) now covers DG23's revisable outlook, older reinterpretation and independent optional extensions. These are product proposals, with adoption, technical work, implementation and gameplay qualification remaining distinct. That design assignment records its inspected source; current delivery state remains in the focused trackers.
+[The sequential five-group assignment](../projects/completed/product-design-groups-21-25.md) extends the first design branch. [Recovery and care](recovery-and-care.md) supplies DG21’s focused consumer; [INV-20.5a–f](inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) now covers DG22’s commissions and optional advances/associations. [EC01–EC06](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) now covers DG23's revisable outlook, older reinterpretation and independent extensions. These are product proposals, with adoption, technical work, implementation and gameplay qualification remaining distinct. That design assignment records its inspected source; current delivery state remains in the focused trackers.
 
 [NC22](narration-and-conversations.md#nc22--authored-world-asynchronous-text) now covers DG24's optional private text journey, with existing MP/CR/data consumer obligations and no parallel authority or cognition checklist. The first complete two-human journey precedes NPC correspondence and optional calls.
 
@@ -54,7 +58,7 @@ DG30 uses [creator funding and contributor governance](creator-fund-and-contribu
 
 ## Future work needing design
 
-[Future work needing design](needs-design.md) distinguishes remaining design/developer decisions from already-designed implementation and verification. Its [current dispositions](needs-design.md#current-design-dispositions) reconcile all 37 ND entries; [design groups](needs-design.md#ordered-design-groups) retain conditional dependencies and roadmap context rather than a current next-project ranking. It links source research and existing owners, including allocated but unmerged work, so unfinished delivery does not trigger duplicate design. Current selection still follows gameplay priorities and repertoire rankings.
+[Future work needing design](needs-design.md) distinguishes remaining design/developer decisions from already-designed implementation and verification. Its [current dispositions](needs-design.md#current-design-dispositions) reconcile all 37 ND entries; [design groups](needs-design.md#ordered-design-groups) retain conditional dependencies and roadmap context rather than a current next-project ranking. It links source research and existing owners, including allocated but unmerged work, so unfinished delivery does not trigger duplicate design. Current selection follows gameplay priorities and repertoire rankings through the [selected first-player milestone](first-player-milestone.md); preparation of a design alone does not select its implementation next.
 
 ## Five researched product specifications
 
