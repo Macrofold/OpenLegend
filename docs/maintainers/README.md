@@ -1,5 +1,9 @@
 # Maintainer work index
 
+## First playable: survival, a defensible home and independent encounters
+
+[First-playable delivery and validation (FPV01–FPV09)](first-playable-validation.md) is the entry point for the required survival-first experience: empty-handed resource use, known crafting and useful invention, a player-built camp with walls, differentiated non-hostile people and cooperation, predator danger and unscripted hostile camp contact. The [existing opening specification](../worlds/base/playable-openings.md#first-playable-game-target) owns the scenario; [gameplay priorities](../repertoires/gameplay-priorities.md) owns priority. The [operational playtest plan](../projects/first-playable-playtest-plan.md) covers preparation, actual sessions and review under DG03/ND26, not a duplicate world specification. Remaining mechanic design/implementation stays with its existing owners. [CO01 and the commercial decision brief](../projects/initial-commercial-offer-decision-brief.md) compare feasible browser offers before adoption; payment is not a prerequisite for ordinary player learning. Documentation is prepared; runtime and participant acceptance remain open.
+
 ## October 14 foundation review
 
 [Review and evidence](../verification/foundation-review.md) assesses the integrated code, with explicit source/probe limits. [Immediate work](foundation-review-todos.md) owns thirteen prioritized recommendations; future improvements live in their subsystem maintainers. [Foundational tests](foundational-tests.md) records the first ten stable tests and the deliberately narrow next slices. The [implementation follow-up](../verification/foundation-hardening.md) records delivered fixes, verification and the feature-document currency audit.
@@ -114,7 +118,7 @@ For a fresh conversation continuing invention and World Agent work, start with [
 
 ## Invention foundation packet
 
-Begin with [Invention foundation](../invention-foundation.md) for coordination and canonical ownership. Supporting specifications are [World constitution](../world-constitution.md), [Validation and compositional evidence](../invention-validation.md), [Runtime art pipeline](../invention-art-pipeline.md), and [Budgets and runtime cost](../invention-budgets.md). Their detailed tasks remain in the single INV tracker, including INV-9–INV-14; this index does not duplicate task bodies or status.
+Begin with [Invention foundation](../invention-foundation.md) for coordination and canonical ownership. Supporting specifications are [World constitution](../world-constitution.md), [Validation and compositional evidence](../invention-validation.md), [Runtime art pipeline](../invention-art-pipeline.md), and [Budgets and runtime cost](../invention-budgets.md). Their detailed tasks remain in the single INV tracker, including INV-9–INV–14; this index does not duplicate task bodies or status.
 
 | Area                                                                   | Tracker                                                               | Design owner                                                                                                                                                                                                                                                   |
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
