@@ -193,6 +193,7 @@ The latest design additions cover [world locks and invention ownership](archive/
 
 - [Maintainer work index](docs/maintainers/README.md) — navigation to cross-cutting work and the focused [ACT](docs/maintainers/actor-model.md), [CR](docs/maintainers/cognition-redesign.md), [NC](docs/maintainers/narration-and-conversations.md), [INV](docs/maintainers/inventions-and-world-evolution.md) and [production-data](docs/maintainers/production-data.md) trackers
 - [Research and design archive](archive/README.md)
+- [Production workflows](docs/production-workflows/README.md) — reusable routes from an idea through art, assets, animation, interfaces, sound and playable consequences; [production principles](archive/02-research/ai-game-development/09-openlegend-principles.md) explain their fit for OpenLegend.
 - [Save/load design](docs/save-and-load.md) — high-level constraints for future state, simulation and storage design; manual and rolling autosave slots, bounded capture and documented recovery qualification
 - [Runtime performance design](docs/performance.md) and [prioritized tasks](docs/maintainers/performance.md) — compact persistence, triggered background work, bounded CPU and the measured scale path; cold event storage, gameplay retry epochs and actor scheduling are implemented; multiplayer and scale qualification remain pending
 - [Real-time multiplayer synchronization](archive/07-technical-architecture/realtime-synchronization.md) — batching, prediction, replication and future improvements

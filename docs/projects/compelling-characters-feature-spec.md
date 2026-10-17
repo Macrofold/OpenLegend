@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                            | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Unified personal evidence, native perspective and the bounded PG02 demonstration are delivered; broader character reliability remains open. | 2026-10-16   |
+| In progress | Unified personal evidence, native perspective and the bounded PG02 demonstration are delivered; broader character reliability remains open. | 2026-10-17   |
 
 **Accepted product direction, October 3, 2026; proposed delivery choices.** Mike requires multidimensional characters whose embodied experience, inner life, attention, choices and consequences work together. This is a product-design assignment, not permission to implement or run paid experiments. The October 4 owner clarification is developed in the [scoped technical design](compelling-characters-tech-design.md); broader psychological mechanics remain deferred. Existing implemented foundations and their unfinished acceptance retain their recorded status.
 
@@ -363,6 +363,14 @@ Do not put the expected action sequence in the character's prompt or secretly pe
 Separate visible behavior, the resident's own self-report, accepted private game state and the evaluator's inference. A later eloquent explanation cannot by itself prove why an earlier action was chosen. Use matched variations and targeted comparisons to test whether a selected input makes a useful difference. Avoid both punishing all eccentric behavior and excusing every loop as eccentricity.
 
 Evaluation should compare coherent baseline and candidate character content, prompt directions, selected memories or supported feelings one factor at a time. Removal comparisons use explicit disposable test configurations and preserve required evidence, security and actual world effects; they do not authorize dropping protected identity in ordinary play. Fix scenario judgments, sample sizes and acceptable tradeoffs after a developmental baseline and before evaluating held-out cases. Record unsuccessful runs and uncertainty. No optimal prompt, emotion set, diversity target or release score is claimed here.
+
+### Production route and creative comparisons
+
+The [characters and play production route](../production-workflows/characters-and-play.md) connects an intended encounter, a particular person and a truthful situation to inexpensive rehearsal, actual independent activity, consequences and revision. Use it to develop content and identify what needs attention; the [complete behavioral flows](#complete-behavioral-flows) remain the product's evaluation owner. A voice sample or staged scene can reveal an appealing possibility before integration. Its value still needs to survive the resident's ordinary choices, competing concerns and later encounters.
+
+Keep the creative purpose of a comparison explicit. A particular resident's interests, humor, taste, vulnerability or way of enjoying solitude may make the player curious, amused, attached, wary or eager to try something together. Ask what this person adds to the player's chosen experience and what actual conduct made that impression. Preserve legitimate refusal, quiet pleasure and surprising but understandable choices when revising; uniformly helpful behavior is not the definition of appeal. Use the existing whole-episode observations rather than adding a separate personality or fun score.
+
+The [story and character research](../../archive/02-research/ai-game-development/06-models-for-stories-and-characters.md) supplies candidate methods, while [evaluation and adoption](../../archive/02-research/ai-game-development/11-evaluation-and-adoption.md) separates creative quality, reliable execution and complete cost. When comparing content, prompts or candidate models, keep required identity and permitted evidence intact and interpret each result at the boundary actually exercised. Broader trials remain with the [intelligent-simulation evaluation design](intelligent-simulation-evaluation-feature-spec.md) and existing character-experience work.
 
 ### Spend on meaningful choice
 

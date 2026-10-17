@@ -13,6 +13,7 @@ The finite source-based implementation reuses the existing renderer, camera, lig
 - Work, dependencies, and acceptance: [V3D tracker](../maintainers/3d-pixel-art.md); the [first-scene plan](3d-pixel-art-first-scene-plan.md) sequences the next visual delivery without duplicating the broader pipeline.
 - New asset-work bounds: [A3D inventory](../limits/3d-pixel-art.md). Shared [interface](../limits/interface.md), [AI execution](../limits/ai-execution.md), [spatial](../limits/spatial.md), [objects](../limits/objects.md), and [persistence](../limits/persistence.md) inventories remain controlling.
 - Detailed mechanisms: [generation pipeline](3d-pixel-art-asset-pipeline.md), [appearance families](3d-pixel-art-appearance-families.md), [qualification](3d-pixel-art-validation.md).
+- Offline source-to-game handoffs: [production workflow](../production-workflows/README.md) and [asset/animation route](../production-workflows/assets-and-animation.md); their working records feed the existing appearance/artifact owners below.
 - Existing boundaries: [engine/world](../engine-and-world-boundaries.md), [spatial renderer contract](../../archive/07-technical-architecture/spatial-world-runtime.md#10-playcanvas-isolation-and-hybrid-assets), [world presentation](../world-presentation.md), [runtime art/publication](../invention-art-pipeline.md), and [AI providers](../ai-providers.md).
 
 ## 1. Original inspected application and smallest useful change
@@ -71,6 +72,21 @@ Animation is a depiction of native state. Clip completion and animation notifies
 ### Art records
 
 Durable requests, stages, artifact metadata, candidate validation reports, publication records, and billing receipts belong to the [pipeline design](3d-pixel-art-asset-pipeline.md). Mechanical installation and appearance publication remain distinct transactions under their respective owners, connected by exact references rather than distributed rollback of valid gameplay when art fails.
+
+### Editable-source handoff and reviewed runtime export
+
+The [offline production route](../production-workflows/assets-and-animation.md) supplies authored, procedural or generated candidates to these same owners. Preserve the connection between the selected identity, editable source and reviewed runtime export. A successful authoring viewport or provider response is an intermediate result; the consumer needs the actual exported geometry, materials, rig/clip coverage and current-game evidence appropriate to the selected family.
+
+| Handoff information                                                        | Existing destination and use                                                                                                                       |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Selected form, meaningful parts and authorized references                  | AppearanceDefinition identity/source lineage and the existing art-study record; keeps dependent views consistent                                   |
+| Editable geometry/material graph, fitted parts, rig or clips actually used | Source-artifact metadata or study source locations, with meaningful tool/source revisions; supports a later repair without reconstructing identity |
+| Exported runtime bytes and conversion settings                             | Artifact digests, processing-profile identity and RepresentationManifest dependencies; lets the consumer inspect what it will load                 |
+| Required views, states, attachments and the observed result                | Existing family compatibility and candidate-validation records; separates covered cases from unperformed qualification                             |
+
+This is a handoff requirement for the selected production work, not a new universal authoring schema, public manifest payload or asset-management service. A small study can keep its source links and review notes in the established [art record](../maintainers/art-direction.md); runtime intake retains only the metadata and dependencies its actual consumer requires. Editable DCC projects and private references do not become client downloads merely because a runtime asset derives from them.
+
+Use the dependency graph below to repair the responsible source. A material edit can refresh maps and their dependent representation without rebuilding the rig; a body or rig change can require renewed skin, clip and attachment checks. Derive alternate icons or sprites from the accepted identity and record intentional finishing differences. Preserve existing validated outputs until their replacement passes the relevant intake/publication path. Source retention and offline review do not bypass immutable publication, grant private reuse, or establish broad rig and equipment support.
 
 ## 4. Dependency and invalidation graph
 

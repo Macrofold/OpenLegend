@@ -24,6 +24,7 @@ The bundled world's [visual requirements](../../art-direction/decisions.md#curre
 - Authorized first-scene work and asset study: [starting-scene art plan](3d-pixel-art-first-scene-plan.md), with implementation and experiment tasks under V3D01.
 - Focused details: [appearance families and composition](3d-pixel-art-appearance-families.md), [generation and publication](3d-pixel-art-asset-pipeline.md), and [visual/operational qualification](3d-pixel-art-validation.md).
 - Existing authorities: [world presentation](../world-presentation.md), [spatial world](../spatial-world.md), and [runtime art/publication](../invention-art-pipeline.md).
+- Development production: [shared workflows](../production-workflows/README.md) and [object/character routes](../production-workflows/assets-and-animation.md); these supply reusable offline methods while this project retains its proposed product scope.
 
 ## 1. Recommendation
 
@@ -56,6 +57,14 @@ A player should recognize an individual from body shape, hair, clothing, possess
 An inventor should not wait for optional artwork before using an admitted mechanic. Existing materials, parts, poses, and effects should cover routine variation without a model call. Novel appearances should become reusable assets rather than permanent per-instance generation expenses. Users should see truthful readiness and failure states, and retain control over consequential appearance changes and spending.
 
 An author of another coherent world should be able to reuse the mechanism without adopting human anatomy, wilderness materials, blood, or a particular pixel palette. The bundled world chooses its style and supported families; the engine supplies bounded, versioned composition, publication, and presentation.
+
+### Creative identity and the production loop
+
+Where a player or creator is authorized to choose an appearance, preserve the features they intentionally select across concept art, world form, equipment, icons and later refinements. A recognizable silhouette, meaningful material, distinctive possession or characteristic posture can make an object or person worth noticing and remembering. More detail and more generated variants are useful only when they strengthen that identity, the intended action or the place's atmosphere. Choosing reuse must not force an unfamiliar supported invention into an inaccurate stock depiction; generation must not silently replace a liked design.
+
+Use the [offline production workflow](../production-workflows/README.md) to explore and deliver the needed representation. A full articulated route can be idea → art → 3D source → rig/motion → working entity, while exact reuse, direct modeling, procedural composition and final 2D art skip unnecessary stages. Develop the supported native interaction with a rough representation alongside visual exploration so scale, use and meaningful choices can be judged early. Choose a coherent example before expanding a family, rather than requiring finished art before any play or producing a large library before discovering whether its source works.
+
+The [asset and animation route](../production-workflows/assets-and-animation.md) defines source handoffs and repair paths; [scenes and interfaces](../production-workflows/scenes-and-interfaces.md) connects the result to light, environment and item presentation. Evaluate the resulting person or object in the actual game: recognizable identity, expressive motion, readable contact and a useful supported interaction. Preserve the accepted source and demonstrate a meaningful revision when repeatability is the purpose. These methods deepen the proposed delivery approach without accepting new art direction, arbitrary rigs or equipment capabilities, and without treating the mercenary pilot as general production qualification.
 
 ## 4. Player and creator scenarios
 

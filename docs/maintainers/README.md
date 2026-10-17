@@ -4,6 +4,10 @@
 
 [The first-player milestone](first-player-milestone.md) is the entry point for selecting the next design and implementation work: finish and observe one worthwhile browser session, repair its actual blockers through existing owners, and measure performance and cost in the same experience. It coordinates P1 and ND26/DG03 rather than creating a competing subsystem backlog. Broader designs and numbered assignments below remain available context, not an automatic next-project queue. Native-engine work remains conditional on a named capability, performance or production advantage; [Godot community and AI research](../../research/game-engines/godot-community-and-ai-2026.md) informs that comparison without approving a port.
 
+## Game production methods
+
+[Production workflows](../production-workflows/README.md) connect ideas to editable art, working assets, animation, scenes, interfaces, character situations and coordinated feedback. The [research collection](../../archive/02-research/ai-game-development/README.md) explains the evidence and OpenLegend-specific creative opportunities; [remaining preparation](needs-design.md#ai-assisted-game-production-research-and-design-integration) maps choices into existing owners. Art studies, V3D/INV, CE, UIUX and playability work retain their task and acceptance records.
+
 ## Speech and social perception
 
 [Speech and social perception](speech-and-social-perception.md) owns the selected ordinary speech replacement through SPK00–SPK11: one optional addressee, audible recipient awareness without sight, reliable recognition separate from names, full structured remembered experience, shared natural presentation, dialogue without membership, consistent freeform AI availability and actual animal sound responses. The [feature specification](../projects/speech-and-social-perception-feature-spec.md) and [technical design](../projects/speech-and-social-perception-tech-design.md) are designed; runtime implementation and qualification remain open. The covered ordinary-speech slice of ND16 is marked designed, while NC/HE/CR/CE and broader hearing/media work retain their own remaining acceptance.
