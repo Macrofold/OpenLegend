@@ -2,7 +2,9 @@
 
 [Forever dossier](../dossiers/world-of-warcraft-forever.md) · [Research coverage](../research-progress-forever-2026-10-17.md) · [Creation research requirements](../research-economics-engagement-and-creation.md)
 
-**Capture: October 17, 2026. R15 applies.** Forever already has publicly distributed, explicitly compatible addons and active authoring projects inside WoW's established addon ecosystem. This establishes an ecosystem worth examining; it does not establish how many Forever players use addons, how popular these particular projects are, or how much their authors earn. Project descriptions, published source and developer documentation were read. No addon was installed, executed, audited for security or tested in a paid client during this study.
+**Capture: October 17, 2026. R15 applicability: yes, for the PC/Mac client addon ecosystem.** Established WoW projects have maintained Forever releases, substantial recorded file use and new specialist authors working alongside them. Leatrix Plus's October 12 Forever-only file showed about 68,000 downloads; its September–October changelog documents repeated compatibility work. Questie's current release explicitly supports Forever alongside other versions. Their much larger lifetime project totals combine versions and are not Forever users. This is persuasive evidence of active creation and use, while longer-term Forever sustainability remains unproven. [A16](#a16) [A17](#a17)
+
+Project descriptions, published source and developer documentation were read. No addon was installed, executed, audited for security or tested in a paid client during this study. The selected examples below serve different purposes and include very early projects; they are not all claimed to be popular.
 
 ## What players can create, and where that freedom ends
 
@@ -18,6 +20,8 @@ These are selected examples of distinct purposes, not a popularity ranking or a 
 
 | Project and inspected state | What its author says it enables | Evidence boundary and useful question |
 | --- | --- | --- |
+| **Leatrix Plus and Questie**, established maintained projects with Forever packages | Interface conveniences and quest/navigation assistance, supported by continuing releases rather than an editor announcement alone. | Cross-version history supports continuity of authorship. Only explicitly Forever-labelled releases establish this edition's distribution; aggregate downloads cannot be assigned to it. [A16](#a16) [A17](#a17) |
+| **ForeverForge**, Walord; October 17 core release and associated modules | A common settings interface, optional quest/vendor automation and a broad UI replacement. Its quest controls can leave newly added stories to the player, and shared settings can be imported as data. | Author-described functionality, not our execution. The core and individual modules have different licences, and the author offers external donation support. Streamlining can be configurable without preserving every intended friction. [A18](#a18) |
 | **ForeverNet**, Andrew Woolfi; published v1.1.1, October 10, targeting 1.60.1 | Planning recipe/material chains and finding crafters through optional party/guild sharing. Its public description preserves manual crafting, travel and trade. | Published availability, not an independent runtime test. Can a tool help people find useful partners without doing the exchange for them? [A02](#a02) |
 | **KinFolk**, guild coordination addon in active beta development | A shared guild roster, linked alternate characters, event attendance and officer coordination inside the game. The author warns that officers should use matching versions. | A roster can make coordination easier; it cannot establish that a guild teaches kindly or distributes loot fairly. Version agreement is a real operating burden. [A04](#a04) |
 | **Travelcraft**, Forever travel-planning addon | Route display across roads, flights and boats/zeppelins, with time and safety considerations. The author credits new dungeon-map contributions from Santiago Reyes's Atlas de Azeroth: Forever with permission. | Author-described routing, not independently verified optimal paths. Information can support a journey while also revealing routes a player might prefer to discover. [A05](#a05) |
@@ -26,7 +30,7 @@ These are selected examples of distinct purposes, not a popularity ranking or a 
 
 The current ForeverNet README is more precise than its shorter distribution description: it distinguishes private inventories, optional recipe/capability sharing and separate version announcements. It also identifies unverified client integrations and a protected item-use problem under investigation. Some former recipe-link behavior moved into a separate project. These qualifications matter more than treating an older feature list as a current guarantee. Its package uses MIT-licensed code and separately licensed font assets. [A03](#a03)
 
-**Interpretation:** a creator ecosystem can add memory, navigation and coordination that the base game leaves awkward. It can also move the expected standard of play: an optional planner may become practically mandatory in an organized group. Downloads establish neither satisfied people nor active installations; a repeated download can be an update. This pass makes no population or revenue calculation from the small, changing project counters.
+**Interpretation:** a creator ecosystem can add memory, navigation and coordination that the base game leaves awkward. It can also move the expected standard of play: an optional planner may become practically mandatory in an organized group. Downloads establish neither satisfied people nor active installations; a repeated download can be an update. This pass makes no population or revenue calculation from project counters. A design built around discovery needs worthwhile choices after maps and guides become available; reducing needless clicks and trivializing a meaningful decision are different effects.
 
 ## An evidenced authoring route
 
@@ -104,3 +108,9 @@ All sources below were inspected October 17, 2026. Published source files are ev
 <a id="a14"></a>**A14 — CurseForge support, updated November 21, 2024.** [Reward Programme FAQ](https://support.curseforge.com/support/solutions/articles/9000197902-reward-program-faq). Full substantive body read. Variable pool and allocation, not a Forever creator income report.
 
 <a id="a15"></a>**A15 — CurseForge.** [Rewards Programme terms](https://support.curseforge.com/support/solutions/articles/9000197898-rewards-program-terms-of-service). Relevant indexed participation/earnings conditions read. No actual author enrolment or payment records inspected.
+
+<a id="a16"></a>**A16 — Leatrix.** [Leatrix Plus 1.60.17 Forever release](https://www.curseforge.com/wow/addons/leatrix-plus/files/9143151). File metadata and dated changelog read. A version-specific file counter supports use; it is not a unique-player or retention measure.
+
+<a id="a17"></a>**A17 — Questie authors.** [Release catalogue](https://www.curseforge.com/wow/addons/questie/files/all). Current October 12 release, supported flavours and historical release list read. Multi-flavour file and project totals cannot isolate Forever adoption.
+
+<a id="a18"></a>**A18 — Walord, ForeverForge.** [Core and suite description](https://www.curseforge.com/wow/addons/foreverforge). Substantive controls, modules, sharing, licences and support route read. The UI overhaul remains a client extension, not a server-world conversion.
