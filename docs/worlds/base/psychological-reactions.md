@@ -55,6 +55,8 @@ These dimensions are prompt/question meaning, not six new stored meters. The mod
 
 Every offered operation binds a personally eligible new source occurrence or an exact supported remembered source, its revision, a permitted subject or no identified subject, the installed policy pin and the prior active record revision where supplied. Known-opponent fear/anger uses that opponent as subject. Unidentified danger uses no guessed person; its cause still says what was felt or observed. Present all still-relevant current threats when judging an unidentified-danger interpretation so that the latest small cue cannot erase other danger by accidental omission.
 
+Within one threat pipeline, prepare at most one question and admit at most one write for each actor, exact definition pin and target-stacking key. When several eligible causes have coalesced, bind the newest personally relevant eligible occurrence in the captured native sequence and include earlier still-relevant evidence and the current interpretation as context. Keep every original source identity; do not manufacture a combined cause or let arbitrary question order decide which fear value survives. With no eligible new cause, offer only the existing permitted no-change/resolution/reframe choices. The binding selects a lawful source, not a feeling amount or compulsory reaction, and cannot consume newer evidence beyond the captured cut.
+
 ### Selected initial values
 
 | Meaning | Fear | Anger |

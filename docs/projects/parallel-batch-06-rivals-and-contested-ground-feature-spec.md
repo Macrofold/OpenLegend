@@ -2,9 +2,11 @@
 
 | Status      | Current progress                                                                                                                          | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Combat mechanics, useful independent help and defensive response verified; hostile choices and the combined visual encounter remain open. | 2026-10-16   |
+| In progress | Combat mechanics, useful independent help and defensive response verified; hostile choices and the combined visual encounter remain open. | 2026-10-17   |
 
 **Current review, October 15:** the combat, consent and watchpost mechanics are integrated on main. Dated qualification records demonstrate useful independently chosen help and defensive guard, actual finite rewards and saved aftermath. Independently hostile attacks with both loadouts, the remaining pursuit/ammunition/evasion/adverse-choice cases, formal voluntary decline and the complete visual encounter remain open under CF01–CF05. The original planning horizon, branch/start instructions and experiments below remain history; their paid limits are not new audit authorization. The shared flight’s coaching-result integration gap remains tracked under [PC04](../maintainers/practical-competence.md#pc04--voluntary-coaching).
+
+**Selected supersession, October 17, 2026:** the [combat-response specification](combat-and-threat-responses-feature-spec.md) and [technical design](combat-and-threat-responses-tech-design.md) select human PvP and actual bodily projectile collateral in the bundled world. The earlier direct-PvP denial, harmless body interception and post-release target-specific lethal suppression remain the delivered baseline until CTR01 implements their replacement. They are not constraints to restore in later work. Preserve the installed world's permission, actual contact law and exact release/participation boundaries; the new project does not close any remaining CF01–CF05 qualification or authorize new paid execution.
 
 ## Purpose and planning horizon
 
@@ -12,7 +14,7 @@ Make venturing out create conflict worth engaging with: an opponent wants someth
 
 At Mike's request, **assume all previously suggested assignments are delivered when deciding what to select next**. That is a planning horizon, not evidence that their branches have merged. The [dependency ledger](parallel-batch-06-rivals-and-contested-ground-tech-design.md#open-prerequisites) records actual readiness separately. No previous task is marked complete by this allocation.
 
-The original planning request authorized these documents and future prompts. The owner consolidated the five interdependent assignments on October 8, then authorized the complete implementation on `codex/rivals-and-contested-ground`. The requirements below remain the accepted target; current branch evidence and unfinished acceptance are tracked separately. CF01–CF05 retain their complete scope as internal work parts, not separate workers or design-only substitutes.
+The original planning request authorized these documents and future prompts. The owner consolidated the five interdependent assignments on October 8, then authorized the complete implementation on `codex/rivals-and-contested-ground`. The requirements below remain the accepted target except for the explicitly superseded combat-policy boundaries above; current branch evidence and unfinished acceptance are tracked separately. CF01–CF05 retain their complete scope as internal work parts, not separate workers or design-only substitutes.
 
 ## Why this batch
 
@@ -44,7 +46,7 @@ Entry owners: [combat](../repertoires/combat-rescue.md), [adventure](../repertoi
 
 On October 6, Mike answered **yes**: hostile NPCs may kill other NPCs, including Ada, under the existing death rules. [Lifecycle and player protection](../worlds/base/lifecycle-and-protection.md#npc-combat-participation) owns the accepted target policy; the [decision register](../../archive/05-project/open-decisions.md#batch-06--npc-combat-participation) records the answer. No further developer decision blocks this allocation.
 
-This removes the planning gate, not any runtime guard by itself. CF01 implements the common target eligibility needed by the new opponents. The stag keeps its separately authored player-targeting behavior; its existing resident exclusion is not a universal rule for humanoid combat. Direct player-versus-player harm remains denied, inactive humans remain protected, and a human's potentially lethal attack still requires its exact review. Ordinary NPC choices need no human confirmation. NPC death is persistent without automatic return; difficult revival and ghosts are not supplied by this batch. No home raids, property damage or new indirect harm is implied.
+This removes the planning gate, not any runtime guard by itself. CF01 implements the common target eligibility needed by the new opponents. The stag keeps its separately authored player-targeting behavior; its existing resident exclusion is not a universal rule for humanoid combat. The delivered CF01 baseline denies direct player-versus-player harm; CTR01 owns its selected removal. In both versions, inactive humans remain protected, and a human's potentially lethal attack still requires its exact review. Ordinary NPC choices need no human confirmation. NPC death is persistent without automatic return; difficult revival and ghosts are not supplied by this batch. No home raids, property damage or new indirect harm is implied.
 
 ## CF01 — Armed opponents with their own purpose
 
@@ -62,7 +64,7 @@ October 13 implementation correction: [authored impact attention](../worlds/base
 
 The player selects a currently perceived permitted target and exact compatible ranged tool/ammunition. **Aim** begins preparation without spending ammunition; after preparation, **Shoot** releases one shot, and **Cancel aim** stops without firing. Ordinary **Shoot once** and animal-facing **Hunt with …** remain understandable ways to choose the same finite aim/release sequence. Holding aim never fires automatically. Selection discloses automatic approach, preparation, projectile cost, range, observed target health and the effect of current cover; unknown facts remain unknown.
 
-The shot locks the last permitted aim point at release. Its travel intersects actual geometry and the selected physical target; it does not follow that target around a corner. A hit commits the ordinary body effect once. A wall stops the shot. Another body stops it without becoming an implicitly authorized damage target. Direct PvP remains forbidden. This deliberate first-flight scope does not implement collateral harm, ricochet, piercing, gravity arcs, homing or recoverable ammunition.
+**Delivered CF02 baseline:** The shot locks the last permitted aim point at release. Its travel intersects actual geometry and the selected physical target; it does not follow that target around a corner. A hit commits the ordinary body effect once. A wall stops the shot. Another body stops it without becoming an implicitly authorized damage target. Direct PvP remains forbidden. This deliberate first-flight scope does not implement collateral harm, ricochet, piercing, gravity arcs, homing or recoverable ammunition. The selected CTR01 contact law supersedes the harmless-interceptor and direct-PvP restrictions; it preserves finite first-contact stopping, straight travel and the separate limits on ricochet, penetration, arcs, homing and recoverable ammunition.
 
 An already released projectile continues after the shooter cancels or moves, and its ammunition stays spent. A target leaving the line can be missed. Losing current sight before release prevents firing at secretly refreshed coordinates. The interface must distinguish aiming, released, stopped, missed and hit, and never report a kill at release. Save/load preserves an in-flight shot and cannot return its ammunition or land it twice.
 
@@ -130,3 +132,4 @@ The priority hypothesis is that readable opposition and persistent stakes earn a
 - Limits and constraints: [batch 06 inventory](../limits/parallel-batch-06-rivals-and-contested-ground.md).
 - Mechanisms and dependencies: [technical design](parallel-batch-06-rivals-and-contested-ground-tech-design.md).
 - One complete implementation prompt: [prompt document](parallel-batch-06-rivals-and-contested-ground-prompts.md).
+

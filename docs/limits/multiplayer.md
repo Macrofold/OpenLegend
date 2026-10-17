@@ -140,11 +140,13 @@ Shared-world simulation pauses when no controlling connection satisfies the pres
 
 ## MP13
 
-**Reported · Restrictiveness: Very safe.**
+**Current bundled-world policy; selected revision not yet implemented · Restrictiveness: Very safe for the existing admission default.**
 
-**Player-to-player strikes are universally blocked in the kernel.** No configurable PvP policy was implemented.
+Human-issued attacks on another player are denied by the bundled world's combat policy. Shared admission in `packages/domain/src/combat-consent.ts` reads the installed body policy's `combat.targets` and `humanIssuedTargets`; `worlds/base/body-policy.ts` currently excludes player targets for human-issued attacks. The denial is not a universal kernel law. This owner correction follows source inspection at `0eb7358f251d1ab706592ccb6e9829e98c729fe9`; it claims no new runtime behavior.
 
-**Reason / tradeoff:** Cooperative-first default; the kernel currently makes it universal instead of an authored PvP policy.
+**Selected October 17:** [CTR01](../maintainers/combat-and-threat-responses.md) implements direct human PvP and actual bodily projectile collateral under the [bundled world policy](../worlds/base/lifecycle-and-protection.md#human-conflict-and-recovery), without mode/area enrollment. Other authored worlds can retain different supported permission/contact policies. Exact issuing authority, human review before commitment, vulnerable fade and fully inactive protection remain distinct constraints.
+
+**Reason / tradeoff:** The current cooperative admission is a world choice consumed by shared execution. The selected revision makes active participants physically consequential to one another while preserving account/control authority and the existing departure law.
 
 ## MP14
 
@@ -269,3 +271,4 @@ Configured account/character IDs: **100 characters maximum**.
 **Reason / tradeoff:** Bound serialized request/record fields and validation work; exact length is a chosen envelope, not a population limit.
 
 [Implementation starting point](../../apps/server/src/authority.ts).
+

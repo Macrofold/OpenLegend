@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | The accepted design is being detailed; runtime implementation and behavioral qualification have not started. | 2026-10-17 |
+| In progress | Design complete; implementation and qualification remain open. | 2026-10-17 |
 
 ## Purpose and authority
 
@@ -42,6 +42,53 @@ Richer animal ecology—offspring, den protection, packs and herds, predation, h
 The journeys below distinguish what was perceived, what the actor chose, what native execution did and what the player can actually observe. The selected harm and contextual-input journeys also remain in their canonical world contracts.
 
 Mechanical correctness, independent model behavior, interface usability and balance require different evidence. Documentation and source inspection establish none of those runtime passes. Detailed implementation order and evidence gates belong to the [technical design](combat-and-threat-responses-tech-design.md) and [implementation tracker](../maintainers/combat-and-threat-responses.md).
+
+## Physical conflict and player control journeys
+
+### A shot has physical consequences
+
+The player chooses and reviews the exact shot while it can still be withheld. A released projectile then follows its captured trajectory and the selected world's contact law. If Ada, another player, an animal or a vulnerable former shooter physically crosses it first, that actual body receives the ordinary contact-defense and injury result. A shield can prevent harm through its real coverage; scenery can stop a projectile through its supported material response. Selecting a different target, calling the shot practice, losing the shooter or discovering that the new impact would be lethal cannot retrospectively make the projectile harmless.
+
+This initial family still stops at its first physical contact. It does not pierce multiple bodies or introduce general structural destruction. Intended target, actual contact, observed outcome and private knowledge remain distinct. A shooter who cannot see the impact does not acquire a damage report or an unseen person's identity. The [ranged world profile](../worlds/base/ranged-counterplay.md#selected-contact-consequences) owns complete contact cases and review wording.
+
+### People can attack people in this world
+
+A human can deliberately attack another physically participating player through the same supported menu, Command shortcut and exact action admission used for other bodies. This world requires no separate duel agreement, flag or PvP zone. The controls must make the chosen action clear before commitment, while ordinary recoverable player death, actual carried-item loss, campfire return and scars remain consequential. Fully inactive participants remain protected; the existing vulnerable departure interval still runs through real simulation. These are the [world's participation and aftermath rules](../worlds/base/lifecycle-and-protection.md#human-conflict-and-recovery), not global engine restrictions.
+
+### Command-click stays understandable during a fight
+
+Holding Command previews the same exact contextual action that a click will request. A berry bush offers Gather; an ordinary person offers Speak. An observed current/recent attack directed at the player, or the player's own admitted offensive intention toward that person, makes a disclosed attack the preference for that pair. Mere selection, hover, a private model thought or somebody else's fight cannot create this state.
+
+The world selects ten normal real seconds of recent continuity, measured as **600 game seconds**. This gives the player time to follow a moving situation without the default flickering back to conversation after each punch. Current observed attacks and genuinely active own commitments remain current independently of that deadline. Incoming evidence and own offensive retention are separate, so ending one's own attack does not erase an attack still arriving from the other person.
+
+The [ordered world preference table](../worlds/base/combat.md#contextual-action-decision-table) is authoritative. Invalid targets are handled first; a deliberate Speak override then wins until fresh hostile evidence or a new explicit attack. Otherwise a held aim offers Release before generic attack-method selection. The current exact method is retained where supported; the ordinary fallback uses an already held compatible contact weapon, then an unarmed strike. Recovery keeps the attack visibly disabled with its real reason. An approach is labeled **Approach and strike…**, not presented as an immediate hit.
+
+The exact action and target visible at pointer-down are captured for that gesture. If they become invalid or the preference changes, the click becomes stale and refreshes; it never silently changes from Speak to Attack or from punch to bow. One click means one action. **Stop attacking this person** cancels the future offensive commitment and its retained preference through the proper work owner while preserving costs, recovery, released flight and incoming threats. Deliberately opening Speak can retain a social default without declaring peace or changing the target's mind.
+
+### Complete physical and interface acceptance
+
+| Journey | Required result |
+| --- | --- |
+| Aim at a wolf; Ada crosses the actual shot | Ada receives the supported physical contact result. The wolf is not recorded as hit; observed source/impact information respects each person's knowledge. |
+| Another player intercepts a shot | The same world contact law applies while vulnerable. A fully inactive body neither takes damage nor becomes an invisible indestructible shield. |
+| Guard the actual incoming direction | The existing shield law can reduce/prevent contact and consumes its real opportunity; guarding does not give nearby people immunity. |
+| Fire and then leave or die | The released shot keeps its captured effect and attribution; current source absence neither cancels it nor grants a successor perception. |
+| Practice shot crosses a living body | The body is not immune because of a scoring label; no practice credit is awarded for the unhit intended prop. |
+| Deliberately punch another active player | The installed world permits the action through every ordinary entry path. Native reach, work, injury, review and recovery remain real. |
+| Hold Command over a bush, ordinary Ada, then an actual attacker | Gather, Speak and the disclosed attack respectively follow the installed ordered table. No hidden hostility is inferred from selection. |
+| Exchange one blow, then remain nearby without attacking | The recent preference expires at its exact game-time deadline; proximity does not restart it. Lingering feelings and memory remain independent. |
+| Stop my own offense while the other person is still attacking | Own retained offense ends; incoming hostility can still justify an attack preference. The interface explains the current situation rather than falsely announcing peace. |
+| Choose Speak, then a fresh attack is actually observed | The deliberate social override persists through ordinary movement but is invalidated by that new hostile evidence. A held old gesture still cannot change action under the pointer. |
+| Target leaves sight, changes life, or a weapon disappears during a gesture | Revalidate and refuse the stale binding with a readable reason. No guessed position, substitute victim, silently equipped weapon or automatic retry. |
+| Press during recovery or keep the modifier/button held | No repeated attack or queued burst appears. Availability explains the real boundary and preserves the selected action's meaning. |
+
+## Design coverage and chosen tradeoffs
+
+This design completes the selected [ND11 direct-conflict/immediate-response portion](../maintainers/needs-design.md#nd11--human-conflictrecovery-and-npc-ghost-continuity) and [ND13 combat-sensitive quick-action portion](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization). Their source discussions are the [COMBAT ND11](../../archive/02-research/game-inspiration/synthesis/combat-and-encounters.md#nd11--responsive-conflict-in-the-selected-base-world) and [COMBAT ND13](../../archive/02-research/game-inspiration/synthesis/combat-and-encounters.md#nd13--predictable-opponent-specific-quick-actions) sections. [The repertoire review](combat-and-threat-responses-repertoire-review.md) records all 42 file dispositions and preserved future possibilities.
+
+Native animals are selected because useful refuge behavior should scale without a thought-generation cost. Two short personal decision stages are selected because relevance and willing action have different meanings; they do incur two real provider waits and require measurement. Per-opponent evidence avoids a global enemy toggle while giving quick input enough continuity. Physical contact makes cover and intervention meaningful while accepting collateral consequences. Finite purposes let a fight stop or change because something changed, leaving space for the rest of a person's life.
+
+No unresolved product decision blocks the selected CTR scope. Numeric values are explicit initial world tuning, not proven optimal values. Runtime reliability, complete latency, animal-route cost, readable play and enjoyment are open **acceptance work**, not missing design. Broader relationships, ecology, rescue/afterlife, institutions, repeated-attack modes and general input customization remain clearly deferred under their existing owners.
 
 ## People respond for reasons, and can change those reasons
 
@@ -121,6 +168,6 @@ Native mechanics acceptance requires all-danger routing, actual safe-margin/time
 ## Maintained records
 
 - Implementation: [Combat and threat responses](../maintainers/combat-and-threat-responses.md).
-- Limits and constraints: [Base-world inventory](../limits/base-world.md), [ranged and evasion inventory](../limits/parallel-batch-06-rivals-and-contested-ground.md), and [interface tuning](../limits/ui-ux.md).
+- Limits and constraints: [Combat/threat inventory](../limits/combat-and-threat-responses.md), [base-world inventory](../limits/base-world.md), [ranged and evasion inventory](../limits/parallel-batch-06-rivals-and-contested-ground.md), and [interface tuning](../limits/ui-ux.md).
 - Mechanism and delivery: [Technical design](combat-and-threat-responses-tech-design.md).
 - Current physical behavior: [Combat](../worlds/base/combat.md), [ranged counterplay](../worlds/base/ranged-counterplay.md), and [player danger](../worlds/base/player-danger.md).
