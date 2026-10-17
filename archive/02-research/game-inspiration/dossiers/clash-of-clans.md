@@ -26,13 +26,13 @@ Army Camps constrain capacity; Barracks unlock troop types, while Laboratory res
 
 Spells provide several kinds of intervention, with placement and timing limited by the prepared spell capacity:
 
-| Function | Named examples and decision |
-| --- | --- |
-| Damage | Lightning attacks a location; Earthquake damages structures and helps break walls. |
-| Sustain | Healing restores units within an area; placement must anticipate where they move. |
-| Acceleration | Rage increases damage and movement; Haste emphasizes movement without the damage bonus. |
-| Access | Jump temporarily lets ground troops cross walls. |
-| Suppression | Freeze disables affected defenses/units; Poison damages and slows defending units. |
+| Function          | Named examples and decision                                                                   |
+| ----------------- | --------------------------------------------------------------------------------------------- |
+| Damage            | Lightning attacks a location; Earthquake damages structures and helps break walls.            |
+| Sustain           | Healing restores units within an area; placement must anticipate where they move.             |
+| Acceleration      | Rage increases damage and movement; Haste emphasizes movement without the damage bonus.       |
+| Access            | Jump temporarily lets ground troops cross walls.                                              |
+| Suppression       | Freeze disables affected defenses/units; Poison damages and slows defending units.            |
 | Additional bodies | Clone copies eligible troops temporarily; Skeleton and Bat spells summon different attackers. |
 
 These functional categories come from a player's detailed guide; its 2020 costs, numeric balance and meta recommendations are excluded. [Irfan Gaming, Clash School, 7 February 2020; full main body read](https://www.clashschool.com/2020/02/07/the-ultimate-spell-guide-for-all-spells-by-ifran-gaming/)
@@ -132,7 +132,6 @@ The adjacent citations form the source register: each identifies the system, pub
 - **Secondary bounded corroboration:** Wikipedia's basic scoring/resource/release sections. Its mistaken later-version chronology and blanket builder requirement were excluded.
 - **Unverified:** proprietary pathfinding internals, exact combat simulation tick behavior, every event's refund rules, undocumented matchmaking weights, causal retention effects, and current numeric prices/statistics for every unit. No hands-on experiment or private telemetry is implied.
 
-
 ### Fiction, recurring characters and stories around the village
 
 **Scope:** this is a lightly framed fantasy war game with durable player projects and occasional authored stories. The player is addressed as Chief; the single-player campaign presents attacks on the Goblin King's bases. That does not establish a simulated kingdom with individual citizens, jobs, food needs, romance or diplomatic relations. The recurring characters primarily give recognizable faces to army roles, construction and progression. [Supercell, Google Play description, retrieved October 17, 2026](https://play.google.com/store/apps/details?hl=en&id=com.supercell.clashofclans).
@@ -145,11 +144,9 @@ Dragon Duke's March 2026 escape illustrates how a character introduction can als
 
 **Interpretation:** much of the enduring narrative is the player's own village and clan history: the layout that finally defended well, the donated army that enabled an attack, or the war decided by a last attempt. Authored heroes and seasonal stories can give those activities emotional texture without requiring a large quest narrative. A transferable research question for OpenLegend is whether familiar, useful characters acquire meaning through repeated consequential interaction; a decorative backstory by itself would not test that proposition.
 
-
 ### Native layout creation, testing and sharing
 
 **Concrete native creation example:** adapt a defensive village layout to test whether a different wall arrangement redirects an attacking army. In Village Edit mode, reposition buildings/walls, save an inactive revision, then inspect missing-building and obstacle warnings before using it. The editor can rotate the village in 90-degree steps; rotation triggers the layout cooldown. Saving an inactive layout can stash invalidly placed buildings, so a saved design is not necessarily ready to defend. [L01](https://supercell.com/en/games/clashofclans/blog/game-updates/quality-of-life-improvements-june21/) Use a Friendly Challenge to test the design, inspect the attack, and revise; upgrading Heroes/Pets have been usable in friendly tests since April 2026. [L02](https://supercell.com/en/games/clashofclans/blog/release-notes/the-sound-of-clash-update/) Share the resulting layout in clan chat or as a link. That link captures a snapshot: later edits require a newly generated link, and unused links can eventually expire. [L03](https://supercell.com/en/games/clashofclans/fr/blog/news/nouveau-mode-entra%C3%AEnement-et-liens-de-partage-de-plans-de-base/) A recipient taps the link to import into their Layout Editor—a workflow Supercell demonstrated with QueeN Walkers' tournament bases. [L04](https://supercell.com/en/games/clashofclans/blog/esports/queen-walkers-war-layouts-2/)
-
 
 This is a constructed workflow, not a layout personally created or tested in this research. L01 is Supercell’s June 14, 2021 editor update; L02 its April 27, 2026 update; L03 its June 15, 2019 French-language sharing announcement; L04 its July 5, 2019 community-layout demonstration. Their relevant bodies were read. A saved layout still needs to satisfy the game’s validation; current numeric compatibility thresholds and the exact friendly-challenge cooldown were not independently verified. These tools arrange the game’s available buildings and defenses; they do not author new units or executable rules.
 
@@ -159,12 +156,12 @@ This is a constructed workflow, not a layout personally created or tested in thi
 
 **Classification: established commercial success, with substantial recent tracked-store contraction.** A fourteen-year service can be an exceptional lifetime business while its latest observable annual sales decline. This case is useful because durable social investment, recurring progression purchases and continued production coexist with that decline; success should not imply uninterrupted growth or a proved current game-level profit.
 
-| Period / disclosure | Metric and source | Scope and interpretation |
-|---|---|---|
-| Lifetime, disclosed 2024-02-14 | Supercell says Clash of Clans generated **over US$10 billion** during its preceding decade. [C01](https://supercell.com/en/news/comfortable-feeling-uncomfortable/) | Company-reported title revenue, with no audited title-level reconciliation, fee basis or channel breakdown in this statement. The same paragraph's **over $14 billion** covers the wider World of Clash including Clash Royale; it is not this game's standalone result. |
-| Calendar 2019, reported January 2020 | Sensor Tower estimated **$727 million gross player spending**, **27% above 2018**. [C02](https://sensortower.com/blog/clash-of-clans-revenue-2019) | Historical store-intelligence estimate, not Supercell's recognized revenue or profit. Provides a dated revival episode rather than a 2026 run rate. |
-| Calendar 2025 versus 2024, reported 2026-01-13 | AppMagic figures reported by Mobilegamer: **$254 million versus $323 million**, with 2025 placing 33rd. [C03](https://mobilegamer.biz/the-top-grossing-mobile-games-of-2025/) | Approximately **21% lower**, calculated from rounded figures. The report excludes Apple/Google's 30%, advertising, webshops and China's third-party Android ecosystem. These are estimated net store receipts, not directly comparable with gross spending. |
-| Supercell FY2025, disclosed 2026-02-10 | **€2.65 billion / $3.01 billion revenue; €0.93 billion / $1.06 billion EBITDA**. [C04](https://supercell.com/en/news/the-best-games-havent-been-made-yet/) | Entire company. The CEO identifies Clash Royale as the biggest contributor. Neither revenue nor EBITDA can be assigned to Clash of Clans; EBITDA also differs from net profit. |
+| Period / disclosure                            | Metric and source                                                                                                                                                             | Scope and interpretation                                                                                                                                                                                                                                                 |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Lifetime, disclosed 2024-02-14                 | Supercell says Clash of Clans generated **over US$10 billion** during its preceding decade. [C01](https://supercell.com/en/news/comfortable-feeling-uncomfortable/)           | Company-reported title revenue, with no audited title-level reconciliation, fee basis or channel breakdown in this statement. The same paragraph's **over $14 billion** covers the wider World of Clash including Clash Royale; it is not this game's standalone result. |
+| Calendar 2019, reported January 2020           | Sensor Tower estimated **$727 million gross player spending**, **27% above 2018**. [C02](https://sensortower.com/blog/clash-of-clans-revenue-2019)                            | Historical store-intelligence estimate, not Supercell's recognized revenue or profit. Provides a dated revival episode rather than a 2026 run rate.                                                                                                                      |
+| Calendar 2025 versus 2024, reported 2026-01-13 | AppMagic figures reported by Mobilegamer: **$254 million versus $323 million**, with 2025 placing 33rd. [C03](https://mobilegamer.biz/the-top-grossing-mobile-games-of-2025/) | Approximately **21% lower**, calculated from rounded figures. The report excludes Apple/Google's 30%, advertising, webshops and China's third-party Android ecosystem. These are estimated net store receipts, not directly comparable with gross spending.              |
+| Supercell FY2025, disclosed 2026-02-10         | **€2.65 billion / $3.01 billion revenue; €0.93 billion / $1.06 billion EBITDA**. [C04](https://supercell.com/en/news/the-best-games-havent-been-made-yet/)                    | Entire company. The CEO identifies Clash Royale as the biggest contributor. Neither revenue nor EBITDA can be assigned to Clash of Clans; EBITDA also differs from net profit.                                                                                           |
 
 **Estimation decision:** do not synthesize a current all-channel lifetime total, current payer rate, ARPPU, acquisition cost or title profit. Public channel coverage, accounting treatment and operating-cost allocation are insufficient. A decline inside tracked stores also cannot establish an equally sized decline in all-channel receipts: purchases can move between app stores and the direct shop. Conversely, merely possessing a webshop does not prove that missing receipts offset the measured decline. These are alternative explanations requiring transaction data, not corrections to apply by assumption.
 
@@ -313,21 +310,21 @@ The five critical bodies above were read in full. Common Sense Media's machine-g
 
 ## Requirement coverage and preservation
 
-| Requirement | Substantive coverage |
-| --- | --- |
-| R01 | Player promise, exact game identity, release and version boundaries in the game and commercial sections. |
-| R02–R03 | Major mechanics inventory, named resources, capabilities, compatibility and worked situations. |
-| R04 | Fictional economy, permanent versus temporary progress, time costs, failure and restart boundaries. |
-| R05 | Constructed multi-system situations with conditions, actions, outcomes and limitations. |
-| R06 | Character roles, authored behavior, social systems, multiplayer or explicit absences. |
-| R07 | Art, sound, controls, interface, feedback and production evidence; firsthand device testing not claimed. |
-| R08 | Fiction, named characters/institutions and narrative connections to actual play. |
-| R09–R10 | Production, release sequence, iteration, distribution, marketing and qualified discovery hypotheses. |
-| R11 | Dated financial metrics, platform/territory definitions, estimate method and missing cost/profit evidence. |
-| R12 | Five substantive independent written reviews where accessible, contrasting player testimony, enjoyment and abandonment analysis. |
-| R13 | Explicitly labeled transferable research hypotheses, dependencies and counterexamples. |
-| R14 | Adjacent sources, annotated access/version limits, reading/viewing routes, navigation and this map. |
-| R15 | Dated modding applicability finding and conditional investigation in the mechanics or commercial/creation section. |
-| October 13 amendment | Commercial outcome; reasons to enjoy, return or leave; fictional economy; meaningful lore; actual creator capabilities. |
+| Requirement          | Substantive coverage                                                                                                             |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| R01                  | Player promise, exact game identity, release and version boundaries in the game and commercial sections.                         |
+| R02–R03              | Major mechanics inventory, named resources, capabilities, compatibility and worked situations.                                   |
+| R04                  | Fictional economy, permanent versus temporary progress, time costs, failure and restart boundaries.                              |
+| R05                  | Constructed multi-system situations with conditions, actions, outcomes and limitations.                                          |
+| R06                  | Character roles, authored behavior, social systems, multiplayer or explicit absences.                                            |
+| R07                  | Art, sound, controls, interface, feedback and production evidence; firsthand device testing not claimed.                         |
+| R08                  | Fiction, named characters/institutions and narrative connections to actual play.                                                 |
+| R09–R10              | Production, release sequence, iteration, distribution, marketing and qualified discovery hypotheses.                             |
+| R11                  | Dated financial metrics, platform/territory definitions, estimate method and missing cost/profit evidence.                       |
+| R12                  | Five substantive independent written reviews where accessible, contrasting player testimony, enjoyment and abandonment analysis. |
+| R13                  | Explicitly labeled transferable research hypotheses, dependencies and counterexamples.                                           |
+| R14                  | Adjacent sources, annotated access/version limits, reading/viewing routes, navigation and this map.                              |
+| R15                  | Dated modding applicability finding and conditional investigation in the mechanics or commercial/creation section.               |
+| October 13 amendment | Commercial outcome; reasons to enjoy, return or leave; fictional economy; meaningful lore; actual creator capabilities.          |
 
 This subject had no earlier full dossier at the recorded branch base. Existing mobile reference studies, game dossiers and their historical evidence remain intact. Source observations are distinguished from interpretation and constructed examples. No gameplay, purchases, account modifications or uninspected video content are presented as firsthand evidence. The linked research ledger owns completion and commit status, including any remaining review work.
