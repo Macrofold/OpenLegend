@@ -103,4 +103,3 @@ PG02 retains provider outages, invalid/confounded setups, unsuccessful interest/
 **Exit:** AG12/CR12 provide evidence for the integrated experience, its limitations and its operating cost. Close CE items only when their stated outcomes are demonstrated; documenting the design or completing one subsystem does not close this tracker.
 
 The [October 14 continued combat qualification](../verification/rivals-and-contested-ground.md#useful-independent-help-and-complete-choice-terms--october-14-2026) demonstrates real purpose-bound mercenary punches and independently secured finite stock. Shared accepted-help terms now explain separate physical work even without paired examples. This earns useful help for that episode; complete hostile/encounter and broader character-quality acceptance remain open.
-

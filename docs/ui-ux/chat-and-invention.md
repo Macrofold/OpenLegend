@@ -117,4 +117,3 @@ Current focused component evidence covers explicit person/item entry, separate r
 ### Current conversation layout
 
 Talk/Invent and the destination remain fixed above message history, with a vertical draggable volume control beside history. The input stays below and grows within its visible envelope before scrolling its text; drafts are not truncated. [CV01](../limits/interface.md#cv01--conversation-reading-space) records current dimensions and the tradeoff of expanding this explicit reading task over more of the world. This supersedes scrolling the volume selector and destination together with messages.
-

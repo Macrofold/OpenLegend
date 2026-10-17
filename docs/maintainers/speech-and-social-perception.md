@@ -24,20 +24,20 @@ The selected ordinary-speech/social-perception slice of [ND16](needs-design.md#n
 
 Use the same semantic owner for a mutation, its dependent updates and its derived invalidation. Current producer/consumer/schema changes form one current-format contract; do not publish a mixed interpretation of the old and new target fields. Internal checkpoint commits can be unfinished if labeled, but no stage may be called delivered while a required caller or storage path still uses the replaced meaning.
 
-| Work | Depends on | Deliverable and acceptance boundary |
-| --- | --- | --- |
-| SPK00 | This design task | Cross-linked selected design, reconciled owners and executable task breakdown. |
-| SPK01 | SPK00 | Single-address speech occurrence and truthful per-observer evidence. |
-| SPK02 | SPK01 | Installed direct-address and reliable-recognition rules with separate names. |
-| SPK03 | SPK01–SPK02 | Shared participant, speech presentation and complete model-evidence projection. |
-| SPK04 | SPK01–SPK03 | Full structured memory, typed lineage, cold recall and faithful consolidation. |
-| SPK05 | SPK01–SPK04 | Ordinary dialogue without membership and bounded source-owned preparation. |
-| SPK06 | SPK01–SPK02, SPK05 | Consistent player admission and ambient/directed NPC speech. |
-| SPK07 | SPK01–SPK03 | Memory-independent sound intake, permitted sensory records and bounded opportunities. |
-| SPK08 | SPK07; shared current action/AI contracts | Animal choices execute and finish through existing cognition/native action owners. |
-| SPK09 | SPK03, SPK05–SPK06 | Coherent composer, captions, history and accessibility. |
+| Work  | Depends on                                      | Deliverable and acceptance boundary                                                                |
+| ----- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| SPK00 | This design task                                | Cross-linked selected design, reconciled owners and executable task breakdown.                     |
+| SPK01 | SPK00                                           | Single-address speech occurrence and truthful per-observer evidence.                               |
+| SPK02 | SPK01                                           | Installed direct-address and reliable-recognition rules with separate names.                       |
+| SPK03 | SPK01–SPK02                                     | Shared participant, speech presentation and complete model-evidence projection.                    |
+| SPK04 | SPK01–SPK03                                     | Full structured memory, typed lineage, cold recall and faithful consolidation.                     |
+| SPK05 | SPK01–SPK04                                     | Ordinary dialogue without membership and bounded source-owned preparation.                         |
+| SPK06 | SPK01–SPK02, SPK05                              | Consistent player admission and ambient/directed NPC speech.                                       |
+| SPK07 | SPK01–SPK03                                     | Memory-independent sound intake, permitted sensory records and bounded opportunities.              |
+| SPK08 | SPK07; shared current action/AI contracts       | Animal choices execute and finish through existing cognition/native action owners.                 |
+| SPK09 | SPK03, SPK05–SPK06                              | Coherent composer, captions, history and accessibility.                                            |
 | SPK10 | Starts with SPK01; completes across SPK01–SPK09 | Current-format persistence, authority, late-result and receipt integrity for every changed record. |
-| SPK11 | SPK01–SPK10 | Integrated behavior, privacy, recovery and workload qualification with reconciled final status. |
+| SPK11 | SPK01–SPK10                                     | Integrated behavior, privacy, recovery and workload qualification with reconciled final status.    |
 
 SPK10 is a cross-stage obligation, not permission to postpone serializers or validation until after new records ship. SPK07 can run alongside the membership/UI work after shared evidence/presentation is stable. Coordinate writes to shared speech, cognition, records and schemas explicitly.
 
@@ -47,7 +47,9 @@ SPK10 is a cross-stage obligation, not permission to postpone serializers or val
 - [x] Inspect the current producers and downstream perception, memory, consolidation, context, UI, availability, animal and recovery consumers; distinguish defects/old behavior from accepted targets.
 - [x] Produce distinct feature/technical files, concrete stages, owner mappings, field meanings, privacy boundaries, failure behavior, trial tuning and scenario acceptance.
 - [x] Reconcile affected canonical docs, UI guidance, limits and existing trackers; keep useful history and broader unresolved work rather than closing whole parent projects.
-- [ ] Finish complete affected-diff review, internal-link/anchor checks, new-separator check and changed-document formatting; commit every task-owned documentation change through the authorized repository workflow.
+- [x] Finish complete affected-diff review, internal-link/anchor checks, new-separator check and changed-document formatting; commit every task-owned documentation change through the authorized repository workflow.
+
+**Documentation evidence, October 17, 2026:** reviewed the complete affected documentation diff and reconciled the paired design, canonical owners and trackers. All 288 newly added relative links resolve, including their anchors; added lines contain no middle-dot character. All 22 changed documents pass the repository's Prettier 3.6.2 configuration. SP-A01–SP-A28 are defined and mapped to implementation work. These are documentation checks only; runtime scenarios, live model behavior and performance have not been exercised by this design task. Task changes are committed on `codex/speech-perception-design-20261016`.
 
 **Exit:** the implementation can follow the selected contracts without inventing product decisions or interpreting display text as memory. The final design check closes only SPK00, not any task below. This task contains no runtime or paid-model verification requirement.
 
@@ -101,7 +103,7 @@ SPK10 is a cross-stage obligation, not permission to postpone serializers or val
 - [ ] Persist and hydrate the complete observer-permitted payload equivalently in hot and cold storage before active retention trims it. Preserve source kind, native ID, actor/world partition, exact source revision and current status. Update indexes and current serializers/decoders atomically.
 - [ ] Replace untyped summary source-ID lists with the selected typed source-reference collection and exact revision semantics. Update all summary creation, edit, invalidation, protected-source, commitment/appraisal dependency, editor-entry, recall and restore consumers; no compatibility alias remains.
 - [ ] Supply the summarizer complete selected sources and optional shared prose. Validate native coverage and current revisions; preserve protected originals in full. Invalid, unavailable, incomplete or oversized output leaves prior records intact with truthful failure and no automatic paid repair.
-- [ ] Implement the required native-derived attribution manifest on experience summaries and automatic speech compaction, with exact indexed coverage, deterministic equivalent-role grouping, atomic publication and bounded source expansion. Models receive it structurally; a missing/stale/oversized optional manifest makes that summary unavailable, not text-only. Keep multi-utterance summaries derived and source-linked rather than attaching one misleading speaker/target pair. Later recall can access retained original experience where needed; it cannot hydrate raw world truth to fill missed words or missing roles.
+- [ ] Implement the required native-derived attribution manifest on experience summaries and automatic speech compaction, with exact indexed coverage, deterministic equivalent-role grouping, atomic publication and bounded source expansion. Models receive it structurally; a missing/stale/oversized optional manifest makes that summary unavailable, not text-only. Keep multi-utterance summaries derived and source-linked rather than attaching one misleading speaker/target pair. A particular claim’s who-to-whom, permission/commitment, knowledge attribution or action reason requires bounded original-source preparation before final model work; group-level roles do not attach themselves to every summary sentence. Unavailable exact attribution stays unavailable. Later recall can access retained original experience where needed; it cannot hydrate raw world truth to fill missed words or missing roles.
 - [ ] Derive embedding text from full permitted source meaning, including meaningful roles/acquisition. Preserve exact required-source paths when similarity ranking/indexing is unavailable; no embedding is not no memory.
 - [ ] Respect existing correction, forgetting, retention, source revision and generation rules through summary lineage and caches. Do not create a new automatic historical rewrite or expand the owner's no-cascade policy.
 - [ ] Exercise SP-A07–SP-A08, SP-A14–SP-A15, SP-A26 and SP-A28 through actual PostgreSQL cold/reload and maintenance boundaries. Demonstrate the original recipient survives consolidation and later recall without relying on display prose.

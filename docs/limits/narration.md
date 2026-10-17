@@ -360,4 +360,3 @@ The [DG33 proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.m
 ## CA-L06 — Existing paid and private-source owners
 
 **Proposed · Restrictiveness: shared bounded admission.** Two-human call control needs no model; optional dictation/synthesis uses existing spending with actual outstanding and uncertain costs. A future NPC participant needs NC22.6's restricted human-private derivatives, safe human takeover and its existing complete actor budget, without a call-specific paid loop. Current blocks/device revocations, authority and real accounting remain current across supported fictional restore. The first service has no recording archive or all-world presence directory.
-

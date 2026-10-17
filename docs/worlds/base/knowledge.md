@@ -49,4 +49,3 @@ The public entity and conversation labels update from the listener's knowledge. 
 - Implementation: [cognition](../../maintainers/cognition-redesign.md) and the accepted [SPK target](../../maintainers/speech-and-social-perception.md).
 - Limits: [knowledge and memory](../../limits/memory.md), including [stable recognition](../../limits/memory.md#ssp-m01--stable-recognition-and-known-names), and the current [encounter policy](../../limits/cognition.md#cg10).
 - Related design: [speech and social perception feature specification](../../projects/speech-and-social-perception-feature-spec.md) and [technical design](../../projects/speech-and-social-perception-tech-design.md).
-

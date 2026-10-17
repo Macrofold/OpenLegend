@@ -146,4 +146,3 @@ The approved `@streamparser/json` replacement removes the custom JSON lexer and 
 **Exit:** two willing people coordinate a useful activity, can participate entirely through text, understand whether a call actually began, leave safely and retain only their permitted record. Complete NC23.1–NC23.4 before claiming the first journey; NPC/media extensions and prior NC/MP/HE qualification remain separately open.
 
 The [Batch 06 native wording correction](../verification/rivals-and-contested-ground.md#literal-definition-names-and-observer-identity--october-14-2026) distinguishes named content definitions from physical participant bindings before event recording. Actual final-portion consumption, literal token-like names and known/unnamed actor perspectives pass. Existing audience and saved grammar remain unchanged; this closes that producer defect, not broader NC12 qualification.
-

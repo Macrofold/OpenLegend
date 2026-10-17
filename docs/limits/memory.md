@@ -665,4 +665,3 @@ SPK's [structured source preservation](#ssp-m02--structured-experience-is-the-se
 ## EC-L08 — Presentation and full-cost qualification
 
 **Proposed · Restrictiveness: concise existing surfaces.** No growth panel, permanent change badge, automatic confession or extra notification count is required. Use existing permitted self-understanding, subject notes and short thought presentation; the current 1–3 thoughts, twenty-word presentation and latest-100 thought history remain their separate owners. A callback must concern actual supported activity. Bounded pages do not bound lifetime search, active context size, all history or queued work. EC04/CE05/CR12 qualify delayed voluntary conduct and total cost before optional expansion; numerical targets await the developmental baseline, not this documentation task.
-

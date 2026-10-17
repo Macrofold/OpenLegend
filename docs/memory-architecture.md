@@ -173,14 +173,14 @@ The server first establishes what this actor can know. Jev then answers “What 
 
 Every decision starts with deterministic hard queries over actor-permitted data. These guarantees survive optional vector-search or Jev failure; they are context coverage, not a processing queue:
 
-| Context                      | Hard-query baseline and order                                                                                                           |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Identity and immediate state | Accepted inner-world text, body, active goals/plan/attempts, contact evidence, trigger evidence, protected commitments/corrections      |
+| Context                                | Hard-query baseline and order                                                                                                                               |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Identity and immediate state           | Accepted inner-world text, body, active goals/plan/attempts, contact evidence, trigger evidence, protected commitments/corrections                          |
 | Exchange context (accepted SPK target) | Exact mandatory causes plus an existing valid actor summary and bounded recent exact suffix; older relevant history remains available through scoped recall |
-| Nearby actors and objects    | Nearest 16 actors and nearest 16 other perceived entities, distance then stable ID                                                      |
-| Inventory                    | Up to 16 possessions, equipped item first, then stable ID                                                                               |
-| Known techniques             | Up to 16 most recently learned recipes, then stable ID                                                                                  |
-| Recent memory                | Newest 8 permitted memories, then stable ID                                                                                             |
+| Nearby actors and objects              | Nearest 16 actors and nearest 16 other perceived entities, distance then stable ID                                                                          |
+| Inventory                              | Up to 16 possessions, equipped item first, then stable ID                                                                                                   |
+| Known techniques                       | Up to 16 most recently learned recipes, then stable ID                                                                                                      |
+| Recent memory                          | Newest 8 permitted memories, then stable ID                                                                                                                 |
 
 **Current runtime:** conversation history has no turn-count cutoff and includes permitted turns through the decision snapshot, including replies committed after the original trigger. It chooses the active conversation first and the trigger-associated conversation when none is active, and can refuse preparation when its required full-group compaction cannot finish. The accepted SPK target replaces that group-dependent automatic coverage rather than turning all retained actor speech into one required conversation.
 
@@ -323,16 +323,16 @@ Current PostgreSQL storage already includes actor-scoped awareness, memories, su
 
 PostgreSQL is the current shared store; records are scoped by world and actor. A persistent actor workspace is the authoring surface for inner-world text, not a second simulation database.
 
-| Record                                      | Responsibility                                                                                                                                                              |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Shared experiential event                   | One external occurrence retained for actor awareness or configured notability; unseen retention grants no actor knowledge                                                   |
-| Actor/event awareness | Which actor perceived which part of the event, retaining the full permitted structured experience and derived English text; SPK carries all supplied roles and facts through consumers |
-| Personal memory | Raw personal experience (including accepted private `self_thought`) or a derived summary, retaining permitted structured meaning, source coverage, readable text, time/range and retention state |
-| `mind_inner_worlds`                         | One current accepted text snapshot per world/actor, with revision and publication binding stored alongside it                                                               |
-| Native commitments and learned capabilities | Protected mechanical facts, status and permissions, independent of authored prose                                                                                           |
-| Cognition/consolidation jobs                | Input boundary, scheduling, spending, completion and idempotent publication state                                                                                           |
-| Private thought history                     | Bounded god-only presentation entries, separate from actor recall                                                                                                           |
-| Player narration                            | Private source-linked prose in separate story tables; never world events or an additional actor recall source                                                               |
+| Record                                      | Responsibility                                                                                                                                                                                   |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Shared experiential event                   | One external occurrence retained for actor awareness or configured notability; unseen retention grants no actor knowledge                                                                        |
+| Actor/event awareness                       | Which actor perceived which part of the event, retaining the full permitted structured experience and derived English text; SPK carries all supplied roles and facts through consumers           |
+| Personal memory                             | Raw personal experience (including accepted private `self_thought`) or a derived summary, retaining permitted structured meaning, source coverage, readable text, time/range and retention state |
+| `mind_inner_worlds`                         | One current accepted text snapshot per world/actor, with revision and publication binding stored alongside it                                                                                    |
+| Native commitments and learned capabilities | Protected mechanical facts, status and permissions, independent of authored prose                                                                                                                |
+| Cognition/consolidation jobs                | Input boundary, scheduling, spending, completion and idempotent publication state                                                                                                                |
+| Private thought history                     | Bounded god-only presentation entries, separate from actor recall                                                                                                                                |
+| Player narration                            | Private source-linked prose in separate story tables; never world events or an additional actor recall source                                                                                    |
 
 World commits and awareness delivery must be recoverable together; duplicate delivery must not create duplicate experiences. Game time drives age, recall windows, sleep and reminders; real time drives service deadlines, queue limits and spending. Store enough clock information to interpret saved game times after restart. The canonical record tree supplies the current physical table/index layout; the production data model preserves the semantic responsibilities and remaining delivery requirements.
 
@@ -586,4 +586,3 @@ An advisory scheduling read can fail without changing the world or dispatching a
 ## Action occurrences and learned-method support
 
 Own native action occurrences preserve selected meaning, observed effects, multiple outputs and bounded dependency links in the existing record repository. Explicit inspection pages cold history. Routine residency/compaction preserves lawful acquisition support; authorized forgetting invalidates dependent learning and current privacy overlays survive older checkpoint restoration. [Action records and learned activities](action-experience.md) owns these contracts and their measured bounds.
-

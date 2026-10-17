@@ -134,4 +134,3 @@ When the same player resumes, preserve their deliberate camera position and inve
 ### Speak and Act text bar
 
 Self-click offers Speak and Act, without Talk or Look closer. Other objects offer Act aimed at the exact clicked object; equipment choices belong in inventory. The centered bottom text bar uses a speech-bubble or hand icon, explicit Send behavior, Enter/Shift+Enter and IME handling, and Escape closes only that bar while retaining its draft. Speak includes a horizontal Whisper/Normal/Shout snapping slider with keyboard operation. Act visibly explains its descriptive-only current behavior. [The speech and expression owner](../narration-and-conversations.md#player-speak-and-descriptive-act) defines effects, perception and failure handling.
-

@@ -121,4 +121,3 @@ Native hearing still runs without AI. Optional choice uses shared admission/budg
 ## VO-L06 — Aggregate growth is not solved by short playback
 
 **Proposed assessment · Restrictiveness: Too liberal until measured and admitted.** Actual utterances, complete audible audiences and retained text grow with play; potential partial audio variants can grow with listeners, while connected silent media sessions and delivery fan-out add independent costs. A two-item client queue does not bound these dimensions. Existing HE/NC/PS/spending owners must qualify total prepared work, connections, request bytes, transient media bytes, egress and retained histories. Optional media is withheld before admission at its limit; required text/evidence is not silently truncated. No universal population, lifetime-text or model-cost number is selected by this proposal.
-

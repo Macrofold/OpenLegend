@@ -105,4 +105,3 @@ Rooms/portals, frequency bands, physical speech duration/overlap, physical voice
 - [ ] **HE07.6 — Complete growth and lifecycle accounting.** Bound synthesis/capture requests, admitted variants, connections, queued age/bytes and transient media storage through existing owners. Measure cold/warm synthesis, actual emitted and delivered duration, transcription, egress, retained text and overload. No unattended background media generation, silent listener truncation, permanent audio cache or new inference cadence; current-format restore and erasure invalidate stale media without recreating paid attempts.
 
 **Exit:** the selected stage improves a real exchange, remains fully playable through text, and preserves actual evidence, privacy, current authority and spending across its ordinary and failure journeys. HE07.1–HE07.3 can finish before timed speech or raw voice. Optional private calls are NC23, independently of a full acoustics catalogue.
-
