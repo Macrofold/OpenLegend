@@ -123,7 +123,7 @@ For linguistic speech, the selected shape is:
 | Awareness.actorId | Memory/sensory owner. This identifies the perspective, not the utterance speaker. |
 | Awareness.sourceId | Sole stored permitted speaker identity when visible recognition or supported voice recognition supplies that association; otherwise absent. |
 | Awareness.targetId | Sole stored permitted intended-addressee identity when known. For speech addressed to the observer, this is the observer's own ID. An unknown third-party addressee stays unbound. |
-| PerceivedSpeech.addressing | Required ambient or directed distinction. Directed speech with no known targetId remains “directed to someone else,” not ambient. |
+| PerceivedSpeech.addressing | For self or heard linguistic experience, required ambient or directed distinction. Directed speech with no known targetId remains “directed to someone else,” not ambient. Seen-only experience stores null because it acquired no addressing fact. |
 | PerceivedSpeech.speaker | Saved permitted speaker label/grammar at occurrence, without another independently writable entity ID. Null means attribution was not available. |
 | PerceivedSpeech.addressee | Saved permitted recipient label/grammar at occurrence when available. Null does not erase the directed distinction. |
 | PerceivedSpeech.perception | Existing self, heard or seen acquisition. A seen-only cue carries no heard words. |
@@ -140,6 +140,8 @@ The same participant selector feeds event projection, response routing, recall a
 For a hearing detector using the selected linguistic policy, detected directed speech is identified as directed without requiring sight, face orientation, language comprehension of the quotation or a nonempty heard fragment. The event-time role is reliable in this version.
 
 Detection still gates acquisition. If nothing was heard and only visible lip movement was observed, the viewer gets a speaking cue without the guaranteed heard-address relationship. A totally unheard addressed utterance creates no remote inbox entry or cognition opportunity for its intended target.
+
+Represent that boundary as a discriminated PerceivedSpeech shape. A seen-only record has perception: seen, addressing: null, intelligibility: none, no heard segments, no addressee label and no speech targetId. It may retain a legitimately visible speaker association. A self or heard linguistic record always has addressing: ambient or directed, even when intelligibility is none and every acoustic fragment is unintelligible. Ambient records have no addressee binding. Heard directed-to-self records bind the observer's own targetId; directed records with an unidentified third-party addressee retain directed with no target identity. Validate these combinations on construction and current-format import. Null denotes an unacquired visual-only fact, not uncertainty about an audibly detected directed utterance.
 
 A bystander can know that audible speech was directed elsewhere while not knowing that addressee's identity. The projection withholds the hidden name, current position and physical action reference. The policy does not upgrade an animal's sound evidence into human language; [animal integration](#10-animal-sound-and-cognition-integration) owns that distinction.
 
@@ -170,7 +172,7 @@ A future world may select uncertain recognition, disguise or different communica
 
 ### Reuse participant grammar instead of rewriting finished prose
 
-Extend [the language package](../../packages/language/src/index.ts) and [domain narration](../../packages/domain/src/narration.ts) with pure participant/quotation operations used by the speech/experience presentation owner. They receive already-permitted structured facts and an explicit perspective; they cannot query the world, infer access or mutate memory.
+Reuse the existing participant grammar in [the language package](../../packages/language/src/index.ts) and [domain narration](../../packages/domain/src/narration.ts), adding only the shared pure presentation operations described below. They receive already-permitted structured facts and an explicit perspective; they cannot query the world, infer access or mutate memory.
 
 The shared renderer handles:
 
@@ -185,6 +187,58 @@ The shared renderer handles:
 Natural first-person prose is the default for the memory owner's experience. Do not force awkward third-person “the memory owner” narration as the sole method of avoiding attribution bugs. Summarization instructions receive explicit roles and can use ordinary I/me consistently. A summary used for a different reader must retain its original owner label or be rendered through the appropriate perspective; never reinterpret its first-person prose as the new reader's experience.
 
 No new middle-dot separator is used in captions, directed-speech labels, transcript attribution or related explanatory copy. Use ordinary words, spacing and layout. A compact “to Ada” or accessible equivalent is derived from the same data rather than inserted into the spoken quotation.
+
+### Minimal shared exports and their contracts
+
+These are proposed exports in the named existing owners, not delivered APIs. The read-only return types are disposable projections of one ExperienceEntry; none is an independently editable or persisted fact model.
+
+| Owner | Export | Contract |
+| --- | --- | --- |
+| packages/domain/src/speech.ts | speechRoles | Select participant IDs, acquisition, ambient/directed/no-acquisition meaning and the owner's relationship from one Awareness. No world lookup, name lookup or word parsing. |
+| packages/domain/src/narration.ts | renderNarrationParts | Render existing typed Narration parts using an already-permitted name map and explicit first-person identity. Literal strings are appended unchanged. |
+| packages/domain/src/speech.ts | speechPresentation | Derive one presentation view with attribution, direction label, exact fragments, personal wording and accessible wording. Captions, transcript rows and memory reading choose fields/layout from that view. |
+| apps/server/src/perceived-context.ts | experienceForModel | Project the complete selected ExperienceEntry with permitted entity/source handles and explicit perspective. It removes server authority metadata without reducing the semantic record to prose. |
+
+The minimum signatures are:
+
+```ts
+// packages/domain/src/speech.ts
+export function speechRoles(
+  awareness: Readonly<Awareness>,
+): Readonly<SpeechRoles> | undefined;
+
+export function speechPresentation(
+  awareness: Readonly<Awareness>,
+  perspective: Readonly<NarrationPerspective>,
+  purpose: 'personal' | 'caption' | 'neutral',
+): Readonly<SpeechPresentation> | undefined;
+
+// packages/domain/src/narration.ts
+export function renderNarrationParts(
+  narration: Readonly<Narration>,
+  perspective: Readonly<NarrationPerspective>,
+  grammaticalPerson: 'first' | 'second' | 'third',
+): string;
+
+// apps/server/src/perceived-context.ts
+export function experienceForModel(
+  entry: Readonly<ExperienceEntry>,
+  bindings: Readonly<ExperienceModelBindings>,
+): Readonly<ModelExperienceEvidence>;
+```
+
+SpeechRoles is derived from the existing source/target fields. It contains the permitted speaker/addressee IDs when bound, acquisition, addressing: ambient | directed | null, and relation: self | addressed | overheard | ambient | seen. A self-authored utterance selects self; heard directed speech selects addressed exactly when its target is the owner, otherwise overheard; heard ambient speech selects ambient; visual-only speech selects seen with null addressing. Sound-only and non-speech entries return undefined. The caller must never recover absent roles from the global event. This is one selector reused by response routing, trigger wording, recall, model projection and presentation.
+
+NarrationPerspective contains an optional selfId and a read-only map from permitted participant ID to the existing Named grammar type. The presentation builder supplies saved event-time fallback labels for permitted references missing a current display label. An unbound source receives a generic literal label, not a fabricated entity ID. The renderer performs no WorldState read and has no global-name fallback. Its explicit grammaticalPerson argument controls grammar, not whose experience the record contains. Existing renderNarration(world, narration, viewerId) can prepare this context once and delegate to renderNarrationParts so non-speech callers share the same loop. Retain the existing language exports personPhrase, personalPronoun, namePhrase and presentTense; extend the shared personalPronoun role helper with an explicit first/second-person parameter for I/me/my/myself versus you/you/your/yourself where needed. Third person uses the permitted Named binding. Do not add another UI pronoun dictionary or string-replacement layer.
+
+SpeechPresentation contains acquisition, speakerLabel, directionLabel or null, the read-only exact SpeechSegment sequence, personalText and accessibilityText. The segment sequence comes directly from the permitted payload; heard text stays literal and gaps stay gaps. A seen-only view has no quotation or direction label. A heard but unintelligible addressed view can still say that someone spoke to me without inventing words. The explicit purpose selects personal I/me wording, compact caption wording that can use you, or neutral permitted-name wording through the shared grammar. It never changes participant identity or quotation content. For personal memory, first person is the evidence owner; a different permitted reader receives that owner attribution rather than silently treating the reader as the experiencer. A caption can use compact attribution fields without changing the underlying roles. The protocol carries this view beside its existing permitted occurrence/reconciliation reference; it does not add hidden spatial anchoring.
+
+ExperienceModelBindings contains a request-local source handle bound externally to the complete source key/revision, the evidence-owner perspective, and a read-only canonical-ID-to-permitted-model-reference map prepared by the existing entity-reference owner. An unknown participant remains unknown. A known required identity without a valid prepared binding is an explicit preparation inconsistency, not an invitation to query world truth.
+
+ModelExperienceEvidence preserves the existing awareness | memory | summary discriminator and all task-permitted semantic fields of that selected source, including exact speech fragments, acquisition, participant/direction relationships, quantities and units, uncertainty, corrections and derived-summary coverage. Only explicitly typed reference positions are remapped. The projector must not search-and-replace ID-like text inside quotations, personal notes or other literal source strings. Technical generation/receipt/source authority remains in server bindings. The result may include the shared rendered prose for readability, but a consumer receives the structured value as well.
+
+All these functions are deterministic and side-effect free given their inputs. They perform no fetching, embedding, paid inference or recording. The caller owns selection, permission preparation and current-source validation; the source mutation owner owns persistence and derived indexes. Provider JSON construction, attention, final decisions, memory consolidation and compaction use experienceForModel instead of inventing separate reduced evidence shapes. Each UI uses speechPresentation rather than a separate directed-speech phrase function.
+
 
 ### Structured evidence is primary; prose is a view
 
@@ -263,7 +317,13 @@ SQL eligibility, explicit required sources, commitments, corrections and exact a
 
 Remove authoritative ordinary conversation records, joining, leaving, merging, active-group occupancy and inactivity expiry. Speaking does not enroll the target or nearby listeners in an interaction state. Hiding a panel, changing selected addressee or walking away is not a conversation mutation.
 
-Use the existing actor-scoped memory owner to select the chronological stream of presently retained eligible linguistic speech through the prepared snapshot. Include self-authored, addressed, ambient and overheard utterances with their respective relationships. The current newest-speech protection remains a retention policy, not a new first-N search filter or an invitation/membership rule. Older already-consolidated experience remains available through ordinary recall and explicit permitted source selection.
+Use the existing actor-scoped memory owner to select relevant speech through the prepared snapshot. Self-authored, addressed, ambient and overheard utterances are all eligible, with their respective relationships; eligibility does not make every retained utterance mandatory input. Full retained records remain accessible through scoped recall and history. A turn does not enumerate or hydrate the actor's lifetime transcript.
+
+Separate required current causes from optional dialogue context. The singular trigger, independently required physical outcomes, commitments, corrections and any other source required by the actual proposed operation retain their existing mandatory path. Ordinary unrelated overheard speech remains optional. An unintelligible addressed trigger still carries its complete directed role through required evidence even though it does not qualify as a linguistic transcript turn.
+
+For automatic dialogue context, select a valid derived actor summary when useful and an exact recent suffix of eligible speech within the remaining request allowance. Select source metadata and complete payload sizes before hydration, using the actor/order/key index and the existing row/byte admission. Stop selection at the request boundary; older sources remain available to bounded topic/subject recall or an explicit source request. The current newest-speech protection remains a storage-retention policy, distinct from these request bounds. A request boundary is not fictional forgetting, a conversation membership, or a claim that unselected evidence was considered.
+
+Keep the exact recent suffix chronologically contiguous within its selected eligible range. Independently recalled older sources are labeled with their actual times and source roles; they do not pretend to be adjacent recent turns. Preserve selection coverage, its ordered boundaries and whether additional eligible history remains. A bounded extra metadata row can establish continuation; do not scan all retained history merely to report an exact omitted count.
 
 The actor's own statements, later committed replies in the same snapshot and retained overheard turns remain distinguishable. A singular triggering event is retained separately from coalesced evidence. A response to that trigger can consider later facts already committed before its snapshot; the context must not end artificially at the triggering utterance.
 
@@ -271,13 +331,21 @@ Keep one existing conversation-context preparation owner, now defined by actor/s
 
 ### Compaction remains a derived read
 
-Reuse current context-byte, source-row, hydration-byte and paid-compaction admission, including a recent exact suffix and an older derived summary. Source selection precedes hydration. A complete source-set digest, ordered source boundary, actor, generation, privacy revision, source revisions and relevant naming/reference revisions replace the former conversationId-based cache identity.
+Reuse current context-byte, source-row, hydration-byte and paid-compaction admission, including a recent exact suffix and an older derived summary. The inspected ceilings are 24,000 bytes of automatic dialogue context, at most 6,000 summary bytes within that allowance, 24,000 input bytes per compaction call, at most eight compaction calls, and the shared preparation limits of 8,192 rows and 4 MiB. These are request/work bounds, not an entitlement to fill every allowance or a retention cap. The remaining full decision budget can make the available dialogue allowance smaller.
+
+Source selection precedes hydration. Derive/index linguistic eligibility and payload-size metadata through the existing source mutation owner so the actor-scoped ordered query does not parse every historical payload to find its recent suffix. Replace the history conversation join with actor/source eligibility and exact keys. Qualify the actual query plan; a result LIMIT alone does not prove bounded visited work.
+
+The existing compaction owner reuses a validated summary prefix and processes only admitted newly selected source chunks. It must not rebuild an entire actor history on each new turn, require all retained source bodies to hash a cache key, or pay to recompact unrelated old speech. A complete digest of the selected sources and covered prefix, ordered source boundaries, actor, generation, privacy revision, source revisions and relevant naming/reference revisions replace the former conversationId-based cache identity. Corrections and forgetting invalidate the affected coverage through the retained dependency index; they do not require a global payload scan on each turn.
 
 The cache is replaceable and derived. Its identity does not enroll participants, grant earlier speech, or interpret semantic replies. Later speech invalidates or extends the prepared source window under its actual dependencies. Corrections, forgetting, changed names and restoration prevent stale compaction from reintroducing revoked facts.
 
 Compaction receives complete permitted structured sources under section 6. The output preserves meaningful uncertainty, disagreements, questions, refusals and speaker/addressee roles. Ambiguous “yes” remains ambiguous where context cannot settle it. Source coverage is retained even when filler is condensed.
 
-Do not replace the removed group with a hidden pair registry, fixed “currently talking” state, or authoritative time-gap episode. Do not introduce an unapproved time/turn cutoff to make the new selection fit. If the existing preparation allowance is exceeded, fail or defer explicitly; broader capacity remains a measured limitation in the [memory](../limits/memory.md) and [narration](../limits/narration.md) inventories.
+Do not replace the removed group with a hidden pair registry, fixed “currently talking” state, or authoritative time-gap episode. The request selector uses the existing byte/row/recall allowances; it adds no universal fictional memory duration or fixed social turn limit. Irrelevant unselected history remains stored and retrievable.
+
+Compaction is optional preparation. If an optional prefix is stale, cannot fit, or cannot obtain its existing provider/spending admission, use the complete required sources and whichever valid summary/recent complete sources fit, with accurate coverage. Do not fail an otherwise valid reply merely because an optional history summary is unavailable or the actor once overheard a large amount of speech. Preserve the prior valid cached result unless a correction/privacy change invalidates it; never silently strip an admitted source to text or substitute global event truth.
+
+An actual required-source set that cannot fit still produces the existing explicit context-budget failure before paid work. Likewise, unavailable required generation remains unavailable AI work. The caller must distinguish these cases from an optional-context omission. In particular, it cannot promote every speech source into requiredContext merely because the former conversation builder returned it, or treat optional compaction failure as refusal of the actor's entire decision. No missing context creates consent or permission for an action whose own source prerequisites are unmet. Broader capacity remains a measured limitation in the [memory](../limits/memory.md) and [narration](../limits/narration.md) inventories.
 
 ### History and selected-person reading
 
@@ -311,7 +379,7 @@ Provisional text remains private to its authorized requesting viewer, non-author
 | Response admission and native action/plan lifecycle | Remove membership pins only. Keep exact actor, source, response, work replacement, life and action prerequisites. |
 | WorldService / HTTP chat submission | Admit intended speech and source-bound work; no active group creation, join/leave mutation or silent default-person substitution. |
 | AiDirector / ActorWork / persisted job fields | Pin exact actor and source causes. Keep urgency, coalescing, cancellation, receipts and spending; separate World Agent transport/session IDs. |
-| Decision-context / conversation-context | Actor-scoped source window, structured evidence, source-set validation and compaction. |
+| Decision-context / conversation-context | Bounded actor-scoped selection, complete structured evidence, distinct required/optional paths, selected-source validation and incremental compaction. |
 | Memory repository preparation/validation | Replace SQL conversation membership joins and validation with exact actor/source eligibility and ordered snapshot coverage. |
 | History / narration preparation | Remove merge notices and active-group grouping. Preserve observer-only history, source-linked story work and independently owned narration sessions. |
 | View / protocol / client | Remove join/leave controls, active-member lists and group gates. Preserve selected-person filtering, local drafts, source labels and pending/confirmed states. |
@@ -508,6 +576,7 @@ Qualify a small ordinary scene first: player, two independent people, an animal,
 - More detectors in a concentrated acoustic area, separately from more distant inert entities.
 - Repeated ambient speech and several addressed speakers, including many utterances reaching one observer.
 - Cold SQL history with source bodies outside residency, followed by warm repeated reads.
+- Much larger unrelated retained speech history with the same immediate stimulus; automatic source hydration and paid compaction must not grow into a lifetime replay or block the same otherwise-valid decision.
 - Long personally heard speech requiring compaction, including corrections and unknown-name participants.
 - A retained body/identity or acoustic-policy change that invalidates a previously warm read.
 - Multiple queued human/animal decision opportunities and a temporarily unavailable provider.
