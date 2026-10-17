@@ -60,15 +60,29 @@ function treatment(): ArtTreatment {
   return {
     ...candidateArt,
     mercenaryArt: select('mercenary').value as ArtTreatment['mercenaryArt'],
-    sampling: route === 'shared' || route === 'small' ? 'screen' : route === 'family' ? '60' : '96',
+    sampling:
+      route === 'shared' || route === 'small' || route === 'balanced'
+        ? 'screen'
+        : route === 'family'
+          ? '60'
+          : '96',
     sceneGrid:
       route === 'control' || route === 'surface'
         ? 'full'
         : (select('world-density').value as ArtTreatment['sceneGrid']),
-    subjectDetail: route === 'family' ? 'preserve' : route === 'small' ? 'small' : 'shared',
+    subjectDetail:
+      route === 'family'
+        ? 'preserve'
+        : route === 'small'
+          ? 'small'
+          : route === 'balanced'
+            ? 'balanced'
+            : 'shared',
     atmosphere: select('world-atmosphere').value as ArtTreatment['atmosphere'],
     surfaceArt: route === 'control' ? 'plain' : 'rigid',
-    environment: 'study',
+    groundPalette: select('world-foliage').value === 'open' ? 'understory' : 'woodland',
+    environment: select('world-foliage').value === 'open' ? 'canopy' : 'study',
+    foliageLight: select('world-foliage').value === 'original' ? 'original' : 'diffuse',
     prop: 'grounded',
     vegetation: 'still',
     cloth: 'settled',
@@ -204,6 +218,7 @@ function update(now: number): void {
           light: select('world-light').value,
           route: select('route').value,
           atmosphere: select('world-atmosphere').value,
+          foliage: select('world-foliage').value,
           viewport: [canvas.clientWidth, canvas.clientHeight],
           shadowQuality: select('world-shadows').value,
           stagedMotion: motion,
@@ -250,7 +265,14 @@ select('place').onchange = () => {
   status.textContent = stop().label;
 };
 select('world-light').onchange = publish;
-for (const id of ['route', 'mercenary', 'world-density', 'world-motion', 'world-atmosphere'])
+for (const id of [
+  'route',
+  'mercenary',
+  'world-density',
+  'world-motion',
+  'world-atmosphere',
+  'world-foliage',
+])
   select(id).onchange = () => scene.setArtTreatment(treatment());
 select('world-framing').onchange = setCamera;
 select('world-shadows').onchange = () =>
@@ -296,6 +318,8 @@ const captureName = () =>
     select('world-light').value,
     select('route').value,
     select('world-atmosphere').value,
+    select('world-foliage').value,
+    select('world-density').value,
   ].join('-');
 button('capture').onclick = () => capture.image(captureName());
 button('record').onclick = () => {

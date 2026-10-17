@@ -1,5 +1,6 @@
 import * as pc from 'playcanvas';
 import { ArtMaterials, candidateArt } from './art-treatment';
+import { prepareFoliageLight } from './environment-art';
 import { BundledModels, destroyModelApplication } from './bundled-models';
 import { CAMERA_FOV_DEGREES, initialCamera } from './world-camera';
 import { installLocomotion } from './model-animation';
@@ -380,6 +381,10 @@ export class ArtStudy {
             texture.mipmaps = true;
           }
           this.art.prepare(material);
+          if (asset.family === 'grounded-conifer' && /twigs/i.test(source.name)) {
+            prepareFoliageLight(material, this.app.graphicsDevice);
+            material.specularityFactor = 0.04;
+          }
           if (fine) markPixelDetail(material, this.app.graphicsDevice);
           material.update();
           materials.set(source, material);
@@ -687,7 +692,8 @@ export class ArtStudy {
     this.camera.lookAt(target);
     const rect = this.canvas.parentElement!.getBoundingClientRect();
     const density = element<HTMLSelectElement>('pixel-treatment').value;
-    const fine = density === 'small';
+    const balanced = density === 'balanced';
+    const fine = density === 'small' || balanced;
     // Use the game's single final resolve. Rendering this inspector directly
     // into a tiny buffer chose coarse texture mips before the final sampling,
     // erasing facial paint that survives in the actual full-detail scene.
@@ -702,16 +708,19 @@ export class ArtStudy {
         ? 'full'
         : density === '20'
           ? 'anchored2'
-          : density === '30'
+          : density === '30' || balanced
             ? 'metres30'
             : density === '40' || fine
               ? 'metres40'
               : 'metres64',
-      fine ? 'small' : 'shared',
+      balanced ? 'balanced' : fine ? 'small' : 'shared',
     );
-    const effective = Math.min(fine ? 40 : Number(density), pixelsHigh / (2 * height));
+    const effective = Math.min(
+      balanced ? 30 : fine ? 40 : Number(density),
+      pixelsHigh / (2 * height),
+    );
     element('pixel-evidence').textContent =
-      `${width} × ${pixelsHigh} source · ${density === 'native' ? 'full display resolution' : fine ? '40 samples/metre · small subjects 120 (display limited)' : `${effective.toFixed(1)} samples/metre · game resolve`} · ${framing === 'game' ? 'current game camera' : 'inspection framing'}`;
+      `${width} × ${pixelsHigh} source · ${density === 'native' ? 'full display resolution' : balanced ? '30 samples/metre · small subjects 60 (display limited)' : fine ? '40 samples/metre · small subjects 120 (display limited)' : `${effective.toFixed(1)} samples/metre · game resolve`} · ${framing === 'game' ? 'current game camera' : 'inspection framing'}`;
     this.invalidate();
   }
   private labels(): void {

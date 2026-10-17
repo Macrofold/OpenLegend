@@ -1,0 +1,226 @@
+{
+  "group": "source-grounded-conifer",
+  "sourceFile": "art-direction/assets/source-study/source-grounded-conifer.blend",
+  "sourceSha256": "30f613de93d955cc2faad13b35edde65b6f8c03962638aaf99332dc689ffa0af",
+  "recipe": {
+    "path": "scripts/prepare-grounded-study.py",
+    "sha256": "daedffe8f9f1d21596c9f608279a7dc6b1a2b0b949ecedd4c6722d9252fd005f"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
+  },
+  "sources": [
+    {
+      "url": "https://polyhaven.com/a/fir_sapling_medium",
+      "license": "CC0",
+      "files": [
+        {
+          "asset": "fir_sapling_medium",
+          "file": "fir_sapling_medium_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/fir_sapling_medium/fir_sapling_medium_1k.gltf",
+          "bytes": 17059,
+          "sha256": "2e80cd49d716c99bdead5a42aa6441e89443044d9a0edc31b56b5dbf87fc41de"
+        },
+        {
+          "asset": "fir_sapling_medium",
+          "file": "textures/fir_sapling_medium_branches_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_sapling_medium/fir_sapling_medium_branches_nor_gl_1k.jpg",
+          "bytes": 1137533,
+          "sha256": "6a570ab53ab2249ecdfa93e7d3b9a8a2cb1a8ad391400e5a64c708914779b2c3"
+        },
+        {
+          "asset": "fir_sapling_medium",
+          "file": "textures/fir_sapling_medium_branches_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_sapling_medium/fir_sapling_medium_branches_diff_1k.jpg",
+          "bytes": 776567,
+          "sha256": "a5d25150ba1bee10008c039f98aa3c73b4477a404d6715c511ca9b5b0f4a9077"
+        },
+        {
+          "asset": "fir_sapling_medium",
+          "file": "textures/fir_sapling_medium_branches_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_sapling_medium/fir_sapling_medium_branches_arm_1k.jpg",
+          "bytes": 789264,
+          "sha256": "95d4e9e62cd309fbc38a175e2306379c76c062425b09c0fb72c5b7356a719123"
+        },
+        {
+          "asset": "fir_sapling_medium",
+          "file": "textures/fir_sapling_medium_twigs_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_sapling_medium/fir_sapling_medium_twigs_nor_gl_1k.jpg",
+          "bytes": 472604,
+          "sha256": "d470dc39b1d02bbeba06feb0ad818680ef3c24623b4db597270301a5fb8c9369"
+        },
+        {
+          "asset": "fir_sapling_medium",
+          "file": "textures/fir_sapling_medium_twigs_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_sapling_medium/fir_sapling_medium_twigs_diff_1k.jpg",
+          "bytes": 297200,
+          "sha256": "db1113d37d68d960b84eb14ce67a4022d02bf10d6f0c078d689063f6296eaa1d"
+        },
+        {
+          "asset": "fir_sapling_medium",
+          "file": "textures/fir_sapling_medium_twigs_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_sapling_medium/fir_sapling_medium_twigs_arm_1k.jpg",
+          "bytes": 407309,
+          "sha256": "d66c81fc073ee7ea97a76b6da2399769f16944e50ef0e007f09c95619f597c79"
+        },
+        {
+          "asset": "fir_sapling_medium",
+          "file": "fir_sapling_medium.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/fir_sapling_medium/fir_sapling_medium.bin",
+          "bytes": 74159400,
+          "sha256": "e3f3fabcaa1bacfc8b1feca5e6500b13c63a0e45cd812e663d01d31b042d73b1"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "grounded-conifer-clear",
+      "family": "grounded-conifer",
+      "label": "Poly Haven woodland fir",
+      "variant": "clear",
+      "description": "Natural source form with retained albedo detail and quiet highlights; fixed-density pixel rendering.",
+      "recommended": false,
+      "file": "grounded-conifer-clear.glb",
+      "bounds": {
+        "min": [
+          -1.525572,
+          0.003858,
+          -1.430456
+        ],
+        "max": [
+          1.542351,
+          5.596748,
+          1.395903
+        ]
+      },
+      "triangles": 30000,
+      "vertices": 35225,
+      "textureSizes": [
+        [
+          512,
+          512
+        ]
+      ],
+      "sha256": "f636b738a1fd258c462bdcb7c1c86c82ab717aa78dd9fac9f2fa80d1388c2339",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/fir_sapling_medium; normalized and adapted by OpenLegend."
+    },
+    {
+      "id": "grounded-conifer-quiet",
+      "family": "grounded-conifer",
+      "label": "Poly Haven woodland fir",
+      "variant": "quiet",
+      "description": "Natural source form with grouped earth colors and restrained fine texture.",
+      "recommended": true,
+      "file": "grounded-conifer-quiet.glb",
+      "bounds": {
+        "min": [
+          -1.525572,
+          0.003858,
+          -1.430456
+        ],
+        "max": [
+          1.542351,
+          5.596748,
+          1.395903
+        ]
+      },
+      "triangles": 30000,
+      "vertices": 35225,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "aacec0a4987ef88f4f6fd6012361ce5182bbaa59a47711fe89e98a11554b73f6",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/fir_sapling_medium; normalized and adapted by OpenLegend."
+    },
+    {
+      "id": "grounded-conifer-weathered",
+      "family": "grounded-conifer",
+      "label": "Poly Haven woodland fir",
+      "variant": "weathered",
+      "description": "Weathered material study with muted color and softer worn highlights.",
+      "recommended": false,
+      "file": "grounded-conifer-weathered.glb",
+      "bounds": {
+        "min": [
+          -1.525572,
+          0.003858,
+          -1.430456
+        ],
+        "max": [
+          1.542351,
+          5.596748,
+          1.395903
+        ]
+      },
+      "triangles": 30000,
+      "vertices": 35225,
+      "textureSizes": [
+        [
+          256,
+          256
+        ]
+      ],
+      "sha256": "75b1b5533c75f94c13b3c152eaa086382113131e59a924639da1449e9d068621",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/fir_sapling_medium; normalized and adapted by OpenLegend."
+    }
+  ],
+  "controls": [
+    {
+      "id": "grounded-conifer-source",
+      "family": "grounded-conifer",
+      "label": "Poly Haven woodland fir",
+      "variant": "source",
+      "description": "Normalized original Poly Haven geometry and materials; source control, not pixel-finished art.",
+      "recommended": false,
+      "file": "grounded-conifer-source.glb",
+      "bounds": {
+        "min": [
+          -1.533256,
+          0.0,
+          -1.421649
+        ],
+        "max": [
+          1.533256,
+          5.6,
+          1.421649
+        ]
+      },
+      "triangles": 420822,
+      "vertices": 479822,
+      "textureSizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ]
+      ],
+      "sha256": "b4eff79bfd6377affe8950ba75f168ccc8bd2f727aac97f586b3965692a64b4c",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/fir_sapling_medium; normalized and adapted by OpenLegend."
+    }
+  ]
+}

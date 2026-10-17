@@ -4,6 +4,44 @@ import { random } from './art';
 
 export type EnvironmentSurface = 'foliage' | 'bark' | 'stone' | 'ground' | 'masonry' | 'timber';
 
+/** Thin foliage gathers diffuse sky light across a cluster of leaves. Keep
+ * direct shadows and real cutouts; no emissive fill or camera-facing normal.
+ * Prepare after ArtMaterials so solid-object light bands are bypassed here. */
+export function prepareFoliageLight(
+  material: pc.StandardMaterial,
+  device: pc.GraphicsDevice,
+): void {
+  const chunks = pc.ShaderChunks.get(device);
+  const diffuse =
+    material.shaderChunks.glsl.get('lightDiffuseLambertPS') ?? chunks.get('lightDiffuseLambertPS')!;
+  material.shaderChunks.glsl.set(
+    'lightDiffuseLambertPS',
+    diffuse.replace('float getLightDiffuse(', 'float ol_solidDiffuse(') +
+      `
+    uniform float ol_foliageLight;
+    float getLightDiffuse(vec3 n, vec3 v, vec3 l) {
+      if (ol_foliageLight < .5) return ol_solidDiffuse(n,v,l);
+      // Wrapped direct light models a leaf cluster, while visibility still
+      // comes from the existing shadow map. This does not illuminate through walls.
+      return .08 + .82 * clamp((dot(n,-l) + .65) / 1.65, 0.0, 1.0);
+    }
+  `,
+  );
+  const ambient = material.shaderChunks.glsl.get('ambientPS') ?? chunks.get('ambientPS')!;
+  material.shaderChunks.glsl.set(
+    'ambientPS',
+    ambient.replace('void addAmbient(', 'void ol_leafAmbient(') +
+      `
+    void addAmbient(vec3 n) {
+      vec3 before = dDiffuseLight;
+      ol_leafAmbient(n);
+      dDiffuseLight = before + (dDiffuseLight-before) * mix(1.0,1.75,ol_foliageLight);
+    }
+  `,
+  );
+  material.update();
+}
+
 /** Original stepped material clusters, not sampled lighting or per-pixel noise.
  * Leaf/bark plates repeat over two metres, with quiet ground over eight. */
 export function environmentSurfaceArt(kind: EnvironmentSurface): HTMLCanvasElement {
@@ -227,6 +265,7 @@ export function prepareEnvironmentSurface(
       uniform sampler2D ol_environmentTile;
       uniform float ol_surfaceEnabled;
       uniform float ol_surfaceEdges;
+      uniform float ol_groundContrast;
       varying vec3 ol_environmentPosition;
       varying vec3 ol_environmentNormal;
       vec4 ol_environmentSample(vec2 uv) {
@@ -267,7 +306,7 @@ export function prepareEnvironmentSurface(
         // Continuous derivatives select the prepared mip chain. At subpixel
         // coverage, taper contrast rather than flashing isolated bright cells.
         float footprint = max(length(dFdx(p)),length(dFdy(p))) * ${texture.width.toFixed(1)};
-        float contrast = 1.0 - smoothstep(.75,1.75,footprint);
+        float contrast = (1.0 - smoothstep(.75,1.75,footprint)) * ${kind === 'ground' ? 'ol_groundContrast' : '1.0'};
         vec3 pigment = ${kind === 'foliage' ? 'mix(mix(vec3(.44,.57,.54),vec3(1.45,1.42,1.02),field),vec3(mix(.52,1.52,field)),bark)' : 'vec3(mix(.52,1.52,field))'};
         dAlbedo *= mix(vec3(1.0),pigment,contrast);
       }`,
@@ -282,7 +321,7 @@ export function groupedGroundArt(
   seed: number,
   earth = false,
   pixelSurface = false,
-  palette: 'meadow' | 'woodland' = 'meadow',
+  palette: 'meadow' | 'woodland' | 'understory' = 'meadow',
 ): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = earth ? 128 : 512;
@@ -290,13 +329,17 @@ export function groupedGroundArt(
   const size = canvas.width;
   const rng = random(seed);
   const colors =
-    palette === 'woodland'
+    palette === 'understory'
       ? earth
-        ? ['#8e8270', '#968975', '#897c69', '#9c8e79']
-        : ['#46634f', '#4c6a54', '#405c4a', '#536f58']
-      : earth
-        ? ['#a99c79', '#afa17d', '#a59874', '#b2a580']
-        : ['#77815b', '#7e855e', '#6e7954', '#838963'];
+        ? ['#8e8270', '#918573', '#8b7f6d', '#938775']
+        : ['#46634f', '#496651', '#43604d', '#4b6853']
+      : palette === 'woodland'
+        ? earth
+          ? ['#8e8270', '#968975', '#897c69', '#9c8e79']
+          : ['#46634f', '#4c6a54', '#405c4a', '#536f58']
+        : earth
+          ? ['#a99c79', '#afa17d', '#a59874', '#b2a580']
+          : ['#77815b', '#7e855e', '#6e7954', '#838963'];
   ctx.fillStyle = colors[0]!;
   ctx.fillRect(0, 0, size, size);
   const grid = pixelSurface ? 8 : 1;

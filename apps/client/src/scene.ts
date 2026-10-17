@@ -369,8 +369,8 @@ export class WildernessScene implements WorldRenderer {
     this.artSettings = { ...style };
     this.artMaterials.update(style);
     this.libraryScenery?.setTreatment(style);
-    if (['kenney', 'quaternius', 'study'].includes(style.environment)) {
-      const family = style.environment as 'kenney' | 'quaternius' | 'study';
+    if (['kenney', 'quaternius', 'study', 'canopy'].includes(style.environment)) {
+      const family = style.environment as 'kenney' | 'quaternius' | 'study' | 'canopy';
       void this.libraryScenery
         .load(family)
         .then((loaded) => {
@@ -1762,7 +1762,9 @@ export class WildernessScene implements WorldRenderer {
     }
     // Authored static scenery has no picking or collision authority. Reuse art by finite input.
     const groups = new Map<string, SceneryInstance[]>();
-    const library = ['kenney', 'quaternius', 'study'].includes(this.artSettings.environment);
+    const library = ['kenney', 'quaternius', 'study', 'canopy'].includes(
+      this.artSettings.environment,
+    );
     for (const instance of map.spatial.scenery ?? []) {
       const cell = instance.appearance === 'meadow-grass' ? 8 : 16;
       const patch = grouped
@@ -1780,7 +1782,8 @@ export class WildernessScene implements WorldRenderer {
       if (
         this.artSettings.environment === 'kenney' ||
         this.artSettings.environment === 'quaternius' ||
-        this.artSettings.environment === 'study'
+        this.artSettings.environment === 'study' ||
+        this.artSettings.environment === 'canopy'
       ) {
         const shape = this.libraryScenery.create(
           this.artSettings.environment,

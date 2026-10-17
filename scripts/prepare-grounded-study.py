@@ -14,6 +14,7 @@ import sys
 import bpy
 import bmesh
 import numpy as np
+from mathutils import Vector
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -28,7 +29,70 @@ SUBJECTS = {
     'boulder_01': ('boulder', 'Poly Haven boulder', 1.05, 1.8, 9000),
     'fern_02': ('fern', 'Poly Haven fern', .65, 1.1, 7000),
     'dead_tree_trunk': ('deadwood', 'Poly Haven dead trunk', 2.0, 2.1, 12000),
+    'fir_sapling_medium': ('conifer', 'Poly Haven woodland fir', 5.6, 4.2, 30000),
 }
+
+
+def group_needles(mesh):
+    """Preserve source branch structure and whole needles at a coarser art scale.
+
+    Blind decimation erases the crown. Retain a distributed subset of complete
+    needle components and broaden their cross-section before final simplification.
+    Everything is baked once; neither placement nor coverage follows the camera.
+    """
+    remaining=set(mesh.verts)
+    remove=[]
+    index=0
+    for start in mesh.verts:
+        if start not in remaining:continue
+        stack=[start];remaining.remove(start);component=[]
+        while stack:
+            vertex=stack.pop();component.append(vertex)
+            for edge in vertex.link_edges:
+                other=edge.other_vert(vertex)
+                if other in remaining:remaining.remove(other);stack.append(other)
+        if len(component)>16:continue
+        index+=1
+        if index%12:
+            remove.extend(component);continue
+        points=np.array([v.co[:] for v in component]);center=points.mean(axis=0)
+        relative=points-center
+        _,axes=np.linalg.eigh(relative.T@relative)
+        axis=axes[:,-1]
+        along=np.outer(relative@axis,axis)
+        shaped=center+along*1.25+(relative-along)*8
+        for vertex,point in zip(component,shaped):vertex.co=point
+    bmesh.ops.delete(mesh,geom=remove,context='VERTS')
+
+
+def paint_needles(obj, variant):
+    """Broad source-attached green groups, avoiding black atlas bleed on needles."""
+    mesh=obj.data
+    colors=mesh.color_attributes.new(name='Needle groups',type='FLOAT_COLOR',domain='CORNER')
+    normals=[n.vector.copy() for n in mesh.corner_normals]
+    palette=np.array([[int(h[i:i+2],16)/255 for i in (0,2,4)] for h in ['405c43','577347','708854','84945f']])
+    if variant=='weathered':palette=palette*.84+np.array([.045,.035,.02])
+    if variant=='clear':palette=np.clip(palette*1.07,0,1)
+    palette=np.where(palette<=.04045,palette/12.92,((palette+.055)/1.055)**2.4)
+    inverse_normal=obj.matrix_world.to_3x3().transposed()
+    for polygon in mesh.polygons:
+        foliage='twigs' in mesh.materials[polygon.material_index].name
+        for loop in polygon.loop_indices:
+            vertex=mesh.loops[loop].vertex_index
+            p=obj.matrix_world@mesh.vertices[vertex].co
+            if foliage:
+                group=min(3,max(0,int((np.sin(p.x*3+p.y*2)+np.sin(p.z*4-p.y*3)+2)*.95)))
+                colors.data[loop].color=(*palette[group],1)
+                crown=Vector((p.x*.32,p.y*.32,.85)).normalized()
+                normals[loop]=(inverse_normal@crown).normalized()
+            else:colors.data[loop].color=(1,1,1,1)
+    mesh.normals_split_custom_set(normals)
+    for material in mesh.materials:
+        if 'twigs' not in material.name:continue
+        shader=material.node_tree.nodes.get('Principled BSDF')
+        for link in list(shader.inputs['Base Color'].links):material.node_tree.links.remove(link)
+        node=material.node_tree.nodes.new('ShaderNodeVertexColor');node.layer_name=colors.name
+        material.node_tree.links.new(node.outputs['Color'],shader.inputs['Base Color'])
 
 
 def prepare(sources, subject):
@@ -43,17 +107,17 @@ def prepare(sources, subject):
         before = set(bpy.data.objects)
         bpy.ops.import_scene.gltf(filepath=str(path))
         objects = list(set(bpy.data.objects)-before)
-        if family == 'fern':
+        if family in ('fern', 'conifer'):
             # The source download contains four arranged specimens. Compare one
             # complete plant at honest scale rather than miniaturize the set.
             for obj in objects[:]:
-                if obj.type == 'MESH' and not obj.name.startswith('fern_02_b'):
+                if obj.type == 'MESH' and not obj.name.startswith('fern_02_b' if family == 'fern' else 'fir_sapling_medium_b'):
                     objects.remove(obj)
                     bpy.data.objects.remove(obj, do_unlink=True)
         source_study.normalize(objects, height, span)
         if variant != 'source':
             meshes = [o for o in objects if o.type == 'MESH']
-            if family in ('boulder', 'deadwood'):
+            if family in ('boulder', 'deadwood', 'conifer'):
                 # Imported seams can duplicate coincident vertices and prevent
                 # useful simplification. UVs remain per corner; this tiny weld
                 # joins the source surface without shrinking its silhouette.
@@ -61,6 +125,9 @@ def prepare(sources, subject):
                     mesh = bmesh.new()
                     mesh.from_mesh(obj.data)
                     bmesh.ops.remove_doubles(mesh, verts=list(mesh.verts), dist=0.00001)
+                    if family == 'conifer':
+                        mesh.verts.index_update()
+                        group_needles(mesh)
                     mesh.to_mesh(obj.data)
                     mesh.free()
             for obj in meshes:
@@ -72,12 +139,14 @@ def prepare(sources, subject):
                     modifier.ratio = target/total
                     bpy.context.view_layer.objects.active = obj
                     bpy.ops.object.modifier_apply(modifier=modifier.name)
-                if family in ('boulder', 'deadwood'):
+                if family in ('boulder', 'deadwood', 'conifer'):
                     for polygon in obj.data.polygons:
                         polygon.use_smooth = True
             for obj in meshes:
                 obj.data.calc_loop_triangles()
             assert sum(len(o.data.loop_triangles) for o in meshes) <= target, 'Study triangle budget exceeded'
+            if family == 'conifer':
+                for obj in meshes:paint_needles(obj,variant)
             materials = {m for o in meshes for m in o.data.materials if m}
             images = {}
             for material in materials:
@@ -94,6 +163,13 @@ def prepare(sources, subject):
                 shader.inputs['Roughness'].default_value = .9
                 shader.inputs['Metallic'].default_value = .06 if family == 'chest' else 0
                 shader.inputs['Specular IOR Level'].default_value = .12
+                if family == 'conifer':
+                    # This source models needles as geometry; its BLEND flag
+                    # has no alpha artwork. Export solid needles and real gaps,
+                    # avoiding transparent sorting and view-dependent coverage.
+                    for link in list(shader.inputs['Alpha'].links):
+                        material.node_tree.links.remove(link)
+                    shader.inputs['Alpha'].default_value = 1
                 for node in material.node_tree.nodes:
                     if node.type != 'TEX_IMAGE' or not node.image or not node.outputs['Color'].is_linked:
                         continue
@@ -136,7 +212,7 @@ def prepare(sources, subject):
         }
         asset, placement = export_asset(objects, output, 'grounded-'+family+'-'+variant,
             'grounded-'+family, label, variant, descriptions[variant],
-            variant == ('quiet' if family == 'boulder' else 'clear'),
+            variant == ('quiet' if family in ('boulder', 'conifer') else 'clear'),
             'Poly Haven, CC0, https://polyhaven.com/a/'+subject+'; normalized and adapted by OpenLegend.')
         placement.location.x = index*3
         (controls if variant=='source' else assets).append(asset)

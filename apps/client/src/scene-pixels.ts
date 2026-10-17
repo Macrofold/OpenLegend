@@ -48,6 +48,7 @@ export class ScenePixels {
   private pixelSize = 1;
   private preserveSubjects = false;
   private fineSubjects = false;
+  private detailMultiplier = 1;
   constructor(
     private readonly device: pc.GraphicsDevice,
     private readonly camera: pc.CameraComponent,
@@ -69,6 +70,7 @@ export class ScenePixels {
       uniform vec4 ol_sceneGrid;
       uniform float ol_preserveSubjects;
       uniform float ol_fineSubjects;
+      uniform float ol_detailMultiplier;
       vec4 ol_gridCell(vec2 center, float size, float fine) {
         vec2 texel = sceneTextureInvRes;
         // Integrate the cell's interior before enlargement, rather than pick a
@@ -100,7 +102,7 @@ export class ScenePixels {
         vec4 original = texture2DLod(sceneTexture, uv, 0.0);
         if (ol_preserveSubjects > .5 && original.a > .001) return original;
         float fine = ol_fineSubjects * (1.0-step(.2,abs(original.a-.5)));
-        float size = max(1.0,ol_sceneGrid.x / mix(1.0,3.0,fine));
+        float size = max(1.0,ol_sceneGrid.x / mix(1.0,ol_detailMultiplier,fine));
         if (size < 1.01) return original;
         vec2 pixel = uv / sceneTextureInvRes;
         vec2 coordinate = (pixel - ol_sceneGrid.yz) / size;
@@ -129,7 +131,8 @@ export class ScenePixels {
   setTreatment(mode: ArtTreatment['sceneGrid'], detail: ArtTreatment['subjectDetail']): void {
     this.mode = mode;
     this.preserveSubjects = detail === 'preserve';
-    this.fineSubjects = detail === 'small';
+    this.fineSubjects = detail === 'small' || detail === 'balanced';
+    this.detailMultiplier = detail === 'small' ? 3 : detail === 'balanced' ? 2 : 1;
     this.update();
   }
   update(): void {
@@ -164,6 +167,7 @@ export class ScenePixels {
     this.device.scope.resolve('ol_sceneGrid').setValue(this.grid);
     this.device.scope.resolve('ol_preserveSubjects').setValue(this.preserveSubjects ? 1 : 0);
     this.device.scope.resolve('ol_fineSubjects').setValue(this.fineSubjects ? 1 : 0);
+    this.device.scope.resolve('ol_detailMultiplier').setValue(this.detailMultiplier);
   }
   diagnostics() {
     return {
@@ -177,7 +181,7 @@ export class ScenePixels {
           ? 'whole orthographic view'
           : 'camera focus plane',
       preserveSubjects: this.preserveSubjects,
-      smallSubjectDensityMultiplier: this.fineSubjects ? 3 : 1,
+      smallSubjectDensityMultiplier: this.detailMultiplier,
     };
   }
   destroy(): void {

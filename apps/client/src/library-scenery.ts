@@ -1,12 +1,16 @@
 import * as pc from 'playcanvas';
 import type { SceneryInstance } from '@open-legend/spatial';
 import { ArtMaterials, type ArtTreatment } from './art-treatment';
-import { SceneryCameraOcclusion, prepareSceneryNormals } from './environment-art';
+import {
+  SceneryCameraOcclusion,
+  prepareSceneryNormals,
+  prepareFoliageLight,
+} from './environment-art';
 import { ShadowMaterial } from './shadow-material';
 import { sceneryStencil, setVisibilityStencil } from './visibility-stencil';
 import { markPixelEnvironment } from './scene-pixels';
 
-type Library = 'kenney' | 'quaternius' | 'study';
+type Library = 'kenney' | 'quaternius' | 'study' | 'canopy';
 interface GeometryPart {
   positions: number[];
   normals: number[];
@@ -53,6 +57,7 @@ export class LibraryScenery {
   private readonly materials = new Map<string, pc.StandardMaterial>();
   private readonly meshes = new Map<Shape, pc.Mesh[]>();
   private painted = true;
+  private diffuseLight = false;
   constructor(
     private readonly app: pc.Application,
     private readonly treatment: ArtMaterials,
@@ -79,6 +84,7 @@ export class LibraryScenery {
   }
   setTreatment(style: Readonly<ArtTreatment>): void {
     this.painted = style.surfaceArt === 'painted';
+    this.diffuseLight = style.foliageLight === 'diffuse';
     for (const [key, material] of this.materials)
       this.setPaint(material, this.materialArt.get(key)!);
   }
@@ -117,6 +123,10 @@ export class LibraryScenery {
     material.diffuseMap = texture ? this.texture(texture) : null;
     // Source and painted versions retain identical UV alpha, including shadow cutouts.
     material.opacityMap = entry.alphaCutoff && entry.texture ? this.texture(entry.texture) : null;
+    // Metalness workflow ignores specular RGB unless explicitly enabled. The
+    // previous .015 RGB therefore did not suppress the broad white highlights.
+    material.specularityFactor = this.diffuseLight ? 0.04 : 1;
+    material.gloss = this.diffuseLight ? 0.08 : 0.25;
     material.update();
   }
   private material(id: string): pc.StandardMaterial {
@@ -138,6 +148,7 @@ export class LibraryScenery {
     setVisibilityStencil(material, sceneryStencil);
     prepareSceneryNormals(material, this.app.graphicsDevice);
     this.treatment.prepare(material);
+    if (entry.canopyNormals) prepareFoliageLight(material, this.app.graphicsDevice);
     markPixelEnvironment(material, this.app.graphicsDevice);
     this.setPaint(material, entry);
     this.materials.set(id, material);

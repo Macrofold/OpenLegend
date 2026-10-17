@@ -20,7 +20,8 @@ export interface ArtTreatment {
   surfaceArt: 'plain' | 'painted' | 'rigid';
   surfaceEdges: 'sharp' | 'filtered';
   coverage: 'none' | 'msaa4';
-  subjectDetail: 'shared' | 'preserve' | 'small';
+  subjectDetail: 'shared' | 'preserve' | 'small' | 'balanced';
+  foliageLight: 'original' | 'diffuse';
   shadowSampling: 'screen' | 'fixed';
   filtering: 'source' | 'nearest' | 'mip';
   characterFiltering: 'source' | 'nearest' | 'mip';
@@ -36,8 +37,8 @@ export interface ArtTreatment {
   edges: 'none' | 'silhouette' | 'depth';
   motion: 'smooth' | 'held8' | 'held12';
   cloth: 'flowing' | 'settled';
-  environment: 'baseline' | 'grouped' | 'kenney' | 'quaternius' | 'study';
-  groundPalette: 'meadow' | 'woodland';
+  environment: 'baseline' | 'grouped' | 'kenney' | 'quaternius' | 'study' | 'canopy';
+  groundPalette: 'meadow' | 'woodland' | 'understory';
   vegetation: 'still' | 'smooth' | 'held';
   atmosphere: 'baseline' | 'restrained' | 'survival';
   effects: 'direct' | 'buffer';
@@ -53,6 +54,7 @@ export const baselineArt: Readonly<ArtTreatment> = Object.freeze({
   surfaceEdges: 'sharp',
   coverage: 'none',
   subjectDetail: 'shared',
+  foliageLight: 'original',
   shadowSampling: 'screen',
   filtering: 'source',
   characterFiltering: 'source',
@@ -73,15 +75,16 @@ export const candidateArt: Readonly<ArtTreatment> = Object.freeze({
   ...baselineArt,
   materials: 'regions',
   lighting: 'soft',
-  environment: 'study',
+  environment: 'canopy',
   mercenaryArt: 'restored',
   sampling: 'screen',
-  sceneGrid: 'metres40',
+  sceneGrid: 'metres30',
   hareArt: 'field',
-  groundPalette: 'woodland',
+  groundPalette: 'understory',
   vegetation: 'still',
   atmosphere: 'survival',
-  subjectDetail: 'small',
+  subjectDetail: 'balanced',
+  foliageLight: 'diffuse',
   motion: 'held12',
   prop: 'grounded',
   surfaceArt: 'rigid',
@@ -101,6 +104,10 @@ export class ArtMaterials {
     this.update(baselineArt);
   }
   update(style: Readonly<ArtTreatment>): void {
+    this.device.scope
+      .resolve('ol_groundContrast')
+      .setValue(style.groundPalette === 'understory' ? 0.3 : 1);
+    this.device.scope.resolve('ol_foliageLight').setValue(style.foliageLight === 'diffuse' ? 1 : 0);
     this.settings[0] = style.materials === 'regions' ? 1 : 0;
     this.settings[1] = style.lighting === 'smooth' ? 0 : style.lighting === 'hard' ? 1 : 2;
     this.settings[2] = 0.055;
@@ -252,7 +259,8 @@ export function mountArtControls(
     surfaceArt: ['plain', 'painted', 'rigid'],
     surfaceEdges: ['sharp', 'filtered'],
     coverage: ['none', 'msaa4'],
-    subjectDetail: ['small', 'shared', 'preserve'],
+    subjectDetail: ['balanced', 'small', 'shared', 'preserve'],
+    foliageLight: ['diffuse', 'original'],
     shadowSampling: ['screen', 'fixed'],
     filtering: ['source', 'nearest', 'mip'],
     characterFiltering: ['source', 'nearest', 'mip'],
@@ -269,8 +277,8 @@ export function mountArtControls(
     edges: ['none', 'silhouette', 'depth'],
     motion: ['smooth', 'held8', 'held12'],
     cloth: ['flowing', 'settled'],
-    environment: ['study', 'baseline', 'grouped', 'kenney', 'quaternius'],
-    groundPalette: ['meadow', 'woodland'],
+    environment: ['canopy', 'study', 'baseline', 'grouped', 'kenney', 'quaternius'],
+    groundPalette: ['understory', 'meadow', 'woodland'],
     vegetation: ['still', 'smooth', 'held'],
     atmosphere: ['survival', 'restrained', 'baseline'],
     effects: ['direct', 'buffer'],
@@ -286,6 +294,7 @@ export function mountArtControls(
     surfaceEdges: 'Painted pixel edges',
     coverage: 'Silhouette coverage',
     subjectDetail: 'People and small-object detail',
+    foliageLight: 'Leaf light response',
     shadowSampling: 'Soft-shadow sample pattern',
     filtering: 'Sprite texture filtering',
     characterFiltering: 'Character texture filtering',
