@@ -196,8 +196,6 @@ Turning the camera or changing a pose must preserve asymmetric physical identity
 
 These are visual acceptance requirements, not claims about renderer internals or a requirement to copy Sea of Stars' sprite workflow. Motion/shimmer, performance, source rights and creator acceptance retain their existing gates.
 
-
-
 The [qualification document](3d-pixel-art-validation.md) owns concrete scenario evidence requirements. Product acceptance requires a compelling moving scene, reliable identity and interaction depiction, no authority or privacy regressions, progressive publication that survives failures and reload, bounded operational work, and measured creation/correction effort. No acceptance box is satisfied by this document.
 
 The agreed first-scene direction is designed dimensional pixel art, comparing authored surfaces and realtime treatment by family through the asset study and moving experiments. Recommended broader defaults remain hybrid representations, rigid-object generation before arbitrary animated-model generation, shared appearance briefs, reuse before generation, a retained immediate fallback, and client-side representation choice among approved options. Decisions still requiring evidence are the final pixel rendering profile, ordinary camera scale, acceptable silhouette deviation, animation cadence by family, target devices and performance budgets, provider choice and real cost/latency, and automatic versus human review for each asset class. They are experiments or release gates, not reasons to invent arbitrary universal restrictions.

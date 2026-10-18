@@ -346,8 +346,7 @@ Each ND entry retains one preparation description below. Multiple DGs indicate d
 | ND10 | DG06, DG22, DG32 | Required small cooperation versus associations/institutions                                                       |
 | ND11 | DG07, DG33       | Human/conflict rules versus NPC afterlife                                                                         |
 | ND12 | DG12, DG28       | Free library reuse versus commercial distribution                                                                 |
-| ND13 | DG01, DG35       | Ordinary controls versus selected device expansion
-| ND38 | DG01             | Player skill during action execution versus action selection/native outcome |                                                                |
+| ND13 | DG01, DG35       | Ordinary controls versus selected device expansion                                                               |
 | ND14 | DG24, DG26       | Text versus calls                                                                                                 |
 | ND15 | DG26             | Speech media                                                                                                      |
 | ND16 | DG02, DG18, DG26 | Ordinary speech/social evidence designed under SPK; selected media and further hearing extensions remain separate |
@@ -372,6 +371,7 @@ Each ND entry retains one preparation description below. Multiple DGs indicate d
 | ND35 | DG25             | Protected shared restore versus broader portability/history                                                       |
 | ND36 | DG15             | Selected external perspective versus other cutaways                                                               |
 | ND37 | DG08             | Public reporting and operator authority                                                                           |
+| ND38 | DG01             | Player skill during action execution versus action selection/native outcome                                      |
 
 ## Product scalability: substantial plans already exist
 
