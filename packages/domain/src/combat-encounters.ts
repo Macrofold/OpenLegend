@@ -21,6 +21,7 @@ export interface PersonalEncounter {
   episode: string | null;
   hostileRevision: number;
   movementRevision: number;
+  movement?: 'closing' | 'withdrawing' | 'lateral';
   lastCause?: { id: string; at: number; kind: 'preparation' | 'release' | 'attempt' | 'contact' };
   incomingUntil?: number;
   active: Record<string, { kind: 'action' | 'projectile'; id: string }>;
@@ -327,6 +328,15 @@ export function reconcileCombatSight(
         (Math.abs(distance - pair.lastObserved.distance) > SPATIAL_LIMITS.epsilon ||
           distance3D(point, pair.lastObserved.point) > SPATIAL_LIMITS.epsilon)
       ) {
+        // Compare both source positions from the observer's present position, so
+        // the observer's own walking is not mistaken for the source withdrawing.
+        const change = distance - distance3D(worldPosition(observer), pair.lastObserved.point);
+        pair.movement =
+          change > SPATIAL_LIMITS.epsilon
+            ? 'withdrawing'
+            : change < -SPATIAL_LIMITS.epsilon
+              ? 'closing'
+              : 'lateral';
         pair.movementRevision++;
         pair.lastObserved = { point: { ...point }, at: world.simTime, distance };
       }
@@ -439,13 +449,15 @@ export function validateCombatEncounters(world: WorldState): void {
         !hasRecordFields(
           pair,
           ['otherLife', 'episode', 'hostileRevision', 'movementRevision', 'active'],
-          ['lastCause', 'incomingUntil', 'lastObserved', 'own', 'speak'],
+          ['lastCause', 'incomingUntil', 'lastObserved', 'movement', 'own', 'speak'],
         ) ||
         ![pair.otherLife, pair.hostileRevision, pair.movementRevision].every(
           (n) => Number.isSafeInteger(n) && n >= 0,
         ) ||
         (pair.episode !== null && (typeof pair.episode !== 'string' || !pair.episode)) ||
-        !dictionary(pair.active)
+        !dictionary(pair.active) ||
+        (pair.movement !== undefined &&
+          !['closing', 'withdrawing', 'lateral'].includes(pair.movement))
       )
         throw new Error('Invalid personal encounter pair.');
       for (const [token, active] of Object.entries(pair.active))

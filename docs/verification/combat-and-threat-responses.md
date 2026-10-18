@@ -269,3 +269,36 @@ The authored 24-purpose/ten-utterance data and native compiler are being connect
 through an exact selected cognition-profile pin. The default pin remains absent;
 no new strategy, interpreted fear or anger is enabled. Compiler integration,
 complete-context qualification and both semantic stages remain unfinished.
+
+## Complete native catalogue context checkpoint — October 18, 2026
+
+A disposable service lands a real ordinary native punch on Ada, then explicitly
+selects the otherwise uninstalled profile only for native compilation. It enrolls
+no director and makes no model calls. The ordinary opening still has no selected
+threat strategy before this fixture edit. Compilation includes real self-defense
+and retaliation strikes, finite observation and the currently available native
+alternatives; the original serialized world is unchanged by compilation.
+
+The first full representation exceeded the existing input allowance and refused
+before inference. Shared action descriptions alone still failed the conservative
+per-option fitting estimate. Required-set fitting now measures its complete actual
+rendered input, while retaining the ordinary optional fitting policy. The compact
+representation supplies each purpose and physical method once, with every complete
+choice referencing both definitions. No option ceiling or gameplay rule changes.
+
+The successful native preparation retains 25 grounded purpose instances (from the
+24-definition catalogue), 501 supplied alternatives and 475 distinct exact choices
+after semantic deduplication. Its 55 shared method descriptions occupy 18,647 bytes;
+the full prepared context is 46,306 bytes. One preparation took
+75.50837499999761 ms in the newly created disposable service after setup. The
+synchronous unchanged-world batch performed 51 primitive physical preparations
+for 474 executable alternatives, while retaining per-option structure, work,
+purpose and action-record admission. This is one native context preparation,
+not cold-process/dense-world qualification, provider latency or a complete reaction.
+All earlier scenario checks in this run pass. No provider callback ran; additional
+Jev cost is $0 and cumulative task Jev cost is $0.
+
+The actual first- and second-stage judge requests still need complete size/work
+admission and integration. This context result does not qualify their transport,
+ratings, receipts, independent character behavior or gameplay timing. The default
+profile, interpreted fear/anger and the two-stage strategy remain uninstalled.

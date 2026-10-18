@@ -151,6 +151,19 @@ function fitActionCandidates(
   reservedBytes = 0,
   coverage: 'optional' | 'complete-required' = 'optional',
 ): CandidateAction[] {
+  if (coverage === 'complete-required') {
+    const offered = candidates.map((candidate, index) => ({
+      id: `a${index}`,
+      description: candidate.description,
+    }));
+    const bytes =
+      Buffer.byteLength(readableDecisionContext(context, offered, true)) +
+      Buffer.byteLength(RESPONSE_INSTRUCTIONS) +
+      reservedBytes;
+    if (bytes > CONTEXT_BYTE_LIMIT)
+      throw new ContextBudgetError('The complete required choice set exceeds the input budget.');
+    return candidates;
+  }
   let remaining =
     CONTEXT_BYTE_LIMIT -
     reservedBytes -
@@ -159,8 +172,6 @@ function fitActionCandidates(
   return candidates.filter((candidate, index) => {
     const bytes = Buffer.byteLength(`- a${index}: ${candidate.description}\n`) + 64;
     if (bytes > remaining) {
-      if (coverage === 'complete-required')
-        throw new ContextBudgetError('The complete required choice set exceeds the input budget.');
       return false;
     }
     remaining -= bytes;
@@ -175,6 +186,7 @@ function preparedChoiceKey(candidate: CandidateAction): string {
     candidate.transition,
     candidate.nativeInvocation,
     candidate.purpose,
+    candidate.subjectIds,
   ]);
 }
 function distinctActions(candidates: CandidateAction[]): CandidateAction[] {
@@ -397,26 +409,26 @@ export async function prepareDecision(
   const availableActions = requiredChoices
     ? distinctActions(requiredChoices.candidates)
     : decisionActionCandidates(service, actorId, observed, actionInspection);
-  if (requiredChoices) {
-    const physical = new Map<string, ReturnType<WorldService['prepareNativeCommandChoice']>>();
-    const expected = currentWorkIdentity(world, actorId);
-    for (const candidate of availableActions) {
-      if (candidate.command && candidate.nativeInvocation)
-        throw new Error('A prepared choice cannot bind two different first invocations.');
-      const choice = candidateChoice(candidate, actorId, jobId, expected);
-      if (!choice.invocation) continue;
-      const { chosenPurpose: _meaning, purpose: _label, ...invocation } = choice.invocation;
-      const key = canonicalJson([invocation, choice.transition]);
-      let prepared = physical.get(key);
-      if (!prepared) {
-        prepared = service.prepareNativeCommandChoice(invocation, choice.transition);
-        physical.set(key, prepared);
-      }
-      const available = 'ok' in prepared ? prepared : prepared.outcome;
-      if (!available.ok && !['combat-recovery', 'evasion-recovery'].includes(available.code))
-        throw new Error(`A required choice became unavailable: ${available.message}`);
-    }
-  }
+  const requiredNative = requiredChoices
+    ? (() => {
+        const expected = currentWorkIdentity(world, actorId);
+        const choices = availableActions.flatMap((candidate) => {
+          if (candidate.command && candidate.nativeInvocation)
+            throw new Error('A prepared choice cannot bind two different first invocations.');
+          const choice = candidateChoice(candidate, actorId, jobId, expected);
+          return choice.invocation
+            ? [{ invocation: choice.invocation, transition: choice.transition }]
+            : [];
+        });
+        const prepared = service.prepareNativeCommandChoices(choices);
+        for (const choice of prepared.choices) {
+          const available = 'ok' in choice ? choice : choice.outcome;
+          if (!available.ok && !['combat-recovery', 'evasion-recovery'].includes(available.code))
+            throw new Error(`A required choice became unavailable: ${available.message}`);
+        }
+        return { options: choices.length, physicalPreparations: prepared.physicalPreparations };
+      })()
+    : undefined;
   let planOffers = [...planning]
     .sort((a, b) => a.id.localeCompare(b.id))
     .map((candidate, index) => ({
@@ -1011,6 +1023,7 @@ export async function prepareDecision(
       sourceTime: currentWorld.simTime,
       triggerFacts: context['triggerFacts'],
       acceptedRevision: currentWorld.innerWorlds?.[actorId]?.revision,
+      ...(requiredNative ? { nativeChoices: requiredNative } : {}),
       planningOptions: {
         available: planningAvailable,
         included: planOffers.length,

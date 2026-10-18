@@ -37,8 +37,19 @@ export function basePreparedThreatResponses(
   const actor = entityGet(world.entities, input.actorId);
   if (!actor?.actor) throw new Error('The responding person is unavailable.');
   const visible = new Map(input.visible.map((entity) => [entity.id, entity]));
+  const labels = new Map(
+    input.visible.map((entity) => [entity.id, observerDescription(world, actor.id, entity.id)]),
+  );
+  for (const evidence of input.evidence)
+    for (const reference of evidence.references ?? [])
+      if (!labels.has(reference.id)) labels.set(reference.id, reference.label);
+  const label = (id: string) =>
+    labels.get(id) ??
+    rememberedPlace(actor.actor!, id)?.label ??
+    'the person in my recorded encounter';
   const physicalLife = (entity: Entity) => entity.actor?.physicalLife ?? 0;
-  const state = actor.actor.encounters;
+  const state =
+    actor.actor.encounters?.life === physicalLife(actor) ? actor.actor.encounters : undefined;
   const pairs = Object.entries(state?.pairs ?? {}).filter(([id, pair]) =>
     subjectReferenceCurrent(world, actor.id, id, pair.episode),
   );
@@ -70,13 +81,16 @@ export function basePreparedThreatResponses(
     if (pair.lastCause?.kind === 'contact') value.flags.add('identified-harm');
     if (Object.keys(pair.active).length || (pair.incomingUntil ?? 0) > world.simTime) {
       value.flags.add('personal-danger');
-      local.flags.add('personal-danger');
     }
     if (visible.has(id)) value.flags.add('visible-assailant');
     else if (rememberedPlace(actor.actor, id)) value.flags.add('last-seen');
     if (!Object.keys(pair.active).length) value.flags.add('withdrawal-or-ended');
     const other = visible.get(id);
-    if (other?.actor?.action && ['move', 'follow', 'evade'].includes(other.actor.action.type))
+    if (
+      pair.movement === 'withdrawing' &&
+      other?.actor?.action &&
+      ['move', 'follow', 'evade'].includes(other.actor.action.type)
+    )
       value.flags.add('withdrawing');
   }
   for (const evidence of input.evidence) {
@@ -88,7 +102,8 @@ export function basePreparedThreatResponses(
       evidence.eventType ?? '',
     );
     if (hostile && evidence.targetId === actor.id) {
-      local.flags.add('personal-danger');
+      if (!evidence.sourceId || state?.unknown[evidence.eventId])
+        local.flags.add('personal-danger');
       local.flags.add('encounter');
       if (contact) {
         local.flags.add('personal-contact');
@@ -229,7 +244,7 @@ export function basePreparedThreatResponses(
     return {
       ...method,
       purpose,
-      description: `${purpose.description}. First action: ${method.description} Stop no later than game time ${control.deadline}.${radius ? ` Stop at ${profile.limits.pursuitRadius} m from the original selected position.` : ''}${participants.length ? ' Stop if a selected visible participant is lost or changes physical life.' : ''}`,
+      description: `${method.description} Stop no later than game time ${control.deadline}.${radius ? ` Stop at ${profile.limits.pursuitRadius} m from the original selected position.` : ''}${participants.length ? ' Stop if a selected visible participant is lost or changes physical life.' : ''}`,
       invocation: {
         id: 'prepared-response',
         actorId: actor.id,
@@ -253,12 +268,20 @@ export function basePreparedThreatResponses(
   };
   for (const definition of profile.purposes)
     for (const binding of bindings.values()) {
+      if (binding.roles.helper && !definition.requires.includes('known-helper')) continue;
+      if (
+        binding.roles.protectee &&
+        !definition.requires.some((value) =>
+          ['protectee', 'escaping-protectee', 'observed-harm'].includes(value),
+        )
+      )
+        continue;
       if (!definition.requires.every((requirement) => binding.flags.has(requirement))) continue;
       const roles = binding.roles;
       const description = `${definition.label}${
         Object.keys(roles).length
           ? ` (${Object.entries(roles)
-              .map(([role, id]) => `${role}: ${observerDescription(world, actor.id, id)}`)
+              .map(([role, id]) => `${role}: ${label(id)}`)
               .join('; ')})`
           : ''
       }`;
@@ -305,7 +328,10 @@ export function basePreparedThreatResponses(
           command?.type === 'guard' &&
           (!target || target === roles.assailant)
         )
-          addMethod(method, target ? [target] : []);
+          addMethod(method, [
+            ...(target ? [target] : []),
+            ...(roles.protectee ? [roles.protectee] : []),
+          ]);
         if (definition.means.includes('evade') && command?.type === 'evade') addMethod(method);
         if (
           (definition.means.includes('approach') || definition.means.includes('pursue')) &&
@@ -331,7 +357,7 @@ export function basePreparedThreatResponses(
           options.push({
             ...method,
             purpose,
-            description: `${description}. ${method.description}`,
+            description: method.description,
           });
       }
       for (const mean of ['hold', 'assess'] as const)
@@ -351,7 +377,7 @@ export function basePreparedThreatResponses(
           options.push({
             id: mean,
             purpose,
-            description: `${description}. ${definition.meaning} Stop at game time ${at}; earlier personally meaningful evidence can prompt a new choice.`,
+            description: `${mean === 'hold' ? 'Remain at the selected place' : 'Observe without starting another physical action'}. Stop at game time ${at}; earlier personally meaningful evidence can prompt a new choice.`,
             invocation: {
               id: 'prepared-response',
               actorId: actor.id,
@@ -392,9 +418,10 @@ export function basePreparedThreatResponses(
             !speech.requires.every((requirement) => binding.flags.has(requirement))
           )
             continue;
-          const recipient = ['TS08', 'TS09'].includes(speech.id)
-            ? (roles.protectee ?? roles.helper ?? roles.assailant)
-            : (roles.assailant ?? roles.helper ?? roles.protectee);
+          const recipient =
+            speech.addressee === 'beneficiary'
+              ? (roles.protectee ?? roles.helper ?? roles.assailant)
+              : (roles.assailant ?? roles.helper ?? roles.protectee);
           if (speech.audience === 'person' && (!recipient || !visible.has(recipient))) continue;
           if (speech.audience === 'possible-hearer' && !binding.flags.has('possible-hearer'))
             continue;
@@ -404,7 +431,7 @@ export function basePreparedThreatResponses(
             options.push({
               id: `${speech.id}:${volume}`,
               purpose,
-              description: `${description}. Say exactly “${speech.text}” at ${volume} volume${recipient ? ` to ${observerDescription(world, actor.id, recipient)}` : ' aloud to possible actual listeners'}. This is speech only; hearing and any reply remain independent.`,
+              description: `Say exactly “${speech.text}” at ${volume} volume${recipient ? ` to ${label(recipient)}` : ' aloud to possible actual listeners'}. This is speech only; hearing and any reply remain independent.`,
               invocation: {
                 id: 'prepared-response',
                 actorId: actor.id,

@@ -212,13 +212,21 @@ export const BASE_THREAT_RESPONSE_PROFILE: PreparedResponseProfile = {
     },
   ],
   speech: [
-    { id: 'TS01', text: 'Help!', purposes: ['TR13'], requires: [], audience: 'possible-hearer' },
+    {
+      id: 'TS01',
+      text: 'Help!',
+      purposes: ['TR13'],
+      requires: [],
+      audience: 'possible-hearer',
+      addressee: 'involved',
+    },
     {
       id: 'TS02',
       text: "Help! I'm hurt.",
       purposes: ['TR12', 'TR13', 'TR21'],
       requires: ['hurt'],
       audience: 'possible-hearer',
+      addressee: 'involved',
     },
     {
       id: 'TS03',
@@ -226,6 +234,7 @@ export const BASE_THREAT_RESPONSE_PROFILE: PreparedResponseProfile = {
       purposes: ['TR02', 'TR03', 'TR14', 'TR17'],
       requires: [],
       audience: 'person',
+      addressee: 'involved',
     },
     {
       id: 'TS04',
@@ -233,6 +242,7 @@ export const BASE_THREAT_RESPONSE_PROFILE: PreparedResponseProfile = {
       purposes: ['TR06', 'TR14', 'TR17'],
       requires: [],
       audience: 'person',
+      addressee: 'involved',
     },
     {
       id: 'TS05',
@@ -240,6 +250,7 @@ export const BASE_THREAT_RESPONSE_PROFILE: PreparedResponseProfile = {
       purposes: ['TR15'],
       requires: ['personal-contact'],
       audience: 'person',
+      addressee: 'involved',
     },
     {
       id: 'TS06',
@@ -247,6 +258,7 @@ export const BASE_THREAT_RESPONSE_PROFILE: PreparedResponseProfile = {
       purposes: ['TR06', 'TR16'],
       requires: ['encounter'],
       audience: 'person',
+      addressee: 'involved',
     },
     {
       id: 'TS07',
@@ -254,6 +266,7 @@ export const BASE_THREAT_RESPONSE_PROFILE: PreparedResponseProfile = {
       purposes: ['TR05', 'TR06', 'TR14'],
       requires: [],
       audience: 'person',
+      addressee: 'involved',
     },
     {
       id: 'TS08',
@@ -261,6 +274,7 @@ export const BASE_THREAT_RESPONSE_PROFILE: PreparedResponseProfile = {
       purposes: ['TR10', 'TR21'],
       requires: [],
       audience: 'person',
+      addressee: 'beneficiary',
     },
     {
       id: 'TS09',
@@ -268,6 +282,7 @@ export const BASE_THREAT_RESPONSE_PROFILE: PreparedResponseProfile = {
       purposes: ['TR10', 'TR11', 'TR12', 'TR21'],
       requires: ['supported-help'],
       audience: 'person',
+      addressee: 'beneficiary',
     },
     {
       id: 'TS10',
@@ -275,6 +290,7 @@ export const BASE_THREAT_RESPONSE_PROFILE: PreparedResponseProfile = {
       purposes: ['TR03', 'TR09', 'TR16'],
       requires: ['can-stay'],
       audience: 'person',
+      addressee: 'involved',
     },
   ],
   appraisals: [

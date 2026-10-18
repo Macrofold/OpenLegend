@@ -27,6 +27,7 @@ export interface PreparedResponseProfile {
     purposes: string[];
     requires: string[];
     audience: 'person' | 'possible-hearer';
+    addressee: 'involved' | 'beneficiary';
   }>;
   appraisals: Array<{ definitionId: string; meaning: string; amounts: number[] }>;
   limits: {

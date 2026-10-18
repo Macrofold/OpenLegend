@@ -1123,6 +1123,7 @@ function operationAfterWork(
   command: Command,
   constructionPermissions: readonly ConstructionPermission[],
   work?: ProspectiveWork,
+  preparation?: NativeChoicePreparation,
 ): Outcome {
   const nested = inWorkGroup();
   try {
@@ -1150,9 +1151,25 @@ function operationAfterWork(
             )
           : 'ok' in first
             ? first
-            : operationAfterWork(world, first, constructionPermissions, work);
+            : operationAfterWork(world, first, constructionPermissions, work, preparation);
       }
-      const prepared = prepareNativeOperation(world, command, { constructionPermissions, work });
+      const cache =
+        preparation?.world === world &&
+        preparation.permissions === constructionPermissions &&
+        Object.isFrozen(world)
+          ? preparation.operations
+          : undefined;
+      let key: string | undefined;
+      if (cache) {
+        const { purpose: _label, chosenPurpose: _meaning, ...physical } = command;
+        key = canonicalJson([physical, work?.mode, work?.releasedInvocations]);
+      }
+      let prepared = key ? cache?.get(key) : undefined;
+      if (!prepared) {
+        if (preparation?.world === world) preparation.physicalPreparations++;
+        prepared = prepareNativeOperation(world, command, { constructionPermissions, work });
+        if (key) cache!.set(key, prepared);
+      } else if (!('ok' in prepared)) prepared = { ...prepared, id: command.id };
       if (work?.mode === 'continue' && !('ok' in prepared))
         return outcome(
           false,
@@ -1190,6 +1207,14 @@ export interface PreparedNativeChoice {
   /** A temporary mechanical refusal can be reconsidered at this game time. */
   nextAt?: number;
 }
+/** Only a synchronous read of one immutable world and one exact permission view
+ * may share physical prerequisites. Record/meaning admission still runs per option. */
+export interface NativeChoicePreparation {
+  world: WorldState;
+  permissions: readonly ConstructionPermission[];
+  operations: Map<string, Action | Outcome>;
+  physicalPreparations: number;
+}
 
 /** Complete next-step preflight after the selected handling of current work. No
  * cancellation, IDs, reservations, randomness or disposable gameplay transition.
@@ -1200,6 +1225,7 @@ export function prepareNativeChoice(
   invocation: Command | null,
   mode: WorkTransitionMode,
   constructionPermissions: readonly ConstructionPermission[] = [],
+  preparation?: NativeChoicePreparation,
 ): PreparedNativeChoice | Outcome {
   const work = prospectiveWork(world, actorId, mode);
   if ('ok' in work) return work;
@@ -1208,7 +1234,7 @@ export function prepareNativeChoice(
     : invocation
       ? invocation.actorId !== actorId
         ? outcome(false, 'actor-unavailable', 'Choose work for this actor.')
-        : operationAfterWork(world, invocation, constructionPermissions, work)
+        : operationAfterWork(world, invocation, constructionPermissions, work, preparation)
       : mode === 'continue'
         ? outcome(true, 'continued', 'Existing behavior continues.')
         : outcome(

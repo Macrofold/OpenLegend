@@ -73,7 +73,7 @@ decision consumers agree.
    movement and boundary prediction, including complete route segments; no second
    mover or pursuit loop is introduced. Preserve exact physical-life references
    through prepared attack/follow selection and final native admission.
-2. Install the catalogue's authored data through the cognition policy and a
+2. Connect the catalogue's authored data through the cognition policy and a
    selected-world compiler at the existing world-composition seam. Purpose/role,
    source, exact method, work handling and finite terms remain one offered binding;
    admitted plans/activities and action records retain that selected meaning.

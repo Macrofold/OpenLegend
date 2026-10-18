@@ -414,6 +414,7 @@ export interface CandidateAction {
   command: CommandInput | null;
   /** A trusted world compiler can bind a native finite composition directly. */
   nativeInvocation?: import('@open-legend/domain').Command;
+  subjectIds?: string[];
   purpose?: import('@open-legend/domain').ResponsePurposeBinding;
   /** Once offered, retain the initiator's exact handling of current work. */
   transition?: import('@open-legend/domain').WorkTransitionMode;
@@ -474,6 +475,12 @@ export function npcCandidates(
   // Explicit player-action callers share these native suggestions. Only implicit
   // resident selection may be absent; never substitute the controlled person.
   if (!actorId || !observed || !actor?.alive || actor.incapacitated || service.paused) return [];
+  const personallyThreatened =
+    Object.keys(actor.encounters?.unknown ?? {}).length > 0 ||
+    Object.values(actor.encounters?.pairs ?? {}).some(
+      (pair) =>
+        Object.keys(pair.active).length > 0 || (pair.incomingUntil ?? 0) > service.world.simTime,
+    );
   const temporary = new WeakMap<CommandInput, { message: string; nextAt?: number }>();
   const checked = new WeakMap<CommandInput, ReturnType<WorldService['previewCommand']>>();
   const previewChoice = (command: CommandInput) => {
@@ -844,6 +851,7 @@ export function npcCandidates(
           command: option.command,
         });
   if (
+    personallyThreatened ||
     observed.visibleEntities.some(
       (e) => e.actor?.alive && observedCombatActivity(service.world, observed.actor, e),
     ) ||
@@ -907,6 +915,7 @@ export function npcCandidates(
     if (previewChoice(command).ok)
       actions.push({
         id: `approach:${entity.id}`,
+        subjectIds: [entity.id],
         description: `Move near the currently observed position of ${observerDescription(service.world, actorId, entity.id, 'definite')}, currently ${Math.hypot(worldPosition(observed.actor).x - worldPosition(entity).x, worldPosition(observed.actor).y - worldPosition(entity).y, worldPosition(observed.actor).z - worldPosition(entity).z).toFixed(1)} m away. Stop at the selected reachable place within ${SIMULATION_RULES.interactionRadius} m of that observed position; route length is not known. This moves to that location once; it does not follow later movement.`,
         command,
       });
@@ -987,6 +996,17 @@ export function npcCandidates(
       definitions.get(item.definitionId)?.contactDefense &&
       !equipmentProblem(service.world, actorId, item.id, 'guard', afterReplacement),
   );
+  if (personallyThreatened)
+    for (const shield of shields) {
+      const profile = definitions.get(shield.definitionId)!.contactDefense!;
+      const command: CommandInput = { type: 'guard', itemId: shield.id, autoEquip: true };
+      if (canOfferPhysical(command))
+        actions.push({
+          id: `guard:${shield.id}:current-facing`,
+          description: `${equipmentChangeDescription(service.world, actorId, shield.id)}${guardChoiceLabel(definitions.get(shield.definitionId)!.name)}. ${guardDescription(profile)}`,
+          command,
+        });
+    }
   for (const target of observed.visibleEntities.filter(
     (e) => e.actor?.alive && observedAttackPreparation(service.world, observed.actor, e),
   ))

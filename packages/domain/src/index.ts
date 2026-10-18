@@ -337,6 +337,7 @@ export * from './worlds/base/watchpost.js';
 export * from './native-values.js';
 
 export type { ResponsePurposeBinding } from './action-capabilities.js';
+export type { NativeChoicePreparation } from './kernel.js';
 export type {
   PreparedResponseProfile,
   PreparedResponseSituation,

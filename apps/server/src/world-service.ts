@@ -4960,6 +4960,33 @@ export class WorldService {
       this.store.authority!.constructionPermissions(this.world.id),
     );
   }
+  /** One synchronous required set shares physical checks without sharing a grant
+   * or skipping each option's exact purpose/record admission. */
+  prepareNativeCommandChoices(
+    choices: readonly { invocation: Command; transition: WorkTransitionMode }[],
+  ) {
+    const world = this.world;
+    const permissions = this.store.authority!.constructionPermissions(world.id);
+    const preparation: import('@open-legend/domain').NativeChoicePreparation = {
+      world,
+      permissions,
+      operations: new Map(),
+      physicalPreparations: 0,
+    };
+    return {
+      choices: choices.map(({ invocation, transition }) =>
+        prepareNativeChoice(
+          world,
+          invocation.actorId,
+          invocation,
+          transition,
+          permissions,
+          preparation,
+        ),
+      ),
+      physicalPreparations: preparation.physicalPreparations,
+    };
+  }
 
   /** Family binding is shared by UI commands and reviewed agent commands. */
   private bindCommand(
