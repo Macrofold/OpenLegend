@@ -187,6 +187,7 @@ function preparedChoiceKey(candidate: CandidateAction): string {
     candidate.nativeInvocation,
     candidate.purpose,
     candidate.subjectIds,
+    candidate.firstActionDescription,
   ]);
 }
 function distinctActions(candidates: CandidateAction[]): CandidateAction[] {

@@ -2544,6 +2544,7 @@ export class AiDirector {
           id: candidate.id,
           description: candidate.description,
           invocation: choice.invocation,
+          firstActionDescription: candidate.firstActionDescription,
           transition: choice.transition,
           subjects: candidate.subjectIds,
         };

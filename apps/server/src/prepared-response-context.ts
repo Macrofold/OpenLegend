@@ -45,6 +45,7 @@ export function preparedResponseChoices(
         ...(option.invocation ? { nativeInvocation: option.invocation } : {}),
         purpose: option.purpose,
         purposeHandle,
+        firstActionDescription: option.firstActionDescription ?? option.description,
         transition: option.transition,
       });
     }

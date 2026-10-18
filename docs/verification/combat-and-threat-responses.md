@@ -420,3 +420,34 @@ ordinary 60:1 speed, achieved simulation progress, requests, native receipts and
 verified continuation checkpoints are retained per run. Every result, including
 failures, remains part of the fixed sample. No paid baseline has run at this
 preparation checkpoint; additional and cumulative task Jev cost are $0.
+
+## Fixed ordinary Ada baseline result — October 18, 2026
+
+Build `2a050bd7a` completed all twelve setups and retained all failures: **0/12
+counterattacks**. Every incoming punch landed and every continuation checkpoint
+was read back before its owned database was removed. The first idle, unarmed
+case selected evasion at 0.71, above the other offered ratings, and the native
+engine admitted that evasion. A later long generation request for Kest occupied
+the shared execution path. The result therefore does not establish either a
+refused strike or successful independent counterattack behavior. Other cases'
+exact selected methods and the scheduling consequences remain under inspection.
+Raw requests, ratings, receipts, saves, accounting and operational backups remain
+outside Git in
+`/var/folders/tp/s408jds97dn41bs0p94lfq4h0000gn/T/openlegend-ctr-baselines-1RuA80`.
+
+The sample dispatched 126 Jev requests, including subsequent ordinary work:
+125 have provider-reported estimates totaling **$0.116294**, and one remains
+uncertain with a **$0.021043008 reservation**. Seven dispatched requests through
+another provider remain unpriced, reserved at $0.25 each (**$1.75 total**).
+Conservative task exposure is approximately **$1.88734** inside the $2 sample
+ceiling and shared $10 task ceiling. Missing prices are not treated as zero.
+Fourteen unavailable native Worker attempts were not dispatched. No additional
+paid comparison or rerun has occurred.
+
+Action questions previously depended on indirect references to purpose and
+method tables. A uniform rendering change puts the offered behavior directly
+in each question while retaining the complete shared facts and bindings. This
+change is still in progress: the 475-choice native case currently produces
+243,971 characters and correctly refuses the existing 220,000-character limit.
+No options were dropped, limit increased, personality changed or favorable
+outcome manufactured. This failed size check remains open before paid comparison.

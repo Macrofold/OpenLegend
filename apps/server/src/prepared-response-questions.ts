@@ -22,12 +22,14 @@ function checkedRequest(state: Record<string, unknown>, questions: TypedQuestion
     validateJudgmentSize(state, questions);
   } catch (error) {
     if (!(error instanceof InvalidData)) throw error;
-    throw new ContextBudgetError(`Complete supplied-response judgment cannot fit: ${error.code}.`);
+    throw new ContextBudgetError(
+      `Complete supplied-response judgment cannot fit: ${error.code}; ${JSON.stringify({ state, questions }).length} serialized characters.`,
+    );
   }
   return { state, questions };
 }
 
-function requestState(prepared: Prepared, offered: { id: string; description: string }[]) {
+function requestState(prepared: Prepared, offered?: { id: string; description: string }[]) {
   return {
     decisionContext: Object.fromEntries(
       Object.entries(prepared.context).filter(
@@ -37,7 +39,9 @@ function requestState(prepared: Prepared, offered: { id: string; description: st
     // One full authored rubric is shared, rather than copied into every independent
     // question. Default Noul yes/no still judges these exact supplied meanings.
     personalChoiceRubric: prepared.actionGuidance,
-    choices: Object.fromEntries(offered.map((choice) => [choice.id, choice.description])),
+    ...(offered
+      ? { choices: Object.fromEntries(offered.map((choice) => [choice.id, choice.description])) }
+      : {}),
   };
 }
 
@@ -130,16 +134,26 @@ export function preparedResponseChoiceRequest(prepared: Prepared, relevance: Pur
     'Supplied purpose relevance; uncertain purposes retained',
   );
   const questions: TypedQuestionMap = Object.fromEntries(
-    selected.offered.map(({ id }) => [
+    selected.offered.map(({ id }, index) => [
       id,
       {
         type: 'noul' as const,
-        instructions: `For choices.${id}, is personalChoiceRubric.criteria.true supported rather than personalChoiceRubric.criteria.false? Judge the complete purpose and first action for this person using personalChoiceRubric.selection and reasons.`,
+        // The actual purpose and action belong in each question, rather than two
+        // layers of opaque references. Shared tables still retain full meanings,
+        // control/cost facts and exact bindings; no offered alternative is removed.
+        instructions: (() => {
+          const candidate = retained[index]!;
+          if (candidate.purpose && !candidate.firstActionDescription)
+            throw new Error('The supplied first action has no descriptive meaning.');
+          return candidate.purpose
+            ? `${candidate.id}: ${candidate.purpose.description}. First action: ${candidate.firstActionDescription}. Would I choose this now?`
+            : `${candidate.description} Would I choose this now?`;
+        })(),
       },
     ]),
   );
   return {
     prepared: selected,
-    request: checkedRequest(requestState(selected, selected.offered), questions),
+    request: checkedRequest(requestState(selected), questions),
   };
 }

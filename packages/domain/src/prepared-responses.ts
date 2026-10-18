@@ -43,6 +43,8 @@ export interface PreparedResponseProfile {
 export interface PreparedResponseMethod {
   id: string;
   description: string;
+  /** Concise actual action; complete requirements/costs remain in description. */
+  firstActionDescription?: string;
   invocation: Command | null;
   transition: WorkTransitionMode;
   /** Personally perceived subjects described by a fixed-point movement. */

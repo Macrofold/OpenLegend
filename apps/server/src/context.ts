@@ -418,6 +418,7 @@ export interface CandidateAction {
   purpose?: import('@open-legend/domain').ResponsePurposeBinding;
   /** Request-local supplied-purpose question, never an entity or executable command. */
   purposeHandle?: string;
+  firstActionDescription?: string;
   /** Once offered, retain the initiator's exact handling of current work. */
   transition?: import('@open-legend/domain').WorkTransitionMode;
 }
@@ -864,6 +865,7 @@ export function npcCandidates(
       if (canOfferPhysical(command))
         actions.push({
           id: `evade:${choice.label}`,
+          firstActionDescription: choice.label,
           description: `${choice.label}. ${choice.description} ${BASE_EVASION_TEXT.destinationScope}`,
           command,
         });
@@ -1005,6 +1007,7 @@ export function npcCandidates(
       if (canOfferPhysical(command))
         actions.push({
           id: `guard:${shield.id}:current-facing`,
+          firstActionDescription: guardChoiceLabel(definitions.get(shield.definitionId)!.name),
           description: `${equipmentChangeDescription(service.world, actorId, shield.id)}${guardChoiceLabel(definitions.get(shield.definitionId)!.name)}. ${guardDescription(profile)}`,
           command,
         });
@@ -1023,6 +1026,10 @@ export function npcCandidates(
       if (canOfferPhysical(command))
         actions.push({
           id: `guard:${shield.id}:${target.id}`,
+          firstActionDescription: guardChoiceLabel(
+            definitions.get(shield.definitionId)!.name,
+            target.name,
+          ),
           description: `${equipmentChangeDescription(service.world, actorId, shield.id)}${guardChoiceLabel(definitions.get(shield.definitionId)!.name, target.name)}. ${guardDescription(profile)}`,
           command,
         });
@@ -1056,6 +1063,11 @@ export function npcCandidates(
         if (!canOfferPhysical(command)) continue;
         actions.push({
           id: `shot:${item.id}:${entity.id}`,
+          firstActionDescription: rangedChoiceLabel(
+            'shoot-once',
+            namePhrase(entity),
+            namePhrase(definition),
+          ),
           description: `${equipmentChangeDescription(service.world, actorId, item.id)}${description} ${definition.name}: ${definition.description} ${(shotView ??=
             nativeActivityViews(service.world, [...possessionItems(service.world, actorId)]))(
             domainCommand(command, actorId, 'offered-shot'),
@@ -1091,6 +1103,9 @@ export function npcCandidates(
         if (!canOfferPhysical(command)) continue;
         actions.push({
           id: `${definition.id}:${definition.weaponItemId ?? 'unarmed'}:${entity.id}`,
+          firstActionDescription: definition.weaponItemId
+            ? strikeDefinition(definition.id, service.world, definition.weaponItemId, entity)!.label
+            : `${definition.label} ${namePhrase(entity, 'definite')}`,
           description: `${definition.weaponItemId ? equipmentChangeDescription(service.world, actorId, definition.weaponItemId) : ''}${description ?? `${strikeDefinition(definition.id, service.world, definition.weaponItemId, entity)?.label ?? definition.label}. Approach and attempt one attack.`} ${definition.weaponItemId ? `${tool}: ${definitions.get(definition.id)!.description}` : `${definition.label} with bare hands.`} ${describeAttack(definition)}`,
           command,
         });

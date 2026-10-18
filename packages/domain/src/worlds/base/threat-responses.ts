@@ -266,11 +266,17 @@ export function basePreparedThreatResponses(
     radius: boolean,
   ): PreparedResponseOption | undefined => {
     const command = method.invocation;
-    if (!command) return { ...method, purpose };
+    if (!command)
+      return {
+        ...method,
+        purpose,
+        firstActionDescription: method.firstActionDescription ?? method.description,
+      };
     if (command.type === 'say')
       return {
         ...method,
         purpose,
+        firstActionDescription: method.firstActionDescription ?? method.description,
         invocation: { ...command, chosenPurpose: purpose },
         transition: 'continue',
       };
@@ -320,6 +326,7 @@ export function basePreparedThreatResponses(
     return {
       ...method,
       purpose,
+      firstActionDescription: method.firstActionDescription ?? method.description,
       description: `${method.description} Stop no later than game time ${control.deadline}.${radius ? ` Stop at ${profile.limits.pursuitRadius} m from the original selected position.` : ''}${participants.length ? ' Stop if a selected visible participant is lost or changes physical life.' : ''}`,
       invocation: {
         id: 'prepared-response',

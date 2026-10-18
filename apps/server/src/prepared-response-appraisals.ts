@@ -128,7 +128,7 @@ export async function prepareResponseAppraisals(
       options.set(handle, choices);
       questions[handle] = {
         type: 'choice',
-        instructions: `What interpretation of ${definition.label} concerning ${target ?? 'no identified person'} fits me now? Judge independently of any proposed action or purpose. ${policy.meaning}`,
+        instructions: `What interpretation of ${definition.label} concerning ${targetId === null ? 'no identified person' : `${catalogue.subjectDescriptions[targetId]} (${target})`} fits me now? Judge independently of any proposed action or purpose. ${policy.meaning}`,
         criteria,
       };
       context.push({
