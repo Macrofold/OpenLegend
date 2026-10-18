@@ -67,6 +67,7 @@ import {
   compilePreparedResponses,
   preparedResponseProfile,
   preparedResponseOpportunity,
+  preparedResponseResult,
   currentWorkIdentity,
   type Awareness,
   type PreparedResponseProfile,
@@ -2563,7 +2564,9 @@ export class AiDirector {
       throw new StopJob('failed', 'The installed response strategy is unavailable.', 'unavailable');
     if (
       selectedProfile &&
-      preparedResponseOpportunity(this.service.world, actorId, decisionEvidence)
+      preparedResponseOpportunity(this.service.world, actorId, decisionEvidence, [
+        ...decisionEvidenceIds,
+      ])
     ) {
       const observed = decisionObservation(this.service.world, actorId);
       if (!observed) throw new StopJob('stale', 'The responding person is unavailable.');
@@ -2581,6 +2584,7 @@ export class AiDirector {
       });
       const catalogue = compilePreparedResponses(this.service.world, {
         actorId,
+        causeIds: [...decisionEvidenceIds],
         evidence: decisionEvidence,
         visible: observed.visibleEntities,
         methods,
@@ -3707,6 +3711,7 @@ export class AiDirector {
         const unseenIds = new Set(unseen.map((entry) => entry.eventId ?? entry.id));
         const urgent =
           (this.thoughtWork.pending(entity.id)?.urgency ?? 0) >= INTAKE_LIMITS.urgent ||
+          preparedResponseResult(world, entity.id, [...unseenIds]) ||
           // First enrollment has no previous change sample. Personally retained,
           // unread danger still qualifies; never infer it from another body's state.
           this.responseInterruptions(entity.id, last?.watermark ?? 0).some((entry) =>
@@ -3715,6 +3720,7 @@ export class AiDirector {
         // Capacity refusal leaves this character's coalesced ticket and evidence
         // untouched. Ordinary aging still orders eligible work in the same queue.
         if (!this.canAdmit(entity.id, urgent)) continue;
+        if (!(await this.execution.primaryAvailable(urgent))) continue;
         const latest = unseen.slice(0, 8);
         // This is a wakeup snapshot, not a queue of memories owed future model calls.
         // docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence

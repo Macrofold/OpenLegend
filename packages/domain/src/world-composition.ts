@@ -29,6 +29,7 @@ import { BASE_THREAT_RESPONSE_PROFILE } from './worlds/base/threat-response-prof
 import {
   basePreparedThreatResponses,
   basePreparedThreatOpportunity,
+  basePreparedThreatResult,
 } from './worlds/base/threat-responses.js';
 import type { Awareness } from './experience.js';
 import type { PreparedResponseSituation } from './prepared-responses.js';
@@ -50,10 +51,21 @@ export function preparedResponseOpportunity(
   world: WorldState,
   actorId: string,
   evidence: readonly Awareness[],
+  causeIds: readonly string[],
 ): boolean {
   const profile = preparedResponseProfile(world.cognitionPolicy.preparedResponses);
   if (profile === undefined) throw new Error('The selected response profile is unavailable.');
-  return !!profile && basePreparedThreatOpportunity(world, profile, actorId, evidence);
+  return !!profile && basePreparedThreatOpportunity(world, profile, actorId, evidence, causeIds);
+}
+
+export function preparedResponseResult(
+  world: WorldState,
+  actorId: string,
+  causeIds: readonly string[],
+): boolean {
+  const profile = preparedResponseProfile(world.cognitionPolicy.preparedResponses);
+  if (profile === undefined) throw new Error('The selected response profile is unavailable.');
+  return !!profile && basePreparedThreatResult(world, profile, actorId, causeIds);
 }
 
 /** Explicit application composition: trusted implementations are linked here, never

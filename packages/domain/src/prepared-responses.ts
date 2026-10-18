@@ -52,6 +52,8 @@ export interface PreparedResponseMethod {
 }
 export interface PreparedResponseSituation {
   actorId: string;
+  /** Exact initiating event or personal-result identities, never an invented event. */
+  causeIds: readonly string[];
   evidence: readonly Awareness[];
   /** The caller's existing permitted observation, reused rather than rediscovered. */
   visible: readonly Entity[];

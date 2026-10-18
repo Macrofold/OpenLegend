@@ -20,6 +20,33 @@ import type {
 } from '../../prepared-responses.js';
 import type { ResponsePurposeBinding } from '../../action-capabilities.js';
 import type { Awareness } from '../../experience.js';
+import { sameDefinitionPin } from '../../state-owners.js';
+
+/** A completed selected response is a new choice boundary even when it produces
+ * private action memory instead of public awareness. It is priority, not new harm
+ * or a reason to interrupt another already-running decision. */
+export function basePreparedThreatResult(
+  world: WorldState,
+  profile: PreparedResponseProfile,
+  actorId: string,
+  causeIds: readonly string[],
+): boolean {
+  const resultId = entityGet(world.entities, actorId)?.actor?.agency.lastResultMemoryId;
+  if (!resultId || !causeIds.includes(resultId)) return false;
+  const entry = world.actionExperience.occurrences[actorId]?.find(
+    (record) => record.resultMemoryId === resultId,
+  );
+  const forgotten = world.experience?.forgotten[actorId] ?? [];
+  return !!(
+    entry &&
+    entry.status !== 'running' &&
+    !entry.revoked &&
+    !forgotten.includes(resultId) &&
+    !forgotten.includes(entry.id) &&
+    entry.command.chosenPurpose &&
+    sameDefinitionPin(entry.command.chosenPurpose.definition, definitionPin(profile))
+  );
+}
 
 /** Select a deliberation strategy from personal causes/active commitments before
  * preparing its physical repertoire. Old encounter history alone is not a new wake. */
@@ -28,9 +55,11 @@ export function basePreparedThreatOpportunity(
   profile: PreparedResponseProfile,
   actorId: string,
   evidence: readonly Awareness[],
+  causeIds: readonly string[],
 ): boolean {
   const actor = entityGet(world.entities, actorId)?.actor;
   if (!actor?.alive) return false;
+  if (basePreparedThreatResult(world, profile, actorId, causeIds)) return true;
   if (
     evidence.some(
       (entry) =>
@@ -545,7 +574,13 @@ export function basePreparedThreatResponses(
             'No currently supplied native means supports this exact purpose and participants.',
         });
     }
-  const eligible = basePreparedThreatOpportunity(world, profile, actor.id, input.evidence);
+  const eligible = basePreparedThreatOpportunity(
+    world,
+    profile,
+    actor.id,
+    input.evidence,
+    input.causeIds,
+  );
   const subjectDescriptions = Object.fromEntries(
     [
       ...new Set([

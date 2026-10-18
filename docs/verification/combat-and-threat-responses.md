@@ -495,3 +495,43 @@ the existing externalization/large-chunk warnings.
 No additional paid comparison or baseline has run. Additional Jev cost is **$0**;
 cumulative provider-reported estimates remain **$0.116294**, with the same one
 uncertain Jev reservation and **$1.75** unpriced other-provider commitments above.
+
+## Frozen question comparison and result intake — October 18, 2026
+
+One declared frozen-input comparison reused the first failed live case's exact
+post-interpretation situation and all 338 stage-two alternatives. It uniformly
+put the purpose label and first action sentence in each question, retaining the
+full unchanged method facts in shared context. No goal, personality, feeling,
+action, ordering or expected answer was changed. It again favored evasion:
+preventing the next blow with evasion north scored 0.71. This does not demonstrate
+that clearer questions repair independent counterattack choice. It produced no
+game effects. Private request, result and operational backup are retained in
+`/var/folders/tp/s408jds97dn41bs0p94lfq4h0000gn/T/openlegend-ctr-frozen-question-r0TFrN`.
+Reported model was `typesafe/jev-1.13-20260917`, application latency 798 ms,
+provider execution 562 ms and provider queue 18 ms, with 36,001 input/6,316 output
+tokens. Its provider-reported estimate is **$0.001513**; cumulative task Jev
+estimates are **$0.117807**. Earlier uncertain commitments remain reserved;
+conservative task exposure is approximately **$1.88885**. This is one diagnostic
+comparison, not a new twelve-case qualification or timing guarantee.
+
+A selected physical response's completed private action record now supplies an
+urgent scheduling opportunity and selects the same response strategy even when
+there is no new public-awareness row. It uses the actual latest result's exact
+owner, selected profile pin and surviving evidence; it creates no new hostile
+event and cannot interrupt an already-running decision as a fresh blow. The
+connected native scenario passes for the actual strike result, result-only
+selection, omitted cause/profile, another actor and forgetting. Occupied provider
+leases are checked before acknowledging intake or marking an opportunity
+attempted; the same scenario confirms saturation preserves pending danger.
+TypeScript and the connected scenario pass. Complete meaningful subscriptions,
+native animal behavior and live acceptance remain open.
+
+The next fixed twelve-case sample retains the same seeds, activities, equipment,
+ordinary scheduling and 900-game-second window on the repaired build. This is a
+declared changed-build qualification, retaining the original 0/12 sample, not a
+reroll of the same build. It has a **$3.50 aggregate local ceiling** inside the
+shared $10 task ceiling, counting prior exposure separately. This covers up to
+twelve observed $0.25 ordinary-generation commitments plus bounded judgments;
+actual reservations remain under the canonical owner and shared private task
+ledger. A detected strike after the observation boundary cannot pass. No second
+sample has run at this preparation checkpoint.

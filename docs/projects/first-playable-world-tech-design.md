@@ -230,6 +230,10 @@ This scheduling change affects approximately 150 logic lines across director,
 execution and delayed-attempt fencing. Required checks cover ordinary plus urgent,
 two urgent actors, exact cancellation, no third slot, uncertain execution recovery,
 and both planned stages within the original lifetime with no automatic third call.
+Selected physical-action results now retain urgent review without inventing new
+public awareness or hostility; provider saturation leaves the pending opportunity
+unacknowledged. A frozen rendering-only comparison still favored evasion. Ada's
+identity remains unchanged while these concrete scheduling causes are repaired.
 Remaining combat repertoire, meaningful subscriptions, animals, controls and full
 qualification precede speech and all later agreed phases. The phase trackers
 remain the detailed incomplete-work owners.
