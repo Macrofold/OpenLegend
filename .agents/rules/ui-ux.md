@@ -1,6 +1,6 @@
 # UI/UX rules for every frontend task
 
-For UI/UX design, implementation or review, and frontend code changes including new files, read this short rule once per task, then only matching detail below. Reuse current loaded context. Backend-only work or a prose mention of React does not trigger the handbook. Guidance is not authorization to implement future features.
+For UI/UX design, implementation or review, and frontend code changes including new files, read this short rule once per task, then only matching detail below. Reuse current loaded context. Backend work that affects neither player-facing text nor another UI contract does not trigger the handbook; neither does a prose mention of React. Guidance is not authorization to implement future features.
 
 ## Essential rules
 
@@ -15,6 +15,8 @@ For UI/UX design, implementation or review, and frontend code changes including 
 9. **Show truthful, recoverable states.** Distinguish empty, filtered-empty, loading, unavailable, stale, failed and completed. Same-owner refresh, pause and reconnect preserve readable content, layout, selection and scroll while disabling stale commands; real permission/ownership loss clears protected facts. Do not replace a populated view with a loading screen or change its navigation shape. Reject stale async results. Preserve drafts and show actual receipts for consequential writes. Unknown is not zero. Use the shared [500 ms visual loading delay](../../docs/ui-ux/system-feedback.md#every-operation-has-a-readable-state), stable control labels and immediate submission guards. A loading animation is not proof of progress; a confidence percentage needs evidence.
 10. **Preserve authority and privacy.** Search, hover, comparison and inspection use permitted projections only. Proposal, approval and execution are distinct. Classify persistence: sharable navigation may belong in a URL; private drafts, hidden facts and credentials do not. Convenience does not authorize new storage, permissions or spending.
 11. **Verify the changed task.** Exercise ordinary and relevant failure/cancellation behavior with interaction and visual inspection when available; inspect other callers of shared components. Follow [verification policy](verification.md), not a new blanket test-writing requirement. Report unrun browser, assistive-technology and native agent-dispatch checks honestly.
+
+For visible or spoken wording, read [Player-facing language](player-facing-language.md) before creating, changing or reviewing it, including content supplied by worlds, servers or models.
 
 ## Read only the matching detail
 
