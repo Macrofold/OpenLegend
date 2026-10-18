@@ -49,7 +49,9 @@ const CHARACTERLESS_ROUTES = new Set([
   'POST /api/maintenance/ready',
 ]);
 export const characterlessRoute = (method: string | undefined, path: string) =>
-  CHARACTERLESS_ROUTES.has(`${method} ${path}`);
+  CHARACTERLESS_ROUTES.has(`${method} ${path}`) ||
+  (method === 'POST' &&
+    (path === '/api/assets/install' || path === '/api/assets/selection-result'));
 /** Ordinary gameplay mutations stop while maintenance holds the world. Creators keep the
  * existing paused-world editing; any job they start waits and is fenced at Ready. */
 const MAINTENANCE_GAMEPLAY = new Set([
@@ -172,6 +174,10 @@ export class OperationsRoutes {
       },
       maintenance: this.service.maintenanceNotice,
     };
+    if (view.checkpoint) {
+      view.presentationRelease = await this.service.presentationReleaseFor(scope);
+      view.presentationReleaseRevision = this.service.presentationReleaseRevision;
+    }
     if (capabilities.includes('spectate')) {
       if (this.overview?.version !== this.service.version)
         this.overview = { version: this.service.version, value: worldOverview(world) };

@@ -1,0 +1,112 @@
+{
+  "recordedAt": "2026-10-17T00:52:56.930582+00:00",
+  "baselineCommit": "c30bf2758",
+  "note": "Actual exported study captures. Before/after settings and rejected candidates are described in README.md.",
+  "files": [
+    {
+      "file": "after-bird-close.png",
+      "bytes": 16789,
+      "sha256": "996d6c07736240c78707e200878560c06aff46eea01df72d573165f65776763d"
+    },
+    {
+      "file": "after-camp-day.png",
+      "bytes": 767471,
+      "sha256": "0aeb281bf7461c8d9dbb3df09b0343fa0b9c2beaba19bb6d0432de093dadd585"
+    },
+    {
+      "file": "after-camp-dusk.png",
+      "bytes": 461656,
+      "sha256": "cc532a5deea51f2d624c7ac875c6ba9977d79f7236f4db8d5ee2eab2c991d3b3"
+    },
+    {
+      "file": "after-camp-low-sun.png",
+      "bytes": 627922,
+      "sha256": "8443e377c7d3f6c9b0c1e2998aa7c4c7604d3815a987e8d722abaeadaacc3d84"
+    },
+    {
+      "file": "before-bear.png",
+      "bytes": 23365,
+      "sha256": "87aedbcd9eef2414f29635dcc8af6710af5c788b6c112d7c0822f6ec9a66d082"
+    },
+    {
+      "file": "before-bird.png",
+      "bytes": 11404,
+      "sha256": "f7d86c75ed5d3d08ac922b17433b30dcf83640737552d006b4c550c400ecf8f1"
+    },
+    {
+      "file": "before-camp-day.png",
+      "bytes": 736871,
+      "sha256": "a919e4e0a7e2b1e302f534b9ac424bd4be45aa83dbdf5831a8307df5360e9113"
+    },
+    {
+      "file": "before-camp-dusk.png",
+      "bytes": 542959,
+      "sha256": "1755e7becd9294a743276f30999b819ca628fd4176d18759d82cafad1348ac59"
+    },
+    {
+      "file": "bird-gameplay-size.png",
+      "bytes": 10607,
+      "sha256": "ccc95a95e0bc90ef2264956327b5496674fb8ee9f22ce449451e71fc7179c50b"
+    },
+    {
+      "file": "bird-rotation.webm",
+      "bytes": 360989,
+      "sha256": "4f961957f4c6513a917a95377ab78f03444ad752108bd709479d4ae00dd0376f"
+    },
+    {
+      "file": "boulder-three-finishes-first.png",
+      "bytes": 64917,
+      "sha256": "d9d16f5b6fa3271ff59877c4b2d6c8b1e2edebb1106a4320a62b6c48545bf1e3"
+    },
+    {
+      "file": "boulder-three-finishes.png",
+      "bytes": 63803,
+      "sha256": "f59a9244e16a8c65c937f38f37c06e8fe3835f56b45687abf78b016dda4a89d5"
+    },
+    {
+      "file": "camp-motion.webm",
+      "bytes": 2469010,
+      "sha256": "a49de95f98ad01dc3fefb87ede158b49f5062ec9a4509d5be6fd29a57f0773d3"
+    },
+    {
+      "file": "chest-fine-density.png",
+      "bytes": 124362,
+      "sha256": "6a3470567045251f43a1ce0d7169f651507804f1ddd82eb0ad83dbae47ea50e6"
+    },
+    {
+      "file": "chest-shared-density.png",
+      "bytes": 26815,
+      "sha256": "9dd96e17116aeedf670b2713d5a7cc169045bb11ba8383ff487f9af2bdad4e70"
+    },
+    {
+      "file": "chest-source-control.png",
+      "bytes": 126162,
+      "sha256": "5713acbdf24c51bfc48cfb0d91d3af8b2e7903296fe18c3a43efa72619c76602"
+    },
+    {
+      "file": "chest-three-finishes.png",
+      "bytes": 287663,
+      "sha256": "026057ee9bf1c176921b0e694e581bafd34987d1c8f207b396b6fca604e561a5"
+    },
+    {
+      "file": "dusk-first-too-dark.png",
+      "bytes": 78310,
+      "sha256": "6a6eeb5d7911a92295c812413c8f9b676da32ad7c2cb90d1ed241bb711891f39"
+    },
+    {
+      "file": "fallen-log-three-finishes.png",
+      "bytes": 29109,
+      "sha256": "43e50d4ede46b4d929d0be44b8a9614cacd57439b16aa601a9f79b54c15c1b75"
+    },
+    {
+      "file": "fern-three-finishes.png",
+      "bytes": 112313,
+      "sha256": "3d0f4977df9a1c672e3b6ecebd4add6d4c05701f18d5ea95c893c93601d07faa"
+    },
+    {
+      "file": "lookout-dusk.png",
+      "bytes": 543105,
+      "sha256": "1a34b081f8886a0abbd1995bd323b535b01055b1915b55dd9de588a1a3d75159"
+    }
+  ]
+}

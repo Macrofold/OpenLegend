@@ -12,7 +12,7 @@ FFXIV is useful for persistent social chat, equipment context, spatial navigatio
 
 ## FFXIV-01 — Full gamepad HUD: keep the world legible
 
-![FFXIV gamepad HUD with world at center, chat lower left, cross hotbar below and objectives at right](../screenshots/ffxiv/01-hud-gamepad.jpg)
+![FFXIV gamepad HUD with world at center, chat lower left, cross hotbar below and objectives at right](https://assets.openlegend.ai/studies/public/blobs/sha256/36/36b931bbace5146f575556b468fc7b0690484edc162cf5ba95abfc36d98ae34a)
 
 _Source: [Square Enix UI Guide](https://na.finalfantasyxiv.com/uiguide/), © Square Enix. Full screenshot; client platform and build unspecified._
 
@@ -26,7 +26,7 @@ _Source: [Square Enix UI Guide](https://na.finalfantasyxiv.com/uiguide/), © Squ
 
 ## FFXIV-02 — Inventory presentation can flatten carried storage
 
-![FFXIV normal, expanded and open-all inventory layouts](../screenshots/ffxiv/02-inventory-layouts.jpg)
+![FFXIV normal, expanded and open-all inventory layouts](https://assets.openlegend.ai/studies/public/blobs/sha256/b0/b0b496f1555d7446179ccad7d705bad421d15377bc0c3e00693b92f6c554ba3f)
 
 _Source: [How can I view more inventory items at once?](https://na.finalfantasyxiv.com/uiguide/equipment/equipment-bag/setting_itemsort.html), © Square Enix. Official comparison of three UI captures, counted as one image._
 
@@ -40,7 +40,7 @@ _Source: [How can I view more inventory items at once?](https://na.finalfantasyx
 
 ## FFXIV-03 — A channel menu changes the audience, not the task object
 
-![FFXIV chat audience menu attached to the chat composer](../screenshots/ffxiv/03-chat-audience.jpg)
+![FFXIV chat audience menu attached to the chat composer](https://assets.openlegend.ai/studies/public/blobs/sha256/3c/3c87f1e2841f1b33414994a7ee52d6a0cf7d7fc390c1d40b8dc7f3ff6017ce04)
 
 _Source: [Using Chat](https://na.finalfantasyxiv.com/uiguide/communication/communication-chat/chat_how_to.html), © Square Enix. Publisher-cropped screenshot with its own callout._
 
@@ -54,7 +54,7 @@ _Source: [Using Chat](https://na.finalfantasyxiv.com/uiguide/communication/commu
 
 ## FFXIV-04 — The item is the starting point for secondary commands
 
-![FFXIV armoury item context menu with Equip, comparison, preview and Link](../screenshots/ffxiv/04-item-context-menu.jpg)
+![FFXIV armoury item context menu with Equip, comparison, preview and Link](https://assets.openlegend.ai/studies/public/blobs/sha256/94/94e2f233eaa7d9c9cdc900c59b215c6b33396ec240459545caa487bc88dd879a)
 
 _Source: [Can I share item information via chat?](https://na.finalfantasyxiv.com/uiguide/communication/communication-chat/chat_iteminfo.html), © Square Enix. Publisher-cropped screenshot; lower menu content is cut off in the source._
 
@@ -80,7 +80,7 @@ _Source: [Can I share item information via chat?](https://na.finalfantasyxiv.com
 
 ## FFXIV-05 — A recipe fills in its own requirements
 
-![FFXIV crafting log showing recipe list, selected Book of Silver, ingredients and Synthesize](../screenshots/ffxiv/05-crafting-log.jpg)
+![FFXIV crafting log showing recipe list, selected Book of Silver, ingredients and Synthesize](https://assets.openlegend.ai/studies/public/blobs/sha256/01/01d6fb9a469364196b16359debf10bbcd7757d60bc637926bde6fcdf9622e4e0)
 
 _Source: [Official Alchemist crafting guide](https://na.finalfantasyxiv.com/crafting_gathering_guide/alchemist/), © Square Enix. Original 400 × 290 guide crop, retained without invented detail._
 
@@ -94,7 +94,7 @@ _Source: [Official Alchemist crafting guide](https://na.finalfantasyxiv.com/craf
 
 ## FFXIV-06 — Transcript tabs are filters with persistent meaning
 
-![FFXIV custom fourth log tab alongside General, Battle and Event](../screenshots/ffxiv/06-custom-log-tab.jpg)
+![FFXIV custom fourth log tab alongside General, Battle and Event](https://assets.openlegend.ai/studies/public/blobs/sha256/11/11d85c561bb3f0991d9718719d09934b55f1d97b9dfa22752749c37e86d38957)
 
 _Source: [Creating Your Own Custom Chat Log Tabs](https://na.finalfantasyxiv.com/uiguide/communication/communication-chat/chat_owntab.html), © Square Enix. Cropped UI capture._
 
@@ -106,7 +106,7 @@ _Source: [Creating Your Own Custom Chat Log Tabs](https://na.finalfantasyxiv.com
 
 ## FFXIV-07 — A map is a reference surface with an explicit persistence control
 
-![FFXIV Limsa Lominsa map with named exits, coordinates, zoom controls and publisher-highlighted padlock](../screenshots/ffxiv/07-map-lock.jpg)
+![FFXIV Limsa Lominsa map with named exits, coordinates, zoom controls and publisher-highlighted padlock](https://assets.openlegend.ai/studies/public/blobs/sha256/42/425ef9d29368d0ded62773fafff05d7d6295e2c601aeb1c41c5fd79d88df1daa)
 
 _Source: [How do I keep the map from closing?](https://na.finalfantasyxiv.com/uiguide/know/know-hud/hud_map_lock.html), © Square Enix. Original publisher crop with its own magnified lock callout; keyboard/mouse guide, capture build unspecified._
 
@@ -122,7 +122,7 @@ _Source: [How do I keep the map from closing?](https://na.finalfantasyxiv.com/ui
 
 ## FFXIV-08 — Separate the selected subject, secondary attention and current action
 
-![FFXIV combat HUD annotated by the publisher for target, target bar, focus target, enmity list and casting progress](../screenshots/ffxiv/08-combat-hud.jpg)
+![FFXIV combat HUD annotated by the publisher for target, target bar, focus target, enmity list and casting progress](https://assets.openlegend.ai/studies/public/blobs/sha256/46/46f9acbbe8cb72c1560f43d33baa230b2553c61f71cfbcc44ee8a41d75bcccc4)
 
 _Source: [HUD Overview](https://na.finalfantasyxiv.com/uiguide/know/know-hud/hud-name.html), © Square Enix. Full keyboard/mouse capture, original publisher annotations; build unspecified._
 

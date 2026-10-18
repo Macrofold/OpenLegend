@@ -25,6 +25,8 @@ import {
 } from './authority.js';
 import { InviteRepository } from './invites.js';
 import { MaintenanceRepository } from './maintenance.js';
+import { AssetRepository } from './asset-repository.js';
+import { assertAssetBinding, type AssetRevisionReference } from '@open-legend/assets';
 import {
   compactHistory,
   compactObjectHistory,
@@ -135,6 +137,9 @@ export interface SqlDatabase {
 
 export interface SavedWorld {
   world: WorldState;
+  /** Exact installed presentation content. Absent means bootstrap-only depiction. */
+  presentationRelease?: AssetRevisionReference;
+  presentationReleaseRevision?: number;
   speed: number;
   manuallyPaused: boolean;
   milestones?: Record<string, boolean>;
@@ -295,6 +300,7 @@ export interface GameRepository extends WorldStore {
   saves?: GameSaves;
   commands?: CommandReceipts;
   authority?: AuthorityRepository;
+  assets?: AssetRepository;
   vectors?: VectorStore;
   records?: WorldRecords;
   memories?: MemoryRepository;
@@ -555,6 +561,7 @@ export class SqlGameRepository implements GameRepository {
 
   readonly history: HistoryRepository;
   readonly saves: GameSaves;
+  readonly assets: AssetRepository;
   constructor(
     dataDirectory: string,
     database: SqlDatabase,
@@ -589,6 +596,7 @@ export class SqlGameRepository implements GameRepository {
     this.authority = new AuthorityRepository(database);
     this.invites = new InviteRepository(this.db);
     this.maintenance = new MaintenanceRepository(this.db);
+    this.assets = new AssetRepository(this.db);
     this.creationTargets = new CreationTargetRepository(this.db);
     this.journal = new WorldJournal(
       database,
@@ -676,6 +684,7 @@ export class SqlGameRepository implements GameRepository {
       await this.saves.initialize(!this.initialization.preserveSaveStages);
       await this.commands.initialize();
       await this.authority.initialize();
+      await this.assets.initialize();
       await this.invites.initialize();
       await this.maintenance.initialize();
       await this.creationTargets.initialize();
@@ -814,6 +823,7 @@ export class SqlGameRepository implements GameRepository {
       const state = canonical.state;
       // These independently reconstructed values share one database cut. Heavy
       // synchronous validation needs no SQL and must not occupy its reader lane.
+      assertAssetBinding(state.presentationRelease, state.presentationReleaseRevision);
       validateCurrentWorldState(state.world);
       if (historyCount !== (state.world.archivedEventCount ?? 0) + state.world.events.length)
         throw new Error(

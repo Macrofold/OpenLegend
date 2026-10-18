@@ -27,7 +27,7 @@ The historical trading design provides a useful qualification. In a developer in
 
 ### MC01 — Creative/category inventory with a carried-item area
 
-![Minecraft Bedrock inventory with Nature catalog, equipment, crafting grid and controller prompts](../screenshots/minecraft/01-personal-inventory.jpg)
+![Minecraft Bedrock inventory with Nature catalog, equipment, crafting grid and controller prompts](https://assets.openlegend.ai/studies/public/blobs/sha256/b2/b23d00991bdf110a1bdcad789e1d1721e51ce10a56cb73d97da131c27da17517)
 
 **Observed layout and controls.** This official image has a left-hand **Nature** catalog, category tabs and search, with an avatar/equipment area, 2×2 crafting grid, output slot, carried inventory and hotbar on the right. It is a creative/category state, not a plain Java survival inventory. The footer explicitly shows **Take**, **Exit**, **Take Half**, and **Quick Move** with controller glyphs; shoulder-button hints accompany categories. [M3]
 
@@ -39,7 +39,7 @@ The historical trading design provides a useful qualification. In a developer in
 
 ### MC02 — Recipe book and an unavailable result
 
-![Minecraft recipe book with red unavailable entries and a crafting preview](../screenshots/minecraft/02-recipe-book.jpg)
+![Minecraft recipe book with red unavailable entries and a crafting preview](https://assets.openlegend.ai/studies/public/blobs/sha256/0a/0ac112883eaec8dbff1c7e20dcf9c6381d7173a0990d1ec3854fd249f5f37982)
 
 **Observed layout and controls.** The left pane is **Construction**. Many recipe cells use a red background. A filter control is selected and the footer says **Show Craftable**. The right pane contains a small crafting preview and a red output cell; most carried slots are empty. The stable inventory and hotbar remain in the same positions as MC01. [M3]
 
@@ -51,7 +51,7 @@ The historical trading design provides a useful qualification. In a developer in
 
 ### MC03 — A concrete recipe: planks become a crafting table
 
-![Minecraft four-plank crafting-table recipe and output](../screenshots/minecraft/03-table-recipe.jpg)
+![Minecraft four-plank crafting-table recipe and output](https://assets.openlegend.ai/studies/public/blobs/sha256/6a/6a66e9a96b486b57f67687aebbd0964b4883434b66969282d854902f92e088fb)
 
 **Observed layout and controls.** Four planks occupy the 2×2 input grid, an arrow points to a crafting table output, and the footer includes **Clear Recipe** and **Exit**. Carried materials remain visible below. This is a distinct recipe state, not a second crop of MC02. [M3]
 
@@ -63,7 +63,7 @@ The historical trading design provides a useful qualification. In a developer in
 
 ### MC04 — Large chest: two sets of cells, one object context
 
-![Minecraft Large Chest with 54 chest slots above the player's inventory and hotbar](../screenshots/minecraft/04-large-chest.jpg)
+![Minecraft Large Chest with 54 chest slots above the player's inventory and hotbar](https://assets.openlegend.ai/studies/public/blobs/sha256/33/33ce631ee306e2dfa2d429e7cafec66dafa1c1100d583fabcaf3aee3fe3e18ee)
 
 **Observed layout and controls.** The upper **Large Chest** area has six rows of nine cells. A lower **Inventory** area has three rows of nine, followed by a separated hotbar. The world is darkened behind the panel. No destination dropdown, nearby-container list, sort button, or take-all button is visible in this frame. [M5]
 
@@ -75,7 +75,7 @@ The historical trading design provides a useful qualification. In a developer in
 
 ### MC05 — Furnace: the station determines the interaction
 
-![Minecraft Furnace input, fuel and output slots above player inventory](../screenshots/minecraft/05-furnace.jpg)
+![Minecraft Furnace input, fuel and output slots above player inventory](https://assets.openlegend.ai/studies/public/blobs/sha256/67/67c255b83666f6b1def2732e20ca695dc0053380059cabdbf0e94d9b6a59457e)
 
 **Observed layout and controls.** A **Furnace** heading sits over an input slot, fuel slot, flame indicator, process arrow, and output slot. Player inventory and hotbar sit beneath. The cursor is holding a coal stack. This historical tutorial frame has no explicit labels on the input and fuel cells. [M6]
 
@@ -87,7 +87,7 @@ The historical trading design provides a useful qualification. In a developer in
 
 ### MC06 — Villager trade: offers next to payment and result
 
-![Minecraft Farmer trade list with payment slots, result slot and inventory](../screenshots/minecraft/06-villager-trade.jpg)
+![Minecraft Farmer trade list with payment slots, result slot and inventory](https://assets.openlegend.ai/studies/public/blobs/sha256/e5/e5779edefa8836dce401147001f25fb37974e4bd813e3e0605daa059c29b9fd2)
 
 **Observed layout and controls.** **Trades** appear on the left. **Farmer – Novice** and a progress bar identify the merchant role on the right. The selected offer exchanges a crop stack for an emerald; another offers bread for an emerald. Two payment cells lead to a result cell, and an **Emerald** hover label is visible. Carried inventory is below. [M7]
 
@@ -138,7 +138,7 @@ Reviewed **2026-10-04**. These two additional official captures extend the study
 
 ### MC07 — Survival information at the edge of the world view
 
-![Minecraft underwater view with hotbar, health, hunger and oxygen](../screenshots/minecraft/07-underwater-hud.jpg)
+![Minecraft underwater view with hotbar, health, hunger and oxygen](https://assets.openlegend.ai/studies/public/blobs/sha256/fe/fe5ca1773b4947eb3eb4f5f17301c60f2d46d1ba0a7db5a5c821ff652e762806)
 
 **Observed.** The crosshair is centered; the bottom nine-cell hotbar has an unmistakable selected outline, stack counts and tool durability marks. Hearts and hunger occupy stable rows directly above it. Blue oxygen bubbles add a row over hunger while the character is submerged. The selected empty cell also agrees with the empty hand on screen. The screenshot shows no activity dialog and leaves the swimming direction visible.
 
@@ -150,7 +150,7 @@ Reviewed **2026-10-04**. These two additional official captures extend the study
 
 ### MC08 — A map is an object used for orientation
 
-![Minecraft held map with a player marker and surrounding village still visible](../screenshots/minecraft/08-held-map.jpg)
+![Minecraft held map with a player marker and surrounding village still visible](https://assets.openlegend.ai/studies/public/blobs/sha256/37/3795e459b0ca81bb17e15aaca1f2f68df3d827000a1eeff9845a594c83502a1f)
 
 **Observed.** A parchment map fills most of the center while the village remains visible around its edges. A white/black marker sits near the mapped paths. Two map items are visible in the hotbar, one selected. There are no travel, destination-dropdown or submit controls. The missing survival rows do not establish a mode by themselves; the exact capture mode is unverified.
 

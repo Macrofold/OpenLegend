@@ -8,6 +8,10 @@ Start with [first-playable delivery and validation (FPV01–FPV09)](first-playab
 
 [Commercial offers](commercial-offers.md) and the [initial-offer decision brief](../projects/initial-commercial-offer-decision-brief.md) own browser-feasible offer comparison and adoption. Payment is not a prerequisite for ordinary game learning.
 
+## Game production methods
+
+[Production workflows](../production-workflows/README.md) connect ideas to editable art, working assets, animation, scenes, interfaces, character situations and coordinated feedback. The [research collection](../../archive/02-research/ai-game-development/README.md) explains the evidence and OpenLegend-specific creative opportunities; [remaining preparation](needs-design.md#ai-assisted-game-production-research-and-design-integration) maps choices into existing owners. Art studies, V3D/INV, CE, UIUX and playability work retain their task and acceptance records.
+
 ## Combat and immediate threat responses
 
 [Combat and threat responses (CTR01–CTR10)](combat-and-threat-responses.md) owns delivery of the [feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire scope](../projects/combat-and-threat-responses-repertoire-review.md) and [limits](../limits/combat-and-threat-responses.md). Selected ND11/ND13 design is complete; runtime and independent acceptance remain open in CTR.
@@ -104,6 +108,8 @@ Reuse the [shelter technical design](../projects/editable-shelters-tech-design.m
 [UI/UX qualification](ui-ux.md) and the [interaction handbook](../ui-ux/README.md) govern usable controls. [Spatial work](spatial-world.md), [world presentation](../world-presentation.md), [Recast evidence](../verification/recast-integration.md) and [deferred regression checks](TODO.md#recast-and-presentation-regression-todos) retain spatial/visual delivery.
 
 [Progressive 3D pixel art](3d-pixel-art.md) links the [feature specification](../projects/3d-pixel-art-feature-spec.md), [technical design](../projects/3d-pixel-art-tech-design.md) and [limits](../limits/3d-pixel-art.md). [Art direction](art-direction.md) and the [mercenary study](art/mercenary.md) own study evidence, separately from broader production qualification.
+
+[Game asset storage and study delivery (AS01–AS08)](game-asset-storage.md) owns external assets, exact publication, selective local caching and recovery. AS01–AS06 are complete; AS07 retains installation qualification and AS08 retains separately authorized history reclamation. [Specifications and design](../projects/game-asset-storage-feature-spec.md), [limits](../limits/game-asset-storage.md) and [verification](../verification/game-asset-storage.md) distinguish delivered behavior from remaining acceptance.
 
 Useful entry points: [gameplay availability](../../archive/05-project/implementation-status.md#gameplay-availability), [remaining foundations](remaining-foundational-work.md), [foundations 1–5](../projects/completed/foundations-1-5.md), [multiplayer](multiplayer.md) and [production deployment](production-deployment.md).
 

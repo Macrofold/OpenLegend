@@ -1,16 +1,18 @@
 # Production deployment — feature specification
 
-| Status      | Current progress                                                                                                        | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The hosting proposal and playbook are prepared; deployment, provider qualification and capacity acceptance remain open. | 2026-10-16   |
+| Status      | Current progress                                                                                              | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Asset storage and delivery are deployed; hosted-game implementation and production qualification remain open. | 2026-10-17   |
 
-**Status: researched proposal, updated 2 October 2026. Auth0 is Mike's selected authentication provider; the other platform choices below are recommendations, not deployed infrastructure.** This package authorizes no runtime change, provisioning, purchase, migration, or paid execution.
+**Status: hosting proposal with implemented asset storage.** Auth0 is selected by Mike. S3/CloudFront asset publication, delivery and recovery are implemented under [AS](../maintainers/game-asset-storage.md); the remaining hosting platform choices and production qualification remain proposed. These documents grant no additional runtime change, provisioning, purchase, migration or paid execution authority.
+
+The [game asset-storage specification](game-asset-storage-feature-spec.md) owns production/development asset delivery, reusable world/engine content, source libraries, preserved studies and exact documentary URLs. The production release consumes that design: players fetch qualified permitted assets, developers fetch selected local dependencies, and substantial source/study media stays outside Git and player builds. [AS work](../maintainers/game-asset-storage.md) supplies the shared implementation; PD05 retains hosted-game acceptance.
 
 ## Purpose
 
 Deliver the existing browser game to real players on a dependable platform, then expand to many persistent worlds and regional simulations without replacing the engine or making every subsystem distributed immediately. Start with a recoverable, invitation-only world. Qualify the existing first-release workload before advertising public capacity.
 
-The [technical design](production-deployment-tech-design.md) contains the hosting comparison, concrete stack, asset pipeline, inference economics, research reconciliation, and scale path. The [implementation playbook](production-deployment-playbook.md) specifies packaging, deployment commands, CI/CD, asset publication and recovery procedures; its proposed infrastructure and operator tools are not implemented by these documents. The [delivery checklist](../maintainers/production-deployment.md) is the work entry point. This specification owns the player/operator outcome, not a second simulation, authentication, or persistence contract.
+The [technical design](production-deployment-tech-design.md) contains the hosting comparison, concrete stack, asset pipeline, inference economics, research reconciliation, and scale path. The [implementation playbook](production-deployment-playbook.md) specifies packaging, deployment commands, CI/CD, asset publication and recovery procedures; its game-hosting infrastructure and release coordinator remain proposed, while asset operations use the implemented [canonical workflow](../asset-workflow.md). The [delivery checklist](../maintainers/production-deployment.md) is the work entry point. This specification owns the player/operator outcome, not a second simulation, authentication, or persistence contract.
 
 ## Required journeys and failure behavior
 
@@ -22,7 +24,7 @@ The [technical design](production-deployment-tech-design.md) contains the hostin
 
 **An NPC/model provider is unavailable.** Supported native actions and existing native plans remain functional. Unavailable dialogue is explicit; neither invented fallback replies nor unapproved paid retries conceal the failure.
 
-**Art improves during play.** Only approved, permitted versions arrive asynchronously. An adequate fallback remains usable. Art does not alter mechanics, and late downloads cannot resurrect removed objects.
+**Art improves during play.** A world owner explicitly selects the permitted artwork release supported by the installed build; its approved files arrive asynchronously. An adequate, still-permitted depiction remains usable if delivery fails. Art does not alter mechanics, and late downloads cannot resurrect removed objects. Runtime generation retains its separate publication and rights gates.
 
 **An operator deploys or restores.** A current-format, fenced handover or announced maintenance interval; coherent recovery of gameplay, required files and content pins; current permissions, privacy restrictions and external accounting are not rewound.
 

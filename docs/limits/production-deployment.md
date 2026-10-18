@@ -1,6 +1,6 @@
 # Production deployment limits and constraints
 
-**Runtime baseline: main `b9a08a05`; research updated 2 October 2026.** This inventory owns discretionary deployment choices, not duplicate gameplay constants. All new choices are **Proposed** except the user's Auth0 selection; none establishes measured capacity. [Design](../projects/production-deployment-tech-design.md), [feature contract](../projects/production-deployment-feature-spec.md), [playbook](../projects/production-deployment-playbook.md), [PD work](../maintainers/production-deployment.md).
+**Hosting research baseline: main `b9a08a05`; research updated 2 October 2026, asset delivery reconciled October 17.** This inventory owns discretionary deployment choices, not duplicate gameplay constants. Broader hosting choices remain **Proposed**; Auth0 is selected and the curated S3/CloudFront asset path is implemented. [AST01–AST08](game-asset-storage.md) owns its configured admission, storage, cache, retention and recovery limits; the [AS report](../verification/game-asset-storage.md) records measured evidence and current cost qualifications. These do not establish general hosted-game capacity. [Design](../projects/production-deployment-tech-design.md), [feature contract](../projects/production-deployment-feature-spec.md), [playbook](../projects/production-deployment-playbook.md), [PD work](../maintainers/production-deployment.md).
 
 ## DEP01 — Initial placement
 
@@ -40,9 +40,9 @@ Existing first/growth targets remain in the production-scale owner. No new lifet
 
 ## DEP07 — Asset access and caching
 
-**Proposed / Medium:** public immutable assets may be cached; restricted assets use authorized short-lived delivery.
+**Implemented curated path / Medium; broader production qualification open:** explicitly public immutable assets may be cached; restricted assets use their authorized delivery route.
 
-Issuing stops on revocation; downloaded bytes cannot be recalled. The playbook's one-year public cache example is not a restricted-asset permission lifetime or permission to delete pinned bytes. Select access lifetime/cache policy per content sensitivity and test takedowns in PD05/PD08. Existing art pipeline limits own decoded size, variants, client budgets and retention pins.
+Issuing stops on revocation; an existing signed URL/cookie can remain valid until its admitted expiry, and a request admitted before expiry may finish. Downloaded bytes cannot be recalled. Select that residual window per content sensitivity before enabling delivery. Content requiring current permission on every request needs authorization before cache hits and a protected origin; do not enable it through ordinary signed links alone. Invalidation clears CDN copies but does not revoke origin access by itself. The implemented controlled withdrawal removes the selected current origin copies and invalidates their known delivery paths; separately permitted uses and retained recovery versions keep their own authority. The [asset delivery contract](../projects/game-asset-storage-tech-design.md#7-environments-local-cache-and-offline-use) owns enforcement and failure behavior; PD05/PD08 qualify both existing credentials after revocation and blocked direct access. The implemented immutable public cache policy is not a restricted-asset permission lifetime or permission to delete pinned bytes. Existing art pipeline limits own decoded size, variants, client budgets and retention pins.
 
 ## DEP08 — Unattended-world time
 
@@ -54,7 +54,7 @@ Always-on hosting alone does not implement ongoing fictional life. PD10 requires
 
 **Proposed / Safe:** operator-selected service objectives and recovery budgets before release.
 
-No cloud SLA is adopted as the game's achieved uptime, and no universal latency/RPO/RTO number is invented. PD01 sets failure-class objectives; PD06/PD09 must demonstrate them without weakening existing durability/privacy semantics. Whole-database recovery must reconcile current authority, erasure and financial records before reopening.
+No cloud SLA is adopted as the game's achieved uptime, and no universal latency/RPO/RTO number is invented. PD01 sets failure-class objectives; PD06/PD09 must demonstrate them without weakening existing durability/privacy semantics. Whole-database recovery must reconcile current authority, erasure and financial records before reopening. The [selected asset recovery topology](../projects/game-asset-storage-tech-design.md#2-physical-storage-and-accounts) has separate buckets and roles in one project/Region; its operational recovery evidence does not qualify whole-project or regional disaster recovery.
 
 ## DEP10 — World release policy
 
@@ -66,7 +66,7 @@ Brief world-specific downtime is preferable to conflicting authority. Use a dura
 
 **Proposed / Safe:** maintained, production-qualified dependencies and one declared deployment configuration owner.
 
-Do not adopt unsupported Copilot or depend on Preview Cloud Run instances for the launch world. Reconsider previews after suitable support and workload qualification. CDK consumes recorded release image/count inputs; workflow retries reconcile actual state. Managed host replacement and quota limits are operational constraints, not guaranteed world lifetimes. PD02/PD04/PD11 own qualification and eventual expansion.
+Do not adopt unsupported Copilot or depend on Preview Cloud Run instances for the launch world. Reconsider previews after suitable support and workload qualification. Application CDK consumes recorded release image/count inputs; workflow retries reconcile actual state. Deployed asset resources retain their separate CloudFormation owner and verified output mapping. Managed host replacement and quota limits are operational constraints, not guaranteed world lifetimes. PD02/PD04/PD11 own qualification and eventual expansion.
 
 ## Shared owners
 

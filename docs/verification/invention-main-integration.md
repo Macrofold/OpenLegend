@@ -13,7 +13,7 @@ All runtime scenarios used disposable PostgreSQL 14.17 databases with pgvector 0
 - The actual player browser showed usage moving 75% → 50% → exhausted from synthetic held reservations. Accessible meter values matched the visible text. Creation displayed no money, compute explanation or invention count; an unconfigured request produced a plain-language owner-enablement message. Visual inspection corrected the default meter appearance and flex sizing to use the existing themed track/fill.
 - The owner browser separately disclosed Run charges and shared Worker billing. It reopened a saved conversation, inspected the exact candidate, approved it, applied it and showed the durable applied result. Keyboard approval and Apply retain focus inside the review; Escape closes it and returns to conversation controls. Unsupported authoring kinds were rejected by the real local route. Browser checks cover these desktop paths; they do not qualify every mobile/assistive-device configuration or a live harness.
 
-![Player usage shown without financial terminology in the creation panel](invention-player-usage.png)
+![Player usage shown without financial terminology in the creation panel](https://assets.openlegend.ai/studies/public/blobs/sha256/db/dba306c6e5eed8103f846afc695d38b3e205a5a864c954a9b7f381892b065d77)
 
 ## Checks and review
 

@@ -1,0 +1,211 @@
+{
+  "captured": "2026-10-17",
+  "baseline": "d0606ea48",
+  "files": [
+    {
+      "file": "README.md",
+      "bytes": 3302,
+      "sha256": "4814389cb7c127b0207aa98aa5f097dd7ef070e8b4ee813e93506b52a32a2cf1"
+    },
+    {
+      "file": "comparison.html",
+      "bytes": 16234,
+      "sha256": "f0f5edf5ab31fe8a85dbaf2afd3dba5935fb4f6eca50b4633dea37f4f3c68aab"
+    },
+    {
+      "file": "feedback/deer-head.png",
+      "bytes": 182929,
+      "sha256": "83df273704d90420bdcf255e19c2d9527ac97bbbde8e1f86b93ac417ef405467"
+    },
+    {
+      "file": "feedback/patchy-light.png",
+      "bytes": 577896,
+      "sha256": "6add9d328177f34b64d6d8d5ea2a0aef0475b9216dfbb8c12fa843bd172a3fc9"
+    },
+    {
+      "file": "feedback/repeated-bush.png",
+      "bytes": 167591,
+      "sha256": "54b8361d7e701b542dacd28f4906c7b858052b2fc33bd29cc33bad8c69c6a76a"
+    },
+    {
+      "file": "feedback/stag-motion.png",
+      "bytes": 169127,
+      "sha256": "2be5a6cfaea334adb748a43233849b390d71dbe67a69fe23d51e35ec569e4728"
+    },
+    {
+      "file": "media/deer-run.png",
+      "bytes": 276932,
+      "sha256": "fb0cdba7fe89ab91a810f065219190b6b0c1816711e7f87a53689693a94c0219"
+    },
+    {
+      "file": "media/deer-walk.png",
+      "bytes": 549869,
+      "sha256": "6f1c2bc8382fc365ae33cc843926acc3cd9bdef133b51e72cc00c2e01a6cbeb4"
+    },
+    {
+      "file": "media/doe-final-idle.png",
+      "bytes": 483482,
+      "sha256": "eedada663113016049d8ed7d60295fe24d0df0026b2fb04f36279b2c705f4164"
+    },
+    {
+      "file": "media/doe-side.png",
+      "bytes": 491642,
+      "sha256": "4b34e3452a1004fcc5f106459fcfcd8d5c629002539eab5e53b8a42c1e75e4c6"
+    },
+    {
+      "file": "media/openlegend-asset-field-arrow-compare-day-close-balanced-2026-10-17T05-06-53-627Z.png",
+      "bytes": 19379,
+      "sha256": "8aea1f7ee44192f476ac4a2f0881411994ef564ca3b8d25ed2aafe5c2fa45f3a"
+    },
+    {
+      "file": "media/openlegend-asset-rooted-berries-compare-day-close-balanced-2026-10-17T05-05-12-389Z.png",
+      "bytes": 123436,
+      "sha256": "6b0757c3331f6e6c61b2ce4360ddf855c3bc227dd26603a082943bbc43396afd"
+    },
+    {
+      "file": "media/openlegend-asset-woodland-doe-compare-day-close-balanced-2026-10-17T05-07-23-088Z.png",
+      "bytes": 65961,
+      "sha256": "df2f3aa686cbab13bc6ba004da27f353a20919cef7db4ebc57bd913c1c2784e4"
+    },
+    {
+      "file": "media/openlegend-asset-woodland-doe-compare-day-close-balanced-2026-10-17T05-16-48-937Z.webm",
+      "bytes": 1561960,
+      "sha256": "7116abdb290348de5f460dc6b627c86f08d2b15f4a2374ff32880ca5fa732cbf"
+    },
+    {
+      "file": "media/openlegend-asset-woodland-doe-compare-day-close-balanced-2026-10-17T05-23-00-978Z.webm",
+      "bytes": 659246,
+      "sha256": "9b2a861c118d2f45f694192e1af7fb4dfae4fd1e3488a75efd97692039b4d930"
+    },
+    {
+      "file": "media/openlegend-asset-woodland-doe-selected-day-close-balanced-2026-10-17T04-48-09-531Z.webm",
+      "bytes": 2090558,
+      "sha256": "bd1cb9d943ff7ca85423e9116ab1e4759371dee25c81ede0f3f1a0122a992e50"
+    },
+    {
+      "file": "media/openlegend-asset-woodland-doe-selected-day-close-balanced-2026-10-17T04-58-49-324Z.webm",
+      "bytes": 1100170,
+      "sha256": "c7154b32501454400e2264e05e73e1adb0ba670dd84ce77283c0e293d891ab51"
+    },
+    {
+      "file": "media/openlegend-asset-woodland-stag-compare-day-close-balanced-2026-10-17T05-04-01-985Z.webm",
+      "bytes": 110,
+      "sha256": "34625a59ca017ae414573bcb4a21464514f695d9806955fa676098939005795c"
+    },
+    {
+      "file": "media/openlegend-asset-woodland-stag-compare-day-close-balanced-2026-10-17T05-12-53-629Z.webm",
+      "bytes": 984302,
+      "sha256": "fb49639c65472eb3aa588aac9712156cb9909aacb5d8d2ef6e54e0c83c870b01"
+    },
+    {
+      "file": "media/openlegend-asset-woodland-stag-selected-day-close-balanced-2026-10-17T05-04-17-512Z.webm",
+      "bytes": 678123,
+      "sha256": "440e23103ece9a3ff6034a7b88f07a357386f2db9f94fe3e88cb5ee9969196bc"
+    },
+    {
+      "file": "media/openlegend-asset-woodland-wolf-compare-day-close-balanced-2026-10-17T05-09-57-675Z.webm",
+      "bytes": 505054,
+      "sha256": "c919a8c7cbf3ab5a63709c826fd591483d27c06ec2cf45884e5ae9c81bc8b70d"
+    },
+    {
+      "file": "media/openlegend-asset-woodland-wolf-compare-day-close-balanced-2026-10-17T05-12-11-602Z.webm",
+      "bytes": 1991513,
+      "sha256": "acb883b09f6cf6b8d71e488be565c828f59e80342a73c1662e01d93d03019a2f"
+    },
+    {
+      "file": "media/openlegend-asset-woodland-wolf-selected-day-close-balanced-2026-10-17T05-04-36-397Z.webm",
+      "bytes": 1869218,
+      "sha256": "c0d558c1095ccdccbe69223dfbab37139c08274a04c7216a5245ea6112c10627"
+    },
+    {
+      "file": "media/openlegend-asset-woodland-wolf-selected-day-close-balanced-2026-10-17T05-04-57-271Z.webm",
+      "bytes": 475003,
+      "sha256": "45d1b6e1f525e0579d77ca3e136b024715c87d85f5f4295cda75c2900bbee733"
+    },
+    {
+      "file": "media/openlegend-asset-woodland-wolf-selected-day-close-balanced-2026-10-17T05-25-10-060Z.webm",
+      "bytes": 1904513,
+      "sha256": "e22fbcd608bd914cd06e91c12fd0caafe3024e9bf9ec0c42c6c94c3c276e2090"
+    },
+    {
+      "file": "media/openlegend-camp-day-balanced-survival-natural-natural-banded-fire-metres30-2026-10-17T05-11-37-807Z.png",
+      "bytes": 771975,
+      "sha256": "5de7d8bd467153e507dba955242230c65bc52ce711233d0df4fc7f68cf90eb6b"
+    },
+    {
+      "file": "media/openlegend-camp-day-balanced-survival-natural-natural-diffuse-fire-metres30-2026-10-17T05-11-35-678Z.png",
+      "bytes": 744703,
+      "sha256": "877b27d131ee22495ba03fb7782bc9f496bb64688e7b161118d5957d317dac1c"
+    },
+    {
+      "file": "media/openlegend-camp-day-balanced-survival-natural-natural-diffuse-no-fire-metres30-2026-10-17T05-14-11-654Z.png",
+      "bytes": 711882,
+      "sha256": "ad129c291a473ca8ae76608616e6dd9cb35ff46a26a0634df1a82cc6a3a9a1a3"
+    },
+    {
+      "file": "media/openlegend-camp-day-balanced-survival-natural-natural-metres30-2026-10-17T05-00-05-168Z.png",
+      "bytes": 774287,
+      "sha256": "33ae05c89be5479ac3c91f404a00b15e6a9147c0277c815f5dc997b62e12373a"
+    },
+    {
+      "file": "media/openlegend-camp-day-balanced-survival-natural-natural-metres30-2026-10-17T05-01-50-109Z.png",
+      "bytes": 747692,
+      "sha256": "abe7f5aeaabb09ad29924939b41e48e78528aba4a6f236798d03356b6581ce54"
+    },
+    {
+      "file": "media/openlegend-camp-day-balanced-survival-natural-natural-metres30-2026-10-17T05-05-17-168Z.png",
+      "bytes": 747221,
+      "sha256": "598866f0300190b58dca919792df2e81b1a7d6d90696f3a10856ea57b75b8708"
+    },
+    {
+      "file": "media/openlegend-camp-fire-balanced-survival-natural-natural-diffuse-fire-metres30-2026-10-17T05-14-14-890Z.png",
+      "bytes": 542345,
+      "sha256": "7278b2588f9540235cad292e357a7bb18c979dd86c0cb99483fa2dd2707fc24e"
+    },
+    {
+      "file": "media/openlegend-woodland-day-balanced-survival-natural-natural-diffuse-fire-metres30-2026-10-17T05-15-57-127Z.webm",
+      "bytes": 1345963,
+      "sha256": "f0d6643222243bfa2c73a2e4b4836ad0f697ac9acc9f61e5b59186509daa956d"
+    },
+    {
+      "file": "media/openlegend-woodland-low-balanced-survival-natural-natural-diffuse-fire-metres30-2026-10-17T05-16-35-173Z.png",
+      "bytes": 489686,
+      "sha256": "52c46ef5134d87be3e4c0b36b1017cb8d897c51e2ac304c34ec3a6847d2e1665"
+    },
+    {
+      "file": "media/stag-idle.png",
+      "bytes": 503026,
+      "sha256": "aa2c6f378fd2b598919f5dd91c03acd180c35454eef409a0d67fe7807bc160cb"
+    },
+    {
+      "file": "media/stag-walk.png",
+      "bytes": 533136,
+      "sha256": "125b3e6bbe89999447102179bb13e611222e0a64c89d43caa763057da583d08e"
+    },
+    {
+      "file": "media/wolf-closed-loop.png",
+      "bytes": 808455,
+      "sha256": "321c3acaefba2358fe7b066e656674f92d1990775b044257c95dcbaa4eea26c1"
+    },
+    {
+      "file": "media/wolf-final-idle.png",
+      "bytes": 520392,
+      "sha256": "98f4e397a581442d425391cac69a11b85351bdce9178a27cdb0c982a14311eec"
+    },
+    {
+      "file": "media/wolf-idle.png",
+      "bytes": 305977,
+      "sha256": "f9411610ef8dda5281cb5571fded7b1072538543d54af9ac7260dddf10152fca"
+    },
+    {
+      "file": "media/wolf-walk.png",
+      "bytes": 620575,
+      "sha256": "3e44474657821d91ee5a2731b5e5bcb4928e1bb840ae7aa72d21b6ffcccb336b"
+    },
+    {
+      "file": "media/woodland-motion.png",
+      "bytes": 831317,
+      "sha256": "2ab80279ce5dc82f5d1e0abe9fcfe3642f29030a7ed97b6255243d21dd52c9f2"
+    }
+  ]
+}

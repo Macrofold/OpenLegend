@@ -1,10 +1,11 @@
 import { WORLD_AGENT_TABLES } from './world-agent-store.js';
+import { ASSET_TABLES } from './asset-repository.js';
 import { AUTHORITY_TABLES } from './authority.js';
 import { CREATION_TARGET_TABLES } from './creation-target-contracts.js';
 import { constants } from 'node:fs';
 import { copyFile, mkdir, open, readFile, rename, rm, stat } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { GameSaves, recoveryFile } from './game-saves.js';
 import {
@@ -35,6 +36,7 @@ export const OPERATION_TABLES = [
   'cognition_attempt_links',
   ...WORLD_AGENT_TABLES,
   ...AUTHORITY_TABLES,
+  ...ASSET_TABLES,
   ...CREATION_TARGET_TABLES,
 ];
 // Import/restore consume this same catalog so new external owners cannot silently
@@ -53,6 +55,8 @@ const manifestSchema = z
   })
   .strict();
 export interface OperationalBackup {
+  /** Exact validated package identity for interrupted installation recovery. */
+  identity: string;
   state: SavedWorld;
   tables: Record<string, Record<string, unknown>[]>;
   sourceDirectory?: string;
@@ -231,6 +235,11 @@ export async function readOperationalBackup(
   const metadata = await files.metadata(manifest.operations);
   if (!metadata || metadata.worldId !== manifest.worldId || metadata.format !== 'operations-1')
     throw new Error('Missing backup external authority.');
+  const checkpointMetadata = await files.metadata(manifest.checkpoint);
+  if (!checkpointMetadata) throw new Error('Missing backup gameplay checkpoint.');
+  const identity = createHash('sha256').update(
+    JSON.stringify([manifest, checkpointMetadata.checksum, metadata.checksum]),
+  );
   const tables: OperationalBackup['tables'] = { ...payload.history, ...payload.memory };
   let index = -1;
   for await (const line of files.lines(metadata)) {
@@ -243,7 +252,7 @@ export async function readOperationalBackup(
       if (
         OPERATION_TABLES[index] !== table ||
         !Object.keys(row).length ||
-        Object.keys(row).some((column) => !/^[a-z_]+$/.test(column))
+        Object.keys(row).some((column) => !/^[a-z_][a-z0-9_]*$/.test(column))
       )
         throw new Error('Invalid backup authority row.');
       tables[table]!.push(row);
@@ -258,8 +267,15 @@ export async function readOperationalBackup(
     if (!slot || slot.worldId !== manifest.worldId)
       throw new Error('Backup retained checkpoint missing or foreign.');
     await retained.verify(slot);
+    identity.update(JSON.stringify([id, slot.checksum]));
   }
-  return { state: payload.state, tables, sourceDirectory: directory, saves: manifest.saves };
+  return {
+    identity: identity.digest('hex'),
+    state: payload.state,
+    tables,
+    sourceDirectory: directory,
+    saves: manifest.saves,
+  };
 }
 /** Copy retained slots into the target and return the identities this attempt newly
  * published, so a failed installation can reconcile exactly those (SB18). A copy failure

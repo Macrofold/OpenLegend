@@ -44,7 +44,7 @@ These are primary, feature-specific player accounts. They support the selected l
 
 ### SDV-01 — A normal chest and backpack together
 
-![SDV-01: A fish collection in the upper chest grid and the player's tools in the lower backpack grid](../screenshots/stardew-valley/fish-chest-2022.jpg)
+![SDV-01: A fish collection in the upper chest grid and the player's tools in the lower backpack grid](https://assets.openlegend.ai/studies/public/blobs/sha256/4b/4bb14f00a75375731b3bc77d06f188384af06b952a4fcc8ddec32b931a33ab3c)
 
 **Provenance:** PerfectionWhaleFarm, [original forum post](https://forums.stardewvalley.net/threads/is-silver-quality-legend-possible.13784/), 2022-08-11. Exact patch and platform are not stated for this capture. [Original image](https://forums.stardewvalley.net/attachments/1660262481741-jpeg.11350/).
 
@@ -60,7 +60,7 @@ These are primary, feature-specific player accounts. They support the selected l
 
 ### SDV-02 — A bigger container does not need a different interaction model
 
-![SDV-02: A populated large chest above the unchanged backpack grid on the farm](../screenshots/stardew-valley/chest-1-6.jpg)
+![SDV-02: A populated large chest above the unchanged backpack grid on the farm](https://assets.openlegend.ai/studies/public/blobs/sha256/a2/a2f6e411d9a2c1267aba6610cae1317098191b87cd88fdc7855c4fb07af3dcc0)
 
 **Provenance:** Adir, [original report, post 1,528](https://forums.stardewvalley.net/threads/report-1-6-issues-here.27915/page-77), 2024-04-24; author identifies **1.6.4**. Platform and mod status are unspecified. [Original image](https://forums.stardewvalley.net/attachments/20240424143429_1-jpg.22610/).
 
@@ -76,7 +76,7 @@ These are primary, feature-specific player accounts. They support the selected l
 
 ### SDV-03 — Inventory and equipped items share a compact character view
 
-![SDV-03: Backpack grid, equipped clothing around the character portrait, and a Dark Boots tooltip](../screenshots/stardew-valley/inventory-equipment-2021.jpg)
+![SDV-03: Backpack grid, equipped clothing around the character portrait, and a Dark Boots tooltip](https://assets.openlegend.ai/studies/public/blobs/sha256/b1/b132bd96cf5a416b45c1ff2673635a95f38279407bb49f08050e19140a81a750)
 
 **Provenance:** Hill Myna, [original forum post](https://forums.stardewvalley.net/threads/prismatic-shard-skull-cave.9440/), 2021-10-25; exact patch/platform unspecified. [Original image](https://forums.stardewvalley.net/attachments/6984/).
 
@@ -92,7 +92,7 @@ These are primary, feature-specific player accounts. They support the selected l
 
 ### SDV-04 — Choose a recipe; the game supplies the routine steps
 
-![SDV-04: Crafting choices above the inventory on a snowy farm](../screenshots/stardew-valley/crafting-winter-1-6.jpg)
+![SDV-04: Crafting choices above the inventory on a snowy farm](https://assets.openlegend.ai/studies/public/blobs/sha256/f4/f4b237875511ef1f792724117d08765085c6e612cc7ba3331c765247b0a5a9f1)
 
 **Provenance:** unicornfang14, [original report, post 1,340](https://forums.stardewvalley.net/threads/report-1-6-issues-here.27915/page-67), 2024-04-16; **Windows 11, Steam, English, single-player, no mods**, according to the author. 1.6-era exact patch unspecified. The supplied JPEG is a photograph/capture of the game display. [Original image](https://forums.stardewvalley.net/attachments/whatsapp-image-2024-04-16-at-13-16-26_b5b36f77-jpg.22007/).
 
@@ -108,7 +108,7 @@ These are primary, feature-specific player accounts. They support the selected l
 
 ### SDV-05 — A recipe reference can resemble an action screen
 
-![SDV-05: The Collections cooking page with an Omelet tooltip whose price extends below its panel](../screenshots/stardew-valley/collection-omelet-1-6.jpg)
+![SDV-05: The Collections cooking page with an Omelet tooltip whose price extends below its panel](https://assets.openlegend.ai/studies/public/blobs/sha256/00/00abfede5d036613467ad8bef3077cf30d9e71a423667c0c696d01ef50aceeac)
 
 **Provenance:** [Original report, post 1,598](https://forums.stardewvalley.net/threads/report-1-6-issues-here.27915/page-80), 2024-04-27; **Windows 10, 1.6.6, English, single-player, no mods**, as stated by the author. [Original image](https://forums.stardewvalley.net/attachments/20240427191002_1-jpg.22829/).
 
@@ -134,7 +134,7 @@ Reviewed **2026-10-04**. The two new images address character/status and map lay
 
 ### SDV-06 — Character progress is a readable summary
 
-![Stardew Valley skills panel with character portrait and five skill tracks](../screenshots/stardew-valley/skills-tab-2024.png)
+![Stardew Valley skills panel with character portrait and five skill tracks](https://assets.openlegend.ai/studies/public/blobs/sha256/8f/8f6ac9cea7e452b498877d80b2b4f8849957f29f92edbf95c72803838924e2d7)
 
 **Observed.** The left side identifies the character by portrait, name and title. Farming, Mining, Foraging, Fishing and Combat each have a distinct icon, a written name and a ten-position row. The fifth and tenth positions are larger. The lower portion contains locks, silhouettes and a visible level indicator. This is the wiki's original panel crop, uploaded **2024-08-14**; no tab strip or focus tooltip is visible, so those are not inferred from this image.
 
@@ -146,7 +146,7 @@ Reviewed **2026-10-04**. The two new images address character/status and map lay
 
 ### SDV-07 — A map can be legible yet waste its container
 
-![Stardew Android map tab with current character marker and empty right-side area](../screenshots/stardew-valley/mobile-map-2025.jpg)
+![Stardew Android map tab with current character marker and empty right-side area](https://assets.openlegend.ai/studies/public/blobs/sha256/56/561840d5bb4e14adcfaf4064dd5b3f7d6211afc91526e5b42fa4cf5cb4867cde)
 
 **Observed.** The orange-highlighted map tab sits in a top strip of icons; a large X closes the menu at the far right. Geography fills the left portion, with a farmer portrait and farm name. A large right-side area remains empty. This is the full original attachment, not the forum's 150-pixel thumbnail. The original author identifies **Android A51**, and the thread is tagged **1.6**; the precise patch is unknown.
 

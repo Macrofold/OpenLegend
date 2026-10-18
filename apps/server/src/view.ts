@@ -653,6 +653,7 @@ export async function projectView(
             supportSurfaceId: worldSupport(entity),
             heading: entity.spatial.heading,
             appearance: entity.appearance ?? 'sprite',
+            ...(entity.heat ? { heat: { lit: entity.heat.lit } } : {}),
             radius: entity.kind === 'campfire' ? 0.5 : 0.35,
             ...(entity.actor
               ? {
@@ -998,6 +999,8 @@ export async function projectView(
     () =>
       service.store.history?.latestNarration(world.id, scope.accountId) ?? Promise.resolve(null),
   );
+  const assetAuthorityGeneration = service.assetAuthorityGeneration;
+  const presentationRelease = await service.presentationReleaseFor(scope);
   const projected: GameView = {
     schemaVersion: 3,
     checkpoint: service.mayManageSaves(scope)
@@ -1028,6 +1031,10 @@ export async function projectView(
     narrator,
     revision,
     worldId: world.id,
+    ...(presentationRelease ? { presentationRelease } : {}),
+    ...(presentationRelease || service.mayManageSaves(scope)
+      ? { presentationReleaseRevision: service.presentationReleaseRevision }
+      : {}),
     presentation,
     saveTimeline: service.timelineId,
     commandEpoch: service.commandEpoch,
@@ -1373,7 +1380,11 @@ export async function projectView(
   };
   // Reads above can cross a correction, forgotten memory, restored world or control change.
   // Do not retain or publish an old passage (or any other private view facts) across that boundary.
-  if (generation !== service.generation || historyEpoch !== service.historyEpoch)
+  if (
+    generation !== service.generation ||
+    historyEpoch !== service.historyEpoch ||
+    assetAuthorityGeneration !== service.assetAuthorityGeneration
+  )
     throw new ViewChangedError();
   service.assertScope(scope);
   return projected;
@@ -1415,6 +1426,8 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
     previous.saveTimeline !== next.saveTimeline ||
     previous.schemaVersion !== next.schemaVersion ||
     previous.godMode !== next.godMode ||
+    !same(previous.presentationRelease, next.presentationRelease) ||
+    previous.presentationReleaseRevision !== next.presentationReleaseRevision ||
     !same(previous.inventionPolicy, next.inventionPolicy) ||
     !same(previous.godTools, next.godTools) ||
     !same(previous.vision, next.vision) ||

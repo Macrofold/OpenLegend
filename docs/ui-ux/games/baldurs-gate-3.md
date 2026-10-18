@@ -79,7 +79,7 @@ All screenshots are third-party reference material for criticism and design rese
 
 ### BG3-01 — One character: equipment next to carried items
 
-![BG3-01: Astarion's equipment, character details, and icon inventory next to the visible game world](../screenshots/bg3/BG3-01-single-inventory.jpg)
+![BG3-01: Astarion's equipment, character details, and icon inventory next to the visible game world](https://assets.openlegend.ai/studies/public/blobs/sha256/cc/cc26589105bc517a2c73d256d813ea0d4263d2c497934effebef8803e17b0a80)
 
 **Provenance:** [Source article](https://argothald.com/2024/09/09/bg3-on-the-mac/) · [Original image](https://argothald.com/wp-content/uploads/2024/09/Just-Astarion-2048x1152.jpg). Mac, keyboard and mouse; article published 9 September 2024. Exact capture date and patch unverified. Accessed 2026-10-04.
 
@@ -103,7 +103,7 @@ The magnifying-glass field searches items; the nearby list-and-arrow control sor
 
 ### BG3-02 — Party inventories and a named equipment tooltip
 
-![BG3-02: Four character inventories with a Leather Boots tooltip naming the equipped owner](../screenshots/bg3/BG3-02-party-inventory.jpg)
+![BG3-02: Four character inventories with a Leather Boots tooltip naming the equipped owner](https://assets.openlegend.ai/studies/public/blobs/sha256/35/35da7c9728806a21fcac08467b299d48cb53b9c42b7aadd74f4d1a39d8789bcf)
 
 **Provenance:** [Source article](https://argothald.com/2024/09/09/bg3-on-the-mac/) · [Original image](https://argothald.com/wp-content/uploads/2024/09/The-party-2048x1152.jpg). Mac, keyboard and mouse; September 2024 publication, exact build unknown. Accessed 2026-10-04.
 
@@ -119,7 +119,7 @@ The magnifying-glass field searches items; the nearby list-and-arrow control sor
 
 ### BG3-03 — Controller inventory and the equipped-state problem
 
-![BG3-03: PS5 inventory with multiple stacked owners on the left and one selected paper doll on the right](../screenshots/bg3/BG3-03-controller-inventory.jpeg)
+![BG3-03: PS5 inventory with multiple stacked owners on the left and one selected paper doll on the right](https://assets.openlegend.ai/studies/public/blobs/sha256/72/72bf607b480494f94ff361e797ee17e85e75079e277e120e344b63e228bfbddf)
 
 **Provenance:** [Source article](https://argothald.com/2024/09/09/bg3-on-the-mac/) · [Original image](https://argothald.com/wp-content/uploads/2024/09/PS5-Inventory-screen.jpeg). PS5 controller UI, September 2024 publication, exact build unknown. Accessed 2026-10-04.
 
@@ -135,7 +135,7 @@ The magnifying-glass field searches items; the nearby list-and-arrow control sor
 
 ### BG3-04 — An item-specific context menu
 
-![BG3-04: Dye selected in inventory with Combine, Split Item, Drop Item, Throw, and recipient commands](../screenshots/bg3/BG3-04-context-menu.jpg)
+![BG3-04: Dye selected in inventory with Combine, Split Item, Drop Item, Throw, and recipient commands](https://assets.openlegend.ai/studies/public/blobs/sha256/a2/a202810f2fd18821984beb1b04cb6db682695f1c964526f223ed63be9750bd9f)
 
 **Provenance:** [Ty Galiz-Rowe's dye guide](https://gaymingmag.com/2023/08/how-to-dye-clothes-and-armor-in-baldurs-gate-3/) · [Original image](https://gaymingmag.com/wp-content/uploads/2023/08/dye-menu.jpg). Desktop, keyboard and mouse; published 10 August 2023, exact build unknown. Source-supplied crop retained. Accessed 2026-10-04.
 
@@ -151,7 +151,7 @@ The magnifying-glass field searches items; the nearby list-and-arrow control sor
 
 ### BG3-05 — Player bag and open chest
 
-![BG3-05: Character inventory at left and a named Traveller's Chest grid at right](../screenshots/bg3/BG3-05-open-chest.png)
+![BG3-05: Character inventory at left and a named Traveller's Chest grid at right](https://assets.openlegend.ai/studies/public/blobs/sha256/92/9259c083275780e778e212730646f9470c6b8d7398bcf28abfc9f5581f10ba5f)
 
 **Provenance:** [Source page](https://scalacube.com/blog/baldurs-gate-3/travellers-chest-in-baldurs-gate-3) · [Original image](https://res.cloudinary.com/ddbybfkod/image/upload/v1754587925/blogs/Nemanja/travellers-chest-in-baldurs-gate-3/img2_iyo7qm.png). Desktop UI; capture date, build, and modification status unverified. Accessed 2026-10-04. The commercial article is used as an image source; its broader mechanics claims are not relied upon.
 
@@ -167,7 +167,7 @@ The magnifying-glass field searches items; the nearby list-and-arrow control sor
 
 ### BG3-06 — Controller action radials
 
-![BG3-06: Three controller action wheels, resource counters, customization, and close prompts over the world](../screenshots/bg3/BG3-06-radial-actions.jpeg)
+![BG3-06: Three controller action wheels, resource counters, customization, and close prompts over the world](https://assets.openlegend.ai/studies/public/blobs/sha256/48/484feed69e65fc22c342fbe9d43bfb328dadda00fd75d58cb3bc7b488e658626)
 
 **Provenance:** [Source article](https://argothald.com/2024/09/09/bg3-on-the-mac/) · [Original image](https://argothald.com/wp-content/uploads/2024/09/Radial-display-2.jpeg). PS5, September 2024 publication; exact build unknown. Accessed 2026-10-04.
 
@@ -183,7 +183,7 @@ The magnifying-glass field searches items; the nearby list-and-arrow control sor
 
 ### BG3-07 — Recipe-led alchemy
 
-![BG3-07: Alchemy categories, selected elixir, material counts, quantity, and craft controls](../screenshots/bg3/BG3-07-alchemy.png)
+![BG3-07: Alchemy categories, selected elixir, material counts, quantity, and craft controls](https://assets.openlegend.ai/studies/public/blobs/sha256/2d/2de1fac55ee0652a73ebeea3c339f0c078dfd19dc7c1446ed198bfca4068a9d2)
 
 **Provenance:** [BG3 Wiki image page](https://bg3.wiki/wiki/File:Alchemy_window.png) · [Original image](https://bg3.wiki/w/images/6/67/Alchemy_window.png). Desktop UI, source-supplied crop; capture date and patch unknown. Accessed 2026-10-04.
 
@@ -199,7 +199,7 @@ The magnifying-glass field searches items; the nearby list-and-arrow control sor
 
 ### BG3-08 — Throw exposes eligible items at the hotbar
 
-![BG3-08: Throw item selection replaces part of the hotbar with throwable inventory candidates](../screenshots/bg3/BG3-08-throw-target-selection.png)
+![BG3-08: Throw item selection replaces part of the hotbar with throwable inventory candidates](https://assets.openlegend.ai/studies/public/blobs/sha256/06/061f8680f910b6bed3c3253966086c7a62d81ae887e9a9c432a6e40a4133f4d6)
 
 **Provenance:** [BG3 Wiki image page](https://bg3.wiki/wiki/File:Throw_UI_Inventory_Menu.png) · [Original image](https://bg3.wiki/w/images/8/85/Throw_UI_Inventory_Menu.png). Desktop, source-supplied UI crop; capture date and patch unknown. Accessed 2026-10-04.
 
@@ -215,7 +215,7 @@ The magnifying-glass field searches items; the nearby list-and-arrow control sor
 
 ### BG3-09 — Focused dye combination
 
-![BG3-09: A small Combine Items window with dye and armour slots beside the player's inventory](../screenshots/bg3/BG3-09-combine.jpg)
+![BG3-09: A small Combine Items window with dye and armour slots beside the player's inventory](https://assets.openlegend.ai/studies/public/blobs/sha256/b3/b320509f3ce9dc08a827de6ac48d1bb193ab045e54562df60b5da4e7fc143ca0)
 
 **Provenance:** [Dye guide](https://gaymingmag.com/2023/08/how-to-dye-clothes-and-armor-in-baldurs-gate-3/) · [Original image](https://gaymingmag.com/wp-content/uploads/2023/08/dye-combine.jpg). Desktop, 10 August 2023 article; exact build unknown. Source crop preserved. Accessed 2026-10-04.
 
@@ -231,7 +231,7 @@ The magnifying-glass field searches items; the nearby list-and-arrow control sor
 
 ### BG3-10 — Trade is a distinct transaction
 
-![BG3-10: Launch-era Trade view with character stock, merchant stock, identities, and separate gold totals](../screenshots/bg3/BG3-10-trading.jpg)
+![BG3-10: Launch-era Trade view with character stock, merchant stock, identities, and separate gold totals](https://assets.openlegend.ai/studies/public/blobs/sha256/f0/f047a5f99adabf9e95511d79bf2001f6ecc70f6ed12c6804a7491fd0011aabec)
 
 **Provenance:** [Dye guide](https://gaymingmag.com/2023/08/how-to-dye-clothes-and-armor-in-baldurs-gate-3/) · [Original image](https://gaymingmag.com/wp-content/uploads/2023/08/buying-dye.jpg). Desktop, August 2023, predating Patch 6's trade redesign. The source crop omits the bottom of the interface. Accessed 2026-10-04.
 
@@ -247,7 +247,7 @@ The magnifying-glass field searches items; the nearby list-and-arrow control sor
 
 ### BG3-11 — Comparison names the wearer and shows consequences
 
-![BG3-11: Gontr Mael loot tooltip compared against equipped Spellthief, including an encumbrance warning](../screenshots/bg3/BG3-11-equipment-comparison.png)
+![BG3-11: Gontr Mael loot tooltip compared against equipped Spellthief, including an encumbrance warning](https://assets.openlegend.ai/studies/public/blobs/sha256/a6/a63fb601cafa22200f121816d256065abd51a01faa582b37ef42286717294491)
 
 **Provenance:** [Gamer Guides longbow reference](https://www.gamerguides.com/baldurs-gate-3/database/weapons/longbow) · [Original image](https://www.gamerguides.com/assets/media/15/17482/image%20_6_-5c7fb507.png). Desktop; capture date and patch unverified. Original watermark and full image retained. Accessed 2026-10-04.
 
@@ -263,7 +263,7 @@ The magnifying-glass field searches items; the nearby list-and-arrow control sor
 
 ### BG3-12 — Conversation belongs to a character in the world
 
-![BG3-12: Wrint Sprigley speaking in a cinematic conversation with subtitle and lower-left utility icons](../screenshots/bg3/BG3-12-dialogue.png)
+![BG3-12: Wrint Sprigley speaking in a cinematic conversation with subtitle and lower-left utility icons](https://assets.openlegend.ai/studies/public/blobs/sha256/ba/ba1652342c062032b7b934bc1e6f8b5efd25b5371eec551501233b025096fbcf)
 
 **Provenance:** [Official Community Update 22](https://baldursgate3.game/news/community-update-22-wield-the-power-of-a-mind-flayer_75) · [Original image](https://lh6.googleusercontent.com/a3-nHQ9SN8pxF0POP_1CGqoWxwdY7tWO2bHNeV6_N06XYVQXDTRhjenRtpivAvKBeKJxCK_Tz2b3zk6RwIF-05_I75_15AjpuRk1GRrWxpo4klQbXRhZ9DhRUn1oJvaatgY6LznVkPs9bNsqgCJI98E). Official July 2023 pre-release material, desktop UI; exact capture date unknown. Source extension was misleading; the saved `.png` matches its actual bytes. Accessed 2026-10-04.
 
@@ -367,7 +367,7 @@ These are individual observations, not survey findings or a claim that popularit
 
 ### BG3-13 — Active Search as a deliberate world-selection aid
 
-![BG3-13: PS5 active search list beside a highlighted wooden hatch](../screenshots/bg3/BG3-13-active-search.webp)
+![BG3-13: PS5 active search list beside a highlighted wooden hatch](https://assets.openlegend.ai/studies/public/blobs/sha256/72/72347127ab64136f3049f1a8e6bf70c3fbe8073f2705d2a00fda0b52a6431979)
 
 **Provenance:** [Publisher exploration guide](https://www.spike-chunsoft.co.jp/pages/baldursgate3/guide1/) · [Original image](https://media.spike-chunsoft.co.jp/pages/baldursgate3/assets/images/guide/p1_img_01.webp). Japanese PS5 controller presentation; source publication/capture date and exact build unknown. Accessed 2026-10-04. Original 1600×900 image retained.
 
@@ -377,7 +377,7 @@ These are individual observations, not survey findings or a claim that popularit
 
 ### BG3-14 — Combat HUD separates turn, actor, target and budget
 
-![BG3-14: Publisher-annotated combat screen showing initiative, target, actor, minimap and resources](../screenshots/bg3/BG3-14-combat-resources.webp)
+![BG3-14: Publisher-annotated combat screen showing initiative, target, actor, minimap and resources](https://assets.openlegend.ai/studies/public/blobs/sha256/0f/0f75dd54fc78069b614d7f3b303ebef5eb15597f5e0f774348ac4ab43fab0f56)
 
 **Provenance:** [Publisher combat guide](https://www.spike-chunsoft.co.jp/pages/baldursgate3/guide2/) · [Original image](https://media.spike-chunsoft.co.jp/pages/baldursgate3/assets/images/guide/p2_img_01.webp). Japanese PS5; exact capture date/build unknown. Accessed 2026-10-04. Numbered boxes are the publisher's annotations, preserved in the original 1600×900 bytes.
 
@@ -387,7 +387,7 @@ These are individual observations, not survey findings or a claim that popularit
 
 ### BG3-15 — A consequential character choice deserves a change summary
 
-![BG3-15: Fighter level-up showing health increase and an outstanding feat choice](../screenshots/bg3/BG3-15-level-up.jpg)
+![BG3-15: Fighter level-up showing health increase and an outstanding feat choice](https://assets.openlegend.ai/studies/public/blobs/sha256/fd/fdd2a924057d2ae71a78e871e5b2ec52fcab18476544f1821546ec062f75572b)
 
 **Provenance:** [Lucas White's firsthand guide](https://www.shacknews.com/article/136852/how-to-level-up-baldurs-gate-3) · [Original image](https://shacknews-www.s3.amazonaws.com/assets/editorial/2023/08/baldurs-gate-3-how-to-level-up-3.jpg). Published 2023-08-30. The author identifies an AYANEO 2 PC handheld with resolution upscaling and controller use; exact input during capture/build unknown. Accessed 2026-10-04. The original 1920×1200 image preserves the source's soft rendering.
 
@@ -397,7 +397,7 @@ These are individual observations, not survey findings or a claim that popularit
 
 ### BG3-16 — Quest history retains reasons behind the current objective
 
-![BG3-16: Official documentation screenshot of the Save the Refugees journal](../screenshots/bg3/BG3-16-quest-journal.png)
+![BG3-16: Official documentation screenshot of the Save the Refugees journal](https://assets.openlegend.ai/studies/public/blobs/sha256/a7/a782d21d9f5a083f4b6d7167a992661a428515b76d10598d3ec60bfb6571c1c7)
 
 **Provenance:** [Official journal documentation](https://docs.baldursgate3.game/index.php?title=Journal_Structure_Overview) · [File record](https://docs.baldursgate3.game/index.php?title=File:23a6e569-6075-40ca-bc22-07e5ebcdafbe.png) · [Original image](https://docs.baldursgate3.game/images/f/fb/23a6e569-6075-40ca-bc22-07e5ebcdafbe.png). Desktop presentation, uploaded 2024-10-15; actual capture date and patch unknown. Accessed 2026-10-04. Original 1915×1195 preserved.
 

@@ -1,13 +1,14 @@
 import type { GameView } from '@open-legend/protocol';
 import type * as pc from 'playcanvas';
 import type { MercenaryActor } from './characters/mercenary';
+import type { LibraryActor } from './library-actors';
 
 const MAX_SAMPLES = 100_000;
 type Point = { x: number; y: number; z: number };
 export type GroundInputConstraint = { anchor: Point; radius: number };
 type GroundInputProbe = (x: number, y: number, constraint?: GroundInputConstraint) => boolean;
 type ModelProbe = () => Array<
-  ReturnType<MercenaryActor['diagnostics']> & {
+  ReturnType<MercenaryActor['diagnostics'] | LibraryActor['diagnostics']> & {
     id: string;
     screen: { x: number; y: number } | null;
   }

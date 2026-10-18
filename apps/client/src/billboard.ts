@@ -64,7 +64,7 @@ export function instanceBillboards(
   material: pc.StandardMaterial,
   transforms: Float32Array,
   bottomPadding: number,
-): { instance: pc.MeshInstance; buffer: pc.VertexBuffer } {
+): { instance: pc.MeshInstance; buffer: pc.VertexBuffer; bounds: pc.BoundingBox } {
   configureBillboard(material);
   material.setDefine('OL_INSTANCED_SPRITE', true);
   // Overriding the instance transform requires explicit attribute semantics.
@@ -127,7 +127,7 @@ export function instanceBillboards(
   instance.setCustomAabb(bounds);
   instance.setInstancing(buffer, true);
   instance.castShadow = false;
-  return { instance, buffer };
+  return { instance, buffer, bounds };
 }
 
 /** Transparent padding shared across frames keeps contact stable during animation.

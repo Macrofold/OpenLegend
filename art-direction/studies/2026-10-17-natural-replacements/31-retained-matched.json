@@ -1,0 +1,474 @@
+{
+  "place": "Camp · people, fire and shelter",
+  "light": "day",
+  "route": "balanced",
+  "atmosphere": "survival",
+  "foliage": "open",
+  "assetSources": "retained",
+  "viewport": [
+    1231,
+    468
+  ],
+  "shadowQuality": "economy",
+  "stagedMotion": true,
+  "cameraOrbit": false,
+  "durationMs": 10007.699999988079,
+  "unrenderedTailMs": 0,
+  "renderedFrameIntervals": {
+    "count": 770,
+    "median": 9.299999999988358,
+    "p95": 17.5,
+    "p99": 41,
+    "max": 92.5
+  },
+  "frameCosts": {
+    "updateMs": {
+      "count": 770,
+      "median": 1.399999976158142,
+      "p95": 3.899999976158142,
+      "p99": 7.699999988079071,
+      "max": 21.899999976158142
+    },
+    "renderSubmissionMs": {
+      "count": 770,
+      "median": 6.100000023841858,
+      "p95": 8.699999988079071,
+      "p99": 12.900000035762787,
+      "max": 34
+    },
+    "gpuPassMs": {
+      "count": 770,
+      "median": 7.3542499999999995,
+      "p95": 11.658583,
+      "p99": 15.426041,
+      "max": 23.881624
+    },
+    "draws": {
+      "count": 770,
+      "median": 658,
+      "p95": 664,
+      "p99": 664,
+      "max": 664
+    }
+  },
+  "renderer": {
+    "device": {
+      "backend": "webgl2",
+      "framebuffer": [
+        1231,
+        468
+      ],
+      "displayPixelRatio": 2,
+      "renderPixelRatio": 1
+    },
+    "memoryBytes": {
+      "textures": 101818240,
+      "vertexBuffers": 20640892,
+      "indexBuffers": 2577930,
+      "total": 125047302
+    },
+    "drawCalls": {
+      "forward": 224,
+      "depth": 0,
+      "shadow": 426,
+      "immediate": 0,
+      "misc": 7,
+      "total": 657,
+      "skinned": 229,
+      "instanced": 0,
+      "removedByInstancing": 0,
+      "culled": 547
+    },
+    "submittedTriangles": 6190612,
+    "settings": {
+      "materials": "regions",
+      "lighting": "soft",
+      "sampling": "screen",
+      "sceneGrid": "metres30",
+      "surfaceArt": "rigid",
+      "surfaceEdges": "filtered",
+      "coverage": "msaa4",
+      "subjectDetail": "balanced",
+      "foliageLight": "diffuse",
+      "shadowSampling": "fixed",
+      "filtering": "source",
+      "characterFiltering": "mip",
+      "mercenaryArt": "restored",
+      "hareArt": "field",
+      "edges": "none",
+      "motion": "held12",
+      "cloth": "settled",
+      "assetSources": "retained",
+      "environment": "canopy",
+      "groundPalette": "understory",
+      "vegetation": "still",
+      "atmosphere": "survival",
+      "effects": "direct",
+      "prop": "grounded",
+      "actionFixture": false
+    },
+    "vegetation": {
+      "patches": 0,
+      "mode": "still",
+      "tested": 0,
+      "submitted": 0,
+      "elapsed": 86.6087000000016
+    },
+    "effects": {
+      "buffered": false,
+      "sources": 1
+    },
+    "pixels": {
+      "mode": "metres30",
+      "pixelsPerCell": 1.4181817770004272,
+      "phase": [
+        0.009091168642044067,
+        1.3240095376968384
+      ],
+      "orthographicAnchoring": true,
+      "densityPlane": "whole orthographic view",
+      "preserveSubjects": false,
+      "smallSubjectDensityMultiplier": 2
+    },
+    "entities": 36,
+    "scenery": 1250,
+    "libraryScenery": {
+      "templates": 10,
+      "materials": 19,
+      "textures": 14,
+      "loadedChoices": [
+        "natural",
+        "canopy"
+      ],
+      "pendingChoices": 0
+    },
+    "materials": 56,
+    "textures": 54,
+    "character": [
+      {
+        "state": "ready",
+        "visible": true,
+        "variant": "study:ada-field-tunic",
+        "representation": "library-rigged-actor",
+        "height": 1.85,
+        "width": 0.626378,
+        "meshes": 8,
+        "animation": "Idle",
+        "animationTime": 0.3333333333333333,
+        "automaticUpdate": false,
+        "sharedRevealSkin": true
+      },
+      {
+        "state": "ready",
+        "visible": true,
+        "meshes": 12,
+        "representation": "original-model-coarse-image",
+        "pixels": {
+          "resolution": [
+            112,
+            192
+          ],
+          "sampling": "screen",
+          "preserveShape": true,
+          "screenCoverage": [
+            53,
+            93
+          ],
+          "captureScale": 2,
+          "targetResizes": 2,
+          "visibleRows": 94.60000000000001,
+          "worldPixelSize": 0.021875000000000002,
+          "sourceRect": [
+            0.014252744615077972,
+            0.18239262700080872,
+            0.04271639138460159,
+            0.19662775099277496
+          ],
+          "displayRect": [
+            0.014252744615077972,
+            0.18239262700080872,
+            0.04271639138460159,
+            0.19662775099277496
+          ],
+          "bodyBounds": {
+            "minY": 152.45735158159306,
+            "maxY": 230.1828984684985
+          },
+          "neutralPoints": 98,
+          "neutralVertices": 42060,
+          "neutralPreparationMs": 201.80000001192093
+        },
+        "displayScale": 1.1,
+        "height": 2.035,
+        "width": 1.045,
+        "artwork": {
+          "wanted": "restored",
+          "active": "restored",
+          "loaded": [
+            "restored"
+          ],
+          "failed": []
+        },
+        "animation": "Idle",
+        "motion": {
+          "clip": "Idle",
+          "time": 0.38400000000000006,
+          "timing": "held12",
+          "actionFixture": false,
+          "automaticUpdate": false
+        },
+        "settling": 0,
+        "cloth": {
+          "particles": 366,
+          "displayScale": 1.1,
+          "steps": 60,
+          "finite": true,
+          "lastStepMs": 0,
+          "motion": "settled",
+          "frameGapResets": 9
+        }
+      },
+      {
+        "state": "ready",
+        "visible": true,
+        "variant": "field",
+        "representation": "library-rigged-actor",
+        "height": 0.45,
+        "width": 0.76,
+        "meshes": 2,
+        "animation": "Run",
+        "animationTime": 0,
+        "automaticUpdate": false,
+        "sharedRevealSkin": true
+      },
+      {
+        "state": "ready",
+        "visible": true,
+        "variant": "field",
+        "representation": "library-rigged-actor",
+        "height": 0.45,
+        "width": 0.76,
+        "meshes": 2,
+        "animation": "Run",
+        "animationTime": 0,
+        "automaticUpdate": false,
+        "sharedRevealSkin": true
+      },
+      {
+        "state": "ready",
+        "visible": true,
+        "variant": "field",
+        "representation": "library-rigged-actor",
+        "height": 0.45,
+        "width": 0.76,
+        "meshes": 2,
+        "animation": "Run",
+        "animationTime": 0,
+        "automaticUpdate": false,
+        "sharedRevealSkin": true
+      },
+      {
+        "state": "ready",
+        "visible": true,
+        "variant": "field",
+        "representation": "library-rigged-actor",
+        "height": 0.45,
+        "width": 0.76,
+        "meshes": 2,
+        "animation": "Run",
+        "animationTime": 0,
+        "automaticUpdate": false,
+        "sharedRevealSkin": true
+      },
+      {
+        "state": "ready",
+        "visible": true,
+        "variant": "study:mara-travel-coat",
+        "representation": "library-rigged-actor",
+        "height": 1.85,
+        "width": 0.63205,
+        "meshes": 8,
+        "animation": "Idle",
+        "animationTime": 0.3333333333333333,
+        "automaticUpdate": false,
+        "sharedRevealSkin": true
+      },
+      {
+        "state": "ready",
+        "visible": true,
+        "variant": "study:tavin-work-vest",
+        "representation": "library-rigged-actor",
+        "height": 1.85,
+        "width": 0.688238,
+        "meshes": 9,
+        "animation": "Idle",
+        "animationTime": 0.3333333333333333,
+        "automaticUpdate": false,
+        "sharedRevealSkin": true
+      },
+      {
+        "state": "ready",
+        "visible": true,
+        "variant": "study:mike-field-tunic",
+        "representation": "library-rigged-actor",
+        "height": 1.85,
+        "width": 0.73697,
+        "meshes": 8,
+        "animation": "Idle",
+        "animationTime": 86.58333333333333,
+        "automaticUpdate": false,
+        "sharedRevealSkin": true
+      },
+      {
+        "state": "ready",
+        "visible": true,
+        "variant": "study:deer-woodland-doe",
+        "representation": "library-rigged-actor",
+        "height": 1.45,
+        "width": 1.491806,
+        "meshes": 7,
+        "animation": "Idle",
+        "animationTime": 0.3333333333333333,
+        "automaticUpdate": false,
+        "sharedRevealSkin": true
+      },
+      {
+        "state": "ready",
+        "visible": true,
+        "variant": "study:deer-woodland-doe",
+        "representation": "library-rigged-actor",
+        "height": 1.45,
+        "width": 1.491806,
+        "meshes": 7,
+        "animation": "Run",
+        "animationTime": 59.083333333333336,
+        "automaticUpdate": false,
+        "sharedRevealSkin": true
+      }
+    ],
+    "props": [
+      {
+        "id": "branches",
+        "state": "ready",
+        "visible": true,
+        "meshes": 1
+      },
+      {
+        "id": "stones",
+        "state": "ready",
+        "visible": true,
+        "meshes": 1
+      },
+      {
+        "id": "lookout-cache",
+        "state": "ready",
+        "visible": true,
+        "meshes": 1
+      },
+      {
+        "id": "camp-route-marker",
+        "state": "ready",
+        "visible": true,
+        "meshes": 1
+      },
+      {
+        "id": "lookout-equipment",
+        "state": "ready",
+        "visible": true,
+        "meshes": 1
+      },
+      {
+        "id": "riverside-workshop",
+        "state": "ready",
+        "visible": true,
+        "meshes": 3
+      },
+      {
+        "id": "mending-clearing-marker",
+        "state": "ready",
+        "visible": true,
+        "meshes": 1
+      },
+      {
+        "id": "reed-side-store-pile",
+        "state": "ready",
+        "visible": true,
+        "meshes": 1
+      },
+      {
+        "id": "reeds",
+        "state": "ready",
+        "visible": true,
+        "meshes": 1
+      },
+      {
+        "id": "reeds-east",
+        "state": "ready",
+        "visible": true,
+        "meshes": 1
+      },
+      {
+        "id": "berries-west",
+        "state": "ready",
+        "visible": true,
+        "meshes": 1
+      },
+      {
+        "id": "berries-east",
+        "state": "ready",
+        "visible": true,
+        "meshes": 1
+      },
+      {
+        "id": "woodland-patch-0",
+        "state": "ready",
+        "visible": true,
+        "meshes": 2
+      },
+      {
+        "id": "woodland-patch-1",
+        "state": "ready",
+        "visible": true,
+        "meshes": 2
+      },
+      {
+        "id": "woodland-patch-2",
+        "state": "ready",
+        "visible": true,
+        "meshes": 2
+      },
+      {
+        "id": "woodland-patch-9",
+        "state": "ready",
+        "visible": true,
+        "meshes": 1
+      },
+      {
+        "id": "woodland-patch-11",
+        "state": "ready",
+        "visible": true,
+        "meshes": 1
+      },
+      {
+        "id": "study-thin-sword",
+        "state": "ready",
+        "visible": true,
+        "meshes": 5
+      }
+    ]
+  },
+  "camera": {
+    "focus": {
+      "x": 11,
+      "y": 0,
+      "z": 11.5
+    },
+    "yaw": 0,
+    "pitch": 0.68,
+    "zoom": 5.5,
+    "projection": "orthographic",
+    "levelId": null,
+    "rotationLocked": false,
+    "following": false
+  }
+}

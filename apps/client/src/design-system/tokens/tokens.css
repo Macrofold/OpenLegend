@@ -1,84 +1,96 @@
 /* Open Legend tokens — generated from tokens.json. Set data-theme="wilderness|fantasy|scifi" on the HUD root. */
 @font-face {
   font-family: 'Cormorant Garamond';
-  src: url('../fonts/cormorant-garamond-latin-500-normal.woff2') format('woff2');
+  src: url('/__assets/apps%2Fclient%2Fsrc%2Fdesign-system%2Ffonts%2Fcormorant-garamond-latin-500-normal.woff2')
+    format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Cormorant Garamond';
-  src: url('../fonts/cormorant-garamond-latin-500-italic.woff2') format('woff2');
+  src: url('/__assets/apps%2Fclient%2Fsrc%2Fdesign-system%2Ffonts%2Fcormorant-garamond-latin-500-italic.woff2')
+    format('woff2');
   font-weight: 500;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
   font-family: 'Cormorant Garamond';
-  src: url('../fonts/cormorant-garamond-latin-600-normal.woff2') format('woff2');
+  src: url('/__assets/apps%2Fclient%2Fsrc%2Fdesign-system%2Ffonts%2Fcormorant-garamond-latin-600-normal.woff2')
+    format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Cormorant Garamond';
-  src: url('../fonts/cormorant-garamond-latin-700-normal.woff2') format('woff2');
+  src: url('/__assets/apps%2Fclient%2Fsrc%2Fdesign-system%2Ffonts%2Fcormorant-garamond-latin-700-normal.woff2')
+    format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Atkinson Hyperlegible Next';
-  src: url('../fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2') format('woff2');
+  src: url('/__assets/apps%2Fclient%2Fsrc%2Fdesign-system%2Ffonts%2Fatkinson-hyperlegible-next-latin-wght-normal.woff2')
+    format('woff2');
   font-weight: 200 800;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Atkinson Hyperlegible Next';
-  src: url('../fonts/atkinson-hyperlegible-next-latin-wght-italic.woff2') format('woff2');
+  src: url('/__assets/apps%2Fclient%2Fsrc%2Fdesign-system%2Ffonts%2Fatkinson-hyperlegible-next-latin-wght-italic.woff2')
+    format('woff2');
   font-weight: 200 800;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
   font-family: 'Cinzel';
-  src: url('../fonts/cinzel-latin-500-normal.woff2') format('woff2');
+  src: url('/__assets/apps%2Fclient%2Fsrc%2Fdesign-system%2Ffonts%2Fcinzel-latin-500-normal.woff2')
+    format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Cinzel';
-  src: url('../fonts/cinzel-latin-600-normal.woff2') format('woff2');
+  src: url('/__assets/apps%2Fclient%2Fsrc%2Fdesign-system%2Ffonts%2Fcinzel-latin-600-normal.woff2')
+    format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Chakra Petch';
-  src: url('../fonts/chakra-petch-latin-500-normal.woff2') format('woff2');
+  src: url('/__assets/apps%2Fclient%2Fsrc%2Fdesign-system%2Ffonts%2Fchakra-petch-latin-500-normal.woff2')
+    format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Chakra Petch';
-  src: url('../fonts/chakra-petch-latin-600-normal.woff2') format('woff2');
+  src: url('/__assets/apps%2Fclient%2Fsrc%2Fdesign-system%2Ffonts%2Fchakra-petch-latin-600-normal.woff2')
+    format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'IBM Plex Mono';
-  src: url('../fonts/ibm-plex-mono-latin-400-normal.woff2') format('woff2');
+  src: url('/__assets/apps%2Fclient%2Fsrc%2Fdesign-system%2Ffonts%2Fibm-plex-mono-latin-400-normal.woff2')
+    format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'IBM Plex Mono';
-  src: url('../fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2');
+  src: url('/__assets/apps%2Fclient%2Fsrc%2Fdesign-system%2Ffonts%2Fibm-plex-mono-latin-500-normal.woff2')
+    format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;

@@ -1,0 +1,2330 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "openlegend-curated"
+    },
+    "assetId": "development-runtime",
+    "revisionId": "sha256-74ada28b97228cdce8f3f8836b578f42ff9a4dbb71eb7c5eb5b1848681fc2a7d",
+    "manifestSha256": "c81b50a4c56774837314aaddf257a7f891e94fb1fe8c8a21a4ae2e19d0709616"
+  },
+  "files": {
+    "apps/client/src/characters/mercenary-assets/mercenary-motion.glb": {
+      "sha256": "4535feed7092a81ed121607d293459df68567276cc8a4f5857b130e43def2f82",
+      "bytes": 148660,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/characters/mercenary-assets/mercenary-sculpted.glb": {
+      "sha256": "68be897ed33c8102ad464d2ccafe25333d232a7d2da1d8c93d77124c5952f3af",
+      "bytes": 5553168,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/characters/mercenary-assets/mercenary.glb": {
+      "sha256": "cfd519287b4ebcc6233ffd269ea10cc455780f3f52c5c4e789f2db245f444ab6",
+      "bytes": 14391244,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/characters/mercenary-assets/variants/body-faithful.png": {
+      "sha256": "a95711317fb7d583798c17109746f292077013824645da95b14223c546c9e232",
+      "bytes": 395134,
+      "mediaType": "image/png",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/characters/mercenary-assets/variants/body-graphic.png": {
+      "sha256": "adef1aaa353e3de5addf121122e2b5fa3a861fe0e4a81a07a1b5890a6878e06b",
+      "bytes": 365876,
+      "mediaType": "image/png",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/characters/mercenary-assets/variants/body-painted.png": {
+      "sha256": "02c18d9a66f29e2ae5284661e87647feb1fb5f74d28cbd612ea5e759d70be948",
+      "bytes": 384069,
+      "mediaType": "image/png",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/characters/mercenary-assets/variants/cape-faithful.png": {
+      "sha256": "f7b64f0a3f0587a12ec42c3879aacb899b705902219cd0e5b55c5bddc7145929",
+      "bytes": 470007,
+      "mediaType": "image/png",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/characters/mercenary-assets/variants/cape-graphic.png": {
+      "sha256": "ec16b874c2223971fc7891df15ef094f14f9a7d6507d155dd4dfa09f012f0c11",
+      "bytes": 61418,
+      "mediaType": "image/png",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/characters/mercenary-assets/variants/cape-painted.png": {
+      "sha256": "a55c345f1fc8a41b236d062eac6ac8c9e1a691935cf46b4ff565fafd64ffcdb6",
+      "bytes": 66778,
+      "mediaType": "image/png",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/design-system/fonts/atkinson-hyperlegible-next-latin-wght-italic.woff2": {
+      "sha256": "4a5037bfaf6680f40147407407ec09fa42925774bde809a579283d27f9f08106",
+      "bytes": 37644,
+      "mediaType": "font/woff2",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/design-system/fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2": {
+      "sha256": "18b2a1a39a2fa298b0ba5390aca68462669826c90925656f1c1f6796e0e1bbaf",
+      "bytes": 33996,
+      "mediaType": "font/woff2",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/design-system/fonts/chakra-petch-latin-500-normal.woff2": {
+      "sha256": "36ad966cb653de70ba37355c41003b02de8940b2df6cbcd46480a6ad8cadd65d",
+      "bytes": 9956,
+      "mediaType": "font/woff2",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/design-system/fonts/chakra-petch-latin-600-normal.woff2": {
+      "sha256": "a5888696e9eb1b4bbbecc8eb3922b8369f49d4bddb72263e033cbd17f399be76",
+      "bytes": 9968,
+      "mediaType": "font/woff2",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/design-system/fonts/cinzel-latin-500-normal.woff2": {
+      "sha256": "2864b2c9db377e10db43d3ca1ab268c0e10cf3ee94b1a325d104b8e4a74dc7da",
+      "bytes": 15040,
+      "mediaType": "font/woff2",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/design-system/fonts/cinzel-latin-600-normal.woff2": {
+      "sha256": "61efc27ceb7d08bb841652fa8979c0b6833b92548b7f9544c07968a6c02f28e4",
+      "bytes": 15204,
+      "mediaType": "font/woff2",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/design-system/fonts/cormorant-garamond-latin-500-italic.woff2": {
+      "sha256": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
+      "bytes": 23924,
+      "mediaType": "font/woff2",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/design-system/fonts/cormorant-garamond-latin-500-normal.woff2": {
+      "sha256": "8197bf53615ddc8c423f444c7f0eec63b7fa0ba093fcfbec60dfdd28429b0fc8",
+      "bytes": 23312,
+      "mediaType": "font/woff2",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/design-system/fonts/cormorant-garamond-latin-600-normal.woff2": {
+      "sha256": "ae062b6d5ae308e7edf61b28b07b9984bbb6e961b1f34d9b2c2f4389c33f21ea",
+      "bytes": 23396,
+      "mediaType": "font/woff2",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/design-system/fonts/cormorant-garamond-latin-700-normal.woff2": {
+      "sha256": "21a0fc1c5c22708cf4aa0c147fd32982e25bf9e21efec0ca31a4495ba41753eb",
+      "bytes": 22340,
+      "mediaType": "font/woff2",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/design-system/fonts/ibm-plex-mono-latin-400-normal.woff2": {
+      "sha256": "08949f728dc52d528e69b1667d15c89a5686a4ee9a296ff90983985f99c380f7",
+      "bytes": 14708,
+      "mediaType": "font/woff2",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/design-system/fonts/ibm-plex-mono-latin-500-normal.woff2": {
+      "sha256": "01d285447409c8a588692162439a038b8cbd7871309ee20267b0d2d91c6e8e22",
+      "bytes": 14888,
+      "mediaType": "font/woff2",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-armor/armor-field-tunic-motion.glb": {
+      "sha256": "44c149a577c987b6afe5739769f9fa31904ff8dcff1d7b41f49412966c1de2ba",
+      "bytes": 2014028,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-armor/armor-field-tunic.glb": {
+      "sha256": "28de95b1671cba5f2e545b24c83f67b1d97f38e2798959b993b648cfca48342c",
+      "bytes": 1625832,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-armor/armor-travel-coat-motion.glb": {
+      "sha256": "e53f1a17cf2589a7821a6d6a734054b2b9703118ddf4d9d237f35005718f4d13",
+      "bytes": 2014068,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-armor/armor-travel-coat.glb": {
+      "sha256": "97d0dcd1337b5ac0bf8fea3a59f8ba5bf6a11015e13371bb18050e64fbca8614",
+      "bytes": 1625824,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-armor/armor-work-vest-motion.glb": {
+      "sha256": "963b25ebc9a8b14c7f9aba713479448503c6ccfe2ad9791de916f79d5991e822",
+      "bytes": 2068632,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-armor/armor-work-vest.glb": {
+      "sha256": "35442c2cbb7830823e6a95e080bdcd495134cc4bce60f80902072177f2159075",
+      "bytes": 1673252,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-bear/bear-forest-brown-motion.glb": {
+      "sha256": "cb957c329e6707b489aa38de304eebc67983df66f4c10e7ac6f33dc406101180",
+      "bytes": 127308,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-bear/bear-forest-brown.glb": {
+      "sha256": "67ffdf1482ede7904df937b4e2588884d8c746cdab98fbc85975c0ba21fcd29a",
+      "bytes": 70460,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-bear/bear-heavy-shoulder-motion.glb": {
+      "sha256": "425f93c1f151b3e4c21cadad4403d34687c59106084f7e6e86f5e36225ab96ba",
+      "bytes": 128184,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-bear/bear-heavy-shoulder.glb": {
+      "sha256": "5cb8b221b15a3efd872ee510b41e9d02c3cd4ed2d97dfe79fa3b0e8ac3da7b82",
+      "bytes": 71316,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-bear/bear-pale-muzzle-motion.glb": {
+      "sha256": "0a2e094d41797a561e9fa7821523206410ea63ce8f84e6926712c8808bdb46a2",
+      "bytes": 127328,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-bear/bear-pale-muzzle.glb": {
+      "sha256": "22fdafb65e1ab7ead8f8b1f052374254c68e9ef0a3f9aeed69837c227a4526d3",
+      "bytes": 70464,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-bird/bird-grey-wing-motion.glb": {
+      "sha256": "3c00b7bcd4e02f29db152bc5aa3622aeac40418379a64398c633a2e451a91334",
+      "bytes": 179824,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-bird/bird-grey-wing.glb": {
+      "sha256": "4ad9d5e1340cc72ba1bd35b13de97fdf24b1b3c5faa2b82c2c45f644c82ee891",
+      "bytes": 74424,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-bird/bird-warm-bib-motion.glb": {
+      "sha256": "8c48ec0077af8abf1acb9d2e838a4458eb4b4a3c2861391ea7330a35823f1818",
+      "bytes": 179248,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-bird/bird-warm-bib.glb": {
+      "sha256": "c6fe867ee726e6f085824b88b99583a51ff8ce340245b2038842a998438acbc5",
+      "bytes": 73836,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-bird/bird-wing-bars-motion.glb": {
+      "sha256": "89e4a4569cf7a86cb3995db709554799f967bef785c47365c8aeff5eba1342c2",
+      "bytes": 179348,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-bird/bird-wing-bars.glb": {
+      "sha256": "5256bfa669898310affdac1476008e100fa7760e08c7748e7ba995f59f7b6300",
+      "bytes": 73936,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-chests/chest-banded-lid.glb": {
+      "sha256": "398b91aefafad7f6c0c245103b8496e6b9f5ec0ca852e0a8411f803c85fe0b83",
+      "bytes": 23128,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-chests/chest-carved-lid.glb": {
+      "sha256": "9439623cc80d41f6bd4dc9fa17cddcea136f4626ae55faf7728b892f7b9da569",
+      "bytes": 474528,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-chests/chest-plank-cache.glb": {
+      "sha256": "d411f984c3ed6a2a24d741bbb06f38527f7a2b2f64e27542305c845ab8cb3c8e",
+      "bytes": 11072,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-deer/deer-dark-back-motion.glb": {
+      "sha256": "4b5e4a60aaa0f910fc0006df0479e07f3358143f03f469a0f3e817cb311570ec",
+      "bytes": 224248,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-deer/deer-dark-back.glb": {
+      "sha256": "93f77a2b10d30f32419b282c6705e38572aa68bc6882a0de43732cbf8d12ca2a",
+      "bytes": 67784,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-deer/deer-slender-doe-motion.glb": {
+      "sha256": "6e1921e4a7ffbfa1fbffcb51986a8644f36ae5328c31225dc9c661bce74fb32f",
+      "bytes": 226080,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-deer/deer-slender-doe.glb": {
+      "sha256": "a47371e94969facc5abdedc2410f82146b8fa3c4d16e817ea1644cdb8749a802",
+      "bytes": 69596,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-deer/deer-woodland-doe-motion.glb": {
+      "sha256": "1324913c65bac22f91d27ebc611dc2781db65e536da6e89b5786152091687b70",
+      "bytes": 226032,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-deer/deer-woodland-doe.glb": {
+      "sha256": "c0e925a687bcb5cc246b25a15d51fcff38af3e77172810df87994fe39f1250bd",
+      "bytes": 69572,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-equipment/arrow-bone-point.glb": {
+      "sha256": "b1370d93b0b7b5e0c21e79a900d2852e50e674c5f35380d716182ac3638971ca",
+      "bytes": 12844,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-equipment/arrow-broad-fletching.glb": {
+      "sha256": "811dc2e08f7c1d03ae4e74032760c8d141739ffe453fae32bbf246827bdc2651",
+      "bytes": 12852,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-equipment/arrow-slender-shaft.glb": {
+      "sha256": "17335f9ac5bca9e59e9de3d34db02ef3e08210c8f45172583eb2d9fdea5a5a8d",
+      "bytes": 12848,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-equipment/bow-bound-grip.glb": {
+      "sha256": "c50b11025869106ab1bbe5b2145d5b03b47f090edca57be18f6d1c370344a07f",
+      "bytes": 44112,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-equipment/bow-curved-limbs.glb": {
+      "sha256": "35d132105cdf112da878681ff957b13358458eef161c1e4da4e2a853ad041908",
+      "bytes": 37776,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-equipment/bow-field-bow.glb": {
+      "sha256": "a6cb72cdcc4548ebba8278d09e523b3cc08ef60db4348adae515db24a8d9de20",
+      "bytes": 40944,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-equipment/knife-leaf-point.glb": {
+      "sha256": "f8f6e80f445eec72f336de9d6a03c24b0568606a82da6784641915ab8923bfb0",
+      "bytes": 36812,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-equipment/knife-long-knife.glb": {
+      "sha256": "f878fdb96d8dc4c6196c90a306903ad6e0d86c0f5fcd8f7a453ce6688d492fa5",
+      "bytes": 42856,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-equipment/knife-utility.glb": {
+      "sha256": "1f46f8741b86ab284f0c277d6da7f4e2cd7d13685d9acb1f829ef269dde44520",
+      "bytes": 36196,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-equipment/shield-heater.glb": {
+      "sha256": "21fa26efc31307da2036db0ccfc4059041e7165769ce0f39768b77c98d684770",
+      "bytes": 94660,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-equipment/shield-reinforced-round.glb": {
+      "sha256": "582cf1adbb79155a29d8fd1a24f688a68456774587979d836c2186282da028d8",
+      "bytes": 65236,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-equipment/shield-round-boards.glb": {
+      "sha256": "fc76fdc80b39c8e49c93067eb2a9b7ae2eff4c995be9ed755914114f4c55cc91",
+      "bytes": 57020,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-equipment/sword-broad-tip.glb": {
+      "sha256": "d86bfff5b8b57aa192e6316bb82102a7ccf9b40533453285352e876778f5bb1f",
+      "bytes": 45224,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-equipment/sword-long-grip.glb": {
+      "sha256": "09c0ac3a8869f6701909c7d67f8487fb84720372655646ff2ddd58a5dbcec7be",
+      "bytes": 47332,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-equipment/sword-straight-crossguard.glb": {
+      "sha256": "8957591c721579e61705c838221473bc4331e07a648f601f0c11ecd09e8b3626",
+      "bytes": 42864,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-field-arrow/field-arrow-clear.glb": {
+      "sha256": "301a057ff65a01e2695c6278662579524e01bc370e0113a61e7f9c2ab02ae062",
+      "bytes": 20432,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-field-arrow/field-arrow-quiet.glb": {
+      "sha256": "81cd7a2c650dd562cb3f083275760ed90a0a53ee18232ba1224af5ddf3273e42",
+      "bytes": 10148,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-field-arrow/field-arrow-weathered.glb": {
+      "sha256": "abbd5658b1906f5533539e656e30fa96f63eb8b58f15984271d3132962707400",
+      "bytes": 9856,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-grounded-boulder/grounded-boulder-clear.glb": {
+      "sha256": "17e95c1dabc1718cdbc7e569bc31dd521b17e2389d6112388c79e48c6f4fb086",
+      "bytes": 313820,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-grounded-boulder/grounded-boulder-quiet.glb": {
+      "sha256": "308580268a2639b1aa56e07b2aef01c3ecdda3a02ff8d1520ab75337c46b71e7",
+      "bytes": 271740,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-grounded-boulder/grounded-boulder-weathered.glb": {
+      "sha256": "9fe45543cb869350053533dfc55329951dd1f680f0e49bb189b947838249e4bf",
+      "bytes": 270940,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-grounded-chest/grounded-chest-clear.glb": {
+      "sha256": "258e02f22ae83fbe949353f2601d7f462dc39b8dacf345371124922be4e81df8",
+      "bytes": 564688,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-grounded-chest/grounded-chest-quiet.glb": {
+      "sha256": "b59d1b701fe9af44c0284c426439cbc3bba3db87f4992a35e23c42003e77431f",
+      "bytes": 530112,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-grounded-chest/grounded-chest-weathered.glb": {
+      "sha256": "e0da0020d52eb9020205ad861588aecb55eb6c7deb0fe50e72f0e352291227a2",
+      "bytes": 529436,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-grounded-conifer/grounded-conifer-clear.glb": {
+      "sha256": "13d3a58840ac25e0b20a84610b4a2412b3ee9b56272b0ebacd4559b65a9fab04",
+      "bytes": 1864960,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-grounded-conifer/grounded-conifer-quiet.glb": {
+      "sha256": "0b6649f20b3a494f6ebc2a8b392893c7f34aaa665e0e2cc8b8546c40a14d862b",
+      "bytes": 1835592,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-grounded-conifer/grounded-conifer-weathered.glb": {
+      "sha256": "1ef8244a8ab1cf7c960ec1f6d59e9b112c603e3acc4ae66429004fe78a9f4b83",
+      "bytes": 1835140,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-grounded-deadwood/grounded-deadwood-clear.glb": {
+      "sha256": "a8ceda193b97d82663601719d488d1375d6faf54d7ed06a2f9ec798736e4edfe",
+      "bytes": 327928,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-grounded-deadwood/grounded-deadwood-quiet.glb": {
+      "sha256": "f9a0c78db08c886fd9fa0c14a15093605492619e68c828eb4df523432402d11c",
+      "bytes": 301204,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-grounded-deadwood/grounded-deadwood-weathered.glb": {
+      "sha256": "df46b7d67af58bae9c4447fc4d6570bc45f3fefcbff27cbc30505dfb458e1087",
+      "bytes": 300776,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-grounded-fern/grounded-fern-clear.glb": {
+      "sha256": "94c9260bb3786143f4476bb554374c0248449f525f9b5e428decf92802e66fbf",
+      "bytes": 346224,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-grounded-fern/grounded-fern-quiet.glb": {
+      "sha256": "fd9e34e81bbae0fb71ed57db5d1bea6e4fede957accc1925b54cd06033fe82ab",
+      "bytes": 107692,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-grounded-fern/grounded-fern-weathered.glb": {
+      "sha256": "993ba1239d76eb7ac26173d1dd54d9c0b5ae6a79702bae2f5a918493af607c41",
+      "bytes": 106860,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-hare/hare-field-motion.glb": {
+      "sha256": "754b9d73f0822af57106e85b21969b11819faa672b5f84d94cbc28de1bfa449b",
+      "bytes": 250560,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-hare/hare-field.glb": {
+      "sha256": "7e0aa770679fc3f83855998d45e53211943aa2e5254f39e79af9a17506472c43",
+      "bytes": 66152,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-hare/hare-russet-motion.glb": {
+      "sha256": "e2b7bc50247ef2ee39ae6a184a013e18250cf5066d1e145fc8b8be88a00a947a",
+      "bytes": 251116,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-hare/hare-russet.glb": {
+      "sha256": "d7a2d99ebdf0cb3f69693bb2d9215cebb9b652f638e06c4eae24510deb6d3fa7",
+      "bytes": 66040,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-hare/hare-winter-motion.glb": {
+      "sha256": "57fa452c338a06d4eaf64207b512dc0ef9b9dd8d1ed48ea3907a47be91c96df8",
+      "bytes": 250772,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-hare/hare-winter.glb": {
+      "sha256": "90684bf4fa70b905a1a63c89a14fa7f559c2c202cecbe64ebf77b8ee55fbae48",
+      "bytes": 66052,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-kest/kest-field-tunic-motion.glb": {
+      "sha256": "31a0ffe265d94026b30caf0e6ab75c5526f94330f72452cdc918aedddc679ab8",
+      "bytes": 2001264,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-kest/kest-field-tunic.glb": {
+      "sha256": "2982549daaa3a6d2a3869cb1bb996756be8b374f3b70221f30daf46f88937b24",
+      "bytes": 1613368,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-kest/kest-travel-coat-motion.glb": {
+      "sha256": "4a81114ee3c30dc64ae7eca8b639a50a8389aba08b880cf705f9b43980bbd03e",
+      "bytes": 1992748,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-kest/kest-travel-coat.glb": {
+      "sha256": "d366f0f7ef0d3c2f7e3dd7ff2733c8ef9f293a0d7fe76e8d1400c1fa95e50bb0",
+      "bytes": 1603812,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-kest/kest-work-vest-motion.glb": {
+      "sha256": "8ffdbc253cc20ceab695cf68f7463597753487aa4a3acd154a9f9c6d9cb33967",
+      "bytes": 2085016,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-kest/kest-work-vest.glb": {
+      "sha256": "54b4e5055900d78240d0612289df0095239085b7b44dc43593d0f91145fadfa9",
+      "bytes": 1683960,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mara/mara-field-tunic-motion.glb": {
+      "sha256": "36bda874dd1e58ee2ae4c53ad1b1b71f74e247cb0bc90920fda0cb2fa0f2b9f5",
+      "bytes": 2183208,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mara/mara-field-tunic.glb": {
+      "sha256": "de229352c87e614cf7421bf30ef09efcf214cd9bee5ce3e7f659912c619a662d",
+      "bytes": 1779232,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mara/mara-travel-coat-motion.glb": {
+      "sha256": "a8ead52b86eade2a817fabd8bf4d2076d10b26b9e639daf3d74fb64b393a7270",
+      "bytes": 2116772,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mara/mara-travel-coat.glb": {
+      "sha256": "39a8af89767935d2b6f081c4a2ba0da5bed4d82b2b6237af1c59b17a6da56813",
+      "bytes": 1716952,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mara/mara-work-vest-motion.glb": {
+      "sha256": "0792680cf8696e58ab3c6c299bc93b9661c671b5c33f1315e90a499145e90485",
+      "bytes": 2337940,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mara/mara-work-vest.glb": {
+      "sha256": "d48b4400d34af3f74f1a4a9fd944b2efee6737da21c3063d1624f784c88128e3",
+      "bytes": 1910920,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mercenary/body-embroidered.png": {
+      "sha256": "f3ada42f7513faa2515b0362f8d8be7e092566817147ed901f48fc4f41c0e1e0",
+      "bytes": 541794,
+      "mediaType": "image/png",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mercenary/body-restored.png": {
+      "sha256": "8a5e31542d204fc42e0968f2850263ba232eb78d7b4b4117aff414f8c8108e40",
+      "bytes": 1460795,
+      "mediaType": "image/png",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mercenary/body-tailored.png": {
+      "sha256": "4cbd3b8615e60d705add7ddecb84331af0e2d4c24c7a5cfb54447b958948662d",
+      "bytes": 523546,
+      "mediaType": "image/png",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mercenary/cape-embroidered.png": {
+      "sha256": "a55c345f1fc8a41b236d062eac6ac8c9e1a691935cf46b4ff565fafd64ffcdb6",
+      "bytes": 66778,
+      "mediaType": "image/png",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mercenary/cape-restored.png": {
+      "sha256": "91ac40cb8464ec0685e143737a8268c51a6ffa037880e00b23b9cdb7b28e4b66",
+      "bytes": 61000,
+      "mediaType": "image/png",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mercenary/cape-tailored.png": {
+      "sha256": "8f61825268f1d0ba7b2911041f9a6229de92468cd59ce9e2fd53d3b93fb63fbe",
+      "bytes": 2604860,
+      "mediaType": "image/png",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mercenary/mercenary-embroidered.glb": {
+      "sha256": "3666475831bfb4b2b0834ce84a18b41df0940ee56258f9923f33484a03cf04e4",
+      "bytes": 2375748,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mercenary/mercenary-restored.glb": {
+      "sha256": "fb5fcfc4045648548f4158b3a841f46df797425f448ad6dfdc2c09fa9b4e6f9f",
+      "bytes": 3288904,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mercenary/mercenary-tailored.glb": {
+      "sha256": "07cd0bcf6662cbf3373fafa73d6fbfa3f2591f95df1436aee0647ffe3cf985cd",
+      "bytes": 4760580,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mike/mike-field-tunic-motion.glb": {
+      "sha256": "d9ebfa5170a3d995acd52368c77b39502d9b62c016a9896e8972bb177d3873af",
+      "bytes": 2036424,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mike/mike-field-tunic.glb": {
+      "sha256": "5120f5d87a6dee7bb4f5704f68160b25adec4612efcedaf44c71ef472c8d8159",
+      "bytes": 1643068,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mike/mike-travel-coat-motion.glb": {
+      "sha256": "7ad51f82dcc9904022c296e2f9d826638893af088cdce89bbf7be1bb732a8442",
+      "bytes": 1991460,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mike/mike-travel-coat.glb": {
+      "sha256": "7f924d5d894ab199f96e128d35aa0952e38478d33d9f2ee029f2508a7a72f504",
+      "bytes": 1604128,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mike/mike-work-vest-motion.glb": {
+      "sha256": "50d673151f6243f56e097ccd859d15fd239731fecec8d68ddcdc70ca7f5504ee",
+      "bytes": 2055272,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mike/mike-work-vest.glb": {
+      "sha256": "a9bb95bb8b421206f2533b587f6e631689f94838b9f7a3a21c5b926ea241f031",
+      "bytes": 1661240,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-arrow/natural-arrow-clear.glb": {
+      "sha256": "3fc4f5ae76d0d4222506de0ef14437b1e0ed8e59693c79877ad6cff9bcfc949a",
+      "bytes": 20436,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-arrow/natural-arrow-quiet.glb": {
+      "sha256": "f3d2e11f615fd5c501de39287c7ae58f7d9725fb8fa5472a03b3c7a9a415e2ae",
+      "bytes": 10148,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-arrow/natural-arrow-weathered.glb": {
+      "sha256": "42637795ce80b264dd64fff4ba63ad296d0a70f186bedbd3c1db889ed15db2c3",
+      "bytes": 9856,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-backpack/natural-backpack-clear.glb": {
+      "sha256": "2a09a4c20f70fef0bc73a656a6a6c0fe7683de882b7b7bff9a80516b3a8f702e",
+      "bytes": 11712,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-backpack/natural-backpack-quiet.glb": {
+      "sha256": "e3241ed27ba4ab13bfdd46b06b4208f4df27b6084c71a22ebec3ad99f512601f",
+      "bytes": 10268,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-backpack/natural-backpack-weathered.glb": {
+      "sha256": "e901f3fb46ba1c479b3a171c086268714bc8e60572134202a135e30b3c3a2ee0",
+      "bytes": 10104,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-berry-bush/natural-berry-bush-clear-depleted.glb": {
+      "sha256": "afe8e91c160916989c8231cddf1bfac5301f6e11d54a1bd2b689c13851eb2a90",
+      "bytes": 512588,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-berry-bush/natural-berry-bush-clear.glb": {
+      "sha256": "e623fc8d9c0c627faf7c86c7f2c944d09cb8e3d2703f5d96664669a9620c43d8",
+      "bytes": 548472,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-berry-bush/natural-berry-bush-quiet-depleted.glb": {
+      "sha256": "65a71709285b01b091e26ec3edf981bc7a6396cad8b5092fc70a5e8878fe58db",
+      "bytes": 257392,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-berry-bush/natural-berry-bush-quiet.glb": {
+      "sha256": "30a0453a133de1dd0ed576cf520a18296c5e742202f56c829678ea29c294bfc9",
+      "bytes": 283292,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-berry-bush/natural-berry-bush-weathered-depleted.glb": {
+      "sha256": "4ea88d661b14f34471da30013bb16d6b96bab338d6f4a9e7e9af512a10cbb7c1",
+      "bytes": 255580,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-berry-bush/natural-berry-bush-weathered.glb": {
+      "sha256": "043b75b4f176581d651e3e4785827a81ecb9ad540c476526e774dc6b9547b432",
+      "bytes": 291468,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-birch/natural-birch-clear.glb": {
+      "sha256": "3ea202ac36ee171c303894496870daa7345f518f00cb72226803281a2adf86a3",
+      "bytes": 2213040,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-birch/natural-birch-quiet.glb": {
+      "sha256": "e48f5ad90b4c0172cb22dd09dd7cc30f988ff0e79975ee738c64b65000e0016f",
+      "bytes": 2096432,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-birch/natural-birch-weathered.glb": {
+      "sha256": "e1876ced43bdae991f1901437838dcbac69443055ddb746342e169a558ee21ec",
+      "bytes": 1609416,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-bow/natural-bow-clear.glb": {
+      "sha256": "64b1818857c508c2ac22f14e317472c099d713d34ff0126f17deae9800223ce6",
+      "bytes": 28708,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-bow/natural-bow-quiet.glb": {
+      "sha256": "a43bffc039c9f5184dea47466b51eb196e0e260dde4f23d66be52f00bb708bd7",
+      "bytes": 18420,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-bow/natural-bow-weathered.glb": {
+      "sha256": "3751275f05914b4c1104c6e775de589fce63feeb46499a48c20131802b330e4c",
+      "bytes": 18128,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-broadleaf/natural-broadleaf-clear.glb": {
+      "sha256": "8fdc22af532de372cc933db5d23f7b9ae2ae336584c02f3569f48bd5b9614bc6",
+      "bytes": 2239752,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-broadleaf/natural-broadleaf-quiet.glb": {
+      "sha256": "15574f8cccd22eacb0f81668f10c99cca49a9f618c729a4cee963be89d932828",
+      "bytes": 2103600,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-broadleaf/natural-broadleaf-weathered.glb": {
+      "sha256": "6a4f6f9cb8f14544dee9b5464304e912e1edfaaa359339a5699ab698fe62a3c8",
+      "bytes": 1617188,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-deer/natural-deer-clear-motion.glb": {
+      "sha256": "3ed6a31495c2027465405589b7514b5b7c4e7e50ce651e00d698b13216736e47",
+      "bytes": 992204,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-deer/natural-deer-clear.glb": {
+      "sha256": "55a0bf46c1dd5e129f783c99aae48e4cccda1e1de57b01dc6aa943c7fd35609b",
+      "bytes": 867936,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-deer/natural-deer-quiet-motion.glb": {
+      "sha256": "74f4a92ee6d38abe1fc3490fd9b213558c37d80f5c87576a812f79515f2cf2e5",
+      "bytes": 394984,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-deer/natural-deer-quiet.glb": {
+      "sha256": "7c759a17d89184e4bc013dacd8779c9451249d10a1ecf4b60ebbe82115198739",
+      "bytes": 270712,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-deer/natural-deer-weathered-motion.glb": {
+      "sha256": "7cb8f1332071bf7660d0faa18f40446c8b6b86ee6630f52980dc8def517a38bc",
+      "bytes": 390544,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-deer/natural-deer-weathered.glb": {
+      "sha256": "c7b182c318d3f9a9149d5319a4f77f1ae7b4227f85e05ca9d2d18ef9259ebd7d",
+      "bytes": 266272,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-dry-fiber/natural-dry-fiber-clear.glb": {
+      "sha256": "405a7d00b559ff98ecba530356310e41ed9ee9a1bf11a7cce6c30be781a5633b",
+      "bytes": 220140,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-dry-fiber/natural-dry-fiber-quiet.glb": {
+      "sha256": "07288787f0849ab273028041a31b5a3ddb9d3ce304c6f96a9a4bb721bd5e4960",
+      "bytes": 62888,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-dry-fiber/natural-dry-fiber-weathered.glb": {
+      "sha256": "be20b47948ff5ee2c07ee02d3f168965e6e5bcc98849d05856d8e15acea9ef9a",
+      "bytes": 60180,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-grass/natural-grass-clear.glb": {
+      "sha256": "7bae4e66babad94f58287c4f9834592a430f3c7324bcdb0891a32dd255b383b9",
+      "bytes": 316736,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-grass/natural-grass-quiet.glb": {
+      "sha256": "b9e12cf299055be56b6dffb9b306a95ea5132fc624b00944dc0dbfe28a7a472b",
+      "bytes": 99748,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-grass/natural-grass-weathered.glb": {
+      "sha256": "3eadc8263bb967dd86a485bc48ed1c2390bf4b66117b6d3c52138af412551bf2",
+      "bytes": 97340,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-knife/natural-knife-clear.glb": {
+      "sha256": "05e45e607c222128716d7a43f053e8978e3bf4dadff704bb28a5f80495a6141f",
+      "bytes": 140600,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-knife/natural-knife-quiet.glb": {
+      "sha256": "33627a916a9b58b63d29910e5f07d1097a1509f79bb6add606a0fef717cc3caf",
+      "bytes": 112812,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-knife/natural-knife-weathered.glb": {
+      "sha256": "a7cf2e389965994b7969c51247999e6ab5546ecc8d112c009a8af88534ff2490",
+      "bytes": 112436,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-leafy-berries/natural-leafy-berries-clear-depleted.glb": {
+      "sha256": "33b87ca96313a24b041e857e565299e5cf6f834a3b4f7d00be9e5141ac765ce6",
+      "bytes": 771464,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-leafy-berries/natural-leafy-berries-clear.glb": {
+      "sha256": "4d760f7f3fafa772b2cd315b8e0a11d61619faeb72a4ef6dd8841ed22bfdb413",
+      "bytes": 807352,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-leafy-berries/natural-leafy-berries-quiet-depleted.glb": {
+      "sha256": "e674c499c6a285671246d21711d70650a86c1a0cba8a40c0486bff838e3fe82e",
+      "bytes": 361264,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-leafy-berries/natural-leafy-berries-quiet.glb": {
+      "sha256": "862c9492aa9a83c19cf04b32a9f024093d853ab814276c3210d7f3449e226b0f",
+      "bytes": 387168,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-leafy-berries/natural-leafy-berries-weathered-depleted.glb": {
+      "sha256": "8a6b615588ed20b98ebaad7c1272c3fdba83dfcda4d84259668eeac7055768ab",
+      "bytes": 203284,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-leafy-berries/natural-leafy-berries-weathered.glb": {
+      "sha256": "bce20ad82dbe002bce65cf298cdd80db24bd30e2b69ce338ed0e60e145f23ff8",
+      "bytes": 239176,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-leafy-shrub/natural-leafy-shrub-clear.glb": {
+      "sha256": "0133624ea33cdc8ca0d759ee07eebfdbcd4ab3744cbae906001a4da5d0064920",
+      "bytes": 771452,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-leafy-shrub/natural-leafy-shrub-quiet.glb": {
+      "sha256": "f3025ba762d150194fbf32bf53858feae2eb4d2e7c99c41b975c2463634a34a8",
+      "bytes": 361252,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-leafy-shrub/natural-leafy-shrub-weathered.glb": {
+      "sha256": "e46763453008e6545242465a8ff251c140acc1e6f14c95cf0a2014c7c5681583",
+      "bytes": 203272,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-reeds/natural-reeds-clear.glb": {
+      "sha256": "d9ce93da87a5ff8a5030c8b2b73304732acaac5d6f3fbc3ec547468caa29a63a",
+      "bytes": 276948,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-reeds/natural-reeds-quiet.glb": {
+      "sha256": "ec44e67ab94ada774d478b83376ef81ba075edf0f850480353f6acd4471d49e8",
+      "bytes": 59956,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-reeds/natural-reeds-weathered.glb": {
+      "sha256": "abfa77c6ed68fce394dce5867a87f0e829f82bdb2c4343019295445b9d6ec8af",
+      "bytes": 57548,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-shield/natural-shield-clear.glb": {
+      "sha256": "67d6af34e9f07c4551e78a4e8dd586f1b58408d3d3686555a496fbe9cc8b073c",
+      "bytes": 380480,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-shield/natural-shield-quiet.glb": {
+      "sha256": "bf1919ac843d9060333f0e556aa35dc77233c01d0885ee0563945333ec2d2845",
+      "bytes": 323112,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-shield/natural-shield-weathered.glb": {
+      "sha256": "02c6493455b6e582fb4a92cd0d6a22b20c83af85dcd096317444e1c2430c7e03",
+      "bytes": 321832,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-shrub/natural-shrub-clear.glb": {
+      "sha256": "be736f60f891b1e551a84febfb436b8def205f1b4d572f3ba7314e8fad564d66",
+      "bytes": 449688,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-shrub/natural-shrub-quiet.glb": {
+      "sha256": "f8de123d8d828e3347ccac1fc6f895826f81a120b040461ac3271e24b6cec723",
+      "bytes": 194496,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-shrub/natural-shrub-weathered.glb": {
+      "sha256": "702552fb23d3b356e10eb7ebb87b2f4eb0f91eec3e04d702dbfbd9e11279b2d7",
+      "bytes": 192684,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-stag/natural-stag-clear-motion.glb": {
+      "sha256": "5658e713a8740e7388b4ba0d18e7a5952ce4086b2d295e26b5332aad1f4c9442",
+      "bytes": 1093664,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-stag/natural-stag-clear.glb": {
+      "sha256": "2ca10f243427232d897fdbefc61959095f8bf3104b7dc50e834ab123e0390b4f",
+      "bytes": 963000,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-stag/natural-stag-quiet-motion.glb": {
+      "sha256": "e9c150ec8ee94d8902bc486b8d167e65135f17747cb5d8ba500c6f0f7dcd0005",
+      "bytes": 442308,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-stag/natural-stag-quiet.glb": {
+      "sha256": "0bb47d57b964ba5da579612549a7365f953b162f7380187244a3ca2eb4b1dd12",
+      "bytes": 311792,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-stag/natural-stag-weathered-motion.glb": {
+      "sha256": "372f8f2d68ae1eeaad8e964430fa8139cc107d88e0943d50a4a8e72542ecd0ea",
+      "bytes": 437784,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-stag/natural-stag-weathered.glb": {
+      "sha256": "85c2505858babc0a88cf0ed9b67fe7bae095d3b9c25a6f4368fb9e5671a00fdd",
+      "bytes": 307268,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-sword/natural-sword-clear.glb": {
+      "sha256": "b64cac4ec163b883f0943cc5dd3e75b3ec0e5a4a6b6202da83265dae808e9135",
+      "bytes": 272900,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-sword/natural-sword-quiet.glb": {
+      "sha256": "14cf5c5f60f633dcba1ef0914d0e4410e1e0a883f0974a58ada11b9d15da21f7",
+      "bytes": 242788,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-sword/natural-sword-weathered.glb": {
+      "sha256": "c88df4177ab9bc4e4d9707245450c30dc951c3a16c66c963c8d5dbfa546493dc",
+      "bytes": 242180,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-travel-pack/natural-travel-pack-clear.glb": {
+      "sha256": "ac628fad457da9c4bb2f751489613743eac4a8aaa99444b30663f65f3fb90b29",
+      "bytes": 851556,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-travel-pack/natural-travel-pack-quiet.glb": {
+      "sha256": "0be8b09629a013f04f35b7958e9face7d236b588a189a1557fd722b17e12440f",
+      "bytes": 817388,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-travel-pack/natural-travel-pack-weathered.glb": {
+      "sha256": "651df373d717a833042e864a2129e5c8d58845a0f3d24c5c9ae76cc2809a1ca0",
+      "bytes": 816504,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-wolf/natural-wolf-clear-motion.glb": {
+      "sha256": "d529c2f9ff1447a3301180b28ba6716fc74234dc24a7b4578d410c19845ff925",
+      "bytes": 635544,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-wolf/natural-wolf-clear.glb": {
+      "sha256": "5c756addc9a2e6143478580dd1a6ea7d53903bd7d1340d290062700db5961d41",
+      "bytes": 281096,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-wolf/natural-wolf-quiet-motion.glb": {
+      "sha256": "ac709ac912905b8b7e605cc8003850167b8244771a41cfcb8613cb422726bc97",
+      "bytes": 584184,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-wolf/natural-wolf-quiet.glb": {
+      "sha256": "7c4692345ab6bc459f0018d7e60955e8cfbe952525a7518cca4ba5efaeccddc8",
+      "bytes": 229732,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-wolf/natural-wolf-weathered-motion.glb": {
+      "sha256": "66c7d4df6baf5bb7f26ac3e4cb7e8ddfb57eb150abdb0c64ab8a4bc47d23a86b",
+      "bytes": 560884,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-natural-wolf/natural-wolf-weathered.glb": {
+      "sha256": "3c0cd4089db7f5736361381346c89d81577911d831399201196c7aaef2091212",
+      "bytes": 206432,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-nature/broadleaf-layered-crown.glb": {
+      "sha256": "13efab7153ac40b02209de824a876cc10fc77574118a8af41629c4445043e518",
+      "bytes": 394756,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-nature/broadleaf-open-boughs.glb": {
+      "sha256": "1e6e82f5c3a76e145a55c7c2f2748f23597095240aabf9328936e715e8681160",
+      "bytes": 575144,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-nature/broadleaf-sheltered-crown.glb": {
+      "sha256": "afe408f1437642fcc9f636352ea9fd24914e1854af026b0d0167b11e8e6b52c0",
+      "bytes": 348168,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-orin/orin-field-tunic-motion.glb": {
+      "sha256": "d0bc25da016798f6641617778b4dbe1d986e94987c596ed16955b3a2d7beffd8",
+      "bytes": 2038612,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-orin/orin-field-tunic.glb": {
+      "sha256": "c086ba71cb3a4ac2846cc9dbc08889827c688b80acfecc6af15d400cafab14b5",
+      "bytes": 1643844,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-orin/orin-travel-coat-motion.glb": {
+      "sha256": "3749ec9ac9590112ee090de5d8f58cebc3107d8116082c45f03b789b4f3c7513",
+      "bytes": 2193084,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-orin/orin-travel-coat.glb": {
+      "sha256": "8d11595f8475d9a162961163d331b99e782e2f671ac8fc531631b6179d7dfa34",
+      "bytes": 1780936,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-orin/orin-work-vest-motion.glb": {
+      "sha256": "bb04d84635d7820c365bf0790551a8ea41640c704d50abb3d6c045bb9e9ccb9a",
+      "bytes": 2192876,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-orin/orin-work-vest.glb": {
+      "sha256": "18c539fef1de64bfbd82f90d0091f86ff704e065376f507e45b2fe0821d7365c",
+      "bytes": 1777104,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-people/ada-field-tunic-motion.glb": {
+      "sha256": "fbaf9e5e879c323fa6a5853bc865bc2bac28b619f7d295d5767c840d7441fb73",
+      "bytes": 2270148,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-people/ada-field-tunic.glb": {
+      "sha256": "3dc70b1dd3565ede64ba96b382365cb06abe742d299a3ba5838f50201b481df0",
+      "bytes": 1858164,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-people/ada-travel-coat-motion.glb": {
+      "sha256": "08c008e985b79795041b430369805020b23633e7593230d7e2dc56f9f9f5b124",
+      "bytes": 2282396,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-people/ada-travel-coat.glb": {
+      "sha256": "03be26289c594cf0eea0c9a438d2fb46ad889a5df91c85e7d7bda21ec521313c",
+      "bytes": 1863896,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-people/ada-work-vest-motion.glb": {
+      "sha256": "c5452174917afacf11c6875cf401408f5b65e9136fe6e817b75f6072a03d0948",
+      "bytes": 2221532,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-people/ada-work-vest.glb": {
+      "sha256": "0f794848a9a3c46b9de53c56f1435491b247c1fd59ce79d30a63a38421a821b3",
+      "bytes": 1813256,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/backpack-broad-flap.glb": {
+      "sha256": "cd61dcb1535bec52525df8c7b8dd4c980a65b6479c2213e2522dc7a2529b6d4d",
+      "bytes": 100372,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/backpack-canvas-pack.glb": {
+      "sha256": "83b9647c6f092f45d4c18e28a7d1e84536746c252e2b0247f3e2f5b36c36f936",
+      "bytes": 100376,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/backpack-slender-pack.glb": {
+      "sha256": "548d09beb64601e051b1277494904b62a19d6adcdd3c6a9327bb07a4bbbb1715",
+      "bytes": 100376,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/berry-bush-fruit-groups-empty.glb": {
+      "sha256": "44c53454632de690f8debc34435b3b2ea5163be1cb089ed6de1895af29fef883",
+      "bytes": 85940,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/berry-bush-fruit-groups.glb": {
+      "sha256": "3eccbbc3273473cbea6fd0f5d35dae7c320101307ffb328e0731ca4711c8ea51",
+      "bytes": 129216,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/berry-bush-low-thicket-empty.glb": {
+      "sha256": "d9506e22e1977cd9dc12b6eea610c67cede89fd006f2bff4735b3c52e110576e",
+      "bytes": 85940,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/berry-bush-low-thicket.glb": {
+      "sha256": "07e14a6663a8835cc8e2feba1457c407f71193cd14c11e4478c97fa990acebfc",
+      "bytes": 129216,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/berry-bush-open-canes-empty.glb": {
+      "sha256": "760591b735d92ef70bd8dd0c39e515933390f1d168e0a54d1322a0f1933a680d",
+      "bytes": 85936,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/berry-bush-open-canes.glb": {
+      "sha256": "347fa2a801a8c175ce6a75e5e13425b55f6c4eb2703fab59b20d7a581a406661",
+      "bytes": 117164,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/bundle-open-bedroll.glb": {
+      "sha256": "435519d2549a5ad595ef6625432289ad731804847a779542b46d5490a1f3f347",
+      "bytes": 11576,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/bundle-rolled-wool.glb": {
+      "sha256": "bed1b8b3b757cc00eee8b618aa840a6e6ac06810a804d6fe8a95ad03b15a3a95",
+      "bytes": 11048,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/bundle-tied-bundle.glb": {
+      "sha256": "58785ee3e42b7617f7cbe2f1487d01c45a60fb92fd00c5d6b94da11cd59f58c3",
+      "bytes": 11048,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/dry-fiber-loose-stems.glb": {
+      "sha256": "d390aa40ae0e65ded80cf21554caca97fb1d83f12bdbcfeff94919b22031a18d",
+      "bytes": 35964,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/dry-fiber-low-tuft.glb": {
+      "sha256": "170934e1cb0a89c0c3f5182c639facb29026ba117a9097a0c75b539cf2d37ba7",
+      "bytes": 10620,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/dry-fiber-standing-stems.glb": {
+      "sha256": "ef8a4e6ab3bd4646fa11a70b476f7ab69b25e82adb0679113add71d7b2d4fc14",
+      "bytes": 18264,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/fallen-wood-fallen-log.glb": {
+      "sha256": "4c78537660ee41458149e95811d7566a8b697cf1b077431aed724403a9f7c8d1",
+      "bytes": 7884,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/fallen-wood-forked-stump.glb": {
+      "sha256": "9d973e5693ccaf9e8cada5d50639c9b4efe879183d013ae584d9b372b3d73683",
+      "bytes": 6256,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/fallen-wood-loose-branches.glb": {
+      "sha256": "2a0f3f21ff81f0ae304555066a3eab4b7330629ca84274ff4281436408700458",
+      "bytes": 6528,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/marker-crossroads.glb": {
+      "sha256": "86aa870ed5297d74cbff86c872c0382eac31c43ee47898813810d599d47a833c",
+      "bytes": 5620,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/marker-single-board.glb": {
+      "sha256": "be469e3f9ac4481e27bae94dbbdaa06a2716e5bf4a06d3e1a2d3c852d088ce92",
+      "bytes": 4568,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/marker-worn-post.glb": {
+      "sha256": "e95b632f62d6e2cf000332e2aeaf965f0a194c9671dc73ace7955bebbe59d0b1",
+      "bytes": 4564,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/reeds-broad-leaves.glb": {
+      "sha256": "46886f902266bcb8d0063b3de9bbd1387f009b3037972d95b5103724f6c8586b",
+      "bytes": 18252,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/reeds-broken-stems.glb": {
+      "sha256": "5ffa2f2059dd565fb9f870f636509d0aaff4eee00febc4e7adbd29e81b2a46ff",
+      "bytes": 35956,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/reeds-river-fan.glb": {
+      "sha256": "e317d9df2f5c743616faf56aabae5192689962b9e2ce2f32c2f69281a201b579",
+      "bytes": 35952,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/river-stones-flat-stone.glb": {
+      "sha256": "4327ab66c3bffe3ed4513798e63d0210d5d12db6afff9157d7f27453c029e51c",
+      "bytes": 18540,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/river-stones-loose-stones.glb": {
+      "sha256": "847ee1aebc37e3ec97ffe98986510ce904247987d4a74398db4f79e4d3bd4b9b",
+      "bytes": 5192,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/river-stones-split-stone.glb": {
+      "sha256": "9918a06192141ad4c929b964fba8010fd88c00f39faecbf33da514b6b65e9b61",
+      "bytes": 9760,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/shelter-canvas-tent.glb": {
+      "sha256": "15faa5b62feaaf0fdbb2d79582cc150e1855f848a66e05271fb8cc64567878ac",
+      "bytes": 13040,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/shelter-framed-tent.glb": {
+      "sha256": "c155c61ad11858d5ce1d7d415ecdfb45d14d77dde884e454cf9c72cc1e06e658",
+      "bytes": 11348,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/shelter-open-awning.glb": {
+      "sha256": "6bdfa7d679422b0417de9eda226310c3e5e3598845fb4106f769701b9103f323",
+      "bytes": 12204,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/supplies-open-box.glb": {
+      "sha256": "ff0700e639eecdfe93332e08bc5f5f7bca047e2c2bf1846b1d3dd1de97ae95ec",
+      "bytes": 13088,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/supplies-stave-barrel.glb": {
+      "sha256": "4de8c6e0cb244c7aaa9b31efd269988e6a881b24bd06bb0a995818b8daf923b0",
+      "bytes": 23336,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/supplies-wide-box.glb": {
+      "sha256": "995ae4a51bd70f4656a6e08150b7484e6c184fddefe80badda0d43b778d88aee",
+      "bytes": 13092,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/workbench-long-table.glb": {
+      "sha256": "dfa80184f6418f4e15b158098e78cdb4af6f93e6cf726d931d2274a62d9476ab",
+      "bytes": 19776,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/workbench-narrow-bench.glb": {
+      "sha256": "34555b07e74e00a26874c4cef6e12b1ede62c44bb2b878287c2448873b25b985",
+      "bytes": 19724,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-resources/workbench-open-bench.glb": {
+      "sha256": "276451552155da4fa07f734f31d4e50aa59736b39702a78e4f3e9e97e469f7d9",
+      "bytes": 19752,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-rooted-berries/rooted-berries-clear-depleted.glb": {
+      "sha256": "2abc284ad0b07f539ed30aa80d5aef6bd6b3cc4b3c0127630dce40738b9840b0",
+      "bytes": 460820,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-rooted-berries/rooted-berries-clear.glb": {
+      "sha256": "8021c38431b3aa69e90c5372a062fedaa35fb98b67eac6e4e6023a28c33367d2",
+      "bytes": 496716,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-rooted-berries/rooted-berries-quiet-depleted.glb": {
+      "sha256": "100c0725b0c101f0d8db5c65738fbeeb6ae76ded7cb0a6bcb2887b980bab805e",
+      "bytes": 196088,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-rooted-berries/rooted-berries-quiet.glb": {
+      "sha256": "7e8f03d7efb402538ea1b72f5dc49aa8f23b1929d4113d1ff2e721cafef78906",
+      "bytes": 221996,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-rooted-berries/rooted-berries-weathered-depleted.glb": {
+      "sha256": "f839ad3fa906a20af38d4538b2abdf7adcd812bc2ff4612a553d073e76212895",
+      "bytes": 191912,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-rooted-berries/rooted-berries-weathered.glb": {
+      "sha256": "df95fab18d61d94f14cc60471f6ddc9cebed6eed519e2638b8cbda88dfadd440",
+      "bytes": 227808,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-rooted-shrub/rooted-shrub-clear.glb": {
+      "sha256": "d9b7581c4436502b01fa16a341bcb55db45b1970c08eaae6587d637fe3b20dfd",
+      "bytes": 460812,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-rooted-shrub/rooted-shrub-quiet.glb": {
+      "sha256": "1fb9df1764775c058c09a88021549445f6eafe4097ae334382f62d14a0d613a1",
+      "bytes": 196076,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-rooted-shrub/rooted-shrub-weathered.glb": {
+      "sha256": "bfb589d1cd85126db70d7a9eac6a26cf11216f0b2262117f67214f09bbcf6284",
+      "bytes": 191904,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-small-equipment/cord-figure-eight.glb": {
+      "sha256": "6fed9c3cc70deab40398b7e8f58414c2d1f8b285b58be61cef88e56fff70d9e9",
+      "bytes": 29928,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-small-equipment/cord-loose-coil.glb": {
+      "sha256": "6f6e1de2aef3ee56ceb9037db41559be89ff93aa34bcab2b70be8961d7f75601",
+      "bytes": 66636,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-small-equipment/cord-working-length.glb": {
+      "sha256": "cc330379042549495456b5ed68bf094395c7643e7080de4d9596fdeb20cc749d",
+      "bytes": 6244,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-small-equipment/sling-long-pouch.glb": {
+      "sha256": "a201ba9fba13467db67c777e89b93341430995398e53ea3edda55b200c38f58c",
+      "bytes": 13908,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-small-equipment/sling-oval-pouch.glb": {
+      "sha256": "0cdaaed384bf159d2303f0e19ff55ed9087c9b6facb33000ec91e1eb1d1efc1c",
+      "bytes": 13908,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-small-equipment/sling-split-pouch.glb": {
+      "sha256": "c8ba471b26fd6d64ea95ead2a11ebdbe7b58d60e518872ca9079355de0f91b60",
+      "bytes": 13092,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-small-equipment/stone-tool-broad-flake.glb": {
+      "sha256": "f883626987e1821278a11ea8cea41cb6f72307f367e2b087a45c25b8521a3a66",
+      "bytes": 9236,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-small-equipment/stone-tool-pointed-flake.glb": {
+      "sha256": "2d3910af9c2bc979eca229a74bc7f49ae7abef24fb78cf8a44ff6e3b93be82db",
+      "bytes": 14456,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-small-equipment/stone-tool-small-scraper.glb": {
+      "sha256": "45a2550534e58dad19a3f660712cc65d8ba2687cf3c8f5ae3169a3731b40909d",
+      "bytes": 18052,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-stag/stag-branching-antlers-motion.glb": {
+      "sha256": "6598f0dae60db9ea7b27c5fd08e94a2556c3019a7c37884bf483c9d72caa1859",
+      "bytes": 219024,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-stag/stag-branching-antlers.glb": {
+      "sha256": "51b49c316637c526078592c022a123853c049e9641bbe6045a2f7df06024ae89",
+      "bytes": 79920,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-stag/stag-dark-mantle-motion.glb": {
+      "sha256": "c39f55cfadbcbd507f5676f534bcf43c9f18bd36b1f565381f26ac3dd175819d",
+      "bytes": 245708,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-stag/stag-dark-mantle.glb": {
+      "sha256": "3c99be8bd699e9eed4c27d5220ab5b07cf87e70024b798a1dc0d79e5f01cbdbf",
+      "bytes": 106572,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-stag/stag-slender-stag-motion.glb": {
+      "sha256": "8f466612262ee75dc69b508d140ce3912abd1e59c7ee09f6c51b25e58962b8a1",
+      "bytes": 219044,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-stag/stag-slender-stag.glb": {
+      "sha256": "ca3cb834f6ec24d80ac478feee3fe16a6113b335011cb1221e05101bf3e38d3c",
+      "bytes": 79924,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-tavin/tavin-field-tunic-motion.glb": {
+      "sha256": "9f71b31170c3fae291fdba356be62d4d6d867b3953939bd3e606394548bbaea9",
+      "bytes": 1969236,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-tavin/tavin-field-tunic.glb": {
+      "sha256": "77f2f777eee76903132c1fe948a03a00e529af9687056410d48865c3ef5dc6ce",
+      "bytes": 1580720,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-tavin/tavin-travel-coat-motion.glb": {
+      "sha256": "6ddeb3c4ececca253bdeb0d62f7713895b0d8dd5e57170910fd904c8007ad4c0",
+      "bytes": 2064076,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-tavin/tavin-travel-coat.glb": {
+      "sha256": "d4cb14683639942a3083cc631954b3d3465f4c775da13f04c79359dd9fec0ea1",
+      "bytes": 1666112,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-tavin/tavin-work-vest-motion.glb": {
+      "sha256": "c0cf785a804ebd1cd3c91aa9a979ab91780149571077d718260a51b14ac0897b",
+      "bytes": 2033828,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-tavin/tavin-work-vest.glb": {
+      "sha256": "1b73386b865757b6e5a0fb6345866de8c5ff80ff1292c46bfd713e0653642cf2",
+      "bytes": 1637944,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/birch-forked-trunk.glb": {
+      "sha256": "877360538a342747f5c115b2945fa5f64a4fb607db31399327efbc2403a32805",
+      "bytes": 416872,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/birch-open-branches.glb": {
+      "sha256": "9df3a0f27545388bc6930c6edf282e06947c47dffc585d195dbeca23e86025a0",
+      "bytes": 304388,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/birch-slender-birch.glb": {
+      "sha256": "3305449e18c1e02bd22cc383a6c51d2b163b446c6e6bdfd7bf4ee87222f2206a",
+      "bytes": 283544,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/conifer-sheltered-pine.glb": {
+      "sha256": "1ad9111792a34734b4171e966ca990e42c7ce7757e336ac6ffb9bb8c68272265",
+      "bytes": 137900,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/conifer-slender-crown.glb": {
+      "sha256": "f936542fb98ca0a9d35667229f0b1c54e5b029ae8c443b6eb1644b4ace5a4a44",
+      "bytes": 363776,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/conifer-tiered-boughs.glb": {
+      "sha256": "dadc8e2e034df24043886da656a0682239af506fb6dabe2ca04596ae78a7e643",
+      "bytes": 295000,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/fern-arching-fronds.glb": {
+      "sha256": "0b6a43919955a5fc6e3280a5604260e6fd0257a24fafab7b1d8012497421181e",
+      "bytes": 22384,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/fern-open-fronds.glb": {
+      "sha256": "e5b2bb1b2e25fbdfde44a76fb0eb5e992f0d3167728970e921549ba67ed7e50a",
+      "bytes": 22376,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/fern-sheltered-fronds.glb": {
+      "sha256": "edcb8cfb565f6d62b0890558403ecaeb2b5c96a96671d205c5b49beb96f6bdfa",
+      "bytes": 22384,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/grass-broad-tuft.glb": {
+      "sha256": "13a42ae6b7e9f94e782e18e0615f3a4deacb1c2a132b19ddc1fdb93fe1ff9d05",
+      "bytes": 10224,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/grass-fine-tuft.glb": {
+      "sha256": "3e957edfbaceb53f0871f0c6e339415255a258ae27ce3e03ff0a75c1d7d55522",
+      "bytes": 30836,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/grass-open-stems.glb": {
+      "sha256": "0c076aefc2456270b30b61643b0cb5040d13c3156384052a954a7ef78d7d6c05",
+      "bytes": 17864,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/rock-low-slab.glb": {
+      "sha256": "20ff77ff3110633ee6e26f410975f24a500380673e0e841704fbcb721723d86f",
+      "bytes": 31624,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/rock-rounded-shoulder.glb": {
+      "sha256": "b27e2a4f66d843f4ffeb856d1e8828b3e1819767a02df0dcd8097a1606740359",
+      "bytes": 22632,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/rock-split-planes.glb": {
+      "sha256": "252e9ac269da82ee84bfcf06ea8ff6f2f56e84d5583bc938bbbd69fe7552095a",
+      "bytes": 17548,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/shrub-low-spreading.glb": {
+      "sha256": "732d34288c8fc3eabf3ab99e5881062f72dea2629611a08334dee26d150395d3",
+      "bytes": 85720,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/shrub-open-flowering.glb": {
+      "sha256": "a3e70f3064440fbfa45e8a0ec17be3fe71215981d610a2af41dc460c5aaf7fc5",
+      "bytes": 132616,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-vegetation/shrub-rounded-thicket.glb": {
+      "sha256": "c60cb0f262aa750242a76c5a62a800332ddbdd8f180ad442bce957f10c08a76a",
+      "bytes": 85720,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-wolf/wolf-dark-saddle-motion.glb": {
+      "sha256": "4b794855a3abbe113cf156073d722510d3358661fee8aafbf3324f4b53795cd8",
+      "bytes": 224984,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-wolf/wolf-dark-saddle.glb": {
+      "sha256": "8c4379aae009b2a438b51849324bb8921066b1bb76e4230b86c001aad59b0ad7",
+      "bytes": 58436,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-wolf/wolf-field-grey-motion.glb": {
+      "sha256": "e8c4a9713027137cfd03fc170fddbd1686d04996d01d80c13169a8f2b03acca6",
+      "bytes": 210416,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-wolf/wolf-field-grey.glb": {
+      "sha256": "349cb78330dd4e17dd6a1387ca7157e76babc083670dc32405bdf314ab5d98a8",
+      "bytes": 43924,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-wolf/wolf-full-ruff-motion.glb": {
+      "sha256": "16f0533e8eb7b8bd36d49061b5f38ddfff70ff0d60918a89caac1295f1d498d4",
+      "bytes": 210452,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-wolf/wolf-full-ruff.glb": {
+      "sha256": "5d55d79213c8b7813c8ce26c4c0accf551a0b73be51b0929d7310ea307e56f9c",
+      "bytes": 43936,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-doe/woodland-doe-clear-motion.glb": {
+      "sha256": "a1b514ae9118a89fca336eeb884bbc54e3f49cc872235692146a03588172c18c",
+      "bytes": 989312,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-doe/woodland-doe-clear.glb": {
+      "sha256": "cc5148ca334bade21438039f33d92bc7f8caf93e205a81abf454e3a429bce674",
+      "bytes": 867976,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-doe/woodland-doe-quiet-motion.glb": {
+      "sha256": "f2c50ea1960892cdd1c6b042770ea80efc0cbd27072f8e64c08e60810a152167",
+      "bytes": 392092,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-doe/woodland-doe-quiet.glb": {
+      "sha256": "9dc3c906ee842ca48d96c3179ebc2151809745e5b0d9d075a23f92eb63078e84",
+      "bytes": 270752,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-doe/woodland-doe-weathered-motion.glb": {
+      "sha256": "dce2df63a43f8a96a42922ccc0914acb474df5e3bdb6a550773a81a4633f0c82",
+      "bytes": 387652,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-doe/woodland-doe-weathered.glb": {
+      "sha256": "442a26889bb47229d52c7330af1af91f9cfaea27e65887adaa382eb760cb3630",
+      "bytes": 266312,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-stag/woodland-stag-clear-motion.glb": {
+      "sha256": "1f4ba1722e227368dae565b76da71c3d890fb11d54c34a611fb6b5fec8da3a97",
+      "bytes": 1091992,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-stag/woodland-stag-clear.glb": {
+      "sha256": "ea971bc2b9f7b6982c7956ed514631417c42d84d3b1795883e4c7ac0bc6fd209",
+      "bytes": 963036,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-stag/woodland-stag-quiet-motion.glb": {
+      "sha256": "cc85ee01bdcaf775967bd6f0b6dea1b693f0ea78b53cf940546c05d27ec5f8cc",
+      "bytes": 440656,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-stag/woodland-stag-quiet.glb": {
+      "sha256": "6c81d8255e9a3dd54004d3ab54af4ce79ea45b97c61df5330ecd5625f6dd9171",
+      "bytes": 311828,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-stag/woodland-stag-weathered-motion.glb": {
+      "sha256": "66f7df235e0bf490e022d2163dc867036022c15deb1e010573fdddf6afffa4fb",
+      "bytes": 436132,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-stag/woodland-stag-weathered.glb": {
+      "sha256": "cf8147b9eeaccc2f7bcb39d13c621cae8f0125b3f4c013bd35d0b6d05b7804e0",
+      "bytes": 307304,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-wolf/woodland-wolf-clear-motion.glb": {
+      "sha256": "835c4bd9a54a65334495e45c23b353d4b2da1f9ed01d30bd75c0a086e99ae3c8",
+      "bytes": 420560,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-wolf/woodland-wolf-clear.glb": {
+      "sha256": "e2deeb95f1b5416d37baff4203a8f9a53e6291196c7355bcc83e46297ef4c778",
+      "bytes": 281180,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-wolf/woodland-wolf-quiet-motion.glb": {
+      "sha256": "8e0c39a9607a513a09be70cb3935b116f16cdf92f2a60230debe25ec3e5a0b5e",
+      "bytes": 369196,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-wolf/woodland-wolf-quiet.glb": {
+      "sha256": "1275acaf3296e55f55d51f6c3333ad3f4345ab7ccfd05ae27d339c97faae02c9",
+      "bytes": 229816,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-wolf/woodland-wolf-weathered-motion.glb": {
+      "sha256": "a7af9f42b6e0dc6ef0c028b7b78aa221c7a85248df009349d2b5b936c1fca682",
+      "bytes": 345896,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-woodland-wolf/woodland-wolf-weathered.glb": {
+      "sha256": "0ea721a6e0aa92d9f2a70c5d78951c788731d0e86ed9cb1b1742fcc8074981e9",
+      "bytes": 206516,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/generated-chest.glb": {
+      "sha256": "f48c364f3deb88e85e043a26801bc0754dc547ece8b47ee535bf962237c86fb2",
+      "bytes": 454308,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/library-animals/hare-field.glb": {
+      "sha256": "754b9d73f0822af57106e85b21969b11819faa672b5f84d94cbc28de1bfa449b",
+      "bytes": 250560,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/library-animals/hare-russet.glb": {
+      "sha256": "e2b7bc50247ef2ee39ae6a184a013e18250cf5066d1e145fc8b8be88a00a947a",
+      "bytes": 251116,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/library-animals/hare-winter.glb": {
+      "sha256": "57fa452c338a06d4eaf64207b512dc0ef9b9dd8d1ed48ea3907a47be91c96df8",
+      "bytes": 250772,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/library-environment/scenery-canopy.json": {
+      "sha256": "df14212fbea5ad77fba0609697b99d0227262198c67cfcf44fddc2bb7cf81b21",
+      "bytes": 9768866,
+      "mediaType": "application/json",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/library-environment/scenery-kenney.json": {
+      "sha256": "d3343834a07aca2d90f5844f7c81330e5edad34e7a31f0f0404784a2ba37ab80",
+      "bytes": 784170,
+      "mediaType": "application/json",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/library-environment/scenery-natural.json": {
+      "sha256": "269328ff19d6640f9455c2b4b0618b4a9f420be09997d5f815e8cb9b568725b2",
+      "bytes": 22576363,
+      "mediaType": "application/json",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/library-environment/scenery-quaternius.json": {
+      "sha256": "6cbbb882fc5e824efe55f5e7188029a8e4f0b759d3e43eb3d3d6a469369c8c4b",
+      "bytes": 5063307,
+      "mediaType": "application/json",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/library-environment/scenery-study.json": {
+      "sha256": "282e8074f05d9434abeb9383210ed34817abf76ceac7367f255ed0519ed496a2",
+      "bytes": 4874530,
+      "mediaType": "application/json",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/design-system/fonts/atkinsonhyperlegiblenext-OFL.txt": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "aca6a428580965d2297d1b718042dd427c2a9443ece3b0d02d758e161e0c4030",
+      "bytes": 4431,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "apps/client/src/design-system/fonts/chakrapetch-OFL.txt": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "13831d02389d917d22fcfa6c79f98f8acbf61d230add0e73a4d4dc5f3bfb9e56",
+      "bytes": 4396,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "apps/client/src/design-system/fonts/cinzel-OFL.txt": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "f2b3029aba64c378bf0963b62945eee15e564fe4330b934c8f2eb058282b5e83",
+      "bytes": 4383,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "apps/client/src/design-system/fonts/cormorantgaramond-OFL.txt": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "60700d351cac4650c51f3f9db318d2a420f8b45052dba2715eb5fec41f0f6956",
+      "bytes": 4387,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "apps/client/src/design-system/fonts/ibmplexmono-OFL.txt": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "7e6b2818edbd8f6a01ae80641cc8f16a51080d08fb4e532be3a0b6f74adb07da",
+      "bytes": 4456,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "apps/client/src/characters/mercenary-assets/mercenary-face.json": {
+      "sha256": "c246bbfbc3b46f0e225debabe284d0357af8983d17648716914722daea15bbd1",
+      "bytes": 9023,
+      "mediaType": "application/json",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/characters/mercenary-assets/variants/face-faithful.json": {
+      "sha256": "8aa842b6a150b5897d023ca447d2337235e6acb18415ff7e8dd72d51c68f7739",
+      "bytes": 8474,
+      "mediaType": "application/json",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/characters/mercenary-assets/variants/face-graphic.json": {
+      "sha256": "07a4c03926c1ed2b8fac1697a3a90198aa802be03d0210fb82ea4aa3c167424c",
+      "bytes": 10750,
+      "mediaType": "application/json",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/characters/mercenary-assets/variants/face-painted.json": {
+      "sha256": "03e8e885ed82a98dfca76fb96a5a021ff4896d424832b0911ca2681e1a562cd6",
+      "bytes": 9371,
+      "mediaType": "application/json",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/characters/mercenary-cloth.json": {
+      "sha256": "1ff957a18af52de6d5eb1da4376c981111dcda02f3aed5efa453a576f18e8e6d",
+      "bytes": 52533,
+      "mediaType": "application/json",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/design-system/icons/icons.json": {
+      "sha256": "9e6272ba2fd899992bad6183be61da4f23a2dc779e6e42dbf35ec2c389db4339",
+      "bytes": 64512,
+      "mediaType": "application/json",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/design-system/panel-noise.svg": {
+      "sha256": "b9c17991bb6c77709fdf114e98b03cde12490651f763a7e4ac7d6300b954bca3",
+      "bytes": 306,
+      "mediaType": "image/svg+xml",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-mercenary/face-study.json": {
+      "sha256": "feae814dd59b6c1ba954d685bf317bd1047e76b65dd59fd31064dd2a650022a7",
+      "bytes": 7796,
+      "mediaType": "application/json",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    }
+  }
+}

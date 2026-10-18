@@ -1,5 +1,7 @@
 # Art direction after round two — detail before technique
 
+**Historical exploration:** retain the ratings and aspect-specific reactions below. New art choices follow the [current visual requirements](decisions.md#current-visual-requirements--october-16-2026): believable proportions and beautiful dimensional pixel art, explicitly excluding visibly low-poly, blocky, cutesy and big-head/small-body styles.
+
 Reviewed September 19, 2026. Source: [saved round-two feedback](feedback-round-02.json), saved at 23:00:19 UTC; [reviewed snapshot](round-02-feedback-reviewed.json). All 20 references received feedback. The file was saved in the parent art-direction folder, not inside round-02; it has been read in place and preserved.
 
 ## What became clearer
@@ -24,7 +26,7 @@ You explicitly added **Hades and Hades II as games whose art you really like**. 
 
 ## Round three
 
-[Open the new board](round-03/index.html). Five new illustrated comparisons lead: Hades, Hades II, Transistor, Bastion and Ori and the Will of the Wisps. Five recognizable pixel-art games return as deliberate controls: Octopath Traveler II, Eastward, Sea of Stars, Blasphemous 2 and Dead Cells. Their earlier responses are shown, including the prior rejection of Sea of Stars. REPLACED and Tails Noir anchor the comparison. No prior rejection is erased or assumed to have changed.
+[Open the new board](https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/art-direction/round-03/index.html). Five new illustrated comparisons lead: Hades, Hades II, Transistor, Bastion and Ori and the Will of the Wisps. Five recognizable pixel-art games return as deliberate controls: Octopath Traveler II, Eastward, Sea of Stars, Blasphemous 2 and Dead Cells. Their earlier responses are shown, including the prior rejection of Sea of Stars. REPLACED and Tails Noir anchor the comparison. No prior rejection is erased or assumed to have changed.
 
 This is a curated comparison, not an exhaustive list or a current popularity ranking. Publisher/store pages establish the game identities and art descriptions; no claims about sales or audience suitability are inferred from visual quality. Screenshots are references, not production assets, and do not establish animation quality or scalable generation costs.
 

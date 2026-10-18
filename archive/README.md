@@ -20,6 +20,8 @@ For active task documents and their owning specifications, use the [master TODO 
 
 ## Start here
 
+The [AI game development research](02-research/ai-game-development/README.md) records the October 17, 2026 investigation of developer workflows, procedural production, public skills, game-specific models, UI quality and PlayCanvas/Godot. Its [principles](02-research/ai-game-development/09-openlegend-principles.md), [working procedures](02-research/ai-game-development/10-openlegend-workflows.md) and [evaluation plan](02-research/ai-game-development/11-evaluation-and-adoption.md) are proposed recommendations; the [source register](02-research/ai-game-development/13-source-register-and-coverage.md) separates verified evidence, creator claims and unrun trials.
+
 The [worldbuilding research library](02-research/worldbuilding/README.md) compares 29 world dossiers through six essays and a matrix. Its whole-world reassessment covers ordinary pleasures, ambition, institutions, conflict, relationships and consequences without prescribing one tone or changing engine contracts. The [source audit](02-research/worldbuilding/source-audit.md) and [reassessment ledger](02-research/worldbuilding/reassessment-progress.md) distinguish actual reading, committed work and remaining evidence limits.
 
 The [Hindsight memory evaluation](02-research/hindsight-memory-evaluation.md) compares the external framework with OpenLegend's actor-scoped memory, knowledge and recovery contracts. It recommends evaluating optional retrieval rather than replacing the canonical mind; source snapshots, tradeoffs, dependency/fork strategy and an unrun R11/R19 benchmark proposal are preserved as research, not an adoption decision.

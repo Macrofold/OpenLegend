@@ -6,6 +6,8 @@ import { Construction } from './ui/construction';
 import { FamilyEditor } from './ui/family-editor';
 import { WorldEvents } from './ui/world-events';
 import { GameSavesPanel } from './ui/game-saves';
+import { AssetReleaseControl } from './ui/asset-release-control';
+import { iconCatalogReady } from './design-system/icons/catalog';
 import { OperationsConsole } from './ui/operations-console';
 import { EntryScreen, type EntryStatus } from './ui/entry-screen';
 import { EntryNotice } from './ui/entry-notice';
@@ -295,7 +297,7 @@ function App({
   );
   const [shadowQuality, setShadowQuality] = useLocal<ShadowQuality>(
     'open-legend:shadow-quality',
-    'detailed',
+    'economy',
     (v): v is ShadowQuality => v === 'detailed' || v === 'economy',
   );
   const [captionsPaused, setCaptionsPaused] = useLocal(
@@ -1988,6 +1990,15 @@ function App({
               {view.access?.canManageSaves && (
                 <Button onPress={() => openGameTask('checkpoints')}>Checkpoints</Button>
               )}
+              {view.access?.canManageSaves && view.checkpoint && (
+                <AssetReleaseControl
+                  key={view.checkpoint.recoveryScope}
+                  context={view.checkpoint}
+                  selected={view.presentationRelease}
+                  revision={view.presentationReleaseRevision ?? 0}
+                  onChanged={() => retry.current()}
+                />
+              )}
               <Button onPress={() => openGameTask('help')}>Settings & help</Button>
               <Button
                 onPress={() => {
@@ -2795,4 +2806,5 @@ function ApplicationScope() {
     />
   );
 }
+await iconCatalogReady;
 createRoot(document.getElementById('app')!).render(<ApplicationScope />);

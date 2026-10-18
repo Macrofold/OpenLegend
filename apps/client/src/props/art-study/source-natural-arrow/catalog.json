@@ -1,0 +1,104 @@
+{
+  "group": "source-natural-arrow",
+  "sourceFile": "art-direction/assets/source-study/source-natural-arrow.blend",
+  "sourceSha256": "5a0a3af16845f38d261f0605f7596bc34e8d3160374d65e278814f90b3663ed3",
+  "recipe": {
+    "path": "scripts/prepare-natural-replacements.py",
+    "sha256": "beeba80520a4a0799ffdcc96d56c939b008e8d0d1a5d234c82e3612e7911ae91"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581",
+    "prepare-resource-study.py": "cf0705e9e6cc2bc3a8489b1f5b8ee01878aea90d4b928c09a1e6eddfc19ebc42"
+  },
+  "sources": [
+    {
+      "url": "https://opengameart.org/content/archery-set",
+      "license": "CC0",
+      "files": [
+        {
+          "url": "https://opengameart.org/sites/default/files/archerySetOGA.blend",
+          "bytes": 2047224,
+          "sha256": "adc4ebb55ab76bcc44d921a36e6691023db1cee9322368027f3c3e830f3adc89"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "natural-arrow-clear",
+      "family": "natural-arrow",
+      "label": "Fletched arrow",
+      "variant": "clear",
+      "description": "Retained natural form and readable source color, restrained highlights.",
+      "recommended": true,
+      "file": "natural-arrow-clear.glb",
+      "bounds": {
+        "min": [-0.031447, -0.0, -0.005159],
+        "max": [0.031447, 0.72, 0.005159]
+      },
+      "triangles": 56,
+      "vertices": 38,
+      "textureSizes": [[256, 512]],
+      "sha256": "3fc4f5ae76d0d4222506de0ef14437b1e0ed8e59693c79877ad6cff9bcfc949a",
+      "source": "yd, CC0, https://opengameart.org/content/archery-set"
+    },
+    {
+      "id": "natural-arrow-quiet",
+      "family": "natural-arrow",
+      "label": "Fletched arrow",
+      "variant": "quiet",
+      "description": "Grouped, muted woodland color with restrained fine texture.",
+      "recommended": false,
+      "file": "natural-arrow-quiet.glb",
+      "bounds": {
+        "min": [-0.031447, -0.0, -0.005159],
+        "max": [0.031447, 0.72, 0.005159]
+      },
+      "triangles": 56,
+      "vertices": 38,
+      "textureSizes": [[128, 256]],
+      "sha256": "f3d2e11f615fd5c501de39287c7ae58f7d9725fb8fa5472a03b3c7a9a415e2ae",
+      "source": "yd, CC0, https://opengameart.org/content/archery-set"
+    },
+    {
+      "id": "natural-arrow-weathered",
+      "family": "natural-arrow",
+      "label": "Fletched arrow",
+      "variant": "weathered",
+      "description": "Worn, lower-saturation material variation on the same natural form.",
+      "recommended": false,
+      "file": "natural-arrow-weathered.glb",
+      "bounds": {
+        "min": [-0.031447, -0.0, -0.005159],
+        "max": [0.031447, 0.72, 0.005159]
+      },
+      "triangles": 56,
+      "vertices": 38,
+      "textureSizes": [[128, 256]],
+      "sha256": "42637795ce80b264dd64fff4ba63ad296d0a70f186bedbd3c1db889ed15db2c3",
+      "source": "yd, CC0, https://opengameart.org/content/archery-set"
+    }
+  ],
+  "controls": [
+    {
+      "id": "natural-arrow-source",
+      "family": "natural-arrow",
+      "label": "Fletched arrow",
+      "variant": "source",
+      "description": "Normalized original geometry and albedo; source control.",
+      "recommended": false,
+      "file": "natural-arrow-source.glb",
+      "bounds": {
+        "min": [-0.031447, -0.0, -0.005159],
+        "max": [0.031447, 0.72, 0.005159]
+      },
+      "triangles": 56,
+      "vertices": 38,
+      "textureSizes": [[512, 1024]],
+      "sha256": "5714730639f6d6268be085cd31cea9ce31fabc1a201b07faff36f81b8a4894aa",
+      "source": "yd, CC0, https://opengameart.org/content/archery-set"
+    }
+  ]
+}

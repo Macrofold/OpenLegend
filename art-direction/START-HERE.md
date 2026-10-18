@@ -1,6 +1,6 @@
 # Open Legend — a first visual pass
 
-Twelve contrasting references from the [full 48-reference board](index.html). React to individual qualities: lighting, trees, palette, character proportions, texture, mood. These selections are a viewing route, not confirmed design choices. Images require an internet connection.
+Twelve contrasting references from the [full 48-reference board](https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/art-direction/index.html). React to individual qualities: lighting, trees, palette, character proportions, texture, mood. These selections are a viewing route, not confirmed design choices. Images require an internet connection.
 
 ## G01 — Octopath Traveler II
 

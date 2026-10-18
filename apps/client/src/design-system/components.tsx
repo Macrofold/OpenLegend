@@ -27,7 +27,7 @@ import {
   Focusable,
   type ButtonProps as AriaButtonProps,
 } from 'react-aria-components';
-import icons from './icons/icons.json';
+import icons from './icons/catalog';
 import {
   LoadingDialog,
   LoadingIndicator,
@@ -51,11 +51,10 @@ export function Icon({
   size?: number;
   fallbackLabel?: string;
 }) {
-  const data = Object.hasOwn(icons, name)
-    ? (icons as Record<string, { body: string; viewBox: string }>)[name]
-    : undefined;
+  const data = Object.hasOwn(icons, name) ? icons[name] : undefined;
   const style = { '--ol-icon': `${size}px` } as CSSProperties;
-  // Only repository-owned SVG bodies enter this sink. Generated names remain React text.
+  // Only the exact checksum-verified, reviewed icon catalog enters this sink.
+  // Arbitrary asset SVG and generated names never become trusted markup.
   const glyph = data ? (
     <svg
       className="ol-icon"

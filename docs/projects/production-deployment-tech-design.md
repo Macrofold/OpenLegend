@@ -1,12 +1,14 @@
 # Production deployment — technical design
 
-| Status      | Current progress                                                                                                        | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The hosting proposal and playbook are prepared; deployment, provider qualification and capacity acceptance remain open. | 2026-10-16   |
+| Status      | Current progress                                                                                                 | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Asset storage and delivery are deployed; game hosting, rollout and broader production qualification remain open. | 2026-10-17   |
 
-**Status: recommendation, researched 1–2 October 2026; not implemented or capacity-certified.** Auth0 is selected by Mike. Runtime baseline: [`b9a08a05`](https://github.com/Macrofold/OpenLegend/commit/b9a08a05b45edbda31154ad40bccd03c69c21cdd); the production branch at `ca804cc8` was reviewed for this update. Read the [feature specification](production-deployment-feature-spec.md) for promises, the [checklist](../maintainers/production-deployment.md) for delivery order, and the [implementation playbook](production-deployment-playbook.md) for packaging, commands, CI/CD and release procedures.
+**Status: hosting recommendation, researched 1–2 October 2026; broader hosting is not implemented or capacity-qualified.** Auth0 is selected by Mike; the asset-storage implementation and measured limits are recorded under [AS](../maintainers/game-asset-storage.md). Hosting research baseline: [`b9a08a05`](https://github.com/Macrofold/OpenLegend/commit/b9a08a05b45edbda31154ad40bccd03c69c21cdd); the production branch at `ca804cc8` was reviewed for this update. Read the [feature specification](production-deployment-feature-spec.md) for promises, the [checklist](../maintainers/production-deployment.md) for delivery order, and the [implementation playbook](production-deployment-playbook.md) for packaging, commands, CI/CD and release procedures.
 
 ## 1. Decision
+
+Mike selected S3/CloudFront for substantial game/source/study assets, with exact references and tiny-only Git media. The [asset feature specification](game-asset-storage-feature-spec.md) and [storage architecture](game-asset-storage-tech-design.md) own bucket/key organization, world/engine/version scope, local cache, hosted studies and migration. The asset storage and CDN are deployed; shared publication, delivery and recovery tooling is implemented. The [verification report](../verification/game-asset-storage.md) records the exercised workloads and remaining limits. Other infrastructure recommendations retain their proposed, unqualified status.
 
 **Prefer AWS for the first deployment: ordinary ECS Fargate On-Demand, RDS PostgreSQL with pgvector, Auth0, and S3/CloudFront. Keep the current Node/React/PlayCanvas stack and HTTP/SSE protocol. Buy no GPUs.** This is a modest operational-fit recommendation, not evidence that AWS is cheaper, faster or more scalable than GCP. Fargate supplies a managed persistent-container starting point without requiring Kubernetes or a game-server SDK. The application must still implement safe ownership, recovery and deployment.
 
@@ -26,7 +28,7 @@ This is not a claim that one Fargate task serves 100,000 players. Either cloud c
 
 **[AI providers](../ai-providers.md) and [MW delivery](../maintainers/macrofold-worker-api.md):** Preserve Macrofold Worker, inference, scope and accounting contracts. Full deliberation and workspace reflection currently require Macrofold; direct model access separately supports immediate inference and does not supply that reflection harness.
 
-**[Runtime art](../invention-art-pipeline.md) and [3D asset pipeline](3d-pixel-art-asset-pipeline.md):** Instantiate their versioned publication/rights/fallback design with storage and delivery services. Do not replace their art semantics or claim the bundled mercenary implements production storage.
+**[Runtime art](../invention-art-pipeline.md) and [3D asset pipeline](3d-pixel-art-asset-pipeline.md):** Reuse the implemented AS publication/storage/delivery owners while preserving their version, rights and fallback contracts. The curated prototype has real external delivery; production licensing, arbitrary generated appearances and broader device/hosted acceptance retain their separate gates.
 
 **[Package scripts](../../package.json), [server entry](../../apps/server/src/main.ts) and [CI](../../.github/workflows/check.yml):** The server runs TypeScript through tsx; build produces client output, not a compiled server. Existing shutdown handling needs container qualification, not replacement by assumption. CI uses PostgreSQL 16 while this design targets qualified PostgreSQL 18. The playbook makes these concrete PD02/PD04/PD09 prerequisites.
 
@@ -71,7 +73,7 @@ Auth0 ── verified server-side login callback ──────────�
                                                           └── admitted AI work → Macrofold/providers
 ```
 
-Use **ECR images, TypeScript AWS CDK, GitHub Actions OIDC, Route 53/ACM, Secrets Manager/KMS, CloudWatch and OpenTelemetry**. Maintain separate production/nonproduction accounts and Auth0 tenants. Put tasks/database in private subnets across two availability zones; expose only the load balancer/CDN. Restrict origin access, security groups and task roles. Budget NAT, endpoints, cross-AZ traffic and logs explicitly. Deployment credentials are short-lived and restricted to the repository/environment; no permanent AWS key in GitHub. [6] [22]
+Use **ECR images, TypeScript AWS CDK, GitHub Actions OIDC, Route 53/ACM, Secrets Manager/KMS, CloudWatch and OpenTelemetry**. The proposed hosted-game rollout uses separate production/nonproduction accounts and Auth0 tenants; the [deployed asset stack](game-asset-storage-tech-design.md#2-physical-storage-and-accounts) currently separates buckets and roles within one project/Region. Reuse its verified outputs and preserve its independent retained-resource ownership. Put tasks/database in private subnets across two availability zones; expose only the load balancer/CDN. Restrict origin access, security groups and task roles. Budget NAT, endpoints, cross-AZ traffic and logs explicitly. Deployment credentials are short-lived and restricted to the repository/environment; no permanent AWS key in GitHub. [6] [22]
 
 Initially keep the built client and dynamic endpoints on the existing same-origin server, with large assets on CloudFront. Move hashed client bundles to the CDN when their release/rollback contract is ready. Never cache private API responses or SSE as public content. Public origin/Host handling must match the existing OIDC configuration.
 
@@ -115,15 +117,17 @@ A CDN speeds static delivery, not the authoritative interaction across continent
 
 ## 6. Production assets, not repository downloads
 
-**Blender/source textures, references, licenses and provenance:** private versioned S3 art storage plus the artist workspace; references are not automatically licensed to ship.
+**Blender/source textures, references, licenses and provenance:** private versioned S3 originals plus the external artist workspace. Intentionally public study/source copies follow the [asset publication workflow](../asset-workflow.md#publish-an-exact-revision); public access does not establish a production license.
 
 **Approved models, textures, sprites, animations and audio:** immutable content-addressed S3 objects through CloudFront; separately published from the application.
 
-**Identity, exact versions, rights, dependencies, validation and publication receipts:** PostgreSQL metadata through the existing appearance/art owners.
+**Identity, exact versions, rights, dependencies, validation and publication receipts:** PostgreSQL metadata through the [shared asset publication owner](game-asset-storage-tech-design.md#1-ownership-and-integration), with application-owned saved-world release choices.
 
-**Engine/import scripts, small authored manifests, essential fallback art:** Git. Local downloaded library files live in an ignored cache.
+**Engine/import scripts, small authored manifests/version pins and explicitly tiny fallback/UI art:** Git, under [AST01](../limits/game-asset-storage.md#ast01--git-and-bootstrap-assets). Local downloaded files use a shared cache outside worktrees; substantial generated scenery JSON follows the same external-asset policy as models/textures.
 
-**First vertical slice:** publish a rights-approved mercenary runtime bundle; create its exact asset/version manifest; resolve it through authorized server metadata; load from the CDN with cache/fallback; verify a clean checkout and a clean browser; then stop adding large runtime binaries to Git. No history rewrite or deletion of current art is authorized here.
+**Curated consumer and production gate:** [AS01–AS08](../maintainers/game-asset-storage.md) implements shared storage, exact publication, selective materialization, separate study hosting and a measured starting-world consumer. PD05 consumes that evidence and retains rights-qualified production appearances, decoder/device qualification and hosted acceptance. Substantial media stays outside Git; existing tracked art is removed only after the AS preservation gate passes. These production documents grant no additional history rewrite or deletion authority.
+
+Use the [canonical physical layout](game-asset-storage-tech-design.md#2-physical-storage-and-accounts): durable private library and separate study buckets, isolated nonproduction/production runtime buckets, intake and a separately controlled recovery destination. Packs organize authored worlds and engine presentation; immutable file identities enable reuse without a bucket per world or file copies per engine version. Intentional promotion/archive/recovery copies have receipts. The [URL contract](game-asset-storage-tech-design.md#5-url-and-repository-contract) replaces workstation/provider paths with verified permanent references during migration; no temporary URL is a saved identity. This asset infrastructure is deployed in the selected single project/Region; the [AS report](../verification/game-asset-storage.md) owns its actual resource mapping and qualification. Its separate recovery roles protect ordinary mistakes, not loss of the entire project or Region.
 
 Use the existing narrow **GLB/glTF 2.0** profile. Pin **glTF Transform** for inspection/deduplication/texture preparation and **Khronos glTF Validator** for structural checks; neither replaces semantic/rights review. Qualify Basis/KTX2 texture output and Draco compression against the installed PlayCanvas loader and target devices before enabling them. Do not blindly use a tool's Meshopt/default optimization preset when the client extension/decoder path is unverified. Ship required decoder/WASM versions with the approved release. Compressed download size is not decoded CPU/GPU memory usage. [13] [26] [27] [28]
 

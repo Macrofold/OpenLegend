@@ -31,6 +31,13 @@ import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { forgetExperience } from '@open-legend/domain';
 import { validateCurrentWorldState } from '../apps/server/src/upgrade-world.js';
 import { join } from 'node:path';
+import { sameAssetRevision } from '@open-legend/assets';
+import { readAssetConfiguration, readAssetIndex } from '../apps/server/src/asset-configuration.js';
+import { S3AssetStorage } from '../apps/server/src/asset-storage.js';
+import { readCurrentAssetAuthority } from './assets/recovery.js';
+import type { AssetAuthoritySnapshot } from '../apps/server/src/asset-repository.js';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 // Initialize native geometry before constructing or validating recovered world state.
 await initializeCollisionRuntime();
 
@@ -84,13 +91,92 @@ try {
     throw new Error('Backup is missing archived history; full restore refused.');
   if (current && state.world.id !== current.state.world.id)
     throw new Error('World identity mismatch.');
+  let assetPrincipal: { accountId: string } | undefined;
+  const assetRestoreKey = `full-restore-asset-authority:${backup.identity}`;
+  const assetRestore = (await store.getIntegration(assetRestoreKey)) as
+    | { status: 'pending' | 'complete'; worldId: string; attemptId: string }
+    | undefined;
+  const resumeAssets =
+    !!current && assetRestore?.status === 'pending' && assetRestore.worldId === state.world.id;
+  const finishAssetAuthority = async () => {
+    const assets = new S3AssetStorage(await readAssetConfiguration(), 'recovery-restore');
+    const directory = await mkdtemp(join(tmpdir(), 'openlegend-full-restore-authority-'));
+    let snapshot: AssetAuthoritySnapshot;
+    try {
+      const principal = { accountId: await assets.principal() };
+      if (assetPrincipal && principal.accountId !== assetPrincipal.accountId)
+        throw new Error('The admitted restore operator changed before asset activation.');
+      assetPrincipal = principal;
+      snapshot = await readCurrentAssetAuthority(assets, {
+        domain: 'openlegend-assets',
+        directory,
+      });
+    } finally {
+      assets.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+    await store.db.transaction(async () => {
+      const phase = (await store.getIntegration(assetRestoreKey)) as typeof assetRestore;
+      if (!phase || phase.status !== 'pending' || phase.worldId !== state.world.id)
+        throw new Error('The exact interrupted full restore is unavailable.');
+      await store.assets.reconcileAuthority(snapshot, snapshot.generation);
+      await store.assets.assertRecoveryOperator(assetPrincipal!);
+      await store.assets.worldReleaseStatus(state.world.id, state.presentationRelease!);
+      await store.putIntegration(assetRestoreKey, { ...phase, status: 'complete' });
+    });
+  };
+  if (state.presentationRelease) {
+    const installed = (await readAssetIndex()).release;
+    if (!sameAssetRevision(state.presentationRelease, installed))
+      throw new Error(
+        'The backup requires another exact asset release. Materialize and build it before restore; the target was kept.',
+      );
+    const assets = new S3AssetStorage(
+      await readAssetConfiguration(),
+      current && !resumeAssets ? 'authoring' : 'recovery-restore',
+    );
+    let authorityDirectory: string | undefined;
+    try {
+      assetPrincipal = { accountId: await assets.principal() };
+      if (!current) {
+        // Read independent current restrictions before the installation transaction;
+        // cloud I/O must never hold the SQL/world mutation lock.
+        authorityDirectory = await mkdtemp(join(tmpdir(), 'openlegend-full-restore-authority-'));
+        await readCurrentAssetAuthority(assets, {
+          domain: 'openlegend-assets',
+          directory: authorityDirectory,
+        });
+      }
+    } finally {
+      assets.close();
+      if (authorityDirectory) await rm(authorityDirectory, { recursive: true, force: true });
+    }
+    if (current && !resumeAssets) {
+      const release = await store.assets.revision(state.presentationRelease, assetPrincipal);
+      await store.assets.assertPermission(assetPrincipal, release.destination, 'manage');
+    }
+  }
   const directoryOwner = await restoreDirectoryOwner(store, config.dataDirectory, state.world.id);
   const priorAttempts = await reconcileInterruptedRestores(store, config.dataDirectory);
   for (const prior of priorAttempts)
     console.error(
       `Prior restore ${prior.id}: ${prior.committed ? 'installation committed' : `${prior.removed.length} owned slot(s) removed`}${prior.retained.length ? `; kept ${prior.retained.join(', ')} for inspection` : ''}.`,
     );
-  if (!current) {
+  if (resumeAssets) {
+    const expected = structuredClone(state);
+    expected.manuallyPaused = true;
+    expected.world.paused = true;
+    const installed = (await store.getIntegration(`restore-attempt:${assetRestore!.attemptId}`)) as
+      | { worldId: string }
+      | undefined;
+    if (installed?.worldId !== state.world.id || !isDeepStrictEqual(current!.state, expected))
+      throw new Error('The target changed after its interrupted full restore; source retained.');
+    await finishAssetAuthority();
+    await store.recoverInterruptedWork();
+    console.log(
+      'Interrupted full restore completed; independently current asset permissions verified.',
+    );
+  } else if (!current) {
     const tables = BACKUP_TABLES.filter((table) => table !== 'meta');
     for (const table of tables)
       if (
@@ -117,7 +203,7 @@ try {
       for (const table of [...tables, 'meta']) {
         for (const row of backup.tables[table] ?? []) {
           const columns = Object.keys(row);
-          if (!columns.length || columns.some((key) => !/^[a-z_]+$/.test(key)))
+          if (!columns.length || columns.some((key) => !/^[a-z_][a-z0-9_]*$/.test(key)))
             throw new Error('Invalid backup columns.');
           if (table === 'meta' && row['key'] === 'schema') {
             // The writer owns the current database format; older backups are refused.
@@ -140,6 +226,10 @@ try {
             .run(...Object.values(row));
         }
       }
+      // A content checkpoint cannot establish today's grants/withdrawals. Keep
+      // restored asset delivery closed until independently current recovery authority
+      // is reconciled; ordinary gameplay restore retains the live operational tables.
+      await store.assets.quarantineAuthority();
       // Keep restored story identities/revisions; projection fills only missing or changed sources.
       validateCurrentWorldState(state.world);
       state.manuallyPaused = true;
@@ -147,12 +237,21 @@ try {
       await fenceCommands();
       await store.commit(0, state);
       await markRestoreInstalled(store, attempt!);
+      if (state.presentationRelease)
+        await store.putIntegration(assetRestoreKey, {
+          status: 'pending',
+          worldId: state.world.id,
+          attemptId: attempt!.id,
+        });
       install.state = 'uncertain';
     });
     install.state = 'committed';
     current = await store.load();
     if (!current || !isDeepStrictEqual(current.state, state))
       throw new Error('Restored world recovery digest mismatch.');
+    // Slow file/SQL restoration remains quarantined. Refresh independent authority
+    // only now, then activate in a short transaction; a crash before it stays closed.
+    if (state.presentationRelease) await finishAssetAuthority();
     await store.recoverInterruptedWork();
     console.log(
       'Full backup restored into an empty target; identities, jobs and accounting retained.',
@@ -267,6 +366,7 @@ try {
           epoch,
           timeline: randomUUID(),
           recoveryId: recoveryId!,
+          assetPrincipal,
         },
       });
       await markRestoreInstalled(store, attempt!);

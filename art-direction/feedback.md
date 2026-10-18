@@ -1,11 +1,13 @@
 # Reference feedback
 
+**October 16, 2026 clarification:** Mike wants realistic proportions interpreted through beautiful dimensional pixel art and rejects the visible low-poly look, cutesy/blocky assets and small-body/big-head characters. He rejects Bitgem, KayKit, Polytope Studio and Synty as style directions, while recognizing Quaternius as solid for its own style. The latest study looks much better; that praise does not approve every source family. See the [current visual requirements](decisions.md#current-visual-requirements--october-16-2026); earlier ratings remain unchanged.
+
 Round one was reviewed on September 19, 2026: **47 ratings — 13 Like, 12 Maybe, 22 Pass**. A07 / Modern Exteriors is unrated. Check `feedback.json` for the latest original-board feedback.
 
 - [Art-direction synthesis with examples](round-01-analysis.md)
 - [All reviewed feedback, including verbatim notes](round-01-feedback-record.md)
 - [Snapshot of the feedback used for that analysis](round-01-feedback-reviewed.json)
-- [Round-two comparison board](round-02/index.html), with a separate `round-02/feedback-round-02.json` file created when the user saves
+- [Round-two comparison board](https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/art-direction/round-02/index.html), with a separate `round-02/feedback-round-02.json` file created when the user saves
 
 The clearest pattern is dense, finely defined pixel art; cinematic light; rich, organic environments; and people with recognizable clothing, gear, body shapes, skin tones, and faces. REPLACED and Tails Noir are the strongest overall references. Owlboy and Eastward contribute environmental richness, with a higher character-detail target. The detailed analysis preserves exceptions and aspect-specific reactions.
 

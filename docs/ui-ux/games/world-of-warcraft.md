@@ -12,7 +12,7 @@ WoW supplies evidence for three different player goals: viewing possessions, int
 
 ## WOW-01 — One carried collection, regardless of bag count
 
-![WoW separated bag windows compared with a combined backpack](../screenshots/wow/01-separated-combined-bags.png)
+![WoW separated bag windows compared with a combined backpack](https://assets.openlegend.ai/studies/public/blobs/sha256/6b/6b5c60ad84266905cdfbbdf1b107a0b0ec7b6b665508932c5774fece5f95ca83)
 
 _Source: Blizzard, [Dragonflight HUD and UI Revamp](https://worldofwarcraft.blizzard.com/en-us/news/23841481), 2022-09-01. © Blizzard Entertainment. Publisher-composed comparison, counted once._
 
@@ -28,7 +28,7 @@ _Source: Blizzard, [Dragonflight HUD and UI Revamp](https://worldofwarcraft.bliz
 
 ## WOW-02 — Optional HUD configuration shows the actual result
 
-![WoW HUD edit mode with layout selector, alignment grid, selectable elements and Save](../screenshots/wow/02-hud-edit-layout.png)
+![WoW HUD edit mode with layout selector, alignment grid, selectable elements and Save](https://assets.openlegend.ai/studies/public/blobs/sha256/aa/aa89ec9fc24a9963be7d1b9745e58e1311e3d5287d95e7b5ef5e5419397e7585)
 
 _Source: [Blizzard's 2022 UI preview](https://worldofwarcraft.blizzard.com/en-us/news/23841481), © Blizzard Entertainment. Full game screenshot._
 
@@ -42,7 +42,7 @@ _Source: [Blizzard's 2022 UI preview](https://worldofwarcraft.blizzard.com/en-us
 
 ## WOW-03 — Local configuration with immediate visual feedback
 
-![WoW debuff frame editor with orientation, wrapping, icon size and padding controls](../screenshots/wow/03-frame-edit-preview.png)
+![WoW debuff frame editor with orientation, wrapping, icon size and padding controls](https://assets.openlegend.ai/studies/public/blobs/sha256/bd/bdecc33a1c0b03bac6a6734828de1a7f9d4b69111c55c4c709462ba9157613db)
 
 _Source: [Blizzard's 2022 UI preview](https://worldofwarcraft.blizzard.com/en-us/news/23841481), © Blizzard Entertainment. Full game screenshot._
 
@@ -58,7 +58,7 @@ _Source: [Blizzard's 2022 UI preview](https://worldofwarcraft.blizzard.com/en-us
 
 ## WOW-04 — Explain the symbols where the player needs to read them
 
-![WoW Map and Quest Log with area breadcrumbs, world markers and an expanded labeled map legend](../screenshots/wow/04-map-legend.png)
+![WoW Map and Quest Log with area breadcrumbs, world markers and an expanded labeled map legend](https://assets.openlegend.ai/studies/public/blobs/sha256/34/347341c3ae219b89abbc0f823ed0eb76bcf1127f52d66d80e9722960130f6001)
 
 _Source: [Blizzard's July 2024 UI announcement](https://news.blizzard.com/en-gb/article/24117139/user-interface-and-quest-updates-in-the-war-withintm), © Blizzard Entertainment. Full publisher capture; War Within preview period, exact client build unspecified._
 
@@ -74,7 +74,7 @@ _Source: [Blizzard's July 2024 UI announcement](https://news.blizzard.com/en-gb/
 
 ## WOW-05 — A learned-action catalogue and a quick-action bar serve different goals
 
-![WoW spellbook in full and minimized layouts with named abilities, class tabs, search, Hide Passives and page controls](../screenshots/wow/05-spellbook.png)
+![WoW spellbook in full and minimized layouts with named abilities, class tabs, search, Hide Passives and page controls](https://assets.openlegend.ai/studies/public/blobs/sha256/7c/7cbe6bc54de56d02698dbd65bf3efa910ab849d274bfa06641208b78e8479abb)
 
 _Source: [Blizzard's July 2024 UI announcement](https://news.blizzard.com/en-gb/article/24117139/user-interface-and-quest-updates-in-the-war-withintm), © Blizzard Entertainment. One original publisher comparison, counted once. Preview build unspecified._
 

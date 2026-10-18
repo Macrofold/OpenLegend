@@ -41,7 +41,7 @@ These accounts justify testing the particular improvements. They do not establis
 
 ### FACT-01 — Simultaneous inventory, logistics and crafting
 
-![FACT-01: Factorio's flat character screen with inventory, logistics and crafting visible together](../screenshots/factorio/fff-363-flat-character-gui.png)
+![FACT-01: Factorio's flat character screen with inventory, logistics and crafting visible together](https://assets.openlegend.ai/studies/public/blobs/sha256/74/740f177a428fae7d77c4fb49f1889c84eb1a0d177e6f4f3d2b1914b87b1d7c64)
 
 **Provenance:** [Wube FFF-363](https://www.factorio.com/blog/post/fff-363), 2020-11-13; 1.1 preview; desktop. [Original image](https://cdn.factorio.com/assets/img/blog/fff-363-flat-character-gui.png).
 
@@ -57,7 +57,7 @@ These accounts justify testing the particular improvements. They do not establis
 
 ### FACT-02 — A clicked machine has an identity and a reason it is stopped
 
-![FACT-02: Inserter interface with the character inventory and an explicit destination-space blocker](../screenshots/factorio/fff-363-inserter-gui.png)
+![FACT-02: Inserter interface with the character inventory and an explicit destination-space blocker](https://assets.openlegend.ai/studies/public/blobs/sha256/53/53f5573c7281c0bd58c0234a93a2445d1b06838595c980924adfa7be041e41e6)
 
 **Provenance:** [Wube FFF-363](https://www.factorio.com/blog/post/fff-363), 2020-11-13; 1.1 preview; desktop. [Original image](https://cdn.factorio.com/assets/img/blog/fff-363-inserter-gui.png).
 
@@ -73,7 +73,7 @@ These accounts justify testing the particular improvements. They do not establis
 
 ### FACT-03 — Storage contents, automation filtering and restricted slots
 
-![FACT-03: Factorio storage chest panel with item slots, a capacity control and a separate logistic filter](../screenshots/factorio/storage-chest-gui.png)
+![FACT-03: Factorio storage chest panel with item slots, a capacity control and a separate logistic filter](https://assets.openlegend.ai/studies/public/blobs/sha256/b5/b59a2b27f0f4c8a6982f84c07963719f6e0539fa1ce1847fa0f96ce4fc820b9b)
 
 **Provenance:** [Official wiki file page](https://wiki.factorio.com/File:Storage_chest_gui.png), uploaded by Zippy on 2021-02-28; exact patch unspecified. This is the publisher's crop of the chest half, so it does not show the paired player inventory. [Original image](https://wiki.factorio.com/images/Storage_chest_gui.png).
 
@@ -89,7 +89,7 @@ These accounts justify testing the particular improvements. They do not establis
 
 ### FACT-04 — The quickbar stores the player's arrangement
 
-![FACT-04: Ten quickbar pages with two active rows and a highlighted page selection](../screenshots/factorio/fff-278-action-bar-pages.png)
+![FACT-04: Ten quickbar pages with two active rows and a highlighted page selection](https://assets.openlegend.ai/studies/public/blobs/sha256/84/84c1f4b2a1360fb5960604a489e918002358e0653a8f8a5ee1bc6cf79a16055b)
 
 **Provenance:** [Wube FFF-278](https://factorio.com/blog/post/fff-278), 2019-01-18; 0.17 preview; desktop. [Original image](https://cdn.factorio.com/assets/img/blog/fff-278-action-bar-pages.png).
 
@@ -105,7 +105,7 @@ These accounts justify testing the particular improvements. They do not establis
 
 ### FACT-05 — Recipe discovery inside the recipe catalogue
 
-![FACT-05: Recipe categories and newly available recipes marked with small exclamation badges](../screenshots/factorio/fff-363-recipe-notifications.png)
+![FACT-05: Recipe categories and newly available recipes marked with small exclamation badges](https://assets.openlegend.ai/studies/public/blobs/sha256/de/de3ed098675c4f9489e60c879527dbd6a686c8a081442ae4566644ddb5b0e259)
 
 **Provenance:** [Wube FFF-363](https://www.factorio.com/blog/post/fff-363), 2020-11-13; 1.1 preview; desktop. [Original image](https://cdn.factorio.com/assets/img/blog/fff-363-recipe-notifications.png).
 
@@ -121,7 +121,7 @@ These accounts justify testing the particular improvements. They do not establis
 
 ### FACT-06 — Optional symbolic names are inserted through a picker
 
-![FACT-06: A name editor with an item-icon picker and searchable icon categories](../screenshots/factorio/fff-363-rich-text-selector.png)
+![FACT-06: A name editor with an item-icon picker and searchable icon categories](https://assets.openlegend.ai/studies/public/blobs/sha256/e4/e40deb6d59ee832849e2d02af834b8aa22a9578490d04001a12591210ee67fed)
 
 **Provenance:** [Wube FFF-363](https://www.factorio.com/blog/post/fff-363), 2020-11-13; 1.1 preview; desktop. [Original image](https://cdn.factorio.com/assets/img/blog/fff-363-rich-text-selector.png).
 

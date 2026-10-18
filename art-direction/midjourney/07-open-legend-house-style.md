@@ -7,14 +7,14 @@ This file turns Open Legend's art direction into prompt wording. It draws on:
 - [Creative brief](../final-board/creative-brief.md): the final inspiration board and practical brief
 - [Art-direction decisions](../decisions.md): preferences from the review rounds
 - [Visual direction](../../archive/03-design-proposals/visual-direction.md): the earlier grounded visual direction
-- The 3D pixel-art style bible (for now an Open Legend project doc, `claude/art-pipeline/style-bible-3d-pixel.md`): 3D pixel-art decision and palette
+- [Current visual requirements](../decisions.md#current-visual-requirements--october-16-2026): October 16 clarification of realistic proportions and rejected styles; replaces the obsolete separate style-bible reference
 - [Threewater March](../../docs/repertoires/worlds/medieval-survival.md): the world proposal (an optional proposal, **not** canonical history)
 
 When those change, update this file.
 
 ## The brief in one paragraph
 
-"Richly detailed, dimensional worlds; expressive and recognizable people; purposeful light; and an inviting sense of life." Pixel art and illustrated approaches are both valid references, and appealing stylization is welcome "when the finish and personality work." Avoid permanent gloom, excessive saturation and toy-like proportions. (brief, decisions)
+Beautiful dimensional pixel art with believable real-world proportions, recognizable people, organic surroundings and purposeful light. Explicitly reject visibly low-poly 3D, blocky/Lego-like, cutesy, chibi and big-head/small-body designs. Keep stylization in pixel craft, palette, material interpretation and expression while preserving convincing anatomy and construction. Painted concepts are useful design inputs; they must follow the same proportion requirements. Avoid permanent gloom and excessive saturation. This October 16 clarification supersedes the former blanket permission for appealing cartoon styling; the linked decisions own the complete rule.
 
 ## Brief → prompt words
 
@@ -25,8 +25,8 @@ When those change, update this file.
 | Warmth alongside atmosphere: "cinematic does not mean permanently gloomy" | "inviting", "lived-in", "golden hour", "gentle", "a mood of stubborn warmth" | "grimdark", "bleak", "despair", endless night scenes |
 | Rich organic environments with quiet space | Layered foliage, reeds, mist, "foreground framing", "breathing room", "quiet open space" | "highly detailed" as a stand-in for real detail; tiled, repeated clutter |
 | Expressive but controlled colour | "earthy palette of bark, moss, stone and faded wool, with warm firelight accents" | "vibrant", "neon", "hyper-saturated" |
-| Natural proportions, restrained cartoon styling | "natural proportions", "grounded anatomy" | "chibi", "cute", "big head", "toy-like" |
-| Stylization welcome when the finish works | "stylized painterly game art, bold clean silhouette, strong colour grouping, visible brush texture" | Naming the games that inspired it (see below) |
+| Believable real-world proportions | "realistic adult anatomy", "natural head-to-body proportions", "convincing garment construction" | "chibi", "cute", "big head", "small body", "toy-like", a fixed six-head-tall recipe |
+| Beautiful dimensional pixel art; visibly low-poly and blocky art rejected | For concepts: "grounded painterly game art, natural proportions, clear silhouettes, deliberate color grouping"; pixel finishing follows separately | "low-poly", "chunky", "faceted", "Lego-like" as desired style cues; naming the games that inspired it (see below) |
 | Meaningful fine detail, "where it describes identity, material or use" | Wear, mends, patches, notches, soot, repairs, personal trinkets | Random ornament, filigree everywhere |
 
 ### The favourite references as words
@@ -47,7 +47,7 @@ The board's favourites, and what to write instead of their names (we don't name 
 
 ## Palette words
 
-From the style bible's starter palette. Use the names in prompts; the hex codes are for reference:
+Retained starter palette from the earlier style study. Use the names in prompts; the hex codes are reference choices, not new requirements:
 
 | Group | Words | Hex |
 | --- | --- | --- |
@@ -76,7 +76,7 @@ Threewater March takes "a loose regional inspiration from medieval societies aro
 
 ## Avoid list and `--no` bank
 
-**Tone to avoid:** grimdark, horror, gore as the focus, glossy high-fantasy spectacle, neon saturation, cartoon or chibi proportions, obvious modern objects.
+**Tone and forms to avoid:** visibly low-poly, faceted, blocky/Lego-like or cutesy assets; small-body/big-head, cartoon or chibi proportions; grimdark, horror, gore as the focus, glossy high-fantasy spectacle, neon saturation and obvious modern objects.
 
 **Single-word `--no` bank** (each word is read on its own, so choose words that don't also match things you want):
 

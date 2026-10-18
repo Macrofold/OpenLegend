@@ -1,0 +1,137 @@
+{
+  "group": "source-grounded-chest",
+  "sourceFile": "art-direction/assets/source-study/source-grounded-chest.blend",
+  "sourceSha256": "e58ecd16501d8ca084c428390a14ba925b320dee2182f1c55e66b9051f7ba61a",
+  "recipe": {
+    "path": "scripts/prepare-grounded-study.py",
+    "sha256": "7a99b1aec9a4a8fad01e6721af2721c25fadbfb25756ab0453c4128b2dd648f5"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581"
+  },
+  "sources": [
+    {
+      "url": "https://polyhaven.com/a/treasure_chest",
+      "license": "CC0",
+      "files": [
+        {
+          "asset": "treasure_chest",
+          "file": "treasure_chest_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/treasure_chest/treasure_chest_1k.gltf",
+          "sha256": "5edb8df3a45d2709b9407102ba4dd63025adff401ed8eba939d0117a74dd8dd5",
+          "bytes": 8584
+        },
+        {
+          "asset": "treasure_chest",
+          "file": "textures/treasure_chest_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/treasure_chest/treasure_chest_arm_1k.jpg",
+          "sha256": "1f09896cfad5b2f80483ab440b732fb03e94a67c3b09eee4c864af7ad2c6cc12",
+          "bytes": 958484
+        },
+        {
+          "asset": "treasure_chest",
+          "file": "textures/treasure_chest_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/treasure_chest/treasure_chest_diff_1k.jpg",
+          "sha256": "4a2ee3b53835e7d4a3e411863c7829f37df1221aeb1cd78d89e24239cf8bbd0b",
+          "bytes": 812089
+        },
+        {
+          "asset": "treasure_chest",
+          "file": "textures/treasure_chest_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/treasure_chest/treasure_chest_nor_gl_1k.jpg",
+          "sha256": "c86a694f7d40e46dfdd0293a5a9bae32061a8476132bbd679b63404cc1795b68",
+          "bytes": 893221
+        },
+        {
+          "asset": "treasure_chest",
+          "file": "treasure_chest.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/treasure_chest/treasure_chest.bin",
+          "sha256": "6e8fd5b5c641c3535bf26767fc7b0e7295c314d43613726da9679ee8cffecb03",
+          "bytes": 2811372
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "grounded-chest-clear",
+      "family": "grounded-chest",
+      "label": "Poly Haven chest",
+      "variant": "clear",
+      "description": "Natural source form with retained albedo detail and quiet highlights; fixed-density pixel rendering.",
+      "recommended": true,
+      "file": "grounded-chest-clear.glb",
+      "bounds": {
+        "min": [-0.550845, 0.000367, -0.299463],
+        "max": [0.550845, 0.70939, 0.29987]
+      },
+      "triangles": 13996,
+      "vertices": 13237,
+      "textureSizes": [[512, 512]],
+      "sha256": "258e02f22ae83fbe949353f2601d7f462dc39b8dacf345371124922be4e81df8",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/treasure_chest; normalized and adapted by OpenLegend."
+    },
+    {
+      "id": "grounded-chest-quiet",
+      "family": "grounded-chest",
+      "label": "Poly Haven chest",
+      "variant": "quiet",
+      "description": "Natural source form with grouped earth colors and restrained fine texture.",
+      "recommended": false,
+      "file": "grounded-chest-quiet.glb",
+      "bounds": {
+        "min": [-0.550845, 0.000367, -0.299463],
+        "max": [0.550845, 0.70939, 0.29987]
+      },
+      "triangles": 13996,
+      "vertices": 13237,
+      "textureSizes": [[256, 256]],
+      "sha256": "b59d1b701fe9af44c0284c426439cbc3bba3db87f4992a35e23c42003e77431f",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/treasure_chest; normalized and adapted by OpenLegend."
+    },
+    {
+      "id": "grounded-chest-weathered",
+      "family": "grounded-chest",
+      "label": "Poly Haven chest",
+      "variant": "weathered",
+      "description": "Weathered material study with muted color and softer worn highlights.",
+      "recommended": false,
+      "file": "grounded-chest-weathered.glb",
+      "bounds": {
+        "min": [-0.550845, 0.000367, -0.299463],
+        "max": [0.550845, 0.70939, 0.29987]
+      },
+      "triangles": 13996,
+      "vertices": 13237,
+      "textureSizes": [[256, 256]],
+      "sha256": "e0da0020d52eb9020205ad861588aecb55eb6c7deb0fe50e72f0e352291227a2",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/treasure_chest; normalized and adapted by OpenLegend."
+    }
+  ],
+  "controls": [
+    {
+      "id": "grounded-chest-source",
+      "family": "grounded-chest",
+      "label": "Poly Haven chest",
+      "variant": "source",
+      "description": "Normalized original Poly Haven geometry and materials; source control, not pixel-finished art.",
+      "recommended": false,
+      "file": "grounded-chest-source.glb",
+      "bounds": {
+        "min": [-0.55, 0.0, -0.299852],
+        "max": [0.55, 0.709954, 0.299852]
+      },
+      "triangles": 103330,
+      "vertices": 68481,
+      "textureSizes": [
+        [1024, 1024],
+        [1024, 1024],
+        [1024, 1024]
+      ],
+      "sha256": "1e317f22741c3a81e5c294ad43bff2798d8d6015b8037f074f18e34fa78567f8",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/treasure_chest; normalized and adapted by OpenLegend."
+    }
+  ]
+}

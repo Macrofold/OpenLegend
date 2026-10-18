@@ -6,6 +6,7 @@ export type {
 import type { ConstructionPlan, AssemblyView } from './construction.js';
 export * from './construction.js';
 import type { Named } from '@open-legend/language';
+import type { AssetRevisionReference } from '@open-legend/assets';
 /** Public wire contract. Never expose the authoritative world or another actor's memory. */
 import type { WorldPoint, SurfacePoint, SpatialLayout } from '@open-legend/spatial';
 import type { InventoryCharacteristic } from './inventory.js';
@@ -389,6 +390,8 @@ export interface EntityView extends Named {
   appearance: string;
   radius: number;
   status: string;
+  /** Observed heat state. Renderers must not infer it from status wording. */
+  heat?: { lit: boolean };
   description?: string;
   traits?: Array<{ id: string; name: string; description: string }>;
   canTalk?: boolean;
@@ -743,6 +746,9 @@ export interface AiJobView {
 }
 
 export interface GameView {
+  /** Exact installed asset release; absent authorizes only bootstrap depiction. */
+  presentationRelease?: AssetRevisionReference;
+  presentationReleaseRevision?: number;
   checkpoint?: import('./request-recovery.js').CheckpointContext;
   access?: {
     scope: string;
@@ -1542,6 +1548,8 @@ export interface InviteView {
 
 export interface OperationsView {
   checkpoint?: import('./request-recovery.js').CheckpointContext;
+  presentationRelease?: AssetRevisionReference;
+  presentationReleaseRevision?: number;
   ok: true;
   worldId: string;
   accountId: string;

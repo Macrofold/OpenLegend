@@ -7,6 +7,7 @@ import { Button, Section, Tag } from '../design-system/components';
 import { LoadingIndicator } from '../design-system/loading';
 import { EntryNotice } from './entry-notice';
 import { GameSavesPanel } from './game-saves';
+import { AssetReleaseControl } from './asset-release-control';
 import { AccessSection } from './operations-access';
 import { MaintenanceNotice } from './maintenance-notice';
 import { MaintenanceSection } from './operations-maintenance';
@@ -236,6 +237,17 @@ export function OperationsConsole() {
                       ))}
                     </ul>
                   </Section>
+                  {view.checkpoint && (
+                    <Section title="World artwork">
+                      <AssetReleaseControl
+                        key={view.checkpoint.recoveryScope}
+                        context={view.checkpoint}
+                        selected={view.presentationRelease}
+                        revision={view.presentationReleaseRevision ?? 0}
+                        onChanged={() => void refresh()}
+                      />
+                    </Section>
+                  )}
                 </section>
                 <section className="ol-card ol-operations-card" aria-label="Public world overview">
                   <Section title="Public world overview">

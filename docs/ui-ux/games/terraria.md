@@ -27,7 +27,7 @@ The UI does not make every interaction frictionless. Item ownership, favorites, 
 
 ### TR01 — A named chest with visible bulk commands
 
-![Terraria Metals chest beneath carried inventory with Loot All, Deposit All, Quick Stack, Restock, Sort Items and Rename](../screenshots/terraria/01-named-chest.jpg)
+![Terraria Metals chest beneath carried inventory with Loot All, Deposit All, Quick Stack, Restock, Sort Items and Rename](https://assets.openlegend.ai/studies/public/blobs/sha256/88/88674ff134353f3f206b1a3fc49600c59556bd2831b34cfa3bc4c1de9452fbfe)
 
 **Observed layout and controls.** Blue carried cells occupy the upper left, with the hotbar as the top row and separate coin/ammunition columns. A brown **Metals** chest grid sits below. A vertical command list contains **Loot All, Deposit All, Quick Stack, Restock, Sort Items, Rename**. Equipment appears at the right edge; the storage room remains visible in the middle. [T3]
 
@@ -39,7 +39,7 @@ The UI does not make every interaction frictionless. Item ownership, favorites, 
 
 ### TR02 — Optional quick-stack to nearby chests
 
-![Terraria inventory with Quick stack to nearby chests tooltip over a large storage room](../screenshots/terraria/02-quick-stack.jpg)
+![Terraria inventory with Quick stack to nearby chests tooltip over a large storage room](https://assets.openlegend.ai/studies/public/blobs/sha256/0b/0b9ec725b64daf5cdf561401b6de241eb014cad1e10208c2f0ec514aed0f7105)
 
 **Observed layout and controls.** Only carried inventory is open. The cursor highlights a small utility control whose tooltip reads **Quick stack to nearby chests**. The world contains many chest columns. There is no destination dropdown, no open chest pane and no visible eligibility boundary. The source guide develops storage layouts around this action. [T2]
 
@@ -51,7 +51,7 @@ The UI does not make every interaction frictionless. Item ownership, favorites, 
 
 ### TR03 — The Guide answers an item-specific crafting question
 
-![Terraria Guide crafting view showing recipes using Platinum Crown and a required Demon Altar](../screenshots/terraria/03-guide-recipe.jpg)
+![Terraria Guide crafting view showing recipes using Platinum Crown and a required Demon Altar](https://assets.openlegend.ai/studies/public/blobs/sha256/3c/3c3ab3868c07119e50b81944ef91114730ab7310ea09bde57ab32a5a8c4c0ae6)
 
 **Observed layout and controls.** The lower-left crafting area says **Showing recipes that use Platinum Crown** and **Required objects: Demon Altar**. Recipe/ingredient cells sit near that explanation, with the player's inventory above and an NPC house still visible. The original screenshot caption complains about the station name in its particular world; that complaint is part of the source, not a verified universal defect. [T4]
 
@@ -63,7 +63,7 @@ The UI does not make every interaction frictionless. Item ownership, favorites, 
 
 ### TR04 — Rename is a bounded, purposeful text interaction
 
-![Terraria Potion Materials chest being renamed with Save and Cancel controls](../screenshots/terraria/04-rename-chest.jpg)
+![Terraria Potion Materials chest being renamed with Save and Cancel controls](https://assets.openlegend.ai/studies/public/blobs/sha256/fb/fb47d27bac4e624868bc6ba5293538f163c6179f6c52b4fc15633e44a6b4cb2f)
 
 **Observed layout and controls.** The chest title is being edited as **Potion Materials**. **Save** and **Cancel** replace the normal rename entry while the other chest actions and both item areas remain visible. A physical open chest remains in the room behind the interface. [T3]
 
@@ -75,7 +75,7 @@ The UI does not make every interaction frictionless. Item ownership, favorites, 
 
 ### TR05 — Shop item with use facts and price
 
-![Terraria Shop and Minishark tooltip showing combat details and buy price](../screenshots/terraria/05-shop-tooltip.jpg)
+![Terraria Shop and Minishark tooltip showing combat details and buy price](https://assets.openlegend.ai/studies/public/blobs/sha256/af/af06d19433707e30fb7c172e15b6890ef258b61ac76d1e78ec6155611e536bdf)
 
 **Observed layout and controls.** A green **Shop** grid appears under the carried inventory. The **Minishark** tooltip lists damage, critical chance, speed, knockback, an ammunition property and a buy price. A **Savings** label appears near the shop. The shown price is a property of this captured state; it is not asserted as the item's universal price. [T5]
 
@@ -87,7 +87,7 @@ The UI does not make every interaction frictionless. Item ownership, favorites, 
 
 ### TR06 — NPC conversation with compact service choices
 
-![Terraria Tavernkeep dialogue with Shop, Close, Eternia Crystal and Happiness options](../screenshots/terraria/06-npc-dialogue.jpg)
+![Terraria Tavernkeep dialogue with Shop, Close, Eternia Crystal and Happiness options](https://assets.openlegend.ai/studies/public/blobs/sha256/f4/f4b2e40c80b922ec938b0f228af220eb5241e37a706e645d0cb0ad7de47ddf28)
 
 **Observed layout and controls.** A Tavernkeep conversation appears over the world with **Shop, Close, Eternia Crystal, Happiness** choices. The text refers to defensive artifacts and Defender Medals. A separate bottom-left arrival notification mentions a Merchant; that system event is not the speaker of the open dialogue. Hotbar and HUD remain visible. [T6]
 
@@ -99,7 +99,7 @@ The UI does not make every interaction frictionless. Item ownership, favorites, 
 
 ### TR07 — Developer experiment: controls near the thing they control
 
-![Terraria console or mobile work-in-progress HUD with inventory hints by the hotbar and map and chat hints near the minimap](../screenshots/terraria/07-contextual-controls-wip.jpg)
+![Terraria console or mobile work-in-progress HUD with inventory hints by the hotbar and map and chat hints near the minimap](https://assets.openlegend.ai/studies/public/blobs/sha256/80/80f259027ac1ef3a7e7f8f1693a7e6964facbde4352d05d2f09cf637aa040a41)
 
 **Observed layout and controls.** This developer-published WIP frame groups inventory/navigation hints near the left hotbar, map/chat/cursor hints under the right minimap, and remaining general controls along the bottom. The world remains central. It uses controller-style glyphs; the source discusses console/mobile work rather than identifying one finalized platform release. [T7]
 
@@ -111,7 +111,7 @@ The UI does not make every interaction frictionless. Item ownership, favorites, 
 
 ### TR08 — Developer experiment: local inventory actions and favorites
 
-![Terraria developer inventory control experiment with Use, Pickup, Take One, Favorite and Close prompts beneath items](../screenshots/terraria/08-inventory-controls-wip.jpg)
+![Terraria developer inventory control experiment with Use, Pickup, Take One, Favorite and Close prompts beneath items](https://assets.openlegend.ai/studies/public/blobs/sha256/43/43f780b5a823a2417bd5a7f36438b48222716fda75c1d3a4c6e2f5bae4d29dab)
 
 **Observed layout and controls.** The developer's original cropped image shows carried item rows with a gold-highlighted favorite/selection state. Directly beneath them are **Use, Pickup, Take One, Favorite, Close** prompts; crafting occupies a separate lower section with its own hint. This is an inventory-open state distinct from TR07's normal HUD, and the source crop is preserved unchanged. [T7]
 
@@ -159,7 +159,7 @@ Reviewed **2026-10-04**. TR09–TR10 are original developer-published interface 
 
 ### TR09 — Character entry explains a consequential choice
 
-![Terraria Journey character creation with explanation beside mode choices](../screenshots/terraria/09-journey-character-entry.jpg)
+![Terraria Journey character creation with explanation beside mode choices](https://assets.openlegend.ai/studies/public/blobs/sha256/16/162df7cb10fb967799d552b9637c83f9702bd49634df12d6ab49b9b08b79d992)
 
 **Observed layout / controls.** Character appearance tabs run horizontally below a character preview. A Name row and four named modes sit beneath them. Journey is selected, and the adjacent description explains extra equipment and restriction to Journey worlds. Back and Create are separate, large bottom buttons. The selected choice stays visible while its consequence is read.
 
@@ -171,7 +171,7 @@ Reviewed **2026-10-04**. TR09–TR10 are original developer-published interface 
 
 ### TR10 — One optional power category opens a small set of related controls
 
-![Terraria Journey power menu with time category and speed multiplier](../screenshots/terraria/10-journey-time-controls.png)
+![Terraria Journey power menu with time category and speed multiplier](https://assets.openlegend.ai/studies/public/blobs/sha256/99/998847ffa94f908e24e69191de5da0290ea3e91613f58d3a0126708317cbf615)
 
 **Observed layout / controls.** A narrow vertical category strip opens a second strip of time icons. A speed slider sits beside it with x1, x10 and x20 marks. The world remains visible behind the controls. The selected section is small, although the unlabeled icons depend on learning or help.
 

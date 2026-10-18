@@ -9,7 +9,8 @@ import struct
 import sys
 
 source = Path(sys.argv[1]).resolve()
-out = Path(__file__).resolve().parent.parent / 'apps/client/src/characters/mercenary-assets'
+from asset_workspace import asset_workspace, workspace_path
+out = workspace_path('apps/client/src/characters/mercenary-assets')
 out.mkdir(parents=True, exist_ok=True)
 
 def read_glb(path):

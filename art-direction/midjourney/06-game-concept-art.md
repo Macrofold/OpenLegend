@@ -4,6 +4,8 @@
 
 Concept art does different jobs at different scales. Our [creative brief](../final-board/creative-brief.md) makes the same point: "Keep human scale, environment scale and close-up scale explicit when evaluating artwork. A large portrait or promotional illustration is not a runtime feasibility result." Pick the shot type for the question you're trying to answer.
 
+**Art direction updated 2026-10-16:** beautiful dimensional pixel art requires believable real-world proportions; visibly low-poly, blocky, cutesy and big-head/small-body designs are explicitly rejected. Apply the [current requirements](../decisions.md#current-visual-requirements--october-16-2026) to every concept below, including painted concepts. The September software/parameter notes are historical, not newly verified product guidance.
+
 | Shot type | Answers | Aspect ratio | Starting parameters (house) |
 | --- | --- | --- | --- |
 | Character design sheet / turnaround | What exactly does this person wear and carry, from every side? | 3:2 or 16:9 | `--raw --s 75` |
@@ -88,19 +90,20 @@ Expression sheet of the same man as in the reference, head-and-shoulders, six ex
 
 ## Pixel art (for the record)
 
-- **We don't use Midjourney to make pixel art (house).** The proposed 3D pixel-art pipeline renders models at low resolution; the current game still mixes sprite art with a bounded character pilot. The [3D tracker](../../docs/maintainers/3d-pixel-art.md) owns delivery and remaining qualification.
+- **These Midjourney templates produce concept art, not finished runtime pixels.** The selected dimensional pixel-art direction combines convincing source forms, deliberate material/face work and reviewed rendering. Merely reducing a simple low-poly model is insufficient; see the [creative brief](../final-board/creative-brief.md).
 - Midjourney's "pixel art" tends toward "vivid contrasts and neon highlights," cyberpunk scenes and a "nostalgic and melancholy" mood rather than genuine low-resolution sprites (community, Midlibrary). The output is pseudo-pixel: the pixel grid isn't exact.
 - Older guides recommend `--v 4` and naming consoles or games ("SNES", "Metal Slug") (community). That's out of date, and naming games breaks our originality rule ([02](02-writing-prompts.md#artist-names-game-titles-and-franchises-house)).
 
 ## Concepts for the 3D pixel-art pipeline
 
-The external style-bible notes describe an asset pipeline (artgen) that turns concept images into 3D models and needs **clean 3D-style images, not paintings**. That source is not supplied by this repository; these notes do not establish its current executable status. The style bible explains that "image-to-3D models reconstruct badly from pixelated, dithered images," so pipeline concepts ask for "a clean stylized low-poly 3D render: chunky readable forms, broad flat colour regions, three-quarter view from above, plain background."
+For an image-to-3D attempt, prepare a clean, consistent view of the selected design with believable anatomy, garment construction and material regions. Keep painted concept exploration separate from reconstruction input preparation; the [generation guidance](../research/3d-pixel-worlds/generative-pipeline.md) and [current pipeline specification](../../docs/projects/3d-pixel-art-asset-pipeline.md) distinguish proposed workflows from delivered tools.
 
-- The original external pipeline notes name fal.ai models. Midjourney remains a manual input here: its current [Terms of Service](https://docs.midjourney.com/hc/en-us/articles/32083055291277-Terms-of-Service) prohibit automated tools accessing or generating through the service (rechecked 2026-10-15). If you make a pipeline concept in Midjourney, download it and feed it in by hand.
-- If you do, match the pipeline's rules: grounded adult proportions (about 6 heads tall for people), handmade natural materials, no baked lighting or shadows, flat colour regions, plain background. Characters need a front **A-pose** plus left, back and right views for 3D reconstruction.
+Midjourney input remains manual: the [Terms of Service](https://docs.midjourney.com/hc/en-us/articles/32083055291277-Terms-of-Service), checked October 15, 2026, prohibit automated access/generation. Provider integration, available views and reconstruction quality require checking the current provider documentation before use.
+
+Preserve natural adult head/body relationships without imposing one ratio on every person. Use clear, evenly lit forms without baked directional shadows, pixel filters or dithering. Prepare consistent front/side/back views and a suitable neutral pose when the selected reconstruction/rigging workflow requires them; do not imply that a provider will consume every supplied view or produce a finished rig.
 
 ```
-Clean stylized low-poly 3D render of [subject], [materials, flat colour regions], grounded adult proportions about six heads tall, standing in an A-pose, front view, even flat lighting, plain light grey background, game asset reference --ar 2:3 --raw --s 50 --v 8.2 --no shadows, texture, dithering, pixel
+Clean detailed 3D character reference of [subject], believable adult anatomy and natural head-to-body proportions, [distinctive face and build], [garments with convincing construction and folds], [materials with clear restrained color regions], standing in an A-pose, front view, even diffuse lighting, plain light grey background, realistic scale --ar 2:3 --raw --s 50 --v 8.2 --no chibi, cartoon, blocky, faceted, cute, dithering, pixel
 ```
 
-For painted concept art (the default), ignore this section.
+This is a reconstruction-input template, not the required appearance of the final pixel art. Review the generated anatomy and equipment before conversion; a prompt's exclusions do not establish that its image passes. Painted concept art remains the default for design exploration.

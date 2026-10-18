@@ -1,9 +1,26 @@
 import * as pc from 'playcanvas';
-import clothData from './mercenary-cloth.json';
+export interface MercenaryClothData {
+  patches: {
+    name: string;
+    columns: number;
+    rows: number;
+    positions: number[];
+    uvs: number[];
+    flip: boolean;
+  }[];
+  frontContact: {
+    columns: number;
+    rows: number;
+    min: number[];
+    max: number[];
+    depths: (number | null)[];
+  };
+  bindMatrices: { Spine01: number[]; cape_root: number[] };
+}
 
 export type ClothPasses = 4 | 8;
 /** Display-size hysteresis keeps small cloth cheaper without repeatedly changing
- * quality at one zoom boundary. docs/limits/3d-pixel-art.md#a3d16--experimental-cloth-quality-tiers */
+ * quality at one zoom boundary. docs/limits/3d-pixel-art.md#a3d20--experimental-cloth-quality-tiers */
 export function clothPassesForSize(
   previous: ClothPasses,
   height: number | undefined,
@@ -61,26 +78,30 @@ export class CapeCloth {
   private readonly root: pc.Entity;
   private readonly bone: pc.GraphNode;
   private readonly torso: pc.GraphNode;
-  private readonly frontContact = clothData.frontContact;
+  private readonly frontContact: MercenaryClothData['frontContact'];
   private readonly contactRest: pc.Mat4;
   private readonly contactRestInverse: pc.Mat4;
   private readonly contactInverse = new pc.Mat4();
   private readonly contactPoint = new pc.Vec3();
+  private readonly previousAttachment = new pc.Mat4();
+  private readonly attachmentInverse = new pc.Mat4();
+  private readonly attachmentDelta = new pc.Mat4();
+
   // Particle values stay binary64 until the existing Float32 mesh publication.
   // Own the buffers for the garment lifetime; hot constraint passes only update
   // numeric slots rather than per-particle object properties/iterators.
-  private readonly p = new Float64Array(
-    clothData.patches.reduce((size, patch) => size + patch.positions.length, 0),
-  );
-  private readonly previous = new Float64Array(this.p.length);
-  private readonly rest = new Float64Array(this.p.length);
-  private readonly pinned = new Uint8Array(this.p.length / 3);
+  private readonly p: Float64Array;
+  private readonly previous: Float64Array;
+  private readonly rest: Float64Array;
+  private readonly pinned: Uint8Array;
   // Authored topology and pins are fixed for this artwork lifetime. Resolve
   // their references once; bone transforms and particle positions stay live.
   // A changed garment/pin configuration must construct its own topology.
   // docs/world-presentation.md#animated-character-pixels
   private readonly links: Link[] = [];
   readonly patches: Patch[] = [];
+  private readonly ownedMeshes = new Set<pc.Mesh>();
+  private readonly nodes: pc.Entity[] = [];
   private readonly seams: Array<[number, number, number, number]> = [];
   private readonly tethers: Array<[number, number, number]> = [];
   private readonly collisionParticles: Array<{ point: number; front: boolean }> = [];
@@ -93,160 +114,184 @@ export class CapeCloth {
   private time = 0;
   private steps = 0;
   private elapsed = 0;
+  private motion: 'flowing' | 'settled' = 'flowing';
+  private frameGapResets = 0;
+  private lastUpdate = performance.now();
   enabled = true;
-  constructor(app: pc.Application, root: pc.Entity) {
-    const data = clothData;
-    this.root = root;
-    this.bone = bone(root, 'cape_root');
-    if (!this.bone) throw Error('Cape attachment is missing');
-    this.torso = bone(root, 'Spine01');
-    this.contactRest = new pc.Mat4().set(data.bindMatrices.Spine01);
-    this.contactRestInverse = this.contactRest.clone().invert();
-    const inverse = new pc.Mat4().set(data.bindMatrices.cape_root).invert();
-    let particleStart = 0;
-    for (const patch of data.patches) {
-      const source = root
-        .findComponents('render')
-        .filter((c): c is pc.RenderComponent => c instanceof pc.RenderComponent)
-        .find((r) => r.entity.name.includes(patch.name));
-      if (!source) throw Error('Cape panel missing: ' + patch.name);
-      const start = particleStart;
-      particleStart += patch.positions.length / 3;
-      for (let i = 0; i < patch.positions.length; i += 3) {
-        const p = new pc.Vec3(
-          at(patch.positions, i),
-          at(patch.positions, i + 1),
-          at(patch.positions, i + 2),
-        );
-        const offset = start * 3 + i;
-        this.p.set([p.x, p.y, p.z], offset);
-        this.previous.set([p.x, p.y, p.z], offset);
-        inverse.transformPoint(p, this.target);
-        this.rest.set([this.target.x, this.target.y, this.target.z], offset);
-        const j = (i / 3 / patch.columns) | 0,
-          k = (i / 3) % patch.columns;
-        this.pinned[start + i / 3] =
-          (patch.name === 'yoke' && j === 0) || (patch.name === 'front throw' && k === 0) ? 1 : 0;
-      }
-      const indexAt = (x: number, y: number) => start + y * patch.columns + x;
-      const indices = [];
-      for (let y = 0; y < patch.rows; y++)
-        for (let x = 0; x < patch.columns; x++) {
-          if (x + 1 < patch.columns) this.link(indexAt(x, y), indexAt(x + 1, y), 1);
-          if (y + 1 < patch.rows) this.link(indexAt(x, y), indexAt(x, y + 1), 1);
-          if (x + 1 < patch.columns && y + 1 < patch.rows) {
-            this.link(indexAt(x, y), indexAt(x + 1, y + 1), 0.7);
-            this.link(indexAt(x + 1, y), indexAt(x, y + 1), 0.7);
-            const a = indexAt(x, y) - start,
-              b = a + 1,
-              c = a + patch.columns,
-              d = c + 1;
-            indices.push(...(patch.flip ? [a, c, b, b, c, d] : [a, b, c, b, d, c]));
+  constructor(
+    app: pc.Application,
+    root: pc.Entity,
+    private readonly displayScale: number,
+    data: MercenaryClothData,
+  ) {
+    try {
+      this.frontContact = data.frontContact;
+      this.p = new Float64Array(
+        data.patches.reduce((size, patch) => size + patch.positions.length, 0),
+      );
+      this.previous = new Float64Array(this.p.length);
+      this.rest = new Float64Array(this.p.length);
+      this.pinned = new Uint8Array(this.p.length / 3);
+      this.root = root;
+      this.bone = bone(root, 'cape_root');
+      if (!this.bone) throw Error('Cape attachment is missing');
+      this.torso = bone(root, 'Spine01');
+      this.contactRest = new pc.Mat4().set(data.bindMatrices.Spine01);
+      this.contactRestInverse = this.contactRest.clone().invert();
+      const inverse = new pc.Mat4().set(data.bindMatrices.cape_root).invert();
+      let particleStart = 0;
+      for (const patch of data.patches) {
+        const source = root
+          .findComponents('render')
+          .filter((c): c is pc.RenderComponent => c instanceof pc.RenderComponent)
+          .find((r) => r.entity.name.includes(patch.name));
+        if (!source) throw Error('Cape panel missing: ' + patch.name);
+        const start = particleStart;
+        particleStart += patch.positions.length / 3;
+        for (let i = 0; i < patch.positions.length; i += 3) {
+          const p = new pc.Vec3(
+            at(patch.positions, i),
+            at(patch.positions, i + 1),
+            at(patch.positions, i + 2),
+          );
+          const offset = start * 3 + i;
+          this.p.set([p.x, p.y, p.z], offset);
+          this.previous.set([p.x, p.y, p.z], offset);
+          inverse.transformPoint(p, this.target);
+          this.rest.set([this.target.x, this.target.y, this.target.z], offset);
+          const j = (i / 3 / patch.columns) | 0,
+            k = (i / 3) % patch.columns;
+          this.pinned[start + i / 3] =
+            (patch.name === 'yoke' && j === 0) || (patch.name === 'front throw' && k === 0) ? 1 : 0;
+        }
+        const indexAt = (x: number, y: number) => start + y * patch.columns + x;
+        const indices = [];
+        for (let y = 0; y < patch.rows; y++)
+          for (let x = 0; x < patch.columns; x++) {
+            if (x + 1 < patch.columns) this.link(indexAt(x, y), indexAt(x + 1, y), 1);
+            if (y + 1 < patch.rows) this.link(indexAt(x, y), indexAt(x, y + 1), 1);
+            if (x + 1 < patch.columns && y + 1 < patch.rows) {
+              this.link(indexAt(x, y), indexAt(x + 1, y + 1), 0.7);
+              this.link(indexAt(x + 1, y), indexAt(x, y + 1), 0.7);
+              const a = indexAt(x, y) - start,
+                b = a + 1,
+                c = a + patch.columns,
+                d = c + 1;
+              indices.push(...(patch.flip ? [a, c, b, b, c, d] : [a, b, c, b, d, c]));
+            }
+            // Longer links resist folding sharply while allowing broad fabric folds.
+            if (x + 2 < patch.columns) this.link(indexAt(x, y), indexAt(x + 2, y), 0.12);
+            if (y + 2 < patch.rows) this.link(indexAt(x, y), indexAt(x, y + 2), 0.12);
           }
-          // Longer links resist folding sharply while allowing broad fabric folds.
-          if (x + 2 < patch.columns) this.link(indexAt(x, y), indexAt(x + 2, y), 0.12);
-          if (y + 2 < patch.rows) this.link(indexAt(x, y), indexAt(x, y + 2), 0.12);
-        }
-      const positions = new Float32Array(patch.positions),
-        mesh = new pc.Mesh(app.graphicsDevice);
-      mesh.clear(true, false);
-      mesh.setPositions(positions);
-      mesh.setNormals(pc.calculateNormals(positions, indices));
-      mesh.setUvs(0, patch.uvs);
-      mesh.setIndices(indices);
-      mesh.update();
-      const material = at(source.meshInstances, 0).material;
-      if (!(material instanceof pc.StandardMaterial)) throw new Error('Unsupported cape material');
-      material.cull = pc.CULLFACE_NONE;
-      material.twoSidedLighting = true;
-      material.update();
-      const node = new pc.Entity('Simulated ' + patch.name);
-      app.root.addChild(node);
-      node.addComponent('render', {
-        meshInstances: [new pc.MeshInstance(mesh, material, node)],
-        castShadows: true,
-        receiveShadows: true,
-      });
-      source.enabled = false;
-      this.patches.push({
-        ...patch,
-        start,
-        mesh,
-        node,
-        material,
-        positions,
-        indices,
-        source,
-      });
-    }
-    const [back, yoke, front, bridge] = [
-      at(this.patches, 0),
-      at(this.patches, 1),
-      at(this.patches, 2),
-      at(this.patches, 3),
-    ];
-    for (let x = 0; x < back.columns; x++)
-      this.link(back.start + x, yoke.start + (yoke.rows - 1) * yoke.columns + x, 1, 0);
-    for (let x = 0; x < bridge.columns; x++)
-      this.link(bridge.start + x, front.start + (front.columns - 1) / 2 + x, 1, 0);
-    // Bridge-to-back seam attaches between samples, avoiding a torn shoulder edge.
-    for (let x = 0; x < bridge.columns; x++) {
-      const u = (0.73 + (0.27 * x) / (bridge.columns - 1)) * (back.columns - 1),
-        a = Math.floor(u),
-        b = Math.min(a + 1, back.columns - 1);
-      this.seams.push([
-        this.coordinateOffset(bridge.start + (bridge.rows - 1) * bridge.columns + x),
-        this.coordinateOffset(back.start + a),
-        this.coordinateOffset(back.start + b),
-        u - a,
-      ]);
-    }
-    // Long-range stretch limits keep the hem from lengthening under gravity
-    // when a small iteration budget cannot fully converge every short edge.
-    for (let i = back.start + back.columns * 4; i < back.start + back.positions.length / 3; i++) {
-      let anchor = yoke.start,
-        distance = Infinity;
-      for (let j = yoke.start; j < yoke.start + yoke.columns; j++) {
-        const d = this.distance(i * 3, j * 3);
-        if (d < distance) {
-          anchor = j;
-          distance = d;
-        }
+        const positions = new Float32Array(patch.positions),
+          mesh = new pc.Mesh(app.graphicsDevice);
+        mesh.incRefCount();
+        this.ownedMeshes.add(mesh);
+        mesh.clear(true, false);
+        mesh.setPositions(positions);
+        mesh.setNormals(pc.calculateNormals(positions, indices));
+        mesh.setUvs(0, patch.uvs);
+        mesh.setIndices(indices);
+        mesh.update();
+        const material = at(source.meshInstances, 0).material,
+          lining = at(source.meshInstances, 1).material;
+        if (!(material instanceof pc.StandardMaterial) || !(lining instanceof pc.StandardMaterial))
+          throw new Error('Unsupported cape material');
+        const node = new pc.Entity('Simulated ' + patch.name, app);
+        this.nodes.push(node);
+        app.root.addChild(node);
+        node.addComponent('render', {
+          meshInstances: [
+            new pc.MeshInstance(mesh, material, node),
+            new pc.MeshInstance(mesh, lining, node),
+          ],
+          castShadows: true,
+          receiveShadows: true,
+        });
+        source.enabled = false;
+        this.patches.push({
+          ...patch,
+          start,
+          mesh,
+          node,
+          material,
+          positions,
+          indices,
+          source,
+        });
       }
-      this.tethers.push([i * 3, anchor * 3, distance * 1.04]);
+      const [back, yoke, front, bridge] = [
+        at(this.patches, 0),
+        at(this.patches, 1),
+        at(this.patches, 2),
+        at(this.patches, 3),
+      ];
+      for (let x = 0; x < back.columns; x++)
+        this.link(back.start + x, yoke.start + (yoke.rows - 1) * yoke.columns + x, 1, 0);
+      for (let x = 0; x < bridge.columns; x++)
+        this.link(bridge.start + x, front.start + (front.columns - 1) / 2 + x, 1, 0);
+      // Bridge-to-back seam attaches between samples, avoiding a torn shoulder edge.
+      for (let x = 0; x < bridge.columns; x++) {
+        const u = (0.73 + (0.27 * x) / (bridge.columns - 1)) * (back.columns - 1),
+          a = Math.floor(u),
+          b = Math.min(a + 1, back.columns - 1);
+        this.seams.push([
+          this.coordinateOffset(bridge.start + (bridge.rows - 1) * bridge.columns + x),
+          this.coordinateOffset(back.start + a),
+          this.coordinateOffset(back.start + b),
+          u - a,
+        ]);
+      }
+      // Long-range stretch limits keep the hem from lengthening under gravity
+      // when a small iteration budget cannot fully converge every short edge.
+      for (let i = back.start + back.columns * 4; i < back.start + back.positions.length / 3; i++) {
+        let anchor = yoke.start,
+          distance = Infinity;
+        for (let j = yoke.start; j < yoke.start + yoke.columns; j++) {
+          const d = this.distance(i * 3, j * 3);
+          if (d < distance) {
+            anchor = j;
+            distance = d;
+          }
+        }
+        this.tethers.push([i * 3, anchor * 3, distance * 1.04 * this.displayScale]);
+      }
+      for (let i = 0; i < this.pinned.length; i++)
+        if (!at(this.pinned, i))
+          this.collisionParticles.push({ point: i * 3, front: i >= front.start });
+      const colliders: Array<[string, string, number, number, boolean?]> = [
+        ['Hips', 'Spine01', 0.25, 0.215, false],
+        ['Spine01', 'neck', 0.25, 0.245, false],
+        ['LeftArm', 'RightArm', 0.12, 0.245, false],
+        ['LeftArm', 'LeftForeArm', 0.085, 0.085],
+        ['RightArm', 'RightForeArm', 0.085, 0.085],
+        ['LeftForeArm', 'LeftHand', 0.065, 0.065],
+        ['RightForeArm', 'RightHand', 0.065, 0.065],
+        ['Hips', 'LeftLeg', 0.2, 0.23, false],
+        ['Hips', 'RightLeg', 0.2, 0.23, false],
+        ['LeftUpLeg', 'LeftLeg', 0.145, 0.17],
+        ['RightUpLeg', 'RightLeg', 0.145, 0.17],
+        ['LeftLeg', 'LeftFoot', 0.1, 0.115],
+        ['RightLeg', 'RightFoot', 0.1, 0.115],
+        ['LeftFoot', 'LeftToeBase', 0.1, 0.14],
+        ['RightFoot', 'RightToeBase', 0.1, 0.14],
+      ];
+      this.colliders = colliders.map(([a, b, rx, rz, front = true]) => ({
+        a: bone(root, a),
+        b: bone(root, b),
+        rx: rx * this.displayScale,
+        rz: rz * this.displayScale,
+        front,
+        from: new pc.Vec3(),
+        to: new pc.Vec3(),
+        direction: new pc.Vec3(),
+        inverseLengthSquared: 1,
+      }));
+      this.reset();
+    } catch (error) {
+      this.destroy();
+      throw error;
     }
-    for (let i = 0; i < this.pinned.length; i++)
-      if (!at(this.pinned, i))
-        this.collisionParticles.push({ point: i * 3, front: i >= front.start });
-    const colliders: Array<[string, string, number, number, boolean?]> = [
-      ['Hips', 'Spine01', 0.25, 0.215, false],
-      ['Spine01', 'neck', 0.25, 0.245, false],
-      ['LeftArm', 'RightArm', 0.12, 0.245, false],
-      ['LeftArm', 'LeftForeArm', 0.085, 0.085],
-      ['RightArm', 'RightForeArm', 0.085, 0.085],
-      ['LeftForeArm', 'LeftHand', 0.065, 0.065],
-      ['RightForeArm', 'RightHand', 0.065, 0.065],
-      ['Hips', 'LeftLeg', 0.2, 0.23, false],
-      ['Hips', 'RightLeg', 0.2, 0.23, false],
-      ['LeftUpLeg', 'LeftLeg', 0.145, 0.17],
-      ['RightUpLeg', 'RightLeg', 0.145, 0.17],
-      ['LeftLeg', 'LeftFoot', 0.1, 0.115],
-      ['RightLeg', 'RightFoot', 0.1, 0.115],
-      ['LeftFoot', 'LeftToeBase', 0.1, 0.14],
-      ['RightFoot', 'RightToeBase', 0.1, 0.14],
-    ];
-    this.colliders = colliders.map(([a, b, rx, rz, front = true]) => ({
-      a: bone(root, a),
-      b: bone(root, b),
-      rx,
-      rz,
-      front,
-      from: new pc.Vec3(),
-      to: new pc.Vec3(),
-      direction: new pc.Vec3(),
-      inverseLengthSquared: 1,
-    }));
-    this.reset();
   }
   private coordinateOffset(index: number): number {
     at(this.pinned, index);
@@ -256,7 +301,7 @@ export class CapeCloth {
     this.links.push({
       p: a * 3,
       q: b * 3,
-      length,
+      length: length * this.displayScale,
       stiffness,
       wa: at(this.pinned, a) ? 0 : 1,
       wb: at(this.pinned, b) ? 0 : 1,
@@ -272,6 +317,7 @@ export class CapeCloth {
   }
   reset() {
     this.time = 0;
+    this.lastUpdate = performance.now();
     const m = this.bone.getWorldTransform();
     for (let i = 0; i < this.p.length; i += 3) {
       this.contactPoint.set(this.rest[i]!, this.rest[i + 1]!, this.rest[i + 2]!);
@@ -280,6 +326,7 @@ export class CapeCloth {
       this.p[i + 1] = this.previous[i + 1] = this.target.y;
       this.p[i + 2] = this.previous[i + 2] = this.target.z;
     }
+    this.previousAttachment.copy(m);
     this.publish();
   }
   private frontDepth(p: pc.Vec3): number | null {
@@ -360,7 +407,7 @@ export class CapeCloth {
     this.right.copy(this.root.right);
     this.up.copy(this.root.up);
     this.forward.copy(this.root.forward);
-    this.ground = this.root.getPosition().y + 0.035;
+    this.ground = this.root.getPosition().y + 0.035 * this.displayScale;
     // Bone endpoints are constant across all particles and constraint iterations in this step.
     for (let i = 0; i < this.colliders.length; i++) {
       const c = at(this.colliders, i);
@@ -389,7 +436,9 @@ export class CapeCloth {
       // Heavy wool: dissipate motion; a weak rest-fold force avoids flattening every authored fold.
       positions[i] = x + ((x - this.previous[i]!) * 0.97 + (this.target.x - x) * 1.5 * dt * dt);
       positions[i + 1] =
-        y + ((y - this.previous[i + 1]!) * 0.97 + (-9.81 + (this.target.y - y) * 1.5) * dt * dt);
+        y +
+        ((y - this.previous[i + 1]!) * 0.97 +
+          (-9.81 * this.displayScale + (this.target.y - y) * 1.5) * dt * dt);
       positions[i + 2] =
         z + ((z - this.previous[i + 2]!) * 0.97 + (this.target.z - z) * 1.5 * dt * dt);
       this.previous[i] = x;
@@ -441,10 +490,53 @@ export class CapeCloth {
       }
     }
     this.steps++;
+    // Initial settling also calls step directly, before the normal update path.
+    this.previousAttachment.copy(matrix);
   }
-  update(dt: number, playing: boolean) {
-    if (!playing || !this.enabled) return;
+  private carryWithAttachment(attachment: pc.Mat4): void {
+    if (attachment.equals(this.previousAttachment)) return;
+    this.attachmentInverse.copy(this.previousAttachment).invert();
+    this.attachmentDelta.mul2(attachment, this.attachmentInverse);
+    for (let i = 0; i < this.p.length; i += 3) {
+      this.contactPoint.set(this.p[i]!, this.p[i + 1]!, this.p[i + 2]!);
+      this.attachmentDelta.transformPoint(this.contactPoint, this.target);
+      this.p[i] = this.target.x;
+      this.p[i + 1] = this.target.y;
+      this.p[i + 2] = this.target.z;
+      this.contactPoint.set(this.previous[i]!, this.previous[i + 1]!, this.previous[i + 2]!);
+      this.attachmentDelta.transformPoint(this.contactPoint, this.target);
+      this.previous[i] = this.target.x;
+      this.previous[i + 1] = this.target.y;
+      this.previous[i + 2] = this.target.z;
+    }
+    this.publish();
+    this.previousAttachment.copy(attachment);
+  }
+  update(dt: number, playing: boolean, motion: 'flowing' | 'settled' = 'flowing') {
+    if (!this.enabled) return;
     const start = performance.now();
+    // PlayCanvas caps dt before this owner sees it; the monotonic presentation
+    // clock detects a real suspended-tab gap without advancing world time.
+    const frameGap = dt > 0.25 || start - this.lastUpdate > 250;
+    this.lastUpdate = start;
+    const attachment = this.bone.getWorldTransform();
+    if (motion !== this.motion || frameGap) {
+      // Resume from the current folds without stale velocity after a tab gap or
+      // a comparison switch. Carry both histories before restarting the solver.
+      this.carryWithAttachment(attachment);
+      this.previous.set(this.p);
+      this.time = 0;
+      if (frameGap) this.frameGapResets++;
+      this.motion = motion;
+    }
+    if (!playing || motion === 'settled') {
+      // The comparison holds settled folds relative to the shoulder attachment;
+      // ordinary pause follows edited travel/heading without advancing fabric.
+      this.carryWithAttachment(attachment);
+      this.previousAttachment.copy(attachment);
+      this.elapsed = 0;
+      return;
+    }
     this.time += Math.min(dt, 0.05);
     let count = 0;
     while (this.time >= 1 / 60 && count++ < 3) {
@@ -453,6 +545,7 @@ export class CapeCloth {
     }
     if (count) this.publish();
     this.elapsed = performance.now() - start;
+    this.previousAttachment.copy(attachment);
   }
   publish() {
     for (const p of this.patches) {
@@ -475,6 +568,9 @@ export class CapeCloth {
     return {
       particles: this.p.length / 3,
       constraintPasses: this.constraintPasses,
+      displayScale: this.displayScale,
+      motion: this.motion,
+      frameGapResets: this.frameGapResets,
       steps: this.steps,
       finite: this.pinned.every((_, i) =>
         Number.isFinite(this.p[i * 3]! + this.p[i * 3 + 1]! + this.p[i * 3 + 2]!),
@@ -483,8 +579,13 @@ export class CapeCloth {
     };
   }
   destroy() {
-    for (const p of this.patches) {
-      p.node.destroy();
+    for (const node of this.nodes) node.destroy();
+    this.nodes.length = 0;
+    this.patches.length = 0;
+    for (const mesh of this.ownedMeshes) {
+      mesh.decRefCount();
+      if (mesh.refCount === 0) mesh.destroy();
     }
+    this.ownedMeshes.clear();
   }
 }

@@ -21,6 +21,7 @@ AGPL-3.0-only is selected for the repository; [LICENSING.md](../../LICENSING.md)
 | [Detailed execution guide](../02-research/indie-launch-commercials/execution-playbook.md) | Parallel work, deliberate promotion and conditional release routes |
 | [Commercial principles](../02-research/indie-launch-commercials/learnings.md) | Twelve principles and counterexamples, with a 64-case evidence map weighted by relevance and source quality |
 | [Business plan](business-plan.md) | Operating goals, managed-world candidate, entitlement directions, cost controls and illustrative economics |
+| [Game production workflows](../../docs/production-workflows/README.md)                    | Turn an idea into a playable, art-directed result; use actual integrated play to support representative demonstrations, while player enjoyment, audience response and payment retain separate evidence |
 | [Language and elevator pitches](language-and-elevator-pitches.md)                         | Selected descriptions, elevator pitches and taglines; audience guidance and explanations of systemic, emergent and generative gameplay              |
 | [Positioning and copy](positioning-and-copy.md) | Player promise, audience hypotheses, draft copy and separate authoring/developer demonstrations |
 | [Ideas, channels and experiments](ideas-channels-and-experiments.md) | Candidate material, relevant audiences and measurement |

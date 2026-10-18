@@ -24,7 +24,7 @@ The August 2023 patch notes also discuss input conflicts involving chat, hotbar 
 
 ### VH01 — Workbench recipe and a repair affordance
 
-![Valheim workbench showing carried inventory, Club recipe, Craft and Upgrade tabs, and repair tooltip](../screenshots/valheim/04-craft-repair.jpg)
+![Valheim workbench showing carried inventory, Club recipe, Craft and Upgrade tabs, and repair tooltip](https://assets.openlegend.ai/studies/public/blobs/sha256/73/738349d0266f0c7bb904540f6b30d16ea593bea292f2a4ca445ceb545935f516)
 
 **Observed layout and controls.** Carried inventory occupies the upper left, with numbered hotbar cells, equipment/durability markings and numerical load. On the right, **WORKBENCH** has a station-level indicator, **CRAFT / UPGRADE** tabs, a recipe list, selected **Club**, statistics, a wood requirement and **Craft**. A small hammer protrudes from the pane; hovering it reveals **Repair an item**. The world still shows a workbench and an **[E] Use** prompt. [V4]
 
@@ -36,7 +36,7 @@ The August 2023 patch notes also discuss input conflicts involving chat, hotbar 
 
 ### VH02 — Cart storage with take-all and matching-stack actions
 
-![Valheim carried inventory and cart storage with Take all and Place stacks controls](../screenshots/valheim/05-cart-storage.png)
+![Valheim carried inventory and cart storage with Take all and Place stacks controls](https://assets.openlegend.ai/studies/public/blobs/sha256/07/077a4e5dfc1bfe1fc3e6a643553517a9f341574703d4f30d3ceab66f4de1df20)
 
 **Observed layout and controls.** This source-provided cropped image shows the carried inventory above a **STORAGE** grid of three rows of six. **Take all** is at the left of the storage section and **Place stacks** at the right. Both inventory and storage show weight information. There is no container-selection control. [V5]
 
@@ -48,7 +48,7 @@ The August 2023 patch notes also discuss input conflicts involving chat, hotbar 
 
 ### VH03 — Build menu over the world
 
-![Valheim build palette with Misc, Crafting, Building and Furniture tabs and placement controls](../screenshots/valheim/07-build-menu.jpg)
+![Valheim build palette with Misc, Crafting, Building and Furniture tabs and placement controls](https://assets.openlegend.ai/studies/public/blobs/sha256/35/356ac7b980d66c2e49b31674eef52f79be573cfe32967ead60dc3ec0f746cc62)
 
 **Observed layout and controls.** A large center grid has **Misc**, **Crafting**, **Building**, and **Furniture** categories with item counts and **Q/E** tab hints. The selected cell is a repair tool. Hotbar, health and the world remain visible. Lower-right hints distinguish placing, removing, opening the build menu, snapping/options and rotation. [V6]
 
@@ -60,7 +60,7 @@ The August 2023 patch notes also discuss input conflicts involving chat, hotbar 
 
 ### VH04 — Controller help and inconsistent glyphs
 
-![Valheim pause menu with controller mapping diagram and a world interaction prompt](../screenshots/valheim/08-controller-help.jpg)
+![Valheim pause menu with controller mapping diagram and a world interaction prompt](https://assets.openlegend.ai/studies/public/blobs/sha256/f8/f83ad533f912c5ba0e409ec759d743d84f31cec0a7a2e6a551e3bee84bcdbec9)
 
 **Observed layout and controls.** The pause menu shows **Continue, Save, Settings, Logout, Quit**, accompanied by a controller diagram with PlayStation-style face symbols. The world beneath it still displays an Xbox-style **X** use hint. The original screenshot belongs to a player report about controller glyphs, not a general product showcase. [V7]
 
@@ -72,7 +72,7 @@ The August 2023 patch notes also discuss input conflicts involving chat, hotbar 
 
 ### VH05 — Controller crafting with explicit focus and window navigation
 
-![Valheim controller workbench with Torch selected, focus outline and per-action controller hints](../screenshots/valheim/09-controller-crafting.jpg)
+![Valheim controller workbench with Torch selected, focus outline and per-action controller hints](https://assets.openlegend.ai/studies/public/blobs/sha256/29/29d82aa1dd35c5af7498be43cb80874b62399578e8375e56b35a9ad4540d211d)
 
 **Observed layout and controls.** The left carried inventory and right workbench pane remain in their familiar positions. **Torch** is selected; the active pane has a conspicuous yellow outline. The station shows tab, repair and craft bindings. Footer hints include **Change window**, **Move**, **Use/equip**, **Split stack**, and **Drop**. This comes from the same April 2024 glyph report as VH04. [V7]
 
@@ -84,7 +84,7 @@ The August 2023 patch notes also discuss input conflicts involving chat, hotbar 
 
 ### VH06 — An unavailable recipe beside an available repair action
 
-![Valheim Leather tunic recipe with disabled Craft and Repair an item tooltip](../screenshots/valheim/10-workbench-repair-player.jpg)
+![Valheim Leather tunic recipe with disabled Craft and Repair an item tooltip](https://assets.openlegend.ai/studies/public/blobs/sha256/76/7628b68b213f94058f09e324660a69ff96ff3c6133df808195f2a4cfb756f7d9)
 
 **Observed layout and controls.** **Leather tunic** is selected at a workbench. A requirement area shows deer hide and a station-level requirement; **Craft** is greyed out. The repair hammer still offers **Repair an item**. The footer explicitly labels mouse move, use/equip, Shift-click split stack, and Ctrl-click drop. This image was supplied in a player discussion asking about repair. [V8]
 
@@ -96,7 +96,7 @@ The August 2023 patch notes also discuss input conflicts involving chat, hotbar 
 
 ### VH07 — Player-labeled storage in the world
 
-![Valheim storage room with category signs above chest rows and the normal world HUD](../screenshots/valheim/11-storage-signs.jpg)
+![Valheim storage room with category signs above chest rows and the normal world HUD](https://assets.openlegend.ai/studies/public/blobs/sha256/cb/cbadfd2e3228f4007ccfee4219483d1fa588663d8cae9d1e3c5aaa64647f59b5)
 
 **Observed layout and controls.** The normal world HUD remains visible around a room of chests. Signs identify categories such as leather, trophies, bones and feathers. There is no open inventory window. This is included for object discovery and spatial memory, not counted as a second image of an open chest. [V9]
 
@@ -146,7 +146,7 @@ Reviewed **2026-10-04**. VH08–VH09 add actual player captures of map planning 
 
 ### VH08 — A map for remembering, marking and discussing places
 
-![Valheim explored coastline map with personal pins and map controls](../screenshots/valheim/12-player-map-pins.png)
+![Valheim explored coastline map with personal pins and map controls](https://assets.openlegend.ai/studies/public/blobs/sha256/df/df809ddfd4827130446b69433f412afd26d1ab79de25d54aac2c10d4651da974)
 
 **Observed layout / controls.** The expanded map occupies most of the screen; unknown surroundings are dark. A vertical pin palette sits at the right, with a selected icon outlined. The footer labels **Add pin**, **Cross off pin**, **Remove pin**, **Ping**, and **Visible to other players**. Personal names include a dock, forge and speculative notes such as “More land maybe?”. Character status and hotbar remain visible around the map. No route-execution or travel button is visible.
 
@@ -158,7 +158,7 @@ Reviewed **2026-10-04**. VH08–VH09 add actual player captures of map planning 
 
 ### VH09 — Building happens around the selected piece
 
-![Valheim build mode with Log beam 2m, material and missing workbench, plus placement controls](../screenshots/valheim/13-building-piece-context.jpg)
+![Valheim build mode with Log beam 2m, material and missing workbench, plus placement controls](https://assets.openlegend.ai/studies/public/blobs/sha256/03/03fdc091a96c31758b721104a3e2057b7c001cafeb518a7aeaf9fbe99a942c14)
 
 **Observed layout / controls.** A selected hammer sits in the numbered hotbar. The world structure dominates the view. A bottom card names **Log beam 2m**, shows **Core wood 1**, and marks **Workbench None** in red. The lower-right lists mouse Place, Remove and Build menu actions, Shift snapping/options, and wheel rotation. The minimap and health/power status remain in their corners. No active placement ghost is claimed from this particular frame: overlapping existing beams are not evidence of a prospective object.
 

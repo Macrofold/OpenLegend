@@ -60,6 +60,7 @@ export function installMissingBelonging(world: WorldState, playerId = PLAYER_ID)
     {
       id: MARA_ID,
       name: 'Mara Reed',
+      appearance: 'study:mara-travel-coat',
       nameForm: 'proper',
       description: MARA_IDENTITY.description,
       kind: 'npc',
@@ -70,6 +71,7 @@ export function installMissingBelonging(world: WorldState, playerId = PLAYER_ID)
     {
       id: TAVIN_ID,
       name: 'Tavin Vale',
+      appearance: 'study:tavin-work-vest',
       nameForm: 'proper',
       description: TAVIN_IDENTITY.description,
       kind: 'npc',
@@ -85,7 +87,7 @@ export function installMissingBelonging(world: WorldState, playerId = PLAYER_ID)
         'A carved wooden marker identifies the Mending Clearing work area beside the rough stone and points south along the reed edge toward the Reed-side Store beside the split stone. Inspect what actually remains at each spot.',
       placement: worldPlacement(clearingMarker, clearingMarker.surfaceId),
       spatial: baseSpatial('object'),
-      appearance: 'crate-mesh',
+      appearance: 'study:marker-single-board',
     },
     {
       id: 'mending-clearing-spot',
@@ -104,7 +106,7 @@ export function installMissingBelonging(world: WorldState, playerId = PLAYER_ID)
         'A dry storage spot beside a split stone near the river reeds. Reach it and inspect what actually rests here.',
       placement: worldPlacement(reedStore, reedStore.surfaceId),
       spatial: baseSpatial('object'),
-      appearance: 'crate-mesh',
+      appearance: 'study:supplies-open-box',
     },
   ];
   for (const entity of entities) entitySet(world.entities, entity.id, entity);

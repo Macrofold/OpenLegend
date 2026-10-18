@@ -42,19 +42,19 @@ Images 69–72 preserve two native observations at branch `0f449430`, actual CI 
 
 ### 01 — World and character first
 
-![The game world with a compact character summary, simulation time, task launchers and separate suggested/pinned actions.](01-hud.png)
+![The game world with a compact character summary, simulation time, task launchers and separate suggested/pinned actions.](https://assets.openlegend.ai/studies/public/blobs/sha256/85/855b11017dcf6b011647bd64b70e32f15e19ad9eedffe5b2cd02507a911d1ef1)
 
 **1440×1000, App.** The upper-left summary answers who is being controlled, where they are and which conditions matter. Simulation time, camera controls and the two action groups have distinct places. Task launchers leave the world visible. This is the current base-world content; the labels and meters are supplied by that world. A screenshot cannot establish discovery by a new player, and the scene's current art/lighting is not a new visual-quality claim.
 
 ### 02 — Choose the subject in the world
 
-![A compact Choose a subject strip leaves the world visible, with In view and Cancel alternatives.](02-subject-selection.png)
+![A compact Choose a subject strip leaves the world visible, with In view and Cancel alternatives.](https://assets.openlegend.ai/studies/public/blobs/sha256/52/52a26eb9f133e7961651f721c4604b858f180247b70dd20b931648c8877d4999)
 
 **1440×1000, App.** Choosing an action's subject temporarily clears the task panels so the player can point at the object. In view provides a readable, keyboard-accessible alternative. Selecting prepares the exact subject; it does not execute. Cancel restores the previous task and words. This applies the research principle that spatial selection needs the spatial scene, rather than another large selection worksheet.
 
 ### 03 — Optional words, explicit commitment
 
-![The Character panel holds one optional action intention, its named subject, Attempt action and Cancel.](03-action-intention.png)
+![The Character panel holds one optional action intention, its named subject, Attempt action and Cancel.](https://assets.openlegend.ai/studies/public/blobs/sha256/36/367649553e8d4c0933b80834d400bcc184b6aa042632bebb2a83b30f10fc2f0c)
 
 **1440×1000, App.** Routine actions already live with their object, item or capability. The optional intention task exposes the player's words and the exact subject without a target/item/tool/recipient/amount worksheet. The primary action and Cancel remain reachable beneath the scrolling field area. The final letter in the example was entered while checking that typing P does not pause the world; the displayed response configuration belongs to the controlled check.
 
@@ -62,43 +62,43 @@ Images 69–72 preserve two native observations at branch `0f449430`, actual CI 
 
 ### 04 — An item's menu belongs above its inventory
 
-![An exact Flaked cutting stone action menu appears above the expanded belongings grid.](04-item-context.png)
+![An exact Flaked cutting stone action menu appears above the expanded belongings grid.](https://assets.openlegend.ai/studies/public/blobs/sha256/2b/2b87b1b481afaeb8f1df56118052346fc81b9384e50d9b6a9138fe69a2316ec4)
 
 **1440×1000, App.** The inventory starts from belongings and a storage object opened in the world. Here no external object is open, so the second pane explains that next step. A secondary click or Shift+F10 opens the exact carried item's context; Close and Escape return focus to that item. The empty action result is deliberately controlled to test menu ownership and focus, not evidence that the real stone has no actions. The earlier hidden-menu defect was corrected in the shared overlay owner.
 
 ### 05 — Stable shortcuts have a local editor
 
-![The shortcut assignment picker stays above expanded Inventory and close to the action bar.](05-shortcut-editor.png)
+![The shortcut assignment picker stays above expanded Inventory and close to the action bar.](https://assets.openlegend.ai/studies/public/blobs/sha256/bf/bf1945199fc5e27c47362697cd0f94dc612c1e5b31b650c6bfcefa008fff97f3)
 
 **1440×1000, App.** Shortcut assignment is a small task attached to its numbered slot. Its searchable catalogue stays above an expanded workspace and returns focus on close. Ordinary suggestions and the player's three retained assignments remain distinct. This image exercises the overlay correction; it does not show native execution of an assigned action.
 
 ### 18 — Work can exist while action is unavailable
 
-![Current fire-watch work remains visible with Stop all work disabled and the character-condition reason underneath.](18-work-unavailable.png)
+![Current fire-watch work remains visible with Stop all work disabled and the character-condition reason underneath.](https://assets.openlegend.ai/studies/public/blobs/sha256/e3/e3c096007f81371cbab46628c0eeed9b88c2d52e745d8a48124d2f9f34f27a03)
 
 **470×311, native projection and component.** An incapacitated character still has waiting work. The UI shows the work, the material/time facts and the native reason Stop all work is unavailable. The cancellation consequence is explicit: paused work is discarded, completed effects remain. Actual native admission and body effects supplied this projection; pointer attempts emitted no commands. This bounded result does not qualify the complete authenticated camp journey.
 
 ### 24 — Opened storage stays beside belongings
 
-![Mike’s belongings beside an opened woven bag on the ground, with a ground-pile breadcrumb and a packing load of 24 out of 24.](24-native-opened-paired-bag.png)
+![Mike’s belongings beside an opened woven bag on the ground, with a ground-pile breadcrumb and a packing load of 24 out of 24.](https://assets.openlegend.ai/studies/public/blobs/sha256/61/61b504d8b6bbcce8c9ddd6771528aaa6a963f0d39bab1cfa888cd643104283df)
 
 **1440×960, native App/server/PostgreSQL.** The player dropped the supplied filled bag, opened the resulting ground pile and opened the bag inside it. Both collections remain named above their item grids. The ground location, distance, breadcrumb and packing load explain which bag is open and why its contents are relevant. This applies the object-first inventory design: the opposite open collection supplies the destination for a move. The expanded workspace consumes much of the screen, leaving the world and selected ground pile mainly to its right; this desktop capture does not establish a comfortable layout at every width.
 
 ### 25 — A full bag refuses without losing items
 
-![The selected stack of six small stones retains its details and named Move to the woven bag action while the packing-capacity refusal remains visible.](25-native-full-capacity-refusal.png)
+![The selected stack of six small stones retains its details and named Move to the woven bag action while the packing-capacity refusal remains visible.](https://assets.openlegend.ai/studies/public/blobs/sha256/79/795b43d599c8aee0cf60edb4be00baf258bcc1528af15c46fb2490a800f8449e)
 
 **1440×960, native App/server/PostgreSQL.** The native move refuses all six stones because the bag is full. The reason stays both in the item detail and the workspace status, and the named destination remains available for deliberate reconsideration. The interaction record verifies unchanged quantities, custody and bag contents after refusal, including the existing 24 branches and load of 24/24; the screenshot alone cannot prove that integrity. The detail panel covers much of the second collection. Keeping the two names above it preserves orientation, but simultaneous comparison of both grids is reduced while the panel is open.
 
 ### 26 — Exact amounts return a recorded result
 
-![After the exact-quantity round trip, Mike has two supple branches, the woven bag has 24, and the workspace reports Possessions updated.](26-native-returned-exact-quantity.png)
+![After the exact-quantity round trip, Mike has two supple branches, the woven bag has 24, and the workspace reports Possessions updated.](https://assets.openlegend.ai/studies/public/blobs/sha256/86/86ca46731775828b74e329433fceff73b18ae99b9598ab2e177f4a62a861c2e8)
 
 **1440×960, native App/server/PostgreSQL.** Taking three branches changed the player/bag totals from 2/24 to 5/21; putting three back restored 2/24. The native command bodies and resolved receipts establish both exact moves. The local quantity control kept the chosen item and opposite collection, and ordinary transfers made no destination-discovery request. For the return, the script focused **Move amount** and pressed Enter. That input is established by the script and receipt record, not by the visible outline, which is around **Small stone** in this later capture. This image demonstrates the returned totals and persistent result; it does not demonstrate focus on the transferred branch cell or broader keyboard usability.
 
 ### 27 — Remains retain identity and permission boundaries
 
-![The dead person’s belongings open beside Mike’s, with a ground location one metre away and a selected-person panel describing the body.](27-native-corpse-paired-contents.png)
+![The dead person’s belongings open beside Mike’s, with a ground location one metre away and a selected-person panel describing the body.](https://assets.openlegend.ai/studies/public/blobs/sha256/de/deab74010d389839854d9d162e24ae63e60655564840290821f65350e44885de)
 
 **1440×960, native App/server/PostgreSQL.** The same paired workspace opens the nearby body and shows its permitted possessions. The character used by the fixture is Ada, but the player has not learned that name, so the UI correctly calls the target **person**. Taking one bone fragment and returning it leaves the visible stack at four; both native commands have resolved receipts. Separate native access checks allow the permitted bag, refuse restricted-bag contents, expose no storage route into the living person’s inventory, and refuse the body’s contents after it is moved beyond reach by the fixture. Those refusals are established by the interaction record, not by this successful opening image. Two identically named woven bags still require context and available actions to distinguish; only the permitted bag shows the **Container** affordance here. Opening the body grants no general access to private or living inventories. No player death, walking, arrival or consent-acceptance journey is claimed.
 
@@ -106,13 +106,13 @@ Images 69–72 preserve two native observations at branch `0f449430`, actual CI 
 
 ### 06 — A Journal with a reachable end
 
-![The Journal shows the final rows of a long personal story beneath a separate World Events route.](06-journal.png)
+![The Journal shows the final rows of a long personal story beneath a separate World Events route.](https://assets.openlegend.ai/studies/public/blobs/sha256/86/8601fecb009eb6b8603e8de56982650a0462bca87c5d546c96f18bff9b17a456)
 
 **1440×1000, App.** Promises, Beginnings and Your story remain distinct. The World Events route explains that it contains what the character perceived. The reader controls stay above its own scroller, and the final row of the 40-entry example stays inside the panel. The adjacent action draft remains intact. The prose is controlled layout content, not newly generated narration or native history-search evidence.
 
 ### 10 — Conversation keeps the recipient and message together
 
-![The Conversation component names the recipient above the transcript, with volume beside it and a multiline composer below.](10-conversation.png)
+![The Conversation component names the recipient above the transcript, with volume beside it and a multiline composer below.](https://assets.openlegend.ai/studies/public/blobs/sha256/81/81ff756b5de2bc91aa3ecc8a3a898928550ee6da764f44b1c873c7cb99e527d0)
 
 **1160×880, component.** The selected person and hearing reminder frame the transcript; volume has its own narrow control, and the message stays with Send. The long example name checks wrapping. Interaction checks separately cover composition, explicit send and retaining an uncertain original message when another recipient receives a successful send. The small top-edge buttons are fixture navigation, not product controls.
 
@@ -120,43 +120,43 @@ Images 69–72 preserve two native observations at branch `0f449430`, actual CI 
 
 ### 07 — Enlarged text changes the arrangement
 
-![Settings and help at 320 pixels wide with 130 percent interface scale, wrapped category tabs and a reachable close control.](07-settings-narrow.png)
+![Settings and help at 320 pixels wide with 130 percent interface scale, wrapped category tabs and a reachable close control.](https://assets.openlegend.ai/studies/public/blobs/sha256/2d/2dee37b62cab06891e0d11262651ccc1d2496b94ac3aad85880e8adedda2e69b)
 
 **320×740, 130% interface scale, App.** Category names use two columns instead of a tall one-column list, with the selected task and Close retained. Settings scroll beneath the header; they are not all visible at once. The shown controls stay within the viewport, and Game stays above the open-task tabs. This is one observed width/scale combination, not a mobile or assistive-technology certification.
 
 ### 08 — A short window uses the task scroller
 
-![The caption reading-time control is visible after scrolling Settings in a short game window.](08-settings-short.png)
+![The caption reading-time control is visible after scrolling Settings in a short game window.](https://assets.openlegend.ai/studies/public/blobs/sha256/0f/0fa51521e2c2f55e91026ed83c541e3475710062b1d423cc8db2aa6c031c9531)
 
 **1180×420, App.** Scrolling brings the caption-reading control and its consequence into view without moving the game page. The control was measured inside the panel's visible bounds. A short viewport has little simultaneous context; this capture demonstrates reachability of this setting, not ideal reading space for every possible combination of controls and text.
 
 ### 20 — Camera and shortcuts share available space
 
-![At 390 pixels wide, the world HUD keeps the time controls and launcher strip above a bounded lower area containing suggestions, numbered shortcuts and camera controls.](20-narrow-controls.png)
+![At 390 pixels wide, the world HUD keeps the time controls and launcher strip above a bounded lower area containing suggestions, numbered shortcuts and camera controls.](https://assets.openlegend.ai/studies/public/blobs/sha256/76/76e75d4350fc30b2728880f6d5e9eacfe9e1741225caf630df5c4ea4716aa179)
 
 **390×844, 130% interface scale, App.** Suggestions and retained numbered shortcuts remain distinct, and the existing camera controls fit inside one lower scrolling region. Their earlier independent positions overlapped and pushed configuration controls beyond the viewport. The correction gives layout ownership to their common region while retaining every capability. This view still devotes much of a narrow screen to the HUD; some launchers and shortcuts require horizontal scrolling. The benefit is reliable access and separation, not a claim that all controls are visible or that this density has passed new-player observation.
 
 ### 21 — A short viewport exposes the scrolling tradeoff
 
-![At 320 by 568 pixels and enlarged interface scale, a shortcut tooltip names Gather branches and Fallen branches above its visible shortcut button.](21-short-shortcut-tooltip.png)
+![At 320 by 568 pixels and enlarged interface scale, a shortcut tooltip names Gather branches and Fallen branches above its visible shortcut button.](https://assets.openlegend.ai/studies/public/blobs/sha256/1c/1c32e5433ee8519cb531bebd0c1c4b7fee790a88f0aeb5a62bd6da84198abd3e)
 
 **320×568, 130% interface scale, App.** The plain tooltip stays attached to the shortcut and can appear outside the lower region's clipping. It names both the action and its selected source. Actual wheel/keyboard checks reach the other controls through the local scrollers without moving the camera. The camera is below the visible part of that region in this capture, and the decorative title wraps beneath the HUD. This is a deliberately constrained case: it demonstrates a bounded overflow strategy and a visible explanation, while making the remaining density problem explicit. Tooltips supplement reachable action details; they do not supply an essential instruction that exists only on hover.
 
 ### 23 — Closing a task returns visible keyboard focus
 
-![The Inventory launcher has a complete inset keyboard focus outline after Inventory closes; Conversation remains open beneath the launcher strip.](23-keyboard-return.png)
+![The Inventory launcher has a complete inset keyboard focus outline after Inventory closes; Conversation remains open beneath the launcher strip.](https://assets.openlegend.ai/studies/public/blobs/sha256/27/27ca8a41046d13457315dfa33cbabba5f177eeb01b0a241ea4c534e7b3b36cb5)
 
 **320×740, 130% interface scale, App.** Enter on Hide Inventory returns focus to the Inventory launcher and reveals it in the horizontal strip. Its complete outline remains inside the scroll boundary. The green Conversation launcher describes the still-open task, so selected/open state and keyboard focus remain visibly distinct. The earlier outward outline was clipped even though focus ownership was correct; this is why a focus assertion alone was insufficient. The retained conversation is controlled example content, and this image establishes no successful message send. The [focused interaction record](../../verification/game-interaction-redesign.md#narrow-controls-and-creator-reading) records the unchanged toolbar reentry behavior and exact bounds.
 
 ### 11 — Saving and recovering have different meanings
 
-![The Checkpoints component explains loading consequences and shows a persistent checkpoint-protection failure.](11-checkpoints.png)
+![The Checkpoints component explains loading consequences and shows a persistent checkpoint-protection failure.](https://assets.openlegend.ai/studies/public/blobs/sha256/31/31313614df0a0983877ef0cf8ed93d8581f5e06610d9e0c0f7940621917efd42)
 
 **1180×900, component.** Named checkpoints are separate from ordinary automatic saving. Loading replaces the current world and starts it paused. A protection failure remains visible; acknowledging it only dismisses the notice and does not pretend to repair storage. The catalogue and creation controls continue in the panel scroller. Exact original-request recovery and named load/delete confirmation are interaction checks, not outcomes established by this one image.
 
 ### 19 — A past invitation does not prove current access
 
-![A narrow entry screen shows a historical accepted invitation separately from current refusal to enter the world.](19-entry.png)
+![A narrow entry screen shows a historical accepted invitation separately from current refusal to enter the world.](https://assets.openlegend.ai/studies/public/blobs/sha256/f8/f8fb539807ca86be00c74f582bebec2e0a74e27b20535a7e41e46ba2d01711de)
 
 **320×568, component.** The invitation receipt and current permission answer different questions. The screen retains the historical receipt but clearly states that this account cannot currently enter, with a deliberate access check. Other entry actions continue below through the existing scroller. The fixture did not create or revoke a real invitation or account.
 
@@ -164,31 +164,31 @@ Images 69–72 preserve two native observations at branch `0f449430`, actual CI 
 
 ### 14 — Create has recognizable destinations
 
-![The Create workspace separates Your workshop, World authoring and Inspect world, with a focused invention request.](14-workshop.png)
+![The Create workspace separates Your workshop, World authoring and Inspect world, with a focused invention request.](https://assets.openlegend.ai/studies/public/blobs/sha256/f0/f0d7d8a400dbe7423113f177597cbbfc74dbcdbb02617c509f7a52806a9dac45)
 
 **1366×900, component.** The player's workshop, authorized world authoring and inspection have separate routes. A new idea stays intact when visiting learned recipes or saved requests. The request explains that learning a supported recipe does not itself craft the item, and review is an explicit choice. The meter is the abstract usage allowance supplied by the fixture; no model request was made.
 
 ### 15 — Review, approve and apply are different actions
 
-![An exact revision review presents the proposed change, native-check limits and separate approval controls.](15-exact-review.png)
+![An exact revision review presents the proposed change, native-check limits and separate approval controls.](https://assets.openlegend.ai/studies/public/blobs/sha256/48/48e9d5998ee659fd1d1c91479c36cd3f70fbd5b46c15841cd8cb4bf78c1b2353)
 
 **1366×900, component.** A review names the actual saved revision, original purpose and affected records. Details remain inspectable, while the distinction between approval and Apply is explicit. The example's native-check statement is controlled report data, not a live validation or generated-invention claim. This is an appropriate structured creator decision; routine gameplay does not inherit the review form.
 
 ### 16 — A newer record does not erase an edit
 
-![Private mind keeps unsaved knowledge beside a newer saved revision with an explicit compare/reapply choice.](16-private-notes.png)
+![Private mind keeps unsaved knowledge beside a newer saved revision with an explicit compare/reapply choice.](https://assets.openlegend.ai/studies/public/blobs/sha256/59/593b5735a79f8b2ca9c9583ee87a4862d141e547728ca303e5637602c7b9c3ea)
 
 **1366×900, component.** The player can see which saved revision their edit is based on and compare the newer text. Reapplying or discarding is deliberate. A refused refresh retains the loaded editor and words. Only currently permitted private knowledge is eligible for this workspace; visible controls do not grant access. The example is controlled data, and native concurrent editing remains a separate gate.
 
 ### 17 — Diagnostics explain evidence honestly
 
-![A diagnostic detail names the actor, reason, recorded time and stages, and labels unreported usage as unknown.](17-diagnostics.png)
+![A diagnostic detail names the actor, reason, recorded time and stages, and labels unreported usage as unknown.](https://assets.openlegend.ai/studies/public/blobs/sha256/0c/0c30023871f4c093ce4d37210f474f10dba0309940db9282310b5af1697d9224)
 
 **1366×900, component.** Investigation detail is separated from ordinary play. The view identifies what happened and keeps stage detail behind an explicit disclosure; unavailable usage is labeled Unknown, not shown as zero. Focus and tooltip triggers use native elements. The visible trace is fixture data and says nothing about live model quality or measured cost.
 
 ### 22 — A new-reply cue must not cover an answer
 
-![The short creator panel shows an unobstructed Save answer button, with the unread jump cue beside Conversation and Work and Stop this request in its own footer.](22-creator-answer.png)
+![The short creator panel shows an unobstructed Save answer button, with the unread jump cue beside Conversation and Work and Stop this request in its own footer.](https://assets.openlegend.ai/studies/public/blobs/sha256/b3/b37f46edf4a87f436fb93aafeca7b1699aa6ff90a4bdc53f936b66b816b39109)
 
 **320×568, 130% interface scale, two panels open, component.** The question has been scrolled to its Save answer action. The unread cue now occupies the existing Conversation/Work row instead of floating across that action. The complete answer button is visible, and Stop remains in the separate footer. The optional Workspace and Session controls share one row; their collapsed state saves reading space. The available reader is only about 62 physical pixels high in this extreme case, so the full question requires scrolling. That is a material compromise, not comfortable paragraph reading. The interaction check traverses the full question and verifies the complete button target, retained unread state and exact request recovery. The small Settings/Create controls above the panel belong to the isolated host, not proposed game navigation.
 
@@ -196,43 +196,43 @@ Images 69–72 preserve two native observations at branch `0f449430`, actual CI 
 
 ### 12 — World operations has its own task hierarchy
 
-![World operations leads with current world status and separates access, invitations, maintenance and checkpoints.](12-world-operations.png)
+![World operations leads with current world status and separates access, invitations, maintenance and checkpoints.](https://assets.openlegend.ai/studies/public/blobs/sha256/9a/9a69cdbc091ab23d60ea1e547326ce57c87d90d103236a3b5c547cecf7d4d5ff)
 
 **1180×900, component.** The operator can return to the character directly. Current status comes before administration; invitations, access, maintenance and checkpoints have distinct destinations. The original selected character stays named when access changes. These are meaningful administration fields rather than fields required to perform an in-world action. No invitation or account mutation was performed outside the fixture.
 
 ### 13 — Maintenance status precedes schedule editing
 
-![An overdue maintenance notice states that the world remains paused, with explicit Mark ready and resume and collapsed schedule editing.](13-maintenance.png)
+![An overdue maintenance notice states that the world remains paused, with explicit Mark ready and resume and collapsed schedule editing.](https://assets.openlegend.ai/studies/public/blobs/sha256/e6/e6e6b9ae48d83c99836dd411710dacab74ed1a3095bc8711fde9941c90aa48ed)
 
 **1180×900, component.** The announced end is an estimate, and the current pause is clear. The authorized Ready action is separate from editing the estimate. Announced and local time are labeled, while schedule editing stays secondary. This capture uses controlled times and revisions; it does not qualify native scheduling, timezone edge cases or a real service restart.
 
 ### 09 — World rules supply their own presentation
 
-![The same game shell displays the clockwork world's Integrity, Charge and Disposition rather than the base world's survival meters.](09-alternate-world.png)
+![The same game shell displays the clockwork world's Integrity, Charge and Disposition rather than the base world's survival meters.](https://assets.openlegend.ai/studies/public/blobs/sha256/a5/a54b462e24cacd2ddb5dfa9449e2869b8feed6664974984dacc4088ef64f6ec5)
 
 **1440×1000, App.** The existing reservoir world supplies its own location, time wording and character attributes to the shared shell. Its recharge task uses the existing native replenishment operation through the newly installed finite task presentation. A focused App check verified the old world's scene-label elements were removed; native checks separately cover charge transfer, stopping, duplicate commands and current-record restoration. Shared scene content does not make this arbitrary-world qualification, and the observed switch did not satisfy the separate five-second CI entry deadline.
 
 ### 28 — The shared inventory in a native clockwork world
 
-![The native clockwork world uses the same labeled item grid, with a second collection reserved for an opened physical container.](28-native-clockwork-inventory.png)
+![The native clockwork world uses the same labeled item grid, with a second collection reserved for an opened physical container.](https://assets.openlegend.ai/studies/public/blobs/sha256/70/70a328bcc3c23fd29e761853bc033e26caed9ba996cf14e47e705767e343bcee)
 
 **1440×960, native App/server/PostgreSQL.** The player sees recognizable item pictures, names and exact quantities. The neighboring empty collection tells the player to open an object in the world, preserving the object-first transfer model. The existing world shares these six starting item kinds with the base world; their familiar names are actual authored content, not evidence of different equipment rules. The search field and roomy tiles are easy to distinguish, but this small six-item sample cannot establish large-inventory density or navigation quality. Reopening the same database retained the exact possessions and the world's Charge/Integrity values.
 
 ### 29 — Successful work can still have poor presentation
 
-![A native Recharge task is active beside a charged capacitor, but the task panel still shows planning modes and a second Start control.](29-native-recharging-current-work.png)
+![A native Recharge task is active beside a charged capacitor, but the task panel still shows planning modes and a second Start control.](https://assets.openlegend.ai/studies/public/blobs/sha256/1f/1fdc4b015cdef902b86fb5e413249cc24db8caeea06ac19201168977e8bc889b)
 
 **1440×960, native App/server/PostgreSQL.** Current work names the real supply, Stop is available, and the source's inspected quantity agrees with actual native spending. Those are useful connections between the world and the menu. The lower panel is nevertheless crowded by scheduling choices and another Start, even though the player just started this work. The technical success toast adds little and competes with the panel. The lesson is to switch the panel's emphasis after commitment: monitor current work first and deliberately reopen preparation. Native success does not make this layout satisfactory.
 
 ### 30 — Shared UI does not require identical character senses
 
-![The touch-demo world presents the same ordinary player's belongings through the shared inventory panel.](30-native-touch-world-inventory.png)
+![The touch-demo world presents the same ordinary player's belongings through the shared inventory panel.](https://assets.openlegend.ai/studies/public/blobs/sha256/37/371a868a1068c90c4f793ab1e480a1a4000d01c8c7fc7db19d4c121ad1708b0a)
 
 **1440×960, native App/server/PostgreSQL.** This intentionally resembles image 28: the controlled player retains ordinary sight and the same six starting item kinds. The world's other resident uses contact-based perception and cannot see the distant supply; that difference is established by native permitted reads, not inferred from this screenshot. The useful design property is that inventory does not need a separate implementation for that world. This is neither touchscreen testing nor proof that any arbitrary world or equipment schema is supported.
 
 ### 31 — The narrow view exposes the active-task problem clearly
 
-![At 390 pixels wide, the active task and Stop are followed by preparation modes, a repeated recharge section and a technical success notice.](31-native-narrow-task-clutter.png)
+![At 390 pixels wide, the active task and Stop are followed by preparation modes, a repeated recharge section and a technical success notice.](https://assets.openlegend.ai/studies/public/blobs/sha256/15/15891fd227780fabde59871367f82c5b0c7603192b862395a1db12292771ef13)
 
 **390×844, native App/server/PostgreSQL, before the correction.** The selected task and Stop fit, but the rest of the screen repeats choices that the player has already made. The acknowledgement appears both inline and as a toast; the sticky Start row crosses the repeated task description. Keeping a button technically reachable is insufficient when the screen no longer makes the current decision clear. The accepted correction folds preparation after a confirmed start, retains its values behind **Prepare another task**, uses plain acknowledgements and preserves refusal or uncertain-result recovery. This original capture remains a record of the defect; a later screenshot must identify the actual corrected source separately.
 
@@ -240,13 +240,13 @@ Images 69–72 preserve two native observations at branch `0f449430`, actual CI 
 
 ### 32 — Monitoring replaces repeated preparation
 
-![The task Panel shows waiting fire care, the selected budget and deadline, Stop all work, a plain acknowledgement and Prepare another task. The Current work group has keyboard focus.](32-current-work-component.png)
+![The task Panel shows waiting fire care, the selected budget and deadline, Stop all work, a plain acknowledgement and Prepare another task. The Current work group has keyboard focus.](https://assets.openlegend.ai/studies/public/blobs/sha256/e4/e42618dfaf4c64bac4574a2dfff229eb928ef2e64c913a9e95f360a13628df6e)
 
 **504×528 Panel crop from a 1280×900 host, component.** After a confirmed start, the player's immediate decision is whether to let this work continue or stop it. The task name, waiting reason, budget and deadline stay together above **Stop all work**. **Prepare another task** makes further planning deliberate and restores the saved values; it does not submit another request. Removing the repeated supply/time editors, scheduling modes and second Start makes that decision easier to find. The visible space below the controls is the result of removing repetition within the existing Panel, not evidence that the full game layout or native journey is accepted. The focus boundary shows the group reached after keyboard Start in this check.
 
 ### 33 — The narrow task keeps the same clear decision
 
-![At 390 pixels wide, the cropped task Panel keeps Current work, its waiting status and limits, Stop all work and Prepare another task visible without the repeated preparation section.](33-narrow-current-work-component.png)
+![At 390 pixels wide, the cropped task Panel keeps Current work, its waiting status and limits, Stop all work and Prepare another task visible without the repeated preparation section.](https://assets.openlegend.ai/studies/public/blobs/sha256/d0/d0a00a2a26e0504ee8c75c701fa8193caf1789089eacbf5209b087214ee2f667)
 
 **390×465 Panel crop from a 390×844 host, component.** The current work and its two relevant next steps remain readable at this width. The cancellation explanation wraps beneath Stop, while preparation stays behind its own deliberate button. The accompanying interaction record separately verifies that a delayed acknowledgement of a successful Start can arrive after this component is hidden and shown without taking focus back; the absence of an outline in this image alone cannot establish that behavior. That hidden interval used the component's real visibility input, not a native panel-hide journey.
 
@@ -256,49 +256,49 @@ The passing component scenario took 10.28 seconds, made five in-memory native ac
 
 ### 34 — Native findings need a concise reading order
 
-![The real Create workspace is scrolled to native Preview findings, coverage limits and source requirements while the game world remains visible.](34-native-creator-preview.png)
+![The real Create workspace is scrolled to native Preview findings, coverage limits and source requirements while the game world remains visible.](https://assets.openlegend.ai/studies/public/blobs/sha256/40/40ca03a30658544fd27ceccafbb661582ae249811b311c1754b07d22a8c892be)
 
 **1440×960, native App/server/PostgreSQL, before the presentation correction.** The selected Work tab keeps the recipe task inside the game, and the preview clearly limits what the native checks establish. In the accompanying journey the player changed crafting time from 60 to 72 game seconds before saving. This particular image shows the findings portion of the scroller, so it cannot demonstrate that the recipe facts and editing controls are simultaneously visible. Long check explanations and a technical connection reminder consume much of the panel. The useful lesson is to lead with the proposed consequence and keep supporting passed evidence deliberately available, while leaving unmet requirements and limitations readable. No model generated this supplied recipe.
 
 ### 35 — A reachable Close does not keep the heading visible
 
-![The original narrow rejected review clips its heading at the top edge and repeats the installation explanation while Close review remains visible at the bottom.](35-native-rejected-review-heading.png)
+![The original narrow rejected review clips its heading at the top edge and repeats the installation explanation while Close review remains visible at the bottom.](https://assets.openlegend.ai/studies/public/blobs/sha256/85/854a2feb30ad8b0ac2c033afc013a2e6ee4f343713c1eab566ed47f5ace057e3)
 
 **390×844, native App/server/PostgreSQL, before the correction.** Revision 2 and its rejected status are repeated in the heading and tag, and the same installation paragraph appears twice. More seriously, the heading has moved into the modal's top edge. The saved trace records 30 pixels of outer scrolling: the inner review allowed 820 pixels of height while its outer container allowed about 776.5. The existing Close and outer-bounds checks passed, but the player lost a stable title while reaching them. The [scoped correction](../../projects/game-interaction-redesign-tech-design.md#creator-review-repetition-and-narrow-scrolling) gives the heading, body and footer one height allowance and leaves ordinary scrolling to the body. This original defect remains visible here.
 
 ### 36 — Uncertain delivery retains the original action
 
-![The native review remains approved after the original Apply reply is lost, with Apply disabled and Retry original Apply visible beside refresh and close controls.](36-native-original-apply-unconfirmed.png)
+![The native review remains approved after the original Apply reply is lost, with Apply disabled and Retry original Apply visible beside refresh and close controls.](https://assets.openlegend.ai/studies/public/blobs/sha256/45/45d20939cc16200cfcdef027e6499fffaca4f704cf473db7f8646c35f299c351)
 
 **1440×960, native App/server/PostgreSQL.** The server has committed the recipe installation, but this client has not received confirmation. The UI retains the original review and offers **Retry original Apply** with its recovery explanation; the ordinary Apply control is disabled. The native record, rather than this image alone, establishes that delivery was interrupted only after a successful commit. The generic **Failed to fetch** text contributes little; the nearby explanation supplies the action's meaning. Above it, duplicated installation text and expanded passed checks still occupy most of the reading area. Recovery is functionally careful, but that does not make the surrounding hierarchy clear.
 
 ### 37 — A successful result should be easier to find
 
-![The original review now says revision 2 applied, but duplicate explanation and expanded passed-check evidence still dominate the body above the refresh and close footer.](37-native-confirmed-apply.png)
+![The original review now says revision 2 applied, but duplicate explanation and expanded passed-check evidence still dominate the body above the refresh and close footer.](https://assets.openlegend.ai/studies/public/blobs/sha256/38/382175c94396a7be4b940d5ae4f08a5956e05ae023d0715964466ed06900595d)
 
 **1440×960, native App/server/PostgreSQL.** **Retry original Apply** returned the unchanged native receipt, and exactly one learned recipe exists. The header correctly says **applied**. The actual technique result, however, sits below the visible portion of this long body; repeated semantics and passed findings appear first. The player should encounter what changed before reading all of its supporting evidence. The native journey also verifies that the six carried item records remain unchanged and the learned recipe persists in storage. It creates no physical Sling and does not qualify Crafting or the later corrected layout.
 
 ### 38 — The decision precedes expandable passed evidence
 
-![The corrected pending review leads with its affected records and unapplied consequence, with passed native checks in a revision-labeled disclosure and approval controls in the footer.](38-creator-pending-component.png)
+![The corrected pending review leads with its affected records and unapplied consequence, with passed native checks in a revision-labeled disclosure and approval controls in the footer.](https://assets.openlegend.ai/studies/public/blobs/sha256/1f/1f8c2bff9900775f181f7f533ec6150ac64615806b29d6941bd65b2fa81efe6d)
 
 **1440×960, component.** Revision and status have one place in the heading. The body leads with affected records, whether the change has been applied and the running-world requirement. The repeated installation paragraph has been removed. Passed checks sit in **Passed native checks retained with revision 2**; the visible focus boundary identifies that disclosure. The companion interaction expanded it by keyboard without making a write. Source requirements, validation and coverage limits remain outside it. The review is still text-heavy, and some optional details need scrolling, but the proposed consequence and approval choice are clearer. These are recorded native values in a controlled component host.
 
 ### 39 — The narrow review keeps its title and exit
 
-![The corrected rejected review at 390 pixels wide keeps its complete heading and revision above the body, with Refresh exact review and Close review in a separate visible footer.](39-creator-narrow-heading-component.png)
+![The corrected rejected review at 390 pixels wide keeps its complete heading and revision above the body, with Refresh exact review and Close review in a separate visible footer.](https://assets.openlegend.ai/studies/public/blobs/sha256/80/8014b920d3c554aeb77e5e38f56fb638d61f9d12cefa5ddc8b8f998fac2c966e)
 
 **390×844, component.** The rejected state, complete heading and Close control now fit within the same modal. This image shows the body returned to its top after a scrolling check. That check wheels the body from 0 to 350 pixels while the heading and footer keep identical rectangles. Outer overflow and outer scroll remain zero. That addresses the specific lost-heading behavior in image 35 without forcing the scroller back to its top. The long source requirements still need ordinary body scrolling; this does not establish comfortable reading at every text size or full-App placement.
 
 ### 40 — Clearer reading preserves uncertain-result recovery
 
-![The corrected approved review keeps an explicit controlled unconfirmed-delivery message, disabled ordinary Apply and Retry original Apply in its visible footer.](40-creator-unconfirmed-component.png)
+![The corrected approved review keeps an explicit controlled unconfirmed-delivery message, disabled ordinary Apply and Retry original Apply in its visible footer.](https://assets.openlegend.ai/studies/public/blobs/sha256/b4/b41160a1bbe72f5ed66a7cc6976c5f9a7d6df1c438c62206a7892b672497cf19)
 
 **1440×960, component.** The body that leads with consequences and its collapsed passed evidence coexist with the existing original-result recovery controls. The footer retains the unconfirmed outcome, the reason to recover the original review, and **Retry original Apply**. Its message explicitly names the controlled acknowledgement used by this check; that text is fixture delivery, not proposed production copy. The two recorded Apply request bodies match exactly, after which the saved applied receipt is shown. This verifies the component's request and presentation continuity. The native one-installation evidence belongs to images 36–37 and their earlier report.
 
 ### 41 — The applied receipt remains reachable with larger body text
 
-![At 320 by 568 pixels, the corrected applied review shows its full heading, the learned-technique receipt in the scrolled body, and separate refresh and close controls.](41-creator-receipt-short-component.png)
+![At 320 by 568 pixels, the corrected applied review shows its full heading, the learned-technique receipt in the scrolled body, and separate refresh and close controls.](https://assets.openlegend.ai/studies/public/blobs/sha256/e3/e365fe439ad3af3af7047677887c35b4cbad92d69e9654b6461bbf8cd186cc4f)
 
 **320×568, 18.2px body text with 26px line height, component.** The body has been scrolled to the recorded receipt: **Woven river sling is now an available technique. It still needs materials and work.** The heading retains revision 2 and **applied**, while the footer keeps Refresh and Close fully visible. Part of the preceding paragraph clips at the body's top boundary because the reader has scrolled; the heading itself stays in place. Only body typography was enlarged to 130% in this controlled case. It is not a browser-zoom or whole-interface-scale test. The available reading area remains small, so this demonstrates reachable content and stable controls, not broad reading comfort.
 
@@ -308,13 +308,13 @@ The native creator report has SHA-256 `333b5e64a73bdc1f4bbdd413dbd829a3d7dc3dc51
 
 ### 42 — An unknown result keeps its original details
 
-![The narrow Original creation sheet names two small stones and Mike’s inventory, explains uncertainty, and keeps Close and Retry original creation visible.](42-creation-recovery-narrow-component.png)
+![The narrow Original creation sheet names two small stones and Mike’s inventory, explains uncertainty, and keeps Close and Retry original creation visible.](https://assets.openlegend.ai/studies/public/blobs/sha256/ff/ff92511201969896154828705916e7152f5c852151801bc170b20dbe0fb110d6)
 
 **390×844, component.** The quantity and destination remain together, so the player can identify the creation they are recovering. The explanation states both possible consequences of retry: it may recover a creation that already happened or perform the same original creation if it never arrived. **Close** preserves this unresolved request; opening a different creation entry reveals it again. In the accompanying check, this item request survives a later refusal and reload before an actual focused Enter gesture retries its unchanged identity and body. The image does not itself establish that gesture or native exactly-once creation. This is a recovery sheet for an uncertain result; ordinary successful environment creation does not add a form. The extra explanation costs vertical space, but replacing it with a generic failure notice would leave the next action ambiguous.
 
 ### 43 — Known success needs a different recovery action
 
-![The desktop Original creation dialog shows a controlled confirmed person result with Close and Retry local cleanup, without a button to send the creation again.](43-creation-cleanup-component.png)
+![The desktop Original creation dialog shows a controlled confirmed person result with Close and Retry local cleanup, without a button to send the creation again.](https://assets.openlegend.ai/studies/public/blobs/sha256/1a/1ab073b4a86f5256dcfdb0946d8cea9e593c8be88cc88a20fd3e651090a28f7e)
 
 **1440×960, component.** The supplied person result is confirmed, but the browser could not remove its saved recovery record. After reload and entry through item creation, the original person and known result remain visible. **Retry local cleanup** handles the browser record without sending a creation request; the original-mutation retry is absent. The lesson is to distinguish uncertainty about a world change from failure to tidy up a local recovery record, so the player does not repeat a known successful action. The large background heading and entry buttons belong to the isolated host. This image was taken promptly after opening and appears dimmer; it is evidence of the shown content and controls, not final-opacity or contrast qualification. “Controlled person confirmation” is supplied test delivery, not production copy.
 
@@ -324,7 +324,7 @@ The first and only controlled run passed all four groups in 7.177 seconds, with 
 
 ### 44 — A dirty edit keeps its subject and commitment visible
 
-![The native Edit Mike window shows the selected Identity tab, an unsaved name of Owner UI checkpoint check and explicit Discard changes and Save person changes controls.](44-native-person-dirty-editor.png)
+![The native Edit Mike window shows the selected Identity tab, an unsaved name of Owner UI checkpoint check and explicit Discard changes and Save person changes controls.](https://assets.openlegend.ai/studies/public/blobs/sha256/4b/4b0d795ef985cb905b9cc7b41ec6626bff859c8698ca9553ef45e0899abdc36a)
 
 **1440×960, native App/server/PostgreSQL.** The window still names **Mike**, while the Name field holds **Owner UI checkpoint check** and the footer says **Unsaved changes**. Keeping the saved subject distinct from the draft helps the owner understand which person will change. The Identity tab groups related authoring fields, and the bounded scroll area leaves the explicit Discard and Save controls visible. This form belongs to deliberate owner editing; ordinary play should continue to act on people and objects through their relevant game controls.
 
@@ -334,25 +334,25 @@ The PNG does **not** visibly show the close-confirmation dialog. The recorded br
 
 ### 45 — Open storage stays beside belongings
 
-![The expanded Inventory pairs Mike’s belongings with a named woven bag on the ground; the knife is equipped and the remaining supplies appear on both sides.](45-native-camp-storage-equipment.png)
+![The expanded Inventory pairs Mike’s belongings with a named woven bag on the ground; the knife is equipped and the remaining supplies appear on both sides.](https://assets.openlegend.ai/studies/public/blobs/sha256/96/96acba2de95db8440cdcebcdf8e293851e7b57918a9c25b2d5534b8ef2411b3e)
 
 **1440×960, native App/server/PostgreSQL.** Mike and the woven bag remain visible as the two sides of one inventory. The bag names its ground location and packing load, with a breadcrumb back to the pile. Equipped appears on the same knife cell and in the equipment strip. The player can understand where a stack is and which tool is held while moving supplies between these exact owners. The native journey opened the ground object and its bag, took the knife, two branches and one raw portion, then equipped the knife; each command has its original receipt. No ordinary transfer destination chooser is needed. The expanded workspace still covers much of the world and the last carried row continues below the visible scroller; this image does not qualify whole-list visibility or discovery by a new player.
 
 ### 46 — Input and output have different moments
 
-![During cooking, Mike’s paired inventory shows three branches and no carried raw meat, while the separate woven bag still holds one raw portion and two branches; the In view list shows the campfire and depleted branch source.](46-native-camp-cooking-input.png)
+![During cooking, Mike’s paired inventory shows three branches and no carried raw meat, while the separate woven bag still holds one raw portion and two branches; the In view list shows the campfire and depleted branch source.](https://assets.openlegend.ai/studies/public/blobs/sha256/89/8997bb3877a91c43321efca68a2cff01c4ba692be6abf2ba0904a9dfbb63a896)
 
 **1440×960, native App/server/PostgreSQL.** Ownership stays clear even when the same material exists elsewhere: the raw portion used for cooking has left Mike’s belongings, while the bag’s separate portion remains. The branch source is now 34 and the carried stack is three. These quantities connect ordinary object actions to the inventory without another activity worksheet. The native record checks halfway progress and exact completion: gathering produces two branches, fueling spends one at completion, and cooking spends its raw input at start before producing one cooked portion at completion. Only part of the Cooking notice is visible behind the inventory, so this screenshot does not show the complete progress control or independently establish those timings. The equipped knife is retained; the session claims no knife gathering bonus.
 
 ### 47 — Consent leaves a character-readable record
 
-![World Events has four offer-search matches, a complete declined sentence and an offer-accepted tag near the bottom; a transient offer notice overlaps the accepted sentence.](47-native-camp-perceived-offers.png)
+![World Events has four offer-search matches, a complete declined sentence and an offer-accepted tag near the bottom; a transient offer notice overlaps the accepted sentence.](https://assets.openlegend.ai/studies/public/blobs/sha256/7c/7cccc2ead8451268e55b0d2c2c2546d20e12a1c542cebe16dddc45ef6fc48289)
 
 **1440×960, native App/server/PostgreSQL.** Journal opens the events the character perceived, and search brings the relevant offers together. The public record calls the recipient **a person**, preserving the character’s knowledge rather than exposing the fixture’s name. The native journey verifies that making an offer moves nothing, a supplied decline leaves custody unchanged, and a supplied acceptance transfers exactly one cooked portion. Both resulting public event texts pass the interaction checks. Here the transient **Offered 1 Cooked meat** receipt overlaps the full acceptance text; the image therefore shows the search context and acceptance tag, not both complete outcomes simultaneously. A persistent searchable record is useful for reviewing consent, but transient notices should not obscure that reading. This session uses supplied native NPC decisions and does not establish generated judgement, live conversation or a human recipient experience.
 
 ### 48 — Conversation retains who and what
 
-![Conversation shows To the person, the hearing explanation, Normal volume, the retained camp message and Set up AI with its readiness explanation.](48-native-camp-recipient-draft.png)
+![Conversation shows To the person, the hearing explanation, Normal volume, the retained camp message and Set up AI with its readiness explanation.](https://assets.openlegend.ai/studies/public/blobs/sha256/74/74631f2dcfc6f03a332572222ded8724ab3d5daabc100b416eca0ab59d56f7c8)
 
 **1440×960, native App/server/PostgreSQL.** The recipient and the warning that others within hearing may hear the player remain above the draft. The message is intact after hiding Conversation, opening the unconfigured setup route and returning. **Set up AI** explains the next available action; the UI does not pretend the words have been sent. The interaction record separately checks the ordinary-player **Intelligence is unavailable** explanation in the setup panel, then the same recipient and draft on return. That panel is already closed in this image. No chat POST, speech event or generated reply occurs. After this capture, focused Enter returns all three leftover branches to the same opened bag; the final native state is five stored branches, one stored raw portion, one accepted cooked portion with the recipient and the equipped knife still with the player.
 
@@ -362,25 +362,25 @@ All four original captures succeed without retry. The complete finite sequence a
 
 ### 49 — An unknown transfer keeps its original identity
 
-![Inventory shows four carried branches and an unknown Move 2 Supple branch to Mike result, with Check result and an explanation that checking does not send the action again.](49-native-object-transfer-unknown.png)
+![Inventory shows four carried branches and an unknown Move 2 Supple branch to Mike result, with Check result and an explanation that checking does not send the action again.](https://assets.openlegend.ai/studies/public/blobs/sha256/4a/4adaa0fdb57fb968b644b2a4f01b125e2c14f1d13a157941f6c1fa82d2ed285c)
 
 **1440×960, native App/server/PostgreSQL.** The player has deliberately walked to and opened the ground bag, moved two branches and reloaded after only the successful reply was lost. The banner retains the exact action and names **Check result**. The other collection is now empty after reload; this image does not show the earlier paired bag. The native observer already knows that the move committed, while the player-facing result remains unknown. After this capture, one deliberate receipt read returns the original success and clears the retained request without another transfer. Keeping uncertainty visible prevents a second move from becoming the accidental recovery action. The stage checks custody and revisions separately from these pixels.
 
 ### 50 — Current work leads with the task and its limits
 
-![The fire panel shows Current work, an active watch using zero of at most one fuel unit, its stopping time, Stop all work and Prepare another task; Adding fuel appears in the HUD.](50-native-care-partial-current-work.png)
+![The fire panel shows Current work, an active watch using zero of at most one fuel unit, its stopping time, Stop all work and Prepare another task; Adding fuel appears in the HUD.](https://assets.openlegend.ai/studies/public/blobs/sha256/03/037a7dc57269cddf3f1fa5732bd03f5a5b2d394255d35ce9b2e9154569c58e83)
 
 **1440×960, native App/server/PostgreSQL.** Confirmed Start replaces preparation with the active task, its resource budget and stopping time. **Stop all work** and **Prepare another task** remain visible near that status. This avoids asking the player to complete the same preparation again while work is already running. The screenshot is taken ten seconds into a twenty-second fuel action: native public progress is 0.5 and the branch remains unspent. Those numerical progress and custody assertions come from the native record; this image does not independently measure a visual progress fill. Completing that action spends one branch, produces one fuel event and leaves the longer task waiting for low fuel.
 
 ### 51 — A changed task keeps its stopping control reachable
 
-![At narrow width, the replacement Current task waits until fuel is visibly low, shows Used 0 of at most 2 and a stopping time, with Stop all work and Prepare another task fully visible.](51-native-care-replacement-stop.png)
+![At narrow width, the replacement Current task waits until fuel is visibly low, shows Used 0 of at most 2 and a stopping time, with Stop all work and Prepare another task fully visible.](https://assets.openlegend.ai/studies/public/blobs/sha256/1e/1ef9401c93f500ec8c157fea693dcba00e5f4a5b0d34d397772878e0b394d699)
 
 **390×844, native App/server/PostgreSQL.** The player deliberately reopened the same fire's task, revealed its retained preparation, changed the maximum fuel budget and duration, then confirmed replacement. The new task shows those limits and its actual waiting reason. **Stop all work** fits inside the narrow sheet beside the task it affects. This capture precedes the actual keyboard action: the script next focuses Stop and presses Enter. Native checks confirm that active and suspended work clear and another second spends no material. This demonstrates one reachable narrow arrangement; it does not qualify every text scale, viewport or assistive input.
 
 ### 52 — Crafting ends in an inspectable, equipped object
 
-![The Woven river sling appears as an equipped inventory item with a readable W fallback symbol; its open detail shows its description, packing load, work time and launcher properties.](52-native-crafted-equipped-sling.png)
+![The Woven river sling appears as an equipped inventory item with a readable W fallback symbol; its open detail shows its description, packing load, work time and launcher properties.](https://assets.openlegend.ai/studies/public/blobs/sha256/9c/9cbf53794eebd4504863d5d273c6c3a1aa08d28b9397082212ac97347b2b9b99)
 
 **1440×960, native App/server/PostgreSQL.** The finished Sling has the same ordinary cell, inspection and equipment actions as other belongings. Its readable **W** fallback remains usable without generated art, and the equipped badge and equipment strip connect the detailed object to what the character holds. The native journey starts the known recipe from Crafting, consumes one cord and two prepared fibers at start, creates one physical Sling after sixty game seconds, and equips that exact result. Its inspected launcher properties include stone ammunition, damage 18, range 7 and accuracy 0.9. The detail covers part of the grid; these pixels show the completed item, not the crafting progress or all simultaneous inventory rows. The known declaration was supplied through the existing native admission/knowledge fixture after entry, with no production recipe seed or generated invention.
 
@@ -390,19 +390,19 @@ All seven gameplay commands retain original native receipts. Five finite clock o
 
 ### 53 — A different entry still shows the unresolved item
 
-![The centered Original creation dialog retains Create 2 Reed fibers in Mike's inventory, explains the unconfirmed result and shows Close and Retry original creation.](53-native-item-original-unconfirmed.png)
+![The centered Original creation dialog retains Create 2 Reed fibers in Mike's inventory, explains the unconfirmed result and shows Close and Retry original creation.](https://assets.openlegend.ai/studies/public/blobs/sha256/f6/f61350a49da58eaddcfad6a0f2a3d73815a3269b3d289f76f613a631231a10d4)
 
 **1440×960, native App/server/PostgreSQL, God mode.** After the item request's native commit succeeds but its reply is lost, closing and reloading keep the exact request private to the same owner, world, timeline and actor. Choosing an environment entry opens this original item recovery instead of creating another object. Its title, quantity and destination explain what Retry can affect; the text explicitly distinguishes uncertainty from failure and explains that closing retains the request. This screenshot is **before Retry**, not a visible success result. The subsequent focused-Enter retry returns the original two Reed fibers and clears the request without creating more. The original artifact name contains “recovered”; its unchanged pixels and this caption preserve the actual earlier moment.
 
 ### 54 — Person recovery keeps the selected place and blocks another creation
 
-![Original creation retains Create Mira on the selected ground at 15.5, 20.1 above Inventory, with the unconfirmed-result explanation, Close and Retry original creation visible.](54-native-person-original-unconfirmed.png)
+![Original creation retains Create Mira on the selected ground at 15.5, 20.1 above Inventory, with the unconfirmed-result explanation, Close and Retry original creation visible.](https://assets.openlegend.ai/studies/public/blobs/sha256/57/5726cce5412ce53a0b0243f34733eba96e4fbf231552d52ba586562cf336ae30)
 
 **1440×960, native App/server/PostgreSQL, God mode.** The same recovery appears when the player opens **Add item** while Mira's creation is unresolved. It preserves the person's name and selected location instead of replacing them with a fresh item form. The dimmed Inventory provides the entry context while the centered dialog holds the consequential decision. Again, the pixels show uncertainty **before the successful keyboard retry**. Native assertions establish one person, the same three randomly assigned traits, one starting tool and three berries, with no second spawn, extra starting possessions or random-state change on retry. Those properties are not visible in this image. The typed person draft and actual selected ground require no model or placement fixture.
 
 ### 55 — Reload preserves an environment request without silently sending it
 
-![Original creation retains Create River stones on the selected ground at 20.0, 19.5 after reload, with the unconfirmed explanation and explicit Retry action above Inventory.](55-native-environment-original-unconfirmed.png)
+![Original creation retains Create River stones on the selected ground at 20.0, 19.5 after reload, with the unconfirmed explanation and explicit Retry action above Inventory.](https://assets.openlegend.ai/studies/public/blobs/sha256/e7/e7fef1050306b7cfcfca5a9fdb6d9c7202d936d806cbc56e60d59ae82c30541c)
 
 **1440×960, native App/server/PostgreSQL, God mode.** The environment choice originally sends through its ordinary world menu. After success-only reply loss and same-owner reload, opening Inventory's creation entry returns to the retained River stones request. It neither repeats the write on open nor substitutes a different destination. The complete dialog and both bottom controls fit in this capture. The following focused-Enter retry recovers the original resource object at the same supported position, with its original sixty stones and one spawn event. The screenshot itself remains an **unconfirmed pre-retry view**; the native result and SQL observations supply the completed recovery evidence.
 
@@ -412,13 +412,13 @@ The session makes exactly three original creation POSTs and three explicit exact
 
 ### 56 — The draft stays distinct from the saved person
 
-![Edit Mike on Identity shows the unsaved Owner UI checkpoint check name, Discard changes and Save person changes while the HUD still identifies Mike.](56-owner-person-unsaved-draft.png)
+![Edit Mike on Identity shows the unsaved Owner UI checkpoint check name, Discard changes and Save person changes while the HUD still identifies Mike.](https://assets.openlegend.ai/studies/public/blobs/sha256/4b/4b0d795ef985cb905b9cc7b41ec6626bff859c8698ca9553ef45e0899abdc36a)
 
 **1440×960, native App/server/PostgreSQL.** Identity groups the precise person fields in the owner's editor. The changed name and **Unsaved changes** footer distinguish the local draft from the character still named Mike in the surrounding HUD; Discard and Save name the available commitments. This is an appropriate structured authoring task. The captured desktop composition also retains the overlapping Game and Character panels; it does not establish an uncluttered narrow layout. The screenshot call follows a passing close-confirmation assertion, but that overlay is absent from these original pixels. The separate interaction record establishes **Keep editing**, the retained draft, then exactly one **Save and Close** with every other native person field unchanged. No native save, confirmation overlay or completed checkpoint return is inferred from this image alone.
 
 ### 57 — The recovery load names its consequence
 
-![The Checkpoints panel shows Before last load with saved time, a named Load confirmation, protective-checkpoint explanation, Confirm load and Cancel over the paused world.](57-owner-recovery-load-confirmation.png)
+![The Checkpoints panel shows Before last load with saved time, a named Load confirmation, protective-checkpoint explanation, Confirm load and Cancel over the paused world.](https://assets.openlegend.ai/studies/public/blobs/sha256/b7/b7a4d30e473e04a2dedf835d9309d146d0b63e10745b12c50e5a3589d87355ce)
 
 **1440×960, native App/server/PostgreSQL.** The confirmation names **Before last load**, identifies its real saved time and explains that loading replaces the current world, pauses it and first preserves the current state. **Confirm load** and **Cancel** are adjacent to that consequence. This applies the research principle that a consequential operation should identify its exact subject rather than present an anonymous confirmation. The list continues below the visible area; this image does not demonstrate every checkpoint row or a narrow viewport. It is captured before the second Confirm action. Later native and App assertions establish the restored edited name, a new timeline, manual pause, the new protective record and the real Operations return; those later states are not shown here.
 
@@ -426,7 +426,7 @@ The session makes exactly three original creation POSTs and three explicit exact
 
 ### 58 — A successful action does not excuse wasted inventory space
 
-![Inventory shows the equipped Woven river sling among seven readable lots, with an empty container region occupying the right half of the expanded workspace.](58-inventory-before-space-correction.png)
+![Inventory shows the equipped Woven river sling among seven readable lots, with an empty container region occupying the right half of the expanded workspace.](https://assets.openlegend.ai/studies/public/blobs/sha256/d9/d9d54e0e2084c6b5943d8789a08fb73a8d27675d1991285046c2e214d0953f5c)
 
 **1440×960, actual App with controlled recorded native data.** The equipped object and its badge are visible, and no global success notice covers the world. The separate interaction record establishes the local receipt and focus returning to My belongings; neither is proved by these pixels, and the receipt footer is below this scroll position. The image also exposes the remaining design problem: only three large item cells fit per row, a disabled root breadcrumb repeats Mike, and unopened storage reserves half the workspace. Readable names, quantities and fallback symbols are useful; this space allocation is not an accepted requirement. The [focused correction](../../projects/game-interaction-redesign-tech-design.md#use-inventory-space-for-the-open-collections) gives a single collection the available width, keeps useful nested navigation and lets cells fit their content. Two open collections still need clear paired endpoints.
 
@@ -434,7 +434,7 @@ The observation uses original native public views, Inventory pages and an Equip 
 
 ### 59 — Horizontal fit still leaves the items too low
 
-![At narrow width, Inventory repeats a Belongings heading above gesture and container-opening instructions; the equipped sling and Search Mike remain readable, while only the first item row is fully visible.](59-inventory-narrow-before-header-correction.png)
+![At narrow width, Inventory repeats a Belongings heading above gesture and container-opening instructions; the equipped sling and Search Mike remain readable, while only the first item row is fully visible.](https://assets.openlegend.ai/studies/public/blobs/sha256/cd/cd3a27b63d72aed9f38cc957f71063806d4e0cb30fb3f561c636d58d459c91e5)
 
 **390×844, actual App with controlled recorded native data, source `3bbfc7b`.** The equipment summary, exact names, search and first-row quantities remain readable. The single collection uses the full available width. But two headings and two instruction blocks precede the items; the first row starts at **y=587**, and lower cells and the local receipt lie below the captured scroll view. Fitting horizontally does not establish useful information order or density. The [compact-header correction](../../projects/game-interaction-redesign-tech-design.md#put-belongings-before-repeated-inventory-instructions) keeps the existing Inventory title, places optional instructions in **Inventory controls**, and preserves equipment and collection context. This original image precedes that correction and does not qualify its result.
 
@@ -444,19 +444,19 @@ The [separate interaction record](../../verification/game-interaction-redesign.m
 
 ### 60 — Paired contents keep useful context close
 
-![Inventory has two named collections, Mike and Woven bag, with a closed Inventory controls disclosure; the bag shows its ground distance, nested path, packing load and four branches.](60-inventory-compact-paired.png)
+![Inventory has two named collections, Mike and Woven bag, with a closed Inventory controls disclosure; the bag shows its ground distance, nested path, packing load and four branches.](https://assets.openlegend.ai/studies/public/blobs/sha256/3d/3d18db30e5676b9866646b673c2e40322a26d96027fff828d29eb51f0778269e)
 
 **1440×960, actual App with controlled recorded native data.** The two collection headers identify the endpoints without repeating them in a separate wide strip. The bag still says **On the ground · 1.0 m away**, retains the path through **Items on the ground**, and shows **Packing load: 4 / 24**. Those details explain where the object is and what its contents occupy; they remain next to the corresponding items. **Inventory controls** keeps the detailed gestures available through deliberate help. The actual object-opening path and native recorded pages are unchanged. Both columns fit, with complete item names and quantities, but the expanded panel still covers a substantial part of the world. This capture precedes both controlled commands and shows no new transfer or receipt.
 
 ### 61 — One collection uses the available width
 
-![The full-width collection shows six item cells across its first row and the equipped Woven river sling below, while the closed Inventory controls summary retains its keyboard focus outline.](61-inventory-compact-single.png)
+![The full-width collection shows six item cells across its first row and the equipped Woven river sling below, while the closed Inventory controls summary retains its keyboard focus outline.](https://assets.openlegend.ai/studies/public/blobs/sha256/ff/ff975ca4d85dd8af99729fbe82002b4589798e9e93adf7f35a628e1c3701ebe9)
 
 **1440×960, actual App with controlled recorded native data.** All seven lots fit in the pictured collection. Their full names and quantities remain readable at the existing 14px item text size; the sling retains its **W** fallback and **Equipped** badge. The separate equipment strip keeps **Unequip** beside the equipped item. The empty destination half and redundant Belongings heading are gone, so the space serves the contents actually open. The visible outline belongs to **Inventory controls** after opening and closing that native disclosure with Enter; it is not a post-command focus result. The shared Inventory title still names the panel. The image uses the original already-equipped projection, not a new successful Equip, and has no command receipt.
 
 ### 62 — Fewer repeated instructions expose more of the narrow inventory
 
-![At 390×844, Inventory shows the closed controls summary, equipment strip, Search Mike and six complete item cells, followed by the upper portion of the Woven river sling cell.](62-inventory-compact-narrow.png)
+![At 390×844, Inventory shows the closed controls summary, equipment strip, Search Mike and six complete item cells, followed by the upper portion of the Woven river sling cell.](https://assets.openlegend.ai/studies/public/blobs/sha256/49/4938c5f2b2139ada7c65471fbf0a41471e8a91cfa4aa89f56f88a897fb8675de)
 
 **390×844, actual App with controlled recorded native data.** The first item row begins at **y422**, 165 pixels above the earlier y587 arrangement preserved in image 59. Two complete rows now show six lots while keeping equipment, the exact owner and Search directly visible. The long gesture tutorial and unopened-container explanation remain behind **Inventory controls**, instead of occupying the first screen whenever Inventory opens. The third-row sling is still partial: its lower **Equipped** badge, the local receipt area and Object history lie below this captured fold. Ordinary scrolling remains necessary, so this is a concrete improvement in default hierarchy rather than a claim that every item or status is visible at once. Its full name, quantity and W fallback remain in the collection; the equipment strip already identifies it as equipped.
 
@@ -466,7 +466,7 @@ The accompanying actual-App continuation passes all five bounded steps in 60.088
 
 ### 63 — Task preparation with a stable keyboard focus
 
-![The prepared fire task with a visible Start focus outline](63-activity-prepared-focus.png)
+![The prepared fire task with a visible Start focus outline](https://assets.openlegend.ai/studies/public/blobs/sha256/33/33f5e606e4d97ce3251453e6ad9ec0ee2116fd2f4b7a95b2e98f1743072d9e29)
 
 **1440 × 960; actual App with controlled transport and recorded native care views.** Source is commit `32cd1af8851fb2db115ce8cd999655dca2964afb`. This is the first original PNG from the passing finite Activity observation.
 
@@ -476,7 +476,7 @@ The surrounding interaction checked ordinary Cancel return, a real material choi
 
 ### 64 — Original work remains identified after choosing another task
 
-![The new task heading, original current work and one global result toast](64-activity-original-result-task-switch.png)
+![The new task heading, original current work and one global result toast](https://assets.openlegend.ai/studies/public/blobs/sha256/f0/f0a6085847627c9eac2ec85806287d14ef2a1e5969d27c66d66d58279251b80f)
 
 **1440 × 960; actual App with controlled transport and recorded native care views.** This is the second original PNG from the same passing observation. One original Start was held while the player opened the other task; its recorded success and working view were then delivered.
 
@@ -490,7 +490,7 @@ A later corrected observation is preserved in [65 — Recover the original actio
 
 ### 65 — Recover the original action before preparing another
 
-![The complete original-result explanation and focused recovery action before Current work](65-activity-recovery-first.png)
+![The complete original-result explanation and focused recovery action before Current work](https://assets.openlegend.ai/studies/public/blobs/sha256/1b/1b8915c9d829686ad3b14c4d9cecc4d81b1ed7982faa9c2394fbaa646ac69790)
 
 **1440 × 960; actual App with controlled transport and recorded native care views.** Source is commit `bb537aaa46f4d772022d0f153c0819f5413b2561`. This original PNG comes from the passing 28.007-second observation: one Start, zero receipt reads or command replays, and one capture. The [verification record](../../verification/game-interaction-redesign.md#desktop-recovery-reading-at-bb537aaa) preserves the exact result and the earlier failed preparation on `ee1da9a`.
 
@@ -506,7 +506,7 @@ The same immediate keyboard material choice also passed the original five-second
 
 ### 66 — Pointer Close passes but the narrow detail is clipped
 
-![At 390×844 the Small stone detail extends off the left edge, clipping its name, Quantity and part of Drop while Close remains visible.](66-inventory-narrow-clipped-detail.png)
+![At 390×844 the Small stone detail extends off the left edge, clipping its name, Quantity and part of Drop while Close remains visible.](https://assets.openlegend.ai/studies/public/blobs/sha256/90/90a82088627d46ae80b909a4025fce9ed1ab0827c4adc2b3060e7412cbae0e18)
 
 **390×844, actual App with controlled recorded native data, source `da67d557e1e5e394c7ff32b8910f9c5ec415f6b9`.** The item detail is 366px wide but starts at **x=−120**, so its left side lies outside the screen. The player cannot read the complete subject, amount label or Drop action. Keeping one hittable Close button does not make the panel usable. This is a placement defect: beside-the-item positioning can choose a side even when neither side has enough horizontal room.
 
@@ -514,7 +514,7 @@ The preceding ordinary pointer Close and focus-return assertions pass. This capt
 
 ### 67 — Narrow detail keeps the complete item and controls visible
 
-![At 390×844 the entire Small stone detail fits inside the viewport, with readable Quantity 6, Drop, Close and the unsent-quantity explanation.](67-inventory-narrow-contained-detail.png)
+![At 390×844 the entire Small stone detail fits inside the viewport, with readable Quantity 6, Drop, Close and the unsent-quantity explanation.](https://assets.openlegend.ai/studies/public/blobs/sha256/eb/ebad6dcde19bb7c40d269cfac7283de6aba82703c5f03899cc650c7a2b435efb)
 
 **390×844, actual App with controlled recorded native data, source `af369fc2c7ba55d6621d49c18cff47f7513f7bf4`.** The same 366px-wide detail now fits from **x=12 to x=378**, with the complete item heading, quantity editor and both actions visible. The App’s existing sheet decision selects vertical placement for the existing popover; its overlay owner can then keep the detail inside the viewport width. The regular desktop keeps its side placement. This small change preserves the selected item and amount rather than constructing another detail owner when the layout changes.
 
@@ -522,7 +522,7 @@ The observation sets an unsent amount of three before narrowing the viewport and
 
 ### 68 — A short screen keeps the unsent three-unit amount
 
-![At 390×480 the complete Small stone detail shows Quantity 3, Drop, Close and the unsent-quantity explanation inside the short viewport.](68-inventory-short-contained-detail.png)
+![At 390×480 the complete Small stone detail shows Quantity 3, Drop, Close and the unsent-quantity explanation inside the short viewport.](https://assets.openlegend.ai/studies/public/blobs/sha256/86/8651c2a09beacce0faa0c4a0b6cbe5bf6b3deeae161c90f934a26579167a5470)
 
 **390×480, actual App with the same controlled inputs and corrected source.** Reducing the viewport height preserves the unsent **three** and keeps the entire detail between y=71 and y=467. The item heading, Quantity, Drop and Close remain visible together. An ordinary upward wheel leaves the existing scroller at its top; this scene requires no scrolling to expose those controls. The image is captured before the final pointer Close, whose later assertion confirms dismissal and focus returning to the same stone. Drop is never committed.
 
@@ -534,7 +534,7 @@ The [manifest](manifest.json) pins each source, all recorded inputs, 20 source f
 
 ### 69 — One second before the chosen stopping time
 
-![The native fire-watch task is waiting, has used one fuel unit, shows its chosen stopping time and offers Stop all work.](69-native-care-waiting-before-deadline.png)
+![The native fire-watch task is waiting, has used one fuel unit, shows its chosen stopping time and offers Stop all work.](https://assets.openlegend.ai/studies/public/blobs/sha256/be/be9b388212c201697b5d5b3fc5715dff86bcb43212e1b46ddffb4f11b84f2174)
 
 **1440×960, actual App/server/PostgreSQL, branch `0f449430`, native CI checkout `ee04c033c34c0525ad1e6f86b176683b04b33ddd`.** At simulation time 59, the task remains waiting until its chosen deadline of 60. The panel names the fire-watch task, reports one of at most one fuel units used and keeps **Stop all work** available. The HUD also identifies the ongoing work. The player can read the current state and consequence without reopening the preparation fields.
 
@@ -542,7 +542,7 @@ The native observation starts once through the actual UI, reads that original re
 
 ### 70 — Care completes, while the retained panel wording lags
 
-![After native completion and Hide/reopen, the task says completed and names the reached stopping time, but its heading still says Current work and its time label still says Stops at.](70-native-care-completed-original-wording.png)
+![After native completion and Hide/reopen, the task says completed and names the reached stopping time, but its heading still says Current work and its time label still says Stops at.](https://assets.openlegend.ai/studies/public/blobs/sha256/be/bee4ada6dc68cc08d75f4a4e3baae545f577d16e642d152584b8929989e22313)
 
 **1440×960, same native observation, original wording preserved.** The task completes at exactly simulation time 60 without a Stop or replacement command. Its **completed** status and “The chosen stopping time was reached” reason are truthful; **Stop all work** is absent, and the HUD no longer advertises current work. Reopening the same fire task does not restart it. These are useful completion behaviors, but the retained panel still calls itself **Current work** and says **Stops at** as if the deadline were ahead. Those labels should agree with the completed state. This capture preserves the inconsistency before its separate correction.
 
@@ -550,7 +550,7 @@ The visible **Started the task** line is the earlier acknowledgement, not eviden
 
 ### 71 — One branch reaches Mike and both panes refresh
 
-![Mike's paired inventory shows three carried branches, one remaining prepared-fiber marker in the shared bag and Possessions updated feedback.](71-native-shared-contest-mike.png)
+![Mike's paired inventory shows three carried branches, one remaining prepared-fiber marker in the shared bag and Possessions updated feedback.](https://assets.openlegend.ai/studies/public/blobs/sha256/da/dae2474f51bc807a1a2dfc4a0062337589eaf3632199f51f490fe026c8d77b3d)
 
 **1440×960, actual App/server/PostgreSQL, separate shared-storage observation at the same branch and native checkout.** Mike and Ada use distinct authenticated fixture accounts, characters, browser contexts and native scopes. Both open the same native bag from its ground pile. Two ordinary **Shift+Enter** gestures request the same last branch; only transport timing is coordinated before the real requests reach the native owner. Mike's transfer succeeds and merges into his existing carried lot, changing its quantity from two to **three**. The bag refreshes to show only its untouched prepared-fiber marker, and the original success appears below the collections.
 
@@ -558,7 +558,7 @@ The adjacent named collections make the changed custody visible without asking f
 
 ### 72 — Ada receives the exact competing refusal
 
-![Ada's paired inventory retains two carried branches, the same one-marker shared bag and the native unavailable message for her competing request.](72-native-shared-contest-ada.png)
+![Ada's paired inventory retains two carried branches, the same one-marker shared bag and the native unavailable message for her competing request.](https://assets.openlegend.ai/studies/public/blobs/sha256/ae/ae2f5dec33f88ac2f20b9dfded537ca4264f5e8e76fe228f661e818c1ce12708)
 
 **1440×960, the other actual account and character in the same observation.** Ada keeps her original **two** branches and receives the native message “Choose an accessible item and destination.” Her original request resolves to that refusal; it creates no second transfer. Both views show the bag's branch has gone. Together the native count assertions establish five total branches before and after the contest: two carried by each actor plus one in the bag become three, two and zero. The feedback is accurate but generic; the refreshed source collection supplies the visible explanation that the last branch is no longer there.
 
@@ -570,13 +570,13 @@ The [CI job](https://github.com/Macrofold/OpenLegend/actions/runs/37575596132/jo
 
 ### 73 — An unfinished watch still offers Stop
 
-![At native time 59, the fire watch shows Current work, waiting, one fuel unit used, the stopping time and Stop all work; the HUD still names the active watch.](73-native-care-waiting-current-work.png)
+![At native time 59, the fire watch shows Current work, waiting, one fuel unit used, the stopping time and Stop all work; the HUD still names the active watch.](https://assets.openlegend.ai/studies/public/blobs/sha256/1b/1b216f92a97054f76cbd6382f92b530632bfd5444aa3c4ba556016b48b43223e)
 
 **1440×960, actual App/server/PostgreSQL, branch `b8dd1dfe`, native checkout `0ebc7ece1d3f645e94eb272071e2cd93c1959870`.** The task remains waiting one native second before its chosen stopping time. **Current work**, the used amount and **Stop all work** still describe the player's available decision. The correction therefore preserves active-work wording rather than labelling every retained task as past. This original capture precedes completion. The reachable stance and starting fire fuel are supplied fixtures, and native time is offered explicitly; walking, wall-clock pacing and uncoached use are not established.
 
 ### 74 — The ended watch is clearly the last task
 
-![After native completion and Hide/reopen, the panel reads Last task, completed, the reached-stopping-time reason and Chosen stopping time, with Prepare another task and no Stop or HUD current-work card.](74-native-care-completed-last-task.png)
+![After native completion and Hide/reopen, the panel reads Last task, completed, the reached-stopping-time reason and Chosen stopping time, with Prepare another task and no Stop or HUD current-work card.](https://assets.openlegend.ai/studies/public/blobs/sha256/6d/6df580e0d425a284af5aa7521094e7673146fae5672e5201a2b837abc5617d81)
 
 **1440×960, the same passing native observation.** **Last task** and **Chosen stopping time** now agree with the completed state. The deadline identifies the player's earlier choice without inventing a separate actual completion timestamp. The original **Started the task** acknowledgement remains visible as evidence of that one request. **Prepare another task** is the deliberate next step; reopening alone does not restart the watch. The retained panel still occupies a large area with substantial blank space, so this wording correction does not establish general layout-density acceptance.
 

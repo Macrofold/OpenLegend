@@ -1,0 +1,1663 @@
+{
+  "archivedAt": "2026-10-17T00:18:27.098824+00:00",
+  "source": "/Users/mzw/.codex/visualizations/2026/10/14/01a13c97-90bf-78b0-a29b-97faf364c8d2",
+  "baselineCommit": "c30bf2758",
+  "note": "Preserved recoverable files, including historical references. Capture dates and original settings are retained where known; archiving date does not establish creation date. No claim that uncaptured earlier UI states can be recovered. Original files remain untouched.",
+  "files": [
+    {
+      "file": "library-art-choices/comparison.html",
+      "bytes": 4926442,
+      "sha256": "17975d857ad3a7622f6c3a87bab66de88f67fad0ba4f781b3bdb63e1df2218da"
+    },
+    {
+      "file": "library-art-choices/environment-choices.png",
+      "bytes": 261187,
+      "sha256": "9c2ffdfb110441d97dbc367e6ba6395b3f66c297a19bbf3fac47b14b10d8ffd6"
+    },
+    {
+      "file": "library-art-choices/environment-grouped.png",
+      "bytes": 589171,
+      "sha256": "9f8a52d5e390805c2c1d93ced3a9b48aac791ad46ca97a29afe5693bf5b657c7"
+    },
+    {
+      "file": "library-art-choices/environment-kenney.png",
+      "bytes": 576103,
+      "sha256": "8a42fd0c9de7e502073f5bb38867419e001ad04e799fb464bfd9759c08f52879"
+    },
+    {
+      "file": "library-art-choices/environment-quaternius.png",
+      "bytes": 839806,
+      "sha256": "a7fb45dbdee78dbeffb78034a2f34512e6e1b1d90e74d7545f489a5aabd59496"
+    },
+    {
+      "file": "library-art-choices/hare-choices.png",
+      "bytes": 170492,
+      "sha256": "041e43aa3ffcb58b13dcea9ffb864dabb377e3f5c5f74bc9a020c1decc4309a5"
+    },
+    {
+      "file": "library-art-choices/hare-field-close.png",
+      "bytes": 118379,
+      "sha256": "badfcaf15901626f78eccfb9820fd3c60691c56637272cc1dbd40f609f9177da"
+    },
+    {
+      "file": "library-art-choices/hare-field-game.png",
+      "bytes": 790100,
+      "sha256": "7375419cae42b5e33a7b8d29d02b85f9f29841f2cb792b0a20b528250f82bb30"
+    },
+    {
+      "file": "library-art-choices/hare-russet-close.png",
+      "bytes": 120518,
+      "sha256": "321bd06991bcb29c449ef9976dab4e2926b7d0c07a7dccf5e16dd1e8021038b5"
+    },
+    {
+      "file": "library-art-choices/hare-russet-game.png",
+      "bytes": 790663,
+      "sha256": "8846365092a28337d45a4a6205f18239fd0cc8f3badb3e5475bdbda4e45f8ffc"
+    },
+    {
+      "file": "library-art-choices/hare-winter-close.png",
+      "bytes": 122817,
+      "sha256": "d3edc177012b3cc40d7e61f7d1af642f5e01f08ffc9aad8e8b8a7a4279ae9071"
+    },
+    {
+      "file": "library-art-choices/hare-winter-game.png",
+      "bytes": 791485,
+      "sha256": "e49a92e98450c43845f4607c659b08bef5a4d7440cfe92c1fadec0fe84d0bf1c"
+    },
+    {
+      "file": "library-art-choices/mercenary-choices.png",
+      "bytes": 474627,
+      "sha256": "77e6ede0537786f4902b9437bac2daec27e9483d9acce0f1303cbef13be2ce92"
+    },
+    {
+      "file": "library-art-choices/mercenary-faithful-game-face.png",
+      "bytes": 73237,
+      "sha256": "2ef5f0a8a40e3f6987aacf8a5fc0842b7e927981f0879d26132217c17fade6e8"
+    },
+    {
+      "file": "library-art-choices/mercenary-faithful-game.png",
+      "bytes": 144642,
+      "sha256": "2ef2e0140cd42d26026a6791006f997fe5c21f3749eba2403286d02a31ff38b3"
+    },
+    {
+      "file": "library-art-choices/mercenary-faithful-source-face.png",
+      "bytes": 297312,
+      "sha256": "a13b23288ab22e600a1471db238e570c680c9c0d3ca33b9d614320de35e74969"
+    },
+    {
+      "file": "library-art-choices/mercenary-graphic-game-face.png",
+      "bytes": 73402,
+      "sha256": "35a242c87945758d2c3e8b860210637036c1c70be1891c0de7c9286c6645cc44"
+    },
+    {
+      "file": "library-art-choices/mercenary-graphic-game.png",
+      "bytes": 144619,
+      "sha256": "26297c869e3027e96a2368cfa004236448c21cb592e665479534122e76635440"
+    },
+    {
+      "file": "library-art-choices/mercenary-graphic-source-face.png",
+      "bytes": 295022,
+      "sha256": "b78f6fd0dfa1c49cbd6601e70702f022f9516f4678a75e59bf3927c9bc029a35"
+    },
+    {
+      "file": "library-art-choices/mercenary-painted-game-face.png",
+      "bytes": 73471,
+      "sha256": "22c3ef74fc8d956c33992a42c5eec4034653e332e62eda1e591dc4612a097793"
+    },
+    {
+      "file": "library-art-choices/mercenary-painted-game.png",
+      "bytes": 144625,
+      "sha256": "0cfbedf260646f50e95ce57ebb3f05d000fd7ac8525926e9e03064ce20711547"
+    },
+    {
+      "file": "library-art-choices/mercenary-painted-source-face.png",
+      "bytes": 298003,
+      "sha256": "d3f5253b15e28844f467561bb83ee723c0fa714e652441fa21f97410e61b513a"
+    },
+    {
+      "file": "library-art-choices/motion-faithful.mp4",
+      "bytes": 9106870,
+      "sha256": "c64e257462d18d1113f471e7419aabd45368e8b1d45fd5d3460b240fbc4726ec"
+    },
+    {
+      "file": "library-art-choices/motion-faithful.webm",
+      "bytes": 3050307,
+      "sha256": "95ac32eb7f9372b1bc9ffb6f26a616485cdfb5e910f62402db8eceeb87f768b0"
+    },
+    {
+      "file": "library-art-choices/motion-graphic.mp4",
+      "bytes": 8013258,
+      "sha256": "124269b82fa977e7e3e7e0f4234f0b02ffd287a41a603637d9e599dabe776e82"
+    },
+    {
+      "file": "library-art-choices/motion-graphic.webm",
+      "bytes": 2770432,
+      "sha256": "de9fbb9a25a57778ec52874d8cc8ad089d5fe0308e1311800dc28388285e2617"
+    },
+    {
+      "file": "library-art-choices/motion-painted.mp4",
+      "bytes": 9120297,
+      "sha256": "15a11c1d57a1b923a4ca9e9d15c04248652735dc8ef01e1d2e3e3af09d7f88a6"
+    },
+    {
+      "file": "library-art-choices/motion-painted.webm",
+      "bytes": 3310341,
+      "sha256": "c0db6cdfe38836c7ac1cc0139c6ce545800dc742af7053279fc12cf44f755910"
+    },
+    {
+      "file": "mercenary-coarse-face.png",
+      "bytes": 311938,
+      "sha256": "388c40e136143928a8b98110c12acf8679a8d4f06e80b6a5fbcf4549517ad934"
+    },
+    {
+      "file": "mercenary-height-and-pixels-fixed.png",
+      "bytes": 114457,
+      "sha256": "89d1584658dcde4ecc0cd72cada77a68f8859ba19422df004d5f76a337611924"
+    },
+    {
+      "file": "mercenary-original-face.png",
+      "bytes": 421022,
+      "sha256": "a7e0b841c0ed30bb5966682486e82c00f66f356b63f6db63f5015e4ce95d7b47"
+    },
+    {
+      "file": "mercenary-original-refined.png",
+      "bytes": 528609,
+      "sha256": "e867b0c71f3dcaff359cc46fd698dfa35321a1b366d3e554240cf86b78773f5e"
+    },
+    {
+      "file": "mercenary-original-world.png",
+      "bytes": 586962,
+      "sha256": "a0934eaba8a15eb895255aabfd68c751c8a57d007d441cb0548565ab2897f3bb"
+    },
+    {
+      "file": "mercenary-sculpted-face.png",
+      "bytes": 971450,
+      "sha256": "0b475866375174110cbffbfc88134d40458a79aa4dc5a1c0259978ec38123c5f"
+    },
+    {
+      "file": "mercenary-sculpted-game.png",
+      "bytes": 576900,
+      "sha256": "b76233e4f6fc6f02ba76e1da4011d0f7c5cafc20552653eeba7659301845d0be"
+    },
+    {
+      "file": "mercenary-sculpted.png",
+      "bytes": 1043633,
+      "sha256": "b042d6058cafb7422dda4e6c549c4b9ad380f49544168f71c1fd2d0f32830d54"
+    },
+    {
+      "file": "mercenary-size-and-pixels.png",
+      "bytes": 499949,
+      "sha256": "5eddc725731f894919254b71ae55a79fdd879323614ed878c1de4c4c0957db0f"
+    },
+    {
+      "file": "mercenary-voxel.png",
+      "bytes": 914760,
+      "sha256": "2be2d04954cc8d6d36ced430190d598599a4aeb9259e069d81c7b2bb28dbb2e6"
+    },
+    {
+      "file": "pixel-stability-review/filtered-no-multisampling.mp4",
+      "bytes": 13938628,
+      "sha256": "5f812f6156a6bed1a39d7f77365384fbc881b9fe134e09d503ee9a9393c25533"
+    },
+    {
+      "file": "pixel-stability-review/filtered-surfaces.mp4",
+      "bytes": 15175324,
+      "sha256": "2167a8123849e2542c012df5cada5371a83fd59b871064b53dbd3376e0bafdbc"
+    },
+    {
+      "file": "pixel-stability-review/single-reduction.mp4",
+      "bytes": 14669462,
+      "sha256": "9d24e4025d4edbee48db4a6bcb400177c10e1063b04347f154a893da36a29b57"
+    },
+    {
+      "file": "pixel-stability-review/single-reduction.png",
+      "bytes": 565057,
+      "sha256": "52cf976edc62fe21fc50a445faf3a0cbd5d44bc88309c652c03b19b1da5cfa06"
+    },
+    {
+      "file": "pixel-stability-review/surface-pixel-art.png",
+      "bytes": 774002,
+      "sha256": "ccc5695e7bb93e1fbfed836645ec0495f7086545b012af28c0f730067ebb8ef3"
+    },
+    {
+      "file": "representative-blender-study/armor-closer.png",
+      "bytes": 48547,
+      "sha256": "34879a5505746f4bf80027a68f0779b51a671bb99bef87ead69286914e635b3c"
+    },
+    {
+      "file": "representative-blender-study/armor-faces.png",
+      "bytes": 164337,
+      "sha256": "a0456cfbff5e28114b19ce5ec71e74d7bfd2a51d901e3abb6fe717cdb59f97dd"
+    },
+    {
+      "file": "representative-blender-study/armor-game.png",
+      "bytes": 25267,
+      "sha256": "5ecfb282e871c2e15a33a0158daaa8fc760b9caa01c27dc7a9651b7ce13c9e75"
+    },
+    {
+      "file": "representative-blender-study/armor-rear.png",
+      "bytes": 109815,
+      "sha256": "5f0284b676ac2730d314db5b2d6041f0947af2ab27a5c35c8fd2944f664c9d26"
+    },
+    {
+      "file": "representative-blender-study/armor.png",
+      "bytes": 188554,
+      "sha256": "8612d63dd3b9bcb936211c9a02ee6e9b746a34c442b0aecbc0a5a8f62f3ea798"
+    },
+    {
+      "file": "representative-blender-study/before-review-chest-orbit.mp4",
+      "bytes": 499559,
+      "sha256": "7aae18934effb3c53545bbf19bb89599306922a57eed1ff886801ea79f103875"
+    },
+    {
+      "file": "representative-blender-study/before-review-chest-orbit.webm",
+      "bytes": 1561881,
+      "sha256": "808fa3a06f3fde07a5695113c8b5eb19c16faffd592ed7c24ed69fe8f2d8e502"
+    },
+    {
+      "file": "representative-blender-study/before-review-composition-orbit.mp4",
+      "bytes": 811989,
+      "sha256": "987df2c9219353b51098df851c87931e75a1d680d4acf7f07ca80040086464c6"
+    },
+    {
+      "file": "representative-blender-study/before-review-composition-orbit.webm",
+      "bytes": 2613073,
+      "sha256": "ddfa6a9c4cde86b642a2e6f0ad24da2aa81595f00682fa5d22224c09fc4da237"
+    },
+    {
+      "file": "representative-blender-study/before-review-mara-orbit.mp4",
+      "bytes": 609367,
+      "sha256": "abea1b7288b1d7a9789317816b7ac526d7ffc92483eab43130353678286461eb"
+    },
+    {
+      "file": "representative-blender-study/before-review-mara-orbit.webm",
+      "bytes": 1806505,
+      "sha256": "868e2997edbc6b74e2d8028ccb9f774f351a92fb9e426f3bb277885019ccb3af"
+    },
+    {
+      "file": "representative-blender-study/berry-bush.png",
+      "bytes": 173656,
+      "sha256": "334145e77e4e05aa9d68cffd57166773849cb3a0acb3aed37c0a20583ececffd"
+    },
+    {
+      "file": "representative-blender-study/blender-chests-rear.png",
+      "bytes": 1138350,
+      "sha256": "1a0d01e6f5e4a3e3375c7dde3429b306f33a9b8500281bb404b5b9c0150ef74c"
+    },
+    {
+      "file": "representative-blender-study/broadleaf.png",
+      "bytes": 190344,
+      "sha256": "1438f7b590ad48072ab2761ab6cc9dab6bcf57c4c44bf010b7c5af166b4355b6"
+    },
+    {
+      "file": "representative-blender-study/chest-motion-review.png",
+      "bytes": 187719,
+      "sha256": "aed53648de2e61734e4398fac3cb5e98dc6248ae7d74b73b82b7e082b726006f"
+    },
+    {
+      "file": "representative-blender-study/chest-motion-sample.png",
+      "bytes": 206088,
+      "sha256": "f494ee0743e2062264b1fed9a56af30ed08f421424a08bf8491118731f3bce8c"
+    },
+    {
+      "file": "representative-blender-study/chest-orbit.mp4",
+      "bytes": 853961,
+      "sha256": "bd141f5b04e1c6199db2da8ece58c196787b792e5636ae4890f1d99e455dd33c"
+    },
+    {
+      "file": "representative-blender-study/chest-orbit.webm",
+      "bytes": 610971,
+      "sha256": "f587cdfce7d00646e6a73d3caf11f271a1ee433161cc096378bdd57b8d256ae6"
+    },
+    {
+      "file": "representative-blender-study/chest-rear.png",
+      "bytes": 64840,
+      "sha256": "7c6afeabeb21c52cd7f9d6f2fceec075ee6d6b1400d9277d02037a02d37a683a"
+    },
+    {
+      "file": "representative-blender-study/chest.png",
+      "bytes": 110492,
+      "sha256": "2553f8c718568876838c6573fdfed1a8110ec1061536ed463cb2ced06237e862"
+    },
+    {
+      "file": "representative-blender-study/comparison.html",
+      "bytes": 12049,
+      "sha256": "21874458107bd0d50a2e447c1f4aa00b47a511b20c342ed5726a4d3fd1c6043f"
+    },
+    {
+      "file": "representative-blender-study/composition-motion-review.png",
+      "bytes": 284315,
+      "sha256": "24dcd9d1aa87c99df5222b2aaf9302b3eae70eddefc54a44549c8a3b08e6b036"
+    },
+    {
+      "file": "representative-blender-study/composition-motion-sample.png",
+      "bytes": 326502,
+      "sha256": "5e00971751dfac3a00aee7ad779061815360a4a5237cc6693f62d8ca10c9238d"
+    },
+    {
+      "file": "representative-blender-study/composition-orbit.mp4",
+      "bytes": 916738,
+      "sha256": "a9edc499bd75dd7a1ebdd48ad32ccdbd2ba5f12eaf212a1e13610d23a8e30628"
+    },
+    {
+      "file": "representative-blender-study/composition-orbit.webm",
+      "bytes": 641811,
+      "sha256": "d0877ab0f46c5521d8c493888874fc9aef109aa34c7d797703cc84e7ed53005d"
+    },
+    {
+      "file": "representative-blender-study/composition-warm-perspective.png",
+      "bytes": 178466,
+      "sha256": "fc68d8677473de003f728dff9fdb51a2cf6de164d760e2b69f996a69db2fb1b7"
+    },
+    {
+      "file": "representative-blender-study/composition.png",
+      "bytes": 229258,
+      "sha256": "3ad677c7bd79de50efb84c9359a15e626b5ac118a57e6158a25cd5030a59eacd"
+    },
+    {
+      "file": "representative-blender-study/conifer.png",
+      "bytes": 237742,
+      "sha256": "9c461025a57f8fa5beb7d9c3e4ca6e96d31e6612f50f3aa7023aa080de1a08aa"
+    },
+    {
+      "file": "representative-blender-study/early-chest-sword.png",
+      "bytes": 1085669,
+      "sha256": "1cefbd1f49b2fc0a2f813328ba9edcd63d3a1f7fc3354d30ba16663364f35d5d"
+    },
+    {
+      "file": "representative-blender-study/early-nature.png",
+      "bytes": 995425,
+      "sha256": "dc6c32defe42d50d3188d3c2db59f3d46ded38deafeba9eadf3ab4aa7290fffe"
+    },
+    {
+      "file": "representative-blender-study/mara-closer.png",
+      "bytes": 45618,
+      "sha256": "fa643c617ef59aaf6f986494fe2202b16a997972d243f8ac43854315b32f5159"
+    },
+    {
+      "file": "representative-blender-study/mara-faces.png",
+      "bytes": 193734,
+      "sha256": "701a6cdca321d958b7f9ad824cf4d47cc82988693287230a5ff83100ee78f01e"
+    },
+    {
+      "file": "representative-blender-study/mara-game.png",
+      "bytes": 24664,
+      "sha256": "7b1f3441075e3f57e4104d840f0004dc9596bdf8e9f631b8dcd607b639f54f66"
+    },
+    {
+      "file": "representative-blender-study/mara-motion-review.png",
+      "bytes": 247232,
+      "sha256": "7d6a7e9e79643da2cf0aee0b6a236aa56baaf753acef29f1307bae697b182fa8"
+    },
+    {
+      "file": "representative-blender-study/mara-motion-sample.png",
+      "bytes": 257062,
+      "sha256": "745957f244b5ce520e2bf72cf354ccdeb5c0071d4061c2a6deb75f0b0f571102"
+    },
+    {
+      "file": "representative-blender-study/mara-orbit.mp4",
+      "bytes": 615346,
+      "sha256": "8462d47d545d922f41cd48c31a39488e50b2c84d85bc3f84383c319e7bdd4510"
+    },
+    {
+      "file": "representative-blender-study/mara-orbit.webm",
+      "bytes": 582451,
+      "sha256": "09ff4383b737883ddd4aa8ac9a2da683e05c6fde0e2224d7466cd53d468c9a1a"
+    },
+    {
+      "file": "representative-blender-study/mara-rear.png",
+      "bytes": 115728,
+      "sha256": "051afce036da086b5f057712e245b4a9e98b191d9a444c0cf27c16a15c4bfa67"
+    },
+    {
+      "file": "representative-blender-study/mara.png",
+      "bytes": 187449,
+      "sha256": "0280c99e01d2a00cf3f395eeaa773da9fd11bff32f6f6be0edc045c0170c170c"
+    },
+    {
+      "file": "representative-blender-study/revised-nature.png",
+      "bytes": 1014185,
+      "sha256": "37698aec15f5a709ec7d09f7af99584bebb890e9d45dfdb0421fd63acb9dca46"
+    },
+    {
+      "file": "representative-blender-study/rock.png",
+      "bytes": 62130,
+      "sha256": "ede6017a82b168ff8d3b26f0bde48ac03c30bcc55b09387778475dc4a2303cfb"
+    },
+    {
+      "file": "representative-blender-study/shield.png",
+      "bytes": 115855,
+      "sha256": "c94f0fae525d5e291302c2a76dba80264d591f924a43aa6656c3a75ae3746cbf"
+    },
+    {
+      "file": "representative-blender-study/sword.png",
+      "bytes": 60455,
+      "sha256": "c519b5e281e2aa24d577ce6e4e5c33b1cbaa9341dd5c5918f2bd6b9160cc6dbb"
+    },
+    {
+      "file": "representative-blender-study/tavin-closer.png",
+      "bytes": 47695,
+      "sha256": "80cd8d72ffeeaa92209c114a7cab73d2e975fbe388024c3278b9275ceb36b43c"
+    },
+    {
+      "file": "representative-blender-study/tavin-faces.png",
+      "bytes": 215998,
+      "sha256": "7a8b0a8c91c198dfe5f3907130212728b501c57620b9926a059de318748c334f"
+    },
+    {
+      "file": "representative-blender-study/tavin-game.png",
+      "bytes": 24869,
+      "sha256": "b7482daf15fb2a3b1c2ff376f91e8a7ca59e4e9025347309e3b667c0733e6332"
+    },
+    {
+      "file": "representative-blender-study/tavin-rear.png",
+      "bytes": 129157,
+      "sha256": "ffc9847efefef984bf4f73455e1bdc0614456aa3b0017b1362ebcf91db9af661"
+    },
+    {
+      "file": "representative-blender-study/tavin.png",
+      "bytes": 192610,
+      "sha256": "5b4734be7a7d19e0659ff593ca26058d2be231eca8c9932cb005c884db46aa26"
+    },
+    {
+      "file": "source-based-study/REVIEW.md",
+      "bytes": 16975,
+      "sha256": "9d44bf984c878cae57fb7458a528aa17e302e6fa282493ecdf315e35ef5eddfd"
+    },
+    {
+      "file": "source-based-study/assets/ada-options.png",
+      "bytes": 7625,
+      "sha256": "34b3ff9d4bbdbc1db334066034051364580d0582e02e2ae01c36341553ff40b9"
+    },
+    {
+      "file": "source-based-study/assets/ada-source.png",
+      "bytes": 3388,
+      "sha256": "2c7f2786e9c54c702f54d0c7526b3d536c078f5afc927e0191cb67faa89c82b2"
+    },
+    {
+      "file": "source-based-study/assets/armor-options.png",
+      "bytes": 7906,
+      "sha256": "a8b569abaebc7d56ecb20f9b5a34c8d8145b3eef35547be6515bab1d5164b34a"
+    },
+    {
+      "file": "source-based-study/assets/armor-source.png",
+      "bytes": 3688,
+      "sha256": "43d72bc62129648449101a647acd2228d025203c6c7efa3d2c66f3d181eb021e"
+    },
+    {
+      "file": "source-based-study/assets/kest-options.png",
+      "bytes": 7979,
+      "sha256": "6892f6ee37cbc43a615235d25d5ca1c1e79e2a4d0acd2ab9bd4752bb66bec77e"
+    },
+    {
+      "file": "source-based-study/assets/kest-source.png",
+      "bytes": 3685,
+      "sha256": "5b9791e29ab405c6bd71a0cd7b06b0ca93ea9ab065840c5b8afa5b387d47e5d6"
+    },
+    {
+      "file": "source-based-study/assets/library-arrow-options.png",
+      "bytes": 19622,
+      "sha256": "722c40a9daf71854946d58a623df3c042ec6c7fb0b45e71052818dde8bbe97e3"
+    },
+    {
+      "file": "source-based-study/assets/library-arrow-source.png",
+      "bytes": 4894,
+      "sha256": "e9762080fb6374d94e207d6c4eb92ffe49a50421915d1c72ecb07ad915a3ab79"
+    },
+    {
+      "file": "source-based-study/assets/library-backpack-options.png",
+      "bytes": 2102,
+      "sha256": "3537b42fb113b42b790d44f1ad265a2a833b5a84f5c9e56bc750fadfd9a1c9a8"
+    },
+    {
+      "file": "source-based-study/assets/library-backpack-source.png",
+      "bytes": 945,
+      "sha256": "e930fb88ef1e90528ed02459b0964f7defec7c3e5ba35c1dc376a1289d78c928"
+    },
+    {
+      "file": "source-based-study/assets/library-bear-options.png",
+      "bytes": 8616,
+      "sha256": "1312ac37e3017de7a2ab80548262a7ee73235de9b3f7cd5b7aa1d56bf7a6febf"
+    },
+    {
+      "file": "source-based-study/assets/library-bear-source.png",
+      "bytes": 2889,
+      "sha256": "73aa70c1ec5bfa63c05d972894609421268d6f89bb02a0ea37ea609972ac499f"
+    },
+    {
+      "file": "source-based-study/assets/library-berry-bush-options.png",
+      "bytes": 6177,
+      "sha256": "2c76324042ebfc53dd5f58cd4c99c31395b58be870629df1403e2f19ba254908"
+    },
+    {
+      "file": "source-based-study/assets/library-berry-bush-source.png",
+      "bytes": 2580,
+      "sha256": "4cb8a4a86c47e67233e749909f4168a178756d700df84777406131d9d886f997"
+    },
+    {
+      "file": "source-based-study/assets/library-birch-options.png",
+      "bytes": 37672,
+      "sha256": "b006a9362abf37ea6857dade4bbc851ed4639911ad2628f23fbd3e2432a33105"
+    },
+    {
+      "file": "source-based-study/assets/library-birch-source.png",
+      "bytes": 17099,
+      "sha256": "68910f0dfa199c96c3e4b268a230c5e131cc54c00b6cf7193af1e447b72b0ad3"
+    },
+    {
+      "file": "source-based-study/assets/library-bird-options.png",
+      "bytes": 874,
+      "sha256": "776f00f3f7517e6e64dff5c1244148d8da2287f4fbb8f3023c628c2308786678"
+    },
+    {
+      "file": "source-based-study/assets/library-bird-source.png",
+      "bytes": 449,
+      "sha256": "301f52c11cc73a7ba34f649612db688fd7217b07f7ec84c6a59ce3b7d49ce07c"
+    },
+    {
+      "file": "source-based-study/assets/library-bow-options.png",
+      "bytes": 2268,
+      "sha256": "490246aee50cf1d0e575b09909ff3cbee3bc194c7c92b5d1260999b7dd5eb148"
+    },
+    {
+      "file": "source-based-study/assets/library-bow-source.png",
+      "bytes": 1031,
+      "sha256": "418f7291c1f32b38f6ed9923ac8d1511121f6cd503c490db7932da0deb1b0f19"
+    },
+    {
+      "file": "source-based-study/assets/library-broadleaf-options.png",
+      "bytes": 38374,
+      "sha256": "d651dcbb3e491019aeef283bcfa511f611f877f6c3ccada12ff1428582b5b51a"
+    },
+    {
+      "file": "source-based-study/assets/library-broadleaf-source.png",
+      "bytes": 15326,
+      "sha256": "ec09b7bfac1160755c9c4acba987b000d27e5469b0d01e07e14b86331b6a25e6"
+    },
+    {
+      "file": "source-based-study/assets/library-bundle-options.png",
+      "bytes": 4083,
+      "sha256": "f75cdfd178654f968adf4a46c0aa5fcb76610a3e8f234c74c1b5ed5c0b88185b"
+    },
+    {
+      "file": "source-based-study/assets/library-bundle-source.png",
+      "bytes": 1272,
+      "sha256": "70da383a375d430ba2abbdec903712e78541060b3ecce2169f128e98c9f0965f"
+    },
+    {
+      "file": "source-based-study/assets/library-chest-options.png",
+      "bytes": 6308,
+      "sha256": "ee6126239ee48d1d1919fc4b7d84b673a1889313df4a53ff9b2cd9f8d2654350"
+    },
+    {
+      "file": "source-based-study/assets/library-chest-source.png",
+      "bytes": 2014,
+      "sha256": "c470d98bb98f681f71e3d53e220a85ff069105fa6d85a2aa27af31a82ac862df"
+    },
+    {
+      "file": "source-based-study/assets/library-conifer-options.png",
+      "bytes": 51133,
+      "sha256": "59db56194cbcd7e1cd5461498b529ea96125fbdedf639a352398242462c336c2"
+    },
+    {
+      "file": "source-based-study/assets/library-conifer-source.png",
+      "bytes": 20114,
+      "sha256": "8fa0953ef394d1186b1eff21012026d08dce82a775851c0fc8c53147cedb0013"
+    },
+    {
+      "file": "source-based-study/assets/library-cord-options.png",
+      "bytes": 650,
+      "sha256": "e5e43bbc1da3a6ea5f885752232aa0df126b4cc005197b5fb4c5ea981758b9eb"
+    },
+    {
+      "file": "source-based-study/assets/library-deer-options.png",
+      "bytes": 6921,
+      "sha256": "33d10735173f29ffefc410674320da82c80d1776088a1953d935b97162e83a08"
+    },
+    {
+      "file": "source-based-study/assets/library-deer-source.png",
+      "bytes": 2651,
+      "sha256": "2011b9356ddfcc4979ccb92e4b2df46ceec69c53c8662f6b060c35d01ff85809"
+    },
+    {
+      "file": "source-based-study/assets/library-dry-fiber-options.png",
+      "bytes": 1263,
+      "sha256": "02b714d4138ede4737178bf5830b348588eeda6b0f21eb2b62dc684ac0bd74db"
+    },
+    {
+      "file": "source-based-study/assets/library-dry-fiber-source.png",
+      "bytes": 571,
+      "sha256": "1c29197e99398501c391b536a55723c709e7760986a7e36d8d4b098dff2df2b8"
+    },
+    {
+      "file": "source-based-study/assets/library-fallen-wood-options.png",
+      "bytes": 1254,
+      "sha256": "419f3bcd97815657b1f0dacc5b56671c3b91481adb5fd95c6ea498c0b81b9936"
+    },
+    {
+      "file": "source-based-study/assets/library-fallen-wood-source.png",
+      "bytes": 682,
+      "sha256": "e5d766870c93ff4d0ff033f3e17a463708bb060d747bdf5543a8e5671cca533d"
+    },
+    {
+      "file": "source-based-study/assets/library-fern-options.png",
+      "bytes": 7402,
+      "sha256": "2393201886b7766ccfc8d380956afb58dd09f9ea0a3ad76dbd57f13531581477"
+    },
+    {
+      "file": "source-based-study/assets/library-fern-source.png",
+      "bytes": 3001,
+      "sha256": "267a9d2302a4c9ad6ee04101f5d64ebf8ecd9f24efab022d41c2cb05c84a8543"
+    },
+    {
+      "file": "source-based-study/assets/library-grass-options.png",
+      "bytes": 1273,
+      "sha256": "d1ddd8d8f0c05cde3a3d0a4adac454f79538c63e81e7c8534a6c9df6c7af8d09"
+    },
+    {
+      "file": "source-based-study/assets/library-grass-source.png",
+      "bytes": 547,
+      "sha256": "45d52214e8113b87847ae4eb414827bb06bbccc55f34d55d4791613dfc59a533"
+    },
+    {
+      "file": "source-based-study/assets/library-hare-options.png",
+      "bytes": 2524,
+      "sha256": "af7fa5afe77e2051571647cb558a1c67c36f1c25259099670eef4fc95664ac00"
+    },
+    {
+      "file": "source-based-study/assets/library-hare-source.png",
+      "bytes": 5165,
+      "sha256": "b7103534e79129cc46432939abdb2014f655a561ee8c119f409da97a1eb49078"
+    },
+    {
+      "file": "source-based-study/assets/library-knife-options.png",
+      "bytes": 657,
+      "sha256": "b7c8873a25b81841d26cb49311d8246a948952aee7c383cb4d2e12319904478c"
+    },
+    {
+      "file": "source-based-study/assets/library-knife-source.png",
+      "bytes": 371,
+      "sha256": "c31c4e14d91d3b8d40499b0cd60f504b091563af2e9653a1894417776904ad6b"
+    },
+    {
+      "file": "source-based-study/assets/library-marker-options.png",
+      "bytes": 1651,
+      "sha256": "60e469573abe9071eae118224ebe473cdd269be7777097be86c43b6b5655e940"
+    },
+    {
+      "file": "source-based-study/assets/library-marker-source.png",
+      "bytes": 867,
+      "sha256": "5cd2bcd29d2011336bbe7f21214dab6ec8e598a9c5b50dc72056418c8aa976d0"
+    },
+    {
+      "file": "source-based-study/assets/library-reeds-options.png",
+      "bytes": 4063,
+      "sha256": "79b3e5af447389fa51acb07c2db11c5fdeb62b289afd0d0751f382b32ad61374"
+    },
+    {
+      "file": "source-based-study/assets/library-reeds-source.png",
+      "bytes": 1834,
+      "sha256": "2dc12d9ff02382d7483afa282712639d3560abba78714a899519a23a2255215d"
+    },
+    {
+      "file": "source-based-study/assets/library-river-stones-options.png",
+      "bytes": 2496,
+      "sha256": "1aea6eb672ba33f5bf067f10e18e3a7b1f865aeb4983d963a254cb99d4df2d16"
+    },
+    {
+      "file": "source-based-study/assets/library-river-stones-source.png",
+      "bytes": 519,
+      "sha256": "79a094973175f45ac1b5ca693e2d4487a3537187539dae3f4881636407feab8a"
+    },
+    {
+      "file": "source-based-study/assets/library-rock-options.png",
+      "bytes": 5108,
+      "sha256": "7838eac5f14a11a729d5a38ab580459cf19fc72c44e96c5398cd2286984d161f"
+    },
+    {
+      "file": "source-based-study/assets/library-rock-source.png",
+      "bytes": 1989,
+      "sha256": "861a94b1b5edc53fb3050a805a1ade7d498a48b9489b3440c10db32a1a4c3962"
+    },
+    {
+      "file": "source-based-study/assets/library-shelter-options.png",
+      "bytes": 18047,
+      "sha256": "f4ea7a5954d0c632891bd51ee15398f6dc4864a8400bd7eb968effa7952d986d"
+    },
+    {
+      "file": "source-based-study/assets/library-shelter-source.png",
+      "bytes": 7713,
+      "sha256": "8787911f35ad92cce53823cd3e071668f8aa2a51ae2f4162d79e295c06588be5"
+    },
+    {
+      "file": "source-based-study/assets/library-shield-options.png",
+      "bytes": 3666,
+      "sha256": "51e3776892c2b5ebcc616b2c56265469b4f3eb7481ecca926ab8384d00b498eb"
+    },
+    {
+      "file": "source-based-study/assets/library-shield-source.png",
+      "bytes": 1448,
+      "sha256": "9cbd16a30dd97cf21746f0fff5864462c49158b9d147d142c87e662ad93f182d"
+    },
+    {
+      "file": "source-based-study/assets/library-shrub-options.png",
+      "bytes": 9948,
+      "sha256": "8ddcba753738e4610cc026be2a6766a0274e5c09ebd2a796f68e1c93fd68f097"
+    },
+    {
+      "file": "source-based-study/assets/library-shrub-source.png",
+      "bytes": 3242,
+      "sha256": "ea004fe8f8eb57267c29c21a27460bb9f8589a8e1fa425ea04ee6470ed361669"
+    },
+    {
+      "file": "source-based-study/assets/library-sling-options.png",
+      "bytes": 741,
+      "sha256": "6ed795921ab2489291f29b050dd07a7b2463ba7c49f75f677b7e92e48ff24016"
+    },
+    {
+      "file": "source-based-study/assets/library-stag-options.png",
+      "bytes": 10730,
+      "sha256": "c2ecaa2573b86f53c42795dc7c585471fac1692571aaef579c1724f0e80dbdea"
+    },
+    {
+      "file": "source-based-study/assets/library-stag-source.png",
+      "bytes": 4572,
+      "sha256": "09ffc4c2841e250f994c1d4245fc44279f03d6c8742b9be4235fe275f0c703e9"
+    },
+    {
+      "file": "source-based-study/assets/library-stone-tool-options.png",
+      "bytes": 1440,
+      "sha256": "4e268e8d1eb126256bdec27653e3a1eed708734c6cd136f584a2cd81f5b0637e"
+    },
+    {
+      "file": "source-based-study/assets/library-supplies-options.png",
+      "bytes": 2929,
+      "sha256": "0ded36356e2dd14a3d77ecb8e1aacedd9d6753ccd706ad79b44679f153ea6e00"
+    },
+    {
+      "file": "source-based-study/assets/library-supplies-source.png",
+      "bytes": 1306,
+      "sha256": "ad92e30999d6b996ab31d7354b3262624f999aef403f3ebd86cb462a95fe98eb"
+    },
+    {
+      "file": "source-based-study/assets/library-sword-options.png",
+      "bytes": 1744,
+      "sha256": "bbb652a7352d6cfb16028f7d014d99eccbf7ad8e48bcd088ca671aabf0b54b9d"
+    },
+    {
+      "file": "source-based-study/assets/library-sword-source.png",
+      "bytes": 792,
+      "sha256": "a44cdeb21c3fb92fb31049803dcc56f4028f4d8c1cc34253b753b840fc46a7de"
+    },
+    {
+      "file": "source-based-study/assets/library-wolf-options.png",
+      "bytes": 5773,
+      "sha256": "8cd7cff96c4e5bfba48eba12dfa6b896cbdefb38fbede57be580925ec3222f8a"
+    },
+    {
+      "file": "source-based-study/assets/library-wolf-source.png",
+      "bytes": 2245,
+      "sha256": "af0eaff93415efeb76df905305e2a0e62a5c4d5d7b1357f331678ee37a4a9c25"
+    },
+    {
+      "file": "source-based-study/assets/library-workbench-options.png",
+      "bytes": 5217,
+      "sha256": "d2e23039e6454dfb827c152c299be1a6200dc53f4cf0409a6726dfb987b4a035"
+    },
+    {
+      "file": "source-based-study/assets/library-workbench-source.png",
+      "bytes": 2477,
+      "sha256": "fb276063ea0e821da7476a2c1c45d5ac206c249def3999b3414d7d1ee4106d61"
+    },
+    {
+      "file": "source-based-study/assets/mara-options.png",
+      "bytes": 7584,
+      "sha256": "1fcaeff7271a5b38294979f9111f18aa29de0e7ff7db3dba2b115a833c9e8946"
+    },
+    {
+      "file": "source-based-study/assets/mara-source.png",
+      "bytes": 3564,
+      "sha256": "4ab07c3523e4a5157171fe7b578368ab11953cf9eb9d38371794f3650f6622ae"
+    },
+    {
+      "file": "source-based-study/assets/mike-options.png",
+      "bytes": 7961,
+      "sha256": "ad3fe11c6e500fd5c79795972faeb0086a8a0069277d53e22228a036f289d38d"
+    },
+    {
+      "file": "source-based-study/assets/mike-source.png",
+      "bytes": 3657,
+      "sha256": "c34701bcba7f30badb2622a42209c74bb4510263ed76b1fb64604fcb90e6dc3b"
+    },
+    {
+      "file": "source-based-study/assets/orin-options.png",
+      "bytes": 7601,
+      "sha256": "947d1ea14bf3efe622a179a855214c55d59311cbc97f7c4e83236db48520de37"
+    },
+    {
+      "file": "source-based-study/assets/orin-source.png",
+      "bytes": 3556,
+      "sha256": "ab803c89fe85dab2e1e6489f448fd055f3a34083f466f81a3ef363303c23f5c1"
+    },
+    {
+      "file": "source-based-study/assets/tavin-options.png",
+      "bytes": 7489,
+      "sha256": "006b310ec67cbf31f4c12abcd2a6d5a134908af9baecd30204649c176981d5c6"
+    },
+    {
+      "file": "source-based-study/assets/tavin-source.png",
+      "bytes": 3377,
+      "sha256": "34000d40a3878ac3943ba7b06bd9486d2c655eb38d15fb23115a670b713a3bb5"
+    },
+    {
+      "file": "source-based-study/calibration/cast.png",
+      "bytes": 115759,
+      "sha256": "6b9436ff357d443ede1a48b121d279f15d555d21773db6ab75ee8a5f40b78abf"
+    },
+    {
+      "file": "source-based-study/calibration/face-20.png",
+      "bytes": 10061,
+      "sha256": "82828084e0ec0717e0357a2f9dc7037f9317ba854623dbf5aa2d1eccf12b8eca"
+    },
+    {
+      "file": "source-based-study/calibration/face-30.png",
+      "bytes": 10061,
+      "sha256": "82828084e0ec0717e0357a2f9dc7037f9317ba854623dbf5aa2d1eccf12b8eca"
+    },
+    {
+      "file": "source-based-study/calibration/face-40.png",
+      "bytes": 10061,
+      "sha256": "82828084e0ec0717e0357a2f9dc7037f9317ba854623dbf5aa2d1eccf12b8eca"
+    },
+    {
+      "file": "source-based-study/calibration/face-64.png",
+      "bytes": 10061,
+      "sha256": "82828084e0ec0717e0357a2f9dc7037f9317ba854623dbf5aa2d1eccf12b8eca"
+    },
+    {
+      "file": "source-based-study/calibration/inspection.png",
+      "bytes": 10061,
+      "sha256": "82828084e0ec0717e0357a2f9dc7037f9317ba854623dbf5aa2d1eccf12b8eca"
+    },
+    {
+      "file": "source-based-study/calibration/ordinary.png",
+      "bytes": 10061,
+      "sha256": "82828084e0ec0717e0357a2f9dc7037f9317ba854623dbf5aa2d1eccf12b8eca"
+    },
+    {
+      "file": "source-based-study/calibration/overview.png",
+      "bytes": 10061,
+      "sha256": "82828084e0ec0717e0357a2f9dc7037f9317ba854623dbf5aa2d1eccf12b8eca"
+    },
+    {
+      "file": "source-based-study/camp-first-motion.webm",
+      "bytes": 2030853,
+      "sha256": "1592ab9d07475f22886a4fb427a193e49a024729ed51720d35a70cb8698de67b"
+    },
+    {
+      "file": "source-based-study/catalog.json",
+      "bytes": 270407,
+      "sha256": "78194dd95a5eefa5a7503fef362048049fbc210417e9eb00acc6326ff59f1d01"
+    },
+    {
+      "file": "source-based-study/contact-sheet.html",
+      "bytes": 14384,
+      "sha256": "c433ad1cb46cf8ba341ffae6936f75b2d8cd339f09496a96b14285928d35414c"
+    },
+    {
+      "file": "source-based-study/index.html",
+      "bytes": 135058,
+      "sha256": "36cc07f04370c91cb00c7519a20fe24415c2556e23c0b452364cf66a72784511"
+    },
+    {
+      "file": "source-based-study/motion/bear-walk.webm",
+      "bytes": 425214,
+      "sha256": "c69cc521650b63ca319c0ab7a3d2c11a3932e76b400292ce403931d4f59481df"
+    },
+    {
+      "file": "source-based-study/motion/bird-walk.webm",
+      "bytes": 112803,
+      "sha256": "1a5f8ca49aa6f9fbef9c13fbf9b0093c330a2273399890be31201695dcb44714"
+    },
+    {
+      "file": "source-based-study/motion/camp-orbit-control.webm",
+      "bytes": 2551103,
+      "sha256": "64e8269c73295c51e3b5b450b824742c05b4d4e447f1973eeaee1f7e913b5090"
+    },
+    {
+      "file": "source-based-study/motion/camp-orbit-family.webm",
+      "bytes": 2535367,
+      "sha256": "423b2fa4061e5a9c43f031c715cdac9b2c4125834e44dbcfe976851fdef4ab5f"
+    },
+    {
+      "file": "source-based-study/motion/camp-orbit-shared.webm",
+      "bytes": 2511782,
+      "sha256": "314376b1dc19bb1a6bde0786f8069688d8d4014244e75f24349b6da29095ed49"
+    },
+    {
+      "file": "source-based-study/motion/camp-orbit-surface.webm",
+      "bytes": 2549544,
+      "sha256": "8253ae6417a9dde94d8efbf60809e3b8cfec96977ad122dac7450dbd23e1da0d"
+    },
+    {
+      "file": "source-based-study/motion/camp-walk-fire.webm",
+      "bytes": 1507993,
+      "sha256": "fc459051f545debcf32db7383bdfe3565c983037eb5b4232a1082bae6856fb3e"
+    },
+    {
+      "file": "source-based-study/motion/camp-walk-held12.webm",
+      "bytes": 1862428,
+      "sha256": "4bd5bd6752d672d4bc2bcaf2760761b1c931163c857f7008992c48b4e5d70126"
+    },
+    {
+      "file": "source-based-study/motion/camp-walk-held8.webm",
+      "bytes": 1946840,
+      "sha256": "2762e63d91f168a1fda5aa74b8b66d8ccfebd7c66717613e37b8fcb40f3f6f1d"
+    },
+    {
+      "file": "source-based-study/motion/camp-walk-low.webm",
+      "bytes": 1736615,
+      "sha256": "04cc05af9c43b9881bd770811da68dc90479c2ad5c121925df3128426ce7d44c"
+    },
+    {
+      "file": "source-based-study/motion/camp-walk-smooth.webm",
+      "bytes": 1961894,
+      "sha256": "75f427d05b4986ccb05b94242446289577a5799bc45a167f231479bd43c05cf4"
+    },
+    {
+      "file": "source-based-study/motion/hare-walk.webm",
+      "bytes": 620643,
+      "sha256": "4f869d3bc37ee0de7c23c14f122f8acad0825bf4680af5b2a226be765f0279c4"
+    },
+    {
+      "file": "source-based-study/motion/lookout-walk.webm",
+      "bytes": 1316199,
+      "sha256": "4ced454265d7510422fddf66f2d3731475bd12d2df0869641c01688586bd91c0"
+    },
+    {
+      "file": "source-based-study/motion/mending-walk.webm",
+      "bytes": 1942034,
+      "sha256": "e13b934bff50e83204b324efb6bca466a2d3760d7b3f6167e0d6c0531536e489"
+    },
+    {
+      "file": "source-based-study/motion/mercenary-close-orbit.webm",
+      "bytes": 2526137,
+      "sha256": "4ca7b1994d71903f758c55f6f2d91cc572910b57cd5876db2510be3027279611"
+    },
+    {
+      "file": "source-based-study/motion/river-walk.webm",
+      "bytes": 1912742,
+      "sha256": "09caaf24534962f6c0ee881bf4a01c32deb98d219b8b72382e3eb9c23aff5ce0"
+    },
+    {
+      "file": "source-based-study/motion/watchpost-walk.webm",
+      "bytes": 1525962,
+      "sha256": "2a875d8fee56257e8e5083bcdad152d60107b9d96d84337c89733f0158490bf8"
+    },
+    {
+      "file": "source-based-study/motion/wolf-walk.webm",
+      "bytes": 1038194,
+      "sha256": "de0177e1f50b278eea634584ade93424eaab6ccf6ee5610b9d2f5f56fb68954c"
+    },
+    {
+      "file": "source-based-study/motion/woodland-walk.webm",
+      "bytes": 1283847,
+      "sha256": "be1092a0f67d8375c19e1735853bb1ef69e246b9df2c067b5568ef755571d6f0"
+    },
+    {
+      "file": "source-based-study/motion/workshop-walk.webm",
+      "bytes": 1033179,
+      "sha256": "14e6ef6615a2f9c199dc3b12d6b8007a6c1b25f6ef1af8bef9e28a2c80958956"
+    },
+    {
+      "file": "source-based-study/options/ada.png",
+      "bytes": 56102,
+      "sha256": "6f2811dab4ca0f671670a0499eac6ffc43bffb30a3aa328c366fd34c60784a64"
+    },
+    {
+      "file": "source-based-study/options/armor.png",
+      "bytes": 58331,
+      "sha256": "48793daefc363865ecd71a05ee3774eeb0b73029853d706e9a941d23b2dff921"
+    },
+    {
+      "file": "source-based-study/options/kest.png",
+      "bytes": 57820,
+      "sha256": "25207ba590dbeef9fe8f268b19eccd2fd1077258c613bd197d630361a6e97c00"
+    },
+    {
+      "file": "source-based-study/options/library-arrow.png",
+      "bytes": 42388,
+      "sha256": "cd234b191ee942c96034fc9449f9b3a5f9b1a4d24f374ad23e49fdc637088dce"
+    },
+    {
+      "file": "source-based-study/options/library-backpack.png",
+      "bytes": 22448,
+      "sha256": "dba5404540078a4556ed251220a37799e63d8bdf9ce0e92a68b307132f426d1c"
+    },
+    {
+      "file": "source-based-study/options/library-bear.png",
+      "bytes": 56765,
+      "sha256": "65ba8cb61ab8b9c110efbb4bdadd1a48b1c698bf3b3e5de2be9f5f8eecd20602"
+    },
+    {
+      "file": "source-based-study/options/library-berry-bush.png",
+      "bytes": 49763,
+      "sha256": "41b808918b9dae3670b60240c240e69377c97a60f4fccdf9915ba9ba08e634a5"
+    },
+    {
+      "file": "source-based-study/options/library-birch.png",
+      "bytes": 122640,
+      "sha256": "9dafb8bba4bf19c86fc4fda5f9479fffa77c4c49ff271c95a85109501fab7a30"
+    },
+    {
+      "file": "source-based-study/options/library-bird.png",
+      "bytes": 14494,
+      "sha256": "b6b02dadc80e9bee998e81a3e43913bfcb4d8f8824722bc48df45c374d78442b"
+    },
+    {
+      "file": "source-based-study/options/library-bow.png",
+      "bytes": 22072,
+      "sha256": "619d7029d18eedf631a2529c55f227fd7d6ca37d58e2cefa2ee9b15f2e22b404"
+    },
+    {
+      "file": "source-based-study/options/library-broadleaf.png",
+      "bytes": 120648,
+      "sha256": "51c0b420635f5e726384218e2a60ec03165a45a62e5da76de316972486d2b95f"
+    },
+    {
+      "file": "source-based-study/options/library-bundle.png",
+      "bytes": 33830,
+      "sha256": "be73c3b33e2c35b2421e6b007651d5fe056f17fcfaadff549558223d65930828"
+    },
+    {
+      "file": "source-based-study/options/library-chest.png",
+      "bytes": 49188,
+      "sha256": "dc86693e05bfd7a65de9b22fed7fbb8b2d1292fe1bbaf3144219f5197e90b63b"
+    },
+    {
+      "file": "source-based-study/options/library-conifer.png",
+      "bytes": 121388,
+      "sha256": "bfb6ba3408bf21236f64258ec7b18821ef932681330d390f0ddcc0df4ca98f2e"
+    },
+    {
+      "file": "source-based-study/options/library-cord.png",
+      "bytes": 12491,
+      "sha256": "5291c27a241774201c757d7668d156d7fbf2e47236c1f11db95c47656b2bd6fc"
+    },
+    {
+      "file": "source-based-study/options/library-deer.png",
+      "bytes": 46813,
+      "sha256": "cd89ea25dd6dee00b4a7a560abcfa2cea900e715ff632622b0c036377d42f26f"
+    },
+    {
+      "file": "source-based-study/options/library-dry-fiber.png",
+      "bytes": 17317,
+      "sha256": "e97f8b013ca5bf38b840d137cd8b8b0b39c717049b17689aacc29d0290e81f2a"
+    },
+    {
+      "file": "source-based-study/options/library-fallen-wood.png",
+      "bytes": 16228,
+      "sha256": "a9ea8d9a9579ffef888c9b61717317a95b6dd01e5c3d22fc26c645abdef92eff"
+    },
+    {
+      "file": "source-based-study/options/library-fern.png",
+      "bytes": 52183,
+      "sha256": "a359d180b8d3794d8e5412f0ae8df8ad4e47a7c798dba2cfce15fe05fe6a1070"
+    },
+    {
+      "file": "source-based-study/options/library-grass.png",
+      "bytes": 17501,
+      "sha256": "7b11401bf8a52e50ea7a3ff086bbeb9fa6ad702d381a3fd5f84dd1da396bbdb5"
+    },
+    {
+      "file": "source-based-study/options/library-hare.png",
+      "bytes": 18534,
+      "sha256": "5da7ae33ce8ea1bd3f242800e602a93a5eaa4797f2790fa4a3b6e796dd212348"
+    },
+    {
+      "file": "source-based-study/options/library-knife.png",
+      "bytes": 12563,
+      "sha256": "3a955d025826e299f02946d1dd6fce8960275bf9b54f84c4857b711ab7fe6e29"
+    },
+    {
+      "file": "source-based-study/options/library-marker.png",
+      "bytes": 18492,
+      "sha256": "54940faec43fc9f8877403710ab03f278bdde04b2c48c87623e6f5208b402a7d"
+    },
+    {
+      "file": "source-based-study/options/library-reeds.png",
+      "bytes": 36564,
+      "sha256": "42458ceed576c71040ce5c890da0aac7099fac001c566428f44cf42fdc861670"
+    },
+    {
+      "file": "source-based-study/options/library-river-stones.png",
+      "bytes": 15042,
+      "sha256": "2dd9740fbdd57ea2629e515e6b2f7a5a22df040ae9182f6a0b6845720189eea1"
+    },
+    {
+      "file": "source-based-study/options/library-rock.png",
+      "bytes": 39910,
+      "sha256": "5601bdb06ca439c1b443f9f516ab2df44e48a79dec47f8418f3eadff31dbadf5"
+    },
+    {
+      "file": "source-based-study/options/library-shelter.png",
+      "bytes": 121359,
+      "sha256": "6d3b76d938bc7a19b3aabc6090db15e66ef399a30d04dafe95e21e944636d17e"
+    },
+    {
+      "file": "source-based-study/options/library-shield.png",
+      "bytes": 31992,
+      "sha256": "202522ece85f8258a07132ab42ec81ced3ec3be6da47a995e22cfb690418e5d1"
+    },
+    {
+      "file": "source-based-study/options/library-shrub.png",
+      "bytes": 73473,
+      "sha256": "cc607b888378a8e86701d1d65d10a66b087a6b608534b9d65df9a0467a419401"
+    },
+    {
+      "file": "source-based-study/options/library-sling.png",
+      "bytes": 13081,
+      "sha256": "f4d1f32ece3734c3e2a530fa13d2ebb6f7a672ba7f4ae5dd59970d2edae40f7e"
+    },
+    {
+      "file": "source-based-study/options/library-stag.png",
+      "bytes": 68385,
+      "sha256": "9222fd1d39806217cfd654dffe412e9159a96358f74c888a6198864e2154d9c8"
+    },
+    {
+      "file": "source-based-study/options/library-stone-tool.png",
+      "bytes": 12321,
+      "sha256": "c1ef76994a116b45f6a8fe0a1ddd371dbd42423ab1611d4230b4c62a2acfdf43"
+    },
+    {
+      "file": "source-based-study/options/library-supplies.png",
+      "bytes": 25984,
+      "sha256": "f55f1016de0d72de62eb9c7d42e9b7ded67c525cdcfdafb466f4961a3c88c844"
+    },
+    {
+      "file": "source-based-study/options/library-sword.png",
+      "bytes": 19326,
+      "sha256": "fd3215913bf0bac01a9e25e0938c02c31cd380699633e7048430774067ded921"
+    },
+    {
+      "file": "source-based-study/options/library-wolf.png",
+      "bytes": 44105,
+      "sha256": "9a821b92a3a3bdd08044d5b04500ddbeb49eae017bf4a9a31b72a0f10b444c2a"
+    },
+    {
+      "file": "source-based-study/options/library-workbench.png",
+      "bytes": 38023,
+      "sha256": "9f55cc83f9aee98fca70d7bf78bacfd196b13ca8523605d82b371500bd5bc93b"
+    },
+    {
+      "file": "source-based-study/options/mara.png",
+      "bytes": 55282,
+      "sha256": "77b5f721fe10deb02399be4ebd1f8ab233c126845fb3bc9a66b0163f7935f410"
+    },
+    {
+      "file": "source-based-study/options/mercenary.png",
+      "bytes": 73727,
+      "sha256": "704b1bd99c08c5e5d358c2ecaa56fa89717d2a356309551242ece46451f20dc0"
+    },
+    {
+      "file": "source-based-study/options/mike.png",
+      "bytes": 57658,
+      "sha256": "9b94311eafd073575a95c6b17db14e53f13d2ede12d4c61dca09f98cfd3df4df"
+    },
+    {
+      "file": "source-based-study/options/orin.png",
+      "bytes": 55824,
+      "sha256": "adbb01667db343cdf0dd3482ef3bc9118f02679d09330533776855b299d8bdb0"
+    },
+    {
+      "file": "source-based-study/options/tavin.png",
+      "bytes": 54692,
+      "sha256": "105eb402b1578a39a8a3f789514fd26daf7f856454223dc1b5e9697a545aa493"
+    },
+    {
+      "file": "source-based-study/references/mercenary-concept.png",
+      "bytes": 7494741,
+      "sha256": "4f8675d6cb0b2254f824cadd349650bbea0d26203362ea577a86b05a30399838"
+    },
+    {
+      "file": "source-based-study/references/ref-0.png",
+      "bytes": 3775438,
+      "sha256": "f5fa8d4f429f355bfe707a4b234224b5313057e427f5f44a7429d02da6d23718"
+    },
+    {
+      "file": "source-based-study/references/ref-1.png",
+      "bytes": 162238,
+      "sha256": "c7117c4fad19ed486711a4dec37cb1dff3cfce8219b078db835e93c2a5425696"
+    },
+    {
+      "file": "source-based-study/references/ref-2.jpg",
+      "bytes": 241799,
+      "sha256": "23530dda3ac1c2257f814e5e72eee83a08fe27338bb91b68904a5e8ce7591ccf"
+    },
+    {
+      "file": "source-based-study/references/ref-3.png",
+      "bytes": 297129,
+      "sha256": "0cd0117430e4f776ff449db16e0f58445803548fee1d0d4a7b2f5b04a4db01d7"
+    },
+    {
+      "file": "source-based-study/references/ref-4.png",
+      "bytes": 2209593,
+      "sha256": "74ea6bd4ca6e3f9724a773cbb6c4c6b23b1f638fab4525663c500e41971e759c"
+    },
+    {
+      "file": "source-based-study/review-floor-restoration.png",
+      "bytes": 748680,
+      "sha256": "125a5e1ecdb4eb9fcc87dec9f1d18c639716600d602b51b397973563358816f2"
+    },
+    {
+      "file": "source-based-study/review-sheet-1.png",
+      "bytes": 74262,
+      "sha256": "fb3af41235830abd51f636efe1cf123f4198375a1105ed102896c14e37379c6b"
+    },
+    {
+      "file": "source-based-study/review-sheet-2.png",
+      "bytes": 107696,
+      "sha256": "d81db6ab3ff561129857a0279fdd067342a23f2fff750d754618b61360108bcc"
+    },
+    {
+      "file": "source-based-study/review-sheet-3.png",
+      "bytes": 80674,
+      "sha256": "da056fbde9c888e2ac2876fde68a58f42e1a2b0f6082c5d54b14a624b41086fa"
+    },
+    {
+      "file": "source-based-study/review-sheet-4.png",
+      "bytes": 41503,
+      "sha256": "eb8ab622fdc7a9b38c3bb96e4acef410ad541851ddf7ef79224c4920a7cb4818"
+    },
+    {
+      "file": "source-based-study/review-sheet-5.png",
+      "bytes": 74505,
+      "sha256": "7d1a17c40f42fa3125289b1dbf87f8e0645d5e9c667bbf0194e91e552a39f76a"
+    },
+    {
+      "file": "source-based-study/review-sheet-6.png",
+      "bytes": 57587,
+      "sha256": "682217f39b1b5f2be482dab781cb5f2bee87403c7f84b3370dbe71089ba593f9"
+    },
+    {
+      "file": "source-based-study/review-sheet-7.png",
+      "bytes": 54092,
+      "sha256": "5c484d4cd4c7802f4a6de34395f6309e47bc3e4e14022c099ebd902ff71a26c6"
+    },
+    {
+      "file": "source-based-study/scene-review-day.png",
+      "bytes": 1403493,
+      "sha256": "9d0a4f884a49eb4207dbd4f7252e09c94cfd75556e8fd0ba42526074da70a948"
+    },
+    {
+      "file": "source-based-study/scene-review-fire.png",
+      "bytes": 995157,
+      "sha256": "dd04905c2c987fed1b3369bef16aef803e2a2b5b0d1d130fbbd14f2c6b685243"
+    },
+    {
+      "file": "source-based-study/scene-review-low.png",
+      "bytes": 1208854,
+      "sha256": "41a0a2c7c42783a1e1aba53e524c48da9907864a4e3ed1be07e2ecd1fb8702a5"
+    },
+    {
+      "file": "source-based-study/scenes/camp-day.png",
+      "bytes": 747157,
+      "sha256": "8361c2a919ff02264e0244ebc1f28573f80797fc6a4ef8f9757765001f1f93f9"
+    },
+    {
+      "file": "source-based-study/scenes/camp-fire.png",
+      "bytes": 549766,
+      "sha256": "124f43adcd6c2bd86d5ad792c6081d2c49e05b7995c01454f836b23fe47b86e3"
+    },
+    {
+      "file": "source-based-study/scenes/camp-low.png",
+      "bytes": 668072,
+      "sha256": "8e097ed98d8da569cfbc524dc4c1ebcb845c4f11b2cb6946fc86334d16b44f23"
+    },
+    {
+      "file": "source-based-study/scenes/fire-off.png",
+      "bytes": 484504,
+      "sha256": "ceddc59bec2c8940687ef1f7c56ee33c231b367a48ab64ba9c5c46c40e0e8eaf"
+    },
+    {
+      "file": "source-based-study/scenes/fire-on.png",
+      "bytes": 549883,
+      "sha256": "d7405d4d3896d2ba94956dccb54a7ee248e2be3b5f08605d4bb9c1a9960d70b3"
+    },
+    {
+      "file": "source-based-study/scenes/lookout-day.png",
+      "bytes": 847238,
+      "sha256": "b63acd394d123825202895dcd21839f7011b45d4b26fc5f8d60b53aefc46422b"
+    },
+    {
+      "file": "source-based-study/scenes/lookout-fire.png",
+      "bytes": 633892,
+      "sha256": "668e17d1ff03035956482f61d7808d9a0fc1893883ecc966307a0e7f4c516f7e"
+    },
+    {
+      "file": "source-based-study/scenes/lookout-low.png",
+      "bytes": 740137,
+      "sha256": "8cb483ce846a70988eead169e048f383ade6213e286f4dcb7a1b00efb0523b24"
+    },
+    {
+      "file": "source-based-study/scenes/mending-day.png",
+      "bytes": 715750,
+      "sha256": "10ef1085a08ee5fa7ada48ac825ba9f8e56981226c4db2b7771d7a2cb10fa558"
+    },
+    {
+      "file": "source-based-study/scenes/mending-fire.png",
+      "bytes": 517387,
+      "sha256": "edf938a28c84035e717f12d14300459cb34ff6e74e35dd4a1d9d268bc1024c4b"
+    },
+    {
+      "file": "source-based-study/scenes/mending-low.png",
+      "bytes": 640596,
+      "sha256": "a39cafaad30b3b3c206f26e6618e3e9e57f7880ef50134f71fc1e3ec3910ca4d"
+    },
+    {
+      "file": "source-based-study/scenes/perspective-gathered.png",
+      "bytes": 798183,
+      "sha256": "585597322b8b69c6cba88fd320a7d27ee640e59c660c48cd3b5b55d9609f0f2e"
+    },
+    {
+      "file": "source-based-study/scenes/river-day.png",
+      "bytes": 815192,
+      "sha256": "b2f318b59717c20e2ff375ecf518d9a229b79c2e83f778909d29a4446ca2f204"
+    },
+    {
+      "file": "source-based-study/scenes/river-fire.png",
+      "bytes": 613742,
+      "sha256": "2dc8548a1f3617fd2ebf486f410ba7668582c3562222e580fd0fda2221d14829"
+    },
+    {
+      "file": "source-based-study/scenes/river-low.png",
+      "bytes": 705688,
+      "sha256": "b61b7131b5bb9f56060f80abaebf29edff5a0ff0ebde5fc55d1cb1c4eda2f27f"
+    },
+    {
+      "file": "source-based-study/scenes/watchpost-day.png",
+      "bytes": 782567,
+      "sha256": "b87b5a2936c16a8093fdb51096a4e7ffbe067a627db63f71cf7a29c318293d7a"
+    },
+    {
+      "file": "source-based-study/scenes/watchpost-fire.png",
+      "bytes": 519419,
+      "sha256": "4f3d3259a8ba60d83da10d5f2f8b816fc0a09ac66558e3566cc7d7b5fbb567d9"
+    },
+    {
+      "file": "source-based-study/scenes/watchpost-low.png",
+      "bytes": 704459,
+      "sha256": "78f1d5644b635cd1515b88ee1cb11c9a43eff46660bcf6082c57ff762165767e"
+    },
+    {
+      "file": "source-based-study/scenes/woodland-day.png",
+      "bytes": 526334,
+      "sha256": "7488e11f2dc60525b56c6475a719e7fd99f824f7ccadc38610e6a509d4172a3d"
+    },
+    {
+      "file": "source-based-study/scenes/woodland-fire.png",
+      "bytes": 333076,
+      "sha256": "8e77fe04d6207914f0d723df4f743754a079d17c33cb214533fcaad18eac691c"
+    },
+    {
+      "file": "source-based-study/scenes/woodland-low.png",
+      "bytes": 540807,
+      "sha256": "38b45b0d30f56b6bc73080bac85f534691c12fa3f56e1ce21c3388c88a62d40b"
+    },
+    {
+      "file": "source-based-study/scenes/workshop-day.png",
+      "bytes": 657306,
+      "sha256": "ecf6f3f319cb254178416bbdff53a520b38050ddee50e75b15ee3391694ad457"
+    },
+    {
+      "file": "source-based-study/scenes/workshop-fire.png",
+      "bytes": 450864,
+      "sha256": "3bbbc7e018a50c51021b4ad5ad100af26c035c407f8c4d646fa5a19d8122adcf"
+    },
+    {
+      "file": "source-based-study/scenes/workshop-low.png",
+      "bytes": 536027,
+      "sha256": "8bf245e3833c7a6b6fa6dc3f719ffa41cb4cc5ea737c32dc1762e49fd7bc1473"
+    },
+    {
+      "file": "source-based-study/separate-detail-orbit.webm",
+      "bytes": 2471766,
+      "sha256": "dafe14a6bc75fc53bfce7c7df01ffd103b5176b086e8f76308ac02c0608f4169"
+    },
+    {
+      "file": "source-based-study/shared-grid-orbit.webm",
+      "bytes": 2265077,
+      "sha256": "7e72ce8124ee3ee07a879dd1adaddb95a19280ad95f205aeef9e945fe1b1a894"
+    },
+    {
+      "file": "source-based-study/sources/ada.png",
+      "bytes": 28744,
+      "sha256": "60adc9f79c250dc785e069020ecf8bbd4cdb0419e03f95d4f568cc6aff65abbb"
+    },
+    {
+      "file": "source-based-study/sources/armor.png",
+      "bytes": 30563,
+      "sha256": "b02863fcda33aec412106cf93a03a038e31b635f191189291bbe82a9ec873dd0"
+    },
+    {
+      "file": "source-based-study/sources/kest.png",
+      "bytes": 30774,
+      "sha256": "e91dec56766db06f774b7964d8686ba5ade3301f99bc9cb642825e7bee701d48"
+    },
+    {
+      "file": "source-based-study/sources/library-arrow.png",
+      "bytes": 39046,
+      "sha256": "dd5101857af101bd7caa9e8293be2ce28949217bb9845bc9e0aec5a1368fa562"
+    },
+    {
+      "file": "source-based-study/sources/library-backpack.png",
+      "bytes": 14524,
+      "sha256": "712478165fd15ab704c012eeda2247c0c7f97313a5062b6c1a28c99559324496"
+    },
+    {
+      "file": "source-based-study/sources/library-bear.png",
+      "bytes": 25085,
+      "sha256": "986afad24f19d8dc9b7ca7dc6c7f06c05f7e5b72e1dc7f1ffe76cb287bca0fb4"
+    },
+    {
+      "file": "source-based-study/sources/library-berry-bush.png",
+      "bytes": 26029,
+      "sha256": "7ee8d6164e8543107c5473c283eafa9405b31db2f48de4c8f0e716d967ce4566"
+    },
+    {
+      "file": "source-based-study/sources/library-birch.png",
+      "bytes": 64442,
+      "sha256": "10a2831df011306ed3a25e3e2cbbd61e65644ab3a4f0f414cb0bb9adf14d3535"
+    },
+    {
+      "file": "source-based-study/sources/library-bird.png",
+      "bytes": 11403,
+      "sha256": "b83ede10ae401734a82c2d0912e25c1944b1b57e03240a2cac6042ac7e432f13"
+    },
+    {
+      "file": "source-based-study/sources/library-bow.png",
+      "bytes": 14692,
+      "sha256": "2ccf7b732f83f815eb967b22cc46969f1dbe59e1cf75cd61cd6da5b7579bd2a9"
+    },
+    {
+      "file": "source-based-study/sources/library-broadleaf.png",
+      "bytes": 58759,
+      "sha256": "e30c5216f41e51a900f306aafa6bbbdd56aa3d53f1eeaffaf1c69edd355df413"
+    },
+    {
+      "file": "source-based-study/sources/library-bundle.png",
+      "bytes": 17451,
+      "sha256": "35430c2381be3741ebbf70e73a6ad42a4a5d02e7ec1532b4cd3de9da4f99355f"
+    },
+    {
+      "file": "source-based-study/sources/library-chest.png",
+      "bytes": 22258,
+      "sha256": "f61b4a3c602d2c80db4fd6c232b54c4e02c3fb92d5e38dec69c50d2b47e4dbcb"
+    },
+    {
+      "file": "source-based-study/sources/library-conifer.png",
+      "bytes": 58527,
+      "sha256": "cfa1298115ac9a4e05e5629a2448cd94f971907cb63af253ded94cfc03177bd9"
+    },
+    {
+      "file": "source-based-study/sources/library-deer.png",
+      "bytes": 24566,
+      "sha256": "76d0315b94a4d878430da56d2338a49a06f6d7dac496054b6feb8231f368f313"
+    },
+    {
+      "file": "source-based-study/sources/library-dry-fiber.png",
+      "bytes": 12330,
+      "sha256": "cec6a50a2b7bf614505564e05c9b15a84fc8895f23473e3f8641b47d6473c2bf"
+    },
+    {
+      "file": "source-based-study/sources/library-fallen-wood.png",
+      "bytes": 13018,
+      "sha256": "d128e4ec39518f3771c3e57959332e543e907bf49b291d0deb5da26ad073ba3a"
+    },
+    {
+      "file": "source-based-study/sources/library-fern.png",
+      "bytes": 27504,
+      "sha256": "00294c1ef2e729406f6e20091d8a516b8e20db47ed307160f1d93ec89428b19a"
+    },
+    {
+      "file": "source-based-study/sources/library-grass.png",
+      "bytes": 12220,
+      "sha256": "80f2653a70f17d43fa5832cca3141d8f76921fea3ecb74c27797907ad533abc8"
+    },
+    {
+      "file": "source-based-study/sources/library-hare.png",
+      "bytes": 13011,
+      "sha256": "76b231e570473bffa3f1524ece5bc68ce47f1251517036397c130428d4eb3d70"
+    },
+    {
+      "file": "source-based-study/sources/library-knife.png",
+      "bytes": 10883,
+      "sha256": "232d2003ef47226d65d358342c252a257a7fdd43dff1a33a4fca149860ffed5d"
+    },
+    {
+      "file": "source-based-study/sources/library-marker.png",
+      "bytes": 13738,
+      "sha256": "4014a3f82d53f3df86db7aa5dd5e084478e932ea8cba0e4d30c2812837488e69"
+    },
+    {
+      "file": "source-based-study/sources/library-reeds.png",
+      "bytes": 20778,
+      "sha256": "e923788ea0ed8b700da0e11792a6532d1fd4950d3d9e3e96de663d06bd80de28"
+    },
+    {
+      "file": "source-based-study/sources/library-river-stones.png",
+      "bytes": 12077,
+      "sha256": "9e27a05a7fbdf40ba75952e99d74ebbba10e393215e56f4d058cdcd209ac2602"
+    },
+    {
+      "file": "source-based-study/sources/library-rock.png",
+      "bytes": 22018,
+      "sha256": "ff1524cc1e8d347fcf63fede8c820fcff30b63a282a4ada9ba3c4a02c2cdbd47"
+    },
+    {
+      "file": "source-based-study/sources/library-shelter.png",
+      "bytes": 52948,
+      "sha256": "cc2ba28194b3e287ade00f957d35eba1d293f89c0f189d39e5f5797eade788ab"
+    },
+    {
+      "file": "source-based-study/sources/library-shield.png",
+      "bytes": 18105,
+      "sha256": "2ad9eb7e3e123739c3cf7e164c3f866fe3e60f71be7202f9188b74455c1b450f"
+    },
+    {
+      "file": "source-based-study/sources/library-shrub.png",
+      "bytes": 29879,
+      "sha256": "bbfeb7c77f61c61a233357523059adb0aded9ffd4ac286b759ffb7396cde4474"
+    },
+    {
+      "file": "source-based-study/sources/library-stag.png",
+      "bytes": 33637,
+      "sha256": "a13f5141a6ea678f49c7beb6193b84866fc9eae29251c676514527acc5d0afcc"
+    },
+    {
+      "file": "source-based-study/sources/library-supplies.png",
+      "bytes": 17207,
+      "sha256": "f7b904dada6de6ae98ce4748b6db4506fe29efae5749a0ab8eccfb836e85e135"
+    },
+    {
+      "file": "source-based-study/sources/library-sword.png",
+      "bytes": 13184,
+      "sha256": "b3693b24ed04d2627c5fecd297073aa5349db90a82979aacfd56bccac7bd0689"
+    },
+    {
+      "file": "source-based-study/sources/library-wolf.png",
+      "bytes": 23152,
+      "sha256": "fe9625f67ac4ec09c204b8c28b89e2f3305915ab6df00b3cc9424543edddf218"
+    },
+    {
+      "file": "source-based-study/sources/library-workbench.png",
+      "bytes": 24461,
+      "sha256": "88ff75d7ce7a19b02731fe155797d848bbe4aeebdd4218d8282625c867148e4a"
+    },
+    {
+      "file": "source-based-study/sources/mara.png",
+      "bytes": 29431,
+      "sha256": "4c9967015e0bccffcac7bbc341c6f82ac1cffc728f810387f534a04442c4c40d"
+    },
+    {
+      "file": "source-based-study/sources/mercenary.png",
+      "bytes": 32662,
+      "sha256": "56b7f6b1b1037c435f2c39ee4866f02aa6dd77412e6e53f1c9fa2f440b1edf46"
+    },
+    {
+      "file": "source-based-study/sources/mike.png",
+      "bytes": 30298,
+      "sha256": "39efdc1fa87e6282ae754a1d35870e0d2758e221148736b0f0d74bf4c8c72a90"
+    },
+    {
+      "file": "source-based-study/sources/orin.png",
+      "bytes": 29577,
+      "sha256": "5ad86e35fa97bb343d8006436a5d819b697e0de287a714de2d5da5b14ea0245f"
+    },
+    {
+      "file": "source-based-study/sources/tavin.png",
+      "bytes": 27274,
+      "sha256": "4a4ba5c28d54c59ab7711808abb65b4ce58ee44f89a2ce0cdaca833c05732341"
+    },
+    {
+      "file": "starting-scene-review/character-close.mp4",
+      "bytes": 8177095,
+      "sha256": "64b67f2aa63141596504664aa0b34c97a3f15624e46e8108ad8c0967ea1a685e"
+    },
+    {
+      "file": "starting-scene-review/character.png",
+      "bytes": 571254,
+      "sha256": "e4ce051e4fcbfcc16e12141d19f0ecdfc2fca8782e3eebc930f52ac5a1660d51"
+    },
+    {
+      "file": "starting-scene-review/face-detail-control.png",
+      "bytes": 466262,
+      "sha256": "03937acc479c0a1383a8955284437932555d9fdffaa6d0fde4494f70cf69c729"
+    },
+    {
+      "file": "starting-scene-review/face.png",
+      "bytes": 415023,
+      "sha256": "50ddb1c969885944ff9dc1316b3f0ea274110ea8c243803b3b836ef70068118e"
+    },
+    {
+      "file": "starting-scene-review/firelight.png",
+      "bytes": 244502,
+      "sha256": "b4c7684b474fcc050ed9d6c61b2ba3d21f5a8b99881606ff14f16dc66300d7a1"
+    },
+    {
+      "file": "starting-scene-review/gameplay.mp4",
+      "bytes": 5879105,
+      "sha256": "87440763ac900246c0b896dae52653a2b96b9497f13304ae76986ff6a4347789"
+    },
+    {
+      "file": "starting-scene-review/resize-dpr.png",
+      "bytes": 701567,
+      "sha256": "34398d06bf9e8aa66d8d2868b519fa389c18df7b71a2ada7c7bbed0e438c0ad5"
+    },
+    {
+      "file": "starting-scene-review/scene.png",
+      "bytes": 773410,
+      "sha256": "4d5fa969dd10d466813197a5be12ebfd277834988e5fef9c65ebf5d2bf6180d9"
+    }
+  ]
+}

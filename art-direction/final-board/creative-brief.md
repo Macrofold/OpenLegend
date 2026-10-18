@@ -1,22 +1,41 @@
 # Open Legend — final creative inspiration board
 
-[Open the visual board](index.html)
+[Open the visual board](https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/art-direction/final-board/index.html)
 
 Confirmed favorites, with creative interpretation kept distinct from your stated preferences. This is the final curated reference set for this discussion, not a finalized renderer, asset budget or production specification.
 
 ## Shared direction
 
-Richly detailed, dimensional worlds; expressive and recognizable people; purposeful light; and an inviting sense of life. Pixel art and illustrated approaches are both valid references. Readable silhouettes and quiet areas matter as much as fine texture. The latest endorsements of Dave the Diver and Hades make clear that stylization can be a positive rather than an automatic rejection.
+Beautiful dimensional pixel art with believable real-world proportions, expressive and recognizable people, purposeful light and an inviting sense of life. Explicitly reject the visibly low-poly 3D look, flat faceted styling, blocky/Lego-like or cutesy assets, and small-body/big-head or exaggerated cartoon characters. Stylization belongs in pixels, palette, material interpretation and lighting while anatomy, objects and the world retain convincing proportions. Readable silhouettes and quiet areas matter as much as fine texture. Painted references remain useful for concepts and composition; photorealistic final rendering is not required.
+
+**Updated 2026-10-16 23:12 UTC:** [Current visual requirements](../decisions.md#current-visual-requirements--october-16-2026) own this clarification and the rejected creator styles. Earlier endorsements of individual games do not authorize their cute or exaggerated proportions. Research [grounded source creators](../research/3d-pixel-worlds/grounded-asset-creators.md) before returning to a familiar low-poly library.
 
 ## The practical brief
 
-- Give the wilderness layered terrain, vegetation and atmospheric depth, without making permanent gloom the default.
+- Give the wilderness layered terrain, vegetation and atmospheric depth. The October 16 owner feedback calls for a more grounded survival mood: sunshine and joy coexist with darkness, brutality and desperation. Weathered materials and readable deep shade replace uniformly bright, happy presentation; permanent gloom is still not the target.
 - Make body shape, clothing, hair, skin tone and carried equipment readable at gameplay distance. Use profiles and close views for richer face and material detail.
+- Preserve natural head/body proportions, varied believable builds, organic plants and animals, and practical object scale/construction. Improve framing and authored features to achieve readability instead of enlarging heads or shortening bodies.
+- Give trees layered, open boughs, varied greens and diffuse leaf shading; opaque paper-like tiers, crushed undersides and unexplained bright patches are rejected.
 - Let campfires, water and shadows connect people to their surroundings. Compose light around an identifiable source and preserve readable values.
 - Add meaningful lived-in objects, not uniform visual noise. Use fine detail where it describes identity, material or use.
 - Keep human scale, environment scale and close-up scale explicit when evaluating artwork. A large portrait or promotional illustration is not a runtime feasibility result.
+- Keep detail grouped and restrained: the October 17 feedback rejects the preceding uniformly fine treatment. Give small tools and animals only enough extra fixed pixel density to preserve identity. Check their actual screen footprint before adding detail, and keep all dated comparisons in the [study archive](../studies/README.md). Poly Haven is an endorsed source starting point; anatomy and construction still need visual review.
 
 ## Favorites and their contributions
+
+### Dimensional pixel art — October 14 direction
+
+Mike's new references sharpen the target without replacing the earlier favorites. **Garbage Country** is a leading environment reference; **The Last Night** is a leading reference for fine pixel craft, dimensional staging, light and focus. **EthrA's environments** are strongly liked, but its small world characters should be exceeded in facial and material detail. **REPLACED** reinforces the desired cinematic finish.
+
+**t3ssel8r’s character in [Making an Animation for my 3D Pixel Art Game](https://www.youtube.com/watch?v=1FrIBkuq0ZI) is the new leading character-quality reference.** Mike explicitly called it perfect. The follow-up supports generating pixel shading, edges and effects through a designed realtime renderer; pre-painting every visible pixel is not an art requirement. Preserve deliberate face features, readable poses and controlled secondary motion. See [rendering](../research/3d-pixel-worlds/realtime-pixel-rendering.md) and [animation guidance](../research/3d-pixel-worlds/animation-tools-and-techniques.md).
+
+Translate those preferences into shaped, believable forms; deliberately grouped surface detail; readable faces and equipment; atmospheric distance; and light that describes materials. Keep quiet areas so foliage, clothing and weathering do not become uniform noise. Strong bokeh and blur are references to evaluate selectively, not a mandate to blur normal play. The primitive wilderness can achieve the light/material relationships through fire, sky, water and foliage without inheriting a neon city or permanent gloom.
+
+A pixel-authored surface does not require cubic anatomy. Cloth may use a continuous shaped surface and a different degree of texture detail if it belongs with the body. The renderer-driven shaped-model direction and first-scene plan are now agreed. Exact sampling, outlines, animation cadence and family representation still need the actual camera/animation comparison; retained sprites and 2D rigs remain available where useful. A beautiful still image, a hidden rear surface, or extra detail visible only in a portrait does not establish an acceptable world character.
+
+The [starting-scene art plan](../../docs/projects/3d-pixel-art-first-scene-plan.md) applies this brief to the existing starting scene, preserving its playtesting content while adding controlled technique experiments, an authored/generated asset pair and measured moving review. [Tracked tasks](../../docs/maintainers/3d-pixel-art.md#first-scene-delivery-and-experiment-tasks) own unfinished work; approving the direction does not approve an unseen result.
+
+See the [local reference gallery](../research/3d-pixel-worlds/gallery.md), [creator evidence](../research/3d-pixel-worlds/reference-techniques.md) and [OpenLegend adaptation proposal](../research/3d-pixel-worlds/openlegend-adaptation.md). These explain which examples are polygon meshes, articulated sprites, 2D illustrations or low-resolution renders; liking their finish does not select one shared construction method.
 
 ### Dave the Diver — Personality at every scale
 
@@ -26,15 +45,15 @@ Richly detailed, dimensional worlds; expressive and recognizable people; purpose
 
 **Creative translation:** Give the wilderness depth and breathing room; make individuals recognizable through body shape, hair, skin tone and equipment. Let closer character views reveal richer faces and material detail while world avatars stay legible.
 
-**Context:** The chef is a close-up, not evidence of facial detail at gameplay distance. Your new endorsement broadens the earlier concerns about cartoon-like proportions: appealing stylization is welcome when the finish and personality work.
+**Context:** The chef is a close-up, not evidence of facial detail at gameplay distance. Borrow personality, material detail and atmosphere. Mike's October 16 clarification explicitly excludes cute and exaggerated cartoon proportions even in otherwise liked references.
 
-![World scale · clear silhouette, luminous water and layered terrain](images/dave-underwater.png)
+![World scale · clear silhouette, luminous water and layered terrain](https://assets.openlegend.ai/studies/public/blobs/sha256/18/18ca658610ac3aedf05e4893cea4398252d39f398eae21d2d589cb5e93bee2f0)
 Source: User-supplied screenshot
 
-![Close-up · expressive anatomy, clothing folds and purposeful action](images/dave-character.png)
+![Close-up · expressive anatomy, clothing folds and purposeful action](https://assets.openlegend.ai/studies/public/blobs/sha256/74/74ea6bd4ca6e3f9724a773cbb6c4c6b23b1f638fab4525663c500e41971e759c)
 Source: User-supplied screenshot
 
-![Social scale · distinctive people, inhabited detail and warm lighting](images/dave-restaurant.png)
+![Social scale · distinctive people, inhabited detail and warm lighting](https://assets.openlegend.ai/studies/public/blobs/sha256/dd/dded7d32ca6868865d670d0c07201de8c231bfd62cdf66298c7c1bb5b91d5608)
 Source: User-supplied screenshot
 
 ### Steam Autumn Sale illustration — The detail benchmark
@@ -47,7 +66,7 @@ Source: User-supplied screenshot
 
 **Context:** This is a promotional illustration, not a game. It establishes a visual aspiration, not evidence of runtime performance, animation or procedural generation. Artist and original publication provenance are not verified; preserve the supplied screenshot as reference only.
 
-![Full supplied illustration · foreground roots, readable people and layered environmental detail](images/steam-autumn-sale.png)
+![Full supplied illustration · foreground roots, readable people and layered environmental detail](https://assets.openlegend.ai/studies/public/blobs/sha256/b2/b24a8582c96d4298895fe7be875c9187fc5b26558afba84fe77008531532efa3)
 Source: User-supplied screenshot
 
 ### Pathway — Light makes the world dimensional
@@ -60,10 +79,10 @@ Source: User-supplied screenshot
 
 **Context:** The supplied image shows the appearance of lighting, not proof of a particular lighting implementation. Borrow the light/material relationship; the historical setting and parchment UI are not selected requirements.
 
-![Warm light / cool shadow · relief in stone and grounded figures](images/pathway-lighting.png)
+![Warm light / cool shadow · relief in stone and grounded figures](https://assets.openlegend.ai/studies/public/blobs/sha256/0c/0cd0117430e4f776ff449db16e0f58445803548fee1d0d4a7b2f5b04a4db01d7)
 Source: User-supplied screenshot
 
-![World figure + profile · two useful scales of character information](images/pathway-profile.png)
+![World figure + profile · two useful scales of character information](https://assets.openlegend.ai/studies/public/blobs/sha256/38/38db989c36798c4b14084585c2280dffd680d7ed6ab85ee7028f4450f62c3c51)
 Source: User-supplied screenshot
 
 ### Hades — The illustrated finish
@@ -142,7 +161,7 @@ Source: https://www.mobygames.com/game/65869/transistor/screenshots/windows/7583
 
 **Creative translation:** Use firelight, shade and daylight to change the emotional character of a place. Keep a small human gathering readable within expansive nature.
 
-**Context:** The image is Octopath Traveler II. Miniature figures and strong blur are not mandatory: earlier reservations remain useful component-level guidance.
+**Context:** The image is Octopath Traveler II. Borrow lighting and depth; miniature big-head/small-body proportions are outside the October 16 direction. Strong blur is not required.
 
 ![Gameplay reference · previously reviewed](https://gh.cdn.sewest.net/assets/ident/games/8bd47aa2/3-OPII_partyofheightaroundafirecamp-upoy5vqh9.jpg?quality=65)
 Source: https://www.square-enix-games.com/en_GB/games/octopath-traveler-ii
@@ -155,7 +174,7 @@ Source: https://www.square-enix-games.com/en_GB/games/octopath-traveler-ii
 
 **Creative translation:** Let camps accumulate meaningful objects: bundles, tools, cooking materials, wear and vegetation. Create richness through the traces of people living there.
 
-**Context:** Liking the whole direction does not require copying its simplified character proportions. Keep clothing and gear legible at our actual camera scale.
+**Context:** Borrow environmental warmth and lived-in detail. Cute or exaggerated character proportions are outside the October 16 direction; preserve natural anatomy and readable clothing at our actual camera scale.
 
 ![Gameplay reference · previously reviewed](https://cdn.mos.cms.futurecdn.net/FjCGBKPmgyXH9rxphyywqQ.jpeg)
 Source: https://www.gamesradar.com/eastward-review/

@@ -5,7 +5,7 @@ import { Button, Section, SegmentedControl } from '../design-system/components';
 import type { ShadowQuality } from '../world-renderer';
 import { InventionSettings } from './invention-settings';
 import { WorldVisualSettings } from './world-visual-settings';
-import icons from '../design-system/icons/icons.json';
+import icons from '../design-system/icons/catalog';
 import './settings.css';
 
 export type SettingsView = Pick<

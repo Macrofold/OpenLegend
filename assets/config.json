@@ -1,0 +1,34 @@
+{
+  "profile": "openlegend",
+  "accountId": "027677879749",
+  "region": "us-east-2",
+  "buckets": {
+    "art-library": "openlegend-assets-librarybucket-ijzk7jkcx54e",
+    "art-studies": "openlegend-assets-studiesbucket-ycjilxpqrsrn",
+    "runtime": "openlegend-runtime-027677879749-us-east-2",
+    "intake": "openlegend-assets-intakebucket-ked39q6hgqhk",
+    "asset-recovery": "openlegend-assets-recoverybucket-n0fg3q4eienm"
+  },
+  "maxObjectBytes": 4294967296,
+  "cache": {
+    "maxBytes": 10737418240,
+    "maxEntries": 20000,
+    "maxConcurrent": 4
+  },
+  "publication": {
+    "maxRevisions": 10000,
+    "maxFiles": 20000,
+    "maxBytes": 10737418240,
+    "maxDepth": 32,
+    "maxManifestBytes": 4194304
+  },
+  "roleArns": {
+    "authoring": "arn:aws:iam::027677879749:role/openlegend-assets-AuthoringRole-w2nX0SMb3UjF",
+    "publication": "arn:aws:iam::027677879749:role/openlegend-assets-PublicationRole-6RkXM3is7XTx",
+    "runtime": "arn:aws:iam::027677879749:role/openlegend-assets-RuntimeReadRole-DHvAqsH1k2Is",
+    "study": "arn:aws:iam::027677879749:role/openlegend-assets-StudyReadRole-Bxx87UQga3wn",
+    "recovery-writer": "arn:aws:iam::027677879749:role/openlegend-assets-RecoveryWriterRole-WFpSEdkxjTxq",
+    "recovery-restore": "arn:aws:iam::027677879749:role/openlegend-assets-RecoveryRestoreRole-KntwcpZmb4Xe",
+    "withdrawal": "arn:aws:iam::027677879749:role/openlegend-assets-WithdrawalRole-xRCltWe2xDi7"
+  }
+}

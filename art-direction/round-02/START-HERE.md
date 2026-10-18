@@ -2,7 +2,7 @@
 
 September 19, 2026. **16 new games, one artist study, and three round-one benchmarks.** Eight opening comparisons focus on your feedback. Inclusion is a question to evaluate, not a decision to adopt a style.
 
-[Interactive board](index.html) · [Round-one analysis](../round-01-analysis.md) · [Original board](../index.html)
+[Interactive board](https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/art-direction/round-02/index.html) · [Round-one analysis](../round-01-analysis.md) · [Original board](https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/art-direction/index.html)
 
 Images remain hosted at credited sources. The sources include gameplay, promotional screenshots, and artist studies; large portraits are distinguished from world sprites. No assets have been acquired.
 

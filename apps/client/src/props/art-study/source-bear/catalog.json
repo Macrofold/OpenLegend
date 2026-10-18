@@ -1,0 +1,108 @@
+{
+  "group": "source-bear",
+  "sourceFile": "art-direction/assets/source-study/source-bear.blend",
+  "sourceSha256": "a0af21a2a7663503a6ba7a3ad4d7ed099ecbeb82c1880d73d466d01c7b0a764c",
+  "recipe": {
+    "path": "scripts/prepare-animal-study.py",
+    "sha256": "d4bf684eeb5086c2d6357c52bde01a5e3713911c784de68e2fea628d2c350778"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "7cf6b8bc5ca5aff50c4b71ee3744613128a806343a963b87ca693f1942b9f5fe",
+    "prepare-mercenary-variants.py": "5cc0107a59e1424970365b928211f9c7d6588612ecb93b1677e04e9798db8aa0"
+  },
+  "sources": [
+    {
+      "url": "https://poly.pizza/m/kLLBpmcw0w",
+      "license": "CC BY 3.0",
+      "file": "bear.glb",
+      "sha256": "e36363e07cfc3f7b4f9e6997b860daae8ac30a90b0d41a0316ec90a84ebed09c"
+    }
+  ],
+  "assets": [
+    {
+      "id": "bear-forest-brown",
+      "family": "library-bear",
+      "label": "Bear",
+      "variant": "forest-brown",
+      "description": "Forest brown: retained source anatomy with deliberate coat regions. Authored study idle/walk clips; no new native action.",
+      "recommended": true,
+      "file": "bear-forest-brown.glb",
+      "bounds": {
+        "min": [-0.365508, 0.0, -1.152355],
+        "max": [0.365508, 1.25, 1.152355]
+      },
+      "triangles": 946,
+      "vertices": 1876,
+      "textureSizes": [[256, 256]],
+      "sha256": "67ffdf1482ede7904df937b4e2588884d8c746cdab98fbc85975c0ba21fcd29a",
+      "source": "Bear by madtrollstudio, CC BY 3.0, https://poly.pizza/m/kLLBpmcw0w; recolored, proportion study and rig by OpenLegend.",
+      "animatedFile": "bear-forest-brown-motion.glb",
+      "animatedSha256": "cb957c329e6707b489aa38de304eebc67983df66f4c10e7ac6f33dc406101180"
+    },
+    {
+      "id": "bear-heavy-shoulder",
+      "family": "library-bear",
+      "label": "Bear",
+      "variant": "heavy-shoulder",
+      "description": "Heavy shoulder: retained source anatomy with deliberate coat regions. Authored study idle/walk clips; no new native action.",
+      "recommended": false,
+      "file": "bear-heavy-shoulder.glb",
+      "bounds": {
+        "min": [-0.391093, 0.0, -1.152355],
+        "max": [0.391093, 1.25, 1.152355]
+      },
+      "triangles": 946,
+      "vertices": 1876,
+      "textureSizes": [[256, 256]],
+      "sha256": "5cb8b221b15a3efd872ee510b41e9d02c3cd4ed2d97dfe79fa3b0e8ac3da7b82",
+      "source": "Bear by madtrollstudio, CC BY 3.0, https://poly.pizza/m/kLLBpmcw0w; recolored, proportion study and rig by OpenLegend.",
+      "animatedFile": "bear-heavy-shoulder-motion.glb",
+      "animatedSha256": "425f93c1f151b3e4c21cadad4403d34687c59106084f7e6e86f5e36225ab96ba"
+    },
+    {
+      "id": "bear-pale-muzzle",
+      "family": "library-bear",
+      "label": "Bear",
+      "variant": "pale-muzzle",
+      "description": "Pale muzzle: retained source anatomy with deliberate coat regions. Authored study idle/walk clips; no new native action.",
+      "recommended": false,
+      "file": "bear-pale-muzzle.glb",
+      "bounds": {
+        "min": [-0.365508, 0.0, -1.152355],
+        "max": [0.365508, 1.25, 1.152355]
+      },
+      "triangles": 946,
+      "vertices": 1876,
+      "textureSizes": [[256, 256]],
+      "sha256": "22fdafb65e1ab7ead8f8b1f052374254c68e9ef0a3f9aeed69837c227a4526d3",
+      "source": "Bear by madtrollstudio, CC BY 3.0, https://poly.pizza/m/kLLBpmcw0w; recolored, proportion study and rig by OpenLegend.",
+      "animatedFile": "bear-pale-muzzle-motion.glb",
+      "animatedSha256": "0a2e094d41797a561e9fa7821523206410ea63ce8f84e6926712c8808bdb46a2"
+    }
+  ],
+  "controls": [
+    {
+      "id": "control-library-bear",
+      "family": "library-bear",
+      "label": "Bear",
+      "variant": "source-control",
+      "description": "Original source form and material at the comparison scale. Normalized for inspection; not the selected pixel-art finish.",
+      "recommended": false,
+      "file": "control-library-bear.glb",
+      "bounds": {
+        "min": [-0.365508, -0.0, -1.152355],
+        "max": [0.365508, 1.25, 1.152355]
+      },
+      "triangles": 946,
+      "vertices": 1876,
+      "textureSizes": [[1024, 1024]],
+      "sha256": "3cb2d25140aed34671b1c37685816f56164aa48630a75179c3d522c6f2017e12",
+      "source": "/private/tmp/openlegend-source-study/animals/bear.glb \u00b7 SHA256 e36363e07cfc3f7b4f9e6997b860daae8ac30a90b0d41a0316ec90a84ebed09c"
+    }
+  ],
+  "controlRecipe": {
+    "path": "scripts/prepare-study-controls.py",
+    "sha256": "5b16232aabfa4ed836a02b2cb4d10baa172f4961f8574c6eca88b60352bf7999"
+  }
+}

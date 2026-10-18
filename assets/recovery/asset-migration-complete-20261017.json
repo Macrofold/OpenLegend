@@ -1,0 +1,11 @@
+{
+  "reference": {
+    "boundary": "asset-recovery",
+    "accessDomain": "openlegend-assets",
+    "sha256": "567e07c49b21d60a2bb8fb2c7ecaab850f297d2d53810ab47b54dd2ffecb9811",
+    "bytes": 21401081,
+    "mediaType": "application/json"
+  },
+  "key": "checkpoints/asset-migration-complete-20261017/manifest.json",
+  "versionId": "D6aNPKTrFBW08dWxV55liGl2qriAyPWq"
+}

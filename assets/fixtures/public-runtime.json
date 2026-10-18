@@ -1,0 +1,20 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "openlegend-curated"
+    },
+    "assetId": "development-runtime",
+    "revisionId": "sha256-e58d03ef9999b68981546425a860c3b94feb1f8028bf9b817ed1fc5029d7c14e",
+    "manifestSha256": "e81dd479660c657e57300f6e3382ef1da8c6e4f07a93956183b95fb916eb1713"
+  },
+  "files": {
+    "apps/client/src/design-system/fonts/chakra-petch-latin-500-normal.woff2": {
+      "sha256": "36ad966cb653de70ba37355c41003b02de8940b2df6cbcd46480a6ad8cadd65d",
+      "bytes": 9956,
+      "mediaType": "font/woff2",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    }
+  }
+}

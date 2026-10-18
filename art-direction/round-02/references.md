@@ -2,7 +2,7 @@
 
 September 19, 2026. **16 new games, one artist study, and three round-one benchmarks.** Eight opening comparisons focus on your feedback. Inclusion is a question to evaluate, not a decision to adopt a style.
 
-[Interactive board](index.html) · [Round-one analysis](../round-01-analysis.md) · [Original board](../index.html)
+[Interactive board](https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/art-direction/round-02/index.html) · [Round-one analysis](../round-01-analysis.md) · [Original board](https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/art-direction/index.html)
 
 Images remain hosted at credited sources. The sources include gameplay, promotional screenshots, and artist studies; large portraits are distinguished from world sprites. No assets have been acquired.
 
@@ -322,7 +322,7 @@ Your strongest overall response: excellent and amazing, with environmental and h
 **Feedback question:** Which part is the non-negotiable benchmark: people, lighting, environment density, or the combination?
 
 [Original round-one reference image](https://i0.wp.com/www.pcmrace.com/wp-content/uploads/2022/12/REPLACED_Screenshot_05.jpg?ssl=1) · [Image source](https://www.pcmrace.com/2022/12/09/replaced-se-lanzara-para-pc-xbox-y-game-pass-en-el-2023-nuevos-screenshots-y-trailer-de-gameplay/)
-[Original reference G30](../index.html#G30)
+[Original reference G30](https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/art-direction/index.html#G30)
 
 Visual reference only; no production reuse permission assumed.
 
@@ -339,7 +339,7 @@ You liked detailed people and surroundings, clothing, lighting, mood, density, a
 **Feedback question:** Does this still set the clearest target for ordinary characters and materials?
 
 [Original round-one reference image](https://game-guide.fr/wp-content/uploads/2018/04/Backbone-screenshot-4.jpg) · [Image source](https://game-guide.fr/231194-backbone-un-jeu-denquete-en-pixelart/)
-[Original reference G32](../index.html#G32)
+[Original reference G32](https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/art-direction/index.html#G32)
 
 Visual reference only; no production reuse permission assumed.
 
@@ -356,6 +356,6 @@ You liked its richness, palette, and body-shape variety, while asking for more v
 **Feedback question:** How much of this color and lushness belongs in the target, and how far should the people move toward finer detail?
 
 [Original round-one reference image](https://cdn.mos.cms.futurecdn.net/Tu5r5mcgx9X5QwY9fS9cg6-1200-80.jpg) · [Image source](https://www.pcgamer.com/owlboy-release-date-set-after-nine-years-in-development/)
-[Original reference G22](../index.html#G22)
+[Original reference G22](https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/art-direction/index.html#G22)
 
 Visual reference only; no production reuse permission assumed.

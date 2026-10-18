@@ -11,7 +11,7 @@
   --panel-radius: var(--radius-lg);
   --panel-clip: none;
   --panel-border: 1px solid var(--line);
-  --panel-texture: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .94 0 0 0 0 .9 0 0 0 0 .82 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  --panel-texture: url('/__assets/apps%2Fclient%2Fsrc%2Fdesign-system%2Fpanel-noise.svg');
   --panel-sheen: linear-gradient(180deg, rgba(239, 231, 214, 0.035), rgba(239, 231, 214, 0) 120px);
   --control-radius: var(--radius-sm);
   --control-height: 40px;

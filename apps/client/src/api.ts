@@ -1,4 +1,5 @@
-import { pruneCheckpointRequests } from './retained-request';
+import { pruneWorldRequests } from './retained-request';
+import type { AssetRevisionReference } from '@open-legend/assets';
 import type {
   ApiResult,
   GamePatch,
@@ -51,6 +52,7 @@ function clearSessionDrafts(
         key.startsWith('open-legend:action-draft:') ||
         key.startsWith('open-legend:creation-request:') ||
         (!preserveCheckpointResults && key.startsWith('open-legend:checkpoint-request:')) ||
+        (!preserveCheckpointResults && key.startsWith('open-legend:asset-selection:')) ||
         (!preservePendingCommands &&
           (key.startsWith('open-legend:action-request:') ||
             key.startsWith('open-legend:inventory-command:') ||
@@ -74,7 +76,7 @@ export function clearAccess(options?: {
   clearTradeDrafts();
   // Each store can be unavailable independently; local storage must not prevent session cleanup.
   clearSessionDrafts(options?.preservePendingCommands, !!options?.preserveCheckpointResultsFor);
-  pruneCheckpointRequests(options?.preserveCheckpointResultsFor);
+  pruneWorldRequests(options?.preserveCheckpointResultsFor);
   try {
     if (!options?.preservePendingCommands) sessionStorage.removeItem('open-legend:private-owner');
   } catch {
@@ -111,7 +113,7 @@ export function acceptAccess(view: GameView): void {
     clearDraft();
   }
   privateDraftNamespace = view.access?.privateDraftScope ?? '';
-  pruneCheckpointRequests(view.checkpoint?.recoveryScope);
+  pruneWorldRequests(view.checkpoint?.recoveryScope);
   privateDraftTimeline = view.saveTimeline ?? '';
   const owner = JSON.stringify([
     view.worldId,
@@ -274,7 +276,7 @@ export async function getOperations(): Promise<OperationsView> {
   if (!response.ok || !result.ok)
     throw new Error(result.message ?? 'World operations could not be loaded. Try again.');
   const view = result as OperationsView;
-  pruneCheckpointRequests(view.checkpoint?.recoveryScope);
+  pruneWorldRequests(view.checkpoint?.recoveryScope);
   // Mutations carry this audience; a changed scope or world generation invalidates in-flight work.
   if (view.generation !== worldGeneration || view.scope !== viewScope) {
     accessGeneration++;
@@ -450,6 +452,27 @@ export async function loadGameSave(request: {
   if (!response.ok && !result.message)
     throw new Error(`The saved game could not be loaded (${response.status}).`);
   return result;
+}
+
+export interface AssetReleaseSelectionRequest {
+  requestId: string;
+  timeline: string;
+  reference: AssetRevisionReference;
+  expectedRevision: number;
+}
+export function selectInstalledArtwork(
+  request: AssetReleaseSelectionRequest,
+  operation: 'install' | 'selection-result',
+  signal?: AbortSignal,
+) {
+  const { requestId, ...selection } = request;
+  return post<{
+    ok: boolean;
+    reference?: AssetRevisionReference;
+    completedUnavailable?: boolean;
+    retryable?: boolean;
+    message?: string;
+  }>('/api/assets/' + operation, { id: requestId, ...selection }, signal);
 }
 /** Report foreground attention independently of the server's saved pause policy.
  * The open event stream proves connection even if background heartbeats stop.

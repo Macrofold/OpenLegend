@@ -1,6 +1,6 @@
 # Round three reference catalog
 
-[Interactive board](index.html) · [Feedback synthesis](../round-02-analysis.md)
+[Interactive board](https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/art-direction/round-03/index.html) · [Feedback synthesis](../round-02-analysis.md)
 
 ## T01 — Hades
 

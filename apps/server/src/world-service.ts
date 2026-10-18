@@ -200,6 +200,11 @@ import type {
 } from '@open-legend/protocol';
 import type { AppConfig } from './config.js';
 import { digest, type SavedWorld, type GameRepository, type PreparedCommit } from './store.js';
+import {
+  assertAssetRevisionReference,
+  sameAssetRevision,
+  type AssetRevisionReference,
+} from '@open-legend/assets';
 import type { CreationActivationReceipt } from './creation-target-contracts.js';
 import { prepareWorldForStartup } from './initial-world-preparation.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
@@ -480,8 +485,16 @@ function evictedFrom(
 }
 
 /** Application coordination only: pure rules live in domain; all I/O is through a store. */
+interface PresentationReleaseSelection {
+  id: string;
+  timeline: string;
+  reference: AssetRevisionReference;
+  expectedRevision: number;
+}
+
 export class WorldService {
   private saved!: SavedWorld;
+  private assetAuthorityUnsubscribe?: () => void;
   private readonly personMemoryPage = createPersonMemoryPager();
   private worldEventsById = new Map<string, WorldEvent>();
   private persistedRevision = 0;
@@ -666,6 +679,8 @@ export class WorldService {
   readonly ready: Promise<void>;
   private readonly hostWork = new HostWork(this);
   releaseHostWork(): void {
+    this.assetAuthorityUnsubscribe?.();
+    this.assetAuthorityUnsubscribe = undefined;
     this.hostWork.close();
   }
   private readonly mutationLane = new WorkLane('mutation');
@@ -761,7 +776,11 @@ export class WorldService {
     readonly store: GameRepository,
     readonly config: AppConfig,
     private readonly now = Date.now,
-    private readonly startup: { createdActivation?: CreationActivationReceipt } = {},
+    private readonly startup: {
+      createdActivation?: CreationActivationReceipt;
+      /** Trusted installed build lock. It never silently binds a saved world. */
+      presentationRelease?: AssetRevisionReference;
+    } = {},
   ) {
     this.store.memories?.setBackgroundSearchAdmission(
       () => this.pendingOperations === 0 && !this.backgroundSave,
@@ -791,6 +810,13 @@ export class WorldService {
       speed: 1,
       manuallyPaused: false,
     };
+    if (this.saved.presentationRelease) {
+      if (!store.assets)
+        throw new GameSaveError('The asset publication repository is unavailable.');
+      // A new build can open a known older release using native depiction, so the
+      // owner can explicitly select this build's exact release without a deadlock.
+      await store.assets.worldReleaseStatus(this.saved.world.id, this.saved.presentationRelease);
+    }
     if (!store.authority) throw new Error('Current authority repository is required.');
     const bindings = createdActivation
       ? []
@@ -905,6 +931,7 @@ export class WorldService {
       .filter((entity) => entity.actor?.controller === 'player')
       .map((entity) => entity.id);
     store.authority.subscribe(() => this.notify(false));
+    this.assetAuthorityUnsubscribe = store.assets?.subscribeAuthority(() => this.notify(false));
     this.viewRevision = this.persistedRevision;
     this.lastProgressSaveAt = this.now();
     this.publishDurable(this.persistedRevision, this.snapshotSequence, this.saved.world);
@@ -939,6 +966,148 @@ export class WorldService {
 
   get world(): WorldState {
     return this.saved.world;
+  }
+  get presentationRelease(): AssetRevisionReference | undefined {
+    return this.saved.presentationRelease;
+  }
+  get presentationReleaseRevision(): number {
+    return this.saved.presentationReleaseRevision ?? 0;
+  }
+  get assetAuthorityGeneration(): number {
+    return this.store.assets?.projectionGeneration ?? 0;
+  }
+  async presentationReleaseFor(scope: RequestScope): Promise<AssetRevisionReference | undefined> {
+    const reference = this.saved.presentationRelease;
+    if (!reference || !this.store.assets) return undefined;
+    this.assertScope(scope);
+    const allowed = await this.store.assets.mayRead(reference, { accountId: scope.accountId });
+    this.assertScope(scope);
+    return allowed ? reference : undefined;
+  }
+  private async assertPresentationRelease(reference: AssetRevisionReference): Promise<void> {
+    assertAssetRevisionReference(reference);
+    if (!sameAssetRevision(reference, this.startup.presentationRelease))
+      throw new GameSaveError(
+        'The world requires another exact asset release. Materialize and build that release before opening it; its saved binding was kept.',
+      );
+    if (!this.store.assets)
+      throw new GameSaveError('The asset publication repository is unavailable.');
+  }
+  /** Explicit owner operation; a catalog/build update never rebinds a running world.
+   * The operational receipt survives gameplay rewind and lost acknowledgements. */
+  async selectPresentationRelease(
+    request: PresentationReleaseSelection,
+    scope = this.localScope,
+  ): Promise<AssetRevisionReference> {
+    return this.authorized(scope, 'save', false, async () => {
+      await this.ready;
+      const { key, fingerprint } = this.presentationSelectionIdentity(request, scope);
+      const prior = (await this.store.getIntegration(key)) as
+        | { fingerprint: string; reference: AssetRevisionReference }
+        | undefined;
+      this.assertScope(scope, 'save');
+      if (prior) {
+        if (prior.fingerprint !== fingerprint)
+          throw new Error('This asset selection request already describes different work.');
+        await this.store.assets!.revision(prior.reference, { accountId: scope.accountId });
+        this.assertScope(scope, 'save');
+        return prior.reference;
+      }
+      if (request.timeline !== this.timelineId)
+        throw new Error('The saved world timeline changed. Refresh before selecting artwork.');
+      await this.assertPresentationRelease(request.reference);
+      // The authenticated scope pins this world and timeline. Its choice revision
+      // is sufficient CAS even when current rights hide the old asset identity.
+      if (this.presentationReleaseRevision !== request.expectedRevision)
+        throw new Error(
+          'Another operation changed the world asset release. Refresh before selecting.',
+        );
+      const principal = { accountId: scope.accountId };
+      const record = await this.store.assets!.revision(request.reference, principal);
+      if (record.manifest.kind !== 'release' || record.destination.boundary !== 'runtime')
+        throw new Error('This game build requires an approved runtime asset release.');
+      const reference = structuredClone(request.reference);
+      if (
+        !(await this.commit(
+          {
+            ...this.saved,
+            presentationRelease: reference,
+            presentationReleaseRevision: request.expectedRevision + 1,
+          },
+          undefined,
+          'unchanged',
+          undefined,
+          undefined,
+          undefined,
+          {
+            operationalChange: async () => {
+              await this.store.assets!.bindWorld(principal, this.world.id, reference);
+              await this.store.putIntegration(key, { fingerprint, reference });
+            },
+          },
+        ))
+      )
+        throw new Error(this.storageError ?? 'The world asset selection could not be saved.');
+      return reference;
+    });
+  }
+  private presentationSelectionIdentity(
+    request: PresentationReleaseSelection,
+    scope: RequestScope,
+  ) {
+    if (!this.mayManageSaves(scope) || !request.id || request.id.length > 128)
+      throw new Error('World creator or host operator access required.');
+    assertAssetRevisionReference(request.reference);
+    if (typeof request.timeline !== 'string' || !request.timeline || request.timeline.length > 128)
+      throw new Error('The original artwork selection timeline is invalid.');
+    if (!Number.isSafeInteger(request.expectedRevision) || request.expectedRevision < 0)
+      throw new Error('The expected asset binding revision is invalid.');
+    if (!this.store.assets)
+      throw new GameSaveError('The asset publication repository is unavailable.');
+    return {
+      key: `asset-world-selection:${JSON.stringify([this.world.id, scope.accountId, request.id])}`,
+      fingerprint: digest({
+        timeline: request.timeline,
+        reference: request.reference,
+        expectedRevision: request.expectedRevision,
+      }),
+    };
+  }
+  /** Read the original durable receipt without selecting artwork again. An
+   * unknown operation can retry only while its original expected choice holds. */
+  async presentationSelectionResult(
+    request: PresentationReleaseSelection,
+    scope = this.localScope,
+  ): Promise<{
+    reference?: AssetRevisionReference;
+    completedUnavailable?: boolean;
+    retryable: boolean;
+  }> {
+    return this.authorized(scope, 'save', false, async () => {
+      await this.ready;
+      const { key, fingerprint } = this.presentationSelectionIdentity(request, scope);
+      const prior = (await this.store.getIntegration(key)) as
+        | { fingerprint: string; reference: AssetRevisionReference }
+        | undefined;
+      this.assertScope(scope, 'save');
+      if (prior) {
+        if (prior.fingerprint !== fingerprint)
+          throw new Error('This asset selection request already describes different work.');
+        const readable = await this.store.assets!.mayRead(prior.reference, {
+          accountId: scope.accountId,
+        });
+        this.assertScope(scope, 'save');
+        return readable
+          ? { reference: prior.reference, retryable: false }
+          : { completedUnavailable: true, retryable: false };
+      }
+      return {
+        retryable:
+          request.timeline === this.timelineId &&
+          sameAssetRevision(request.reference, this.startup.presentationRelease) &&
+          request.expectedRevision === this.presentationReleaseRevision,
+      };
+    });
   }
   worldEvent(eventId: string): WorldEvent | undefined {
     return this.worldEventsById.get(eventId);
@@ -2369,6 +2538,15 @@ export class WorldService {
         if (!this.mayManageSaves(scope))
           throw new Error('World creator or host operator access required.');
         const restored = structuredClone(payload.state);
+        if (restored.presentationRelease)
+          await this.assertPresentationRelease(restored.presentationRelease);
+        const assetPrincipal = { accountId: scope.accountId };
+        await this.store.saves?.assertAssetDependencies(
+          payload,
+          this.startup.presentationRelease,
+          assetPrincipal,
+          id,
+        );
         await this.store.authority!.restoreBindings(restored.world);
         // Current-format validation precedes installation; the current privacy
         // ledger below still removes experience forgotten after this save.
@@ -2433,6 +2611,7 @@ export class WorldService {
             epoch,
             timeline,
             recoveryId,
+            assetPrincipal,
           }))
         )
           throw new Error(this.storageError ?? 'Load failed.');

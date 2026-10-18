@@ -1,0 +1,2857 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "OpenLegend private asset storage and isolated study delivery; conditional immutable writes and short project-operator access.",
+  "Metadata": {
+    "AWSToolsMetrics": {
+      "AWSAgentToolkit": "aws-cloudformation@3"
+    },
+    "com.aws.cloudformation.Context": {
+      "arch": "Separate library, studies, production, nonproduction, intake, recovery and audit boundaries; no gameplay authority.",
+      "must": [
+        "All regional resources stay in the selected project Region.",
+        "Retain durable content; deletion and Git history rewriting are separately authorized.",
+        "Same-project recovery is not independent disaster recovery.",
+        "CloudFront logging v2 is configured by the CLI in its required us-east-1 control Region, delivering into the selected-Region log bucket.",
+        "Private study access covers only explicitly copied curated material; ordinary game/private-world permission remains server-owned."
+      ],
+      "ref": [
+        {
+          "at": "docs/projects/game-asset-storage-tech-design.md",
+          "has": "storage, publication, retention and recovery contracts"
+        }
+      ]
+    }
+  },
+  "Parameters": {
+    "ResourcePrefix": {
+      "Type": "String",
+      "Default": "openlegend-assets",
+      "AllowedPattern": "[a-z][a-z0-9-]{2,31}",
+      "MaxLength": 32
+    },
+    "AllowedConsumerOrigins": {
+      "Type": "CommaDelimitedList",
+      "Default": "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3211,http://127.0.0.1:3211,https://dy6x7i85gv15v.cloudfront.net,https://d2f3eexpr97ljm.cloudfront.net,https://d1wtsbsz823sj.cloudfront.net,https://assets.openlegend.ai",
+      "Description": "Exact game and tooling origins admitted for browser asset reads."
+    },
+    "SignerSecretArn": {
+      "Type": "String",
+      "AllowedPattern": "arn:aws:secretsmanager:us-east-2:[0-9]{12}:secret:.+",
+      "Description": "Existing secret JSON with privateKeyPem. No secret value belongs in the template."
+    },
+    "SignerPublicKeyPem": {
+      "Type": "String",
+      "Description": "RSA2048 PUBLIC KEY PEM corresponding to SignerSecretArn; never pass the private key."
+    },
+    "CookieSeconds": {
+      "Type": "Number",
+      "Default": 900,
+      "MinValue": 60,
+      "MaxValue": 900
+    },
+    "ExternalRuntimeBucket": {
+      "Type": "String",
+      "Default": "openlegend-runtime-027677879749-us-east-2",
+      "AllowedPattern": "[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]",
+      "Description": "Existing production bucket served by assets.openlegend.ai; retained and owned outside this stack."
+    },
+    "ExternalDistributionId": {
+      "Type": "String",
+      "Default": "E1P72BBRAH5LT9",
+      "AllowedPattern": "[A-Z0-9]+",
+      "Description": "Existing custom-domain CloudFront distribution; public study behavior is merged through the reviewed ETag guarded command."
+    }
+  },
+  "Resources": {
+    "LibraryBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Retained private editable originals."
+        }
+      },
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced"
+            }
+          ]
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "OpenLegend"
+          },
+          {
+            "Key": "AssetPurpose",
+            "Value": "art-library"
+          }
+        ],
+        "LoggingConfiguration": {
+          "DestinationBucketName": {
+            "Ref": "LogsBucket"
+          },
+          "LogFilePrefix": "s3/art-library/"
+        }
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "StudiesBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Retained study delivery boundary."
+        }
+      },
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced"
+            }
+          ]
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "OpenLegend"
+          },
+          {
+            "Key": "AssetPurpose",
+            "Value": "art-studies"
+          }
+        ],
+        "LoggingConfiguration": {
+          "DestinationBucketName": {
+            "Ref": "LogsBucket"
+          },
+          "LogFilePrefix": "s3/art-studies/"
+        },
+        "CorsConfiguration": {
+          "CorsRules": [
+            {
+              "AllowedMethods": ["GET", "HEAD"],
+              "AllowedOrigins": {
+                "Ref": "AllowedConsumerOrigins"
+              },
+              "AllowedHeaders": ["Range", "If-None-Match", "If-Range"],
+              "ExposedHeaders": ["ETag", "Content-Length", "Content-Range", "Accept-Ranges"],
+              "MaxAge": 300
+            }
+          ]
+        }
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "RuntimeBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Retained production delivery boundary."
+        }
+      },
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced"
+            }
+          ]
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "OpenLegend"
+          },
+          {
+            "Key": "AssetPurpose",
+            "Value": "runtime-production"
+          }
+        ],
+        "LoggingConfiguration": {
+          "DestinationBucketName": {
+            "Ref": "LogsBucket"
+          },
+          "LogFilePrefix": "s3/runtime-production/"
+        },
+        "CorsConfiguration": {
+          "CorsRules": [
+            {
+              "AllowedMethods": ["GET", "HEAD"],
+              "AllowedOrigins": {
+                "Ref": "AllowedConsumerOrigins"
+              },
+              "AllowedHeaders": ["Range", "If-None-Match", "If-Range"],
+              "ExposedHeaders": ["ETag", "Content-Length", "Content-Range", "Accept-Ranges"],
+              "MaxAge": 300
+            }
+          ]
+        }
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "NonproductionRuntimeBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Retained development delivery boundary."
+        }
+      },
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced"
+            }
+          ]
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "OpenLegend"
+          },
+          {
+            "Key": "AssetPurpose",
+            "Value": "runtime-nonproduction"
+          }
+        ],
+        "LoggingConfiguration": {
+          "DestinationBucketName": {
+            "Ref": "LogsBucket"
+          },
+          "LogFilePrefix": "s3/runtime-nonproduction/"
+        },
+        "CorsConfiguration": {
+          "CorsRules": [
+            {
+              "AllowedMethods": ["GET", "HEAD"],
+              "AllowedOrigins": {
+                "Ref": "AllowedConsumerOrigins"
+              },
+              "AllowedHeaders": ["Range", "If-None-Match", "If-Range"],
+              "ExposedHeaders": ["ETag", "Content-Length", "Content-Range", "Accept-Ranges"],
+              "MaxAge": 300
+            }
+          ]
+        }
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "IntakeBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Isolate unaccepted and restored inputs."
+        }
+      },
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced"
+            }
+          ]
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "OpenLegend"
+          },
+          {
+            "Key": "AssetPurpose",
+            "Value": "intake"
+          }
+        ],
+        "LoggingConfiguration": {
+          "DestinationBucketName": {
+            "Ref": "LogsBucket"
+          },
+          "LogFilePrefix": "s3/intake/"
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "Id": "AbortIncompleteIntakeUploads",
+              "Status": "Enabled",
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 7
+              }
+            },
+            {
+              "Id": "ExpireExplicitDisposableTerminalRuns",
+              "Status": "Enabled",
+              "Prefix": "runs/",
+              "TagFilters": [
+                {
+                  "Key": "asset-run-state",
+                  "Value": "terminal-disposable"
+                }
+              ],
+              "ExpirationInDays": 7,
+              "NoncurrentVersionExpiration": {
+                "NoncurrentDays": 7
+              }
+            }
+          ]
+        }
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "RecoveryBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Retain independently protected recovery."
+        }
+      },
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced"
+            }
+          ]
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "OpenLegend"
+          },
+          {
+            "Key": "AssetPurpose",
+            "Value": "asset-recovery"
+          }
+        ],
+        "LoggingConfiguration": {
+          "DestinationBucketName": {
+            "Ref": "LogsBucket"
+          },
+          "LogFilePrefix": "s3/asset-recovery/"
+        }
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "LogsBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Bound diagnostic retention."
+        }
+      },
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced"
+            }
+          ]
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "OpenLegend"
+          },
+          {
+            "Key": "AssetPurpose",
+            "Value": "asset-audit-logs"
+          }
+        ],
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "Id": "BoundDiagnosticLogRetention",
+              "Status": "Enabled",
+              "ExpirationInDays": 30,
+              "NoncurrentVersionExpiration": {
+                "NoncurrentDays": 30
+              },
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 7
+              }
+            }
+          ]
+        }
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "RestrictedDefault": {
+      "Type": "AWS::CloudFront::Function",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Reject unadmitted paths."
+        }
+      },
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${ResourcePrefix}-deny-unpublished"
+        },
+        "AutoPublish": true,
+        "FunctionConfig": {
+          "Comment": "Reject unpublished paths.",
+          "Runtime": "cloudfront-js-2.0"
+        },
+        "FunctionCode": "function handler(event) { return {statusCode:403,statusDescription:'Forbidden',headers:{'cache-control':{value:'no-store'},'content-type':{value:'text/plain; charset=utf-8'}}}; }"
+      }
+    },
+    "ViewerHost": {
+      "Type": "AWS::CloudFront::Function",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Overwrite untrusted viewer-host input."
+        }
+      },
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${ResourcePrefix}-viewer-host"
+        },
+        "AutoPublish": true,
+        "FunctionConfig": {
+          "Comment": "Trust the actual viewer host.",
+          "Runtime": "cloudfront-js-2.0"
+        },
+        "FunctionCode": "function handler(event) { var r=event.request; r.headers['x-openlegend-viewer-host']={value:r.headers.host.value}; return r; }"
+      }
+    },
+    "PublicCache": {
+      "Type": "AWS::CloudFront::CachePolicy",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Cache immutable public bytes."
+        }
+      },
+      "Properties": {
+        "CachePolicyConfig": {
+          "Name": {
+            "Fn::Sub": "${ResourcePrefix}-publiccache"
+          },
+          "MinTTL": 0,
+          "DefaultTTL": 31536000,
+          "MaxTTL": 31536000,
+          "ParametersInCacheKeyAndForwardedToOrigin": {
+            "CookiesConfig": {
+              "CookieBehavior": "none"
+            },
+            "HeadersConfig": {
+              "HeaderBehavior": "none"
+            },
+            "QueryStringsConfig": {
+              "QueryStringBehavior": "none"
+            },
+            "EnableAcceptEncodingBrotli": true,
+            "EnableAcceptEncodingGzip": true
+          }
+        }
+      }
+    },
+    "NoCache": {
+      "Type": "AWS::CloudFront::CachePolicy",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Never share protected/login replies."
+        }
+      },
+      "Properties": {
+        "CachePolicyConfig": {
+          "Name": {
+            "Fn::Sub": "${ResourcePrefix}-nocache"
+          },
+          "MinTTL": 0,
+          "DefaultTTL": 0,
+          "MaxTTL": 0,
+          "ParametersInCacheKeyAndForwardedToOrigin": {
+            "CookiesConfig": {
+              "CookieBehavior": "none"
+            },
+            "HeadersConfig": {
+              "HeaderBehavior": "none"
+            },
+            "QueryStringsConfig": {
+              "QueryStringBehavior": "none"
+            },
+            "EnableAcceptEncodingBrotli": false,
+            "EnableAcceptEncodingGzip": false
+          }
+        }
+      }
+    },
+    "AccessOriginPolicy": {
+      "Type": "AWS::CloudFront::OriginRequestPolicy",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Only the uncached login exchange forwards cookies, so CloudFront preserves its Set-Cookie response; query ticket and trusted viewer host are scoped separately."
+        }
+      },
+      "Properties": {
+        "OriginRequestPolicyConfig": {
+          "Name": {
+            "Fn::Sub": "${ResourcePrefix}-access-query"
+          },
+          "CookiesConfig": {
+            "CookieBehavior": "all"
+          },
+          "HeadersConfig": {
+            "HeaderBehavior": "whitelist",
+            "Headers": ["x-openlegend-viewer-host"]
+          },
+          "QueryStringsConfig": {
+            "QueryStringBehavior": "whitelist",
+            "QueryStrings": ["ticket"]
+          }
+        }
+      }
+    },
+    "PublicHeaders": {
+      "Type": "AWS::CloudFront::ResponseHeadersPolicy",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Public media transport headers and CORS."
+        }
+      },
+      "Properties": {
+        "ResponseHeadersPolicyConfig": {
+          "Name": {
+            "Fn::Sub": "${ResourcePrefix}-publicheaders"
+          },
+          "SecurityHeadersConfig": {
+            "ContentTypeOptions": {
+              "Override": true
+            },
+            "FrameOptions": {
+              "FrameOption": "DENY",
+              "Override": true
+            },
+            "ReferrerPolicy": {
+              "ReferrerPolicy": "no-referrer",
+              "Override": true
+            },
+            "StrictTransportSecurity": {
+              "AccessControlMaxAgeSec": 31536000,
+              "IncludeSubdomains": false,
+              "Preload": false,
+              "Override": true
+            }
+          },
+          "CorsConfig": {
+            "AccessControlAllowCredentials": false,
+            "AccessControlAllowHeaders": {
+              "Items": ["Range", "If-None-Match", "If-Range"]
+            },
+            "AccessControlAllowMethods": {
+              "Items": ["GET", "HEAD", "OPTIONS"]
+            },
+            "AccessControlAllowOrigins": {
+              "Items": {
+                "Ref": "AllowedConsumerOrigins"
+              }
+            },
+            "AccessControlExposeHeaders": {
+              "Items": ["ETag", "Content-Length", "Content-Range", "Accept-Ranges"]
+            },
+            "AccessControlMaxAgeSec": 300,
+            "OriginOverride": true
+          },
+          "CustomHeadersConfig": {
+            "Items": [
+              {
+                "Header": "Timing-Allow-Origin",
+                "Value": "*",
+                "Override": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    "StudyHeaders": {
+      "Type": "AWS::CloudFront::ResponseHeadersPolicy",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Isolated private tooling headers and CORS."
+        }
+      },
+      "Properties": {
+        "ResponseHeadersPolicyConfig": {
+          "Name": {
+            "Fn::Sub": "${ResourcePrefix}-studyheaders"
+          },
+          "SecurityHeadersConfig": {
+            "ContentTypeOptions": {
+              "Override": true
+            },
+            "FrameOptions": {
+              "FrameOption": "DENY",
+              "Override": true
+            },
+            "ReferrerPolicy": {
+              "ReferrerPolicy": "no-referrer",
+              "Override": true
+            },
+            "StrictTransportSecurity": {
+              "AccessControlMaxAgeSec": 31536000,
+              "IncludeSubdomains": false,
+              "Preload": false,
+              "Override": true
+            },
+            "ContentSecurityPolicy": {
+              "ContentSecurityPolicy": "default-src 'self'; img-src 'self' data: blob: https:; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' blob:; worker-src 'self' blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+              "Override": true
+            }
+          },
+          "CorsConfig": {
+            "AccessControlAllowCredentials": false,
+            "AccessControlAllowHeaders": {
+              "Items": ["Range", "If-None-Match", "If-Range"]
+            },
+            "AccessControlAllowMethods": {
+              "Items": ["GET", "HEAD", "OPTIONS"]
+            },
+            "AccessControlAllowOrigins": {
+              "Items": {
+                "Ref": "AllowedConsumerOrigins"
+              }
+            },
+            "AccessControlExposeHeaders": {
+              "Items": ["ETag", "Content-Length", "Content-Range", "Accept-Ranges"]
+            },
+            "AccessControlMaxAgeSec": 300,
+            "OriginOverride": true
+          },
+          "CustomHeadersConfig": {
+            "Items": [
+              {
+                "Header": "Cache-Control",
+                "Value": "private, no-store",
+                "Override": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    "RuntimeOac": {
+      "Type": "AWS::CloudFront::OriginAccessControl",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Sign exact origin reads."
+        }
+      },
+      "Properties": {
+        "OriginAccessControlConfig": {
+          "Name": {
+            "Fn::Sub": "${ResourcePrefix}-runtimeoac"
+          },
+          "OriginAccessControlOriginType": "s3",
+          "SigningBehavior": "always",
+          "SigningProtocol": "sigv4"
+        }
+      }
+    },
+    "NonproductionOac": {
+      "Type": "AWS::CloudFront::OriginAccessControl",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Sign exact origin reads."
+        }
+      },
+      "Properties": {
+        "OriginAccessControlConfig": {
+          "Name": {
+            "Fn::Sub": "${ResourcePrefix}-nonproductionoac"
+          },
+          "OriginAccessControlOriginType": "s3",
+          "SigningBehavior": "always",
+          "SigningProtocol": "sigv4"
+        }
+      }
+    },
+    "StudiesOac": {
+      "Type": "AWS::CloudFront::OriginAccessControl",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Sign exact origin reads."
+        }
+      },
+      "Properties": {
+        "OriginAccessControlConfig": {
+          "Name": {
+            "Fn::Sub": "${ResourcePrefix}-studiesoac"
+          },
+          "OriginAccessControlOriginType": "s3",
+          "SigningBehavior": "always",
+          "SigningProtocol": "sigv4"
+        }
+      }
+    },
+    "AccessOac": {
+      "Type": "AWS::CloudFront::OriginAccessControl",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Sign exact origin reads."
+        }
+      },
+      "Properties": {
+        "OriginAccessControlConfig": {
+          "Name": {
+            "Fn::Sub": "${ResourcePrefix}-accessoac"
+          },
+          "OriginAccessControlOriginType": "lambda",
+          "SigningBehavior": "always",
+          "SigningProtocol": "sigv4"
+        }
+      }
+    },
+    "StudyPublicKey": {
+      "Type": "AWS::CloudFront::PublicKey",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Public signing key only."
+        }
+      },
+      "Properties": {
+        "PublicKeyConfig": {
+          "Name": {
+            "Fn::Sub": "${ResourcePrefix}-study-signing"
+          },
+          "CallerReference": {
+            "Fn::Sub": "${AWS::StackName}-study-signing"
+          },
+          "EncodedKey": {
+            "Ref": "SignerPublicKeyPem"
+          },
+          "Comment": "Public half only; private RSA key is read from Secrets Manager."
+        }
+      }
+    },
+    "StudyKeyGroup": {
+      "Type": "AWS::CloudFront::KeyGroup",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Curated-private prefix signed cookies."
+        }
+      },
+      "Properties": {
+        "KeyGroupConfig": {
+          "Name": {
+            "Fn::Sub": "${ResourcePrefix}-study-operators"
+          },
+          "Items": [
+            {
+              "Ref": "StudyPublicKey"
+            }
+          ]
+        }
+      }
+    },
+    "AccessLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Bound issuer logs; exclude tickets/keys."
+        }
+      },
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${ResourcePrefix}-study-access"
+        },
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "OpenLegend"
+          }
+        ]
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "AccessExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "One secret; own diagnostics only."
+        }
+      },
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "AssetOperations",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": ["secretsmanager:GetSecretValue"],
+                  "Resource": {
+                    "Ref": "SignerSecretArn"
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+                  "Resource": {
+                    "Fn::GetAtt": ["AccessLogGroup", "Arn"]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "StudyAccess": {
+      "Type": "AWS::Lambda::Function",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "IAM issues expiring tickets; HTTP only exchanges them."
+        }
+      },
+      "Properties": {
+        "FunctionName": {
+          "Fn::Sub": "${ResourcePrefix}-study-access"
+        },
+        "Runtime": "nodejs22.x",
+        "Handler": "index.handler",
+        "Architectures": ["arm64"],
+        "MemorySize": 256,
+        "Timeout": 10,
+        "ReservedConcurrentExecutions": 2,
+        "Role": {
+          "Fn::GetAtt": ["AccessExecutionRole", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "SIGNER_SECRET_ARN": {
+              "Ref": "SignerSecretArn"
+            },
+            "PUBLIC_KEY_ID": {
+              "Ref": "StudyPublicKey"
+            },
+            "COOKIE_SECONDS": {
+              "Ref": "CookieSeconds"
+            }
+          }
+        },
+        "Code": {
+          "ZipFile": "const { createPrivateKey, createPublicKey, randomBytes, sign, verify } = require('node:crypto');\nconst { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');\nconst secrets = new SecretsManagerClient({ maxAttempts: 1 });\nlet cached;\nasync function signingKey() {\nif (!cached || cached.until < Date.now()) {\nconst result = await secrets.send(new GetSecretValueCommand({ SecretId: process.env.SIGNER_SECRET_ARN }));\nif (typeof result.SecretString !== 'string') throw new Error('The configured signing key is unavailable.');\nconst secret = JSON.parse(result.SecretString);\nif (typeof secret.privateKeyPem !== 'string') throw new Error('Invalid configured signing key.');\nconst privateKey = createPrivateKey(secret.privateKeyPem);\nif (privateKey.asymmetricKeyType !== 'rsa' || privateKey.asymmetricKeyDetails.modulusLength !== 2048)\nthrow new Error('The configured signing key must be RSA2048.');\ncached = { privateKey, publicKey: createPublicKey(privateKey), until: Date.now() + 60000 };\n}\nreturn cached;\n}\nconst prefix = '/restricted/curated-private/';\nconst validHost = (value) => typeof value === 'string' && /^[a-z0-9]+\\.cloudfront\\.net$/.test(value);\nfunction safePath(value) {\nif (typeof value !== 'string' || value.length > 4096 || !value.startsWith(prefix) || /[\\\\?#\\u0000-\\u0020\\u007f]/.test(value))\nthrow new Error('The destination must be a named private study path.');\nconst decoded = decodeURIComponent(value);\nif (/[\\\\?#\\u0000-\\u0020\\u007f]/.test(decoded) || decoded.split('/').some((part) => part === '.' || part === '..'))\nthrow new Error('Unsafe private study path.');\nreturn value;\n}\nfunction cfBase64(value) {\nreturn Buffer.from(value).toString('base64').replace(/\\+/g, '-').replace(/=/g, '_').replace(/\\//g, '~');\n}\nfunction unavailable() {\nreturn { statusCode: 403, headers: { 'cache-control': 'no-store', 'content-type': 'text/plain; charset=utf-8',\n'referrer-policy': 'no-referrer', 'content-security-policy': \"default-src 'none'; frame-ancestors 'none'\" },\nbody: 'This study needs a fresh project-operator login. Run the documented asset login command.' };\n}\nexports.handler = async (event) => {\nconst now = Math.floor(Date.now() / 1000);\nconst keys = await signingKey();\nif (!event?.requestContext?.http) {\nif (event?.operation !== 'issue' || !validHost(event.viewerHost))\nthrow new Error('Unsupported operator request.');\nconst destination = safePath(event.destination);\nconst expires = now + Number(process.env.COOKIE_SECONDS);\nconst payload = Buffer.from(JSON.stringify({ host: event.viewerHost, destination,\nissued: now, ticketExpires: now + 60, cookieExpires: expires, nonce: randomBytes(24).toString('hex') }));\nconst ticket = payload.toString('base64url') + '.' + sign('RSA-SHA256', payload, keys.privateKey).toString('base64url');\nreturn { entryUrl: 'https://' + event.viewerHost + '/access?ticket=' + encodeURIComponent(ticket), expiresAt: expires };\n}\ntry {\nif (event.requestContext.http.method !== 'GET' || event.rawPath !== '/access') return unavailable();\nconst ticket = event.queryStringParameters?.ticket;\nif (typeof ticket !== 'string' || ticket.length > 8192) return unavailable();\nconst parts = ticket.split('.');\nif (parts.length !== 2) return unavailable();\nconst payload = Buffer.from(parts[0], 'base64url');\nif (!verify('RSA-SHA256', payload, keys.publicKey, Buffer.from(parts[1], 'base64url'))) return unavailable();\nconst claim = JSON.parse(payload.toString('utf8'));\nconst host = event.headers?.['x-openlegend-viewer-host'];\nif (!validHost(host) || host !== claim.host || !Number.isSafeInteger(claim.issued) || claim.issued > now ||\n!Number.isSafeInteger(claim.ticketExpires) || claim.ticketExpires < now || claim.ticketExpires !== claim.issued + 60 ||\n!Number.isSafeInteger(claim.cookieExpires) || claim.cookieExpires !== claim.issued + Number(process.env.COOKIE_SECONDS))\nreturn unavailable();\nconst destination = safePath(claim.destination);\nconst policy = JSON.stringify({ Statement: [{ Resource: 'https://' + host + prefix + '*',\nCondition: { DateLessThan: { 'AWS:EpochTime': claim.cookieExpires } } }] });\nconst values = { 'CloudFront-Policy': cfBase64(policy),\n'CloudFront-Signature': cfBase64(sign('RSA-SHA256', Buffer.from(policy), keys.privateKey)),\n'CloudFront-Key-Pair-Id': process.env.PUBLIC_KEY_ID, 'CloudFront-Hash-Algorithm': 'SHA256' };\nreturn { statusCode: 303,\nheaders: { location: destination, 'cache-control': 'no-store', 'referrer-policy': 'no-referrer',\n'content-security-policy': \"default-src 'none'; frame-ancestors 'none'\" },\ncookies: Object.entries(values).map(([name, value]) => name + '=' + value + '; Path=' + prefix +\n'; Max-Age=' + (claim.cookieExpires - now) + '; Secure; HttpOnly; SameSite=Lax'), body: '' };\n} catch { return unavailable(); }\n};\n"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "OpenLegend"
+          }
+        ]
+      }
+    },
+    "StudyAccessUrl": {
+      "Type": "AWS::Lambda::Url",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Regional IAM-signed CloudFront exchange."
+        }
+      },
+      "Properties": {
+        "TargetFunctionArn": {
+          "Fn::GetAtt": ["StudyAccess", "Arn"]
+        },
+        "AuthType": "AWS_IAM",
+        "InvokeMode": "BUFFERED"
+      }
+    },
+    "RuntimeDistribution": {
+      "Type": "AWS::CloudFront::Distribution",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Production delivery origin."
+        }
+      },
+      "Properties": {
+        "DistributionConfig": {
+          "Enabled": true,
+          "Comment": "OpenLegend production runtime",
+          "HttpVersion": "http2and3",
+          "IPV6Enabled": true,
+          "PriceClass": "PriceClass_100",
+          "Origins": [
+            {
+              "Id": "objects",
+              "DomainName": {
+                "Fn::GetAtt": ["RuntimeBucket", "RegionalDomainName"]
+              },
+              "OriginAccessControlId": {
+                "Ref": "RuntimeOac"
+              },
+              "S3OriginConfig": {
+                "OriginAccessIdentity": ""
+              }
+            }
+          ],
+          "DefaultCacheBehavior": {
+            "TargetOriginId": "objects",
+            "ViewerProtocolPolicy": "https-only",
+            "AllowedMethods": ["GET", "HEAD", "OPTIONS"],
+            "CachedMethods": ["GET", "HEAD", "OPTIONS"],
+            "Compress": false,
+            "CachePolicyId": {
+              "Ref": "NoCache"
+            },
+            "ResponseHeadersPolicyId": {
+              "Ref": "StudyHeaders"
+            },
+            "FunctionAssociations": [
+              {
+                "EventType": "viewer-request",
+                "FunctionARN": {
+                  "Fn::GetAtt": ["RestrictedDefault", "FunctionARN"]
+                }
+              }
+            ]
+          },
+          "CacheBehaviors": [
+            {
+              "TargetOriginId": "objects",
+              "ViewerProtocolPolicy": "https-only",
+              "AllowedMethods": ["GET", "HEAD", "OPTIONS"],
+              "CachedMethods": ["GET", "HEAD", "OPTIONS"],
+              "Compress": true,
+              "CachePolicyId": {
+                "Ref": "PublicCache"
+              },
+              "ResponseHeadersPolicyId": {
+                "Ref": "PublicHeaders"
+              },
+              "PathPattern": "/public/*",
+              "FunctionAssociations": [
+                {
+                  "EventType": "viewer-response",
+                  "FunctionARN": {
+                    "Fn::GetAtt": ["StudyPublicPrefixRewrite", "FunctionARN"]
+                  }
+                }
+              ]
+            }
+          ],
+          "ViewerCertificate": {
+            "CloudFrontDefaultCertificate": true
+          },
+          "Restrictions": {
+            "GeoRestriction": {
+              "RestrictionType": "none"
+            }
+          },
+          "CustomErrorResponses": [
+            {
+              "ErrorCode": 403,
+              "ErrorCachingMinTTL": 0
+            },
+            {
+              "ErrorCode": 404,
+              "ErrorCachingMinTTL": 0
+            }
+          ]
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "OpenLegend"
+          }
+        ]
+      }
+    },
+    "NonproductionDistribution": {
+      "Type": "AWS::CloudFront::Distribution",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Development delivery origin."
+        }
+      },
+      "Properties": {
+        "DistributionConfig": {
+          "Enabled": true,
+          "Comment": "OpenLegend nonproduction runtime",
+          "HttpVersion": "http2and3",
+          "IPV6Enabled": true,
+          "PriceClass": "PriceClass_100",
+          "Origins": [
+            {
+              "Id": "objects",
+              "DomainName": {
+                "Fn::GetAtt": ["NonproductionRuntimeBucket", "RegionalDomainName"]
+              },
+              "OriginAccessControlId": {
+                "Ref": "NonproductionOac"
+              },
+              "S3OriginConfig": {
+                "OriginAccessIdentity": ""
+              }
+            }
+          ],
+          "DefaultCacheBehavior": {
+            "TargetOriginId": "objects",
+            "ViewerProtocolPolicy": "https-only",
+            "AllowedMethods": ["GET", "HEAD", "OPTIONS"],
+            "CachedMethods": ["GET", "HEAD", "OPTIONS"],
+            "Compress": false,
+            "CachePolicyId": {
+              "Ref": "NoCache"
+            },
+            "ResponseHeadersPolicyId": {
+              "Ref": "StudyHeaders"
+            },
+            "FunctionAssociations": [
+              {
+                "EventType": "viewer-request",
+                "FunctionARN": {
+                  "Fn::GetAtt": ["RestrictedDefault", "FunctionARN"]
+                }
+              }
+            ]
+          },
+          "CacheBehaviors": [
+            {
+              "TargetOriginId": "objects",
+              "ViewerProtocolPolicy": "https-only",
+              "AllowedMethods": ["GET", "HEAD", "OPTIONS"],
+              "CachedMethods": ["GET", "HEAD", "OPTIONS"],
+              "Compress": true,
+              "CachePolicyId": {
+                "Ref": "PublicCache"
+              },
+              "ResponseHeadersPolicyId": {
+                "Ref": "PublicHeaders"
+              },
+              "PathPattern": "/public/*",
+              "FunctionAssociations": [
+                {
+                  "EventType": "viewer-response",
+                  "FunctionARN": {
+                    "Fn::GetAtt": ["StudyPublicPrefixRewrite", "FunctionARN"]
+                  }
+                }
+              ]
+            }
+          ],
+          "ViewerCertificate": {
+            "CloudFrontDefaultCertificate": true
+          },
+          "Restrictions": {
+            "GeoRestriction": {
+              "RestrictionType": "none"
+            }
+          },
+          "CustomErrorResponses": [
+            {
+              "ErrorCode": 403,
+              "ErrorCachingMinTTL": 0
+            },
+            {
+              "ErrorCode": 404,
+              "ErrorCachingMinTTL": 0
+            }
+          ]
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "OpenLegend"
+          }
+        ]
+      }
+    },
+    "StudyDistribution": {
+      "Type": "AWS::CloudFront::Distribution",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Isolated study delivery origin."
+        }
+      },
+      "Properties": {
+        "DistributionConfig": {
+          "Enabled": true,
+          "Comment": "OpenLegend reviewed study/tooling",
+          "HttpVersion": "http2and3",
+          "IPV6Enabled": true,
+          "PriceClass": "PriceClass_100",
+          "Origins": [
+            {
+              "Id": "objects",
+              "DomainName": {
+                "Fn::GetAtt": ["StudiesBucket", "RegionalDomainName"]
+              },
+              "OriginAccessControlId": {
+                "Ref": "StudiesOac"
+              },
+              "S3OriginConfig": {
+                "OriginAccessIdentity": ""
+              }
+            },
+            {
+              "Id": "access",
+              "DomainName": {
+                "Fn::Select": [
+                  2,
+                  {
+                    "Fn::Split": [
+                      "/",
+                      {
+                        "Fn::GetAtt": ["StudyAccessUrl", "FunctionUrl"]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "OriginAccessControlId": {
+                "Ref": "AccessOac"
+              },
+              "CustomOriginConfig": {
+                "OriginProtocolPolicy": "https-only",
+                "OriginSSLProtocols": ["TLSv1.2"]
+              }
+            }
+          ],
+          "DefaultCacheBehavior": {
+            "TargetOriginId": "objects",
+            "ViewerProtocolPolicy": "https-only",
+            "AllowedMethods": ["GET", "HEAD", "OPTIONS"],
+            "CachedMethods": ["GET", "HEAD", "OPTIONS"],
+            "Compress": false,
+            "CachePolicyId": {
+              "Ref": "NoCache"
+            },
+            "ResponseHeadersPolicyId": {
+              "Ref": "StudyHeaders"
+            },
+            "FunctionAssociations": [
+              {
+                "EventType": "viewer-request",
+                "FunctionARN": {
+                  "Fn::GetAtt": ["RestrictedDefault", "FunctionARN"]
+                }
+              }
+            ]
+          },
+          "CacheBehaviors": [
+            {
+              "TargetOriginId": "objects",
+              "ViewerProtocolPolicy": "https-only",
+              "AllowedMethods": ["GET", "HEAD", "OPTIONS"],
+              "CachedMethods": ["GET", "HEAD", "OPTIONS"],
+              "Compress": true,
+              "CachePolicyId": {
+                "Ref": "PublicCache"
+              },
+              "ResponseHeadersPolicyId": {
+                "Ref": "PublicHeaders"
+              },
+              "PathPattern": "/public/*",
+              "FunctionAssociations": [
+                {
+                  "EventType": "viewer-response",
+                  "FunctionARN": {
+                    "Fn::GetAtt": ["StudyPublicPrefixRewrite", "FunctionARN"]
+                  }
+                }
+              ]
+            },
+            {
+              "TargetOriginId": "objects",
+              "ViewerProtocolPolicy": "https-only",
+              "AllowedMethods": ["GET", "HEAD", "OPTIONS"],
+              "CachedMethods": ["GET", "HEAD", "OPTIONS"],
+              "Compress": false,
+              "CachePolicyId": {
+                "Ref": "NoCache"
+              },
+              "ResponseHeadersPolicyId": {
+                "Ref": "StudyHeaders"
+              },
+              "PathPattern": "/restricted/curated-private/*",
+              "TrustedKeyGroups": [
+                {
+                  "Ref": "StudyKeyGroup"
+                }
+              ]
+            },
+            {
+              "TargetOriginId": "access",
+              "ViewerProtocolPolicy": "https-only",
+              "AllowedMethods": ["GET", "HEAD"],
+              "CachedMethods": ["GET", "HEAD"],
+              "Compress": false,
+              "CachePolicyId": {
+                "Ref": "NoCache"
+              },
+              "ResponseHeadersPolicyId": {
+                "Ref": "StudyHeaders"
+              },
+              "PathPattern": "/access",
+              "OriginRequestPolicyId": {
+                "Ref": "AccessOriginPolicy"
+              },
+              "FunctionAssociations": [
+                {
+                  "EventType": "viewer-request",
+                  "FunctionARN": {
+                    "Fn::GetAtt": ["ViewerHost", "FunctionARN"]
+                  }
+                }
+              ]
+            }
+          ],
+          "ViewerCertificate": {
+            "CloudFrontDefaultCertificate": true
+          },
+          "Restrictions": {
+            "GeoRestriction": {
+              "RestrictionType": "none"
+            }
+          },
+          "CustomErrorResponses": [
+            {
+              "ErrorCode": 403,
+              "ErrorCachingMinTTL": 0
+            },
+            {
+              "ErrorCode": 404,
+              "ErrorCachingMinTTL": 0
+            }
+          ]
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "OpenLegend"
+          }
+        ]
+      }
+    },
+    "AccessUrlPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Only selected CDN invokes the exchange."
+        }
+      },
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": ["StudyAccess", "Arn"]
+        },
+        "Action": "lambda:InvokeFunctionUrl",
+        "Principal": "cloudfront.amazonaws.com",
+        "SourceArn": {
+          "Fn::Sub": "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${StudyDistribution}"
+        },
+        "FunctionUrlAuthType": "AWS_IAM"
+      }
+    },
+    "AccessInvokePermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Only selected CDN invokes the exchange."
+        }
+      },
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": ["StudyAccess", "Arn"]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "cloudfront.amazonaws.com",
+        "SourceArn": {
+          "Fn::Sub": "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${StudyDistribution}"
+        },
+        "InvokedViaFunctionUrl": true
+      }
+    },
+    "AuthoringRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+                }
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "AssetOperations",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject", "s3:GetObjectVersion"],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "${LibraryBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "${IntakeBucket.Arn}/*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:PutObject",
+                    "s3:AbortMultipartUpload",
+                    "s3:ListMultipartUploadParts"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "${LibraryBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "${IntakeBucket.Arn}/*"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "PublicationRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+                }
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "AssetOperations",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject", "s3:GetObjectVersion"],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "${LibraryBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "${IntakeBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "${StudiesBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "${RuntimeBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "${NonproductionRuntimeBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:s3:::${ExternalRuntimeBucket}/*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:PutObject",
+                    "s3:AbortMultipartUpload",
+                    "s3:ListMultipartUploadParts"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "${LibraryBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "${StudiesBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "${RuntimeBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "${NonproductionRuntimeBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:s3:::${ExternalRuntimeBucket}/*"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "RuntimeReadRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+                }
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "AssetOperations",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject", "s3:GetObjectVersion"],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "${RuntimeBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:s3:::${ExternalRuntimeBucket}/*"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "NonproductionReadRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+                }
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "AssetOperations",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject", "s3:GetObjectVersion"],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "${NonproductionRuntimeBucket.Arn}/*"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "StudyReadRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+                }
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "AssetOperations",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject", "s3:GetObjectVersion"],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "${StudiesBucket.Arn}/*"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "RecoveryWriterRole": {
+      "Type": "AWS::IAM::Role",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Separate temporary recovery writer."
+        }
+      },
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+                }
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "AssetOperations",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject", "s3:GetObjectVersion"],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "${LibraryBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "${StudiesBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "${RuntimeBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "${NonproductionRuntimeBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "${IntakeBucket.Arn}/*"
+                    },
+                    {
+                      "Fn::Sub": "${RecoveryBucket.Arn}/domains/*"
+                    },
+                    {
+                      "Fn::Sub": "${RecoveryBucket.Arn}/origins/*"
+                    },
+                    {
+                      "Fn::Sub": "${RecoveryBucket.Arn}/checkpoints/*"
+                    },
+                    {
+                      "Fn::Sub": "${RecoveryBucket.Arn}/migrations/*"
+                    },
+                    {
+                      "Fn::Sub": "${RecoveryBucket.Arn}/recovery-authority/*/current.json"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:s3:::${ExternalRuntimeBucket}/*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:PutObject",
+                    "s3:AbortMultipartUpload",
+                    "s3:ListMultipartUploadParts"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "${RecoveryBucket.Arn}/domains/*"
+                    },
+                    {
+                      "Fn::Sub": "${RecoveryBucket.Arn}/origins/*"
+                    },
+                    {
+                      "Fn::Sub": "${RecoveryBucket.Arn}/checkpoints/*"
+                    },
+                    {
+                      "Fn::Sub": "${RecoveryBucket.Arn}/migrations/*"
+                    },
+                    {
+                      "Fn::Sub": "${RecoveryBucket.Arn}/recovery-authority/*/current.json"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "s3:ListBucket",
+                  "Resource": {
+                    "Fn::GetAtt": ["RecoveryBucket", "Arn"]
+                  },
+                  "Condition": {
+                    "StringLike": {
+                      "s3:prefix": "recovery-authority/*/current.json"
+                    },
+                    "NumericLessThanEquals": {
+                      "s3:max-keys": 1
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "RecoveryRestoreRole": {
+      "Type": "AWS::IAM::Role",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Separate temporary isolated restore."
+        }
+      },
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+                }
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "AssetOperations",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject", "s3:GetObjectVersion"],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "${RecoveryBucket.Arn}/*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject",
+                    "s3:GetObjectVersion",
+                    "s3:PutObject",
+                    "s3:AbortMultipartUpload",
+                    "s3:ListMultipartUploadParts"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "${IntakeBucket.Arn}/runs/recovery-*/*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "s3:ListBucket",
+                  "Resource": {
+                    "Fn::GetAtt": ["RecoveryBucket", "Arn"]
+                  },
+                  "Condition": {
+                    "StringLike": {
+                      "s3:prefix": "recovery-authority/*/current.json"
+                    },
+                    "NumericLessThanEquals": {
+                      "s3:max-keys": 1
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "RecoveryCustodianRole": {
+      "Type": "AWS::IAM::Role",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Separate temporary recovery custodian."
+        }
+      },
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+                }
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "AssetOperations",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject", "s3:GetObjectVersion"],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "${RecoveryBucket.Arn}/*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": ["s3:DeleteObject", "s3:DeleteObjectVersion"],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "${RecoveryBucket.Arn}/*"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "LibraryBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "TLS and immutable creation."
+        }
+      },
+      "Properties": {
+        "Bucket": {
+          "Ref": "LibraryBucket"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "DenyNonTls",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:*",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["LibraryBucket", "Arn"]
+                },
+                {
+                  "Fn::Sub": "${LibraryBucket.Arn}/*"
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                  "aws:PrincipalIsAWSService": "false"
+                }
+              }
+            },
+            {
+              "Sid": "RequireConditionalCreation",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Sub": "${LibraryBucket.Arn}/*"
+              },
+              "Condition": {
+                "Null": {
+                  "s3:if-none-match": "true"
+                },
+                "Bool": {
+                  "s3:ObjectCreationOperation": "true"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "StudiesBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "TLS and immutable creation."
+        }
+      },
+      "Properties": {
+        "Bucket": {
+          "Ref": "StudiesBucket"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "DenyNonTls",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:*",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["StudiesBucket", "Arn"]
+                },
+                {
+                  "Fn::Sub": "${StudiesBucket.Arn}/*"
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                  "aws:PrincipalIsAWSService": "false"
+                }
+              }
+            },
+            {
+              "Sid": "RequireConditionalCreation",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Sub": "${StudiesBucket.Arn}/*"
+              },
+              "Condition": {
+                "Null": {
+                  "s3:if-none-match": "true"
+                },
+                "Bool": {
+                  "s3:ObjectCreationOperation": "true"
+                }
+              }
+            },
+            {
+              "Sid": "ExactCloudFrontOrigin",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudfront.amazonaws.com"
+              },
+              "Action": "s3:GetObject",
+              "Resource": [
+                {
+                  "Fn::Sub": "${StudiesBucket.Arn}/public/*"
+                },
+                {
+                  "Fn::Sub": "${StudiesBucket.Arn}/restricted/curated-private/*"
+                }
+              ],
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceArn": {
+                    "Fn::Sub": "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${StudyDistribution}"
+                  }
+                }
+              }
+            },
+            {
+              "Sid": "CustomDomainPublicStudiesOnly",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudfront.amazonaws.com"
+              },
+              "Action": "s3:GetObject",
+              "Resource": {
+                "Fn::Sub": "${StudiesBucket.Arn}/public/*"
+              },
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceArn": {
+                    "Fn::Sub": "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${ExternalDistributionId}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "RuntimeBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "TLS and immutable creation."
+        }
+      },
+      "Properties": {
+        "Bucket": {
+          "Ref": "RuntimeBucket"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "DenyNonTls",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:*",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["RuntimeBucket", "Arn"]
+                },
+                {
+                  "Fn::Sub": "${RuntimeBucket.Arn}/*"
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                  "aws:PrincipalIsAWSService": "false"
+                }
+              }
+            },
+            {
+              "Sid": "RequireConditionalCreation",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Sub": "${RuntimeBucket.Arn}/*"
+              },
+              "Condition": {
+                "Null": {
+                  "s3:if-none-match": "true"
+                },
+                "Bool": {
+                  "s3:ObjectCreationOperation": "true"
+                }
+              }
+            },
+            {
+              "Sid": "ExactCloudFrontOrigin",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudfront.amazonaws.com"
+              },
+              "Action": "s3:GetObject",
+              "Resource": [
+                {
+                  "Fn::Sub": "${RuntimeBucket.Arn}/public/*"
+                }
+              ],
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceArn": {
+                    "Fn::Sub": "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${RuntimeDistribution}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "NonproductionRuntimeBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "TLS and immutable creation."
+        }
+      },
+      "Properties": {
+        "Bucket": {
+          "Ref": "NonproductionRuntimeBucket"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "DenyNonTls",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:*",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["NonproductionRuntimeBucket", "Arn"]
+                },
+                {
+                  "Fn::Sub": "${NonproductionRuntimeBucket.Arn}/*"
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                  "aws:PrincipalIsAWSService": "false"
+                }
+              }
+            },
+            {
+              "Sid": "RequireConditionalCreation",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Sub": "${NonproductionRuntimeBucket.Arn}/*"
+              },
+              "Condition": {
+                "Null": {
+                  "s3:if-none-match": "true"
+                },
+                "Bool": {
+                  "s3:ObjectCreationOperation": "true"
+                }
+              }
+            },
+            {
+              "Sid": "ExactCloudFrontOrigin",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudfront.amazonaws.com"
+              },
+              "Action": "s3:GetObject",
+              "Resource": [
+                {
+                  "Fn::Sub": "${NonproductionRuntimeBucket.Arn}/public/*"
+                }
+              ],
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceArn": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${NonproductionDistribution}"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${ExternalDistributionId}"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "IntakeBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "TLS and immutable creation."
+        }
+      },
+      "Properties": {
+        "Bucket": {
+          "Ref": "IntakeBucket"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "DenyNonTls",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:*",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["IntakeBucket", "Arn"]
+                },
+                {
+                  "Fn::Sub": "${IntakeBucket.Arn}/*"
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                  "aws:PrincipalIsAWSService": "false"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "RecoveryBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Immutable recovery bytes; narrow versioned authority-marker CAS."
+        }
+      },
+      "Properties": {
+        "Bucket": {
+          "Ref": "RecoveryBucket"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "DenyNonTls",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:*",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["RecoveryBucket", "Arn"]
+                },
+                {
+                  "Fn::Sub": "${RecoveryBucket.Arn}/*"
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                  "aws:PrincipalIsAWSService": "false"
+                }
+              }
+            },
+            {
+              "Sid": "RequireConditionalCreation",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:PutObject",
+              "Condition": {
+                "Null": {
+                  "s3:if-none-match": "true"
+                },
+                "Bool": {
+                  "s3:ObjectCreationOperation": "true"
+                }
+              },
+              "NotResource": {
+                "Fn::Sub": "${RecoveryBucket.Arn}/recovery-authority/*/current.json"
+              }
+            },
+            {
+              "Sid": "RequireRecoveryMarkerCondition",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Sub": "${RecoveryBucket.Arn}/recovery-authority/*/current.json"
+              },
+              "Condition": {
+                "Null": {
+                  "s3:if-none-match": "true",
+                  "s3:if-match": "true"
+                },
+                "Bool": {
+                  "s3:ObjectCreationOperation": "true"
+                }
+              }
+            },
+            {
+              "Sid": "ProtectRecoveryVersions",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": ["s3:DeleteObject", "s3:DeleteObjectVersion"],
+              "Resource": {
+                "Fn::Sub": "${RecoveryBucket.Arn}/*"
+              },
+              "Condition": {
+                "ArnNotEquals": {
+                  "aws:PrincipalArn": {
+                    "Fn::GetAtt": ["RecoveryCustodianRole", "Arn"]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "LogsBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "TLS and immutable creation."
+        }
+      },
+      "Properties": {
+        "Bucket": {
+          "Ref": "LogsBucket"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "DenyNonTls",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:*",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["LogsBucket", "Arn"]
+                },
+                {
+                  "Fn::Sub": "${LogsBucket.Arn}/*"
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                  "aws:PrincipalIsAWSService": "false"
+                }
+              }
+            },
+            {
+              "Sid": "S3ServerAccessLogs",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "logging.s3.amazonaws.com"
+              },
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Sub": "${LogsBucket.Arn}/s3/*"
+              },
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                },
+                "ArnLike": {
+                  "aws:SourceArn": [
+                    {
+                      "Fn::GetAtt": ["LibraryBucket", "Arn"]
+                    },
+                    {
+                      "Fn::GetAtt": ["StudiesBucket", "Arn"]
+                    },
+                    {
+                      "Fn::GetAtt": ["RuntimeBucket", "Arn"]
+                    },
+                    {
+                      "Fn::GetAtt": ["NonproductionRuntimeBucket", "Arn"]
+                    },
+                    {
+                      "Fn::GetAtt": ["IntakeBucket", "Arn"]
+                    },
+                    {
+                      "Fn::GetAtt": ["RecoveryBucket", "Arn"]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "Sid": "CloudFrontLogAcl",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "delivery.logs.amazonaws.com"
+              },
+              "Action": "s3:GetBucketAcl",
+              "Resource": {
+                "Fn::GetAtt": ["LogsBucket", "Arn"]
+              },
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                }
+              }
+            },
+            {
+              "Sid": "CloudFrontLogWrite",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "delivery.logs.amazonaws.com"
+              },
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Sub": "${LogsBucket.Arn}/cloudfront/*"
+              },
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId"
+                  },
+                  "s3:x-amz-acl": "bucket-owner-full-control"
+                },
+                "ArnLike": {
+                  "aws:SourceArn": {
+                    "Fn::Sub": "arn:${AWS::Partition}:logs:us-east-1:${AWS::AccountId}:delivery-source:${ResourcePrefix}-*"
+                  }
+                }
+              }
+            },
+            {
+              "Sid": "TrailAcl",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudtrail.amazonaws.com"
+              },
+              "Action": "s3:GetBucketAcl",
+              "Resource": {
+                "Fn::GetAtt": ["LogsBucket", "Arn"]
+              },
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceArn": {
+                    "Fn::Sub": "arn:${AWS::Partition}:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/${ResourcePrefix}-audit"
+                  }
+                }
+              }
+            },
+            {
+              "Sid": "TrailWrite",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudtrail.amazonaws.com"
+              },
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Sub": "${LogsBucket.Arn}/cloudtrail/AWSLogs/${AWS::AccountId}/*"
+              },
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceArn": {
+                    "Fn::Sub": "arn:${AWS::Partition}:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/${ResourcePrefix}-audit"
+                  },
+                  "s3:x-amz-acl": "bucket-owner-full-control"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "AssetAuditTrail": {
+      "Type": "AWS::CloudTrail::Trail",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Audit scoped infrastructure/asset writes."
+        }
+      },
+      "Properties": {
+        "TrailName": {
+          "Fn::Sub": "${ResourcePrefix}-audit"
+        },
+        "S3BucketName": {
+          "Ref": "LogsBucket"
+        },
+        "S3KeyPrefix": "cloudtrail",
+        "IsLogging": true,
+        "IsMultiRegionTrail": false,
+        "IncludeGlobalServiceEvents": true,
+        "EnableLogFileValidation": true,
+        "EventSelectors": [
+          {
+            "ReadWriteType": "WriteOnly",
+            "IncludeManagementEvents": true,
+            "DataResources": [
+              {
+                "Type": "AWS::S3::Object",
+                "Values": [
+                  {
+                    "Fn::Sub": "${LibraryBucket.Arn}/"
+                  },
+                  {
+                    "Fn::Sub": "${StudiesBucket.Arn}/"
+                  },
+                  {
+                    "Fn::Sub": "${RuntimeBucket.Arn}/"
+                  },
+                  {
+                    "Fn::Sub": "${NonproductionRuntimeBucket.Arn}/"
+                  },
+                  {
+                    "Fn::Sub": "${IntakeBucket.Arn}/"
+                  },
+                  {
+                    "Fn::Sub": "${RecoveryBucket.Arn}/"
+                  },
+                  {
+                    "Fn::Sub": "arn:${AWS::Partition}:s3:::${ExternalRuntimeBucket}/"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "OpenLegend"
+          }
+        ]
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "DependsOn": "LogsBucketPolicy"
+    },
+    "StudyPublicPrefixRewrite": {
+      "Type": "AWS::CloudFront::Function",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Route public media; sandbox raw documents."
+        }
+      },
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${ResourcePrefix}-study-prefix"
+        },
+        "AutoPublish": true,
+        "FunctionConfig": {
+          "Comment": "Public routes and raw-document download protection.",
+          "Runtime": "cloudfront-js-2.0"
+        },
+        "FunctionCode": "function handler(e){var r=e.request;if(e.response){var s=e.response,h=s.headers,t=(h['content-type']||{}).value||'';var b=/^\\/(?:studies\\/|development\\/)?public\\/blobs\\/sha256\\//.test(r.uri);if(b)h['timing-allow-origin']={value:'*'};if(b&&/^(?:text\\/html|image\\/svg\\+xml|(?:application|text)\\/(?:xml|xhtml\\+xml))(?:;|$)/i.test(t)){h['content-disposition']={value:'attachment'};h['content-security-policy']={value:\"sandbox; default-src 'none'; base-uri 'none'; form-action 'none'\"};h['x-content-type-options']={value:'nosniff'};}return s;}if(r.uri.indexOf('/studies/public/')===0)r.uri=r.uri.slice(8);else if(r.uri.indexOf('/development/public/')===0)r.uri=r.uri.slice(12);return r;}"
+      }
+    },
+    "WithdrawalRole": {
+      "Type": "AWS::IAM::Role",
+      "Metadata": {
+        "com.aws.cloudformation.Context": {
+          "why": "Remove current admitted copies; retain versions/originals/recovery."
+        }
+      },
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+                }
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "CurrentDeliveryRemoval",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "s3:DeleteObject",
+                  "Resource": [
+                    {
+                      "Fn::Sub": "${RuntimeBucket.Arn}/public/*"
+                    },
+                    {
+                      "Fn::Sub": "${NonproductionRuntimeBucket.Arn}/public/*"
+                    },
+                    {
+                      "Fn::Sub": "${StudiesBucket.Arn}/public/*"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:s3:::${ExternalRuntimeBucket}/public/*"
+                    },
+                    {
+                      "Fn::Sub": "${RuntimeBucket.Arn}/restricted/curated-private/*"
+                    },
+                    {
+                      "Fn::Sub": "${NonproductionRuntimeBucket.Arn}/restricted/curated-private/*"
+                    },
+                    {
+                      "Fn::Sub": "${StudiesBucket.Arn}/restricted/curated-private/*"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:s3:::${ExternalRuntimeBucket}/restricted/curated-private/*"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "LibraryBucket": {
+      "Value": {
+        "Ref": "LibraryBucket"
+      }
+    },
+    "StudiesBucket": {
+      "Value": {
+        "Ref": "StudiesBucket"
+      }
+    },
+    "RuntimeBucket": {
+      "Value": {
+        "Ref": "RuntimeBucket"
+      }
+    },
+    "NonproductionRuntimeBucket": {
+      "Value": {
+        "Ref": "NonproductionRuntimeBucket"
+      }
+    },
+    "IntakeBucket": {
+      "Value": {
+        "Ref": "IntakeBucket"
+      }
+    },
+    "RecoveryBucket": {
+      "Value": {
+        "Ref": "RecoveryBucket"
+      }
+    },
+    "LogsBucket": {
+      "Value": {
+        "Ref": "LogsBucket"
+      }
+    },
+    "RuntimeDistributionId": {
+      "Value": {
+        "Ref": "RuntimeDistribution"
+      }
+    },
+    "RuntimeDistributionDomain": {
+      "Value": {
+        "Fn::GetAtt": ["RuntimeDistribution", "DomainName"]
+      }
+    },
+    "NonproductionDistributionId": {
+      "Value": {
+        "Ref": "NonproductionDistribution"
+      }
+    },
+    "NonproductionDistributionDomain": {
+      "Value": {
+        "Fn::GetAtt": ["NonproductionDistribution", "DomainName"]
+      }
+    },
+    "StudyDistributionId": {
+      "Value": {
+        "Ref": "StudyDistribution"
+      }
+    },
+    "StudyDistributionDomain": {
+      "Value": {
+        "Fn::GetAtt": ["StudyDistribution", "DomainName"]
+      }
+    },
+    "AuthoringRoleArn": {
+      "Value": {
+        "Fn::GetAtt": ["AuthoringRole", "Arn"]
+      }
+    },
+    "PublicationRoleArn": {
+      "Value": {
+        "Fn::GetAtt": ["PublicationRole", "Arn"]
+      }
+    },
+    "RuntimeReadRoleArn": {
+      "Value": {
+        "Fn::GetAtt": ["RuntimeReadRole", "Arn"]
+      }
+    },
+    "NonproductionReadRoleArn": {
+      "Value": {
+        "Fn::GetAtt": ["NonproductionReadRole", "Arn"]
+      }
+    },
+    "StudyReadRoleArn": {
+      "Value": {
+        "Fn::GetAtt": ["StudyReadRole", "Arn"]
+      }
+    },
+    "RecoveryWriterRoleArn": {
+      "Value": {
+        "Fn::GetAtt": ["RecoveryWriterRole", "Arn"]
+      }
+    },
+    "RecoveryRestoreRoleArn": {
+      "Value": {
+        "Fn::GetAtt": ["RecoveryRestoreRole", "Arn"]
+      }
+    },
+    "RecoveryCustodianRoleArn": {
+      "Value": {
+        "Fn::GetAtt": ["RecoveryCustodianRole", "Arn"]
+      }
+    },
+    "StudyAccessFunctionName": {
+      "Value": {
+        "Ref": "StudyAccess"
+      }
+    },
+    "StudySigningPublicKeyId": {
+      "Value": {
+        "Ref": "StudyPublicKey"
+      }
+    },
+    "StudySigningKeyGroupId": {
+      "Value": {
+        "Ref": "StudyKeyGroup"
+      }
+    },
+    "SignerSecretArn": {
+      "Value": {
+        "Ref": "SignerSecretArn"
+      }
+    },
+    "CookieSeconds": {
+      "Value": {
+        "Ref": "CookieSeconds"
+      }
+    },
+    "RecoveryIsolation": {
+      "Value": "Separate roles and bucket in the same AWS project and Region; does not protect against project-wide compromise, loss or Region failure."
+    },
+    "StudyPublicPrefixRewriteArn": {
+      "Value": {
+        "Fn::GetAtt": ["StudyPublicPrefixRewrite", "FunctionARN"]
+      }
+    },
+    "ExternalRuntimeBucket": {
+      "Value": {
+        "Ref": "ExternalRuntimeBucket"
+      }
+    },
+    "ExternalDistributionId": {
+      "Value": {
+        "Ref": "ExternalDistributionId"
+      }
+    },
+    "WithdrawalRoleArn": {
+      "Value": {
+        "Fn::GetAtt": ["WithdrawalRole", "Arn"]
+      }
+    }
+  }
+}

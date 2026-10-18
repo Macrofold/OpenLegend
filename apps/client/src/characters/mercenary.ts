@@ -1,43 +1,53 @@
+import { assetUrl, readAssetJson } from '../asset-files';
 import * as pc from 'playcanvas';
-import mercenaryUrl from './mercenary-assets/mercenary.glb?url';
+import { BundledModels, type BundledModel } from '../bundled-models';
+import { MercenaryMotion } from './mercenary-motion';
+import { MercenaryFaceResources } from './mercenary-face';
+import { ArtMaterials, type ArtTreatment, baselineArt } from '../art-treatment';
 import type { EntityView } from '@open-legend/protocol';
 import { intersectBox } from '@open-legend/spatial';
 import { WorldPresentation } from '../world-presentation';
 import { PixelCharacter } from './pixel-character';
-import { CapeCloth, clothPassesForSize } from './mercenary-cloth';
+import { CapeCloth, clothPassesForSize, type MercenaryClothData } from './mercenary-cloth';
 import { MercenaryMaterials } from './mercenary-materials';
+const mercenaryUrl = assetUrl('apps/client/src/characters/mercenary-assets/mercenary.glb');
+const motionUrl = assetUrl('apps/client/src/characters/mercenary-assets/mercenary-motion.glb');
 
-type Container = pc.ContainerResource & { animations: pc.Asset[] };
-function container(value: unknown): value is Container {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'instantiateRenderEntity' in value &&
-    typeof value.instantiateRenderEntity === 'function' &&
-    'animations' in value &&
-    Array.isArray(value.animations)
-  );
-}
+type LoadedModel = {
+  resource: BundledModel;
+  tracks: pc.AnimTrack[];
+  cloth: MercenaryClothData;
+};
 function renders(root: pc.Entity): pc.RenderComponent[] {
   return root
     .findComponents('render')
     .filter((c): c is pc.RenderComponent => c instanceof pc.RenderComponent);
 }
 
-/** One trusted bundled pilot. No generated URL intake, appearance authority, or world writes.
+/** One trusted release-selected pilot. No generated URL intake, appearance authority, or world writes.
  * docs/projects/completed/mercenary-scene-pilot.md */
 export class MercenaryModels {
-  private asset?: pc.Asset;
-  private pending?: Promise<Container>;
-  private disposed = false;
+  private readonly models: BundledModels;
+  private pending?: Promise<LoadedModel>;
+  private readonly download = new AbortController();
   private readonly materials: MercenaryMaterials;
+  private readonly faces: MercenaryFaceResources;
   constructor(
     private readonly app: pc.Application,
     private readonly presentation: WorldPresentation,
     private readonly camera: pc.Entity,
     sun: pc.Light,
+    art: ArtMaterials,
   ) {
-    this.materials = new MercenaryMaterials(app.graphicsDevice, sun);
+    this.models = new BundledModels(app);
+    this.materials = new MercenaryMaterials(
+      app,
+      sun,
+      art,
+      (variant) => this.faces.setVariant(variant),
+      (variant) => this.faces.load(variant),
+    );
+    this.faces = new MercenaryFaceResources(app, this.materials);
   }
   create(parent: pc.Entity): MercenaryActor {
     return new MercenaryActor(
@@ -45,49 +55,58 @@ export class MercenaryModels {
       parent,
       this.presentation,
       this.materials,
+      this.faces,
       this.load(),
       this.camera,
     );
   }
-  private load(): Promise<Container> {
-    return (this.pending ??= new Promise((resolve, reject) => {
-      this.app.assets.loadFromUrl(mercenaryUrl, 'container', (error, asset) => {
-        if (this.disposed) {
-          asset?.unload();
-          if (asset) this.app.assets.remove(asset);
-          reject(new Error('Mercenary renderer disposed'));
-          return;
-        }
-        if (asset) this.asset = asset;
-        const resource: unknown = asset?.resource;
-        if (error || !container(resource)) {
-          reject(new Error('Mercenary model unavailable'));
-          return;
-        }
-        resolve(resource);
-      });
-    }));
+  private load(): Promise<LoadedModel> {
+    return (this.pending ??= Promise.all([
+      this.models.load('Original mercenary', mercenaryUrl),
+      this.models.load('Mercenary motion', motionUrl),
+      readAssetJson<MercenaryClothData>(
+        'apps/client/src/characters/mercenary-cloth.json',
+        this.download.signal,
+      ),
+      this.faces.load('original'),
+    ])
+      .then(([resource, motion, cloth]) => ({
+        resource,
+        cloth,
+        tracks: [...resource.animations, ...motion.animations]
+          .map((a) => a.resource)
+          .filter((track): track is pc.AnimTrack => track instanceof pc.AnimTrack),
+      }))
+      .catch((error: unknown) => {
+        this.pending = undefined;
+        throw error;
+      }));
   }
-  destroy(): void {
-    this.disposed = true;
+  setArtTreatment(style: Readonly<ArtTreatment>): void {
+    this.materials.setArtTreatment(style);
+  }
+  destroy(): Promise<void> | undefined {
+    this.download.abort();
+    this.faces.destroy();
     this.materials.destroy();
-    this.asset?.unload();
-    if (this.asset) this.app.assets.remove(this.asset);
+    return this.models.destroy();
   }
 }
+
+// The visual body is ten percent taller than the 1.85 m study adults. Native
+// collision dimensions stay with the world's body definition.
+const displayScale = 1.1;
 
 export class MercenaryActor {
   private node?: pc.Entity;
   private cloth?: CapeCloth;
   private pixels?: PixelCharacter;
-  private revealAmount = 0;
+  private strength = 0;
   private selected = false;
-  private readonly renderPixels = () =>
-    this.pixels?.update(this.parent.getPosition(), this.visible, this.revealAmount, this.selected);
   private meshes: pc.MeshInstance[] = [];
   private disposed = false;
   private wanted = false;
-  private wasMoving = false;
+  private motion?: MercenaryMotion;
   private resetCloth = true;
   private settling = 0;
   private yaw?: number;
@@ -99,16 +118,17 @@ export class MercenaryActor {
   private decorativeSleeping = false;
   state: 'loading' | 'ready' | 'failed' = 'loading';
   visible = false;
-  readonly height = 1.85;
+  readonly height = 1.85 * displayScale;
+  readonly width = 0.95 * displayScale;
   constructor(
     private readonly app: pc.Application,
     private readonly parent: pc.Entity,
     private readonly presentation: WorldPresentation,
     private readonly materials: MercenaryMaterials,
-    loading: Promise<Container>,
+    private readonly faces: MercenaryFaceResources,
+    loading: Promise<LoadedModel>,
     private readonly camera: pc.Entity,
   ) {
-    this.app.on('prerender', this.renderPixels);
     void loading
       .then((resource) => {
         if (this.disposed) return;
@@ -121,19 +141,14 @@ export class MercenaryActor {
         console.warn('Mercenary preview keeps the sprite fallback:', error);
       });
   }
-  private install(resource: Container): void {
-    const tracks = resource.animations
-      .map((a) => a.resource)
-      .filter((r): r is pc.AnimTrack => r instanceof pc.AnimTrack);
-    const idle = tracks.find((r) => r.name === 'Idle');
-    const walk = tracks.find((r) => r.name === 'Walk');
-    if (!(idle instanceof pc.AnimTrack) || !(walk instanceof pc.AnimTrack))
-      throw new Error('Mercenary idle/walk clips missing');
+  private install({ resource, tracks, cloth }: LoadedModel): void {
     const node = (this.node = resource.instantiateRenderEntity({
       castShadows: true,
       receiveShadows: true,
     }));
     this.parent.addChild(node);
+    // Preserve the GLB root's centimetre-to-metre conversion.
+    node.setLocalScale(node.getLocalScale().clone().mulScalar(displayScale));
     node.enabled = false;
     for (const render of renders(node))
       for (const mesh of render.meshInstances) {
@@ -144,26 +159,11 @@ export class MercenaryActor {
     node.addComponent('anim', { activate: true });
     const anim = node.anim;
     if (!anim) throw new Error('Mercenary animation component missing');
-    anim.loadStateGraph({
-      layers: [
-        {
-          name: 'Body',
-          states: [{ name: 'START' }, { name: 'Idle', loop: true }, { name: 'Walk', loop: true }],
-          transitions: [{ from: 'START', to: 'Idle' }],
-        },
-      ],
-      parameters: {},
-    });
-    anim.assignAnimation('Idle', idle);
-    anim.assignAnimation('Walk', walk);
-    const layer = anim.baseLayer;
-    if (!layer) throw new Error('Mercenary animation layer missing');
-    layer.play('Idle');
-    anim.speed = 0;
-    // Force the first supported pose before attaching skin-relative fabric.
     node.enabled = true;
-    layer.update(0);
-    this.cloth = new CapeCloth(this.app, node);
+    this.motion = new MercenaryMotion(anim, tracks);
+    this.faces.attach(node);
+    this.faces.preparePose(node);
+    this.cloth = new CapeCloth(this.app, node, displayScale, cloth);
     const components = [
       ...renders(node).filter((r) => r.enabled),
       ...this.cloth.patches.flatMap((p) => renders(p.node)),
@@ -172,14 +172,15 @@ export class MercenaryActor {
     this.pixels = new PixelCharacter(
       this.app,
       this.camera,
-      this.presentation.characterLayer,
+      this.presentation.layer,
       this.presentation.foregroundLayer,
       this.presentation.protectionLayer,
       components,
+      node,
     );
     this.previousFoot.copy(this.parent.getPosition());
     this.state = 'ready';
-    this.setVisible(false);
+    this.setVisible(this.wanted);
   }
   setVisible(visible: boolean): void {
     if (visible && !this.wanted) this.resetCloth = true;
@@ -190,10 +191,17 @@ export class MercenaryActor {
       !this.decorativeSleeping &&
       !this.resetCloth &&
       this.settling === 0;
-    if (this.node) this.node.enabled = this.visible;
+    // Disabling a skinned RenderComponent destroys its cached skin. Keep the rig
+    // alive while settling/falling back; hide its geometry and skip pose updates.
     this.cloth?.setVisible(this.visible);
-    for (const mesh of this.meshes) mesh.castShadow = this.visible;
-    this.pixels?.setVisible(this.visible);
+    for (const mesh of this.meshes) {
+      mesh.visible = this.visible;
+      mesh.castShadow = this.visible;
+    }
+    if (!this.visible) {
+      this.strength = 0;
+      this.pixels?.setVisible(false);
+    }
   }
   update(
     view: EntityView,
@@ -202,8 +210,8 @@ export class MercenaryActor {
     paused: boolean,
     reveal: number,
     selected: boolean,
+    art: Readonly<ArtTreatment> = baselineArt,
   ): void {
-    this.selected = selected;
     const node = this.node,
       anim = node?.anim;
     if (!node || !anim || !this.cloth || !this.wanted) return;
@@ -253,6 +261,8 @@ export class MercenaryActor {
       selected,
     );
     if (this.resetCloth || foot.distance(this.previousFoot) > 1.5) {
+      this.motion?.rest();
+      this.faces.preparePose(node);
       this.cloth.reset();
       this.settling = 60;
       this.resetCloth = false;
@@ -260,40 +270,61 @@ export class MercenaryActor {
     }
     this.previousFoot.copy(foot);
     if (this.settling > 0) {
-      // Settle under the current pose even while paused, without a 60-step first-use hitch.
+      // Keep the neutral pose during preparation, including a load while walking.
+      // Settle without a 60-step first-use hitch.
       // Keep the existing sprite until the prepared model can replace it atomically.
       for (let i = 0; i < Math.min(3, this.settling); i++) this.cloth.step(1 / 60);
       this.settling = Math.max(0, this.settling - 3);
       this.cloth.publish();
       if (this.settling > 0) return;
+      this.pixels?.prepareNeutralPose();
       this.setVisible(this.wanted);
     }
-    if (moving !== this.wasMoving) {
-      anim.baseLayer?.transition(moving ? 'Walk' : 'Idle', 0.12);
-      this.wasMoving = moving;
-    }
-    anim.speed = paused ? 0 : 1;
-    this.cloth.update(dt, !paused);
-    this.setReadThrough(reveal);
+    this.motion?.update(dt, moving, paused, art.motion, art.actionFixture);
+    this.faces.preparePose(node);
+    this.cloth.update(dt, !paused, art.cloth);
+    this.pixels?.setTreatment(
+      art.sampling,
+      art.edges,
+      ['restored', 'tailored', 'embroidered'].includes(art.mercenaryArt),
+    );
+    this.selected = selected;
+    const targetStrength = selected ? 0 : reveal;
+    this.strength += (targetStrength - this.strength) * (1 - Math.exp(-Math.min(dt, 0.1) * 12));
+    if (Math.abs(this.strength - targetStrength) < 0.001) this.strength = targetStrength;
+    this.pixels?.update(foot, this.visible, this.strength, selected);
   }
   setReadThrough(strength: number): void {
-    this.revealAmount = strength;
+    this.strength = strength;
+    this.pixels?.update(this.parent.getPosition(), this.visible, strength, this.selected);
   }
   get revealStrength(): number {
-    return this.visible ? this.revealAmount : 0;
+    return this.visible ? this.strength : 0;
   }
   get outlineMeshes(): readonly pc.MeshInstance[] {
     return this.pixels?.outlineMeshes ?? [];
   }
-  hit(from: pc.Vec3, to: pc.Vec3): number | null {
-    // Conservative per-mesh bounds for this one pilot, retaining world obstruction.
-    // Exact skinned-triangle picking remains part of the broader representation work.
+  get screenAnchor(): { x: number; y: number } | undefined {
+    return this.pixels?.anchor;
+  }
+  screenPoint(point: pc.Vec3): pc.Vec3 {
+    return this.pixels?.screenPoint(point) ?? this.camera.camera!.worldToScreen(point);
+  }
+  hit(from: pc.Vec3, to: pc.Vec3): { fraction: number; point: pc.Vec3 } | null {
+    // Invert the displayed image before testing the original model. Geometry and
+    // its world-depth range remain unchanged by the apparent-height correction.
+    const ray = this.pixels?.sourceRay(from, to) ?? { from, to };
     let nearest: number | null = null;
     for (const mesh of this.meshes) {
-      const hit = intersectBox(from, to, { min: mesh.aabb.getMin(), max: mesh.aabb.getMax() });
+      const hit = intersectBox(ray.from, ray.to, {
+        min: mesh.aabb.getMin(),
+        max: mesh.aabb.getMax(),
+      });
       if (hit !== null && (nearest === null || hit < nearest)) nearest = hit;
     }
-    return nearest;
+    return nearest === null
+      ? null
+      : { fraction: nearest, point: new pc.Vec3().lerp(ray.from, ray.to, nearest) };
   }
   diagnostics() {
     return {
@@ -301,7 +332,14 @@ export class MercenaryActor {
       visible: this.visible,
       selected: this.selected,
       meshes: this.meshes.length,
-      resolution: [128, 192],
+      representation: 'original-model-coarse-image',
+      pixels: this.pixels?.diagnostics(),
+      displayScale,
+      height: this.height,
+      width: this.width,
+      artwork: this.materials.diagnostics(),
+      animation: this.node?.anim?.baseLayer?.activeState,
+      motion: this.motion?.diagnostics(),
       settling: this.settling,
       projectedHeight: this.projectedHeight,
       decorativeSleeping: this.decorativeSleeping,
@@ -313,14 +351,15 @@ export class MercenaryActor {
     this.pixels = undefined;
     this.cloth?.destroy();
     this.cloth = undefined;
+    if (this.node) this.faces.detach(this.node);
     this.node?.destroy();
     this.node = undefined;
+    this.motion = undefined;
     this.meshes.length = 0;
     this.visible = false;
   }
   destroy(): void {
     this.disposed = true;
-    this.app.off('prerender', this.renderPixels);
     this.release();
   }
 }

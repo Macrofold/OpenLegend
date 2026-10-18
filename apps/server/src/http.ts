@@ -81,6 +81,8 @@ import type { CreationActivationReceipt } from './creation-target-contracts.js';
 import { prepareCreatedWorld } from './initial-world-preparation.js';
 import { randomBytes } from 'node:crypto';
 import { createClientAssets, type ClientAssets } from './client-assets.js';
+import { readAssetIndex } from './asset-configuration.js';
+import { assertAssetRevisionReference, type ArtifactReference } from '@open-legend/assets';
 import { z } from 'zod';
 import { intentSlotsSchema } from './navigation-contracts.js';
 import type { AiClient } from '@open-legend/ai';
@@ -428,8 +430,29 @@ async function initializeGameServer(
       },
     );
   if (!options.store) onFailure(() => store.close());
+  const assetIndex = await readAssetIndex();
+  const authorizeAsset = async (request: IncomingMessage, reference: ArtifactReference) => {
+    try {
+      const token = /(?:^|;\s*)ol_session=([a-f0-9]{64})(?:;|$)/.exec(
+        request.headers.cookie ?? '',
+      )?.[1];
+      const login = await store.authority.authenticate(token, options.now?.() ?? Date.now());
+      await store.assets.authorizeArtifact(
+        { accountId: login.accountId },
+        assetIndex.release,
+        reference,
+      );
+      // The delivery owner repeats admission after preparing the file. It never
+      // treats a warm cache or the selected build as a grant to read private art.
+      await store.authority.authenticate(token, options.now?.() ?? Date.now());
+      return true;
+    } catch {
+      return false;
+    }
+  };
   if (config.creation.startup === 'awaiting-creation' && !options.createdActivation) {
-    const assets = options.clientAssets ?? (await createClientAssets(options.production));
+    const assets =
+      options.clientAssets ?? (await createClientAssets(options.production, { authorizeAsset }));
     if (!options.clientAssets) onFailure(() => assets.close());
     return createAwaitingCreationHost({
       assets,
@@ -452,6 +475,7 @@ async function initializeGameServer(
   }
   const service = new WorldService(store, config, options.now, {
     createdActivation: options.createdActivation,
+    presentationRelease: assetIndex.release,
   });
   onFailure(() => service.releaseHostWork());
   const autosaves = new Autosaves(service);
@@ -732,7 +756,8 @@ async function initializeGameServer(
   };
   const unsubscribe = service.subscribe(publish);
   onFailure(unsubscribe);
-  const clientAssets = options.clientAssets ?? (await createClientAssets(options.production));
+  const clientAssets =
+    options.clientAssets ?? (await createClientAssets(options.production, { authorizeAsset }));
   if (!options.clientAssets) onFailure(() => clientAssets.close());
   const server = createServer(async (request, response) => {
     const arrivedAt = options.profileCommand ? performance.now() : 0;
@@ -1333,6 +1358,38 @@ async function initializeGameServer(
           (url.pathname === '/api/presence' ? url.searchParams.get('scope') : undefined);
         if (url.pathname !== '/api/embodiment' && submittedScope !== scopeKey(scope))
           throw new AuthorityError('stale-scope');
+        if (
+          url.pathname === '/api/assets/install' ||
+          url.pathname === '/api/assets/selection-result'
+        ) {
+          responseCapability = 'save';
+          const value = z
+            .object({
+              id: requestIdSchema,
+              timeline: requestIdSchema,
+              reference: z.unknown(),
+              expectedRevision: z.number().int().nonnegative(),
+            })
+            .strict()
+            .parse(body);
+          assertAssetRevisionReference(value.reference);
+          const selection = {
+            id: value.id,
+            timeline: value.timeline,
+            reference: value.reference,
+            expectedRevision: value.expectedRevision,
+          };
+          if (url.pathname === '/api/assets/selection-result') {
+            const result = await service.presentationSelectionResult(selection, scope);
+            return send(response, 200, { ok: true, ...result });
+          }
+          const reference = await service.selectPresentationRelease(selection, scope);
+          return send(response, 200, {
+            ok: true,
+            reference,
+            revision: service.presentationReleaseRevision,
+          });
+        }
         if (operations.owns(url.pathname)) {
           // Operations routes check their own capability; a validation error stays a 400.
           responseScope = undefined;

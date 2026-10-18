@@ -49,6 +49,9 @@ const numberColumn = (field: string) => ({
 });
 
 export const WORLD_RECORD_SCHEMA: RecordNode = {
+  // The compact optional presentationRelease is app-owned metadata in this same
+  // canonical record as speed/pause. The checkpoint worker therefore captures its
+  // exact asset binding with the world cut, without another mutable release pointer.
   table: 'data_world',
   children: {
     world: one('world_settings', {

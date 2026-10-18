@@ -42,7 +42,7 @@ Two additional primary discussions bound the lesson:
 
 ### PZ-01 — The physical refrigerator supplies the loot context
 
-![PZ-01: A survivor stands at an outlined refrigerator while the fridge inventory and character health panel are visible](../screenshots/project-zomboid/fridge-loot-health.webp)
+![PZ-01: A survivor stands at an outlined refrigerator while the fridge inventory and character health panel are visible](https://assets.openlegend.ai/studies/public/blobs/sha256/45/45ac747d93695d77288b9a344171897388b38e41e457a226feb431e0b7b75ed9)
 
 **Provenance:** 4Netplayers Team, [article published 2025-04-28](https://www.4netplayers.com/en/blog/project-zomboid/why-play-project-zomboid/). Exact screenshot build, platform and mod status unspecified. This commercial article is the image supplier, not independent player-review evidence. [Original image](https://www.4netplayers.com/images/blog/project-zomboid-warum-spielen/2.webp).
 
@@ -58,7 +58,7 @@ Two additional primary discussions bound the lesson:
 
 ### PZ-02 — A workstation establishes context before recipe choice
 
-![PZ-02: June 2024 work-in-progress Crafting on Desk interface with a selected weapon recipe, required tools, output and Craft button](../screenshots/project-zomboid/b42-surface-crafting-wip-2024.png)
+![PZ-02: June 2024 work-in-progress Crafting on Desk interface with a selected weapon recipe, required tools, output and Craft button](https://assets.openlegend.ai/studies/public/blobs/sha256/51/513feab5d86afd09a41d0723ddcf76d77cda585306594c67e5e2e062e6fdeb71)
 
 **Provenance:** The Indie Stone, [The Biomic Man, June 2024](https://projectzomboid.com/blog/news/2024/06/the-biomic-man/); **Build 42 development preview** on desktop. The page presents this as work in progress. [Original image](https://projectzomboid.com/blog/content/uploads/2024/06/image-107-1024x824.png).
 
@@ -74,7 +74,7 @@ Two additional primary discussions bound the lesson:
 
 ### PZ-03 — A later crafting layout makes names and search central
 
-![PZ-03: Build 42.20 developer screenshot with Crafting on Table, category rail, recipe list and input/output details beside the survivor](../screenshots/project-zomboid/b42-crafting-2026.jpeg)
+![PZ-03: Build 42.20 developer screenshot with Crafting on Table, category rail, recipe list and input/output details beside the survivor](https://assets.openlegend.ai/studies/public/blobs/sha256/15/15ebd1c90c3ad201678a7530a34d30aa5706e8f49e489e6450e72296bf0dbf8d)
 
 **Provenance:** The Indie Stone, [Build 42.20 feature overview](https://projectzomboid.com/blog/features-overview-build-42-20/); image asset dated **July 2026**, exact capture date unknown. Desktop developer-published capture; mode/mod details unspecified. [Original image](https://projectzomboid.com/blog/content/uploads/2026/07/pz-new-crafting.jpeg).
 
@@ -90,7 +90,7 @@ Two additional primary discussions bound the lesson:
 
 ### PZ-04 — Building keeps the affected world nearby
 
-![PZ-04: Build 42.20 developer building screen with Plank Barricade selected and material requirements beside the visible wall and survivor](../screenshots/project-zomboid/b42-building-2026.jpg)
+![PZ-04: Build 42.20 developer building screen with Plank Barricade selected and material requirements beside the visible wall and survivor](https://assets.openlegend.ai/studies/public/blobs/sha256/67/674cf2f1c2ad66ba315634c4c56e2dd8f49f6a8d32080b190ca7baa2772a1858)
 
 **Provenance:** Same [Build 42.20 overview](https://projectzomboid.com/blog/features-overview-build-42-20/); image asset dated **July 2026**, exact capture date unknown. Desktop developer-published capture; mode/mod details unspecified. [Original image](https://projectzomboid.com/blog/content/uploads/2026/07/pz-new-building.jpg).
 
@@ -106,7 +106,7 @@ Two additional primary discussions bound the lesson:
 
 ### PZ-05 — Precision controls are justified when composition is the decision
 
-![PZ-05: A Build 42 fluid-transfer prototype compares two bottles, mixed contents and an explicit transfer quantity](../screenshots/project-zomboid/fluid-bottle-mixing-wip-2022.png)
+![PZ-05: A Build 42 fluid-transfer prototype compares two bottles, mixed contents and an explicit transfer quantity](https://assets.openlegend.ai/studies/public/blobs/sha256/97/97fe3549d02a9ccc791823b17cffab7726e9f8816512004d605e05e0bf523b69)
 
 **Provenance:** The Indie Stone, [Liquid Zedball, 2022-07-21](https://projectzomboid.com/blog/news/2022/07/liquid-zedball/); **Build 42 fluid prototype**, desktop. [Original image](https://projectzomboid.com/blog/content/uploads/2022/07/fluids_b.png).
 
@@ -122,7 +122,7 @@ Two additional primary discussions bound the lesson:
 
 ### PZ-06 — A detailed transfer panel can coexist with a quick refill action
 
-![PZ-06: A world water cooler supplies a carried bottle in a Build 42 fluid-transfer prototype](../screenshots/project-zomboid/fluid-cooler-transfer-wip-2022.png)
+![PZ-06: A world water cooler supplies a carried bottle in a Build 42 fluid-transfer prototype](https://assets.openlegend.ai/studies/public/blobs/sha256/c1/c1065ccdc1a119331d13c2a2b2a8239a3cf0aa3c816016369bfc98d1f7e64b0c)
 
 **Provenance:** Same [Liquid Zedball article, 2022-07-21](https://projectzomboid.com/blog/news/2022/07/liquid-zedball/); **Build 42 fluid prototype**. This is a distinct source screenshot from PZ-05, showing a world cooler rather than a second carried bottle. [Original image](https://projectzomboid.com/blog/content/uploads/2022/07/fluids_c.png).
 

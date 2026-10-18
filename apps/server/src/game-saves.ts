@@ -9,6 +9,13 @@ import { writeCheckpoint, readCheckpoint } from './checkpoint.js';
 import { CheckpointWorker, type CheckpointSource } from './checkpoint-worker-client.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import {
+  assertAssetBinding,
+  assertAssetRevisionReference,
+  sameAssetRevision,
+  type AssetRevisionReference,
+} from '@open-legend/assets';
+import { AssetRepository, type AssetPrincipal } from './asset-repository.js';
 
 // Physical storage changes reject incompatible development checkpoints without conversion.
 // docs/save-and-load.md#active-development-policy.
@@ -72,11 +79,14 @@ export interface RestoreSave {
   /** Recovery checkpoint every caller publishes before the restore transaction (SL09-A, SB18),
    * so a refused or failed installation can never leave one it cannot account for. */
   recoveryId: string;
+  /** Current authenticated installation authority; never read from saved payload. */
+  assetPrincipal?: AssetPrincipal;
 }
 
 /** The database captures authority; manual slots publish to local files after capture. */
 export class GameSaves {
   private readonly files: SaveFiles;
+  private readonly assets: AssetRepository;
   private readonly worker?: CheckpointWorker;
   private active?: {
     id: string;
@@ -310,6 +320,7 @@ export class GameSaves {
     restoreAttemptId?: string,
   ) {
     this.files = new SaveFiles(directory, undefined, restoreAttemptId);
+    this.assets = new AssetRepository(db);
     if (source) this.worker = new CheckpointWorker(source);
   }
   async close() {
@@ -440,9 +451,12 @@ export class GameSaves {
             throw new GameSaveError('Save identity conflicts.');
           finishCapture();
           await this.files.confirmPublished(prior);
+          if (!options.unordered) await this.assets.completeSaveSnapshot(state.world.id, id);
           return;
         }
         const sequence = options.unordered ? undefined : await this.nextSequence(state.world.id);
+        if (!options.unordered)
+          await this.assets.claimSaveSnapshot(state.world.id, id, options.expectedRevision);
         if (this.worker) {
           await this.worker.capture(
             {
@@ -457,6 +471,7 @@ export class GameSaves {
             },
             finishCapture,
           );
+          if (!options.unordered) await this.assets.completeSaveSnapshot(state.world.id, id);
           return;
         }
         await writeCheckpoint(
@@ -472,6 +487,14 @@ export class GameSaves {
           },
           { expectedRevision: options.expectedRevision, captured: finishCapture },
         );
+        if (!options.unordered) await this.assets.completeSaveSnapshot(state.world.id, id);
+      })
+      .catch(async (error: unknown) => {
+        // The worker has settled/terminated before rejection. Only a proven absent
+        // slot releases its own provisional hold; an ambiguous published file keeps it.
+        if (!options.unordered && !(await this.files.metadata(id)))
+          await this.assets.releaseSaveSnapshot(state.world.id, id, true);
+        throw error;
       })
       .finally(() => {
         this.active = undefined;
@@ -501,7 +524,10 @@ export class GameSaves {
     if (valid.length < retain) return;
     const keep = new Set([...valid.map((m) => m.id), ...(protectedId ? [protectedId] : [])]);
     for (const candidate of candidates)
-      if (!keep.has(candidate.id)) await this.files.delete(candidate.id);
+      if (!keep.has(candidate.id)) {
+        await this.files.delete(candidate.id);
+        await this.assets.releaseSaveSnapshot(worldId, candidate.id);
+      }
   }
   async retainRecovery(worldId: string) {
     try {
@@ -524,7 +550,7 @@ export class GameSaves {
       );
     }
   }
-  async read(worldId: string, id: string): Promise<SavePayload> {
+  private async assetSlotId(worldId: string, id: string): Promise<string> {
     if (id === 'before-load') {
       const row = await this.db
         .prepare('SELECT format,checksum,payload FROM game_saves WHERE world_id=? AND id=?')
@@ -532,8 +558,12 @@ export class GameSaves {
       if (!row) throw new GameSaveError('That save no longer exists.');
       if (row['format'] !== SAVE_FORMAT || Buffer.byteLength(String(row['payload'])) > 1024)
         throw new GameSaveError('Unsupported recovery pointer; existing data was not changed.');
-      return this.read(worldId, recoveryFile(safeJson(String(row['payload'])), row['checksum']));
+      return recoveryFile(safeJson(String(row['payload'])), row['checksum']);
     }
+    return id;
+  }
+  async read(worldId: string, id: string): Promise<SavePayload> {
+    id = await this.assetSlotId(worldId, id);
     const row = await this.files.metadata(id);
     if (!row) throw new GameSaveError('That save no longer exists.');
     if (row.worldId !== worldId) throw new GameSaveError('Save belongs to another world.');
@@ -567,6 +597,7 @@ export class GameSaves {
       if (metadata && metadata.worldId !== worldId)
         throw new GameSaveError('Save belongs to another world.');
       await this.files.delete(id);
+      await this.assets.releaseSaveSnapshot(worldId, id);
       return;
     }
     await this.db.prepare('DELETE FROM game_saves WHERE world_id=? AND id=?').run(worldId, id);
@@ -583,14 +614,63 @@ export class GameSaves {
     )
       throw new GameSaveError('Save event count disagrees with retained records.');
     validateCurrentWorldState(payload.state.world);
+    assertAssetBinding(
+      payload.state.presentationRelease,
+      payload.state.presentationReleaseRevision,
+    );
     validateHistoryEvidence(
       payload.history,
       payload.state.world,
       payload.memory?.mind_source_versions ?? [],
     );
   }
+  async assertAssetDependencies(
+    payload: SavePayload,
+    installed?: AssetRevisionReference,
+    principal?: AssetPrincipal,
+    retainedSlotId?: string,
+  ): Promise<void> {
+    const reference = payload.state.presentationRelease;
+    if (reference === undefined) return;
+    assertAssetRevisionReference(reference);
+    if (installed && !sameAssetRevision(reference, installed))
+      throw new GameSaveError(
+        'This save requires another exact asset release. Materialize and build that release before loading; the active world was kept.',
+      );
+    const status = principal
+      ? await this.assets.retainedReleaseStatus(reference, principal)
+      : await this.assets.worldReleaseStatus(payload.state.world.id, reference);
+    const record = status.record;
+    if (!status.available) {
+      if (!retainedSlotId)
+        throw new GameSaveError(
+          'This external checkpoint cannot establish retained unavailable art. Current rights are required.',
+        );
+      await this.assets.assertRetainedSave(
+        payload.state.world.id,
+        await this.assetSlotId(payload.state.world.id, retainedSlotId),
+        reference,
+      );
+    }
+    if (record.manifest.kind !== 'release' || record.destination.boundary !== 'runtime')
+      throw new GameSaveError(
+        'The saved runtime asset release is unavailable under current permissions.',
+      );
+  }
   async install(current: SavedWorld, restore: RestoreSave) {
     this.validatePayload(restore.payload);
+    await this.assertAssetDependencies(
+      restore.payload,
+      undefined,
+      restore.assetPrincipal,
+      restore.id,
+    );
+    await this.assets.restoreWorldBinding(
+      restore.assetPrincipal,
+      current.world.id,
+      restore.payload.state.presentationRelease,
+      await this.assetSlotId(current.world.id, restore.id),
+    );
     const { recoveryId } = restore;
     const prepared = await this.files.metadata(recoveryId);
     if (!prepared || prepared.worldId !== current.world.id || prepared.kind !== 'recovery')

@@ -5,6 +5,7 @@
   "type": "module",
   "license": "AGPL-3.0-only",
   "dependencies": {
+    "@open-legend/assets": "workspace:*",
     "@open-legend/protocol": "workspace:*",
     "playcanvas": "2.22.2",
     "react": "19.3.0",

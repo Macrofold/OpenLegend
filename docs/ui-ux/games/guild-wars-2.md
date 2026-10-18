@@ -14,7 +14,7 @@ Guild Wars 2 is a useful comparison for persistent characters, many item types, 
 
 ## GW2-01 — A carried collection with visible bag identity
 
-![Guild Wars 2 inventory showing shared slots, starter backpack, search, bag rail and capacity](../screenshots/gw2/01-inventory-guide.jpg)
+![Guild Wars 2 inventory showing shared slots, starter backpack, search, bag rail and capacity](https://assets.openlegend.ai/studies/public/blobs/sha256/34/34df3a2e85b51c0cd96dd49e8c2de618e6586524258bdad96fdee69234393b98)
 
 _Source: [ArenaNet new-player guide](https://www.guildwars2.com/en/new-player-guide/), © ArenaNet / NCSOFT. Original 480 × 287 guide crop; asset path dates to 2020, exact build unspecified._
 
@@ -28,7 +28,7 @@ _Source: [ArenaNet new-player guide](https://www.guildwars2.com/en/new-player-gu
 
 ## GW2-02 — Market navigation expresses a goal
 
-![Guild Wars 2 Trading Post home with buying, selling, transactions and category filters](../screenshots/gw2/02-trading-post.jpg)
+![Guild Wars 2 Trading Post home with buying, selling, transactions and category filters](https://assets.openlegend.ai/studies/public/blobs/sha256/14/1439a3addb88860c5436a07a28491215ead2c11f5d1c5c012d70d2dec61391ed)
 
 _Source: [ArenaNet new-player guide](https://www.guildwars2.com/en/new-player-guide/), © ArenaNet / NCSOFT. Original 480 × 287 crop. Although its source filename says inventory, the inspected image is the Trading Post._
 
@@ -40,7 +40,7 @@ _Source: [ArenaNet new-player guide](https://www.guildwars2.com/en/new-player-gu
 
 ## GW2-03 — Fungible currency can leave the item grid
 
-![Guild Wars 2 wallet with named currency rows, amounts, currency filter and bag toggle](../screenshots/gw2/03-currency-wallet.png)
+![Guild Wars 2 wallet with named currency rows, amounts, currency filter and bag toggle](https://assets.openlegend.ai/studies/public/blobs/sha256/00/00e93293b314493b1eef0f0eb5ff5849ca08e09b049b6f557c0bdd7751d877c5)
 
 _Source: [ArenaNet currency-wallet FAQ](https://help.guildwars2.com/hc/en-us/articles/230429967-FAQ-In-Game-Currency-Wallet), © ArenaNet / NCSOFT. Official support capture; exact date and build unspecified._
 
@@ -54,7 +54,7 @@ _Source: [ArenaNet currency-wallet FAQ](https://help.guildwars2.com/hc/en-us/art
 
 ## GW2-04 — Crafting discovery is an intentional combination task
 
-![Guild Wars 2 weaponsmith discovery with eligible ingredients, four combination slots and discipline progress](../screenshots/gw2/04-crafting-discovery.jpg)
+![Guild Wars 2 weaponsmith discovery with eligible ingredients, four combination slots and discipline progress](https://assets.openlegend.ai/studies/public/blobs/sha256/f4/f42be5a7518d38ca0efc2502fad9dbea597a6b51f4617b50fb780cb3e3e1d34e)
 
 _Source: [Weaponsmith guide by raphael, September 3, 2019](https://mmoauctions.com/news/guild-wars-2-weaponsmith-guide-make-your-own-swords-and-axes), game imagery © ArenaNet / NCSOFT. Third-party screenshot provenance only; the commercial site's services and economic advice are not recommendations._
 
@@ -68,7 +68,7 @@ _Source: [Weaponsmith guide by raphael, September 3, 2019](https://mmoauctions.c
 
 ## GW2-05 — The bank exposes both sides of the transfer
 
-![Guild Wars 2 Account Vault with carried bags at left and bank grids at right, each independently searchable and scrollable](../screenshots/gw2/05-bank-account-vault.png)
+![Guild Wars 2 Account Vault with carried bags at left and bank grids at right, each independently searchable and scrollable](https://assets.openlegend.ai/studies/public/blobs/sha256/e5/e5f63d3ce21880b7bd32f018bb87cddfe192592b897d6b4784cfd261f663250b)
 
 _Source: [Embry / Projekt Dyad inventory guide](https://projektdyad.com/guides-list/guild-wars-2-inventory-management), game imagery © ArenaNet / NCSOFT. Original 896 × 658 capture; source says June 30 without a verified year. Capture build unspecified._
 
@@ -82,7 +82,7 @@ _Source: [Embry / Projekt Dyad inventory guide](https://projektdyad.com/guides-l
 
 ## GW2-06 — Give the player an immediate, named next step
 
-![GW2 tutorial objective tracker with story title, suggested level, overall purpose and Talk to Corporal Beirne](../screenshots/gw2/06-tutorial-objective.jpg)
+![GW2 tutorial objective tracker with story title, suggested level, overall purpose and Talk to Corporal Beirne](https://assets.openlegend.ai/studies/public/blobs/sha256/b6/b67248ef433cabb559a1d9a282298fc56b6430eee3cfb8440d84f34525c85de4)
 
 _Source: [ArenaNet new-player guide](https://www.guildwars2.com/en/new-player-guide/), © ArenaNet / NCSOFT. Actual 480 × 287 guide crop, asset path dated June 2020; PC, exact build unspecified._
 
@@ -96,7 +96,7 @@ _Source: [ArenaNet new-player guide](https://www.guildwars2.com/en/new-player-gu
 
 ## GW2-07 — A level notification can teach the next opportunity
 
-![GW2 Upcoming Level Rewards panel over the world with reward names, level requirements and Close](../screenshots/gw2/07-level-notification.jpg)
+![GW2 Upcoming Level Rewards panel over the world with reward names, level requirements and Close](https://assets.openlegend.ai/studies/public/blobs/sha256/81/81380d80660208fa8ef88565659076a9deaf6184eaf55ab306b84c8d4e45acdf)
 
 _Source: [Briseadh's firsthand new-player guide](https://www.gaisciochmagazine.com/guides/new_adventures_in_gw2.html), imagery © ArenaNet / NCSOFT. Original wide guide crop. The article describes play before the game's sixth birthday in August, placing the reported session in 2018; exact client build and capture date are unverified._
 
@@ -110,7 +110,7 @@ _Source: [Briseadh's firsthand new-player guide](https://www.gaisciochmagazine.c
 
 ## GW2-08 — The journal makes current story, archive and unavailability distinct
 
-![GW2 Story Journal with current My Story, expandable story groups, locked episodes and an explicit active-instance restriction](../screenshots/gw2/08-story-journal.jpg)
+![GW2 Story Journal with current My Story, expandable story groups, locked episodes and an explicit active-instance restriction](https://assets.openlegend.ai/studies/public/blobs/sha256/be/beca422c771130b9d3d307e5414e257fff3e08747bceae72b7bd26ff4d7c2f79)
 
 _Source: [Briseadh / Gaiscioch Magazine](https://www.gaisciochmagazine.com/guides/new_adventures_in_gw2.html), imagery © ArenaNet / NCSOFT. Actual PC guide capture from the reported 2018 play period; exact build unspecified. This is not ArenaNet's 2014 demo journal image, which was reviewed but excluded from this screenshot set._
 

@@ -71,7 +71,7 @@ All four images are third-party reference material used for criticism and design
 
 ### DOS2-01 — Historical alpha barter with staged offers
 
-![DOS2-01: Alpha barter interface with player stock, two offer areas, merchant stock, and Accept](../screenshots/dos2/DOS2-01-barter.jpg)
+![DOS2-01: Alpha barter interface with player stock, two offer areas, merchant stock, and Accept](https://assets.openlegend.ai/studies/public/blobs/sha256/e2/e295649f01e14c3c3e94ab63fee70b24526f105979bb6cd9c51a5fe25b70e9ca)
 
 **Provenance:** [RPGuides merchant-location page](https://www.rpguides.de/divinity-original-sin-2/fundorte/pyrokinet-pyrokinetic-fertigkeitenbucher.htm) · [Original image](https://www.rpguides.de/images/dos2/location086.jpg). Desktop, keyboard and mouse. The top-right label visibly says **ALPHA VERSION v3.0.15.252**. Publication and exact capture date unknown. Accessed 2026-10-04.
 
@@ -87,7 +87,7 @@ All four images are third-party reference material used for criticism and design
 
 ### DOS2-02 — Open a world chest and see its contents
 
-![DOS2-02: A character near a chest with the chest's item grid open over the world](../screenshots/dos2/DOS2-02-chest-loot.jpg)
+![DOS2-02: A character near a chest with the chest's item grid open over the world](https://assets.openlegend.ai/studies/public/blobs/sha256/42/428b0c4396567960bb60998edecd5e5486efdc301745e9226424432dd1ece2dc)
 
 **Provenance:** [Neoseeker, The Key to Freedom](https://www.neoseeker.com/divinity-original-sin-ii/walkthrough/The_Key_to_Freedom) · [Original image](https://cdn.staticneo.com/ew/e/e6/20171027151534_1.jpg). Desktop keyboard/mouse presentation. The filename suggests 27 October 2017; capture date and patch are not independently confirmed. Accessed 2026-10-04.
 
@@ -103,7 +103,7 @@ All four images are third-party reference material used for criticism and design
 
 ### DOS2-03 — PS4 party inventory and a bag's context menu
 
-![DOS2-03: Four PS4 party inventories with text categories and a context menu for a selected organization bag](../screenshots/dos2/DOS2-03-bag-context.jpg)
+![DOS2-03: Four PS4 party inventories with text categories and a context menu for a selected organization bag](https://assets.openlegend.ai/studies/public/blobs/sha256/a9/a9b168bbb1fffcff868ecf797639f9d59313c69672444d04b13432fd25285e3e)
 
 **Provenance:** [Raphaël Leroy's firsthand PS4 analysis](https://raphleroy18.wixsite.com/gamingux/post/divinity-original-sin-ii-on-ps4-menus-usability-and-information-visualization) · [Original image](https://static.wixstatic.com/media/03021d_2224bdfa37f94991b99e3fbcfffd220e~mv2.jpg/v1/fill/w_1920,h_1080,al_c,q_90/03021d_2224bdfa37f94991b99e3fbcfffd220e~mv2.jpg). Published 7 June 2020, updated 17 July 2020. PS4 Definitive Edition with **Improved Organization gift bag enabled**; precise build and capture date unknown. Accessed 2026-10-04.
 
@@ -119,7 +119,7 @@ All four images are third-party reference material used for criticism and design
 
 ### DOS2-04 — Experimental crafting reveals an organization failure
 
-![DOS2-04: PS4 Combine crafting tab with five ingredient positions and repeated organization bags in the item selector](../screenshots/dos2/DOS2-04-crafting.jpg)
+![DOS2-04: PS4 Combine crafting tab with five ingredient positions and repeated organization bags in the item selector](https://assets.openlegend.ai/studies/public/blobs/sha256/5c/5c5194198c8d10328be77a1b79d19df2c79fb7d859cabdd5b586ed8baf180028)
 
 **Provenance:** [Same PS4 analysis](https://raphleroy18.wixsite.com/gamingux/post/divinity-original-sin-ii-on-ps4-menus-usability-and-information-visualization) · [Original image](https://static.wixstatic.com/media/03021d_a783efe8de294d1394a962335a85f4af~mv2.jpg/v1/fill/w_1920,h_1080,al_c,q_90/03021d_a783efe8de294d1394a962335a85f4af~mv2.jpg). PS4 Definitive Edition, 2020, **Improved Organization gift bag enabled**; exact build unknown. Accessed 2026-10-04.
 
@@ -183,7 +183,7 @@ All six images below are reference-only third-party gameplay captures. No open-a
 
 ### DOS2-05 — Quest navigation, current selection and tracking
 
-![DOS2-05: PS4 journal with quest hierarchy and a selected entry](../screenshots/dos2/DOS2-05-quest-log.jpg)
+![DOS2-05: PS4 journal with quest hierarchy and a selected entry](https://assets.openlegend.ai/studies/public/blobs/sha256/7c/7c22731655a21a6a526cb5938cfd1e1aa2547eb51cf6356af8ee9d689b960109)
 
 **Provenance:** [Firsthand PS4 analysis](https://raphleroy18.wixsite.com/gamingux/post/divinity-original-sin-ii-on-ps4-menus-usability-and-information-visualization) · [Original](https://static.wixstatic.com/media/03021d_b7572562540443cdb9cb6a02fa16e1a9~mv2.jpg). PS4 Definitive Edition, 2020 publication, gift bags enabled; capture date/build unknown. Accessed 2026-10-04.
 
@@ -193,7 +193,7 @@ All six images below are reference-only third-party gameplay captures. No open-a
 
 ### DOS2-06 — A transcript can be navigable without becoming chat clutter
 
-![DOS2-06: Dialogue history grouped by day, time and conversation partner](../screenshots/dos2/DOS2-06-dialogue-history.jpg)
+![DOS2-06: Dialogue history grouped by day, time and conversation partner](https://assets.openlegend.ai/studies/public/blobs/sha256/3d/3d45892b6674ca5108f93280108523b6606406d9f02dc08ed87aea779a524976)
 
 **Provenance:** [Firsthand PS4 analysis](https://raphleroy18.wixsite.com/gamingux/post/divinity-original-sin-ii-on-ps4-menus-usability-and-information-visualization) · [Original](https://static.wixstatic.com/media/03021d_99ebf71c964c4b988aa2a6547413e5a5~mv2.jpg). PS4 Definitive Edition; 2020 publication, gift bags enabled; exact build/capture date unknown. Accessed 2026-10-04.
 
@@ -203,7 +203,7 @@ All six images below are reference-only third-party gameplay captures. No open-a
 
 ### DOS2-07 — A waypoint list asks a real destination question
 
-![DOS2-07: Waypoint selection over the current world with named destinations](../screenshots/dos2/DOS2-07-waypoints.jpg)
+![DOS2-07: Waypoint selection over the current world with named destinations](https://assets.openlegend.ai/studies/public/blobs/sha256/07/07af419151c3d89c2d3704fb9a76553ed462a034020935a44bf055878305fa7c)
 
 **Provenance:** [Firsthand PS4 analysis](https://raphleroy18.wixsite.com/gamingux/post/divinity-original-sin-ii-on-ps4-menus-usability-and-information-visualization) · [Original](https://static.wixstatic.com/media/03021d_d595472f44ca4b06b20776d3ca5707a8~mv2.jpg). PS4 Definitive Edition; 2020 publication, gift bags enabled; exact build/capture date unknown. Accessed 2026-10-04.
 
@@ -213,7 +213,7 @@ All six images below are reference-only third-party gameplay captures. No open-a
 
 ### DOS2-08 — Known, prepared, innate and equipment-provided abilities
 
-![DOS2-08: Skills screen separating memory slots, innate skills and skills from items](../screenshots/dos2/DOS2-08-skills.jpg)
+![DOS2-08: Skills screen separating memory slots, innate skills and skills from items](https://assets.openlegend.ai/studies/public/blobs/sha256/30/30213296d62b91b9b5083e8c8c5d848f8ca72fc1fe6c55d70ade76e817c259af)
 
 **Provenance:** [Firsthand PS4 analysis](https://raphleroy18.wixsite.com/gamingux/post/divinity-original-sin-ii-on-ps4-menus-usability-and-information-visualization) · [Original](https://static.wixstatic.com/media/03021d_3035be004d2e4ae88712ad8e2132970a~mv2.jpg). PS4 Definitive Edition; 2020 publication, gift bags enabled; exact build/capture date unknown. Accessed 2026-10-04.
 
@@ -223,7 +223,7 @@ All six images below are reference-only third-party gameplay captures. No open-a
 
 ### DOS2-09 — Scene-first exploration with a compact action strip
 
-![DOS2-09: Exploration HUD with party conditions left, minimap right and hotbar below](../screenshots/dos2/DOS2-09-exploration-hud.jpg)
+![DOS2-09: Exploration HUD with party conditions left, minimap right and hotbar below](https://assets.openlegend.ai/studies/public/blobs/sha256/99/99b566b48b9e7a23f405a283eeca0a0f05808ba3bcbb4916b1823928c1c39b03)
 
 **Provenance:** [Firsthand PS4 analysis](https://raphleroy18.wixsite.com/gamingux/post/divinity-original-sin-ii-on-ps4-menus-usability-and-information-visualization) · [Original](https://static.wixstatic.com/media/03021d_abbf32d1e5c4481088e00015f4cfec7f~mv2.jpg). PS4 Definitive Edition; 2020 publication, gift bags enabled; exact build/capture date unknown. Accessed 2026-10-04.
 
@@ -233,7 +233,7 @@ All six images below are reference-only third-party gameplay captures. No open-a
 
 ### DOS2-10 — Returning to play is a primary game interaction
 
-![DOS2-10: Definitive Edition main menu with Story focused and Continue below it](../screenshots/dos2/DOS2-10-entry-menu.jpg)
+![DOS2-10: Definitive Edition main menu with Story focused and Continue below it](https://assets.openlegend.ai/studies/public/blobs/sha256/f5/f5312c759dee8451fbd74095bac5822d90cfcf58d08f10db106509020efe2aea)
 
 **Provenance:** [Firsthand PS4 analysis](https://raphleroy18.wixsite.com/gamingux/post/divinity-original-sin-ii-on-ps4-menus-usability-and-information-visualization) · [Original](https://static.wixstatic.com/media/03021d_7f8d415233004a89a2c63dbfdb51eea2~mv2.jpg). PS4 Definitive Edition, **v3.6.58.1306** visibly displayed; 2020 publication, gift bags enabled. Exact capture date unknown. Accessed 2026-10-04.
 

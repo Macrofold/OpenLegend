@@ -1,5 +1,7 @@
 # Open Legend
 
+For models, images, fonts, captures, editable sources and studies, follow [Working with game assets](docs/asset-workflow.md). Substantial files live in S3 and are delivered through `assets.openlegend.ai`; exact checked-in selections identify the files needed by each game/study build. Public downloads use `pnpm assets pull --public --path PATH` or a selected prefix without AWS credentials. Keep new art workspaces and generated outputs outside the checkout, then publish verified permanent references.
+
 ## Gameplay priorities and repertoire library
 
 The product priority is a **complete, playable, enjoyable OpenLegend game**: actual enemies, usable weapons, readable combat and recovery, worthwhile exploration, rewards, progression, useful crafting and functional building. A small real instance of practical invention, independent character choice and persistent consequence belongs in that first playable experience—not behind a generic survival-game checklist. Optional maintenance and elaborate simulation must earn their place through play. See [Playable game first](docs/repertoires/gameplay-priorities.md).
@@ -34,7 +36,7 @@ The implementation supports **local play and authenticated shared-world play** w
 
 Hosted operations and scale qualification, regional replication, arbitrary invented physics, marketplace, memberships and creator fund remain future work. Automated fixture tests are not evidence of live model quality. See [verification status](docs/verification.md).
 
-![The React interface over original procedural artwork, in an isolated native fixture](docs/images/wilderness.png)
+![The React interface over original procedural artwork, in an isolated native fixture](https://assets.openlegend.ai/studies/public/blobs/sha256/d0/d04a290ddf3c2566d01927153d2e2e5c0a5e06fcca43325bf2578f948920b76e)
 
 - [Engine/world boundaries](docs/engine-and-world-boundaries.md), [extensibility roadmap](docs/extensibility-roadmap.md) and [EWF work](docs/maintainers/extensible-world-foundation.md) — shared foundation and staged delivery
 
@@ -193,6 +195,7 @@ The latest design additions cover [world locks and invention ownership](archive/
 
 - [Maintainer work index](docs/maintainers/README.md) — navigation to cross-cutting work and the focused [ACT](docs/maintainers/actor-model.md), [CR](docs/maintainers/cognition-redesign.md), [NC](docs/maintainers/narration-and-conversations.md), [INV](docs/maintainers/inventions-and-world-evolution.md) and [production-data](docs/maintainers/production-data.md) trackers
 - [Research and design archive](archive/README.md)
+- [Production workflows](docs/production-workflows/README.md) — reusable routes from an idea through art, assets, animation, interfaces, sound and playable consequences; [production principles](archive/02-research/ai-game-development/09-openlegend-principles.md) explain their fit for OpenLegend.
 - [Save/load design](docs/save-and-load.md) — high-level constraints for future state, simulation and storage design; manual and rolling autosave slots, bounded capture and documented recovery qualification
 - [Runtime performance design](docs/performance.md) and [prioritized tasks](docs/maintainers/performance.md) — compact persistence, triggered background work, bounded CPU and the measured scale path; cold event storage, gameplay retry epochs and actor scheduling are implemented; multiplayer and scale qualification remain pending
 - [Real-time multiplayer synchronization](archive/07-technical-architecture/realtime-synchronization.md) — batching, prediction, replication and future improvements

@@ -1,12 +1,14 @@
 # Production deployment — implementation playbook
 
-| Status      | Current progress                                                                                            | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The deployment design is documented; the application has not been deployed through this proposed procedure. | 2026-10-16   |
+| Status      | Current progress                                                                                                         | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Asset storage and shared tooling are delivered; game packaging, hosted rollout and production qualification remain open. | 2026-10-17   |
 
-**Design only, researched 2 October 2026.** This is the execution companion to the [technical design](production-deployment-tech-design.md), not deployed infrastructure. The Dockerfile, CDK application, deployment workflows, release-specific maintenance gate and asset publisher described below still need implementation. Commands are reviewed examples, not evidence that they ran. [PD01–PD12](../maintainers/production-deployment.md) owns tasks and acceptance; this document owns the deployment procedure, not another checklist.
+**Hosting design, researched 2 October 2026; asset operations implemented under AS.** This is the execution companion to the [technical design](production-deployment-tech-design.md). The Dockerfile, application CDK, game deployment workflows and release-specific maintenance gate still need implementation. Asset storage is deployed and its shared publisher is implemented; use the [canonical asset workflow](../asset-workflow.md) for supported commands and [AS verification](../verification/game-asset-storage.md) for actual results. Other command examples remain proposed until exercised. [PD01–PD12](../maintainers/production-deployment.md) owns tasks and acceptance; this document owns the deployment procedure, not another checklist.
 
 The release-specific write gate remains future work. Existing [maintenance controls](completed/multiplayer-entry-maintenance.md) already pause ordinary play and retain the notice across restart; reuse that owner rather than rebuilding maintenance.
+
+[AS01–AS08](../maintainers/game-asset-storage.md) supplies shared asset storage, study delivery and migration work; deployment keeps the procedure and acceptance owned here.
 
 ## 1. Build the smallest complete deployment
 
@@ -15,7 +17,7 @@ Deliver one native-only staging world first, then actual Auth0 login, the CDN as
 The proposed implementation adds these artifacts:
 
 - A root `Dockerfile` and `.dockerignore`: reproducible application image, no credentials, private saves, local caches or research artwork.
-- An `infra/` TypeScript CDK application: a foundation stack for networking, registry, storage, database and secrets; a runtime stack for the world service and its load balancer. Assets can share the foundation initially. Do not create a VPC or database instance per player/world.
+- An `infra/` TypeScript CDK application: a foundation stack for networking, registry, database and application secrets; a runtime stack for the world service and its load balancer. Integrate verified outputs from the independently retained [asset infrastructure](game-asset-storage-tech-design.md#2-physical-storage-and-accounts); do not create a second asset resource owner or a VPC/database instance per player/world.
 - A protected build/release workflow and a separately authorized asset-publication workflow. Reuse `.github/workflows/check.yml`; do not replace its checks with deployment success.
 - A narrow operator release command implementing the phases below, with a durable release record. Do not build a generic workflow platform or an administration dashboard before the first safe release.
 
@@ -33,9 +35,9 @@ Run non-root, forward SIGTERM to Node, and preserve the existing shutdown handle
 
 ## 2. Provision and configure once
 
-Use separate production/nonproduction AWS accounts and Auth0 tenants. The initial managed environment is private Fargate tasks, RDS and EFS across two availability zones, with public HTTPS only at the ALB/CDN. One world task is still one availability failure domain even when the network and database span zones.
+For the proposed hosted-game rollout, plan separate production/nonproduction AWS accounts and Auth0 tenants. The implemented [asset deployment](game-asset-storage-tech-design.md#2-physical-storage-and-accounts) uses one project/Region with separate buckets and narrow roles; its protected copies do not supply project-wide or regional disaster recovery. The proposed game environment is private Fargate tasks, RDS and EFS across two availability zones, with public HTTPS only at the ALB/CDN. One world task is still one availability failure domain even when the network and database span zones.
 
-CDK owns infrastructure, service configuration and task definitions. The release pipeline supplies an explicit approved image digest and desired world count to the runtime stack. Persist that release input and reuse it for future infrastructure deployments; never let a routine CDK deployment reset the application to a hard-coded old image. Console changes are emergency operations that must be reconciled back into the reviewed configuration.
+Application CDK owns the proposed game infrastructure, service configuration and task definitions. The existing asset CloudFormation template retains its separate ownership and review/apply workflow. The release pipeline supplies an explicit approved image digest and desired world count to the runtime stack. Persist that release input and reuse it for future infrastructure deployments; never let a routine CDK deployment reset the application to a hard-coded old image. Console changes are emergency operations that must be reconciled back into the reviewed configuration.
 
 Implement separate IAM roles for image publishing, infrastructure deployment, task startup and runtime access. Restrict `iam:PassRole`; the game role must not administer the database, provision fleets or alter arbitrary S3 content. Backup/restore jobs use separate operator roles. Use GitHub OIDC rather than stored AWS access keys, and restrict both the token audience and the repository/environment subject. Fork pull requests receive no deployment credentials. [C01]
 
@@ -167,23 +169,15 @@ Retain one release record from source to deployment: source commit, image digest
 
 ## 5. Publish assets independently
 
-Start with curated mercenary delivery, not a complete AI art factory. The [art contract](../invention-art-pipeline.md) retains semantic validation, rights, fallbacks and save pins. This sequence supplies its production storage and tooling.
+The implemented [asset workflow](../asset-workflow.md) supplies curated storage, publication, local fetch, study delivery and exact saved release selection. Reuse it for the production consumer; the [art contract](../invention-art-pipeline.md) retains semantic validation, rights, fallbacks and save pins. Runtime generation and the remaining PD05 production qualification have separate gates.
+
+Use the [asset storage directory and publication contract](game-asset-storage-tech-design.md#4-s3-directory-contract), not a second deployment-specific folder convention. Before running upload commands, bind verified account/region/bucket/domain configuration and destination access policy. Library/study preservation and selective local fetch may precede full world hosting. Runtime promotion verifies the exact destination dependency closure; dev/preview/staging/production selections are records at the release owner, not mutable S3 `latest` files. Study and source files remain separate from player output. Publication is committed only after the bytes/manifests are verified and protected from cleanup.
 
 **Curated publication:** retain source/provenance privately, produce a bounded runtime bundle, inspect it with pinned glTF Transform and Khronos validation, test the actual PlayCanvas loader, upload immutable bytes, verify checksums, then atomically publish the authorized metadata/binding. Never publish the database pointer before its dependencies exist. Reuse textures/rigs; measure download, decode, upload-to-GPU and steady VRAM separately. An optimized file is not automatically a correctly rigged or mechanically faithful character.
 
-A minimal upload primitive for one already-approved public GLB is below. The bucket remains origin-private behind CloudFront OAC; the public cache policy is appropriate only for content approved for public distribution. Restricted content needs its own viewer authorization/cache policy. This is **not** the missing manifest/rights publisher. [C10]
+Use **prepare → approve → publish** through the [implemented publisher](../asset-workflow.md#publish-an-exact-revision), with its reviewed exact manifest, permitted destination and expected selection revision. The publisher owns immutable conditional writes, full-file checksum verification, retained claims, physical copy receipts and committed metadata. A raw S3 upload is not a published asset. The [integrity contract](game-asset-storage-tech-design.md#62-exact-bytes-and-s3-integrity) distinguishes full-file SHA-256 from composite multipart checksums and ETags; the narrow storage adapter computes the required checksum encodings from the same bytes. [C10]
 
-```sh
-: "${ASSET_BUCKET:?Set the approved runtime asset bucket}"
-: "${ASSET_FILE:?Set the validated GLB path}"
-HASH="$(shasum -a 256 "$ASSET_FILE" | awk '{print $1}')"
-aws s3api put-object --bucket "$ASSET_BUCKET" \
-  --key "runtime/sha256/$HASH.glb" --body "$ASSET_FILE" \
-  --content-type model/gltf-binary --checksum-algorithm SHA256 \
-  --if-none-match '*' --cache-control 'public,max-age=31536000,immutable'
-```
-
-On an existing-key response, verify the stored SHA-256 and metadata before treating it as an idempotent success; an ETag is not universally the file's SHA-256. Other failures remain failures. Publish a new manifest revision through expected-version checks. Do not use `s3 sync --delete` on the live library. A bad new asset rolls back its binding, not the game database. Preserve every dependency pinned by retained saves, active worlds or released packs.
+Keep the bucket origin-private behind CloudFront OAC. The public cache policy applies only to explicitly public content; restricted files use their separately authorized route. Preserve source/library/study/release pins and active upload claims, and record intentional copies across storage or permission boundaries. A bad new artwork release rolls back its exact selection through the supported owner controls while retaining current permission checks. It does not rewind the game database. Rehearse restoration through the [recovery contract](game-asset-storage-tech-design.md#9-retention-backups-and-withdrawal). [AS05](../maintainers/game-asset-storage.md#as05--inventory-preservation-and-repository-migration) owns preservation and fresh-checkout gates before tracked-media removal; AS08 requires a separately approved history-rewrite plan. Bucket-wide pruning is not deployment cleanup.
 
 **Generated publication:** add private quarantine and an asynchronous conversion/review worker only after the curated path passes. Use a small source queue with durable job/attempt IDs; do not run Blender, untrusted decoders or arbitrary asset fetches inside the simulation process. Disable executable/scripted asset behavior and arbitrary external references; bound compressed/decoded size, CPU, memory, output count and elapsed work. A model-supplied URL must not reach internal services or cloud metadata. Reconcile unknown provider completion before another paid attempt.
 

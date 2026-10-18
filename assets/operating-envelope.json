@@ -1,0 +1,5 @@
+{
+  "maxRetainedBytes": 10737418240,
+  "maxRetainedFiles": 100000,
+  "maxPublicationOperations": 10000
+}

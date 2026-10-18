@@ -16,7 +16,7 @@ The [developer's 2016 interface article](https://discoelysium.com/devblog/2016/1
 
 ## DISCO-01 — Conversation, inner voice and consequence share one scene
 
-![Disco Elysium dialogue beside the visible room, with named speakers and a morale-loss message](../screenshots/disco/01-dialogue-morale.jpg)
+![Disco Elysium dialogue beside the visible room, with named speakers and a morale-loss message](https://assets.openlegend.ai/studies/public/blobs/sha256/45/451833db45668dbd2bfa91dee3386c506ab88c072566c35be26f2340da8791c5)
 
 _Source: [ZA/UM media gallery](https://discoelysium.com/media), © ZA/UM. Full publisher screenshot; build and capture date unspecified._
 
@@ -30,7 +30,7 @@ _Source: [ZA/UM media gallery](https://discoelysium.com/media), © ZA/UM. Full p
 
 ## DISCO-02 — A check explains the world instead of opening another form
 
-![Disco Elysium forensic world overlay with named observations, numbered actions, dice and a textual success result](../screenshots/disco/02-check-world-overlay.jpg)
+![Disco Elysium forensic world overlay with named observations, numbered actions, dice and a textual success result](https://assets.openlegend.ai/studies/public/blobs/sha256/11/1178eb298302fbf8d062f53d1e8fe781909e0434b8bdeb7464771f17f762df3e)
 
 _Source: [ZA/UM media gallery](https://discoelysium.com/media), © ZA/UM. Full publisher screenshot; build unspecified._
 
@@ -44,7 +44,7 @@ _Source: [ZA/UM media gallery](https://discoelysium.com/media), © ZA/UM. Full p
 
 ## DISCO-03 — The Thought Cabinet: compelling metaphor, costly obscurity
 
-![Disco Elysium PS5 Thought Cabinet with character summary, slotted thoughts, sortable list and selected thought detail](../screenshots/disco/03-thought-cabinet-ps5.jpg)
+![Disco Elysium PS5 Thought Cabinet with character summary, slotted thoughts, sortable list and selected thought detail](https://assets.openlegend.ai/studies/public/blobs/sha256/c3/c33f7f84bdf58313d52f30743155651d8a0b9f07abc11c023d2974a7004cf306)
 
 _Source: [Coty Craven / Can I Play That, March 31, 2021](https://caniplaythat.com/2021/03/31/disco-elysium-the-final-cut-can-i-play-that-accessibility-review/), game imagery © ZA/UM. Full PS5 screenshot; patch unspecified._
 
@@ -58,7 +58,7 @@ _Source: [Coty Craven / Can I Play That, March 31, 2021](https://caniplaythat.co
 
 ## DISCO-04 — Equipment is visible on the person and in its slot
 
-![Disco Elysium inventory with equipped clothing around the character, aggregate effects and a selected glove detail](../screenshots/disco/04-equipment-inventory.jpg)
+![Disco Elysium inventory with equipped clothing around the character, aggregate effects and a selected glove detail](https://assets.openlegend.ai/studies/public/blobs/sha256/ad/ad8cf61fcc1e0fb541e28610cf386fd7ffba17d0f7b706160a950821ff127ee1)
 
 _Source: [Riker Santivong's game review page](https://planita13.github.io/Final-Project/disco.html), game imagery © ZA/UM. Full PC-style screenshot reproduced by a third party; original capture build and date are unverified._
 
@@ -72,7 +72,7 @@ _Source: [Riker Santivong's game review page](https://planita13.github.io/Final-
 
 ## DISCO-05 — A map can remember opportunities without prescribing every move
 
-![Disco Elysium Journal Map with a list of found checks, skill and difficulty labels, availability explanation and named landmarks](../screenshots/disco/05-map-checks.jpg)
+![Disco Elysium Journal Map with a list of found checks, skill and difficulty labels, availability explanation and named landmarks](https://assets.openlegend.ai/studies/public/blobs/sha256/11/11630c28db14e3e9faa9b2df7df61822f7ce9ca8d75996726d0b54b45a3e11ee)
 
 _Source: [Sam Chandler / Shacknews, October 29, 2019](https://www.shacknews.com/article/114689/where-to-get-a-map-in-disco-elysium), game imagery © ZA/UM. Full original capture from the PC release period; exact build unspecified. No Final Cut travel behavior is inferred from this older image._
 
@@ -88,7 +88,7 @@ _Source: [Sam Chandler / Shacknews, October 29, 2019](https://www.shacknews.com/
 
 ## DISCO-06 — Help must connect physical controls to player intentions
 
-![Disco Elysium PS5 pause menu Options and Controls page showing named controller bindings](../screenshots/disco/06-controls-ps5.jpg)
+![Disco Elysium PS5 pause menu Options and Controls page showing named controller bindings](https://assets.openlegend.ai/studies/public/blobs/sha256/01/018cd29c277933f691270be695834a0951b01d87f13779248f880ee2bf0c7165)
 
 _Source: [Coty Craven / Can I Play That, March 31, 2021](https://caniplaythat.com/2021/03/31/disco-elysium-the-final-cut-can-i-play-that-accessibility-review/), game imagery © ZA/UM. Full PS5 launch-period screenshot, exact patch unspecified._
 

@@ -1,10 +1,12 @@
 # Art direction and study progress
 
+**Latest preference:** follow the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026): beautiful dimensional pixel art with believable proportions; reject visibly low-poly, blocky, cutesy and big-head/small-body art. Mike praised the latest study’s improvement, then explicitly narrowed source/style selection; that does not close the remaining art or motion acceptance checks.
+
 This tracker is the entry point for visual work, individual studies and Mike's art-review decisions. The [creative brief](../../art-direction/final-board/creative-brief.md), [reference boards](../../art-direction/README.md) and [recorded decisions](../../art-direction/decisions.md) remain the aesthetic owners. A working asset or passing renderer check does not establish final style approval.
 
 ## Where the work lives
 
-The active local art workspace is **[OpenLegend-art](/Users/mzw/Documents/ChatGPT/OpenLegend-art/README.md)**, beside the main game checkout under `/Users/mzw/Documents/ChatGPT/`. It contains editable art and dated milestone packages. This is its working location, not a claim that the files have been replicated off-device.
+Use [Asset workflows](../asset-workflow.md) to create independent external workspaces from exact published files. The original OpenLegend-art package, editable sources and dated milestone archive are preserved in the [verified source collection](https://assets.openlegend.ai/studies/public/blobs/sha256/4a/4a349cc6546c47d5542f47f8f5034cdbbb171fa1fd6283fb5d088449162aeff4); its [original cape-study viewer](https://assets.openlegend.ai/studies/public/viewers/source-5186378a84f892865537563c1adb1e1ebb5b694af7494d9101ff66e93c7272ff/mercenary/study/index.html) retains its earlier renderer and recorded limitations. Keep new editable work outside Git and publish verified revisions before recording permanent links.
 
 Repository responsibilities:
 
@@ -17,7 +19,19 @@ The absolute source links are intentionally specific to Mike's computer and work
 
 Reference repository documentation by repository-relative path, including from the local art workspace READMEs. Active file locations must use the stable art workspace, never a temporary Codex worktree or visualization directory. Old visualization aliases only preserve earlier links; they are not the source locations to record for future work.
 
+## Reusable production methods
+
+The [production handbook](../production-workflows/README.md) owns reusable development methods: [objects, bodies and animation](../production-workflows/assets-and-animation.md), [scenes, material recipes, lighting and interfaces](../production-workflows/scenes-and-interfaces.md), and [sound, motion and effects](../production-workflows/audio-and-feedback.md). Use a route for a particular study without treating every optional stage as required. Early visual exploration can discover a stronger idea while a rough playable version tests what the player can actually do.
+
+Keep the brief, chosen references, editable source location, relevant tool/model versions, useful export settings and reviewed in-game result together in the existing study record. Record the visual or player-experience reason for the selection and the remaining repair work. For generated or third-party inputs, retain the source and applicable use terms. Large source assets continue to live in the established art workspace; a new asset database is not required by this guidance.
+
+When a body, material, camera treatment or animation changes, identify the exports and views that need checking again. Develop a useful variation before treating a recipe as a production family. A coherent identity and an expressive action can justify the work even when the route does not reduce production time. [V3D](3d-pixel-art.md) continues to own technical family qualification and progressive appearances.
+
 ## Active studies
+
+**First-scene direction agreed:** the [focused plan](../projects/3d-pixel-art-first-scene-plan.md) and [V3D01.1–V3D01.12](3d-pixel-art.md#first-scene-delivery-and-experiment-tasks) now define an art revision of the existing starting scene, controlled visual comparisons and authored/generated production proof. Preserve the existing playtest content; add only justified missing demonstration subjects. The October 16 [source-based replacement study](../verification/source-based-starting-study.md) now supplies 41 families with three alternatives, the original mercenary, complete existing-world scene/light comparisons and measured moving review. Working rendering choices are implemented; creator acceptance and the documented visual/initial-load limits remain open. Prior MER/scene experiments retain their separate historical evidence. The [October 17 detail/atmosphere increment](../verification/small-subject-art-and-atmosphere.md) expands the collection to 45 families, adopts finer small-subject pixels and a Poly Haven chest, preserves all recoverable captures, and leaves bear acquisition explicitly pending.
+
+**Reference research completed October 14:** [Dimensional pixel-art research](../../art-direction/research/3d-pixel-worlds/README.md) includes 34 locally saved images, source evidence, rendering explanations and generative-workflow implications. Garbage Country and The Last Night strengthen the environment/finish targets; EthrA's environment is liked with richer characters requested. The [decision record](../../art-direction/decisions.md#dimensional-pixel-art-references--october-14-2026) separates confirmed preferences from proposed techniques. The [realtime follow-up](../../art-direction/research/3d-pixel-worlds/realtime-pixel-rendering.md) adds t3ssel8r’s endorsed character, lighting/grass/VFX techniques, texel stability, animation/tool research, all supplied video links and the additional transcripts. The proposed first comparison now uses designed realtime pixel shading; painted surface detail remains available. This research does not close a study's visual approval or V3D01's moving comparison.
 
 | Study             | Progress owner                       | Current state                                                                              | Next art decision                                                                                                                              |
 | ----------------- | ------------------------------------ | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |

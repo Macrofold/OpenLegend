@@ -1,0 +1,199 @@
+{
+  "group": "source-natural-birch",
+  "sourceFile": "art-direction/assets/source-study/source-natural-birch.blend",
+  "sourceSha256": "bbda61be4b4f644e3711a6f1b1dfef86ad302e1e40fa9b08cee5d28bc1af0752",
+  "recipe": {
+    "path": "scripts/prepare-natural-replacements.py",
+    "sha256": "beeba80520a4a0799ffdcc96d56c939b008e8d0d1a5d234c82e3612e7911ae91"
+  },
+  "helpers": {
+    "art_study_common.py": "8f96082f9a824dcddd9d2b5f45578c0eb9870a6896c05e6fb74020af85dd9080",
+    "prepare-source-study.py": "8ba3b45a391b1c4cf7e761c8e140c84d86ecb86cf7e23227f85d0861c851598a",
+    "prepare-mercenary-variants.py": "9a1567df9e2212a497859e3e047f2652ba2a5e724c2d602bbbbd20156d115581",
+    "prepare-resource-study.py": "cf0705e9e6cc2bc3a8489b1f5b8ee01878aea90d4b928c09a1e6eddfc19ebc42"
+  },
+  "sources": [
+    {
+      "url": "https://polyhaven.com/a/tree_small_02",
+      "license": "CC0",
+      "files": [
+        {
+          "asset": "tree_small_02",
+          "file": "tree_small_02_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/tree_small_02/tree_small_02_1k.gltf",
+          "bytes": 9075,
+          "sha256": "3062a709614c05b80fdc1e56583998bc3cb1027b0d52f956c8ecfb882ff8ca6d"
+        },
+        {
+          "asset": "tree_small_02",
+          "file": "textures/tree_small_02_branch_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_small_02/tree_small_02_branch_nor_gl_1k.jpg",
+          "bytes": 581596,
+          "sha256": "a2efae9e7fede259601188cd5cb7e561fc502bd87e04d862a9532b2d8e647a62"
+        },
+        {
+          "asset": "tree_small_02",
+          "file": "textures/tree_small_02_branch_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_small_02/tree_small_02_branch_diff_1k.jpg",
+          "bytes": 449977,
+          "sha256": "a71b768e330c0c6cca097e30314f6b4e842ef724a1370f6aab14b4434eec64cb"
+        },
+        {
+          "asset": "tree_small_02",
+          "file": "textures/tree_small_02_branch_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_small_02/tree_small_02_branch_arm_1k.jpg",
+          "bytes": 375732,
+          "sha256": "8968b46d76c67da09ebbf4eed04b8123c9e0ddf5b55d123968b35b32aa76d27a"
+        },
+        {
+          "asset": "tree_small_02",
+          "file": "textures/tree_small_02_leaves_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_small_02/tree_small_02_leaves_nor_gl_1k.jpg",
+          "bytes": 681604,
+          "sha256": "8c72e04fb23e16ae1df79c01385a638473d1dd4dede3d51e83d70153c129f09b"
+        },
+        {
+          "asset": "tree_small_02",
+          "file": "textures/tree_small_02_leaves_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_small_02/tree_small_02_leaves_diff_1k.jpg",
+          "bytes": 340003,
+          "sha256": "261e7d7a5ac7d2e16ea8823ff8510be8f3f615999724232994039ad2885e5c36"
+        },
+        {
+          "asset": "tree_small_02",
+          "file": "textures/tree_small_02_leaves_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_small_02/tree_small_02_leaves_arm_1k.jpg",
+          "bytes": 633698,
+          "sha256": "71f81374daf5a8f3e6eb2c694264a1769fdb0bea508178e4105618eecea83c3e"
+        },
+        {
+          "asset": "tree_small_02",
+          "file": "textures/tree_small_02_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_small_02/tree_small_02_nor_gl_1k.jpg",
+          "bytes": 1228646,
+          "sha256": "9c83be074c950ea1b94c732c0c0291b53b9ba357f932d378bafe3ca3b4418871"
+        },
+        {
+          "asset": "tree_small_02",
+          "file": "textures/tree_small_02_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_small_02/tree_small_02_diff_1k.jpg",
+          "bytes": 863246,
+          "sha256": "4e0093f407b3a1120a36de49a48ebe5a465a9a9b77e361c7a3e66866e115e404"
+        },
+        {
+          "asset": "tree_small_02",
+          "file": "textures/tree_small_02_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_small_02/tree_small_02_arm_1k.jpg",
+          "bytes": 708242,
+          "sha256": "891c5a1bb124292984b01558e9f2b0302d27d2fa3ccf9dfc6c34f9ea4ca24e6c"
+        },
+        {
+          "asset": "tree_small_02",
+          "file": "tree_small_02.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/tree_small_02/tree_small_02.bin",
+          "bytes": 95102324,
+          "sha256": "8da6c3c389ad8748286d1b7488cd827f75ebdad9d8f59ef7dfb0916df5edc634"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "natural-birch-clear",
+      "family": "natural-birch",
+      "label": "Pale-barked woodland tree",
+      "variant": "clear",
+      "description": "Retained natural form and readable source color, restrained highlights. Whole source leaves retained in full, open or sparse crown groupings. Authored slender, pale-barked adaptation of a broadleaf source; not a scanned birch.",
+      "recommended": false,
+      "file": "natural-birch-clear.glb",
+      "bounds": {
+        "min": [-1.206392, 0.0, -1.75],
+        "max": [1.206392, 5.093149, 1.75]
+      },
+      "triangles": 34441,
+      "vertices": 64643,
+      "textureSizes": [
+        [512, 512],
+        [512, 512],
+        [512, 512]
+      ],
+      "sha256": "3ea202ac36ee171c303894496870daa7345f518f00cb72226803281a2adf86a3",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/tree_small_02"
+    },
+    {
+      "id": "natural-birch-quiet",
+      "family": "natural-birch",
+      "label": "Pale-barked woodland tree",
+      "variant": "quiet",
+      "description": "Grouped, muted woodland color with restrained fine texture. Whole source leaves retained in full, open or sparse crown groupings. Authored slender, pale-barked adaptation of a broadleaf source; not a scanned birch.",
+      "recommended": true,
+      "file": "natural-birch-quiet.glb",
+      "bounds": {
+        "min": [-1.181956, 0.0, -1.75],
+        "max": [1.181956, 5.091702, 1.75]
+      },
+      "triangles": 34441,
+      "vertices": 57986,
+      "textureSizes": [
+        [256, 256],
+        [256, 256],
+        [256, 256]
+      ],
+      "sha256": "e48f5ad90b4c0172cb22dd09dd7cc30f988ff0e79975ee738c64b65000e0016f",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/tree_small_02"
+    },
+    {
+      "id": "natural-birch-weathered",
+      "family": "natural-birch",
+      "label": "Pale-barked woodland tree",
+      "variant": "weathered",
+      "description": "Worn, lower-saturation material variation on the same natural form. Whole source leaves retained in full, open or sparse crown groupings. Authored slender, pale-barked adaptation of a broadleaf source; not a scanned birch.",
+      "recommended": false,
+      "file": "natural-birch-weathered.glb",
+      "bounds": {
+        "min": [-1.18582, 0.0, -1.75],
+        "max": [1.185821, 5.10835, 1.75]
+      },
+      "triangles": 34441,
+      "vertices": 39566,
+      "textureSizes": [
+        [256, 256],
+        [256, 256],
+        [256, 256]
+      ],
+      "sha256": "e1876ced43bdae991f1901437838dcbac69443055ddb746342e169a558ee21ec",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/tree_small_02"
+    }
+  ],
+  "controls": [
+    {
+      "id": "natural-birch-source",
+      "family": "natural-birch",
+      "label": "Pale-barked woodland tree",
+      "variant": "source",
+      "description": "Normalized original geometry and albedo; source control.",
+      "recommended": false,
+      "file": "natural-broadleaf-source.glb",
+      "bounds": {
+        "min": [-1.56283, 0.0, -2.3],
+        "max": [1.562829, 4.883196, 2.3]
+      },
+      "triangles": 2062487,
+      "vertices": 1777278,
+      "textureSizes": [
+        [1024, 1024],
+        [1024, 1024],
+        [1024, 1024],
+        [1024, 1024],
+        [1024, 1024],
+        [1024, 1024],
+        [1024, 1024],
+        [1024, 1024],
+        [1024, 1024]
+      ],
+      "sha256": "affdbde449e2b065c797f0c91d73cc45563b7dd14cb5deee3aefd1cfef876e7a",
+      "source": "Poly Haven, CC0, https://polyhaven.com/a/tree_small_02",
+      "fileGroup": "source-natural-broadleaf"
+    }
+  ]
+}
