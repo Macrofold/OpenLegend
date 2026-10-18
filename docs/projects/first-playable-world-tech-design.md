@@ -214,19 +214,25 @@ logic lines, excluding tests; refine this as each existing owner is inspected.
 This estimate is planning guidance, not a delivery limit. No new mechanic or
 policy decision is implied by it.
 
-CTR06's next owner change is a scoped private-feeling read and numerical context
-projection, approximately 150–250 logic lines. Cost grows with active feelings
-for the selected definitions/subjects, rather than every retained historical
-interpretation on every read or replacement. Extend the existing appraisal
-index with those exact keys; share its cold preparation and existing native
-value/decay projection. Appraisal writes, correction and restore invalidate or
-rebuild the index through its existing lifecycle. Qualify the actual decision
-context and target replacement with more than one convenience page, simultaneous
-subjects, decay, correction and database reopen; measure cold versus warm reads
-and retained bytes separately. Required records must fit the admitted preparation
-and context budgets as a complete set or preparation refuses. The interpreted
-fear/anger installation and removal of automatic fear producers remain one
-coordinated integration with the connected threat strategy.
+Combat's scoped private-feeling preparation, target replacement, finite work,
+complete purpose/action bindings and two accounted stages are connected. The
+ordinary installed profile includes interpreted fear/anger, removal of automatic
+fear and Ada's general assertiveness. Native component checks are partial evidence;
+the first fixed twelve-case live sample failed its counterattack gate (0/12),
+with all failures and uncertain costs retained in the combat verification owner.
+
+Current work repairs concrete action-question clarity and scheduling failures
+before another live qualification. Explicit action questions retain all 475
+native choices within the existing size limit. The director now owns up to two
+immediate actor/job records, at most one ordinary, and urgent requests share the
+existing second provider lease rather than introducing a third execution.
+This scheduling change affects approximately 150 logic lines across director,
+execution and delayed-attempt fencing. Required checks cover ordinary plus urgent,
+two urgent actors, exact cancellation, no third slot, uncertain execution recovery,
+and both planned stages within the original lifetime with no automatic third call.
+Remaining combat repertoire, meaningful subscriptions, animals, controls and full
+qualification precede speech and all later agreed phases. The phase trackers
+remain the detailed incomplete-work owners.
 
 | Phase                    | Implementation and owners                                                                                                                                                                       | Verification checkpoint                                                                                                                                                              |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

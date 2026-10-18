@@ -460,6 +460,7 @@ export function basePreparedThreatResponses(
           options.push({
             id: mean,
             purpose,
+            firstActionDescription: root.name,
             description: `${mean === 'hold' ? 'Remain at the selected place' : 'Observe without starting another physical action'}. Stop at game time ${at}; earlier personally meaningful evidence can prompt a new choice.`,
             invocation: {
               id: 'prepared-response',
@@ -481,6 +482,7 @@ export function basePreparedThreatResponses(
           addMethod(
             {
               id: 'last-seen',
+              firstActionDescription: `Move once to where I last saw ${place.label}`,
               description: `Move once to the point where I saw ${place.label} at game time ${place.at}; this does not track their present location.`,
               invocation: {
                 id: 'prepared-response',
@@ -514,6 +516,7 @@ export function basePreparedThreatResponses(
             options.push({
               id: `${speech.id}:${volume}`,
               purpose,
+              firstActionDescription: `Say “${speech.text}” at ${volume} volume${recipient ? ` to ${label(recipient)}` : ' aloud'}`,
               description: `Say exactly “${speech.text}” at ${volume} volume${recipient ? ` to ${label(recipient)}` : ' aloud to possible actual listeners'}. This is speech only; hearing and any reply remain independent.`,
               invocation: {
                 id: 'prepared-response',

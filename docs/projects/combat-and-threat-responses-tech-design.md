@@ -64,8 +64,8 @@ Measure complete caller paths, including cold preparation, dense danger, obstacl
 ### Active implementation sequence for the connected human response
 
 The delivered work-transition and scoped-feeling foundations precede the following
-connected changes. Keep the selected profile uninstalled until its native and
-decision consumers agree.
+connected changes. The ordinary profile is now installed with its connected native and
+decision consumers; qualify the complete selected repertoire and shared behavior.
 
 1. Extend the existing chosen-activity control with optional observation/counting
    requirements and an exact selected distance boundary. Preserve its original
@@ -96,7 +96,13 @@ decision consumers agree.
 
 Steps 1–4 have connected native implementations and partial controlled service
 qualification. Complete requests retain their full sets; supplied callbacks reach
-an admitted exact strike and its next ordinary native step. The ordinary world now selects the connected profile, interpreted fear/anger and Ada’s general assertiveness together, with both automatic fear producers removed. Independent interpretation/choice, remaining repertoire, source and stale races, bounded refresh and concurrency qualification remain unfinished.
+an admitted exact strike and its next ordinary native step. The ordinary world now selects the connected profile, interpreted fear/anger and Ada’s general assertiveness together, with both automatic fear producers removed. The first fixed twelve-case live sample failed 0/12 counterattacks and remains
+retained. Uniform explicit action questions now fit the complete 475-choice native
+case without changing the 220,000-character limit. Actor/job-owned immediate
+scheduling and shared two-execution capacity have controlled coverage for ordinary
+plus urgent, two urgent actors and exact cancellation. Independent interpretation/
+choice, remaining repertoire, source and stale races, bounded refresh and complete
+concurrency qualification remain unfinished.
 
 The native-control change is approximately 150–300 logic lines; the catalogue
 and decision integration is expected to affect another 1,000–2,000 logic lines.

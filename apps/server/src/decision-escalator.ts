@@ -239,9 +239,7 @@ export class DecisionEscalator {
         !this.eligible(job, state) ||
         state.higherEntitlement !== 'available' ||
         (await this.service.store.decisionAttempts(rootId)).some(
-          (attempt) =>
-            attempt.executionClass === 'primary' &&
-            (!attempt.receipt || attempt.receipt.completionUncertain),
+          (attempt) => !attempt.receipt || attempt.receipt.completionUncertain,
         ) ||
         !Object.values(state.groups).some((group) => group.state === 'open') ||
         (await this.service.store.activeDecision(

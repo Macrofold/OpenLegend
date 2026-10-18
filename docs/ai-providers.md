@@ -8,7 +8,16 @@ The game server owns routing, fresh context assembly, audience restrictions, req
 
 ### Admission and cancellation
 
-The server has one shared decision slot. A new conversation or invention request uses the existing busy refusal while an admitted decision owns it; it does not cancel another character's funded opportunity. This replaces the earlier unconditional chat-first preemption. The client preserves its draft for explicit resubmission after the current decision finishes. Invalid, paused, replayed or unauthorized requests cannot discard current work. A successfully admitted human conversation or invention cancels background reflection asynchronously without waiting for remote cleanup. The existing urgent evidence refresh, explicit cancellation, durable receipts and uncertain spending remain separate.
+The director admits at most two immediate pipelines per world, one per actor
+and at most one ordinary pipeline. Urgent personal evidence can use the second
+position; two urgent actors can occupy both. A new conversation or invention
+request receives the existing busy refusal when its actor or ordinary capacity is
+occupied, preserving the player's draft. Admission never cancels another funded
+character decision. Each job owns its watcher, cancellation, preview, reservations
+and completion; deferral records timing without freeing a still-running pipeline.
+A successfully admitted human request cancels background reflection asynchronously.
+The [combat qualification](verification/combat-and-threat-responses.md) records
+controlled coverage; complete live fairness and reaction qualification remain open.
 
 Resolve the validity and authority of a replacement request before any cancellation it could cause. A request's priority alone does not establish that its replacement operation is permitted or worth discarding already admitted work. Cancellation does not make dispatched work free or create an automatic retry. [Complete-operation authorization](engine-and-world-boundaries.md#complete-operation-authorization) and [continuation](save-and-load.md#continuation-and-identity) own those boundaries; [the combat qualification](verification/rivals-and-contested-ground.md#preserve-admitted-decisions-and-qualify-the-last-ammunition--october-14-2026) records the demonstrated failure and correction.
 
@@ -229,7 +238,22 @@ An explicit configuration overrides the default, including its exact eligible or
 
 The immediate choice has a one-second budget from intake. Native behavior and compatible existing actions continue when a choice is deferred. Waiting for Luna holds neither the simulation nor a world transaction; other characters and permitted player commands can proceed. A still-useful late original answer may commit once before its original deadline; it does not trigger Luna merely for being slow. Useful-later work lasts at most 31 seconds from intake. A higher request must start within two seconds of its eligibility and finish publication within 30 seconds of that eligibility, bounded by the original deadline. Both elapsed-time and wall-clock fences apply; a simulation-time boundary may expire sooner. [DE-L01–DE-L04](limits/ai-execution.md#decision-escalation-limits) own exact limits.
 
-`CognitionExecution` shares one background execution across reconsideration, paid maintenance and indexing, separately from one primary execution. Sixteen waiting reconsiderations retain identifiers and deadlines, without copied prompts. Decision and maintenance classes alternate; decisions use trusted urgency, eligibility time and stable ID. Primary saturation defers new opportunities rather than launching a second slow primary or using Luna to bypass capacity. Unknown execution retains its lease across restart; known completed work with missing pricing frees execution capacity while keeping its monetary hold.
+`CognitionExecution` retains two total provider leases: primary and background.
+Ordinary immediate work uses primary. Urgent work prefers the same background
+lease used by reconsideration, paid maintenance and indexing, then primary; it
+cannot create a third execution. Each financial attempt records its actual lease
+class, so an uncertain urgent background call retains that exact capacity after
+restart. Sixteen waiting reconsiderations retain identifiers/deadlines, without
+copied prompts. Decision and maintenance classes alternate within their existing
+queue; admission uses trusted urgency and aging. Saturated executions defer
+without another provider or automatic retry. Known completed work with missing
+pricing frees execution capacity while keeping its monetary hold.
+
+The selected supplied-response strategy plans two sequential judgments inside the
+original useful lifetime and funding. Its one-second immediate timing can be
+recorded as deferred while those declared stages finish; their original deadline
+never renews. A failed stage buys no higher-model fallback. Ordinary routes retain
+their existing one-second dispatch rule and configured higher-attempt policy.
 
 If startup cannot reconstruct occupied executions from storage, this pool closes and cancels queued admission. It never treats missing accounting as free capacity or repeatedly schedules the failed read. Callers retain the original storage failure; a corrected restart must reconstruct capacity before dispatch can resume.
 

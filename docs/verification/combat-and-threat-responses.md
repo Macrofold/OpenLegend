@@ -451,3 +451,47 @@ change is still in progress: the 475-choice native case currently produces
 243,971 characters and correctly refuses the existing 220,000-character limit.
 No options were dropped, limit increased, personality changed or favorable
 outcome manufactured. This failed size check remains open before paid comparison.
+
+## Explicit questions and actor-owned scheduling — October 18, 2026
+
+The complete native case now retains 475 distinct options (501 raw bindings),
+25 purposes and all full shared method facts. Concise actual action labels in
+each independent question reduce the second request to **154,041 characters**;
+the unchanged 220,000-character limit passes. Its first request is 105,553
+characters. Native feasibility shares 51 physical preparations across 474
+executable options. These are one controlled scene's preparation/size counts,
+not measured population capacity or provider latency.
+
+The evolving connected native scenario passes with the higher-model policy
+enabled and a deliberately delayed first judgment of 1,200 ms. The one-second
+immediate outcome remains deferred, both planned supplied judgments finish under
+the original useful lifetime, and the exact chosen strike is admitted and starts
+on the next native step. A second-stage explicit outage retains its accepted
+feelings and existing work without a third judgment or generation. The original
+outage fixture evaluated an unnecessary selection assertion before returning its
+outage receipt; that assertion threw and left synthetic uncertain execution.
+The corrected fixture returns the actual explicit unavailable receipt first and
+now requires that exact disposition. This tool failure was not provider evidence.
+
+A real native punch to a second person supplies the concurrency fixture's urgent
+evidence. Controlled provider waits demonstrate one ordinary plus one urgent
+pipeline, two urgent pipelines, refusal of a third, refusal of a second pipeline
+for the same actor, cancellation of only the named job, and a replacement ordinary
+job without clearing the still-running urgent job. Both existing provider leases
+are actually occupied; urgent work shares background capacity with maintenance
+and higher reasoning, preserving two total provider executions. Financial attempt
+links retain the actual lease class for uncertain-completion reconstruction.
+Deferral records timing while the admitted pipeline retains its position until
+completion/handoff. All fixture calls use synthetic zero-cost receipts; network
+access is blocked. These checks do not establish independent willingness or live
+queue fairness. Repeated-blow refresh, full meaningful subscriptions and complete
+reaction/browser qualification remain open.
+
+TypeScript passes. Eleven focused existing delayed-decision checks pass (52
+unselected): capacity reconstruction failure, unknown/completed-unpriced recovery,
+funding rollback, publication rollback/replay, simulation expiry, and fair
+maintenance/reconsideration ordering. Production build and asset guard pass, with
+the existing externalization/large-chunk warnings.
+No additional paid comparison or baseline has run. Additional Jev cost is **$0**;
+cumulative provider-reported estimates remain **$0.116294**, with the same one
+uncertain Jev reservation and **$1.75** unpriced other-provider commitments above.

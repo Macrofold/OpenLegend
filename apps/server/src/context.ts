@@ -920,6 +920,7 @@ export function npcCandidates(
       actions.push({
         id: `approach:${entity.id}`,
         subjectIds: [entity.id],
+        firstActionDescription: `Move once near ${observerDescription(service.world, actorId, entity.id, 'definite')}'s observed position`,
         description: `Move near the currently observed position of ${observerDescription(service.world, actorId, entity.id, 'definite')}, currently ${Math.hypot(worldPosition(observed.actor).x - worldPosition(entity).x, worldPosition(observed.actor).y - worldPosition(entity).y, worldPosition(observed.actor).z - worldPosition(entity).z).toFixed(1)} m away. Stop at the selected reachable place within ${SIMULATION_RULES.interactionRadius} m of that observed position; route length is not known. This moves to that location once; it does not follow later movement.`,
         command,
       });

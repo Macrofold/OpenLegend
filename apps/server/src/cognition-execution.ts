@@ -2,6 +2,7 @@ import { DECISION_LIMITS, type ExecutionClass } from './decision-state.js';
 import type { GameRepository } from './store.js';
 
 export interface ExecutionLease {
+  readonly executionClass: ExecutionClass;
   readonly uncertainCompletion: boolean;
   /** Unknown remote execution keeps capacity occupied even after its caller ends. */
   uncertain(): void;
@@ -60,9 +61,12 @@ export class CognitionExecution {
   timestamp(): number {
     return this.now();
   }
-  async primaryAvailable(): Promise<boolean> {
+  async primaryAvailable(urgent = false): Promise<boolean> {
     await this.ready;
-    return !this.closed && !this.occupied.has('primary');
+    return (
+      !this.closed &&
+      (!this.occupied.has('primary') || (urgent && !this.occupied.has('background')))
+    );
   }
   snapshot() {
     return {
@@ -87,6 +91,7 @@ export class CognitionExecution {
     let held = false,
       released = false;
     return {
+      executionClass: kind,
       get uncertainCompletion() {
         return held;
       },
@@ -102,9 +107,13 @@ export class CognitionExecution {
       },
     };
   }
-  async primary(): Promise<ExecutionLease | undefined> {
+  async primary(urgent = false): Promise<ExecutionLease | undefined> {
     await this.ready;
-    return this.lease('primary');
+    // Use the existing second execution capacity for urgent work, keeping the
+    // primary capacity available to one ordinary pipeline. Maintenance/higher
+    // work shares this same lease: no third provider execution is introduced.
+    // docs/projects/combat-and-threat-responses-tech-design.md#bounded-urgent-concurrency
+    return (urgent && this.lease('background')) || this.lease('primary');
   }
   enqueue(entry: Waiting): boolean {
     if (this.closed) return false;
