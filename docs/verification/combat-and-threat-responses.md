@@ -979,3 +979,19 @@ end-to-end timing and independent behavior qualification remain open.
 Additional Jev cost is **$0**. Cumulative provider-reported estimates remain Jev
 **$0.440786** and other providers **$0.207513**, with **$5.939396** uncertain
 commitments and **$6.587695** conservative aggregate exposure.
+
+## Native definition foundation
+
+The replacement animal controller is still inactive. Its new definition owner
+admits the selected profile as data through a closed native family. The evolving
+native scenario installs a real second authored revision with a different deer
+speed and confirms that both complete pins still resolve their original values.
+An unsupported implementation refuses before modifying the registry. Dedicated
+PostgreSQL record capture/load retains both definitions and validates their exact
+keys. This qualifies definition admission and current-format storage only; no new
+animal locomotion, escape choice, rest rule or ecology is claimed. Full TypeScript
+checking, production build/asset guard and the three existing context checks pass.
+
+No external calls were made. Additional Jev cost is **$0**; cumulative reported
+estimates remain Jev **$0.440786** and other providers **$0.207513**, uncertain
+commitments **$5.939396**, and conservative aggregate exposure **$6.587695**.

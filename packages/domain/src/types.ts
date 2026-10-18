@@ -492,6 +492,8 @@ export interface WorldState {
   map: WorldMap;
   flightRoutes: Record<string, import('./spatial-state.js').FlightRoute>;
   nativeStrikes?: Record<string, import('./strikes.js').StrikeDefinition>;
+  /** Exact installed native-family definitions, including referenced authored revisions. */
+  nativeResponseProfiles?: Record<string, import('./native-response.js').NativeResponseProfile>;
   entities: import('./entity-collection.js').EntityCollection;
   objectState: { revision: number };
   objectLineage?: Record<string, import('./objects.js').ObjectLineage>;

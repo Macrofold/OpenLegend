@@ -63,6 +63,7 @@ import { assertReservedStock, validateResourceReservations } from './resource-cl
 import { DEFAULT_SENSES, SENSE_IMPLEMENTATIONS, type SenseDefinition } from './perception.js';
 import { bodyPolicy, validateBodyPolicy, type BodyPolicy } from './body-policy.js';
 import { validateCombatEncounters } from './combat-encounters.js';
+import { validateNativeResponseProfiles } from './native-response.js';
 import { validateReincarnation } from './reincarnation.js';
 import { validateTerritorialThreats } from './territorial-threat.js';
 import { validateCognitionPolicy } from './cognition-policy.js';
@@ -1154,6 +1155,7 @@ export function validateWorldModules(world: WorldState): void {
     world.itemDefinitions,
   );
   validateCognitionPolicy(world, world.cognitionPolicy);
+  validateNativeResponseProfiles(world);
   validateReincarnation(world);
   validateRangedActions(world);
   validateNativeStrikes(world);

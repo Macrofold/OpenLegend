@@ -334,3 +334,13 @@ body-owned strike/guard or evasion deadline. Stop can clear the action while tha
 body deadline remains. Its due notice is consumed once and emitted only for a
 still-relevant selected response; it grants no action or refund. Current-format
 validation checks the deadline and includes it in the encounter's next due time.
+
+## Installed native response definitions
+
+The world record catalogue stores native response definitions separately from the
+frequently written world header. Keys contain the complete definition ID, revision
+and content digest. Installation validates the supported native family and its
+usable finite parameters before writing; loading validates both content and key.
+Referenced authored revisions remain available for a running episode after a
+future default changes. These are current authored definitions, not legacy save
+readers or migrations. The registry itself starts no behavior or physical action.

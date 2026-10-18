@@ -49,6 +49,13 @@ Contract: [personal evidence](../projects/combat-and-threat-responses-tech-desig
 
 ## CTR03 — One native animal response owner
 
+Native family definitions, current-format validation and dedicated PostgreSQL
+records are now available. Exact full pins preserve separate authored revisions;
+unsupported families refuse before installation. The authored animal profile is
+encoded, but existing animals are not bound to the new controller yet. Its danger
+intake, refuge execution, continuous clearance, passage, rest and flight integration
+remain unfinished. Definition/SQL checks do not qualify animal behavior.
+
 Contract: [native execution](../projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04) and [animal world profile](../worlds/base/animal-responses.md).
 
 - [ ] Install a single native response family with explicit calm, escape, blocked/preparing and settling meanings. Intake alarm even during movement, flight or physical incapacity without bypassing physical capability.

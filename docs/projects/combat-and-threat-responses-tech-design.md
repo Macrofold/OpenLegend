@@ -363,6 +363,85 @@ Authoring inspection must explain what is supported: native danger classes, refu
 
 ## Native animal execution (CTR03–CTR04)
 
+### Active native animal implementation plan
+
+CTR03–CTR04 are not delivered by the connected human response. The current
+adapter still stores one threat, chooses short steering headings, decays alarm
+exponentially and moves ordinary wandering instantaneously. The implementation
+replaces those meanings together; retaining the old fields as another writable
+controller or a compatibility path is excluded. Approximately 2,000–4,000 logic
+lines are expected across the controller and its existing consumers. This is a
+cross-layer, current-format change with material movement, privacy, ordering and
+continuation risk.
+
+The accepted profile and transition-order sections below remain the contract.
+Implementation proceeds through these connected checkpoints under this assignment:
+
+1. **Install the selected native family and current record.** Use an explicit
+   installed profile and exact per-body pin, with authored locomotion bindings,
+   one episode, complete local danger estimates, semantic proposal generation,
+   selected refuge/movement reference and absolute review/clearance deadlines.
+   Reconcile all initializer/spawn, death, projection and validation consumers in
+   the same model change. Preserve the existing routine wander-clock owner. The
+   family dispatcher must also admit the specified contrasting rover fixture;
+   absence selects no bundled biological law.
+2. **Connect exact permitted cues and danger preparation.** Reuse physical contact,
+   committed visible preparation and event-time perception. Add the bounded
+   projectile passage membership on the projectile itself, before alarm intake,
+   and split actual flight before passage changes a body's trajectory. Prepare
+   every eligible local perceived danger through existing spatial/perception
+   indexes; retain source lives, observed extents and original last-seen times,
+   with anonymous regions remaining distinct. No history scan or nearest-N cut
+   can certify complete safety.
+3. **Prepare and commit refuges through existing navigation.** Extend the live
+   coordinator's existing bounded queue/worker to one complete candidate batch.
+   Direct routes keep the current fast path. Pending records retain the exact
+   semantic proposal while meshes/results remain derived. Callbacks supply
+   preparation only. Native canonical order rechecks current complete dangers
+   before the one allowed tie draw and an ordinary movement admission. An earlier
+   pending animal prevents later same-boundary choices exchanging RNG draws.
+   Use the existing continuous geometry/sweep owners for complete route exposure,
+   body clearance, all-danger route margins and local planning scope.
+4. **Use one physical continuation.** Replace steering and wander jumps with
+   ordinary timed actions; predict and execute those same paths at the selected
+   speed. Reconcile temporal/motion boundaries, actual work/energy and ranged
+   approach facts. Continuous clearance includes executed moving dangers and
+   growing remembered regions, with physical/perception changes before a tied
+   settling completion. Blocked in-place settling precedes another route request.
+5. **Connect real rest, bird flight and territorial withdrawal.** Add the readonly
+   response fact and edge-triggered status interruption through the existing
+   status owner. Preserve zero-energy rest and its cooldown. Supply actual finite
+   bird escape connections and terminal landing through the flight owner, and
+   delegate the stag's selected withdrawal without changing its territorial
+   pursuit speed, antler action or relinquishment. No simultaneous mover or
+   automatic new attack is introduced.
+6. **Qualify and reconcile before phase completion.** Evolve the existing native
+   scenario for actual attack/preparation/near-passage, all-danger bends and
+   occlusion, blocked/reached refuges, uninterrupted clearance, exhaustion/waking,
+   birds, stag, source/life loss, late preparation and current-format continuation.
+   Run the early ordinary hunt–harvest–cook–eat journey when connected; retain
+   failures. Select focused existing checks and current TypeScript/configuration,
+   build and asset gates. Measure ordinary/100/500 calm, 10% alarm and all-alarm
+   workloads at normal and 8× speed, plus the specified 1,000-animal exploration,
+   recording actual simulation progress, navigation/command/render waits, memory,
+   native work and zero animal provider calls. Browser and final ordinary-world
+   evidence remain separately required. Reconcile the animal, survival, sleep,
+   ranged, flight, save and BW12 descriptions and the CTR tracker with measured
+   limits; no phase checkbox closes from a fixture alone.
+
+Completion requires the single installed controller and every connected consumer
+above, the canonical qualification matrix below, and truthful remaining evidence.
+The ordinary supplied Main opening remains selected. Broader feeding, packs and
+roaming stay in the later already-authorized RW phase and must extend this owner.
+
+Installed native response definitions use the existing world record catalogue,
+with a structured key containing their complete definition pin. A body selects a
+profile and locomotion binding; its running episode retains its own exact pin.
+Referenced authored revisions remain installed when a future default is selected,
+so one registry owns definition content instead of copying rules into every
+animal. This supports actual authored revisions, not old-format readers. Native
+family validation admits data only; a definition grants no movement or harm.
+
 ### Owners and integration
 
 Replace the current selected animal steering adapter with one installed trusted native response family. Keep the existing `actor.controller = native` authority distinction. Do not turn species into controllers, route animals through the person's Decision API, or introduce a second write path for position. A native controller can be a small coded policy; world ownership means its installation, parameters, meanings and permitted choices can differ between worlds.

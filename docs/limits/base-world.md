@@ -159,6 +159,14 @@ Ground escape speeds become hare **0.24**, deer/bear **0.20** and wolf **0.22 m/
 
 **Growth and limits:** zero animal model calls; no top-N danger cutoff or maximum distance from the original attack; one native response owner, retained refuge and at most one pending local proposal per animal. Complete danger records grow with local perceived density and retained anonymous evidence; bounded candidates alone do not bound O(candidates × dangers × route segments) work or simultaneous navigation demand. Passage dedup membership grows with actually exposed animal lives along each live projectile and retires with that flight. Existing native/spatial query, path, worker, queue and admission budgets remain in force and defer incomplete work explicitly without declaring safety or unreachability. No new population cap, ecology, endurance reservoir, offspring/pack model or unrestricted free flight is promised. Current corpses/rot above are unchanged. Physical, browser and density qualification remains CTR10; preserving the prior source/evidence distinguishes designed replacement from installed behavior.
 
+The native-family definition admission owner now bounds a complete candidate
+preparation envelope at **64 destinations including any retained refuge**. The
+selected animal data still requests only twelve new points plus at most one
+retained point. This is a supported preparation-data limit, not a danger cutoff,
+population capacity claim or a running replacement controller. Exact installed
+definition records grow with actual authored revisions rather than duplicating
+rules per animal; their runtime behavior remains under CTR03–CTR04.
+
 ## BW13 — Starting wilderness
 
 **Current · Restrictiveness: Medium.** New-world extents are **62×54** (4.98 times the former 28×24 area). Ground rises reach **2 metres**, using 25 connected ground patches plus the existing deck/ramp. The authored outer population adds **5 hares, 5 deer, 3 wolves and 2 bears**, and **12 resource patches**. Wolves and bears reuse deer quadruped clearance and native animal behavior; they do not introduce predation or aggression. Wolf health/harvest starts at **36 points / 4 meat / 3 bone**; bear at **72 / 6 / 4**. These are initial body/content tuning, not universal species biology.
