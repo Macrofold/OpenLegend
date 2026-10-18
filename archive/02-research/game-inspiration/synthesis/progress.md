@@ -4,22 +4,22 @@
 
 **Scope:** these records track assessment and incorporation into the 35 learning topics. They do not replace per-game or world research ledgers, certify that a source dossier is complete, allocate features, or record implementation progress. Building or reviewing the framework is distinct from filling its guides.
 
-## Current snapshot — October 17, 2026
+## Current snapshot — October 18, 2026
 
-The focused intelligence/simulation pass retains published `Macrofold/OpenLegend` main at `0c12398e32e7c9578e18de07bbe79d39b4827208` as its source base and `research/intelligent-simulation-2026-10-14` as its original work branch. The combat-response synthesis uses four existing dossiers at `0eb7358f251d1ab706592ccb6e9829e98c729fe9` plus their named primary sources; its exact scope and provenance are in the [assessment records](assessment-records.md#combat-pass--october-17-2026). Counts come from the actual matrices and inventory, not a second per-source status list.
+The focused intelligence/simulation pass retains published `Macrofold/OpenLegend` main at `0c12398e32e7c9578e18de07bbe79d39b4827208` as its source base. The October 17 combat-response pass retains its named four-source provenance; the October 18 Sea of Stars incorporation reads G178 from branch `codex/sea-of-stars-research-art-direction` after `ce0d4cd324c64d3d6c5c2bff5d36f6c7b59b93f3`. Counts come from the actual matrices and inventory, not a second per-source status list.
 
-| Measure                     | State                                                                                                                                                                                                       |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Topic pages                 | 35: 29 unfilled synthesis shells, the NPC guide's focused intelligence/simulation pass, the COMBAT guide's focused four-source pass, and FUN, CREATE, DISCOVERY and PRODUCTION routes to existing research. |
-| Game/case sources           | 176 stable keys: 167 roster subjects, the unnumbered EVE Online essay case and eight new unnumbered topic-only subjects.                                                                                    |
-| Available game/case sources | 150 original dossier files and ten scoped sources: EVE Online plus nine topic-only dossiers. Availability is not full research certification.                                                               |
-| Queued game sources         | 16 of G150–G166 remain queued; G159 now has a focused dossier. No claim about unpublished branch work.                                                                                                      |
-| Game matrix                 | 176 × 35 = 6,160 cells: 4,928 U, 526 W, 672 X and 34 I.                                                                                                                                                     |
-| NPC column                  | 30 scoped incorporations, 130 U and 16 W. The focused pass does not complete every source or all relationship subtopics.                                                                                    |
-| COMBAT column               | Four scoped incorporations, 155 U and 17 W; broader combat research remains open.                                                                                                                           |
-| World matrix                | Unchanged: 29 listed world dossiers × 35 = 1,015 cells: 903 U and 112 X.                                                                                                                                    |
-| New incorporation           | Thirty source-to-NPC assessments and four source-to-COMBAT assessments link exact scopes and stable lessons.                                                                                                |
-| Existing owners             | X retains unreconciled evidence, not an assertion that earlier learning is absent.                                                                                                                          |
+| Measure                     | State |
+| --------------------------- | ----- |
+| Topic pages                 | 35: 27 unfilled synthesis shells; focused NPC, COMBAT, PRESENT and EXPLORE guides; and FUN, CREATE, DISCOVERY and PRODUCTION routes to existing research. |
+| Game/case sources           | 187 stable keys: 178 roster subjects, the unnumbered EVE Online essay case and eight unnumbered topic-only subjects. |
+| Available game/case sources | 161 full dossier files and ten scoped sources: EVE Online plus nine topic-only dossiers. Availability is not full research certification. |
+| Queued game sources         | 16 of G150–G166 remain queued; G159 has a focused dossier. No claim about unpublished branch work. |
+| Game matrix                 | 187 × 35 = 6,545 cells: 37 I, 5310 U, 526 W, 672 X. |
+| NPC column                  | 30 scoped incorporations; wider coverage remains open. |
+| COMBAT column               | Five scoped incorporations after adding G178; wider combat research remains open. |
+| PRESENT / EXPLORE           | One focused G178 incorporation each; both remain partial single-source guides. |
+| World matrix                | Unchanged: 29 listed world dossiers × 35 = 1,015 cells: 903 U and 112 X. |
+| Existing owners             | X retains unreconciled evidence, not an assertion that earlier learning is absent. |
 
 The October 14 game matrix was byte-checked against a locally validated expected document before publication: blob `9c090e25e3fb106c48cd7679b4a3f3d5cd0e9f46`, published in commit `02966e0bae31482b1f5d06191a687506f82c2593`. The check preserved the baseline's exact bytes before applying only 22 existing NPC changes and eight new rows, then verified 176 unique keys, 35 unique topic columns, equal row widths and valid codes. This is a document-integrity check, not a runtime test.
 
@@ -88,7 +88,7 @@ Edit only the intended source/topic cells and evidence records; preserve other t
 
 ## Verification and remaining work
 
-The framework review delivered the source/goal review, organized topic set, skeletons, template and tracking. The subsequent intelligence/simulation pass fills NPC at its declared 30-source scope and adds general research. The October 17 pass fills COMBAT only for four selected sources and questions. Twenty-nine other shells remain unfilled; four existing owners require scoped coverage reconciliation. The NPC guide's wider source and relationship coverage is not complete. World essays were read for structural coverage, not falsely marked incorporated into each new guide.
+The framework review delivered the source/goal review, organized topic set, skeletons, template and tracking. The subsequent intelligence/simulation pass fills NPC at its declared 30-source scope and adds general research. The October 17 pass fills COMBAT for four selected sources; the October 18 G178 pass adds one COMBAT assessment and focused PRESENT/EXPLORE guides and questions. Twenty-seven other shells remain unfilled; four existing owners require scoped coverage reconciliation. The NPC guide's wider source and relationship coverage is not complete. World essays were read for structural coverage, not falsely marked incorporated into each new guide.
 
 Check unique source keys and topic columns, valid codes, equal row widths, expected source identities, preserved existing cell meanings, working local paths/anchors and the actual affected diff. These are documentation checks, not game execution, fresh verification of every inherited fact, or a whole-archive audit. Check results belong in the handoff or focused review record, not fabricated assessment entries.
 
@@ -109,3 +109,10 @@ The initial framework was based on published main `7a576214fbb9891b2e9f742db56bb
 The broader review used main `74e081a2ddc39a18da1ffe3357ffc298a4f14dce`, added five topic columns and the separate world matrix. It updated Songs of Syx availability, Starfield's canonical ID/availability and EVE's scoped availability. Its only changes to pre-existing game/topic cells were Starfield and EVE's 52 W-to-U transitions for newly available source material; it inferred no I/N statuses. That snapshot had 168 game sources and 5,880 cells: 4,681 U, 527 W and 672 X. The later world integration at `467e7f1be02f2a3e9bb69ebb83bfdef435483c9e` added D&D as unassessed, leaving the structural-review scope unchanged.
 
 The focused October 14 intelligence/simulation pass changes 21 existing available NPC cells from U to I and G159's NPC cell from W to I, backed by assessment records. It adds eight topic-only rows with NPC I and every other topic U. Other inherited topic statuses and the world matrix remain unchanged. This advances useful research without claiming a full pass over every source, changing full-game completion or allocating implementation work.
+
+
+## October 18 Sea of Stars incorporation
+
+G168–G178 are now present in the synthesis source inventory as available full dossiers; the ten mobile cases remain unassessed here. G178 is incorporated only into COMBAT, PRESENT and EXPLORE at the reviewed scope recorded in [assessment evidence](assessment-records.md#sea-of-stars-focused-incorporation--october-18-2026). Other G178 topic cells remain U rather than being inferred from the dossier's existence.
+
+The PRESENT and EXPLORE guides become useful focused guides without claiming broad topic completion. COMBAT gains one lesson about execution skill versus tactical variety. ND38 is a design-register handoff, not implementation approval. The source matrix and topic status therefore record exactly what was synthesized rather than treating the full dossier as automatic incorporation into every relevant topic.

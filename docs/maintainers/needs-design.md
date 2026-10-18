@@ -1,6 +1,6 @@
 # Future work needing design
 
-This register identifies remaining product decisions and design preparation. Existing feature/technical specifications own behavior and mechanism; focused maintainer trackers own implementation and qualification. **ND01–ND37** identify needs and **DG01–DG36** group related preparation. Neither numbering nor inclusion establishes implementation priority or authorizes an unselected feature.
+This register identifies remaining product decisions and design preparation. Existing feature/technical specifications own behavior and mechanism; focused maintainer trackers own implementation and qualification. **ND01–ND38** identify needs and **DG01–DG36** group related preparation. Neither numbering nor inclusion establishes implementation priority or authorizes an unselected feature.
 
 ## First-playable preparation and current selected scope
 
@@ -67,7 +67,7 @@ Groups organize decisions and dependencies, not a release queue, staffing plan o
 
 #### DG01 — Actions and first encounters
 
-ND13's combat-sensitive Command-click extension is designed under [CTR02/CTR09/CTR10](combat-and-threat-responses.md); implementation and acceptance remain open. Recommendation counting, remapping and other nearby controls still need scoped extension design. Reuse PG03's readable/stable action discovery, PX03's static place/item discovery and the investigation's evidence comparison; their broader qualification stays in their trackers. Another discovery or input family needs a selected benefit and failure cases.
+ND13's combat-sensitive Command-click extension is designed under [CTR02/CTR09/CTR10](combat-and-threat-responses.md); implementation and acceptance remain open. Recommendation counting, remapping and other nearby controls still need scoped extension design. **ND38** separately asks whether human skill during an already selected action should affect execution quality; do not fold that question into shortcut ranking or the current CTR design. Reuse PG03's readable/stable action discovery, PX03's static place/item discovery and the investigation's evidence comparison; their broader qualification stays in their trackers. Another discovery or input family needs a selected benefit and failure cases.
 
 **Owners/dependencies:** AC/UIUX, NC/EPR and PO; [PG03](parallel-batch-03-personal-game.md), [PX03](parallel-batch-04-expeditions-and-exchange.md), [player-clarity evidence](../verification/player-clarity-ui.md) and [discovery evidence](../verification/useful-discoveries.md). Present actual permitted knowledge/actions. Device-specific expansion belongs to DG35.
 
@@ -346,7 +346,8 @@ Each ND entry retains one preparation description below. Multiple DGs indicate d
 | ND10 | DG06, DG22, DG32 | Required small cooperation versus associations/institutions                                                       |
 | ND11 | DG07, DG33       | Human/conflict rules versus NPC afterlife                                                                         |
 | ND12 | DG12, DG28       | Free library reuse versus commercial distribution                                                                 |
-| ND13 | DG01, DG35       | Ordinary controls versus selected device expansion                                                                |
+| ND13 | DG01, DG35       | Ordinary controls versus selected device expansion
+| ND38 | DG01             | Player skill during action execution versus action selection/native outcome |                                                                |
 | ND14 | DG24, DG26       | Text versus calls                                                                                                 |
 | ND15 | DG26             | Speech media                                                                                                      |
 | ND16 | DG02, DG18, DG26 | Ordinary speech/social evidence designed under SPK; selected media and further hearing extensions remain separate |
@@ -591,6 +592,16 @@ Define complete dependency inventories, retained attribution, private-origin met
 **Current menu/shortcut slice delivered; recommendation and control extensions need scoped design.** Reuse [action discovery](../architecture.md#action-discovery-and-player-preferences), [PG03 evidence](../verification/player-clarity-ui.md), AC and UIUX. Preserve stable open menus, search/expanded identity, refreshed availability and existing pins.
 
 Refine [counting/ranking and controls](../../archive/03-design-proposals/playability-and-controls.md): one count per authoritative committed execution, family/revision grouping, personal/world/global signals, windows/weights, NPC treatment and privacy. Define predictable changes, user control, remapping/conflicts/accessibility, device/world scope, stale bindings, nearby target stability, destination cancellation and text-focus isolation. F57/F58 and D46/D47 retain the direction; illustrative keys/counts are not adopted requirements.
+
+### ND38 — Player skill during action execution
+
+**Needs scoped design; not selected for implementation.** The [Sea of Stars PRESENT/COMBAT synthesis](../../archive/02-research/game-inspiration/synthesis/art-audio-and-game-feel.md#present-l003) makes a gap explicit between choosing an action and physically executing it. Existing action capability owners decide what can start and what the world actually does; ND13 owns shortcut/default controls; CTR owns the selected threat-response behavior. None currently owns a reusable product contract for optional human skill expression such as hold/release, aim/tracking, impact timing or directional defense after the player has selected an exact action.
+
+A future design must begin with a concrete action where execution skill adds a worthwhile changing decision. Separate: (1) exact action/target/method selection; (2) character/world capability and native preparation; (3) the human input interaction; (4) trusted interpretation of that input into action-family-owned parameters; and (5) authoritative native contact/result/recovery. The engine may provide bounded input/presentation primitives, but the selected world/action family owns whether execution skill matters and what it means. NPCs must not simulate fake mouse timings; their competence continues through character/world mechanics.
+
+The design must compare omission and assistance as first-class alternatives. Repeated timing that no longer changes a decision is a failure mode, not automatically “more real-time.” Accessibility, reduced-motion/precision assistance, keyboard/pointer/controller parity, input focus, interruption, stale target/method bindings, pause/simulation time, latency and recovery all need explicit behavior. Human-vs-human use additionally needs a selected client-trust/fairness boundary before execution quality can affect competitive outcomes; do not infer anti-cheat guarantees from browser timestamps.
+
+**Recommended next design:** when selected, create the paired `action-execution-and-skill-expression` feature specification and technical design under `docs/projects/`, with AC/UIUX as shared owners and the affected world/action family as the semantic outcome owner. Start with one representative combat action and one materially different noncombat action so the mechanism cannot accidentally become a combat-only timing minigame. [PRESENT-L003](../../archive/02-research/game-inspiration/synthesis/art-audio-and-game-feel.md#present-l003), [COMBAT-L005](../../archive/02-research/game-inspiration/synthesis/combat-and-encounters.md#combat-l005), [action availability](../action-capabilities.md#action-availability-and-temporary-execution) and [UI essentials](../../.agents/rules/ui-ux.md) are the starting references.
 
 ### ND14 — In-world remote messages and calls
 

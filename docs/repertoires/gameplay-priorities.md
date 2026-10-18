@@ -80,6 +80,18 @@ When comparing proposals of similar priority and scope, consider the questions r
 - **Relationships beyond a shared task.** Distinguish useful help, pleasant company and voluntarily meeting again. Ask whether participants can recognize contributions, retain meaningful roles and choose how to continue. Brief exchanges, quiet participation and solo play remain legitimate; rivalry and shared competitive mastery can also give people a reason to return. Friendship is one possible outcome, not a compulsory reward.
 - **The whole activity's time cost.** Include arrival, preparation, waiting and recovery when judging the payoff. Consider what a player can meaningfully accomplish before stopping and what it takes to resume within the supported world's rules. Deliberate travel and demanding group expeditions can earn their time through interest and stakes; repeated administration or compulsory upkeep needs its own justification.
 
+### Make execution and presentation earn their attention
+
+When two designs provide the same core capability, prefer the one whose moment-to-moment execution and presentation make the underlying choice easier to understand or more satisfying **without replacing the choice**.
+
+- **Execution follows a meaningful decision.** A timing, aiming, tracking or hold/release interaction is valuable when changing conditions make the result worth attending to. If the player already knows the answer and merely repeats a precision ritual, the extra input can become fatigue. Omission, automation or assistance can be the better design.
+- **Different actions can deserve different execution.** Physical input should express what the action is doing rather than force every activity through one reflex test. The authoritative world still decides capability, cost, contact and consequence.
+- **A beautiful place should support curiosity or life, not just screenshots.** Give places recognizable large forms, coherent material/light relationships and enough quiet space to read people and routes. Distinctive features are stronger when ecology, history or use explains them.
+- **Discovery can be its own reward, but attached progression should add a useful option.** Avoid turning every peaceful place or side activity into a required checklist before narrative closure.
+- **Judge the complete repeated loop.** Test after the player learns the efficient tactic, recognizes the timing cue and has seen the visual surprise. Continuing value can come from changing opponents, weather, companions, goals, expression or mastery; spectacle alone is not durable variety.
+
+The focused [Sea of Stars synthesis](../../archive/02-research/game-inspiration/synthesis/art-audio-and-game-feel.md) supplies one source and counterexamples for these questions. They are product-selection prompts, not evidence that OpenLegend should adopt its combat or camera.
+
 These are selection prompts. The [player-learning plan](../projects/first-playable-playtest-plan.md#step-4--observe-distinct-player-journeys) owns how to examine effort, payoff and return, including the applicable handling of test progress; existing world acceptance and delivery owners define required scope. The [Forever synthesis](https://github.com/Macrofold/OpenLegend/blob/14ac519648f4dd0c681db8fa168479fb9ed4e387/archive/02-research/game-inspiration/essays/wow-forever-and-a-world-worth-returning-to.md) supplies comparative reasoning and counterexamples from prelaunch evidence, not proof of long-term outcomes.
 
 ## Completion checks for the first playable game

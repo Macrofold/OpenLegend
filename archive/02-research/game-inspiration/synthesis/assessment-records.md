@@ -190,3 +190,32 @@ This is a scoped four-source comparison of creature escape, tactical pursuit, ta
 **Evidence and contribution:** Deliberately different default interaction access supports [COMBAT-L004](combat-and-encounters.md#combat-l004). The source is a counterexample to copying the entire category rule: OpenLegend's independently acting resident is also a normal conversation partner, so being an NPC is not sufficient grounds for a default attack.
 
 **Evidence limits:** The dated announcement does not prove a present account's settings, universal auto-retaliation behavior or a particular grace period. Broader OSRS combat details were context and were not independently rechecked as new current facts. The inference is limited to input design.
+
+
+## Sea of Stars focused incorporation — October 18, 2026
+
+Reviewer: ChatGPT, conducting Mike's requested post-dossier integration review. Source: [G178 dossier](../dossiers/sea-of-stars.md) and [illustrated art study](../../../../art-direction/research/sea-of-stars/README.md) on branch `codex/sea-of-stars-research-art-direction`, reviewed after commit `ce0d4cd324c64d3d6c5c2bff5d36f6c7b59b93f3`. The dossier's source register distinguishes launch and later rules, critic/player testimony and creator accounts. No gameplay session, renderer reproduction or player study was performed.
+
+### PRESENT--sea-of-stars
+
+**Identity and scope:** G178 Sea of Stars, PRESENT. Read the dossier's art/audio, production and reception sections plus the complete ten-image visual study.
+
+**Evidence and contribution:** Official stills support [PRESENT-L001](art-audio-and-game-feel.md#present-l001) and [PRESENT-L002](art-audio-and-game-feel.md#present-l002): recognizable large forms, selective detail, quiet regions and coherent local light can make pixel environments rich without uniform noise. Combat mechanics and reviews support [PRESENT-L003](art-audio-and-game-feel.md#present-l003): action-specific timing can make execution expressive, while repeated inputs can become tiring when tactical variety narrows. Creator testimony about deliberately mirrored scar art supports [PRESENT-L004](art-audio-and-game-feel.md#present-l004) as a useful counterexample for OpenLegend's persistent physical identity.
+
+**Evidence limits:** Still images do not establish shader implementation, moving stability or production performance. Review disagreement does not estimate prevalence. The source game's stylized anatomy and fixed-camera presentation are not adopted.
+
+### EXPLORE--sea-of-stars
+
+**Identity and scope:** G178 Sea of Stars, EXPLORE. Read traversal, puzzles, fishing, Mirth, collectibles, world-access and visual-place sections.
+
+**Evidence and contribution:** Distinctive environmental forms that also indicate routes support [EXPLORE-L001](exploration-and-world-design.md#explore-l001). Region differentiation through landform, material, traversal and activity supports [EXPLORE-L002](exploration-and-world-design.md#explore-l002). Cross-activity rewards and the disputed completion burden support [EXPLORE-L003](exploration-and-world-design.md#explore-l003): discovery can change another worthwhile activity, while broad checklist gating can turn optional exploration into obligation.
+
+**Evidence limits:** The game is heavily authored and uses compressed map presentation. It does not demonstrate procedural-region quality, persistent autonomous settlement change or OpenLegend-scale navigation.
+
+### COMBAT--sea-of-stars
+
+**Identity and scope:** G178 Sea of Stars, COMBAT. Read the version table; combat/resources/timing and Dawn redesign; six critic reviews; sampled Steam reactions.
+
+**Evidence and contribution:** Turn selection followed by distinct timing gestures supplies a clean separation between tactical intent and physical execution. Dawn's persistent combo points and revised information loop show a developer response to intended move variety being inaccessible. Praise for tactile execution alongside criticism of repetitive choices supports [COMBAT-L005](combat-and-encounters.md#combat-l005): execution skill can amplify an encounter, but cannot substitute for changing tactics.
+
+**Evidence limits:** Sea of Stars is turn-based and locally controlled. It does not establish real-time targeting, moving-crowd fairness, network latency, client trust or OpenLegend's world-rule mapping. No timing window was measured.
