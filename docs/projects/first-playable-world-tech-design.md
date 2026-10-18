@@ -197,6 +197,56 @@ The larger map raises cold navigation/scene costs but does not justify scanning 
 
 ## Implementation order and independent task boundaries
 
+### Active implementation plan
+
+The combined assignment uses `codex/implement-complete-first-playable` in
+`/Users/mzw/.codex/worktrees/214c/OpenLegend`, based on local `main` at
+`19a0c303a89d3cb278db1cbbbe5b95e2e6e26fe1` in
+`https://github.com/Macrofold/OpenLegend.git`. A fresh October 18 fetch of
+`origin/main` agrees; the reviewed `d261c94f50875edd88e8eb4a69cf8f4a413563cb`
+is an ancestor. One AI owns implementation and qualification. Main is not a
+merge destination during this assignment.
+
+Initial risk is high: the accepted scope changes physical contact, personal
+evidence, asynchronous decisions, current-format records, construction authority
+and ordinary controls together. The preliminary estimate is 8,000–20,000 changed
+logic lines, excluding tests; refine this as each existing owner is inspected.
+This estimate is planning guidance, not a delivery limit. No new mechanic or
+policy decision is implied by it.
+
+| Phase                    | Implementation and owners                                                                                                                                                                       | Verification checkpoint                                                                                                                                                              |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Combat                   | CTR01–CTR10: shared attack/contact owners, personal encounter records, the existing animal movement owner, complete action preparation, appraisals/director and contextual controls.            | Native contact/evidence/continuation failures; twelve ordinary Ada baselines and hunt-to-meal at their first connected paths; browser and complete reaction measurements.            |
+| Speech                   | SPK01–SPK11: source/listener records, recognition, personal memory, admission, existing director and Speak/Act controls; acoustic input extends the delivered animal controller.                | Exact hearing/recognition and current-format checks; speech while busy, unseen voices and repeated assault; animal sound plus physical danger through one continuation.              |
+| Foundations and survival | FPW01 and SV: typed build-time bundle, source-before-family installation, shared manufacture, finite chosen quantities, food/tool/fire and recovery; exact output-origin authority publication. | Real resource-to-output-to-permitted-use path, missing source, nonmaterial result, replay and grant-bound refusal; empty-handed component journey without selecting incomplete Main. |
+| Camps                    | SH07–SH12 and dependent SV: actual structural/container definitions, walls/gates, construction contributions, repair/breach/reclaim and material rain.                                          | Geometry and changed support/gate cases, exact permission failures, interrupted work and restoration, ordinary building and exposure.                                                |
+| People                   | CP01–CP10: four residents, existing transfer/offer/outing owners, finite guide/help/hunt and revocable social agreements.                                                                       | Real transfers and contributions, refusal/withdrawal, continued released effects, ordinary-prey cooperation and private perspective.                                                 |
+| Roaming                  | RW01–RW06: extend the same animal controller with finite feeding, pack/bear behavior and supported moving strikes; existing human decisions choose supply trips.                                | Feeding/harvest contention, actual moving contact and escape, local knowledge and independently chosen travel/discovery.                                                             |
+| Complete Main            | FPW02–FPW05 and applicable FPV: install and validate the complete useful-content union through the shared initializer; ordinary surfaces and readiness.                                         | Final ordinary Main, native/server/PostgreSQL/browser/live-character and invention evidence, combined cases below, complete-path performance and operable participant handoff.       |
+
+Read each phase's detailed specifications, world profiles, limits and shared
+contracts before modifying its producers or consumers. Keep detailed task state
+in CTR/SPK/SV/SH/CP/RW/FPW and requirement coverage in FPV01. A passing phase is a
+checkpoint within this assignment. Checks requiring final Main remain explicitly
+open until that world exists. Keep the supplied Main selected in the meantime.
+
+Cost growth comes from nearby bodies and dangers, routes and geometry, recipes
+times permitted lots, concentrated offers/listeners, exposed materials and retained
+personal evidence. Share definition preparation and actor-scoped eligibility at
+their existing owners; reuse must invalidate on the relevant definition, geometry,
+custody, life, authority, personal evidence and deadline changes. Measure cold
+preparation, warm reuse, invalidation and restoration through actual command,
+native interval, persistence and browser callers, with provider queue/execution
+reported separately. Preserve existing 1×/8× native requirements and all selected
+gameplay settings.
+
+Completion requires every authorized software, integration, documentation,
+review-fix and available verification obligation above. Use the existing $10
+aggregate task ceiling for authorized provider work, including uncertain calls.
+Actual participant comprehension/enjoyment and return evidence remain open
+without real participants; prepare their usable supervised session without
+claiming that fixtures or AI browser operation establish it.
+
 The selected combined assignment uses one AI and one implementation branch, in the order **combat → speech → complete first-playable world**. CTR and SPK are work inside that assignment, not missing external deliveries to wait for or duplicate. Their existing trackers remain the detailed owners. Phase completion is a checkpoint within the full assignment, not permission to stop with later agreed implementation unfinished.
 
 Keep the current supplied Main opening selected until FPW02 can construct and validate the complete replacement. FPW01 proves the configuration/authority interfaces with a deliberately scoped resource-to-tool candidate; that fixture is not the final Main bundle and grants no first-playable acceptance. Add typed family registration and authored rows in coherent stages on the same branch. The complete bundle must pass all required-reference, source, family and physical checks before the ordinary Main selector changes. Do not solve staging dependencies by allowing missing required rows, importing old generated data, silently skipping an unimplemented family or publishing a partial replacement world.

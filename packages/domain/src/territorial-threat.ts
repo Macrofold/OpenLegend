@@ -92,7 +92,7 @@ function returnToSafety(world: WorldState, entity: Entity, events: WorldEvent[])
 export function noteTerritorialInjury(
   world: WorldState,
   entity: Entity,
-  source: Entity,
+  source: Entity | undefined,
   damage: number,
   events: WorldEvent[],
 ): void {
@@ -102,6 +102,7 @@ export function noteTerritorialInjury(
     threat.relinquished = true;
   if (
     threat.relinquished ||
+    !source ||
     !eligible(source, threat.policy) ||
     !seesEntity(world, entity, source) ||
     distance3D(worldPosition(source), threat.policy.home) > threat.policy.territoryRadius

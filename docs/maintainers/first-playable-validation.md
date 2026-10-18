@@ -41,6 +41,35 @@ For the combined implementation assignment, follow the [single-AI combat → spe
 
 Local `main` and `origin/main` at `0543f9ec61301240c5c4ec3cd007063f4f1c25d6` in `https://github.com/Macrofold/OpenLegend.git` were inspected for this design. The [source table](../projects/first-playable-world-tech-design.md#scope-and-current-source-baseline) records supplied-player/empty-berry, open-shelter, wandering-animal and existing social/creation behavior against the required changes. This is not an executed build/readiness record and does not close FPV01's actual-build checks. Within the combined sequence, world implementation begins after combat/speech with the shared bundle/authority contract and a complete bare-hand food/tool/material route; no new player-evidence report is created for design-only work.
 
+### Active build and requirement coverage
+
+Implementation branch: `codex/implement-complete-first-playable`, starting at
+`19a0c303a89d3cb278db1cbbbe5b95e2e6e26fe1` (local `main` and freshly fetched
+`origin/main`, `https://github.com/Macrofold/OpenLegend.git`, October 18, 2026).
+`pnpm typecheck` and `pnpm build` pass on that starting revision. The build reports
+existing browser externalization and large-bundle warnings; this is static/build
+evidence, not an executed gameplay or performance pass.
+
+| Required capability                                       | Delivered baseline and reusable owners                                                                                                                                                       | Remaining implementation/evidence                                                                                                |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Physical conflict and voluntary threat response           | Existing strikes, ranged flight, guard, body effects, appraisals and independent director. Source inspection confirms target-only projectile injury and restricted player attack permission. | CTR01–CTR10; actual contact and independent choices, complete busy-work choices, animal escape, controls and qualification.      |
+| Speech and social perception                              | Existing hearing/captions, speech admission, personal history and recognition.                                                                                                               | SPK01–SPK11; full source/listener facts, ordinary speech without membership, coherent recognition/memory and acoustic reactions. |
+| Empty-handed survival, known methods and useful invention | Existing gathering, native preparation/craft, invention admission and custody.                                                                                                               | SV/FPW01/FPW03; natural finite chains, chosen quantities, recovery, material permissions and actual useful invention/reuse.      |
+| Defensible camp                                           | Existing canopy/lean-to construction and physical geometry.                                                                                                                                  | SH07–SH12 and dependent SV; real walls/gates, manufacture, exact authority, damage/reclaim and rain.                             |
+| People, exchange and voluntary cooperation                | Existing resident authorship, gifts/barter, outings and combat-help.                                                                                                                         | CP01–CP10; selected four residents, finite guide/help/hunt and revocable agreements, actual contributions and refusal.           |
+| Wildlife and independent human travel                     | Existing local animal movement, territorial stag and human decision/travel owners.                                                                                                           | RW01–RW06; extend CTR's single controller, feeding/local pack/bear behavior and independently chosen trips/discovery.            |
+| Complete ordinary opening and continuation                | Existing shared Main initializer, scenario installers and current-format persistence.                                                                                                        | FPW02–FPW05; approved content union, ordinary controls and combined native/server/database/browser/live qualification.           |
+| Real-player experience                                    | Existing participant procedure only.                                                                                                                                                         | FPV04–FPV09 session preparation and actual participants; no human acceptance inferred from technical checks.                     |
+
+The first selected activity is physical conflict followed by an ordinary
+hunt-to-meal: establish that an actual attack has physical consequences, leaves
+the other person free to choose a response, and still permits practically useful
+hunting. It resolves CTR's central uncertainty before speech/world breadth; it
+does not qualify empty-handed Main, camps, cooperation, roaming or player enjoyment.
+The [active implementation plan](../projects/first-playable-world-tech-design.md#active-implementation-plan)
+owns the full sequence and cross-layer risk. FPV01 remains open while the actual
+runtime/evidence inventory is completed.
+
 ## FPV02 — Finish the necessary detailed design in existing owners
 
 **Completed design, October 17, 2026; runtime/evidence remain open.**

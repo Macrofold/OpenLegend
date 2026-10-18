@@ -29,6 +29,7 @@ export interface BodyPolicy {
   combat: null | {
     targets: Record<'player' | 'npc' | 'native', Array<'player' | 'npc' | 'native'>>;
     humanIssuedTargets: Array<'player' | 'npc' | 'native'>;
+    projectileContact: 'injure-vulnerable-body' | 'stop-only';
     impactAttention: { importance: number; urgency: number };
     unavailableText: string;
   };
@@ -141,7 +142,15 @@ export function validateBodyPolicy(
     text(p.description);
   }
   if (policy.combat !== null) {
-    fields(policy.combat, ['targets', 'humanIssuedTargets', 'impactAttention', 'unavailableText']);
+    fields(policy.combat, [
+      'targets',
+      'humanIssuedTargets',
+      'projectileContact',
+      'impactAttention',
+      'unavailableText',
+    ]);
+    if (!['injure-vulnerable-body', 'stop-only'].includes(policy.combat.projectileContact))
+      throw new Error('Invalid installed projectile contact response.');
     fields(policy.combat.impactAttention, ['importance', 'urgency']);
     if (
       !Object.values(policy.combat.impactAttention).every(
@@ -163,7 +172,13 @@ export function validateBodyPolicy(
     text(policy.combat.unavailableText);
   }
   if (policy.lethalAttackReview !== null) {
-    fields(policy.lethalAttackReview, ['title', 'description', 'confirmLabel', 'cancelLabel']);
+    fields(policy.lethalAttackReview, [
+      'title',
+      'description',
+      'rangedDescription',
+      'confirmLabel',
+      'cancelLabel',
+    ]);
     for (const value of Object.values(policy.lethalAttackReview)) text(value);
   }
   if (

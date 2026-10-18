@@ -8,7 +8,7 @@ import {
 } from '@open-legend/spatial';
 import { rangedTargetAllowed, rangedAccuracy, rangedPolicy } from './ranged-policy.js';
 import { nextId } from './data.js';
-import { canonicalJson, emit, outcome } from './events.js';
+import { emit, outcome } from './events.js';
 import { subjectNarration, person } from './narration.js';
 import { accessiblePossession } from './object-access.js';
 import { itemFor } from './objects.js';
@@ -25,7 +25,6 @@ import { interactionAnchor, spatialCandidates } from './spatial.js';
 import { seesEntity, visionQuery } from './perception.js';
 import { activelyParticipates } from './participation-state.js';
 import { commitContactImpact } from './contact-defense.js';
-import { scarFactor } from './scar-effects.js';
 import { projectAttributes, definitionPin, type DefinitionPin } from './world-modules.js';
 import { sameDefinitionPin, isDefinitionPin } from './state-owners.js';
 import {
@@ -64,6 +63,11 @@ export interface ProjectileFlight {
   sourceId: string;
   sourceLife: number;
   sourceController: 'player' | 'npc' | 'native';
+  contactPolicy: {
+    pin: DefinitionPin | null;
+    response: 'injure-vulnerable-body' | 'stop-only';
+  };
+  sourceExited: boolean;
   targetId: string;
   targetLife?: number;
   practice: boolean;
@@ -209,7 +213,8 @@ export function releaseShot(
     launcher = definition.launcher!;
   const aim = action.ranged!,
     handling = handlingAccuracy(world, actor, definition);
-  const facts = action.type === 'practice-shot' ? null : attackFacts(world, actor, action);
+  const facts = attackFacts(world, actor, action);
+  if (!facts) return outcome(false, 'aim-unavailable', BASE_RANGED_TEXT.selectedChanged);
   // Admit the complete release before consuming stock or drawing randomness. Existing flights
   // are never discarded to admit a new one. Collision work retains the native group's allowance.
   chargeWork({ effects: 1, retainedBytes: 2048 });
@@ -250,12 +255,24 @@ export function releaseShot(
     sourceId: actor.id,
     sourceLife: aim.sourceLife,
     sourceController: actor.actor!.controller,
+    contactPolicy: {
+      pin: world.moduleManifest.bodyPolicyPin && { ...world.moduleManifest.bodyPolicyPin },
+      response: bodyPolicy(world)?.combat?.projectileContact ?? 'stop-only',
+    },
+    sourceExited:
+      movingBodyContact(
+        origin,
+        origin,
+        worldPosition(actor),
+        worldPosition(actor),
+        bodyProfile(actor),
+      ) === undefined,
     targetId: target.id,
     ...(action.targetLife === undefined ? {} : { targetLife: action.targetLife }),
     practice: action.type === 'practice-shot',
     requiresLethalReview: !!action.requiresLethalReview || actor.actor!.controller === 'player',
     ...(action.lethalPermission ? { lethalPermission: { ...action.lethalPermission } } : {}),
-    ...(facts ? { attackDigest: facts.digest } : {}),
+    attackDigest: facts.digest,
     tool: { ...aim.tool },
     ammunition: { ...aim.ammunition },
     position: origin,
@@ -264,7 +281,7 @@ export function releaseShot(
     advancedAt: world.simTime,
     speed: launcher.flightSpeed,
     remainingRange: launcher.range,
-    injury: facts?.injury ?? 0,
+    injury: facts.injury,
   };
   (world.projectiles ??= {})[flight.id] = flight;
   const released = emit(
@@ -307,6 +324,21 @@ export type ProjectileBodies = Map<
   string,
   { entity: Entity; position: WorldPoint; profile: ReturnType<typeof bodyProfile> }
 >;
+/** Exempt only the original launch overlap. Once clear, even the source can intercept.
+ * Relative linear capsule motion is convex; native track turns split intervals below. */
+function launchOverlap(
+  flight: ProjectileFlight,
+  entity: Entity,
+  position: WorldPoint,
+  profile: ReturnType<typeof bodyProfile>,
+): boolean {
+  return (
+    !flight.sourceExited &&
+    entity.id === flight.sourceId &&
+    (entity.actor?.physicalLife ?? 0) === flight.sourceLife &&
+    movingBodyContact(flight.position, flight.position, position, position, profile) !== undefined
+  );
+}
 export function captureProjectileBodies(
   world: WorldState,
   bodyIds: readonly string[],
@@ -409,9 +441,7 @@ export function projectileBoundary(
     if (solid) bound = Math.min(bound, Math.max(TIME_EPSILON, duration * solid.fraction));
     const midpoint = interpolate(from, to, 0.5);
     const candidates = query(midpoint, travel / 2 + extent).filter(
-      (entry) =>
-        entry.entity.id !== flight.sourceId &&
-        distance3D(midpoint, entry.position) <= travel / 2 + entry.extent + TIME_EPSILON,
+      (entry) => distance3D(midpoint, entry.position) <= travel / 2 + entry.extent + TIME_EPSILON,
     );
     // A chord cannot represent a corridor turn. Split only a nearby body's relevant
     // interval; distant birds keep their private turns and paths are prepared once.
@@ -423,6 +453,7 @@ export function projectileBoundary(
     bound = Math.min(bound, duration);
     const shortTo = interpolate(from, to, duration / (travel / flight.speed));
     for (const entry of candidates) {
+      if (launchOverlap(flight, entry.entity, entry.position, entry.profile)) continue;
       for (const track of tracksFor(entry)) {
         const fraction = movingBodyContact(
           from,
@@ -478,7 +509,7 @@ export function advanceProjectiles(
     const solid = rayHits(spatialMap(world), from, to, 'movement')[0];
     if (solid) contact = { fraction: solid.fraction, id: solid.id };
     for (const entry of query(interpolate(from, to, 0.5), travel / 2 + maximum)) {
-      if (entry.id === flight.sourceId) continue;
+      if (launchOverlap(flight, entry.entity, entry.position, entry.profile)) continue;
       const fraction = movingBodyContact(from, to, entry.position, entry.end, entry.profile);
       chargeWork({ tests: 1 });
       if (
@@ -492,40 +523,46 @@ export function advanceProjectiles(
     flight.position = interpolate(from, to, contact?.fraction ?? 1);
     flight.remainingRange = Math.max(0, flight.remainingRange - travel * (contact?.fraction ?? 1));
     flight.advancedAt = world.simTime;
+    if (!flight.sourceExited) {
+      const source = entityGet(world.entities, flight.sourceId);
+      flight.sourceExited =
+        !source || !launchOverlap(flight, source, worldPosition(source), bodyProfile(source));
+    }
     if (!contact && flight.remainingRange > 1e-8) continue;
     const source = entityGet(world.entities, flight.sourceId),
       target = contact?.body;
     let result = contact ? 'stopped' : 'missed';
     let damage = 0;
     let contactFacts: Record<string, number> | undefined;
-    if (target?.id === flight.targetId && source) {
-      const permission = flight.practice
-        ? null
-        : attackPermissionProblem(world, source, target, flight, {
-            controller: flight.sourceController,
-          });
-      const review = flight.practice ? null : flightReviewProblem(world, flight, target);
-      if (
-        !permission &&
-        !review &&
-        (flight.practice ? !!target.practiceTarget : !!target.actor?.alive)
-      ) {
-        result = 'hit';
-        if (!flight.practice) {
-          const impact = commitContactImpact(
-            world,
-            source,
-            target,
-            flight.injury,
-            flight.actionId,
-            events,
-            { x: -flight.direction.x, y: -flight.direction.y, z: -flight.direction.z },
-          );
-          damage = impact.damage;
-          contactFacts = { ...impact };
-          if (target.threat) noteTerritorialInjury(world, target, source, damage, events);
-        }
-      }
+    if (
+      target?.actor?.alive &&
+      activelyParticipates(target) &&
+      flight.contactPolicy.response === 'injure-vulnerable-body'
+    ) {
+      // Release completed admission and human review. The actual current body supplies
+      // susceptibility/defense; historical intention is never a damage allowlist.
+      const impact = commitContactImpact(
+        world,
+        source,
+        target,
+        flight.injury,
+        flight.actionId,
+        events,
+        { x: -flight.direction.x, y: -flight.direction.y, z: -flight.direction.z },
+      );
+      result = 'hit';
+      damage = impact.damage;
+      contactFacts = { ...impact };
+      if (target.threat)
+        noteTerritorialInjury(
+          world,
+          target,
+          source?.actor?.physicalLife === flight.sourceLife ? source : undefined,
+          damage,
+          events,
+        );
+    } else if (target?.practiceTarget && target.id === flight.targetId && flight.practice) {
+      result = 'hit';
     }
     if (target) {
       // Contact is at the struck body. It does not identify an unseen shooter.
@@ -541,6 +578,10 @@ export function advanceProjectiles(
         target.id,
         {
           projectileId: flight.id,
+          contactLife: target.actor?.physicalLife ?? -1,
+          incomingX: -flight.direction.x,
+          incomingY: -flight.direction.y,
+          incomingZ: -flight.direction.z,
           contactInjury: true,
           ...(contactFacts ? bodyPolicy(world)?.combat?.impactAttention : {}),
           damage,
@@ -568,7 +609,14 @@ export function advanceProjectiles(
         actionId: flight.actionId,
         projectileId: flight.id,
         sourceLife: flight.sourceLife,
+        sourceId: flight.sourceId,
+        sourceController: flight.sourceController,
+        intendedTargetId: flight.targetId,
         targetLife: flight.targetLife ?? -1,
+        ...(target ? { contactLife: target.actor?.physicalLife ?? -1 } : {}),
+        incomingX: -flight.direction.x,
+        incomingY: -flight.direction.y,
+        incomingZ: -flight.direction.z,
         result,
         damage,
         importance: 8,
@@ -595,11 +643,15 @@ export function advanceProjectiles(
       )({ id: flight.id, position: flight.position, height: 0 });
       // A miss has no contacted body. Preserve a witnessed outcome for the exact
       // selected life, without substituting an intervening body's identity or condition.
+      const observedContact = !!target && seesEntity(world, source, target);
+      const reported = observedContact ? target : selected;
       const observed =
-        !!selected &&
-        (selected.actor?.physicalLife ?? 0) === (flight.targetLife ?? 0) &&
-        seesEntity(world, source, selected) &&
-        (result === 'hit' || observedPoint);
+        observedContact ||
+        (!!selected &&
+          (selected.actor?.physicalLife ?? 0) === (flight.targetLife ?? 0) &&
+          seesEntity(world, source, selected) &&
+          !!observedPoint);
+      const reportedHit = observedContact && result === 'hit';
 
       emit(
         world,
@@ -607,8 +659,8 @@ export function advanceProjectiles(
         'shot-ended',
         observed
           ? subjectNarration(source, [
-              result === 'hit' ? BASE_RANGED_TEXT.observedHit : BASE_RANGED_TEXT.observedNoInjury,
-              person(selected, 'object'),
+              reportedHit ? BASE_RANGED_TEXT.observedHit : BASE_RANGED_TEXT.observedNoInjury,
+              person(reported!, 'object'),
               '.',
             ])
           : subjectNarration(
@@ -620,12 +672,18 @@ export function advanceProjectiles(
                 : BASE_RANGED_TEXT.stopped,
             ),
         source,
-        observed ? selected.id : undefined,
+        observed ? reported?.id : undefined,
         {
           actionId: flight.actionId,
           projectileId: flight.id,
-          result: observed || observedPoint ? result : 'unobserved',
-          ...(observed
+          result: observedContact
+            ? result
+            : observedPoint
+              ? contact
+                ? 'stopped'
+                : 'missed'
+              : 'unobserved',
+          ...(observedContact
             ? { damage, ...contactFacts, contactInjury: true, targetReference: true }
             : {}),
           semanticTrigger: true,
@@ -634,57 +692,17 @@ export function advanceProjectiles(
       );
       const occurrence = occurrenceFor(world, source.id, flight.actionId);
       if (occurrence?.release && observed) {
-        occurrence.release.hit = result === 'hit';
-        if (projectAttributes(world, selected, 'public').some((attribute) => attribute.bodyHealth))
+        occurrence.release.hit = reportedHit && target?.id === flight.targetId;
+        if (
+          observedContact &&
+          target.id === flight.targetId &&
+          projectAttributes(world, target, 'public').some((attribute) => attribute.bodyHealth)
+        )
           occurrence.release.damage = damage;
       }
     }
     delete world.projectiles![id];
   }
-}
-function flightReviewProblem(
-  world: WorldState,
-  flight: ProjectileFlight,
-  target: Entity,
-): Outcome | null {
-  const permission = flight.lethalPermission;
-  if (permission) {
-    const tool = world.itemDefinitions[flight.tool.id],
-      ammo = world.itemDefinitions[flight.ammunition.id];
-    const expected = {
-      actorId: flight.sourceId,
-      sourceLife: flight.sourceLife,
-      targetId: flight.targetId,
-      targetLife: flight.targetLife,
-      attackDigest: canonicalJson({
-        attack: flight.attackDigest,
-        susceptibility: target.actor?.body?.susceptibility.injury,
-        incomingInjuryFactor: scarFactor(world, target, 'incomingInjuryFactor'),
-      }),
-    };
-    if (
-      !tool ||
-      !ammo ||
-      !sameDefinitionPin(flight.tool, definitionPin(tool)) ||
-      !sameDefinitionPin(flight.ammunition, definitionPin(ammo)) ||
-      canonicalJson(expected) !== canonicalJson(permission)
-    )
-      return outcome(false, 'lethal-review-stale', BASE_RANGED_TEXT.reviewedAttackChanged);
-  }
-  const policy = bodyPolicy(world);
-  if (
-    policy?.lethalAttackReview &&
-    flight.requiresLethalReview &&
-    target.actor &&
-    policy.zeroHealth[target.actor.controller] === 'die' &&
-    flight.injury *
-      (target.actor.body?.susceptibility.injury ?? 0) *
-      scarFactor(world, target, 'incomingInjuryFactor') >=
-      target.actor.health &&
-    !permission
-  )
-    return outcome(false, 'lethal-review-required', BASE_RANGED_TEXT.concurrentLethal);
-  return null;
 }
 export function validateRanged(world: WorldState): void {
   for (const definition of Object.values(world.itemDefinitions)) {
@@ -748,6 +766,8 @@ export function validateRanged(world: WorldState): void {
           'sourceId',
           'sourceLife',
           'sourceController',
+          'contactPolicy',
+          'sourceExited',
           'targetId',
           'practice',
           'requiresLethalReview',
@@ -760,17 +780,18 @@ export function validateRanged(world: WorldState): void {
           'speed',
           'remainingRange',
           'injury',
+          'attackDigest',
         ],
-        ['targetLife', 'lethalPermission', 'attackDigest'],
+        ['targetLife', 'lethalPermission'],
       ) ||
       !isDefinitionPin(flight.tool) ||
       !isDefinitionPin(flight.ammunition) ||
-      !entityGet(world.entities, flight.sourceId)?.actor ||
-      (flight.practice
-        ? flight.targetLife !== undefined ||
-          flight.attackDigest !== undefined ||
-          flight.injury !== 0
-        : !entityGet(world.entities, flight.targetId)?.actor) ||
+      !flight.contactPolicy ||
+      !hasRecordFields(flight.contactPolicy, ['pin', 'response']) ||
+      !['injure-vulnerable-body', 'stop-only'].includes(flight.contactPolicy.response) ||
+      (flight.contactPolicy.pin === null
+        ? flight.contactPolicy.response !== 'stop-only'
+        : !isDefinitionPin(flight.contactPolicy.pin)) ||
       (flight.lethalPermission !== undefined &&
         (!hasRecordFields(flight.lethalPermission, [
           'actorId',
@@ -808,8 +829,13 @@ export function validateRanged(world: WorldState): void {
       flight.remainingRange <= 0 ||
       flight.injury < 0 ||
       typeof flight.practice !== 'boolean' ||
+      typeof flight.sourceExited !== 'boolean' ||
       typeof flight.requiresLethalReview !== 'boolean' ||
-      (!flight.practice && (!Number.isSafeInteger(flight.targetLife) || !flight.attackDigest))
+      typeof flight.attackDigest !== 'string' ||
+      !flight.attackDigest ||
+      (flight.practice
+        ? flight.targetLife !== undefined
+        : !Number.isSafeInteger(flight.targetLife) || flight.targetLife! < 0)
     )
       throw new Error('Invalid committed projectile continuation.');
     releases.add(flight.actionId);

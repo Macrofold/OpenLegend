@@ -1,5 +1,17 @@
 # Documentation changelog
 
+## October 18, 2026 — Actual projectile contact and human attack permission
+
+CTR01 installs the selected bundled-world permission for attacks on vulnerable
+players and removes target-only projectile immunity and contact-time lethal
+suppression. Released shots retain their contact law and source attribution;
+practice ammunition can injure an interceptor, a prepared shield still protects
+its own body, and initial launch overlap ends once the projectile clears its
+source. This makes physical interception consequential while retaining departure
+protection and pre-release review. [Native checkpoint evidence](verification/combat-and-threat-responses.md)
+is partial; [CTR](maintainers/combat-and-threat-responses.md) retains complete
+caller, continuation, character and player qualification.
+
 ## October 18, 2026 — Review optional measurement and carry its lessons forward
 
 The [complete implementation review](verification/performance/profiling-controls.md#complete-implementation-review--october-18-2026-0008-edt) corrects malformed-request observation, failed-setup and shutdown cleanup, off-mode peak calculation and unsampled-delay reporting. Current gameplay, world/engine ownership and authoritative checks remain intact. [Performance guidance](performance.md#optional-measurement) gains one focused section with an explicit conditional read from its already-mandatory skill; root instructions and existing policy owners are not duplicated. Both feature specs record synchronization datetimes and both designs record use datetimes. PSF01–PSF06 remain complete; PC06's unmatched-activity qualification remains open and the full-game run allowance is unchanged.

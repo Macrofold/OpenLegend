@@ -1,8 +1,8 @@
 # Combat and threat responses: feature specification
 
-| Status      | Current progress                                               | Last updated |
-| ----------- | -------------------------------------------------------------- | ------------ |
-| In progress | Design complete; implementation and qualification remain open. | 2026-10-17   |
+| Status      | Current progress                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Actual contact and human attack permission are implemented; complete combat delivery and qualification remain open. | 2026-10-18   |
 
 ## Purpose and authority
 

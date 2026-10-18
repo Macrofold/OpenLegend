@@ -2,6 +2,7 @@ import type { AttributeDefinition } from '../../world-modules.js';
 import { canonicalJson, contentLabel } from '../../events.js';
 import { BASE_RECIPE_FAMILIES } from './recipe-families.js';
 import { BASE_ACTION_DEFAULTS } from './actions.js';
+import { BASE_PROJECTILE_CONTACT_WARNING } from './ranged-counterplay.js';
 
 export const SLING_HANDLING: AttributeDefinition = {
   id: 'wilderness:sling-handling',
@@ -29,8 +30,7 @@ export const SLING_HANDLING: AttributeDefinition = {
       laneOutOfReach: 'The practice target is outside a clear firing range. No shot was released.',
       laneBlocked: 'The firing lane is blocked. No shot was released.',
       laneUnsafe: 'The firing lane is not safely clear. No shot was released.',
-      practiceDescription:
-        '{label} at {target}. {tool} {windupSeconds} game seconds of preparation after approach; one real projectile is consumed only on release. {chance}{scope} No automatic next shot. The firing lane must remain safely clear; stopping before release spends no projectile and earns no practice.',
+      practiceDescription: `{label} at {target}. {tool} {windupSeconds} game seconds of preparation after approach; one real projectile is consumed only on release. {chance}{scope} No automatic next shot. The firing lane must remain safely clear; stopping before release spends no projectile and earns no practice. ${BASE_PROJECTILE_CONTACT_WARNING}`,
       practiceActivityLabel: 'Practicing a shot',
       coachingActivityLabel: 'Giving/receiving guided feedback',
       selectedTool: 'Tool: {toolName}.',

@@ -4,6 +4,8 @@ import type { WorldState } from '../../types.js';
 
 /** Bundled straight-flight tuning. See docs/worlds/base/ranged-counterplay.md. */
 export const BASE_PROJECTILE_SPEED = { stone: 0.5, arrow: 0.75 } as const;
+export const BASE_PROJECTILE_CONTACT_WARNING =
+  'This shot can injure any body in its path, including someone other than your target. Once fired, it cannot be recalled.';
 
 /** The current native launcher families use this world's two-radius, uniformly angled
  * release error. The flight owner retains only its chosen direction; alternate error
@@ -56,10 +58,8 @@ export const BASE_RANGED_TEXT = {
   shootingLabel: 'Preparing a shot',
   aimDescription:
     'Approach a perceived opponent and prepare an aim with the selected tool and one held projectile. Aim stays ready until you shoot, cancel or lose sight or range. Holding longer gives no accuracy bonus.',
-  shotDescription:
-    'Approach a perceived opponent and release one projectile after preparation. The projectile travels straight until a body or solid cover stops it. Only the selected opponent can be injured.',
-  releaseDescription:
-    'Release the projectile held by this prepared aim. The shot travels independently; later movement or cancellation does not recall it.',
+  shotDescription: `Approach a perceived opponent and release one projectile after preparation. The projectile travels straight until a body or solid cover stops it. ${BASE_PROJECTILE_CONTACT_WARNING}`,
+  releaseDescription: `Release the projectile held by this prepared aim. ${BASE_PROJECTILE_CONTACT_WARNING}`,
   released: 'released one shot. One projectile was spent; its outcome is not yet known.',
   stopped: 'could not observe where the released shot ended.',
   ready: 'Aim is prepared. Shoot releases one projectile; cancel spends none.',
@@ -86,8 +86,6 @@ export const BASE_RANGED_TEXT = {
   observedCover: 'saw the projectile stop against solid cover.',
   observedRangeEnd: 'saw the projectile finish its range without contact.',
   injuryInterrupted: 'Injury interrupted preparation; no shot was released.',
-  reviewedAttackChanged: 'The reviewed attack changed after release.',
-  concurrentLethal: 'Concurrent injury made this unreviewed shot potentially lethal.',
 };
 
 export const BASE_EVASION_KEYWORDS = ['evade', 'dodge'];

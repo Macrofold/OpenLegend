@@ -5542,9 +5542,11 @@ export class WorldService {
         )
           return { ...preview, lethalReview: prior.view };
         const attack = nativeActivityView(this.world, offer.command);
+        const { rangedDescription, ...reviewPolicy } = policy;
         const view: NonNullable<ApiResult['lethalReview']> = {
           id: randomUUID(),
-          ...policy,
+          ...reviewPolicy,
+          description: command.type === 'strike' ? policy.description : rangedDescription,
           targetLabel: observerName(this.world, actorId, offer.permission.targetId).name,
           attack: {
             name: attack.name,

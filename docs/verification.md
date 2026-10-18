@@ -1,5 +1,7 @@
 # Verification
 
+- [Combat and threat responses](verification/combat-and-threat-responses.md) — initial actual-contact native checks and explicit remaining combat qualification.
+
 - [Optional performance collection](verification/performance/profiling-controls.md) — default-off server/worker collection, capture cleanup, tool modes, actual functional checks and required overhead-comparison limits.
 - [Asset storage and preservation](verification/game-asset-storage.md) — exact publication, shared-cache failures, real public/private delivery, historical preservation, asset-free builds and recovery evidence; incomplete migration/browser/restore gates remain explicit.
 

@@ -1,7 +1,11 @@
 import type { BodyPolicy } from '../../body-policy.js';
 import type { StatusCondition } from '../../status-effects.js';
 import { BASE_REINCARNATION_POLICY } from './death.js';
-import { BASE_EVASION_TEXT, BASE_RANGED_TEXT } from './ranged-counterplay.js';
+import {
+  BASE_EVASION_TEXT,
+  BASE_RANGED_TEXT,
+  BASE_PROJECTILE_CONTACT_WARNING,
+} from './ranged-counterplay.js';
 import type { ActorComponent } from '../../types.js';
 
 /** These native families use the bundled injury-cancels-preparation rule. The body
@@ -37,9 +41,11 @@ const distress: StatusCondition = {
 const awake: StatusCondition = {
   statusActive: { target: '$subject', definitionId: 'wilderness:restorative-rest', value: false },
 };
+const lethalAttackDescription =
+  'This attack could kill the target. Death leaves a body; ordinary animal and NPC revival is unavailable. Confirm one attack; a hit is not guaranteed. Choosing does not pause the world.';
 export const BASE_BODY_POLICY: BodyPolicy = {
   id: 'wilderness:body-policy',
-  version: 9,
+  version: 10,
   evasion: {
     bodyPlans: ['biped'],
     maximumDistance: 2,
@@ -51,11 +57,12 @@ export const BASE_BODY_POLICY: BodyPolicy = {
   },
   combat: {
     targets: {
-      player: ['npc', 'native'],
+      player: ['player', 'npc', 'native'],
       npc: ['player', 'npc', 'native'],
       native: ['player', 'npc', 'native'],
     },
-    humanIssuedTargets: ['npc', 'native'],
+    humanIssuedTargets: ['player', 'npc', 'native'],
+    projectileContact: 'injure-vulnerable-body',
     // A perceived impact warrants prompt reconsideration, never a prescribed retaliation.
     // docs/worlds/base/lifecycle-and-protection.md#npc-combat-participation
     impactAttention: { importance: 8, urgency: 8 },
@@ -64,8 +71,8 @@ export const BASE_BODY_POLICY: BodyPolicy = {
   reincarnation: BASE_REINCARNATION_POLICY,
   lethalAttackReview: {
     title: 'Attempt a final blow?',
-    description:
-      'This attack could kill the target. Death leaves a body; ordinary animal and NPC revival is unavailable. Confirm one attack; a hit is not guaranteed. Choosing does not pause the world.',
+    description: lethalAttackDescription,
+    rangedDescription: `${lethalAttackDescription} ${BASE_PROJECTILE_CONTACT_WARNING}`,
     confirmLabel: 'Attempt lethal blow',
     cancelLabel: 'Cancel',
   },
