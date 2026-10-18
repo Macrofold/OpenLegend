@@ -2610,17 +2610,19 @@ export class AiDirector {
       const observed = decisionObservation(this.service.world, actorId);
       if (!observed) throw new StopJob('stale', 'The responding person is unavailable.');
       const work = currentWorkIdentity(this.service.world, actorId);
-      const methods = npcCandidates(this.service, actorId, observed).map((candidate) => {
-        const choice = candidateChoice(candidate, actorId, run.job.id, work);
-        return {
-          id: candidate.id,
-          description: candidate.description,
-          invocation: choice.invocation,
-          firstActionDescription: candidate.firstActionDescription,
-          transition: choice.transition,
-          subjects: candidate.subjectIds,
-        };
-      });
+      const methods = npcCandidates(this.service, actorId, observed, 'complete-physical').map(
+        (candidate) => {
+          const choice = candidateChoice(candidate, actorId, run.job.id, work);
+          return {
+            id: candidate.id,
+            description: candidate.description,
+            invocation: choice.invocation,
+            firstActionDescription: candidate.firstActionDescription,
+            transition: choice.transition,
+            subjects: candidate.subjectIds,
+          };
+        },
+      );
       const catalogue = compilePreparedResponses(this.service.world, {
         actorId,
         causeIds: [...decisionEvidenceIds],

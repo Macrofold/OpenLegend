@@ -473,6 +473,7 @@ export function npcCandidates(
   service: WorldService,
   actorId = service.availableDefaultResidentEntityId,
   observed = actorId ? decisionObservation(service.world, actorId) : undefined,
+  coverage: 'suggestions' | 'complete-physical' = 'suggestions',
 ): CandidateAction[] {
   const actor = observed?.actor.actor;
   // Explicit player-action callers share these native suggestions. Only implicit
@@ -750,9 +751,10 @@ export function npcCandidates(
         command: null,
       });
   }
-  for (const target of observed.visibleEntities
-    .filter((e) => e.actor?.alive && e.id !== actorId)
-    .slice(0, 4)) {
+  const followTargets = observed.visibleEntities.filter((e) => e.actor?.alive && e.id !== actorId);
+  for (const target of coverage === 'complete-physical'
+    ? followTargets
+    : followTargets.slice(0, 4)) {
     const command: CommandInput = { type: 'follow', targetId: target.id };
     if (previewChoice(command).ok)
       actions.push({

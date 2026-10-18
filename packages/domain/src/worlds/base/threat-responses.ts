@@ -309,7 +309,10 @@ export function basePreparedThreatResponses(
         invocation: { ...command, chosenPurpose: purpose },
         transition: 'continue',
       };
-    if (!['move', 'follow', 'strike', 'guard', 'evade'].includes(command.type)) return;
+    if (
+      !['move', 'follow', 'strike', 'shoot-once', 'hunt', 'guard', 'evade'].includes(command.type)
+    )
+      return;
     const args: Record<string, ActivityArgument> = {},
       values: Record<string, ActivityBinding> = {};
     for (const [field, value] of Object.entries(activityCommandFields(command))) {
@@ -429,7 +432,8 @@ export function basePreparedThreatResponses(
           command?.type === 'move' && method.subjects?.includes(roles.assailant ?? '');
         if (
           definition.means.includes('attack') &&
-          command?.type === 'strike' &&
+          command &&
+          ['strike', 'shoot-once', 'hunt'].includes(command.type) &&
           target !== undefined &&
           target === roles.assailant &&
           visible.has(target)
@@ -450,6 +454,22 @@ export function basePreparedThreatResponses(
           approach
         )
           addMethod(method, [roles.assailant!], true);
+        if (
+          definition.means.includes('pursue') &&
+          command?.type === 'follow' &&
+          target !== undefined &&
+          target === roles.assailant &&
+          visible.has(target)
+        )
+          addMethod(method, [target], true);
+        if (
+          definition.means.includes('follow-helper') &&
+          command?.type === 'follow' &&
+          target !== undefined &&
+          target === roles.helper &&
+          visible.has(target)
+        )
+          addMethod(method, [target], true);
         if (
           definition.means.includes('approach-helper') &&
           command?.type === 'move' &&
