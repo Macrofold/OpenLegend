@@ -3782,10 +3782,12 @@ export class AiDirector {
         // Native urgency identifies the initiating experience, not just queue
         // priority. A later incidental sighting cannot replace an actual blow
         // as the cause sentence. Other coalesced evidence keeps its own order.
-        const priorityId =
-          interruptions[0]?.eventId ??
-          (preparedResult ? actor.agency.lastResultMemoryId : undefined);
-        const priority = unseen.find((memory) => (memory.eventId ?? memory.id) === priorityId);
+        const urgentId = interruptions.at(-1)?.eventId;
+        const resultId = preparedResult ? actor.agency.lastResultMemoryId : undefined;
+        const priority = unseen.find((memory) => {
+          const id = memory.eventId ?? memory.id;
+          return id === urgentId || id === resultId;
+        });
         const latest = priority
           ? [priority, ...unseen.filter((memory) => memory !== priority)].slice(0, 8)
           : unseen.slice(0, 8);

@@ -862,8 +862,10 @@ strategy. That specimen now explicitly omits the optional strategy, retaining it
 ordinary-route coverage rather than asserting an obsolete default. Its rerun then
 exposed an actual cause-selection defect: an incidental later sighting could replace
 the unread punch as the initiating sentence. The director now reuses its native
-urgent-evidence selection before newer incidental records, with a selected physical
-result next. Focused verification of this repair is pending. The connected threat
+urgent evidence and selected physical results to choose their newest personal cause
+before newer incidental records. The focused actual-punch specimen now passes,
+as do all 20 existing routing/context/disclosure checks, the connected native
+scenario, production build and asset guard. The connected threat
 strategy has separate controlled two-stage coverage;
 the failed independent Ada cohorts remain failed and retained. Complete inventory
 scaling, stable observations and full qualification remain open.
@@ -872,3 +874,36 @@ Additional Jev cost is **$0**; cumulative provider-reported Jev estimates remain
 **$0.290701**, other-provider estimates **$0.088246**, uncertain commitments
 **$4.105220**, and conservative task exposure **$4.484167**. Automated providers
 and their accounting receipts are synthetic; no external transport ran.
+
+## Native cause priority and frozen comparison — October 18, 2026
+
+The director's urgent-evidence list is chronological. Selecting its newest actual
+personal danger or the newer selected physical result now supplies the initiating
+sentence before incidental observations. Other coalesced evidence and its original
+watermark remain intact. An initial priority repair chose the older preparation
+cue; the focused actual-hit specimen exposed that ordering error. The corrected
+ordinary-route specimen and all 20 routing/context/disclosure checks pass, as do
+the connected native scenario, production build and asset guard.
+
+Inspection of the retained first Ada sample confirms that both semantic stages
+headlined a later sighting of the attacker instead of the personally experienced
+punch. Its retained recall already contains the exact punch. A single frozen
+comparison replaces only the initiating sentence and event-time attribution with
+that existing contact record. All original 338 alternatives, identity, body,
+scene, admitted feelings and other facts remain unchanged. No gameplay runs and
+no result is installed. The corrected cause still selects evasion at 0.72; this
+does not establish the required independent counterattack. Both failed twelve-case
+cohorts remain failed and retained. A new ordinary cohort must test the actual
+corrected two-stage pipeline, including its independent feeling interpretations.
+
+The borrowed Macrofold process on port 3210 retains its recorded PID/start time
+and reports healthy local-docker configuration. The one call's receipt reports
+715 ms application latency, 484 ms provider execution and 16 ms provider queue;
+35,997 input and 6,316 output tokens. These are isolated route timings, not complete
+reaction, persistence or rendered latency. Its operational backup is retained.
+
+Additional provider-reported Jev estimate is **$0.001512**; cumulative Jev estimates
+are **$0.292213**, other-provider estimates **$0.088246**, uncertain commitments
+**$4.105220**, and conservative task exposure **$4.485679**. The call used a $0.03
+local ceiling and an upward-rounded $0.021044 reservation before dispatch; it
+completed with a known receipt and no retry.

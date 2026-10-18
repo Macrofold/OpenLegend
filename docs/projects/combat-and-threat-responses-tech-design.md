@@ -182,8 +182,8 @@ Broader inventory scaling remains part of complete qualification.
 
 The ordinary-route hazard specimen also exposed cause selection: a later incidental
 sighting could headline an unread actual blow. Reuse the existing actor-scoped
-urgent-evidence read to select the initiating cause before incidental newer records;
-an actual selected physical result has the next priority. Preserve the remaining
+urgent-evidence read and actual selected physical result to choose their newest
+personal cause before incidental newer records. Preserve the remaining
 coalesced records and their original evidence cut. This is a small scheduling repair,
 not a new urgency rule or queue. The ordinary-route specimen explicitly omits the
 optional threat strategy; both routes require their own qualification.
