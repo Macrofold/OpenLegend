@@ -30,6 +30,8 @@ retain physical alternatives and explain recovery. Exact affected-work bindings
 and selected handling reach shared response admission, including speech that
 preserves work. A refused learned-method start retains the original work.
 
+Explicit return to paused work now uses the existing agency owner, checks its remaining first action before ending the intervention and preserves outputs, attempt/debit ceilings and original limits. Saved actor-reference associations also cover unexpanded steps, preventing a later unfamiliar sighting from silently replacing the selected person. Last-seen threat choices bind historical places without live targeting authority and inherit a continuing chase’s original bounds. These shared mechanisms add no mover, attack loop or permission grant; full combat qualification remains open.
+
 Private feeling reads now select exact installed definitions and subjects beyond
 convenience paging, and decision rendering preserves current intensity, scale and
 decay. The same index supports target replacement. Cause-derived identity

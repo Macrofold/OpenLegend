@@ -31,17 +31,29 @@ export function basePreparedThreatResult(
   actorId: string,
   causeIds: readonly string[],
 ): boolean {
-  const resultId = entityGet(world.entities, actorId)?.actor?.agency.lastResultMemoryId;
+  const agency = entityGet(world.entities, actorId)?.actor?.agency;
+  const resultId = agency?.lastResultMemoryId;
   if (!resultId || !causeIds.includes(resultId)) return false;
   const entry = world.actionExperience.occurrences[actorId]?.find(
     (record) => record.resultMemoryId === resultId,
   );
   const forgotten = world.experience?.forgotten[actorId] ?? [];
+  if (forgotten.includes(resultId)) return false;
+  const plan = agency?.plan;
+  if (
+    plan?.resultMemoryId === resultId &&
+    plan.activity?.request?.chosenPurpose &&
+    sameDefinitionPin(plan.activity.request.chosenPurpose.definition, definitionPin(profile)) &&
+    world.memories[actorId]?.some(
+      (memory) =>
+        memory.id === resultId && memory.actorId === actorId && memory.source === 'internal',
+    )
+  )
+    return true;
   return !!(
     entry &&
     entry.status !== 'running' &&
     !entry.revoked &&
-    !forgotten.includes(resultId) &&
     !forgotten.includes(entry.id) &&
     entry.command.chosenPurpose &&
     sameDefinitionPin(entry.command.chosenPurpose.definition, definitionPin(profile))
@@ -262,7 +274,9 @@ export function basePreparedThreatResponses(
           sequence: evidence.sequence,
           subjectId: source,
         });
-      else if (contact && evidence.targetId === actor.id)
+      // Losing a formerly identified sighting does not turn that same recorded
+      // cause into a second anonymous injury or renew its interpretation curve.
+      else if (!source && contact && evidence.targetId === actor.id)
         appraisalOccurrences.push({
           eventId: evidence.eventId,
           sequence: evidence.sequence,
@@ -383,8 +397,10 @@ export function basePreparedThreatResponses(
     const control: FiniteActivityControl = {
       kind: 'finite',
       deadline: inherited?.deadline ?? world.simTime + seconds,
-      boundary: inherited?.boundary
-        ? { origin: { ...inherited.boundary.origin }, radius: inherited.boundary.radius }
+      boundary: inherited
+        ? inherited.boundary
+          ? { origin: { ...inherited.boundary.origin }, radius: inherited.boundary.radius }
+          : null
         : radius
           ? { origin: { ...original }, radius: profile.limits.pursuitRadius }
           : null,
@@ -409,7 +425,7 @@ export function basePreparedThreatResponses(
       ...method,
       purpose,
       firstActionDescription: method.firstActionDescription ?? method.description,
-      description: `${method.description} Stop no later than game time ${control.deadline}.${radius ? ` Stop at ${profile.limits.pursuitRadius} m from the original selected position.` : ''}${participants.length ? ' Stop if a selected visible participant is lost or changes physical life.' : ''}`,
+      description: `${method.description} Stop no later than game time ${control.deadline}.${control.boundary ? ` Stop at ${control.boundary.radius} m from the original selected position.` : ''}${participants.length ? ' Stop if a selected visible participant is lost or changes physical life.' : ''}`,
       invocation: {
         id: 'prepared-response',
         actorId: actor.id,
@@ -627,7 +643,7 @@ export function basePreparedThreatResponses(
           priorMeans?.some((mean) => ['pursue', 'last-seen'].includes(mean))
             ? previous.activity.control
             : undefined;
-        if (place && supportedPosition(actor))
+        if (supportedPosition(actor))
           addMethod(
             {
               id: 'last-seen',

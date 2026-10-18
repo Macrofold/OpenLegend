@@ -673,3 +673,59 @@ work; a paused activity must retain its original unfamiliar-person association.
 Additional Jev cost is **$0**; cumulative provider-reported Jev estimates remain
 **$0.290701**, other-provider estimates **$0.088246**, uncertain commitments
 **$4.105220**, and conservative task exposure **$4.484167**.
+
+## Historical points and unexpanded activity references — October 18, 2026
+
+Requested and learned activities capture their originally selected actor-reference
+associations before later steps exist. The shared native dispatcher and remaining
+first-step preflight preserve them; current-format validation requires the saved
+field. The existing private-role classifier distinguishes people/objects from
+spoken text and historical positions. No legacy reader or migration was added.
+
+The evolving native scenario selects a real wait-then-follow sequence, pauses it
+before the follow has been prepared, and compares an unchanged unfamiliar sighting
+with loss of sight followed by a new encounter. The unchanged person is followed
+normally; a new encounter blocks the old follow without substituting a target.
+PostgreSQL retains the original association. A missing required association map
+refuses current-format validation. Controlled relocation creates these perception
+conditions; this does not qualify natural travel, recognition or independent choice.
+An initial literal-target setup was correctly rejected because personal activity
+values require private bindings; the corrected setup uses that supported path.
+
+An actual punch and actual visible departure support a natively selected follow.
+Controlled sight loss stops it immediately. A separately selected last-seen move
+uses the exact personally observed support, point and event-time label. It has no
+live actor role or continuing-sight requirement, so an unfamiliar body's lost
+association cannot grant identification or targeting. The selected original
+pursuit deadline/anchor survive later preparation, actual movement and PostgreSQL.
+Moving the hidden source elsewhere does not update the historical destination.
+
+The first connected check exposed the previous compiler's dependence on a current
+body association even for a remembered place. The corrected historical-point
+binding retains its actual cause and observation identity separately from live
+roles. Older causes cited by the supplied repertoire join ordinary mandatory
+private source capture; purpose facts expose those source IDs. Actual selected
+plan-control result memories keep the supplied strategy eligible after native
+work ends. Forgetting that result removes eligibility. Lost identification also
+cannot reinterpret the same known contact as a new anonymous injury and renew its
+appraisal curve. No model was invoked for these checks.
+
+The older actual encounter cause is distinct from the new plan-result wake. A
+captured future decision passes its source check, then actual native forgetting of
+that older cause invalidates it. The complete evolving native scenario, 40
+existing native/disclosure checks, TypeScript, production build and asset guard
+pass. The build retains its existing externalization/large-chunk warnings. The
+complete supplied native case retains 476 choices in 155,673 characters, below
+the unchanged 220,000-character request limit; this is a size check, not provider
+latency or independent-character evidence.
+
+An earlier relocation setup used an unsupported ground point and left a movement
+route inconsistent with its changed position; current-format loading correctly
+refused it. The corrected fixture ends that source movement and chooses the
+selected world's actual ground support. No gameplay geometry or validation was
+relaxed. Full movement/visibility smoothing, remaining source/capability races,
+independent counterattack and complete combat qualification remain unfinished.
+
+Additional Jev cost is **$0**; cumulative provider-reported Jev estimates remain
+**$0.290701**, other-provider estimates **$0.088246**, uncertain commitments
+**$4.105220**, and conservative task exposure **$4.484167**.

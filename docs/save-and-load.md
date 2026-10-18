@@ -155,6 +155,8 @@ For each new or substantially changed state concept, its owning design should an
 
 ## Continuation and identity
 
+Selected activities retain the original actor-reference associations for unexpanded steps as well as their queued steps. Pausing and current-format restoration preserve those associations, prior outputs and original stopping limits; resumption does not recapture an unfamiliar person from a new sighting. [Selected execution](action-experience.md#selected-execution-and-inspection) owns those checks.
+
 Keep relationships independent of display names, memory addresses, UI trees and incidental database row order. The [identity contract](identity-and-references.md) remains authoritative. Reconstruct identities before resolving relationships, including cycles; distinguish legitimately absent references from corrupt required ones.
 
 For retries or recovery of a durable operation, resolve its exact identity and content against the owning recorded outcome before new-operation eligibility or gameplay preparation. An identical recorded result reports earlier effects under current disclosure authority; it does not execute again or grant current gameplay rights. Conflicting content refuses. Without a recorded outcome, current timeline, dependencies and execution admission remain required. Recheck mutable disclosure authority after awaited receipt reads. [Authoring receipt recovery](world-agent-runtime.md#durable-write-sessions) supplies the concrete owner example, including later gameplay restore and unavailable current preparation.

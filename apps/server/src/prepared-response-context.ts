@@ -10,11 +10,15 @@ export function preparedResponseChoices(
   instructions: string,
 ): RequiredDecisionChoices {
   const methods = new Map<string, { id: string; description: string; workHandling: string }>();
-  const purposes: Array<{ id: string; description: string }> = [];
+  const purposes: Array<{ id: string; description: string; sourceIds: string[] }> = [];
   const candidates: CandidateAction[] = [];
   for (const [index, purpose] of catalogue.purposes.entries()) {
     const purposeHandle = `p${index}`;
-    purposes.push({ id: purposeHandle, description: purpose.description });
+    purposes.push({
+      id: purposeHandle,
+      description: purpose.description,
+      sourceIds: purpose.purpose.sourceIds,
+    });
     for (const option of purpose.options) {
       const {
         id: _id,
