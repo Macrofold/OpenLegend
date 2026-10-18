@@ -574,23 +574,29 @@ export function advanceProjectiles(
     }
     if (target) {
       // Contact is at the struck body. It does not identify an unseen shooter.
+      const knownSource =
+        source?.actor &&
+        (source.actor.physicalLife ?? 0) === flight.sourceLife &&
+        seesEntity(world, target, source)
+          ? source
+          : undefined;
       const contactEvent = emit(
         world,
         events,
         'projectile-contact',
-        subjectNarration(
-          target,
+        subjectNarration(target, [
           result === 'hit' ? BASE_RANGED_TEXT.contactHit : BASE_RANGED_TEXT.contactStopped,
-        ),
+          ...(knownSource
+            ? [BASE_RANGED_TEXT.contactSource, person(knownSource.id, 'object'), '.']
+            : []),
+        ]),
         target,
         target.id,
         {
           projectileId: flight.id,
           contactLife: target.actor?.physicalLife ?? -1,
-          ...(source?.actor &&
-          (source.actor.physicalLife ?? 0) === flight.sourceLife &&
-          seesEntity(world, target, source)
-            ? { contactSourceId: source.id, contactSourceLife: flight.sourceLife }
+          ...(knownSource
+            ? { contactSourceId: knownSource.id, contactSourceLife: flight.sourceLife }
             : {}),
           incomingX: -flight.direction.x,
           incomingY: -flight.direction.y,

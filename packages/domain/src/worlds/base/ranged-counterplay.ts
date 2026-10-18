@@ -81,6 +81,7 @@ export const BASE_RANGED_TEXT = {
   releaseCompleted: 'One projectile was released; its outcome is not yet known.',
   contactHit: 'was contacted by a projectile.',
   contactStopped: 'stopped a projectile without injury.',
+  contactSource: ' The projectile came from ',
   observedHit: 'hit ',
   observedNoInjury: 'did not injure ',
   observedCover: 'saw the projectile stop against solid cover.',

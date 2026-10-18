@@ -674,7 +674,7 @@ export interface PublicEvent {
     displayToPlayer?: boolean;
   };
   /** Only identities and names admitted when this character perceived the occurrence. */
-  references?: Array<{ id: string; label: string; role: 'actor' | 'target' }>;
+  references?: Array<{ id: string; label: string; role: 'actor' | 'target' | 'participant' }>;
   /** Perceived descriptive expression, with no mechanical effects. */
   descriptive?: true;
   /** Actual committed change, taken only from this observer's permitted evidence. */

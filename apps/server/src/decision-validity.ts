@@ -6,9 +6,55 @@ import {
   bodyEligibilityRevision,
   projectAttributes,
   requiredOutcomeMemoryIds,
+  scopedAppraisals,
+  type AppraisalScope,
   type WorldState,
 } from '@open-legend/domain';
 import { digest } from './content-digest.js';
+
+/** Additive personally experienced blows remain evidence for the next opportunity,
+ * not an automatic veto of a still-legal choice after the one funded refresh.
+ * Physical capability, exact work and selected subjects are checked again at admission. */
+export function preparedResponseValidity(
+  world: WorldState,
+  actorId: string,
+  scopes: readonly AppraisalScope[],
+): string {
+  const entity = entityGet(world.entities, actorId),
+    actor = entity?.actor;
+  return digest({
+    world: world.id,
+    policy: world.cognitionPolicy,
+    modules: world.moduleManifest.revision,
+    status: world.statusEffectPolicy.revision,
+    identity: [entity?.name, actor?.species, actor?.traits],
+    life: actor?.physicalLife,
+    controller: actor?.controller,
+    alive: actor?.alive,
+    incapacitated: actor?.incapacitated,
+    capabilities: actor?.capabilities,
+    goals: actor?.agency.goals,
+    mind: world.innerWorlds?.[actorId]?.revision ?? world.minds?.[actorId]?.revision,
+    forgotten: world.experience?.forgotten[actorId],
+    corrections: world.experience?.corrections?.[actorId],
+    feelings: scopedAppraisals(world, actorId, scopes).map((feeling) => {
+      const definition = appraisalDefinition(world, feeling.definitionPin);
+      return {
+        id: feeling.id,
+        revision: feeling.revision,
+        value:
+          definition?.lifetime.kind === 'decays' && feeling.value.kind === 'scaled'
+            ? {
+                kind: 'band',
+                band: definition.lifetime.bands.findIndex(
+                  (boundary) => feeling.value.kind === 'scaled' && feeling.value.value >= boundary,
+                ),
+              }
+            : feeling.value,
+      };
+    }),
+  });
+}
 
 /** Task-local semantic facts: no history bodies or whole-world revision in this fingerprint. */
 export function decisionValidity(world: WorldState, actorId: string): string {

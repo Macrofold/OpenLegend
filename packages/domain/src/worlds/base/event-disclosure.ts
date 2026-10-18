@@ -25,7 +25,7 @@ const fields: Record<string, readonly string[]> = {
   cooked: ['preparationId', 'quantity'],
   'cast-completed': ['definitionId', 'quantity'],
   'shot-released': ['ammunitionKind', 'quantity'],
-  'projectile-contact': ['contactInjury'],
+  'projectile-contact': ['contactInjury', 'contactSourceId', 'contactSourceLife'],
   struck: ['definitionId', 'contactInjury', 'hit', 'reason'],
   'state-changed': ['definitionId', 'active'],
   // These outcomes narrate visible work; internal material ID lists are not public facts.

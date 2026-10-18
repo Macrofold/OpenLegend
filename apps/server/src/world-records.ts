@@ -13,6 +13,7 @@ import {
 import { randomUUID, createHash } from 'node:crypto';
 import {
   EXPERIENCE_LIMITS,
+  RESPONSE_LIMITS,
   orderedRecordEntries,
   orderedRecordGet,
   orderedRecordChangedKeys,
@@ -1094,7 +1095,8 @@ export class WorldRecords {
     actorId: string,
     ids: readonly string[],
   ): Promise<Record<string, Appraisal>> {
-    if (ids.length > 8) throw new Error('Too many appraisal outcome bindings.');
+    if (ids.length > RESPONSE_LIMITS.operations)
+      throw new Error('Too many appraisal outcome bindings.');
     if (!ids.length) return {};
     const rows = await this.db
       .prepare(

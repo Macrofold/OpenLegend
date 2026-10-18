@@ -63,7 +63,29 @@ export function observeEvent(world: WorldState, event: WorldEvent, observerId: s
       text,
       eventType: event.type,
       eventData,
-      references: names(event.actorId, event.targetId),
+      references: [
+        ...names(event.actorId, event.targetId),
+        // Preserve the people explicitly named in this admitted account. They need
+        // not be its grammatical performer/target (for example a visible shooter
+        // whose projectile contacted the observer). Partial accounts never use this.
+        ...[
+          ...new Set(
+            event.narration?.parts.flatMap((part) =>
+              typeof part === 'string' ? [] : ['entityId' in part ? part.entityId : part.subjectId],
+            ) ?? [],
+          ),
+        ]
+          .filter((id) => id !== event.actorId && id !== event.targetId)
+          .map((id) => ({
+            id,
+            label: renderNarration(
+              world,
+              { parts: [{ entityId: id, role: 'name', article: 'none' }] },
+              observerId,
+            ),
+            role: 'participant' as const,
+          })),
+      ],
     };
   };
   // Private acquisition is the common path; its producer already supplied the grant.

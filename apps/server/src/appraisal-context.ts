@@ -83,6 +83,7 @@ async function bindAppraisals(
   purpose: 'reflection' | 'decision',
   triggerEvidenceId?: string,
   requiredFeelings: readonly AppraisalScope[] = [],
+  completeSources = false,
 ) {
   await service.flush();
   const world = service.world,
@@ -90,8 +91,23 @@ async function bindAppraisals(
   const head = await service.store.records?.head();
   const scope = head && { worldId: world.id, actorId, generation: head.generation };
   const repository = service.store.memories;
+  const requested = [...new Set(evidenceIds)];
+  if (completeSources && requested.length > 48)
+    throw new Error('The complete appraisal source set exceeds its admitted work limit.');
   const selected =
-    scope && repository ? await repository.appraisalSources(scope, evidenceIds.slice(0, 48)) : [];
+    scope && repository
+      ? await repository.appraisalSources(
+          scope,
+          completeSources ? requested : requested.slice(0, 48),
+        )
+      : [];
+  if (
+    completeSources &&
+    requested.some(
+      (id) => !selected.some((entry) => entry.memory.id === id || entry.memory.eventId === id),
+    )
+  )
+    throw new Error('A required personal appraisal source is unavailable.');
   const sources = new Map<string, AppraisalEvidence>(
     selected.map((entry, index) => [
       `cause${index + 1}`,
@@ -139,14 +155,19 @@ async function bindAppraisals(
     sourceKind: entry.sourceKind,
     revision: entry.revision,
   }));
-  const sourcesCurrent = async () =>
+  const sourceCurrent = async () =>
     generation === service.generation &&
     worldId === service.world.id &&
-    appraisalState === service.world.appraisals?.[actorId] &&
-    installed === service.world.moduleManifest.appraisals &&
+    [...definitions.values()].every(
+      (definition) => appraisalDefinition(service.world, appraisalPin(definition)) === definition,
+    ) &&
     knowledgeRevision === service.world.knowledgeRevisions?.[actorId] &&
     ownerAccount === service.world.authorship.playerAccountIds[actorId] &&
     (!scope || !repository || (await repository.current(scope, proof)));
+  const sourcesCurrent = async () =>
+    appraisalState === service.world.appraisals?.[actorId] &&
+    installed === service.world.moduleManifest.appraisals &&
+    (await sourceCurrent());
   if (!(await sourcesCurrent()))
     throw new Error('Appraisal sources changed during context preparation.');
   const subjectRef = (id: string | null) =>
@@ -172,6 +193,10 @@ async function bindAppraisals(
   };
   return {
     current,
+    sourceCurrent,
+    sources,
+    definitions,
+    records,
     bindings,
     valueSchema(handle: string) {
       const definition = definitions.get(handle) ?? recordDefinitions.get(handle);
@@ -301,6 +326,7 @@ export async function bindDecisionAppraisals(
   subjects: Record<string, string>,
   triggerEvidenceId?: string,
   requiredFeelings: readonly AppraisalScope[] = [],
+  completeSources = false,
 ) {
   const ids = [...new Set([...(triggerEvidenceId ? [triggerEvidenceId] : []), ...evidenceIds])];
   const bound = await bindAppraisals(
@@ -312,6 +338,7 @@ export async function bindDecisionAppraisals(
     'decision',
     triggerEvidenceId,
     requiredFeelings,
+    completeSources,
   );
   return {
     ...bound,

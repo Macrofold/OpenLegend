@@ -94,7 +94,14 @@ decision consumers agree.
    through the existing scheduling/execution owners, then continue the remaining
    combat controls, animal breadth and qualification.
 
-The next native-control change is approximately 150–300 logic lines; the catalogue
+Steps 1–4 have connected native implementations and partial controlled service
+qualification. Complete requests retain their full sets; supplied callbacks reach
+an admitted exact strike and its next ordinary native step. Atomic world
+installation, independent interpretation/choice, source and stale races, bounded
+refresh and concurrency qualification remain unfinished. The default response
+profile remains absent until that installation is coherent.
+
+The native-control change is approximately 150–300 logic lines; the catalogue
 and decision integration is expected to affect another 1,000–2,000 logic lines.
 Relevant recurring growth is active controlled work × remaining route segments,
 plus actual perceived threat pairs × supported methods. Reuse actor/tool and

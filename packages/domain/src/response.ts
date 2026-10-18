@@ -497,7 +497,10 @@ export function commitActorResponse(
             actorId,
             op.appraise,
             'appraisal-response-' + contentLabel(canonicalJson([id, localId])),
-            appraisalBindings,
+            {
+              ...appraisalBindings,
+              publication: { ...appraisalBindings.publication, responseId: id },
+            },
             appraisalEvents,
           )
         : outcome(false, 'appraisal-rejected', 'Decision appraisal changes are unavailable.');

@@ -88,6 +88,14 @@ Reflection may propose **8 feeling changes**. Source preparation considers only 
 
 **October 17 selected consumer:** [FL24](#fl24--interpreted-threat-reactions) requires complete relevant subject/source-bound feeling acquisition for threat decisions through this same owner, using exact lookup or continued pages. The current reflection prefix remains a baseline fact; copying it cannot satisfy that selected required-context contract.
 
+The implemented, currently unselected threat preparation uses exact feeling scopes
+and complete source binding: more than 48 required IDs or an unavailable required
+source refuses preparation. It offers at most one question per exact definition
+and target, checks stored cause outcomes before offering a fresh intensity, and
+refuses a complete set exceeding the native response's 16 operations. Ordinary
+reflection retains its separate eight-change and optional-source policy. These
+mechanical bounds do not establish independent interpretation quality.
+
 **Reason / tradeoff:** Bound supplied feeling choices and changes, but the selected prefix can omit a relevant feeling or cause. Preserve that limitation rather than describing the supplied page as the character’s complete emotional state.
 
 ## FL08

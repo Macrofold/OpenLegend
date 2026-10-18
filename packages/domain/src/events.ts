@@ -486,7 +486,7 @@ function recordEvent(
                 ? 'heard'
                 : 'observed',
         entityEpisodes: Object.fromEntries(
-          [perceived.sourceId, perceived.targetId].flatMap((id) => {
+          [...new Set(perceived.references.map((reference) => reference.id))].flatMap((id) => {
             const episode = id && world.perceptionEpisodes?.[actorId]?.[id];
             return id && episode ? [[id, episode]] : [];
           }),
@@ -496,7 +496,7 @@ function recordEvent(
           !!perceived.sourceId &&
           recognizesSubject(world, actorId, perceived.sourceId),
         intelligible: true,
-        entityIds: [perceived.sourceId, perceived.targetId].filter((id): id is string => !!id),
+        entityIds: [...new Set(perceived.references.map((reference) => reference.id))],
         importance: event.importance ?? importance,
         urgency: event.urgency ?? urgency,
         eventType: perceived.eventType,

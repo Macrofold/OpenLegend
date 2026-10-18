@@ -298,7 +298,54 @@ not cold-process/dense-world qualification, provider latency or a complete react
 All earlier scenario checks in this run pass. No provider callback ran; additional
 Jev cost is $0 and cumulative task Jev cost is $0.
 
-The actual first- and second-stage judge requests still need complete size/work
-admission and integration. This context result does not qualify their transport,
-ratings, receipts, independent character behavior or gameplay timing. The default
-profile, interpreted fear/anger and the two-stage strategy remain uninstalled.
+The default profile and interpreted fear/anger remain uninstalled. Context fitting
+alone does not qualify independent character behavior or gameplay timing.
+
+## Supplied judgment and interpretation integration checkpoint — October 18, 2026
+
+Both complete requests pass the existing native size checks. In the controlled
+context, the relevance request has 25 purpose questions and 105,009 serialized
+characters; the independent-choice request has 475 Noul questions and 210,122
+characters. Supplied scores exercise uncertain/relevant ties, ignored claimed
+choice labels, missing required relevance and preserving uncertain exact bindings.
+These numbers exclude optional appraisal questions, whose actual combined request
+is checked separately before dispatch. No model result is implied.
+
+The evolving native/PostgreSQL scenario installs interpreted definitions only in
+its disposable fixture. Two independent supplied fear/anger operations publish
+through ordinary native response admission, preserve intensity 0.5, and retain
+their job/cause/captured-cut provenance in canonical event-time accounts. Their
+original source proof remains current after this publication. A subsequent read
+of stored outcomes excludes creation from the same used occurrence. The selected
+route requires complete eligible source bindings, refusing more than 48 supplied
+sources or missing required sources; exact feeling scopes bypass convenience
+paging. The native response's existing 16-operation capacity also bounds the
+complete set of independent interpretation questions before inference.
+
+A positive projectile contact now preserves a personally seen shooter as an
+explicit participant in the felt account, its subject list and player projection.
+This fixes a gap between immediate personal danger and remembered appraisal
+eligibility. Actor and target grammar remain distinct from other named
+participants. Unseen-source contact remains anonymous; the existing nine
+disclosure checks pass. Both accounts retain current-format validation.
+
+The director selects this installed strategy before ordinary route preparation
+and uses its existing accounted job for both calls, source-bound interpretation
+publication and exact selected-action admission. The default world remains
+unselected while runtime qualification, atomic fear/anger installation and Ada's
+authored dispositions are unfinished. A first controlled director check reached
+two callbacks and accepted the selected strike as a finite task; its assertion
+incorrectly expected the first child action before the next native simulation
+step. Continuation through that ordinary step now passes: the selected strike
+actually starts against its exact opponent, with no generation or third judgment.
+This is controlled mechanical evidence, not an ordinary Ada baseline or provider
+timing. Invalidated-source/race, failure, scheduling and live cases remain open.
+
+TypeScript checking and the production build pass for this integration checkpoint;
+the build retains the existing externalization/chunk warnings and passes the asset
+guard. A further controlled case that asks stage one to replace both feelings
+before choosing the strike is under diagnosis; its expected-intensity assertion
+has not passed and must not be counted as post-publication director qualification.
+
+No external provider calls occurred. Additional Jev cost is $0 and cumulative
+task Jev cost is $0; fixture accounting receipts are explicitly synthetic.

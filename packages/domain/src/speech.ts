@@ -236,8 +236,8 @@ export function validateEventEvidence(value: unknown): asserts value is EventEvi
   if (
     evidence.references !== undefined &&
     (!Array.isArray(evidence.references) ||
-      evidence.references.length > 2 ||
-      new Set(evidence.references.map((ref) => ref?.role)).size !== evidence.references.length ||
+      new Set(evidence.references.map((ref) => `${ref?.role}:${ref?.id}`)).size !==
+        evidence.references.length ||
       evidence.references.some(
         (ref) =>
           !ref ||
@@ -245,8 +245,11 @@ export function validateEventEvidence(value: unknown): asserts value is EventEvi
           !ref.id ||
           typeof ref.label !== 'string' ||
           !ref.label.trim() ||
-          (ref.role !== 'actor' && ref.role !== 'target') ||
-          ref.id !== (ref.role === 'actor' ? evidence.sourceId : evidence.targetId),
+          !['actor', 'target', 'participant'].includes(ref.role) ||
+          (ref.role === 'actor' && ref.id !== evidence.sourceId) ||
+          (ref.role === 'target' && ref.id !== evidence.targetId) ||
+          (ref.role === 'participant' &&
+            (ref.id === evidence.sourceId || ref.id === evidence.targetId)),
       ))
   )
     throw new Error('Invalid occurrence-time participant references.');

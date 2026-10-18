@@ -158,6 +158,13 @@ export interface AppraisalBindings {
   /** Exact scoped repository outcomes, checked in the current publication lane. */
   completeCreates?: readonly string[];
   priorOutcomes?: Readonly<Record<string, Appraisal>>;
+  /** Exact immediate publication provenance; decay and later edits never inherit it. */
+  publication?: {
+    responseId?: string;
+    pipeline?: 'prepared-response';
+    inputSequence?: number;
+    causeIds?: readonly string[];
+  };
 }
 function causeEpisode(cause: AppraisalCause): string {
   return cause.kind === 'condition'
@@ -420,6 +427,7 @@ function privateChange(
   events: WorldEvent[],
   record: Appraisal,
   definition: AppraisalDefinition,
+  publication?: AppraisalBindings['publication'],
 ): void {
   emit(
     world,
@@ -439,6 +447,14 @@ function privateChange(
       semanticTrigger: true,
       importance: 5,
       urgency: 0,
+      ...(publication?.responseId ? { responseId: publication.responseId } : {}),
+      ...(publication?.pipeline
+        ? {
+            appraisalPipeline: publication.pipeline,
+            appraisalInputSequence: publication.inputSequence!,
+            appraisalCauseIds: canonicalJson(publication.causeIds ?? []),
+          }
+        : {}),
     },
     'private',
   );
@@ -551,7 +567,7 @@ function install(
   records[id] = record;
   indexAppraisal(world, record);
   changed(world, actorId);
-  if (notify) privateChange(world, events, record, definition);
+  if (notify) privateChange(world, events, record, definition, bindings?.publication);
   return outcome(true, 'appraisal-created', 'Appraisal recorded.');
 }
 function endAppraisal(
@@ -665,7 +681,7 @@ export function changeAppraisal(
   else return outcome(false, 'appraisal-rejected', 'Unsupported appraisal operation.');
   record.lastOperation = { id: operationId, body };
   changed(world, actorId);
-  privateChange(world, events, record, definition);
+  privateChange(world, events, record, definition, bindings.publication);
   return outcome(true, 'appraisal-changed', 'Appraisal updated.');
 }
 

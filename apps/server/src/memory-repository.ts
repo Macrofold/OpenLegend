@@ -1911,9 +1911,9 @@ export class MemoryRepository {
       this.hydrate(
         await this.db
           .prepare(
-            `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND r.id IN (${unique.map(() => '?').join(',')}) ORDER BY r.id`,
+            `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND (r.id IN (${unique.map(() => '?').join(',')}) OR r.event_id IN (${unique.map(() => '?').join(',')})) ORDER BY r.id`,
           )
-          .all(...this.params(scope), ...unique),
+          .all(...this.params(scope), ...unique, ...unique),
       ),
     );
   }

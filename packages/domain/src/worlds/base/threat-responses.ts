@@ -58,6 +58,11 @@ export function basePreparedThreatResponses(
     !!actor.actor.action || ['active', 'blocked'].includes(actor.actor.agency.plan?.status ?? '');
   const local: SituationBinding = { roles: {}, sources: new Set(), flags: new Set() };
   const bindings = new Map<string, SituationBinding>([['local', local]]);
+  const appraisalOccurrences: Array<{
+    eventId: string;
+    sequence: number;
+    subjectId: string | null;
+  }> = [];
   const bind = (roles: Record<string, string>) => {
     const key = JSON.stringify(Object.entries(roles).sort(([a], [b]) => a.localeCompare(b)));
     let value = bindings.get(key);
@@ -118,7 +123,37 @@ export function basePreparedThreatResponses(
       local.flags.add('hurt');
       local.flags.add('experienced-cost');
     }
-    const source = evidence.sourceId;
+    // A contact account is grammatically about the struck body. Only its admitted
+    // projectile-source fact can identify the shooter; the victim is not an assailant.
+    const source =
+      evidence.eventType === 'projectile-contact'
+        ? typeof evidence.eventData?.['contactSourceId'] === 'string'
+          ? evidence.eventData['contactSourceId']
+          : undefined
+        : evidence.sourceId;
+    if (
+      hostile ||
+      (source &&
+        pairs.some(([id]) => id === source) &&
+        ['speech', 'moved', 'encounter', 'action-stopped'].includes(evidence.eventType ?? ''))
+    ) {
+      if (
+        source &&
+        source !== actor.id &&
+        subjectReferenceCurrent(world, actor.id, source, evidence.entityEpisodes?.[source] ?? null)
+      )
+        appraisalOccurrences.push({
+          eventId: evidence.eventId,
+          sequence: evidence.sequence,
+          subjectId: source,
+        });
+      else if (contact && evidence.targetId === actor.id)
+        appraisalOccurrences.push({
+          eventId: evidence.eventId,
+          sequence: evidence.sequence,
+          subjectId: null,
+        });
+    }
     if (
       !hostile ||
       !source ||
@@ -459,5 +494,33 @@ export function basePreparedThreatResponses(
             'No currently supplied native means supports this exact purpose and participants.',
         });
     }
-  return { purposes, unavailable, profile: profilePin };
+  const commitment = actor.actor.agency.plan?.activity?.request?.chosenPurpose;
+  const eligible =
+    appraisalOccurrences.length > 0 ||
+    Object.keys(state?.unknown ?? {}).length > 0 ||
+    pairs.some(
+      ([, pair]) =>
+        Object.keys(pair.active).length > 0 ||
+        (pair.incomingUntil ?? 0) > world.simTime ||
+        !!pair.own,
+    ) ||
+    (commitment?.definition.id === profile.id && actor.actor.agency.plan?.status === 'active');
+  const subjectDescriptions = Object.fromEntries(
+    [
+      ...new Set([
+        ...purposes.flatMap((purpose) => Object.values(purpose.purpose.roles)),
+        ...appraisalOccurrences.flatMap((occurrence) =>
+          occurrence.subjectId ? [occurrence.subjectId] : [],
+        ),
+      ]),
+    ].map((id) => [id, label(id)]),
+  );
+  return {
+    purposes,
+    unavailable,
+    profile: profilePin,
+    appraisalOccurrences,
+    eligible,
+    subjectDescriptions,
+  };
 }

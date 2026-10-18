@@ -91,7 +91,12 @@ export function preparedResponseRelevance(
 ): PurposeRelevance {
   // Reuse offered-score selection, including partial-score refusal and exact ties;
   // a claimed choice label never substitutes for the supplied finite scores.
-  const decoded = decodeJudge(value, questions);
+  const decoded = decodeJudge(
+    value,
+    Object.fromEntries(
+      catalogue.purposes.map((_, index) => [`p${index}`, questions[`p${index}`]!]),
+    ),
+  );
   return Object.fromEntries(
     catalogue.purposes.map((_, index) => {
       const handle = `p${index}`,
