@@ -945,3 +945,37 @@ of the shared explanatory method row; every exact native candidate retains them,
 and their meaning is described once. No candidate or supported constraint is
 removed. Twenty focused existing server checks pass. Full TypeScript checking passes after repairing the typed method-row
 normalization. This checkpoint is not a phase completion or merge-readiness claim.
+
+## Observation timing and recovery continuation
+
+The same native scenario now compares an ordinary departure in one 100-game-second
+advance with 25/25/50-game-second advances. It exposed a real retained-forecast
+bug: a newly pending observation deadline was ignored until a later boundary.
+The existing actor pass now constrains that deadline without a second queue or
+additional population scan. The range notice agrees at approximately game time
+129.727273727273 within 0.0000001 seconds; this is deterministic clock-equivalence
+evidence in this scene, not a reaction-latency benchmark.
+
+An actually equipped knife approaches, completes wind-up and enters real body
+recovery. Stop clears the action; another strike still refuses. A separately
+selected assessment with no person roles receives exactly one recovery-end notice
+at the original body deadline. PostgreSQL capture/load retains that deadline and
+continuation agrees with the unsaved branch; native strike admission subsequently
+succeeds. An actual evasion likewise retains its repeat deadline after Stop,
+refuses early repetition and gives one selected-assessment notice when due.
+Malformed recovery and null pending bands refuse current-format validation. New assessment admission also captures an already
+committed body deadline when the derived person-pair index is absent. The
+first database specimen correctly refused an unsupported manually relocated
+terrain position; the corrected specimen uses the initializer's actual ground
+query. These are controlled native cases, not autonomous choices.
+
+Eighty focused existing domain/server checks pass across nine explicit files;
+the connected native/server scenario and production build/asset guard also pass.
+The build retains its existing externalization and large-bundle warnings. Full
+TypeScript checking passes. The subsequent observation-role and diagnostic-counter changes pass the same
+80 focused checks, connected scenario and focused native/PostgreSQL probe. Broader changing-geometry, density,
+end-to-end timing and independent behavior qualification remain open.
+
+Additional Jev cost is **$0**. Cumulative provider-reported estimates remain Jev
+**$0.440786** and other providers **$0.207513**, with **$5.939396** uncertain
+commitments and **$6.587695** conservative aggregate exposure.

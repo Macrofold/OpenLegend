@@ -51,6 +51,10 @@ export function baseThreatObservation(
       return `${label} is now within the ${range} m reach of a strike or shot I have the means to attempt.`;
     case 'range-left':
       return `${label} has stayed beyond the ${range} m reach I was considering.`;
+    case 'combat-ready':
+      return 'My wait before another strike or guard has ended.';
+    case 'evasion-ready':
+      return 'I have recovered from that short evasion.';
   }
 }
 

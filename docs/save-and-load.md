@@ -313,7 +313,7 @@ A marker-`3` database with the preceding generated memory-search column is also 
 
 Current-format capture retains exact installed/lowered materials, root/attachment/joint membership, selected definition pins, material attributes, finite shower time, phase/corner progress, holds and receipts. Restore validates the graph and supported geometry before publication; an invalid saved roof is rejected, never lowered or repaired during load. Operational construction-use grants remain current outside gameplay rewind. Missing/revoked authority releases unfinished work while retaining completed parts; a stale grant revision refuses the SQL commit. Derived geometry and worker routes rebuild under the new timeline. [AV04 native/PostgreSQL/browser evidence](verification/editable-shelters.md#postgresql-and-current-format-continuity) distinguishes cold restoration from an ordinary browser departure that cancels work. Development compatibility remains governed by the root policy above.
 
-### Personal threat observations
+## Personal threat observations
 
 Personal encounter records retain their exact observer and other-body lives and
 recognition episode. Their selected response-profile pin owns sight, preparation,
@@ -328,3 +328,9 @@ work from people being passively observed for the selected purpose. Both binding
 must be personally available at admission. Later loss of a passive person prompts
 reconsideration without cancelling work that has no physical dependency on them.
 A positive proximity stopping condition requires a hard execution participant.
+
+A personal recovery observation retains the response-profile pin and original
+body-owned strike/guard or evasion deadline. Stop can clear the action while that
+body deadline remains. Its due notice is consumed once and emitted only for a
+still-relevant selected response; it grants no action or refund. Current-format
+validation checks the deadline and includes it in the encounter's next due time.

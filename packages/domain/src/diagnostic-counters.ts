@@ -61,6 +61,8 @@ export const DOMAIN_COUNTERS = [
   'outingChecked',
   /** Sensory input preparation, certified draft coverage, affected observers and recovery. */
   'sensoryCaptures',
+  'combatObservationPreparations',
+  'combatObservedPairs',
   'sensoryComparisons',
   'sensoryDraftsVisited',
   'sensoryEntriesUpdated',

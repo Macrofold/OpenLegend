@@ -307,6 +307,11 @@ export const BASE_THREAT_RESPONSE_PROFILE: PreparedResponseProfile = {
       amounts: [0.25, 0.5, 0.75, 1],
     },
   ],
+  observations: {
+    rangeRole: 'assailant',
+    ordinary: { importance: 6, urgency: 4 },
+    enteredReach: { importance: 8, urgency: 8 },
+  },
   limits: {
     pursuitSeconds: 600,
     pursuitRadius: 30,

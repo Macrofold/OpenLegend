@@ -998,9 +998,11 @@ export function sensoryCrossingBound(
   const moving = (id: string) => certain.has(id) || outcomes.has(id);
   const proximityObservers: Entity[] = [];
   const watchedObservers: Entity[] = [];
+  let observationDue = Infinity;
   const observers = actorIds.flatMap((id) => {
     const entity = entityGet(entities, id);
     if (!entity) return [];
+    observationDue = Math.min(observationDue, entity.actor?.encounters?.nextAt ?? Infinity);
     if (Object.values(entity.actor?.encounters?.pairs ?? {}).some((pair) => pair.watch))
       watchedObservers.push(entity);
     const plan = entity.actor?.agency.plan;
@@ -1018,7 +1020,9 @@ export function sensoryCrossingBound(
       ? [{ entity, radius: body.radius, touch: body.touch }]
       : [];
   });
-  if (!observers.length && !proximityObservers.length && !watchedObservers.length) return seconds;
+  const observationBound = Math.min(seconds, Math.max(TIME_EPSILON, observationDue - now));
+  if (!observers.length && !proximityObservers.length && !watchedObservers.length)
+    return observationBound;
   // Moving targets for every observer; static targets only matter to a moving observer.
   const targets = !observers.length
     ? []
@@ -1057,7 +1061,10 @@ export function sensoryCrossingBound(
       return Math.max(body.bodyRadius, body.height);
     }),
   );
-  let bound = seconds;
+  // A newly observed band can become due inside a retained physical forecast.
+  // Reuse this actor pass to bound its next sample without rebuilding unrelated
+  // mechanics or waiting for a later host publication to notice the deadline.
+  let bound = observationBound;
   const constrain = (
     kind: CrossingPair['kind'],
     observer: Entity,

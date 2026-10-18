@@ -18,6 +18,8 @@ import { resourcesAfterEnding } from './resource-claims.js';
 import { canReachEntity } from './spatial.js';
 import type { DefinitionPin } from './world-modules.js';
 import type { PreparedResponseObservation } from './prepared-responses.js';
+import { countDomainWork } from './diagnostic-counters.js';
+import { chargeWork } from './work-budget.js';
 
 interface ObservationBand<T> {
   value: T;
@@ -66,6 +68,7 @@ export interface PersonalEncounters {
   pairs: Record<string, PersonalEncounter>;
   unknown: Record<string, { at: number; until: number; sequence: number }>;
   nextAt?: number;
+  recovery?: { definition: DefinitionPin; combatUntil?: number; evasionUntil?: number };
 }
 
 const life = (entity: Entity) => entity.actor?.physicalLife ?? 0;
@@ -136,21 +139,36 @@ function pairFor(
  * protected person is not a failed physical prerequisite for striking an assailant.
  * docs/worlds/base/threat-response-options.md#5-first-delivery-commitments-and-reconsideration-tuning */
 function selectedSubjects(world: WorldState, observer: Entity) {
-  const selected = new Map<string, { physicalLife: number; episode: string | null }>();
+  const selected = new Map<
+    string,
+    {
+      physicalLife: number;
+      episode: string | null;
+      rangeRelevant: boolean;
+    }
+  >();
   const agency = observer.actor?.agency;
   for (const plan of [agency?.plan, agency?.suspended]) {
     const activity = plan?.activity,
       control = activity?.control;
+    const purpose = activity?.request?.chosenPurpose;
+    const profile = purpose && preparedResponseProfile(purpose.definition);
     if (
       !plan ||
       !['active', 'blocked'].includes(plan.status) ||
       control?.kind !== 'finite' ||
       control.deadline <= world.simTime ||
-      !activity?.request?.chosenPurpose ||
-      !preparedResponseProfile(activity.request.chosenPurpose.definition)
+      !purpose ||
+      !profile
     )
       continue;
-    for (const [id, binding] of Object.entries(control.subjects)) selected.set(id, binding);
+    // Current work takes precedence over a paused frontier with an older binding.
+    for (const [id, binding] of Object.entries(control.subjects))
+      if (!selected.has(id))
+        selected.set(id, {
+          ...binding,
+          rangeRelevant: purpose.roles[profile.observations.rangeRole] === id,
+        });
   }
   return selected;
 }
@@ -187,6 +205,7 @@ function observeChanges(
   exposed: ReadonlySet<string>,
   means: ReturnType<typeof prepareCombatMeans>,
   events: WorldEvent[],
+  selectedOpponent: boolean,
 ): void {
   const watch = pair.watch,
     profile = watch && preparedResponseProfile(watch.definition);
@@ -230,7 +249,12 @@ function observeChanges(
       preparedResponseObservation(watch.definition, change, label, range),
       visible && other ? other : observer,
       undefined,
-      { semanticTrigger: true, importance: 6, urgency: 4 },
+      {
+        semanticTrigger: true,
+        ...(change === 'range-entered'
+          ? profile.observations.enteredReach
+          : profile.observations.ordinary),
+      },
     );
   };
   if (changedBand(world, watch.sight, visible, profile.limits.stableSeconds, visible))
@@ -283,7 +307,7 @@ function observeChanges(
       pair.movementRevision++;
     }
   }
-  const own = pair.own?.method;
+  const own = pair.own?.until === undefined ? pair.own?.method : undefined;
   const selectedStrike =
     own?.type === 'strike' &&
     means.strikes.find(
@@ -297,13 +321,17 @@ function observeChanges(
         launcher.item.id === own.weaponItemId &&
         launcher.ammunition.some((item) => item.id === own.ammoItemId),
     );
-  const range = selectedStrike
-    ? selectedStrike.range
-    : selectedLauncher
-      ? selectedLauncher.launcher.range
-      : means.strikes.length
-        ? Math.min(...means.strikes.map((strike) => strike.range))
-        : undefined;
+  const relevantRange =
+    selectedOpponent || pair.lastCause || pair.own || Object.keys(pair.active).length;
+  const range = !relevantRange
+    ? undefined
+    : selectedStrike
+      ? selectedStrike.range
+      : selectedLauncher
+        ? selectedLauncher.launcher.range
+        : means.strikes.length
+          ? Math.min(...means.strikes.map((strike) => strike.range))
+          : undefined;
   if (range === undefined) delete watch.range;
   else {
     const within = canReachEntity(world, observer, other, range);
@@ -328,6 +356,8 @@ function observeChanges(
 }
 function nextDeadline(world: WorldState, state: PersonalEncounters): number | undefined {
   let at = Infinity;
+  if (state.recovery?.combatUntil !== undefined) at = Math.min(at, state.recovery.combatUntil);
+  if (state.recovery?.evasionUntil !== undefined) at = Math.min(at, state.recovery.evasionUntil);
   for (const pair of Object.values(state.pairs)) {
     if (pair.incomingUntil !== undefined) at = Math.min(at, pair.incomingUntil);
     if (pair.own?.until !== undefined) at = Math.min(at, pair.own.until);
@@ -339,6 +369,79 @@ function nextDeadline(world: WorldState, state: PersonalEncounters): number | un
   }
   for (const unknown of Object.values(state.unknown)) at = Math.min(at, unknown.until);
   return Number.isFinite(at) ? at : undefined;
+}
+
+function hasSelectedResponse(world: WorldState, observer: Entity): boolean {
+  return [observer.actor?.agency.plan, observer.actor?.agency.suspended].some(
+    (plan) =>
+      !!(
+        plan &&
+        ['active', 'blocked'].includes(plan.status) &&
+        plan.activity?.control?.kind === 'finite' &&
+        plan.activity.control.deadline > world.simTime &&
+        plan.activity.request?.chosenPurpose &&
+        preparedResponseProfile(plan.activity.request.chosenPurpose.definition)
+      ),
+  );
+}
+
+/** The body/action owner supplies its already committed deadline. This observes
+ * availability once; it neither shortens recovery nor starts another action. */
+export function retainCombatRecovery(
+  world: WorldState,
+  actor: Entity,
+  kind: 'combat' | 'evasion',
+  until: number,
+): void {
+  const pin = world.cognitionPolicy.preparedResponses;
+  if (
+    !pin ||
+    !preparedResponseProfile(pin) ||
+    !hasMemory(actor) ||
+    !(Object.keys(actor.actor?.encounters?.pairs ?? {}).length || hasSelectedResponse(world, actor))
+  )
+    return;
+  const state = owner(world, actor);
+  if (!state || until <= world.simTime) return;
+  const recovery = (state.recovery ??= { definition: { ...pin } });
+  if (kind === 'combat') recovery.combatUntil = Math.max(recovery.combatUntil ?? 0, until);
+  else recovery.evasionUntil = Math.max(recovery.evasionUntil ?? 0, until);
+  reschedule(world, state);
+}
+
+function observeRecovery(world: WorldState, observer: Entity, events: WorldEvent[]): void {
+  const state = observer.actor?.encounters,
+    recovery = state?.recovery;
+  if (!state || !recovery) return;
+  const relevant = hasSelectedResponse(world, observer);
+  const profile = preparedResponseProfile(recovery.definition)!;
+  for (const [field, change] of [
+    ['combatUntil', 'combat-ready'],
+    ['evasionUntil', 'evasion-ready'],
+  ] as const) {
+    const until = recovery[field];
+    if (until === undefined || until > world.simTime) continue;
+    const current =
+      field === 'combatUntil' ? observer.actor!.combatReadyAt : observer.actor!.evasionReadyAt;
+    if ((current ?? 0) > world.simTime) {
+      recovery[field] = current!;
+      continue;
+    }
+    delete recovery[field];
+    if (!relevant) continue;
+    emitPrivateObservation(
+      world,
+      events,
+      'response-observation',
+      observer,
+      preparedResponseObservation(recovery.definition, change, ''),
+      observer,
+      undefined,
+      { semanticTrigger: true, ...profile.observations.ordinary },
+    );
+  }
+  if (recovery.combatUntil === undefined && recovery.evasionUntil === undefined)
+    delete state.recovery;
 }
 function reschedule(world: WorldState, state: PersonalEncounters): void {
   const at = nextDeadline(world, state);
@@ -536,6 +639,12 @@ export function reconcileCombatSight(
   }
   const state = observer.actor.encounters;
   if (!state) return;
+  observeRecovery(world, observer, events);
+  if (!Object.keys(state.pairs).length) {
+    expireCombatEncounters(world, observer);
+    return;
+  }
+  countDomainWork('combatObservationPreparations');
   const means = prepareCombatMeans(
     world,
     observer.id,
@@ -543,6 +652,8 @@ export function reconcileCombatSight(
     resourcesAfterEnding(world, observer.actor.action ? [observer.actor.action.id] : []),
   );
   for (const [id, pair] of Object.entries(state.pairs)) {
+    countDomainWork('combatObservedPairs');
+    chargeWork({ tests: 1 });
     const other = entityGet(world.entities, id);
     // Only current exposure can resolve the remembered participant. An unseen
     // removal or new body is world truth, not a new observation by this person.
@@ -571,7 +682,17 @@ export function reconcileCombatSight(
       pair.incomingUntil = world.simTime + p.recentSeconds;
       pair.movementRevision++;
     }
-    observeChanges(world, observer, other, pair, visibleNow, exposed, means, events);
+    observeChanges(
+      world,
+      observer,
+      other,
+      pair,
+      visibleNow,
+      exposed,
+      means,
+      events,
+      selected.get(id)?.rangeRelevant === true,
+    );
   }
   expireCombatEncounters(world, observer);
   reschedule(world, state);
@@ -686,13 +807,24 @@ export function validateCombatEncounters(world: WorldState): void {
     if (!state) continue;
     if (
       !policy(world) ||
-      !hasRecordFields(state, ['life', 'pairs', 'unknown'], ['nextAt']) ||
+      !hasRecordFields(state, ['life', 'pairs', 'unknown'], ['nextAt', 'recovery']) ||
       state.life !== life(observer) ||
       !dictionary(state.pairs) ||
       !dictionary(state.unknown) ||
       (state.nextAt !== undefined && (!Number.isFinite(state.nextAt) || state.nextAt < 0))
     )
       throw new Error('Invalid personal encounter owner.');
+    const recovery = state.recovery;
+    if (
+      recovery !== undefined &&
+      (!hasRecordFields(recovery, ['definition'], ['combatUntil', 'evasionUntil']) ||
+        !preparedResponseProfile(recovery.definition) ||
+        (recovery.combatUntil === undefined && recovery.evasionUntil === undefined) ||
+        [recovery.combatUntil, recovery.evasionUntil].some(
+          (until) => until !== undefined && (!Number.isFinite(until) || until < 0),
+        ))
+    )
+      throw new Error('Invalid personal recovery observation.');
     for (const [id, pair] of Object.entries(state.pairs)) {
       if (
         !isSafeRecordId(id) ||

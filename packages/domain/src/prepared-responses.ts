@@ -11,7 +11,9 @@ export type PreparedResponseObservation =
   | 'lateral'
   | 'still'
   | 'range-entered'
-  | 'range-left';
+  | 'range-left'
+  | 'combat-ready'
+  | 'evasion-ready';
 
 /** Data for one supported supplied-response strategy. World composition owns its
  * native templates and validation; text can choose no new executable behavior. */
@@ -41,6 +43,11 @@ export interface PreparedResponseProfile {
     addressee: 'involved' | 'beneficiary';
   }>;
   appraisals: Array<{ definitionId: string; meaning: string; amounts: number[] }>;
+  observations: {
+    rangeRole: string;
+    ordinary: { importance: number; urgency: number };
+    enteredReach: { importance: number; urgency: number };
+  };
   limits: {
     pursuitSeconds: number;
     pursuitRadius: number;

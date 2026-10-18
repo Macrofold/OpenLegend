@@ -10,6 +10,7 @@ import { emit } from './events.js';
 import { subjectNarration } from './narration.js';
 import { guardContactResult } from './worlds/base/shield-defense.js';
 import { activelyParticipates } from './participation-state.js';
+import { retainCombatRecovery } from './combat-encounters.js';
 
 /** Finite contact-only capability; tuning and wording belong to the authored world. */
 export interface ContactDefenseProfile {
@@ -165,6 +166,7 @@ export function recoverGuard(world: WorldState, defender: Entity, at = world.sim
   action.totalSeconds = profile.recoverySeconds;
   action.remainingSeconds = Math.max(0, until - world.simTime);
   actor.combatReadyAt = Math.max(actor.combatReadyAt ?? 0, until);
+  retainCombatRecovery(world, defender, 'combat', actor.combatReadyAt);
 }
 export function combatRecoveryDeadline(world: WorldState, entity: Entity): number {
   const guard = entity.actor?.action?.guard;

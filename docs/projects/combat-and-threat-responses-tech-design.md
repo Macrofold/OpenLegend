@@ -195,7 +195,12 @@ encounter records retain profile-pinned stable/pending sight, observed preparati
 movement and actual supported-method reach bands. Temporal due work and the
 existing piecewise crossing owner establish their real boundaries; private native
 notices enter ordinary intake. Include current and paused finite commitments
-without rebuilding identity from hidden bodies. Combined with shared actor/tool
+without rebuilding identity from hidden bodies. Recovery observation takes its
+original deadline from the existing body/action owner, survives Stop and emits
+once only for a still-relevant selected response. The actor pass that prepares
+sensory crossings also bounds newly pending observation deadlines inside retained
+physical forecasts; it does not rebuild unrelated mechanics to service a notice.
+Combined with shared actor/tool
 preparation this is approximately 900–1,200 logic lines. Cost grows with active
 observers' own admitted means and relevant pairs/ranges, not retained history or
 every world resident. Share actor preparation once per observation pass and

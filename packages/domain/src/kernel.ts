@@ -13,6 +13,7 @@ import {
   selectOffense,
   reconcileCombatSight,
   expireCombatEncounters,
+  retainCombatRecovery,
 } from './combat-encounters.js';
 import { orderedRecordOwn, orderedRecordSet } from './ordered-record.js';
 import { inventoryGroupReason, moveInventoryGroup, dropInventoryGroup } from './inventory-group.js';
@@ -2336,6 +2337,13 @@ function executeCommandNative(
           options.constructionPermissions,
         );
         if (!result.ok) return { world: original, events: [], outcome: result };
+        {
+          const current = entityGet(world.entities, actor.id)!;
+          if (current.actor!.combatReadyAt !== undefined)
+            retainCombatRecovery(world, current, 'combat', current.actor!.combatReadyAt);
+          if (current.actor!.evasionReadyAt !== undefined)
+            retainCombatRecovery(world, current, 'evasion', current.actor!.evasionReadyAt);
+        }
         break;
       case 'transfer-item':
       case 'split-item':
@@ -3145,7 +3153,10 @@ function executeCommandNative(
     }
     component.action = action;
     selectOffense(world, actor, action, command);
-    if (action.evasion) component.evasionReadyAt = action.evasion.repeatAt;
+    if (action.evasion) {
+      component.evasionReadyAt = action.evasion.repeatAt;
+      retainCombatRecovery(world, actor, 'evasion', component.evasionReadyAt);
+    }
     if (action.ranged) {
       const problem = holdAim(world, actor, action);
       if (problem) return { world: original, events: [], outcome: problem };
@@ -4255,6 +4266,7 @@ function advanceAction(
     action.totalSeconds = definition.recoverySeconds!;
     action.remainingSeconds = definition.recoverySeconds!;
     actor.actor!.combatReadyAt = world.simTime + definition.recoverySeconds!;
+    retainCombatRecovery(world, actor, 'combat', actor.actor!.combatReadyAt);
     // The shared event owner records the world outcome and the actor's own awareness.
     // A completed miss is evidence for another choice, never an automatic retry.
     emit(
