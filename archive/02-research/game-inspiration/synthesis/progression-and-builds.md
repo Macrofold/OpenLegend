@@ -1,6 +1,6 @@
 # Progression, skills and build diversity
 
-**Status: In progress — focused Forever assessment under review. Topic: GROWTH.** The wider topic remains unassessed.
+**Status: Focused Forever incorporation complete. Topic: GROWTH.** The wider topic remains unassessed.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md)
 

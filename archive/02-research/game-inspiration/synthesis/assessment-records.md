@@ -196,7 +196,7 @@ This is a scoped four-source comparison of creature escape, tactical pursuit, ta
 
 **Source scope:** G178, World of Warcraft: Forever, documented design and beta through October 17. The [dossier](../dossiers/world-of-warcraft-forever.md), [creator supplement](../references/wow-forever-addon-ecosystem.md) and [Open Legend interpretation](../essays/wow-forever-and-a-world-worth-returning-to.md) are published on `codex/wow-forever-research-20261017`, based on inspected main `4f9ab001ffb74d565ae8cd9dd68fe12cec36ebe2`. Dossier snapshot `0946536065a3396218a5000c92ef4e1ba4889caf` contains the integrated evidence; later same-branch corrections and final relative links are recorded by repository history. The G97 context retains its independent scope.
 
-**Reviewer:** ChatGPT research and documentation review. Source-to-lesson review is in progress. Official intentions, dated beta changes, original player/critic accounts and our interpretations remain distinct; no gameplay execution or financial result is inferred. The matrix owns current assessment status.
+**Reviewer:** ChatGPT research and documentation review, October 17, 2026. Source-to-lesson review is complete for the three declared prelaunch assessments. The review checked supporting and contrary evidence, destination lessons, current gameplay priorities, source links and the scoped CSV diff. Official intentions, dated beta changes, original player/critic accounts and our interpretations remain distinct; no gameplay execution or financial result is inferred. The matrix owns current assessment status.
 
 ### MULTI--world-of-warcraft-forever
 

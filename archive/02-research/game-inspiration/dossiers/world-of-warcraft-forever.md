@@ -27,6 +27,8 @@ The comparison with Open Legend is a world, people and achievements worth return
 
 The intended level cap remains 60 while equipment and activities expand. Developers describe modest item-level increases, situational equipment and rare desirable pieces, aiming to preserve earlier content's usefulness. This does not promise that every old item stays optimal or that numerical power never rises. The current level-30 beta cannot demonstrate the long-term result. [PC Gamer developer interview, October 15](https://www.pcgamer.com/games/world-of-warcraft/world-of-warcraft-forever-devs-say-gear-upgrades-will-stay-relevant-for-a-long-long-time-its-very-much-our-intention-to-try-wherever-we-can-to-not-invalidate-old-content/).
 
+Stone describes horizontal growth primarily as world expansion. Gear can eventually be replaced; a later gear soft reset remained undecided in October. [CP06](#cp06)
+
 The early journey offers class learning, a useful reward and another reachable destination. Established play adds choices over specialization, professions, companions and longer expeditions. Maximum-level raids, mature markets and repeated seasons remain announced or incompletely observed. The distinction is central to the [return-loop analysis](#return-loss-and-the-limits-of-beta-evidence): continued relevance is a design aim, while long-term replay quality requires later evidence.
 
 ### Camps connect preparation, professions and shared activity
@@ -74,11 +76,11 @@ The following is the official class-availability matrix, expressed as selectable
 
 Legacy has three distinct layers: **Challenges** earn account-wide points; **Perks** spend them independently on each character; **Rewards** recognize accumulated achievement. The launch design permits 65 earned points but only 16 spent per character. A single character can unlock all gameplay advantages; alternate characters make some routes easier, but are not mandatory. Typical entry is level 25, with profession and exploration alternatives. [Blizzard, Legacy system](https://news.blizzard.com/en-us/article/24307383/get-to-know-the-world-of-warcraft-forever-legacy-system)
 
-Challenges span class levels, tradeskills, exploration, dungeon sets, raids and PvP. Perks change gathering yields, vendor prices, rested experience, travel, death recovery, reputation or consumable use. This creates choices between kinds of convenience instead of one endlessly increasing damage track. Hardcore receives an isolated incoming progression boundary and alternative challenges; achievements earned there can carry outward. Future perk expansion is a plan. [Blizzard, Legacy system](https://news.blizzard.com/en-us/article/24307383/get-to-know-the-world-of-warcraft-forever-legacy-system)
+Challenges span class levels, tradeskills, exploration, dungeon sets, raids and PvP. Perks change gathering yields, vendor prices, rested experience, travel, death recovery, reputation or consumable use. This creates choices between kinds of convenience instead of one endlessly increasing damage track. Hardcore characters cannot import Legacy progress from ordinary rulesets and receive alternative challenges; accomplishments earned there can carry outward. Future perk expansion is a plan. [Blizzard, Legacy system](https://news.blizzard.com/en-us/article/24307383/get-to-know-the-world-of-warcraft-forever-legacy-system)
 
 ### PvP progression and objective play
 
-Forever separates **Honor**, spent on equipment, from **Rank Points**, used for advancement through the familiar 14 ranks. Ranks have a weekly cap. The epic equipment upgrade requires the corresponding blue item and a rank-gated Emboldened Seal. Rewards extend from trinkets, consumables and a battle standard to mounts, armor and weapons. The character panel displays progress and eligibility. Seasonal tasks grant additional progress; Legacy-linked tasks remain available in later seasons. An enduring world therefore still contains schedules and seasonal goals. This article does not establish final reset, catch-up or every future season's rules. [Blizzard, PvP progression, October 7](https://news.blizzard.com/en-us/article/24303316/how-pvp-progression-in-world-of-warcraft-forever-works)
+Forever separates **Honor**, spent on equipment, from **Rank Points**, used for advancement through the familiar 14 ranks. Rank Points are subject to weekly caps. The epic equipment upgrade requires the corresponding blue item and a rank-gated Emboldened Seal. Rewards extend from trinkets, consumables and a battle standard to mounts, armor and weapons. The character panel displays progress and eligibility. Seasonal tasks grant additional progress; Legacy-linked tasks remain available in later seasons. An enduring world therefore still contains schedules and seasonal goals. This article does not establish final reset, catch-up or every future season's rules. [Blizzard, PvP progression, October 7](https://news.blizzard.com/en-us/article/24303316/how-pvp-progression-in-world-of-warcraft-forever-works)
 
 **Darkspear Islands** is a 15-versus-15 battleground for levels 30–60. Teams hold four points to generate score and can carry a central flag to an owned base for additional points; 2,000 wins. Players queue through capital-city battlemasters or the factions' Barrens outposts. The Darkspear Raiders and Theramore Expeditionary Force offer reputation rewards and quests, with an Exalted questline for a faction tabard. Capturing, defending, escorting and intercepting can therefore compete for the same team's attention. That division of labor is an analytical consequence of the documented objectives, not an observed optimal strategy. [Blizzard, Darkspear Islands, October 7](https://news.blizzard.com/en-us/article/24307308/battle-for-the-darkspear-islands-in-world-of-warcraft-forever)
 
@@ -129,6 +131,10 @@ Item usefulness extends beyond a larger statistic. A strong research question is
 | Gift of Galloping | Reported vendor price: 150 gold | Temporary 10% mounted speed for 15 real-time days creates a travel-related gold sink and calendar decision | September beta observation; not a verified launch price. [Reagent vendor report](https://www.wowhead.com/news/new-black-market-vendor-caps-prices-on-high-end-reagents-383052) |
 
 The commercial and progression analysis in this dossier distinguishes the permanent level cap from continued item-power growth and tracks the unresolved long-term limits. The relevant gameplay question is whether a new reward changes a decision, opens an activity, preserves a valued older route, or merely replaces the number on an existing tool.
+
+Developers describe withholding item statistics, properties and tooltips from the client until someone on that server obtains the item. Forever also omits a built-in dungeon Adventure Guide. This delays initial knowledge; players and addons can subsequently record and share discoveries. [PC Gamer, October 15](https://www.pcgamer.com/games/world-of-warcraft/world-of-warcraft-forever-devs-say-gear-upgrades-will-stay-relevant-for-a-long-long-time-its-very-much-our-intention-to-try-wherever-we-can-to-not-invalidate-old-content/)
+
+For bind-on-pickup uncommon and rare dungeon drops, eligible looters receive the appearance when the item is looted. Epic raid appearances instead belong to the acquiring player. Blizzard intends this distinction to reduce competition between equipment upgrades and appearance collection. Appearance credit is distinct from awarding multiple physical items. [Deep Dive recap](https://news.blizzard.com/en-us/article/24303313/world-of-warcraft-forever-deep-dive-panel-recap)
 
 **Storage and ownership limits:** the examined evidence is adequate to identify consumables, tradable inputs, bound rewards and gold-based exchanges, but not to certify every binding rule, bag capacity, bank entitlement, loot-allocation method or death penalty. Account-wide Warband-style banking was discussed as a possible future support for alts; it should not be listed as a delivered Forever system. [PC Gamer developer interview, October 12](https://www.pcgamer.com/games/world-of-warcraft/why-alts-are-part-of-world-of-warcraft-forevers-core-progression-plans/)
 
@@ -199,13 +205,17 @@ Level-band source: [Blizzard correction, September 15](https://us.forums.blizzar
 
 The October-1 build also opened Razorfen Downs and Uldaman within a roster containing the familiar low-level dungeons through Scarlet Monastery. The cap remained 30 in week four. Thus an accessible dungeon entrance, a client record or a high-level reward does not establish that its intended full progression has been tested. [October-1 notes](https://us.forums.blizzard.com/en/wow/t/wow-forever-beta-development-notes-%E2%80%93-updated-october-15/2360696/4) · [October-8 announcement](https://bsky.app/profile/worldofwarcraft.blizzard.com/post/3mxfi7bxcoa2l)
 
-At maximum level, **Barrow Deeps is planned for ten players and Hyjal Summit for twenty**, with tier sets and a legendary reward. New raids are scheduled for December 9. Future raids, dungeons and world additions are announced intentions; encounter quality, long-term loot relevance and the eventual progression ceiling remain unproven. [Blizzard, What's Next panel](https://news.blizzard.com/en-us/article/24303862/world-of-warcraft-forever-whats-next-panel-recap)
+At maximum level, **Barrow Deeps is planned for ten players and Hyjal Summit for twenty**, with tier sets and a legendary reward, on December 9. Later plans include PvP updates, level-1–60 quests, dungeons and a revamped iconic raid. Encounter quality and long-term progression remain unproven. [Blizzard, What's Next panel](https://news.blizzard.com/en-us/article/24303862/world-of-warcraft-forever-whats-next-panel-recap)
 
 ### Concrete quest conditions and the limits of NPC agency
 
 Authored quests connect objects, places and people. October-8 notes describe returning a **Titan Relic** for Excavation Site follow-ups instead of requiring a second acquisition, and moving new Gelkis/Magram quests to level 35. October-15 notes preserve Horde dungeon access through the **Dalaran Sewer Key** quest while making open-world Dalaran hostile, and repair **Halaan's Gift** scrying interactions in Zephras. These are examples of defined prerequisites and state changes, not evidence that inhabitants independently invent goals. [October-8 notes](https://us.forums.blizzard.com/en/wow/t/wow-forever-beta-development-notes-%E2%80%93-updated-october-15/2360696/5) · [October-15 notes](https://us.forums.blizzard.com/en/wow/t/wow-forever-beta-development-notes-%E2%80%93-updated-october-15/2360696/6)
 
-The demonstrated vocabulary includes quest-givers, merchants, guards, enemies, pets, social emotes and authored encounters. It does not establish independent NPC careers, persistent personal memories of arbitrary events, autonomous faction economies, player–NPC romance, or unrestricted invention. A /flirt emote is expression, not evidence of a relationship simulation. [Blizzard, Skyborne emotes](https://news.blizzard.com/en-us/article/24302071/wow-forever-meet-the-new-skyborne) Camps and recipes are bounded placement and production systems. Player housing was discussed as a possible future direction, not committed Forever content. [Windows Central developer interview, September 22](https://www.windowscentral.com/gaming/blizzard/i-spoke-to-the-world-of-warcraft-forever-team-about-balance-competing-with-retail-adding-classic-style-player-housing-and-more)
+The demonstrated vocabulary includes quest-givers, merchants, guards, enemies, pets, social emotes and authored encounters. Blizzard demonstrates a Skyborne /flirt emote. [Blizzard, Skyborne emotes](https://news.blizzard.com/en-us/article/24302071/wow-forever-meet-the-new-skyborne)
+
+An emote does not establish a relationship simulation. The reviewed evidence likewise does not establish independent NPC careers, persistent personal memories of arbitrary events, autonomous faction economies, player–NPC romance, or unrestricted invention. Camps and recipes are bounded placement and production systems.
+
+Player housing was discussed as a possible future direction, not committed Forever content. [Windows Central developer interview, September 22](https://www.windowscentral.com/gaming/blizzard/i-spoke-to-the-world-of-warcraft-forever-team-about-balance-competing-with-retail-adding-classic-style-player-housing-and-more)
 
 ## Art, sound, interface and accessibility
 
@@ -213,7 +223,7 @@ The demonstrated vocabulary includes quest-givers, merchants, guards, enemies, p
 
 The production account explains the [visual target and its constraints](#four-promises-used-to-judge-additions). The question for play is whether old and new assets remain readable and coherent together.
 
-Players can choose SD/HD presentation. Transmog's visibility switch affects other players' displayed outfits; one's own configured appearance remains visible. Edit Mode and a distinctive minimap combine familiarity with a recognizable Forever interface. The built-in damage meter and planned cooldown support reduce dependence on third-party UI work; their exact beta delivery must follow patch evidence. [MMORPG.com interview, September 15](https://www.mmorpg.com/interviews/blizzcon-2026-interview-chatting-wow-forevers-campsites-horizontal-progression-and-more-with-blizzard-2000138932)
+Players can choose SD/HD presentation. Transmog's visibility switch affects other players' displayed outfits; one's own configured appearance remains visible. Edit Mode and a distinctive minimap give Forever a recognizable interface. The September interview discusses a built-in damage meter and planned cooldown support; [later patch evidence](#current-feedback-and-input-support) records delivery. [MMORPG.com interview, September 15](https://www.mmorpg.com/interviews/blizzcon-2026-interview-chatting-wow-forevers-campsites-horizontal-progression-and-more-with-blizzard-2000138932)
 
 Blizzard agrees that HD Skyborne can look inconsistent alongside SD characters and environments. It is reducing softness, adding fur texture and revising saturation on Druid forms. **SD Skyborne characters and forms are scheduled for early 2027**, so the launch promise of visual choice has a race-specific limitation. This is a useful example of listening to a concrete aesthetic complaint and identifying a visible response; its final success still depends on the shipped assets. [Blizzard, Skyborne visual update, October 7](https://news.blizzard.com/en-us/article/24302546/world-of-warcraft-forever-the-future-of-skyborne-visual-updates)
 
@@ -265,7 +275,7 @@ The comparative lesson is to explain durable compatibility constraints when a pl
 
 ### 5. One character earns a broader account benefit
 
-**Intention:** gain Legacy convenience. **Conditions:** challenges remain available across several activities. **Action:** pursue profession, exploration or combat milestones on one character. **Result:** earned points become selectable perks on characters. **Next decision:** continue that character or begin an alt for a different journey. **Counterexample:** alts can help but are not required for all gameplay advantages; beta-granted points cannot establish natural earning speed. [Legacy design](https://news.blizzard.com/en-us/article/24307383/get-to-know-the-world-of-warcraft-forever-legacy-system)
+**Intention:** gain Legacy convenience. **Conditions:** choose from the challenges described above. **Action:** pursue a profession milestone. **Result:** select a perk. **Next decision:** continue this character or try another journey. **Counterexample:** an optional route can still feel compulsory to an optimizer; beta-granted points cannot establish natural earning speed. [Legacy design](https://news.blizzard.com/en-us/article/24307383/get-to-know-the-world-of-warcraft-forever-legacy-system)
 
 The comparison asks whether recognition expands choice or makes repetition compulsory.
 
@@ -540,15 +550,15 @@ These promises clarify different kinds of complexity. A mechanic can be easy to 
 
 ### How new places are chosen and made to belong
 
-Blizzard credits Chris Metzen with the found-photograph framing: new stories should feel grounded in Azeroth's earlier history. [CP13](#cp13) The [world account](#world-geography-narrative-and-authored-inhabitants) explains the resulting places and conflicts.
+Developed in Season of Discovery discussions, Metzen's framing mixes anticipated places, additions grounded in familiar regions and occasional surprises that fit earlier Azeroth. [CP13](#cp13) See the [world account](#world-geography-narrative-and-authored-inhabitants).
 
-Parrott describes artists studying vanilla assets; Greenfield describes internal and outside-team playtests. Their [camp and interface examples](#art-sound-interface-and-accessibility) connect production choices to play. Proprietary authoring applications and throughput remain undisclosed. [CP14](#cp14)
+Artists study vanilla assets; playtests include other teams; modern and Forever share UI technology. [CP14](#cp14) See the [camp and interface examples](#art-sound-interface-and-accessibility). Proprietary authoring applications and throughput remain undisclosed.
 
 **Interpretation:** visual continuity comes from deliberate selection and editing. Preserving old assets is not the same thing as having no art work to do; new lighting can expose mismatches, and a new race can fit the fiction while still looking inconsistent beside its neighbors.
 
 ### Feedback that changes an identifiable thing
 
-The production record contains specific examples, rather than only a claim to listen. In the October 8 Inven interview, Stone describes reversing some racial-trait changes and revisiting initial dungeon experience tuning. He presents beta as a way to test uncertain choices, while Longdale describes continuing refinement after reveal. The interview's English text is an edited, AI-assisted translation of the Korean original, a relevant wording limitation. [CP06](#cp06)
+In the October 8 Inven interview, Stone describes reversing racial-trait changes and revisiting dungeon experience tuning. He presents beta as testing uncertain choices; Longdale describes continued refinement. The English text is an edited, AI-assisted translation of the Korean original, which limits interpretation of exact wording. [CP06](#cp06)
 
 The [Skyborne visual response](#a-coherent-version-of-remembered-azeroth) is a concrete example: the dossier distinguishes revisions from an announced future model option.
 
@@ -561,7 +571,7 @@ The October stress-test plan provides a different kind of feedback: exercise the
 | Holly Longdale | Executive producer discussing beta reception and the product's evolving direction. | Her participation claim has no published numerical denominator. [CP06](#cp06) |
 | Clay Stone | Associate production director describing scope and earlier experiments. | Interview recollections do not disclose budget or exact development duration. [CP10](#cp10) |
 | Ion Hazzikostas | Senior game director discussing the coexistence of WoW versions and their audiences. | Strategy and intent, not measured cannibalization. [CP09](#cp09) |
-| Jeff Parrott and Josh Greenfield | Art and design leads. | Roles and methods in the interview above. [CP14](#cp14) |
+| Jeff Parrott; Josh Greenfield | Senior Art Director; Senior Game Designer. | Interview above. [CP14](#cp14) |
 | Tim Jones, Nora Mills, Ana Resendez and Kris Zierhut | Named design/engineering presenters across the official What’s Next and Deep Dive panels. | Panel credits establish participation, not a complete staff roster. [CP16](#cp16) |
 
 

@@ -61,7 +61,11 @@ For Open Legend, the relevant questions are who observed a fact, what a tool can
 
 ## Distribution, incentives and moderation
 
-The inspected examples use CurseForge project pages for discovery, descriptions, versions and updates, with source repositories supporting some projects. Distribution policy, code licensing and rights in contributed artwork remain separate. The MIT and GPL examples permit forms of reuse under their respective terms; Sojourn's All Rights Reserved listing supplies no equivalent general permission. This is a description of the labels in the sources, not a legal assessment of a proposed reuse. [A02](#a02) [A06](#a06) [A07](#a07)
+The inspected examples use CurseForge project pages for discovery, descriptions, versions and updates, with source repositories supporting some projects. The MIT and GPL examples permit forms of reuse under their respective terms. [A02](#a02) [A07](#a07)
+
+Sojourn lists All Rights Reserved, supplying no equivalent general permission. [A06](#a06)
+
+Distribution policy, code licensing and rights in contributed artwork remain separate. These are source labels, not a legal assessment of a proposed reuse.
 
 CurseForge describes an opt-in author rewards programme funded through a variable monthly revenue pool. It bases allocations on relative popularity and explicitly rejects a fixed downloads-to-points conversion. Its terms do not guarantee earnings. The existence of this programme does not establish that any inspected Forever author participates, receives payment or can cover maintenance costs. [A14](#a14) [A15](#a15)
 

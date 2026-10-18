@@ -1,6 +1,6 @@
 # Monetization and commercial sustainability
 
-**Status: In progress — focused Forever assessment under review. Topic: BUSINESS.** The wider topic remains unassessed.
+**Status: Focused Forever incorporation complete. Topic: BUSINESS.** The wider topic remains unassessed.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md)
 
@@ -33,7 +33,7 @@ The [Forever commercial record](../dossiers/world-of-warcraft-forever.md#require
 <a id="business-l001"></a>
 ### BUSINESS-L001 — Measure the commercial result that belongs to the product
 
-Attention, activity, purchases, gross spending, recognized receipts and profit answer different questions. A bundled service can create value by retaining someone who would otherwise leave, but moving an already-paying customer's hours between included products does not automatically add revenue. A defensible estimate needs a purchase/price basis and a justified allocation. When those inputs are missing, explaining the uncertainty is more useful than a fabricated numerical range.
+Attention, activity, purchases, gross spending, recognized revenue, developer/publisher receipts and profit answer different questions. A bundled service can create value by retaining someone who would otherwise leave, but moving an already-paying customer's hours between included products does not automatically add revenue. A defensible estimate needs a purchase/price basis and a justified allocation. When those inputs are missing, explaining the uncertainty is more useful than a fabricated numerical range.
 
 <a id="business-l002"></a>
 ### BUSINESS-L002 — Treat identity and continued belonging as part of purchase design

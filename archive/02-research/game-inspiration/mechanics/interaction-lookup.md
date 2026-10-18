@@ -142,6 +142,18 @@ The [G101–G110 dossier index](../README.md#g101-g110-dossiers) supplies indepe
 | Does a party remain useful without the protagonist? | Dxun team selection and mutually exclusive turret interventions | [KOTOR II — G110-I05](../dossiers/star-wars-knights-of-the-old-republic-ii.md#g110-i05--send-a-capable-team-where-the-protagonist-cannot-go) |
 | Can a relationship change the action economy through a precise exception? | Kreia–Exile Force Chain and qualifying beneficial powers | [KOTOR II — G110-I06](../dossiers/star-wars-knights-of-the-old-republic-ii.md#g110-i06--a-narrative-bond-changes-who-should-spend-an-action) |
 
+## World of Warcraft: Forever interactions (G178)
+
+The [G178 dossier](../dossiers/world-of-warcraft-forever.md) owns the October 17, 2026 beta evidence and separates announced designs from observed play. Its [research ledger](../research-progress-forever-2026-10-17.md) records the remaining questions. These are source routes for comparison.
+
+| Question | Named reference or interaction | Read |
+| --- | --- | --- |
+| When does an item change which methods are available? | Conditional weapon effects and Druid equipment interactions | [Items and limits](../dossiers/world-of-warcraft-forever.md#useful-items-have-verbs-conditions-and-limits) / [Druid worked example](../dossiers/world-of-warcraft-forever.md#2-a-found-weapon-changes-a-druids-next-expedition) |
+| Can helpful protection interfere with an ally's resource generation? | Priest shield and Warrior Rage; intended compatibility and dated beta fixes | [Constructed protection example](../dossiers/world-of-warcraft-forever.md#1-an-allys-protection-preserves-a-tanks-contribution) |
+| What connects a shared benefit to a continuing acquaintance? | Camp fixtures and contrasting accounts of brief versus repeated contact | [Camps](../dossiers/world-of-warcraft-forever.md#camps-connect-preparation-professions-and-shared-activity) / [Player accounts](../dossiers/world-of-warcraft-forever.md#what-direct-players-value-and-where-the-same-systems-disappoint) |
+| Can friends join the same activity after choosing their characters? | Ruleset, faction and language boundaries in realmless play | [Group compatibility](../dossiers/world-of-warcraft-forever.md#meeting-other-players-and-retaining-an-identity) |
+| What does an addon remember, and what can it change? | Recorded journeys, local persistence, information sharing and server-world authority | [Addon memory](../references/wow-forever-addon-ecosystem.md#persistence-dependencies-removal-and-information-boundaries) / [Creation boundaries](../references/wow-forever-addon-ecosystem.md#what-players-can-create-and-where-that-freedom-ends) |
+
 ## Keep the comparison honest
 
 The same word can conceal different promises: a story can be authored, generated, mechanically recorded, or interpreted by a player. A reusable object can preserve its image, its relationships, its behavior, or its surrounding scenario. A helper can execute a job, choose a purpose, or become someone the player cares about. Identify which property matters before borrowing a pattern.

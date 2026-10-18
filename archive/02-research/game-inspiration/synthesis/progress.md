@@ -10,15 +10,15 @@ The focused intelligence/simulation pass retains published `Macrofold/OpenLegend
 
 | Measure                     | State                                                                                                                                                                                                       |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Topic pages | 35: 26 unfilled shells, focused NPC and COMBAT guides, three Forever guides under review, and four routes to existing research. |
+| Topic pages | 35: 26 unfilled shells, focused NPC and COMBAT guides, three guides with completed focused Forever incorporation, and four routes to existing research. Wider topic coverage remains open. |
 | Game/case sources | 177 stable keys: G01–G167 plus G178, the unnumbered EVE Online case and eight topic-only subjects. G168–G177 remain in their separate mobile ledger; this scoped addition does not assess them. |
 | Available game/case sources | 150 dossiers and ten scoped sources on the inspected main baseline, plus Forever on the explicitly inspected branch (E). Availability is not full research certification. |
 | Queued game sources         | 16 of G150–G166 remain queued; G159 now has a focused dossier. No claim about unpublished branch work.                                                                                                      |
-| Game matrix | 177 × 35 = 6,195 cells: 4,959 U, 526 W, 673 X, 3 R and 34 I. |
+| Game matrix | 177 × 35 = 6,195 cells: 4,959 U, 526 W, 673 X, 0 R and 37 I. |
 | NPC column | 30 scoped incorporations, 131 U and 16 W; Forever is unassessed for this topic. |
 | COMBAT column | Four scoped incorporations, 156 U and 17 W; Forever is unassessed for this topic. |
 | World matrix                | Unchanged: 29 listed world dossiers × 35 = 1,015 cells: 903 U and 112 X.                                                                                                                                    |
-| New incorporation | Thirty NPC and four COMBAT assessments remain incorporated. Three scoped Forever assessments (MULTI, GROWTH, BUSINESS) are under review. |
+| New incorporation | Thirty NPC and four COMBAT assessments remain incorporated. Three scoped Forever assessments (MULTI, GROWTH, BUSINESS) are now incorporated; their wider topics remain open. |
 | Existing owners             | X retains unreconciled evidence, not an assertion that earlier learning is absent.                                                                                                                          |
 
 The October 14 game matrix was byte-checked against a locally validated expected document before publication: blob `9c090e25e3fb106c48cd7679b4a3f3d5cd0e9f46`, published in commit `02966e0bae31482b1f5d06191a687506f82c2593`. The check preserved the baseline's exact bytes before applying only 22 existing NPC changes and eight new rows, then verified 176 unique keys, 35 unique topic columns, equal row widths and valid codes. This is a document-integrity check, not a runtime test.
@@ -88,7 +88,7 @@ Edit only the intended source/topic cells and evidence records; preserve other t
 
 ## Verification and remaining work
 
-The framework review delivered the source/goal review, organized topic set, skeletons, template and tracking. The subsequent intelligence/simulation pass fills NPC at its declared 30-source scope and adds general research. The October 17 pass fills COMBAT only for four selected sources and questions. Twenty-six other shells remain unfilled; MULTI, GROWTH and BUSINESS contain focused Forever assessments under review, and four existing owners require scoped coverage reconciliation. The NPC guide's wider source and relationship coverage is not complete. World essays were read for structural coverage, not falsely marked incorporated into each new guide.
+The framework review delivered the source/goal review, organized topic set, skeletons, template and tracking. The subsequent intelligence/simulation pass fills NPC at its declared 30-source scope and adds general research. The October 17 pass fills COMBAT only for four selected sources and questions. Twenty-six other shells remain unfilled; MULTI, GROWTH and BUSINESS contain completed focused Forever incorporations while their wider topics remain open, and four existing owners require scoped coverage reconciliation. The NPC guide's wider source and relationship coverage is not complete. World essays were read for structural coverage, not falsely marked incorporated into each new guide.
 
 Check unique source keys and topic columns, valid codes, equal row widths, expected source identities, preserved existing cell meanings, working local paths/anchors and the actual affected diff. These are documentation checks, not game execution, fresh verification of every inherited fact, or a whole-archive audit. Check results belong in the handoff or focused review record, not fabricated assessment entries.
 
