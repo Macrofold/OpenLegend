@@ -234,6 +234,10 @@ Selected physical-action results now retain urgent review without inventing new
 public awareness or hostility; provider saturation leaves the pending opportunity
 unacknowledged. A frozen rendering-only comparison still favored evasion. Ada's
 identity remains unchanged; a separate frozen general-disposition diagnostic also favored words. Repaired scheduling now supplies later opportunities, while independent counterattack quality remains unmet.
+The operational root now records its one urgent refresh without extending its
+lifetime. Controlled repeated native punches reach a selected strike, while actual
+source forgetting still refuses; exact feeling guards exclude unrelated native
+discomfort. These remain mechanical evidence, with independent quality unmet.
 Remaining combat repertoire, meaningful subscriptions, animals, controls and full
 qualification precede speech and all later agreed phases. The phase trackers
 remain the detailed incomplete-work owners.

@@ -419,6 +419,7 @@ export class AiDirector {
         const interruptions = this.responseInterruptions(watch.actorId, watch.afterSequence);
         if (!interruptions.length) continue;
         run.supersession = { attempt: watch.attempt, interruptions };
+        run.urgent = true;
         // Abort the provider stage promptly; the attempt wrapper rebuilds context once.
         run.controller.abort();
         this.replyPreviews.recheck();
@@ -1419,6 +1420,7 @@ export class AiDirector {
       );
     if (
       this.stopped ||
+      run.invalidated ||
       run.controller.signal.aborted ||
       (this.service.paused && (run.job.kind === 'thought' || !!decision))
     )
@@ -1458,6 +1460,7 @@ export class AiDirector {
       !actorId ||
       run.generation !== this.service.generation ||
       !actor?.actor?.alive ||
+      (decision && (actor.actor.physicalLife ?? 0) !== decision.physicalLife) ||
       ((run.job.kind === 'chat' || run.job.kind === 'thought') && actor.actor.controller !== 'npc')
     )
       throw new StopJob('stale', 'The actor or world changed; the result was not applied.');
@@ -2082,12 +2085,19 @@ export class AiDirector {
       if (
         run.validity !== validityFor(this.service.world) ||
         !(await interpretations.bound.sourceCurrent())
-      )
+      ) {
+        run.invalidated = true;
         throw new StopJob(
           'stale',
           'The character’s identity, permission, source or interpreted feeling changed.',
         );
-      await prepared.validateConversation(false);
+      }
+      try {
+        await prepared.validateConversation(false);
+      } catch (error) {
+        run.invalidated = true;
+        throw error;
+      }
     };
     const relevanceRequest = preparedResponseRelevanceRequest(
       prepared,
@@ -2109,9 +2119,9 @@ export class AiDirector {
         this.client.judge({ ...relevanceRequest, requestId, signal: run.controller.signal }),
       judgeMeter('level', relevanceRequest),
     );
+    await current();
     const relevance = preparedResponseRelevance(first, relevanceRequest.questions, catalogue);
     const interpreted = interpretations.resolve(first);
-    await current();
     if (!(await interpretations.bound.current()))
       throw new StopJob('stale', 'The supplied feeling changed before interpretation admission.');
     const appraisalId = `${run.job.id}:a${attempt}:appraisals`;
@@ -2414,6 +2424,34 @@ export class AiDirector {
         ].map((entry) => [entry.eventId, entry]),
       ).values(),
     ].sort((a, b) => a.sequence - b.sequence);
+    if (run.job.decision) {
+      const claimed = await this.service.store.mutateDecision(run.job.id, async (job) => {
+        const state = job.decision!;
+        if (
+          state.phase === 'closed' ||
+          state.refreshUsed ||
+          state.generation !== this.service.generation ||
+          state.timelineId !== this.service.timelineId ||
+          this.now() >= state.usefulUntilWall ||
+          performance.now() >= state.usefulUntilMonotonic
+        )
+          return undefined;
+        return {
+          ...job,
+          decision: {
+            ...state,
+            refreshUsed: true,
+            urgency: Math.max(
+              state.urgency,
+              ...completeInterruptions.map((entry) => entry.urgency),
+            ),
+          },
+        };
+      });
+      if (!claimed)
+        throw new StopJob('stale', 'The decision’s one refresh is no longer available.');
+      run.job = claimed;
+    }
     await this.log.record(`${run.job.id}:attempt:${attempt}:superseded`, 'Generation superseded', {
       threshold: RESPONSE_INTERRUPTION,
       interruptions: completeInterruptions,
@@ -2441,6 +2479,7 @@ export class AiDirector {
         (!run.job.decision || run.preparedResponse) &&
         attempt === 0 &&
         supersession?.attempt === attempt &&
+        !run.invalidated &&
         !run.cancelReason &&
         !this.stopped &&
         !(this.service.paused && run.job.kind === 'thought')

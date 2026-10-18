@@ -96,13 +96,15 @@ decision consumers; qualify the complete selected repertoire and shared behavior
 
 Steps 1–4 have connected native implementations and partial controlled service
 qualification. Complete requests retain their full sets; supplied callbacks reach
-an admitted exact strike and its next ordinary native step. The ordinary world now selects the connected profile, interpreted fear/anger and Ada’s general assertiveness together, with both automatic fear producers removed. The first fixed twelve-case live sample failed 0/12 counterattacks and remains
+an admitted exact strike and its next ordinary native step. The ordinary world now selects the connected profile, interpreted fear/anger and Ada’s general assertiveness together, with both automatic fear producers removed. Both fixed twelve-case live samples failed 0/12 counterattacks and remain
 retained. Uniform explicit action questions now fit the complete 475-choice native
 case without changing the 220,000-character limit. Actor/job-owned immediate
 scheduling and shared two-execution capacity have controlled coverage for ordinary
-plus urgent, two urgent actors and exact cancellation. Independent interpretation/
-choice, remaining repertoire, source and stale races, bounded refresh and complete
-concurrency qualification remain unfinished.
+plus urgent, two urgent actors and exact cancellation. The one saved refresh now has controlled actual repeated-hit coverage through both
+refreshed stages, including preserved native work and a same-boundary forgetting
+contrast. Exact fear/anger guards exclude unrelated bodily discomfort. Independent
+interpretation/choice, remaining repertoire, meaningful subscriptions, remaining
+source/stale races and complete concurrency qualification remain unfinished.
 
 The native-control change is approximately 150–300 logic lines; the catalogue
 and decision integration is expected to affect another 1,000–2,000 logic lines.

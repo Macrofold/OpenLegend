@@ -103,7 +103,9 @@ Contract: [technical stages](../projects/combat-and-threat-responses-tech-design
 
 ## CTR08 — Reconsideration and prompt service
 
-The existing chosen-activity owner now supports finite work without fuel counting: an original deadline, optional original distance boundary and exact currently visible participant lives. Real movement stops at the boundary, including an outward route followed by a return; interruption and restoration retain the original limits. Native/JSON/PostgreSQL component checks and the existing counted fire-watch regression pass. The world threat catalogue is connected. Actor/job-owned scheduling has controlled ordinary/urgent, two-urgent and exact-cancellation coverage; complete condition subscriptions, repeated-blow refresh and live scheduling qualification remain open.
+The existing chosen-activity owner now supports finite work without fuel counting: an original deadline, optional original distance boundary and exact currently visible participant lives. Real movement stops at the boundary, including an outward route followed by a return; interruption and restoration retain the original limits. Native/JSON/PostgreSQL component checks and the existing counted fire-watch regression pass. The saved operational root now claims its one refresh without renewing the deadline. Controlled real repeated punches across both refreshed stages retain every cause and reach a selected strike; same-boundary source forgetting plus harm refuses without repair. Closed supplied appraisals guard their exact fear/anger scopes rather than unrelated discomfort.
+
+The world threat catalogue is connected. Actor/job-owned scheduling has controlled ordinary/urgent, two-urgent and exact-cancellation coverage; complete condition subscriptions, remaining refresh races and live repeated-blow/scheduling qualification remain open.
 
 Contract: [reconsideration and concurrency](../projects/combat-and-threat-responses-tech-design.md#reconsideration-finite-continuation-and-prompt-reactions--ctr08); [CTR limits](../limits/combat-and-threat-responses.md).
 

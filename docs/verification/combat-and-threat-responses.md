@@ -584,3 +584,51 @@ uncertain ratings through both actual stages, retains existing native work,
 creates no fabricated physical receipt and sends no third request. TypeScript,
 the connected scenario and all 102 existing independent-selection checks pass.
 This is mechanical/outcome evidence, not independent character acceptance.
+
+## Saved bounded refresh and unrelated bodily feelings — October 18, 2026
+
+The director now claims the existing operational root's `refreshUsed` flag before
+its single urgent refresh. The original deadline, actor/life, job and financial
+ledger remain unchanged; newly received urgent evidence can upgrade the same
+pipeline's priority without creating another job. Actual identity, source,
+permission, physical-life or interpreted-feeling invalidation remains terminal,
+including a race with newly received harm. A reset abort controller cannot clear
+that invalidation. Source validation precedes interpreting a returned appraisal.
+
+The connected native scenario delivers four actual additional punches while the
+initial relevance callback, refreshed relevance callback and refreshed choice
+callback are waiting. Controlled answers commit new 0.75 fear/anger interpretations
+for the captured cause, retain all subsequent exact blows, claim exactly one saved
+refresh, retain the original useful deadline and reach an actual native strike.
+There are exactly three callbacks: cancelled initial relevance, refreshed relevance
+and refreshed choice. Further additive harm creates no fourth callback. No paid
+provider was invoked; all scores/receipts are explicitly synthetic.
+
+The check exposed a real overbroad guard: a new native discomfort record changed
+the actor's whole appraisal collection and invalidated unchanged fear/anger
+questions. Closed supplied preparation now guards its declared exact feeling
+scopes, including absence and native meaningful decay revisions. Ordinary
+reflection/generated proposals retain their complete guard. Source, definition,
+knowledge and account checks remain in place, and native admission still validates
+every proposed write. Unrelated discomfort cannot become a repeated veto.
+
+Two earlier tool failures remain distinguished: rebuilding the whole world during
+position setup replaced immutable installed-definition identities, and unnecessary
+waits let the selected 600-game-second finite control expire before the answer.
+Those were actual stale/expired inputs, correctly refused. Removing the setup
+rebuild and keeping the repeated punches inside the original finite interval
+isolates the intended additive-harm case; no world deadline or combat rule changed.
+
+A contrasting native transaction actually forgets the captured personal speech
+source and lands a fresh punch at the same boundary. The job ends stale, does not
+claim its refresh and creates neither another callback nor a physical receipt.
+This verifies the difference between additive harm and lost source authority.
+TypeScript and seven focused existing checks pass (56 unselected), covering valid
+initial/late answers, unknown execution, exact publication and cause/history
+appraisal coverage. Production build, asset guard and the final connected rerun pass, with the existing
+externalization/large-chunk warnings. Broader condition subscriptions, all caller races, live repeated-assault,
+independent counterattack and complete combat qualification remain open.
+
+Additional Jev cost is **$0**; cumulative provider-reported Jev estimates remain
+**$0.290701**, other-provider estimates **$0.088246**, uncertain commitments
+**$4.105220**, and conservative task exposure **$4.484167**.

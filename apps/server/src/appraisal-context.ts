@@ -21,6 +21,13 @@ import type { DecisionAppraisalProposal, AppraisalProposal } from './cognition-c
 import { decisionAppraisalSchema } from './cognition-contracts.js';
 import { z } from 'zod';
 
+interface AppraisalPreparation {
+  requiredFeelings?: readonly AppraisalScope[];
+  completeSources?: boolean;
+  /** Only a closed supplied strategy may restrict its possible writes this way. */
+  guard?: 'all' | 'required';
+}
+
 /** Feelings are the actor's interpretation, not knowledge of somebody else's mind.
  * A missing target does not mean that the accepted feeling has an unknown cause.
  * docs/projects/parallel-batch-03-personal-game-tech-design.md#representation-choices */
@@ -82,9 +89,9 @@ async function bindAppraisals(
   subjects: Record<string, string>,
   purpose: 'reflection' | 'decision',
   triggerEvidenceId?: string,
-  requiredFeelings: readonly AppraisalScope[] = [],
-  completeSources = false,
+  preparation: AppraisalPreparation = {},
 ) {
+  const { requiredFeelings = [], completeSources = false, guard = 'all' } = preparation;
   await service.flush();
   const world = service.world,
     generation = service.generation;
@@ -128,6 +135,15 @@ async function bindAppraisals(
   );
   const worldId = world.id;
   const appraisalState = world.appraisals?.[actorId];
+  const requiredRevisions =
+    guard === 'required'
+      ? new Map(
+          scopedAppraisals(world, actorId, requiredFeelings).map(({ id, revision }) => [
+            id,
+            revision,
+          ]),
+        )
+      : undefined;
   const installed = world.moduleManifest.appraisals;
   const knowledgeRevision = world.knowledgeRevisions?.[actorId];
   const ownerAccount = world.authorship.playerAccountIds[actorId];
@@ -164,8 +180,20 @@ async function bindAppraisals(
     knowledgeRevision === service.world.knowledgeRevisions?.[actorId] &&
     ownerAccount === service.world.authorship.playerAccountIds[actorId] &&
     (!scope || !repository || (await repository.current(scope, proof)));
+  const feelingsCurrent = () => {
+    if (appraisalState === service.world.appraisals?.[actorId]) return true;
+    if (!requiredRevisions) return false;
+    // New bodily discomfort is not a changed interpretation of fear or anger.
+    // Preserve actual subscribed revisions, including absence and native decay;
+    // the native writer still validates every exact proposed operation.
+    const current = scopedAppraisals(service.world, actorId, requiredFeelings);
+    return (
+      current.length === requiredRevisions.size &&
+      current.every(({ id, revision }) => requiredRevisions.get(id) === revision)
+    );
+  };
   const sourcesCurrent = async () =>
-    appraisalState === service.world.appraisals?.[actorId] &&
+    feelingsCurrent() &&
     installed === service.world.moduleManifest.appraisals &&
     (await sourceCurrent());
   if (!(await sourcesCurrent()))
@@ -325,8 +353,7 @@ export async function bindDecisionAppraisals(
   evidenceIds: string[],
   subjects: Record<string, string>,
   triggerEvidenceId?: string,
-  requiredFeelings: readonly AppraisalScope[] = [],
-  completeSources = false,
+  preparation: AppraisalPreparation = {},
 ) {
   const ids = [...new Set([...(triggerEvidenceId ? [triggerEvidenceId] : []), ...evidenceIds])];
   const bound = await bindAppraisals(
@@ -337,8 +364,7 @@ export async function bindDecisionAppraisals(
     subjects,
     'decision',
     triggerEvidenceId,
-    requiredFeelings,
-    completeSources,
+    preparation,
   );
   return {
     ...bound,

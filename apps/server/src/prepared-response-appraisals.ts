@@ -52,8 +52,7 @@ export async function prepareResponseAppraisals(
     [...new Set([...newest.values()].map((entry) => entry.eventId))],
     subjects,
     triggerEvidenceId,
-    scopes,
-    true,
+    { requiredFeelings: scopes, completeSources: true, guard: 'required' },
   );
   const questions: TypedQuestionMap = {};
   const options = new Map<string, Map<string, DecisionAppraisalProposal | null>>();
