@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { itemFor } from './objects.js';
 import { accessiblePossession } from './object-access.js';
 import {
@@ -362,7 +363,7 @@ export function validateFoodPreparations(world: WorldState): void {
     )
       throw new Error('Invalid installed food preparation.');
   }
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     const action = entity.actor?.action;
     if (action?.type !== 'cook') continue;
     const binding = action.foodPreparation;
@@ -391,7 +392,7 @@ export function validateFoodPreparations(world: WorldState): void {
       Object.keys(binding.inputs).length !==
         world.foodPreparations[binding.definition.id]!.inputs.length ||
       Object.values(binding.inputs).some((id) => !isSafeRecordId(id)) ||
-      !world.entities[action.heatId ?? '']?.heat
+      !entityGet(world.entities, action.heatId ?? '')?.heat
     )
       throw new Error('Invalid saved cooking binding.');
   }

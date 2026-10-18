@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import type { MemoryRecord, WorldState } from '@open-legend/domain';
 import type { RelationshipEdge, RelationshipNode, RelationshipRef } from '@open-legend/protocol';
 import { fingerprint, refKey, RelationshipIndex } from './relationship-index.js';
@@ -25,7 +26,7 @@ export function projectMemoryRecord(
   const actor: RelationshipRef = { kind: 'actor-reference', id: actorId, version: 'identity' };
   nodes.push({
     ref: actor,
-    label: world.entities[actorId]?.name ?? 'Record holder',
+    label: entityGet(world.entities, actorId)?.name ?? 'Record holder',
     layer: 'live',
     availability: 'reference-only',
   });

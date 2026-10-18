@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import {
   analyzeStatusEffectRemoval,
   StatusEffectRemovalCapacityError,
@@ -70,7 +71,7 @@ export async function assertRemovalDisclosure(
   const timeline = service.timelineId;
   const objectRevision = service.world.objectState.revision;
   const ids = new Set(rows.flatMap((row) => [row.entityId, row.sourceId, row.actionTargetId]));
-  const missing = [...ids].filter((id) => !service.world.entities[id]);
+  const missing = [...ids].filter((id) => !entityGet(service.world.entities, id));
   let custody: Map<string, { custodianId?: string } | null> | undefined;
   if (missing.length) {
     service.assertScope(scope, 'create');
@@ -101,7 +102,7 @@ export async function assertRemovalDisclosure(
         service.world,
         id,
         (actorId) => service.mayInspectPrivate(actorId, scope),
-        service.world.entities[id]?.retirement ?? custody?.get(id),
+        entityGet(service.world.entities, id)?.retirement ?? custody?.get(id),
       );
       permission.set(id, current);
       return current;

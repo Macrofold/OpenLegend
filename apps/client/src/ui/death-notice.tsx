@@ -12,7 +12,7 @@ export function DeathNotice({
 }) {
   const [busy, setBusy] = useState(false);
   const death = view.player.death;
-  const continuation = view.player.actions.find((action) => action.command.type === 'respawn');
+  const continuation = view.player.controls.find((action) => action.command.type === 'respawn');
   if (!death || !continuation) return null;
   return (
     <aside className="ol-root ol-card ol-death-notice" aria-label="Lost life">

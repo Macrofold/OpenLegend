@@ -14,7 +14,7 @@ import type {
 } from '@open-legend/protocol';
 import { digest } from './content-digest.js';
 import type { SqlDatabase } from './store.js';
-import type { StorySource } from './history.js';
+import { storyAccountSql, storySourceRow } from './personal-accounts.js';
 import { SEARCH_SCAN_ROWS, matchesSearch, scanMatches, searchTerms } from './text-search.js';
 import { HistoryCursorError } from './history-cursor-error.js';
 export { HistoryCursorError } from './history-cursor-error.js';
@@ -338,11 +338,11 @@ export async function readPerceivedEvents(
           const edge = after ? at(after) : cursor?.before;
           return db
             .prepare(
-              `SELECT ${position} AS position,p.event_id AS id,coalesce(p.payload::jsonb->>'text','') AS text FROM ${join} WHERE ${where}${boundary(edge)} ORDER BY ${position} ${order},p.event_id ${order} LIMIT ?`,
+              `SELECT ${position} AS position,p.event_id AS id,p.payload,${storyAccountSql()} AS account_payload FROM ${join} WHERE ${where}${boundary(edge)} ORDER BY ${position} ${order},p.event_id ${order} LIMIT ?`,
             )
             .all(...args, ...positions(edge), count);
         },
-        (row) => matchesSearch(terms, String(row['text'])),
+        (row) => matchesSearch(terms, storySourceRow(row).text),
         limit,
         SEARCH_SCAN_ROWS,
       ));
@@ -351,7 +351,7 @@ export async function readPerceivedEvents(
         (ids.length
           ? await db
               .prepare(
-                `SELECT p.event_id AS id,e.payload,p.payload AS perspective FROM ${join} WHERE p.world_id=? AND p.actor_id=? AND p.event_id IN (${ids.map(() => '?').join(',')})`,
+                `SELECT p.event_id AS id,e.payload,p.payload AS perspective,${storyAccountSql()} AS account_payload FROM ${join} WHERE p.world_id=? AND p.actor_id=? AND p.event_id IN (${ids.map(() => '?').join(',')})`,
               )
               .all(worldId, actorId, ...ids)
           : []
@@ -367,7 +367,7 @@ export async function readPerceivedEvents(
     } else {
       rows = await db
         .prepare(
-          `SELECT ${position} AS position,p.event_id AS id,e.payload,p.payload AS perspective FROM ${join} WHERE ${where}${boundary(cursor?.before)} ORDER BY ${position} ${order},p.event_id ${order} LIMIT ?`,
+          `SELECT ${position} AS position,p.event_id AS id,e.payload,p.payload AS perspective,${storyAccountSql()} AS account_payload FROM ${join} WHERE ${where}${boundary(cursor?.before)} ORDER BY ${position} ${order},p.event_id ${order} LIMIT ?`,
         )
         .all(...args, ...positions(cursor?.before), limit + 1);
       scanLimited = false;
@@ -399,7 +399,7 @@ export async function readPerceivedEvents(
     return {
       events: chronological.map((row) => {
         const event = JSON.parse(String(row['payload'])) as WorldEvent;
-        const perspective = JSON.parse(String(row['perspective'])) as StorySource;
+        const perspective = storySourceRow(row, 'perspective');
         const projected = projectEventEvidence(event, perspective.evidence);
         const corr = correctionEventIdFor(corrections, projected.id);
         const source =
@@ -483,7 +483,7 @@ export async function readPerceivedEventSources(
   return snapshot(async () => {
     const rows = await db
       .prepare(
-        `SELECT ${position} AS position,p.event_id AS id,e.payload,p.payload AS perspective FROM ${join} WHERE ${where}`,
+        `SELECT ${position} AS position,p.event_id AS id,e.payload,p.payload AS perspective,${storyAccountSql()} AS account_payload FROM ${join} WHERE ${where}`,
       )
       .all(worldId, actorId, ...allIds);
     const byId = new Map(rows.map((row) => [String(row['id']), row]));
@@ -496,7 +496,7 @@ export async function readPerceivedEventSources(
         return unavailableSourceDetail(ref.sourceId);
       }
       const event = JSON.parse(String(row['payload'])) as WorldEvent;
-      const perspective = JSON.parse(String(row['perspective'])) as StorySource;
+      const perspective = storySourceRow(row, 'perspective');
       const projected = projectEventEvidence(event, perspective.evidence);
       if (
         (projected.type !== 'speech' && projected.type !== 'encounter') ||
@@ -559,7 +559,7 @@ export async function readPerceivedEventSources(
         const corrRow = !isForgotten(correctionEventId) ? byId.get(correctionEventId) : undefined;
         if (corrRow) {
           const corrEvent = JSON.parse(String(corrRow['payload'])) as WorldEvent;
-          const corrPerspective = JSON.parse(String(corrRow['perspective'])) as StorySource;
+          const corrPerspective = storySourceRow(corrRow, 'perspective');
           const corrProjected = projectEventEvidence(corrEvent, corrPerspective.evidence);
           correctionNote = `Qualified by later observation: ${corrProjected.text}`;
         } else {

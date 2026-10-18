@@ -1,7 +1,7 @@
 import { Worker } from 'node:worker_threads';
 import type { NavigationRequest, NavigationResult, SpatialMap } from '@open-legend/spatial';
 import { OverloadError, WorkLane } from '../work-lane.js';
-import { recordDuration } from '../performance.js';
+import { beginTiming, endTiming, profilingEnabled, recordDuration } from '../performance.js';
 import type { NavigationMessage, NavigationReply } from './messages.js';
 
 // Explicit candidate preparation shares one bounded lane; live gameplay retains
@@ -28,7 +28,8 @@ export async function prepareCandidateNavigation(
     return failed();
   try {
     return await preparationLane.run(async () => {
-      const started = performance.now();
+      const profiling = profilingEnabled();
+      const started = beginTiming();
       const results = failed();
       const key = `candidate-preparation:${++serial}`;
       let worker: Worker | undefined;
@@ -45,6 +46,7 @@ export async function prepareCandidateNavigation(
         worker = new Worker(new URL('./worker.mjs', import.meta.url), {
           execArgv: [],
           env: {},
+          workerData: { profiling },
           resourceLimits: { maxOldGenerationSizeMb: 128 },
         });
         worker.on('error', fail);
@@ -75,8 +77,10 @@ export async function prepareCandidateNavigation(
           });
           if (!reply || reply.error || !reply.result) break;
           results.set(task.id, reply.result);
-          recordDuration('navigation.preparation.query', reply.queryMs);
-          recordDuration('navigation.preparation.build', reply.buildMs);
+          if (reply.timing) {
+            recordDuration('navigation.preparation.query', reply.timing.queryMs);
+            recordDuration('navigation.preparation.build', reply.timing.buildMs);
+          }
         }
       } catch {
         fail();
@@ -84,7 +88,7 @@ export async function prepareCandidateNavigation(
         clearTimeout(timer);
         outstanding = undefined;
         if (worker) await worker.terminate();
-        recordDuration('navigation.preparation.batch', performance.now() - started);
+        endTiming('navigation.preparation.batch', started);
       }
       return results;
     });

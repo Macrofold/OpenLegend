@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { cookingChoices } from './food-preparation.js';
 import { inventoryFor } from './index.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
@@ -142,7 +143,9 @@ describe('untrusted dictionary identifiers', () => {
     const candidate = draft();
     candidate.inputs[0]!.definitionId = 'inherited_material';
     expect(validateDeclaration(world, candidate).length).toBeGreaterThan(0);
-    Object.setPrototypeOf(world.entities, { inherited_target: world.entities.branches });
+    Object.setPrototypeOf(world.entities, {
+      inherited_target: entityGet(world.entities, 'branches'),
+    });
     const result = executeCommand(world, {
       id: 'hidden-inheritance',
       actorId: PLAYER_ID,
@@ -157,7 +160,7 @@ describe('untrusted dictionary identifiers', () => {
     const world = createWorld();
     const originalRecipes = structuredClone(world.recipes);
     const originalKnowledge = structuredClone(world.knowledge[PLAYER_ID]);
-    world.entities[PLAYER_ID]!.actor!.incapacitated = true;
+    entityGet(world.entities, PLAYER_ID)!.actor!.incapacitated = true;
     const result = admitDeclaration(world, draft(), {
       actorId: PLAYER_ID,
       requestId: 'collapsed-invention',

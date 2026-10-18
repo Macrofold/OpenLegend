@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { episodeStartedAt } from './encounter-cache.js';
 import { readOnlyDraftView } from './draft.js';
 import { outwardStates } from './perception-frame.js';
@@ -56,7 +57,7 @@ export function activeStimuli(
     ...(world.visiblePeople?.[observerId] ?? []),
     ...(world.visibleObjects?.[observerId] ?? []),
   ]) {
-    const source = world.entities[sourceId];
+    const source = entityGet(world.entities, sourceId);
     if (!source) continue;
     const salience = stimulusSalience(source, policy);
     if (salience <= 0) continue;

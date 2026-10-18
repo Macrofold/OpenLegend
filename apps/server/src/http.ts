@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { recoverPlayerAction } from './action-request-recovery.js';
 import { recoverHumanRequest } from './human-request-recovery.js';
 import { CognitionExecution } from './cognition-execution.js';
@@ -62,10 +63,11 @@ import {
   timed,
   recordDuration,
   countMetric,
-  startRuntimeMonitoring,
+  profilingEnabled,
 } from './performance.js';
 import {
   ACTIVITY_LIMITS,
+  SPEECH_VOLUMES,
   amendCommitment,
   stateOwnerCapabilities,
   observerDescription,
@@ -113,7 +115,7 @@ const command = z
   .strict();
 const interaction = z
   .object({
-    volume: z.enum(['whisper', 'normal', 'shout']).default('normal'),
+    volume: z.enum(SPEECH_VOLUMES).default('normal'),
     candidate: z.unknown().optional(),
     requestId: requestIdSchema,
     text: z.string().trim().min(1).max(1000),
@@ -158,6 +160,8 @@ const presence = z
 const actionContext = z
   .object({
     catalogue: z.boolean().optional(),
+    recipeId: requestIdSchema.optional(),
+    equipped: z.literal(true).optional(),
     targetId: requestIdSchema.optional(),
     itemId: requestIdSchema.optional(),
     inventoryGroup: z.string().min(1).max(4096).optional(),
@@ -173,7 +177,21 @@ const actionContext = z
       .strict()
       .optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    if (
+      value.equipped &&
+      (!value.itemId ||
+        !value.targetId ||
+        Object.keys(value).some((key) => !['equipped', 'itemId', 'targetId'].includes(key)))
+    )
+      context.addIssue({
+        code: 'custom',
+        message: 'Equipped use requires only the exact item and target.',
+      });
+    if (value.recipeId && Object.keys(value).some((key) => key !== 'recipeId'))
+      context.addIssue({ code: 'custom', message: 'A method menu names only its exact recipe.' });
+  });
 const preferences = z
   .object({
     showUnavailableActions: z.boolean().optional(),
@@ -366,6 +384,12 @@ interface GameServerOptions {
   createdActivation?: CreationActivationReceipt;
   publicServer?: Server;
   clientAssets?: ClientAssets;
+  /** Optional private profiling context; IDs are diagnostic labels, never authority. */
+  profileCommand?: <T>(
+    commandId: string | undefined,
+    arrivedAt: number,
+    operation: () => Promise<T>,
+  ) => Promise<T>;
 }
 
 export async function createGameServer(
@@ -396,9 +420,13 @@ async function initializeGameServer(
   const config = options.config ?? readConfig();
   const store =
     options.store ??
-    new SqlGameRepository(config.dataDirectory, new PostgresDatabase(config.databaseUrl), {
-      preserveSaveStages: config.creation.startup === 'awaiting-creation',
-    });
+    new SqlGameRepository(
+      config.dataDirectory,
+      new PostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups),
+      {
+        preserveSaveStages: config.creation.startup === 'awaiting-creation',
+      },
+    );
   if (!options.store) onFailure(() => store.close());
   if (config.creation.startup === 'awaiting-creation' && !options.createdActivation) {
     const assets = options.clientAssets ?? (await createClientAssets(options.production));
@@ -707,6 +735,7 @@ async function initializeGameServer(
   const clientAssets = options.clientAssets ?? (await createClientAssets(options.production));
   if (!options.clientAssets) onFailure(() => clientAssets.close());
   const server = createServer(async (request, response) => {
+    const arrivedAt = options.profileCommand ? performance.now() : 0;
     let responseScope: RequestScope | undefined;
     let responseCapability: Capability = 'play';
     const send = (target: ServerResponse, status: number, value: unknown) => {
@@ -869,13 +898,13 @@ async function initializeGameServer(
           token = service.localSessionToken;
           response.setHeader('Set-Cookie', cookie('ol_session', token));
         }
-        const login = await store.authority.authenticate(token, now());
         const connectionId = clientId.parse(
           request.headers['x-ol-client'] ?? url.searchParams.get('client') ?? 'local-internal',
         );
         if (config.authentication.mode === 'oidc' && connectionId === 'local-internal')
           throw new AuthorityError('session');
         if (request.method === 'GET' && url.pathname === '/api/session') {
+          const login = await store.authority.authenticate(token, now());
           const grant = await store.authority.grant(service.world.id, login.accountId);
           const entered =
             grant &&
@@ -895,6 +924,7 @@ async function initializeGameServer(
           });
         }
         if (request.method === 'POST' && url.pathname === '/api/session/logout') {
+          const login = await store.authority.authenticate(token, now());
           if (origin !== ownOrigin) throw new AuthorityError('forbidden');
           if (!(request.headers['content-type'] ?? '').startsWith('application/json'))
             return send(response, 415, { ok: false, message: 'Use a JSON request.' });
@@ -913,7 +943,13 @@ async function initializeGameServer(
           response.setHeader('Set-Cookie', cookie('ol_session', '', 0));
           return send(response, 200, { ok: true, message: 'Signed out.' });
         }
-        let scope = await service.requestScope(login, connectionId);
+        let scope = await store.authority.authenticateScope(
+          token,
+          now(),
+          service.world.id,
+          service.timelineId,
+          connectionId,
+        );
         if (isCharacterless(scope) && !characterlessRoute(request.method, url.pathname))
           return send(response, 403, {
             ok: false,
@@ -2572,7 +2608,7 @@ async function initializeGameServer(
                         actorName: worldAgent
                           ? 'World agent'
                           : actorId
-                            ? (service.world.entities[actorId]?.name ?? actorId)
+                            ? (entityGet(service.world.entities, actorId)?.name ?? actorId)
                             : call.actorName,
                         trigger: worldAgent
                           ? 'Message'
@@ -2763,7 +2799,7 @@ async function initializeGameServer(
               return send(response, 200, await service.control(controls.parse(body), scope));
             case '/api/presence': {
               const value = presence.parse(body);
-              await service.setPresence(value.clientId, value.visible, value.sequence, scope);
+              await service.reportPresence(value.clientId, value.visible, value.sequence, scope);
               return send(response, 200, {
                 ok: true,
                 code: 'presence',
@@ -3342,25 +3378,38 @@ async function initializeGameServer(
         // Read-only access is checked above and again by send after asynchronous work.
         // Autosave settings and failure acknowledgment are short writes without a service entry
         // point, so they run fenced in the lane and are ordered after any revocation.
-        return [
-          '/api/actions',
-          '/api/chat/receipt',
-          '/api/inventions/receipt',
-          '/api/inventions/list',
-          '/api/action-attempt/receipt',
-          '/api/saves/list',
-          '/api/saves/receipt',
-          '/api/saves/load',
-          '/api/saves/create',
-          '/api/saves/delete',
-          '/api/world-agent/messages',
-          '/api/expression',
-          '/api/chat',
-          '/api/chat/retry',
-          '/api/invent',
-        ].includes(url.pathname) || url.pathname.startsWith('/api/world-agent/')
-          ? await dispatch()
-          : await service.authorized(scope, required, controlling, dispatch);
+        const perform = async () =>
+          [
+            '/api/actions',
+            '/api/presence',
+            '/api/chat/receipt',
+            '/api/inventions/receipt',
+            '/api/inventions/list',
+            '/api/action-attempt/receipt',
+            '/api/saves/list',
+            '/api/saves/receipt',
+            '/api/saves/load',
+            '/api/saves/create',
+            '/api/saves/delete',
+            '/api/world-agent/messages',
+            '/api/expression',
+            '/api/chat',
+            '/api/chat/retry',
+            '/api/invent',
+          ].includes(url.pathname) || url.pathname.startsWith('/api/world-agent/')
+            ? await dispatch()
+            : await service.authorized(scope, required, controlling, dispatch);
+        if (options.profileCommand && url.pathname === '/api/command') {
+          const commandId =
+            body &&
+            typeof body === 'object' &&
+            'commandId' in body &&
+            typeof body.commandId === 'string'
+              ? body.commandId.slice(0, 300)
+              : undefined;
+          return await options.profileCommand(commandId, arrivedAt, perform);
+        }
+        return await perform();
       } catch (error) {
         if (error instanceof OverloadError || error instanceof ViewChangedError) {
           response.setHeader('Retry-After', '1');
@@ -3410,14 +3459,67 @@ async function initializeGameServer(
   });
   server.requestTimeout = 10_000;
   server.headersTimeout = 10_000;
-  const stopRuntimeMonitoring = startRuntimeMonitoring();
-  onFailure(stopRuntimeMonitoring);
   let previous = performance.now();
   let previousCallback = previous;
   let suspendedSeconds = 0;
   let ticking = false;
   let activeTick: Promise<void> | undefined;
   let thinking: Promise<void> | undefined;
+  let clockContinuation: ReturnType<typeof setImmediate> | undefined;
+  const wakeClock = () => {
+    if (disposed || loadingSave || ticking) return;
+    if (clockContinuation) clearImmediate(clockContinuation);
+    clockContinuation = undefined;
+    ticking = true;
+    const current = performance.now();
+    // Real time from before the latest resume is never simulated.
+    const elapsed = (current - Math.max(previous, service.clockStartedAt)) / 1000;
+    previous = current;
+    const excluded = suspendedSeconds;
+    suspendedSeconds = 0;
+    let more = false;
+    activeTick = (async () => {
+      more = await timed('tick.wall', () =>
+        service.tick(elapsed, excluded, { drain: false, offeredUntil: current }),
+      );
+      // Resume may have committed while the offered tick waited for its turn.
+      // Automatic checkpoint cadence follows the same active interval as native time.
+      const admittedElapsed = Math.min(
+        elapsed,
+        Math.max(0, (current - service.clockStartedAt) / 1000),
+      );
+      autosaves.advance(Math.max(0, admittedElapsed - excluded));
+      // Background admission must not hold the native clock (docs/performance.md#triggered-background-work).
+      if (!thinking)
+        thinking = director
+          .considerThought()
+          .catch((error: unknown) => {
+            if (error instanceof OverloadError) return;
+            service.storageError =
+              'Background admission failed; simulation paused. Restart and reconcile storage.';
+            service.notify();
+          })
+          .finally(() => {
+            thinking = undefined;
+          });
+    })()
+      .catch((error: unknown) => {
+        if (error instanceof OverloadError) return;
+        service.storageError =
+          'Background persistence failed; simulation paused. Restart and reconcile storage.';
+        service.notify();
+      })
+      .finally(() => {
+        ticking = false;
+        // One owned continuation preserves catch-up throughput without keeping an
+        // old elapsed-time offer open. The interval remains the idle wake owner.
+        if (more && !disposed && !loadingSave)
+          clockContinuation = setImmediate(() => {
+            clockContinuation = undefined;
+            wakeClock();
+          });
+      });
+  };
   const interval =
     options.tick === false
       ? undefined
@@ -3427,45 +3529,14 @@ async function initializeGameServer(
           const callbackGap = (callbackAt - previousCallback) / 1000;
           // Busy ticks still receive timer callbacks; only missing callbacks imply suspension.
           if (callbackGap > 2) suspendedSeconds += callbackGap;
-          recordDuration('timer.lateness', Math.max(0, callbackGap * 1000 - 50));
+          if (profilingEnabled())
+            recordDuration('timer.lateness', Math.max(0, callbackGap * 1000 - 50));
           previousCallback = callbackAt;
           if (ticking) {
             countMetric('timer.skippedWhileBusy');
             return;
           }
-          ticking = true;
-          const current = performance.now();
-          // Real time from before the latest resume is never simulated.
-          const elapsed = (current - Math.max(previous, service.clockStartedAt)) / 1000;
-          previous = current;
-          const excluded = suspendedSeconds;
-          suspendedSeconds = 0;
-          activeTick = (async () => {
-            await timed('tick.wall', () => service.tick(elapsed, excluded));
-            autosaves.advance(Math.max(0, elapsed - excluded));
-            // Background admission must not hold the native clock (docs/performance.md#triggered-background-work).
-            if (!thinking)
-              thinking = director
-                .considerThought()
-                .catch((error: unknown) => {
-                  if (error instanceof OverloadError) return;
-                  service.storageError =
-                    'Background admission failed; simulation paused. Restart and reconcile storage.';
-                  service.notify();
-                })
-                .finally(() => {
-                  thinking = undefined;
-                });
-          })()
-            .catch((error: unknown) => {
-              if (error instanceof OverloadError) return;
-              service.storageError =
-                'Background persistence failed; simulation paused. Restart and reconcile storage.';
-              service.notify();
-            })
-            .finally(() => {
-              ticking = false;
-            });
+          wakeClock();
         }, 50);
 
   return {
@@ -3518,8 +3589,9 @@ async function initializeGameServer(
         clearTimeout(timer);
       }
     };
-    stopRuntimeMonitoring();
     if (interval) clearInterval(interval);
+    if (clockContinuation) clearImmediate(clockContinuation);
+    clockContinuation = undefined;
     if (publishTimer) clearTimeout(publishTimer);
     unsubscribe();
     director.macrofold.stop();

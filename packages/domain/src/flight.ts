@@ -16,6 +16,7 @@ import {
 } from '@open-legend/spatial';
 import { bodyProfile, setSpatialPosition, spatialMap } from './spatial-state.js';
 import { emit } from './events.js';
+import { TIME_EPSILON } from './simulation-time.js';
 import type { FlightRoute } from './spatial-state.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
 
@@ -375,7 +376,12 @@ export function advanceFlight(
   const route = world.flightRoutes[progress.routeId];
   if (!route) throw new Error('Missing admitted native flight route.');
   if (progress.waitSeconds > 0) {
-    progress.waitSeconds = Math.max(0, progress.waitSeconds - seconds);
+    const remaining = progress.waitSeconds - seconds;
+    progress.waitSeconds = remaining > TIME_EPSILON ? remaining : 0;
+    // The wait ends at this endpoint. Prepare departure now, without backdating
+    // flight movement or depending on a floating-point sliver causing another slice.
+    if (progress.waitSeconds === 0)
+      advanceFlight(world, entity, 0, events, landingOccupancy, emitOccurrence);
     return;
   }
   // Continue through private mid-air turns within this slice; stop at any observable waypoint.

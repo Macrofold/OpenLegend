@@ -109,6 +109,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     throw new Error('OPEN_LEGEND_DATABASE_URL is required and must be a PostgreSQL URL.');
   }
   const macrofoldBillingMode = env['MACROFOLD_BILLING_MODE'] ?? 'byok';
+  const sqlWriteGroups = z.enum(['on', 'off']).parse(env['OPEN_LEGEND_SQL_WRITE_GROUPS'] ?? 'on');
   if (macrofoldBillingMode !== 'byok' && macrofoldBillingMode !== 'managed')
     throw new Error('MACROFOLD_BILLING_MODE must be byok or managed.');
   if (
@@ -309,6 +310,8 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     },
     worldPreset,
     databaseUrl,
+    sqlWriteGroups: sqlWriteGroups === 'on',
+    profiling: z.enum(['off', 'on']).parse(env['OPEN_LEGEND_PROFILING'] ?? 'off') === 'on',
     mcpRead: readMcpConfig(env),
     embeddingKey:
       env['AI_JEV_ONLY'] === 'true'

@@ -1,3 +1,4 @@
+import { entityGet, currentAttributeState } from '@open-legend/domain';
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld, editWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
@@ -160,7 +161,9 @@ describe('world presence, time and durable commands', () => {
       await service.tick(0.25);
     }
     expect(service.world.simTime).toBe(before + 300);
-    expect(service.world.entities[PLAYER_ID]!.actor!.participation!.phase).toBe('inactive');
+    expect(entityGet(service.world.entities, PLAYER_ID)!.actor!.participation!.phase).toBe(
+      'inactive',
+    );
     const rng = service.world.rngState;
     clock.now += 60_000;
     await service.tick(60);
@@ -195,7 +198,9 @@ describe('world presence, time and durable commands', () => {
     clock.now += 12_001;
     await service.tick(0.25);
     expect(service.paused).toBe(false);
-    expect(service.world.entities[PLAYER_ID]!.actor!.participation!.phase).toBe('exiting');
+    expect(entityGet(service.world.entities, PLAYER_ID)!.actor!.participation!.phase).toBe(
+      'exiting',
+    );
     for (let i = 0; i < 19; i++) {
       clock.now += 250;
       await service.tick(0.25);
@@ -220,10 +225,10 @@ describe('world presence, time and durable commands', () => {
     await activate(service);
     expect(service.world.simTime).toBe(state.simTime);
     expect(service.world.rngState).toBe(state.rngState);
-    expect(service.world.entities[PLAYER_ID]!.actor!.health).toBe(
-      state.entities[PLAYER_ID]!.actor!.health,
+    expect(entityGet(service.world.entities, PLAYER_ID)!.actor!.health).toBe(
+      entityGet(state.entities, PLAYER_ID)!.actor!.health,
     );
-    expect(service.world.entities[PLAYER_ID]!.actor!.action).toBeNull();
+    expect(entityGet(service.world.entities, PLAYER_ID)!.actor!.action).toBeNull();
     expect(service.pauseReason).toBe('manual');
     expect((await service.say('paused-speech', NPC_ID, 'This was never spoken.')).code).toBe(
       'paused',
@@ -266,6 +271,25 @@ describe('world presence, time and durable commands', () => {
     }
     expect(service.world.simTime).toBeCloseTo(2 * 60 * 8, 9);
   });
+  it('returns a bounded host batch while retaining elapsed time for exact later drainage', async () => {
+    const { service } = await setup();
+    await activate(service);
+    let instant = performance.now();
+    const monotonic = vi.spyOn(performance, 'now').mockImplementation(() => (instant += 10));
+    try {
+      expect(await service.tick(1, 0, { drain: false })).toBe(true);
+      expect(service.world.simTime).toBeGreaterThan(0);
+      expect(service.world.simTime).toBeLessThan(60);
+      await service.tick(0.25, 0, { drain: false });
+      expect(await service.tick(0, 0)).toBe(false);
+      expect(service.world.simTime).toBeCloseTo(75, 9);
+      await service.control({ paused: true });
+      expect(await service.tick(1, 0, { drain: false })).toBe(false);
+      expect(service.world.simTime).toBeCloseTo(75, 9);
+    } finally {
+      monotonic.mockRestore();
+    }
+  });
   it('restores work and pause preferences without repeating commands or elapsed real time', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'open-legend-world-test-'));
     directories.push(directory);
@@ -298,8 +322,8 @@ describe('world presence, time and durable commands', () => {
     // Clearing transports while paused is not a physical departure. The player has
     // returned with verified control, so the exact saved rest continues after resume.
     // docs/save-and-load.md#continuation-and-identity
-    const restoredAction = restored.service.world.entities[PLAYER_ID]!.actor!.action;
-    expect(restoredAction).toEqual(previous.entities[PLAYER_ID]!.actor!.action);
+    const restoredAction = entityGet(restored.service.world.entities, PLAYER_ID)!.actor!.action;
+    expect(restoredAction).toEqual(entityGet(previous.entities, PLAYER_ID)!.actor!.action);
     expect(restoredAction).toMatchObject({
       type: 'status-effect',
       definitionId: 'wilderness:restorative-rest',
@@ -312,15 +336,24 @@ describe('world presence, time and durable commands', () => {
     ).toBe('duplicate');
     expect(quantityOf(restored.service.world, PLAYER_ID, 'berries')).toBe(2);
     expect(restored.service.world.simTime).toBe(previous.simTime);
-    const energyBefore =
-      restored.service.world.entities[PLAYER_ID]!.actor!.attributes!['wilderness:energy']!.value;
+    const energyBefore = currentAttributeState(
+      restored.service.world,
+      entityGet(restored.service.world.entities, PLAYER_ID)!,
+      'wilderness:energy',
+    )!.value;
     if (typeof energyBefore !== 'number') throw new Error('Sleeping requires numeric energy.');
     await run(restored.service, clock, 0.25);
     expect(restored.service.world.simTime).toBe(previous.simTime + 45);
     expect(
-      restored.service.world.entities[PLAYER_ID]!.actor!.attributes!['wilderness:energy']!.value,
+      currentAttributeState(
+        restored.service.world,
+        entityGet(restored.service.world.entities, PLAYER_ID)!,
+        'wilderness:energy',
+      )!.value,
     ).toBeGreaterThan(energyBefore);
-    expect(restored.service.world.entities[PLAYER_ID]!.actor!.action?.id).toBe(restoredAction!.id);
+    expect(entityGet(restored.service.world.entities, PLAYER_ID)!.actor!.action?.id).toBe(
+      restoredAction!.id,
+    );
   });
   it('pauses on ambiguous persistence completion and recovers its committed receipt', async () => {
     const { service, store, clock } = await setup();
@@ -359,7 +392,7 @@ describe('public projection', () => {
     await activate(service);
     await editWorld(service, (world) => {
       // Authored residents can start without goals; this privacy fixture supplies its own.
-      world.entities[NPC_ID]!.actor!.agency = seedAgency(['secret-npc-intention']);
+      entityGet(world.entities, NPC_ID)!.actor!.agency = seedAgency(['secret-npc-intention']);
       world.memories[NPC_ID]!.push({
         id: 'private-memory',
         actorId: NPC_ID,
@@ -372,9 +405,9 @@ describe('public projection', () => {
       });
       setSpatialPosition(
         world,
-        world.entities[NPC_ID]!,
+        entityGet(world.entities, NPC_ID)!,
         { y: 0, x: 26, z: 22 },
-        worldSupport(world.entities[NPC_ID]!),
+        worldSupport(entityGet(world.entities, NPC_ID)!),
       );
     });
     expect(
@@ -383,9 +416,9 @@ describe('public projection', () => {
     await editWorld(service, (world) => {
       setSpatialPosition(
         world,
-        world.entities[NPC_ID]!,
+        entityGet(world.entities, NPC_ID)!,
         { y: 0, x: 12, z: 13 },
-        worldSupport(world.entities[NPC_ID]!),
+        worldSupport(entityGet(world.entities, NPC_ID)!),
       );
     });
     await store.putJob({
@@ -431,7 +464,10 @@ describe('public projection', () => {
     await activate(service);
     await service.command('already-there', {
       type: 'move',
-      position: { ...worldPosition(service.world.entities[PLAYER_ID]!), surfaceId: 'terrain' },
+      position: {
+        ...worldPosition(entityGet(service.world.entities, PLAYER_ID)!),
+        surfaceId: 'terrain',
+      },
     });
     const action = (await projectView(service)).player.action;
     expect(action === null || Number.isFinite(action.progress)).toBe(true);

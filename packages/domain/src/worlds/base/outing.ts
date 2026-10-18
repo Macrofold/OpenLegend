@@ -1,3 +1,4 @@
+import { entityGet } from '../../entity-collection.js';
 import type { ActivityHostDescriptor, ActivityRequestDescriptor } from '../../activity-hosts.js';
 import { attackPermissionProblem } from '../../combat-consent.js';
 import { seesEntity } from '../../perception.js';
@@ -105,12 +106,16 @@ export const BASE_OUTING_HOST: ActivityHostDescriptor = {
             requestId === BASE_COMBAT_HELP.family ? 'combat-help' : 'travel',
           )
         : fieldId === 'opponentId' && requestId === BASE_COMBAT_HELP.family
-          ? !!world.entities[candidateId]?.actor &&
-            seesEntity(world, world.entities[actorId]!, world.entities[candidateId]!) &&
+          ? !!entityGet(world.entities, candidateId)?.actor &&
+            seesEntity(
+              world,
+              entityGet(world.entities, actorId)!,
+              entityGet(world.entities, candidateId)!,
+            ) &&
             !attackPermissionProblem(
               world,
-              world.entities[actorId]!,
-              world.entities[candidateId],
+              entityGet(world.entities, actorId)!,
+              entityGet(world.entities, candidateId),
               {},
             )
           : fieldId === 'destinationId' && !!outingDestination(world, actorId, candidateId);

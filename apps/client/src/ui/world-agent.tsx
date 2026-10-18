@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import type {
-  ActionOption,
   GameView,
   RecipeView,
   WorldAgentSessionSummary,
@@ -31,7 +30,7 @@ type Props = {
   invent(text: string): void;
   visible: boolean;
   recipes: RecipeView[];
-  command(action: ActionOption): void;
+  browseRecipe(recipeId: string, opener: Element): void;
   connected: boolean;
   conditionPolicyRevision: number;
   onStatusPolicyChanged(): void;
@@ -68,7 +67,7 @@ function WorldAgentPanel(props: Props) {
     inventionSeed,
     visible,
     recipes,
-    command,
+    browseRecipe,
     connected,
     conditionPolicyRevision,
     onStatusPolicyChanged,
@@ -207,7 +206,7 @@ function WorldAgentPanel(props: Props) {
           seed={inventionSeed}
           visible={visible}
           recipes={recipes}
-          command={command}
+          browseRecipe={browseRecipe}
           connected={connected}
           allowance={
             <UsageRemaining

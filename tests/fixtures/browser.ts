@@ -9,4 +9,7 @@ export async function enterGame(page: Page): Promise<void> {
   await expect(page.locator('.ol-entry')).toBeHidden();
   await expect(page.getByRole('dialog', { name: 'Game is paused.', exact: true })).toBeHidden();
   await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeHidden();
+  // Cold 3D allocation on software-rendered hosts can exceed a generic assertion
+  // deadline. This only waits for startup; interaction deadlines remain unchanged.
+  await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true', { timeout: 30_000 });
 }

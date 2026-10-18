@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld, editWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
@@ -81,13 +82,13 @@ it('scopes object menus to their target, including relevant missing prerequisite
     },
   });
   await editWorld(service, (world) => {
-    world.entities.campfire!.heat!.lit = false;
+    entityGet(world.entities, 'campfire')!.heat!.lit = false;
   });
   expect(fire().find((action) => action.id.startsWith('cook-'))?.enabled).toBe(false);
   const reeds = actionCatalogue(service, { targetId: 'reeds' }).actions;
   expect(reeds.map((action) => action.id)).toEqual(['move', 'gather-reeds']);
   await editWorld(service, (world) => {
-    world.entities.reeds!.resource!.quantity = 0;
+    entityGet(world.entities, 'reeds')!.resource!.quantity = 0;
   });
   expect(
     actionCatalogue(service, { targetId: 'reeds' }).actions.find(
@@ -202,7 +203,7 @@ it('updates contextual food descriptions from the player’s current state witho
   const { service } = await setup();
   await editWorld(service, (world) => {
     createItemLot(world, PLAYER_ID, 'berries', 3, 'fixture-food');
-    world.entities[NPC_ID]!.actor!.agency = seedAgency(['Private fixture objective']);
+    entityGet(world.entities, NPC_ID)!.actor!.agency = seedAgency(['Private fixture objective']);
   });
   const itemId = inventoryFor(service.world, PLAYER_ID).find(
     (item) => item.definitionId === 'berries',
@@ -210,8 +211,9 @@ it('updates contextual food descriptions from the player’s current state witho
   const food = actionCatalogue(service, { itemId }).actions.find(
     (action) => action.intent.kind === 'command' && action.intent.command.type === 'eat',
   )!;
-  const fullness =
-    service.world.entities[PLAYER_ID]!.actor!.attributes!['wilderness:fullness']!.value;
+  const fullness = entityGet(service.world.entities, PLAYER_ID)!.actor!.attributes![
+    'wilderness:fullness'
+  ]!.value;
   if (fullness === undefined) throw new Error('Wilderness fixture lacks fullness.');
   expect(food.description).toContain(`Current Food: ${Math.round(Number(fullness))}; range 0–100.`);
   if (food.intent.kind !== 'command') throw new Error('Missing fixture food command');
@@ -220,14 +222,15 @@ it('updates contextual food descriptions from the player’s current state witho
     (action) => action.id === food.id,
   )!;
   expect(next.description).not.toBe(food.description);
-  const nextFullness =
-    service.world.entities[PLAYER_ID]!.actor!.attributes!['wilderness:fullness']!.value;
+  const nextFullness = entityGet(service.world.entities, PLAYER_ID)!.actor!.attributes![
+    'wilderness:fullness'
+  ]!.value;
   if (nextFullness === undefined) throw new Error('Wilderness fixture lacks fullness.');
   expect(next.description).toContain(
     `Current Food: ${Math.round(Number(nextFullness))}; range 0–100.`,
   );
   expect(JSON.stringify(actionCatalogue(service, { targetId: PLAYER_ID }))).not.toContain(
-    service.world.entities[NPC_ID]!.actor!.agency.goals[0]!.objective,
+    entityGet(service.world.entities, NPC_ID)!.actor!.agency.goals[0]!.objective,
   );
 });
 

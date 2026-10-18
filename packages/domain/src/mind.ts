@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { dreamStatus, dreamPolicy } from './cognition-policy.js';
 import { bodyThinkingBlocked, bodyEligibilityRevision } from './body-policy.js';
 import { draftWorld, cloneValue } from './draft.js';
@@ -107,7 +108,7 @@ export const byteCount = (value: unknown): number =>
 export function mindFor(world: WorldState, actorId: string): ActorMind {
   const existing = world.minds?.[actorId];
   if (existing) return cloneValue(existing);
-  const actor = world.entities[actorId];
+  const actor = entityGet(world.entities, actorId);
   const component = actor?.actor;
   const identity = [
     `I am ${actor?.name ?? actorId}.`,
@@ -176,7 +177,7 @@ export function commitCognition(
     events: [],
     outcome: outcome(false, 'mind-rejected', message),
   });
-  const actor = input.entities[binding.actorId]?.actor;
+  const actor = entityGet(input.entities, binding.actorId)?.actor;
   if (!actor?.alive || actor.incapacitated || input.paused)
     return reject('Actor cannot deliberate now.');
   const mind = mindFor(input, binding.actorId);
@@ -203,18 +204,22 @@ export function commitCognition(
     return reject('This thinking tier cannot change the lasting mind.');
   if (proposal.thought.length > 2000 || wordCount(proposal.thought) > 250)
     return reject('Thought exceeds its presentation limit.');
-  if (binding.bodyEligibility !== bodyEligibilityRevision(input, input.entities[binding.actorId]!))
+  if (
+    binding.bodyEligibility !==
+    bodyEligibilityRevision(input, entityGet(input.entities, binding.actorId)!)
+  )
     return reject('Installed body or thinking policy changed.');
   if (
     binding.purpose !== 'thought' &&
-    (bodyThinkingBlocked(input, input.entities[binding.actorId]!, 'commit') ||
+    (bodyThinkingBlocked(input, entityGet(input.entities, binding.actorId)!, 'commit') ||
       (actor.action && actor.action.type !== 'status-effect'))
   )
     return reject('Urgency or active work superseded consolidation.');
   if (
     binding.purpose === 'dream' &&
-    (!dreamStatus(input, input.entities[binding.actorId]) ||
-      dreamStatus(input, input.entities[binding.actorId])?.episode !== binding.restEpisode)
+    (!dreamStatus(input, entityGet(input.entities, binding.actorId)) ||
+      dreamStatus(input, entityGet(input.entities, binding.actorId))?.episode !==
+        binding.restEpisode)
   )
     return reject('Rest episode changed.');
   // Ordinary perceived events live in actor-scoped awareness after the cognition

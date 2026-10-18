@@ -1,3 +1,4 @@
+import { entityGet, entityOwn } from '../../entity-collection.js';
 import type { ActivityHostDescriptor } from '../../activity-hosts.js';
 import { outcome } from '../../events.js';
 import { getOwn, isSafeRecordId } from '../../records.js';
@@ -54,8 +55,8 @@ export const RESERVOIR_ACTIVITY_HOST: ActivityHostDescriptor = {
         'activity-choices',
         'Choose a recharge supply and how to handle current work.',
       );
-    const actor = getOwn(world.entities, actorId),
-      source = getOwn(world.entities, args.sourceId);
+    const actor = entityOwn(world.entities, actorId),
+      source = entityOwn(world.entities, args.sourceId);
     const definition =
       source?.replenisher && attributeDefinition(world, source.replenisher.attributeId);
     if (
@@ -64,7 +65,7 @@ export const RESERVOIR_ACTIVITY_HOST: ActivityHostDescriptor = {
       source.retirement ||
       !definition?.reservoir ||
       definition.schema.kind !== 'number' ||
-      typeof readAttribute(actor.actor, definition) !== 'number' ||
+      typeof readAttribute(world, actor, definition) !== 'number' ||
       permitted?.includes(source.id) === false ||
       !seesEntity(world, actor, source)
     )
@@ -91,8 +92,8 @@ export const RESERVOIR_ACTIVITY_HOST: ActivityHostDescriptor = {
   },
   requestChoice(world, actorId, requestId, fieldId, candidateId) {
     if (requestId !== 'reservoir-demo:recharge-session' || fieldId !== 'sourceId') return;
-    const source = world.entities[candidateId],
-      actor = world.entities[actorId]?.actor;
+    const source = entityGet(world.entities, candidateId),
+      actor = entityGet(world.entities, actorId)?.actor;
     const definition =
       source?.replenisher && attributeDefinition(world, source.replenisher.attributeId);
     if (
@@ -100,7 +101,7 @@ export const RESERVOIR_ACTIVITY_HOST: ActivityHostDescriptor = {
       source.retirement ||
       !actor ||
       !definition?.reservoir ||
-      typeof readAttribute(actor, definition) !== 'number'
+      typeof readAttribute(world, entityGet(world.entities, actorId)!, definition) !== 'number'
     )
       return;
     return {
@@ -136,7 +137,7 @@ export const RESERVOIR_ACTIVITY_HOST: ActivityHostDescriptor = {
     };
   },
   reviewRequest(world, _actorId, request) {
-    const source = world.entities[String(request.arguments.sourceId)];
+    const source = entityGet(world.entities, String(request.arguments.sourceId));
     const definition =
       source?.replenisher && attributeDefinition(world, source.replenisher.attributeId);
     return definition?.reservoir

@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { PLAYER_ID } from '@open-legend/domain';
 import { worldPosition } from './spatial-state.js';
 import { describe, expect, it } from 'vitest';
@@ -27,7 +28,7 @@ describe('god world editing (native fixtures)', () => {
     });
     expect(result.outcome).toMatchObject({ ok: true, code: 'spawned' });
     expect(original.entities).not.toHaveProperty('person-20');
-    const person = Object.values(result.world.entities).find((entity) => entity.name === 'Mira')!;
+    const person = entityValues(result.world.entities).find((entity) => entity.name === 'Mira')!;
     expect(result.outcome.entityId).toBe(person.id);
     expect(person.actor).toMatchObject({
       personality: 'Warm, direct, and difficult to discourage.',
@@ -62,7 +63,7 @@ describe('god world editing (native fixtures)', () => {
     } satisfies GodSpawnRequest;
     const result = spawnWorldEntity(createWorld(32), request);
     const spawned = result.world;
-    const person = Object.values(spawned.entities).find((entity) => entity.name === 'Rowan')!;
+    const person = entityValues(spawned.entities).find((entity) => entity.name === 'Rowan')!;
     expect(person.actor!.traits).toHaveLength(3);
     expect(result.outcome.entityId).toBe(person.id);
     const saved = JSON.stringify(spawned);
@@ -92,7 +93,7 @@ describe('god world editing (native fixtures)', () => {
     person.actor!.health = 0;
     const revived = reviveActor(spawned, person.id);
     expect(revived.outcome).toMatchObject({ ok: true, code: 'revived' });
-    expect(revived.world.entities[person.id]!.actor).toMatchObject({
+    expect(entityGet(revived.world.entities, person.id)!.actor).toMatchObject({
       alive: true,
       incapacitated: false,
       health: 100,
@@ -113,7 +114,7 @@ describe('god world editing (native fixtures)', () => {
       spawnWorldEntity(world, {
         id: 'occupied-stones',
         type: 'river-stones',
-        position: { ...worldPosition(world.entities[PLAYER_ID]!), surfaceId: 'terrain' },
+        position: { ...worldPosition(entityGet(world.entities, PLAYER_ID)!), surfaceId: 'terrain' },
       }).outcome.code,
     ).toBe('occupied');
     const request = {
@@ -128,9 +129,7 @@ describe('god world editing (native fixtures)', () => {
     const created = spawnWorldEntity(world, request);
     expect(created.outcome).toMatchObject({ ok: true, code: 'spawned' });
     expect(
-      Object.values(created.world.entities).find(
-        (entity) => entity.id === created.outcome.entityId,
-      ),
+      entityValues(created.world.entities).find((entity) => entity.id === created.outcome.entityId),
     ).toMatchObject({
       kind: 'resource',
       resource: { definitionId: 'stone', quantity: 60 },

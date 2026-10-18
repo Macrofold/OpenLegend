@@ -1,3 +1,4 @@
+import { entityGet, entityHas } from './entity-collection.js';
 import { surfaceContains, surfaceHeight, type SurfacePoint } from '@open-legend/spatial';
 import { FOLLOW_RULES, headingFrame } from './follow.js';
 export { FOLLOW_RULES } from './follow.js';
@@ -141,7 +142,7 @@ export function resolutionSignature(
         ...(world.visiblePeople?.[actorId] ?? []),
         ...(world.visibleObjects?.[actorId] ?? []),
       ];
-    const entity = Object.hasOwn(world.entities, id) ? world.entities[id] : undefined;
+    const entity = entityHas(world.entities, id) ? entityGet(world.entities, id) : undefined;
     if (!entity || entity.retirement) return 'absent';
     return [
       world.perceptionEpisodes?.[actorId]?.[id] ?? null,
@@ -439,11 +440,13 @@ export function bindActionInvocation(
       { family: raw.family, arguments: raw.parameters },
       permittedEntityIds,
     );
-  const actor = Object.hasOwn(world.entities, actorId) ? world.entities[actorId] : undefined;
+  const actor = entityHas(world.entities, actorId) ? entityGet(world.entities, actorId) : undefined;
   if (!actor?.actor) return outcome(false, 'actor-unavailable', 'The actor is unavailable.');
   const targetId = raw.targetEntityId;
   const target =
-    targetId && Object.hasOwn(world.entities, targetId) ? world.entities[targetId] : undefined;
+    targetId && entityHas(world.entities, targetId)
+      ? entityGet(world.entities, targetId)
+      : undefined;
   const visibleTarget =
     !!target &&
     targetId !== actorId &&

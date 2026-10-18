@@ -1,3 +1,4 @@
+import { entityGet, entitySet } from './entity-collection.js';
 import {
   findPhysicalWorkApproach,
   physicalWorkPointAvailable,
@@ -157,7 +158,7 @@ export function loweredAssemblyMaterials(world: WorldState, rootId: string): str
   return worldRootEntities(world, true)
     .filter((root) => root.kind === 'item-pile')
     .flatMap((root) => [...directChildIds(world, root.id)])
-    .filter((id) => world.entities[id]?.item?.assemblyClaim?.rootId === rootId);
+    .filter((id) => entityGet(world.entities, id)?.item?.assemblyClaim?.rootId === rootId);
 }
 export function assemblyRoot(
   world: WorldState,
@@ -168,7 +169,7 @@ export function assemblyRoot(
     worldRootEntities(world, true).find((root) => root.assembly?.requestId === phase.requestId)?.id;
   // The index supplies identity only: a compound mutation must use its live draft,
   // never an unchanged immutable record returned by the read-only root view.
-  return id ? world.entities[id] : undefined;
+  return id ? entityGet(world.entities, id) : undefined;
 }
 export function assemblyFamily(world: WorldState, id: string): AssemblyFamily | undefined {
   return world.assemblyFamilies?.[id];
@@ -198,7 +199,7 @@ function releasedMaterials(world: WorldState, phase: AssemblyPhase): string[] {
 }
 function activeEdit(world: WorldState, root: Entity): string | undefined {
   const edit = root.assembly?.activeEdit;
-  const actor = edit && world.entities[edit.actorId]?.actor;
+  const actor = edit && entityGet(world.entities, edit.actorId)?.actor;
   const plan = actor?.agency.plan,
     phase = actor?.action?.assemblyPhase;
   return (plan && plan.id === edit?.invocationId && plan.status === 'active') ||
@@ -250,7 +251,7 @@ export function materialAuthorized(
   id: string,
   permission: ConstructionPermission,
 ): boolean {
-  const origins = world.entities[id]?.item?.materialOriginIds;
+  const origins = entityGet(world.entities, id)?.item?.materialOriginIds;
   return !!origins?.length && origins.every((source) => permission.materialIds.includes(source));
 }
 export function materialUsable(
@@ -259,7 +260,7 @@ export function materialUsable(
   family: AssemblyFamily,
   role: string,
 ): boolean {
-  const material = world.entities[id],
+  const material = entityGet(world.entities, id),
     definition = material?.item && world.itemDefinitions[material.item.definitionPin.id];
   const descriptor = definition?.assemblyMaterial;
   if (
@@ -338,9 +339,11 @@ export function assemblyStances(
   actorId: string,
 ): Array<SurfacePoint | undefined> {
   if (phase.operation === 'reclaim-lowered') {
-    const placement = world.entities[phase.itemId]?.placement;
+    const placement = entityGet(world.entities, phase.itemId)?.placement;
     const pile =
-      placement?.mode === 'contained' ? world.entities[placement.parentEntityId] : undefined;
+      placement?.mode === 'contained'
+        ? entityGet(world.entities, placement.parentEntityId)
+        : undefined;
     return pile?.placement?.mode === 'world' && pile.placement.supportSurfaceId
       ? [{ ...pile.placement.position, surfaceId: pile.placement.supportSurfaceId }]
       : [];
@@ -351,7 +354,7 @@ export function assemblyStances(
     (_, corner) =>
       findPhysicalWorkApproach(
         world,
-        world.entities[actorId]!,
+        entityGet(world.entities, actorId)!,
         assemblyWorkCandidates(world, phase, corner),
         world.itemHandling.reach,
       )?.candidate.stance,
@@ -433,7 +436,7 @@ function geometryProblem(
   );
   if (support) return support;
   const map = spatialMap(world),
-    actor = world.entities[actorId]!;
+    actor = entityGet(world.entities, actorId)!;
   const blockers = spatialBlockers(map);
   if (blockers.length >= SPATIAL_LIMITS.maxBlockers && ['post', 'cover'].includes(phase.operation))
     return 'This world has reached its supported physical geometry limit. Reclaim unused parts before adding another.';
@@ -484,7 +487,7 @@ function assemblyWorkProblem(
   actorId: string,
   phase: AssemblyPhase,
 ): string | undefined {
-  const actor = world.entities[actorId]!;
+  const actor = entityGet(world.entities, actorId)!;
   const count = ['cover', 'lower'].includes(phase.operation) ? 4 : 1;
   for (let corner = 0; corner < count; corner++) {
     if (
@@ -508,7 +511,7 @@ export function evaluateAssemblyPhase(
 ): Outcome {
   const refuse = (code: string, message: string) => outcome(false, code, message);
   const family = assemblyFamily(world, phase.familyId),
-    actor = world.entities[actorId];
+    actor = entityGet(world.entities, actorId);
   if (!validAssemblyPhase(phase))
     return refuse('invalid-phase', 'Choose a complete supported construction phase.');
   if (
@@ -710,7 +713,7 @@ export function evaluateAssemblyPhase(
       );
   }
   if (!inputs.length) {
-    const selected = world.entities[phase.itemId];
+    const selected = entityGet(world.entities, phase.itemId);
     if (selected?.item?.assemblyClaim?.rootId !== root?.id)
       return refuse('missing-part', 'The selected actual part is no longer available.');
     if (releasedMaterials(world, phase).some((id) => !materialAuthorized(world, id, permission)))
@@ -784,7 +787,7 @@ export function reserveAssemblyPhase(
   const totals = new Map<string, number>();
   phaseInputs(phase).forEach((id) => totals.set(id, (totals.get(id) ?? 0) + 1));
   for (const [id, amount] of totals) {
-    const lot = world.entities[id]!.item!;
+    const lot = entityGet(world.entities, id)!.item!;
     const result = reserveResource(
       world,
       {
@@ -809,7 +812,7 @@ export function assemblyGroundDestination(
   family: AssemblyFamily,
 ): string {
   const id = nextEntityId(world, 'pile');
-  world.entities[id] = {
+  entitySet(world.entities, id, {
     id,
     kind: 'item-pile',
     name: family.presentation.loweredName,
@@ -818,7 +821,7 @@ export function assemblyGroundDestination(
       ...groundedSpatial(world.itemHandling.objectBody),
       softFootprint: family.exposure.folded,
     },
-  };
+  });
   rootMembershipChanged(world, id);
   return id;
 }
@@ -849,7 +852,7 @@ function commitAssemblyParts(
         joints: {},
       },
     };
-    world.entities[id] = root;
+    entitySet(world.entities, id, root);
     rootMembershipChanged(world, id);
   }
   const component = root.assembly!;
@@ -985,10 +988,10 @@ export function commitAssemblyPhase(
     events,
     'construction-phase',
     subjectNarration(
-      world.entities[actorId]!,
+      entityGet(world.entities, actorId)!,
       `completed: ${family.labels[phase.operation].toLowerCase()}.`,
     ),
-    world.entities[actorId],
+    entityGet(world.entities, actorId),
     parts.rootId,
     {
       installed: parts.installed.join(','),
@@ -1002,7 +1005,7 @@ export function commitAssemblyPhase(
   // Record this visible completion while the physical subject still exists. Retirement
   // publishes in the same transition; later readers must use the saved observer facts.
   if (parts.retire) {
-    const root = world.entities[parts.rootId]!;
+    const root = entityGet(world.entities, parts.rootId)!;
     root.assembly!.retired = { at: world.simTime, cause: 'dismantled' };
     delete root.assembly!.activeEdit;
     delete root.placement;
@@ -1032,7 +1035,8 @@ function publishAssemblyParts(world: WorldState, candidate: WorldState): void {
   const roots = new Map(
     [...changed].map((id) => [
       id,
-      world.entities[id]?.placement?.mode === 'world' && !world.entities[id]?.retirement,
+      entityGet(world.entities, id)?.placement?.mode === 'world' &&
+        !entityGet(world.entities, id)?.retirement,
     ]),
   );
   // Apply the validated candidate's actual writes into the existing mutable owner.
@@ -1060,7 +1064,7 @@ function publishAssemblyParts(world: WorldState, candidate: WorldState): void {
   reservations(world);
   allocations(world);
   for (const id of changed) {
-    const next = world.entities[id];
+    const next = entityGet(world.entities, id);
     if (roots.get(id) !== (next?.placement?.mode === 'world' && !next.retirement))
       rootMembershipChanged(world, id);
   }
@@ -1071,8 +1075,8 @@ export function lowerUnsupportedCovers(
   changedId: string,
   events: WorldEvent[],
 ): void {
-  const claim = world.entities[changedId]?.item?.assemblyClaim,
-    root = claim && world.entities[claim.rootId],
+  const claim = entityGet(world.entities, changedId)?.item?.assemblyClaim,
+    root = claim && entityGet(world.entities, claim.rootId),
     component = root?.assembly;
   const family = component && assemblyFamily(world, component.family.id),
     site = root && assemblySite(root);
@@ -1091,7 +1095,7 @@ export function lowerUnsupportedCovers(
   );
   if (!affected.length) return;
   const candidate = draftWorld(world),
-    next = candidate.entities[root!.id]!.assembly!,
+    next = entityGet(candidate.entities, root!.id)!.assembly!,
     destination = assemblyGroundDestination(candidate, site, family),
     lowered: string[] = [];
   for (const cover of affected) {
@@ -1118,7 +1122,7 @@ export function lowerUnsupportedCovers(
     events,
     'cover-lowered',
     family.presentation.failureText,
-    world.entities[root!.id],
+    entityGet(world.entities, root!.id),
     undefined,
     {
       assemblyId: root!.id,
@@ -1138,7 +1142,7 @@ export function compileAssemblyActivity(
   permissions: readonly ConstructionPermission[],
 ): Command | Outcome {
   const family = assemblyFamily(world, plan.familyId),
-    root = plan.rootId ? world.entities[plan.rootId] : undefined,
+    root = plan.rootId ? entityGet(world.entities, plan.rootId) : undefined,
     component = root?.assembly;
   if (
     !family ||
@@ -1150,7 +1154,7 @@ export function compileAssemblyActivity(
       'stale-structure',
       'Refresh the selected structure and its current parts.',
     );
-  if (root && !seesEntity(world, world.entities[actorId]!, root))
+  if (root && !seesEntity(world, entityGet(world.entities, actorId)!, root))
     return outcome(
       false,
       'not-visible',

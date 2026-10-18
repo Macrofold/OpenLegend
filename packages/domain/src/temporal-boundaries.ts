@@ -1,12 +1,12 @@
+import { entityGet } from './entity-collection.js';
 import { nextOutingDeadline } from './outings.js';
 import { nextItemOfferDeadline } from './handover.js';
 import { nextRemainsDeadline } from './remains.js';
-import { nextActivityBoundary } from './activity-execution.js';
-import { isDraft, original } from 'immer';
+import { activeActivityControl, nextActivityBoundary } from './activity-execution.js';
 import { distance3D } from '@open-legend/spatial';
 import { capabilityBlocked } from './status-capabilities.js';
-import { worldPosition } from './spatial-state.js';
-import { readAttribute } from './world-modules.js';
+import { worldPosition, worldSupport } from './spatial-state.js';
+import { prepareAttributeForecast, readAttribute } from './world-modules.js';
 import { hasMemory } from './living.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import { nativeMovementSpeed } from './worlds/base/actions.js';
@@ -54,6 +54,7 @@ export function nativeInterval(
   requiresImmediateIntegration: boolean;
   serialClamps: boolean;
   drains: NativeDrain[];
+  privateWalkers: ReadonlySet<string>;
   endsAt?: number;
 } {
   let bound = Math.min(requested, BASE_TIME_POLICY.idleHorizonSeconds);
@@ -68,11 +69,12 @@ export function nativeInterval(
   at(nextRemainsDeadline(world, ambientIds));
   for (const deadline of Object.values(world.exitExposures ?? {})) at(deadline);
   for (const id of ambientIds) {
-    const entity = world.entities[id],
+    const entity = entityGet(world.entities, id),
       animal = entity?.animal;
     const threat = entity?.threat;
     if (threat && !(threat.relinquished && threat.mode === 'idle')) {
-      at(threat.reviewAt);
+      // Ordinary reviews are private wake-ups. The owner certifies deadline-only
+      // idle renewals; every real pursuit/action change still rebuilds preparation.
       if (['pursuit', 'search'].includes(threat.mode) && threat.episodeUntil !== undefined)
         at(threat.episodeUntil);
       if (threat.mode === 'search' && threat.searchUntil !== undefined) at(threat.searchUntil);
@@ -89,21 +91,17 @@ export function nativeInterval(
   };
   const rates = statusAttributeRates(status),
     drains: NativeDrain[] = [];
+  const attributes = prepareAttributeForecast(world);
   const requiresImmediateIntegration = status.some(
     (interval) =>
       interval.periodic.length > 0 ||
-      interval.rates.some((rate) =>
-        world.moduleManifest.definitions.some(
-          (d) => d.id === rate.attribute && d.implementation === 'native-health-v1',
-        ),
-      ),
+      interval.rates.some((rate) => attributes.healthIds.has(rate.attribute)),
   );
-  const manifest = isDraft(world.moduleManifest)
-    ? original(world.moduleManifest)!
-    : world.moduleManifest;
   const supplies = new Map<string, number>();
+  const references = crossStatusReferences(world, statusIds, status);
+  const privateWalkers = new Set<string>();
   for (const id of actorIds) {
-    const entity = world.entities[id],
+    const entity = entityGet(world.entities, id),
       actor = entity?.actor;
     if (!entity || !actor?.alive || actor.incapacitated) continue;
     const action = actor.action;
@@ -132,8 +130,8 @@ export function nativeInterval(
     if (hasMemory(entity)) at(nextConditionReview(entity));
     const reservoirs: NativeDrain[] = [];
     let coupledReservoir = false;
-    for (const d of manifest.definitions) {
-      const value = readAttribute(actor, d);
+    for (const { definition: d, thresholds } of attributes.native) {
+      const value = readAttribute(world, entity, d);
       if (typeof value !== 'number' || d.schema.kind !== 'number') continue;
       const statusRate = rates.get(id)?.get(d.id) ?? 0;
       // A status rate on a natively drained value integrates with the drain as one net flow
@@ -163,15 +161,7 @@ export function nativeInterval(
           );
       }
       const rate = rates.get(id)?.get(d.id) ?? 0;
-      for (const t of [
-        ...(d.condition?.bands.flatMap((b) => [
-          b.below,
-          Math.min(
-            d.schema.kind === 'number' ? d.schema.max : Infinity,
-            b.below + d.condition!.recoveryMargin,
-          ),
-        ]) ?? []),
-      ])
+      for (const t of thresholds)
         if (
           !(
             value === t &&
@@ -198,19 +188,42 @@ export function nativeInterval(
       !capabilityBlocked(world, entity, 'locomotion')
     ) {
       const speed = nativeMovementSpeed(world, entity);
-      bound = Math.min(
-        bound,
-        travelFor(id) / speed,
-        Math.max(TIME_EPSILON, distance3D(worldPosition(entity), action.path[0]!) / speed),
-      );
+      if (
+        action.type === 'move' &&
+        !action.navigation &&
+        !action.evasion &&
+        !activeActivityControl(plan) &&
+        !entity.threat &&
+        !references.has(id)
+      ) {
+        // Intermediate same-support movement changes pose, not captured bodily rules.
+        // Arrival and a support seam remain shared boundaries; private slices still
+        // retain the original displacement/waypoint sampling.
+        privateWalkers.add(id);
+        let from = worldPosition(entity),
+          support = worldSupport(entity),
+          length = 0;
+        for (const point of action.path) {
+          length += distance3D(from, point);
+          from = point;
+          if (point.surfaceId !== support) break;
+          support = point.surfaceId;
+        }
+        bound = Math.min(bound, Math.max(TIME_EPSILON, length / speed));
+      } else
+        bound = Math.min(
+          bound,
+          travelFor(id) / speed,
+          Math.max(TIME_EPSILON, distance3D(worldPosition(entity), action.path[0]!) / speed),
+        );
     }
   }
   for (const [id, demand] of supplies) {
-    const remaining = world.entities[id]?.replenisher?.remaining;
+    const remaining = entityGet(world.entities, id)?.replenisher?.remaining;
     if (remaining !== undefined && remaining > 0) bound = Math.min(bound, remaining / demand);
   }
   for (const id of ambientIds) {
-    const entity = world.entities[id];
+    const entity = entityGet(world.entities, id);
     if (!entity) continue;
     if (entity.heat?.lit && entity.heat.fuelSeconds > 0)
       bound = Math.min(bound, entity.heat.fuelSeconds);
@@ -234,8 +247,8 @@ export function nativeInterval(
   }
   bound = Math.min(
     bound,
-    attributeBoundary(world, rates),
-    statusBoundary(world, statusIds, rates, at),
+    attributeBoundary(world, rates, attributes.numeric),
+    statusBoundary(world, statusIds, rates, attributes.byId, at),
   );
   const seconds = Math.min(requested, Math.max(TIME_EPSILON, bound));
   return {
@@ -243,6 +256,7 @@ export function nativeInterval(
     requiresImmediateIntegration,
     serialClamps,
     drains,
+    privateWalkers,
     ...(deadline - world.simTime <= seconds ? { endsAt: deadline } : {}),
   };
 }
@@ -262,10 +276,27 @@ export function refineNativeInterval(
   },
   previous: readonly StatusRateInterval[],
   travelFor: (id: string) => number,
-): { seconds: number; status: StatusRateInterval[]; endsAt?: number } | undefined {
+  prepareParticipant: (id: string) => StatusRateInterval[] = (id) =>
+    prepareStatusRates(world, entityGet(world.entities, id)!),
+):
+  | {
+      seconds: number;
+      status: StatusRateInterval[];
+      privateWalkers: ReadonlySet<string>;
+      endsAt?: number;
+    }
+  | undefined {
   const statusIds = participants.statuses.filter((id) => changed.has(id));
-  const local = statusIds.flatMap((id) => prepareStatusRates(world, world.entities[id]!));
-  if (crossStatusReferences(world, statusIds, local).size) return undefined;
+  const local = statusIds.flatMap(prepareParticipant);
+  if (
+    crossStatusReferences(world, statusIds, local).size ||
+    crossStatusReferences(
+      world,
+      statusIds,
+      previous.filter((entry) => changed.has(entry.entityId)),
+    ).size
+  )
+    return undefined;
   const interval = nativeInterval(
     world,
     BASE_TIME_POLICY.idleHorizonSeconds,
@@ -279,8 +310,9 @@ export function refineNativeInterval(
     return undefined;
   // Integration order follows the participant roster, exactly as a global rebuild orders it.
   const kept = new Map<string, StatusRateInterval[]>();
-  for (const entry of [...previous, ...local]) {
-    if (changed.has(entry.entityId) !== local.includes(entry)) continue;
+  // A refreshed interval may reuse the exact previous object. Select by the owning
+  // participant, not object membership, so each active episode is integrated once.
+  for (const entry of [...previous.filter((entry) => !changed.has(entry.entityId)), ...local]) {
     const list = kept.get(entry.entityId);
     if (list) list.push(entry);
     else kept.set(entry.entityId, [entry]);
@@ -289,5 +321,6 @@ export function refineNativeInterval(
     seconds: interval.seconds,
     ...(interval.endsAt === undefined ? {} : { endsAt: interval.endsAt }),
     status: participants.statuses.flatMap((id) => kept.get(id) ?? []),
+    privateWalkers: interval.privateWalkers,
   };
 }

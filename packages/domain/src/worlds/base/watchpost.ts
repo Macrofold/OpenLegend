@@ -1,3 +1,4 @@
+import { entitySet, entityValues } from '../../entity-collection.js';
 import { baseSpatial } from './spatial-definitions.js';
 import { addItem } from '../../data.js';
 import { installRecipe } from '../../declarations.js';
@@ -101,7 +102,7 @@ export function installWatchpost(world: WorldState, makeActor: typeof createActo
     spatial: baseSpatial('object'),
     appearance: 'crate-mesh',
   };
-  world.entities[cache.id] = cache;
+  entitySet(world.entities, cache.id, cache);
   const place: PlaceDefinition = {
     id: WATCHPOST.id,
     revision: 1,
@@ -114,7 +115,7 @@ export function installWatchpost(world: WorldState, makeActor: typeof createActo
   world.places![place.id] = place;
   for (const resident of WATCHPOST.occupants) {
     const p = ground(resident.position);
-    world.entities[resident.id] = {
+    entitySet(world.entities, resident.id, {
       id: resident.id,
       name: resident.name,
       nameForm: 'proper',
@@ -122,13 +123,13 @@ export function installWatchpost(world: WorldState, makeActor: typeof createActo
       spatial: { ...baseSpatial('person'), heading: Math.PI },
       placement: worldPlacement(p, p.surfaceId),
       actor: makeActor(world, 'npc', 76, resident.identity),
-    };
+    });
     world.memories[resident.id] = [];
     world.knowledge[resident.id] = [];
     addItem(world, resident.id, 'knife', 1);
     addItem(world, resident.id, 'cooked_meat', 2);
   }
-  const knife = Object.values(world.entities).find(
+  const knife = entityValues(world.entities).find(
     (e) =>
       e.item?.definitionPin.id === 'knife' &&
       e.placement?.mode === 'contained' &&

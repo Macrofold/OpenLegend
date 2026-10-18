@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import {
   actorOutings,
   BASE_OUTING,
@@ -17,11 +18,11 @@ export function outingViews(world: WorldState, actorId: string): OutingView[] {
   }));
 }
 function outingTerms(world: WorldState, actorId: string): Omit<OutingView, 'choices'>[] {
-  const actor = world.entities[actorId];
+  const actor = entityGet(world.entities, actorId);
   if (!actor) return [];
   return actorOutings(world, actorId).map((trip) => {
     const otherId = actorId === trip.proposerId ? trip.recipientId : trip.proposerId;
-    const other = world.entities[otherId];
+    const other = entityGet(world.entities, otherId);
     const visible = !!other && seesEntity(world, actor, other);
     const here = worldPosition(actor),
       destination = trip.destination.point;
@@ -41,7 +42,7 @@ function outingTerms(world: WorldState, actorId: string): Omit<OutingView, 'choi
       distance:
         trip.kind === 'combat-help'
           ? (() => {
-              const opponent = world.entities[trip.combat!.opponentId];
+              const opponent = entityGet(world.entities, trip.combat!.opponentId);
               if (!opponent || !seesEntity(world, actor, opponent)) return null;
               const point = worldPosition(opponent);
               return Math.hypot(here.x - point.x, here.y - point.y, here.z - point.z);
@@ -82,7 +83,7 @@ function outingChoices(world: WorldState, actorId: string, trip: Outing): Outing
     command: input,
   });
   if (trip.status === 'pending' && trip.recipientId === actorId) {
-    const actor = world.entities[actorId]!.actor!;
+    const actor = entityGet(world.entities, actorId)!.actor!;
     const busy =
       !!actor.action ||
       !!actor.agency.suspended ||

@@ -101,7 +101,7 @@ it('reports lost window focus immediately and does not let a visible-tab heartbe
 // A small public projection exercises transport semantics without authored world fixtures.
 function publicView(): import('@open-legend/protocol').GameView {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     revision: 1,
     worldId: 'world:a',
     saveTimeline: 'timeline:1',
@@ -167,15 +167,15 @@ function publicView(): import('@open-legend/protocol').GameView {
       alive: true,
       attributes: [],
       practice: [],
-      suggestedActionIds: [],
       action: null,
       hasWork: false,
       inventory: [],
       inventoryRevision: 1,
+      memoryRevision: 'memory:1',
       canUseInventory: true,
       actionAttempts: [],
       outings: [],
-      actions: [],
+      controls: [],
     },
     entities: [],
     recipes: [],
@@ -251,7 +251,6 @@ it('retains entity removal/order and refuses an update for a different audience 
     appearance: '',
     radius: 1,
     status: '',
-    actions: [],
   });
   previous.entities = [entity('one'), entity('two'), entity('three')];
   const next = { ...previous, revision: 2, entities: [entity('three'), entity('four')] };
@@ -267,6 +266,106 @@ it('retains entity removal/order and refuses an update for a different audience 
   expect(
     projectPatch(previous, { ...next, vision: { ...next.vision, enabled: false } }),
   ).toBeNull();
+});
+
+it('applies small entity field changes atomically and keeps unchanged public objects', async () => {
+  const { projectPatch } = await import('../../server/src/view.js');
+  const { applyGamePatch } = await import('./api.js');
+  const previous = publicView();
+  const entity: import('@open-legend/protocol').EntityView = {
+    id: 'moving',
+    name: 'Walker',
+    kind: 'actor',
+    subtype: 'human',
+    position: { x: 0, y: 0, z: 0 },
+    supportSurfaceId: null,
+    heading: 0,
+    appearance: 'sprite',
+    radius: 1,
+    status: '',
+    description: 'Unchanged description',
+    talkUnavailableReason: 'Outside hearing',
+  };
+  const stationary = { ...entity, id: 'stationary' };
+  previous.entities = [entity, stationary];
+  const moved = { ...entity, position: { x: 1, y: 0, z: 0 }, actionAnimation: null };
+  delete moved.talkUnavailableReason;
+  const next = { ...previous, revision: 2, entities: [moved, stationary] };
+  const patch = projectPatch(previous, next)!;
+  expect(patch.entities?.add).toEqual([]);
+  expect(patch.entities?.update).toEqual([
+    {
+      id: 'moving',
+      set: { position: moved.position, actionAnimation: null },
+      remove: ['talkUnavailableReason'],
+    },
+  ]);
+  const wire = JSON.parse(JSON.stringify(patch)) as import('@open-legend/protocol').GamePatch;
+  const received = applyGamePatch(previous, wire);
+  expect(received).toEqual(next);
+  expect(received.entities[1]).toBe(stationary);
+  expect(received.player).toBe(previous.player);
+  const before = structuredClone(previous);
+  for (const entities of [
+    { add: [], update: [{ id: 'absent', set: { status: 'bad' } }], remove: [] },
+    { add: [entity], update: [], remove: [] },
+    { add: [], update: [{ id: 'moving', set: { status: 'bad' } }], remove: ['moving'] },
+    { add: [], update: [], remove: [], order: ['moving', 'moving'] },
+    { add: [], update: [], remove: [], order: ['moving'] },
+  ])
+    expect(() => applyGamePatch(previous, { ...wire, entities })).toThrow();
+  expect(previous).toEqual(before);
+});
+
+it('keeps inventory preparation stable through received movement but updates relevant controls and roots', async () => {
+  const { inventoryPresentation } = await import('./ui/inventory-presentation');
+  const { projectPatch } = await import('../../server/src/view.js');
+  const { applyGamePatch } = await import('./api.js');
+  const previous = publicView();
+  const resident: import('@open-legend/protocol').EntityView = {
+    id: 'resident',
+    name: 'Resident',
+    kind: 'actor',
+    subtype: 'human',
+    position: { x: 1, y: 0, z: 1 },
+    supportSurfaceId: null,
+    heading: 0,
+    appearance: 'sprite',
+    radius: 1,
+    status: '',
+  };
+  const box = {
+    ...resident,
+    id: 'box',
+    kind: 'station' as const,
+    storage: { containerId: 'box', placementRevision: 1, revision: 1 },
+  };
+  previous.entities = [resident, box];
+  const initial = inventoryPresentation(previous);
+  const next = {
+    ...previous,
+    revision: 2,
+    clock: { ...previous.clock, seconds: 1 },
+    entities: [{ ...resident, position: { x: 2, y: 0, z: 1 } }, box],
+  };
+  const received = applyGamePatch(
+    previous,
+    JSON.parse(JSON.stringify(projectPatch(previous, next))),
+  );
+  expect(inventoryPresentation(received, initial)).toBe(initial);
+  const movedBox = {
+    ...received,
+    entities: [received.entities[0]!, { ...box, position: { x: 3, y: 0, z: 1 } }],
+  };
+  expect(inventoryPresentation(movedBox, initial)).not.toBe(initial);
+  for (const relevant of [
+    { ...received, clock: { ...received.clock, paused: true } },
+    { ...received, player: { ...received.player, canUseInventory: false } },
+    { ...received, access: { ...received.access!, scope: 'new-access' } },
+    { ...received, entities: [box] },
+    { ...received, recipes: [...received.recipes] },
+  ])
+    expect(inventoryPresentation(relevant, initial)).not.toBe(initial);
 });
 
 it('clears private drafts on logout or ownership replacement, but preserves ordinary Resume', async () => {
@@ -315,5 +414,56 @@ it('clears private drafts on logout or ownership replacement, but preserves ordi
     replace();
     expect(readDraft(key)).toEqual(emptyDraft());
     expect(storage.getItem(key!)).toBeNull();
+  }
+});
+
+it('reloads only a successful selected save acknowledgment across access changes', async () => {
+  const reload = vi.fn();
+  vi.stubGlobal('window', { location: { reload } });
+  const api = await import('./api.js');
+  const request = { id: 'selected-save', requestId: 'stable-load-request' };
+  const cases = [
+    { operation: 'load', status: 200, ok: true, succeeds: true },
+    { operation: 'load', status: 403, ok: false, succeeds: false },
+    { operation: 'load', status: 500, ok: true, succeeds: false },
+    { operation: 'post', status: 200, ok: true, succeeds: false },
+    { operation: 'private', status: 200, ok: true, succeeds: false },
+    { operation: 'unreadable', status: 200, ok: true, succeeds: false },
+    { operation: 'logout', status: 200, ok: true, succeeds: true },
+  ];
+  for (const [index, scenario] of cases.entries()) {
+    reload.mockClear();
+    api.acceptAccess({ ...publicView(), historyEpoch: `before-${index}:1` });
+    let respond!: (response: unknown) => void;
+    const fetch = vi.fn().mockImplementation(() => new Promise((resolve) => (respond = resolve)));
+    vi.stubGlobal('fetch', fetch);
+    const pending =
+      scenario.operation === 'post'
+        ? api.post('/api/memories', {})
+        : scenario.operation === 'private'
+          ? api.getScoped('/api/private-history')
+          : api.loadGameSave(request);
+    if (scenario.operation === 'logout') api.clearAccess();
+    else api.acceptAccess({ ...publicView(), historyEpoch: `after-${index}:1` });
+    respond({
+      ok: scenario.status === 200,
+      status: scenario.status,
+      json: async () => {
+        if (scenario.operation === 'unreadable') throw new Error('Uncertain acknowledgment.');
+        return {
+          ok: scenario.ok,
+          message: 'Obsolete private text must never be adopted.',
+          entries: [{ text: 'Obsolete private text' }],
+        };
+      },
+    });
+    if (scenario.succeeds) {
+      await expect(pending).resolves.toBeUndefined();
+      expect(reload).toHaveBeenCalledOnce();
+      expect(JSON.parse(fetch.mock.calls[0]![1]!.body)).toEqual(request);
+    } else {
+      await expect(pending).rejects.not.toThrow('Obsolete private text');
+      expect(reload).not.toHaveBeenCalled();
+    }
   }
 });

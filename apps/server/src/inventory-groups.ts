@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 import {
   availableItemQuantity,
@@ -34,7 +35,7 @@ const preparations = new WeakMap<
 >();
 const digest = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 function groupKey(world: WorldState, item: ItemInstance): string {
-  const entity = world.entities[item.id]!,
+  const entity = entityGet(world.entities, item.id)!,
     definition = world.itemDefinitions[item.definitionId]!;
   if (
     item.container ||
@@ -61,7 +62,7 @@ export function inventoryDisplayGroups(
 ): InventoryDisplayGroup[] {
   let cache = preparations.get(world.objectState);
   if (!cache) preparations.set(world.objectState, (cache = new Map()));
-  const revision = world.entities[containerId]?.inventoryRevision ?? 0;
+  const revision = entityGet(world.entities, containerId)?.inventoryRevision ?? 0;
   const retained = cache.get(containerId);
   if (
     Object.isFrozen(world.entities) &&
@@ -118,7 +119,7 @@ export function inventoryGroupToken(
     actorId,
     containerId,
     timeline,
-    revision: world.entities[containerId]!.inventoryRevision ?? 0,
+    revision: entityGet(world.entities, containerId)!.inventoryRevision ?? 0,
     key: group.key,
   });
 }
@@ -148,7 +149,8 @@ export function resolveInventoryGroup(
     reference.actorId !== actorId ||
     reference.timeline !== timeline ||
     !canAccessContainer(world, actorId, reference.containerId) ||
-    (world.entities[reference.containerId]?.inventoryRevision ?? -1) !== reference.revision
+    (entityGet(world.entities, reference.containerId)?.inventoryRevision ?? -1) !==
+      reference.revision
   )
     throw new Error('These belongings changed. Refresh before moving them.');
   if (!Number.isSafeInteger(quantity) || quantity < 1)

@@ -1,7 +1,14 @@
+import {
+  AnimalWanderQueue,
+  type AnimalWanderPreparation,
+} from './worlds/base/animal-wander-queue.js';
+import { entityGet, entityOwn } from './entity-collection.js';
+import { orderedRecordOwn, orderedRecordSet } from './ordered-record.js';
 import { inventoryGroupReason, moveInventoryGroup, dropInventoryGroup } from './inventory-group.js';
 import { BASE_EVASION_TEXT, BASE_RANGED_TEXT } from './worlds/base/ranged-counterplay.js';
 import { prepareEvasion } from './evasion.js';
-import { recordSemanticChange } from './dependencies.js';
+import { recordSemanticChange, captureStateChanges, stateChangesSince } from './dependencies.js';
+import { statusWorkFits } from './native-work.js';
 import {
   bindAim,
   holdAim,
@@ -47,6 +54,7 @@ import {
 import {
   applyCoaching,
   coachingProblem,
+  coachingChoiceOutcome,
   endsCoachingConsent,
   coachingFor,
   registerFeedback,
@@ -54,6 +62,7 @@ import {
   completeFeedback,
   feedbackWaiting,
   reconcileActorCoaching,
+  reconcileCoaching,
 } from './coaching.js';
 import { hasOtherTargetUser } from './entity-index.js';
 import {
@@ -75,6 +84,7 @@ import { namePhrase } from '@open-legend/language';
 import {
   ACTIVITY_LIMITS,
   beginActivity,
+  prepareActivity,
   endActivity,
   bindActivityAction,
   occurrenceFor,
@@ -116,9 +126,14 @@ import {
   startRequestedActivity,
   reconcileActivityControl,
   admitActivityAttempt,
+  activeActivityControl,
 } from './activity-execution.js';
 import { transferStock, prepareStockTransfer } from './stock-transfer.js';
-import { activityCommandSupported, nativeCommandSupported } from './activity-hosts.js';
+import {
+  activityCommandSupported,
+  nativeCommandSupported,
+  installedActionMeaning,
+} from './activity-hosts.js';
 import { isSpeechVolume } from './acoustics.js';
 import { SIGHTING_POLICY } from './worlds/base/senses.js';
 import {
@@ -129,14 +144,13 @@ import {
   type EncounterBaseline,
 } from './encounter-cache.js';
 import {
-  copyCrossings,
-  crossingCache,
+  createCrossingCache,
   forgetCrossings,
   motionTravelBounds,
+  motionReach,
   nativeMotionInterval,
   reconcileCrossings,
   sensoryCrossingBound,
-  type CrossingCache,
 } from './motion-boundaries.js';
 import { withStableAudience } from './event-audience.js';
 import { stateChangeRevision } from './dependencies.js';
@@ -171,6 +185,8 @@ import { finishSimulatedExits } from './participation.js';
 import {
   territorialIntention,
   territorialReviewDue,
+  renewQuietTerritorialReview,
+  nextTerritorialReview,
   territorialRefusal,
   admitTerritorialDetour,
   noteTerritorialInjury,
@@ -189,7 +205,14 @@ import {
   scarFactor,
 } from './reincarnation.js';
 import { advanceRemains } from './remains.js';
-import { advanceAnimal, rememberAttack } from './worlds/base/animal-behavior.js';
+import {
+  advanceAnimal,
+  advanceAnimalWanderClock,
+  animalWanderNeedsCountdown,
+  rememberAttack,
+  animalWanderRemaining,
+  reconcileAnimalWander,
+} from './worlds/base/animal-behavior.js';
 import { actionTargetsCurrent } from './action-targets.js';
 import { observerDescription, observerName } from './worlds/base/knowledge.js';
 import { setBodyHealth } from './body-state.js';
@@ -218,6 +241,7 @@ import {
   advanceCommitments,
   COMMITMENT_ADMISSION_LIMIT,
   unresolvedCommitmentCount,
+  retainsCommitmentSchedule,
 } from './commitments.js';
 import {
   canHandleItems,
@@ -242,6 +266,7 @@ import { confirmActionRevision } from './agency.js';
 import { current, isDraft } from 'immer';
 import {
   canWalkSegment,
+  distance3D,
   finitePoint,
   interpolate,
   MOVEMENT,
@@ -290,18 +315,20 @@ import {
   recordHealthChange,
   commitBodyEffects,
 } from './living.js';
-import { draftWorld, cloneValue } from './draft.js';
+import { draftWorld, finishWorld, freezeWorld, cloneValue, readOnlyDraftView } from './draft.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { experiences } from './experience.js';
 import {
   reconcileStatusEffects,
   prepareStatusRates,
+  prepareStatusIntegration,
   integrateStatusRates,
   applyBodyRate,
   crossStatusReferences,
   mayAdvanceStatusEffects,
   activateStatusEffect,
   canActivateStatusEffect,
+  statusEffectChoiceOutcome,
   deactivateStatusEffect,
   interruptStatusEffects,
   capabilityBlocked,
@@ -318,7 +345,7 @@ import {
   finish,
   outcome,
 } from './events.js';
-import { getOwn, isSafeRecordId } from './records.js';
+import { getOwn, isSafeRecordId, isImmutableData } from './records.js';
 import {
   hearsEntity,
   seesEntity,
@@ -431,7 +458,8 @@ function takeItem(
     applyResourceGroup(
       world,
       {
-        invocationId: cause ?? world.entities[actorId]?.actor?.action?.id ?? `native:${actorId}`,
+        invocationId:
+          cause ?? entityGet(world.entities, actorId)?.actor?.action?.id ?? `native:${actorId}`,
         fulfillment: 'all-or-nothing',
         operations: [
           {
@@ -476,7 +504,9 @@ export function ammoFor(
 }
 function actionReach(world: WorldState, action: Action): number {
   if (action.type === 'fish')
-    return castDefinition(world, world.entities[action.targetId ?? ''])?.stanceTolerance ?? 0;
+    return (
+      castDefinition(world, entityGet(world.entities, action.targetId ?? ''))?.stanceTolerance ?? 0
+    );
   if (action.type === 'pickup') return world.itemHandling.reach;
   if (action.type === 'treat-scar') return reincarnationPolicy(world)?.treatment?.reach ?? 0;
   if (action.type === 'strike') {
@@ -494,10 +524,10 @@ function actionReach(world: WorldState, action: Action): number {
 function targetPosition(world: WorldState, action: Action): Position | undefined {
   return action.type === 'move' || action.type === 'assemble' || action.type === 'fish'
     ? action.destination
-    : worldPosition(world.entities[action.targetId ?? action.heatId ?? '']);
+    : worldPosition(entityGet(world.entities, action.targetId ?? action.heatId ?? ''));
 }
 function actionTarget(world: WorldState, action: Action): Entity | undefined {
-  return world.entities[action.targetId ?? action.heatId ?? ''];
+  return entityGet(world.entities, action.targetId ?? action.heatId ?? '');
 }
 function actionInReach(
   world: WorldState,
@@ -578,7 +608,9 @@ function approach(world: WorldState, actor: Entity, action: Action): Outcome | n
  * in the public barrier indicator. docs/architecture.md#navigation-preparation
  */
 export function navigationBlocked(world: WorldState, actorIds?: readonly string[]): boolean {
-  const actors = actorIds ? actorIds.map((id) => world.entities[id]!) : worldRootEntities(world);
+  const actors = actorIds
+    ? actorIds.map((id) => entityGet(world.entities, id)!)
+    : worldRootEntities(world);
   return actors.some((entity) => {
     const request = entity.actor?.action?.navigation;
     if (
@@ -618,7 +650,7 @@ export function completeNavigation(
   request: NavigationRequest,
   result: NavigationResult,
 ): Transition {
-  const source = original.entities[actorId],
+  const source = entityGet(original.entities, actorId),
     action = source?.actor?.action;
   const stale = (): Transition => ({
     world: original,
@@ -674,7 +706,7 @@ export function completeNavigation(
       failure = 'navigation returned only a partial route.';
   }
   const world = draftWorld(original),
-    current = world.entities[actorId]!.actor!.action!;
+    current = entityGet(world.entities, actorId)!.actor!.action!;
   if (failure) current.navigation!.failure = failure;
   else {
     current.path = result.path.map((p) => ({ ...p }));
@@ -715,7 +747,7 @@ function workMaterials(
   action: Action,
 ): ResourceOperation[] | Outcome {
   if (action.type === 'fish') {
-    const target = world.entities[action.targetId ?? ''];
+    const target = entityGet(world.entities, action.targetId ?? '');
     const problem =
       castBindingProblem(world, actor, target, action.itemId!, action.fishing) ??
       (target && castGeometryProblem(world, actor, target, action.stage === 'working'));
@@ -743,7 +775,7 @@ function workMaterials(
         'missing-material',
         'The exact selected ingredients are no longer available.',
       );
-    if (!world.entities[action.heatId ?? '']?.heat?.lit)
+    if (!entityGet(world.entities, action.heatId ?? '')?.heat?.lit)
       return outcome(false, 'no-heat', 'The selected preparation requires a lit heat source.');
     return claims;
   }
@@ -762,7 +794,7 @@ function workMaterials(
     const problem = fireCareProblem(
       world,
       actor,
-      world.entities[action.targetId ?? ''],
+      entityGet(world.entities, action.targetId ?? ''),
       action.fireOperation!,
       action.itemId,
       action.fireGuard,
@@ -848,7 +880,7 @@ function startWork(
           ...new Set(
             claims.flatMap((claim) =>
               claim.source.kind === 'item'
-                ? (world.entities[claim.source.itemId]?.item?.materialOriginIds ?? [
+                ? (entityGet(world.entities, claim.source.itemId)?.item?.materialOriginIds ?? [
                     claim.source.itemId,
                   ])
                 : [],
@@ -894,8 +926,8 @@ function prepareReplenishment(
   targetId: string,
 ): Action | Outcome {
   const definition = attributeDefinition(world, attributeId);
-  const target = getOwn(world.entities, targetId);
-  const value = definition && readAttribute(actor.actor!, definition);
+  const target = entityOwn(world.entities, targetId);
+  const value = definition && readAttribute(world, actor, definition);
   if (!definition?.reservoir || definition.schema.kind !== 'number' || typeof value !== 'number')
     return outcome(false, 'not-applicable', 'That reservoir is not installed on this actor.');
   if (
@@ -927,7 +959,7 @@ function prepareReplenishment(
 /** Read-only lifecycle, body and perception admission shared by execution and queued choices. */
 function nativeActorProblem(world: WorldState, command: Command): Outcome | null {
   const reject = (code: string, message: string) => outcome(false, code, message);
-  const source = getOwn(world.entities, command.actorId);
+  const source = entityOwn(world.entities, command.actorId);
   if (!source?.actor) return reject('unknown-actor', 'That actor does not exist.');
   // Withdrawing consent needs no physical action, including while paused or unable to move.
   if (endsOutingConsent(command) || endsCoachingConsent(command)) return null;
@@ -1034,7 +1066,7 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
         ? command.targetId
         : undefined;
   if (scopedTargetId) {
-    const target = getOwn(world.entities, scopedTargetId);
+    const target = entityOwn(world.entities, scopedTargetId);
     if (!target || !visible(world, source, target))
       return reject('not-visible', 'The action target is not currently perceived.');
   }
@@ -1085,7 +1117,7 @@ export function lethalAttackOffer(
   command: Command,
 ): { command: Command; permission: LethalPermission } | null {
   if (command.type === 'release-shot') {
-    const actor = world.entities[command.actorId],
+    const actor = entityGet(world.entities, command.actorId),
       held = actor?.actor?.action;
     if (
       !actor ||
@@ -1095,7 +1127,7 @@ export function lethalAttackOffer(
       aimProblem(world, actor, held, true, true)
     )
       return null;
-    const target = world.entities[held.targetId!]!;
+    const target = entityGet(world.entities, held.targetId!)!;
     const permission = lethalPermission(world, actor, target, held);
     return permission ? { command, permission } : null;
   }
@@ -1103,8 +1135,8 @@ export function lethalAttackOffer(
     return null;
   const prepared = prepareNativeOperation(world, command, { skipLethalReview: true });
   if ('ok' in prepared) return null;
-  const actor = world.entities[command.actorId]!,
-    target = world.entities[prepared.targetId!]!;
+  const actor = entityGet(world.entities, command.actorId)!,
+    target = entityGet(world.entities, prepared.targetId!)!;
   const permission = lethalPermission(world, actor, target, prepared);
   if (!permission) return null;
   const exact: Command =
@@ -1129,7 +1161,7 @@ function prepareNativeOperation(
     return reject('unsupported-capability', 'This world does not install that action.');
   const problem = nativeActorProblem(world, command);
   if (problem) return problem;
-  const actor = world.entities[command.actorId]!;
+  const actor = entityGet(world.entities, command.actorId)!;
   const source = actor;
   const component = actor.actor!;
   let action: Action | undefined;
@@ -1185,9 +1217,9 @@ function prepareNativeOperation(
       if (!isSpeechVolume(command.volume ?? 'normal'))
         return reject('invalid-volume', 'Choose whisper, normal or shout.');
       const recipient = command.targetId ?? command.intendedRecipientId;
-      if (recipient && !getOwn(world.entities, recipient))
+      if (recipient && !entityOwn(world.entities, recipient))
         return reject('invalid-recipient', 'The intended recipient no longer exists.');
-      const target = command.targetId ? getOwn(world.entities, command.targetId) : undefined;
+      const target = command.targetId ? entityOwn(world.entities, command.targetId) : undefined;
       if (
         command.targetId &&
         (!target?.actor?.alive ||
@@ -1199,7 +1231,7 @@ function prepareNativeOperation(
       break;
     }
     case 'pickup': {
-      const target = getOwn(world.entities, command.targetId);
+      const target = entityOwn(world.entities, command.targetId);
       if (!canHandleItems(world, source) || !(target?.kind === 'item-pile' || target?.remains))
         return reject('unavailable', 'Choose a visible pile and an actor able to handle items.');
       const stack = command.itemId
@@ -1221,7 +1253,7 @@ function prepareNativeOperation(
           return reject('unavailable', `Only ${stack?.quantity ?? 0} are in that stack.`);
         if (
           command.quantity < stack.quantity &&
-          (world.entities[stack.id]?.container || stack.individuality === 'individual')
+          (entityGet(world.entities, stack.id)?.container || stack.individuality === 'individual')
         )
           return reject('indivisible', 'That item cannot be divided; pick up the whole of it.');
       }
@@ -1285,7 +1317,7 @@ function prepareNativeOperation(
     }
     case 'strike': {
       const definition = strikeDefinition(command.definitionId, world, command.weaponItemId);
-      const target = getOwn(world.entities, command.targetId);
+      const target = entityOwn(world.entities, command.targetId);
       if (!definition) return reject('unknown-action', 'Choose a registered strike.');
       if (!supportsStrike(actor, definition))
         return reject('unsupported-body', 'This body cannot perform that natural strike.');
@@ -1339,7 +1371,7 @@ function prepareNativeOperation(
         const problem = equipmentProblem(world, actor.id, command.itemId, 'guard');
         if (problem) return reject('shield-unavailable', problem);
       }
-      const target = command.targetId ? world.entities[command.targetId] : undefined;
+      const target = command.targetId ? entityGet(world.entities, command.targetId) : undefined;
       const position = target && worldPosition(target);
       const origin = worldPosition(actor);
       if (
@@ -1375,7 +1407,7 @@ function prepareNativeOperation(
       break;
     }
     case 'gather': {
-      const target = getOwn(world.entities, command.targetId);
+      const target = entityOwn(world.entities, command.targetId);
       if (target?.resource?.cast)
         return reject('requires-cast', 'This source requires its supported one-cast action.');
       if (!target?.resource || target.resource.quantity < 1)
@@ -1449,7 +1481,7 @@ function prepareNativeOperation(
     case 'hunt': {
       if (combatRecoveryDeadline(world, actor) > world.simTime)
         return reject('combat-recovery', BASE_GUARD_TEXT.recovery);
-      const target = getOwn(world.entities, command.targetId);
+      const target = entityOwn(world.entities, command.targetId);
       const practice = command.type === 'practice-shot';
       if (
         !target ||
@@ -1534,7 +1566,7 @@ function prepareNativeOperation(
       break;
     }
     case 'harvest': {
-      const target = getOwn(world.entities, command.targetId);
+      const target = entityOwn(world.entities, command.targetId);
       if (
         !target?.remains ||
         target.remains.phase !== 'fresh' ||
@@ -1552,7 +1584,7 @@ function prepareNativeOperation(
     }
     case 'cook': {
       const definition = preparationDefinition(world, command);
-      const heat = getOwn(world.entities, command.heatId);
+      const heat = entityOwn(world.entities, command.heatId);
       if (!definition)
         return reject('stale-preparation', 'Choose a current installed food preparation.');
       if (!heat?.heat?.lit || !visible(world, actor, heat))
@@ -1571,7 +1603,7 @@ function prepareNativeOperation(
       break;
     }
     case 'fish': {
-      const target = getOwn(world.entities, command.targetId);
+      const target = entityOwn(world.entities, command.targetId);
       const definition = castDefinition(world, target);
       const problem =
         castBindingProblem(world, actor, target, command.itemId) ??
@@ -1648,7 +1680,7 @@ function prepareNativeOperation(
     case 'tend-fire': {
       if (!isFireCareCommand(command))
         return reject('invalid-command', 'Choose to light, fuel or put out a campfire.');
-      const fire = getOwn(world.entities, command.targetId);
+      const fire = entityOwn(world.entities, command.targetId);
       const guard = fireStockGuard(command);
       const fuel = guard ? bindFireFuel(world, actor.id, guard, command.itemId) : undefined;
       const problem = fireCareProblem(
@@ -1695,7 +1727,7 @@ function prepareNativeOperation(
       break;
     }
     case 'status-effect': {
-      const target = getOwn(world.entities, command.targetId);
+      const target = entityOwn(world.entities, command.targetId);
       const definition = world.statusEffectPolicy.definitions.find(
         (d) => d.id === command.definitionId,
       );
@@ -1850,15 +1882,16 @@ function executeCommandNative(
   const digest = canonicalJson(command);
   const receipt = options.nativeController
     ? undefined
-    : getOwn(original.commandReceipts, command.id);
+    : orderedRecordOwn(original.commandReceipts, command.id);
   if (receipt)
     return receipt.digest === digest
       ? { world: original, events: [], outcome: { ...receipt.outcome, code: 'duplicate' } }
       : reject('idempotency-conflict', 'This command ID was already used with another body.');
   if (!nativeCommandSupported(original, command.type))
     return reject('unsupported-capability', 'This world does not install that action.');
+  const activity = isActivityCommand(command);
   const prepared =
-    isActivityCommand(command) || command.type === 'learn-record'
+    activity || command.type === 'learn-record'
       ? prepareNativeOperation(original, command, {
           constructionPermissions: options.constructionPermissions,
         })
@@ -1867,6 +1900,55 @@ function executeCommandNative(
     return { world: original, events: [], outcome: prepared };
   const action = prepared && !('ok' in prepared) ? prepared : undefined;
   let result = outcome(true, 'accepted', 'Action started.');
+  const statusDefinition =
+    options.preview && command.type === 'status-effect'
+      ? original.statusEffectPolicy.definitions.find((d) => d.id === command.definitionId)
+      : undefined;
+  // These choices share complete record admission without discarded episode/evidence
+  // mutations. Status activation also proves ongoing-work capacity at its owner; if
+  // interruption might be needed to free capacity, retain exact disposable execution.
+  // Nested callers still execute below to charge their existing work allowance.
+  let choiceOutcome: Outcome | undefined;
+  const equipmentPreview =
+    options.preview &&
+    standalone &&
+    !options.nativeController &&
+    activity &&
+    command.type === 'equip';
+  if (options.preview && standalone && !options.nativeController && activity) {
+    if (command.type === 'coaching' && command.operation !== 'feedback')
+      choiceOutcome = coachingChoiceOutcome(
+        practiceDefinition(original, command.attributeId)!,
+        command.operation,
+      );
+    else if (
+      command.type === 'status-effect' &&
+      statusDefinition &&
+      (command.operation === 'deactivate' ||
+        statusWorkFits(original, entityGet(original.entities, command.targetId)!, statusDefinition))
+    )
+      choiceOutcome = statusEffectChoiceOutcome(statusDefinition, command.operation);
+  }
+  if (choiceOutcome || equipmentPreview) {
+    const source = entityGet(original.entities, command.actorId)!;
+    if (isRecordedActivityCommand(command)) {
+      const plan = source.actor!.agency.plan;
+      const record = prepareActivity(
+        original,
+        command,
+        command.id,
+        startingActivityView(original, command),
+        plan?.steps.some((step) => step.id === command.id) ? plan.id : undefined,
+      );
+      if ('ok' in record) return { world: original, events: [], outcome: record };
+    }
+    if (choiceOutcome)
+      return {
+        world: original,
+        events: [],
+        outcome: choiceOutcome,
+      };
+  }
   // These scheduled families have no material admission after prepareNativeOperation.
   // Replenishment checks its source/meter/reach here; following prepares its route without
   // recording a sighting. Their remaining setup adds effects, not starting refusals.
@@ -1908,7 +1990,7 @@ function executeCommandNative(
     };
   if (options.preview && standalone && command.type === 'learn-record')
     return { world: original, events: [], outcome: result };
-  const source = getOwn(original.entities, command.actorId)!;
+  const source = entityOwn(original.entities, command.actorId)!;
   if (options.nativeController && (source.actor?.controller !== 'native' || !source.threat))
     return reject(
       'unsupported-controller',
@@ -1935,7 +2017,7 @@ function executeCommandNative(
       };
   }
   const world = draftWorld(original);
-  const actor = world.entities[command.actorId]!;
+  const actor = entityGet(world.entities, command.actorId)!;
   const component = actor.actor!;
   const events: WorldEvent[] = [];
   if (component.action?.guard && world.simTime >= component.action.guard.expiresAt)
@@ -1945,6 +2027,7 @@ function executeCommandNative(
   // docs/projects/parallel-batch-03-personal-game-tech-design.md#algorithm-boundary
   const experience =
     !options.nativeController &&
+    !equipmentPreview &&
     !(options.preview && command.type === 'drop') &&
     isRecordedActivityCommand(command)
       ? beginActivity(
@@ -2097,7 +2180,7 @@ function executeCommandNative(
         // grants neither physical access nor another human's private contents.
         // Merge-target discovery mirrors these checks in object-access mergeTargetAvailable.
         const item = itemFor(world, command.itemId),
-          destination = getOwn(world.entities, command.targetId);
+          destination = entityOwn(world.entities, command.targetId);
         if (!canHandleItems(world, actor) || !item || !destination)
           return reject('unavailable', 'Choose an accessible item and destination.');
         try {
@@ -2140,7 +2223,7 @@ function executeCommandNative(
             item.placementRevision !== command.placementRevision ||
             // Moving a bag retains the contents the player reviewed.
             (command.expectedContentsRevision !== undefined &&
-              (world.entities[item.id]!.inventoryRevision ?? 0) !==
+              (entityGet(world.entities, item.id)!.inventoryRevision ?? 0) !==
                 command.expectedContentsRevision) ||
             targetRevision !== command.targetRevision
           )
@@ -2373,6 +2456,11 @@ function executeCommandNative(
           message: description.message,
           itemId: equippedId,
         };
+        // The isolated physical transaction still checks nested custody, splitting,
+        // revisions and attachments. Its successful preview needs no discarded
+        // event or witness evidence. Nested callers retain their existing charges.
+        // docs/action-capabilities.md#action-availability-and-temporary-execution
+        if (equipmentPreview) return { world: original, events: [], outcome: result };
         emit(world, events, 'equipped', subjectNarration(actor, description.narration), actor);
         break;
       }
@@ -2442,7 +2530,7 @@ function executeCommandNative(
         break;
       }
       case 'status-effect': {
-        const target = getOwn(world.entities, command.targetId);
+        const target = entityOwn(world.entities, command.targetId);
         const definition = world.statusEffectPolicy.definitions.find(
           (d) => d.id === command.definitionId,
         );
@@ -2522,11 +2610,7 @@ function executeCommandNative(
             return reject('not-active', 'That status effect is not active.');
           deactivateStatusEffect(world, target, definition, events, 'voluntary', actor.id);
         }
-        result = outcome(
-          true,
-          'status-effect',
-          `${definition.label}: ${command.operation === 'activate' ? 'activated' : 'deactivated'}.`,
-        );
+        result = statusEffectChoiceOutcome(definition, command.operation);
         recordActivityEffect(world, command.id, {
           subjectId: target.id,
           property: definition.label,
@@ -2615,7 +2699,7 @@ function executeCommandNative(
         delete actor.spatial.fallVelocity;
         for (const floor of bodyPolicy(world)!.recovery!.floors) {
           const definition = attributeDefinition(world, floor.attributeId)!;
-          const prior = readAttribute(component, definition);
+          const prior = readAttribute(world, actor, definition);
           if (typeof prior !== 'number' || definition.schema.kind !== 'number')
             return reject('cannot-recover', bodyPolicy(world)!.recovery!.refusalText);
           const value = Math.max(prior, floor.value);
@@ -2666,9 +2750,9 @@ function executeCommandNative(
         const volume = command.volume ?? 'normal';
         if (!isSpeechVolume(volume))
           return reject('invalid-volume', 'Choose whisper, normal or shout.');
-        const target = command.targetId ? getOwn(world.entities, command.targetId) : undefined;
+        const target = command.targetId ? entityOwn(world.entities, command.targetId) : undefined;
         const intendedRecipientId = command.targetId ?? command.intendedRecipientId;
-        if (intendedRecipientId && !getOwn(world.entities, intendedRecipientId))
+        if (intendedRecipientId && !entityOwn(world.entities, intendedRecipientId))
           return reject('invalid-recipient', 'The intended recipient no longer exists.');
         if (
           command.targetId &&
@@ -2751,7 +2835,7 @@ function executeCommandNative(
       }
       case 'teach': {
         if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot teach through speech.');
-        const target = getOwn(world.entities, command.targetId);
+        const target = entityOwn(world.entities, command.targetId);
         const recipe = getOwn(world.recipes, command.recipeId);
         if (
           !target?.actor?.alive ||
@@ -2802,7 +2886,7 @@ function executeCommandNative(
       const equippedId = atomicObjects(world, (candidate) => {
         // The chosen physical action replaces current work in this same transaction. Pure
         // admission already checked real reservations on the selected/conflicting items.
-        candidate.entities[actor.id]!.actor!.action = null;
+        entityGet(candidate.entities, actor.id)!.actor!.action = null;
         return equipLot(candidate, actor.id, toolId, command.id);
       });
       if (command.type === 'guard') action.itemId = equippedId;
@@ -2883,7 +2967,7 @@ function executeCommandNative(
         : action.type === 'tend-fire'
           ? subjectNarration(
               actor,
-              `${fireCareStartText(action.fireOperation!, world.entities[action.targetId!] ?? 'fire')}.`,
+              `${fireCareStartText(action.fireOperation!, entityGet(world.entities, action.targetId!) ?? 'fire')}.`,
             )
           : subjectNarration(
               actor,
@@ -2896,7 +2980,8 @@ function executeCommandNative(
   }
   if (options.preview) return { world: original, events: [], outcome: result };
   if (!action && experience) endActivity(world, actor.id, command.id, result);
-  if (!options.nativeController) world.commandReceipts[command.id] = { digest, outcome: result };
+  if (!options.nativeController)
+    orderedRecordSet(world.commandReceipts, command.id, { digest, outcome: result });
   reconcileConditions(world, actor, events);
   // A queued child is marked running by its plan owner after this command returns.
   // Direct changes and consent replies can reconcile now without mistaking that gap for departure.
@@ -2958,7 +3043,7 @@ function completeAction(
   const produce = (definitionId: string, quantity: number): string => {
     const itemId = addItem(world, actor.id, definitionId, quantity);
     if (world.itemDefinitions[definitionId]?.assemblyMaterial && action.materialOriginIds?.length)
-      world.entities[itemId]!.item!.materialOriginIds = [...action.materialOriginIds];
+      entityGet(world.entities, itemId)!.item!.materialOriginIds = [...action.materialOriginIds];
     outputs.push({ port: definitionId, itemId, definitionId, quantity });
     return itemId;
   };
@@ -2989,7 +3074,7 @@ function completeAction(
       break;
     }
     case 'pickup': {
-      const target = world.entities[action.targetId ?? ''];
+      const target = entityGet(world.entities, action.targetId ?? '');
       if (!target || !visible(world, actor, target) || !actionInReach(world, actor, action)) {
         failAction(world, actor, events, 'the pile is no longer visible or within reach.');
         return;
@@ -3036,7 +3121,7 @@ function completeAction(
       );
       break;
     case 'gather': {
-      const target = world.entities[action.targetId ?? ''];
+      const target = entityGet(world.entities, action.targetId ?? '');
       if (!target?.resource || target.resource.quantity <= 0) {
         failAction(world, actor, events, 'the resource is depleted.');
         return;
@@ -3145,7 +3230,7 @@ function completeAction(
     case 'strike': {
       if (action.strikePhase === 'recovery') break; // Impact already committed; recovery completes the attempt.
       const definition = strikeDefinition(action.definitionId, world, action.weaponItemId);
-      const target = world.entities[action.targetId ?? ''];
+      const target = entityGet(world.entities, action.targetId ?? '');
       // Admission is not a hit: recheck the pinned definition and live physical target.
       // docs/targeted-actions.md#targeted-strikes
       if (
@@ -3224,7 +3309,7 @@ function completeAction(
       break;
     }
     case 'harvest': {
-      const target = world.entities[action.targetId ?? ''];
+      const target = entityGet(world.entities, action.targetId ?? '');
       if (
         !target?.remains ||
         target.remains.phase !== 'fresh' ||
@@ -3256,7 +3341,7 @@ function completeAction(
     case 'cook': {
       const definition =
         action.foodPreparation && preparationForBinding(world, action.foodPreparation);
-      if (!definition || !world.entities[action.heatId ?? '']?.heat?.lit) {
+      if (!definition || !entityGet(world.entities, action.heatId ?? '')?.heat?.lit) {
         failAction(
           world,
           actor,
@@ -3291,7 +3376,7 @@ function completeAction(
       break;
     }
     case 'fish': {
-      const target = world.entities[action.targetId ?? ''];
+      const target = entityGet(world.entities, action.targetId ?? '');
       const definition = castDefinition(world, target);
       const problem =
         castBindingProblem(world, actor, target, action.itemId!, action.fishing) ??
@@ -3348,7 +3433,7 @@ function completeAction(
       const done = completeFireCare(
         world,
         actor,
-        world.entities[action.targetId ?? ''],
+        entityGet(world.entities, action.targetId ?? ''),
         action.fireOperation!,
         action.id,
         events,
@@ -3452,6 +3537,7 @@ function advanceAction(
 ): void {
   const action = actor.actor!.action;
   if (!action) return;
+  countDomainWork('nativeActionCalls');
   if (!nativeCommandSupported(world, action.type)) {
     failAction(world, actor, events, 'this world no longer supports the action.');
     return;
@@ -3551,7 +3637,8 @@ function advanceAction(
   }
   if (
     action.targetLife !== undefined &&
-    (world.entities[action.targetId ?? '']?.actor?.physicalLife ?? 0) !== action.targetLife
+    (entityGet(world.entities, action.targetId ?? '')?.actor?.physicalLife ?? 0) !==
+      action.targetLife
   ) {
     failAction(world, actor, events, 'the targeted physical life has ended.');
     return;
@@ -3560,7 +3647,7 @@ function advanceAction(
     const permission = attackPermissionProblem(
       world,
       actor,
-      world.entities[action.targetId ?? ''],
+      entityGet(world.entities, action.targetId ?? ''),
       action,
     );
     if (permission) {
@@ -3573,7 +3660,7 @@ function advanceAction(
   if (
     action.targetId &&
     action.type !== 'follow' &&
-    !activelyParticipates(world.entities[action.targetId])
+    !activelyParticipates(entityGet(world.entities, action.targetId))
   ) {
     failAction(world, actor, events, 'the target is no longer participating.');
     return;
@@ -3605,8 +3692,8 @@ function advanceAction(
       (!equippedItem(world, actor.id, 'melee', action.weaponItemId) ||
         !accessiblePossession(world, actor.id, action.weaponItemId))) ||
       capabilityBlocked(world, actor, 'actions') ||
-      !world.entities[action.targetId!]?.actor?.alive ||
-      !visible(world, actor, world.entities[action.targetId!]!))
+      !entityGet(world.entities, action.targetId!)?.actor?.alive ||
+      !visible(world, actor, entityGet(world.entities, action.targetId!)!))
   ) {
     failAction(
       world,
@@ -3623,7 +3710,7 @@ function advanceAction(
       !accessiblePossession(world, actor.id, action.itemId) ||
       !tool ||
       world.itemDefinitions[tool.definitionId]?.gatheringTool?.resourceId !==
-        world.entities[action.targetId!]?.resource?.definitionId
+        entityGet(world.entities, action.targetId!)?.resource?.definitionId
     ) {
       failAction(world, actor, events, 'the equipped gathering tool is no longer available.');
       return;
@@ -3682,7 +3769,7 @@ function advanceAction(
     }
     if (
       ['hunt', 'strike'].includes(action.type) &&
-      !world.entities[action.targetId ?? '']?.actor?.alive
+      !entityGet(world.entities, action.targetId ?? '')?.actor?.alive
     ) {
       failAction(world, actor, events, 'the target is no longer alive.');
       return;
@@ -3758,7 +3845,7 @@ function advanceAction(
       world,
       actor,
       events,
-      action.type === 'pickup' && !world.entities[action.targetId ?? '']
+      action.type === 'pickup' && !entityGet(world.entities, action.targetId ?? '')
         ? 'the pile is no longer available.'
         : 'the target moved out of reach.',
     );
@@ -3791,15 +3878,15 @@ function advanceAction(
     action.type === 'cook' &&
     (!action.foodPreparation ||
       !preparationForBinding(world, action.foodPreparation) ||
-      !world.entities[action.heatId ?? '']?.heat?.lit)
+      !entityGet(world.entities, action.heatId ?? '')?.heat?.lit)
   ) {
     failAction(world, actor, events, 'the selected preparation changed or its heat went out.');
     return;
   }
   if (action.type === 'replenish') {
     const definition = attributeDefinition(world, action.attributeId ?? '');
-    const target = world.entities[action.targetId ?? ''];
-    const value = definition && readAttribute(actor.actor!, definition);
+    const target = entityGet(world.entities, action.targetId ?? '');
+    const value = definition && readAttribute(world, actor, definition);
     if (
       !definition?.reservoir ||
       definition.version !== action.definitionVersion ||
@@ -3891,7 +3978,7 @@ function advanceAction(
     action.strikePhase === 'windup'
   ) {
     const definition = strikeDefinition(action.definitionId, world, action.weaponItemId)!;
-    const target = world.entities[action.targetId!]!;
+    const target = entityGet(world.entities, action.targetId!)!;
     const permission = attackPermissionProblem(world, actor, target, action);
     if (permission) {
       failAction(world, actor, events, permission.message);
@@ -3994,15 +4081,11 @@ function advanceAction(
 function nativeReservoirResponse(world: WorldState, actor: Entity): void {
   const component = actor.actor!;
   if (component.controller !== 'npc' || component.action || !component.attributes) return;
-  for (const [id, state] of Object.entries(component.attributes ?? {})) {
+  for (const id of Object.keys(component.attributes ?? {})) {
     const definition = attributeDefinition(world, id)!;
-    if (
-      !definition.reservoir ||
-      !definition.concern ||
-      typeof state.value !== 'number' ||
-      state.value >= definition.concern.below
-    )
-      continue;
+    if (!definition.reservoir || !definition.concern) continue;
+    const value = readAttribute(world, actor, definition);
+    if (typeof value !== 'number' || value >= definition.concern.below) continue;
     const sources = worldRootEntities(world)
       .filter(
         (target) =>
@@ -4036,6 +4119,10 @@ function nativeReservoirResponse(world: WorldState, actor: Entity): void {
 function nativeParticipants(world: WorldState): {
   actors: string[];
   ambient: string[];
+  ambientMovers: string[];
+  animals: string[];
+  heatSources: string[];
+  territorial: string[];
   statuses: string[];
   projectileBodies: string[];
 } {
@@ -4046,6 +4133,14 @@ function nativeParticipants(world: WorldState): {
   return {
     actors: active.filter((e) => e.actor).map((e) => e.id),
     ambient: active.map((e) => e.id),
+    // Flight/fall continue existing components; new native component producers must
+    // refresh this roster just as commands/body replacement already do.
+    ambientMovers: active
+      .filter((e) => e.animal || e.spatial.flight || e.spatial.fallVelocity !== undefined)
+      .map((e) => e.id),
+    animals: active.filter((e) => e.animal).map((e) => e.id),
+    heatSources: active.filter((e) => e.heat).map((e) => e.id),
+    territorial: active.filter((e) => e.threat).map((e) => e.id),
     statuses: roots.filter((e) => mayAdvanceStatusEffects(world, e)).map((e) => e.id),
     projectileBodies: roots
       .filter((e) => activelyParticipates(e) && (e.actor || e.practiceTarget))
@@ -4053,12 +4148,116 @@ function nativeParticipants(world: WorldState): {
   };
 }
 
+/** Current decision eligibility, shared by global preparation and local invalidation. */
+function nativeActorReactive(world: WorldState, id: string): boolean {
+  const entity = entityGet(world.entities, id),
+    actor = entity?.actor;
+  return !!(
+    actor &&
+    (entity.threat ||
+      actor.action?.type === 'follow' ||
+      actor.agency.plan ||
+      (actor.controller === 'npc' &&
+        Object.keys(actor.attributes ?? {}).some((attributeId) => {
+          const definition = attributeDefinition(world, attributeId)!;
+          if (!definition.reservoir || !definition.concern) return false;
+          const value = readAttribute(world, entity, definition);
+          return typeof value === 'number' && value < definition.concern.below;
+        })))
+  );
+}
+
+/** Ordinary running plans do not inspect private work progress. Continuing activity
+ * controls do, so they retain detailed progress; an inconsistent frontier also falls back. */
+function coarsePlanAllowsWork(entity: Entity): boolean {
+  const actor = entity.actor!,
+    plan = actor.agency.plan;
+  if (!plan) return true;
+  if (plan.status !== 'active' || activeActivityControl(plan)) return false;
+  const running = plan.steps.filter((step) => step.status === 'running');
+  return running.length === 1 && running[0]!.actionId === actor.action?.id;
+}
+
+/** The first trusted coarse family omits only repeated stationary-work checks. Bodies,
+ * sensing and actual completion remain detailed. No camera or remembered knowledge grants
+ * eligibility. The existing motion envelope includes every possible move this interval. */
+function coarseWorkCandidates(
+  world: WorldState,
+  actorIds: readonly string[],
+  ambientIds: readonly string[],
+  seconds: number,
+): ReadonlyMap<string, string> {
+  const selected = new Map<string, string>();
+  if (Object.keys(world.projectiles ?? {}).length) return selected;
+  const candidates = actorIds.filter((id) => {
+    const entity = entityGet(world.entities, id),
+      actor = entity?.actor,
+      action = actor?.action;
+    return (
+      !!entity &&
+      actor?.controller === 'npc' &&
+      actor.alive &&
+      !actor.incapacitated &&
+      coarsePlanAllowsWork(entity) &&
+      !entity.threat &&
+      entity.placement?.mode === 'world' &&
+      !!supportedPosition(entity) &&
+      !entity.spatial.flight &&
+      entity.spatial.fallVelocity === undefined &&
+      action?.type === 'craft' &&
+      action.stage === 'working' &&
+      !action.assemblyPhase &&
+      action.consumed.length > 0 &&
+      installedActionMeaning(world, action.type)?.coarseWork === 'consumed-stationary-craft' &&
+      !capabilityBlocked(world, entity, 'locomotion') &&
+      !capabilityBlocked(world, entity, 'actions')
+    );
+  });
+  if (!candidates.length) return selected;
+  const envelopes = ambientIds.flatMap((id) => {
+    const entity = entityGet(world.entities, id)!;
+    if (!entity.actor?.alive || !activelyParticipates(entity)) return [];
+    const senses = sensesFor(world, entity);
+    const radius = Math.max(0, ...senses.map((sense) => ('radius' in sense ? sense.radius : 0)));
+    return [{ entity, radius, reach: motionReach(world, entity, seconds) }];
+  });
+  for (const id of candidates) {
+    const actor = entityGet(world.entities, id)!;
+    const site = worldPosition(actor),
+      body = bodyProfile(actor);
+    const isolated = envelopes.every(({ entity, radius, reach }) => {
+      if (entity.id === id) return true;
+      countDomainWork('nativeCoarseEnvelopesTested');
+      const action = entity.actor!.action;
+      if (action?.ranged || action?.targetId === id || !Number.isFinite(radius + reach))
+        return false;
+      const other = bodyProfile(entity);
+      return (
+        distance3D(site, worldPosition(entity)) >
+        radius + reach + body.height + other.height + body.radius + other.radius
+      );
+    });
+    if (isolated) selected.set(id, actor.actor!.action!.id);
+  }
+  return selected;
+}
+
 type NativeMechanics = {
   remainingSeconds: number;
   interval: ReturnType<typeof nativeInterval>;
   status: ReturnType<typeof prepareStatusRates>;
+  statusIntegration: ReturnType<typeof prepareStatusIntegration>;
   travelFor: (id: string) => number;
   reactiveActors: string[];
+  /** Ordered possible actions, including responders which may act before re-prediction. */
+  actionCandidates: string[];
+  /** Lit at prediction; an event which changes this membership ends that prediction. */
+  burningCandidates: string[];
+  /** Exact action identities certified outside every participant's reachable sight. */
+  coarseWork: ReadonlyMap<string, string>;
+  /** Quiet wandering is handled by its due queue; retain every other possible mover. */
+  ambientMovingCandidates?: string[];
+  motionIds: string[];
   /** Captured rates may wait for a boundary: no serial clamps, per-slice damage or transfer. */
   deferRates: boolean;
   /** Entities other participants' statuses depend on; their changes re-predict globally. */
@@ -4081,22 +4280,37 @@ function* integrateEndpoint(
     working: ReadonlyMap<string, string>;
     /** Fires lit when this slice began; postponed time uses the unchanged current state. */
     burning: ReadonlySet<string>;
+    deferProgress: (id: string, action: Action, seconds: number) => boolean;
   },
 ): Generator<void> {
   const { interval } = mechanics;
+  if (rateSeconds) {
+    countDomainWork('nativeRateMaterializations');
+    countDomainWork('nativeRateParticipants', participants.actors.length);
+  }
   const bodyRates = rateSeconds
-    ? integrateStatusRates(world, mechanics.status, rateSeconds, events, interval.drains, true)
+    ? integrateStatusRates(
+        world,
+        mechanics.status,
+        rateSeconds,
+        events,
+        interval.drains,
+        true,
+        mechanics.statusIntegration,
+        true,
+      )
     : [];
   const bodyRatesByTarget = new Map(bodyRates.map((rate) => [rate.targetId, rate]));
   const exitDue =
     !!work &&
     Object.values(world.exitExposures ?? {}).some((at) => at - world.simTime <= TIME_EPSILON);
   const progressWork = (id: string) => {
-    const actor = world.entities[id],
+    const actor = entityGet(world.entities, id),
       component = actor?.actor;
     if (!actor || !component?.alive || component.incapacitated || !activelyParticipates(actor))
       return;
-    if (work && work.working.get(id) === component.action?.id) {
+    if (work && component.action && work.working.get(id) === component.action.id) {
+      if (work.deferProgress(id, component.action, work.seconds)) return;
       const following = component.action?.type === 'follow';
       const stage = component.action?.stage;
       advanceAction(world, actor, following ? 0 : work.seconds, events, constructionPermissions);
@@ -4106,8 +4320,8 @@ function* integrateEndpoint(
   // Drains folded into a status net flow were applied there (PF13.12).
   const folded = (id: string, kind: 'reservoir') =>
     interval.drains.some((drain) => drain.targetId === id && drain.kind === kind);
-  for (const id of participants.actors) {
-    const actor = world.entities[id],
+  for (const id of rateSeconds ? participants.actors : (work?.working.keys() ?? [])) {
+    const actor = entityGet(world.entities, id),
       component = actor?.actor;
     if (!actor || !component?.alive || component.incapacitated || !activelyParticipates(actor))
       continue;
@@ -4127,11 +4341,11 @@ function* integrateEndpoint(
     for (const id of participants.actors) progressWork(id);
   }
   if (!rateSeconds) return;
-  for (const id of participants.ambient) {
-    const entity = world.entities[id];
+  for (const id of work?.burning ?? mechanics.burningCandidates) {
+    const entity = entityGet(world.entities, id);
     // Fires burn for the state they had when the slice began: one lit by work finishing at
     // the endpoint gained no burn, and one put out at the endpoint burned throughout.
-    if (entity?.heat && (work ? work.burning.has(id) : entity.heat.lit)) {
+    if (entity?.heat && (work !== undefined || entity.heat.lit)) {
       entity.heat.fuelSeconds = Math.max(0, entity.heat.fuelSeconds - rateSeconds);
       if (entity.heat.fuelSeconds === 0 && entity.heat.lit) {
         entity.heat.lit = false;
@@ -4144,13 +4358,129 @@ function* integrateEndpoint(
 const nativeContinuations = new WeakMap<
   WorldState,
   {
-    mechanics: NativeMechanics;
-    participants: ReturnType<typeof nativeParticipants>;
-    crossings: CrossingCache;
+    mechanics?: NativeMechanics;
+    participants?: ReturnType<typeof nativeParticipants>;
+    /** Selected operations are always rechecked before reuse; these are not truth certificates. */
+    statusPreparations: ReadonlyMap<string, ReturnType<typeof prepareStatusRates>>;
+    statusIntegration?: ReturnType<typeof prepareStatusIntegration>;
     /** Flyers whose takeoff/landing awaits local re-prediction at the next start boundary. */
     localChanges?: ReadonlySet<string>;
+    wander?: AnimalWanderPreparation;
   }
 >();
+
+type HistoryProjection = Partial<Pick<WorldState, 'events' | 'archivedEventCount' | 'memories'>> &
+  Partial<Pick<NonNullable<WorldState['experience']>, 'awareness' | 'summaries'>> &
+  Partial<Pick<WorldState['actionExperience'], 'occurrences'>>;
+const historyProjectionRoots = new Set([
+  'events',
+  'archivedEventCount',
+  'memories',
+  'experience',
+  'actionExperience',
+]);
+const historyProjectionFields = new Set([
+  'events',
+  'archivedEventCount',
+  'memories',
+  'awareness',
+  'summaries',
+  'occurrences',
+]);
+/** Removal preserves both record identity and order; protected active records cannot
+ * move to cold storage. Only changed arrays are visited. */
+function retainsHistory<T>(
+  before: readonly T[],
+  after: readonly T[],
+  required?: (entry: T) => boolean,
+): boolean {
+  if (before === after) return true;
+  let position = 0;
+  for (const entry of before) {
+    if (entry === after[position]) position++;
+    else if (required?.(entry)) return false;
+  }
+  return position === after.length;
+}
+function retainsHistoryMap<T>(
+  before: Record<string, T[]>,
+  after: Record<string, T[]>,
+  required?: (entry: T) => boolean,
+): boolean {
+  if (before === after) return true;
+  return [...new Set([...Object.keys(before), ...Object.keys(after)])].every((id) =>
+    retainsHistory(before[id] ?? [], after[id] ?? [], required),
+  );
+}
+/** Relocate already committed history without settling unrelated physical calculations.
+ * Record edits use ordinary mutation/materialization; only proven ordered removal
+ * preserves prediction. Other experience/action fields never pass through this API.
+ * Recovery never reconstructs this process-local proof.
+ * docs/projects/performance-overhaul/saved-native-calculations.md */
+export function projectWorldHistory(world: WorldState, projection: HistoryProjection): WorldState {
+  const keys = Object.keys(projection);
+  if (keys.some((key) => !historyProjectionFields.has(key)))
+    throw new Error('History residency cannot change mechanical world fields.');
+  if ((projection.awareness || projection.summaries) && !world.experience)
+    throw new Error('History residency requires existing character experience.');
+  if (
+    keys.every((key) => {
+      const owner =
+        key === 'awareness' || key === 'summaries'
+          ? world.experience
+          : key === 'occurrences'
+            ? world.actionExperience
+            : world;
+      return owner && Reflect.get(owner, key) === Reflect.get(projection, key);
+    })
+  )
+    return world;
+  const pure =
+    (!projection.events || retainsHistory(world.events, projection.events)) &&
+    (projection.archivedEventCount ?? world.archivedEventCount ?? 0) ===
+      (world.archivedEventCount ?? 0) +
+        world.events.length -
+        (projection.events ?? world.events).length &&
+    (!projection.memories ||
+      (retainsHistoryMap(world.memories, projection.memories) &&
+        retainsCommitmentSchedule(world.memories, projection.memories))) &&
+    (!projection.awareness ||
+      retainsHistoryMap(world.experience!.awareness, projection.awareness)) &&
+    (!projection.summaries ||
+      retainsHistoryMap(world.experience!.summaries, projection.summaries)) &&
+    (!projection.occurrences ||
+      retainsHistoryMap(
+        world.actionExperience.occurrences,
+        projection.occurrences,
+        (entry) => entry.status === 'running',
+      ));
+  const draft = draftWorld(world, { retainNativeValues: pure });
+  const { awareness, summaries, occurrences, ...roots } = projection;
+  Object.assign(draft, roots);
+  if (occurrences) draft.actionExperience = { ...draft.actionExperience, occurrences };
+  if (awareness || summaries)
+    draft.experience = {
+      ...draft.experience!,
+      ...(awareness ? { awareness } : {}),
+      ...(summaries ? { summaries } : {}),
+    };
+  // finishWorld clears interval progress after ordinary semantic edits. Residency is
+  // explicitly pure, so publish a separately owned, identical remainder instead.
+  if (pure && world.nativeInterval) draft.nativeInterval = { ...world.nativeInterval };
+  const result = finishWorld(draft);
+  const continuation = pure && Object.isFrozen(world) ? nativeContinuations.get(world) : undefined;
+  if (
+    continuation &&
+    [...new Set([...Object.keys(world), ...Object.keys(result)])].every(
+      (key) =>
+        historyProjectionRoots.has(key) ||
+        key === 'nativeInterval' ||
+        Reflect.get(world, key) === Reflect.get(result, key),
+    )
+  )
+    nativeContinuations.set(result, continuation);
+  return Object.isFrozen(world) ? freezeWorld(result) : result;
+}
 
 /** Advance a bounded prefix at meaningful/fidelity boundaries.
  * docs/simulation-time.md#native-interval-contract */
@@ -4233,7 +4563,9 @@ function* advanceWorldNative(
   // Only the exact immutable native successor can reuse this prediction. Commands,
   // edits and recovery create another identity and rebuild; forks copy the countdown.
   const continuation = Object.isFrozen(original) ? nativeContinuations.get(original) : undefined;
+  if (continuation?.mechanics) countDomainWork('nativeContinuationsReused');
   let participants = continuation?.participants ?? nativeParticipants(original);
+  const wanderQueue = new AnimalWanderQueue(continuation?.wander);
   const mechanicalRevision = (world: WorldState) =>
     stateChangeRevision(world, 'contribution') +
     stateChangeRevision(world, 'body') +
@@ -4241,18 +4573,81 @@ function* advanceWorldNative(
     stateChangeRevision(world, 'participation') +
     stateChangeRevision(world, 'attribute') +
     world.moduleManifest.revision;
-  let world = draftWorld(original);
+  let world = draftWorld(original, { retainNativeValues: true });
+  wanderQueue.beginNative(world);
   let before = snapshotEncounters(original);
   const events: WorldEvent[] = [];
   let remaining = elapsedSimSeconds,
     intervals = 0,
     motionSlices = 0,
     slicesSinceBoundary = 0;
-  let mechanics: NativeMechanics | undefined = continuation
+  let mechanics: NativeMechanics | undefined = continuation?.mechanics
     ? { ...continuation.mechanics }
     : undefined;
-  let crossings = continuation ? copyCrossings(continuation.crossings) : crossingCache();
+  // Each branch owns its map. Entries contain only existing immutable definitions and
+  // primitive selected operations, and their predicates/bindings are rechecked below.
+  let statusPreparations = new Map(continuation?.statusPreparations);
+  let statusIntegration = continuation?.statusIntegration;
+  const prepareParticipantStatus = (id: string) => {
+    const prepared = prepareStatusRates(
+      world,
+      entityGet(world.entities, id)!,
+      statusPreparations.get(id),
+    );
+    statusPreparations.set(id, prepared);
+    return prepared;
+  };
+  const prepareIntegration = (
+    status: ReturnType<typeof prepareStatusRates>,
+    drains: NativeMechanics['interval']['drains'],
+  ) => {
+    const manifest = readOnlyDraftView(world.moduleManifest),
+      policy = readOnlyDraftView(world.statusEffectPolicy),
+      prior = statusIntegration;
+    // This owner derives grouping only from ordered selected operations, drains and
+    // installed definitions. Current predicate truth was checked above, including
+    // foreign bindings; health, serial clamps and periodic accounting remain unchanged.
+    if (
+      prior &&
+      isImmutableData(manifest) &&
+      isImmutableData(policy) &&
+      prior.manifest === manifest &&
+      prior.policy === policy &&
+      prior.active.length === status.length &&
+      prior.active.every((entry, index) => entry === status[index]) &&
+      prior.drains.length === drains.length &&
+      prior.drains.every((entry, index) => {
+        const other = drains[index]!;
+        return (
+          entry.targetId === other.targetId &&
+          entry.attribute === other.attribute &&
+          entry.rate === other.rate &&
+          entry.kind === other.kind
+        );
+      })
+    ) {
+      countDomainWork('nativeStatusIntegrationReuses');
+      // The integration owner fences its exact current drain array. The scalar
+      // comparison above certifies the grouped data; rebind only its owned header.
+      return (statusIntegration = prior.drains === drains ? prior : { ...prior, drains });
+    }
+    return (statusIntegration = prepareStatusIntegration(world, status, drains));
+  };
+  const crossings = createCrossingCache();
+  // Native-call-owned elapsed work is never published or saved separately. Flush before
+  // effects, invalidation and publication; only this existing action owner mutates progress.
+  // docs/verification/performance/overhaul-simulation-implementation.md#coarse-stationary-crafting-trial--october17-2026-1245-edt
+  const coarseElapsed = new Map<string, { actionId: string; seconds: number }>();
+  const materializeCoarse = () => {
+    for (const [id, pending] of coarseElapsed) {
+      const action = entityGet(world.entities, id)?.actor?.action;
+      if (action?.id === pending.actionId)
+        action.remainingSeconds = Math.max(0, action.remainingSeconds - pending.seconds);
+    }
+    coarseElapsed.clear();
+  };
   const discardMechanics = () => {
+    materializeCoarse();
     mechanics = undefined;
     delete world.nativeInterval;
   };
@@ -4263,6 +4658,7 @@ function* advanceWorldNative(
   let pendingSeconds = 0,
     pendingMechanics: NativeMechanics | undefined;
   const materialize = function* (): Generator<void> {
+    materializeCoarse();
     if (!pendingSeconds) return;
     const seconds = pendingSeconds;
     pendingSeconds = 0;
@@ -4275,17 +4671,87 @@ function* advanceWorldNative(
       options.constructionPermissions ?? [],
     );
   };
-  // A flyer's own takeoff or landing changes only its grounded/activeWork predicates. Unless
-  // another entity's status or plan depends on it, re-predict it alone before the next slice.
+  // Isolated action/body/status changes refresh only their subjects. Incoming foreign
+  // dependencies, current responders, resource transfers and unknown writes stay global.
+  // No local refresh may lengthen the original shared physical deadline.
   let localChanges: Set<string> | undefined = continuation?.localChanges
     ? new Set(continuation.localChanges)
     : undefined;
   const localize = (ids: readonly string[]) => {
     const current = mechanics;
     if (!current || !ids.length) return;
-    if (ids.some((id) => current.referenced.has(id) || current.reactiveActors.includes(id)))
+    if (
+      current.interval.serialClamps ||
+      current.interval.requiresImmediateIntegration ||
+      current.interval.drains.length ||
+      participants.actors.some(
+        (id) => entityGet(world.entities, id)?.actor?.action?.type === 'replenish',
+      ) ||
+      ids.some((id) => current.referenced.has(id))
+    ) {
+      countDomainWork('nativeLocalFallbackCoupled');
       discardMechanics();
-    else for (const id of ids) (localChanges ??= new Set()).add(id);
+    } else if (
+      ids.some((id) => current.reactiveActors.includes(id) || nativeActorReactive(world, id))
+    ) {
+      countDomainWork('nativeLocalFallbackReactive');
+      discardMechanics();
+    } else for (const id of ids) (localChanges ??= new Set()).add(id);
+  };
+  const localizeState = (cursor: ReturnType<typeof captureStateChanges>, manifest: number) => {
+    if (!mechanics) return;
+    const changes = stateChangesSince(world, cursor);
+    if (!changes || !changes.length || world.moduleManifest.revision !== manifest) {
+      countDomainWork('nativeLocalFallbackUnknown');
+      discardMechanics();
+      return;
+    }
+    if (changes.some((change) => !participants.ambient.includes(change.entityId))) {
+      // An inventory object or other unhandled owner can affect collision, stock,
+      // equipment or another actor without having a native status participant.
+      countDomainWork('nativeLocalFallbackUnknown');
+      discardMechanics();
+      return;
+    }
+    if (
+      changes.some(
+        (change) => !['body', 'behavior', 'attribute', 'contribution'].includes(change.field),
+      )
+    ) {
+      countDomainWork(
+        changes.some((change) => change.field === 'participation')
+          ? 'nativeLocalFallbackMembership'
+          : 'nativeLocalFallbackUnknown',
+      );
+      discardMechanics();
+      return;
+    }
+    if (changes.some((change) => change.field === 'body')) {
+      const next = nativeParticipants(world);
+      if (
+        Object.keys(participants).some((key) => {
+          const field = key as keyof typeof participants,
+            before = participants[field],
+            after = next[field];
+          return before.length !== after.length || before.some((id, index) => id !== after[index]);
+        })
+      ) {
+        countDomainWork('nativeLocalFallbackMembership');
+        discardMechanics();
+        return;
+      }
+    }
+    for (const change of changes)
+      countDomainWork(
+        change.field === 'body'
+          ? 'nativeLocalBodyChanges'
+          : change.field === 'contribution'
+            ? 'nativeLocalStatusChanges'
+            : change.field === 'attribute'
+              ? 'nativeLocalAttributeChanges'
+              : 'nativeLocalActivityChanges',
+      );
+    localize([...new Set(changes.map((change) => change.entityId))]);
   };
   while (
     remaining > 0 &&
@@ -4296,14 +4762,18 @@ function* advanceWorldNative(
     // A tiny retained remainder is a forecast, not authority to advance the clock.
     // Recompute from current state; only a real predicate may require a micro-interval.
     if (mechanics && mechanics.remainingSeconds <= TIME_EPSILON) discardMechanics();
-    if (!mechanics) yield* materialize();
+    if (!mechanics) {
+      // Rebuilding prediction does not change already-earned ordinary meter operations.
+      // Current getters read them; actual writers and changed bindings settle their own.
+      yield* materialize();
+    }
     // Observers able to perceive before this start boundary's reconciliation and commands.
     // A change retires or resumes evidence at this instant, not at the slice end (PF13.16).
     let perceiving: string | undefined;
     const perceivers = () =>
       participants.actors
         .filter((id) => {
-          const e = world.entities[id];
+          const e = entityGet(world.entities, id);
           return (
             !!e?.actor?.alive &&
             hasMemory(e) &&
@@ -4314,6 +4784,8 @@ function* advanceWorldNative(
         .join('\0');
     if (!mechanics) perceiving = perceivers();
     const beforeState = mechanicalRevision(world);
+    const startChanges = captureStateChanges(world),
+      startManifest = world.moduleManifest.revision;
     let statusIds = participants.statuses;
     if (!mechanics) {
       if (finishSimulatedExits(world, events)) participants = nativeParticipants(world);
@@ -4323,21 +4795,27 @@ function* advanceWorldNative(
       reconcileItemOffers(world, events);
       reconcileOutings(world, events);
       advanceAppraisals(world, events);
-      for (const id of statusIds) reconcileStatusEffects(world, world.entities[id]!, events);
+      for (const id of statusIds)
+        reconcileStatusEffects(world, entityGet(world.entities, id)!, events);
       advanceCommitments(world, []);
       reconcileConversations(world);
     }
     const beforeDecisions = world.nextId;
     for (const actorId of mechanics?.reactiveActors ?? participants.actors) {
       yield;
-      let actor = world.entities[actorId];
+      let actor = entityGet(world.entities, actorId);
       if (!actor?.actor) continue;
       let component = actor.actor;
       reconcileActivityControl(world, actorId, component.agency.plan);
       if (!component.alive || component.incapacitated) continue;
       reconcileConditions(world, actor, events);
       if (!capabilityBlocked(world, actor, 'actions')) nativeReservoirResponse(world, actor);
-      if (actor.threat && territorialReviewDue(world, actor)) {
+      if (
+        actor.threat &&
+        territorialReviewDue(world, actor) &&
+        !renewQuietTerritorialReview(world, actor)
+      ) {
+        countDomainWork('nativeTerritorialReviewFallbacks');
         yield* materialize();
         const intent = territorialIntention(world, actor, events);
         if (intent) {
@@ -4348,7 +4826,7 @@ function* advanceWorldNative(
           participants = nativeParticipants(transition.world);
           world = draftWorld(transition.world);
           events.push(...transition.events);
-          actor = world.entities[actorId]!;
+          actor = entityGet(world.entities, actorId)!;
           component = actor.actor!;
           if (!transition.outcome.ok) territorialRefusal(world, actor, events);
         }
@@ -4387,7 +4865,7 @@ function* advanceWorldNative(
         world = draftWorld(transition.world);
         discardMechanics();
         events.push(...transition.events);
-        actor = world.entities[actorId]!;
+        actor = entityGet(world.entities, actorId)!;
         component = actor.actor!;
         const started = component.agency.plan!.steps.find((entry) => entry.id === stepId)!;
         started.status = 'running';
@@ -4410,16 +4888,26 @@ function* advanceWorldNative(
         component.action?.type === 'pickup' ||
         component.action?.type === 'follow'
       )
-        advanceAction(world, actor, 0, events, options.constructionPermissions);
+        if (component.action && mechanics?.coarseWork.get(actorId) === component.action.id)
+          countDomainWork('nativeCoarseActionCallsAvoided');
+        else advanceAction(world, actor, 0, events, options.constructionPermissions);
       if (
         priorFollowStage &&
         (component.action?.stage !== priorFollowStage || component.action.path !== priorFollowPath)
       )
         discardMechanics();
       // Work begun here starts silently; the next prediction must bound its completion.
-      if (priorStage === 'approaching' && component.action?.stage === 'working') discardMechanics();
+      if (priorStage === 'approaching' && component.action?.stage === 'working') {
+        countDomainWork('nativeLocalActivityChanges');
+        localize([actorId]);
+      }
     }
-    if (world.nextId !== beforeDecisions) discardMechanics();
+    if (world.nextId !== beforeDecisions) {
+      // Allocation alone supplies no affected-participant proof. Keep the deadline
+      // fallback, while unchanged selected rate calculations can still be reused.
+      countDomainWork('nativeLocalFallbackAllocation');
+      discardMechanics();
+    }
     let occupancy: LandingOccupancy | undefined;
     const landingOccupancy = () => (occupancy ??= new LandingOccupancy(world));
     const trackOccupancy = (e: Entity) => occupancy?.update(e);
@@ -4444,10 +4932,15 @@ function* advanceWorldNative(
       return sources;
     };
     const beforeStartEvents = events.length;
-    for (const id of participants.ambient) {
+    let blockedAnimalClocks: string[] | undefined;
+    for (const id of participants.ambientMovers) {
       yield;
-      const entity = world.entities[id];
-      if (!entity || capabilityBlocked(world, entity, 'locomotion')) continue;
+      const entity = entityGet(world.entities, id);
+      if (!entity) continue;
+      if (capabilityBlocked(world, entity, 'locomotion')) {
+        if (entity.animal) (blockedAnimalClocks ??= []).push(id);
+        continue;
+      }
       advanceFlight(world, entity, 0, events, landingOccupancy, deferFlight);
       advanceAnimal(world, entity, 0);
       trackOccupancy(entity);
@@ -4455,25 +4948,30 @@ function* advanceWorldNative(
     const takeoffs = flushFlight();
     const afterFlight = events.length;
     // Grounding predicates may change even without changing an active status episode.
-    if (
-      mechanicalRevision(world) !== beforeState ||
-      afterFlight - beforeStartEvents !== takeoffs.length
-    )
-      discardMechanics();
-    else localize(takeoffs);
+    if (afterFlight - beforeStartEvents !== takeoffs.length) discardMechanics();
+    else {
+      if (mechanicalRevision(world) !== beforeState) localizeState(startChanges, startManifest);
+      localize(takeoffs);
+    }
     // Nested commands can replace entities or status attributes. Reuse the speech branch's
     // conservative roster helper; never retain revoked draft references across that boundary.
     statusIds = participants.statuses;
     // A retained prediction certifies that no status condition changed since its endpoint
     // reconciliation: thresholds bound it and every other change above discards it.
+    const animalEligibilityMechanics = mechanics && !localChanges ? mechanics : undefined;
+    const statusState = mechanicalRevision(world),
+      statusChanges = captureStateChanges(world),
+      statusManifest = world.moduleManifest.revision,
+      statusAllocation = world.nextId;
     if (!mechanics || localChanges) {
       yield* materialize();
       for (const id of statusIds)
         if (!mechanics || localChanges!.has(id))
-          reconcileStatusEffects(world, world.entities[id]!, events);
+          reconcileStatusEffects(world, entityGet(world.entities, id)!, events);
     }
-    if (events.length !== afterFlight || mechanicalRevision(world) !== beforeState)
-      discardMechanics();
+    if (events.length !== afterFlight || world.nextId !== statusAllocation) discardMechanics();
+    else if (mechanicalRevision(world) !== statusState)
+      localizeState(statusChanges, statusManifest);
     if (perceiving !== undefined && perceivers() !== perceiving) {
       yield* updateEncounters(world, before, events, participants.actors);
       reconcileOutings(world, events, { companyObserved: true });
@@ -4482,27 +4980,82 @@ function* advanceWorldNative(
     if (navigationBlocked(world, participants.actors)) break;
     const intervalState = mechanicalRevision(world);
     if (mechanics && localChanges) {
+      countDomainWork('nativeLocalForecasts');
+      // Changed bodies/capabilities/actions can alter reachable sensing envelopes.
+      // Rebuild that global physical bound; only unrelated rule calculations are local.
+      const travelFor = motionTravelBounds(
+        world,
+        BASE_TIME_POLICY.idleHorizonSeconds,
+        participants.actors,
+        participants.ambient,
+      );
       const refined = refineNativeInterval(
         world,
         localChanges,
         participants,
         mechanics.status,
-        mechanics.travelFor,
+        travelFor,
+        prepareParticipantStatus,
       );
+      const privateWalkers =
+        refined &&
+        new Set([
+          ...[...mechanics.interval.privateWalkers].filter((id) => !localChanges!.has(id)),
+          ...refined.privateWalkers,
+        ]);
       mechanics = refined && {
         ...mechanics,
+        interval: { ...mechanics.interval, privateWalkers: privateWalkers! },
+        motionIds: [...new Set([...participants.ambientMovers, ...privateWalkers!])].sort((a, b) =>
+          a.localeCompare(b),
+        ),
+        actionCandidates: participants.actors.filter(
+          (id) =>
+            mechanics!.reactiveActors.includes(id) ||
+            !!entityGet(world.entities, id)?.actor?.action,
+        ),
+        coarseWork: coarseWorkCandidates(
+          world,
+          participants.actors,
+          participants.ambient,
+          Math.min(refined.seconds, mechanics.remainingSeconds),
+        ),
+        travelFor,
         status: refined.status,
+        statusIntegration: prepareIntegration(refined.status, mechanics.interval.drains),
         ...(refined.seconds < mechanics.remainingSeconds
           ? { remainingSeconds: refined.seconds, endsAt: refined.endsAt }
           : {}),
       };
+      if (mechanics)
+        for (const id of mechanics.interval.privateWalkers) {
+          const action = entityGet(world.entities, id)!.actor!.action!;
+          const travel = mechanics.travelFor(id);
+          action.motionSampleRemainingMetres = Math.min(
+            action.motionSampleRemainingMetres ?? travel,
+            travel,
+          );
+        }
       forgetCrossings(crossings, localChanges);
     }
     localChanges = undefined;
     if (!mechanics) {
+      countDomainWork('nativeForecasts');
       yield* materialize();
+      // Keep supported earned arithmetic through prediction; unsupported effects and
+      // changed cohorts still settle through the existing numeric/work mutation owners.
       reconcileCrossings(world, participants.actors, participants.ambient, crossings);
-      const status = statusIds.flatMap((id) => prepareStatusRates(world, world.entities[id]!));
+      const retained = statusPreparations;
+      statusPreparations = new Map();
+      const status = statusIds.flatMap((id) => {
+        const prepared = prepareStatusRates(
+          world,
+          entityGet(world.entities, id)!,
+          retained.get(id),
+        );
+        statusPreparations.set(id, prepared);
+        return prepared;
+      });
       const travelFor = motionTravelBounds(
         world,
         BASE_TIME_POLICY.idleHorizonSeconds,
@@ -4520,24 +5073,20 @@ function* advanceWorldNative(
       );
       // Only already-urgent native responders and plans can reconsider between known
       // thresholds. Others keep integrating values without repeating decision work.
+      const actionCandidates: string[] = [];
       const reactiveActors = participants.actors.filter((id) => {
-        const actor = world.entities[id]?.actor;
-        return (
-          actor &&
-          (world.entities[id]?.threat ||
-            actor.action?.type === 'follow' ||
-            actor.agency.plan ||
-            (actor.controller === 'npc' &&
-              Object.entries(actor.attributes ?? {}).some(([id, state]) => {
-                const definition = attributeDefinition(world, id)!;
-                return (
-                  definition.reservoir &&
-                  definition.concern &&
-                  typeof state.value === 'number' &&
-                  state.value < definition.concern.below
-                );
-              })))
-        );
+        countDomainWork('nativeActionCandidatesPrepared');
+        const actor = entityGet(world.entities, id)?.actor;
+        const reactive = nativeActorReactive(world, id);
+        // New commands and automatic action activation invalidate this forecast. Keep
+        // responders too; this ID list never authorizes action execution.
+        // docs/projects/performance-overhaul/simulation.md#pf1712--active-participants-and-absolute-deadlines
+        if (actor?.action || reactive) actionCandidates.push(id);
+        return reactive;
+      });
+      const burningCandidates = participants.heatSources.filter((id) => {
+        countDomainWork('nativeFireCandidatesPrepared');
+        return entityGet(world.entities, id)?.heat?.lit;
       });
       // Restore sampling progress, not stale rates. A newly derived earlier bound wins;
       // only the retained remainder can carry its own exact ending clock value.
@@ -4549,33 +5098,54 @@ function* advanceWorldNative(
         endsAt: retainEnd ? savedInterval.endsAt : interval.endsAt,
         interval,
         status,
+        statusIntegration: prepareIntegration(status, interval.drains),
         travelFor,
         reactiveActors,
+        actionCandidates,
+        burningCandidates,
+        coarseWork: coarseWorkCandidates(
+          world,
+          participants.actors,
+          participants.ambient,
+          interval.seconds,
+        ),
+        motionIds: [...new Set([...participants.ambientMovers, ...interval.privateWalkers])].sort(
+          (a, b) => a.localeCompare(b),
+        ),
         deferRates:
           !interval.serialClamps &&
           !interval.requiresImmediateIntegration &&
           participants.actors.every(
-            (id) => world.entities[id]?.actor?.action?.type !== 'replenish',
+            (id) => entityGet(world.entities, id)?.actor?.action?.type !== 'replenish',
           ),
         referenced: crossStatusReferences(world, statusIds, status),
       };
+      for (const id of interval.privateWalkers) {
+        const action = entityGet(world.entities, id)!.actor!.action!;
+        const travel = travelFor(id);
+        action.motionSampleRemainingMetres = savedInterval
+          ? Math.min(action.motionSampleRemainingMetres ?? travel, travel)
+          : travel;
+      }
       delete world.nativeInterval;
     }
     const { travelFor } = mechanics;
+    const territorialReviewAt = nextTerritorialReview(world, participants.territorial);
     let seconds = sensoryCrossingBound(
       world,
       nativeMotionInterval(
         world,
-        Math.min(remaining, mechanics.remainingSeconds),
-        participants.ambient,
+        Math.min(remaining, mechanics.remainingSeconds, territorialReviewAt - world.simTime),
+        mechanics.motionIds,
         travelFor,
+        mechanics.interval.privateWalkers,
       ),
       participants.actors,
       participants.ambient,
       crossings,
     );
-    for (const id of participants.actors) {
-      const action = world.entities[id]?.actor?.action;
+    for (const id of mechanics.actionCandidates) {
+      const action = entityGet(world.entities, id)?.actor?.action;
       if (action?.stage === 'working' && action.assemblyPhase)
         seconds = Math.min(seconds, Math.max(TIME_EPSILON, assemblyWorkBoundary(action)));
     }
@@ -4591,87 +5161,154 @@ function* advanceWorldNative(
     // future movement, never movement over the interval they restricted.
     // docs/simulation-time.md#native-interval-contract
     const movementRestricted = new Set(
-      statusIds.filter((id) => capabilityBlocked(world, world.entities[id], 'locomotion')),
+      statusIds.filter((id) =>
+        capabilityBlocked(world, entityGet(world.entities, id), 'locomotion'),
+      ),
     );
-    const working = new Map(
-      participants.actors.flatMap((id) => {
-        const e = world.entities[id],
-          a = e?.actor?.action;
-        return e?.actor?.alive &&
-          !e.actor.incapacitated &&
-          a?.stage === 'working' &&
-          (!capabilityBlocked(world, e, 'locomotion') ||
-            a.type === 'status-effect' ||
-            a.type === 'pickup')
-          ? [[id, a.id] as const]
-          : [];
-      }),
-    );
+    const working = new Map<string, string>(),
+      approaching: string[] = [];
+    for (const id of mechanics.actionCandidates) {
+      countDomainWork('nativeSliceActorsVisited');
+      const entity = entityGet(world.entities, id),
+        action = entity?.actor?.action;
+      if (!entity?.actor?.alive || entity.actor.incapacitated || !action) continue;
+      const restricted = movementRestricted.has(id);
+      if (
+        action.stage === 'working' &&
+        (!restricted || action.type === 'status-effect' || action.type === 'pickup')
+      )
+        working.set(id, action.id);
+      if (action.stage === 'approaching' && !restricted) approaching.push(id);
+    }
     // Fires burn for the state they had when this slice began: one lit by work finishing
     // at the endpoint gained no burn, and one put out at the endpoint burned throughout.
-    const burning = new Set(participants.ambient.filter((id) => world.entities[id]?.heat?.lit));
+    const burning = new Set(
+      mechanics.burningCandidates.filter((id) => entityGet(world.entities, id)?.heat?.lit),
+    );
+    // advanceAnimal(0) already reconciled unblocked animals during this exact start
+    // phase. Reuse only its unchanged forecast; any intervening status reconciliation,
+    // command or new prediction needs the complete current eligibility pass.
+    const wanderingClocks =
+      mechanics === animalEligibilityMechanics ? blockedAnimalClocks : participants.animals;
+    if (wanderingClocks)
+      for (const id of wanderingClocks)
+        reconcileAnimalWander(world, entityGet(world.entities, id)!);
+    wanderQueue.synchronize(world, participants.animals);
     // Reaching the interval's stored deadline lands on it exactly (PF13.16).
     const landing = mechanics.endsAt !== undefined && seconds >= mechanics.remainingSeconds;
-    if (landing) seconds = mechanics.endsAt! - world.simTime;
-    world.simTime = landing ? mechanics.endsAt! : world.simTime + seconds;
+    const reviewLanding = seconds >= territorialReviewAt - world.simTime;
+    const endpoint = landing ? mechanics.endsAt : reviewLanding ? territorialReviewAt : undefined;
+    if (endpoint !== undefined) seconds = endpoint - world.simTime;
+    if (animalWanderNeedsCountdown(world))
+      for (const id of participants.animals)
+        advanceAnimalWanderClock(entityGet(world.entities, id)!, seconds);
+    world.simTime = endpoint ?? world.simTime + seconds;
     remaining = Math.max(0, remaining - seconds);
+    // Subtracting several bounded slices can leave less than one representable
+    // clock step. It is not another physical interval with its own side effects.
+    if (remaining <= 4 * Number.EPSILON * Math.max(1, elapsedSimSeconds)) remaining = 0;
     mechanics.remainingSeconds = landing ? 0 : Math.max(0, mechanics.remainingSeconds - seconds);
     motionSlices++;
+    countDomainWork('nativeMotionSlices');
     slicesSinceBoundary++;
     const beforeMovementEffects = events.length;
     // Move before endpoint effects: a shot/death at the end cannot cause earlier fleeing.
-    for (const id of participants.actors) {
+    for (const id of approaching) {
       yield;
-      const actor = world.entities[id];
+      const actor = entityGet(world.entities, id);
       if (
         actor?.actor?.alive &&
         !actor.actor.incapacitated &&
         actor.actor.action?.stage === 'approaching' &&
         !movementRestricted.has(id)
-      )
+      ) {
+        const action = actor.actor.action;
+        const from = mechanics.interval.privateWalkers.has(id)
+          ? { ...worldPosition(actor) }
+          : undefined;
         advanceAction(world, actor, seconds, events, options.constructionPermissions);
+        if (from && actor.actor.action?.id === action.id) {
+          const limit = travelFor(id);
+          const left =
+            Math.min(action.motionSampleRemainingMetres ?? limit, limit) -
+            distance3D(from, worldPosition(actor));
+          action.motionSampleRemainingMetres =
+            left > 8 * Number.EPSILON * Math.max(1, limit) ? left : limit;
+        }
+      }
     }
     const movementEffects = events.length !== beforeMovementEffects;
     // Non-emitting, bounded 0.4 m wander impulses retain their local timer remainder.
     // Order due RNG draws by deadline then identity, independently of callback chunk size.
     // Whole-second timers often fall due together; compare them at TIME_EPSILON resolution so
     // the floating-point residue of how elapsed time was sliced cannot reorder their draws.
-    const wanderDeadline = (id: string) =>
-      Math.round(world.entities[id]!.animal!.wanderSeconds / TIME_EPSILON);
-    const wanderers = participants.ambient
-      .filter((id) => {
-        const e = world.entities[id];
-        return (
-          e?.animal &&
-          !e.threat &&
-          e.actor?.alive &&
-          !e.actor.incapacitated &&
-          !e.actor.action &&
-          !e.spatial.flight &&
-          e.spatial.fallVelocity === undefined &&
-          !(e.animal.danger > 0 && e.animal.threatPosition) &&
-          !movementRestricted.has(id)
-        );
-      })
-      .sort((a, b) => wanderDeadline(a) - wanderDeadline(b) || a.localeCompare(b));
+    const wanderers = wanderQueue.due(world, seconds).filter((id) => {
+      const e = entityGet(world.entities, id);
+      return (
+        e?.animal &&
+        !e.threat &&
+        e.actor?.alive &&
+        !e.actor.incapacitated &&
+        !e.actor.action &&
+        !e.spatial.flight &&
+        e.spatial.fallVelocity === undefined &&
+        !(e.animal.danger > 0 && e.animal.threatPosition) &&
+        !movementRestricted.has(id) &&
+        animalWanderRemaining(world, e)! <= TIME_EPSILON
+      );
+    });
     const wandered = new Set(wanderers);
-    for (const id of wanderers) advanceAnimal(world, world.entities[id]!, seconds);
+    for (const id of wanderers) advanceAnimal(world, entityGet(world.entities, id)!, seconds);
     occupancy = undefined;
+    // Wandering already used the due queue, and a quiet grounded animal has no flight
+    // or fleeing time to integrate. Keep all movers after an occurrence during approach:
+    // its effects may change an animal which was quiet when the forecast was captured.
+    const ambientMovingCandidates = movementEffects
+      ? participants.ambientMovers
+      : (mechanics.ambientMovingCandidates ?? participants.ambientMovers);
+    // Capture during the already required first landing pass. A separate scan at
+    // every forecast would make a busy animal cohort pay more selection work.
+    const preparedMovers: string[] | undefined = mechanics.ambientMovingCandidates ? undefined : [];
     const landings = new Set(
-      participants.ambient.filter((id) => landingDue(world, world.entities[id]!, seconds)),
+      ambientMovingCandidates.filter((id) => {
+        const entity = entityGet(world.entities, id)!;
+        if (preparedMovers) {
+          countDomainWork('nativeAmbientCandidatesPrepared');
+          if (
+            entity.spatial.flight ||
+            entity.spatial.fallVelocity !== undefined ||
+            entity.animal?.danger ||
+            entity.actor?.action
+          )
+            preparedMovers.push(id);
+        }
+        return landingDue(world, entity, seconds);
+      }),
     );
-    const movementOrder = [...participants.ambient.filter((id) => !landings.has(id)), ...landings];
+    if (preparedMovers) mechanics.ambientMovingCandidates = preparedMovers;
+    const movementOrder = [
+      ...ambientMovingCandidates.filter((id) => !landings.has(id)),
+      ...landings,
+    ];
     let fleeEnded = false;
     for (const id of movementOrder) {
+      countDomainWork('nativeAmbientMoversVisited');
       yield;
-      const entity = world.entities[id];
+      const entity = entityGet(world.entities, id);
       if (!entity) continue;
       if (!movementRestricted.has(id)) {
         const flightOwned = !!entity.spatial.flight || entity.spatial.fallVelocity !== undefined;
         const fleeing = !!entity.animal?.danger;
         advanceFlight(world, entity, seconds, events, landingOccupancy, deferFlight);
         // Landing grants future animal movement, never the flight interval just consumed.
-        if (!flightOwned && !wandered.has(id)) advanceAnimal(world, entity, seconds);
+        if (
+          !flightOwned &&
+          !wandered.has(id) &&
+          ((entity.animal?.danger ?? 0) > 0 ||
+            animalWanderRemaining(world, entity)! <= TIME_EPSILON)
+        )
+          advanceAnimal(world, entity, seconds);
+        reconcileAnimalWander(world, entity);
         // A flee end silently changes activeWork, so its captured energy rate ends here.
         fleeEnded ||= fleeing && !entity.animal?.danger;
       }
@@ -4686,12 +5323,14 @@ function* advanceWorldNative(
     // open-ended: its conditions end it at a predicted boundary. A remainder the loop would
     // discard as floating-point residue is the interval's end, not a reason to defer.
     const workEnds = [...working].some(([id, actionId]) => {
-      const action = world.entities[id]?.actor?.action;
+      const action = entityGet(world.entities, id)?.actor?.action;
       return (
         action?.id === actionId &&
         action.type !== 'follow' &&
         action.type !== 'status-effect' &&
-        (action.assemblyPhase ? assemblyWorkBoundary(action) : action.remainingSeconds) <=
+        (action.assemblyPhase
+          ? assemblyWorkBoundary(action)
+          : action.remainingSeconds - (coarseElapsed.get(id)?.seconds ?? 0)) <=
           seconds + TIME_EPSILON
       );
     });
@@ -4710,7 +5349,12 @@ function* advanceWorldNative(
     else pendingSeconds += seconds;
     pendingMechanics = mechanics;
     for (const id of participants.actors)
-      reconcileActivityControl(world, id, world.entities[id]?.actor?.agency.plan, seconds);
+      reconcileActivityControl(
+        world,
+        id,
+        entityGet(world.entities, id)?.actor?.agency.plan,
+        seconds,
+      );
     yield* integrateEndpoint(
       world,
       participants,
@@ -4722,6 +5366,25 @@ function* advanceWorldNative(
         seconds,
         working,
         burning,
+        deferProgress: (id, action, elapsed) => {
+          const actor = entityGet(world.entities, id)!;
+          if (
+            mechanics?.coarseWork.get(id) !== action.id ||
+            capabilityBlocked(world, actor, 'actions') ||
+            capabilityBlocked(world, actor, 'locomotion') ||
+            workEnds
+          ) {
+            materializeCoarse();
+            return false;
+          }
+          const previous = coarseElapsed.get(id);
+          coarseElapsed.set(id, {
+            actionId: action.id,
+            seconds: (previous?.seconds ?? 0) + elapsed,
+          });
+          countDomainWork('nativeCoarseActionCallsAvoided');
+          return true;
+        },
       },
     );
     if (projectileBodies)
@@ -4734,14 +5397,14 @@ function* advanceWorldNative(
       participants = nativeParticipants(world);
     if (!deferred)
       for (const id of statusIds) {
-        const entity = world.entities[id];
+        const entity = entityGet(world.entities, id);
         if (entity) reconcileStatusEffects(world, entity, events);
       }
     // Arrival starts new work now; only work already active at the start receives elapsed time.
     // That work starts silently, so the next prediction must bound its completion (PF13.16).
     let startedWork = false;
-    for (const id of participants.actors) {
-      const actor = world.entities[id];
+    for (const id of mechanics.actionCandidates) {
+      const actor = entityGet(world.entities, id);
       if (
         actor?.actor?.alive &&
         !actor.actor.incapacitated &&
@@ -4750,10 +5413,13 @@ function* advanceWorldNative(
       ) {
         advanceAction(world, actor, 0, events, options.constructionPermissions);
         // advanceAction mutates the action; read its stage afresh.
-        const stage: string | undefined = world.entities[id]?.actor?.action?.stage;
+        const stage: string | undefined = entityGet(world.entities, id)?.actor?.action?.stage;
         startedWork ||= stage === 'working';
       }
     }
+    for (const id of participants.animals)
+      reconcileAnimalWander(world, entityGet(world.entities, id)!);
+    wanderQueue.synchronize(world, participants.animals);
     reconcileResourceReservations(world);
     reconcileItemOffers(world, events);
     advanceAppraisals(world, events);
@@ -4764,12 +5430,17 @@ function* advanceWorldNative(
       movementEffects ||
       events.length !== beforeEffects ||
       mechanicalRevision(world) !== intervalState;
-    if (sharedBoundary || slicesSinceBoundary === 32) {
+    if (sharedBoundary) countDomainWork('nativeSharedBoundaries');
+    const completedInterval = sharedBoundary || slicesSinceBoundary === 32;
+    if (completedInterval) {
       intervals++;
       slicesSinceBoundary = 0;
     }
     if (sharedBoundary || fleeEnded || startedWork || workEnds) discardMechanics();
-    else localize(flightSources);
+    else {
+      if (mechanics.interval.privateWalkers.size) countDomainWork('nativeWalkingForecastReuses');
+      localize(flightSources);
+    }
     yield* updateEncounters(world, before, events, participants.actors);
     reconcileOutings(world, events, { companyObserved: true });
     advanceCommitments(world, events);
@@ -4777,7 +5448,7 @@ function* advanceWorldNative(
     // Control-only waits must observe endpoint changes even when this advance
     // ends exactly at the deadline. Queue future work without granting it time.
     for (const id of participants.actors) {
-      const plan = world.entities[id]?.actor?.agency.plan;
+      const plan = entityGet(world.entities, id)?.actor?.agency.plan;
       reconcileActivityControl(world, id, plan);
       if (plan?.status === 'active' && plan.activity?.pending.at(-1)?.node.kind === 'wait') {
         const revision = plan.revision;
@@ -4787,12 +5458,24 @@ function* advanceWorldNative(
     }
     if (remaining > 0 && intervals < maxIntervals && motionSlices < 4096) {
       if (yield 'boundary') break;
+      if (completedInterval && world.coachingEpisodes) {
+        // A private interval must still end interrupted requests/observation before
+        // another interval. Feedback actions already check their own episode.
+        yield* materialize();
+        const teachingState = mechanicalRevision(world);
+        const teachingEvents = events.length;
+        reconcileCoaching(world, events);
+        advanceCommitments(world, events);
+        reconcileConversations(world);
+        if (mechanicalRevision(world) !== teachingState || events.length !== teachingEvents)
+          discardMechanics();
+      }
       before = snapshotEncounters(world);
     }
   }
-  // Every publication, including a coherent early stop, holds materialized values. A pending
-  // local re-prediction travels with the continuation, so where a call ends cannot move
-  // later interval ends.
+  // Motion-rate time is integrated at publication. Certified exact numeric operations
+  // may remain in their bounded immutable window; all current readers use that owner.
+  // A pending local re-prediction cannot move later interval ends.
   yield* materialize();
   if (mechanics && mechanics.remainingSeconds > TIME_EPSILON)
     world.nativeInterval = {
@@ -4800,6 +5483,9 @@ function* advanceWorldNative(
       ...(mechanics.endsAt === undefined ? {} : { endsAt: mechanics.endsAt }),
     };
   else delete world.nativeInterval;
+  countDomainWork('nativePublications');
+  const publicationState = mechanicalRevision(world);
+  const publicationEvents = events.length;
   const result = finish(
     world,
     events,
@@ -4812,9 +5498,23 @@ function* advanceWorldNative(
           : 'advanced',
       `Advanced ${world.simTime - original.simTime} simulation seconds in ${intervals + (slicesSinceBoundary ? 1 : 0)} intervals (${motionSlices} motion slices).`,
     ),
+    () => {
+      if (mechanicalRevision(world) !== publicationState || events.length !== publicationEvents) {
+        countDomainWork('nativePublicationPreparationInvalidations');
+        discardMechanics();
+      }
+    },
   );
-  if (mechanics && Object.isFrozen(original))
-    nativeContinuations.set(result.world, { mechanics, participants, crossings, localChanges });
+  if (Object.isFrozen(original))
+    nativeContinuations.set(result.world, {
+      // A semantic endpoint cannot retain roster/deadline authority. Its reusable
+      // operation objects still require the same full current checks on the next call.
+      ...(mechanics
+        ? { mechanics, participants, localChanges, wander: wanderQueue.snapshot() }
+        : {}),
+      statusPreparations,
+      statusIntegration,
+    });
   return result;
 }
 
@@ -4840,7 +5540,7 @@ function* updateEncounters(
   let placeIndex: ReturnType<typeof placeLandmarkIndex> | undefined;
   // Loss of sensory/memory participation cannot retain a recognition grant.
   for (const id of actorIds) {
-    const observer = world.entities[id];
+    const observer = entityGet(world.entities, id);
     if (observer?.actor?.alive && hasMemory(observer) && activelyParticipates(observer)) continue;
     if (world.visiblePeople?.[id]?.length) world.visiblePeople[id] = [];
     if (world.visibleObjects?.[id]?.length) world.visibleObjects[id] = [];
@@ -4876,7 +5576,7 @@ function* updateEncounters(
       yield* updateContactEpisodes(
         world,
         original.positions,
-        world.entities[actor.id]!,
+        entityGet(world.entities, actor.id)!,
         events,
         () => frame.nearby(actor.position, touchRadius, 'contact'),
       );
@@ -4889,10 +5589,22 @@ function* updateEncounters(
       continue;
     }
     const previous = original.visiblePeople?.[actor.id] ?? [];
-    let seen = frame
-      .nearby(actor.position, radius + 2, 'people')
-      .filter((e) => e.id !== actor.id && e.alive && sees(e))
-      .map((e) => e.id);
+    const changedPeople = frame.changedPeople(actor.id);
+    let seen: string[];
+    if (changedPeople) {
+      countDomainWork('sensoryPairReuseObservers');
+      const retained = previous.filter((id) => !changedPeople.has(id));
+      const candidates = frame.selectedPeople(actor.position, radius + 2, changedPeople);
+      countDomainWork('sensoryPairsRetested', candidates.length);
+      seen = frame.orderPeople([
+        ...retained,
+        ...candidates.filter((e) => e.id !== actor.id && e.alive && sees(e)).map((e) => e.id),
+      ]);
+    } else {
+      const candidates = frame.nearby(actor.position, radius + 2, 'people');
+      countDomainWork('sensoryPairsRetested', candidates.length);
+      seen = candidates.filter((e) => e.id !== actor.id && e.alive && sees(e)).map((e) => e.id);
+    }
     let objectIds =
       !frame.objectsChanged(actor.id) && original.visibleObjects?.[actor.id]
         ? original.visibleObjects[actor.id]!
@@ -4952,7 +5664,7 @@ function* updateEncounters(
       for (const id of previous) {
         if (stillSeen.has(id)) continue;
         countDomainWork('exposureExits');
-        const source = world.entities[id];
+        const source = entityGet(world.entities, id);
         // Death and removal have their own occurrences; one departure per record window.
         if (
           source?.actor?.alive &&
@@ -5002,7 +5714,7 @@ function* updateEncounters(
       : seen.filter(
           (id) =>
             !previouslySeen!.has(id) &&
-            (hasMemory(world.entities[id]) || SIGHTING_POLICY.retainRoutineOnset),
+            (hasMemory(entityGet(world.entities, id)) || SIGHTING_POLICY.retainRoutineOnset),
         );
     if (newlySeen.length) {
       for (const id of newlySeen) {
@@ -5015,7 +5727,9 @@ function* updateEncounters(
           encounter(
             actor.entity,
             id,
-            hasMemory(world.entities[id]) ? SIGHTING_POLICY.social : SIGHTING_POLICY.routine,
+            hasMemory(entityGet(world.entities, id))
+              ? SIGHTING_POLICY.social
+              : SIGHTING_POLICY.routine,
           );
         yield;
       }
@@ -5104,7 +5818,7 @@ export function observeActor(
   actorId: string,
   options: { includeMemories?: boolean } = {},
 ): ActorObservation | null {
-  const actor = getOwn(world.entities, actorId);
+  const actor = entityOwn(world.entities, actorId);
   if (!actor?.actor) return null;
   const inventory = inventoryFor(world, actorId);
   const knownRecipes = (world.knowledge[actorId] ?? [])
@@ -5236,7 +5950,7 @@ export function remember(
   actorId: string,
   proposal: Omit<MemoryRecord, 'id' | 'actorId' | 'at'>,
 ): Transition {
-  if (!getOwn(original.entities, actorId)?.actor?.alive || original.paused)
+  if (!entityOwn(original.entities, actorId)?.actor?.alive || original.paused)
     return {
       world: original,
       events: [],

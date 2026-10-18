@@ -85,6 +85,8 @@ export interface ActivityActionMeaning {
   unpausableWhileWorking?: boolean;
   toolFields?: readonly string[];
   unitPerCommand?: boolean;
+  /** Trusted stationary executor only; arbitrary authored effects do not qualify. */
+  coarseWork?: 'consumed-stationary-craft';
 }
 /** A trusted command's meaning can also interpret historical records after uninstallation.
  * Execution/discovery must separately use nativeCommandSupported. */

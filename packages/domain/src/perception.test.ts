@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { setSpatialPosition, worldSupport } from './index.js';
 import { expect, it } from 'vitest';
@@ -7,15 +8,15 @@ it('sees distant objects without extending speech exposure', () => {
   const world = createWorld();
   setSpatialPosition(
     world,
-    world.entities[PLAYER_ID]!,
+    entityGet(world.entities, PLAYER_ID)!,
     { y: 0, x: 1, z: 2 },
-    worldSupport(world.entities[PLAYER_ID]!),
+    worldSupport(entityGet(world.entities, PLAYER_ID)!),
   );
   setSpatialPosition(
     world,
-    world.entities[NPC_ID]!,
+    entityGet(world.entities, NPC_ID)!,
     { y: 0, x: 22, z: 2 },
-    worldSupport(world.entities[NPC_ID]!),
+    worldSupport(entityGet(world.entities, NPC_ID)!),
   );
   expect(
     observeActor(world, PLAYER_ID)!.visibleEntities.some((entity) => entity.id === NPC_ID),
@@ -58,15 +59,15 @@ it('keeps an authoritative outer sight boundary even though the renderer can rem
   const world = createWorld();
   setSpatialPosition(
     world,
-    world.entities[PLAYER_ID]!,
+    entityGet(world.entities, PLAYER_ID)!,
     { y: 0, x: 1, z: 1 },
-    worldSupport(world.entities[PLAYER_ID]!),
+    worldSupport(entityGet(world.entities, PLAYER_ID)!),
   );
   setSpatialPosition(
     world,
-    world.entities[NPC_ID]!,
+    entityGet(world.entities, NPC_ID)!,
     { y: 0, x: 27, z: 23 },
-    worldSupport(world.entities[NPC_ID]!),
+    worldSupport(entityGet(world.entities, NPC_ID)!),
   );
   expect(
     observeActor(world, PLAYER_ID)!.visibleEntities.some((entity) => entity.id === NPC_ID),

@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { subjectNarration } from './narration.js';
 import { mutateExperience } from './experience.js';
 import { draftWorld } from './draft.js';
@@ -11,26 +12,31 @@ const activeRecords = new WeakMap<MemoryRecord[], MemoryRecord[]>();
 const indexes = new WeakMap<
   WorldState['memories'],
   {
+    pending: Pending[];
     completions: Map<string, Pending[]>;
     deadlines: Pending[];
   }
 >();
 
-function commitmentIndex(world: WorldState) {
-  const memories = isDraft(world.memories) ? current(world.memories) : world.memories;
+function commitmentIndex(source: WorldState['memories']) {
+  const memories = isDraft(source) ? current(source) : source;
   let index = indexes.get(memories);
   if (index) return index;
-  index = { completions: new Map(), deadlines: [] };
+  index = { pending: [], completions: new Map(), deadlines: [] };
   let order = 0;
   for (const [actorId, records] of Object.entries(memories)) {
     let pending = activeRecords.get(records);
     if (!pending) {
-      pending = records.filter((record) => record.obligation && !record.resolved);
+      pending = records.filter(
+        (record) => (record.obligation || record.kind === 'commitment') && !record.resolved,
+      );
       activeRecords.set(records, pending);
     }
     for (const record of pending) {
       const entry = { actorId, record, order: order++ },
-        obligation = record.obligation!;
+        obligation = record.obligation;
+      index.pending.push(entry);
+      if (!obligation) continue;
       if (obligation.completion) {
         const key = JSON.stringify([actorId, obligation.completion.eventType]);
         const group = index.completions.get(key) ?? [];
@@ -45,11 +51,29 @@ function commitmentIndex(world: WorldState) {
   indexes.set(memories, index);
   return index;
 }
+/** History placement cannot remove or edit an unresolved promise, including native
+ * completion/deadline dependencies and the owner's exact tie-breaking order. */
+export function retainsCommitmentSchedule(
+  before: WorldState['memories'],
+  after: WorldState['memories'],
+): boolean {
+  if (before === after) return true;
+  const previous = commitmentIndex(before).pending,
+    next = commitmentIndex(after).pending;
+  return (
+    previous.length === next.length &&
+    previous.every(
+      (entry, index) =>
+        entry.actorId === next[index]!.actorId && entry.record === next[index]!.record,
+    )
+  );
+}
 /** Reuse the obligation owner's existing sorted deadline index. */
 export function nextCommitmentDeadline(world: WorldState): number {
   return (
-    commitmentIndex(world).deadlines.find((e) => e.record.obligation!.dueAt! > world.simTime)
-      ?.record.obligation?.dueAt ?? Infinity
+    commitmentIndex(world.memories).deadlines.find(
+      (e) => e.record.obligation!.dueAt! > world.simTime,
+    )?.record.obligation?.dueAt ?? Infinity
   );
 }
 export interface Obligation {
@@ -138,7 +162,7 @@ export function amendCommitment(
     record.obligation.revision !== expectedRevision ||
     record.resolved ||
     input.paused ||
-    !input.entities[actorId]?.actor?.alive ||
+    !entityGet(input.entities, actorId)?.actor?.alive ||
     (change.dueAt !== undefined &&
       (!Number.isFinite(change.dueAt) || change.dueAt < input.simTime)) ||
     (change.completion &&
@@ -177,7 +201,7 @@ export function amendCommitment(
 }
 export function advanceCommitments(world: WorldState, events: WorldEvent[]): void {
   // Indexes follow immutable source identities, including edits/recovery; ordering stays native.
-  const index = commitmentIndex(world),
+  const index = commitmentIndex(world.memories),
     candidates = new Set<Pending>();
   // Dense private acquisition records thousands of events; skip keying them when no
   // obligation awaits any completion (PF12.3/SW08.4a first-exposure burst).

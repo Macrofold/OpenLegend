@@ -1,3 +1,4 @@
+import { entityGet, entityHas } from '@open-legend/domain';
 import { equippedItems } from '@open-legend/domain';
 import {
   itemFor,
@@ -26,7 +27,7 @@ export const inspectableEntity = (world: WorldState, e: Entity) => ({
   heat: e.heat,
   remains: e.remains,
   attributeIds: e.actor
-    ? applicableAttributes(world, e.actor)
+    ? applicableAttributes(world, e)
         .map((d) => d.id)
         .sort()
     : [],
@@ -84,7 +85,7 @@ export function projectLiveSubject(
   // Deliberate field projection: no memory/private authoring records or full path arrays.
   const entity = (id: string) => {
     if (!canRead(id)) throw new GraphReadError('forbidden', 'Subject is unavailable.');
-    const e = Object.hasOwn(world.entities, id) ? world.entities[id] : undefined;
+    const e = entityHas(world.entities, id) ? entityGet(world.entities, id) : undefined;
     if (!e) throw new GraphReadError('unavailable', 'Entity is unavailable.');
     return add('entity', id, e.name, inspectableEntity(world, e));
   };
@@ -94,7 +95,7 @@ export function projectLiveSubject(
     if (!i) throw new GraphReadError('unavailable', 'Item is unavailable.');
     const ref = add('item', id, world.itemDefinitions[i.definitionId]?.name ?? 'Item', i);
     link(ref, definition('item-definition', i.definitionId), 'instance_of');
-    if (i.ownerId && Object.hasOwn(world.entities, i.ownerId))
+    if (i.ownerId && entityHas(world.entities, i.ownerId))
       link(ref, entity(i.ownerId), 'inventory_owner');
     return ref;
   };
@@ -102,7 +103,7 @@ export function projectLiveSubject(
   if (kind === 'item') root = item(id);
   else {
     root = entity(id);
-    const e = world.entities[id]!;
+    const e = entityGet(world.entities, id)!;
     const supportId = worldSupport(e);
     const support =
       supportId && world.map.spatial.surfaces.find((surface) => surface.id === supportId);
@@ -118,7 +119,7 @@ export function projectLiveSubject(
         'supported_by',
       );
     if (e.actor) {
-      for (const attribute of applicableAttributes(world, e.actor))
+      for (const attribute of applicableAttributes(world, e))
         link(root, definition('attribute', attribute.id), 'uses', 'attribute-binding');
       for (const senseId of e.actor.senses ?? world.moduleManifest.defaultSenses)
         link(root, definition('sense', senseId), 'uses', 'sense-binding');
@@ -130,7 +131,7 @@ export function projectLiveSubject(
       link(root, ref, 'uses', 'current-action');
       link(ref, root, 'operated_by');
       if (action.recipeId) link(ref, definition('recipe', action.recipeId), 'uses', 'recipe');
-      if (action.targetId && Object.hasOwn(world.entities, action.targetId))
+      if (action.targetId && entityHas(world.entities, action.targetId))
         link(ref, entity(action.targetId), 'uses', 'target');
       for (const [role, itemId] of Object.entries({
         item: action.itemId,

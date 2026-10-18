@@ -99,14 +99,18 @@ export function ActionPicker({
     readController = useRef<AbortController | null>(null);
   const [position, setPosition] = useState(picker.point);
   const context = picker.context;
+  const recipe = context.recipeId
+    ? view.recipes.find((row) => row.id === context.recipeId)
+    : undefined;
   const full = context.catalogue === true;
-  const browsing = full || picker.browse === true;
+  const browsing = full || picker.browse === true || !!context.recipeId;
   const scopeKey = JSON.stringify([
     view.worldId,
     view.player.id,
     view.access?.scope,
     view.access?.controlGeneration,
     view.saveTimeline,
+    view.historyEpoch,
     context,
   ]);
   // Movement replaces entity data without changing which targets are permitted.
@@ -125,6 +129,7 @@ export function ActionPicker({
     actionSubjectKey(subject),
   ]);
   const lostTarget = !full && !!picker.context.targetId && !subject;
+  const lostRecipe = !!context.recipeId && !recipe;
   const available = visible && connected;
   const [availability, setAvailability] = useState({ available, revision: 0 });
   if (availability.available !== available)
@@ -140,7 +145,8 @@ export function ActionPicker({
   const catalogueCurrent =
     result?.scopeKey === scopeKey &&
     result.inventoryRevision === view.player.inventoryRevision &&
-    !lostTarget;
+    !lostTarget &&
+    !lostRecipe;
   const actions = useMemo(
     () =>
       catalogueCurrent && result
@@ -329,6 +335,7 @@ export function ActionPicker({
   }
   const canInvent =
     browsing &&
+    !context.recipeId &&
     !view.inventionPolicy.playerLocked &&
     connected &&
     !error &&
@@ -362,7 +369,11 @@ export function ActionPicker({
     (!query || 'grant cognition speech'.includes(query.toLowerCase()));
   const self = !full && context.targetId === view.player.id;
   const showSpeak = self && (!query || 'speak say whisper shout'.includes(query.toLowerCase()));
-  const showAct = !full && !lostTarget && (!query || 'act action'.includes(query.toLowerCase()));
+  const showAct =
+    !full &&
+    !context.recipeId &&
+    !lostTarget &&
+    (!query || 'act action'.includes(query.toLowerCase()));
   // Quick suggestions contain executable choices; All actions retains known blockers.
   const suggested = useMemo(() => {
     const limit = Math.max(
@@ -438,7 +449,7 @@ export function ActionPicker({
         )
           hadFocus.current = false;
       }}
-      aria-label={`Actions for ${full ? 'all known choices' : (picker.item?.name ?? (subject ? namePhrase(subject, 'definite') : picker.entity ? namePhrase(picker.entity, 'definite') : view.presentation.locationName))}`}
+      aria-label={`Actions for ${full ? 'all known choices' : (recipe?.name ?? picker.item?.name ?? (subject ? namePhrase(subject, 'definite') : picker.entity ? namePhrase(picker.entity, 'definite') : view.presentation.locationName))}`}
       style={embedded ? undefined : { left: position.x, top: position.y }}
       onKeyDown={(e) => {
         if (e.defaultPrevented || e.nativeEvent.isComposing || e.repeat) return;
@@ -466,7 +477,15 @@ export function ActionPicker({
         }
         if (e.key === 'Enter' && e.target === input.current) {
           e.preventDefault();
-          if (!available || checking || error || lostTarget || result?.key !== readKey) return;
+          if (
+            !available ||
+            checking ||
+            error ||
+            lostTarget ||
+            lostRecipe ||
+            result?.key !== readKey
+          )
+            return;
           const first = visibleMatches.find((a) => a.enabled);
           if (first) run(first);
           else if (canInvent) invent(query.trim());
@@ -480,12 +499,15 @@ export function ActionPicker({
           <div className="ol-picker-head">
             <Icon
               name={subject?.icon ?? picker.entity?.icon ?? 'ui.inview'}
-              fallbackLabel={picker.item?.name ?? subject?.name ?? picker.entity?.name}
+              fallbackLabel={
+                recipe?.name ?? picker.item?.name ?? subject?.name ?? picker.entity?.name
+              }
             />
             <strong>
               {full
                 ? 'Action browser'
-                : (picker.item?.name ??
+                : (recipe?.name ??
+                  picker.item?.name ??
                   subject?.name ??
                   picker.entity?.name ??
                   view.presentation.locationName)}
@@ -556,6 +578,11 @@ export function ActionPicker({
             <p role="status" className="ol-meta">
               {picker.entity?.name ?? 'That target'} is no longer in view. Choose a currently
               perceived target or browse all known actions.
+            </p>
+          )}
+          {lostRecipe && (
+            <p role="status" className="ol-meta">
+              This recipe is no longer known. Choose a current known recipe.
             </p>
           )}
           {showOpen && subject && (
@@ -752,6 +779,7 @@ export function ActionPicker({
           {!error &&
             !checking &&
             !lostTarget &&
+            !lostRecipe &&
             result?.key === readKey &&
             !matches.length &&
             (full || !taskMatches) &&

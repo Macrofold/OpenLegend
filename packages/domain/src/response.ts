@@ -1,3 +1,4 @@
+import { entityGet, entityHas, entityOwn } from './entity-collection.js';
 import { changeAppraisal, type AppraisalChange, type AppraisalBindings } from './appraisals.js';
 import { accessiblePossession } from './object-access.js';
 import { subjectNarration, presentVerb, person } from './narration.js';
@@ -387,7 +388,7 @@ export function commitActorResponse(
         }
       : reject('Response identity was reused with different content.');
   }
-  const actor = getOwn(input.entities, actorId);
+  const actor = entityOwn(input.entities, actorId);
   // Paused commits wait for resume at the paid-work boundary rather than turning
   // an admitted response into a failure. See docs/architecture.md#paid-work-absence-and-recovery.
   if (input.paused)
@@ -522,7 +523,7 @@ export function commitActorResponse(
     ].filter((ref): ref is string => !!ref);
     const slots = op.act?.slots;
     const kindOf = (id: string | null | undefined) =>
-      id ? getOwn(input.entities, id)?.kind : undefined;
+      id ? entityOwn(input.entities, id)?.kind : undefined;
     // Scope first: an unpermitted reference gets one answer whatever it names, so hidden
     // entity kinds cannot be probed through slot errors.
     if (
@@ -539,7 +540,7 @@ export function commitActorResponse(
     if (
       (slots?.itemId && kindOf(slots.itemId) !== 'item') ||
       (slots?.instrumentId && kindOf(slots.instrumentId) !== 'item') ||
-      (slots?.recipientId && !getOwn(input.entities, slots.recipientId)?.actor)
+      (slots?.recipientId && !entityOwn(input.entities, slots.recipientId)?.actor)
     ) {
       components[localId] = outcome(
         false,
@@ -614,7 +615,7 @@ export function commitActorResponse(
     if (op.talk) {
       const validTarget =
         permitted.has(op.talk.addresseeEntityId) &&
-        Object.hasOwn(world.entities, op.talk.addresseeEntityId);
+        entityHas(world.entities, op.talk.addresseeEntityId);
       if (!op.talk.text.trim() || op.talk.text.length > 1200 || !validTarget)
         components[localId] = outcome(
           false,
@@ -667,7 +668,7 @@ export function commitActorResponse(
       if ('ok' in bound) components[localId] = bound;
       else if (
         act.mode !== 'enqueue' &&
-        input.entities[actorId]!.actor!.planGeneration !== expectedPlan
+        entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
       else if (bound.type === 'outing' && bound.operation === 'help') command('act', bound);
@@ -682,11 +683,11 @@ export function commitActorResponse(
       } else
         components[localId] = admitPlan(
           world,
-          world.entities[actorId]!.actor!,
+          entityGet(world.entities, actorId)!.actor!,
           `${id}:${localId}`,
           [bound],
           act.mode,
-          world.entities[actorId]!.actor!.agency.plan?.revision ?? 0,
+          entityGet(world.entities, actorId)!.actor!.agency.plan?.revision ?? 0,
           null,
         );
     } else if (act?.kind === 'known' && !Object.hasOwn(actions, act.actionId!)) {
@@ -697,7 +698,10 @@ export function commitActorResponse(
       );
     } else if (act?.kind === 'known') {
       const selected = actions[act.actionId!];
-      if (act.mode !== 'enqueue' && input.entities[actorId]!.actor!.planGeneration !== expectedPlan)
+      if (
+        act.mode !== 'enqueue' &&
+        entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan
+      )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
       else if (
         selected &&
@@ -729,20 +733,20 @@ export function commitActorResponse(
       } else if (selected)
         components[localId] = admitPlan(
           world,
-          world.entities[actorId]!.actor!,
+          entityGet(world.entities, actorId)!.actor!,
           `${id}:${localId}`,
           [{ ...selected, actorId, id: `${id}:${localId}` }],
           act.mode,
-          world.entities[actorId]!.actor!.agency.plan?.revision ?? 0,
+          entityGet(world.entities, actorId)!.actor!.agency.plan?.revision ?? 0,
           null,
         );
       else components[localId] = outcome(true, 'continued', 'Existing behavior continues.');
     } else if (act?.kind === 'expression') {
-      const source = world.entities[actorId]!;
-      const target = act.targetEntityId ? world.entities[act.targetEntityId] : undefined;
+      const source = entityGet(world.entities, actorId)!;
+      const target = act.targetEntityId ? entityGet(world.entities, act.targetEntityId) : undefined;
       const invalidTarget =
         !!act.targetEntityId &&
-        (!permitted.has(act.targetEntityId) || !Object.hasOwn(world.entities, act.targetEntityId));
+        (!permitted.has(act.targetEntityId) || !entityHas(world.entities, act.targetEntityId));
       const reachable =
         act.verb !== 'slap' ||
         (!!target &&
@@ -808,7 +812,7 @@ export function commitActorResponse(
       const matches = attemptBindings.filter(
         (binding) => binding.operationId === localId && binding.description === act.description,
       );
-      const component = world.entities[actorId]!.actor!;
+      const component = entityGet(world.entities, actorId)!.actor!;
       if (matches.length === 1 && matches[0]!.resolution) {
         // Nothing physical starts; the plain reason is the result.
         const resolution = matches[0]!.resolution;
@@ -902,7 +906,7 @@ export function commitActorResponse(
         if (fulfillment.verdict === 'confirm') {
           if (
             act.mode !== 'enqueue' &&
-            input.entities[actorId]!.actor!.planGeneration !== expectedPlan
+            entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan
           ) {
             components[localId] = outcome(false, 'stale-plan', 'The current native task changed.');
             continue;
@@ -928,7 +932,7 @@ export function commitActorResponse(
         }
         if (
           act.mode !== 'enqueue' &&
-          input.entities[actorId]!.actor!.planGeneration !== expectedPlan
+          entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan
         )
           components[localId] = outcome(false, 'stale-plan', 'The current native task changed.');
         else if (selected.length === 1 && selected[0]!.type === 'compose')
@@ -964,7 +968,7 @@ export function commitActorResponse(
           );
         if (components[localId]?.ok)
           resolveAttempt(
-            world.entities[actorId]!.actor!,
+            entityGet(world.entities, actorId)!.actor!,
             act.description!,
             act.targetEntityId,
             act.mode,
@@ -984,10 +988,10 @@ export function commitActorResponse(
 
     if (op.think) {
       const invalidReferences = op.think.aboutEntityIds.some(
-        (target) => !permitted.has(target) || !Object.hasOwn(world.entities, target),
+        (target) => !permitted.has(target) || !entityHas(world.entities, target),
       );
       if (
-        !hasMemory(world.entities[actorId]) ||
+        !hasMemory(entityGet(world.entities, actorId)) ||
         !op.think.text.trim() ||
         op.think.text.length > 240 ||
         op.think.aboutEntityIds.length > 8 ||
@@ -1024,14 +1028,14 @@ export function commitActorResponse(
                 'Local goal references require an accepted goal dependency.',
               )
             : changeGoal(
-                world.entities[actorId]!.actor!,
+                entityGet(world.entities, actorId)!.actor!,
                 { ...op.goal, goalId, parentId },
                 `${id}:${localId}`,
                 'actor',
               );
     }
     if (op.plan) {
-      const component = world.entities[actorId]!.actor!;
+      const component = entityGet(world.entities, actorId)!.actor!;
       const goalId = goalRef(op.plan.goalId);
       if (
         goalId === undefined ||
@@ -1144,8 +1148,8 @@ export function recordPlayerExpression(
           ? previous.outcome
           : outcome(false, 'idempotency-conflict', 'This expression identity was already used.'),
     };
-  const source = input.entities[actorId];
-  const target = targetId ? input.entities[targetId] : undefined;
+  const source = entityGet(input.entities, actorId);
+  const target = targetId ? entityGet(input.entities, targetId) : undefined;
   const reject = (code: string, message: string): Transition => ({
     world: input,
     events: [],
@@ -1184,7 +1188,7 @@ export function recordPlayerExpression(
     events,
     'expression',
     subjectNarration(source, parts),
-    world.entities[actorId],
+    entityGet(world.entities, actorId),
     targetId,
     {
       mechanical: false,

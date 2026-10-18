@@ -1,4 +1,5 @@
 import {
+  entityGet,
   activeAppraisals,
   appraisalDefinition,
   attributeDefinition,
@@ -11,7 +12,7 @@ import { digest } from './content-digest.js';
 
 /** Task-local semantic facts: no history bodies or whole-world revision in this fingerprint. */
 export function decisionValidity(world: WorldState, actorId: string): string {
-  const entity = world.entities[actorId];
+  const entity = entityGet(world.entities, actorId);
   const actor = entity?.actor;
   if (!actor) return 'unavailable';
   const flowing = new Set(

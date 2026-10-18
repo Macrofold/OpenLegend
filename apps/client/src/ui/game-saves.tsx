@@ -21,7 +21,7 @@ import type {
   GameSaveCatalog,
   GameSaveSummary,
 } from '@open-legend/protocol';
-import { post } from '../api';
+import { loadGameSave, post } from '../api';
 import { Button, Section } from '../design-system/components';
 import './lifecycle.css';
 
@@ -262,21 +262,16 @@ export function GameSavesPanel({
         retainRequest(recoveryKey, request);
         remember({ status: 'pending', request });
       }
-      const result = await post(
-        `/api/saves/${action}`,
-        request ? { id: save.id, requestId: request.requestId } : { id: save.id },
-      );
+      const result = request
+        ? await loadGameSave({ id: save.id, requestId: request.requestId })
+        : await post('/api/saves/delete', { id: save.id });
+      if (!result) return;
       if (!alive.current) return;
       if (!result.ok) {
         if (request && ['invalid-input', 'loading', 'deferred'].includes(result.code))
           settle(result, request);
         else setMessage(result.message || 'The original checkpoint operation is not confirmed.');
         await refresh();
-        return;
-      }
-      if (request) {
-        settle(result, request);
-        window.location.reload();
         return;
       }
       setRowUncertain(undefined);

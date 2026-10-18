@@ -1,3 +1,4 @@
+import { entityKeys } from '@open-legend/domain';
 import type { NameArticle } from '@open-legend/language';
 import { observerDescription, recognizesSubject } from '@open-legend/domain';
 import type {
@@ -30,7 +31,7 @@ export function entityHandles(
 ): Map<string, string> {
   const cached = cache.get(world)?.get(observerId);
   if (cached) return cached;
-  const hashes = Object.keys(world.entities).map(
+  const hashes = entityKeys(world.entities).map(
     (id) =>
       [
         id,

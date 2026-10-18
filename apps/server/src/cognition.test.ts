@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
@@ -147,7 +148,7 @@ describe('fixture: cognition vertical slice', () => {
       null,
     );
     expect((await s.transition((w) => commitCognition(w, prepared.binding, p))).ok).toBe(true);
-    expect(s.world.entities[NPC_ID]!.actor!.action?.type).toBe('status-effect');
+    expect(entityGet(s.world.entities, NPC_ID)!.actor!.action?.type).toBe('status-effect');
     expect(cognitionOpportunity(s, NPC_ID)).toBeNull();
     expect(mindFor(s.world, NPC_ID).thoughts[0]?.source).toBe('imagined');
   });

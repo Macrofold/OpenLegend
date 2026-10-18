@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { namePhrase, personalPronoun, validName, type Named } from '@open-legend/language';
 import { worldPosition } from './spatial-state.js';
 import { observerName, recognizesSubject } from './worlds/base/knowledge.js';
@@ -145,7 +146,7 @@ export function perceiveSpeech(
     typeof event.data?.['intendedRecipientId'] === 'string'
       ? event.data['intendedRecipientId']
       : event.targetId;
-  const recipient = intendedId ? world.entities[intendedId] : undefined;
+  const recipient = intendedId ? entityGet(world.entities, intendedId) : undefined;
   const perceivedRecipient =
     intendedId &&
     (self ||

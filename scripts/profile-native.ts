@@ -1,10 +1,16 @@
+import { materializeNativeValues } from '../packages/domain/src/index.js';
+import { entityKeys, entityValues } from '../packages/domain/src/index.js';
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { populateScenario, type Scenario } from './performance/scenario.js';
 import { readFile, writeFile } from 'node:fs/promises';
 import { Session } from 'node:inspector/promises';
 import { createHash } from 'node:crypto';
-import * as domain from '../packages/domain/src/index.js';
-import { advanceWorld, freezeWorld, type WorldState } from '../packages/domain/src/index.js';
+import {
+  advanceWorld,
+  freezeWorld,
+  observeDomainCounters,
+  type WorldState,
+} from '../packages/domain/src/index.js';
 
 const [input, output, stepArgument = '180', experiment, scenarioArgument] = process.argv.slice(2);
 const steps = Number(stepArgument);
@@ -25,10 +31,6 @@ const mutable = experiment === '--mutable-snapshots';
 // Optional differential trace (EPR00/PF03): per-step outcome, events with audiences, and
 // RNG/id/sequence scalars. Hashing happens after the timed loop so it cannot inflate cpuMs.
 const tracePath = process.env['OPENLEGEND_PROFILE_TRACE'];
-// Counters exist only on revisions that define them, so the same harness runs on baselines.
-const observeCounters = (domain as Record<string, unknown>)['observeDomainCounters'] as
-  | ((target?: Record<string, number>) => void)
-  | undefined;
 await initializeCollisionRuntime();
 console.error('profile stage: loading/setup');
 const setupAt = performance.now();
@@ -41,7 +43,7 @@ if (!world || !Number.isFinite(world.simTime) || !world.entities || !Array.isArr
 world.paused = false;
 const initial = {
   simTime: world.simTime,
-  entities: Object.keys(world.entities).length,
+  entities: entityKeys(world.entities).length,
   events: world.events.length,
 };
 // Match the server ownership boundary; the optional baseline leaves snapshots mutable.
@@ -80,7 +82,10 @@ const setupMs = performance.now() - setupAt;
 const warmupSteps = scenario?.warmup ?? 30;
 const fixturePath = process.env['OPENLEGEND_PROFILE_FIXTURE'];
 if (fixturePath)
-  await writeFile(fixturePath, JSON.stringify({ world }), { mode: 0o600, flag: 'wx' });
+  await writeFile(fixturePath, JSON.stringify({ world: materializeNativeValues(world) }), {
+    mode: 0o600,
+    flag: 'wx',
+  });
 console.error('profile stage: warmup');
 const warmupStarted = world.simTime;
 let warmupCalls = 0;
@@ -116,7 +121,7 @@ try {
     [];
   const heapSamples: number[] = [process.memoryUsage().heapUsed];
   const counters: Record<string, number> = {};
-  observeCounters?.(counters);
+  observeDomainCounters(counters);
   tracing = !!tracePath;
   const simulationStartedAt = world.simTime;
   let completedSteps = 0;
@@ -156,7 +161,7 @@ try {
   const simulatedSeconds = world.simTime - simulationStartedAt;
   const totalMs = performance.now() - started;
   const cpu = process.cpuUsage(cpuAt);
-  observeCounters?.();
+  observeDomainCounters();
   tracing = false;
   const firstStepMs = durations[0];
   console.error('profile stage: writing results');
@@ -187,10 +192,14 @@ try {
     traceDigest = hash(steps);
     await writeFile(tracePath, JSON.stringify(steps), { mode: 0o600, flag: 'wx' });
     if (process.env['OPENLEGEND_PROFILE_DETAIL'] === '1')
-      await writeFile(tracePath + '.details.json', JSON.stringify({ trace, world }), {
-        mode: 0o600,
-        flag: 'wx',
-      });
+      await writeFile(
+        tracePath + '.details.json',
+        JSON.stringify({ trace, world: materializeNativeValues(world) }),
+        {
+          mode: 0o600,
+          flag: 'wx',
+        },
+      );
   }
   const awareness = world.experience?.awareness ?? {};
   const awarenessDigest = hash(
@@ -231,15 +240,15 @@ try {
         fixturePath,
         workload: {
           map: { width: world.map.width, height: world.map.height },
-          sensingActors: Object.values(world.entities).filter(
+          sensingActors: entityValues(world.entities).filter(
             (e) => e.actor?.alive && e.actor.capabilities?.memory,
           ).length,
-          flightBodies: Object.values(world.entities).filter((e) => e.spatial.flight).length,
+          flightBodies: entityValues(world.entities).filter((e) => e.spatial.flight).length,
         },
         nativeHeadroomAtRequestedSpeed:
           (simulatedSeconds * 1000) / totalMs / (60 * (scenario?.speed ?? 1)),
         finalCounts: {
-          entities: Object.keys(world.entities).length,
+          entities: entityKeys(world.entities).length,
           events: world.events.length,
           awareness: Object.values(world.experience?.awareness ?? {}).reduce(
             (n, rows) => n + rows.length,
@@ -273,5 +282,6 @@ try {
     ),
   );
 } finally {
+  observeDomainCounters();
   session.disconnect();
 }

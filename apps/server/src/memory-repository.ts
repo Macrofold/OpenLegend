@@ -1,5 +1,6 @@
 import { tableRows } from './record-pages.js';
-import { insertRows } from './sql-rows.js';
+import { insertRows, sqlRecordBatches, type SqlWriteBatch } from './sql-rows.js';
+import { LexicalProjection } from './lexical-projection.js';
 import type { ConsolidationBatch } from './memory-consolidation.js';
 import { matchesSearch, scanMatches, searchWords } from './text-search.js';
 // Preparation allowance, not a retained-history or searchable-corpus limit.
@@ -15,17 +16,21 @@ export class MemoryPreparationError extends Error {
 }
 export const MAINTENANCE_SOURCES = 128;
 export const MAINTENANCE_BYTES = 512 * 1024;
-import { createHash } from 'node:crypto';
+import { personalAccountRevision } from './personal-accounts.js';
 import type {
   Awareness,
   ExperienceEntry,
   ExperienceSummary,
   MemoryRecord,
 } from '@open-legend/domain';
-import { EXPERIENCE_LIMITS, validEncounterExposure } from '@open-legend/domain';
+import {
+  EXPERIENCE_LIMITS,
+  validEncounterExposure,
+  validateEventEvidence,
+} from '@open-legend/domain';
 import { z } from 'zod';
 import type { SqlDatabase } from './store.js';
-import type { RecordChanges } from './world-records.js';
+import type { RecordChanges, RowChange } from './world-records.js';
 
 export const MEMORY_SOURCE_TABLES = {
   awareness: 'mind_awareness',
@@ -35,8 +40,11 @@ export const MEMORY_SOURCE_TABLES = {
 const sourceTables = MEMORY_SOURCE_TABLES;
 export type MemoryChanges = Map<string, Set<string> | null> & {
   placeIds?: Map<string, Set<string>>;
+  /** Transaction-local canonical creations, never a reusable eligibility cache. */
+  newSources?: Map<string, Map<string, SourceKind>>;
 };
 type SourceKind = keyof typeof sourceTables;
+const sourceKey = (kind: string, id: string) => JSON.stringify([kind, id]);
 // Payload/text bodies must not leak into metadata selection before byte admission.
 const sourceColumnNames = [
   'world_id',
@@ -58,26 +66,22 @@ const sourceColumnNames = [
   'place_label',
 ];
 const sourceColumns = sourceColumnNames.map((name) => `r.${name}`).join(',');
-const sourceRevision = (payload: string) => createHash('sha256').update(payload).digest('hex');
+interface PreparedSource {
+  row: RowChange;
+  actorId: string;
+  id: string;
+  exposure: Awareness['exposure'];
+  sourceIds: readonly string[];
+  values: unknown[];
+}
+export interface PreparedMemorySources {
+  readonly worldId: string;
+  readonly changes: RecordChanges;
+  readonly groups: ReadonlyMap<SourceKind, readonly PreparedSource[]>;
+}
 // Bound parameters are parsed as full-text values, never as SQL or locale-dependent text.
 const quotedLexeme = (word: string) => `'${word.replace(/['\\]/g, '\\$&')}'`;
 const indexedWord = (word: string) => Buffer.byteLength(word) < 2047;
-function lexicalVector(text: string): string {
-  const words = new Map<string, number[]>();
-  let position = 0;
-  for (const word of searchWords(text)) {
-    // PostgreSQL's existing parser skips oversized lexemes without consuming a
-    // position. Keep its byte/position/repetition edges, not a smaller ASCII limit.
-    if (!indexedWord(word)) continue;
-    position = Math.min(position + 1, 16383);
-    const positions = words.get(word) ?? [];
-    if (positions.length < 255 && positions.at(-1) !== position) positions.push(position);
-    words.set(word, positions);
-  }
-  return [...words]
-    .map(([word, positions]) => `${quotedLexeme(word)}:${positions.join(',')}`)
-    .join(' ');
-}
 const lexicalQuery = (words: string[]) =>
   words
     .filter(indexedWord)
@@ -161,10 +165,16 @@ export const conversationCompactionKey = (
   conversationId: string,
 ) => `conversation-compaction:${JSON.stringify([worldId, actorId, conversationId])}`;
 export interface RetrievedMemory {
+  sourceKind: SourceKind;
   memory: MemoryRecord;
   awareness?: Awareness;
   revision: string;
   score?: number;
+}
+export interface CurrentMemorySource {
+  id: string;
+  sourceKind: SourceKind;
+  revision: string;
 }
 export interface KnownPlaceSource extends RetrievedMemory {
   correctionId?: string;
@@ -208,7 +218,21 @@ export class MemoryRepository {
   actorRevision(actorId: string): number {
     return this.actorRevisions.get(actorId) ?? 0;
   }
-  constructor(private readonly db: SqlDatabase) {}
+  private readonly lexical: LexicalProjection;
+  constructor(private readonly db: SqlDatabase) {
+    this.lexical = new LexicalProjection(db);
+  }
+  setBackgroundSearchAdmission(allowed: () => boolean): void {
+    this.lexical.setBackgroundAdmission(allowed);
+  }
+  lexicalCommitted(remoteSources?: PreparedMemorySources) {
+    if (remoteSources && [...remoteSources.groups.values()].some((rows) => rows.length))
+      this.lexical.sourcesCommitted();
+    else this.lexical.committed();
+  }
+  closeLexical() {
+    return this.lexical.close();
+  }
   private retainCoverage(scope: MemoryScope, model: MemoryModel): CoverageEpochs {
     const actorKey = actorScopeKey(scope),
       modelKey = modelScopeKey(scope, model);
@@ -288,6 +312,7 @@ export class MemoryRepository {
     )
       this.resetCaches();
     if (restored) {
+      this.lexical.restored();
       this.actorRevisions.clear();
     }
     if (
@@ -321,14 +346,14 @@ export class MemoryRepository {
       // that layout before CREATE IF NOT EXISTS hides it; never convert development
       // databases or replace their indexes/rows (AGENTS.md#development-save-policy).
       if (
-        columns.length !== 2 ||
+        columns.length !== 1 ||
         !columns.every(
           (column) =>
             column['generated'] === '' &&
             column['required'] === true &&
-            column['type'] === (column['name'] === 'search_text' ? 'text' : 'tsvector') &&
-            column['default_value'] ===
-              (column['name'] === 'search_text' ? "''::text" : "''::tsvector"),
+            column['name'] === 'search_text' &&
+            column['type'] === 'text' &&
+            column['default_value'] === "''::text",
         )
       )
         throw new Error(
@@ -343,7 +368,6 @@ export class MemoryRepository {
         at DOUBLE PRECISION NOT NULL, importance DOUBLE PRECISION NOT NULL, required BIGINT NOT NULL,eligible BIGINT NOT NULL DEFAULT 0, sequence BIGINT NOT NULL DEFAULT 0,
         place_id TEXT, place_label TEXT, place_latest BIGINT NOT NULL DEFAULT 0,
         search_text TEXT NOT NULL DEFAULT '',
-        search_vector tsvector NOT NULL DEFAULT ''::tsvector,
         PRIMARY KEY(world_id,actor_id,id,source_kind));
       CREATE INDEX IF NOT EXISTS recall_actor_rank ON recall_sources(world_id,actor_id,eligible,importance DESC,at DESC,id);
       CREATE INDEX IF NOT EXISTS recall_source_validation ON recall_sources(world_id,actor_id,eligible,id);
@@ -387,7 +411,6 @@ export class MemoryRepository {
         PRIMARY KEY(world_id,actor_id,source_id,source_revision,model,dimensions));
     `);
     await this.db.exec(`
-      CREATE INDEX IF NOT EXISTS recall_text_vector ON recall_sources USING GIN(search_vector);
       CREATE INDEX IF NOT EXISTS recall_maintenance ON recall_sources(world_id,actor_id,eligible,at,sequence,id);
       CREATE INDEX IF NOT EXISTS recall_maintenance_speech ON recall_sources(world_id,actor_id,eligible,event_type,at DESC,sequence DESC,id DESC);
     `);
@@ -400,6 +423,7 @@ export class MemoryRepository {
       ALTER TABLE memory_vectors ALTER COLUMN embedding SET STORAGE PLAIN;
       CREATE INDEX IF NOT EXISTS memory_vector_scope ON memory_vectors(world_id,actor_id,generation,model,dimensions,source_id,source_revision);
     `);
+    await this.lexical.initialize();
   }
   /** Called before current rows change, inside their transaction. Retired/corrected
    * source versions preserve provenance for future consolidation policies.
@@ -409,8 +433,10 @@ export class MemoryRepository {
     revision: number,
     changes: RecordChanges,
     archive = true,
+    sharedWrites?: SqlWriteBatch,
   ): Promise<MemoryChanges> {
     const affected: MemoryChanges = new Map();
+    affected.newSources = new Map();
     const placeIds = (affected.placeIds = new Map());
     const touchPlace = (actorId: string, value: Record<string, unknown>) => {
       const exposure = value['exposure'] as Awareness['exposure'];
@@ -441,6 +467,7 @@ export class MemoryRepository {
       const ids = new Set([...direct, ...writes.filter((row) => !row.create).map((row) => row.id)]);
       // Only deletion needs ancestor matching; ordinary appends inspect their own IDs.
       for (const ancestor of ancestors) {
+        await sharedWrites?.flush();
         // Deleting an actor-owned list has an exact structural parent. Root/world/
         // experience deletion intentionally affects every source in that world.
         const path = JSON.parse(ancestor) as string[];
@@ -453,9 +480,8 @@ export class MemoryRepository {
         for (const row of rows) ids.add(String(row['id']));
       }
       const next = new Map(writes.map((row) => [row.id, row.payload]));
-      const sourceRows: unknown[][] = [],
-        links: unknown[][] = [];
       const allIds = [...ids];
+      if (allIds.length) await sharedWrites?.flush();
       for (let offset = 0; offset < allIds.length; offset += 800) {
         const batch = allIds.slice(offset, offset + 800);
         const placeholders = batch.map(() => '?').join(',');
@@ -483,7 +509,7 @@ export class MemoryRepository {
               row['actor_id'],
               kind,
               row['source_id'],
-              sourceRevision(String(row['payload'])),
+              personalAccountRevision(String(row['payload'])),
               row['payload'],
               revision,
             ]),
@@ -496,51 +522,14 @@ export class MemoryRepository {
             )
             .run(worldId, ...batch);
         }
-        await this.db
+        const pending = await this.db
           .prepare(
-            `DELETE FROM recall_sources WHERE world_id=? AND source_kind=? AND record_id IN (${placeholders})`,
+            `WITH changed AS (DELETE FROM recall_sources WHERE world_id=? AND source_kind=? AND record_id IN (${placeholders})
+              RETURNING world_id,actor_id,id,source_kind,revision) ${this.lexical.enqueueSql('changed', true)}`,
           )
-          .run(worldId, kind, ...batch);
+          .get(worldId, kind, ...batch);
+        await this.lexical.admit(pending);
       }
-      for (const row of writes) {
-        const path = JSON.parse(row.id) as string[];
-        const actorId = kind === 'memory' ? path[2]! : path[3]!;
-        const value = JSON.parse(row.payload) as Record<string, unknown>;
-        const id = String(value[kind === 'awareness' ? 'eventId' : 'id']);
-        const exposure = value['exposure'] as Awareness['exposure'];
-        if (kind === 'awareness') touchPlace(actorId, value);
-        sourceRows.push([
-          worldId,
-          actorId,
-          id,
-          kind,
-          row.id,
-          sourceRevision(row.payload),
-          value['eventId'] ?? null,
-          value['kind'] ?? null,
-          value['source'] ?? null,
-          value['eventType'] ?? null,
-          value[kind === 'summary' ? 'to' : 'at'],
-          value['importance'],
-          value['kind'] === 'commitment' && !value['resolved'] ? 1 : 0,
-          0,
-          value['sequence'] ?? 0,
-          kind === 'awareness' && exposure?.kind === 'place' ? exposure.id : null,
-          kind === 'awareness' && exposure?.kind === 'place' ? exposure.label : null,
-          value[kind === 'memory' ? 'summary' : 'text'] ?? '',
-          lexicalVector(String(value[kind === 'memory' ? 'summary' : 'text'] ?? '')),
-        ]);
-        touch(actorId, id);
-        if (kind === 'summary')
-          for (const sourceId of value['sourceIds'] as string[])
-            links.push([worldId, actorId, id, sourceId]);
-      }
-      await insertRows(
-        this.db,
-        `recall_sources(${[...sourceColumnNames, 'search_text', 'search_vector'].join(',')})`,
-        sourceRows,
-      );
-      await insertRows(this.db, 'mind_summary_sources', links, 'ON CONFLICT DO NOTHING');
     }
     for (const table of ['mind_forgotten', 'mind_corrections']) {
       for (const row of changes.writes.get(table) ?? []) {
@@ -557,6 +546,8 @@ export class MemoryRepository {
         invalidateConversations.add((JSON.parse(id) as string[])[3]!);
       }
     }
+    if (invalidateConversations.size || changes.deletes.has('experience_state'))
+      await sharedWrites?.flush();
     for (const actorId of invalidateConversations)
       await this.invalidateConversationCompactions(worldId, actorId);
     if (changes.deletes.has('experience_state'))
@@ -566,12 +557,152 @@ export class MemoryRepository {
         affected.set(String(row['actor_id']), null);
     return affected;
   }
+  /** Prepare the exact changed source rows once. No world/history enumeration or SQL,
+   * and no eligibility/index mutation before the transaction actually applies them.
+   * docs/projects/performance-overhaul/journal-contract.md */
+  prepareSources(worldId: string, changes: RecordChanges): PreparedMemorySources {
+    const groups = new Map<SourceKind, readonly PreparedSource[]>();
+    for (const kind of Object.keys(sourceTables) as SourceKind[])
+      groups.set(kind, [...this.sourceRows(worldId, kind, changes)]);
+    return { worldId, changes, groups };
+  }
+  private *sourceRows(
+    worldId: string,
+    kind: SourceKind,
+    changes: RecordChanges,
+  ): Generator<PreparedSource> {
+    for (const row of changes.writes.get(sourceTables[kind]) ?? []) {
+      const path = JSON.parse(row.id) as string[];
+      const actorId = kind === 'memory' ? path[2]! : path[3]!;
+      const value = JSON.parse(row.payload) as Record<string, unknown>;
+      const id = value[kind === 'awareness' ? 'eventId' : 'id'];
+      const exposure = value['exposure'] as Awareness['exposure'];
+      const sourceIds = kind === 'summary' ? value['sourceIds'] : [];
+      if (
+        typeof id !== 'string' ||
+        id !== path.at(-1) ||
+        !Array.isArray(sourceIds) ||
+        sourceIds.some((sourceId) => typeof sourceId !== 'string') ||
+        (exposure !== undefined && !validEncounterExposure(exposure))
+      )
+        throw new Error('Invalid memory source projection.');
+      const values: unknown[] = [
+        worldId,
+        actorId,
+        id,
+        kind,
+        row.id,
+        personalAccountRevision(row.payload),
+        value['eventId'] ?? null,
+        value['kind'] ?? null,
+        value['source'] ?? null,
+        value['eventType'] ?? null,
+        value[kind === 'summary' ? 'to' : 'at'],
+        value['importance'],
+        value['kind'] === 'commitment' && !value['resolved'] ? 1 : 0,
+        0,
+        value['sequence'] ?? 0,
+        kind === 'awareness' && exposure?.kind === 'place' ? exposure.id : null,
+        kind === 'awareness' && exposure?.kind === 'place' ? exposure.label : null,
+        value[kind === 'memory' ? 'summary' : 'text'] ?? '',
+      ];
+      // These are the actual SQL fields: required times/ranks cannot become NULL,
+      // sequence must fit BIGINT exactly, and supplied text must remain text.
+      for (let index = 0; index < values.length; index++) {
+        const part = values[index];
+        if (index >= 10 && index <= 14) {
+          if (
+            typeof part !== 'number' ||
+            !Number.isFinite(part) ||
+            (index >= 12 && !Number.isSafeInteger(part))
+          )
+            throw new Error('Invalid numeric memory source projection.');
+        } else if (part === null ? index < 6 || index === 17 : typeof part !== 'string')
+          throw new Error('Invalid text memory source projection.');
+      }
+      if (kind === 'awareness') validateEventEvidence(value);
+      yield { row, actorId, id, exposure, sourceIds, values };
+    }
+  }
+  /** Insert only after current records have changed. All awareness must precede
+   * episode eligibility; summary links must precede their summaries. Final
+   * reconciliation still updates every dependent old source in this transaction. */
+  async writeSources(
+    worldId: string,
+    changes: RecordChanges,
+    affected: MemoryChanges,
+    prepared?: PreparedMemorySources,
+  ) {
+    if (prepared && (prepared.worldId !== worldId || prepared.changes !== changes))
+      throw new Error('Prepared memory sources do not match these exact world changes.');
+    const columns = [...sourceColumnNames, 'search_text'];
+    const repository = this;
+    for (const kind of Object.keys(sourceTables) as SourceKind[]) {
+      // Complete restores stream rows rather than allocating a second complete source set.
+      const writes = () =>
+        prepared?.groups.get(kind) ?? repository.sourceRows(worldId, kind, changes);
+      if (kind === 'summary') {
+        function* summaryLinks() {
+          if (prepared) {
+            for (const entry of writes())
+              for (const sourceId of entry.sourceIds)
+                yield [worldId, entry.actorId, entry.id, sourceId];
+          } else {
+            for (const row of changes.writes.get(sourceTables.summary) ?? []) {
+              const path = JSON.parse(row.id) as string[];
+              const value = JSON.parse(row.payload) as Record<string, unknown>;
+              for (const sourceId of value['sourceIds'] as string[])
+                yield [worldId, path[3]!, value['id'], sourceId];
+            }
+          }
+        }
+        await insertRows(this.db, 'mind_summary_sources', summaryLinks(), 'ON CONFLICT DO NOTHING');
+      }
+      function* incoming() {
+        for (const { row, actorId, id, exposure, values } of writes()) {
+          if (affected.get(actorId) !== null) {
+            const ids = affected.get(actorId) ?? new Set<string>();
+            if (row.create && !ids.has(id)) {
+              const inserted = affected.newSources?.get(actorId) ?? new Map<string, SourceKind>();
+              inserted.set(id, kind);
+              affected.newSources?.set(actorId, inserted);
+            } else affected.newSources?.get(actorId)?.delete(id);
+            ids.add(id);
+            affected.set(actorId, ids);
+          }
+          if (kind === 'awareness' && exposure?.kind === 'place') {
+            const ids = affected.placeIds!.get(actorId) ?? new Set<string>();
+            ids.add(exposure.id);
+            affected.placeIds!.set(actorId, ids);
+          }
+          yield values;
+        }
+      }
+      for (const batch of sqlRecordBatches(columns, incoming())) {
+        const projection = columns.map((name) =>
+          name === 'eligible'
+            ? `CASE WHEN ${this.sourceEligibility} THEN 1 ELSE 0 END`
+            : `r.${name}`,
+        );
+        const pending = await this.db
+          .prepare(
+            `WITH changed AS (INSERT INTO recall_sources(${columns.join(',')})
+            SELECT ${projection.join(',')} FROM jsonb_populate_recordset(NULL::recall_sources,?::jsonb) AS r
+            RETURNING world_id,actor_id,id,source_kind,revision) ${this.lexical.enqueueSql('changed', false)}`,
+          )
+          .get(batch);
+        await this.lexical.admit(pending);
+      }
+    }
+  }
+
   /** Current eligibility is a transactional index, never inferred from vector presence. */
   async reconcile(worldId: string, changes: MemoryChanges) {
-    const small: [string, string][] = [];
+    const small: [string, string, SourceKind | null][] = [];
     for (const [actorId, ids] of changes) {
       if (ids && ids.size <= 1000) {
-        for (const id of ids) small.push([actorId, id]);
+        for (const id of ids)
+          small.push([actorId, id, changes.newSources?.get(actorId)?.get(id) ?? null]);
         continue;
       }
       // Restore/extraction can replace a large actor history. Keep each SQL
@@ -632,13 +763,19 @@ export class MemoryRepository {
     // dependencies together instead of paying one database round trip per witness.
     for (let offset = 0; offset < small.length; offset += 250) {
       const pairs = small.slice(offset, offset + 250);
-      const cte = `WITH changed(actor_id,id) AS (VALUES ${pairs.map(() => '(?,?)').join(',')}),
-        affected AS MATERIALIZED (SELECT actor_id,id FROM changed
-          UNION SELECT r.actor_id,r.id FROM changed c CROSS JOIN recall_sources r WHERE r.world_id=? AND r.actor_id=c.actor_id AND r.event_id=c.id
+      const cte = `WITH changed(actor_id,id,fresh_kind) AS (VALUES ${pairs.map(() => '(?,?,?::text)').join(',')}),
+        affected AS MATERIALIZED (SELECT actor_id,id FROM changed WHERE fresh_kind IS NULL
+          UNION SELECT r.actor_id,r.id FROM changed c CROSS JOIN recall_sources r
+            WHERE r.world_id=? AND r.actor_id=c.actor_id
+            AND (r.event_id=c.id OR (c.fresh_kind IS NOT NULL AND r.id=c.id AND r.source_kind<>c.fresh_kind))
+            AND NOT (c.fresh_kind IS NOT NULL AND r.id=c.id AND r.source_kind=c.fresh_kind)
           UNION SELECT s.actor_id,s.summary_id FROM changed c CROSS JOIN mind_summary_sources s WHERE s.world_id=? AND s.actor_id=c.actor_id AND s.source_id=c.id)`;
-      const params = [...pairs.flat(), worldId, worldId, worldId];
+      const params = [...pairs.flat(), worldId, worldId, worldId, worldId];
       const target = '(r.actor_id,r.id) IN (SELECT actor_id,id FROM affected)';
 
+      // New sources already have exact insertion-time eligibility in this transaction.
+      // Only that family skips previous-version cleanup; linked episodes/summaries
+      // and an ID shared with another family remain on the complete path.
       // One snapshot computes eligibility and the wanted queue for this affected set.
       // DML CTEs cannot read one another's table updates: all consumers use `desired`,
       // including removed sources. Queue delete/upsert sets are deliberately disjoint.
@@ -649,6 +786,10 @@ export class MemoryRepository {
           SELECT r.world_id,r.actor_id,r.id,r.source_kind,r.revision,r.importance,r.at,
             CASE WHEN ${this.sourceEligibility} THEN 1 ELSE 0 END AS next_eligible
           FROM recall_sources r WHERE r.world_id=? AND ${target}
+          UNION ALL
+          SELECT r.world_id,r.actor_id,r.id,r.source_kind,r.revision,r.importance,r.at,r.eligible AS next_eligible
+          FROM changed c JOIN recall_sources r ON r.actor_id=c.actor_id AND r.id=c.id AND r.source_kind=c.fresh_kind
+          WHERE r.world_id=? AND c.fresh_kind IS NOT NULL AND NOT EXISTS (SELECT 1 FROM affected a WHERE a.actor_id=c.actor_id AND a.id=c.id)
         ), updated AS (
           UPDATE recall_sources r SET eligible=d.next_eligible FROM desired d
           WHERE r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.id=d.id AND r.source_kind=d.source_kind
@@ -1242,7 +1383,10 @@ export class MemoryRepository {
             };
       const page = matched.slice(0, limit);
       const entries = (await this.hydrate(page)).sort(
-        (a, b) => b.memory.at - a.memory.at || (a.memory.id < b.memory.id ? 1 : -1),
+        (a, b) =>
+          b.memory.at - a.memory.at ||
+          (a.memory.id < b.memory.id ? 1 : a.memory.id > b.memory.id ? -1 : 0) ||
+          (a.sourceKind < b.sourceKind ? 1 : a.sourceKind > b.sourceKind ? -1 : 0),
       );
       if (matched.length > limit)
         return { entries, resume: position(page.at(-1)!), scanLimited: false };
@@ -1399,7 +1543,11 @@ export class MemoryRepository {
           throughRevision,
           after: { at: last.at, sequence: last.sequence ?? 0, id: last.id },
           complete: rows.length === selected.length,
-          revisions: selected.map((entry) => ({ id: entry.memory.id, revision: entry.revision })),
+          revisions: selected.map((entry) => ({
+            id: entry.memory.id,
+            sourceKind: entry.sourceKind,
+            revision: entry.revision,
+          })),
         },
       };
     });
@@ -1416,7 +1564,7 @@ export class MemoryRepository {
     // contain tentative writes or an older view and must never populate shared reuse.
     const cacheable = this.db.transactionActive === false;
     const terms = query === null ? [] : [...new Set(searchWords(query))];
-    return this.snapshot(async () => {
+    const read = async () => {
       if (query === null)
         return this.hydrate(
           await this.db
@@ -1436,7 +1584,11 @@ export class MemoryRepository {
         cached.reset === reset &&
         (await this.current(
           scope,
-          cached.rows.map((row) => ({ id: String(row['id']), revision: String(row['revision']) })),
+          cached.rows.map((row) => ({
+            id: String(row['id']),
+            sourceKind: String(row['source_kind']) as SourceKind,
+            revision: String(row['revision']),
+          })),
         )) &&
         revision === this.actorRevision(scope.actorId) &&
         reset === this.resetEpoch
@@ -1450,9 +1602,11 @@ export class MemoryRepository {
         matched = await this.db
           .prepare(
             `SELECT ${sourceColumns},
-            ts_rank(r.search_vector,?::tsquery) AS score
-            FROM recall_sources r WHERE ${this.eligible}
-            AND r.search_vector @@ ?::tsquery
+            ts_rank(d.search_vector,?::tsquery) AS score
+            FROM recall_sources r JOIN memory_lexical_documents d ON d.world_id=r.world_id
+              AND d.actor_id=r.actor_id AND d.id=r.id AND d.source_kind=r.source_kind AND d.source_revision=r.revision
+            WHERE ${this.eligible}
+            AND d.search_vector @@ ?::tsquery
             ORDER BY score DESC,r.importance DESC,r.at DESC,r.id LIMIT ?`,
           )
           .all(expression, ...this.params(scope), expression, limit);
@@ -1487,7 +1641,8 @@ export class MemoryRepository {
         this.textSelection.set(cacheKey, { revision, reset, rows });
       }
       return result;
-    });
+    };
+    return lexicalQuery(terms) ? this.lexical.snapshot(scope, read) : this.snapshot(read);
   }
   private async hydrate(
     rows: Record<string, unknown>[],
@@ -1533,7 +1688,7 @@ export class MemoryRepository {
         const byId = new Map(values.map((row) => [row['id'], String(row['payload'])]));
         for (const row of batch) {
           const payload = byId.get(row['record_id']);
-          if (!payload || sourceRevision(payload) !== row['revision']) continue;
+          if (!payload || personalAccountRevision(payload) !== row['revision']) continue;
           const actorId = String(row['actor_id']);
           let memory: MemoryRecord;
           let awareness: Awareness | undefined;
@@ -1570,6 +1725,7 @@ export class MemoryRepository {
             };
           } else memory = JSON.parse(payload) as MemoryRecord;
           const value: RetrievedMemory = {
+            sourceKind: kind,
             memory,
             awareness,
             revision: String(row['revision']),
@@ -1586,11 +1742,17 @@ export class MemoryRepository {
     const order = new Map(
       Object.keys(sourceTables)
         .flatMap((kind) =>
-          rows.filter((row) => row['source_kind'] === kind).map((row) => String(row['id'])),
+          rows
+            .filter((row) => row['source_kind'] === kind)
+            .map((row) => sourceKey(kind, String(row['id']))),
         )
         .map((id, index) => [id, index]),
     );
-    return result.sort((a, b) => order.get(a.memory.id)! - order.get(b.memory.id)!);
+    return result.sort(
+      (a, b) =>
+        order.get(sourceKey(a.sourceKind, a.memory.id))! -
+        order.get(sourceKey(b.sourceKind, b.memory.id))!,
+    );
   }
   async count(scope: MemoryScope): Promise<number> {
     const row = await this.db
@@ -1598,17 +1760,27 @@ export class MemoryRepository {
       .get(...this.params(scope));
     return Number(row?.['count'] ?? 0);
   }
-  async current(scope: MemoryScope, sources: { id: string; revision: string }[]): Promise<boolean> {
+  async current(scope: MemoryScope, sources: CurrentMemorySource[]): Promise<boolean> {
     const read = async () => {
       for (let offset = 0; offset < sources.length; offset += 500) {
         const batch = sources.slice(offset, offset + 500);
         const rows = await this.db
           .prepare(
-            `SELECT r.id,r.revision FROM recall_sources r WHERE ${this.eligible} AND r.id IN (${batch.map(() => '?').join(',')})`,
+            `SELECT r.id,r.source_kind,r.revision FROM recall_sources r WHERE ${this.eligible} AND (r.id,r.source_kind) IN (${batch.map(() => '(?,?)').join(',')})`,
           )
-          .all(...this.params(scope), ...batch.map((source) => source.id));
-        const versions = new Map(rows.map((row) => [row['id'], row['revision']]));
-        if (batch.some((source) => versions.get(source.id) !== source.revision)) return false;
+          .all(...this.params(scope), ...batch.flatMap((source) => [source.id, source.sourceKind]));
+        const versions = new Map(
+          rows.map((row) => [
+            sourceKey(String(row['source_kind']), String(row['id'])),
+            row['revision'],
+          ]),
+        );
+        if (
+          batch.some(
+            (source) => versions.get(sourceKey(source.sourceKind, source.id)) !== source.revision,
+          )
+        )
+          return false;
       }
       return true;
     };
@@ -1619,14 +1791,19 @@ export class MemoryRepository {
   async validatePreparation(
     scope: MemoryScope,
     conversation: { id: string; sequence: number; sources: ConversationSource[] } | undefined,
-    sources: { id: string; revision: string }[],
+    sources: CurrentMemorySource[],
   ): Promise<boolean> {
-    const covered = new Map(conversation?.sources.map((source) => [source.id, source.revision]));
-    const remaining = new Map<string, { id: string; revision: string }>();
+    // Conversation turns are awareness sources. A personal note or summary with
+    // the same ID is independent and still needs its own current revision check.
+    const covered = new Map(
+      conversation?.sources.map((source) => [sourceKey('awareness', source.id), source.revision]),
+    );
+    const remaining = new Map<string, CurrentMemorySource>();
     for (const source of sources) {
-      const previous = covered.get(source.id) ?? remaining.get(source.id)?.revision;
+      const key = sourceKey(source.sourceKind, source.id);
+      const previous = covered.get(key) ?? remaining.get(key)?.revision;
       if (previous && previous !== source.revision) return false;
-      if (!previous) remaining.set(source.id, source);
+      if (!previous) remaining.set(key, source);
     }
     const read = async () => {
       if (conversation) {

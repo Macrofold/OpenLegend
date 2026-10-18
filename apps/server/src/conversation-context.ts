@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import type { CognitionPreparation } from './memory-repository.js';
 import { z } from 'zod';
 import { observerDescription, recognizesSubject, type WorldState } from '@open-legend/domain';
@@ -13,6 +14,7 @@ import {
   RETRIEVAL_BYTES,
   RETRIEVAL_ROWS,
   type ConversationSource,
+  type CurrentMemorySource,
   type MemoryScope,
 } from './memory-repository.js';
 
@@ -71,7 +73,7 @@ function perspective(world: WorldState, actorId: string, entityIds: string[]): s
       const episode = world.perceptionEpisodes?.[actorId]?.[id];
       return [
         id,
-        !!world.entities[id],
+        !!entityGet(world.entities, id),
         observerDescription(world, actorId, id),
         known,
         episode ?? null,
@@ -280,10 +282,7 @@ export async function buildConversationContext(input: {
       checkedWorld = new WeakRef(service.world);
     }
   };
-  const check = async (
-    flush = true,
-    additionalSources: { id: string; revision: string }[] = [],
-  ) => {
+  const check = async (flush = true, additionalSources: CurrentMemorySource[] = []) => {
     signal.throwIfAborted();
     if (flush) await service.flushMemorySources(actorId, false);
     assertCurrent();

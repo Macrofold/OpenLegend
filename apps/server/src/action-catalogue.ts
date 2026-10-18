@@ -1,7 +1,12 @@
+import { entityGet } from '@open-legend/domain';
 import { nativeCommandKind } from './native-command-kind.js';
 import {
   canonicalJson,
   nativeCommandSupported,
+  preferredTargetEquipment,
+  equippedTargetAction,
+  reincarnationPolicy,
+  replacementRest,
   installedActionMeaning,
   installedActionMeanings,
   rangedTargetAllowed,
@@ -40,6 +45,7 @@ import { inventoryItemChoices } from './inventory-view.js';
 import type { RequestScope } from './authority.js';
 import { pickupActions } from './item-actions.js';
 import { statusEffectActions } from './status-effect-actions.js';
+import { learnedActivityCandidates } from './activity-context.js';
 import { ammoFor, availableStrikes } from '@open-legend/domain';
 import { attributeDefinition, readAttribute } from '@open-legend/domain';
 import { canSpeak } from '@open-legend/domain';
@@ -135,6 +141,129 @@ export function actionCatalogue(
     }
     return result;
   };
+  const world = service.world;
+  if (context.recipeId) {
+    const recipe = observation.knownRecipes.find((entry) => entry.id === context.recipeId);
+    if (!recipe) throw new ActionCatalogueUnavailable('This method is no longer known.');
+    const command: CommandInput = { type: 'craft', recipeId: recipe.id };
+    const availability = controlling ? preview(command) : controlUnavailable;
+    const choices: CatalogueAction[] = nativeCommandSupported(world, 'craft')
+      ? [
+          {
+            id: `craft-${recipe.id}`,
+            label: 'Craft one',
+            category: 'Create',
+            icon: nativeActionIcon(command.type),
+            description: descriptions.describe(command),
+            facts: descriptions.facts(command),
+            keywords: [recipe.name, 'craft'],
+            enabled: availability.ok,
+            ...(!availability.ok ? { reason: availability.message } : {}),
+            intent: { kind: 'command', command },
+          },
+        ]
+      : [];
+    return {
+      revision: service.version,
+      actions: choices,
+      categories: choices.length ? ['Create'] : [],
+    };
+  }
+  if (context.equipped) {
+    const equipment = preferredTargetEquipment(world, scope.actorId);
+    if (!equipment || equipment.id !== context.itemId)
+      throw new ActionCatalogueUnavailable('The held item changed. Choose a target again.');
+    const target = observation.visibleEntities.find((entry) => entry.id === context.targetId);
+    if (!target || target.id === scope.actorId)
+      throw new ActionCatalogueUnavailable('That target is no longer in view.');
+    const definition = world.itemDefinitions[equipment.definitionId]!;
+    const commands: { id: string; label: string; category: string; command: CommandInput }[] = [];
+    if (target.actor)
+      for (const strike of availableStrikes(world, scope.actorId, target))
+        if (strike.weaponItemId === equipment.id)
+          commands.push({
+            id: `${strike.id}-${target.id}`,
+            label: strike.label,
+            category: 'Combat',
+            command: {
+              type: 'strike',
+              definitionId: strike.id,
+              itemId: equipment.id,
+              targetId: target.id,
+            },
+          });
+    // Retain this gesture's established first matching carried-lot choice. A
+    // reserved first lot still refuses; selecting another projectile is a new choice.
+    const ammunitionId = definition.launcher
+      ? observation.inventory.find(
+          (item) =>
+            world.itemDefinitions[item.definitionId]?.ammunition?.kind ===
+            definition.launcher!.ammunitionKind,
+        )?.id
+      : undefined;
+    if (target.actor?.alive && definition.launcher)
+      for (const type of ['aim', 'shoot-once'] as const)
+        commands.push({
+          id: `${type}:${target.id}:${equipment.id}`,
+          label: rangedChoiceLabel(
+            type,
+            observerDescription(world, scope.actorId, target.id),
+            definition.name,
+          ),
+          category: 'Combat',
+          command: { type, targetId: target.id, itemId: equipment.id, ammunitionId },
+        });
+    if (
+      target.resource &&
+      !target.resource.cast &&
+      definition.gatheringTool?.resourceId === target.resource.definitionId
+    )
+      commands.push({
+        id: `gather-${target.id}`,
+        label: 'Gather',
+        category: 'Gather',
+        command: { type: 'gather', targetId: target.id, itemId: equipment.id },
+      });
+    if (rangedTargetAllowed(world, target) && definition.launcher)
+      commands.push({
+        id: `hunt-${target.id}`,
+        label: rangedPolicy(world)!.actionLabel,
+        category: 'Hunt',
+        command: { type: 'hunt', targetId: target.id, itemId: equipment.id, ammunitionId },
+      });
+    for (const option of competenceOptions(world, scope.actorId, target, [equipment]))
+      if (option.command.type === 'practice-shot' && option.command.itemId === equipment.id)
+        commands.push({ ...option, category: 'Practice' });
+    const selected = equippedTargetAction(
+      world,
+      target,
+      equipment,
+      commands.filter((entry) =>
+        nativeCommandSupported(world, nativeCommandKind(entry.command.type)),
+      ),
+    );
+    if (!selected) return { revision: service.version, actions: [], categories: [] };
+    const availability = controlling ? preview(selected.command) : controlUnavailable;
+    return {
+      revision: service.version,
+      actions: [
+        {
+          id: selected.id,
+          label: selected.label,
+          category: selected.category,
+          icon: nativeActionIcon(selected.command.type),
+          description: descriptions.describe(selected.command),
+          facts: descriptions.facts(selected.command),
+          keywords: [],
+          targetId: target.id,
+          enabled: availability.ok,
+          ...(!availability.ok ? { reason: availability.message } : {}),
+          intent: { kind: 'command', command: selected.command },
+        },
+      ],
+      categories: [selected.category],
+    };
+  }
   const possessionAvailability = (option: ActionOption) =>
     option.enabled
       ? preview(option.command)
@@ -159,7 +288,7 @@ export function actionCatalogue(
             : option,
       );
     if (context.destinationId) {
-      const destination = service.world.entities[context.destinationId];
+      const destination = entityGet(service.world.entities, context.destinationId);
       if (!destination || custodian(service.world, destination.id) !== scope.actorId)
         throw new ActionCatalogueUnavailable('This destination is unavailable.');
       const command: CommandInput = {
@@ -201,12 +330,11 @@ export function actionCatalogue(
       }),
     );
   }
-  const world = service.world;
   const itemUses = selectedItem ? [selectedItem] : observation.inventory;
   const targets = observation.visibleEntities.filter((entity) => entity.id !== scope.actorId);
   const selected =
     context.targetId === scope.actorId
-      ? world.entities[scope.actorId]
+      ? entityGet(world.entities, scope.actorId)
       : targets.find((entity) => entity.id === context.targetId);
   if (context.targetId && !selected)
     throw new ActionCatalogueUnavailable('That target is no longer in view.');
@@ -381,9 +509,49 @@ export function actionCatalogue(
     : selected
       ? [selected]
       : [])
-    for (const option of statusEffectActions(world, world.entities[scope.actorId]!, target))
+    for (const option of statusEffectActions(
+      world,
+      entityGet(world.entities, scope.actorId)!,
+      target,
+    ))
       add(option.id, option.label, 'States', option.command, [], target.id, undefined, option.icon);
-  const self = world.entities[scope.actorId]!.actor!;
+  const self = entityGet(world.entities, scope.actorId)!.actor!;
+  if (personal) {
+    for (const option of learnedActivityCandidates(
+      service,
+      scope.actorId,
+      undefined,
+      0,
+      undefined,
+      'complete',
+    ))
+      if (option.command)
+        add(option.id, option.description, 'Activities', option.command, ['learned', 'activity']);
+    const reincarnation = reincarnationPolicy(world),
+      treatment = reincarnation?.treatment;
+    if (reincarnation && treatment && observation.actor.actor?.alive) {
+      const rest = targets.find(
+        (entity) =>
+          replacementRest(world, entity) &&
+          Math.hypot(
+            worldPosition(entity).x - worldPosition(observation.actor).x,
+            worldPosition(entity).y - worldPosition(observation.actor).y,
+            worldPosition(entity).z - worldPosition(observation.actor).z,
+          ) <= treatment.reach,
+      );
+      if (rest)
+        for (const scar of reincarnation.scars.filter(
+          (entry) => observation.actor.actor!.scars?.[entry.id],
+        )) {
+          const command: CommandInput = { type: 'treat-scar', targetId: rest.id, scarId: scar.id };
+          // These are personal choices even though their command names the permitted rest site.
+          add(`treat-${scar.id}`, `${reincarnation.treatmentLabel} ${scar.name}`, 'Body', command, [
+            'scar',
+            'treatment',
+          ]);
+        }
+    }
+  }
   if (self.action?.ranged?.manual && self.action.targetId)
     add(
       `release-shot:${self.action.id}`,
@@ -491,7 +659,7 @@ export function actionCatalogue(
       const definition = attributeDefinition(world, target.replenisher.attributeId);
       if (
         definition?.reservoir &&
-        readAttribute(observation.actor.actor!, definition) !== undefined
+        readAttribute(world, observation.actor, definition) !== undefined
       )
         add(
           `replenish-${target.id}`,

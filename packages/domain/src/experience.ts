@@ -1,3 +1,4 @@
+import { entityGet, entityHas, entityValues } from './entity-collection.js';
 import { revokePracticeSupport } from './practical-competence.js';
 import { revokeActivityEvidence } from './activity-learning.js';
 import {
@@ -280,7 +281,7 @@ export function mutateExperience(
   mutation: ExperienceOperation,
 ): string[] | null {
   if (!world.experience) migrateCognition(world);
-  if (!hasMemory(world.entities[actorId])) return null;
+  if (!hasMemory(entityGet(world.entities, actorId))) return null;
   return applyExperienceMutation(world, actorId, mutation, 'copy');
 }
 /** Transfer fresh event-time evidence through the existing admission owner.
@@ -293,7 +294,7 @@ export function acquireEventAwareness(world: WorldState, entries: Awareness[]): 
   if (!entries.length) return;
   if (!world.experience) migrateCognition(world);
   for (const entry of entries) {
-    if (!hasMemory(world.entities[entry.actorId])) continue;
+    if (!hasMemory(entityGet(world.entities, entry.actorId))) continue;
     applyExperienceMutation(
       world,
       entry.actorId,
@@ -595,7 +596,7 @@ export function migrateCognition(world: WorldState): void {
     forgotten: {},
   };
   world.innerWorlds ??= {};
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     if (!hasMemory(entity)) continue;
     world.experience.awareness[entity.id] ??= [];
     if (world.innerWorlds[entity.id]) continue;
@@ -640,7 +641,7 @@ export function experiences(
   includeBacklog = false,
 ): MemoryRecord[] {
   // Public query IDs never resolve inherited Object prototype members.
-  if (!Object.hasOwn(world.entities, actorId) || !world.entities[actorId]?.actor) return [];
+  if (!entityHas(world.entities, actorId) || !entityGet(world.entities, actorId)?.actor) return [];
   const state = world.experience;
   const forgotten = new Set(state?.forgotten[actorId] ?? []);
   const aware = state?.awareness[actorId] ?? [];
@@ -701,7 +702,7 @@ export function unseenExperiences(
   /** Records the caller would act on (for example trigger evidence); kept before truncation. */
   prefer: (record: MemoryRecord) => boolean = () => false,
 ): { records: MemoryRecord[]; maxSequence: number } {
-  if (!Object.hasOwn(world.entities, actorId) || !world.entities[actorId]?.actor)
+  if (!entityHas(world.entities, actorId) || !entityGet(world.entities, actorId)?.actor)
     return { records: [], maxSequence: afterSequence };
   const state = world.experience;
   const forgotten = new Set(state?.forgotten[actorId] ?? []);
@@ -1021,7 +1022,7 @@ export function publishInnerWorld(
     outcome: outcome(false, 'publication-rejected', message),
   });
   const prior = input.innerWorlds?.[actorId];
-  const actor = input.entities[actorId]?.actor;
+  const actor = entityGet(input.entities, actorId)?.actor;
   const publicationBody = canonicalJson({
     actorId,
     expectedRevision,
@@ -1047,7 +1048,7 @@ export function publishInnerWorld(
     !prior ||
     prior.revision !== expectedRevision ||
     !actor?.alive ||
-    !hasMemory(input.entities[actorId]) ||
+    !hasMemory(entityGet(input.entities, actorId)) ||
     actor.capabilities?.innerWorld === false ||
     actor.incapacitated ||
     input.paused
@@ -1055,8 +1056,8 @@ export function publishInnerWorld(
     return reject('Actor or accepted revision changed.');
   if (
     dreamEpisode &&
-    (dreamStatus(input, input.entities[actorId])?.episode !== dreamEpisode ||
-      dreamStatus(input, input.entities[actorId])!.elapsedSeconds <
+    (dreamStatus(input, entityGet(input.entities, actorId))?.episode !== dreamEpisode ||
+      dreamStatus(input, entityGet(input.entities, actorId))!.elapsedSeconds <
         (dreamPolicy(input)?.afterSeconds ?? Infinity))
   )
     return reject('Dream interrupted.');
@@ -1142,7 +1143,7 @@ export function publishInnerWorld(
     return reject('Reflection cannot replace player intentions or exceed eight goal changes.');
   for (const [index, change] of goalChanges.entries()) {
     const result = changeGoal(
-      world.entities[actorId]!.actor!,
+      entityGet(world.entities, actorId)!.actor!,
       change,
       `${jobId}:goal:${index}`,
       'actor',

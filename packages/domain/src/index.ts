@@ -1,3 +1,5 @@
+export * from './entity-collection.js';
+export * from './ordered-record.js';
 export * from './world-creation.js';
 export * from './world-composition.js';
 export type {
@@ -32,6 +34,7 @@ export {
 export { STIMULUS_POLICY } from './worlds/base/senses.js';
 export {
   DOMAIN_COUNTERS,
+  domainCountersEnabled,
   observeDomainCounters,
   type DomainCounter,
   type DomainCounters,
@@ -42,6 +45,7 @@ export * from './activity-execution.js';
 export {
   BASE_FOOD_ACTION_WORDING,
   equippedTargetAction,
+  preferredTargetEquipment,
   nativeCatalogueView,
   nativeActivityViews,
   nativeHuntCatalogueLabel,
@@ -101,6 +105,7 @@ export {
   lethalAttackOffer,
   nativeOperationAvailable,
   advanceWorld,
+  projectWorldHistory,
   navigationBlocked,
   observeActor,
   initializePerception,
@@ -144,6 +149,7 @@ export {
   appendedRecordCount,
   freezeWorld,
   entityChangesBetween,
+  recordMapChangesBetween,
 } from './draft.js';
 
 export * from './living.js';
@@ -215,6 +221,7 @@ export {
   subjectNarration,
   renderNarration,
   narrationTemplate,
+  validateNarration,
   type Narration,
   type NarrationPart,
 } from './narration.js';
@@ -325,3 +332,4 @@ export * from './evasion.js';
 export * from './worlds/base/combat-views.js';
 
 export * from './worlds/base/watchpost.js';
+export * from './native-values.js';

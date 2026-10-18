@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 export function readLocal<T>(key: string, fallback: T, valid: (value: unknown) => value is T): T {
   try {
     const value: unknown = JSON.parse(localStorage.getItem(key) ?? 'null');
@@ -16,11 +16,12 @@ export function writeLocal(key: string, value: unknown) {
 }
 export function useLocal<T>(key: string, fallback: T, valid: (value: unknown) => value is T) {
   const [value, set] = useState(() => readLocal(key, fallback, valid));
-  return [
-    value,
+  const update = useCallback(
     (next: T) => {
       set(next);
       writeLocal(key, next);
     },
-  ] as const;
+    [key],
+  );
+  return [value, update] as const;
 }

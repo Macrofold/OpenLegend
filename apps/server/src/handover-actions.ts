@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
 import {
   BASE_HANDOVER,
@@ -130,7 +131,7 @@ export function handoverOptions(
         expectedRevision: item.revision,
         placementRevision: item.placementRevision,
         expectedContentsRevision: item.container
-          ? (world.entities[item.id]?.inventoryRevision ?? 0)
+          ? (entityGet(world.entities, item.id)?.inventoryRevision ?? 0)
           : undefined,
       };
       // A reply replaces the existing proposal rather than promising its item twice.
@@ -238,7 +239,7 @@ export function tradeOwnLots(
         revision: item.revision ?? 0,
         placementRevision: item.placementRevision ?? 0,
         contentsRevision: item.container
-          ? (world.entities[item.id]?.inventoryRevision ?? 0)
+          ? (entityGet(world.entities, item.id)?.inventoryRevision ?? 0)
           : undefined,
         whole: !!item.container || item.individuality === 'individual',
       }),
@@ -256,7 +257,9 @@ export function itemTradeView(
   const { incoming, outgoing } = offersBetween(world, actorId, person.id);
   const remembered = knownTradeLots(world, actorId, person.id);
   const termView = (lot: OfferLot, own: boolean): TradeLotView => {
-    const saved = world.entities[actorId]?.actor?.knownTradeLots?.[person.id]?.[lot.itemId];
+    const saved = entityGet(world.entities, actorId)?.actor?.knownTradeLots?.[person.id]?.[
+      lot.itemId
+    ];
     const named = own
       ? ownLots.find((item) => item.id === lot.itemId)
       : saved && disclosedView(saved, remembered.indexOf(saved));

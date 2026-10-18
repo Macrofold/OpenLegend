@@ -1,3 +1,5 @@
+import { entityGet, entitySet, entityValues } from '../../entity-collection.js';
+import { emptyEntities } from '../../entity-collection.js';
 import { BASE_NATIVE_ACTIVITY_HOSTS } from './native-activities.js';
 import { baseSpatial } from './spatial-definitions.js';
 import { BASE_TERRAIN } from './spatial-definitions.js';
@@ -94,7 +96,11 @@ export function baseWorldInitialConstructionSeeds(
   world: WorldState,
   builderId = PLAYER_ID,
 ): ConstructionPermission[] {
-  if (!world.entities['camp-route-marker'] || !world.entities[builderId]?.actor) return [];
+  if (
+    !entityGet(world.entities, 'camp-route-marker') ||
+    !entityGet(world.entities, builderId)?.actor
+  )
+    return [];
   return [
     {
       id: 'intro-canopy-builder',
@@ -226,7 +232,7 @@ export function createFreshBaseWorld(
     },
     flightRoutes: starterFlightRoutes(),
     nativeStrikes: structuredClone({ ...NATIVE_STRIKES, [STAG_CONTACT.id]: STAG_CONTACT }),
-    entities: {},
+    entities: emptyEntities(),
     objectState: { revision: 0 },
     assemblyFamilies: { [BASE_CANOPY.id]: structuredClone(BASE_CANOPY) },
     constructionProfile: baseConstructionProfile(BASE_CANOPY_SCENE.suggested),
@@ -238,7 +244,7 @@ export function createFreshBaseWorld(
     memories: {},
     knowledge: {},
     events: [],
-    commandReceipts: {},
+    commandReceipts: { size: 0 },
     declarationReceipts: {},
     nextId: 1,
   };
@@ -422,7 +428,7 @@ export function createWorld(
         calmRate: 0,
         reviewAt: 0,
         danger: 0,
-        wanderSeconds: 150,
+        wander: { remainingSeconds: 150 },
       },
     },
     {
@@ -445,7 +451,7 @@ export function createWorld(
         calmRate: 0,
         reviewAt: 0,
         danger: 0,
-        wanderSeconds: 100,
+        wander: { remainingSeconds: 100 },
       },
     },
     {
@@ -468,7 +474,7 @@ export function createWorld(
         calmRate: 0,
         reviewAt: 0,
         danger: 0,
-        wanderSeconds: 200,
+        wander: { remainingSeconds: 200 },
       },
     },
     {
@@ -508,7 +514,7 @@ export function createWorld(
         calmRate: 0,
         reviewAt: 0,
         danger: 0,
-        wanderSeconds: 0,
+        wander: { remainingSeconds: 0 },
       },
     },
   ];
@@ -526,14 +532,14 @@ export function createWorld(
               ? 'person.wayfarer'
               : undefined;
     // Prospective primary identities must not erase fixed authored starting content.
-    if (world.entities[entity.id])
+    if (entityGet(world.entities, entity.id))
       throw new Error('A starting person identity collides with an authored scene object.');
-    world.entities[entity.id] = entity;
+    entitySet(world.entities, entity.id, entity);
   }
   for (const material of [...BASE_CANOPY_SCENE.kit, ...BASE_CANOPY_SCENE.variantStock])
     for (let n = 0; n < material.quantity; n++) {
       const id = addItem(world, playerId, material.definitionId, 1);
-      if (material.quantity > 1) world.entities[id]!.name += ` ${n + 1}`;
+      if (material.quantity > 1) entityGet(world.entities, id)!.name += ` ${n + 1}`;
     }
   const shieldRecipe = installKnownShieldMethod(world);
   const containerRecipe = installRecipe(world, BASE_WOVEN_CONTAINER_METHOD, {
@@ -541,7 +547,7 @@ export function createWorld(
     profile: { ...world.profile },
   }).recipe;
   // Explicit authored starting support; Ada's biography does not grant mechanics.
-  setStartingPractice(world, world.entities[residentId]!, SLING_HANDLING, 1);
+  setStartingPractice(world, entityGet(world.entities, residentId)!, SLING_HANDLING, 1);
   for (const id of [playerId, residentId, MERCENARY_ID]) {
     startingRecipeKnowledge(world, id, shieldRecipe.id);
     learnRecipe(world, id, containerRecipe.id, 'authored', 'base:known-woven-container');
@@ -601,7 +607,7 @@ function sampleTraits(world: WorldState) {
   }));
 }
 export function initializeActorTraits(world: WorldState): void {
-  for (const entity of Object.values(world.entities))
+  for (const entity of entityValues(world.entities))
     if (hasMemory(entity) && entity.actor && entity.actor.traits === undefined) {
       const savedRng = world.rngState;
       for (const character of entity.id)

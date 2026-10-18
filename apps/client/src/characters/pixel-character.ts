@@ -181,28 +181,47 @@ export class PixelCharacter {
   get outlineMeshes(): readonly pc.MeshInstance[] {
     return this.outlineSources;
   }
-  update(foot: pc.Vec3, visible: boolean, reveal: number, selected: boolean): void {
+  /** The complete authored sampling window, with separate sleep/wake margins.
+   * This is decorative eligibility only; world visibility and picking stay with the scene. */
+  nearViewport(foot: pc.Vec3, sleeping: boolean): boolean {
+    if (!this.projectWindow(foot)) return false;
+    const margin = sleeping ? 0.25 : 0.5;
+    if (!this.rect.every(Number.isFinite)) return true;
+    return (
+      Math.abs(this.rect[0]!) - this.rect[2]! <= 1 + margin &&
+      Math.abs(this.rect[1]!) - this.rect[3]! <= 1 + margin
+    );
+  }
+  private projectWindow(foot: pc.Vec3): boolean {
     const camera = this.worldCamera.camera!;
     this.center.copy(foot).y += 0.95;
     const distance = this.top
       .sub2(this.center, this.worldCamera.getPosition())
       .dot(this.worldCamera.forward);
-    if (!visible || distance <= camera.nearClip) {
-      this.setVisible(false);
-      return;
-    }
+    if (distance <= camera.nearClip) return false;
     // A fixed world-space window gives the same character texel density at every zoom.
     // Match the main projection exactly rather than creating a second viewing angle.
     this.top.copy(this.worldCamera.up).mulScalar(1.4).add(this.center);
     camera.worldToScreen(this.center, this.screen);
     camera.worldToScreen(this.top, this.screenTop);
-    const device = this.app.graphicsDevice;
+    // The camera returns CSS coordinates, including on high-density displays.
+    // Normalizing by framebuffer pixels would sleep still-visible characters.
+    const viewport = this.app.graphicsDevice.clientRect;
+    if (viewport.width <= 0 || viewport.height <= 0) return false;
     const height = Math.abs(this.screenTop.y - this.screen.y) * 2;
     const width = (height * 128) / 192;
-    this.rect[0] = (this.screen.x / device.width) * 2 - 1;
-    this.rect[1] = 1 - (this.screen.y / device.height) * 2;
-    this.rect[2] = width / device.width;
-    this.rect[3] = height / device.height;
+    this.rect[0] = (this.screen.x / viewport.width) * 2 - 1;
+    this.rect[1] = 1 - (this.screen.y / viewport.height) * 2;
+    this.rect[2] = width / viewport.width;
+    this.rect[3] = height / viewport.height;
+    return true;
+  }
+  update(foot: pc.Vec3, visible: boolean, reveal: number, selected: boolean): void {
+    if (!visible || !this.projectWindow(foot)) {
+      this.setVisible(false);
+      return;
+    }
+    const camera = this.worldCamera.camera!;
     this.crop.setIdentity();
     const m = this.crop.data;
     m[0] = 1 / this.rect[2]!;

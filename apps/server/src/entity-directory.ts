@@ -1,3 +1,4 @@
+import { entityGet, entityKeys } from '@open-legend/domain';
 import type { RelationshipNode } from '@open-legend/protocol';
 import type { WorldState } from '@open-legend/domain';
 import { inspectableEntity } from './live-relationships.js';
@@ -28,7 +29,7 @@ export class EntityDirectory {
       throw new GraphReadError('invalid', 'Entity page limit must be 1–50.');
     let roster = this.cached;
     if (!roster || roster.source !== world.entities || !Object.isFrozen(world.entities)) {
-      const keys = Object.keys(world.entities).sort();
+      const keys = entityKeys(world.entities).sort();
       if (keys.length > GRAPH_LIMITS.nodes)
         throw new GraphReadError('capacity', 'Entity directory requires a larger indexed reader.');
       roster = {
@@ -36,7 +37,7 @@ export class EntityDirectory {
         keys,
         revision: fingerprint(
           keys.map((id) => {
-            const e = world.entities[id]!;
+            const e = entityGet(world.entities, id)!;
             return [id, e.name, e.kind, e.actor?.controller ?? null];
           }),
         ),
@@ -74,7 +75,7 @@ export class EntityDirectory {
       nodes.length < input.limit &&
       examined++ < GRAPH_LIMITS.examined
     ) {
-      const e = world.entities[roster.keys[offset++]!]!;
+      const e = entityGet(world.entities, roster.keys[offset++]!)!;
       if (!canRead(e.id)) continue;
       if (
         (input.kind && e.kind !== input.kind) ||

@@ -1,18 +1,19 @@
 import { inventoryCommandStorageKey } from '../inventory-command-record';
 import { RecipeDetails } from './recipe-details';
 import { namePhrase } from '@open-legend/language';
-import { useEffect, useLayoutEffect, useRef, useState, type DragEvent } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import { Popover } from 'react-aria-components';
 import type {
   ActionOption,
   ContainerPage,
   GameView,
   InventoryItemView,
+  InventoryItemSummary,
   InventoryTransferSource,
   ApiResult,
 } from '@open-legend/protocol';
 import { post } from '../api';
-import type { CommandDispatcher } from '../command-request';
+import type { CommandDispatcher, CommandRequestIdentity } from '../command-request';
 import { Button, DisclosurePopover, Icon, Tag, symbol } from '../design-system/components';
 import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import { InventoryCollection, type InventorySide } from './inventory-collection';
@@ -23,13 +24,14 @@ import { ItemTrade } from './item-trade';
 import { useInventoryCollection } from './use-inventory-collection';
 import { useInventoryCommand } from './use-inventory-command';
 import './inventory.css';
+import { inventoryPresentation, type InventoryPresentation } from './inventory-presentation';
 
 type InventoryProps = {
   view: GameView;
   addItem(): void;
   browseActions?(
-    item: InventoryItemView,
-    opener: HTMLElement,
+    item: InventoryItemSummary,
+    opener: Element,
     dispatchCommand: (action: ActionOption) => Promise<ApiResult>,
   ): void;
   contextMenu(
@@ -123,6 +125,32 @@ function transferSource(
 /** Private ownership owns editable work; connection/control scope owns permitted reads.
  * Regaining control refreshes the pages without discarding an unsubmitted amount. */
 export function Inventory(props: InventoryProps) {
+  const latest = useRef(props);
+  latest.current = props;
+  const lastView = useRef<InventoryPresentation | undefined>(undefined);
+  const view = inventoryPresentation(props.view, lastView.current);
+  lastView.current = view;
+  const callbacks = useMemo(
+    () => ({
+      addItem: () => latest.current.addItem(),
+      browseActions: (
+        item: InventoryItemSummary,
+        opener: Element,
+        dispatchCommand: (action: ActionOption) => Promise<ApiResult>,
+      ) => latest.current.browseActions?.(item, opener, dispatchCommand),
+      contextMenu: (
+        item: InventoryItemView,
+        point: { x: number; y: number },
+        opener: HTMLElement,
+        dispatchCommand: (action: ActionOption) => Promise<ApiResult>,
+      ) => latest.current.contextMenu(item, point, opener, dispatchCommand),
+      command: (action: ActionOption, request?: CommandRequestIdentity) =>
+        latest.current.command(action, request),
+      onTalkAbout: (context: { itemId: string; name: string; recipientId?: string }) =>
+        latest.current.onTalkAbout?.(context),
+    }),
+    [],
+  );
   const access = props.view.access;
   if (!access?.scope || !access.privateDraftScope)
     return <p role="status">Refresh character access before opening belongings.</p>;
@@ -136,13 +164,17 @@ export function Inventory(props: InventoryProps) {
     <InventoryWorkspace
       key={privateOwner}
       {...props}
+      {...callbacks}
+      browseActions={props.browseActions ? callbacks.browseActions : undefined}
+      onTalkAbout={props.onTalkAbout ? callbacks.onTalkAbout : undefined}
+      view={view}
       scope={access.scope}
       displayOwner={privateOwner}
     />
   );
 }
 
-function InventoryWorkspace({
+const InventoryWorkspace = memo(function InventoryWorkspace({
   view,
   addItem,
   browseActions,
@@ -156,7 +188,11 @@ function InventoryWorkspace({
   onTalkAbout,
   scope,
   displayOwner,
-}: InventoryProps & { scope: string; displayOwner: string }) {
+}: Omit<InventoryProps, 'view'> & {
+  view: InventoryPresentation;
+  scope: string;
+  displayOwner: string;
+}) {
   const workspace = useRef<HTMLDivElement>(null);
   const anchor = useRef<HTMLButtonElement>(null);
   const detail = useRef<HTMLDivElement>(null);
@@ -224,28 +260,69 @@ function InventoryWorkspace({
   }, []);
   // These are permitted native changes, not world-clock ticks. Exterior storage loses its
   // revision hint on lost reach/access; that invalidates any previously readable contents.
-  const revisionKey = JSON.stringify([
-    view.player.inventoryRevision,
-    view.player.canUseInventory,
-    view.clock.paused,
-    view.access?.controlling,
-    view.player.alive,
-    view.player.participation,
-    !!view.player.action,
-    view.player.statusEffects,
-    view.player.supportSurfaceId,
-    view.player.inventory.map((item) => [
-      item.id,
-      item.equipped,
-      item.container?.revision,
-      item.characteristics,
-      item.equipmentConflicts,
-      item.recipeRecord,
-      item.materialCondition,
-    ]),
-    view.entities.filter((entity) => entity.storage).map((entity) => [entity.id, entity.storage]),
-    view.recipes.map((recipe) => recipe.id),
-  ]);
+  const inventoryKey = useMemo(
+    () =>
+      JSON.stringify(
+        view.player.inventory.map((item) => [
+          item.id,
+          item.equipped,
+          item.container?.revision,
+          item.characteristics,
+          item.equipmentConflicts,
+          item.recipeRecord,
+          item.materialCondition,
+        ]),
+      ),
+    [view.player.inventory],
+  );
+  const storageKey = useMemo(
+    () =>
+      JSON.stringify(
+        view.entities
+          .filter((entity) => entity.storage)
+          .map((entity) => [entity.id, entity.storage]),
+      ),
+    [view.entities],
+  );
+  const recipeKey = useMemo(
+    () => JSON.stringify(view.recipes.map((recipe) => recipe.id)),
+    [view.recipes],
+  );
+  const revisionKey = useMemo(
+    () =>
+      JSON.stringify([
+        view.player.inventoryRevision,
+        view.player.canUseInventory,
+        view.clock.paused,
+        view.access?.controlling,
+        view.player.alive,
+        view.player.participation,
+        !!view.player.action,
+        view.player.statusEffects,
+        view.player.position,
+        view.player.supportSurfaceId,
+        view.map.spatial.revision,
+        inventoryKey,
+        storageKey,
+        recipeKey,
+      ]),
+    [
+      view.player.inventoryRevision,
+      view.player.canUseInventory,
+      view.clock.paused,
+      view.access?.controlling,
+      view.player.alive,
+      view.player.participation,
+      !!view.player.action,
+      view.player.statusEffects,
+      view.player.position,
+      view.player.supportSurfaceId,
+      view.map.spatial.revision,
+      inventoryKey,
+      storageKey,
+      recipeKey,
+    ],
+  );
   const left = useInventoryCollection({
     initialId: view.player.id,
     scope,
@@ -825,19 +902,20 @@ function InventoryWorkspace({
                 <div key={entry.id}>
                   <Icon name={symbol(entry.icon ?? '')} fallbackLabel={entry.name} />
                   <span>{entry.name}</span>
-                  {entry.actions
-                    .filter((action) => action.command.type === 'unequip')
-                    .map((action) => (
-                      <Button
-                        key={action.id}
-                        size="sm"
-                        variant="quiet"
-                        disabled={!canAct || !action.enabled}
-                        onPress={() => send(action, 'belongings')}
-                      >
-                        Unequip
-                      </Button>
-                    ))}
+                  {browseActions && (
+                    <Button
+                      size="sm"
+                      variant="quiet"
+                      disabled={!canAct}
+                      onPress={(event) =>
+                        browseActions(entry, event.target, (action) =>
+                          contextDispatch.current(action, 'belongings'),
+                        )
+                      }
+                    >
+                      Item actions
+                    </Button>
+                  )}
                 </div>
               ))}
           </section>
@@ -1485,4 +1563,4 @@ function InventoryWorkspace({
       </footer>
     </div>
   );
-}
+});

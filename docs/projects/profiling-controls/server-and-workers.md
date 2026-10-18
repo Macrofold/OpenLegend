@@ -1,0 +1,96 @@
+# Optional profiling — server and worker implementation
+
+| Status      | Current progress                                                                                                       | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Code and focused checks are complete; the two full-game observations had unequal activity and cannot qualify overhead. | 2026-10-18   |
+
+**Implementation update — October 17, 2026, 20:12 EDT.** Mike authorized implementation of the complete package. The [profiling-controls tracker](../../maintainers/profiling-controls.md) owns current completion and verification; the earlier source findings below describe the design baseline. No smooth-3× result is asserted.
+
+**Design updated:** October 17, 2026, 18:10 EDT. Follow the [shared API contract](../profiling-controls-tech-design.md#shared-collector-contract) and [PC01–PC03 tracker](../../maintainers/profiling-controls.md). Names below refer to the inspected source; reread current functions before editing.
+
+## PC01: establish one capture owner
+
+1. In `apps/server/src/performance.ts`, move timing samples, counters, gauges and duration observers into one private capture object. Keep their current limits. Store that object in a module-level optional reference. Importing the module must not start monitoring or allocate those collections.
+2. Keep `backgroundFailures`, its observed count and `recordBackgroundFailure` independent of that object. Retain the current sanitation, bounded retention and reporting. Moving this small owner to another file is unnecessary for the switch.
+3. Implement the start/stop and timing API specified in the technical design. Make runtime monitoring a private function taking its exact capture, so a queued GC callback or interval cannot write to a replacement capture. Guard callbacks against inactive ownership before reading the clock or process statistics. A stopped callback does nothing.
+4. Have enabled recording helpers write through that capture. When off, return before storage lookup or allocation. Only read `performance.now()` for observer end times if at least one listener exists. Count omitted events at name capacity without retaining their names.
+5. Preserve wrapper result/error behavior. In particular, do not turn `timed()` into a non-async function whose disabled branch throws synchronously where callers currently receive a rejected Promise. Preserve `timedSync()` as synchronous. Do not retry the operation on a collector error.
+6. Implement the `runtime.profiling` snapshot metadata and disabled response described in the design. Do not return stale samples after stop. Callers needing a final report take a snapshot before stopping.
+7. Add `OPEN_LEGEND_PROFILING` parsing alongside trusted settings in `apps/server/src/config.ts`: `z.enum(['off', 'on']).parse(env['OPEN_LEGEND_PROFILING'] ?? 'off')`, then return its comparison with `'on'` as `profiling`. No environment reads belong in `performance.ts` or domain code. Update current typed configuration constructors/callers together.
+8. In `apps/server/src/main.ts`, after `readConfig()` and before `createGameServer()`, start capture only if `config.profiling` is true, with `runtimeMonitoring: true`. Wrap server creation so an initialization rejection stops the capture before rethrowing the original failure. Register normal shutdown cleanup that stops capture in a `finally` after the attempted game shutdown, including a rejected shutdown. Preserve the existing finite shutdown/backstop policy. Forced process exit needs no new shutdown framework.
+9. Remove `startRuntimeMonitoring` acquisition and cleanup from `apps/server/src/http.ts`. Preserve the factory's existing resource rollback for gameplay resources. A created or awaiting-creation host can replace/adopt its runtime without replacing process capture. Do not add profiling ownership to each HTTP factory invocation.
+10. Update `.env.example` with the default, exact accepted values, restart requirement and separate browser flag. Keep all existing actual secret values out of examples. One startup console line identifying on/off is sufficient; no per-frame message or new UI is needed.
+
+Finish the focused collector/config checks in the verification guide before changing worker payloads. Tools that called the removed monitoring export are updated under PC05; do not add a compatibility re-export to make an incomplete integration compile.
+
+## PC02: stop preparation, not just storage
+
+Search the **current** tree, including new files, for every measurement producer:
+
+```sh
+rg -n 'recordDuration|timedSync|timed\(|countMetric|gaugeMetric|observeDurations|startRuntimeMonitoring' apps/server/src scripts tests
+rg -n 'performance\.now|process\.hrtime|process\.cpuUsage|process\.memoryUsage|monitorEventLoopDelay' apps/server/src
+```
+
+Classify each clock by what consumes it. A timestamp used to reject expired work or yield control is required behavior. A timestamp only subtracted into a performance report is optional. A timestamp serving both purposes stays; guard only its diagnostic consumer. Do not mechanically replace every clock.
+
+| Owner / exact starting point                                 | Required edit                                                                                                                                                                                                                                                                                                          | Work that must remain                                                                                                                                                                                  |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `world-service.ts`, mutation queue hold duration             | Replace measurement-only start/end clocks with `beginTiming` / `endTiming`.                                                                                                                                                                                                                                            | Queue ownership, scope activation and failure cleanup.                                                                                                                                                 |
+| `world-service.ts`, background save elapsed duration         | Capture an optional mark at save submission and finish only for that capture.                                                                                                                                                                                                                                          | Save completion, durable revision, error state, real start/elapsed values used by save cadence.                                                                                                        |
+| `world-service.ts`, `tick`, `nextSlice`, native finalization | Gate iterator/finalization/step measurement clocks and diagnostic totals. Use the shared wrappers or marks. Avoid making an extra closure per native iteration solely to check the flag.                                                                                                                               | The clock used for the 8 ms yield decision, the 32 ms publication decision, real elapsed time, simulation debt and route barriers. Do not skip `freezeWorld` or any native work when profiling is off. |
+| `postgres.ts`, `read`                                        | Replace the optional `postgres.readWait` bracket with a mark captured before queue admission and finished on execution.                                                                                                                                                                                                | Reader initialization, actual read transaction and lane admission. The general lane's expiry clock is independent.                                                                                     |
+| `work-lane.ts`, `run`                                        | Reuse the already-required admission time for measured wait; form the stage label and emit the metric only when collection is active. Read admission time once if both consumers need it.                                                                                                                              | Queue start timestamp, expiry timer, elapsed-age recheck and rejection. They prevent a delayed timer from admitting expired work.                                                                      |
+| `history.ts` and `history-batch.ts`                          | Gate history preparation timing and `writeMilliseconds` timing accumulation. Use `endTiming('history.sourceBuild', mark, batch.writeMilliseconds)` for the existing subtraction. Preserve the exact current bracket for each write; remove a duplicate bracket only if its measured interval is demonstrably the same. | Row encoding, parameter-byte measurement, flush thresholds, history totals and transaction boundaries. Bytes used for batching are required even when their gauge is disabled.                         |
+| `actor-work.ts` and other named counters                     | Guard interpolation of diagnostic labels and any diagnostic-only calculation. Keep simple static-name/count calls through cheap shared helpers.                                                                                                                                                                        | Candidate eligibility, waiting age used for fairness, urgency, ordering and the existing character inspection data. These are not optional profiling.                                                  |
+| `sql-rows.ts`                                                | Shared metric helpers suffice for already-known statement/byte totals.                                                                                                                                                                                                                                                 | SQL grouping, row checks and byte/parameter limits.                                                                                                                                                    |
+| All remaining files found by the searches                    | Gate computations used only to form metric arguments. Keep cheap existing values and use one owner per timing operation. Record any deliberate exception in the audit result.                                                                                                                                          | Any value also consumed by application behavior, saving, permission checks or user-visible operational inspection.                                                                                     |
+
+For counters whose arguments currently call a selector, first reuse a value already prepared for gameplay. If no such value exists, add `domainCountersEnabled(): boolean` beside the existing domain sink and gate only the diagnostic expression. Export it through the current domain index. In `statusReconciliationRules`, specifically avoid evaluating `statusDefinitions(world)` solely for `statusDormantRulesExcluded` while the sink is absent. Do not add a lazy callback for every increment: that would allocate a closure even when off.
+
+Keep the existing domain sink setter/removal contract; the explicit profiling tool owns it in `try/finally`. The ordinary server switch leaves that sink absent. Do not put performance marks, server imports or wall-clock calls in `packages/domain` or `packages/spatial`.
+
+## PC03: navigation worker
+
+Read the current navigation lifecycle before editing. This change removes measurements, not route safety, map preparation or failure handling.
+
+1. In `navigation/coordinator.ts`, capture `profilingEnabled()` once for that coordinator's lifetime. Workers and the coordinator must be closed before that process capture is stopped or replaced. Make diagnostic-only queued/sent timestamps optional. Do not use zero as an absence marker: zero is a valid clock value.
+2. Make `reportQueueAge()` return before scanning the queue when this coordinator is not profiled. Never start its 250 ms interval in that case. Retain its existing empty-queue/close cleanup when enabled. Keep the separate worker watchdog, scheduling continuation and publication retry timer; those affect gameplay.
+3. Pass a required trusted boolean in worker startup data from **both** worker creation sites: `navigation/coordinator.ts` and `navigation/preparation.ts`. Do not pass the whole server config or environment. Candidate preparation inherits the active server/tool capture choice just like ordinary navigation.
+4. In `navigation/worker.mjs`, read that boolean through `node:worker_threads` before the existing dynamic loader imports. Set the loader-start timestamp only when enabled. Leave runtime initialization and the empty worker environment intact.
+5. In `navigation/worker.ts`, allocate timing data and read clocks only if the startup boolean is true. A completed route still carries exactly the same request ID, map key, route result and error information when disabled.
+6. In `navigation/backend.ts`, pass the boolean into `RecastPlanner` as an explicit optional constructor option defaulting false; update all callers that deliberately need timing. Gate `prepareMapMs`, the build start/end clocks and the per-build records. Map validation, triangle generation, mesh reuse/eviction and query behavior remain unconditional. Do not add a profiling framework to the geometry package.
+7. Consolidate optional worker statistics into the existing `NavigationTiming` object in `navigation/messages.ts`: put `buildMs` and `queryMs` there alongside startup/map/build breakdowns, and remove the mandatory top-level duration fields. `timing` is absent when disabled. Preserve build reasons and warmup-failure attribution when enabled. Do not send zero placeholders or retain two equivalent payload shapes.
+8. Update every consumer of the old duration fields together, including candidate preparation and focused tools. The parent records metrics only when timing is present; absence never changes whether the route can be used. Startup timing remains reported once per worker, and publication retries must not recount a route's computation.
+9. Keep timing arrays scoped to one reply. When disabled, do not call `takeBuilds()` just to produce an empty array. When enabled, subtract first-use build time from route time exactly as today; this project is not a redefinition of navigation statistics.
+10. Close the coordinator's age timer and workers through their existing close/failure paths. No command may enable worker profiling, and changing server configuration requires restarting this worker through normal server restart.
+
+Search all `new RecastPlanner`, `NavigationReply`, `queryMs`, `buildMs` and worker constructor references after editing. This is a current-code contract update, not a compatibility migration.
+
+## PC03: background journal application worker
+
+1. Keep `ApplicationSource` as the existing database-lease information. Define a narrow worker startup envelope containing that source plus `profiling: boolean`; do not put observability policy inside the database lease contract.
+2. Add an explicit profiling option to `JournalWorker` construction. The store passes `profilingEnabled()` when creating the worker. The client forwards only the existing source and boolean in worker data.
+3. In `journal-worker.ts`, unpack that envelope and start a worker-local capture with `runtimeMonitoring: false` only when enabled, before constructing the database adapter. This activates its shared SQL timing helpers without creating another CPU/memory/event-loop sampler. Parent termination ends the isolate; any graceful worker-close path also stops its capture.
+4. Make `statistics` optional on the complete reply. Only when enabled, allocate the batch statistics, take its clocks and install the existing SQL duration listener. Remove that listener in `finally`. When disabled, execute `applyJournalRange` and send the exact same committed `result`, omitting statistics. Do not let optional statistics control transaction success.
+5. Make `JournalWorker.statistics` optional too. Aggregate only actual statistics from a profiled worker. Keep complete-result identity checks unconditional. A missing profiling payload is missing evidence, not a persistence failure; count the batch as unobserved if a profiled client has no statistics, and never add fabricated zeros. Preserve ordinary worker failures and pending-request rejection.
+6. Guard updates of diagnostic `unobservedBatches` on failure/close when no statistics object exists. Keep failure callbacks and pending-operation rejection regardless of profiling mode.
+7. Let the store's existing optional `applicationStatistics` getter return `undefined` when unprofiled. Update its report consumers to label disabled/missing data and omit derived rates. Do not manufacture a zero-filled object for old callers.
+8. Preserve required journal ranges, identity/lease checks, committed revision, debt, in-flight admission and replay/application boundaries. No retry, database work or save behavior is added or removed by this switch.
+
+## Review traps
+
+- A flag in `recordDuration()` does not prevent `performance.now() - started` from running before the call.
+- A flag in the parent does not disable measurement inside a worker's separate environment.
+- A timing listener alone must not implicitly enable collection; tools must own start and stop.
+- Removing `recordDuration()` from a `finally` must not remove the cleanup or error propagation in that `finally`.
+- Statistics are not receipts. Never make saving successful merely because a report looks complete, or make it fail solely because optional statistics are absent.
+- Keep the switch process-wide. Do not allow a world's author, player or AI prompt to change another viewer's profiling policy.
+
+## Maintained records
+
+- Behavior: [feature specification](../profiling-controls-feature-spec.md).
+- Shared API and lifecycle: [technical design](../profiling-controls-tech-design.md).
+- Tasks: [PC01–PC03](../../maintainers/profiling-controls.md).
+- Constraints: [OB02](../../limits/observability.md#ob02--optional-profiling-controls).
+- Required scenarios and measurement: [verification guide](tools-and-verification.md).

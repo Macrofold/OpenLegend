@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { z } from 'zod';
 import {
   installedRecipeFamilies,
@@ -253,7 +254,7 @@ export function executeInventionTool(
   const parsed = inventionToolInput.safeParse(raw);
   if (!parsed.success) return { ok: false, message: 'Invalid tool arguments.' };
   const input = parsed.data;
-  if (!service.world.entities[actorId]?.actor)
+  if (!entityGet(service.world.entities, actorId)?.actor)
     return { ok: false, message: 'Inventor unavailable.' };
   if (
     (input.operation !== 'validate' && input.candidateJson !== null) ||
@@ -322,10 +323,11 @@ export function executeInventionTool(
         : { ok: false, message: 'Select a recipe ID.' };
     case 'inspect_modules': {
       const world = service.world,
-        actor = world.entities[actorId]!.actor!,
+        actor = entityGet(world.entities, actorId)!.actor!,
         manifest = world.moduleManifest;
       const attributes = manifest.definitions.filter(
-        (definition) => readAttribute(actor, definition) !== undefined,
+        (definition) =>
+          readAttribute(world, entityGet(world.entities, actorId)!, definition) !== undefined,
       );
       return {
         ok: true,

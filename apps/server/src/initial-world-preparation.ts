@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from '@open-legend/domain';
 import {
   selectedSocialPolicy,
   validateSocialPolicy,
@@ -39,7 +40,7 @@ export function prepareWorldForStartup(
     world.storyPolicy ??= defaultStoryPolicy();
     validateStoryPolicy(world.storyPolicy);
     world.minds ??= {};
-    for (const entity of Object.values(world.entities))
+    for (const entity of entityValues(world.entities))
       if (hasMemory(entity)) world.minds[entity.id] ??= mindFor(world, entity.id);
     migrateCognition(world);
     // Explicit authored traits, including an empty list, remain unchanged.
@@ -49,14 +50,14 @@ export function prepareWorldForStartup(
     if (config.conversationInactivitySeconds !== undefined)
       world.socialPolicy.conversationInactivitySeconds = config.conversationInactivitySeconds;
     for (const [actorId, accountId] of actorOwners) {
-      const actor = world.entities[actorId]?.actor;
+      const actor = entityGet(world.entities, actorId)?.actor;
       if (!actor) continue;
       actor.controller = 'player';
       world.authorship.playerAccountIds[actorId] = accountId;
     }
     if (fresh) {
       initializePerception(world, []);
-      for (const entity of Object.values(world.entities)) reconcileConditions(world, entity, []);
+      for (const entity of entityValues(world.entities)) reconcileConditions(world, entity, []);
     }
     world.paused = true;
     reconcileConstructionAuthority(world, constructionPermissions);

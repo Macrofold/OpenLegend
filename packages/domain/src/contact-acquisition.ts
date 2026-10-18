@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { subjectNarration, presentVerb } from './narration.js';
 import { emit } from './events.js';
 import { nextId } from './data.js';
@@ -39,7 +40,7 @@ export function* updateContactEpisodes(
     // Yield by candidates examined, not only accepted contacts; keep exact body/geometry checks.
     if (examined > 0 && examined % 64 === 0) yield;
     examined++;
-    const source = world.entities[candidate.id];
+    const source = entityGet(world.entities, candidate.id);
     if (
       !source ||
       source.id === observer.id ||

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { personalAccountRevision } from './personal-accounts.js';
 /** Current gameplay record boundaries. JSON is the value of one owned record, never
  * a world/actor history container. New growing collections belong here explicitly.
  * docs/architecture.md#current-consuming-data-contracts
@@ -13,11 +14,13 @@ export interface RecordNode {
 }
 export type JsonRecord = Record<string, unknown>;
 export interface RecordCollection {
-  mode: 'map' | 'list' | 'one';
+  mode: 'map' | 'list' | 'one' | 'indexed-map' | 'entity-map';
   node: RecordNode;
   key?: string;
   /** Key lookup only; insertion order is not part of the owned value's meaning. */
   unordered?: boolean;
+  /** Ordered rolling maps retain surviving ordinals; genuine reorders renumber. */
+  stablePositions?: boolean;
 }
 const leaf = (table: string): RecordNode => ({ table });
 const map = (table: string, children?: RecordNode['children']): RecordCollection => ({
@@ -82,37 +85,40 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
           scenery: list('sim_scenery', 'id'),
         }),
       }),
-      entities: map('sim_entities', {
-        placement: one('sim_placements'),
-        assembly: one('sim_assemblies'),
-        item: one('sim_items'),
-        container: one('sim_containers'),
-        declaredOwner: one('sim_declared_owners'),
-        retirement: one('sim_object_retirements'),
-        spatial: one('sim_entity_geometry'),
-        actor: one('sim_actors', {
-          action: one('sim_processes'),
-          agency: one('sim_agency', {
-            goals: list('sim_goals', 'id'),
-            plan: one('sim_plans', { steps: list('sim_plan_steps', 'id') }),
-            history: list('sim_plan_history'),
-            attempts: list('sim_intentions', 'id'),
+      entities: {
+        ...map('sim_entities', {
+          placement: one('sim_placements'),
+          assembly: one('sim_assemblies'),
+          item: one('sim_items'),
+          container: one('sim_containers'),
+          declaredOwner: one('sim_declared_owners'),
+          retirement: one('sim_object_retirements'),
+          spatial: one('sim_entity_geometry'),
+          actor: one('sim_actors', {
+            action: one('sim_processes'),
+            agency: one('sim_agency', {
+              goals: list('sim_goals', 'id'),
+              plan: one('sim_plans', { steps: list('sim_plan_steps', 'id') }),
+              history: list('sim_plan_history'),
+              attempts: list('sim_intentions', 'id'),
+            }),
+            attributes: map('sim_actor_attributes'),
+            practice: map('sim_actor_practice'),
+            conditions: map('sim_actor_conditions'),
+            traits: list('sim_actor_traits', 'id'),
           }),
-          attributes: map('sim_actor_attributes'),
-          practice: map('sim_actor_practice'),
-          conditions: map('sim_actor_conditions'),
-          traits: list('sim_actor_traits', 'id'),
+          animal: one('sim_animal_behavior'),
+          threat: one('sim_territorial_threat'),
+          resource: one('sim_resources'),
+          remains: one('sim_remains'),
+          heat: one('sim_heat'),
+          replenisher: one('sim_reservoirs'),
+          statusEffects: map('sim_status_effects'),
+          attributes: map('sim_attributes'),
+          mechanismFields: map('sim_mechanism_fields'),
         }),
-        animal: one('sim_animal_behavior'),
-        threat: one('sim_territorial_threat'),
-        resource: one('sim_resources'),
-        remains: one('sim_remains'),
-        heat: one('sim_heat'),
-        replenisher: one('sim_reservoirs'),
-        statusEffects: map('sim_status_effects'),
-        attributes: map('sim_attributes'),
-        mechanismFields: map('sim_mechanism_fields'),
-      }),
+        mode: 'entity-map',
+      },
       actionExperience: one('activity_state', {
         occurrences: actorLists('activity_occurrences', 'id'),
         methods: map('activity_methods'),
@@ -148,9 +154,12 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       // A subject leaving view must not renumber every remaining sight binding.
       // Episode identities fence recognition by key, never by iteration order.
       // docs/performance.md#preserve-order-without-one-global-database-bottleneck
-      perceptionEpisodes: map('mind_exposure_owners', {
-        $: { ...map('mind_exposure'), unordered: true },
-      }),
+      perceptionEpisodes: {
+        ...map('mind_exposure_owners', {
+          $: { ...map('mind_exposure'), unordered: true },
+        }),
+        unordered: true,
+      },
       visibleObjects: actorLists('mind_visible_objects'),
       visiblePeople: actorLists('mind_visible_people'),
       appraisals: actorMaps('mind_appraisals'),
@@ -161,9 +170,13 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         active: map('conversation_active'),
         transitions: map('conversation_transitions'),
       }),
-      responseReceipts: map('response_receipts'),
+      responseReceipts: { ...map('response_receipts'), stablePositions: true },
       experience: one('experience_state', {
-        corrections: actorMaps('mind_corrections'),
+        // Correction chronology belongs to its evidence, not map insertion order.
+        corrections: {
+          ...map('mind_corrections_owners', { $: { ...map('mind_corrections'), unordered: true } }),
+          unordered: true,
+        },
         awareness: actorLists('mind_awareness', 'eventId'),
         summaries: actorLists('mind_summaries', 'id'),
         consolidatedAt: map('mind_consolidation'),
@@ -171,7 +184,13 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       }),
       innerWorlds: map('mind_inner_worlds', { files: list('mind_inner_files', 'path') }),
       events: list('world_hot_events', 'id'),
-      commandReceipts: map('world_command_receipts'),
+      // Exact command IDs govern replay; insertion order has no gameplay meaning.
+      // Canonical row identities/bodies remain independent of the runtime tree.
+      commandReceipts: {
+        mode: 'indexed-map',
+        node: leaf('world_command_receipts'),
+        unordered: true,
+      },
       declarationReceipts: map('declaration_receipts'),
     }),
     milestones: map('world_milestones'),
@@ -289,6 +308,14 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
       event_id: textColumn('eventId'),
       kind: textColumn('kind'),
       sequence: { ...numberColumn('sequence'), sql: 'BIGINT' },
+      ...(table === 'mind_awareness'
+        ? {
+            account_revision: {
+              sql: 'TEXT NOT NULL',
+              value: (value: JsonRecord) => personalAccountRevision(JSON.stringify(value)),
+            },
+          }
+        : {}),
       ...(table === 'mind_memories'
         ? {
             unresolved: {

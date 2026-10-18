@@ -1,3 +1,4 @@
+import { entityGet, entityOwn } from './entity-collection.js';
 import { recordSemanticChange } from './dependencies.js';
 import { chargeWork, requireAllocation, requireWork, WORK_LIMITS } from './work-budget.js';
 import {
@@ -120,7 +121,7 @@ export function readResource(world: WorldState, ref: ResourceRef): ResourceStock
     const stock =
       ref.kind === 'item'
         ? itemFor(world, ref.itemId)
-        : getOwn(world.entities, ref.entityId)?.resource;
+        : entityOwn(world.entities, ref.entityId)?.resource;
     if (!stock || stock.definitionId !== definition.id) return;
     return {
       value: stock.quantity,
@@ -150,7 +151,7 @@ export function readResource(world: WorldState, ref: ResourceRef): ResourceStock
       precision: 'native-continuous',
     };
   }
-  const stock = getOwn(world.entities, ref.entityId)?.replenisher;
+  const stock = entityOwn(world.entities, ref.entityId)?.replenisher;
   if (!stock || stock.attributeId !== definition.id) return;
   return {
     value: stock.remaining,
@@ -692,11 +693,11 @@ function publishResourcePlan(
       if (result.status !== 'applied' && result.status !== 'unchanged')
         throw new Error('Validated resource owner rejected publication.');
     } else if (ref.kind === 'replenisher') {
-      const target = world.entities[ref.entityId]!.replenisher!;
+      const target = entityGet(world.entities, ref.entityId)!.replenisher!;
       target.remaining = value;
       target.revision = stock.revision + 1;
     } else if (ref.kind === 'gathering') {
-      const target = world.entities[ref.entityId]!.resource!;
+      const target = entityGet(world.entities, ref.entityId)!.resource!;
       target.quantity = value;
       target.revision = stock.revision + 1;
     } else {
@@ -748,7 +749,7 @@ export function reserveResource(
       (!Number.isFinite(request.expiresAt) || request.expiresAt <= world.simTime))
   )
     return { status: 'invalid' };
-  const actor = world.entities[request.actorId];
+  const actor = entityGet(world.entities, request.actorId);
   if (
     !actor?.actor ||
     actor.retirement ||
@@ -862,7 +863,7 @@ export function validateResourceReservations(world: WorldState): void {
       throw new Error('Invalid resource reservation.');
     if (hold.state !== 'held') continue;
     const stock = readResource(world, hold.resource);
-    const actor = world.entities[hold.actorId];
+    const actor = entityGet(world.entities, hold.actorId);
     if (
       !actor?.actor?.alive ||
       actor.retirement ||

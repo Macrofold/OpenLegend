@@ -37,18 +37,22 @@ export class RecastPlanner {
   private readonly meshes = new Map<string, Prepared>();
   private readonly triangles: ReturnType<typeof navigationTriangles>;
   /** Validation and triangle export for this map (SW06.2a attribution). */
-  readonly prepareMapMs: number;
+  readonly prepareMapMs?: number;
   /** Mesh builds since the last takeBuilds(), attributed separately from route queries. */
-  private builds: Array<{ profile: string; ms: number; reason: 'map' | 'first-use' }> = [];
-  constructor(readonly map: SpatialMap) {
-    const started = performance.now();
+  private builds?: Array<{ profile: string; ms: number; reason: 'map' | 'first-use' }>;
+  constructor(
+    readonly map: SpatialMap,
+    options: { profiling?: boolean } = {},
+  ) {
+    this.builds = options.profiling ? [] : undefined;
+    const started = this.builds ? performance.now() : undefined;
     validateSpatialMap(map);
     this.triangles = navigationTriangles(map);
-    this.prepareMapMs = performance.now() - started;
+    if (started !== undefined) this.prepareMapMs = performance.now() - started;
   }
   takeBuilds() {
     const builds = this.builds;
-    this.builds = [];
+    if (builds) this.builds = [];
     return builds;
   }
   prepare(body: BodyProfile, reason: 'map' | 'first-use' = 'map'): Prepared {
@@ -59,7 +63,7 @@ export class RecastPlanner {
       this.meshes.set(key, prepared);
       return prepared;
     }
-    const started = performance.now();
+    const started = this.builds ? performance.now() : undefined;
     const { cellSize: cs, cellHeight: ch, skin } = MOVEMENT;
     const generated = generateTiledNavMesh(this.triangles.positions, this.triangles.indices, {
       cs,
@@ -79,17 +83,23 @@ export class RecastPlanner {
       detailSampleMaxError: 1,
     });
     if (!generated.success) throw new Error('Recast could not prepare the admitted geometry.');
-    prepared = {
-      mesh: generated.navMesh,
-      query: new R.NavMeshQuery(generated.navMesh, { maxNodes: 4096 }),
-    };
+    let query: R.NavMeshQuery;
+    try {
+      query = new R.NavMeshQuery(generated.navMesh, { maxNodes: 4096 });
+    } catch (error) {
+      // Cache ownership starts only after the query exists; release this successful mesh.
+      generated.navMesh.destroy();
+      throw error;
+    }
+    prepared = { mesh: generated.navMesh, query };
     if (this.meshes.size >= 6) {
       const oldest = this.meshes.keys().next().value!;
       this.release(this.meshes.get(oldest)!);
       this.meshes.delete(oldest);
     }
     this.meshes.set(key, prepared);
-    this.builds.push({ profile: key, ms: performance.now() - started, reason });
+    if (this.builds && started !== undefined)
+      this.builds.push({ profile: key, ms: performance.now() - started, reason });
     return prepared;
   }
   private release(p: Prepared) {

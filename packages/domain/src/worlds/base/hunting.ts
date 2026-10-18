@@ -1,3 +1,4 @@
+import { entityGet } from '../../entity-collection.js';
 import { namePhrase, type Named } from '@open-legend/language';
 import { seesEntity } from '../../perception.js';
 import { projectAttributes } from '../../world-modules.js';
@@ -59,8 +60,8 @@ export function observedBodyHealth(
   observerId: string,
   targetId: string,
 ): string {
-  const target = world.entities[targetId];
-  const observer = world.entities[observerId];
+  const target = entityGet(world.entities, targetId);
+  const observer = entityGet(world.entities, observerId);
   if (!observer || !target?.actor || !seesEntity(world, observer, target)) return '';
   const health = projectAttributes(
     world,

@@ -1,6 +1,14 @@
+import { entityGet, entityValues } from './entity-collection.js';
+import { countDomainWork, domainCountersEnabled } from './diagnostic-counters.js';
 import { narrationTemplate } from './narration.js';
-import { reconcileConditions } from './conditions.js';
-import { admitStatusWork, chargeStatusWork } from './native-work.js';
+import { admitStatusWork, chargeStatusWork, statusWork } from './native-work.js';
+import {
+  currentAttributeState,
+  retainNativeIntegration,
+  NATIVE_VALUE_SEGMENTS,
+  type NativeValueBinding,
+  type NativeValueAttribute,
+} from './native-values.js';
 import { releaseWork } from './work-budget.js';
 import { recordSemanticChange } from './dependencies.js';
 import { chargeWork } from './work-budget.js';
@@ -15,7 +23,7 @@ import {
 import { advanceCapabilityContributions } from './state-contributions.js';
 import { completeContributionHistory } from './contribution-residency.js';
 import { current, isDraft } from 'immer';
-import { draftWorld, cloneValue } from './draft.js';
+import { draftWorld, cloneValue, readOnlyDraftView } from './draft.js';
 import { emit, finish, outcome, canonicalJson, contentLabel } from './events.js';
 import { finishPlanAction } from './agency.js';
 import { nextId } from './data.js';
@@ -25,11 +33,14 @@ import {
   attributeThreshold,
   readAttribute,
   setAttribute,
+  type AttributeDefinition,
 } from './world-modules.js';
 import { commitHealthChange } from './living.js';
 import { validateBodyPolicy } from './body-policy.js';
 import { validateStatusEffectPolicy } from './status-effect-validation.js';
 import { TIME_EPSILON } from './simulation-time.js';
+import { statusDefinitionConditions, visitStatusCondition } from './status-condition-references.js';
+import { getOwn, isImmutableData } from './records.js';
 import type { Entity, WorldState, WorldEvent, Transition } from './types.js';
 
 export type EntityReference = '$subject' | '$source' | '$actionTarget';
@@ -169,9 +180,9 @@ export function effectBindings(
   if (!state) return { subject: entity, source: entity, actionTarget: entity };
   return {
     subject: entity,
-    source: state.sourceId === entity.id ? entity : world.entities[state.sourceId],
+    source: state.sourceId === entity.id ? entity : entityGet(world.entities, state.sourceId),
     actionTarget:
-      state.actionTargetId === entity.id ? entity : world.entities[state.actionTargetId],
+      state.actionTargetId === entity.id ? entity : entityGet(world.entities, state.actionTargetId),
   };
 }
 export function readEntityAttribute(
@@ -181,7 +192,10 @@ export function readEntityAttribute(
 ): number | string | undefined {
   const definition = attributeDefinition(world, id);
   if (!entity || !definition) return undefined;
-  return entity.actor ? readAttribute(entity.actor, definition) : entity.attributes?.[id]?.value;
+  const current = readOnlyDraftView(entity);
+  if (current.actor) return readAttribute(world, current, definition);
+  const state = current.attributes && readOnlyDraftView(current.attributes)[id];
+  return state ? readOnlyDraftView(state).value : undefined;
 }
 export function statusComparisonValue(
   world: WorldState,
@@ -263,11 +277,14 @@ function prepareCondition(condition: StatusCondition): {
         : name === 'grounded'
           ? (e: Entity) => worldSupport(e) !== null
           : name === 'activeWork'
-            ? (e: Entity) => !!e.actor?.action || worldSupport(e) === null || !!e.animal?.danger
-            : (e: Entity) => e.actor?.[name];
+            ? (e: Entity) =>
+                !!(e.actor && readOnlyDraftView(e.actor).action) ||
+                worldSupport(e) === null ||
+                !!(e.animal && readOnlyDraftView(e.animal).danger)
+            : (e: Entity) => (e.actor ? readOnlyDraftView(e.actor)[name] : undefined);
     matches = (_world, bindings) => {
       const entity = resolve(target, bindings);
-      return !!entity && compare(read(entity), operator, value);
+      return !!entity && compare(read(readOnlyDraftView(entity)), operator, value);
     };
   } else if ('dailyWindow' in condition) {
     const c = condition.dailyWindow;
@@ -289,6 +306,7 @@ function prepareCondition(condition: StatusCondition): {
   const evaluate = matches;
   matches = (world, bindings) => {
     chargeWork({ tests: 1 });
+    if (reuseNegativeCondition(world, bindings, condition)) return false;
     return evaluate(world, bindings);
   };
   if (immutable) predicates.set(condition, matches);
@@ -306,6 +324,172 @@ export function matchesStatusCondition(
   condition: StatusCondition,
 ): boolean {
   return (predicates.get(condition) ?? prepareCondition(condition).matches)(world, bindings);
+}
+
+interface NegativeCondition {
+  entityId: string;
+  definition: AttributeDefinition;
+  anchorValue: number;
+  anchorRevision: number;
+  threshold: number;
+  from: number;
+  rate: number;
+  segmentCount: number;
+  segment: WeakRef<object>;
+  remaining: number;
+}
+// One weakly owned answer per retained arithmetic operation/immutable condition.
+// No world, draft, episode history, or second current-value authority is retained.
+const negativeConditions = new WeakMap<
+  StatusCondition,
+  WeakMap<NativeValueAttribute, NegativeCondition>
+>();
+function conditionArithmetic(
+  world: WorldState,
+  bindings: EffectBindings,
+  comparison: Extract<StatusCondition, { compare: unknown }>['compare'],
+) {
+  const target = resolve(comparison.target, bindings);
+  if (!target) return;
+  const entity = readOnlyDraftView(target),
+    definition = attributeDefinition(world, comparison.attribute),
+    attributes = entity.actor ? readOnlyDraftView(entity.actor).attributes : entity.attributes,
+    stored = attributes && getOwn(readOnlyDraftView(attributes), comparison.attribute),
+    anchor = stored && readOnlyDraftView(stored),
+    pending = readOnlyDraftView(world).pendingNativeIntegration,
+    window = pending && readOnlyDraftView(pending),
+    subject = window && getOwn(readOnlyDraftView(window.byEntity), entity.id),
+    episode = subject && getOwn(readOnlyDraftView(subject), comparison.attribute),
+    storedBinding = window && episode && getOwn(readOnlyDraftView(window.bindings), episode),
+    binding = storedBinding && readOnlyDraftView(storedBinding),
+    storedOperation =
+      binding && getOwn(readOnlyDraftView(binding.attributes), comparison.attribute),
+    operation = storedOperation && readOnlyDraftView(storedOperation);
+  if (
+    !anchor ||
+    typeof anchor.value !== 'number' ||
+    !Object.isFrozen(anchor) ||
+    !entity.actor ||
+    !definition ||
+    definition.schema.kind !== 'number' ||
+    (definition.implementation !== 'number-v1' && definition.implementation !== 'reservoir-v1') ||
+    !isImmutableData(definition) ||
+    !window ||
+    !binding ||
+    binding.entityId !== entity.id ||
+    !operation ||
+    !isImmutableData(operation) ||
+    operation.rates.length !== 1 ||
+    operation.min !== definition.schema.min ||
+    operation.max !== definition.schema.max
+  )
+    return;
+  const segments = readOnlyDraftView(window.segments);
+  return { entity, definition, anchor, anchorValue: anchor.value, binding, operation, segments };
+}
+function reuseNegativeCondition(
+  world: WorldState,
+  bindings: EffectBindings,
+  condition: StatusCondition,
+): boolean {
+  if (!('compare' in condition)) return false;
+  const answers = negativeConditions.get(condition);
+  if (!answers) return false;
+  const input = conditionArithmetic(world, bindings, condition.compare);
+  if (!input) return false;
+  const cached = answers.get(input.operation);
+  if (!cached) return false;
+  const { entity, definition, anchor, binding, operation, segments } = input;
+  if (
+    cached.entityId !== entity.id ||
+    cached.definition !== definition ||
+    cached.anchorValue !== anchor.value ||
+    cached.anchorRevision !== anchor.revision ||
+    cached.threshold !== statusComparisonValue(world, bindings, condition.compare) ||
+    cached.from !== binding.from ||
+    cached.rate !== operation.rates[0] ||
+    segments.length < cached.segmentCount ||
+    cached.segment.deref() !== readOnlyDraftView(segments[cached.segmentCount - 1]!)
+  )
+    return false;
+  // The saved arithmetic owner only appends segments; replacing/materializing a
+  // binding or restoring JSON loses this exact prefix/operation witness. A fork
+  // behind the cursor therefore evaluates normally instead of sharing a cursor.
+  let remaining = cached.remaining;
+  for (let index = cached.segmentCount; index < segments.length; index++)
+    remaining -= readOnlyDraftView(segments[index]!).seconds;
+  if (!(remaining > 0)) return false;
+  const segment = readOnlyDraftView(segments[segments.length - 1]!);
+  if (isDraft(segment)) return false;
+  cached.remaining = remaining;
+  cached.segmentCount = segments.length;
+  cached.segment = new WeakRef(segment);
+  return true;
+}
+/** Share the existing forecast's negative leaf answer with later reconciliation.
+ * This never changes a physical deadline. Activity/status/clock predicates remain
+ * live, and every earlier ordered effect still passes the exact witnesses above.
+ */
+export function retainNegativeStatusCondition(
+  world: WorldState,
+  bindings: EffectBindings,
+  condition: Extract<StatusCondition, { compare: unknown }>,
+  value: number,
+  threshold: number,
+  rate: number,
+  afterSeconds: number,
+): void {
+  if (!predicates.has(condition)) return;
+  const input = conditionArithmetic(world, bindings, condition.compare);
+  if (!input || input.operation.rates[0] !== rate) return;
+  const { entity, definition, anchor, binding, operation, segments } = input,
+    segment = segments.length && readOnlyDraftView(segments[segments.length - 1]!);
+  if (!segment || isDraft(segment) || value < operation.min || value > operation.max) return;
+  let remaining = Infinity;
+  if (afterSeconds === Infinity) {
+    // Infinity can also result from overflowing a very distant crossing time.
+    // Retain it only with a separate monotonic/no-change proof, never merely
+    // because the predictor's numeric division returned Infinity.
+    const stationary =
+        !rate || (value === operation.min && rate < 0) || (value === operation.max && rate > 0),
+      away =
+        (value < threshold && rate < 0) ||
+        (value > threshold && rate > 0) ||
+        (value === threshold && condition.compare.operator === 'lessThan' && rate > 0);
+    if (!stationary && !away) return;
+  } else {
+    const distance = Math.abs(value - threshold),
+      scale = Math.max(
+        1,
+        Math.abs(value),
+        Math.abs(threshold),
+        Math.abs(operation.min),
+        Math.abs(operation.max),
+      ),
+      slack = 32 * (NATIVE_VALUE_SEGMENTS + 1) * Number.EPSILON * scale;
+    // A single monotone rate has at most 64 multiply/add roundings before its
+    // owner materializes. Keep three quarters of the measured gap unused, and
+    // require that gap to exceed a conservative bound on all their rounding.
+    // Near a threshold, serial/clamped rate mixtures and unknown data use the
+    // original current-value reader; a tolerance never decides predicate truth.
+    if (!Number.isFinite(distance) || !(distance > slack) || !rate) return;
+    remaining = Math.min(afterSeconds, distance / Math.abs(rate)) / 4;
+    if (!(remaining > 0) || !Number.isFinite(remaining)) return;
+  }
+  let answers = negativeConditions.get(condition);
+  if (!answers) negativeConditions.set(condition, (answers = new WeakMap()));
+  answers.set(operation, {
+    entityId: entity.id,
+    definition,
+    anchorValue: input.anchorValue,
+    anchorRevision: anchor.revision,
+    threshold,
+    from: binding.from,
+    rate,
+    segmentCount: segments.length,
+    segment: new WeakRef(segment),
+    remaining,
+  });
 }
 export function canActivateStatusEffect(
   world: WorldState,
@@ -346,6 +530,16 @@ export function canActivateStatusEffect(
           'number'
       );
     })
+  );
+}
+export function statusEffectChoiceOutcome(
+  definition: StatusEffectDefinition,
+  operation: 'activate' | 'deactivate',
+) {
+  return outcome(
+    true,
+    'status-effect',
+    `${definition.label}: ${operation === 'activate' ? 'activated' : 'deactivated'}.`,
   );
 }
 export function statusTransitionEvent(
@@ -508,8 +702,8 @@ function applyRate(
   if (d.schema.kind !== 'number' || typeof prior !== 'number') return;
   const value = Math.max(d.schema.min, Math.min(d.schema.max, prior + amount));
   if (value === prior) return;
+  // The sparse-value writer records condition crossings immediately after this write.
   setAttribute(world, entity, d, value, events, 'now', feedback);
-  reconcileConditions(world, entity, events);
 }
 /** A conservative participation check, not a condition evaluator. Native rate operations
  * cannot add an absent attribute or actor component; every active instance still runs.
@@ -521,6 +715,78 @@ const statusEligibility = new WeakMap<
   Entity,
   { definitions: StatusEffectDefinition[]; manifest: object; eligible: boolean }
 >();
+interface AutomaticStatusRoster {
+  rules: Array<{ definition: StatusEffectDefinition; order: number }>;
+  definitions: StatusEffectDefinition[];
+  excluded: ReadonlyMap<string, { definition: StatusEffectDefinition; order: number }>;
+}
+const automaticRosters = new WeakMap<
+  StatusEffectDefinition[],
+  Map<string | undefined, Map<string, AutomaticStatusRoster>>
+>();
+/** Only controller/kind facts can prune this static roster. Every current status operation
+ * leaves them unchanged; numeric/body/clock/status inputs remain live and all active rules
+ * are merged back below. No second predicate compiler or cached negative meter is added. */
+function automaticStatusRoster(world: WorldState, entity: Entity): AutomaticStatusRoster {
+  const definitions = statusDefinitions(world),
+    actor = readOnlyDraftView(entity).actor;
+  const controller = actor && readOnlyDraftView(actor).controller,
+    kind = readOnlyDraftView(entity).kind;
+  let controllers = automaticRosters.get(definitions);
+  const cached = controllers?.get(controller)?.get(kind);
+  if (cached) return cached;
+  const rules: AutomaticStatusRoster['rules'] = [],
+    excluded = new Map<string, AutomaticStatusRoster['rules'][number]>();
+  const bindings = effectBindings(world, entity);
+  for (let order = 0; order < definitions.length; order++) {
+    const definition = definitions[order]!;
+    let possible =
+      definition.enabled &&
+      !!definition.automaticActivation &&
+      (!definition.occupiesAction || !!actor);
+    for (const { condition, sourcePath } of statusDefinitionConditions(definition)) {
+      if (!['requires', 'activationCondition', 'automaticActivation'].includes(sourcePath))
+        continue;
+      visitStatusCondition(condition, sourcePath, (part, path) => {
+        if (
+          !possible ||
+          path.includes('.any[') ||
+          !('field' in part) ||
+          !['controller', 'kind'].includes(part.field.name)
+        )
+          return;
+        if (!matchesStatusCondition(world, bindings, part)) possible = false;
+      });
+    }
+    const entry = { definition, order };
+    if (possible) rules.push(entry);
+    else excluded.set(definition.id, entry);
+  }
+  const roster = { rules, definitions: rules.map((entry) => entry.definition), excluded };
+  if (isImmutableData(definitions)) {
+    if (!controllers) automaticRosters.set(definitions, (controllers = new Map()));
+    let kinds = controllers.get(controller);
+    if (!kinds) controllers.set(controller, (kinds = new Map()));
+    kinds.set(kind, roster);
+  }
+  return roster;
+}
+function statusReconciliationRules(world: WorldState, entity: Entity): StatusEffectDefinition[] {
+  const roster = automaticStatusRoster(world, entity);
+  const stored = readOnlyDraftView(entity).statusEffects;
+  const states = stored && readOnlyDraftView(stored);
+  let merged: AutomaticStatusRoster['rules'] | undefined;
+  // Iterate installed excluded definitions, never potentially growing retained
+  // contribution history merely to find a current native singleton.
+  for (const [id, entry] of roster.excluded) {
+    const value = states?.[id];
+    if (value && readOnlyDraftView(value).active) (merged ??= [...roster.rules]).push(entry);
+  }
+  const result = merged ? merged.sort((a, b) => a.order - b.order) : roster.rules;
+  if (domainCountersEnabled())
+    countDomainWork('statusDormantRulesExcluded', statusDefinitions(world).length - result.length);
+  return merged ? result.map((entry) => entry.definition) : roster.definitions;
+}
 export function mayAdvanceStatusEffects(world: WorldState, entity: Entity): boolean {
   if (entity.actor) return true;
   if (Object.values(entity.statusEffects ?? {}).some((state) => state.active)) return true;
@@ -556,8 +822,13 @@ export function reconcileStatusEffects(
 ): void {
   advanceCapabilityContributions(world, entity, events);
   if (!activelyParticipates(entity)) return;
-  for (const d of statusDefinitions(world)) {
-    const state = entity.statusEffects?.[d.id];
+  for (const d of statusReconciliationRules(world, entity)) {
+    countDomainWork('statusRulesConsidered');
+    // Checking a dormant rule does not need a writable draft. Re-read the latest
+    // table each iteration because an earlier rule may activate another status.
+    const states = readOnlyDraftView(entity).statusEffects;
+    const stored = states && readOnlyDraftView(states)[d.id];
+    const state = stored && readOnlyDraftView(stored);
     // An occupying effect requires an actor by the admission contract. Avoid evaluating
     // automatic conditions on every inert object, while still reconciling active states.
     if (
@@ -622,16 +893,34 @@ export interface StatusRateInterval {
 export function periodicChangeCount(elapsed: number, every: number): number {
   return Math.floor((elapsed + TIME_EPSILON) / every);
 }
-/** Conditions use one starting state, including cross-target rate predicates. */
-export function prepareStatusRates(world: WorldState, entity: Entity): StatusRateInterval[] {
+/** Recheck every current predicate and binding, but retain the ordered calculation when
+ * its complete selected operations are unchanged. A character starting work therefore
+ * cannot reuse an old activeWork answer; unrelated characters avoid new rate objects.
+ * Only admitted immutable definitions can supply this derived preparation. */
+export function prepareStatusRates(
+  world: WorldState,
+  entity: Entity,
+  previous?: StatusRateInterval[],
+): StatusRateInterval[] {
   const result: StatusRateInterval[] = [];
-  if (!activelyParticipates(entity)) return result;
+  entity = readOnlyDraftView(entity);
+  if (!activelyParticipates(entity)) return previous?.length === 0 ? previous : result;
+  const states = entity.statusEffects && readOnlyDraftView(entity.statusEffects);
   for (const definition of statusDefinitions(world)) {
-    const state = entity.statusEffects?.[definition.id];
+    const stored = states?.[definition.id];
+    const state = stored && readOnlyDraftView(stored);
     if (!state?.active) continue;
+    const prior = previous?.[result.length];
+    const sameEpisode =
+      prior?.entityId === entity.id &&
+      prior.episode === state.episode &&
+      prior.definition === definition &&
+      isImmutableData(definition);
     const bindings = effectBindings(world, entity, state);
-    const rates: StatusRateInterval['rates'] = [];
-    const periodic: StatusRateInterval['periodic'] = [];
+    let rates: StatusRateInterval['rates'] | undefined = sameEpisode ? undefined : [];
+    let periodic: StatusRateInterval['periodic'] | undefined = sameEpisode ? undefined : [];
+    let rateCount = 0,
+      periodicCount = 0;
     for (const op of definition.whileActive) {
       const change = statusNumericChange(op);
       if (!change || ('when' in op && op.when && !matchesStatusCondition(world, bindings, op.when)))
@@ -639,17 +928,58 @@ export function prepareStatusRates(world: WorldState, entity: Entity): StatusRat
       const target = resolve(change.target, bindings);
       if (!target || typeof readEntityAttribute(world, target, change.attribute) !== 'number')
         continue;
-      if ('changeRate' in op)
-        rates.push({
+      if ('changeRate' in op) {
+        const old = prior?.rates[rateCount];
+        if (
+          !rates &&
+          (!old ||
+            old.targetId !== target.id ||
+            old.attribute !== change.attribute ||
+            old.rate !== op.changeRate.amount)
+        )
+          rates = prior!.rates.slice(0, rateCount);
+        rates?.push({
           targetId: target.id,
           attribute: change.attribute,
           rate: op.changeRate.amount,
         });
-      else if ('changeEvery' in op) periodic.push({ ...op.changeEvery, targetId: target.id });
+        rateCount++;
+      } else if ('changeEvery' in op) {
+        const old = prior?.periodic[periodicCount],
+          every = op.changeEvery;
+        if (
+          !periodic &&
+          (!old ||
+            old.targetId !== target.id ||
+            old.attribute !== every.attribute ||
+            old.amount !== every.amount ||
+            old.everyGameSeconds !== every.everyGameSeconds ||
+            old.unit !== every.unit)
+        )
+          periodic = prior!.periodic.slice(0, periodicCount);
+        periodic?.push({ ...every, targetId: target.id });
+        periodicCount++;
+      }
     }
-    result.push({ entityId: entity.id, episode: state.episode, definition, rates, periodic });
+    if (!rates && prior!.rates.length !== rateCount) rates = prior!.rates.slice(0, rateCount);
+    if (!periodic && prior!.periodic.length !== periodicCount)
+      periodic = prior!.periodic.slice(0, periodicCount);
+    if (sameEpisode && !rates && !periodic) result.push(prior!);
+    else
+      result.push({
+        entityId: entity.id,
+        episode: state.episode,
+        definition,
+        rates: rates ?? prior!.rates,
+        periodic: periodic ?? prior!.periodic,
+      });
   }
-  return result;
+  const reused =
+    previous &&
+    result.length === previous.length &&
+    result.every((interval, index) => interval === previous[index]);
+  countDomainWork(reused ? 'nativeStatusParticipantsReused' : 'nativeStatusParticipantsPrepared');
+  return reused && previous ? previous : result;
 }
 /** Entities that another participant's active status binds as source or action target, or
  * whose attribute another entity's status changes. A change concerning only one entity can be
@@ -661,7 +991,7 @@ export function crossStatusReferences(
 ): Set<string> {
   const referenced = new Set<string>();
   for (const id of statusIds)
-    for (const state of Object.values(world.entities[id]?.statusEffects ?? {}))
+    for (const state of Object.values(entityGet(world.entities, id)?.statusEffects ?? {}))
       if (state.active) {
         if (state.sourceId !== id) referenced.add(state.sourceId);
         if (state.actionTargetId !== id) referenced.add(state.actionTargetId);
@@ -702,7 +1032,7 @@ export function applyBodyRate(
   rate: BodyRateInterval,
   events: WorldEvent[],
 ): void {
-  const target = world.entities[rate.targetId],
+  const target = entityGet(world.entities, rate.targetId),
     actor = target?.actor,
     definition = attributeDefinition(world, rate.attribute);
   if (
@@ -714,7 +1044,7 @@ export function applyBodyRate(
     definition.schema.kind !== 'number'
   )
     return;
-  const prior = readAttribute(actor, definition);
+  const prior = readAttribute(world, target, definition);
   if (typeof prior !== 'number') return;
   const range = attributeRange(actor, definition);
   const value = Math.max(range.min, Math.min(range.max, prior + rate.amount));
@@ -740,18 +1070,15 @@ export function applyBodyRate(
     );
   }
 }
-export function integrateStatusRates(
+/** Arithmetic grouping belongs to one captured interval. The caller revalidates the active
+ * episode subset before reuse; time, ranges, periodic occurrences and accounting stay live.
+ * docs/projects/performance-overhaul/simulation.md#pf1710--prepare-status-operations-and-net-flows-once */
+export function prepareStatusIntegration(
   world: WorldState,
-  intervals: readonly StatusRateInterval[],
-  seconds: number,
-  events: WorldEvent[],
+  active: readonly StatusRateInterval[],
   drains: readonly NativeDrain[] = [],
-  deferBodyRates = false,
-): BodyRateInterval[] {
-  const active = intervals.filter((interval) => {
-    const state = world.entities[interval.entityId]?.statusEffects?.[interval.definition.id];
-    return state?.active && state.episode === interval.episode;
-  });
+) {
+  countDomainWork('statusFlowPreparations');
   const flows = new Map<
     string,
     {
@@ -770,7 +1097,7 @@ export function integrateStatusRates(
     drained: boolean,
     cause?: string,
   ) => {
-    const key = `${targetId}\0${attribute}`;
+    const key = JSON.stringify([targetId, attribute]);
     let flow = flows.get(key);
     if (!flow) {
       flow = { targetId, attribute, rate: 0, signs: new Set(), drained: false };
@@ -807,6 +1134,326 @@ export function integrateStatusRates(
       .filter(([, flow]) => flow.drained || flow.signs.size > 1 || flow.causes !== undefined)
       .map(([key]) => key),
   );
+  // Writer membership is part of this captured active subset, just like net-flow
+  // grouping. Preserve repeated same-episode operations without rebuilding this
+  // map on every integration; a duplicate interval remains a competing occurrence.
+  const writers = new Map<string, number | null>();
+  for (let index = 0; index < active.length; index++) {
+    const interval = active[index]!;
+    for (const rate of interval.rates) {
+      const key = JSON.stringify([rate.targetId, rate.attribute]);
+      if (!writers.has(key)) writers.set(key, index);
+      else if (writers.get(key) !== index) writers.set(key, null);
+    }
+    for (const change of interval.periodic)
+      writers.set(JSON.stringify([change.targetId, change.attribute]), null);
+  }
+  for (const drain of drains) writers.set(JSON.stringify([drain.targetId, drain.attribute]), null);
+  const arithmetic = active.map((interval, index) => {
+    const requirements = statusArithmeticRequirements(interval.definition);
+    if (interval.periodic.length || !interval.rates.length || !requirements.linear) return;
+    const attributes: Record<string, NativeValueAttribute> = {};
+    const values: Array<{ id: string; thresholds: number[]; conditionVersion?: number }> = [];
+    for (const rate of interval.rates) {
+      const key = JSON.stringify([rate.targetId, rate.attribute]);
+      if (rate.targetId !== interval.entityId || writers.get(key) !== index || net.has(key)) return;
+      let attribute = attributes[rate.attribute];
+      if (!attribute) {
+        const definition = attributeDefinition(world, rate.attribute);
+        if (
+          !definition ||
+          definition.implementation !== 'number-v1' ||
+          definition.schema.kind !== 'number' ||
+          definition.reservoir
+        )
+          return;
+        const thresholds = statusArithmeticThresholds(definition);
+        values.push({
+          id: definition.id,
+          thresholds,
+          ...(definition.condition ? { conditionVersion: definition.version } : {}),
+        });
+        attributes[definition.id] = attribute = {
+          rates: [],
+          min: definition.schema.min,
+          max: definition.schema.max,
+          changed: true,
+        };
+      }
+      attribute.rates.push(rate.rate);
+    }
+    return { attributes, values, requirements };
+  });
+  return {
+    active,
+    drains,
+    arithmetic,
+    manifest: isDraft(world.moduleManifest) ? current(world.moduleManifest) : world.moduleManifest,
+    policy: isDraft(world.statusEffectPolicy)
+      ? current(world.statusEffectPolicy)
+      : world.statusEffectPolicy,
+    flows,
+    net,
+    healthCauses: new Map([...flows].map(([key, flow]) => [key, [...(flow.causes ?? [])].sort()])),
+    serial: active.flatMap((interval) =>
+      interval.rates.filter(
+        ({ targetId, attribute }) => !net.has(JSON.stringify([targetId, attribute])),
+      ),
+    ),
+  };
+}
+interface StatusArithmeticRequirements {
+  linear: boolean;
+  source: boolean;
+  actionTarget: boolean;
+}
+const exactLinearDefinitions = new WeakMap<StatusEffectDefinition, StatusArithmeticRequirements>();
+function statusArithmeticRequirements(
+  definition: StatusEffectDefinition,
+): StatusArithmeticRequirements {
+  const cached = exactLinearDefinitions.get(definition);
+  if (cached) return cached;
+  const requirements = { linear: true, source: false, actionTarget: false };
+  const reference = (target: EntityReference) => {
+    if (target === '$source') requirements.source = true;
+    if (target === '$actionTarget') requirements.actionTarget = true;
+  };
+  for (const operation of definition.whileActive) {
+    if ('changeRate' in operation) reference(operation.changeRate.target);
+    else if (!('restrictCapabilities' in operation)) requirements.linear = false;
+  }
+  for (const { condition, sourcePath } of statusDefinitionConditions(definition))
+    visitStatusCondition(condition, sourcePath, (part) => {
+      if ('compare' in part) reference(part.compare.target);
+      if ('field' in part) reference(part.field.target);
+      if ('hasAttribute' in part) reference(part.hasAttribute.target);
+      if ('statusActive' in part) reference(part.statusActive.target);
+    });
+  if (isImmutableData(definition)) exactLinearDefinitions.set(definition, requirements);
+  return requirements;
+}
+/** The same exact boundaries govern runtime retention and cold saved continuation.
+ * Ordinary numeric attributes have definition-owned ranges; health stays eager. */
+export function statusArithmeticThresholds(
+  definition: import('./world-modules.js').AttributeDefinition,
+): number[] {
+  if (definition.schema.kind !== 'number') throw new Error('Native arithmetic needs a number.');
+  const thresholds = [definition.schema.min, definition.schema.max];
+  if (definition.concern) {
+    const below = attributeThreshold(
+      undefined,
+      definition,
+      definition.concern.below,
+      definition.concern.unit,
+    );
+    thresholds.push(
+      below,
+      Math.min(definition.schema.max, below + (definition.concern.recoveryMargin ?? 0)),
+    );
+  }
+  if (definition.condition)
+    for (const band of definition.condition.bands)
+      thresholds.push(
+        band.below,
+        Math.min(definition.schema.max, band.below + definition.condition.recoveryMargin),
+      );
+  return thresholds;
+}
+/** Validate captured operations against their admitted meaning, not today's predicate
+ * truth: a new action at the endpoint may legitimately select a different next rate.
+ * The existing invocation definition pin protects the complete installed definition.
+ * Conditional selections are saved history, not an authenticated historical proof,
+ * just as an ordinary saved meter cannot prove which earlier actions earned it. */
+export function validateRetainedStatusArithmetic(
+  world: WorldState,
+  entity: Entity,
+  state: StatusEffectInstance,
+  definition: StatusEffectDefinition,
+  attributes: Readonly<Record<string, NativeValueAttribute>>,
+  demand: import('./work-budget.js').WorkDemand,
+): void {
+  const fail: () => never = () => {
+    throw new Error('Invalid saved native arithmetic meaning.');
+  };
+  const requirements = statusArithmeticRequirements(definition);
+  if (
+    !requirements.linear ||
+    state.contribution ||
+    !state.active ||
+    !entity.actor ||
+    (requirements.source && state.sourceId !== entity.id) ||
+    (requirements.actionTarget && state.actionTargetId !== entity.id)
+  )
+    fail();
+  const cost = statusWork(definition);
+  if (
+    Object.keys(demand).length !== 2 ||
+    demand.tests !== cost.tests ||
+    demand.effects !== cost.effects
+  )
+    fail();
+  const operations = new Map<string, Array<{ rate: number; optional: boolean }>>();
+  const bindings = effectBindings(world, entity, state);
+  for (const operation of definition.whileActive) {
+    if (!('changeRate' in operation)) continue;
+    const change = operation.changeRate;
+    const target = resolve(change.target, bindings);
+    if (target?.id !== entity.id) fail();
+    const values = operations.get(change.attribute) ?? [];
+    values.push({ rate: change.amount, optional: operation.when !== undefined });
+    operations.set(change.attribute, values);
+  }
+  for (const [id, choices] of operations) {
+    const actual = attributes[id]?.rates ?? [];
+    // At most 32 admitted operations: preserve mandatory operations and original
+    // order while allowing conditional operations that were inactive then.
+    let positions = new Set([0]);
+    for (const choice of choices) {
+      const next = choice.optional ? new Set(positions) : new Set<number>();
+      for (const position of positions)
+        if (actual[position] === choice.rate) next.add(position + 1);
+      positions = next;
+    }
+    if (!positions.has(actual.length)) fail();
+  }
+  for (const [id, captured] of Object.entries(attributes)) {
+    const attribute = attributeDefinition(world, id);
+    if (
+      !operations.has(id) ||
+      !attribute ||
+      attribute.implementation !== 'number-v1' ||
+      attribute.schema.kind !== 'number' ||
+      attribute.reservoir ||
+      captured.min !== attribute.schema.min ||
+      captured.max !== attribute.schema.max ||
+      new Set(captured.rates.filter((rate) => rate !== 0).map(Math.sign)).size > 1
+    )
+      fail();
+  }
+}
+export function integrateStatusRates(
+  world: WorldState,
+  intervals: readonly StatusRateInterval[],
+  seconds: number,
+  events: WorldEvent[],
+  drains: readonly NativeDrain[] = [],
+  deferBodyRates = false,
+  preparation?: ReturnType<typeof prepareStatusIntegration>,
+  retainValues = false,
+): BodyRateInterval[] {
+  const active = intervals.filter((interval) => {
+    const state = entityGet(world.entities, interval.entityId)?.statusEffects?.[
+      interval.definition.id
+    ];
+    return state?.active && state.episode === interval.episode;
+  });
+  const manifest = isDraft(world.moduleManifest)
+      ? current(world.moduleManifest)
+      : world.moduleManifest,
+    policy = isDraft(world.statusEffectPolicy)
+      ? current(world.statusEffectPolicy)
+      : world.statusEffectPolicy;
+  const reuse =
+    preparation &&
+    isImmutableData(manifest) &&
+    isImmutableData(policy) &&
+    preparation.manifest === manifest &&
+    preparation.policy === policy &&
+    preparation.drains === drains &&
+    preparation.active.length === active.length &&
+    active.every((interval, index) => preparation.active[index] === interval);
+  const prepared = reuse ? preparation : prepareStatusIntegration(world, active, drains);
+  if (reuse) countDomainWork('statusFlowReuses');
+  const { flows, net } = prepared;
+  // Independent ordinary meters share one episode's elapsed/accounting continuation.
+  // Preserve every same-sign addition and clamp; opposite/netted flows and actual
+  // threshold side effects remain in their existing eager owners.
+  const lazy: Omit<NativeValueBinding, 'from'>[] = [];
+  if (retainValues) {
+    for (let index = 0; index < active.length; index++) {
+      const interval = active[index]!;
+      const arithmetic = prepared.arithmetic[index];
+      if (!arithmetic) continue;
+      const { requirements } = arithmetic;
+      const entity = entityGet(readOnlyDraftView(world.entities), interval.entityId)!;
+      const state = entity.statusEffects![interval.definition.id]!;
+      // Recurrence/ownership fields change only through work mutations, which first
+      // materialize pending charges. Counters are projected once at charge preflight.
+      const workState = readOnlyDraftView(world).workState;
+      const workRecords = workState && readOnlyDraftView(workState).invocations;
+      const storedWork = workRecords && readOnlyDraftView(workRecords)[interval.episode];
+      const work = storedWork && readOnlyDraftView(storedWork);
+      if (
+        !entity.actor ||
+        state.contribution ||
+        (requirements.source && state.sourceId !== entity.id) ||
+        (requirements.actionTarget && state.actionTargetId !== entity.id) ||
+        !work?.recurrence ||
+        work.parentId ||
+        work.children ||
+        work.rootId !== work.id
+      )
+        continue;
+      let attributes = arithmetic.attributes;
+      let eligible = true;
+      for (const prepared of arithmetic.values) {
+        const attribute = attributes[prepared.id]!;
+        const currentValue = currentAttributeState(world, entity, prepared.id)?.value;
+        if (typeof currentValue !== 'number') {
+          eligible = false;
+          break;
+        }
+        if (prepared.conditionVersion !== undefined) {
+          const condition = entity.actor.conditions?.[prepared.id];
+          if (
+            condition?.version !== prepared.conditionVersion ||
+            condition.pending ||
+            (condition.nextReviewAt !== undefined && condition.nextReviewAt <= world.simTime)
+          ) {
+            eligible = false;
+            break;
+          }
+        }
+        let value = currentValue;
+        let changed = false;
+        for (const rate of attribute.rates) {
+          const next = Math.max(attribute.min, Math.min(attribute.max, value + rate * seconds));
+          if (
+            next !== value &&
+            prepared.thresholds.some(
+              (threshold) =>
+                Math.min(value, next) <= threshold && Math.max(value, next) >= threshold,
+            )
+          ) {
+            eligible = false;
+            break;
+          }
+          changed ||= next !== value;
+          value = next;
+        }
+        if (!eligible) break;
+        if (!changed) {
+          if (attributes === arithmetic.attributes) attributes = { ...attributes };
+          attributes[prepared.id] = { ...attribute, changed: false };
+        }
+      }
+      if (!eligible) continue;
+      const cost = statusWork(interval.definition);
+      lazy.push({
+        entityId: entity.id,
+        statusId: interval.definition.id,
+        episode: interval.episode,
+        attributes,
+        demand: { tests: cost.tests, effects: cost.effects },
+      });
+    }
+  }
+  const retained = retainNativeIntegration(world, lazy, seconds);
+  const retainedRates = new Set(
+    lazy.flatMap((binding) =>
+      Object.keys(binding.attributes).map((id) => JSON.stringify([binding.entityId, id])),
+    ),
+  );
   const due: Array<{
     interval: StatusRateInterval;
     change: StatusRateInterval['periodic'][number];
@@ -814,9 +1461,13 @@ export function integrateStatusRates(
   }> = [];
   // Finish captured accounting before health can end any source/target episode.
   for (const interval of active) {
-    const entity = world.entities[interval.entityId]!;
+    if (retained.has(interval.episode)) {
+      chargeWork({ effects: interval.definition.whileActive.length });
+      continue;
+    }
+    const entity = entityGet(world.entities, interval.entityId)!;
     const state = entity.statusEffects![interval.definition.id]!;
-    chargeStatusWork(world, entity, interval.definition, state);
+    chargeStatusWork(world, entity, interval.definition, interval.definition.id, state);
     chargeWork({ effects: interval.definition.whileActive.length });
     for (const change of interval.periodic) {
       const count =
@@ -826,17 +1477,15 @@ export function integrateStatusRates(
     }
     state.elapsedSeconds += seconds;
   }
-  for (const interval of active) {
-    for (const { targetId, attribute, rate } of interval.rates) {
-      const target = world.entities[targetId];
-      if (target && !net.has(`${targetId}\0${attribute}`))
-        applyRate(world, target, attribute, rate * seconds, events);
-    }
+  for (const { targetId, attribute, rate } of prepared.serial) {
+    if (retainedRates.has(JSON.stringify([targetId, attribute]))) continue;
+    const target = entityGet(world.entities, targetId);
+    if (target) applyRate(world, target, attribute, rate * seconds, events);
   }
   const health: BodyRateInterval[] = [];
   for (const key of net) {
     const flow = flows.get(key)!,
-      target = world.entities[flow.targetId];
+      target = entityGet(world.entities, flow.targetId);
     if (!target) continue;
     const definition = attributeDefinition(world, flow.attribute)!;
     if (definition.implementation === 'native-health-v1') {
@@ -846,13 +1495,13 @@ export function integrateStatusRates(
         targetId: target.id,
         attribute: flow.attribute,
         amount: flow.rate * seconds,
-        causes: [...flow.causes!].sort(),
+        causes: prepared.healthCauses.get(key)!,
       });
     } else applyRate(world, target, flow.attribute, flow.rate * seconds, events);
   }
   const healthByTarget = new Map(health.map((rate) => [rate.targetId, rate]));
   for (const { interval, change, count } of due) {
-    const target = world.entities[change.targetId],
+    const target = entityGet(world.entities, change.targetId),
       definition = attributeDefinition(world, change.attribute);
     if (!target || !definition || definition.schema.kind !== 'number') continue;
     const bounds = target.actor ? attributeRange(target.actor, definition) : definition.schema;
@@ -957,7 +1606,7 @@ export function admitStatusEffectPolicy(
   const changedIds = new Set(changed.map((d) => d.id));
   if (
     changed.length &&
-    Object.values(input.entities).some(
+    entityValues(input.entities).some(
       (entity) => !completeContributionHistory(entity.statusEffects),
     )
   )
@@ -971,7 +1620,7 @@ export function admitStatusEffectPolicy(
       ),
     };
   if (
-    Object.values(input.entities).some((entity) =>
+    entityValues(input.entities).some((entity) =>
       Object.values(entity.statusEffects ?? {}).some(
         (state) => state.contribution && changedIds.has(state.contribution.definitionId),
       ),
@@ -986,7 +1635,7 @@ export function admitStatusEffectPolicy(
         'Retained contributions require their exact definition.',
       ),
     };
-  for (const entity of Object.values(world.entities))
+  for (const entity of entityValues(world.entities))
     for (const old of changed) {
       deactivateStatusEffect(world, entity, old, events, 'policy-changed');
       if (!retained.has(old.id) && entity.statusEffects) delete entity.statusEffects[old.id];

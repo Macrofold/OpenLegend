@@ -1,3 +1,4 @@
+import { entitySet } from '../../entity-collection.js';
 import { baseSpatial } from './spatial-definitions.js';
 import { addItem } from '../../data.js';
 import { installRecipe } from '../../declarations.js';
@@ -116,7 +117,7 @@ export function installExpeditions(world: WorldState): void {
       appearance: 'crate-mesh',
     },
   ];
-  for (const entity of entities) world.entities[entity.id] = entity;
+  for (const entity of entities) entitySet(world.entities, entity.id, entity);
   const lookoutCase = addItem(world, 'lookout-equipment', 'lookout-equipment-case', 1);
   const workshopSatchel = addItem(world, 'riverside-workshop', 'workshop-supply-satchel', 1);
   addItem(world, lookoutCase, 'spear', 1);

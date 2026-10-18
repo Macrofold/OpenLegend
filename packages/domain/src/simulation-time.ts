@@ -1,4 +1,4 @@
-import { isDraft, original } from 'immer';
+import { entityGet } from './entity-collection.js';
 import { statusDefinitions } from './status-capabilities.js';
 import { activelyParticipates } from './participation-state.js';
 import {
@@ -6,6 +6,7 @@ import {
   localHour,
   readEntityAttribute,
   matchesStatusCondition,
+  retainNegativeStatusCondition,
   periodicChangeCount,
   statusComparisonValue,
   type EffectBindings,
@@ -13,12 +14,13 @@ import {
   type StatusRateInterval,
 } from './status-effects.js';
 import {
-  attributeDefinition,
+  type AttributeDefinition,
   attributeRange,
   attributeThreshold,
   readAttribute,
 } from './world-modules.js';
 import type { WorldState } from './types.js';
+import { readOnlyDraftView } from './draft.js';
 
 /** Numeric progress guard, not a biological tick. docs/simulation-time.md#native-interval-contract */
 export const TIME_EPSILON = 1e-6;
@@ -54,6 +56,7 @@ function conditionTransition(
   bindings: EffectBindings,
   condition: StatusCondition,
   rates: AttributeRates,
+  attributes: ReadonlyMap<string, AttributeDefinition>,
 ): ConditionTransition {
   if ('all' in condition || 'any' in condition) {
     const conjunction = 'all' in condition;
@@ -62,7 +65,7 @@ function conditionTransition(
       blocking = 0,
       hasBlocking = false;
     for (const child of children) {
-      const transition = conditionTransition(world, bindings, child, rates);
+      const transition = conditionTransition(world, bindings, child, rates, attributes);
       earliest = Math.min(earliest, transition.afterSeconds);
       if (transition.matches !== conjunction) {
         if (transition.afterSeconds === Infinity)
@@ -103,7 +106,7 @@ function conditionTransition(
   const value = readEntityAttribute(world, target, c.attribute);
   if (!target || typeof value !== 'number') return { matches, afterSeconds: Infinity };
   const rate = rates.get(target.id)?.get(c.attribute) ?? 0;
-  const definition = attributeDefinition(world, c.attribute);
+  const definition = attributes.get(c.attribute);
   const schema =
     definition?.schema.kind === 'number'
       ? target.actor
@@ -111,46 +114,55 @@ function conditionTransition(
         : definition.schema
       : undefined;
   const threshold = statusComparisonValue(world, bindings, c);
+  let afterSeconds = Infinity;
   // A saturated outward rate cannot change a predicate, including equality.
-  if (!rate || (schema && ((value <= schema.min && rate < 0) || (value >= schema.max && rate > 0))))
-    return { matches, afterSeconds: Infinity };
-  if (value === threshold) {
-    const after =
-      c.operator === 'equal'
-        ? false
-        : c.operator === 'notEqual'
-          ? true
-          : c.operator === 'greaterThanOrEqual'
-            ? rate > 0
-            : rate < 0;
-    // A reached threshold only needs the strict-side micro-interval when its truth changes,
-    // long enough to change the value representably.
-    return {
-      matches,
-      afterSeconds:
-        matches === after
-          ? Infinity
-          : Math.max(TIME_EPSILON, (2 * Math.abs(value) * Number.EPSILON) / Math.abs(rate)),
-    };
+  if (
+    rate &&
+    !(schema && ((value <= schema.min && rate < 0) || (value >= schema.max && rate > 0)))
+  ) {
+    if (value === threshold) {
+      const after =
+        c.operator === 'equal'
+          ? false
+          : c.operator === 'notEqual'
+            ? true
+            : c.operator === 'greaterThanOrEqual'
+              ? rate > 0
+              : rate < 0;
+      // A reached threshold only needs the strict-side micro-interval when its truth changes,
+      // long enough to change the value representably.
+      if (matches !== after)
+        afterSeconds = Math.max(
+          TIME_EPSILON,
+          (2 * Math.abs(value) * Number.EPSILON) / Math.abs(rate),
+        );
+    } else afterSeconds = untilThreshold(value, rate, threshold);
   }
-  return { matches, afterSeconds: untilThreshold(value, rate, threshold) };
+  if (!matches)
+    retainNegativeStatusCondition(world, bindings, condition, value, threshold, rate, afterSeconds);
+  return { matches, afterSeconds };
 }
 export function statusBoundary(
   world: WorldState,
   entities: readonly string[],
   rates: AttributeRates,
+  attributes: ReadonlyMap<string, AttributeDefinition>,
   /** Receives stored absolute deadlines so the caller can land on them exactly. */
   at: (time: number) => void = () => {},
 ): number {
   let result = Infinity;
   const definitions = statusDefinitions(world);
   const byId = new Map(definitions.map((definition) => [definition.id, definition]));
+  const currentEntities = readOnlyDraftView(world.entities);
   for (const id of entities) {
-    const entity = world.entities[id];
-    if (!entity) continue;
+    const storedEntity = entityGet(currentEntities, id);
+    if (!storedEntity) continue;
+    const entity = readOnlyDraftView(storedEntity);
+    const states = entity.statusEffects && readOnlyDraftView(entity.statusEffects);
     // Independent contributions use contribution IDs, not singleton definition keys.
     // Their lifetime and predicates must end a restriction at the actual boundary.
-    for (const state of Object.values(entity.statusEffects ?? {})) {
+    for (const stored of Object.values(states ?? {})) {
+      const state = readOnlyDraftView(stored);
       if (!state.active || !state.contribution) continue;
       const { lifetime, definitionId } = state.contribution;
       if (lifetime.kind === 'fixed') {
@@ -164,12 +176,13 @@ export function statusBoundary(
         if (condition)
           result = Math.min(
             result,
-            conditionTransition(world, bindings, condition, rates).afterSeconds,
+            conditionTransition(world, bindings, condition, rates, attributes).afterSeconds,
           );
     }
     if (!activelyParticipates(entity)) continue;
     for (const d of definitions) {
-      const state = entity.statusEffects?.[d.id];
+      const stored = states?.[d.id];
+      const state = stored && readOnlyDraftView(stored);
       if (!state?.active) {
         // Only automatic activation can happen without a command. Retired episode bindings
         // must not predict reactivation against its old source/target: activation binds self.
@@ -193,6 +206,7 @@ export function statusBoundary(
               ],
             },
             rates,
+            attributes,
           ).afterSeconds,
         );
         continue;
@@ -217,7 +231,7 @@ export function statusBoundary(
         if (condition)
           result = Math.min(
             result,
-            conditionTransition(world, bindings, condition, rates).afterSeconds,
+            conditionTransition(world, bindings, condition, rates, attributes).afterSeconds,
           );
     }
   }
@@ -230,21 +244,27 @@ export function statusAttributeRates(intervals: readonly StatusRateInterval[]): 
       addRate(result, targetId, attribute, rate);
   return result;
 }
-export function attributeBoundary(world: WorldState, rates: AttributeRates): number {
+export function attributeBoundary(
+  world: WorldState,
+  rates: AttributeRates,
+  definitions: readonly AttributeDefinition[],
+): number {
   let result = Infinity;
-  const manifest = isDraft(world.moduleManifest)
-    ? original(world.moduleManifest)!
-    : world.moduleManifest;
+  const currentEntities = readOnlyDraftView(world.entities);
   for (const [id, values] of rates) {
-    const entity = world.entities[id];
-    if (!entity) continue;
-    for (const d of manifest.definitions) {
-      if (d.schema.kind !== 'number') continue;
-      const value = entity.actor
-        ? readAttribute(entity.actor, d)
-        : entity.attributes?.[d.id]?.value;
+    const stored = entityGet(currentEntities, id);
+    if (!stored) continue;
+    const entity = readOnlyDraftView(stored);
+    for (const d of definitions) {
       const rate = values.get(d.id) ?? 0;
-      if (typeof value !== 'number' || !rate) continue;
+      if (!rate) continue;
+      const state = entity.attributes && readOnlyDraftView(entity.attributes)[d.id];
+      const value = entity.actor
+        ? readAttribute(world, entity, d)
+        : state
+          ? readOnlyDraftView(state).value
+          : undefined;
+      if (typeof value !== 'number') continue;
       const range = attributeRange(entity.actor, d);
       const thresholds = [range.min, range.max];
       if (d.concern) {

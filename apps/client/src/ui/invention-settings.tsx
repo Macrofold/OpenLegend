@@ -12,7 +12,11 @@ type PolicyDraft = {
   agentLocked: boolean;
 };
 
-export function InventionSettings({ view }: { view: GameView }) {
+export function InventionSettings({
+  view,
+}: {
+  view: Pick<GameView, 'godMode' | 'worldId' | 'saveTimeline' | 'inventionPolicy'>;
+}) {
   const [editing, setEditing] = useState<PolicyDraft>();
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);

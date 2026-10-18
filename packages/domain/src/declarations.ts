@@ -1,3 +1,5 @@
+import { entityGet, entityOwn, entityValues } from './entity-collection.js';
+import { orderedRecordOwn, orderedRecordSet } from './ordered-record.js';
 import { subjectNarration } from './narration.js';
 import { canonicalName, namePhrase } from '@open-legend/language';
 import { learnRecipe } from './knowledge.js';
@@ -93,8 +95,8 @@ export function admitDeclaration(
   if (
     !provenance ||
     !isSafeRecordId(provenance.requestId) ||
-    !getOwn(original.entities, provenance.actorId)?.actor?.alive ||
-    getOwn(original.entities, provenance.actorId)?.actor?.incapacitated ||
+    !entityOwn(original.entities, provenance.actorId)?.actor?.alive ||
+    entityOwn(original.entities, provenance.actorId)?.actor?.incapacitated ||
     !['live-model', 'test-fixture', 'supplied-proposal'].includes(provenance.source)
   )
     return reject(
@@ -154,7 +156,7 @@ export function admitDeclaration(
     source: provenance.source,
   };
   learnRecipe(world, provenance.actorId, recipeId, 'invented', provenance.requestId);
-  const actor = world.entities[provenance.actorId]!;
+  const actor = entityGet(world.entities, provenance.actorId)!;
   emit(
     world,
     events,
@@ -194,7 +196,7 @@ export function admitAttributeDeclaration(
     outcome: outcome(false, 'attribute-rejected', message),
   });
   const digest = canonicalJson(request);
-  const prior = getOwn(original.commandReceipts, request.id);
+  const prior = orderedRecordOwn(original.commandReceipts, request.id);
   if (prior)
     return prior.digest === digest
       ? { world: original, events: [], outcome: prior.outcome }
@@ -218,7 +220,7 @@ export function admitAttributeDeclaration(
     !['attributes', 'practice'].includes(HOST_IMPLEMENTATIONS[previous.implementation].storage)
   )
     return reject('Body-backed bindings cannot be edited.');
-  const users = Object.values(original.entities).filter(
+  const users = entityValues(original.entities).filter(
     (e) =>
       e.actor?.attributes?.[id] ||
       e.actor?.practice?.[id] ||
@@ -289,6 +291,6 @@ export function admitAttributeDeclaration(
       ? 'Unused definition removed.'
       : 'Attribute definition admitted; existing instances were preserved.',
   );
-  world.commandReceipts[request.id] = { digest, outcome: result };
+  orderedRecordSet(world.commandReceipts, request.id, { digest, outcome: result });
   return finish(world, [], result);
 }

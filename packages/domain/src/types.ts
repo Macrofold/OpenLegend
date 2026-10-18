@@ -198,6 +198,8 @@ export interface Action {
   targetId?: string;
   destination?: SurfacePoint;
   path: SurfacePoint[];
+  /** Remaining bounded travel before the next movement sample; persists across private timer steps. */
+  motionSampleRemainingMetres?: number;
   /** Admitted work awaiting derived data; no positions, costs or effects are supplied by a client. */
   navigation?: { request: import('@open-legend/spatial').NavigationRequest; failure?: string };
   replans?: number;
@@ -281,7 +283,8 @@ export interface AnimalComponent {
   escapeHeading: number | null;
   calmRate: number;
   reviewAt: number;
-  wanderSeconds: number;
+  /** Exactly one clock mode: waiting while eligible, paused while another activity owns movement. */
+  wander: { dueAt: number } | { remainingSeconds: number; running?: true };
 }
 export interface ResourceComponent {
   cast?: import('./finite-casts.js').CastSource;
@@ -428,6 +431,8 @@ export interface WorldState {
   finiteRain?: import('./assembly-types.js').FiniteRain;
   actionExperience: import('./action-experience.js').ActionExperienceState;
   workState?: import('./work-budget.js').WorkState;
+  /** Exact bounded runtime continuation; saves materialize it through its owner. */
+  pendingNativeIntegration?: import('./native-values.js').NativeValueWindow;
   participationPolicy?: {
     safeReturnAnchor?: import('@open-legend/spatial').SurfacePoint;
     exitExposureSeconds?: number;
@@ -481,7 +486,7 @@ export interface WorldState {
   map: WorldMap;
   flightRoutes: Record<string, import('./spatial-state.js').FlightRoute>;
   nativeStrikes?: Record<string, import('./strikes.js').StrikeDefinition>;
-  entities: Record<string, Entity>;
+  entities: import('./entity-collection.js').EntityCollection;
   objectState: { revision: number };
   objectLineage?: Record<string, import('./objects.js').ObjectLineage>;
   itemDefinitions: Record<string, ItemDefinition>;
@@ -496,7 +501,7 @@ export interface WorldState {
   events: WorldEvent[];
   /** Durable history rows outside the active event working set; not deleted evidence. */
   archivedEventCount?: number;
-  commandReceipts: Record<string, CommandReceipt>;
+  commandReceipts: import('./ordered-record.js').OrderedRecord<CommandReceipt>;
   declarationReceipts: Record<
     string,
     {

@@ -1,3 +1,4 @@
+import { entityGet } from '../../entity-collection.js';
 import type { WorldState, WorldEvent, Outcome } from '../../types.js';
 import { namePhrase, type Named, type NameArticle } from '@open-legend/language';
 import { outcome } from '../../events.js';
@@ -12,7 +13,7 @@ export function startingRecipeKnowledge(
   actorId: string,
   shieldRecipeId: string,
 ): void {
-  if (!world.entities[actorId]?.actor?.body?.equipmentPorts.length) return;
+  if (!entityGet(world.entities, actorId)?.actor?.body?.equipmentPorts.length) return;
   learnRecipe(world, actorId, shieldRecipeId, 'authored', 'base:known-shield');
 }
 
@@ -69,7 +70,7 @@ export function observerGivenName(
   observerId: string,
   subjectId: string,
 ): string | undefined {
-  if (observerId === subjectId) return world.entities[subjectId]?.name;
+  if (observerId === subjectId) return entityGet(world.entities, subjectId)?.name;
   return recognizesSubject(world, observerId, subjectId)
     ? world.observerIdentities?.[observerId]?.[subjectId]?.givenName || undefined
     : undefined;
@@ -82,8 +83,8 @@ export function assignGivenName(
   authored = false,
 ): Outcome {
   if (
-    !world.entities[observerId]?.actor ||
-    !world.entities[edit.subjectId] ||
+    !entityGet(world.entities, observerId)?.actor ||
+    !entityGet(world.entities, edit.subjectId) ||
     !isSafeRecordId(edit.subjectId) ||
     !permittedSubjects.includes(edit.subjectId)
   )
@@ -162,12 +163,12 @@ export function rememberSubject(
 
 /** Select permitted identity before applying presentation grammar. */
 export function observerName(world: WorldState, observerId: string, subjectId: string): Named {
-  const remains = world.entities[subjectId]?.remains;
+  const remains = entityGet(world.entities, subjectId)?.remains;
   if (remains && remains.sourceId !== subjectId)
     return observerName(world, observerId, remains.sourceId);
   const known = observerGivenName(world, observerId, subjectId);
   if (known) return { name: known, nameForm: 'proper', indefiniteArticle: undefined };
-  const entity = world.entities[subjectId];
+  const entity = entityGet(world.entities, subjectId);
   if (!entity?.actor)
     return entity
       ? {
@@ -218,14 +219,14 @@ export function learnSpeechIntroduction(world: WorldState, event: WorldEvent): v
     delete event.data!['selfIntroduction'];
     return;
   }
-  const source = world.entities[event.actorId];
+  const source = entityGet(world.entities, event.actorId);
   if (!source?.actor) return;
   event.data!['selfIntroduction'] = proposed.trim();
   const nameWords = [...introductionWords.segment(proposed.trim())]
     .filter((word) => word.isWordLike)
     .map((word) => word.segment);
   for (const observerId of event.audience) {
-    const observer = world.entities[observerId];
+    const observer = entityGet(world.entities, observerId);
     if (observerId === source.id || !observer?.actor || !seesEntity(world, observer, source))
       continue;
     const evidence = world.experience?.awareness[observerId]?.at(-1);
@@ -260,7 +261,8 @@ Spoken introductions: when your speech introduces your own name or preferred lab
 
 export function validateObserverIdentities(world: WorldState): void {
   for (const [actorId, identities] of Object.entries(world.observerIdentities ?? {})) {
-    if (!world.entities[actorId]?.actor) throw new Error('Observer identity owner is unavailable.');
+    if (!entityGet(world.entities, actorId)?.actor)
+      throw new Error('Observer identity owner is unavailable.');
     for (const [subjectId, identity] of Object.entries(identities))
       if (
         !isSafeRecordId(subjectId) ||
@@ -275,7 +277,7 @@ export function validateObserverIdentities(world: WorldState): void {
         throw new Error('Invalid observer identity binding.');
   }
   for (const [actorId, episodes] of Object.entries(world.perceptionEpisodes ?? {})) {
-    if (!world.entities[actorId]?.actor)
+    if (!entityGet(world.entities, actorId)?.actor)
       throw new Error('Perception episode owner is unavailable.');
     for (const [subjectId, episode] of Object.entries(episodes))
       if (!isSafeRecordId(subjectId) || typeof episode !== 'string' || !episode)

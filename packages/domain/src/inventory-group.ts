@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { STOCK_TRANSFER_LIMITS } from './stock-transfer.js';
 import { canAccessContainer, inventoryWorkReason } from './object-access.js';
 import { canHandleItems, dropSelectedItems, atomicObjects } from './item-handling.js';
@@ -57,7 +58,7 @@ export function moveInventoryGroup(
 ): string[] {
   const problem = inventoryGroupReason(world, actor, sources, quantity);
   if (problem) throw new Error(problem);
-  const destination = world.entities[destinationId];
+  const destination = entityGet(world.entities, destinationId);
   // The access owner distinguishes a living person's private inventory from
   // accessible remains; the grouped path must preserve ordinary transfer rules.
   if (!destination || !canAccessContainer(world, actor.id, destinationId))

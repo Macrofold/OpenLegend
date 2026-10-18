@@ -1,3 +1,4 @@
+import { entityKeys } from '../packages/domain/src/index.js';
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { MEMORY_HISTORY_TABLES } from '../apps/server/src/memory-repository.js';
 import { HISTORY_TABLES } from '../apps/server/src/history.js';
@@ -43,7 +44,7 @@ if (!statSync(file).isDirectory())
     'Current-format backup directory required; legacy JSON is unsupported. Source retained.',
   );
 const config = readConfig();
-const database = new PostgresDatabase(config.databaseUrl);
+const database = new PostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups);
 try {
   await preflightRestoreDirectoryOwner(database, config.dataDirectory);
 } catch (error) {
@@ -272,7 +273,7 @@ try {
       install.state = 'uncertain';
     });
     install.state = 'committed';
-    for (const actorId of Object.keys(state.world.entities)) {
+    for (const actorId of entityKeys(state.world.entities)) {
       await store.putIntegration(`vectors:${state.world.id}:${actorId}`, null);
       await store.putIntegration(`interests:${state.world.id}:${actorId}`, null);
     }

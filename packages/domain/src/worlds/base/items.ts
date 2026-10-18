@@ -11,7 +11,7 @@ export const BASE_CORDAGE_RULE = {
   inputQuantity: 2,
   output: 'cord',
   outputQuantity: 1,
-  workSeconds: 60,
+  workSeconds: 1200,
   properties: ['binding', 'flexible'] as const,
   packingLoad: 1,
 };
@@ -291,7 +291,7 @@ export const NATIVE_PREPARATIONS = {
     inputQuantity: 2,
     output: 'prepared_fiber',
     outputQuantity: 2,
-    workSeconds: 48,
+    workSeconds: 960,
   },
   cord: BASE_CORDAGE_RULE,
 } as const;

@@ -1,3 +1,4 @@
+import { entityValues } from '@open-legend/domain';
 import { randomUUID } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -86,7 +87,7 @@ async function setup(config: NodeJS.ProcessEnv = {}) {
   await service.setPresence('durability-fixture', true);
   await service.control({ paused: false });
   const memoryId = await editWorld(service, (world) => {
-    for (const entity of Object.values(world.entities))
+    for (const entity of entityValues(world.entities))
       if (entity.actor && entity.id !== NPC_ID) entity.actor.controller = 'player';
     return appendMemory(world, NPC_ID, {
       kind: 'episode',
@@ -132,6 +133,21 @@ async function setup(config: NodeJS.ProcessEnv = {}) {
 }
 
 describe('durable character decision admission', () => {
+  it('skips automatic model preparation with zero allowance without consuming experience', async () => {
+    const h = await setup({ AI_BUDGET_USD: '0' });
+    const experience = h.service.world.experience;
+    const memories = h.service.world.memories;
+    const maintenance = vi.spyOn(h.director['maintenance'], 'tick');
+    const jobs = vi.spyOn(h.store, 'putJob');
+    await h.director.considerThought();
+    expect(maintenance).not.toHaveBeenCalled();
+    expect(jobs).not.toHaveBeenCalled();
+    expect(h.calls).toEqual([]);
+    expect(h.service.world.experience).toBe(experience);
+    expect(h.service.world.memories).toBe(memories);
+    await h.service.tick(0.1, 0);
+    expect(h.service.world.simTime).toBeGreaterThan(0);
+  });
   it.each(['cancel', 'close'] as const)(
     'does not start maintenance after %s during its admission write',
     async (ending) => {
@@ -228,7 +244,7 @@ describe('durable character decision admission', () => {
     await h.service.setPresence('durability-fixture', true);
     await h.service.control({ paused: false });
     await maintenance.tick(false);
-    await maintenance['pending'];
+    await h.director.idle();
     expect(await h.store.getIntegration(queueKey)).toBeNull();
     expect(await h.store.getIntegration(attemptKey)).toMatchObject({ day: 0 });
     expect(await h.store.getIntegration(`maintenance-at:${h.service.world.id}:${NPC_ID}`)).toBe(

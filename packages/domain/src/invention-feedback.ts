@@ -1,3 +1,5 @@
+import { entityGet } from './entity-collection.js';
+import { orderedRecordGet, orderedRecordSet } from './ordered-record.js';
 import { draftWorld } from './draft.js';
 import { emit, finish, outcome } from './events.js';
 import type { Transition, WorldState } from './types.js';
@@ -18,7 +20,10 @@ export function recordInventionFeedback(
       events: [],
       outcome: outcome(false, 'paused', 'Feedback remains in request history while paused.'),
     };
-  if (original.commandReceipts[key] || !original.entities[actorId]?.actor?.alive)
+  if (
+    orderedRecordGet(original.commandReceipts, key) ||
+    !entityGet(original.entities, actorId)?.actor?.alive
+  )
     return {
       world: original,
       events: [],
@@ -35,12 +40,12 @@ export function recordInventionFeedback(
     events,
     'invention-feedback',
     message,
-    world.entities[actorId],
+    entityGet(world.entities, actorId),
     undefined,
     { requestId, semanticTrigger: true },
     'private',
   );
   const result = outcome(true, 'invention-feedback', 'Private invention feedback delivered.');
-  world.commandReceipts[key] = { digest: message, outcome: result };
+  orderedRecordSet(world.commandReceipts, key, { digest: message, outcome: result });
   return finish(world, events, result);
 }

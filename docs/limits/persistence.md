@@ -58,9 +58,13 @@ Original recommendation: **Keep**.
 
 **Current — source inspected · Restrictiveness: Safe.**
 
-Write batches use at most 10,000 PostgreSQL parameters and approximately 262,144 encoded bytes; one oversized row remains admissible. History construction enforces its combined parameter-byte bound before retaining additional rows, writing source rows before audiences/perspectives inside the same transaction. Other record batches use the shared parameter limit and their existing encoded-byte bounds.
+Write batches use at most 10,000 PostgreSQL parameters and approximately 262,144 encoded bytes; one oversized row remains admissible. History construction enforces its combined parameter-byte bound before retaining additional rows. Independent history source/perspective writes and world-record table writes may share a parameterized PostgreSQL statement; foreign keys check the completed statement. Other record batches retain the shared parameter limit and existing encoded-byte bounds.
 
-Compatible new/updated record rows are grouped within their table before batching; alternating observer updates no longer force separate statements per observer. Secondary-unique-index tables retain original row order. Duplicate-create checks, parent ordering and atomic commit remain unchanged.
+Canonical and memory-source writes can transport bounded batches as typed JSON expanded through the existing trusted table composite type. Explicit columns, row ordering, insert-only/upsert behavior, same-table barriers and dependent-read/delete flushes remain owned by the existing writer. Both complete encoded JSON bytes and the original row/parameter ceilings remain enforced; lower wire parameter count does not enlarge admitted batches. No prepared-statement cache or retry policy is added.
+
+Compatible new/updated record rows are grouped within their table before batching; alternating observer updates no longer force separate statements per observer. Transport groups contain at most 64 writes, 10,000 parameters and approximately 262,144 bytes including SQL text; an already admitted oversized statement is sent alone. Repeating a table flushes the preceding group, preserving secondary-unique ordering and preventing two group members from modifying the same row. Dependent reads and all record deletes occur after the write group finishes, so re-parented children survive old-parent deletion. Strict duplicate-create failures and atomic commit remain unchanged. `OPEN_LEGEND_SQL_WRITE_GROUPS=off` restores separate statement waits for diagnosis.
+
+The single final history flush includes its complete retained-event-count delta in the group and checks exactly one returned total row. Missing totals still refuse the entire transaction. Intermediate byte/parameter flushes do not reset the cumulative inserted-event count; total creation remains an earlier statement.
 
 **Reason / tradeoff:** Larger PostgreSQL batches reduce local round trips. SQLite support and its portable parameter floor were removed on 2026-09-27. The byte bound prevents one huge multi-row statement. The former shared 900-parameter ceiling was replaced only for PostgreSQL; this is not a cap on saved records or permission to split authoritative commits.
 
@@ -70,7 +74,7 @@ Compatible new/updated record rows are grouped within their table before batchin
 
 **Current — source inspected at `af1eb02` · Restrictiveness: Safe.**
 
-PostgreSQL connection/read statements have a 5-second timeout; write transactions set a 30-second statement timeout. These are not end-to-end queue deadlines or scan-count caps. The former three-second SQLite busy-lock wait was removed with that adapter.
+PostgreSQL connection/read statements have a 5-second timeout; write transactions set a 30-second statement timeout. A grouped write has one 30-second statement deadline for its complete bounded group. These are not end-to-end queue deadlines or scan-count caps. The former three-second SQLite busy-lock wait was removed with that adapter.
 
 **Reason / tradeoff:** Bound external storage stalls while permitting larger atomic extraction/restore writes; report genuine storage failure. The original audit’s blanket 5-second statement claim is superseded.
 
@@ -102,9 +106,9 @@ Original recommendation: **Review**.
 
 ## LA237
 
-**Current — source inspected 2026-10-04 · Restrictiveness: Medium.**
+**Reported — implementation inspected 2026-10-17; new connection ownership runtime-unverified · Restrictiveness: Medium.**
 
-One writer connection holds a PostgreSQL advisory lock per database; a competing writer is refused. The game service serializes authoritative mutations, while PostgreSQL maintains independent bounded write and read lanes. Read-only checkpoint/backup connections do not acquire the writer lock. One world per database remains the current operational contract; this is not a claim of distributed world ownership.
+One game server owns each database. A competing game server must obtain the exclusive PostgreSQL advisory reservation and is refused while the current server or any of its application connections holds that reservation. The original primary and its local/worker application connections share that reservation through the [owned handoff protocol](../projects/performance-overhaul/journal-contract.md#complete-accepted-batch-worker--selected-october-17-2026-1749-edt). The game service serializes authoritative mutations, while PostgreSQL maintains independent bounded write and read lanes. Read-only checkpoint/backup connections do not acquire the writer lock. One world per database remains the current operational contract; this is not a claim of distributed world ownership.
 
 **Reason / tradeoff:** Keep exclusive authoritative writing so simultaneous changes cannot overwrite each other or produce inconsistent saved state.
 
@@ -487,3 +491,11 @@ The former SQLite writer/read workers, 128-RPC bounds and 128-statement caches w
 ## RW-L10 — Growing text and economic qualification
 
 **Proposed consumer exposure · Restrictiveness: unqualified aggregate growth.** DG24's 100 × 24 × 8,000 bytes/minute envelope is 19.2 MB/minute: roughly fourteen real minutes to 256 MiB of raw bodies alone, before world state/encoding/derivatives. This is worst-envelope arithmetic, not demand, exact saved size or capacity. Existing sender/page limits do not prove indefinite saveability. NC/SL/data must qualify a concrete supported accumulated-history envelope or explicit admission policy, with current retention rationale; no silent private expiry, copy-per-utterance or paid reconstruction is selected.
+
+## PF17-J01 — Experimental deferred saving
+
+**Implemented experiment, 2026-10-17; retention and complete-game capacity unqualified.** At most 32 accepted but unapplied revisions or 32MiB of encoded journal descriptions may remain. Reaching either bound waits for accepted work to apply; nothing is evicted. A larger valid transition uses the existing synchronous save path. Deferred admission considers at most 512 changed rows plus summary-source links and at most 512 canonical constraint identities; exceeding that allowance selects synchronous saving rather than rejecting the world. Online application may share one transaction for at most eight consecutive already prepared revisions; it still applies every revision and distinct event in order. Recovery initially applies one revision per transaction. Exact table-backed reads wait at most five seconds and then report unavailable; accepted application continues.
+
+These are operational preparation/backlog bounds, not limits on people, evidence or world size. A lower byte bound avoids constructing provably oversized journal payloads; exact encoded bytes are checked afterward. The numbers bound the prototype, not proven production capacity. Finite revision/byte backpressure, checkpoint and rollback results and remaining adoption questions live in the [journal contract](../projects/performance-overhaul/journal-contract.md) and [saving results](../verification/performance/overhaul-storage-implementation.md).
+
+**Accepted-batch worker — reported implementation, October 17, 2026; runtime and performance unverified.** One worker has at most one batch in flight; the durable journal is its queue. It uses the existing eight-revision atomic batch limit without copying a complete world or replaying gameplay. Worker/session failure refuses new saves. A lost completion requires stopping the old writer, exclusive reacquisition under the existing five-second statement wait, and proof that the full batch committed; only then may it publish once and retire to the same local writer. Unapplied or unproved work remains a storage failure. No new eligible family or retained-history limit is introduced. [Current contract](../projects/performance-overhaul/journal-contract.md#complete-accepted-batch-worker--selected-october-17-2026-1749-edt) · [Application owner](../../apps/server/src/journal-application.ts).

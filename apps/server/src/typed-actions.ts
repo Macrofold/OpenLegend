@@ -1,3 +1,4 @@
+import { entityGet, entityHas } from '@open-legend/domain';
 import {
   activityCommandFields,
   isCookingInputField,
@@ -60,13 +61,13 @@ export function actionReferencePermitted(
   id: string,
 ): boolean {
   if (id === actorId || visibleIds.includes(id)) return true;
-  if (!Object.hasOwn(world.entities, id)) return false;
+  if (!entityHas(world.entities, id)) return false;
   if (accessiblePossession(world, actorId, id)) return true;
-  const placement = world.entities[id]!.placement;
+  const placement = entityGet(world.entities, id)!.placement;
   return (
     placement?.mode === 'contained' &&
     visibleIds.includes(placement.parentEntityId) &&
-    world.entities[placement.parentEntityId]?.kind === 'item-pile'
+    entityGet(world.entities, placement.parentEntityId)?.kind === 'item-pile'
   );
 }
 /** Typed commands the player or a character can issue without a model or a suggestion
@@ -341,7 +342,7 @@ function knownNoun(scope: Scope, name: string): boolean {
     return true;
   if (scope.visible.some((entity) => matchLevel([named(scope, entity.id)], wanted) > 0))
     return true;
-  const places = scope.world.entities[scope.actorId]?.actor?.agency.places ?? [];
+  const places = entityGet(scope.world.entities, scope.actorId)?.actor?.agency.places ?? [];
   return places.some((place) => matchLevel([place.label], wanted) > 0);
 }
 /** A chosen item slot applies to the clause that names it (or says "it"); another clause
@@ -552,7 +553,7 @@ function offset(scope: Scope, text: string): Outcome | undefined {
  * described then. A visible thing counts as that subject only when recognition holds, so a
  * new encounter never reveals that it is the same entity. */
 function lastSeen(scope: Scope, name: string): Outcome | undefined {
-  const actor = scope.world.entities[scope.actorId]!.actor!;
+  const actor = entityGet(scope.world.entities, scope.actorId)!.actor!;
   const wanted = bare(name);
   const matches = best(
     (actor.agency.places ?? []).map((place) => ({
@@ -827,7 +828,7 @@ function gather(scope: Scope, name: string): Outcome | undefined {
   const matches = visibleMatches(scope, name, source);
   if (!matches.length)
     return noMatch(scope, name, source, `No ${bare(name)} to gather is in view.`, 'gathered from');
-  const here = scope.world.entities[scope.actorId]!;
+  const here = entityGet(scope.world.entities, scope.actorId)!;
   // Declared metric: straight-line distance among visible sources, preferring ones that do
   // not visibly look depleted (depletion is an outward, perceived feature).
   const nearest = [...matches].sort(
@@ -935,7 +936,7 @@ function gatherUntil(
   const single = gather(scope, name);
   if (!single || !('commands' in single)) return single;
   const command = single.commands[0] as Extract<Command, { type: 'gather' | 'harvest' }>;
-  const source = scope.world.entities[command.targetId]!;
+  const source = entityGet(scope.world.entities, command.targetId)!;
   const definitionId = source.resource!.definitionId;
   const label = scope.world.itemDefinitions[definitionId]?.name ?? definitionId;
   // The same carried-tool rule the native gather uses at completion.
@@ -1127,7 +1128,7 @@ function parseOne(scope: Scope, text: string): Outcome | undefined {
       moving: ['move'],
       walking: ['move'],
     };
-    const current = scope.world.entities[scope.actorId]?.actor?.action?.type;
+    const current = entityGet(scope.world.entities, scope.actorId)?.actor?.action?.type;
     if (stopping[1] && !named[stopping[1] as keyof typeof named].includes(current ?? ''))
       return refuse(
         'needs_clarification',
@@ -1256,14 +1257,20 @@ function parseOne(scope: Scope, text: string): Outcome | undefined {
     if (noun && matchLevel([gatheringUntil[1]!], noun) === 0) {
       const single = gather(scope, gatheringUntil[1]!);
       if (!single || !('commands' in single)) return single;
-      const source = scope.world.entities[(single.commands[0] as { targetId: string }).targetId]!;
+      const source = entityGet(
+        scope.world.entities,
+        (single.commands[0] as { targetId: string }).targetId,
+      )!;
       if (matchLevel(itemNames(scope.world, source.resource!.definitionId), noun) === 0)
         return undefined;
     }
     if (typeof amount === 'number' && gatheringUntil[3]) {
       const single = gather(scope, gatheringUntil[1]!);
       if (!single || !('commands' in single)) return single;
-      const source = scope.world.entities[(single.commands[0] as { targetId: string }).targetId]!;
+      const source = entityGet(
+        scope.world.entities,
+        (single.commands[0] as { targetId: string }).targetId,
+      )!;
       return gatherUntil(scope, gatheringUntil[1]!, {
         held: heldCount(scope, source.resource!.definitionId) + amount,
       });
@@ -1282,7 +1289,10 @@ function parseOne(scope: Scope, text: string): Outcome | undefined {
     // "gather 4 wood" means four more than now; batch yields may overshoot, disclosed.
     const single = gather(scope, gatheringSome[2]!);
     if (!single || !('commands' in single)) return single;
-    const source = scope.world.entities[(single.commands[0] as { targetId: string }).targetId]!;
+    const source = entityGet(
+      scope.world.entities,
+      (single.commands[0] as { targetId: string }).targetId,
+    )!;
     const held = heldCount(scope, source.resource!.definitionId);
     return gatherUntil(scope, gatheringSome[2]!, {
       held: held + (quantityWord(gatheringSome[1]) as number),
@@ -1570,7 +1580,7 @@ export async function commitTypedAction(
         response,
         {},
         refs,
-        world.entities[actorId]?.actor?.planGeneration ?? 0,
+        entityGet(world.entities, actorId)?.actor?.planGeneration ?? 0,
         binding
           ? [
               {
@@ -1624,7 +1634,7 @@ export function applySlotControl(
   const children = commands.slice(0, -1).map((command) => builder.invoke(command, command.type));
   let tail: ActivityNode | undefined;
   if (slots.quantityMode === 'held' && last.type === 'gather') {
-    const definitionId = world.entities[last.targetId]?.resource?.definitionId;
+    const definitionId = entityGet(world.entities, last.targetId)?.resource?.definitionId;
     if (!definitionId) return commands;
     tail = {
       kind: 'repeat',

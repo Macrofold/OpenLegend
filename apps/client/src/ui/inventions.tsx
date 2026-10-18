@@ -4,7 +4,6 @@ import { useLocal } from './storage';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Modal, ModalOverlay } from 'react-aria-components';
 import type {
-  ActionOption,
   ApiResult,
   InventionContinuation,
   InventionHistory,
@@ -13,7 +12,7 @@ import type {
   RequestRecoveryResult,
 } from '@open-legend/protocol';
 import { post } from '../api';
-import { Button, Explanation, Icon, Tag } from '../design-system/components';
+import { Button, Icon, Tag } from '../design-system/components';
 import './inventions.css';
 import { RecipeDetails } from './recipe-details';
 import {
@@ -81,7 +80,7 @@ export function Inventions({
   seed,
   visible,
   recipes,
-  command,
+  browseRecipe,
   connected,
   allowance,
 }: {
@@ -92,7 +91,7 @@ export function Inventions({
   seed: { id: string; text: string } | null;
   visible: boolean;
   recipes: RecipeView[];
-  command(action: ActionOption): void;
+  browseRecipe(recipeId: string, opener: Element): void;
   connected: boolean;
   allowance?: ReactNode;
 }) {
@@ -501,7 +500,7 @@ export function Inventions({
             <LearnedRecipeCard
               key={recipe.id}
               recipe={recipe}
-              command={command}
+              browseRecipe={browseRecipe}
               connected={connected}
             />
           ))
@@ -694,7 +693,11 @@ export function Inventions({
                 </p>
               )}
               {recipe && (
-                <LearnedRecipeCard recipe={recipe} command={command} connected={connected} />
+                <LearnedRecipeCard
+                  recipe={recipe}
+                  browseRecipe={browseRecipe}
+                  connected={connected}
+                />
               )}
               {!request.currentTimeline && <p>Requested before the current save timeline.</p>}
               <RequestDetails request={request} />
@@ -951,23 +954,14 @@ function RequestDetails({ request }: { request: InventionRequestView }) {
 /** Compact knowledge summaries defer detail rendering without changing native actions. */
 function LearnedRecipeCard({
   recipe,
-  command,
+  browseRecipe,
   connected,
 }: {
   recipe: RecipeView;
-  command(action: ActionOption): void;
+  browseRecipe(recipeId: string, opener: Element): void;
   connected: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const missingMaterials = recipe.ingredients.some(
-    (ingredient) =>
-      Number.isFinite(ingredient.available) && ingredient.available < ingredient.quantity,
-  );
-  const reasons = [
-    ...new Set(
-      recipe.actions.flatMap((action) => (!action.enabled && action.reason ? [action.reason] : [])),
-    ),
-  ];
   return (
     <article className="ol-learned-recipe">
       <header>
@@ -976,25 +970,13 @@ function LearnedRecipeCard({
           <h4>{recipe.name}</h4>
         </div>
         <div className="ol-invention-actions">
-          {recipe.actions.map((action) => (
-            <Explanation
-              key={action.id}
-              title={action.label}
-              text={
-                [!action.enabled && action.reason, action.detail].filter(Boolean).join('\n') ||
-                action.label
-              }
-              facts={action.facts}
-            >
-              <Button
-                size="sm"
-                disabled={!action.enabled || !connected}
-                onPress={() => command(action)}
-              >
-                {action.label}
-              </Button>
-            </Explanation>
-          ))}
+          <Button
+            size="sm"
+            disabled={!connected}
+            onPress={(event) => browseRecipe(recipe.id, event.target)}
+          >
+            Check crafting options
+          </Button>
         </div>
       </header>
       <p className="ol-caption ol-recipe-material-summary">
@@ -1011,18 +993,11 @@ function LearnedRecipeCard({
         {recipe.ingredients.length > 0 && '; '}
         {formatDisplayNumber(recipe.workSeconds)} game seconds
       </p>
-      {!missingMaterials &&
-        reasons.map((reason) => (
-          <p className="ol-caption" key={reason}>
-            {reason}
-          </p>
-        ))}
       <details onToggle={(event) => setExpanded(event.currentTarget.open)}>
         <summary>Recipe details</summary>
         {expanded && (
           <>
             <RecipeDetails recipe={recipe} />
-            {missingMaterials && reasons.map((reason) => <p key={reason}>{reason}</p>)}
           </>
         )}
       </details>

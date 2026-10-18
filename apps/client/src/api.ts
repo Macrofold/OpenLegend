@@ -310,8 +310,21 @@ function applyFields<T extends object>(
   for (const key of remove ?? []) delete next[key];
   return next;
 }
+const requiredEntityFields = new Set([
+  'id',
+  'name',
+  'kind',
+  'subtype',
+  'position',
+  'supportSurfaceId',
+  'heading',
+  'appearance',
+  'radius',
+  'status',
+]);
 export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
   if (
+    patch.schemaVersion !== current.schemaVersion ||
     patch.scope !== current.access?.scope ||
     patch.baseRevision !== current.revision ||
     patch.revision <= current.revision
@@ -319,16 +332,41 @@ export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
     throw new Error('Game update revision mismatch.');
   let entities = current.entities;
   if (patch.entities) {
-    const removed = new Set(patch.entities.remove);
-    const byId = new Map(
-      current.entities
-        .filter((entity) => !removed.has(entity.id))
-        .map((entity) => [entity.id, entity]),
-    );
-    for (const entity of patch.entities.upsert) byId.set(entity.id, entity);
-    entities = patch.entities.order
-      ? patch.entities.order.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []))
-      : [...byId.values()];
+    const byId = new Map(current.entities.map((entity) => [entity.id, entity]));
+    const touched = new Set<string>();
+    const touch = (id: string) => {
+      if (touched.has(id)) throw new Error('Conflicting game entity changes.');
+      touched.add(id);
+    };
+    for (const id of patch.entities.remove) {
+      touch(id);
+      if (!byId.delete(id)) throw new Error('Missing removed game entity.');
+    }
+    for (const entity of patch.entities.add) {
+      touch(entity.id);
+      if (byId.has(entity.id)) throw new Error('Duplicate added game entity.');
+      byId.set(entity.id, entity);
+    }
+    for (const change of patch.entities.update) {
+      touch(change.id);
+      const before = byId.get(change.id);
+      if (!before || Object.hasOwn(change.set ?? {}, 'id'))
+        throw new Error('Missing or renamed game entity.');
+      for (const field of change.remove ?? [])
+        if (requiredEntityFields.has(field) || Object.hasOwn(change.set ?? {}, field))
+          throw new Error('Conflicting or required entity fields.');
+      byId.set(change.id, applyFields<typeof before>(before, change.set, change.remove));
+    }
+    if (patch.entities.order) {
+      const order = patch.entities.order;
+      if (
+        order.length !== byId.size ||
+        new Set(order).size !== order.length ||
+        order.some((id) => !byId.has(id))
+      )
+        throw new Error('Incomplete game entity order.');
+      entities = order.map((id) => byId.get(id)!);
+    } else entities = [...byId.values()];
   }
   const next: GameView = {
     ...current,
@@ -354,12 +392,11 @@ export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
   for (const key of patch.remove?.view ?? []) delete next[key];
   return next;
 }
-export async function post<T extends { ok: boolean; message?: string } = ApiResult>(
+async function sendPost<T extends { ok: boolean; message?: string }>(
   path: string,
   body: unknown,
   signal?: AbortSignal,
-): Promise<T> {
-  const generation = accessGeneration;
+): Promise<{ response: Response; result: T }> {
   const response = await fetch(path, {
     method: 'POST',
     signal,
@@ -378,10 +415,40 @@ export async function post<T extends { ok: boolean; message?: string } = ApiResu
   } catch {
     throw new Error(`The server returned an unreadable response (${response.status}).`);
   }
+  return { response, result };
+}
+export async function post<T extends { ok: boolean; message?: string } = ApiResult>(
+  path: string,
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
+  const generation = accessGeneration;
+  const { response, result } = await sendPost<T>(path, body, signal);
   if (generation !== accessGeneration)
     throw new Error('Your access or world changed. Reload before continuing.');
   if (!response.ok && !result.message)
     throw new Error(`The request was not accepted (${response.status}).`);
+  return result;
+}
+/** Loading intentionally replaces this timeline. Only the selected load's
+ * non-disclosing success acknowledgment may cross that change; no old result
+ * fields are adopted. Reload resolves the current account/session from scratch.
+ * docs/save-and-load.md#loading-as-an-authority-transition
+ */
+export async function loadGameSave(request: {
+  id: string;
+  requestId: string;
+}): Promise<ApiResult | undefined> {
+  const generation = accessGeneration;
+  const { response, result } = await sendPost<ApiResult>('/api/saves/load', request);
+  if (response.ok && result.ok === true) {
+    window.location.reload();
+    return;
+  }
+  if (generation !== accessGeneration)
+    throw new Error('Your access or world changed. Reload before continuing.');
+  if (!response.ok && !result.message)
+    throw new Error(`The saved game could not be loaded (${response.status}).`);
   return result;
 }
 /** Report foreground attention independently of the server's saved pause policy.

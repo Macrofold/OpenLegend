@@ -1,3 +1,4 @@
+import { entityValues } from './entity-collection.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
 import type { Entity, WorldState } from './types.js';
@@ -107,7 +108,7 @@ export function rangedApproachRange(world: WorldState, range: number): number {
     : range;
 }
 export function validateRangedActions(world: WorldState): void {
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     const action = entity.actor?.action;
     if (
       !action ||

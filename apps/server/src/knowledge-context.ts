@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import {
   characterCount,
   knowledgeDocument,
@@ -54,7 +55,7 @@ export function subjectKnowledgeCandidates(
 ): AttentionCandidate[] {
   return Object.entries(world.actorKnowledge?.[actorId] ?? {}).flatMap(([id, doc]) => {
     if (doc.subjectId === null || !doc.text) return [];
-    const entity = world.entities[doc.subjectId];
+    const entity = entityGet(world.entities, doc.subjectId);
     const bound = !!entity && recognizesSubject(world, actorId, doc.subjectId);
     const name = world.observerIdentities?.[actorId]?.[doc.subjectId]?.givenName;
     const label = bound

@@ -6,6 +6,9 @@ import { readConfig } from '../fixtures/database.js';
 test('scaled themes, reduced motion and responsive controls persist across reload', async ({
   page,
 }, info) => {
+  // Three full-canvas readbacks plus reload need a separate whole-journey
+  // allowance on software rendering. Individual control assertions stay at 5s.
+  test.setTimeout(120_000);
   const game = await createGameServer({
     config: readConfig({ OPEN_LEGEND_GOD_MODE: 'true', AI_BUDGET_USD: '0' }),
     store: await testRepository(),

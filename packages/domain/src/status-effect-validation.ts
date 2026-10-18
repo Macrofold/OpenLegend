@@ -1,3 +1,4 @@
+import { entityValues } from './entity-collection.js';
 import { validNarrationTemplate } from '@open-legend/language';
 import { validateStatusInstallation } from './native-work.js';
 import { isSafeRecordId } from './records.js';
@@ -304,7 +305,7 @@ export function validateStatusEffectPolicy(
 }
 export function validateStatusEffects(world: WorldState): void {
   validateStatusEffectPolicy(world, world.statusEffectPolicy);
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     if (entity.actor && entity.attributes) fail('duplicate attribute owner.');
     for (const [id, state] of Object.entries(entity.attributes ?? {})) {
       const d = attributeDefinition(world, id);

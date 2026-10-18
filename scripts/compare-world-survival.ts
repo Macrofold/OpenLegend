@@ -1,3 +1,4 @@
+import { entityGet } from '../packages/domain/src/index.js';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
@@ -26,7 +27,7 @@ const baselineRoot = option('--baseline-root');
 const baseline = baselineRoot ? await load(baselineRoot) : undefined;
 const actorIds = ['entity-0001', 'entity-0002', 'peacock-mercenary', 'bird-1'];
 function meter(world: WorldState, actorId: string, id: string): number | undefined {
-  const actor = world.entities[actorId]?.actor;
+  const actor = entityGet(world.entities, actorId)?.actor;
   if (!actor) return;
   const sparse = actor.attributes?.[id]?.value;
   const field = id === 'wilderness:fullness' ? 'fullness' : 'energy';
@@ -34,7 +35,7 @@ function meter(world: WorldState, actorId: string, id: string): number | undefin
   return typeof value === 'number' ? value : undefined;
 }
 function setMeter(world: WorldState, actorId: string, id: string, value: number): void {
-  const actor = world.entities[actorId]!.actor!;
+  const actor = entityGet(world.entities, actorId)!.actor!;
   const sparse = actor.attributes?.[id];
   if (sparse) sparse.value = value;
   else Reflect.set(actor, id === 'wilderness:fullness' ? 'fullness' : 'energy', value);
@@ -63,7 +64,7 @@ const scenarios: Scenario[] = [
     name: 'exhausted-player',
     seconds: 40,
     setup: (_d, w) => {
-      w.entities['entity-0001']!.actor!.health = 0.09;
+      entityGet(w.entities, 'entity-0001')!.actor!.health = 0.09;
       setMeter(w, 'entity-0001', 'wilderness:energy', 0);
       return w;
     },
@@ -73,7 +74,7 @@ const scenarios: Scenario[] = [
     seconds: 40,
     setup: (_d, w) => {
       for (const id of ['entity-0002', 'peacock-mercenary']) {
-        w.entities[id]!.actor!.health = 0.09;
+        entityGet(w.entities, id)!.actor!.health = 0.09;
         setMeter(w, id, 'wilderness:fullness', 0);
       }
       return w;
@@ -91,7 +92,7 @@ const scenarios: Scenario[] = [
     name: 'sleep-while-starving',
     seconds: 140,
     setup: (d, w) => {
-      w.entities['entity-0002']!.actor!.health = 1;
+      entityGet(w.entities, 'entity-0002')!.actor!.health = 1;
       setMeter(w, 'entity-0002', 'wilderness:fullness', 0);
       setMeter(w, 'entity-0002', 'wilderness:energy', 30);
       return command(
@@ -111,8 +112,8 @@ const scenarios: Scenario[] = [
     name: 'fatal-blow-while-starving',
     seconds: 60,
     setup: (d, w) => {
-      const p = w.entities['entity-0001']!,
-        v = w.entities['entity-0002']!;
+      const p = entityGet(w.entities, 'entity-0001')!,
+        v = entityGet(w.entities, 'entity-0002')!;
       v.actor!.health = 1;
       setMeter(w, v.id, 'wilderness:fullness', 0);
       d.setSpatialPosition(
@@ -128,8 +129,8 @@ const scenarios: Scenario[] = [
     name: 'fatal-blow-food-interval',
     seconds: 60,
     setup: (d, w) => {
-      const p = w.entities['entity-0001']!,
-        v = w.entities['entity-0002']!;
+      const p = entityGet(w.entities, 'entity-0001')!,
+        v = entityGet(w.entities, 'entity-0002')!;
       v.actor!.health = 1;
       setMeter(w, v.id, 'wilderness:fullness', 35);
       d.setSpatialPosition(
@@ -146,7 +147,7 @@ const scenarios: Scenario[] = [
     seconds: 240,
     setup: (_d, w) => {
       setMeter(w, 'bird-1', 'wilderness:energy', 0);
-      w.entities['bird-1']!.spatial.flight!.waitSeconds = 0;
+      entityGet(w.entities, 'bird-1')!.spatial.flight!.waitSeconds = 0;
       return w;
     },
   },
@@ -166,7 +167,7 @@ const scenarios: Scenario[] = [
     name: 'camp-recovery',
     seconds: 120,
     setup: (d, w) => {
-      w.entities['entity-0001']!.actor!.health = 29;
+      entityGet(w.entities, 'entity-0001')!.actor!.health = 29;
       setMeter(w, 'entity-0001', 'wilderness:fullness', 19);
       setMeter(w, 'entity-0001', 'wilderness:energy', 10);
       return command(d, w, { type: 'recover' });
@@ -186,7 +187,7 @@ function capture(world: WorldState) {
     time: world.simTime,
     rng: world.rngState,
     actors: actorIds.map((id) => {
-      const entity = world.entities[id],
+      const entity = entityGet(world.entities, id),
         actor = entity?.actor;
       return {
         id,

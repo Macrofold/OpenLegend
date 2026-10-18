@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import {
   distance3D,
   interpolate,
@@ -126,7 +127,7 @@ export function aimProblem(
   if (action.type !== 'practice-shot' && !rangedPolicy(world))
     return outcome(false, 'aim-unavailable', BASE_RANGED_TEXT.selectedChanged);
   const aim = action.ranged,
-    target = world.entities[action.targetId ?? ''];
+    target = entityGet(world.entities, action.targetId ?? '');
   const tool = itemFor(world, action.weaponItemId ?? ''),
     ammo = itemFor(world, action.ammoItemId ?? '');
   const definition = tool && world.itemDefinitions[tool.definitionId],
@@ -200,7 +201,7 @@ export function releaseShot(
 ): Outcome {
   const problem = aimProblem(world, actor, action, true);
   if (problem) return problem;
-  const target = world.entities[action.targetId!]!,
+  const target = entityGet(world.entities, action.targetId!)!,
     tool = itemFor(world, action.weaponItemId!)!,
     ammo = itemFor(world, action.ammoItemId!)!;
   const definition = world.itemDefinitions[tool.definitionId]!,
@@ -315,7 +316,7 @@ export function captureProjectileBodies(
   const entities = readOnlyDraftView(world.entities);
   return new Map(
     bodyIds
-      .flatMap((id) => entities[id] ?? [])
+      .flatMap((id) => entityGet(entities, id) ?? [])
       .filter((e) => activelyParticipates(e))
       .map((entity) => [
         entity.id,
@@ -452,7 +453,7 @@ export function advanceProjectiles(
     ...entry,
     id: entry.entity.id,
     order,
-    end: { ...worldPosition(world.entities[entry.entity.id] ?? entry.entity) },
+    end: { ...worldPosition(entityGet(world.entities, entry.entity.id) ?? entry.entity) },
   }));
   const maximum = candidates.reduce(
     (max, entry) =>
@@ -486,13 +487,13 @@ export function advanceProjectiles(
           fraction < contact.fraction ||
           (fraction === contact.fraction && entry.id.localeCompare(contact.id) < 0))
       )
-        contact = { fraction, id: entry.id, body: world.entities[entry.id] };
+        contact = { fraction, id: entry.id, body: entityGet(world.entities, entry.id) };
     }
     flight.position = interpolate(from, to, contact?.fraction ?? 1);
     flight.remainingRange = Math.max(0, flight.remainingRange - travel * (contact?.fraction ?? 1));
     flight.advancedAt = world.simTime;
     if (!contact && flight.remainingRange > 1e-8) continue;
-    const source = world.entities[flight.sourceId],
+    const source = entityGet(world.entities, flight.sourceId),
       target = contact?.body;
     let result = contact ? 'stopped' : 'missed';
     let damage = 0;
@@ -587,7 +588,7 @@ export function advanceProjectiles(
       activelyParticipates(source) &&
       (source.actor.physicalLife ?? 0) === flight.sourceLife
     ) {
-      const selected = world.entities[flight.targetId];
+      const selected = entityGet(world.entities, flight.targetId);
       const observedPoint = visionQuery(
         world,
         source,
@@ -691,7 +692,7 @@ export function validateRanged(world: WorldState): void {
     if (launcher && (!Number.isFinite(launcher.flightSpeed) || launcher.flightSpeed <= 0))
       throw new Error('Invalid installed projectile speed.');
   }
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     const action = entity.actor?.action;
     if (!action || !['hunt', 'practice-shot', 'aim', 'shoot-once'].includes(action.type)) continue;
     const aim = action.ranged;
@@ -720,8 +721,11 @@ export function validateRanged(world: WorldState): void {
       (hold?.resource.kind === 'item' &&
         (hold.resource.itemId !== action.ammoItemId ||
           !sameDefinitionPin(hold.resource.definition, aim.ammunition))) ||
-      !world.entities[action.weaponItemId]?.item?.definitionPin ||
-      !sameDefinitionPin(world.entities[action.weaponItemId]!.item!.definitionPin, aim.tool) ||
+      !entityGet(world.entities, action.weaponItemId)?.item?.definitionPin ||
+      !sameDefinitionPin(
+        entityGet(world.entities, action.weaponItemId)!.item!.definitionPin,
+        aim.tool,
+      ) ||
       world.resourceReservations?.[aim.reservationId]?.actorId !== entity.id ||
       world.resourceReservations?.[aim.reservationId]?.amount !== 1 ||
       world.resourceReservations?.[aim.reservationId]?.resource.kind !== 'item' ||
@@ -761,12 +765,12 @@ export function validateRanged(world: WorldState): void {
       ) ||
       !isDefinitionPin(flight.tool) ||
       !isDefinitionPin(flight.ammunition) ||
-      !world.entities[flight.sourceId]?.actor ||
+      !entityGet(world.entities, flight.sourceId)?.actor ||
       (flight.practice
         ? flight.targetLife !== undefined ||
           flight.attackDigest !== undefined ||
           flight.injury !== 0
-        : !world.entities[flight.targetId]?.actor) ||
+        : !entityGet(world.entities, flight.targetId)?.actor) ||
       (flight.lethalPermission !== undefined &&
         (!hasRecordFields(flight.lethalPermission, [
           'actorId',

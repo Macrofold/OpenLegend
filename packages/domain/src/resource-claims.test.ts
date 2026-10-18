@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { describe, expect, it } from 'vitest';
 import { createWorld, PLAYER_ID } from './data.js';
 import { cloneValue } from './draft.js';
@@ -24,7 +25,7 @@ function heldStock() {
   });
   expect(started.outcome.ok).toBe(true);
   const world = cloneValue(started.world);
-  const invocationId = world.entities[PLAYER_ID]!.actor!.action!.id;
+  const invocationId = entityGet(world.entities, PLAYER_ID)!.actor!.action!.id;
   const request = {
     id: 'held-stock',
     invocationId,
@@ -62,7 +63,7 @@ describe('current resource reservation ownership', () => {
     wrong.resourceReservations!['held-stock']!.actorId = 'absent-claimant';
     expect(() => validateResourceReservations(wrong)).toThrow('no live owning process');
     const orphan = cloneValue(world);
-    orphan.entities[PLAYER_ID]!.actor!.action = null;
+    entityGet(orphan.entities, PLAYER_ID)!.actor!.action = null;
     expect(() => validateResourceReservations(orphan)).toThrow('no live owning process');
   });
 

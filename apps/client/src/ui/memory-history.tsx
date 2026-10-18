@@ -8,142 +8,213 @@ import { ConversationThread } from './conversation';
 import './reading.css';
 
 type Result = MemoryHistoryPage | { ok: false; message?: string };
+interface Loaded {
+  identity: string;
+  privacyIdentity: string;
+  revision: string;
+  entries: MemoryEntryView[];
+  next: string | null;
+  scanLimited: boolean;
+  depth: number;
+}
+interface Read {
+  identity: string;
+  privacyIdentity: string;
+  revision: string;
+  actorId: string;
+  owned: boolean;
+  query: string;
+  thoughts: boolean;
+  depth: number;
+  cursor?: string;
+  append: boolean;
+}
+const entryKey = (entry: MemoryEntryView) => JSON.stringify([entry.sourceKind, entry.id]);
 
 /** Paged, searchable memory history for the owner or an inspectable NPC. The server reads
  * only eligible memories and matches only the text shown here (docs/limits/memory.md#mh08).
- * With `recent`, the live snapshot is shown until the reader asks for older memories; then
- * only history pages are shown, because the snapshot can be newer than them and orders
- * same-time memories differently. */
+ * A single reader coalesces live refreshes; private results match the current request
+ * identity during render, before Effects can start their replacement read. */
 export function MemoryHistory({
   actorId,
   owned,
-  recent,
-  visible = true,
+  visible,
+  requestScope,
+  revision = '',
 }: {
   actorId: string;
   owned: boolean;
-  recent?: MemoryEntryView[];
-  visible?: boolean;
+  visible: boolean;
+  requestScope: string;
+  revision?: string;
 }) {
   const [draft, setDraft] = useState('');
   const [query, setQuery] = useState('');
   const [thoughts, setThoughts] = useState(false);
-  const [loaded, setLoaded] = useState<MemoryEntryView[] | null>(null);
-  const [next, setNext] = useState<string | null>(null);
-  const [scanLimited, setScanLimited] = useState(false);
+  const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [snapshot, setSnapshot] = useState(recent);
-  const [openingRevision, setOpeningRevision] = useState(0);
-  const request = useRef(0);
-  const failedOlder = useRef(false);
-  const controller = useRef<AbortController | null>(null);
-  const loadedQueryKey = useRef<string | null>(null);
-  const composing = useRef(false);
+  const [error, setError] = useState<{ identity: string; message: string } | null>(null);
   const searchInput = useRef<HTMLInputElement>(null);
-  const recentRevision = JSON.stringify(recent);
-  const baseline = useRef(recentRevision);
+  const composing = useRef(false);
+  const [openingRevision, setOpeningRevision] = useState(0);
   const filtered = !!query || thoughts;
-  const path = owned ? '/api/memories' : '/api/god/memories';
-  const queryKey = JSON.stringify([query, thoughts]);
-  const currentResults =
-    loaded !== null ? loadedQueryKey.current === queryKey : !filtered && snapshot !== undefined;
+  const exposure = useRef({ visible, generation: 0 });
+  if (exposure.current.visible !== visible)
+    exposure.current = { visible, generation: exposure.current.generation + 1 };
+  const privacyIdentity = JSON.stringify([requestScope, actorId, owned, query, thoughts]);
+  const identity = JSON.stringify([privacyIdentity, exposure.current.generation]);
+  const searchIdentity = JSON.stringify([actorId, owned, query, thoughts]);
+  const current = useRef({
+    identity,
+    privacyIdentity,
+    actorId,
+    owned,
+    query,
+    thoughts,
+    revision,
+    visible,
+  });
+  current.current = {
+    identity,
+    privacyIdentity,
+    actorId,
+    owned,
+    query,
+    thoughts,
+    revision,
+    visible,
+  };
+  const result = useRef(loaded);
+  result.current = loaded;
+  const depth = useRef(1);
+  const previousSearch = useRef(searchIdentity);
+  const pending = useRef<Read | null>(null);
+  const running = useRef(false);
+  const alive = useRef(true);
+  const isCurrent = (read: Read) =>
+    alive.current && current.current.visible && current.current.identity === read.identity;
 
-  async function page(signal: AbortSignal, cursor?: string) {
-    const result = await post<Result>(
-      path,
-      {
-        actorId,
-        ...(cursor ? { cursor } : {}),
-        ...(query ? { query } : {}),
-        ...(thoughts ? { thoughts } : {}),
-      },
-      signal,
-    );
-    if (!result.ok) throw new Error(result.message ?? 'Memories are unavailable.');
-    return result;
-  }
-  /** Ignores any page still loading. */
-  function cancel() {
-    request.current++;
-    controller.current?.abort();
-    setBusy(false);
-  }
-  /** Loads the first page, or the next older page. Leaving the live snapshot loads two
-   * pages, so the first press reaches memories older than the snapshot. */
-  async function load(older: boolean) {
-    if (!visible || (older && !currentResults)) return;
-    controller.current?.abort();
-    const abort = new AbortController();
-    controller.current = abort;
-    const id = ++request.current;
-    const atRevision = recentRevision;
-    failedOlder.current = older;
-    setBusy(true);
-    setError('');
-    try {
-      let result = await page(abort.signal, older ? (next ?? undefined) : undefined);
-      if (id !== request.current) return;
-      let entries = result.entries;
-      if (!older && !filtered && recent) {
-        if (result.next) {
-          result = await page(abort.signal, result.next);
-          entries = [...result.entries, ...entries];
+  async function drain() {
+    if (running.current) return;
+    running.current = true;
+    while (pending.current && alive.current) {
+      const read = pending.current;
+      pending.current = null;
+      if (!isCurrent(read)) continue;
+      try {
+        let cursor = read.cursor;
+        let page: MemoryHistoryPage | null = null;
+        let entries: MemoryEntryView[] = [];
+        let pages = 0;
+        // Renewed authority expires old cursors. Replay the requested depth with
+        // current cursors; concurrent appends can shift that older reading range.
+        while (pages < read.depth) {
+          const answer = await post<Result>(read.owned ? '/api/memories' : '/api/god/memories', {
+            actorId: read.actorId,
+            ...(cursor ? { cursor } : {}),
+            ...(read.query ? { query: read.query } : {}),
+            ...(read.thoughts ? { thoughts: true } : {}),
+          });
+          if (!isCurrent(read)) break;
+          if (!answer.ok) throw new Error(answer.message ?? 'Memories are unavailable.');
+          page = answer;
+          entries = [...page.entries, ...entries];
+          pages++;
+          if (!page.next) break;
+          cursor = page.next;
+        }
+        if (!page || !isCurrent(read)) continue;
+        const previous = result.current;
+        const append = read.append && previous?.identity === read.identity;
+        if (append) {
+          const seen = new Set(previous.entries.map(entryKey));
+          entries = [...entries.filter((entry) => !seen.has(entryKey(entry))), ...previous.entries];
+        }
+        const next: Loaded = {
+          identity: read.identity,
+          privacyIdentity: read.privacyIdentity,
+          revision: append ? previous.revision : read.revision,
+          entries,
+          next: page.next,
+          scanLimited: page.scanLimited,
+          depth: append ? previous.depth + pages : pages,
+        };
+        depth.current = next.depth;
+        result.current = next;
+        setLoaded(next);
+        setError(null);
+      } catch (failure) {
+        if (isCurrent(read)) {
+          // A stale-history refusal can arrive before its public revision. Keep
+          // navigation, but require a successful read before showing private text.
+          result.current = null;
+          setLoaded(null);
+          setError({
+            identity: read.identity,
+            message: failure instanceof Error ? failure.message : String(failure),
+          });
         }
       }
-      if (id !== request.current) return;
-      loadedQueryKey.current = queryKey;
-      setLoaded((current) => {
-        if (!older || !current) return entries;
-        const seen = new Set(current.map((entry) => entry.id));
-        return [...entries.filter((entry) => !seen.has(entry.id)), ...current];
-      });
-      setNext(result.next);
-      setScanLimited(result.scanLimited);
-      if (!older) {
-        baseline.current = atRevision;
-        // The first Older press replaces the live window with two history pages.
-        // Its newest row is unchanged, so the shared reader preserves the visible anchor.
-        if (filtered || !recent || loaded !== null) setOpeningRevision((value) => value + 1);
-      }
-    } catch (failure) {
-      if (id === request.current)
-        setError(failure instanceof Error ? failure.message : String(failure));
-    } finally {
-      if (id === request.current) setBusy(false);
     }
+    running.current = false;
+    if (alive.current) setBusy(false);
   }
-  // A new search or filter starts from the newest matches; plain inspection loads its own
-  // first page when there is no live snapshot.
-  useEffect(() => {
-    cancel();
-    if (!visible) return;
-    if (filtered || !recent) {
-      if (!currentResults) void load(false);
-    } else if (!currentResults) {
-      setLoaded(null);
-      setNext(null);
-      setScanLimited(false);
-      setError('');
-      setSnapshot(recent);
-      baseline.current = recentRevision;
-      setOpeningRevision((value) => value + 1);
-    }
-    return () => {
-      request.current++;
-      controller.current?.abort();
+  function load(older = false, pages = depth.current) {
+    if (!current.current.visible || (older && running.current)) return;
+    const previous = result.current;
+    pending.current = {
+      ...current.current,
+      depth: older ? 1 : pages,
+      append: older,
+      cursor: older && previous?.identity === identity ? (previous.next ?? undefined) : undefined,
     };
-  }, [query, thoughts, visible]);
+    if (older) depth.current++;
+    setBusy(true);
+    setError(null);
+    void drain();
+  }
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+      pending.current = null;
+    };
+  }, []);
+  useEffect(() => {
+    if (previousSearch.current !== searchIdentity) {
+      previousSearch.current = searchIdentity;
+      depth.current = 1;
+    }
+    if (!visible) {
+      pending.current = null;
+      return;
+    }
+    // Ordinary appends refresh only the latest page. Query/older-page reading
+    // remains in place; changed authority/privacy instead replaces its identity.
+    if (
+      result.current?.identity !== identity ||
+      (!filtered && depth.current === 1 && result.current.revision !== revision)
+    )
+      load();
+  }, [identity, searchIdentity, revision, visible]);
 
-  const shown = loaded ?? snapshot ?? [];
-  const staleRecent = recentRevision !== baseline.current;
+  // Keep the authorized reader mounted while hidden so its scroll anchor survives.
+  // Visibility still fences every completion/read; changed privacy/query authority
+  // removes old bodies immediately, including while this panel is hidden.
+  const shownPage = loaded?.privacyIdentity === privacyIdentity ? loaded : null;
+  const shown = shownPage?.entries ?? [];
+  const next = shownPage?.next;
+  const scanLimited = shownPage?.scanLimited;
+  const message = error?.identity === identity ? error.message : '';
+  const staleRecent = shownPage && shownPage.revision !== revision;
+  const loading = busy || (!shownPage && !message);
   const moreLabel = filtered
     ? scanLimited
       ? 'Search older memories'
       : 'More matches'
     : 'Older memories';
   return (
-    <div className="ol-memory-history">
+    <div className="ol-memory-history" hidden={!visible}>
       <p className="ol-caption">
         {owned
           ? 'Your character’s retained memories.'
@@ -155,9 +226,7 @@ export function MemoryHistory({
         role="search"
         onSubmit={(event) => {
           event.preventDefault();
-          if (composing.current) return;
-          if (draft.trim() === query) return;
-          setError('');
+          if (composing.current || draft.trim() === query) return;
           setQuery(draft.trim());
         }}
       >
@@ -208,54 +277,36 @@ export function MemoryHistory({
         )}
       </form>
       <p className="ol-meta" role="status">
-        <LoadingIndicator active={busy} label="Loading memories" />
-        {error
-          ? 'Reading did not finish. Any entries already loaded are kept below.'
-          : !currentResults
-            ? null
-            : filtered
-              ? loaded === null
-                ? null
-                : `${shown.length} ${shown.length === 1 ? 'memory' : 'memories'}${query ? ` matching “${query}”` : ''}${
-                    scanLimited
-                      ? '. This search stopped at its record limit; older memories remain to search.'
-                      : next
-                        ? '. Older memories remain to search.'
-                        : '. End of the retained records.'
-                  }`
-              : loaded !== null && !next
-                ? 'Reached the oldest retained memory.'
-                : loaded !== null
-                  ? 'Reading retained history, oldest first.'
-                  : 'Recent retained memories, oldest first.'}
+        <LoadingIndicator active={loading} label="Loading memories" />
+        {message
+          ? 'Reading did not finish.'
+          : filtered
+            ? `${shown.length} ${shown.length === 1 ? 'memory' : 'memories'}${query ? ` matching “${query}”` : ''}${
+                scanLimited
+                  ? '. This search stopped at its record limit; older memories remain to search.'
+                  : next
+                    ? '. Older memories remain to search.'
+                    : '. End of the retained records.'
+              }`
+            : shownPage && !next
+              ? 'Reached the oldest retained memory.'
+              : 'Reading retained history, oldest first.'}
       </p>
-      {error && (
+      {message && (
         <div className="ol-reading-error">
-          <p role="alert">{error}</p>
-          <Button
-            size="sm"
-            variant="quiet"
-            isDisabled={busy}
-            onPress={() => void load(failedOlder.current)}
-          >
+          <p role="alert">{message}</p>
+          <Button size="sm" variant="quiet" isDisabled={busy} onPress={() => load()}>
             Retry reading memories
           </Button>
         </div>
       )}
-      {error && !currentResults && shown.length > 0 && <p>Earlier search results remain below.</p>}
       <Button
         size="sm"
         isDisabled={busy}
         onPress={() => {
-          cancel();
-          setError('');
-          if (!filtered && recent) {
-            setLoaded(null);
-            setNext(null);
-            setSnapshot(recent);
-            baseline.current = recentRevision;
-            setOpeningRevision((value) => value + 1);
-          } else void load(false);
+          depth.current = 1;
+          setOpeningRevision((value) => value + 1);
+          load(false, 1);
         }}
       >
         {staleRecent
@@ -264,12 +315,12 @@ export function MemoryHistory({
             : 'New memories — read latest'
           : filtered
             ? 'Search latest memories'
-            : loaded !== null
+            : (shownPage?.depth ?? 1) > 1
               ? 'Return to recent memories'
               : 'Refresh memories'}
       </Button>
       <ConversationThread
-        conversationKey={`${actorId}:${owned}:${query}:${thoughts}`}
+        conversationKey={searchIdentity}
         visible={visible}
         preserveReading
         openingRevision={openingRevision}
@@ -277,15 +328,14 @@ export function MemoryHistory({
         ariaLabel={owned ? 'Your retained memories' : 'Character memory records'}
         newMessageLabel="New memories"
         before={
-          currentResults &&
-          (filtered ? !!next : loaded === null ? !!snapshot?.length : !!next) && (
-            <Button size="sm" isPending={busy} onPress={() => void load(loaded !== null)}>
+          !!next && (
+            <Button size="sm" isPending={busy} onPress={() => load(true)}>
               {moreLabel}
             </Button>
           )
         }
         items={shown.map((entry) => ({
-          id: entry.id,
+          id: entryKey(entry),
           content: (
             <article className="ol-memory">
               <EventTime time={entry.time} />
@@ -294,10 +344,8 @@ export function MemoryHistory({
           ),
         }))}
         empty={
-          !busy &&
-          currentResults &&
-          (!filtered || loaded !== null) &&
-          !error && (
+          !loading &&
+          !message && (
             <p className="ol-meta">
               {filtered
                 ? `No matches in the memories searched.${next ? ' Continue with older memories or change your search.' : ''}`

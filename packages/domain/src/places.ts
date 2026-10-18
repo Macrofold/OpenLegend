@@ -1,3 +1,4 @@
+import { entityOwn } from './entity-collection.js';
 import { readOnlyDraftView } from './draft.js';
 import { resolveSupport, finitePoint, type SurfacePoint } from '@open-legend/spatial';
 import { worldPosition, worldSupport, spatialMap } from './spatial-state.js';
@@ -154,7 +155,7 @@ export function placeLandmarkIndex(definitions: WorldState['places']) {
 
 /** A moved landmark cannot establish that its old authored site is present here. */
 function landmarkAtPlace(world: WorldState, place: PlaceDefinition): boolean {
-  const landmark = getOwn(world.entities, place.landmarkId);
+  const landmark = entityOwn(world.entities, place.landmarkId);
   if (!landmark || landmark.actor || landmark.placement?.mode !== 'world') return false;
   const position = worldPosition(landmark);
   return (
@@ -245,7 +246,7 @@ export function validatePlaces(world: WorldState): void {
     // site. Keep that valid saved definition inactive; exposure/movement require a
     // present world marker through landmarkAtPlace, not through save validation.
     // docs/spatial-world.md#static-named-places-and-known-places
-    const landmark = getOwn(world.entities, place.landmarkId);
+    const landmark = entityOwn(world.entities, place.landmarkId);
     if (
       !hasRecordFields(place.exposure, ['kind', 'radius', 'importance']) ||
       !isSafeRecordId(id) ||

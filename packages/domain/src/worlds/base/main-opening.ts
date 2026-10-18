@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from '../../entity-collection.js';
 import { hasRecordFields, isSafeRecordId } from '../../records.js';
 import { definitionPin } from '../../world-modules.js';
 import { supportedPosition } from '../../spatial-state.js';
@@ -88,8 +89,8 @@ export function buildBaseMainWorld(
   const world = createWorld(candidate.seed, accounts, candidate);
   // Detect a collision with a fixed authored person before any publication or grant.
   if (
-    world.entities[candidate.playerId]?.kind !== 'player' ||
-    world.entities[candidate.residentId]?.name !== 'Ada'
+    entityGet(world.entities, candidate.playerId)?.kind !== 'player' ||
+    entityGet(world.entities, candidate.residentId)?.name !== 'Ada'
   )
     throw new Error('The starting person identity collides with an authored scenario.');
   prepareBaseInitialWorldState(world);
@@ -115,7 +116,7 @@ export function checkBaseMainWorldReadiness(
   // Read the actual constructed locality once; never import a source world's data
   // or duplicate the ordinary initializer's placements, supplies or recipes.
   const scene: BaseOpeningScene[] = [];
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     if (entity.placement?.mode !== 'world') continue;
     const position = supportedPosition(entity);
     if (!position) continue;

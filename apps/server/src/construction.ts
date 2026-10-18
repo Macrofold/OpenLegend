@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { isAssemblyPlacement } from '@open-legend/domain';
 import { z } from 'zod';
 import {
@@ -40,7 +41,7 @@ export function assemblyView(
   id: string,
   editor = false,
 ): AssemblyView | undefined {
-  const root = world.entities[id],
+  const root = entityGet(world.entities, id),
     component = root?.assembly,
     site = root && assemblySite(root);
   if (!component || component.retired || !site) return;
@@ -57,7 +58,7 @@ export function assemblyView(
       const condition = editor && materialExposureView(world, part.itemId);
       return {
         id: part.itemId,
-        name: world.entities[part.itemId]?.name ?? '',
+        name: entityGet(world.entities, part.itemId)?.name ?? '',
         role: part.role,
         slot: part.slot,
         bay: part.bay,
@@ -68,7 +69,7 @@ export function assemblyView(
       ...Object.values(component.parts)
         .filter((p) => p.role === 'binding')
         .flatMap((part) => {
-          const material = world.entities[part.itemId],
+          const material = entityGet(world.entities, part.itemId),
             placement = material?.placement,
             family = world.assemblyFamilies![component.family.id]!;
           if (!isAssemblyPlacement(placement)) return [];

@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { bodyPolicy, bodyNarration } from './body-policy.js';
 import { rootMembershipChanged } from './entity-index.js';
 import { emit } from './events.js';
@@ -8,7 +9,7 @@ import type { WorldEvent, WorldState } from './types.js';
 export function nextRemainsDeadline(world: WorldState, ids: readonly string[]): number {
   let deadline = Infinity;
   for (const id of ids) {
-    const remains = world.entities[id]?.remains;
+    const remains = entityGet(world.entities, id)?.remains;
     if (!remains || remains.phase === 'removed') continue;
     if (remains.phase === 'fresh' && remains.rotAt !== null)
       deadline = Math.min(deadline, remains.rotAt);
@@ -29,7 +30,7 @@ export function advanceRemains(
   if (!policy) return false;
   let removed = false;
   for (const id of ids) {
-    const entity = world.entities[id],
+    const entity = entityGet(world.entities, id),
       remains = entity?.remains;
     if (!entity || !remains || remains.phase === 'removed') continue;
     if (remains.phase === 'fresh' && remains.rotAt !== null && world.simTime >= remains.rotAt) {

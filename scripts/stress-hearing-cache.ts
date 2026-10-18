@@ -1,3 +1,4 @@
+import { entityGet, entitySet, entityValues } from '../packages/domain/src/index.js';
 import { createHash } from 'node:crypto';
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { createWorld, freezeWorld } from '../packages/domain/src/index.js';
@@ -16,7 +17,7 @@ const reports = [];
 await initializeCollisionRuntime();
 for (const population of populations) {
   const world = createWorld(73);
-  const template = Object.values(world.entities).find((entity) => entity.actor)!;
+  const template = entityValues(world.entities).find((entity) => entity.actor)!;
   const speaker = structuredClone(template);
   speaker.id = 'cache-source';
   speaker.placement = {
@@ -25,7 +26,7 @@ for (const population of populations) {
     position: { x: 20, y: 0, z: 20 },
     supportSurfaceId: 'terrain',
   };
-  world.entities[speaker.id] = speaker;
+  entitySet(world.entities, speaker.id, speaker);
   const listenerIds: string[] = [];
   for (let i = 0; i < population; i++) {
     const listener = structuredClone(template);
@@ -42,12 +43,12 @@ for (const population of populations) {
         z: 20 + Math.sin(angle) * radius,
       },
     };
-    world.entities[listener.id] = listener;
+    entitySet(world.entities, listener.id, listener);
     listenerIds.push(listener.id);
   }
   const input = freezeWorld(world);
   const query = (id: string) => {
-    const listener = input.entities[id]!;
+    const listener = entityGet(input.entities, id)!;
     return {
       id,
       hearing: speechExposure(input, listener, speaker, 'normal'),

@@ -1,3 +1,4 @@
+import { entityGet, entityOwn, entityValues } from './entity-collection.js';
 import { subjectNarration } from './narration.js';
 import { emit, emitPrivateObservation, emitWitnessObservation, outcome } from './events.js';
 import { canHandleItems } from './item-handling.js';
@@ -155,7 +156,7 @@ export function knownTradeLots(
   limit: number = BASE_HANDOVER.candidateLots,
 ): KnownTradeLot[] {
   const result: KnownTradeLot[] = [],
-    remembered = world.entities[actorId]?.actor?.knownTradeLots?.[otherId] ?? {};
+    remembered = entityGet(world.entities, actorId)?.actor?.knownTradeLots?.[otherId] ?? {};
   for (const id in remembered) {
     const known = getOwn(remembered, id);
     if (known) result.push(known);
@@ -183,13 +184,13 @@ export function offerRecipientProblem(
   return null;
 }
 function grantedContainer(world: WorldState, itemId: string): boolean {
-  if (world.entities[itemId]?.container?.access) return true;
+  if (entityGet(world.entities, itemId)?.container?.access) return true;
   for (const child of directChildIds(world, itemId))
     if (grantedContainer(world, child)) return true;
   return false;
 }
 function pinLot(world: WorldState, item: ItemInstance, quantity: number): OfferLot {
-  const entity = world.entities[item.id]!;
+  const entity = entityGet(world.entities, item.id)!;
   return {
     itemId: item.id,
     definitionPin: { ...entity.item!.definitionPin },
@@ -216,7 +217,7 @@ export function describeItemOffer(world: WorldState, offer: ItemOffer): string {
 }
 function lotStillHeld(world: WorldState, holderId: string, lot: OfferLot, exact = true): boolean {
   const item = itemFor(world, lot.itemId),
-    holder = world.entities[holderId];
+    holder = entityGet(world.entities, holderId);
   const definition = item && world.itemDefinitions[item.definitionId];
   return (
     !!item &&
@@ -224,7 +225,7 @@ function lotStillHeld(world: WorldState, holderId: string, lot: OfferLot, exact 
     canHandleItems(world, holder) &&
     !!definition &&
     sameDefinitionPin(definitionPin(definition), lot.definitionPin) &&
-    sameDefinitionPin(world.entities[item.id]!.item!.definitionPin, lot.definitionPin) &&
+    sameDefinitionPin(entityGet(world.entities, item.id)!.item!.definitionPin, lot.definitionPin) &&
     (!exact ||
       (item.revision === lot.revision && item.placementRevision === lot.placementRevision)) &&
     definition.portable === true &&
@@ -232,9 +233,9 @@ function lotStillHeld(world: WorldState, holderId: string, lot: OfferLot, exact 
     availableItemQuantity(world, item.id) >= lot.quantity &&
     !inventoryWorkReason(world, holderId, item.id) &&
     (lot.contentsRevision === undefined ||
-      (world.entities[item.id]?.inventoryRevision ?? 0) === lot.contentsRevision) &&
+      (entityGet(world.entities, item.id)?.inventoryRevision ?? 0) === lot.contentsRevision) &&
     (lot.subtreeRevision === undefined ||
-      world.entities[item.id]?.container?.subtreeRevision === lot.subtreeRevision) &&
+      entityGet(world.entities, item.id)?.container?.subtreeRevision === lot.subtreeRevision) &&
     !grantedContainer(world, item.id)
   );
 }
@@ -245,8 +246,8 @@ function offerStillHeld(world: WorldState, offer: ItemOffer): boolean {
   );
 }
 function remember(world: WorldState, learnerId: string, holderId: string, lot: OfferLot) {
-  const learner = world.entities[learnerId]?.actor,
-    entity = world.entities[lot.itemId];
+  const learner = entityGet(world.entities, learnerId)?.actor,
+    entity = entityGet(world.entities, lot.itemId);
   const definition = world.itemDefinitions[lot.definitionPin.id];
   if (!learner || !definition || !entity?.item) return;
   const known = (learner.knownTradeLots ??= {});
@@ -307,7 +308,7 @@ function notice(
     { offerId: offer.id },
   );
   for (const id of [offer.offererId, offer.recipientId]) {
-    const receiver = world.entities[id];
+    const receiver = entityGet(world.entities, id);
     if (!receiver?.actor) continue;
     emitPrivateObservation(
       world,
@@ -349,7 +350,8 @@ function matchingSelection(
     (selection.placementRevision === undefined ||
       item.placementRevision === selection.placementRevision) &&
     (selection.expectedContentsRevision === undefined ||
-      (world.entities[item.id]!.inventoryRevision ?? 0) === selection.expectedContentsRevision)
+      (entityGet(world.entities, item.id)!.inventoryRevision ?? 0) ===
+        selection.expectedContentsRevision)
   );
 }
 function belongs(
@@ -370,7 +372,7 @@ export function prepareItemOffer(
 ): Outcome | { item: ItemInstance; recipient: Entity; requested?: OfferLot; prior?: ItemOffer } {
   if (!isHandoverCommand(command))
     return outcome(false, 'invalid-command', 'Choose an offer and a person.');
-  const other = getOwn(world.entities, command.targetId);
+  const other = entityOwn(world.entities, command.targetId);
   const refused = offerRecipientProblem(world, actor, other);
   if (refused || !other)
     return outcome(false, refused?.code ?? 'not-visible', refused?.message ?? 'Choose a person.');
@@ -402,7 +404,7 @@ export function prepareItemOffer(
     return outcome(false, 'quantity', 'You do not have that many free to offer.');
   if (
     command.quantity !== item.quantity &&
-    (item.individuality === 'individual' || world.entities[item.id]?.container)
+    (item.individuality === 'individual' || entityGet(world.entities, item.id)?.container)
   )
     return outcome(false, 'whole-object', 'Offer the whole object.');
   const busy = inventoryWorkReason(world, actor.id, item.id);
@@ -503,7 +505,7 @@ export function itemOfferReplyProblem(
     return outcome(false, 'stale-offer', BASE_HANDOVER.text.changed);
   if (command.operation !== 'accept') return;
   if (world.simTime >= offer.expiresAt) return outcome(false, 'expired', 'That offer has expired.');
-  const other = world.entities[offer.offererId];
+  const other = entityGet(world.entities, offer.offererId);
   if (!other || !seesEntity(world, actor, other) || !seesEntity(world, other, actor))
     return outcome(false, 'not-visible', 'You and the offerer must be able to see each other.');
   if (!canHandleItems(world, actor))
@@ -615,10 +617,14 @@ export function reconcileItemOffers(world: WorldState, events: WorldEvent[]): vo
   if (!world.itemOffers) return;
   for (const offer of Object.values(world.itemOffers)) {
     const expired = world.simTime >= offer.expiresAt;
-    if (!expired && able(world.entities[offer.recipientId]) && offerStillHeld(world, offer))
+    if (
+      !expired &&
+      able(entityGet(world.entities, offer.recipientId)) &&
+      offerStillHeld(world, offer)
+    )
       continue;
-    const offerer = world.entities[offer.offererId],
-      recipient = world.entities[offer.recipientId];
+    const offerer = entityGet(world.entities, offer.offererId),
+      recipient = entityGet(world.entities, offer.recipientId);
     close(
       world,
       events,
@@ -664,7 +670,7 @@ function validLot(lot: OfferLot): boolean {
 }
 /** Validate current shapes; dangling terms/memories are not an old-format reader. */
 export function validateItemOffers(world: WorldState): void {
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     const remembered = entity.actor?.knownTradeLots;
     if (remembered === undefined) continue;
     if (!remembered || typeof remembered !== 'object' || Array.isArray(remembered))

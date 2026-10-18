@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
@@ -391,17 +392,17 @@ describe('AI director with explicit fixtures, no live calls', () => {
       },
     });
     await h.change((world) => {
-      world.entities[PLAYER_ID]!.actor!.incapacitated = true;
+      entityGet(world.entities, PLAYER_ID)!.actor!.incapacitated = true;
     });
     expect((await h.inventNew('incapacitated-submit', 'A sling.')).code).toBe('actor');
     expect(h.calls.judges).toHaveLength(0);
     await h.change((world) => {
-      world.entities[PLAYER_ID]!.actor!.incapacitated = false;
+      entityGet(world.entities, PLAYER_ID)!.actor!.incapacitated = false;
     });
     await h.inventNew('incapacitated-result', 'A sling.');
     await started.promise;
     await h.change((world) => {
-      world.entities[PLAYER_ID]!.actor!.incapacitated = true;
+      entityGet(world.entities, PLAYER_ID)!.actor!.incapacitated = true;
     });
     wait.resolve(value(h.calls.generations[0]!.requestId, 'openai', slingFixture()));
     await h.director.idle();

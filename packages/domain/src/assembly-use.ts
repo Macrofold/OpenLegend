@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { releaseInvocationResources } from './resource-claims.js';
 import { finishPlanAction } from './agency.js';
 import type { ConstructionPermission } from './assembly-types.js';
@@ -19,11 +20,11 @@ export function evaluateAssemblyRest(
   bay = 0,
   atCurrentPosition = false,
 ): { point: import('@open-legend/spatial').SurfacePoint; facingHeading: number } | Outcome {
-  const root = world.entities[rootId],
+  const root = entityGet(world.entities, rootId),
     component = root?.assembly,
     site = root && assemblySite(root),
     family = component && world.assemblyFamilies?.[component.family.id],
-    actor = world.entities[actorId];
+    actor = entityGet(world.entities, actorId);
   if (
     !family ||
     !site ||
@@ -112,7 +113,7 @@ export function compileAssemblyRest(
       'rest-unavailable',
       'This world has no available ordinary resting action.',
     );
-  const actor = world.entities[actorId]!;
+  const actor = entityGet(world.entities, actorId)!;
   if (
     !canActivateStatusEffect(world, { subject: actor, source: actor, actionTarget: actor }, effect)
   )
@@ -162,7 +163,7 @@ export function reconcileConstructionAuthority(
   world: WorldState,
   permissions: readonly ConstructionPermission[],
 ): void {
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     const action = entity.actor?.action;
     if (!action?.assemblyPhase) continue;
     const receipt = action.constructionGrant,

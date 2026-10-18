@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from '@open-legend/domain';
 import { createHash, randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import type { InviteView } from '@open-legend/protocol';
@@ -216,7 +217,7 @@ export async function ownedActors(
   return owned;
 }
 export function isInvitable(world: WorldState, actorId: string, owned: ReadonlySet<string>) {
-  const entity = world.entities[actorId];
+  const entity = entityGet(world.entities, actorId);
   return (
     !!entity?.actor?.alive &&
     (entity.kind === 'npc' || entity.kind === 'player') &&
@@ -227,7 +228,7 @@ export function isInvitable(world: WorldState, actorId: string, owned: ReadonlyS
   );
 }
 export function invitableCharacters(world: WorldState, owned: ReadonlySet<string>) {
-  return Object.values(world.entities)
+  return entityValues(world.entities)
     .filter((entity) => isInvitable(world, entity.id, owned))
     .map((entity) => ({ actorId: entity.id, name: entity.name }));
 }

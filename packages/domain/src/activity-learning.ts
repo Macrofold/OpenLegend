@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { commandEntityFields, nativeOutputBinding } from './native-command-contracts.js';
 import {
   activityCommandFields,
@@ -54,15 +55,16 @@ export function activityRoleCompatible(
   requirement: ActivityMethod['roles'][string],
   value: ActivityBinding | undefined,
 ): boolean {
-  if (requirement.kind === 'self') return value === actorId && !!world.entities[actorId]?.actor;
+  if (requirement.kind === 'self')
+    return value === actorId && !!entityGet(world.entities, actorId)?.actor;
   if (requirement.kind === 'text')
     return typeof value === 'string' && !!value.trim() && value.length <= 1500;
   if (requirement.kind === 'place')
     return (
       !!value && typeof value === 'object' && finitePoint(value) && isSafeRecordId(value.surfaceId)
     );
-  const entity = typeof value === 'string' ? world.entities[value] : undefined;
-  const actor = world.entities[actorId];
+  const entity = typeof value === 'string' ? entityGet(world.entities, value) : undefined;
+  const actor = entityGet(world.entities, actorId);
   if (!entity || entity.retirement || !actor?.actor) return false;
   const carried = accessiblePossession(world, actorId, entity.id);
   const stockContainer = requirement.commandFields.some((field) =>

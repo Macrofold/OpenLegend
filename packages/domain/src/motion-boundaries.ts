@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import {
   canWalkSegment,
   clearOf,
@@ -6,8 +7,7 @@ import {
   distance3D,
   interpolate,
   quadraticRoots,
-  sightChangeFractions,
-  sightObstacles,
+  sightSweep,
   SPATIAL_LIMITS,
   type SightObstacle,
   supportBelow,
@@ -43,10 +43,11 @@ import { TIME_EPSILON } from './simulation-time.js';
 import { chargeWork } from './work-budget.js';
 import { countDomainWork, maximumDomainWork } from './diagnostic-counters.js';
 import { BASE_ACTION_DEFAULTS, nativeMovementSpeed } from './worlds/base/actions.js';
-import { escapeDuration } from './worlds/base/animal-behavior.js';
+import { escapeDuration, animalWanderRemaining } from './worlds/base/animal-behavior.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import type { Entity, WorldState } from './types.js';
 import { current, isDraft } from 'immer';
+import { readOnlyDraftView } from './draft.js';
 
 /** An unavailable landing closer than this retries at the flyer's sensing cadence instead of
  * at its remaining gap, which an unrelated boundary can make arbitrarily small. */
@@ -55,7 +56,7 @@ const IMMINENT_LANDING_SECONDS = 1;
 /** Conservative reach over one shared interval. Native decisions/actions are reconsidered
  * before a new interval; unsupported future movers must add their own bound here.
  */
-function motionReach(world: WorldState, entity: Entity, seconds: number): number {
+export function motionReach(world: WorldState, entity: Entity, seconds: number): number {
   if (capabilityBlocked(world, entity, 'locomotion')) return 0;
   if (entity.spatial.fallVelocity !== undefined) return TERMINAL_FALL_SPEED * seconds;
   if (!entity.actor?.alive || entity.actor.incapacitated) return 0;
@@ -81,7 +82,7 @@ export function motionTravelBounds(
   moverIds: readonly string[],
 ) {
   const observers = actorIds.flatMap((id) => {
-    const entity = world.entities[id];
+    const entity = entityGet(world.entities, id);
     if (!entity?.actor?.alive || entity.actor.incapacitated || !hasMemory(entity)) return [];
     const senses = sensesFor(world, entity).filter(
       (s): s is Extract<typeof s, { radius: number }> =>
@@ -109,7 +110,7 @@ export function motionTravelBounds(
   );
   const bounds = new Map<string, number>();
   for (const id of moverIds) {
-    const entity = world.entities[id]!;
+    const entity = entityGet(world.entities, id)!;
     const position = worldPosition(entity);
     const reach = motionReach(world, entity, seconds) + bodyProfile(entity).height;
     let travel: number = BASE_TIME_POLICY.perceptionTravelMetres;
@@ -132,11 +133,28 @@ export function nativeMotionInterval(
   requested: number,
   ambientIds: readonly string[],
   travelFor: (id: string) => number,
+  privateWalkers: ReadonlySet<string> = new Set(),
 ): number {
   let bound = requested;
   let occupancy: LandingOccupancy | undefined;
   for (const id of ambientIds) {
-    const entity = world.entities[id];
+    const entity = entityGet(world.entities, id);
+    if (entity && privateWalkers.has(id)) {
+      const action = entity.actor?.action;
+      if (
+        action?.type === 'move' &&
+        action.stage === 'approaching' &&
+        action.path.length &&
+        !capabilityBlocked(world, entity, 'locomotion')
+      ) {
+        const speed = nativeMovementSpeed(world, entity);
+        bound = Math.min(
+          bound,
+          Math.min(travelFor(id), action.motionSampleRemainingMetres ?? Infinity) / speed,
+          Math.max(TIME_EPSILON, distance3D(worldPosition(entity), action.path[0]!) / speed),
+        );
+      }
+    }
     // Only falls, flight, fleeing and small-sense wander can bound a slice; check those first.
     if (
       !entity ||
@@ -168,7 +186,7 @@ export function nativeMotionInterval(
         // A landing is reached exactly at arrival. A refused landing leaves the body where that
         // slice began, so it retries after the same gap. That gap can be arbitrarily small and a
         // departing occupant clears with no exact deadline, so an unavailable landing under one
-        // game second away retries at the one-metre sensing cadence instead (PF13.16). So does
+        // game second away retries at the selected sensing cadence instead (PF13.16). So does
         // every landing on a route whose whole lap takes under a game second: such a flyer would
         // otherwise land again at every tiny slice. docs/worlds/base/time.md#spatial-fidelity
         const cadence = travelFor(id) / route.speed;
@@ -193,8 +211,8 @@ export function nativeMotionInterval(
           escapeDuration(entity),
           travel / nativeMovementSpeed(world, entity, true),
         );
-      else if (travel < 0.4 && animal.wanderSeconds > TIME_EPSILON)
-        bound = Math.min(bound, animal.wanderSeconds);
+      else if (travel < 0.4 && animalWanderRemaining(world, entity)! > TIME_EPSILON)
+        bound = Math.min(bound, animalWanderRemaining(world, entity)!);
     }
   }
   return Math.min(requested, Math.max(TIME_EPSILON, bound));
@@ -215,20 +233,12 @@ function walkerTracks(
   const action = entity.actor?.action;
   if (action?.stage !== 'approaching' || action.navigation || !action.path.length) return;
   if (action.type !== 'move') return 'sampled';
-  const start = { ...worldPosition(entity) },
-    point = action.path[0]!,
-    speed = nativeMovementSpeed(world, entity);
-  const delta = distance3D(start, point),
-    travel = speed * seconds;
-  const arrival = delta <= travel ? (delta > 0 ? delta / speed : 0) : seconds;
-  const end =
-    delta <= travel
-      ? { x: point.x, y: point.y, z: point.z }
-      : interpolate(start, point, travel / delta);
-  return [
-    { at: [0, arrival, seconds], pose: [start, end, end] },
-    { at: [0, seconds], pose: [start, start] },
-  ];
+  // The shared forecast may now span several private turns. Reuse the existing
+  // complete certain-route preparation rather than a first-waypoint/start-end chord.
+  const track = walkerCertainTrack(world, entity, seconds);
+  if (!track) return 'sampled';
+  const start = { ...worldPosition(entity) };
+  return [track, { at: [0, seconds], pose: [start, start] }];
 }
 /** Steering is chosen at the start boundary. Predict that saved heading and refusal,
  * keeping sight crossings consistent with actual movement. */
@@ -292,6 +302,12 @@ function interiorOf(runs: readonly Run[], from: number, to: number): number {
 function mergedCuts(first: MotionTrack, second: MotionTrack): number[] {
   return [...new Set([...first.at, ...second.at])].sort((a, b) => a - b);
 }
+/** A relative coordinate stays between its endpoints throughout one linear piece.
+ * Independent coordinate intervals understate distance, so strict separation plus
+ * the spatial tolerance can only remove geometry for an impossible predicate. */
+function intervalGap(a: number, b: number): number {
+  return Math.max(0, Math.min(a, b), -Math.max(a, b));
+}
 function visionRuns(
   world: WorldState,
   observer: { track: MotionTrack; radius: number; eye: number },
@@ -309,6 +325,7 @@ function visionRuns(
       b = pieces[i + 1]!;
     if (b <= a) continue;
     chargeWork({ tests: 1 });
+    countDomainWork('crossingSightPieces');
     const f0 = poseAt(observer.track, a),
       f1 = poseAt(observer.track, b),
       p0 = poseAt(target.track, a),
@@ -322,15 +339,25 @@ function visionRuns(
       r0.x * r0.x + r0.y * r0.y + r0.z * r0.z - observer.radius * observer.radius,
       roots,
     );
-    const e0 = lift(f0, observer.eye),
-      e1 = lift(f1, observer.eye);
-    heights.forEach((h, k) => {
-      const ray = [e0, e1, lift(p0, h), lift(p1, h)] as const;
-      const near = sightObstacles(map, ray);
-      if (!near.length) return;
-      blockers[k]!.push(...near);
-      roots.push(...sightChangeFractions(near, ...ray));
-    });
+    const nearest = Math.hypot(
+      intervalGap(r0.x, p1.x - f1.x),
+      intervalGap(r0.y, p1.y - f1.y),
+      intervalGap(r0.z, p1.z - f1.z),
+    );
+    const outside =
+      Number.isFinite(nearest) &&
+      Number.isFinite(observer.radius) &&
+      nearest > observer.radius + SPATIAL_LIMITS.epsilon;
+    if (!outside) {
+      const e0 = lift(f0, observer.eye),
+        e1 = lift(f1, observer.eye);
+      heights.forEach((h, k) => {
+        const ray = [e0, e1, lift(p0, h), lift(p1, h)] as const;
+        const sweep = sightSweep(map, ...ray);
+        blockers[k]!.push(...sweep.obstacles);
+        roots.push(...sweep.fractions);
+      });
+    } else countDomainWork('crossingSightPrunedPieces');
     for (const u of roots) if (u > 0 && u < 1) cuts.push(a + u * (b - a));
   }
   return runsOf(horizon, cuts, (t) => {
@@ -361,6 +388,7 @@ function contactRuns(
       t1 = pieces[i + 1]!;
     if (t1 <= t0) continue;
     chargeWork({ tests: 1 });
+    countDomainWork('crossingContactPieces');
     const f0 = poseAt(first.track, t0),
       f1 = poseAt(first.track, t1),
       s0 = poseAt(second.track, t0),
@@ -379,15 +407,29 @@ function contactRuns(
     const y0 = s0.y - f0.y,
       dy = s1.y - f1.y - y0;
     if (dy) roots.push((-b.height - tolerance - y0) / dy, (a.height + tolerance - y0) / dy);
-    const anchors = [
-      lift(f0, a.interactionHeight),
-      lift(f1, a.interactionHeight),
-      lift(s0, b.interactionHeight),
-      lift(s1, b.interactionHeight),
-    ] as const;
-    const near = sightObstacles(map, anchors);
-    blockers.push(...near);
-    roots.push(...sightChangeFractions(near, ...anchors));
+    const nearest = Math.hypot(intervalGap(x0, s1.x - f1.x), intervalGap(z0, s1.z - f1.z));
+    const y1 = s1.y - f1.y;
+    // Only this geometry guard gets extra slack; the contact classifier below
+    // retains its original cylinder reach and vertical tolerance.
+    const disjointHeight =
+      Number.isFinite(y0) &&
+      Number.isFinite(y1) &&
+      Number.isFinite(a.height) &&
+      Number.isFinite(b.height) &&
+      (Math.min(y0, y1) > a.height + 2 * tolerance || Math.max(y0, y1) < -b.height - 2 * tolerance);
+    const outside =
+      Number.isFinite(nearest) && Number.isFinite(reach) && nearest > reach + tolerance;
+    if (!outside && !disjointHeight) {
+      const anchors = [
+        lift(f0, a.interactionHeight),
+        lift(f1, a.interactionHeight),
+        lift(s0, b.interactionHeight),
+        lift(s1, b.interactionHeight),
+      ] as const;
+      const sweep = sightSweep(map, ...anchors);
+      blockers.push(...sweep.obstacles);
+      roots.push(...sweep.fractions);
+    } else countDomainWork('crossingContactPrunedPieces');
     for (const u of roots) if (u > 0 && u < 1) cuts.push(t0 + u * (t1 - t0));
   }
   return runsOf(horizon, cuts, (t) => {
@@ -434,7 +476,7 @@ interface CrossingPair {
   runs: Run[];
   bodies: readonly [BodyCertificate, BodyCertificate];
 }
-/** Derived crossing runs reused across slices: never saved, and holding only copied scalars.
+/** Derived crossing runs reused only within one native call, never saved or inherited.
  * Tracks are checked against actual poses/dependencies each slice; shared rebuilds certify
  * the remaining absolute paths before retaining their certain pairs. */
 export interface CrossingCache {
@@ -447,12 +489,14 @@ export interface CrossingCache {
   /** Runs of uncertain outcomes keyed by their exact track content, e.g. a held flyer's. */
   outcomes: Map<string, Run[]>;
 }
-export const crossingCache = (): CrossingCache => ({
-  tracks: new Map(),
-  pairs: new Map(),
-  pairsByBody: new Map(),
-  outcomes: new Map(),
-});
+/** Warm calls and loaded worlds must derive future observation times from the same current
+ * poses. Reusing runs with an older time origin can select a different floating-point
+ * endpoint after reconstruction, including a different continuous-exposure identity.
+ * Keep reuse inside this call; publication exposes no derived schedule authority.
+ * docs/simulation-time.md#native-interval-contract */
+export function createCrossingCache(): CrossingCache {
+  return { tracks: new Map(), pairs: new Map(), pairsByBody: new Map(), outcomes: new Map() };
+}
 export function forgetCrossings(cache: CrossingCache, ids: Iterable<string>): void {
   const keys = new Set<string>();
   for (const id of ids) {
@@ -639,7 +683,7 @@ function freshCertainTrack(
     if ((entity.animal?.danger ?? 0) > 0) return;
   }
   const wait = entity.spatial.flight?.waitSeconds;
-  const wander = !entity.spatial.flight ? entity.animal?.wanderSeconds : undefined;
+  const wander = !entity.spatial.flight ? animalWanderRemaining(world, entity) : undefined;
   const span =
     wait === undefined
       ? wander === undefined
@@ -692,6 +736,7 @@ export function reconcileCrossings(
   ambientIds: readonly string[],
   cache: CrossingCache,
 ): void {
+  const entities = readOnlyDraftView(world.entities);
   cache.outcomes.clear();
   if (!crossingGeometryCurrent(world, cache)) return;
   const now = world.simTime,
@@ -700,7 +745,7 @@ export function reconcileCrossings(
   const bodies = new Map<string, BodyCertificate>();
   const untilByBody = new Map<string, number>();
   const readBody = (id: string) => {
-    const entity = world.entities[id];
+    const entity = entityGet(entities, id);
     if (!entity || !hasWorldPlacement(entity)) return;
     let body = bodies.get(id);
     if (!body) bodies.set(id, (body = bodyCertificate(world, entity, actors, ambient)));
@@ -743,7 +788,7 @@ export function reconcileCrossings(
       invalid.add(id);
       continue;
     }
-    const fresh = freshCertainTrack(world, world.entities[id]!, until - now, body);
+    const fresh = freshCertainTrack(world, entityGet(entities, id)!, until - now, body);
     if (!fresh || !sameCertainPath(old, fresh, now, until)) {
       countDomainWork('crossingRetentionPath');
       invalid.add(id);
@@ -751,17 +796,6 @@ export function reconcileCrossings(
   }
   forgetCrossings(cache, invalid);
   countDomainWork('crossingPairsRetained', cache.pairs.size);
-}
-/** Forks of one continuation must not share mutable derived state. */
-export function copyCrossings(cache: CrossingCache): CrossingCache {
-  return {
-    tracks: new Map(cache.tracks),
-    pairs: new Map(cache.pairs),
-    pairsByBody: new Map([...cache.pairsByBody].map(([id, keys]) => [id, new Set(keys)])),
-    ...(cache.map ? { map: cache.map } : {}),
-    ...(cache.manifest ? { manifest: cache.manifest } : {}),
-    outcomes: new Map(cache.outcomes),
-  };
 }
 const signatures = new WeakMap<MotionTrack, string>();
 function signature(track: MotionTrack): string {
@@ -779,7 +813,7 @@ function signature(track: MotionTrack): string {
  * inside any visibility or contact interval (or gap) that would otherwise fall strictly
  * between two samples. The unchanged sampler then records it; nothing here emits evidence.
  * Runs from certain tracks are reused across slices. Falls and routes toward living targets
- * keep the sampled one-metre bound. docs/worlds/base/time.md#spatial-fidelity */
+ * keep the sampled authored travel bound. docs/worlds/base/time.md#spatial-fidelity */
 export function sensoryCrossingBound(
   world: WorldState,
   seconds: number,
@@ -788,6 +822,7 @@ export function sensoryCrossingBound(
   cache: CrossingCache,
 ): number {
   if (!(seconds > TIME_EPSILON)) return seconds;
+  const entities = readOnlyDraftView(world.entities);
   crossingGeometryCurrent(world, cache);
   const now = world.simTime,
     horizon = Math.max(seconds, BASE_TIME_POLICY.idleHorizonSeconds);
@@ -801,7 +836,7 @@ export function sensoryCrossingBound(
   };
   // A body that left its predicted track invalidates everything derived from it.
   for (const [id, certain] of cache.tracks) {
-    const entity = world.entities[id];
+    const entity = entityGet(entities, id);
     const expected = poseAt(certain.track, now - certain.at);
     const actual = entity && hasWorldPlacement(entity) && worldPosition(entity);
     if (
@@ -818,7 +853,7 @@ export function sensoryCrossingBound(
   const certain = new Map<string, CertainTrack>(),
     outcomes = new Map<string, MotionTrack[]>();
   for (const id of new Set([...ambientIds, ...actorIds])) {
-    const entity = world.entities[id];
+    const entity = entityGet(entities, id);
     // Only flight, an approach or a flee can move a body continuously within the slice.
     if (
       !entity ||
@@ -855,7 +890,12 @@ export function sensoryCrossingBound(
   }
   function remember(id: string, track: MotionTrack, until: number) {
     forgetCrossings(cache, [id]);
-    const entry = { at: now, until: now + until, track, body: certificate(world.entities[id]!) };
+    const entry = {
+      at: now,
+      until: now + until,
+      track,
+      body: certificate(entityGet(entities, id)!),
+    };
     cache.tracks.set(id, entry);
     maximumDomainWork('crossingTrackPeak', cache.tracks.size);
     certain.set(id, entry);
@@ -882,7 +922,7 @@ export function sensoryCrossingBound(
   };
   const moving = (id: string) => certain.has(id) || outcomes.has(id);
   const observers = actorIds.flatMap((id) => {
-    const entity = world.entities[id];
+    const entity = entityGet(entities, id);
     if (!entity) return [];
     // No world mutation occurs during this query. Reuse this invocation's current copied
     // dependencies for observer/target geometry instead of rereading them through drafts.
@@ -895,8 +935,8 @@ export function sensoryCrossingBound(
   if (!observers.length) return seconds;
   // Moving targets for every observer; static targets only matter to a moving observer.
   const targets = observers.some((o) => moving(o.entity.id))
-    ? worldRootEntities(world).filter((e) => activelyParticipates(e))
-    : [...certain.keys(), ...outcomes.keys()].map((id) => world.entities[id]!);
+    ? worldRootEntities(world, true).filter((e) => activelyParticipates(e))
+    : [...certain.keys(), ...outcomes.keys()].map((id) => entityGet(entities, id)!);
   // Outcomes span the horizon; only this slice's displacement widens the pair search.
   const reaches = new Map<string, number>();
   const reach = (id: string) => {

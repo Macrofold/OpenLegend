@@ -1,4 +1,5 @@
 import { WorldComposer, type WorldIntent } from './ui/world-composer';
+import { NearbyEntities } from './ui/nearby-entities';
 import { AimControls } from './ui/aim-controls';
 import { modalOwnsInput, uiOwnsShortcut } from './ui/keyboard';
 import { Construction } from './ui/construction';
@@ -23,12 +24,15 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
 } from 'react';
 import type {
   ActionOption,
+  ActionCatalogue,
+  ActionContext,
   ApiResult,
   CatalogueAction,
   EntityView,
@@ -69,7 +73,6 @@ import {
   Button,
   Condition,
   EmptyState,
-  EntityRow,
   Icon,
   IconButton,
   Launcher,
@@ -78,7 +81,6 @@ import {
   SelectField,
   SegmentedControl,
   Toolbar,
-  symbol,
 } from './design-system/components';
 import { ItemCreationModal, type ItemCreationTarget } from './ui/item-creation';
 import { CreationRecoveryModal, useCreationRequest } from './ui/creation-request';
@@ -89,7 +91,6 @@ import {
   WorldEventsEditor,
   type PersonDraft,
 } from './ui/god-tools';
-import { QuickActions } from './ui/quick-actions';
 import { WorldAgent } from './ui/world-agent';
 import { EventTime } from './ui/event-time';
 import { AiSettings, Character, Crafting, EntityDetail, Inventory } from './ui/panels';
@@ -151,6 +152,34 @@ function taskScope(view: GameView) {
     view.player.id,
   ]);
 }
+function nearbyIdentity(view: GameView) {
+  return JSON.stringify([
+    view.worldId,
+    view.player.id,
+    view.saveTimeline,
+    view.access?.scope,
+    view.access?.controlGeneration,
+    view.historyEpoch,
+  ]);
+}
+function equippedTargetIdentity(view: GameView) {
+  // A held-item gesture survives ordinary movement, but never a changed item,
+  // private viewing identity or ability to act. Native execution checks afresh.
+  return JSON.stringify([
+    view.worldId,
+    view.player.id,
+    view.access?.scope,
+    view.access?.controlGeneration,
+    view.saveTimeline,
+    view.historyEpoch,
+    view.player.inventoryRevision,
+    view.player.equippedTargetItem?.id,
+    view.player.alive,
+    view.player.participation,
+    view.player.statusEffects,
+    view.clock.paused,
+  ]);
+}
 function App({
   resetApplication,
   onCharacterless,
@@ -185,6 +214,7 @@ function App({
   const [open, setOpen] = useState<PanelId[]>([]),
     [selected, setSelected] = useState<string | null>(null),
     [targeting, setTargeting] = useState(false),
+    [targetingPending, setTargetingPending] = useState(false),
     [picker, setPicker] = useState<PickerContext | null>(null),
     [hover, setHover] = useState<{
       entity: EntityView;
@@ -294,6 +324,13 @@ function App({
     scene = useRef<WorldRenderer | null>(null),
     latest = useRef(view),
     currentPicker = useRef(picker),
+    targetingMode = useRef<string | null>(null),
+    targetingRead = useRef<{
+      controller: AbortController;
+      identity: string;
+      targetId: string;
+    } | null>(null),
+    targetingAllowed = useRef(false),
     handlers = useRef({
       select: (
         _e: EntityView | null,
@@ -302,11 +339,48 @@ function App({
       ) => {},
       move: (_p: { x: number; y: number; z: number; surfaceId: string }) => {},
       target: (_entity: EntityView) => {},
+      nearbySelect: (_id: string) => {},
+      nearbyContextMenu: (_id: string, _x: number, _y: number) => {},
+      browseKnown: (_opener: HTMLElement) => {},
       primaryAction: (_entity: EntityView) => {},
     }),
     retry = useRef(() => {});
   latest.current = view;
+  const settingsView = useMemo(
+    () =>
+      view
+        ? {
+            worldId: view.worldId,
+            saveTimeline: view.saveTimeline,
+            godMode: view.godMode,
+            profile: view.profile,
+            inventionPolicy: view.inventionPolicy,
+          }
+        : undefined,
+    [view?.worldId, view?.saveTimeline, view?.godMode, view?.profile, view?.inventionPolicy],
+  );
+  const browseSettingsActions = useCallback(
+    (opener: HTMLElement) => handlers.current.browseKnown(opener),
+    [],
+  );
   currentPicker.current = picker;
+  const nearbyScope = view ? nearbyIdentity(view) : null;
+  const selectNearby = useCallback(
+    (id: string) => {
+      const current = latest.current;
+      if (current && nearbyIdentity(current) === nearbyScope) handlers.current.nearbySelect(id);
+    },
+    [nearbyScope],
+  );
+  const nearbyContextMenu = useCallback(
+    (id: string, x: number, y: number) => {
+      const current = latest.current;
+      if (current && nearbyIdentity(current) === nearbyScope)
+        handlers.current.nearbyContextMenu(id, x, y);
+    },
+    [nearbyScope],
+  );
+
   const notify = useCallback((text: string) => setNotice(text), []);
   useEffect(() => {
     if (!notice) return;
@@ -323,6 +397,12 @@ function App({
   }, [view?.presentation.worldName]);
   const { paused: tabPaused, acceptView, pause: pauseTab, isPaused, enter } = tab;
   const connected = transportReady && !tabPaused && !!view?.access?.controlling;
+  targetingAllowed.current =
+    connected &&
+    !picker &&
+    !choosingActionSubject &&
+    !!view?.player.alive &&
+    view.player.participation !== 'inactive';
   const creation = useCreationRequest(view, connected);
   const showEntry = !view || (tabPaused && !tab.blocked && entryStatus.kind !== 'loading');
   const showFocusPause = !!view && tabPaused && !tab.blocked && !showEntry;
@@ -670,6 +750,7 @@ function App({
     return hasGame ? [...result, 'game' as const] : result;
   }
   function show(id: PanelId) {
+    setTargetMode(false);
     if (id === 'game') {
       if (!panelVisible('game')) gameReturnFocus.current = document.activeElement;
       const opener = document.activeElement;
@@ -825,7 +906,7 @@ function App({
       };
     }
     setPicker(null);
-    setTargeting(false);
+    setTargetMode(false);
     const requestedLife = latest.current?.player.life;
     const requestedScope = latest.current?.access?.scope;
     // A task switch replaces this group; its pending result still belongs to the original reader.
@@ -945,7 +1026,7 @@ function App({
     show('character');
   }
   function chooseActionSubject() {
-    setTargeting(false);
+    setTargetMode(false);
     subjectReturnPanels.current = open;
     setChoosingActionSubject(true);
     setPicker(null);
@@ -1025,23 +1106,95 @@ function App({
     setPicker(null);
   }
   function clearSelection() {
+    setTargetMode(false);
     setSelected(null);
     scene.current?.select(null);
+  }
+  function setTargetMode(active: boolean) {
+    targetingRead.current?.controller.abort();
+    targetingRead.current = null;
+    targetingMode.current =
+      active && latest.current ? equippedTargetIdentity(latest.current) : null;
+    setTargeting(!!targetingMode.current);
+    setTargetingPending(false);
+  }
+  function openPicker(next: Omit<PickerContext, 'opener'> & { opener?: Element }) {
+    // Native canvas events can precede React's render/effects. Invalidate the old
+    // targeting read now, before it can complete during that deferred render.
+    setTargetMode(false);
+    setPicker({ ...next, opener: next.opener instanceof HTMLElement ? next.opener : undefined });
+  }
+  async function useEquippedTarget(entity: EntityView) {
+    const current = latest.current;
+    const item = current?.player.equippedTargetItem;
+    if (!current || !item || !targetingAllowed.current || !targetingMode.current) return;
+    const identity = equippedTargetIdentity(current);
+    if (targetingMode.current !== identity || !current.entities.some((row) => row.id === entity.id))
+      return setTargetMode(false);
+    targetingRead.current?.controller.abort();
+    // Replacing the clicked target cancels this read, never queues another command.
+    const request = { controller: new AbortController(), identity, targetId: entity.id };
+    targetingRead.current = request;
+    setTargetingPending(true);
+    const isCurrent = () => {
+      const latestView = latest.current;
+      return (
+        targetingRead.current === request &&
+        !request.controller.signal.aborted &&
+        targetingAllowed.current &&
+        targetingMode.current === identity &&
+        !!latestView &&
+        equippedTargetIdentity(latestView) === identity &&
+        latestView.entities.some((row) => row.id === request.targetId)
+      );
+    };
+    try {
+      const result = await post<{ ok: boolean; message?: string; catalogue: ActionCatalogue }>(
+        '/api/actions',
+        { equipped: true, itemId: item.id, targetId: entity.id },
+        request.controller.signal,
+      );
+      if (!isCurrent()) return;
+      if (!result.ok) throw new Error(result.message ?? 'This equipped use could not be checked.');
+      const choice = result.catalogue.actions[0];
+      if (!choice) return notify('Your equipped item has no available use on this target.');
+      if (
+        result.catalogue.actions.length !== 1 ||
+        choice.intent.kind !== 'command' ||
+        choice.intent.command.itemId !== item.id ||
+        choice.intent.command.targetId !== entity.id ||
+        choice.intent.command.autoEquip === true
+      )
+        throw new Error('The equipped choice changed. Choose the target again.');
+      if (!choice.enabled) return notify(choice.reason ?? 'This equipped use is unavailable.');
+      run(choice);
+    } catch (error) {
+      if (isCurrent())
+        notify(error instanceof Error ? error.message : 'Could not check this equipped use.');
+    } finally {
+      if (targetingRead.current === request) {
+        targetingRead.current = null;
+        setTargetingPending(false);
+      }
+    }
   }
   const primaryAction = usePrimaryAction(view, connected && !tabPaused, run, notify);
   handlers.current = {
     primaryAction,
+    browseKnown: (opener) => browseActions({ catalogue: true }, opener),
+    nearbySelect: (id) => {
+      const entity = latest.current?.entities.find((entry) => entry.id === id);
+      if (entity) choosingActionSubject ? finishActionSubject(entity) : inspect(entity);
+    },
+    nearbyContextMenu: (id, x, y) => {
+      const entity = latest.current?.entities.find((entry) => entry.id === id);
+      if (!entity) return;
+      if (choosingActionSubject) return finishActionSubject(entity);
+      openPicker({ entity, context: { targetId: id }, point: { x, y } });
+    },
     target: (entity) => {
       if (choosingActionSubject) return;
-      const action = latest.current?.entities.find(
-        (target) => target.id === entity.id,
-      )?.equippedAction;
-      if (!action) {
-        notify('Your equipped item has no available use on this target.');
-        return;
-      }
-      if (action.enabled) setTargeting(false);
-      void command(action);
+      void useEquippedTarget(entity);
     },
     select: (entity, point, ground) => {
       if (choosingActionSubject) {
@@ -1049,7 +1202,7 @@ function App({
         return;
       }
       if (point) {
-        setPicker({
+        openPicker({
           context: {
             ...(entity ? { targetId: entity.id } : {}),
             ...(ground ? { position: ground } : {}),
@@ -1214,8 +1367,24 @@ function App({
     choosingActionSubject,
   ]);
   useEffect(() => {
-    setTargeting(false);
-  }, [view?.access?.scope, view?.saveTimeline, tabPaused, connected]);
+    if (
+      targetingMode.current &&
+      (!targetingAllowed.current ||
+        !view ||
+        targetingMode.current !== equippedTargetIdentity(view) ||
+        (targetingRead.current &&
+          !view.entities.some((row) => row.id === targetingRead.current?.targetId)))
+    )
+      setTargetMode(false);
+  }, [view, tabPaused, connected, picker, choosingActionSubject]);
+  useEffect(
+    () => () => {
+      targetingRead.current?.controller.abort();
+      targetingRead.current = null;
+      targetingMode.current = null;
+    },
+    [],
+  );
   useEffect(() => {
     scene.current?.setCaptionOptions({
       enabled: true,
@@ -1283,7 +1452,8 @@ function App({
         } else if (picker) {
           closePicker();
         } else if (targeting) {
-          setTargeting(false);
+          setTargetMode(false);
+          e.preventDefault();
         } else if (timeSettings) setTimeSettings(false);
         else if (panelVisible('game')) hide('game');
         else if (view) show('game');
@@ -1304,11 +1474,11 @@ function App({
       if (e.key.toLowerCase() === 't') {
         if (!view || picker || !connected || e.repeat) return;
         e.preventDefault();
-        if (!view.player.inventory.some((item) => item.equipped)) {
-          notify('Equip an item before targeting.');
+        if (!view.player.equippedTargetItem) {
+          notify('Equip an item with a targeting use first.');
           return;
         }
-        setTargeting((active) => !active);
+        setTargetMode(!targetingMode.current);
         return;
       }
       if (
@@ -1392,6 +1562,20 @@ function App({
       if (a.intent.mode === 'invention') invent();
       else talk(a.intent.npcId ?? '');
     }
+  }
+  function browseActions(context: ActionContext, opener: Element) {
+    const bounds = opener.getBoundingClientRect();
+    const subject =
+      context.targetId === latest.current?.player.id
+        ? latest.current && playerEntity(latest.current)
+        : latest.current?.entities.find((row) => row.id === context.targetId);
+    openPicker({
+      context,
+      point: { x: bounds.right, y: bounds.top },
+      entity: subject ?? null,
+      browse: context.catalogue === true,
+      opener,
+    });
   }
   async function revive(entity: EntityView) {
     if (!connected) return notify('Reconnect to the world.');
@@ -1576,7 +1760,7 @@ function App({
               showHeading={false}
               browseActions={(item, opener, dispatchCommand) => {
                 const bounds = opener.getBoundingClientRect();
-                setPicker({
+                openPicker({
                   context: {
                     itemId: item.id,
                     inventoryGroup: item.group?.token,
@@ -1596,7 +1780,7 @@ function App({
               visible={panelVisible('inventory')}
               addItem={() => openItemCreation({ target: { actorId: view.player.id } })}
               contextMenu={(item, point, opener, dispatchCommand) =>
-                setPicker({
+                openPicker({
                   context: {
                     itemId: item.id,
                     inventoryGroup: item.group?.token,
@@ -1623,7 +1807,13 @@ function App({
           />
         );
       case 'crafting':
-        return <Crafting {...props} invent={() => invent()} />;
+        return (
+          <Crafting
+            {...props}
+            invent={() => invent()}
+            browseRecipe={(recipeId, opener) => browseActions({ recipeId }, opener)}
+          />
+        );
       case 'building':
         return (
           <Construction
@@ -1675,32 +1865,11 @@ function App({
                 Only currently visible objects appear here.
               </EmptyState>
             )}
-            {view.entities.map((e) => (
-              <div
-                key={e.id}
-                data-entity={e.id}
-                onContextMenu={(event) => {
-                  event.preventDefault();
-                  if (choosingActionSubject) {
-                    finishActionSubject(e);
-                    return;
-                  }
-                  setPicker({
-                    entity: e,
-                    context: { targetId: e.id },
-                    point: { x: event.clientX, y: event.clientY },
-                  });
-                }}
-              >
-                <EntityRow
-                  name={e.name}
-                  icon={symbol(e.icon ?? '')}
-                  meta={e.status}
-                  count={e.quantity}
-                  onPress={() => (choosingActionSubject ? finishActionSubject(e) : inspect(e))}
-                />
-              </div>
-            ))}
+            <NearbyEntities
+              entities={view.entities}
+              select={selectNearby}
+              contextMenu={nearbyContextMenu}
+            />
           </>
         );
       case 'agent':
@@ -1721,7 +1890,7 @@ function App({
             key={view.worldId}
             worldId={view.worldId}
             recipes={view.recipes}
-            command={command}
+            browseRecipe={(recipeId, opener) => browseActions({ recipeId }, opener)}
             connected={connected}
             inventionSeed={inventionSeed}
             invent={invent}
@@ -1792,6 +1961,11 @@ function App({
               visible={visible}
               onDirtyChange={setMindDirty}
               readScope={view.access?.scope}
+              memoryScope={JSON.stringify([
+                view.access?.scope,
+                view.access?.controlGeneration,
+                view.historyEpoch,
+              ])}
               evidenceEpoch={view.historyEpoch}
             />
           </>
@@ -1876,7 +2050,7 @@ function App({
       case 'help':
         return (
           <Settings
-            view={view}
+            view={settingsView ?? view}
             section={settingsSection}
             setSection={setSettingsSection}
             theme={theme}
@@ -1893,15 +2067,7 @@ function App({
             setShadowQuality={setShadowQuality}
             performance={performance}
             setPerformance={setPerformance}
-            browseActions={(opener) => {
-              const bounds = opener.getBoundingClientRect();
-              setPicker({
-                context: { catalogue: true },
-                point: { x: bounds.right, y: bounds.top },
-                entity: null,
-                opener,
-              });
-            }}
+            browseActions={browseSettingsActions}
           />
         );
     }
@@ -2345,13 +2511,15 @@ function App({
               className="ol-world-controls"
               data-bounded={narrow && open.length === 0 ? '' : undefined}
             >
-              <QuickActions
-                key={`quick:${captionScope(view)}`}
-                view={view}
-                connected={connected && !choosingActionSubject}
-                command={(a) => void command(a)}
-                talk={talk}
-              />
+              <div className="ol-quick-position">
+                <Button
+                  icon="ui.search"
+                  disabled={!connected || choosingActionSubject}
+                  onPress={(event) => browseActions({ catalogue: true }, event.target)}
+                >
+                  Actions
+                </Button>
+              </div>
               <CameraControls
                 overlays={{ vision: visionGuide, hearing: hearingGuide }}
                 toggleOverlay={(sense) =>
@@ -2509,10 +2677,10 @@ function App({
         </div>
         {targeting && (
           <div className="ol-targeting-hint" role="status">
-            {hover?.entity.equippedAction?.label ??
-              'Choose a highlighted target for an equipped-item action.'}
-            <Button size="sm" onPress={() => setTargeting(false)}>
-              Cancel — Esc
+            {targetingPending ? 'Checking' : 'Use'} {view?.player.equippedTargetItem?.name}: click a
+            target.
+            <Button size="sm" onPress={() => setTargetMode(false)}>
+              Cancel · Esc
             </Button>
           </div>
         )}

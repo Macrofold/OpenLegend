@@ -1,16 +1,25 @@
 import { createGameServer, SHUTDOWN_DEADLINE_MS } from './http.js';
 import { readConfig } from './config.js';
+import { startPerformanceCapture } from './performance.js';
 
 const config = readConfig();
-const game = await createGameServer({ config, production: process.argv.includes('--production') });
+const capture = config.profiling ? startPerformanceCapture({ runtimeMonitoring: true }) : undefined;
+const game = await createGameServer({
+  config,
+  production: process.argv.includes('--production'),
+}).catch((error: unknown) => {
+  capture?.stop();
+  throw error;
+});
 game.server.on('error', (error) => {
   console.error(`Open Legend could not start: ${error.message}`);
   process.exitCode = 1;
-  void game.close();
+  void game.close().finally(() => capture?.stop());
 });
 game.server.listen(config.port, config.host, () => {
   console.log(`Open Legend · http://${config.host}:${config.port}`);
   console.log('Persistence: PostgreSQL');
+  console.log(`Performance profiling: ${config.profiling ? 'on' : 'off'}`);
   console.log(
     config.macrofoldKey || config.jevKey
       ? `Live AI enabled with a $${config.budgetUsd.toFixed(2)} per-agent monthly spending cap.`
@@ -40,12 +49,15 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const)
       console.error('Open Legend: shutdown exceeded its backstop; exiting without a clean close.');
       process.exit(1);
     }, SHUTDOWN_DEADLINE_MS + 15_000).unref();
-    const report = await game.shutdown().catch((error: unknown) => ({
-      saved: false,
-      durableRevision: game.isWorldRunning ? game.service.durable.revision : 0,
-      durableSimTime: game.isWorldRunning ? game.service.durable.simTime : undefined,
-      problems: [`Shutdown failed: ${error instanceof Error ? error.message : 'unknown error'}`],
-    }));
+    const report = await game
+      .shutdown()
+      .catch((error: unknown) => ({
+        saved: false,
+        durableRevision: game.isWorldRunning ? game.service.durable.revision : 0,
+        durableSimTime: game.isWorldRunning ? game.service.durable.simTime : undefined,
+        problems: [`Shutdown failed: ${error instanceof Error ? error.message : 'unknown error'}`],
+      }))
+      .finally(() => capture?.stop());
     reported = true;
     for (const problem of report.problems) console.error(`Open Legend shutdown: ${problem}`);
     // Without a confirmed final save, a commit abandoned at its deadline may still have reached

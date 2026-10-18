@@ -25,6 +25,6 @@ export function playerEntity(view: GameView): EntityView {
     attributes: view.player.attributes,
     description: view.player.history,
     traits: view.player.traits,
-    actions: view.player.actions,
+    controls: view.player.controls,
   };
 }

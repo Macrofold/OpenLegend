@@ -1,3 +1,4 @@
+import { entityValues } from './entity-collection.js';
 import { activelyParticipates } from './participation-state.js';
 import { recordSemanticChange } from './dependencies.js';
 import { canStand, type SpatialLayout } from '@open-legend/spatial';
@@ -35,7 +36,7 @@ export function replaceSpatialLayout(
   try {
     validateSpatialWorld(world);
     const map = spatialMap(world);
-    for (const entity of Object.values(world.entities)) {
+    for (const entity of entityValues(world.entities)) {
       if (!activelyParticipates(entity)) continue;
       const p = supportedPosition(entity);
       if (p && !canStand(map, p, bodyProfile(entity)))

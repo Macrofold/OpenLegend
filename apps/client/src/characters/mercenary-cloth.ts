@@ -1,7 +1,19 @@
 import * as pc from 'playcanvas';
 import clothData from './mercenary-cloth.json';
 
-function at<T>(values: readonly T[], index: number): T {
+export type ClothPasses = 4 | 8;
+/** Display-size hysteresis keeps small cloth cheaper without repeatedly changing
+ * quality at one zoom boundary. docs/limits/3d-pixel-art.md#a3d16--experimental-cloth-quality-tiers */
+export function clothPassesForSize(
+  previous: ClothPasses,
+  height: number | undefined,
+  selected: boolean,
+): ClothPasses {
+  if (selected || height === undefined || !Number.isFinite(height) || height <= 0) return 8;
+  return height < 80 ? 4 : height > 100 ? 8 : previous;
+}
+
+function at<T>(values: ArrayLike<T>, index: number): T {
   const value = values[index];
   if (value === undefined) throw new Error('Invalid authored cape index');
   return value;
@@ -31,12 +43,21 @@ interface Collider {
   direction: pc.Vec3;
   inverseLengthSquared: number;
 }
+interface Link {
+  p: number;
+  q: number;
+  length: number;
+  stiffness: number;
+  wa: number;
+  wb: number;
+}
 function bone(root: pc.Entity, name: string): pc.GraphNode {
   const value = root.findByName(name);
   if (!value) throw new Error('Missing mercenary bone: ' + name);
   return value;
 }
 export class CapeCloth {
+  constraintPasses: ClothPasses = 8;
   private readonly root: pc.Entity;
   private readonly bone: pc.GraphNode;
   private readonly torso: pc.GraphNode;
@@ -45,14 +66,24 @@ export class CapeCloth {
   private readonly contactRestInverse: pc.Mat4;
   private readonly contactInverse = new pc.Mat4();
   private readonly contactPoint = new pc.Vec3();
-  private readonly p: pc.Vec3[] = [];
-  private readonly previous: pc.Vec3[] = [];
-  private readonly rest: pc.Vec3[] = [];
-  private readonly pinned: boolean[] = [];
-  private readonly links: Array<[number, number, number, number]> = [];
+  // Particle values stay binary64 until the existing Float32 mesh publication.
+  // Own the buffers for the garment lifetime; hot constraint passes only update
+  // numeric slots rather than per-particle object properties/iterators.
+  private readonly p = new Float64Array(
+    clothData.patches.reduce((size, patch) => size + patch.positions.length, 0),
+  );
+  private readonly previous = new Float64Array(this.p.length);
+  private readonly rest = new Float64Array(this.p.length);
+  private readonly pinned = new Uint8Array(this.p.length / 3);
+  // Authored topology and pins are fixed for this artwork lifetime. Resolve
+  // their references once; bone transforms and particle positions stay live.
+  // A changed garment/pin configuration must construct its own topology.
+  // docs/world-presentation.md#animated-character-pixels
+  private readonly links: Link[] = [];
   readonly patches: Patch[] = [];
   private readonly seams: Array<[number, number, number, number]> = [];
   private readonly tethers: Array<[number, number, number]> = [];
+  private readonly collisionParticles: Array<{ point: number; front: boolean }> = [];
   private readonly colliders: Collider[];
   private readonly right = new pc.Vec3();
   private readonly up = new pc.Vec3();
@@ -72,27 +103,30 @@ export class CapeCloth {
     this.contactRest = new pc.Mat4().set(data.bindMatrices.Spine01);
     this.contactRestInverse = this.contactRest.clone().invert();
     const inverse = new pc.Mat4().set(data.bindMatrices.cape_root).invert();
+    let particleStart = 0;
     for (const patch of data.patches) {
       const source = root
         .findComponents('render')
         .filter((c): c is pc.RenderComponent => c instanceof pc.RenderComponent)
         .find((r) => r.entity.name.includes(patch.name));
       if (!source) throw Error('Cape panel missing: ' + patch.name);
-      const start = this.p.length;
+      const start = particleStart;
+      particleStart += patch.positions.length / 3;
       for (let i = 0; i < patch.positions.length; i += 3) {
         const p = new pc.Vec3(
           at(patch.positions, i),
           at(patch.positions, i + 1),
           at(patch.positions, i + 2),
         );
-        this.p.push(p);
-        this.previous.push(p.clone());
-        this.rest.push(inverse.transformPoint(p, new pc.Vec3()));
+        const offset = start * 3 + i;
+        this.p.set([p.x, p.y, p.z], offset);
+        this.previous.set([p.x, p.y, p.z], offset);
+        inverse.transformPoint(p, this.target);
+        this.rest.set([this.target.x, this.target.y, this.target.z], offset);
         const j = (i / 3 / patch.columns) | 0,
           k = (i / 3) % patch.columns;
-        this.pinned.push(
-          (patch.name === 'yoke' && j === 0) || (patch.name === 'front throw' && k === 0),
-        );
+        this.pinned[start + i / 3] =
+          (patch.name === 'yoke' && j === 0) || (patch.name === 'front throw' && k === 0) ? 1 : 0;
       }
       const indexAt = (x: number, y: number) => start + y * patch.columns + x;
       const indices = [];
@@ -161,9 +195,9 @@ export class CapeCloth {
         a = Math.floor(u),
         b = Math.min(a + 1, back.columns - 1);
       this.seams.push([
-        bridge.start + (bridge.rows - 1) * bridge.columns + x,
-        back.start + a,
-        back.start + b,
+        this.coordinateOffset(bridge.start + (bridge.rows - 1) * bridge.columns + x),
+        this.coordinateOffset(back.start + a),
+        this.coordinateOffset(back.start + b),
         u - a,
       ]);
     }
@@ -173,14 +207,17 @@ export class CapeCloth {
       let anchor = yoke.start,
         distance = Infinity;
       for (let j = yoke.start; j < yoke.start + yoke.columns; j++) {
-        const d = at(this.p, i).distance(at(this.p, j));
+        const d = this.distance(i * 3, j * 3);
         if (d < distance) {
           anchor = j;
           distance = d;
         }
       }
-      this.tethers.push([i, anchor, distance * 1.04]);
+      this.tethers.push([i * 3, anchor * 3, distance * 1.04]);
     }
+    for (let i = 0; i < this.pinned.length; i++)
+      if (!at(this.pinned, i))
+        this.collisionParticles.push({ point: i * 3, front: i >= front.start });
     const colliders: Array<[string, string, number, number, boolean?]> = [
       ['Hips', 'Spine01', 0.25, 0.215, false],
       ['Spine01', 'neck', 0.25, 0.245, false],
@@ -211,20 +248,37 @@ export class CapeCloth {
     }));
     this.reset();
   }
-  private link(
-    a: number,
-    b: number,
-    stiffness: number,
-    length = at(this.p, a).distance(at(this.p, b)),
-  ) {
-    this.links.push([a, b, length, stiffness]);
+  private coordinateOffset(index: number): number {
+    at(this.pinned, index);
+    return index * 3;
+  }
+  private link(a: number, b: number, stiffness: number, length = this.distance(a * 3, b * 3)) {
+    this.links.push({
+      p: a * 3,
+      q: b * 3,
+      length,
+      stiffness,
+      wa: at(this.pinned, a) ? 0 : 1,
+      wb: at(this.pinned, b) ? 0 : 1,
+    });
+  }
+  // Every coordinate offset is derived from the fixed constructed topology;
+  // hot scalar reads use those offsets directly, without a generic checked read per number.
+  private distance(p: number, q: number): number {
+    const x = this.p[p]! - this.p[q]!,
+      y = this.p[p + 1]! - this.p[q + 1]!,
+      z = this.p[p + 2]! - this.p[q + 2]!;
+    return Math.sqrt(x * x + y * y + z * z);
   }
   reset() {
     this.time = 0;
     const m = this.bone.getWorldTransform();
-    for (let i = 0; i < this.p.length; i++) {
-      m.transformPoint(at(this.rest, i), at(this.p, i));
-      at(this.previous, i).copy(at(this.p, i));
+    for (let i = 0; i < this.p.length; i += 3) {
+      this.contactPoint.set(this.rest[i]!, this.rest[i + 1]!, this.rest[i + 2]!);
+      m.transformPoint(this.contactPoint, this.target);
+      this.p[i] = this.previous[i] = this.target.x;
+      this.p[i + 1] = this.previous[i + 1] = this.target.y;
+      this.p[i + 2] = this.previous[i + 2] = this.target.z;
     }
     this.publish();
   }
@@ -245,19 +299,26 @@ export class CapeCloth {
     if (a === null || b === null || d === null || e === null) return null;
     return a * (1 - u) * (1 - v) + b * u * (1 - v) + d * (1 - u) * v + e * u * v;
   }
-  private collide(p: pc.Vec3, front: boolean) {
-    let contact: number | null = null;
+  private collide(offset: number, front: boolean) {
+    let x = this.p[offset]!,
+      y = this.p[offset + 1]!,
+      z = this.p[offset + 2]!;
     if (front) {
-      this.contactInverse.transformPoint(p, this.contactPoint);
+      this.target.set(x, y, z);
+      this.contactInverse.transformPoint(this.target, this.contactPoint);
       this.contactRest.transformPoint(this.contactPoint, this.contactPoint);
-      contact = this.frontDepth(this.contactPoint);
+      const contact = this.frontDepth(this.contactPoint);
       if (contact !== null && this.contactPoint.z < contact + 0.006) {
         this.contactPoint.z = contact + 0.006;
-        this.contactRestInverse.transformPoint(this.contactPoint, p);
-        this.torso.getWorldTransform().transformPoint(p, p);
+        this.contactRestInverse.transformPoint(this.contactPoint, this.target);
+        this.torso.getWorldTransform().transformPoint(this.target, this.target);
+        x = this.target.x;
+        y = this.target.y;
+        z = this.target.z;
       }
     }
-    for (const c of this.colliders) {
+    for (let i = 0; i < this.colliders.length; i++) {
+      const c = at(this.colliders, i);
       // Use the sampled garment for front chest contact; the broad capsules
       // remain conservative protection for the back and moving limbs.
       if (front && !c.front) continue;
@@ -265,29 +326,33 @@ export class CapeCloth {
       const r = this.right,
         u = this.up,
         f = this.forward;
-      const xp = p.x - a.x,
-        yp = p.y - a.y,
-        zp = p.z - a.z;
-      const { x: dx, y: dy, z: dz } = c.direction;
+      const xp = x - a.x,
+        yp = y - a.y,
+        zp = z - a.z;
+      const dx = c.direction.x,
+        dy = c.direction.y,
+        dz = c.direction.z;
       const px = (xp * r.x + yp * r.y + zp * r.z) / c.rx,
         py = (xp * u.x + yp * u.y + zp * u.z) / c.rx,
         pz = (xp * f.x + yp * f.y + zp * f.z) / c.rz;
       const t = Math.max(0, Math.min(1, (px * dx + py * dy + pz * dz) * c.inverseLengthSquared));
-      const x = px - t * dx,
-        y = py - t * dy,
-        z = pz - t * dz,
-        squared = x * x + y * y + z * z;
+      const cx = px - t * dx,
+        cy = py - t * dy,
+        cz = pz - t * dz,
+        squared = cx * cx + cy * cy + cz * cz;
       if (squared < 1 && squared > 1e-12) {
         const amount = 1 / Math.sqrt(squared) - 1,
-          ox = x * amount * c.rx,
-          oy = y * amount * c.rx,
-          oz = z * amount * c.rz;
-        p.x += r.x * ox + u.x * oy + f.x * oz;
-        p.y += r.y * ox + u.y * oy + f.y * oz;
-        p.z += r.z * ox + u.z * oy + f.z * oz;
+          ox = cx * amount * c.rx,
+          oy = cy * amount * c.rx,
+          oz = cz * amount * c.rz;
+        x += r.x * ox + u.x * oy + f.x * oz;
+        y += r.y * ox + u.y * oy + f.y * oz;
+        z += r.z * ox + u.z * oy + f.z * oz;
       }
     }
-    p.y = Math.max(this.ground, p.y);
+    this.p[offset] = x;
+    this.p[offset + 1] = Math.max(this.ground, y);
+    this.p[offset + 2] = z;
   }
   step(dt: number) {
     const matrix = this.bone.getWorldTransform();
@@ -297,7 +362,8 @@ export class CapeCloth {
     this.forward.copy(this.root.forward);
     this.ground = this.root.getPosition().y + 0.035;
     // Bone endpoints are constant across all particles and constraint iterations in this step.
-    for (const c of this.colliders) {
+    for (let i = 0; i < this.colliders.length; i++) {
+      const c = at(this.colliders, i);
       c.from.copy(c.a.getPosition());
       c.to.copy(c.b.getPosition()).sub(c.from);
       c.direction.set(
@@ -307,60 +373,72 @@ export class CapeCloth {
       );
       c.inverseLengthSquared = 1 / (c.direction.lengthSq() || 1);
     }
-    for (let i = 0; i < this.p.length; i++) {
-      const p = at(this.p, i),
-        old = at(this.previous, i);
-      matrix.transformPoint(at(this.rest, i), this.target);
-      if (at(this.pinned, i)) {
-        p.copy(this.target);
-        old.copy(p);
+    const positions = this.p;
+    for (let i = 0; i < positions.length; i += 3) {
+      this.contactPoint.set(this.rest[i]!, this.rest[i + 1]!, this.rest[i + 2]!);
+      matrix.transformPoint(this.contactPoint, this.target);
+      if (at(this.pinned, i / 3)) {
+        positions[i] = this.previous[i] = this.target.x;
+        positions[i + 1] = this.previous[i + 1] = this.target.y;
+        positions[i + 2] = this.previous[i + 2] = this.target.z;
         continue;
       }
-      const x = p.x,
-        y = p.y,
-        z = p.z;
+      const x = positions[i]!,
+        y = positions[i + 1]!,
+        z = positions[i + 2]!;
       // Heavy wool: dissipate motion; a weak rest-fold force avoids flattening every authored fold.
-      p.x += (p.x - old.x) * 0.97 + (this.target.x - p.x) * 1.5 * dt * dt;
-      p.y += (p.y - old.y) * 0.97 + (-9.81 + (this.target.y - p.y) * 1.5) * dt * dt;
-      p.z += (p.z - old.z) * 0.97 + (this.target.z - p.z) * 1.5 * dt * dt;
-      old.set(x, y, z);
+      positions[i] = x + ((x - this.previous[i]!) * 0.97 + (this.target.x - x) * 1.5 * dt * dt);
+      positions[i + 1] =
+        y + ((y - this.previous[i + 1]!) * 0.97 + (-9.81 + (this.target.y - y) * 1.5) * dt * dt);
+      positions[i + 2] =
+        z + ((z - this.previous[i + 2]!) * 0.97 + (this.target.z - z) * 1.5 * dt * dt);
+      this.previous[i] = x;
+      this.previous[i + 1] = y;
+      this.previous[i + 2] = z;
     }
-    for (let iteration = 0; iteration < 8; iteration++) {
-      for (const [a, b, length, stiffness] of this.links) {
-        const p = at(this.p, a),
-          q = at(this.p, b),
-          wa = at(this.pinned, a) ? 0 : 1,
-          wb = at(this.pinned, b) ? 0 : 1;
-        const x = q.x - p.x,
-          y = q.y - p.y,
-          z = q.z - p.z,
+    for (let iteration = 0; iteration < this.constraintPasses; iteration++) {
+      for (let i = 0; i < this.links.length; i++) {
+        const { p, q, length, stiffness, wa, wb } = at(this.links, i);
+        const x = positions[q]! - positions[p]!,
+          y = positions[q + 1]! - positions[p + 1]!,
+          z = positions[q + 2]! - positions[p + 2]!,
           d = Math.sqrt(x * x + y * y + z * z);
         if (d < 1e-8 || wa + wb === 0) continue;
         const amount = (((d - length) / d) * stiffness) / (wa + wb);
-        p.x += x * amount * wa;
-        p.y += y * amount * wa;
-        p.z += z * amount * wa;
-        q.x -= x * amount * wb;
-        q.y -= y * amount * wb;
-        q.z -= z * amount * wb;
+        positions[p] = positions[p]! + x * amount * wa;
+        positions[p + 1] = positions[p + 1]! + y * amount * wa;
+        positions[p + 2] = positions[p + 2]! + z * amount * wa;
+        positions[q] = positions[q]! - x * amount * wb;
+        positions[q + 1] = positions[q + 1]! - y * amount * wb;
+        positions[q + 2] = positions[q + 2]! - z * amount * wb;
       }
-      for (const [i, anchor, max] of this.tethers) {
-        const p = at(this.p, i),
-          a = at(this.p, anchor),
-          d = p.distance(a);
+      for (let i = 0; i < this.tethers.length; i++) {
+        const tether = at(this.tethers, i),
+          p = tether[0],
+          a = tether[1],
+          max = tether[2];
+        const d = this.distance(p, a);
         if (d > max) {
           const k = max / d;
-          p.set(a.x + (p.x - a.x) * k, a.y + (p.y - a.y) * k, a.z + (p.z - a.z) * k);
+          positions[p] = positions[a]! + (positions[p]! - positions[a]!) * k;
+          positions[p + 1] = positions[a + 1]! + (positions[p + 1]! - positions[a + 1]!) * k;
+          positions[p + 2] = positions[a + 2]! + (positions[p + 2]! - positions[a + 2]!) * k;
         }
       }
-      for (const [i, a, b, t] of this.seams) {
-        const p = at(this.p, i),
-          u = at(this.p, a),
-          v = at(this.p, b);
-        p.set(u.x + (v.x - u.x) * t, u.y + (v.y - u.y) * t, u.z + (v.z - u.z) * t);
+      for (let i = 0; i < this.seams.length; i++) {
+        const seam = at(this.seams, i),
+          p = seam[0],
+          u = seam[1],
+          v = seam[2],
+          t = seam[3];
+        positions[p] = positions[u]! + (positions[v]! - positions[u]!) * t;
+        positions[p + 1] = positions[u + 1]! + (positions[v + 1]! - positions[u + 1]!) * t;
+        positions[p + 2] = positions[u + 2]! + (positions[v + 2]! - positions[u + 2]!) * t;
       }
-      for (let i = 0; i < this.p.length; i++)
-        if (!at(this.pinned, i)) this.collide(at(this.p, i), i >= at(this.patches, 2).start);
+      for (let i = 0; i < this.collisionParticles.length; i++) {
+        const particle = at(this.collisionParticles, i);
+        this.collide(particle.point, particle.front);
+      }
     }
     this.steps++;
   }
@@ -379,10 +457,10 @@ export class CapeCloth {
   publish() {
     for (const p of this.patches) {
       for (let i = 0; i < p.positions.length; i += 3) {
-        const v = at(this.p, p.start + i / 3);
-        p.positions[i] = v.x;
-        p.positions[i + 1] = v.y;
-        p.positions[i + 2] = v.z;
+        const offset = p.start * 3 + i;
+        p.positions[i] = this.p[offset]!;
+        p.positions[i + 1] = this.p[offset + 1]!;
+        p.positions[i + 2] = this.p[offset + 2]!;
       }
       p.mesh.setPositions(p.positions);
       p.mesh.setNormals(pc.calculateNormals(p.positions, p.indices));
@@ -395,9 +473,12 @@ export class CapeCloth {
   }
   diagnostics() {
     return {
-      particles: this.p.length,
+      particles: this.p.length / 3,
+      constraintPasses: this.constraintPasses,
       steps: this.steps,
-      finite: this.p.every((p) => Number.isFinite(p.x + p.y + p.z)),
+      finite: this.pinned.every((_, i) =>
+        Number.isFinite(this.p[i * 3]! + this.p[i * 3 + 1]! + this.p[i * 3 + 2]!),
+      ),
       lastStepMs: this.elapsed,
     };
   }

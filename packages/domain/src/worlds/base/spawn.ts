@@ -1,3 +1,4 @@
+import { BASE_RESOURCE_GATHERING_SECONDS } from './resources.js';
 import { worldPlacement } from '../../spatial-state.js';
 import { baseSpatial } from './spatial-definitions.js';
 import { nativeActor } from './bodies.js';
@@ -74,7 +75,11 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
         ...base,
         name: draft.type === 'berry-bush' ? 'Berry bush' : 'Berry thicket',
         kind: 'resource',
-        resource: { definitionId: 'berries', quantity: 36, workSeconds: 30 },
+        resource: {
+          definitionId: 'berries',
+          quantity: 36,
+          workSeconds: BASE_RESOURCE_GATHERING_SECONDS.berries,
+        },
       };
     case 'dry-grass-fibers':
     case 'river-reeds':
@@ -83,7 +88,11 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
         name: draft.type === 'river-reeds' ? 'River reeds' : 'Dry grass fibers',
         nameForm: 'plural',
         kind: 'resource',
-        resource: { definitionId: 'raw_fiber', quantity: 36, workSeconds: 36 },
+        resource: {
+          definitionId: 'raw_fiber',
+          quantity: 36,
+          workSeconds: BASE_RESOURCE_GATHERING_SECONDS.raw_fiber,
+        },
       };
     case 'fallen-branches':
       return {
@@ -91,7 +100,11 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
         name: 'Fallen branches',
         nameForm: 'plural',
         kind: 'resource',
-        resource: { definitionId: 'wood', quantity: 36, workSeconds: 42 },
+        resource: {
+          definitionId: 'wood',
+          quantity: 36,
+          workSeconds: BASE_RESOURCE_GATHERING_SECONDS.wood,
+        },
       };
     case 'river-stones':
       return {
@@ -99,7 +112,11 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
         name: 'River stones',
         nameForm: 'plural',
         kind: 'resource',
-        resource: { definitionId: 'stone', quantity: 60, workSeconds: 24 },
+        resource: {
+          definitionId: 'stone',
+          quantity: 60,
+          workSeconds: BASE_RESOURCE_GATHERING_SECONDS.stone,
+        },
       };
     case 'hare':
     case 'deer':
@@ -121,7 +138,7 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
           calmRate: 0,
           reviewAt: 0,
           danger: 0,
-          wanderSeconds: draft.type === 'hare' ? 150 : 200,
+          wander: { remainingSeconds: draft.type === 'hare' ? 150 : 200 },
         },
       };
   }

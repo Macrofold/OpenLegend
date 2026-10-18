@@ -12,7 +12,7 @@ export function WorldVisualSettings({
   shadowQuality,
   setShadowQuality,
 }: {
-  view: GameView;
+  view: Pick<GameView, 'profile'>;
   shadowQuality: ShadowQuality;
   setShadowQuality(quality: ShadowQuality): void;
 }) {

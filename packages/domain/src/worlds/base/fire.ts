@@ -1,10 +1,11 @@
+import { entityGet } from '../../entity-collection.js';
 import { subjectNarration, person } from '../../narration.js';
 import { namePhrase, type Named } from '@open-legend/language';
 import { isDraft, original } from 'immer';
 import { worldRootEntities } from '../../entity-index.js';
 import { emit, outcome } from '../../events.js';
 import { accessiblePossession, possessionItems } from '../../object-access.js';
-import { itemFor } from '../../objects.js';
+import { itemFor, validateItemQuantityChanges } from '../../objects.js';
 import { STOCK_TRANSFER_LIMITS, proveAvailableStock } from '../../stock-transfer.js';
 import { sameDefinitionPin, isDefinitionPin } from '../../state-owners.js';
 import {
@@ -108,8 +109,10 @@ function carriedLot(
   actorId: string,
   test: (definition: ItemDefinition) => boolean,
   excluded?: string,
+  consumed = false,
 ): ItemInstance | undefined {
   let chosen: ItemInstance | undefined;
+  const candidates: ItemInstance[] | undefined = consumed ? [] : undefined;
   for (const item of possessionItems(world, actorId)) {
     const definition = world.itemDefinitions[item.definitionId];
     if (
@@ -119,15 +122,25 @@ function carriedLot(
       availableItemQuantity(world, item.id) < 1
     )
       continue;
-    if (!chosen || item.id < chosen.id) chosen = item;
+    if (candidates) candidates.push(item);
+    else if (!chosen || item.id < chosen.id) chosen = item;
   }
+  if (candidates)
+    return candidates
+      .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+      .find((item) => consumableUnit(world, item));
   return chosen;
+}
+/** Tags establish world suitability; the quantity owner also protects active objects
+ * and contents from retirement. Do not offer a last unit that owner cannot consume. */
+function consumableUnit(world: WorldState, item: ItemInstance): boolean {
+  return !validateItemQuantityChanges(world, [{ id: item.id, quantity: item.quantity - 1 }]);
 }
 function lightingMaterials(
   world: WorldState,
   actorId: string,
 ): { tinder: ItemInstance; drill: ItemInstance } | undefined {
-  const tinder = carriedLot(world, actorId, isTinder);
+  const tinder = carriedLot(world, actorId, isTinder, undefined, true);
   const drill =
     tinder &&
     carriedLot(
@@ -139,14 +152,15 @@ function lightingMaterials(
   return tinder && drill ? { tinder, drill } : undefined;
 }
 function fuelLot(world: WorldState, actorId: string, itemId?: string): ItemInstance | undefined {
-  if (!itemId) return carriedLot(world, actorId, isFuel);
+  if (!itemId) return carriedLot(world, actorId, isFuel, undefined, true);
   const item = itemFor(world, itemId);
   const definition = item && world.itemDefinitions[item.definitionId];
   return item &&
     definition &&
     isFuel(definition) &&
     accessiblePossession(world, actorId, item.id) &&
-    availableItemQuantity(world, item.id) >= 1
+    availableItemQuantity(world, item.id) >= 1 &&
+    consumableUnit(world, item)
     ? item
     : undefined;
 }
@@ -160,7 +174,8 @@ export function bindFireFuel(
 ): ItemInstance | undefined {
   if (itemId) {
     const item = fuelLot(world, actorId, itemId);
-    return item && sameDefinitionPin(world.entities[item.id]!.item!.definitionPin, guard.definition)
+    return item &&
+      sameDefinitionPin(entityGet(world.entities, item.id)!.item!.definitionPin, guard.definition)
       ? item
       : undefined;
   }
@@ -171,7 +186,10 @@ export function bindFireFuel(
     if (
       definition &&
       isFuel(definition) &&
-      sameDefinitionPin(world.entities[item.id]!.item!.definitionPin, guard.definition) &&
+      sameDefinitionPin(
+        entityGet(world.entities, item.id)!.item!.definitionPin,
+        guard.definition,
+      ) &&
       fuelLot(world, actorId, item.id)
     )
       return item;
@@ -308,7 +326,8 @@ export function fireCareProblem(
   const roster = worldRootEntities(isDraft(world) ? original(world)! : world);
   if (
     roster.some((entry) => {
-      const cook = entry.actor && entry.id !== actor.id ? world.entities[entry.id] : undefined;
+      const cook =
+        entry.actor && entry.id !== actor.id ? entityGet(world.entities, entry.id) : undefined;
       const action = cook?.actor?.action;
       return action?.type === 'cook' && action.stage === 'working' && action.heatId === fire.id;
     })

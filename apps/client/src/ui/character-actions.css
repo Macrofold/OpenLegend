@@ -196,57 +196,6 @@
   background: var(--surface);
   border-block-start: 1px solid var(--line);
 }
-.ol-quick-position .ol-qa-section {
-  display: grid;
-  gap: var(--space-1);
-  justify-items: center;
-}
-.ol-quick-position .ol-qa-heading {
-  color: var(--world-text);
-  font: 500 11px/1.4 var(--font-ui);
-  text-shadow: var(--world-text-shadow);
-}
-.ol-quick-position .ol-qa[aria-disabled='true'] {
-  color: var(--ink-faint);
-  cursor: not-allowed;
-  box-shadow: none;
-}
-.ol-shortcut-picker[role='dialog'] {
-  align-items: start;
-}
-.ol-quick-reason {
-  position: absolute;
-  inset-block-end: calc(100% + var(--space-3));
-  inset-inline-start: 50%;
-  translate: -50% 0;
-  inline-size: min(360px, calc(100vw / var(--ui-scale) - 32px));
-  display: flex;
-  align-items: start;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-}
-.ol-quick-reason > p {
-  margin: 0;
-  min-inline-size: 0;
-}
-.ol-quick-source {
-  position: absolute;
-  inset-block-end: calc(100% + var(--space-3));
-  inset-inline-start: 50%;
-  translate: -50% 0;
-  inline-size: min(360px, calc(100vw / var(--ui-scale) - 32px));
-  max-block-size: calc(100vh / var(--ui-scale) - 160px);
-  overflow: auto;
-  padding: var(--space-3);
-  display: grid;
-  gap: var(--space-2);
-}
-.ol-quick-source p {
-  margin: 0;
-}
 @media (forced-colors: active) {
   .ol-character-tabs [data-selected] {
     border-block-end: 2px solid Highlight;

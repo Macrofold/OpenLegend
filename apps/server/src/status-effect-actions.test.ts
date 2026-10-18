@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from '@open-legend/domain';
 import { setSpatialPosition, worldSupport } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
 import { describe, expect, it } from 'vitest';
@@ -8,8 +9,8 @@ import { statusEffectActions } from './status-effect-actions.js';
 function sleepingTarget() {
   let world = structuredClone(createWorld());
   world.paused = false;
-  const source = Object.values(world.entities).find((e) => e.actor?.controller === 'player')!;
-  const target = Object.values(world.entities).find((e) => e.actor?.controller === 'npc')!;
+  const source = entityValues(world.entities).find((e) => e.actor?.controller === 'player')!;
+  const target = entityValues(world.entities).find((e) => e.actor?.controller === 'npc')!;
   setSpatialPosition(
     world,
     target,
@@ -49,16 +50,20 @@ describe('authored status actions', () => {
     );
     const result = wake(world);
     expect(result.outcome.ok).toBe(true);
-    expect(result.world.entities[target.id]!.statusEffects?.[definition.id]?.active).toBe(false);
+    expect(
+      entityGet(result.world.entities, target.id)!.statusEffects?.[definition.id]?.active,
+    ).toBe(false);
     expect(result.events.some((event) => event.text === `${target.name} woke up.`)).toBe(true);
   });
 
   it('rejects distant interaction without waking the target', () => {
     const { world, target, definition, wake } = sleepingTarget();
     const distant = structuredClone(world);
-    worldPosition(distant.entities[target.id]!).x += 100;
+    worldPosition(entityGet(distant.entities, target.id)!).x += 100;
     expect(wake(distant).outcome.ok).toBe(false);
-    expect(distant.entities[target.id]!.statusEffects?.[definition.id]?.active).toBe(true);
+    expect(entityGet(distant.entities, target.id)!.statusEffects?.[definition.id]?.active).toBe(
+      true,
+    );
   });
 
   it('takes labels and other-target permission from configuration', () => {

@@ -36,7 +36,10 @@ config.databaseUrl = disposable.url;
 let store: SqlGameRepository | undefined;
 try {
   config.dataDirectory = await mkdtemp(join(tmpdir(), 'openlegend-memory-'));
-  store = new SqlGameRepository(config.dataDirectory, new PostgresDatabase(config.databaseUrl));
+  store = new SqlGameRepository(
+    config.dataDirectory,
+    new PostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups),
+  );
   let service = new WorldService(store, config);
   await service.ready;
   async function enter(service: WorldService) {
@@ -142,7 +145,10 @@ try {
     throw new Error('Encounter did not produce the required relationship and belief.');
   const revision = first.revision;
   await store.close();
-  store = new SqlGameRepository(config.dataDirectory, new PostgresDatabase(config.databaseUrl));
+  store = new SqlGameRepository(
+    config.dataDirectory,
+    new PostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups),
+  );
   service = new WorldService(store, config);
   await service.ready;
   await enter(service);

@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type { AiClient, FetchTransport, GenerateRequest } from '@open-legend/ai';
 import type { IntelligenceCall } from '@open-legend/protocol';
 import type { GameRepository } from './store.js';
+import { recordBackgroundFailure } from './performance.js';
 
 function clean(value: unknown): unknown {
   const ancestors = new WeakSet<object>();
@@ -168,8 +169,8 @@ export class IntelligenceLog {
       if (this.store.putIntelligenceCalls) {
         try {
           await this.store.putIntelligenceCalls(batch);
-        } catch {
-          console.error('Could not persist intelligence diagnostics.');
+        } catch (error: unknown) {
+          recordBackgroundFailure('intelligence-write', error, { attemptedCalls: batch.length });
         }
       } else
         for (const call of batch) {
@@ -177,8 +178,8 @@ export class IntelligenceLog {
           // snapshots after one fails. Diagnostics never prevent shutdown.
           try {
             await this.store.putIntelligenceCall(call);
-          } catch {
-            console.error('Could not persist intelligence diagnostics.');
+          } catch (error: unknown) {
+            recordBackgroundFailure('intelligence-write', error, { attemptedCalls: 1 });
           }
         }
       this.dropped = false;

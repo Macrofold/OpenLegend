@@ -1,3 +1,4 @@
+import { entityGet, entityKeys, entityValues } from './entity-collection.js';
 import { occupiedBodySweepClear } from './spatial.js';
 import { bodyProfile, worldPosition, worldSupport } from './spatial-state.js';
 import {
@@ -25,6 +26,7 @@ import {
 import { commitBodyEffects } from './living.js';
 import { validateWorldModules } from './world-modules.js';
 import { projectEventEvidence } from './speech.js';
+import { materializeNativeValues } from './native-values.js';
 
 function active() {
   const world = createWorld();
@@ -38,21 +40,21 @@ function advance(world: WorldState, seconds: number) {
 describe('native spatial-world integration without providers', () => {
   it('continues explicitly shaped flight after a current JSON roundtrip', () => {
     const world = active();
-    const bird = world.entities['bird-1']!;
+    const bird = entityGet(world.entities, 'bird-1')!;
     bird.spatial.body = { ...bird.spatial.body, id: 'glider', radius: 0.1, height: 0.35 };
     world.flightRoutes[bird.spatial.flight!.routeId]!.body = { ...bird.spatial.body };
-    const restored = JSON.parse(JSON.stringify(world)) as WorldState;
+    const restored = JSON.parse(JSON.stringify(materializeNativeValues(world))) as WorldState;
     validateSpatialWorld(restored);
     const direct = advance(world, 200),
       continued = advance(restored, 200);
-    expect(worldPosition(continued.entities['bird-1']!)).toEqual(
-      worldPosition(direct.entities['bird-1']!),
+    expect(worldPosition(entityGet(continued.entities, 'bird-1')!)).toEqual(
+      worldPosition(entityGet(direct.entities, 'bird-1')!),
     );
-    expect(continued.entities['bird-1']!.spatial.flight).toEqual(
-      direct.entities['bird-1']!.spatial.flight,
+    expect(entityGet(continued.entities, 'bird-1')!.spatial.flight).toEqual(
+      entityGet(direct.entities, 'bird-1')!.spatial.flight,
     );
     const malformed = JSON.parse(JSON.stringify(restored)) as WorldState;
-    Reflect.deleteProperty(malformed.entities['bird-1']!.spatial.body, 'height');
+    Reflect.deleteProperty(entityGet(malformed.entities, 'bird-1')!.spatial.body, 'height');
     expect(() => validateSpatialWorld(malformed)).toThrow('Invalid physical body profile');
     const wrongRoute = structuredClone(restored);
     wrongRoute.flightRoutes[bird.spatial.flight!.routeId]!.body.radius = 0.2;
@@ -60,8 +62,8 @@ describe('native spatial-world integration without providers', () => {
   });
   it('keeps a tall body in conservative candidates when its feet are far below', () => {
     const world = active(),
-      actor = world.entities[PLAYER_ID]!,
-      other = world.entities[NPC_ID]!;
+      actor = entityGet(world.entities, PLAYER_ID)!,
+      other = entityGet(world.entities, NPC_ID)!;
     setSpatialPosition(world, other, { x: 5, y: 0, z: 3 }, 'terrain');
     other.spatial.body = { ...other.spatial.body, id: 'tall-column', height: 32 };
     expect(occupiedBodySweepClear(world, actor, { x: 4, y: 30, z: 3 }, { x: 6, y: 30, z: 3 })).toBe(
@@ -70,7 +72,7 @@ describe('native spatial-world integration without providers', () => {
   });
   it('checks restored standing clearance before reviving an inactive body', () => {
     const world = active(),
-      actor = world.entities[NPC_ID]!;
+      actor = entityGet(world.entities, NPC_ID)!;
     setSpatialPosition(world, actor, { x: 20, y: 0, z: 5.5 }, 'terrain');
     actor.actor!.alive = false;
     world.map.spatial.surfaces.find((surface) => surface.id === 'lookout-deck')!.y = 1;
@@ -79,7 +81,7 @@ describe('native spatial-world integration without providers', () => {
   });
   it('uses saved inactive posture instead of a universal corpse shape', () => {
     const world = active(),
-      actor = world.entities[NPC_ID]!;
+      actor = entityGet(world.entities, NPC_ID)!;
     actor.actor!.alive = false;
     actor.spatial.inactiveBody = {
       ...actor.spatial.body,
@@ -102,9 +104,9 @@ describe('native spatial-world integration without providers', () => {
     });
     expect(t.outcome.ok).toBe(true);
     world = advance(t.world, 280);
-    expect(worldPosition(world.entities[PLAYER_ID]!)).toEqual({ x: 20, y: 3, z: 5.5 });
-    expect(worldSupport(world.entities[PLAYER_ID]!)).toBe('lookout-deck');
-    expect(world.entities[PLAYER_ID]!.actor!.action).toBeNull();
+    expect(worldPosition(entityGet(world.entities, PLAYER_ID)!)).toEqual({ x: 20, y: 3, z: 5.5 });
+    expect(worldSupport(entityGet(world.entities, PLAYER_ID)!)).toBe('lookout-deck');
+    expect(entityGet(world.entities, PLAYER_ID)!.actor!.action).toBeNull();
     const before = quantityOf(world, PLAYER_ID, 'wood');
     t = executeCommand(world, {
       id: 'deck-gather',
@@ -113,7 +115,7 @@ describe('native spatial-world integration without providers', () => {
       targetId: 'lookout-cache',
     });
     expect(t.outcome.ok).toBe(true);
-    world = advance(t.world, 80);
+    world = advance(t.world, entityGet(world.entities, 'lookout-cache')!.resource!.workSeconds + 1);
     expect(quantityOf(world, PLAYER_ID, 'wood')).toBeGreaterThan(before);
     t = executeCommand(world, {
       id: 'down',
@@ -123,13 +125,13 @@ describe('native spatial-world integration without providers', () => {
     });
     expect(t.outcome.ok).toBe(true);
     world = advance(t.world, 350);
-    expect(worldPosition(world.entities[PLAYER_ID]!)).toEqual({ x: 20, y: 0, z: 5.5 });
+    expect(worldPosition(entityGet(world.entities, PLAYER_ID)!)).toEqual({ x: 20, y: 0, z: 5.5 });
     validateSpatialWorld(world);
   });
   it('enforces floor and airborne reach and protects private speech through slabs', () => {
     const world = active(),
-      a = world.entities[PLAYER_ID]!,
-      b = world.entities[NPC_ID]!;
+      a = entityGet(world.entities, PLAYER_ID)!,
+      b = entityGet(world.entities, NPC_ID)!;
     setSpatialPosition(world, a, { x: 20, y: 0, z: 5.5 }, 'terrain');
     setSpatialPosition(world, b, { x: 20, y: 3, z: 5.5 }, 'lookout-deck');
     expect(canReachEntity(world, a, b, 1.6)).toBe(false);
@@ -170,7 +172,7 @@ describe('native spatial-world integration without providers', () => {
         speech.events.some((event) => event.type === 'speech' && event.id === entry.eventId),
       ) ?? false,
     ).toBe(false);
-    const bird = world.entities['bird-1']!;
+    const bird = entityGet(world.entities, 'bird-1')!;
     setSpatialPosition(world, bird, { x: 20, y: 6, z: 5.5 }, null);
     expect(canReachEntity(world, a, bird, 1.6)).toBe(false);
   });
@@ -207,36 +209,40 @@ describe('native spatial-world integration without providers', () => {
       let i = 0;
       i < 250 &&
       !(
-        worldPosition(world.entities[PLAYER_ID]!).y > 0.1 &&
-        worldPosition(world.entities[PLAYER_ID]!).y < 2.9
+        worldPosition(entityGet(world.entities, PLAYER_ID)!).y > 0.1 &&
+        worldPosition(entityGet(world.entities, PLAYER_ID)!).y < 2.9
       );
       i++
     )
       world = advance(world, 1);
-    expect(worldSupport(world.entities[PLAYER_ID]!)).toBe('lookout-ramp');
-    const restored = JSON.parse(JSON.stringify(world)) as WorldState;
+    expect(worldSupport(entityGet(world.entities, PLAYER_ID)!)).toBe('lookout-ramp');
+    const restored = JSON.parse(JSON.stringify(materializeNativeValues(world))) as WorldState;
     validateWorldModules(restored);
-    expect(advance(restored, 120)).toEqual(advance(world, 120));
+    expect(materializeNativeValues(advance(restored, 120))).toEqual(
+      materializeNativeValues(advance(world, 120)),
+    );
   });
   it('executes native flight and grounded landing without an AI job', () => {
     let world = active();
-    const ids = Object.keys(world.entities);
+    const ids = entityKeys(world.entities);
     world = advance(world, 240);
-    expect(worldPosition(world.entities['bird-1']!).y).toBeGreaterThan(3);
-    expect(worldSupport(world.entities['bird-1']!)).toBeNull();
-    const restored = JSON.parse(JSON.stringify(world)) as WorldState;
-    expect(advance(world, 20)).toEqual(advance(restored, 20));
+    expect(worldPosition(entityGet(world.entities, 'bird-1')!).y).toBeGreaterThan(3);
+    expect(worldSupport(entityGet(world.entities, 'bird-1')!)).toBeNull();
+    const restored = JSON.parse(JSON.stringify(materializeNativeValues(world))) as WorldState;
+    expect(materializeNativeValues(advance(world, 20))).toEqual(
+      materializeNativeValues(advance(restored, 20)),
+    );
     const trip = advanceWorld(world, 650);
     world = trip.world;
     expect(trip.events.some((event) => event.type === 'landed' && event.actorId === 'bird-1')).toBe(
       true,
     );
-    expect(Object.keys(world.entities)).toEqual(ids);
+    expect(entityKeys(world.entities)).toEqual(ids);
     validateSpatialWorld(world);
   });
   it('lands a dead flyer once without duplicating its identity or finite remains', () => {
     let world = structuredClone(advance(active(), 240));
-    const bird = world.entities['bird-1']!;
+    const bird = entityGet(world.entities, 'bird-1')!;
     commitBodyEffects(
       world,
       bird,
@@ -246,23 +252,23 @@ describe('native spatial-world integration without providers', () => {
     );
     expect(bird.actor!.alive).toBe(false);
     world = advance(world, 80);
-    expect(worldSupport(world.entities['bird-1']!)).not.toBeNull();
-    expect(world.entities['bird-1']!.spatial.flight).toBeUndefined();
-    expect(world.entities['bird-1']!.spatial.fallVelocity).toBeUndefined();
-    expect(Object.values(world.entities).filter((e) => e.id === 'bird-1')).toHaveLength(1);
+    expect(worldSupport(entityGet(world.entities, 'bird-1')!)).not.toBeNull();
+    expect(entityGet(world.entities, 'bird-1')!.spatial.flight).toBeUndefined();
+    expect(entityGet(world.entities, 'bird-1')!.spatial.fallVelocity).toBeUndefined();
+    expect(entityValues(world.entities).filter((e) => e.id === 'bird-1')).toHaveLength(1);
   });
   it('lands a fallen bird on real rock support and keeps the result restorable', () => {
     let world = active();
     const z = world.map.tiles.findIndex((row) => row.includes('rock'));
     const x = world.map.tiles[z]!.indexOf('rock');
-    const bird = world.entities['bird-1']!;
+    const bird = entityGet(world.entities, 'bird-1')!;
     setSpatialPosition(world, bird, { x, y: 6, z }, null);
     delete bird.spatial.flight;
     bird.spatial.fallVelocity = 0;
     bird.actor!.alive = false;
     world = advance(world, 80);
-    expect(worldPosition(world.entities['bird-1']!).y).toBe(2);
-    expect(worldSupport(world.entities['bird-1']!)).toBe(`terrain-solid:${x}:${z}`);
+    expect(worldPosition(entityGet(world.entities, 'bird-1')!).y).toBe(2);
+    expect(worldSupport(entityGet(world.entities, 'bird-1')!)).toBe(`terrain-solid:${x}:${z}`);
     validateSpatialWorld(JSON.parse(JSON.stringify(world)) as WorldState);
   });
   it('rejects a saved route whose waypoint silently changes floor', () => {
@@ -273,7 +279,7 @@ describe('native spatial-world integration without providers', () => {
       destination: { x: 20, y: 3, z: 5.5, surfaceId: 'lookout-deck' },
     }).world;
     const bad = structuredClone(prepareWorldNavigation(world));
-    bad.entities[PLAYER_ID]!.actor!.action!.path[0]!.y += 3;
+    entityGet(bad.entities, PLAYER_ID)!.actor!.action!.path[0]!.y += 3;
     expect(() => validateSpatialWorld(bad)).toThrow('Invalid saved spatial route');
   });
   it('refuses a second airborne physical executor and invalid flight corridors', () => {

@@ -1,3 +1,4 @@
+import { entityGet, entityHas } from '@open-legend/domain';
 import {
   activityRequestHost,
   activityHostForCommand,
@@ -52,12 +53,12 @@ export function projectActivityStatus(
   world: WorldState,
   actorId: string,
 ): ActivityRequestsView['status'] {
-  const plan = world.entities[actorId]?.actor?.agency.plan,
+  const plan = entityGet(world.entities, actorId)?.actor?.agency.plan,
     execution = plan?.activity;
   if (!execution) return undefined;
   const waiting =
     plan!.status === 'active' &&
-    !world.entities[actorId]!.actor!.action &&
+    !entityGet(world.entities, actorId)!.actor!.action &&
     execution.pending.at(-1)?.node.kind === 'wait'
       ? execution.pending.at(-1)!.node.name
       : undefined;
@@ -169,7 +170,7 @@ export function activityChoicePage(
 ): ActivityChoicePage {
   service.assertScope(scope);
   const world = service.world,
-    actor = world.entities[scope.actorId]!;
+    actor = entityGet(world.entities, scope.actorId)!;
   const host = activityRequestHost(world, request.family);
   const field = host?.definition.requests?.find((entry) => entry.id === request.family)?.fields[
     request.field
@@ -187,8 +188,8 @@ export function activityChoicePage(
   const storage = source === 'storage' ? activityStorageReader(service, scope, request) : undefined;
   const inspection = currentInventoryInspection(world, scope.actorId);
   const selectedTarget =
-    request.selectedId && Object.hasOwn(world.entities, request.selectedId)
-      ? world.entities[request.selectedId]
+    request.selectedId && entityHas(world.entities, request.selectedId)
+      ? entityGet(world.entities, request.selectedId)
       : undefined;
   const binding = createHash('sha256')
     .update(
@@ -218,7 +219,7 @@ export function activityChoicePage(
               entity.container?.access,
             ])
           : null,
-        request.sourceId ? world.entities[request.sourceId]?.inventoryRevision : null,
+        request.sourceId ? entityGet(world.entities, request.sourceId)?.inventoryRevision : null,
       ]),
     )
     .digest('hex');
@@ -231,7 +232,7 @@ export function activityChoicePage(
     evidence,
   };
   const permitted = (id: string) => {
-    const target = world.entities[id];
+    const target = entityGet(world.entities, id);
     return (
       !!target &&
       !target.retirement &&
@@ -262,7 +263,7 @@ export function activityChoicePage(
     }
     if (!permitted(id)) return;
     if (source === 'materials') {
-      const selected = request.sourceId && world.entities[request.sourceId];
+      const selected = request.sourceId && entityGet(world.entities, request.sourceId);
       if (!selected) return;
       const own = custodian(world, selected.id) === actor.id;
       if (selected.resource) {
@@ -294,7 +295,7 @@ export function activityChoicePage(
     );
     if (selected?.id === request.selectedId) result.selected = selected;
     if (request.approach && selected && source === 'storage') {
-      const target = world.entities[selected.id]!;
+      const target = entityGet(world.entities, selected.id)!;
       const point = targetApproachPoint(
         world,
         actor,
@@ -358,7 +359,7 @@ export function activityChoicePage(
     countMetric('discovery.activityReturned', result.choices.length);
   };
   if (source === 'materials') {
-    const selected = request.sourceId && world.entities[request.sourceId];
+    const selected = request.sourceId && entityGet(world.entities, request.sourceId);
     if (!selected || !permitted(selected.id))
       return {
         ...result,
@@ -419,7 +420,7 @@ export function activityChoicePage(
           break;
         }
         cursor.after = parent;
-        const placement = world.entities[parent]?.placement;
+        const placement = entityGet(world.entities, parent)?.placement;
         if (!placement || placement.mode === 'world')
           return { ...result, status: 'stale', message: 'Supply moved. Refresh the search.' };
         parent = cursor.parent = placement.parentEntityId;
@@ -428,7 +429,7 @@ export function activityChoicePage(
       scanned++;
       cursor.after = id;
       add(id);
-      if (world.entities[id]?.container && canAccessContainer(world, actor.id, id)) {
+      if (entityGet(world.entities, id)?.container && canAccessContainer(world, actor.id, id)) {
         parent = cursor.parent = id;
         cursor.after = '';
       }

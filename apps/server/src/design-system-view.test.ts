@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { it, expect } from 'vitest';
 import { createWorld, observeActor } from '@open-legend/domain';
@@ -6,14 +7,18 @@ import { commandFacts } from './action-descriptions.js';
 it('native fixture: look-closer prose and berry facts describe actual resource mechanics', () => {
   const world = createWorld();
   // Exercise a stocked resource independently of the bundled starting scarcity.
-  world.entities['berries-west']!.resource!.quantity = 36;
+  entityGet(world.entities, 'berries-west')!.resource!.quantity = 36;
   const observation = observeActor(world, PLAYER_ID)!;
   expect(commandFacts({ type: 'gather', targetId: 'berries-west' }, observation)).toEqual([
     ['Yields', '2 Wild berries'],
-    ['Time', '30 seconds of game time, plus travel'],
+    ['Time', '5 minutes of game time, plus travel'],
   ]);
   expect(
-    describeEntity(world.entities['berries-west']!, world.itemDefinitions, world.castDefinitions),
+    describeEntity(
+      entityGet(world.entities, 'berries-west')!,
+      world.itemDefinitions,
+      world.castDefinitions,
+    ),
   ).toContain('Familiar edible berries');
   world.memories[NPC_ID]!.push({
     id: 'secret',
@@ -26,7 +31,11 @@ it('native fixture: look-closer prose and berry facts describe actual resource m
     importance: 1,
   });
   expect(
-    describeEntity(world.entities[NPC_ID]!, world.itemDefinitions, world.castDefinitions),
+    describeEntity(
+      entityGet(world.entities, NPC_ID)!,
+      world.itemDefinitions,
+      world.castDefinitions,
+    ),
   ).not.toContain('secret');
 });
 

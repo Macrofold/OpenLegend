@@ -1,3 +1,5 @@
+import { currentAttributeState } from './native-values.js';
+import { entityOwn } from './entity-collection.js';
 import { lowerUnsupportedCovers } from './assemblies.js';
 import { reconcileConditions } from './conditions.js';
 import { installedStateQuery } from './queries.js';
@@ -120,10 +122,10 @@ export function stateOwnerCapabilities(world: WorldState) {
   }));
 }
 
-function revision(entity: Entity, definition: AttributeDefinition): number {
+function revision(world: WorldState, entity: Entity, definition: AttributeDefinition): number {
   const storage = HOST_IMPLEMENTATIONS[definition.implementation].storage;
   if (storage === 'attributes')
-    return (entity.actor?.attributes ?? entity.attributes)?.[definition.id]?.revision ?? 0;
+    return currentAttributeState(world, entity, definition.id)?.revision ?? 0;
   if (storage === 'health') return entity.actor?.body?.revision ?? 0;
   if (storage === 'practice') return entity.actor?.practice?.[definition.id]?.revision ?? 0;
   return 0;
@@ -141,13 +143,13 @@ export function readState(
   const definition = resolve(world, address);
   if (!definition) return { status: 'unsupported' };
   if (audience === 'public' && definition.disclosure === 'owner') return { status: 'unknown' };
-  const entity = getOwn(world.entities, address.entityId);
+  const entity = entityOwn(world.entities, address.entityId);
   if (!entity) return { status: 'not-applicable' };
   const storage = HOST_IMPLEMENTATIONS[definition.implementation].storage;
   const value = entity.actor
-    ? readAttribute(entity.actor, definition)
+    ? readAttribute(world, entity, definition)
     : storage === 'attributes'
-      ? entity.attributes?.[definition.id]?.value
+      ? currentAttributeState(world, entity, definition.id)?.value
       : undefined;
   if (value === undefined)
     return {
@@ -157,7 +159,7 @@ export function readState(
           ? 'uninitialized'
           : 'not-applicable',
     };
-  return { status: 'known', value, revision: revision(entity, definition) };
+  return { status: 'known', value, revision: revision(world, entity, definition) };
 }
 
 /** Internal typed owner port, called only inside an admitted domain draft. Authority
@@ -177,7 +179,7 @@ export function writeState(
   if (!isStateAddress(address) || !isStateOperation(operation)) return { status: 'invalid' };
   const definition = resolve(world, address);
   if (!definition) return { status: 'unsupported' };
-  const entity = getOwn(world.entities, address.entityId);
+  const entity = entityOwn(world.entities, address.entityId);
   const prior = readState(world, address, 'owner');
   if (!entity || prior.status !== 'known') return { status: 'not-applicable' };
   if (!Number.isSafeInteger(expectedRevision) || expectedRevision !== prior.revision)
@@ -235,5 +237,5 @@ export function writeState(
     entityId: entity.id,
     field: storage === 'health' ? 'body' : 'attribute',
   });
-  return { status: 'applied', value, revision: revision(entity, definition) };
+  return { status: 'applied', value, revision: revision(world, entity, definition) };
 }

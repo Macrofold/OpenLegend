@@ -1,3 +1,5 @@
+import { entityGet } from './entity-collection.js';
+import { orderedRecordGet, orderedRecordSet } from './ordered-record.js';
 import { activelyParticipates } from './participation-state.js';
 import { current, isDraft } from 'immer';
 import { bodyProfile, spatialMap, worldPosition } from './spatial-state.js';
@@ -180,13 +182,13 @@ export function changeConversation(
     events: [],
     outcome: outcome(false, 'conversation-rejected', message),
   });
-  const prior = input.commandReceipts[id];
+  const prior = orderedRecordGet(input.commandReceipts, id);
   if (prior)
     return prior.digest === digest
       ? { world: input, events: [], outcome: prior.outcome }
       : reject('Request identity reused.');
   const conversation = input.conversations?.records[conversationId];
-  const entity = input.entities[actorId];
+  const entity = entityGet(input.entities, actorId);
   if (
     !['join', 'leave'].includes(operation) ||
     (input.paused && operation !== 'leave') ||
@@ -203,8 +205,8 @@ export function changeConversation(
   const member = conversation.intervals.find(
     (i) =>
       i.leftAt === undefined &&
-      !!input.entities[i.actorId]?.actor?.alive &&
-      hearsEntity(input, entity, input.entities[i.actorId]!),
+      !!entityGet(input.entities, i.actorId)?.actor?.alive &&
+      hearsEntity(input, entity, entityGet(input.entities, i.actorId)!),
   );
   if (operation === 'join' && !member) return reject('No participant is within hearing range.');
   if (operation === 'leave' && input.conversations!.active[actorId] !== conversationId)
@@ -213,7 +215,7 @@ export function changeConversation(
   if (operation === 'leave') leaveConversation(world, actorId, 'explicit');
   else engageConversation(world, actorId, member!.actorId);
   const result = outcome(true, 'conversation-updated', `Conversation ${operation} committed.`);
-  world.commandReceipts[id] = { digest, outcome: result };
+  orderedRecordSet(world.commandReceipts, id, { digest, outcome: result });
   return finish(world, [], result);
 }
 type ContinuityPose = {
@@ -261,7 +263,7 @@ export function reconcileConversations(world: WorldState): void {
     world.simTime >= old.checkedAt &&
     world.simTime < old.nextExpiry &&
     old.poses.every((pose) => {
-      const entity = world.entities[pose.id];
+      const entity = entityGet(world.entities, pose.id);
       const position = entity && worldPosition(entity);
       return (
         !!entity &&
@@ -281,7 +283,7 @@ export function reconcileConversations(world: WorldState): void {
   const membersByConversation = new Map<string, string[]>();
   let nextExpiry = Infinity;
   for (const [actorId, id] of Object.entries(active)) {
-    const entity = world.entities[actorId];
+    const entity = entityGet(world.entities, actorId);
     if (!entity?.actor?.alive || !activelyParticipates(entity)) {
       leaveConversation(world, actorId, 'death');
       continue;
@@ -305,8 +307,8 @@ export function reconcileConversations(world: WorldState): void {
       if (member === actorId || world.conversations.active[member] !== id) continue;
       hasOther = true;
       if (
-        world.entities[member] &&
-        withinHearingRange(world, entity, world.entities[member]!, loudest)
+        entityGet(world.entities, member) &&
+        withinHearingRange(world, entity, entityGet(world.entities, member)!, loudest)
       ) {
         connected = true;
         break;
@@ -326,7 +328,7 @@ export function reconcileConversations(world: WorldState): void {
     Object.isFrozen(manifest)
   ) {
     const poses = Object.keys(active).map((id): ContinuityPose => {
-      const entity = world.entities[id]!;
+      const entity = entityGet(world.entities, id)!;
       return {
         id,
         position: { ...worldPosition(entity) },

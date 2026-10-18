@@ -1,3 +1,4 @@
+import { entityGet, entityHas } from '@open-legend/domain';
 import { accessiblePossession, worldPosition } from '@open-legend/domain';
 import { knowledgeDocument, characterCount, recognizesSubject } from '@open-legend/domain';
 import {
@@ -53,14 +54,14 @@ export function responseTriggerContext(
   if (!aware) return undefined;
   const source =
     aware.sourceId && awarenessBindsSubject(world, actorId, aware, aware.sourceId)
-      ? world.entities[aware.sourceId]
+      ? entityGet(world.entities, aware.sourceId)
       : undefined;
   const recipientId = aware.intendedRecipientId ?? aware.targetId;
   const recipient =
     recipientId && awarenessBindsSubject(world, actorId, aware, recipientId)
-      ? world.entities[recipientId]
+      ? entityGet(world.entities, recipientId)
       : undefined;
-  const observer = world.entities[actorId];
+  const observer = entityGet(world.entities, actorId);
   return {
     eventId: aware.eventId,
     eventTime: gameTime(aware.at, world.statusEffectPolicy.clockOffsetHours),
@@ -195,14 +196,14 @@ export function responseReferences(
     ...new Set([
       actorId,
       ...visibleIds,
-      ...rememberedIds.filter((id) => Object.hasOwn(world.entities, id)),
+      ...rememberedIds.filter((id) => entityHas(world.entities, id)),
       ...awareness
         .flatMap((entry) =>
           [entry.sourceId, entry.intendedRecipientId ?? entry.targetId, ...entry.entityIds].filter(
             (id): id is string => !!id && awarenessBindsSubject(world, actorId, entry, id),
           ),
         )
-        .filter((id): id is string => !!id && Object.hasOwn(world.entities, id)),
+        .filter((id): id is string => !!id && entityHas(world.entities, id)),
     ]),
   ];
   const visible = new Set(visibleIds);
@@ -229,7 +230,7 @@ export function responseReferences(
   );
   const piled = pileItemIds.filter((id) => !ids.includes(id) && !possessions.includes(id));
   const references = ids.map((id) => {
-    const entity = world.entities[id]!;
+    const entity = entityGet(world.entities, id)!;
     return JSON.stringify({
       entityId: entityHandles(world, actorId).get(id),
       label: recognizedIds.has(id)
@@ -254,7 +255,7 @@ export function responseReferences(
     references.push(
       JSON.stringify({
         entityId: entityHandles(world, actorId).get(id),
-        label: entityLabel(world, world.entities[id]!, actorId),
+        label: entityLabel(world, entityGet(world.entities, id)!, actorId),
         relation: 'my possession',
       }),
     );
@@ -262,7 +263,7 @@ export function responseReferences(
     references.push(
       JSON.stringify({
         entityId: entityHandles(world, actorId).get(id),
-        label: entityLabel(world, world.entities[id]!, actorId),
+        label: entityLabel(world, entityGet(world.entities, id)!, actorId),
         relation: 'lying in a visible pile',
       }),
     );
@@ -271,13 +272,13 @@ export function responseReferences(
       !ids.includes(id) &&
       !possessions.includes(id) &&
       !piled.includes(id) &&
-      Object.hasOwn(world.entities, id),
+      entityHas(world.entities, id),
   );
   for (const id of inspected)
     references.push(
       JSON.stringify({
         entityId: entityHandles(world, actorId).get(id),
-        label: entityLabel(world, world.entities[id]!, actorId),
+        label: entityLabel(world, entityGet(world.entities, id)!, actorId),
         relation: 'current permitted activity choice or inspected container page',
       }),
     );

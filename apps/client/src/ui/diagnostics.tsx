@@ -436,6 +436,7 @@ export function Mind({
   owned = false,
   visible = true,
   readScope,
+  memoryScope,
   evidenceEpoch,
   onDirtyChange,
 }: {
@@ -443,6 +444,7 @@ export function Mind({
   owned?: boolean;
   visible?: boolean;
   readScope?: string;
+  memoryScope: string;
   evidenceEpoch?: string;
   onDirtyChange?(dirty: boolean): void;
 }) {
@@ -650,6 +652,7 @@ export function Mind({
                   key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}:${evidenceEpoch}`}
                   actorId={mind.actorId}
                   owned={false}
+                  requestScope={memoryScope}
                   visible={visible}
                 />
               </Section>

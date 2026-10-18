@@ -1,10 +1,16 @@
 # Save round-trip batching — feature spec
 
-| Status      | Current progress                                                                                                 | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | The 2026-09-29 batching proposal remains unimplemented; its decision and measurement gate is still open in PF15. | 2026-10-16   |
+| Status      | Current progress                                                                                                  | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Record/history grouping is qualified and enabled; the original four-round-trip and full-game targets remain open. | 2026-10-16   |
 
-**Status: proposal, not approved for implementation.** Written 2026-09-29 at Mike's request as a follow-up to [background world saves](ordered-async-saves.md). Implementation needs a separate chat go-ahead. Technical design: [save round-trip batching — technical design](save-round-trip-batching-tech-design.md). Work items: [PF15](../maintainers/performance.md#pf15--save-round-trip-batching).
+**Original proposal: September 29; measured implementation authorized October 14.** Written at Mike's request as a follow-up to [background world saves](ordered-async-saves.md). Technical design: [save round-trip batching — technical design](save-round-trip-batching-tech-design.md). Work items: [PF15](../maintainers/performance.md#pf15--save-round-trip-batching).
+
+## October 14 authorized measured slice
+
+Mike's renewed full-game profiling/optimization request authorizes the measured trial and justified implementation; the earlier proposal alone did not authorize work. The current full-server baseline reproduces long synchronous saves dominated by statement waits. The implementation uses the proposed parameterized CTE mechanism, but deliberately starts with explicit independent record-table and history writes at their existing owners, plus transaction start/timeout together. It does not introduce the proposed universal deferred-write API. Repeating a table and dependent reads/deletes remain barriers. Existing authority/revision checks and commit are separate awaited requests. The qualified slice is retained and enabled by default with an operator off switch. Exact three-save comparisons use 113 sequential requests versus 31 grouped requests; record/history contents, bounded flushes, rollback and failed/ambiguous-commit outcomes match. Twelve controlled-delay trials support the request reduction, while busy full-scene OFF/ON runs establish no speedup. Full PF15 acceptance, including the typical four-round-trip and full-game targets, remains open. Current behavior/limits live in [Storage execution](../performance.md#storage-execution) and [LA174/LA175](../limits/persistence.md#la174); attempts/results are tracked under [PF16.7/PF15](../maintainers/performance.md#october-14-expanded-3-investigation).
+
+The original proposal below retains its design reasoning and larger target; descriptions of a deferred adapter API are proposals, not the currently implemented API.
 
 ## Purpose
 

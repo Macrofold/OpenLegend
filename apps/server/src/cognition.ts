@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { dreamStatus } from '@open-legend/domain';
 import { bodyThinkingBlocked, bodyEligibilityRevision } from '@open-legend/domain';
 import { z } from 'zod';
@@ -364,7 +365,7 @@ export function cognitionContext(
   tier: CognitionBinding['tier'],
 ) {
   const mind = mindFor(service.world, actorId);
-  const actor = service.world.entities[actorId]!.actor!;
+  const actor = entityGet(service.world.entities, actorId)!.actor!;
   const query =
     purpose === 'thought'
       ? 'Current situation, relationships, goals and concerns'
@@ -407,7 +408,10 @@ export function cognitionContext(
     ]),
   ];
   const binding: CognitionBinding = {
-    bodyEligibility: bodyEligibilityRevision(service.world, service.world.entities[actorId]!),
+    bodyEligibility: bodyEligibilityRevision(
+      service.world,
+      entityGet(service.world.entities, actorId)!,
+    ),
     actorId,
     decisionId,
     policy: MIND_POLICY,
@@ -429,7 +433,8 @@ export function cognitionContext(
         c.command ? domainCommand(c.command, actorId, decisionId) : null,
       ]),
     ),
-    restEpisode: dreamStatus(service.world, service.world.entities[actorId])?.episode ?? null,
+    restEpisode:
+      dreamStatus(service.world, entityGet(service.world.entities, actorId))?.episode ?? null,
   };
   const { thoughts: _thoughts, receipts: _receipts, ...acceptedMind } = mind;
   const context = {
@@ -495,7 +500,7 @@ export function thoughtProposal(
 }
 
 export function cognitionOpportunity(service: WorldService, actorId: string) {
-  const entity = service.world.entities[actorId];
+  const entity = entityGet(service.world.entities, actorId);
   const actor = entity?.actor;
   if (
     !actor?.alive ||
@@ -506,8 +511,8 @@ export function cognitionOpportunity(service: WorldService, actorId: string) {
   const mind = mindFor(service.world, actorId);
   const recall = get_memories(service.world, actorId, { limit: 0 });
   const fresh = recall.observationWatermark > mind.processedWatermark;
-  if (dreamStatus(service.world, service.world.entities[actorId]))
-    return dreamStatus(service.world, service.world.entities[actorId])!.episode !==
+  if (dreamStatus(service.world, entityGet(service.world.entities, actorId)))
+    return dreamStatus(service.world, entityGet(service.world.entities, actorId))!.episode !==
       mind.lastDreamEpisode && fresh
       ? ('dream' as const)
       : null;

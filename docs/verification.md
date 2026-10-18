@@ -1,5 +1,7 @@
 # Verification
 
+- [Optional performance collection](verification/performance/profiling-controls.md) — default-off server/worker collection, capture cleanup, tool modes, actual functional checks and required overhead-comparison limits.
+
 - [World-first player experience](verification/player-experience-overhaul.md) — current speech/Events, inspection, creation, visual placement and shared UI audit; actual browser evidence, controlled local provider presentation and remaining decisions are distinguished. [Inventory and inspection evidence](verification/player-experience-inventory.md) owns grouped-stock authority and reader continuity.
 - [Decision fallback](verification/decision-escalation.md): enabled Luna Low fallback, native/fixture/browser evidence, live gameplay verification and retained load/provider limitations.
 
@@ -19,7 +21,9 @@ Add detailed evidence to the relevant report under `docs/verification/`, followi
 
 Historical migration/recovery observations in the linked reports describe the pinned implementations that ran. Current development compatibility is governed only by the [root policy](../AGENTS.md#development-save-policy); past evidence is not new work authorization.
 
-Current 3× scene investigation: [measured improvements, lifecycle checks and unresolved acceptance](verification/three-times-scene-performance.md). Severe host contention invalidated the final capacity comparison; this is not a zero-stutter or full-release acceptance claim.
+Current overhaul implementation: [readable combined results and remaining qualification](verification/performance/overhaul-implementation.md), with owner records for [saving](verification/performance/overhaul-storage-implementation.md), [simulation](verification/performance/overhaul-simulation-implementation.md) and [presentation/thinking](verification/performance/overhaul-presentation-implementation.md). Implementation remains in progress; the first timed observation fails and its copied-source package bindings limit before/after attribution.
+
+Current 3× scene investigation: [plain-language results, before/after tables and compromises](verification/smooth-game-experiments.md), with [detailed technical evidence](verification/three-times-scene-performance.md). The expanded game still fails actual 3× and smoothness; measured owner improvements do not establish full-game acceptance.
 
 - [Rivals and contested ground](verification/rivals-and-contested-ground.md): current native flight/evasion/consent and finite-site checks, PostgreSQL continuation, ordinary browser discovery, failed live character qualification and complete cost accounting. Full encounter acceptance remains open.
 - [Finite sling practice and voluntary coaching](verification/practical-competence.md): complete native comparisons, private progress, SQL continuity/correction, browser interaction and separate real NPC choices with bounded accounting; human appreciation and the later finite-flight [coaching result-observation repair](maintainers/practical-competence.md#pc04--voluntary-coaching) remain open.

@@ -1,3 +1,5 @@
+import { entityGet } from './entity-collection.js';
+import { orderedRecordGet, orderedRecordSet } from './ordered-record.js';
 import { person } from './narration.js';
 import { namePhrase, formatDisplayNumber } from '@open-legend/language';
 import { activeActivity, connectActivityState } from './action-experience.js';
@@ -17,7 +19,7 @@ import { separateDeadLife } from './reincarnation.js';
 import { scarFactor } from './scar-effects.js';
 import { strikeDefinition } from './strikes.js';
 import type { Entity, WorldEvent, WorldState, Transition } from './types.js';
-import { draftWorld } from './draft.js';
+import { draftWorld, readOnlyDraftView } from './draft.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
 import { attributeRange, projectAttributes, readAttribute } from './world-modules.js';
 import { canNoticeInternalChange } from './conditions.js';
@@ -34,20 +36,24 @@ export interface LivingBody {
   harvestYield: { definitionId: string; quantity: number }[];
 }
 export function hasMemory(entity: Entity | undefined): boolean {
-  return (
-    !!entity?.actor && (entity.actor.capabilities?.memory ?? entity.actor.controller !== 'native')
-  );
+  const stored = entity && readOnlyDraftView(entity).actor;
+  const actor = stored && readOnlyDraftView(stored);
+  const capabilities = actor?.capabilities && readOnlyDraftView(actor.capabilities);
+  return !!actor && (capabilities?.memory ?? actor.controller !== 'native');
 }
 /** Current manual-work families are reviewed for the biped body only. Cognition is not anatomy.
  * docs/engine-and-world-boundaries.md#intentional-v1-specificity
  */
 export function supportsManualWork(entity: Entity | undefined): boolean {
-  return entity?.actor?.body?.plan === 'biped';
+  const stored = entity && readOnlyDraftView(entity).actor;
+  const actor = stored && readOnlyDraftView(stored);
+  return !!actor?.body && readOnlyDraftView(actor.body).plan === 'biped';
 }
 export function canSpeak(entity: Entity | undefined): boolean {
-  return (
-    !!entity?.actor && (entity.actor.capabilities?.speech ?? entity.actor.controller !== 'native')
-  );
+  const stored = entity && readOnlyDraftView(entity).actor;
+  const actor = stored && readOnlyDraftView(stored);
+  const capabilities = actor?.capabilities && readOnlyDraftView(actor.capabilities);
+  return !!actor && (capabilities?.speech ?? actor.controller !== 'native');
 }
 // Stable composition exports; authored defaults have one base-world owner.
 export { livingBody, nativeActor } from './worlds/base/bodies.js';
@@ -160,7 +166,7 @@ export function recordHealthChange(
     definition.nativeHealth?.units === 'points'
       ? before
       : range.min + (before / actor.body!.maxHealth) * (range.max - range.min);
-  const after = readAttribute(actor, definition);
+  const after = readAttribute(world, entity, definition);
   if (typeof after !== 'number') return;
   emit(
     world,
@@ -220,7 +226,7 @@ export function applyBodyEffects(
     events: [],
     outcome: outcome(false, 'effect-rejected', message),
   });
-  const prior = input.commandReceipts[id];
+  const prior = orderedRecordGet(input.commandReceipts, id);
   if (prior)
     return prior.digest === digest
       ? { world: input, events: [], outcome: prior.outcome }
@@ -235,9 +241,9 @@ export function applyBodyEffects(
         !Number.isFinite(e.amount) ||
         Math.abs(e.amount) > 100 ||
         (e.kind !== 'health' && e.amount < 0) ||
-        !input.entities[e.targetId]?.actor?.alive ||
-        !activelyParticipates(input.entities[e.targetId]) ||
-        input.entities[e.targetId]?.actor?.body?.revision !== expected[e.targetId],
+        !entityGet(input.entities, e.targetId)?.actor?.alive ||
+        !activelyParticipates(entityGet(input.entities, e.targetId)) ||
+        entityGet(input.entities, e.targetId)?.actor?.body?.revision !== expected[e.targetId],
     )
   )
     return reject('Invalid, incompatible or stale body effect.');
@@ -246,14 +252,14 @@ export function applyBodyEffects(
   for (const targetId of [...new Set(effects.map((e) => e.targetId))].sort()) {
     commitBodyEffects(
       world,
-      world.entities[targetId]!,
+      entityGet(world.entities, targetId)!,
       effects.filter((e) => e.targetId === targetId),
       id,
       events,
     );
   }
   const result = outcome(true, 'effects-applied', 'Native body effects committed.');
-  world.commandReceipts[id] = { digest, outcome: result };
+  orderedRecordSet(world.commandReceipts, id, { digest, outcome: result });
   return finish(world, events, result);
 }
 
@@ -297,7 +303,7 @@ export function commitBodyEffects(
     events,
   );
   const experience = activeActivity(world, cause);
-  const observer = experience && world.entities[experience.actorId];
+  const observer = experience && entityGet(world.entities, experience.actorId);
   connectActivityState(
     world,
     entity.id,

@@ -1,3 +1,4 @@
+import { entityGet, entityKeys } from './entity-collection.js';
 import { current, isDraft, original } from 'immer';
 import { readOnlyDraftView, sensoryDraftWrites } from './draft.js';
 import { worldRootEntities } from './entity-index.js';
@@ -152,7 +153,9 @@ interface ExposureCache {
   radii: Dimensions;
   ranges: Dimensions;
   observers: Map<string, ObserverInput>;
-  dirty?: ReturnType<typeof sensoryDraftWrites>;
+  dirty?: Omit<ReturnType<typeof sensoryDraftWrites>, 'coverage'>;
+  /** Phase coverage for one owned working draft only, never its published successor. */
+  coverage?: ReturnType<typeof sensoryDraftWrites>['coverage'];
 }
 export type EncounterBaseline = Pick<
   WorldState,
@@ -200,20 +203,29 @@ export function* prepareExposure(
       kind: 'people' | 'objects' | 'contact',
     ) => Source[];
     objectsChanged: (id: string) => boolean;
+    /** Undefined requires a full rescan; otherwise only these sources can change sight. */
+    changedPeople: (id: string) => ReadonlySet<string> | undefined;
+    selectedPeople: (position: Position, radius: number, ids: ReadonlySet<string>) => Source[];
+    orderPeople: (ids: readonly string[]) => string[];
     maximumBodyHeight: number;
     maximumBodyRadius: number;
   }
 > {
   countDomainWork('sensoryPhases');
   const ancestor = isDraft(world) ? original(world)! : world;
-  let cache = pending.get(world) ?? caches.get(ancestor);
+  const working = pending.get(world);
+  let cache = working ?? caches.get(ancestor);
   const inherited = cache?.owner === ownerToken(ancestor) ? cache.dirty : undefined;
-  const audit = sensoryDraftWrites(world);
+  const audit = sensoryDraftWrites(
+    world,
+    working?.owner === ownerToken(world) ? working.coverage : undefined,
+  );
   if (inherited) {
     for (const id of inherited.sources) recordSensoryChange(world, id);
     for (const id of inherited.observers) recordSensoryChange(world, id, true);
     audit.complete &&= inherited.complete;
     audit.overflow ||= inherited.overflow;
+    audit.orderChanged ||= inherited.orderChanged;
   }
   const changes = nextSensoryPhase(world, audit);
   const map = spatialMap(world),
@@ -260,6 +272,7 @@ export function* prepareExposure(
   }
   const prepared = cache!;
   prepared.owner = ownerToken(world);
+  prepared.coverage = audit.coverage;
   delete prepared.dirty;
   pending.set(world, prepared);
   const previousPositions = new Map<string, Position | undefined>();
@@ -272,11 +285,15 @@ export function* prepareExposure(
   const affected = new Set<string>(),
     changedFeatures = new Map<string, string>();
   const changed: Source[] = [];
+  const fullPeople = new Set<string>();
+  const peopleChanges = new Map<string, Set<string>>();
+  let orderChanged = audit.orderChanged;
   const update = (id: string, entity: Entity | undefined) => {
     const old = prepared.inputs.get(id);
     const capture = entity ? captureExposure(entity) : null;
     countDomainWork('sensoryComparisons');
     if (capture && equal(old, capture)) return;
+    orderChanged ||= !!old !== !!capture;
     previousPositions.set(id, priorPositions.get(id));
     if (old) {
       changed.push(old);
@@ -323,8 +340,27 @@ export function* prepareExposure(
     let index = 0;
     for (const id of new Set([...changes.sources, ...changes.observers])) {
       if (index++ % 64 === 0) yield;
-      update(id, entities[id]);
+      update(id, entityGet(entities, id));
     }
+  }
+  if (!rebuild && orderChanged) {
+    // Replacements and custody can reorder physical roots without changing their
+    // captured facts. Keep source and observer candidates in the actual table order,
+    // including delete/reinsert and numeric keys, while retaining unchanged geometry.
+    const roots = worldRootEntities(world, true, true);
+    const currentOrder = new Map<string, number>();
+    let reordered = false;
+    roots.forEach((entity, order) => {
+      reordered ||= prepared.order.get(entity.id) !== order;
+      currentOrder.set(entity.id, order);
+      const source = prepared.inputs.get(entity.id),
+        observer = prepared.observers.get(entity.id);
+      if (source) source.order = order;
+      if (observer) observer.order = order;
+    });
+    prepared.order = currentOrder;
+    prepared.nextOrder = roots.length;
+    orderChanged = reordered;
   }
   // Observer participation is maintained by changed source IDs. Rebuilds seed the roster.
   const observerIds = rebuild
@@ -360,7 +396,7 @@ export function* prepareExposure(
   for (const input of [...prepared.observers.values()].sort((a, b) => a.order - b.order)) {
     if (observerIndex++ % 64 === 0) yield;
     const source = prepared.inputs.get(input.id)!;
-    const entity = readOnlyDraftView(world.entities)[input.id]!;
+    const entity = entityGet(readOnlyDraftView(world.entities), input.id)!;
     const radius = visionRadius(world, entity),
       touch = sensesFor(world, entity).find((s) => s.implementation === 'body-contact-v1');
     const contactRadius =
@@ -371,6 +407,7 @@ export function* prepareExposure(
     const moved = !within(input.position, source.position, 0);
     if (
       rebuild ||
+      orderChanged ||
       moved ||
       signature !== input.signature ||
       changes.observers.has(input.id) ||
@@ -380,8 +417,12 @@ export function* prepareExposure(
       input.contacts !== base.contacts.get(input.id)
     ) {
       affected.add(input.id);
+      fullPeople.add(input.id);
       input.objectsDirty ||=
-        moved || signature !== input.signature || input.objects !== base.visibleObjects?.[input.id];
+        orderChanged ||
+        moved ||
+        signature !== input.signature ||
+        input.objects !== base.visibleObjects?.[input.id];
     }
     const changedRange = !input.signature || input.radius !== range;
     if (changedRange) {
@@ -391,7 +432,7 @@ export function* prepareExposure(
     input.radius = range;
     input.signature = signature;
     input.position = source.position;
-    if (moved || rebuild || changedRange)
+    if (moved || rebuild || changedRange || orderChanged)
       prepared.observerNear.set({
         id: input.id,
         position: input.position,
@@ -408,8 +449,28 @@ export function* prepareExposure(
     for (const observer of prepared.observerNear.query(source.position, prepared.ranges.maximum))
       if (within(source.position, observer.position, observer.radius)) {
         affected.add(observer.id);
+        if (source.object) fullPeople.add(observer.id);
+        else {
+          let ids = peopleChanges.get(observer.id);
+          if (!ids) peopleChanges.set(observer.id, (ids = new Set()));
+          ids.add(source.id);
+        }
         if (source.object) prepared.observers.get(observer.id)!.objectsDirty = true;
       }
+  }
+  if (!rebuild && !orderChanged) {
+    const changedIds = new Set(
+      changed.filter((source) => !source.object).map((source) => source.id),
+    );
+    if (changedIds.size)
+      for (const observer of observers)
+        for (const id of base.visiblePeople?.[observer.id] ?? [])
+          if (changedIds.has(id)) {
+            affected.add(observer.id);
+            let ids = peopleChanges.get(observer.id);
+            if (!ids) peopleChanges.set(observer.id, (ids = new Set()));
+            ids.add(id);
+          }
   }
   countDomainWork('sensoryObserversSelected', affected.size);
   // Maintain the existing saved outward baseline only for sources this phase evaluated.
@@ -434,6 +495,13 @@ export function* prepareExposure(
     maximumBodyHeight: prepared.heights.maximum,
     maximumBodyRadius: prepared.radii.maximum,
     objectsChanged: (id) => prepared.observers.get(id)?.objectsDirty ?? true,
+    changedPeople: (id) =>
+      rebuild || orderChanged || fullPeople.has(id)
+        ? undefined
+        : (peopleChanges.get(id) ?? new Set<string>()),
+    selectedPeople: (position, radius, ids) => prepared.near.querySelected(position, radius, ids),
+    orderPeople: (ids) =>
+      [...ids].sort((a, b) => prepared.inputs.get(a)!.order - prepared.inputs.get(b)!.order),
     nearby: (position, radius, kind) =>
       (kind === 'contact'
         ? prepared.contacts
@@ -451,10 +519,14 @@ export function captureExposureCache(world: WorldState): (result: WorldState) =>
   const ancestor = isDraft(world) ? original(world)! : world;
   const evaluated = pending.get(world);
   const cache = evaluated ?? caches.get(ancestor);
-  const audit = sensoryDraftWrites(world);
+  const audit = sensoryDraftWrites(
+    world,
+    evaluated?.owner === ownerToken(world) ? evaluated.coverage : undefined,
+  );
   if (cache?.dirty && !evaluated) {
     audit.complete &&= cache.dirty.complete;
     audit.overflow ||= cache.dirty.overflow;
+    audit.orderChanged ||= cache.dirty.orderChanged;
     for (const [target, ids] of [
       [audit.sources, cache.dirty.sources],
       [audit.observers, cache.dirty.observers],
@@ -474,14 +546,16 @@ export function captureExposureCache(world: WorldState): (result: WorldState) =>
   return (result) => {
     if (!cache || (cache.owner !== ownerToken(world) && cache.owner !== ownerToken(ancestor)))
       return;
+    delete cache.coverage;
     cache.owner = ownerToken(result);
-    cache.dirty = audit;
+    const { coverage: _coverage, ...dirty } = audit;
+    cache.dirty = dirty;
     if (evaluated)
       for (const [id, input] of cache.observers) {
         input.people = result.visiblePeople?.[id];
         input.objects = result.visibleObjects?.[id];
         input.episodes = result.perceptionEpisodes?.[id];
-        input.contacts = result.entities[id]?.actor?.contacts;
+        input.contacts = entityGet(result.entities, id)?.actor?.contacts;
         input.objectsDirty = false;
       }
     caches.set(result, cache);
@@ -508,7 +582,7 @@ export function snapshotEncounters(world: WorldState): EncounterBaseline {
       ? {
           get: (id) => {
             if (available.dirty?.sources.has(id) || available.dirty?.observers.has(id)) {
-              const entity = readOnlyDraftView(world.entities)[id];
+              const entity = entityGet(readOnlyDraftView(world.entities), id);
               return entity?.placement?.mode === 'world' ? { ...worldPosition(entity) } : undefined;
             }
             return available.inputs.get(id)?.position;
@@ -525,8 +599,8 @@ export function snapshotEncounters(world: WorldState): EncounterBaseline {
     ...(world.visibleObjects ? { visibleObjects: snapshot(world.visibleObjects) } : {}),
     ...(world.perceptionEpisodes ? { perceptionEpisodes: snapshot(world.perceptionEpisodes) } : {}),
   };
-  for (const id of available?.observers.keys() ?? Object.keys(world.entities)) {
-    const contacts = world.entities[id]?.actor?.contacts;
+  for (const id of available?.observers.keys() ?? entityKeys(world.entities)) {
+    const contacts = entityGet(world.entities, id)?.actor?.contacts;
     result.contacts.set(id, contacts ? snapshot(contacts) : contacts);
     const input = available?.observers.get(id);
     if (input && evaluated) {

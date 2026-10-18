@@ -1,3 +1,4 @@
+import { entityGet } from '../../entity-collection.js';
 import type { ActivityHostDescriptor } from '../../activity-hosts.js';
 import { seesEntity } from '../../perception.js';
 import { capabilityBlocked } from '../../status-capabilities.js';
@@ -48,10 +49,10 @@ export const BASE_FIRE_ACTIVITY_HOST: ActivityHostDescriptor = {
     },
   },
   acceptsTarget: (world, targetId) =>
-    !!world.entities[targetId]?.heat && !world.entities[targetId]?.retirement,
+    !!entityGet(world.entities, targetId)?.heat && !entityGet(world.entities, targetId)?.retirement,
   evaluateCondition(world, actorId, targetId) {
-    const actor = world.entities[actorId],
-      target = world.entities[targetId];
+    const actor = entityGet(world.entities, actorId),
+      target = entityGet(world.entities, targetId);
     const depends = [actorId, targetId];
     if (
       !actor?.actor?.alive ||

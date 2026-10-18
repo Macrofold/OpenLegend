@@ -1,3 +1,5 @@
+import { entityGet } from '../../entity-collection.js';
+import { cloneEntities, entitySet } from '../../entity-collection.js';
 import {
   canWalkSegment,
   distance3D,
@@ -42,7 +44,7 @@ export function checkBaseOpeningReadiness(
     status: OpeningReadiness['findings'][number]['status'],
     message: string,
   ) => result.findings.push({ id, status, message });
-  const player = world.entities[candidate.player.id];
+  const player = entityGet(world.entities, candidate.player.id);
   const start = player && supportedPosition(player);
   if (
     !player ||
@@ -113,7 +115,7 @@ export function checkBaseOpeningReadiness(
     for (const scene of candidate.scene) {
       if (scene.kind !== 'resource' || scene.definition.id !== definitionId || scene.quantity < 1)
         continue;
-      const target = world.entities[scene.id]!;
+      const target = entityGet(world.entities, scene.id)!;
       const access = route(target, SIMULATION_RULES.interactionRadius);
       if (access.status === 'incomplete') incomplete = true;
       if (access.status !== 'ready') continue;
@@ -123,7 +125,8 @@ export function checkBaseOpeningReadiness(
         ...player,
         placement: worldPlacement(access.stance, access.stance.surfaceId),
       };
-      const atSource = { ...resumed, entities: { ...world.entities, [player.id]: standingPlayer } };
+      const atSource = { ...resumed, entities: cloneEntities(world.entities) };
+      entitySet(atSource.entities, player.id, standingPlayer);
       const available = nativeOperationAvailable(atSource, {
         id: 'opening-gather-check',
         actorId: player.id,
@@ -258,7 +261,7 @@ export function checkBaseOpeningReadiness(
     const quarryAccess = anyAccess(
       candidate.scene
         .filter((scene) => scene.kind === 'hare')
-        .map((scene) => world.entities[scene.id]!)
+        .map((scene) => entityGet(world.entities, scene.id)!)
         .filter((entity) => entity.actor?.alive),
     );
     finding(
@@ -273,7 +276,7 @@ export function checkBaseOpeningReadiness(
     const heatAccess = anyAccess(
       candidate.scene
         .filter((scene) => scene.kind === 'fire' && scene.fuelSeconds > 0)
-        .map((scene) => world.entities[scene.id]!),
+        .map((scene) => entityGet(world.entities, scene.id)!),
     );
     finding(
       'cooking-access',

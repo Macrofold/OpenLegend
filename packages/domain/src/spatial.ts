@@ -55,6 +55,33 @@ export class SpatialCandidateIndex<T extends { id: string; position: Position; o
     this.entries.set(value.id, value);
     countDomainWork('spatialEntriesPrepared');
   }
+  /** Query an already bounded changed-ID set with the same cell envelope and ordering as
+   * the ordinary query. This does not replace the consumer's exact geometry check. */
+  querySelected(position: Position, radius: number, ids: ReadonlySet<string>): T[] {
+    const low = [position.x - radius, position.y - radius, position.z - radius].map((value) =>
+      Math.floor(value / this.cellSize),
+    );
+    const high = [position.x + radius, position.y + radius, position.z + radius].map((value) =>
+      Math.floor(value / this.cellSize),
+    );
+    const found: T[] = [];
+    for (const id of ids) {
+      chargeWork({ tests: 1 });
+      const entry = this.entries.get(id);
+      if (!entry) continue;
+      const point = entry.position;
+      if (
+        [point.x, point.y, point.z].every((value, axis) => {
+          const cell = Math.floor(value / this.cellSize);
+          return cell >= low[axis]! && cell <= high[axis]!;
+        })
+      )
+        found.push(entry);
+    }
+    countDomainWork('spatialQueries');
+    countDomainWork('spatialCandidates', found.length);
+    return found.sort((a, b) => a.order - b.order);
+  }
   query(position: Position, radius: number): T[] {
     const found: T[] = [];
     const min = [position.x - radius, position.y - radius, position.z - radius].map((v) =>

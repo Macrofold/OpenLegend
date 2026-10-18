@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { setSpatialPosition, worldSupport } from './index.js';
 import { worldPosition } from './spatial-state.js';
@@ -22,9 +23,9 @@ function encounter() {
   world.paused = false;
   setSpatialPosition(
     world,
-    world.entities[PLAYER_ID]!,
-    { ...worldPosition(world.entities[NPC_ID]!) },
-    worldSupport(world.entities[PLAYER_ID]!),
+    entityGet(world.entities, PLAYER_ID)!,
+    { ...worldPosition(entityGet(world.entities, NPC_ID)!) },
+    worldSupport(entityGet(world.entities, PLAYER_ID)!),
   );
   world = executeCommand(world, {
     id: 'encounter',
@@ -48,10 +49,10 @@ function setup() {
     watermark: recall.observationWatermark,
     evidenceIds: recall.entries.map((e) => e.id),
     entityIds: [NPC_ID, PLAYER_ID],
-    expectedPlan: world.entities[NPC_ID]!.actor!.planGeneration,
+    expectedPlan: entityGet(world.entities, NPC_ID)!.actor!.planGeneration,
     actions: { continue: null },
     restEpisode: null,
-    bodyEligibility: bodyEligibilityRevision(world, world.entities[NPC_ID]!),
+    bodyEligibility: bodyEligibilityRevision(world, entityGet(world.entities, NPC_ID)!),
   };
   const proposal: MindProposal = {
     decisionId: binding.decisionId,
@@ -200,7 +201,7 @@ describe('fixture: bounded authored minds', () => {
   });
   it('marks dreams imagined and does not insert them into observed episodes', () => {
     const { world, binding, proposal } = setup();
-    world.entities[NPC_ID]!.actor!.attributes!['wilderness:energy']!.value = 60;
+    entityGet(world.entities, NPC_ID)!.actor!.attributes!['wilderness:energy']!.value = 60;
     const resting = executeCommand(world, {
       id: 'rest',
       actorId: NPC_ID,
@@ -210,7 +211,7 @@ describe('fixture: bounded authored minds', () => {
       operation: 'activate',
     }).world;
     binding.purpose = 'dream';
-    binding.restEpisode = resting.entities[NPC_ID]!.actor!.action!.id;
+    binding.restEpisode = entityGet(resting.entities, NPC_ID)!.actor!.action!.id;
     proposal.records.forEach((r) => (r.source = 'imagined'));
     const result = commitCognition(resting, binding, proposal);
     expect(result.outcome.ok).toBe(true);
@@ -223,16 +224,16 @@ describe('fixture: bounded authored minds', () => {
     world.paused = false;
     setSpatialPosition(
       world,
-      world.entities[PLAYER_ID]!,
+      entityGet(world.entities, PLAYER_ID)!,
       { y: 0, x: 100, z: 100 },
-      worldSupport(world.entities[PLAYER_ID]!),
+      worldSupport(entityGet(world.entities, PLAYER_ID)!),
     );
     world = advanceWorld(world, 1).world;
     setSpatialPosition(
       world,
-      world.entities[PLAYER_ID]!,
-      { ...worldPosition(world.entities[NPC_ID]!) },
-      worldSupport(world.entities[PLAYER_ID]!),
+      entityGet(world.entities, PLAYER_ID)!,
+      { ...worldPosition(entityGet(world.entities, NPC_ID)!) },
+      worldSupport(entityGet(world.entities, PLAYER_ID)!),
     );
     world = advanceWorld(world, 1).world;
     const initial = (world.experience?.awareness[NPC_ID] ?? []).filter((m) =>

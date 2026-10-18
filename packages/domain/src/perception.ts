@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { chargeWork } from './work-budget.js';
 import { worldPosition } from './spatial-state.js';
@@ -150,7 +151,7 @@ function receiverIndex(world: WorldState, entities: WorldState['entities']): Rec
   const existing = byManifest?.get(manifest);
   if (existing) return existing;
   const entries: Receiver[] = [];
-  for (const entity of Object.values(entities)) {
+  for (const entity of entityValues(entities)) {
     if (!hasMemory(entity) || !activelyParticipates(entity)) continue;
     chargeWork({ candidates: 1 });
     entries.push({
@@ -230,7 +231,7 @@ export function speechObservers(world: WorldState, source: Entity, volume: Speec
     },
   );
   // Relative receiver order is unchanged by inserting/removing non-observers.
-  return found.sort((a, b) => a.order - b.order).map((entry) => entities[entry.id]!);
+  return found.sort((a, b) => a.order - b.order).map((entry) => entityGet(entities, entry.id)!);
 }
 
 type AcousticPath = { position: Position; ear: number; transmission: number };

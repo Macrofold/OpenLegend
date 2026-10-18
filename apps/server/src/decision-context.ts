@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { outingContext } from './outing-view.js';
 import { remainingActivityText, learnedActivityCandidates } from './activity-context.js';
 import { MemoryReadCache, type CognitionPreparation } from './memory-repository.js';
@@ -134,7 +135,7 @@ function socialEntityIds(world: Parameters<typeof activeAppraisals>[0], actorId:
         entry.targetId ? [entry.targetId] : [],
       ),
     ]),
-  ].filter((id) => !!world.entities[id]);
+  ].filter((id) => !!entityGet(world.entities, id));
 }
 
 function fitActionCandidates(
@@ -248,7 +249,7 @@ function decisionActionCandidates(
 
 /** Paused work is part of the actor's own intentions: it resumes when current work ends. */
 function pausedWorkText(world: import('@open-legend/domain').WorldState, actorId: string) {
-  const paused = world.entities[actorId]?.actor?.agency.suspended;
+  const paused = entityGet(world.entities, actorId)?.actor?.agency.suspended;
   if (!paused) return null;
   return `Earlier work is paused. ${remainingActivityText(world, actorId, paused)} It resumes, after rechecking its targets, when my current work ends; stopping or replacing work discards it.`;
 }
@@ -491,7 +492,7 @@ export async function prepareDecision(
   if (
     carryingConcern &&
     carryingMeter &&
-    readAttribute(snapshotActor, carryingMeter) !== undefined &&
+    readAttribute(world, observed.actor, carryingMeter) !== undefined &&
     !observed.inventoryCoverage.paged &&
     !observed.inventory.some((item) =>
       world.itemDefinitions[item.definitionId]?.properties.some(
@@ -501,7 +502,7 @@ export async function prepareDecision(
   )
     requiredContext['carryingConcern'] = renderNarration(
       world,
-      narrationTemplate(carryingConcern.text, { subject: world.entities[actorId] }),
+      narrationTemplate(carryingConcern.text, { subject: entityGet(world.entities, actorId) }),
       actorId,
     );
   if (world.innerWorlds?.[actorId]?.reconsiderationRequired)
@@ -617,7 +618,11 @@ export async function prepareDecision(
   await service.flushMemorySources(actorId, false);
   const sources = [
     ...recall.selectedSources(candidates, selection.selected),
-    ...(retainedEvidence ?? []).map((entry) => ({ id: entry.memory.id, revision: entry.revision })),
+    ...(retainedEvidence ?? []).map((entry) => ({
+      id: entry.memory.id,
+      sourceKind: entry.sourceKind,
+      revision: entry.revision,
+    })),
   ];
   const outcomeBinding = JSON.stringify(outcomeIds);
   const rememberedSubjects = new Set(
@@ -752,7 +757,7 @@ export async function prepareDecision(
   if (
     currentCarryingConcern &&
     currentCarryingMeter &&
-    readAttribute(actor, currentCarryingMeter) !== undefined &&
+    readAttribute(currentWorld, currentObserved.actor, currentCarryingMeter) !== undefined &&
     !currentObserved.inventoryCoverage.paged &&
     !currentObserved.inventory.some((i) =>
       currentWorld.itemDefinitions[i.definitionId]?.properties.some(
@@ -762,7 +767,9 @@ export async function prepareDecision(
   )
     context['carryingConcern'] = renderNarration(
       currentWorld,
-      narrationTemplate(currentCarryingConcern.text, { subject: currentWorld.entities[actorId] }),
+      narrationTemplate(currentCarryingConcern.text, {
+        subject: entityGet(currentWorld.entities, actorId),
+      }),
       actorId,
     );
   const references = responseReferences(
@@ -809,7 +816,10 @@ export async function prepareDecision(
     ...entityReferenceMap(currentWorld, planningTargetIds, actorId),
   };
   const binding: CognitionBinding = {
-    bodyEligibility: bodyEligibilityRevision(currentWorld, currentWorld.entities[actorId]!),
+    bodyEligibility: bodyEligibilityRevision(
+      currentWorld,
+      entityGet(currentWorld.entities, actorId)!,
+    ),
     knowledgeReferences: selectedKnowledgeReferences(currentWorld, actorId, currentSelection),
     actorId,
     decisionId: jobId,
@@ -838,7 +848,8 @@ export async function prepareDecision(
       }),
     ),
     expectedPlan: actor.planGeneration,
-    restEpisode: dreamStatus(currentWorld, currentWorld.entities[actorId])?.episode ?? null,
+    restEpisode:
+      dreamStatus(currentWorld, entityGet(currentWorld.entities, actorId))?.episode ?? null,
     actions: planActions,
   };
   const offered: { id: string; description: string }[] = [];
@@ -1027,7 +1038,7 @@ export function refreshDecisionActions(
   service: WorldService,
   prepared: Awaited<ReturnType<typeof prepareDecision>>,
 ) {
-  const actor = service.world.entities[prepared.binding.actorId]?.actor;
+  const actor = entityGet(service.world.entities, prepared.binding.actorId)?.actor;
   if (!actor) throw new Error('Actor unavailable.');
   const observed = decisionObservation(service.world, prepared.binding.actorId);
   return {

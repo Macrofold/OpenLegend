@@ -1,3 +1,4 @@
+import { entityValues } from './entity-collection.js';
 import { recordSemanticChange } from './dependencies.js';
 import { assemblySpatialMap } from './assembly-geometry.js';
 import { activelyParticipates } from './participation-state.js';
@@ -19,6 +20,7 @@ import {
 } from '@open-legend/spatial';
 import type { Entity, WorldState } from './types.js';
 import { current, isDraft } from 'immer';
+import { readOnlyDraftView } from './draft.js';
 
 export interface FlightProgress {
   routeId: string;
@@ -94,17 +96,19 @@ export function worldPosition(entity: Entity | undefined): WorldPoint | undefine
   return placement.position;
 }
 export function worldSupport(entity: Entity | undefined): string | null {
-  const placement = entity?.placement;
+  const stored = entity && readOnlyDraftView(entity).placement;
+  const placement = stored && readOnlyDraftView(stored);
   return placement?.mode === 'world' ? placement.supportSurfaceId : null;
 }
 export function bodyProfile(entity: Entity): BodyProfile {
-  const base =
-    entity.actor && !entity.actor.alive && entity.spatial.inactiveBody
-      ? entity.spatial.inactiveBody
-      : entity.spatial.body;
+  entity = readOnlyDraftView(entity);
+  const spatial = readOnlyDraftView(entity.spatial);
+  const actor = entity.actor && readOnlyDraftView(entity.actor);
+  const base = actor && !actor.alive && spatial.inactiveBody ? spatial.inactiveBody : spatial.body;
   // Navigation requests and reusable reads must never retain a live Immer proxy.
   const resolved = isDraft(base) ? current(base) : base;
-  const form = entity.spatial.softFootprint;
+  const storedForm = spatial.softFootprint;
+  const form = storedForm && readOnlyDraftView(storedForm);
   return form
     ? {
         ...resolved,
@@ -230,7 +234,7 @@ export function validateSpatialWorld(world: WorldState): void {
         throw new Error('Flight landing has no valid stance.');
     }
   }
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     validateBodyProfile(entity.spatial?.body);
     if (entity.spatial.inactiveBody !== undefined) validateBodyProfile(entity.spatial.inactiveBody);
     if (
@@ -295,6 +299,14 @@ export function validateSpatialWorld(world: WorldState): void {
         a.path.some((p) => !finitePoint(p) || !resolveSupport(map, p, p.surfaceId))
       )
         throw new Error('Invalid saved spatial route.');
+      if (
+        a.motionSampleRemainingMetres !== undefined &&
+        (a.type !== 'move' ||
+          a.stage !== 'approaching' ||
+          !Number.isFinite(a.motionSampleRemainingMetres) ||
+          a.motionSampleRemainingMetres <= 0)
+      )
+        throw new Error('Invalid saved movement sampling progress.');
       // Pending preparation is saved intent, never a saved WASM ref or worker handle.
       // Old geometry may legitimately await replanning; bound/validate its plain data here.
       if (a.navigation) {

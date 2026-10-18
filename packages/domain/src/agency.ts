@@ -1,3 +1,4 @@
+import { entityGet, entityHas, entityValues } from './entity-collection.js';
 import { validExactInventorySources } from './native-command-contracts.js';
 import {
   isCookingInputRole,
@@ -171,7 +172,7 @@ export interface ActorAgency {
 /** Existing plan/history bounds limit these actor-local references. Retrieval applies
  * correction, forgetting and retention; execution receipts cannot recreate lost evidence. */
 export function requiredOutcomeMemoryIds(world: WorldState, actorId: string): string[] {
-  const agency = world.entities[actorId]?.actor?.agency;
+  const agency = entityGet(world.entities, actorId)?.actor?.agency;
   if (!agency) return [];
   const plans = [agency.plan, agency.suspended];
   return [
@@ -211,7 +212,7 @@ export function rememberSighting(
   subjectId: string,
   point: SurfacePoint,
 ): void {
-  const actor = world.entities[actorId]!.actor!;
+  const actor = entityGet(world.entities, actorId)!.actor!;
   const places = (actor.agency.places ??= []);
   const episode = world.perceptionEpisodes?.[actorId]?.[subjectId] ?? null;
   const last = places.at(-1);
@@ -516,7 +517,7 @@ function retirePlan(world: WorldState, actor: ActorComponent, actorId?: string):
 /** Explicit replacement follows native cancellation: spent inputs are never refunded, and
  * work that was paused for later resumption is discarded too. */
 export function stopCurrentWork(world: WorldState, actorId: string): void {
-  const actor = world.entities[actorId]!.actor!;
+  const actor = entityGet(world.entities, actorId)!.actor!;
   retirePlan(world, actor, actorId);
   discardSuspended(world, actor, actorId);
   if (actor.action) {
@@ -552,7 +553,7 @@ export function pauseRefusal(action: ActorComponent['action']): string | null {
  * is re-queued to restart from scratch later: effects already committed stay, elapsed work
  * on that step is not kept. One paused frontier at most. */
 export function suspendCurrentWork(world: WorldState, actorId: string): Outcome | null {
-  const actor = world.entities[actorId]!.actor!;
+  const actor = entityGet(world.entities, actorId)!.actor!;
   const plan = actor.agency.plan;
   if (!plan || plan.status !== 'active') return null;
   if (actor.agency.suspended)
@@ -636,7 +637,7 @@ function activityObjectBindings(world: WorldState, plan: ActorPlan): string[] {
 /** After the interrupting work ends, revalidate and reinstate the paused frontier. An
  * invalid resumption becomes an explicit blocked plan, never a silent retarget. */
 function resumeSuspended(world: WorldState, actorId: string): void {
-  const actor = world.entities[actorId]!.actor!;
+  const actor = entityGet(world.entities, actorId)!.actor!;
   const paused = actor.agency.suspended!;
   actor.agency.suspended = null;
   // Plan revisions keep increasing across the interrupting plan, so a decision made while
@@ -665,7 +666,9 @@ function resumeSuspended(world: WorldState, actorId: string): void {
       ? 'its goal is no longer active.'
       : changed
         ? 'a target is no longer the one I saw.'
-        : objects.some((id) => !Object.hasOwn(world.entities, id) || world.entities[id]!.retirement)
+        : objects.some(
+              (id) => !entityHas(world.entities, id) || entityGet(world.entities, id)!.retirement,
+            )
           ? 'something the activity uses no longer exists.'
           : null;
   paused.status = reason ? 'blocked' : 'active';
@@ -723,7 +726,7 @@ export function linkPlanResult(
   evidenceId: string | undefined,
 ): void {
   plan.resultMemoryId = evidenceId;
-  world.entities[actorId]!.actor!.agency.lastResultMemoryId = evidenceId;
+  entityGet(world.entities, actorId)!.actor!.agency.lastResultMemoryId = evidenceId;
 }
 
 /** Cancellation and suspended-work discard share one terminal report. The marker
@@ -823,7 +826,7 @@ export function finishPlanAction(
 ): void {
   const resultMemoryId = endActivity(world, actorId, actionId, result);
   releaseInvocationResources(world, actionId);
-  const actor = world.entities[actorId]!.actor!;
+  const actor = entityGet(world.entities, actorId)!.actor!;
   const plan = actor.agency.plan;
   const step = plan?.steps.find(
     (entry) => entry.status === 'running' && entry.actionId === actionId,
@@ -881,7 +884,7 @@ export function finishPlanAction(
   // not another narrative of the same effects. Goal completion remains actor-declared.
 }
 export function readyPlanStep(world: WorldState, actorId: string): PlanStep | undefined {
-  const actor = world.entities[actorId]!.actor!;
+  const actor = entityGet(world.entities, actorId)!.actor!;
   // Paused work resumes once the interrupting frontier has ended, whatever its outcome.
   if (actor.agency.suspended && !actor.action && actor.agency.plan?.status !== 'active')
     resumeSuspended(world, actorId);
@@ -902,7 +905,7 @@ export function readyPlanStep(world: WorldState, actorId: string): PlanStep | un
     actor.action ||
     !actor.alive ||
     actor.incapacitated ||
-    capabilityBlocked(world, world.entities[actorId], 'actions')
+    capabilityBlocked(world, entityGet(world.entities, actorId), 'actions')
   )
     return;
   if (
@@ -913,14 +916,14 @@ export function readyPlanStep(world: WorldState, actorId: string): PlanStep | un
   const next =
     plan.steps.find((step) => step.status === 'queued') ?? activityFrontier(world, actorId, plan);
   const targetId = next && 'targetId' in next.command ? next.command.targetId : undefined;
-  const target = targetId ? world.entities[targetId] : undefined;
+  const target = targetId ? entityGet(world.entities, targetId) : undefined;
   const seen = target && supportedPosition(target);
-  if (seen && seesEntity(world, world.entities[actorId]!, target))
+  if (seen && seesEntity(world, entityGet(world.entities, actorId)!, target))
     rememberSighting(world, actorId, target.id, seen);
   return next;
 }
 export function validateAgency(world: WorldState): void {
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     if (!entity.actor) continue;
     const action = entity.actor.action;
     if (
@@ -1194,7 +1197,7 @@ export function deferAttempt(
     (resolution !== undefined && !validActionResolution(resolution))
   )
     return outcome(false, 'invalid-attempt', 'An attempt needs 1–500 characters.');
-  const actor = world.entities[actorId]!.actor!;
+  const actor = entityGet(world.entities, actorId)!.actor!;
   const normalized = normalizeAttempt(description);
   const prior = actor.agency.attempts.find(
     (attempt) =>
@@ -1531,7 +1534,7 @@ export function proposeActionRevision(
     );
   const held = deferAttempt(world, actorId, id, fulfillment.requested, targetEntityId, mode, slots);
   if (!held.ok) return held;
-  const actor = world.entities[actorId]!.actor!;
+  const actor = entityGet(world.entities, actorId)!.actor!;
   const pending = actor.agency.attempts.find(
     (a) =>
       sameAttempt(a, fulfillment.requested, targetEntityId, mode, slots) &&
@@ -1576,11 +1579,13 @@ export function confirmActionRevision(
   attemptId: string,
   id: string,
 ): Outcome {
-  const actor = Object.hasOwn(world.entities, actorId) ? world.entities[actorId]?.actor : undefined;
+  const actor = entityHas(world.entities, actorId)
+    ? entityGet(world.entities, actorId)?.actor
+    : undefined;
   if (
     !actor?.alive ||
     actor.incapacitated ||
-    capabilityBlocked(world, world.entities[actorId], 'actions')
+    capabilityBlocked(world, entityGet(world.entities, actorId), 'actions')
   )
     return outcome(
       false,

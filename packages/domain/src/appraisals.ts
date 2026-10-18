@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { subjectNarration, presentVerb, person } from './narration.js';
 import {
   prepareAppraisalIndex,
@@ -419,7 +420,7 @@ function privateChange(
           ` ${definition.label}.`,
         ])
       : { parts: [person(record.actorId, 'possessive'), ` ${definition.label} has ended.`] },
-    world.entities[record.actorId],
+    entityGet(world.entities, record.actorId),
     undefined,
     {
       appraisalId: record.id,
@@ -457,8 +458,8 @@ function install(
   bindings?: AppraisalBindings,
 ): Outcome {
   if (
-    !hasMemory(world.entities[actorId]) ||
-    !world.entities[actorId]?.actor?.alive ||
+    !hasMemory(entityGet(world.entities, actorId)) ||
+    !entityGet(world.entities, actorId)?.actor?.alive ||
     !validValue(definition, value) ||
     (definition.lifetime.kind === 'decays' &&
       value.kind === 'scaled' &&
@@ -580,7 +581,7 @@ export function changeAppraisal(
   bindings: AppraisalBindings,
   events: WorldEvent[],
 ): Outcome {
-  if (!hasMemory(world.entities[actorId]) || !isSafeRecordId(operationId))
+  if (!hasMemory(entityGet(world.entities, actorId)) || !isSafeRecordId(operationId))
     return outcome(false, 'appraisal-rejected', 'Invalid appraisal owner or operation.');
   if (change.kind === 'create') {
     const definition = appraisalDefinition(world, change.definitionPin);
@@ -742,7 +743,7 @@ export function appraisePerceivedEvent(
   pin: DefinitionPin,
   value: AppraisalValue,
 ): void {
-  if (!event.audience.includes(actorId) || !hasMemory(world.entities[actorId])) return;
+  if (!event.audience.includes(actorId) || !hasMemory(entityGet(world.entities, actorId))) return;
   const definition = appraisalDefinition(world, pin);
   if (!definition) return;
   const cause: AppraisalEvidence = {
@@ -842,7 +843,7 @@ export function configureAppraisalProcess(
     !['condition', 'disposition'].includes(request.kind) ||
     JSON.stringify(request).length * 3 > 1800 ||
     !definition ||
-    !hasMemory(input.entities[request.actorId]) ||
+    !hasMemory(entityGet(input.entities, request.actorId)) ||
     !isSafeRecordId(request.id) ||
     !definition.causes.includes(request.kind) ||
     !Number.isFinite(request.intervalSeconds) ||
@@ -929,7 +930,7 @@ export function advanceAppraisals(world: WorldState, events: WorldEvent[]): void
     advanceWorkInterval(world, process.id);
     chargeInvocation(world, process.id, { tests: 1 });
     process.nextAt = world.simTime + process.intervalSeconds;
-    const actor = world.entities[process.actorId];
+    const actor = entityGet(world.entities, process.actorId);
     if (!actor?.actor?.alive || !hasMemory(actor)) continue;
     const definition = appraisalDefinition(world, process.definitionPin)!;
     const previous = process.activeId
@@ -1049,7 +1050,7 @@ export function validateAppraisals(world: WorldState): void {
   validateAppraisalPolicy(world.moduleManifest.appraisals);
   const ids = new Set<string>();
   for (const [actorId, records] of Object.entries(world.appraisals ?? {})) {
-    if (!hasMemory(world.entities[actorId]) || Array.isArray(records))
+    if (!hasMemory(entityGet(world.entities, actorId)) || Array.isArray(records))
       throw new Error('Invalid appraisal owner or unmigrated records.');
     for (const [id, record] of Object.entries(records)) {
       if (
@@ -1242,7 +1243,7 @@ export function validateAppraisals(world: WorldState): void {
       id !== process.id ||
       ids.has(id) ||
       !isSafeRecordId(id) ||
-      !hasMemory(world.entities[process.actorId]) ||
+      !hasMemory(entityGet(world.entities, process.actorId)) ||
       !definition ||
       !['condition', 'disposition'].includes(process.kind) ||
       JSON.stringify(process).length * 3 > 2048 ||

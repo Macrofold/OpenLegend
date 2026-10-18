@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -279,9 +280,9 @@ async function harness(
   // Hungry, conscious Ada with owned edible food: hunger alone does not trigger native protection.
   await editWorld(service, (world) => {
     createItemLot(world, NPC_ID, 'berries', 2, 'fixture-berries');
-    world.entities[NPC_ID]!.actor!.attributes!['wilderness:fullness']!.value = 30;
+    entityGet(world.entities, NPC_ID)!.actor!.attributes!['wilderness:fullness']!.value = 30;
   });
-  const ada = () => service.world.entities[NPC_ID]!.actor!;
+  const ada = () => entityGet(service.world.entities, NPC_ID)!.actor!;
   const berries = () => quantityOf(service.world, NPC_ID, 'berries');
   const jobCalls = (jobId: string) => ({
     judges: calls.judges.filter((request) => request.requestId.startsWith(`${jobId}:`)),
@@ -458,7 +459,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     });
     // This fixture measures Ada's repeated opportunity, with other residents outside its scope.
     await editWorld(h.service, (world) => {
-      for (const entity of Object.values(world.entities))
+      for (const entity of entityValues(world.entities))
         if (entity.actor?.controller === 'npc' && entity.id !== NPC_ID)
           entity.actor.controller = 'native';
     });
@@ -1022,8 +1023,11 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(h.calls.generations).toHaveLength(0);
   });
 
-  it('dispatches nothing when the budget is exhausted', async () => {
-    const h = await harness({ config: { budgetUsd: 0 }, judge: (request) => answer(request, {}) });
+  it('dispatches nothing when the allowance cannot cover the next call', async () => {
+    const h = await harness({
+      config: { budgetUsd: 0.001 },
+      judge: (request) => answer(request, {}),
+    });
     const job = await h.thought();
     expect(job.status).toBe('failed');
     expect(disposition(job)).toBe('budget-exhausted');

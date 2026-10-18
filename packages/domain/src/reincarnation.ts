@@ -1,3 +1,4 @@
+import { entityGet, entitySet, entityValues } from './entity-collection.js';
 import { equippedItems } from './equipment.js';
 import { canStand, distance3D, surfaceHeight, type SurfacePoint } from '@open-legend/spatial';
 import { bodyPolicy, bodyNarration } from './body-policy.js';
@@ -123,7 +124,7 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
     remains: { ...entity.remains!, sourceId: entity.id, yields: [] },
   };
   delete corpse.spatial.flight;
-  world.entities[corpseId] = corpse;
+  entitySet(world.entities, corpseId, corpse);
   rootMembershipChanged(world, corpseId);
   // Snapshot the existing indexed custody tree before moving anything. Deepest first lets
   // a retained child leave a lost bag without exceeding another bag's capacity or depth.
@@ -134,7 +135,7 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
     for (const id of directChildIds(world, parent)) {
       const item = itemFor(world, id)!;
       lots.push({ id, parent, type: item.definitionId });
-      if (world.entities[id]?.container) pending.push(id);
+      if (entityGet(world.entities, id)?.container) pending.push(id);
     }
   }
   const types = [...new Set(lots.map((lot) => lot.type))].sort();
@@ -333,7 +334,7 @@ export function scarTreatmentProblem(
 ): string | null {
   const policy = reincarnationPolicy(world),
     treatment = policy?.treatment,
-    rest = world.entities[restId];
+    rest = entityGet(world.entities, restId);
   if (
     !policy ||
     !treatment ||
@@ -470,7 +471,7 @@ export function validateReincarnationPolicy(policy: ReincarnationPolicy | null):
 }
 export function validateReincarnation(world: WorldState): void {
   const policy = reincarnationPolicy(world);
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     const actor = entity.actor;
     if (!actor) continue;
     if (
@@ -513,7 +514,7 @@ export function validateReincarnation(world: WorldState): void {
                 item.quantity > 0,
             ),
         ) ||
-        world.entities[death.corpseId]?.remains?.sourceId !== entity.id)
+        entityGet(world.entities, death.corpseId)?.remains?.sourceId !== entity.id)
     )
       throw new Error('Invalid pending player death.');
   }

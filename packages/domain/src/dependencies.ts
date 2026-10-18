@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { isDraft } from 'immer';
 import { isSafeRecordId, hasRecordFields } from './records.js';
 import { sameDefinitionPin, isDefinitionPin } from './state-owners.js';
@@ -61,13 +62,42 @@ export interface ChangeSet {
 }
 const pending = new WeakMap<
   WorldState,
-  { changes: Map<string, SemanticChange>; conservative: boolean; states: Map<StateField, number> }
+  {
+    changes: Map<string, SemanticChange>;
+    conservative: boolean;
+    states: Map<StateField, number>;
+    stateSequence: number;
+    stateAt: Map<string, number>;
+  }
 >();
 type StateField = Extract<SemanticChange, { kind: 'state' }>['field'];
 /** Private-phase invalidation follows mutation owners, including silent status changes.
  * This rebuildable token is not a persisted revision or permission to reuse across commands. */
 export function stateChangeRevision(world: WorldState, field: StateField): number {
   return pending.get(world)?.states.get(field) ?? 0;
+}
+/** A cursor covers this exact editable phase, including repeated writes to an already
+ * coalesced entity/field. It certifies recorded state owners only, never direct writes,
+ * allocation, membership, changed definitions or another draft/publication. */
+export function captureStateChanges(world: WorldState) {
+  const owner = pending.get(world);
+  return { world, owner, sequence: owner?.stateSequence ?? 0 };
+}
+export function stateChangesSince(
+  world: WorldState,
+  cursor: ReturnType<typeof captureStateChanges>,
+): ReadonlyArray<Extract<SemanticChange, { kind: 'state' }>> | undefined {
+  const owner = pending.get(world);
+  if (world !== cursor.world || (cursor.owner && cursor.owner !== owner) || owner?.conservative)
+    return undefined;
+  const changes: Array<Extract<SemanticChange, { kind: 'state' }>> = [];
+  if (owner)
+    for (const [key, sequence] of owner.stateAt) {
+      if (sequence <= cursor.sequence) continue;
+      const change = owner.changes.get(key);
+      if (change?.kind === 'state') changes.push(change);
+    }
+  return changes;
 }
 const published = new WeakMap<WorldState, ChangeSet>();
 export const MAX_CHANGE_SCOPES = 4096;
@@ -160,7 +190,16 @@ export function recordSemanticChange(world: WorldState, change: SemanticChange):
     };
   let set = pending.get(world);
   if (!set)
-    pending.set(world, (set = { changes: new Map(), conservative: false, states: new Map() }));
+    pending.set(
+      world,
+      (set = {
+        changes: new Map(),
+        conservative: false,
+        states: new Map(),
+        stateSequence: 0,
+        stateAt: new Map(),
+      }),
+    );
   if (change.kind === 'state')
     set.states.set(change.field, (set.states.get(change.field) ?? 0) + 1);
   const key =
@@ -177,6 +216,7 @@ export function recordSemanticChange(world: WorldState, change: SemanticChange):
     set.conservative = true;
     return;
   }
+  if (change.kind === 'state') set.stateAt.set(key, ++set.stateSequence);
   const prior = set.changes.get(key);
   set.changes.set(
     key,
@@ -222,13 +262,13 @@ export function membershipDependency(
   let revision: number;
   switch (family) {
     case 'direct-contents':
-      revision = world.entities[scopeId]?.inventoryRevision ?? 0;
+      revision = entityGet(world.entities, scopeId)?.inventoryRevision ?? 0;
       break;
     case 'installed-capabilities':
       revision = snapshotRevision(world.moduleManifest);
       break;
     case 'actor-state':
-      revision = snapshotRevision(world.entities[scopeId]);
+      revision = snapshotRevision(entityGet(world.entities, scopeId));
       break;
     case 'actor-knowledge':
       revision = world.knowledgeRevisions?.[scopeId] ?? 0;
@@ -245,7 +285,11 @@ export function existenceDependency(
   world: WorldState,
   entityId: string,
 ): Extract<Dependency, { kind: 'existence' }> {
-  return { kind: 'existence', entityId, revision: snapshotRevision(world.entities[entityId]) };
+  return {
+    kind: 'existence',
+    entityId,
+    revision: snapshotRevision(entityGet(world.entities, entityId)),
+  };
 }
 export function valueDependency(
   world: WorldState,

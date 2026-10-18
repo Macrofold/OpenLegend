@@ -1,16 +1,17 @@
+import { entityGet, entityHas, entitySet, entityValues } from '../../packages/domain/src/index.js';
 import {
   baseSpatial,
   BASE_BODY_PROFILES,
 } from '../../packages/domain/src/worlds/base/spatial-definitions.js';
 import { worldPlacement } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
+import { canStand, resolveSupport, type SurfacePoint } from '@open-legend/spatial';
+import { spatialMap } from '../../packages/domain/src/spatial-state.js';
 import {
   createWorld,
   freezeWorld,
-  isWalkable,
   spawnWorldEntity,
   type ItemDefinition,
-  type Position,
   type WorldState,
 } from '../../packages/domain/src/index.js';
 
@@ -181,7 +182,7 @@ function populateGroup(
   groupId: string,
 ): WorldState {
   world.paused = false;
-  const player = worldPosition(Object.values(world.entities).find((e) => e.kind === 'player')) ?? {
+  const player = worldPosition(entityValues(world.entities).find((e) => e.kind === 'player')) ?? {
     y: 0,
     x: 0,
     z: 0,
@@ -189,11 +190,15 @@ function populateGroup(
   const anchor = { ...player, x: player.x + offset, z: player.z + offset };
   if (offset && (anchor.x + 16 >= world.map.width || anchor.z + 16 >= world.map.height))
     throw new Error('The separated group does not fit within the fixture map.');
-  const positions: Position[] = [];
+  const positions: SurfacePoint[] = [];
+  const map = spatialMap(world);
   for (let z = 0; z < world.map.height; z++)
-    for (let x = 0; x < world.map.width; x++)
-      if (isWalkable(world, { y: 0, x, z }, undefined, BASE_BODY_PROFILES.person))
-        positions.push({ y: 0, x, z });
+    for (let x = 0; x < world.map.width; x++) {
+      const point = resolveSupport(map, { y: 0, x, z });
+      // Retain the exact support: integrated maps contain more than one terrain patch.
+      // Each living body is checked separately before ordinary spawn admission below.
+      if (point && canStand(map, point, BASE_BODY_PROFILES.object)) positions.push(point);
+    }
   if (!positions.length) throw new Error('No walkable fixture positions.');
   if (scenario.layout === 'crowded')
     positions.sort(
@@ -211,12 +216,15 @@ function populateGroup(
   }
   let cursor = 0;
   for (let index = 0; index < scenario.people + scenario.animals; index++) {
+    const type = index < scenario.people ? 'person' : 'deer';
     let accepted = false;
     while (cursor < positions.length) {
+      const position = positions[cursor++]!;
+      if (!canStand(map, position, BASE_BODY_PROFILES[type])) continue;
       const result = spawnWorldEntity(world, {
         id: `profile-spawn:${groupId}:${index}`,
-        type: index < scenario.people ? 'person' : 'deer',
-        position: { ...positions[cursor++]!, surfaceId: 'terrain' },
+        type,
+        position: { ...position },
         ...(index < scenario.people
           ? {
               person: {
@@ -243,7 +251,7 @@ function populateGroup(
   world = structuredClone(world);
   // Fixture-only ordinary flight loops have staggered departure times and copied native bodies.
   // The manifest records their exact routes; gameplay randomness is not consumed here.
-  const bird = world.entities['bird-1']!;
+  const bird = entityGet(world.entities, 'bird-1')!;
   if (scenario.birds && (!bird?.actor || bird.spatial.body.id !== 'bird'))
     throw new Error('Synthetic flight fixtures require the starter native bird body.');
   for (let index = 0; index < scenario.birds; index++) {
@@ -266,7 +274,7 @@ function populateGroup(
         { position: { x, y, z: z + 12 }, waitSeconds: 0 },
       ],
     };
-    world.entities[id] = {
+    entitySet(world.entities, id, {
       ...structuredClone(bird),
       id,
       name: `Synthetic profile bird ${groupId} ${index}`,
@@ -276,7 +284,7 @@ function populateGroup(
         heading: 0,
         flight: { routeId, next: 1, waitSeconds: (index * 7) % 53 },
       },
-    };
+    });
   }
   let objectIndex = 0;
   for (const group of scenario.objects) {
@@ -286,25 +294,25 @@ function populateGroup(
     world.itemDefinitions[definition.id] = definition;
     for (let i = 0; i < group.count; i++) {
       const id = `profile-${groupId}-object-${objectIndex++}`;
-      if (Object.hasOwn(world.entities, id)) throw new Error('Fixture entity ID collision.');
+      if (entityHas(world.entities, id)) throw new Error('Fixture entity ID collision.');
       // Ground objects may share tiles; quantity=500 is distinct from 500 visible entities.
       const position =
         positions[
           (scenario.layout === 'crowded' ? i % Math.min(9, positions.length) : objectIndex - 1) %
             positions.length
         ]!;
-      world.entities[id] = {
+      entitySet(world.entities, id, {
         id,
         name: group.definition.name,
         kind: 'resource',
         spatial: baseSpatial('object'),
-        placement: worldPlacement({ ...position }, 'terrain'),
+        placement: worldPlacement(position, position.surfaceId),
         resource: {
           definitionId: definition.id,
           quantity: group.quantity,
           workSeconds: group.workSeconds,
         },
-      };
+      });
     }
   }
   return world;

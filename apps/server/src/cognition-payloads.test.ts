@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
@@ -569,7 +570,7 @@ async function harness(
   // Hungry, conscious Ada; the resource task also gives her owned edible food.
   await editWorld(service, (world) => {
     if (options.food) createItemLot(world, NPC_ID, 'berries', 2, 'fixture-berries');
-    world.entities[NPC_ID]!.actor!.attributes!['wilderness:fullness']!.value = 30;
+    entityGet(world.entities, NPC_ID)!.actor!.attributes!['wilderness:fullness']!.value = 30;
   });
   const jobCalls = (jobId: string) => ({
     judges: calls.judges.filter((request) => request.requestId.startsWith(`${jobId}:`)),
@@ -1084,7 +1085,7 @@ describe(
 
     it('hazard: another actor strikes Ada; attention, combined routing and a level-3 payload', async () => {
       const h = await harness({ script: { route: { level3: 0.9 } } });
-      const health = h.service.world.entities[NPC_ID]!.actor!.health;
+      const health = entityGet(h.service.world.entities, NPC_ID)!.actor!.health;
       const struck = await h.service.command('fixture-punch', {
         type: 'strike',
         definitionId: 'punch',
@@ -1100,7 +1101,7 @@ describe(
       expect(hit(), 'native punch landed').toBeDefined();
       // The blow came from the player's body, not from Ada or the environment.
       expect(hit()!.actorId).toBe(controlledEntityId(h.service.world));
-      expect(h.service.world.entities[NPC_ID]!.actor!.health).toBeLessThan(health);
+      expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.health).toBeLessThan(health);
 
       const job = await h.thought();
       expect(job.status).toBe('completed');
@@ -1143,7 +1144,7 @@ describe(
         script: { route: { level2: 0.9 }, possibleAction: { no: 0.95 } },
       });
       const limit = levelLimits(h.config)[2].visibleOutputBytes;
-      const ada = () => h.service.world.entities[NPC_ID]!.actor!;
+      const ada = () => entityGet(h.service.world.entities, NPC_ID)!.actor!;
       const outcomes: Record<string, unknown>[] = [];
       type Issue = {
         code: string;

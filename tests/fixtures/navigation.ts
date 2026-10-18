@@ -1,3 +1,4 @@
+import { entityValues } from '../../packages/domain/src/index.js';
 import { BASE_BODY_PROFILES } from '../../packages/domain/src/worlds/base/spatial-definitions.js';
 import {
   advanceWorld,
@@ -37,14 +38,14 @@ export function preparedRoute(
 
 export function prepareWorldNavigation(world: WorldState): WorldState {
   if (
-    !Object.values(world.entities).some(
+    !entityValues(world.entities).some(
       (actor) => actor.actor?.action?.navigation && !actor.actor.action.navigation.failure,
     )
   )
     return world;
   const planner = new RecastPlanner(world.map);
   try {
-    for (const actor of Object.values(world.entities)) {
+    for (const actor of entityValues(world.entities)) {
       const action = actor.actor?.action;
       if (!action?.navigation || action.navigation.failure) continue;
       const request = action.navigation.request;

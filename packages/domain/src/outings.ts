@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import {
   prepareOutingIndex,
   indexOuting,
@@ -127,8 +128,8 @@ export function outingRecipientProblem(
   actorId: string,
   otherId: string,
 ): Outcome | undefined {
-  const actor = world.entities[actorId],
-    other = world.entities[otherId];
+  const actor = entityGet(world.entities, actorId),
+    other = entityGet(world.entities, otherId);
   if (!actor || !other || actorId === otherId || !seesEntity(world, actor, other))
     return outcome(false, 'not-visible', BASE_OUTING.messages.person);
   if (!able(world, otherId) || !canReachEntity(world, actor, other, world.itemHandling.reach))
@@ -154,7 +155,7 @@ export function outingInvitationProblem(
     return outcome(false, 'outing-limit', BASE_OUTING.messages.limit);
 }
 function able(world: WorldState, id: string): boolean {
-  const entity = world.entities[id];
+  const entity = entityGet(world.entities, id);
   return (
     !!entity?.actor?.alive &&
     BASE_OUTING.participant(entity) &&
@@ -170,8 +171,8 @@ export function outingDestination(
   actorId: string,
   entityId: string,
 ): OutingDestination | undefined {
-  const actor = world.entities[actorId],
-    target = world.entities[entityId];
+  const actor = entityGet(world.entities, actorId),
+    target = entityGet(world.entities, entityId);
   // The first authored family names stationary physical places, not a moving person's body.
   if (!actor || !target || target.actor || target.retirement || !seesEntity(world, actor, target))
     return;
@@ -188,7 +189,7 @@ function destinationCurrent(world: WorldState, trip: Outing): boolean {
   if (trip.kind === 'combat-help') return combatCurrent(world, trip);
   const destination = trip.destination;
   if (!destination.entityId) return true;
-  const entity = world.entities[destination.entityId];
+  const entity = entityGet(world.entities, destination.entityId);
   return (
     !!entity && !entity.retirement && canonicalJson(entity.placement) === destination.placement
   );
@@ -221,7 +222,7 @@ function workProblem(
   actorId: string,
   mode: OutingMode,
 ): Outcome | undefined {
-  const actor = world.entities[actorId]?.actor;
+  const actor = entityGet(world.entities, actorId)?.actor;
   if (!actor || !able(world, actorId) || actor.planGeneration !== trip.work[actorId])
     return outcome(false, 'outing-changed', BASE_OUTING.messages.changed);
   const plan = actor.agency.plan;
@@ -261,7 +262,8 @@ function heldProblem(world: WorldState, trip: Outing): Outcome | undefined {
         // Help adds a purpose without replacing work; fighting while awaiting a
         // reply must not revoke it. Travel acceptance still replaces exact work.
         // docs/worlds/base/social.md#voluntary-combat-help
-        (trip.kind === 'travel' && world.entities[id]!.actor!.planGeneration !== trip.work[id]) ||
+        (trip.kind === 'travel' &&
+          entityGet(world.entities, id)!.actor!.planGeneration !== trip.work[id]) ||
         acceptedOutingId(world, id, trip.kind) !== undefined,
     )
   )
@@ -288,17 +290,18 @@ export function prepareOuting(
       'combat-help',
     );
     if (problem) return problem;
-    const opponent = world.entities[command.opponentId];
+    const opponent = entityGet(world.entities, command.opponentId);
     const humanProposed =
-      !!command.humanInitiated || world.entities[command.actorId]!.actor!.controller === 'player';
+      !!command.humanInitiated ||
+      entityGet(world.entities, command.actorId)!.actor!.controller === 'player';
     const ids = [command.actorId, command.recipientId];
     if (
       !opponent ||
       ids.some(
         (id) =>
           id === opponent.id ||
-          !seesEntity(world, world.entities[id]!, opponent) ||
-          attackPermissionProblem(world, world.entities[id]!, opponent, {
+          !seesEntity(world, entityGet(world.entities, id)!, opponent) ||
+          attackPermissionProblem(world, entityGet(world.entities, id)!, opponent, {
             requiresLethalReview: humanProposed,
           }),
       )
@@ -320,7 +323,9 @@ export function prepareOuting(
         expiresAt: world.simTime + BASE_OUTING.offerSeconds,
         status: 'pending',
         proposerMode: 'enqueue',
-        work: Object.fromEntries(ids.map((id) => [id, world.entities[id]!.actor!.planGeneration])),
+        work: Object.fromEntries(
+          ids.map((id) => [id, entityGet(world.entities, id)!.actor!.planGeneration]),
+        ),
         arrived: [],
         company: {},
         combat: {
@@ -328,7 +333,7 @@ export function prepareOuting(
           opponentLife: opponent.actor!.physicalLife ?? 0,
           humanProposed,
           lives: Object.fromEntries(
-            ids.map((id) => [id, world.entities[id]!.actor!.physicalLife ?? 0]),
+            ids.map((id) => [id, entityGet(world.entities, id)!.actor!.physicalLife ?? 0]),
           ),
           labels: Object.fromEntries(
             ids.map((id) => [id, observerDescription(world, id, opponent.id, 'definite')]),
@@ -379,7 +384,7 @@ export function prepareOuting(
       work: Object.fromEntries(
         [command.actorId, command.recipientId].map((id) => [
           id,
-          world.entities[id]!.actor!.planGeneration,
+          entityGet(world.entities, id)!.actor!.planGeneration,
         ]),
       ),
       arrived: [],
@@ -427,11 +432,11 @@ export function prepareOuting(
 function combatCurrent(world: WorldState, trip: Outing, requireSight = false): boolean {
   const combat = trip.combat;
   if (!combat) return false;
-  const opponent = world.entities[combat.opponentId];
+  const opponent = entityGet(world.entities, combat.opponentId);
   return (
     !!opponent &&
     participants(trip).every((id) => {
-      const actor = world.entities[id];
+      const actor = entityGet(world.entities, id);
       return (
         !!actor?.actor &&
         able(world, id) &&
@@ -461,7 +466,11 @@ export function combatHelpProblem(
     trip.recipientId !== actorId ||
     !combatCurrent(world, trip) ||
     (targetId && targetId !== trip.combat!.opponentId) ||
-    !seesEntity(world, world.entities[actorId]!, world.entities[trip.combat!.opponentId]!)
+    !seesEntity(
+      world,
+      entityGet(world.entities, actorId)!,
+      entityGet(world.entities, trip.combat!.opponentId)!,
+    )
   )
     return outcome(false, 'help-ended', BASE_COMBAT_HELP.unavailable);
 }
@@ -475,7 +484,7 @@ export function validateCombatHelpReference(
 ): void {
   if (reference.combatHelpId === undefined) return;
   const trip = world.outings?.[reference.combatHelpId];
-  const helper = world.entities[actorId]?.actor;
+  const helper = entityGet(world.entities, actorId)?.actor;
   const combat = trip?.combat;
   const opponentBound = ['strike', 'aim', 'shoot-once', 'hunt', 'follow'].includes(
     reference.type ?? '',
@@ -510,7 +519,7 @@ function preserveCombatHelpWork(
 ): void {
   const help = combatHelpFor(world, actorId);
   if (help?.recipientId === actorId && help.work[actorId] === previousGeneration)
-    help.work[actorId] = world.entities[actorId]!.actor!.planGeneration;
+    help.work[actorId] = entityGet(world.entities, actorId)!.actor!.planGeneration;
 }
 export function combatHelpBinding(
   world: WorldState,
@@ -526,7 +535,7 @@ export function combatHelpBinding(
     )
   )
     return;
-  const helper = world.entities[actorId]!.actor!;
+  const helper = entityGet(world.entities, actorId)!.actor!;
   const purpose = BASE_COMBAT_HELP.purpose;
   // A compatible physical action is not evidence that the helper chose this purpose.
   // Explicit candidates or the existing goal owner establish it; independent work survives.
@@ -554,7 +563,7 @@ function notice(
   text: string,
   ending?: { cause: OutingEndCause; actorId?: string },
 ): void {
-  const actor = world.entities[actorId];
+  const actor = entityGet(world.entities, actorId);
   if (!actor?.actor) return;
   const event = emit(
     world,
@@ -605,7 +614,7 @@ function closeOuting(
   delete world.outings![trip.id];
   indexOuting(world, trip.id);
   for (const actorId of participants(trip)) {
-    const actor = world.entities[actorId]?.actor;
+    const actor = entityGet(world.entities, actorId)?.actor;
     if (!actor) continue;
     const previousGeneration = actor.planGeneration;
     const planId = trip.plans?.[actorId];
@@ -721,7 +730,7 @@ export function executeOuting(
     return outcome(true, 'outing-ended', message);
   }
   if (trip.kind === 'combat-help') {
-    const helper = world.entities[trip.recipientId]!.actor!;
+    const helper = entityGet(world.entities, trip.recipientId)!.actor!;
     const goalId = nextId(world, 'help-goal');
     const result = changeGoal(
       helper,
@@ -813,7 +822,7 @@ export function reconcileOutings(
       continue;
     }
     if (trip.kind === 'combat-help') {
-      const helper = world.entities[trip.recipientId]!.actor!;
+      const helper = entityGet(world.entities, trip.recipientId)!.actor!;
       const goal = helper.agency.goals.find((goal) => goal.id === trip.combat!.goalId);
       const plan = helper.agency.plan;
       const ownsWork =
@@ -836,8 +845,8 @@ export function reconcileOutings(
         (helper.planGeneration !== trip.work[trip.recipientId] && !ownsWork) ||
         !seesEntity(
           world,
-          world.entities[trip.recipientId]!,
-          world.entities[trip.combat!.opponentId]!,
+          entityGet(world.entities, trip.recipientId)!,
+          entityGet(world.entities, trip.combat!.opponentId)!,
         )
       ) {
         close('unavailable');
@@ -848,7 +857,7 @@ export function reconcileOutings(
         const otherId = id === trip.proposerId ? trip.recipientId : trip.proposerId;
         const company = options.companyObserved
           ? (world.visiblePeople?.[id]?.includes(otherId) ?? false)
-          : seesEntity(world, world.entities[id]!, world.entities[otherId]!);
+          : seesEntity(world, entityGet(world.entities, id)!, entityGet(world.entities, otherId)!);
         if (trip.company[id] !== company) {
           trip.company[id] = company;
           notice(
@@ -864,7 +873,7 @@ export function reconcileOutings(
     }
     let ended = false;
     for (const id of actors) {
-      const actor = world.entities[id]!,
+      const actor = entityGet(world.entities, id)!,
         plan = actor.actor!.agency.plan;
       if (
         !plan ||
@@ -888,7 +897,8 @@ export function reconcileOutings(
       const observedCompany = options.companyObserved
         ? world.visiblePeople?.[id]?.includes(otherId)
         : undefined;
-      const company = observedCompany ?? seesEntity(world, actor, world.entities[otherId]!);
+      const company =
+        observedCompany ?? seesEntity(world, actor, entityGet(world.entities, otherId)!);
       if (trip.company[id] !== company) {
         trip.company[id] = company;
         notice(
@@ -948,7 +958,7 @@ export function validateOutings(world: WorldState): void {
       new Set(trip.arrived).size !== trip.arrived.length ||
       trip.arrived.some((id) => !participants(trip).includes(id)) ||
       participants(trip).some(
-        (id) => !world.entities[id]?.actor || !Number.isSafeInteger(trip.work[id]),
+        (id) => !entityGet(world.entities, id)?.actor || !Number.isSafeInteger(trip.work[id]),
       )
     )
       throw new Error('Invalid outing consent.');
@@ -965,7 +975,7 @@ export function validateOutings(world: WorldState): void {
         Object.keys(combat.lives ?? {}).length !== 2 ||
         Object.keys(combat.labels ?? {}).length !== 2 ||
         !isSafeRecordId(combat.opponentId) ||
-        !world.entities[combat.opponentId]?.actor ||
+        !entityGet(world.entities, combat.opponentId)?.actor ||
         !Number.isSafeInteger(combat.opponentLife) ||
         combat.opponentLife < 0 ||
         typeof combat.humanProposed !== 'boolean' ||
@@ -980,7 +990,7 @@ export function validateOutings(world: WorldState): void {
         ) ||
         (trip.status === 'pending'
           ? combat.goalId !== undefined
-          : !world.entities[trip.recipientId]!.actor!.agency.goals.some(
+          : !entityGet(world.entities, trip.recipientId)!.actor!.agency.goals.some(
               (goal) => goal.id === combat.goalId && goal.status === 'active',
             )) ||
         !combatCurrent(world, trip)
@@ -998,7 +1008,7 @@ export function validateOutings(world: WorldState): void {
         if (
           active.has(`${trip.kind}\0${actorId}`) ||
           !isSafeRecordId(trip.plans?.[actorId]) ||
-          world.entities[actorId]!.actor!.agency.plan?.id !== trip.plans?.[actorId]
+          entityGet(world.entities, actorId)!.actor!.agency.plan?.id !== trip.plans?.[actorId]
         )
           throw new Error('Invalid outing participation.');
         active.add(`${trip.kind}\0${actorId}`);

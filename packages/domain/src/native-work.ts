@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { initializeAppraisalWork, ownsAppraisalWork } from './appraisals.js';
 import { ownsCoachingWork } from './coaching.js';
 import { canonicalJson, contentLabel } from './events.js';
@@ -10,6 +11,8 @@ import {
   multiplyWork,
   addWork,
   requireWork,
+  requireAllocation,
+  WorkBudgetError,
   WORK_LIMITS,
   type WorkDemand,
 } from './work-budget.js';
@@ -21,6 +24,7 @@ import type {
 } from './status-effects.js';
 import type { Entity, WorldState } from './types.js';
 import type { BodyPolicy } from './body-policy.js';
+import { readOnlyDraftView } from './draft.js';
 
 function conditionCost(condition: StatusCondition | undefined | null): number {
   if (!condition) return 0;
@@ -153,11 +157,6 @@ export function admitStatusWork(
   definition: StatusEffectDefinition,
   episode: string,
 ): void {
-  const cost = statusWork(definition);
-  // Existing public native advancement accepts subsecond samples. Its operational
-  // allowance permits 1024 samples per simulated second without changing their order
-  // or rates. The ordinary server clock advances at one sample per second.
-  const limit = multiplyWork({ tests: cost.tests, effects: cost.effects, depth: 1 }, 1024);
   admitWork(world, {
     id: episode,
     actorId: entity.id,
@@ -167,24 +166,56 @@ export function admitStatusWork(
       version: 1,
       digest: contentLabel(canonicalJson(definition)),
     },
+    ...statusInvocationDemand(definition),
+  });
+}
+function statusInvocationDemand(definition: StatusEffectDefinition) {
+  const cost = statusWork(definition);
+  // Existing public native advancement accepts subsecond samples. Its operational
+  // allowance permits 1024 samples per simulated second without changing their order
+  // or rates. The ordinary server clock advances at one sample per second.
+  const limit = multiplyWork({ tests: cost.tests, effects: cost.effects, depth: 1 }, 1024);
+  return {
     limit,
     allocation: { live: 1, retainedBytes: cost.retainedBytes, subscriptions: 1 },
     recurrence: { intervalSeconds: 1, burst: 1024 },
-  });
+  };
+}
+/** A positive result proves current capacity without stopping any existing work.
+ * A negative result is inconclusive: interruption may release capacity, so callers
+ * must retain full admission rather than inventing a refusal from this preflight.
+ * docs/action-capabilities.md#action-availability-and-temporary-execution
+ */
+export function statusWorkFits(
+  world: WorldState,
+  entity: Entity,
+  definition: StatusEffectDefinition,
+): boolean {
+  const { limit, allocation } = statusInvocationDemand(definition);
+  try {
+    requireWork(limit, WORK_LIMITS.group);
+    requireWork(allocation, WORK_LIMITS.world);
+    requireAllocation(world, entity.id, definition.id, allocation);
+    return true;
+  } catch (error) {
+    if (!(error instanceof WorkBudgetError)) throw error;
+    return false;
+  }
 }
 export function chargeStatusWork(
   world: WorldState,
   entity: Entity,
   definition: StatusEffectDefinition,
+  stateId: string,
   state: StatusEffectInstance,
 ): void {
-  if (
-    !state.active ||
-    !Object.values(entity.statusEffects ?? {}).some(
-      (current) => current.active && current.episode === state.episode,
-    )
-  )
-    return;
+  state = readOnlyDraftView(state);
+  const states = readOnlyDraftView(entity).statusEffects;
+  // The caller owns this exact record key; a replacement at that key cannot charge
+  // the earlier episode. Independent contributions need not use the definition ID.
+  const stored = states && readOnlyDraftView(states)[stateId];
+  const current = stored && readOnlyDraftView(stored);
+  if (!state.active || !current?.active || current.episode !== state.episode) return;
   if (!world.workState?.invocations[state.episode])
     admitStatusWork(world, entity, definition, state.episode);
   advanceWorkInterval(world, state.episode);
@@ -199,7 +230,7 @@ export function initializeNativeWork(world: WorldState): void {
   const definitions = new Map(
     world.statusEffectPolicy.definitions.map((definition) => [definition.id, definition]),
   );
-  for (const entity of Object.values(world.entities))
+  for (const entity of entityValues(world.entities))
     for (const [id, state] of Object.entries(entity.statusEffects ?? {})) {
       if (!state.active) continue;
       const definition = definitions.get(state.contribution?.definitionId ?? id);
@@ -226,7 +257,7 @@ export function validateNativeWork(world: WorldState): void {
       )
     )
       continue;
-    const entity = world.entities[invocation.actorId];
+    const entity = entityGet(world.entities, invocation.actorId);
     let active = episodes.get(invocation.actorId);
     if (!active) {
       active = new Set(

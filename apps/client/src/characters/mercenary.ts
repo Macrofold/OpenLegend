@@ -4,7 +4,7 @@ import type { EntityView } from '@open-legend/protocol';
 import { intersectBox } from '@open-legend/spatial';
 import { WorldPresentation } from '../world-presentation';
 import { PixelCharacter } from './pixel-character';
-import { CapeCloth } from './mercenary-cloth';
+import { CapeCloth, clothPassesForSize } from './mercenary-cloth';
 import { MercenaryMaterials } from './mercenary-materials';
 
 type Container = pc.ContainerResource & { animations: pc.Asset[] };
@@ -92,6 +92,11 @@ export class MercenaryActor {
   private settling = 0;
   private yaw?: number;
   private readonly previousFoot = new pc.Vec3();
+  private readonly worldHead = new pc.Vec3();
+  private readonly screenHead = new pc.Vec3();
+  private readonly screenFoot = new pc.Vec3();
+  private projectedHeight?: number;
+  private decorativeSleeping = false;
   state: 'loading' | 'ready' | 'failed' = 'loading';
   visible = false;
   readonly height = 1.85;
@@ -179,7 +184,12 @@ export class MercenaryActor {
   setVisible(visible: boolean): void {
     if (visible && !this.wanted) this.resetCloth = true;
     this.wanted = visible;
-    this.visible = visible && this.state === 'ready' && !this.resetCloth && this.settling === 0;
+    this.visible =
+      visible &&
+      this.state === 'ready' &&
+      !this.decorativeSleeping &&
+      !this.resetCloth &&
+      this.settling === 0;
     if (this.node) this.node.enabled = this.visible;
     this.cloth?.setVisible(this.visible);
     for (const mesh of this.meshes) mesh.castShadow = this.visible;
@@ -197,13 +207,51 @@ export class MercenaryActor {
     const node = this.node,
       anim = node?.anim;
     if (!node || !anim || !this.cloth || !this.wanted) return;
+    const foot = this.parent.getPosition();
+    const sleeping = this.pixels ? !this.pixels.nearViewport(foot, this.decorativeSleeping) : false;
+    if (sleeping !== this.decorativeSleeping) {
+      this.decorativeSleeping = sleeping;
+      if (!sleeping) this.resetCloth = true;
+      this.setVisible(this.wanted);
+    }
+    if (sleeping) {
+      // Decorative pose, cloth and shadows sleep. Current positions/intentions still
+      // update in the scene; return settles under the present pose with sprite fallback.
+      // docs/verification/performance/overhaul-presentation-implementation.md#offscreen-detailed-model-trial--october17-2026
+      anim.speed = 0;
+      this.projectedHeight = undefined;
+      return;
+    }
     const target = view.heading * pc.math.RAD_TO_DEG;
     this.yaw =
       this.yaw === undefined
         ? target
         : pc.math.lerpAngle(this.yaw, target, 1 - Math.exp(-Math.min(dt, 0.1) * 12));
     node.setLocalEulerAngles(0, this.yaw, 0);
-    const foot = this.parent.getPosition();
+    const projection = this.camera.camera;
+    this.projectedHeight = undefined;
+    if (projection) {
+      const cameraPosition = this.camera.getPosition(),
+        forward = this.camera.forward;
+      const depth =
+        (foot.x - cameraPosition.x) * forward.x +
+        (foot.y - cameraPosition.y) * forward.y +
+        (foot.z - cameraPosition.z) * forward.z;
+      if (depth > projection.nearClip) {
+        this.worldHead.copy(foot);
+        this.worldHead.y += this.height;
+        // The pinned camera API uses graphicsDevice.clientRect (CSS pixels).
+        // Clip-space Z is not a forward-distance test for orthographic cameras.
+        projection.worldToScreen(foot, this.screenFoot);
+        projection.worldToScreen(this.worldHead, this.screenHead);
+        this.projectedHeight = Math.abs(this.screenHead.y - this.screenFoot.y);
+      }
+    }
+    this.cloth.constraintPasses = clothPassesForSize(
+      this.cloth.constraintPasses,
+      this.projectedHeight,
+      selected,
+    );
     if (this.resetCloth || foot.distance(this.previousFoot) > 1.5) {
       this.cloth.reset();
       this.settling = 60;
@@ -251,9 +299,12 @@ export class MercenaryActor {
     return {
       state: this.state,
       visible: this.visible,
+      selected: this.selected,
       meshes: this.meshes.length,
       resolution: [128, 192],
       settling: this.settling,
+      projectedHeight: this.projectedHeight,
+      decorativeSleeping: this.decorativeSleeping,
       cloth: this.cloth?.diagnostics(),
     };
   }

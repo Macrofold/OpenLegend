@@ -1,6 +1,6 @@
-/** Persistent ordered index for direct physical children. Only scalar summaries are cached: no draft
- * proxies or entity copies survive publication. Path copying keeps a root move independent
- * of its descendants and of unrelated containers. Rebuilt from canonical placement on load. */
+/** Persistent ordered tree shared by physical-child summaries and canonical exact-key records.
+ * Nodes never retain draft proxies. Path copying preserves immutable branches; each owning
+ * collection chooses its values, validation and canonical persistence boundary. */
 export interface ObjectIndexNode<T> {
   readonly key: string;
   readonly value: T;
@@ -78,9 +78,9 @@ export function objectIndexSet<T>(tree: Tree<T>, key: string, value: T | undefin
     ),
   );
 }
-export function* objectIndexEntries<T>(tree: Tree<T>, after = ''): Generator<[string, T]> {
+export function* objectIndexEntries<T>(tree: Tree<T>, after?: string): Generator<[string, T]> {
   if (!tree) return;
-  if (tree.key > after) {
+  if (after === undefined || tree.key > after) {
     yield* objectIndexEntries(tree.left, after);
     yield [tree.key, tree.value];
   }

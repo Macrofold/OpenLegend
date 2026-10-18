@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import {
   closeTestDatabases,
@@ -303,7 +304,7 @@ async function harness(
   await useNearCampSight(service);
   // These fixtures measure Ada's decisions, with other residents outside their scope.
   await editWorld(service, (world) => {
-    for (const entity of Object.values(world.entities))
+    for (const entity of entityValues(world.entities))
       if (entity.actor?.controller === 'npc' && entity.id !== NPC_ID)
         entity.actor.controller = 'native';
   });
@@ -382,7 +383,7 @@ async function harness(
     },
     /** Kill a native animal Ada can see through the native body-effect owner. */
     async kill(targetId: string) {
-      const revision = service.world.entities[targetId]!.actor!.body!.revision;
+      const revision = entityGet(service.world.entities, targetId)!.actor!.body!.revision;
       const result = await service.transition((world) =>
         applyBodyEffects(
           world,
@@ -392,7 +393,7 @@ async function harness(
         ),
       );
       expect(result.ok, result.message).toBe(true);
-      expect(service.world.entities[targetId]!.actor!.alive).toBe(false);
+      expect(entityGet(service.world.entities, targetId)!.actor!.alive).toBe(false);
     },
     /** Admit exactly one autonomous (non-speech) decision for Ada. */
     async think(): Promise<JobRecord> {
@@ -560,7 +561,7 @@ describe(
         reflection: 'yes',
         rate: (description) => (CONTINUE.test(description) ? 0.9 : 0.1),
       };
-      const ada = () => h.service.world.entities[NPC_ID]!.actor!;
+      const ada = () => entityGet(h.service.world.entities, NPC_ID)!.actor!;
       const before = structuredClone({
         action: ada().action ?? null,
         plan: ada().agency.plan ?? null,
@@ -1006,7 +1007,8 @@ describe(
       const cordStep = expect.objectContaining({
         command: expect.objectContaining({ type: 'prepare', preparation: 'cord' }),
       });
-      const steps = () => h.service.world.entities[NPC_ID]!.actor!.agency.plan?.steps ?? [];
+      const steps = () =>
+        entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.plan?.steps ?? [];
       expect(steps()).not.toEqual(expect.arrayContaining([cordStep]));
       const act = await h.think();
       const acted = await record('level1 act', act);

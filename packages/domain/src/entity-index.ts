@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { recordSemanticChange } from './dependencies.js';
 import { isDraft, original } from 'immer';
@@ -21,7 +22,7 @@ const physicalRoot = (entity: Entity | undefined) =>
 function snapshotRoots(entities: WorldState['entities']): readonly string[] {
   let ids = Object.isFrozen(entities) ? roots.get(entities) : undefined;
   if (!ids) {
-    ids = Object.values(entities)
+    ids = entityValues(entities)
       .filter(physicalRoot)
       .map((entity) => entity.id);
     if (Object.isFrozen(entities)) roots.set(entities, ids);
@@ -54,7 +55,7 @@ export function hasOtherTargetUser(
     let tree: TargetUsers;
     for (const id of snapshotRoots(world.entities)) {
       chargeWork({ tests: 1 });
-      const key = targetKey(world.entities[id]);
+      const key = targetKey(entityGet(world.entities, id));
       if (key) tree = updateTargetUsers(tree, key, id, true);
     }
     index = { tree };
@@ -65,8 +66,8 @@ export function hasOtherTargetUser(
 }
 /** Every admitted root creation/removal calls this in its existing semantic owner. */
 export function rootMembershipChanged(world: WorldState, id: string): void {
-  const before = isDraft(world) ? original(world)!.entities[id] : undefined,
-    after = world.entities[id];
+  const before = isDraft(world) ? entityGet(original(world)!.entities, id) : undefined,
+    after = entityGet(world.entities, id);
   recordSemanticChange(world, {
     kind: 'spatial',
     entityId: id,
@@ -90,14 +91,14 @@ export function worldRootEntities(world: WorldState, readOnly = false, rebuild =
   // Recovery enumerates the actual table, rather than trusting a derived selector.
   if (rebuild) {
     const entities = readOnly ? readOnlyDraftView(world.entities) : world.entities;
-    const result = Object.values(entities).filter(physicalRoot);
+    const result = entityValues(entities).filter(physicalRoot);
     countDomainWork('rootsVisited', result.length);
     return result;
   }
   if (!isDraft(world)) {
     const ids = snapshotRoots(world.entities);
     countDomainWork('rootsVisited', ids.length);
-    return ids.map((id) => world.entities[id]!);
+    return ids.map((id) => entityGet(world.entities, id)!);
   }
   const base = original(world)!;
   const ids = snapshotRoots(base.entities),
@@ -110,13 +111,13 @@ export function worldRootEntities(world: WorldState, readOnly = false, rebuild =
   // not need repeated placement proxy walks for every emitted event in this phase;
   // values still come from the current draft, including replaced entity records.
   for (const id of ids) {
-    const entity = entities[id];
+    const entity = entityGet(entities, id);
     if (entity && (!changed?.has(id) || physicalRoot(entity))) result.push(entity);
   }
   if (changed)
     for (const id of changed)
-      if (!physicalRoot(base.entities[id]) && physicalRoot(entities[id]))
-        result.push(entities[id]!);
+      if (!physicalRoot(entityGet(base.entities, id)) && physicalRoot(entityGet(entities, id)))
+        result.push(entityGet(entities, id)!);
   countDomainWork('rootsVisited', result.length);
   return result;
 }
@@ -133,8 +134,8 @@ export function captureRootIndex(
     if (priorTargets && world.entities !== base.entities) {
       let tree = priorTargets.tree;
       for (const id of changed) {
-        const before = targetKey(base.entities[id]),
-          after = targetKey(world.entities[id]);
+        const before = targetKey(entityGet(base.entities, id)),
+          after = targetKey(entityGet(world.entities, id));
         if (before === after) continue;
         if (before) tree = updateTargetUsers(tree, before, id, false);
         if (after) tree = updateTargetUsers(tree, after, id, true);
@@ -145,8 +146,8 @@ export function captureRootIndex(
     const removed = new Set<string>(),
       added: string[] = [];
     for (const id of changed) {
-      const was = physicalRoot(base.entities[id]),
-        now = physicalRoot(world.entities[id]);
+      const was = physicalRoot(entityGet(base.entities, id)),
+        now = physicalRoot(entityGet(world.entities, id));
       if (was && !now) removed.add(id);
       else if (!was && now) added.push(id);
     }

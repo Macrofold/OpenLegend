@@ -1,3 +1,4 @@
+import { entityGet } from '../../entity-collection.js';
 import { bodyPolicy } from '../../body-policy.js';
 import { combatRecoveryDeadline } from '../../contact-defense.js';
 import { seesEntity } from '../../perception.js';
@@ -57,7 +58,7 @@ export function observedAttackPreparation(
   observer: Entity,
   target: Pick<Entity, 'id'>,
 ): string | undefined {
-  const current = world.entities[target.id];
+  const current = entityGet(world.entities, target.id);
   if (!current?.actor?.alive) return;
   const description = preparationDescription(current);
   return description && seesEntity(world, observer, current) ? description : undefined;
@@ -68,7 +69,7 @@ export function observedCombatActivity(
   observer: Entity,
   target: Pick<Entity, 'id'>,
 ): string | undefined {
-  const current = world.entities[target.id];
+  const current = entityGet(world.entities, target.id);
   if (!current?.actor?.alive) return;
   let description = preparationDescription(current);
   if (!description) {

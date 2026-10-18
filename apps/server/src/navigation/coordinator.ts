@@ -1,13 +1,25 @@
+import { entityGet } from '@open-legend/domain';
 import { Worker } from 'node:worker_threads';
-import type { NavigationRequest } from '@open-legend/spatial';
+import type { BodyProfile, NavigationRequest } from '@open-legend/spatial';
 import {
   navigationBlocked,
+  bodyProfile,
+  activelyParticipates,
+  worldSupport,
+  type Entity,
   spatialMap,
   worldRootEntities,
   type WorldState,
 } from '@open-legend/domain';
 import type { WorldService } from '../world-service.js';
-import { recordDuration, gaugeMetric, countMetric } from '../performance.js';
+import {
+  beginTiming,
+  endTiming,
+  profilingEnabled,
+  recordDuration,
+  gaugeMetric,
+  countMetric,
+} from '../performance.js';
 import { OverloadError } from '../work-lane.js';
 import type { NavigationMessage, NavigationReply } from './messages.js';
 interface Task {
@@ -16,7 +28,22 @@ interface Task {
   request: NavigationRequest;
   map: WorldState['map'];
   timeline: string;
-  queuedAt: number;
+  queuedAt?: number;
+}
+
+/** This is derived preparation, never route admission. Resolve one actual grounded body only
+ * when a geometry/timeline key changes; every real request still supplies its exact body. */
+function warmupBody(world: WorldState): BodyProfile | undefined {
+  const eligible = (entity: Entity | undefined): entity is Entity =>
+    !!entity?.actor?.alive &&
+    activelyParticipates(entity) &&
+    worldSupport(entity) !== null &&
+    !entity.spatial.flight &&
+    entity.spatial.fallVelocity === undefined;
+  const designatedId = world.identity?.controlledEntityId;
+  const designated = designatedId ? entityGet(world.entities, designatedId) : undefined;
+  const entity = eligible(designated) ? designated : worldRootEntities(world).find(eligible);
+  return entity ? { ...bodyProfile(entity) } : undefined;
 }
 
 /** One persistent worker initially; no per-actor WASM worlds and no waits in the mutation lane.
@@ -24,14 +51,16 @@ interface Task {
  * an old result. Pending state is saved, while workers, refs and caches are disposable.
  */
 export class NavigationCoordinator {
+  private readonly profiling = profilingEnabled();
   private worker?: Worker;
-  private active?: { id: number; task?: Task; key: string; sentAt: number };
+  private active?: { id: number; task?: Task; key: string; sentAt?: number };
   private timer?: ReturnType<typeof setTimeout>;
   private ageTimer?: ReturnType<typeof setInterval>;
   private scheduled?: ReturnType<typeof setImmediate>;
   private queue: Task[] = [];
   private key = '';
   private map?: WorldState['map'];
+  private warmBody?: BodyProfile;
   private timeline = '';
   private serial = 0;
   private requestId = 0;
@@ -57,6 +86,7 @@ export class NavigationCoordinator {
     const map = spatialMap(world);
     if (this.map !== map || this.timeline !== timelineId) {
       this.map = map;
+      this.warmBody = warmupBody(world);
       this.timeline = timelineId;
       this.key = `${world.id}:${timelineId}:${++this.serial}`;
       // Do not make a loaded/replaced world wait for an obsolete heavy build. Termination
@@ -88,7 +118,7 @@ export class NavigationCoordinator {
         request: a.navigation.request,
         map,
         timeline: timelineId,
-        queuedAt: prior?.queuedAt ?? performance.now(),
+        ...(this.profiling ? { queuedAt: prior?.queuedAt ?? performance.now() } : {}),
       });
     }
     gaugeMetric('navigation.queued', this.queue.length);
@@ -98,7 +128,8 @@ export class NavigationCoordinator {
   /** Oldest waiting request's age, refreshed while any wait: a cold build or a paused world
    * publishes no reconcile, so an age computed only at queue time would read near zero. */
   private reportQueueAge() {
-    const oldest = this.queue.reduce((min, task) => Math.min(min, task.queuedAt), Infinity);
+    if (!this.profiling) return;
+    const oldest = this.queue.reduce((min, task) => Math.min(min, task.queuedAt!), Infinity);
     gaugeMetric('navigation.oldestQueuedMs', oldest === Infinity ? 0 : performance.now() - oldest);
     if (oldest === Infinity || this.closed) {
       clearInterval(this.ageTimer);
@@ -114,13 +145,14 @@ export class NavigationCoordinator {
     if (!task && this.failed) return;
     if (!task && this.worker && this.preparedKey === this.key) return;
     const id = ++this.requestId;
-    this.active = { id, task, key: this.key, sentAt: performance.now() };
+    this.active = { id, task, key: this.key };
     try {
       if (!this.worker) {
         this.failed = false;
         this.worker = new Worker(new URL('./worker.mjs', import.meta.url), {
           execArgv: [],
           env: {},
+          workerData: { profiling: this.profiling },
           resourceLimits: { maxOldGenerationSizeMb: 128 },
         });
         const worker = this.worker;
@@ -137,16 +169,21 @@ export class NavigationCoordinator {
       const message: NavigationMessage = {
         id,
         key: this.key,
-        ...(this.preparedKey !== this.key ? { map: this.map } : {}),
+        ...(this.preparedKey !== this.key
+          ? { map: this.map, ...(!task && this.warmBody ? { warmBody: this.warmBody } : {}) }
+          : {}),
         ...(task ? { request: task.request } : {}),
       };
-      if (task) recordDuration('navigation.queueWait', performance.now() - task.queuedAt);
+      if (task?.queuedAt !== undefined)
+        recordDuration('navigation.queueWait', performance.now() - task.queuedAt);
       this.timer = setTimeout(() => void this.failedWorker(), 20_000);
       // Synchronous structured clone of the map (on a key change) and the request.
-      const posting = performance.now();
+      const posting = this.profiling ? performance.now() : undefined;
       this.worker.postMessage(message);
-      this.active.sentAt = performance.now();
-      recordDuration('navigation.dispatch', this.active.sentAt - posting);
+      if (posting !== undefined) {
+        this.active.sentAt = performance.now();
+        recordDuration('navigation.dispatch', this.active.sentAt - posting);
+      }
     } catch {
       // Launch/serialization can fail before an error event. Use the same terminal path
       // instead of throwing from setImmediate or leaving a saved action pending forever.
@@ -166,6 +203,7 @@ export class NavigationCoordinator {
     // SW06.2a attribution: record each worker reply's work once, and never a placeholder for
     // a failure or a publication retry. Failures keep their own counters.
     if (!publicationRetry && reply.timing) {
+      if (reply.timing.warmupFailed) countMetric('navigation.warmupFailure');
       if (reply.timing.startupMs !== undefined)
         recordDuration('navigation.startup', reply.timing.startupMs);
       if (reply.timing.prepareMapMs !== undefined)
@@ -176,12 +214,13 @@ export class NavigationCoordinator {
           build.ms,
         );
       if (active.task && !reply.error) {
-        recordDuration('navigation.query', reply.queryMs);
-        recordDuration('navigation.roundTrip', performance.now() - active.sentAt);
+        recordDuration('navigation.query', reply.timing.queryMs);
+        if (active.sentAt !== undefined)
+          recordDuration('navigation.roundTrip', performance.now() - active.sentAt);
       }
     }
     let deferred = false;
-    const publishing = performance.now();
+    const publishing = this.profiling ? beginTiming() : undefined;
     try {
       if (active.task && reply.result)
         await this.service.preparedNavigation(
@@ -208,8 +247,9 @@ export class NavigationCoordinator {
     } finally {
       if (!deferred) {
         if (active.task && reply.result) {
-          recordDuration('navigation.publish', performance.now() - publishing);
-          recordDuration('navigation.requestLatency', performance.now() - active.task.queuedAt);
+          endTiming('navigation.publish', publishing);
+          if (active.task.queuedAt !== undefined)
+            recordDuration('navigation.requestLatency', performance.now() - active.task.queuedAt);
         }
         if (this.active === active) this.active = undefined;
         this.schedule();
@@ -247,8 +287,6 @@ export class NavigationCoordinator {
           key: active.key,
           result: { status: 'unavailable', path: [] },
           error: 'Navigation worker failed.',
-          buildMs: 0,
-          queryMs: 0,
         });
         await this.completion;
       } else if (this.active === active) this.active = undefined;

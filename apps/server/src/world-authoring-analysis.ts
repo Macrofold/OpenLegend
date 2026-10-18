@@ -1,3 +1,4 @@
+import { entityGet, entityHas } from '@open-legend/domain';
 import {
   compileRecipeCandidate,
   recipeDependencyReferences,
@@ -364,8 +365,8 @@ export function candidateGraph(
       if (
         typeof p.entityId !== 'string' ||
         !canReadBody(p.entityId) ||
-        !Object.hasOwn(world.entities, p.entityId) ||
-        !world.entities[p.entityId]?.actor
+        !entityHas(world.entities, p.entityId) ||
+        !entityGet(world.entities, p.entityId)?.actor
       ) {
         missing('entityId', 'Required body is unavailable in the permitted scope.');
       } else {
@@ -375,7 +376,7 @@ export function candidateGraph(
             id: p.entityId,
             version: authoringBodyTarget(world, p.entityId).digest,
           },
-          label: `Body: ${world.entities[p.entityId]!.name}`,
+          label: `Body: ${entityGet(world.entities, p.entityId)!.name}`,
           layer: 'live',
           availability: 'reference-only',
         });

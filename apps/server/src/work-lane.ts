@@ -1,4 +1,4 @@
-import { recordDuration } from './performance.js';
+import { recordDuration, beginTiming, elapsedTiming } from './performance.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 export class OverloadError extends Error {
@@ -34,6 +34,7 @@ export class WorkLane {
     if (this.pending.length >= this.maximum || waitMs <= 0)
       return Promise.reject(new OverloadError());
     const queuedAt = performance.now();
+    const measured = beginTiming(queuedAt);
     // A queued operation belongs to its submitter, not whoever finishes before it.
     // Preserve request/diagnostic/transaction contexts across the queue boundary.
     const run = AsyncLocalStorage.bind(operation);
@@ -41,9 +42,12 @@ export class WorkLane {
       const entry = {
         start: () => {
           clearTimeout(timer);
-          recordDuration(`${this.name}.wait`, performance.now() - queuedAt);
+          const admittedAt = performance.now();
+          const waited = admittedAt - queuedAt;
+          const measuredWait = elapsedTiming(measured, admittedAt);
+          if (measuredWait !== undefined) recordDuration(`${this.name}.wait`, measuredWait);
           // Timers cannot fire during synchronous native work; check age on admission too.
-          if (performance.now() - queuedAt > waitMs) {
+          if (waited > waitMs) {
             reject(new OverloadError());
             this.finish();
             return;

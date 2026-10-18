@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { distance3D, finitePoint, type SurfacePoint } from '@open-legend/spatial';
 import { seesEntity } from './perception.js';
 import { nearbyEntities, canReachEntity } from './spatial.js';
@@ -11,6 +12,7 @@ import { releaseInvocationResources } from './resource-claims.js';
 import { finishPlanAction } from './agency.js';
 import { outcome } from './events.js';
 import type { Command, Entity, WorldState, WorldEvent } from './types.js';
+import { countDomainWork } from './diagnostic-counters.js';
 
 export interface TerritorialPolicy {
   id: string;
@@ -131,6 +133,63 @@ export function territorialReviewDue(world: WorldState, entity: Entity): boolean
         world.simTime >= threat.searchUntil))
   );
 }
+/** A due review can be a private wake-up when its sole change is scheduling the next
+ * look. Any possible entrant or retained pursuit/action uses the full existing owner.
+ * No pending linear body rate affects this guard: it reads only current life/health,
+ * supported positions and admitted controller/body applicability. */
+export function renewQuietTerritorialReview(world: WorldState, entity: Entity): boolean {
+  const threat = entity.threat,
+    actor = entity.actor;
+  if (
+    !threat ||
+    !actor?.alive ||
+    actor.incapacitated ||
+    !activelyParticipates(entity) ||
+    !territorialReviewDue(world, entity) ||
+    threat.mode !== 'idle' ||
+    threat.relinquished ||
+    actor.action ||
+    threat.targetId ||
+    threat.exhaustedTarget ||
+    threat.episodeUntil !== undefined ||
+    threat.searchUntil !== undefined ||
+    threat.lastSeen ||
+    !actor.body ||
+    actor.health <= actor.body.maxHealth * threat.policy.relinquishHealthFraction ||
+    distance3D(worldPosition(entity), threat.policy.home) > threat.policy.territoryRadius
+  )
+    return false;
+  for (const candidate of nearbyEntities(world, threat.policy.home, threat.policy.entryRadius)) {
+    if (
+      candidate.id !== entity.id &&
+      eligible(candidate, threat.policy) &&
+      distance3D(worldPosition(candidate), threat.policy.home) <= threat.policy.entryRadius
+    )
+      return false;
+  }
+  threat.reviewAt = world.simTime + threat.policy.reviewSeconds;
+  countDomainWork('nativeTerritorialDeadlineReuses');
+  return true;
+}
+/** Absolute private wake-up, separate from body/action/interaction forecast expiry. */
+export function nextTerritorialReview(world: WorldState, ids: readonly string[]): number {
+  let next = Infinity;
+  for (const id of ids) {
+    const entity = entityGet(world.entities, id),
+      threat = entity?.threat;
+    if (
+      !threat ||
+      !entity.actor?.alive ||
+      entity.actor.incapacitated ||
+      !activelyParticipates(entity) ||
+      (threat.relinquished && threat.mode === 'idle') ||
+      threat.reviewAt <= world.simTime
+    )
+      continue;
+    next = Math.min(next, threat.reviewAt);
+  }
+  return next;
+}
 export function territorialIntention(
   world: WorldState,
   entity: Entity,
@@ -151,7 +210,7 @@ export function territorialIntention(
   threat.reviewAt = world.simTime + policy.reviewSeconds;
   recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'behavior' });
   if (threat.exhaustedTarget) {
-    const prior = world.entities[threat.exhaustedTarget.id];
+    const prior = entityGet(world.entities, threat.exhaustedTarget.id);
     if (
       !eligible(prior, policy) ||
       (prior.actor!.physicalLife ?? 0) !== threat.exhaustedTarget.life ||
@@ -178,7 +237,7 @@ export function territorialIntention(
       ['pursuit', 'search'].includes(threat.mode))
   )
     returnToSafety(world, entity, events);
-  let target = threat.targetId ? world.entities[threat.targetId] : undefined;
+  let target = threat.targetId ? entityGet(world.entities, threat.targetId) : undefined;
   if (threat.mode === 'idle' && !threat.relinquished) {
     let nearest = Infinity;
     for (const candidate of nearbyEntities(world, policy.home, policy.entryRadius)) {
@@ -300,7 +359,7 @@ export function territorialRefusal(world: WorldState, entity: Entity, events: Wo
   }
 }
 export function validateTerritorialThreats(world: WorldState): void {
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     const threat = entity.threat;
     if (!threat) continue;
     const p = threat.policy,

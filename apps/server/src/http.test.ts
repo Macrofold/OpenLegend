@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { localHttpClient } from '../../../tests/fixtures/http.js';
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { editWorld } from '../../../tests/fixtures/service.js';
@@ -12,12 +13,12 @@ const cleanup: Array<() => Promise<void>> = [];
 afterEach(async () => {
   for (const close of cleanup.splice(0)) await close();
 });
-async function start(godMode = false) {
+async function start(godMode = false, tick = false) {
   const game = await createGameServer({
     config: readConfig({ OPEN_LEGEND_GOD_MODE: String(godMode) }),
     store: await testRepository(),
     production: true,
-    tick: false,
+    tick,
   });
   await new Promise<void>((resolve, reject) => {
     game.server.once('error', reject);
@@ -32,6 +33,36 @@ async function start(godMode = false) {
 }
 
 describe('local HTTP boundary', () => {
+  it('continues bounded clock work without overlap and cancels its wake on close', async () => {
+    const { game, post } = await start(false, true);
+    const tick = game.service.tick.bind(game.service);
+    let calls = 0,
+      active = 0,
+      peak = 0;
+    const draining: Array<boolean | undefined> = [];
+    game.service.tick = async (...args) => {
+      active++;
+      peak = Math.max(peak, active);
+      draining.push(args[2]?.drain);
+      try {
+        const more = await tick(...args);
+        // Force two continuation opportunities without depending on this host's
+        // timing or how many native boundaries the opening happens to contain.
+        return ++calls < 3 || more;
+      } finally {
+        active--;
+      }
+    };
+    await post('/api/control', { paused: false, clientId: 'bounded-host-clock' });
+    await expect.poll(() => calls).toBeGreaterThanOrEqual(3);
+    expect(game.service.world.simTime).toBeGreaterThan(0);
+    expect(peak).toBe(1);
+    expect(draining.every((value) => value === false)).toBe(true);
+    await game.close();
+    const atClose = calls;
+    await new Promise<void>((resolve) => setTimeout(resolve, 100));
+    expect(calls).toBe(atClose);
+  });
   it('E36 shows paired decision details only while inspection remains authorized', async () => {
     const { game, post } = await start(true),
       id = await seedDecisionInspection(game.service);
@@ -129,7 +160,7 @@ describe('local HTTP boundary', () => {
       expect(game.service.world.simTime).toBe(30);
       controller.abort();
       await expect
-        .poll(() => game.service.world.entities[PLAYER_ID]?.actor?.participation?.phase)
+        .poll(() => entityGet(game.service.world.entities, PLAYER_ID)?.actor?.participation?.phase)
         .toBe('exiting');
       const departureAt = game.service.world.exitExposures![PLAYER_ID]!;
       expect(game.service.paused).toBe(false);
@@ -152,6 +183,7 @@ describe('local HTTP boundary', () => {
     const wood = allItems(game.service.world).find(
       (item) => item.ownerId === PLAYER_ID && item.definitionId === 'wood',
     )!;
+    // Evasive destinations belong to ground/self, not a selected campfire.
     expect(report.catalogue.actions.map((action: { id: string }) => action.id)).toEqual([
       'move',
       'fire-extinguish:campfire',
@@ -231,10 +263,14 @@ describe('local HTTP boundary', () => {
     await post('/api/presence', { clientId: 'returning-tab', visible: false, sequence: 1 });
     expect(game.service.paused).toBe(false);
     await post('/api/presence', { clientId: 'returning-tab', visible: false, sequence: 3 });
-    expect(game.service.world.entities[PLAYER_ID]?.actor?.participation?.phase).toBe('exiting');
+    expect(entityGet(game.service.world.entities, PLAYER_ID)?.actor?.participation?.phase).toBe(
+      'exiting',
+    );
     const departureAt = game.service.world.exitExposures![PLAYER_ID]!;
     await post('/api/presence', { clientId: 'returning-tab', visible: true, sequence: 2 });
-    expect(game.service.world.entities[PLAYER_ID]?.actor?.participation?.phase).toBe('exiting');
+    expect(entityGet(game.service.world.entities, PLAYER_ID)?.actor?.participation?.phase).toBe(
+      'exiting',
+    );
     expect(game.service.world.exitExposures![PLAYER_ID]).toBe(departureAt);
     await game.service.tick((departureAt - game.service.world.simTime) / 60, 0);
     expect(game.service.pauseReason).toBe('away');

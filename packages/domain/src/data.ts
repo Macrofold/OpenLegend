@@ -1,3 +1,4 @@
+import { entityHas } from './entity-collection.js';
 import type { WorldState } from './types.js';
 import {
   createItemLot,
@@ -45,7 +46,7 @@ export function nextId(world: WorldState, prefix: string): string {
  */
 export function nextEntityId(world: WorldState, prefix: string): string {
   let id = nextId(world, prefix);
-  while (Object.hasOwn(world.entities, id)) id = nextId(world, prefix);
+  while (entityHas(world.entities, id)) id = nextId(world, prefix);
   return id;
 }
 /** Reserve a supplied entity's canonical native-looking number before it can become

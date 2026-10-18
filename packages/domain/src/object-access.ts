@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { directChildIds, itemFor, objectAncestors, custodian, mergeCompatible } from './objects.js';
 import { canReachEntity } from './spatial.js';
 import { seesEntity } from './perception.js';
@@ -7,8 +8,8 @@ import type { WorldState, ItemInstance } from './types.js';
 /** Physical access is separate from declared title and human-private knowledge.
  * docs/projects/completed/immediate-gameplay-limits.md#decisions */
 export function canAccessContainer(world: WorldState, actorId: string, id: string): boolean {
-  const actor = world.entities[actorId],
-    target = world.entities[id];
+  const actor = entityGet(world.entities, actorId),
+    target = entityGet(world.entities, id);
   if (
     !actor?.actor ||
     !target ||
@@ -54,7 +55,7 @@ export function* possessionItems(world: WorldState, actorId: string): Generator<
 export function inventoryWorkReason(world: WorldState, actorId: string, id: string): string | null {
   const referenced = new Set<string | undefined>();
   for (const owner of new Set([actorId, custodian(world, id)])) {
-    const actor = world.entities[owner]?.actor,
+    const actor = entityGet(world.entities, owner)?.actor,
       action = actor?.action;
     for (const reference of [
       action?.itemId,

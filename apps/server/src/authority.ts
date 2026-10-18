@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
@@ -140,7 +141,7 @@ export function mayDiscloseSubject(
   mayReadActor: (actorId: string) => boolean,
   retainedCustody?: { custodianId?: string | null } | null,
 ): boolean {
-  const entity = world.entities[id];
+  const entity = entityGet(world.entities, id);
   if (!entity || entity.retirement) {
     if (retainedCustody === undefined) return false;
     // Retirement records have no live placement. Their recorded custodian keeps
@@ -239,6 +240,7 @@ const key = (worldId: string, id: string) => JSON.stringify([worldId, id]);
 export class AuthorityRepository {
   private construction = new Map<string, readonly ConstructionPermission[]>();
   private sessions = new Map<string, LoginSession>();
+  private publication = {};
   private grants = new Map<string, WorldGrant>();
   private controls = new Map<string, ControlLease>();
   private listeners = new Set<() => void>();
@@ -351,6 +353,7 @@ export class AuthorityRepository {
   private changed(apply: () => void) {
     const publish = () => {
       apply();
+      this.publication = {};
       for (const listener of this.listeners) listener();
     };
     if (this.db.afterCommit) this.db.afterCommit(publish);
@@ -453,20 +456,55 @@ export class AuthorityRepository {
   }
   async authenticate(token: string | undefined, now: number): Promise<LoginSession> {
     if (!token || !/^[a-f0-9]{64}$/.test(token)) throw new AuthorityError('session');
+    const publication = this.publication;
     const row = await this.db
       .prepare(
-        'SELECT id,account_id,revision,expires_at FROM auth_sessions WHERE token_hash=? AND expires_at>?',
+        `SELECT id AS login_id,account_id AS login_account_id,
+         revision AS login_revision,expires_at AS login_expires_at
+         FROM auth_sessions WHERE token_hash=? AND expires_at>?`,
       )
       .get(hash(token), now);
     if (!row) throw new AuthorityError('session');
+    return this.sessionFromRow(row, publication);
+  }
+  private sessionFromRow(row: Record<string, unknown>, publication: object): LoginSession {
     const session: LoginSession = {
-      id: String(row['id']),
-      accountId: String(row['account_id']),
-      revision: Number(row['revision']),
-      expiresAt: Number(row['expires_at']),
+      id: String(row['login_id']),
+      accountId: String(row['login_account_id']),
+      revision: Number(row['login_revision']),
+      expiresAt: Number(row['login_expires_at']),
     };
-    this.sessions.set(session.id, session);
+    // A read begun before logout/account replacement must not revive its cache entry.
+    // The returned scope still has the ordinary current and SQL publication fences.
+    if (publication === this.publication) this.sessions.set(session.id, session);
     return session;
+  }
+  /** Ordinary HTTP admission needs these exact facts together, once per request.
+   * No authority is reused across requests or past the existing commit fence. */
+  async authenticateScope(
+    token: string | undefined,
+    now: number,
+    worldId: string,
+    timelineId: string,
+    connectionId: string,
+  ): Promise<RequestScope> {
+    if (!token || !/^[a-f0-9]{64}$/.test(token)) throw new AuthorityError('session');
+    const publication = this.publication;
+    const row = await this.db
+      .prepare(
+        `SELECT s.id AS login_id,s.account_id AS login_account_id,
+         s.revision AS login_revision,s.expires_at AS login_expires_at,
+         g.actor_id,g.revision,g.capabilities,
+         c.generation,c.account_id,c.session_id,c.connection_id
+         FROM auth_sessions s
+         LEFT JOIN auth_grants g ON g.world_id=? AND g.account_id=s.account_id
+         LEFT JOIN auth_controls c ON c.world_id=g.world_id AND c.actor_id=g.actor_id
+         WHERE s.token_hash=? AND s.expires_at>?`,
+      )
+      .get(worldId, hash(token), now);
+    if (!row) throw new AuthorityError('session');
+    const session = this.sessionFromRow(row, publication);
+    return this.scopeFromRow(session, worldId, timelineId, connectionId, row);
   }
   async revokeSession(sessionId: string, now: number): Promise<void> {
     await this.db.transaction(async () => {
@@ -481,6 +519,13 @@ export class AuthorityRepository {
       .prepare('SELECT * FROM auth_grants WHERE world_id=? AND account_id=?')
       .get(worldId, accountId);
     if (!row) return undefined;
+    return this.grantFromRow(worldId, accountId, row);
+  }
+  private grantFromRow(
+    worldId: string,
+    accountId: string,
+    row: Record<string, unknown>,
+  ): WorldGrant {
     const value: WorldGrant = {
       worldId,
       accountId,
@@ -488,13 +533,24 @@ export class AuthorityRepository {
       revision: Number(row['revision']),
       capabilities: z.array(capabilitySchema).parse(JSON.parse(String(row['capabilities']))),
     };
-    this.grants.set(key(worldId, accountId), value);
+    // A read can finish after a newer writer has published its authority change.
+    // Keep that committed revision; the returned older scope will then fail current().
+    const cached = this.grants.get(key(worldId, accountId));
+    if (!cached || cached.revision <= value.revision)
+      this.grants.set(key(worldId, accountId), value);
     return value;
   }
   async control(worldId: string, actorId: string): Promise<ControlLease> {
     const row = await this.db
       .prepare('SELECT * FROM auth_controls WHERE world_id=? AND actor_id=?')
       .get(worldId, actorId);
+    return this.controlFromRow(worldId, actorId, row);
+  }
+  private controlFromRow(
+    worldId: string,
+    actorId: string,
+    row: Record<string, unknown> | undefined,
+  ): ControlLease {
     const value: ControlLease = {
       worldId,
       actorId,
@@ -503,7 +559,9 @@ export class AuthorityRepository {
       sessionId: String(row?.['session_id'] ?? ''),
       connectionId: String(row?.['connection_id'] ?? ''),
     };
-    this.controls.set(key(worldId, actorId), value);
+    const cached = this.controls.get(key(worldId, actorId));
+    if (!cached || cached.generation <= value.generation)
+      this.controls.set(key(worldId, actorId), value);
     return value;
   }
   async scope(
@@ -512,8 +570,29 @@ export class AuthorityRepository {
     timelineId: string,
     connectionId: string,
   ): Promise<RequestScope> {
-    const grant = await this.grant(worldId, session.accountId);
-    if (grant && !grant.actorId && grant.capabilities.length)
+    // These facts describe one requested scope. One statement gives them one SQL
+    // snapshot and avoids another read-lane wait for the character's controller.
+    const row = await this.db
+      .prepare(
+        `SELECT g.actor_id,g.revision,g.capabilities,
+        c.generation,c.account_id,c.session_id,c.connection_id
+        FROM auth_grants g
+        LEFT JOIN auth_controls c ON c.world_id=g.world_id AND c.actor_id=g.actor_id
+        WHERE g.world_id=? AND g.account_id=?`,
+      )
+      .get(worldId, session.accountId);
+    return this.scopeFromRow(session, worldId, timelineId, connectionId, row);
+  }
+  private scopeFromRow(
+    session: LoginSession,
+    worldId: string,
+    timelineId: string,
+    connectionId: string,
+    row: Record<string, unknown> | undefined,
+  ): RequestScope {
+    if (!row || row['capabilities'] == null) throw new AuthorityError('forbidden');
+    const grant = this.grantFromRow(worldId, session.accountId, row);
+    if (!grant.actorId && grant.capabilities.length)
       return Object.freeze({
         accountId: session.accountId,
         sessionId: session.id,
@@ -526,9 +605,9 @@ export class AuthorityRepository {
         connectionId,
         audience: 'authorized-inspection' as const,
       });
-    if (!grant?.actorId || !grant.capabilities.includes('play'))
+    if (!grant.actorId || !grant.capabilities.includes('play'))
       throw new AuthorityError('forbidden');
-    const control = await this.control(worldId, grant.actorId);
+    const control = this.controlFromRow(worldId, grant.actorId, row);
     return Object.freeze({
       accountId: session.accountId,
       sessionId: session.id,
@@ -761,13 +840,13 @@ export class AuthorityRepository {
    * operational installation; historical gameplay cannot restore revoked bindings. */
   async restoreBindings(world: WorldState): Promise<void> {
     for (const [actorId, accountId] of await this.actorOwners(world.id)) {
-      const actor = world.entities[actorId]?.actor;
+      const actor = entityGet(world.entities, actorId)?.actor;
       if (actor) actor.controller = 'player';
       world.authorship.playerAccountIds[actorId] = accountId;
     }
     for (const grant of await this.worldGrants(world.id)) {
       if (!grant.actorId) continue;
-      const actor = world.entities[grant.actorId]?.actor;
+      const actor = entityGet(world.entities, grant.actorId)?.actor;
       if (!actor)
         throw new Error(
           'The save lacks a currently bound human character; authority cannot be restored from historical state.',

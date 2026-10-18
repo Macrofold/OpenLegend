@@ -72,3 +72,5 @@ Lifecycle policies: [logout, protection, ghosts and lethal consequences](lifecyc
 - [Typed-request wording](typed-requests.md) — the words the free typed-request reader uses for this world's things and missing actions.
 - [Action family facts](actions.md) — what engine code reads about the bundled families (item outputs, tool fields, pausing, cooking).
 - [Time](time.md) — clock fidelity and the named stopping times (dawn, dusk).
+
+[Routine attention experiment](attention.md) records a tested, unretained busy-witness rule; it is not a current world law.

@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { subjectReferenceCurrent } from './worlds/base/knowledge.js';
 import { isSafeRecordId } from './records.js';
 import type { WorldState } from './types.js';
@@ -35,7 +36,7 @@ export function captureActionTargets(
     commands
       .flatMap((command) =>
         targets(command)
-          .filter((id) => !!world.entities[id]?.actor)
+          .filter((id) => !!entityGet(world.entities, id)?.actor)
           .map((id) => [id, world.perceptionEpisodes?.[actorId]?.[id] ?? null] as const),
       )
       .slice(0, 16),
@@ -50,7 +51,7 @@ export function actionTargetsCurrent(
 ): boolean {
   return commands.every((command) =>
     targets(command).every((id) => {
-      if (!world.entities[id]?.actor) return true; // Native admission handles missing objects.
+      if (!entityGet(world.entities, id)?.actor) return true; // Native admission handles missing objects.
       return subjectReferenceCurrent(
         world,
         actorId,

@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import {
   worldPosition,
   observedBodyHealth,
@@ -64,8 +65,8 @@ export function perceivedEntityText(
     `I can see ${entityLabel(world, entity, observerId, 'indefinite')}.${entity.actor ? ` Species: ${entity.actor.species ?? 'unknown'}.` : ''}`,
   ];
   const combat =
-    world.entities[observerId] &&
-    observedCombatActivity(world, world.entities[observerId]!, entity);
+    entityGet(world.entities, observerId) &&
+    observedCombatActivity(world, entityGet(world.entities, observerId)!, entity);
   if (combat) facts.push(combat);
   const health = observedBodyHealth(world, observerId, entity.id);
   if (health) facts.push(health);

@@ -1,3 +1,4 @@
+import { entityGet } from '../../entity-collection.js';
 import { preparationDefinition } from '../../food-preparation.js';
 import { NATIVE_PREPARATIONS } from './items.js';
 import type { ActivityHostDescriptor, ActivityActionMeaning } from '../../activity-hosts.js';
@@ -25,6 +26,7 @@ function host(
       ).includes(command),
       toolFields: BASE_FAMILY_FACTS.toolFields[command] ?? [],
       unitPerCommand: (BASE_FAMILY_FACTS.unitPerCommand as readonly string[]).includes(command),
+      ...(command === 'craft' ? { coarseWork: 'consumed-stationary-craft' as const } : {}),
     };
   return {
     definition: {
@@ -49,7 +51,7 @@ function host(
     },
     outputDefinition(world, command) {
       if (command.type === 'gather' || command.type === 'fish')
-        return world.entities[command.targetId]?.resource?.definitionId;
+        return entityGet(world.entities, command.targetId)?.resource?.definitionId;
       if (command.type === 'cook') {
         const outputs = preparationDefinition(world, command)?.outputs;
         return outputs?.length === 1 ? outputs[0]!.definitionId : undefined;

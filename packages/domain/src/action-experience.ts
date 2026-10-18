@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { validExactInventorySources } from './native-command-contracts.js';
 import {
   invocationFields,
@@ -448,13 +449,16 @@ export function activityResultFacts(
       ]
     : [];
 }
-export function beginActivity(
+/** Prepare the exact retained record without installing it or changing owned history.
+ * Previews must keep size/display admission even when they skip disposable effects.
+ * docs/action-capabilities.md#action-availability-and-temporary-execution */
+export function prepareActivity(
   world: WorldState,
   command: Command,
   actionId: string,
   view: ActivityView,
   parentId?: string,
-): ActivityOccurrence | Outcome {
+): { record: ActivityOccurrence; existing: boolean } | Outcome {
   // A learned success may reproduce the physical action, never a human's one-attack consent.
   const { humanInitiated: _human, combatHelpId: _help, ...recordable } = command;
   command = recordable;
@@ -466,14 +470,14 @@ export function beginActivity(
     command = physical;
   }
   const state = world.actionExperience;
-  const entries = (state.occurrences[command.actorId] ??= []);
+  const entries = state.occurrences[command.actorId] ?? [];
   const existing = entries.find((entry) => entry.commandId === command.id);
-  if (existing) return existing;
+  if (existing) return { record: existing, existing: true };
   const objects: ActivityOccurrence['objects'] = {};
   const entityFields = new Set(commandEntityFields(command));
   for (const [field, value] of Object.entries(activityCommandFields(command))) {
     if (!entityFields.has(field) || typeof value !== 'string') continue;
-    const entity = world.entities[value];
+    const entity = entityGet(world.entities, value);
     if (!entity) continue;
     objects[value] = {
       kind: entity.kind,
@@ -488,7 +492,7 @@ export function beginActivity(
   }
   if ('sources' in command && command.sources) {
     for (const source of command.sources) {
-      const entity = world.entities[source.itemId];
+      const entity = entityGet(world.entities, source.itemId);
       if (entity?.item)
         objects[source.itemId] = {
           kind: entity.kind,
@@ -518,7 +522,7 @@ export function beginActivity(
     connections: [],
     evidenceIds: [],
   };
-  const plan = world.entities[command.actorId]?.actor?.agency.plan;
+  const plan = entityGet(world.entities, command.actorId)?.actor?.agency.plan;
   if (
     parentId &&
     plan?.id === parentId &&
@@ -536,7 +540,21 @@ export function beginActivity(
     if (method) record.methodId = method.id;
   }
   const problem = activityRecordProblem(record);
-  if (problem) return problem;
+  return problem ?? { record, existing: false };
+}
+export function beginActivity(
+  world: WorldState,
+  command: Command,
+  actionId: string,
+  view: ActivityView,
+  parentId?: string,
+): ActivityOccurrence | Outcome {
+  const prepared = prepareActivity(world, command, actionId, view, parentId);
+  if ('ok' in prepared) return prepared;
+  const { record } = prepared;
+  if (prepared.existing) return record;
+  const state = world.actionExperience;
+  const entries = (state.occurrences[command.actorId] ??= []);
   entries.push(record);
   state.admitted++;
   state.current[command.actorId] = actionId;
@@ -579,7 +597,7 @@ export function connectActivityItem(
   if (!sources?.length) return;
   const entry = activeActivity(world, cause);
   const sourceSize =
-    (world.entities[sourceId]?.item?.quantity ?? 0) + (type === 'split' ? quantity : 0);
+    (entityGet(world.entities, sourceId)?.item?.quantity ?? 0) + (type === 'split' ? quantity : 0);
   const ambiguous =
     sources.length > 1 ||
     sources.some((source) => source.ambiguous) ||
@@ -609,7 +627,8 @@ export function connectActivityItem(
       ? 0
       : Math.max(
           0,
-          (world.entities[sourceId]?.item?.quantity ?? 0) - (type === 'consume' ? quantity : 0),
+          (entityGet(world.entities, sourceId)?.item?.quantity ?? 0) -
+            (type === 'consume' ? quantity : 0),
         );
   for (const source of sources) {
     // In a mixture, each number is only an upper bound on a source's remaining
@@ -772,7 +791,7 @@ export function endActivity(
       entityIds: [actorId],
     });
   }
-  world.entities[actorId]!.actor!.agency.lastResultMemoryId = entry.resultMemoryId;
+  entityGet(world.entities, actorId)!.actor!.agency.lastResultMemoryId = entry.resultMemoryId;
   const cursor = world.actionExperience.learning[actorId]!;
   if (!cursor.pending.includes(entry.id)) cursor.pending.push(entry.id);
   if (cursor.pending.length > ACTIVITY_LIMITS.page) cursor.pending.shift();
@@ -827,7 +846,7 @@ export function activityCompletionProblem(
       sources.length > 1 ||
       sources.some((source) => source.ambiguous) ||
       sources.reduce((sum, source) => sum + source.quantity, 0) <
-        (world.entities[material.itemId]?.item?.quantity ?? 0);
+        (entityGet(world.entities, material.itemId)?.item?.quantity ?? 0);
     recordConsumedSources(proposed, sources, material.quantity, ambiguous);
   }
   applyActivityResult(world, proposed, result);
@@ -1467,7 +1486,7 @@ export function validateActionExperience(world: WorldState): void {
       validateActivityBindings(state.methods[acquisition.methodId]!, acquisition.bindings);
     }
   }
-  for (const execution of Object.values(world.entities).flatMap((entity) =>
+  for (const execution of entityValues(world.entities).flatMap((entity) =>
     [entity.actor?.agency.plan?.activity, entity.actor?.agency.suspended?.activity].flatMap(
       (activity) => (activity ? [{ entity, activity }] : []),
     ),
@@ -1605,7 +1624,10 @@ function validateExecution(
       let retainedAttempts = 0,
         retainedSpent = 0;
       const retainedIds = new Set<string>();
-      for (const step of [...plan.steps, ...world.entities[actorId]!.actor!.agency.history]) {
+      for (const step of [
+        ...plan.steps,
+        ...entityGet(world.entities, actorId)!.actor!.agency.history,
+      ]) {
         if (
           !step.id.startsWith(attemptPrefix) ||
           !step.activityKey ||
@@ -1647,7 +1669,7 @@ function validateExecution(
         execution.spent! > execution.control.budget.maximumSpent ||
         typeof execution.interrupted !== 'boolean' ||
         typeof execution.terminal !== 'boolean' ||
-        (world.entities[actorId]?.actor?.agency.suspended?.activity === execution &&
+        (entityGet(world.entities, actorId)?.actor?.agency.suspended?.activity === execution &&
           !execution.interrupted) ||
         (execution.terminal &&
           (plan.status === 'active' ||
@@ -1679,9 +1701,10 @@ function validateExecution(
     };
     visit(root);
     if (execution.control && execution.lastAttemptId !== undefined) {
-      const lastAttempt = [...plan.steps, ...world.entities[actorId]!.actor!.agency.history].find(
-        (step) => step.id === execution.lastAttemptId,
-      );
+      const lastAttempt = [
+        ...plan.steps,
+        ...entityGet(world.entities, actorId)!.actor!.agency.history,
+      ].find((step) => step.id === execution.lastAttemptId);
       const runningAttempt = plan.steps.find(
         (step) =>
           step.status === 'running' &&

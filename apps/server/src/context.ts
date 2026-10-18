@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { nativeCommandKind } from './native-command-kind.js';
 import { nativeCommandSupported, rangedTargetAllowed, rangedPolicy } from '@open-legend/domain';
 
@@ -111,7 +112,7 @@ function describeTargets(
 ): CandidateAction[] {
   const health = new Map<string, string>();
   const positions = new Map<string, ReturnType<typeof effectivePosition>>();
-  const origin = worldPosition(service.world.entities[actorId]!);
+  const origin = worldPosition(entityGet(service.world.entities, actorId)!);
   const help = combatHelpFor(service.world, actorId);
   const purpose = help?.recipientId === actorId ? BASE_COMBAT_HELP.purpose : undefined;
   const choices = candidates
@@ -148,7 +149,7 @@ function describeTargets(
   return choices.map((candidate) => {
     const command = candidate.command;
     const id = command && 'targetId' in command ? command.targetId : undefined;
-    const target = id ? service.world.entities[id] : undefined;
+    const target = id ? entityGet(service.world.entities, id) : undefined;
     if (target && !health.has(target.id)) {
       health.set(target.id, observedBodyHealth(service.world, actorId, target.id));
       positions.set(target.id, effectivePosition(service.world, target.id));
@@ -343,29 +344,52 @@ export function buildContext(
       nearbySupplied: observed.visibleEntities.length,
     },
   };
-  const bytes = () => {
-    context.coverage.knownRecipeSupplied = context.knownRecipes.length;
-    context.coverage.memorySupplied = context.memories.length;
-    context.coverage.recentEventSupplied = context.recentEvents.length;
-    context.coverage.nearbySupplied = context.nearby.length;
-    return Buffer.byteLength(JSON.stringify(context), 'utf8');
+  context.coverage.knownRecipeSupplied = context.knownRecipes.length;
+  context.coverage.memorySupplied = context.memories.length;
+  context.coverage.recentEventSupplied = context.recentEvents.length;
+  context.coverage.nearbySupplied = context.nearby.length;
+  const encodedBytes = (value: unknown) => Buffer.byteLength(JSON.stringify(value), 'utf8');
+  let bytes = encodedBytes(context);
+  // Count each removable record once. JSON punctuation and changing coverage-count
+  // widths are part of the budget; UTF-16 string length is not UTF-8 byte length.
+  const sizes = new Map<unknown[], number[]>();
+  const trim = (
+    records: unknown[],
+    field: 'knownRecipeSupplied' | 'memorySupplied' | 'recentEventSupplied' | 'nearbySupplied',
+    floor: number,
+    front = false,
+  ) => {
+    if (bytes <= CONTEXT_BYTE_LIMIT || records.length <= floor) return;
+    let recordSizes = sizes.get(records);
+    if (!recordSizes) sizes.set(records, (recordSizes = records.map(encodedBytes)));
+    while (bytes > CONTEXT_BYTE_LIMIT && records.length > floor) {
+      const length = records.length;
+      const removed = front ? recordSizes.shift()! : recordSizes.pop()!;
+      if (front) records.shift();
+      else records.pop();
+      bytes -= removed + (length > 1 ? 1 : 0);
+      bytes += String(length - 1).length - String(length).length;
+      context.coverage[field] = records.length;
+    }
   };
   // Discard complete lowest-priority records, never structural JSON fragments or
   // item/material identities. Keep current speech and the best memories when possible.
-  while (bytes() > CONTEXT_BYTE_LIMIT && context.knownRecipes.length > 8)
-    context.knownRecipes.pop();
-  while (bytes() > CONTEXT_BYTE_LIMIT && context.recentEvents.length > 4)
-    context.recentEvents.shift();
-  while (bytes() > CONTEXT_BYTE_LIMIT && context.memories.length > 4) context.memories.pop();
-  while (bytes() > CONTEXT_BYTE_LIMIT && context.knownRecipes.length > 1)
-    context.knownRecipes.pop();
-  while (bytes() > CONTEXT_BYTE_LIMIT && context.nearby.length > 0) context.nearby.pop();
-  while (bytes() > CONTEXT_BYTE_LIMIT && context.recentEvents.length > 1)
-    context.recentEvents.shift();
-  while (bytes() > CONTEXT_BYTE_LIMIT && context.memories.length > 1) context.memories.pop();
+  trim(context.knownRecipes, 'knownRecipeSupplied', 8);
+  trim(context.recentEvents, 'recentEventSupplied', 4, true);
+  trim(context.memories, 'memorySupplied', 4);
+  trim(context.knownRecipes, 'knownRecipeSupplied', 1);
+  trim(context.nearby, 'nearbySupplied', 0);
+  trim(context.recentEvents, 'recentEventSupplied', 1, true);
+  trim(context.memories, 'memorySupplied', 1);
   // Even display labels are optional compared with physical fields and owned IDs.
-  if (bytes() > CONTEXT_BYTE_LIMIT) for (const material of context.materials) material.name = '';
-  if (bytes() > CONTEXT_BYTE_LIMIT) throw new ContextBudgetError();
+  if (bytes > CONTEXT_BYTE_LIMIT)
+    for (const material of context.materials) {
+      bytes += 2 - encodedBytes(material.name);
+      material.name = '';
+    }
+  const exactBytes = encodedBytes(context);
+  if (exactBytes !== bytes) throw new Error('Context byte accounting disagreed with JSON.');
+  if (exactBytes > CONTEXT_BYTE_LIMIT) throw new ContextBudgetError();
   return context;
 }
 
@@ -397,7 +421,11 @@ export function npcCandidates(
   const replenishments: CandidateAction[] = observed.visibleEntities.flatMap((target) => {
     const definition =
       target.replenisher && attributeDefinition(service.world, target.replenisher.attributeId);
-    if (!definition?.reservoir || readAttribute(actor, definition) === undefined) return [];
+    if (
+      !definition?.reservoir ||
+      readAttribute(service.world, observed.actor, definition) === undefined
+    )
+      return [];
     const command: CommandInput = {
       type: 'replenish',
       targetId: target.id,
@@ -509,7 +537,7 @@ export function npcCandidates(
     if (service.world.itemDefinitions[item.definitionId]?.container)
       knownContainers.set(item.id, service.world.itemDefinitions[item.definitionId]!);
   for (const entity of observed.visibleEntities)
-    if (entity.kind === 'item-pile' || service.world.entities[entity.id]?.container)
+    if (entity.kind === 'item-pile' || entityGet(service.world.entities, entity.id)?.container)
       knownContainers.set(entity.id, observerName(service.world, actorId, entity.id));
   const accessibleContainers = [...knownContainers].filter(([id]) =>
     canAccessContainer(service.world, actorId, id),
@@ -572,7 +600,7 @@ export function npcCandidates(
           targetId: destination,
           expectedRevision: item.revision,
           placementRevision: item.placementRevision,
-          targetRevision: service.world.entities[destination]!.inventoryRevision ?? 0,
+          targetRevision: entityGet(service.world.entities, destination)!.inventoryRevision ?? 0,
         };
         // The same native owner checks unknown load, nesting, reservations and access.
         // If the whole lot will not fit, offer one exact unit only when it is admitted.
@@ -793,7 +821,7 @@ export function npcCandidates(
     if (kind && !ammunitionByKind.has(kind)) ammunitionByKind.set(kind, item);
   }
   const compatibleAmmo = (kind: string) => ammunitionByKind.get(kind);
-  const combatActor = service.world.entities[actorId];
+  const combatActor = entityGet(service.world.entities, actorId);
   const readyForCombat =
     !!combatActor && combatRecoveryDeadline(service.world, combatActor) <= service.world.simTime;
   // Offers reuse current native admission: a carried component does not grant a supported

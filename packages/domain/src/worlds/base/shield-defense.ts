@@ -1,3 +1,4 @@
+import { entityGet } from '../../entity-collection.js';
 import type { ContactDefenseProfile } from '../../contact-defense.js';
 import type { Entity, WorldState } from '../../types.js';
 import { equipmentConflicts, isEquipped } from '../../equipment.js';
@@ -61,7 +62,7 @@ export function guardWorkLabel(world: WorldState, entity: Entity): string | unde
   const action = entity.actor?.action;
   const profile =
     action?.itemId &&
-    world.itemDefinitions[world.entities[action.itemId]?.item?.definitionPin.id ?? '']
+    world.itemDefinitions[entityGet(world.entities, action.itemId)?.item?.definitionPin.id ?? '']
       ?.contactDefense;
   if (!profile || !action?.guard) return;
   return action.guard.phase === 'preparing'
@@ -84,9 +85,10 @@ export function equipmentEquipOutcome(
   itemId: string,
   stowedIds: string[],
 ): { message: string; narration: string } {
-  const name = world.itemDefinitions[world.entities[itemId]!.item!.definitionPin.id]!.name;
+  const name =
+    world.itemDefinitions[entityGet(world.entities, itemId)!.item!.definitionPin.id]!.name;
   const stowed = stowedIds
-    .map((id) => world.itemDefinitions[world.entities[id]!.item!.definitionPin.id]!.name)
+    .map((id) => world.itemDefinitions[entityGet(world.entities, id)!.item!.definitionPin.id]!.name)
     .join(', ');
   return {
     message: `Equipped ${name}.${stowed ? ` Put away ${stowed}; the same items remain carried.` : ''}`,

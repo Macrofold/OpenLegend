@@ -1,3 +1,4 @@
+import { currentAttributeState, entityGet, entityHas } from '@open-legend/domain';
 import { z } from 'zod';
 import { namePhrase } from '@open-legend/language';
 import {
@@ -38,11 +39,11 @@ export function attributeValueTarget(world: WorldState, payload: unknown) {
 
 /** State identity shared by review freshness and its scoped dependency projection. */
 export function authoringAttributeValue(world: WorldState, entityId: string, attributeId: string) {
-  const actor = Object.hasOwn(world.entities, entityId)
-    ? world.entities[entityId]?.actor
+  const actor = entityHas(world.entities, entityId)
+    ? entityGet(world.entities, entityId)?.actor
     : undefined;
   return Object.hasOwn(actor?.attributes ?? {}, attributeId)
-    ? actor?.attributes?.[attributeId]
+    ? currentAttributeState(world, entityGet(world.entities, entityId)!, attributeId)
     : actor?.practice?.[attributeId]
       ? {
           value: actor.practice[attributeId]!.starting,
@@ -73,8 +74,8 @@ export function editAuthoringAttributeValues(
   if (!parsed.success)
     return reject('Choose one body and up to sixteen distinct, revision-bound attribute values.');
   const { entityId, changes } = parsed.data;
-  const actor = Object.hasOwn(world.entities, entityId)
-    ? world.entities[entityId]?.actor
+  const actor = entityHas(world.entities, entityId)
+    ? entityGet(world.entities, entityId)?.actor
     : undefined;
   if (!actor) return reject('The selected entity has no supported body attribute owner.');
   const definitions = new Map(world.moduleManifest.definitions.map((d) => [d.id, d]));
@@ -114,7 +115,8 @@ export function attributeValueImpact(world: WorldState, payload: unknown) {
         : [],
     ]),
     affected:
-      Object.hasOwn(world.entities, target.entityId) && world.entities[target.entityId]?.actor
+      entityHas(world.entities, target.entityId) &&
+      entityGet(world.entities, target.entityId)?.actor
         ? 1
         : 0,
   };
@@ -124,8 +126,8 @@ export function attributeValueSummary(world: WorldState, payload: unknown): stri
   const parsed = attributeValueSchema.safeParse(payload);
   if (!parsed.success)
     return 'Review an explicit world-owner intervention on existing custom attribute values.';
-  const entity = Object.hasOwn(world.entities, parsed.data.entityId)
-    ? world.entities[parsed.data.entityId]
+  const entity = entityHas(world.entities, parsed.data.entityId)
+    ? entityGet(world.entities, parsed.data.entityId)
     : undefined;
   const definitions = new Map(world.moduleManifest.definitions.map((d) => [d.id, d]));
   const changes = parsed.data.changes.map((c) => {

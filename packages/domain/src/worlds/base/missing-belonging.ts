@@ -1,3 +1,4 @@
+import { entitySet } from '../../entity-collection.js';
 import { baseSpatial } from './spatial-definitions.js';
 import { addItem } from '../../data.js';
 import { worldPlacement } from '../../spatial-state.js';
@@ -106,7 +107,7 @@ export function installMissingBelonging(world: WorldState, playerId = PLAYER_ID)
       appearance: 'crate-mesh',
     },
   ];
-  for (const entity of entities) world.entities[entity.id] = entity;
+  for (const entity of entities) entitySet(world.entities, entity.id, entity);
 
   for (const id of [MARA_ID, TAVIN_ID]) {
     world.memories[id] = [];

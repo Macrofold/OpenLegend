@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import {
   membershipDependency,
   existenceDependency,
@@ -51,7 +52,7 @@ export function contentsQuery(
     { kind: 'authority', scope },
   ];
   if (
-    !world.entities[parentId] ||
+    !entityGet(world.entities, parentId) ||
     !Number.isSafeInteger(pageSize) ||
     pageSize < 1 ||
     pageSize > 201

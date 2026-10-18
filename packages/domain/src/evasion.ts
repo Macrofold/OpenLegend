@@ -1,3 +1,4 @@
+import { entityValues } from './entity-collection.js';
 import { canWalkSegment, distance3D, type SurfacePoint } from '@open-legend/spatial';
 import { bodyPolicy } from './body-policy.js';
 import { canonicalJson, contentLabel, outcome } from './events.js';
@@ -78,7 +79,7 @@ export function prepareEvasion(
 export function validateEvasion(world: WorldState): void {
   const profile = bodyPolicy(world)?.evasion;
   const profileId = profile && contentLabel(canonicalJson(profile));
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     if (
       entity.actor?.evasionReadyAt !== undefined &&
       (!Number.isFinite(entity.actor.evasionReadyAt) || entity.actor.evasionReadyAt < 0)

@@ -1,3 +1,5 @@
+import { entitySet } from '../../entity-collection.js';
+import { BASE_RESOURCE_GATHERING_SECONDS } from './resources.js';
 import { baseSpatial } from './spatial-definitions.js';
 import {
   surfaceContains,
@@ -46,18 +48,18 @@ const WOODLAND_ANIMALS: Array<['hare' | 'deer' | 'wolf' | 'bear', number, number
   ['bear', 37, 47],
 ];
 const WOODLAND_PATCHES: Array<[string, string, number, number, number, number]> = [
-  ['berries', 'Berry thicket', 28, 29, 24, 30],
-  ['berries', 'Berry bush', 37, 17, 18, 30],
-  ['berries', 'Berry thicket', 19, 35, 28, 30],
-  ['berries', 'Berry bush', 44, 44, 22, 30],
-  ['wood', 'Fallen branches', 33, 31, 40, 42],
-  ['wood', 'Fallen branches', 49, 20, 32, 42],
-  ['wood', 'Fallen branches', 24, 46, 34, 42],
-  ['stone', 'Loose stones', 38, 25, 36, 24],
-  ['stone', 'Loose stones', 51, 45, 42, 24],
-  ['raw_fiber', 'Dry grass fibers', 30, 23, 36, 36],
-  ['raw_fiber', 'Dry grass fibers', 46, 35, 30, 36],
-  ['raw_fiber', 'River reeds', 10, 40, 42, 36],
+  ['berries', 'Berry thicket', 28, 29, 24, BASE_RESOURCE_GATHERING_SECONDS.berries],
+  ['berries', 'Berry bush', 37, 17, 18, BASE_RESOURCE_GATHERING_SECONDS.berries],
+  ['berries', 'Berry thicket', 19, 35, 28, BASE_RESOURCE_GATHERING_SECONDS.berries],
+  ['berries', 'Berry bush', 44, 44, 22, BASE_RESOURCE_GATHERING_SECONDS.berries],
+  ['wood', 'Fallen branches', 33, 31, 40, BASE_RESOURCE_GATHERING_SECONDS.wood],
+  ['wood', 'Fallen branches', 49, 20, 32, BASE_RESOURCE_GATHERING_SECONDS.wood],
+  ['wood', 'Fallen branches', 24, 46, 34, BASE_RESOURCE_GATHERING_SECONDS.wood],
+  ['stone', 'Loose stones', 38, 25, 36, BASE_RESOURCE_GATHERING_SECONDS.stone],
+  ['stone', 'Loose stones', 51, 45, 42, BASE_RESOURCE_GATHERING_SECONDS.stone],
+  ['raw_fiber', 'Dry grass fibers', 30, 23, 36, BASE_RESOURCE_GATHERING_SECONDS.raw_fiber],
+  ['raw_fiber', 'Dry grass fibers', 46, 35, 30, BASE_RESOURCE_GATHERING_SECONDS.raw_fiber],
+  ['raw_fiber', 'River reeds', 10, 40, 42, BASE_RESOURCE_GATHERING_SECONDS.raw_fiber],
 ];
 const noise = (seed: number, x: number, z: number): number => {
   let n =
@@ -229,10 +231,10 @@ export function populateOuterWilderness(world: WorldState): void {
         calmRate: 0,
         reviewAt: 0,
         danger: 0,
-        wanderSeconds: 120 + index * 7,
+        wander: { remainingSeconds: 120 + index * 7 },
       },
     };
-    world.entities[id] = entity;
+    entitySet(world.entities, id, entity);
   }
   for (const [
     index,
@@ -240,7 +242,7 @@ export function populateOuterWilderness(world: WorldState): void {
   ] of WOODLAND_PATCHES.entries()) {
     const p = starterGroundAt(layout, x, z),
       id = `woodland-patch-${index}`;
-    world.entities[id] = {
+    entitySet(world.entities, id, {
       id,
       name,
       ...(definitionId === 'berries' ? {} : { nameForm: 'plural' as const }),
@@ -248,6 +250,6 @@ export function populateOuterWilderness(world: WorldState): void {
       spatial: baseSpatial('object'),
       placement: worldPlacement(p, p.surfaceId),
       resource: { definitionId, quantity, workSeconds },
-    };
+    });
   }
 }

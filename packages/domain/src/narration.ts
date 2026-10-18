@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { isSafeRecordId, hasRecordFields } from './records.js';
 import {
   namePhrase,
@@ -52,7 +53,7 @@ export function renderNarration(
   const named = (id: string): Named =>
     viewerId
       ? observerName(world, viewerId, id)
-      : (world.entities[id] ?? { name: 'unidentified individual' });
+      : (entityGet(world.entities, id) ?? { name: 'unidentified individual' });
   let text = '';
   for (const part of narration.parts) {
     if (typeof part === 'string') {

@@ -70,7 +70,7 @@ current code and canonical contracts take precedence over stale handoff claims.
 - The integration is merged; qualification remains incomplete. At integration time, disk exhaustion
   blocked disposable PostgreSQL qualification, browser interaction could not pass the disposable
   instance's sign-in screen, and automated CI was unrun. See the [integration evidence](../verification/native-action-integration.md)
-  and [continued merged-build observations](../verification/three-times-scene-performance.md#continued-merged-build-investigation)
+  and [continued merged-build observations](../verification/performance/05-september-history.md#continued-merged-build-investigation)
   for later progress; these do not close broad AR acceptance.
 
 ## Remaining work and decisions

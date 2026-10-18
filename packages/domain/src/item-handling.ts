@@ -1,3 +1,5 @@
+import { entityDelete, entityGet, entityOwn, entitySet } from './entity-collection.js';
+import { orderedRecordOwn, orderedRecordSet } from './ordered-record.js';
 import { subjectNarration, narrationTemplate } from './narration.js';
 import { BASE_PICKUP_NARRATION } from './worlds/base/item-handling.js';
 import { namePhrase } from '@open-legend/language';
@@ -77,7 +79,7 @@ function pileAt(world: WorldState, position: SurfacePoint): Entity {
     placement: worldPlacement({ x: position.x, y: position.y, z: position.z }, position.surfaceId),
     spatial: groundedSpatial(world.itemHandling.objectBody),
   };
-  world.entities[id] = pile;
+  entitySet(world.entities, id, pile);
   rootMembershipChanged(world, id);
   return pile;
 }
@@ -110,15 +112,15 @@ export function atomicObjects<T>(world: WorldState, operation: (candidate: World
     result = operation(candidate),
     committed = finishWorld(candidate);
   for (const id of changedEntityIds(committed) ?? []) {
-    const entity = committed.entities[id];
-    const current = world.entities[id];
+    const entity = entityGet(committed.entities, id);
+    const current = entityGet(world.entities, id);
     const wasRoot = current?.placement?.mode === 'world' && !current.retirement;
     const isRoot = entity?.placement?.mode === 'world' && !entity.retirement;
-    if (!entity) delete world.entities[id];
+    if (!entity) entityDelete(world.entities, id);
     else if (current?.actor && entity.actor) {
       if (current.inventoryRevision !== entity.inventoryRevision)
         current.inventoryRevision = entity.inventoryRevision;
-    } else if (current !== entity) world.entities[id] = entity;
+    } else if (current !== entity) entitySet(world.entities, id, entity);
     if (wasRoot !== isRoot) rootMembershipChanged(world, id);
   }
   world.objectState = committed.objectState;
@@ -138,7 +140,7 @@ export function pickUpItems(
   events: WorldEvent[],
   quantity?: number,
 ): { itemId: string; definitionId: string; quantity: number }[] | string {
-  const pile = getOwn(world.entities, pileId);
+  const pile = entityOwn(world.entities, pileId);
   if (
     !(pile?.kind === 'item-pile' || (pile?.remains && pile.remains.phase !== 'removed')) ||
     !canHandleItems(world, actor)
@@ -179,7 +181,7 @@ export function pickUpItems(
     { targetMustBeVisible: true },
   );
   if (pile.kind === 'item-pile' && !itemsForOwner(world, pileId).length) {
-    delete world.entities[pileId];
+    entityDelete(world.entities, pileId);
     rootMembershipChanged(world, pileId);
   }
   return received;
@@ -312,7 +314,7 @@ export function declareOwnership(original: WorldState, request: OwnershipRequest
   )
     return reject('Invalid ownership declaration.');
   const digest = canonicalJson(request),
-    prior = getOwn(original.commandReceipts, request.id);
+    prior = orderedRecordOwn(original.commandReceipts, request.id);
   if (prior)
     return prior.digest === digest
       ? { world: original, events: [], outcome: prior.outcome }
@@ -336,7 +338,7 @@ export function declareOwnership(original: WorldState, request: OwnershipRequest
     'ownership-declared',
     'Declared ownership updated; physical custody is unchanged.',
   );
-  world.commandReceipts[request.id] = { digest, outcome: result };
+  orderedRecordSet(world.commandReceipts, request.id, { digest, outcome: result });
   return finish(world, [], result);
 }
 export function createGodItem(original: WorldState, request: GodItemRequest): Transition {
@@ -353,7 +355,7 @@ export function createGodItem(original: WorldState, request: GodItemRequest): Tr
   )
     return reject('Choose a known item type and a positive whole quantity.');
   const digest = canonicalJson(request),
-    previous = getOwn(original.commandReceipts, request.id);
+    previous = orderedRecordOwn(original.commandReceipts, request.id);
   if (previous)
     return previous.digest === digest
       ? { world: original, events: [], outcome: previous.outcome }
@@ -361,14 +363,14 @@ export function createGodItem(original: WorldState, request: GodItemRequest): Tr
   const destination = request.destination;
   if (
     'actorId' in destination
-      ? !getOwn(original.entities, destination.actorId)?.actor
+      ? !entityOwn(original.entities, destination.actorId)?.actor
       : !canStand(spatialMap(original), destination.position, original.itemHandling.objectBody)
   )
     return reject('Choose an existing actor or a supported ground position.');
   const world = draftWorld(original);
   const owner =
     'actorId' in destination
-      ? world.entities[destination.actorId]!
+      ? entityGet(world.entities, destination.actorId)!
       : pileAt(world, destination.position);
   let itemId: string;
   try {
@@ -391,7 +393,7 @@ export function createGodItem(original: WorldState, request: GodItemRequest): Tr
     'actorId' in destination ? 'private' : 'external',
   );
   const result = { ...outcome(true, 'item-created', message), itemId };
-  world.commandReceipts[request.id] = { digest, outcome: result };
+  orderedRecordSet(world.commandReceipts, request.id, { digest, outcome: result });
   return finish(world, events, result);
 }
 export function validateItemHandling(world: WorldState): void {
@@ -470,20 +472,22 @@ export function setContainerAccess(
     (request.actors !== null &&
       (!Array.isArray(request.actors) ||
         request.actors.length > 100 ||
-        request.actors.some((id) => !isSafeRecordId(id) || !original.entities[id]?.actor)))
+        request.actors.some(
+          (id) => !isSafeRecordId(id) || !entityGet(original.entities, id)?.actor,
+        )))
   )
     return reject('Invalid container access.');
   const digest = canonicalJson(request),
-    prior = getOwn(original.commandReceipts, request.id);
+    prior = orderedRecordOwn(original.commandReceipts, request.id);
   if (prior)
     return prior.digest === digest
       ? { world: original, events: [], outcome: prior.outcome }
       : reject('Request identity was already used.');
-  const entity = original.entities[request.itemId];
+  const entity = entityGet(original.entities, request.itemId);
   if (!entity?.container || (entity.inventoryRevision ?? 0) !== request.expectedRevision)
     return reject('Container changed. Refresh before editing.');
   const world = draftWorld(original),
-    container = world.entities[request.itemId]!;
+    container = entityGet(world.entities, request.itemId)!;
   if (request.actors === null) delete container.container!.access;
   else container.container!.access = { actors: [...new Set(request.actors)] };
   container.inventoryRevision = request.expectedRevision + 1;
@@ -494,6 +498,6 @@ export function setContainerAccess(
     scopeId: request.itemId,
   });
   const result = outcome(true, 'container-access', 'Container access updated.');
-  world.commandReceipts[request.id] = { digest, outcome: result };
+  orderedRecordSet(world.commandReceipts, request.id, { digest, outcome: result });
   return finish(world, [], result);
 }

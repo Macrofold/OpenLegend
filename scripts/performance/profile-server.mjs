@@ -1,3 +1,4 @@
+import { profilingOptions } from './profiling-options.ts';
 import { readFile, writeFile, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir, cpus, loadavg } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -8,11 +9,21 @@ import { randomUUID } from 'node:crypto';
 import { performance, monitorEventLoopDelay } from 'node:perf_hooks';
 import { setTimeout as delay } from 'node:timers/promises';
 import { parseScenario, populateScenario } from './scenario.ts';
-import { worldPosition, worldSupport, observeDomainCounters } from '@open-legend/domain';
+import {
+  worldPosition,
+  worldSupport,
+  observeDomainCounters,
+  entityGet,
+  entityKeys,
+} from '../../packages/domain/src/index.js';
 import { initializeCollisionRuntime } from '../../packages/spatial/src/rapier.js';
 import { createGameServer } from '../../apps/server/src/http.ts';
 import { readConfig } from '../../apps/server/src/config.ts';
-import { performanceSnapshot, observeDurations } from '../../apps/server/src/performance.ts';
+import {
+  performanceSnapshot,
+  observeDurations,
+  startPerformanceCapture,
+} from '../../apps/server/src/performance.ts';
 import { SqlGameRepository } from '../../apps/server/src/store.ts';
 import { PostgresDatabase } from '../../apps/server/src/postgres.ts';
 import { createDisposableDatabase } from '../disposable-postgres.mjs';
@@ -291,13 +302,16 @@ function metricDelta(before, after) {
 }
 
 async function main() {
+  const toolOptions = profilingOptions(process.argv.slice(2));
+  const appProfiling = toolOptions.enabled;
   const [scenarioPath, output, secondsText = '15', speedText = '1,3,8', intervalText = '500'] =
-    process.argv.slice(2);
+    toolOptions.arguments;
   const seconds = Number(secondsText),
     warmupSeconds = Number(process.env.OPENLEGEND_PROFILE_SERVER_WARMUP_SECONDS ?? '0'),
     commandIntervalMs = Number(intervalText),
     speeds = speedText.split(',').map(Number);
   if (
+    toolOptions.arguments.length > 5 ||
     !scenarioPath ||
     !output ||
     !Number.isInteger(seconds) ||
@@ -314,7 +328,7 @@ async function main() {
     speeds.some((n) => ![1, 3, 8].includes(n))
   )
     throw Error(
-      'Usage: node --import tsx scripts/performance/profile-server.mjs SCENARIO.json NEW_REPORT.json [5..60 seconds per phase] [1,3,8] [25..1000 command interval ms]',
+      'Usage: node --import tsx scripts/performance/profile-server.mjs SCENARIO.json NEW_REPORT.json [5..60 seconds per phase] [1,3,8] [25..1000 command interval ms] [--app-profiling=on|off]',
     );
   const scenario = parseScenario(JSON.parse(await readFile(scenarioPath, 'utf8')));
   if (scenario.input)
@@ -323,8 +337,10 @@ async function main() {
   const config = readConfig({
     ...process.env,
     OPEN_LEGEND_DATA_DIR: dir,
+    OPEN_LEGEND_PROFILING: appProfiling ? 'on' : 'off',
     OPEN_LEGEND_DATABASE_URL: process.env.OPEN_LEGEND_PROFILE_POSTGRES_URL,
     AI_BUDGET_USD: '0',
+    DECISION_ESCALATION_JSON: '{"mode":"off","origins":[],"reasons":[]}',
     OPENAI_API_KEY: '',
     JEV_API_KEY: '',
     MACROFOLD_API_KEY: '',
@@ -346,16 +362,23 @@ async function main() {
     requestedSpeeds: speeds,
     scenario,
     paidModelCalls: 0,
+    instrumentation: {
+      appProfiling: appProfiling ? 'on' : 'off',
+      runtimeMonitoring: appProfiling,
+      domainCounters: appProfiling,
+      externalProcessCuts: true,
+      externalEventLoop: appProfiling,
+    },
     warmups: [],
     phases: [],
   };
-  let game, load, database, stopPhaseObserving, observedLoop, activePhase;
+  let game, load, database, stopPhaseObserving, observedLoop, activePhase, capture;
   // Retain the resource until the factory returns a closeable server. An initialization
   // failure otherwise leaves the database socket/worker alive with no returned handle.
   const startGame = async (tick) => {
     const store = new SqlGameRepository(
       config.dataDirectory,
-      new PostgresDatabase(config.databaseUrl),
+      new PostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups),
     );
     try {
       return await createGameServer({ config, production: true, tick, store });
@@ -367,16 +390,19 @@ async function main() {
   const beginPhase = () => {
     const nativeCounters = {},
       stages = {};
-    observeDomainCounters(nativeCounters);
-    stopPhaseObserving = observeDurations((stage, milliseconds) => {
-      const sample = (stages[stage] ??= { count: 0, totalMs: 0, maxMs: 0, values: [] });
-      sample.values[sample.count % 256] = milliseconds;
-      sample.count++;
-      sample.totalMs += milliseconds;
-      sample.maxMs = Math.max(sample.maxMs, milliseconds);
-    });
-    const loop = (observedLoop = monitorEventLoopDelay({ resolution: 10 }));
-    loop.enable();
+    if (appProfiling) observeDomainCounters(nativeCounters);
+    if (appProfiling)
+      stopPhaseObserving = observeDurations((stage, milliseconds) => {
+        const sample = (stages[stage] ??= { count: 0, totalMs: 0, maxMs: 0, values: [] });
+        sample.values[sample.count % 256] = milliseconds;
+        sample.count++;
+        sample.totalMs += milliseconds;
+        sample.maxMs = Math.max(sample.maxMs, milliseconds);
+      });
+    const loop = appProfiling
+      ? (observedLoop = monitorEventLoopDelay({ resolution: 10 }))
+      : undefined;
+    loop?.enable();
     return {
       before: performanceSnapshot(),
       nativeCounters,
@@ -391,10 +417,10 @@ async function main() {
     };
   };
   const finishPhase = (phase) => {
-    stopPhaseObserving();
+    stopPhaseObserving?.();
     stopPhaseObserving = undefined;
     observeDomainCounters();
-    phase.loop.disable();
+    phase.loop?.disable();
     observedLoop = undefined;
     const end = performance.now(),
       used = process.cpuUsage(phase.cpu),
@@ -410,36 +436,43 @@ async function main() {
       serverCpuMs: (used.user + used.system) / 1000,
       startingHostLoad: phase.startingHostLoad,
       endingHostLoad: loadavg(),
-      nativeCounters: phase.nativeCounters,
-      stageMaximaMs: Object.fromEntries(
-        Object.entries(phase.stages).map(([name, s]) => [name, s.maxMs]),
-      ),
-      stageDistributions: Object.fromEntries(
-        Object.entries(phase.stages).map(([name, s]) => [
-          name,
-          {
-            count: s.count,
-            totalMs: s.totalMs,
-            maxMs: s.maxMs,
-            recent: distribution(s.values),
-          },
-        ]),
-      ),
-      eventLoop: {
-        p50Ms: phase.loop.percentile(50) / 1e6,
-        p95Ms: phase.loop.percentile(95) / 1e6,
-        maxMs: phase.loop.max / 1e6,
-      },
+      nativeCounters: appProfiling ? phase.nativeCounters : null,
+      stageMaximaMs: appProfiling
+        ? Object.fromEntries(Object.entries(phase.stages).map(([name, s]) => [name, s.maxMs]))
+        : null,
+      stageDistributions: appProfiling
+        ? Object.fromEntries(
+            Object.entries(phase.stages).map(([name, s]) => [
+              name,
+              {
+                count: s.count,
+                totalMs: s.totalMs,
+                maxMs: s.maxMs,
+                recent: distribution(s.values),
+              },
+            ]),
+          )
+        : null,
+      eventLoop: phase.loop
+        ? {
+            p50Ms: phase.loop.percentile(50) / 1e6,
+            p95Ms: phase.loop.percentile(95) / 1e6,
+            maxMs: phase.loop.max / 1e6,
+          }
+        : null,
       startingHeapUsedBytes: phase.startingMemory.heapUsed,
       startingRssBytes: phase.startingMemory.rss,
       heapUsedBytes: process.memoryUsage().heapUsed,
       rssBytes: process.memoryUsage().rss,
       storageError: game.service.storageError,
       memoryBacklog: game.service.memoryBacklog,
-      ...metricDelta(phase.before, after),
+      attribution: appProfiling
+        ? { status: 'collected', ...metricDelta(phase.before, after) }
+        : { status: 'disabled' },
     };
   };
   try {
+    capture = appProfiling ? startPerformanceCapture({ runtimeMonitoring: true }) : undefined;
     await initializeCollisionRuntime();
     database = await createDisposableDatabase(process.env.OPEN_LEGEND_PROFILE_POSTGRES_URL);
     config.databaseUrl = database.url;
@@ -478,7 +511,7 @@ async function main() {
     // The reopened fixture has a new login, while its setup login may still hold
     // control. Take control explicitly through the same endpoint used by a player.
     const state = await resumeWorld(base, cookie);
-    const actor = game.service.world.entities[game.service.controlledEntityId];
+    const actor = entityGet(game.service.world.entities, game.service.controlledEntityId);
     const position = { ...worldPosition(actor), surfaceId: worldSupport(actor) };
     // Keep warm-up and measured work continuous: an intervening pause can itself
     // fail the normal busy-admission gate in precisely the overloaded case measured here.
@@ -533,7 +566,7 @@ async function main() {
       }
     }
     report.finalCounts = {
-      entities: Object.keys(game.service.world.entities).length,
+      entities: entityKeys(game.service.world.entities).length,
       events: game.service.world.events.length,
       awareness: Object.values(game.service.world.experience?.awareness ?? {}).reduce(
         (n, rows) => n + rows.length,
@@ -565,7 +598,11 @@ async function main() {
       report.cleanupErrors = cleanupErrors;
       process.exitCode = 1;
     }
-    await writeFile(resolve(output), JSON.stringify(report, null, 2) + '\n', { flag: 'wx' });
+    try {
+      await writeFile(resolve(output), JSON.stringify(report, null, 2) + '\n', { flag: 'wx' });
+    } finally {
+      capture?.stop();
+    }
   }
   console.log(
     JSON.stringify({

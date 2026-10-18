@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import {
   appraisalPage,
   appraisalPin,
@@ -30,7 +31,7 @@ export function continuityView(
   if (!service.mayInspectPrivate(actorId, scope))
     throw new Error('Private continuity is unavailable.');
   const world = service.world,
-    actor = world.entities[actorId];
+    actor = entityGet(world.entities, actorId);
   if (!actor?.actor) throw new Error('Character unavailable.');
   const fence = digest([
     scopeKey(scope),
@@ -149,8 +150,8 @@ function subjectView(
   const recognized = canRememberSubject(world, actorId, subjectId),
     notes = !!knowledgeDocument(world, actorId, subjectId);
   if (!recognized && !notes) return undefined;
-  const observer = world.entities[actorId],
-    subject = world.entities[subjectId];
+  const observer = entityGet(world.entities, actorId),
+    subject = entityGet(world.entities, subjectId);
   const inView = recognized && visible.has(subjectId) && !!observer && !!subject;
   const status = inView ? 'in-view' : recognized ? 'known' : 'notes-only';
   const detail =
@@ -177,7 +178,7 @@ export function continuitySubjects(
 ): MindSubjectPage {
   if (!service.mayInspectPrivate(actorId, scope)) throw new AuthorityError('forbidden');
   const world = service.world;
-  if (!world.entities[actorId]?.actor) throw new AuthorityError('forbidden');
+  if (!entityGet(world.entities, actorId)?.actor) throw new AuthorityError('forbidden');
   const words = normalized(request.query ?? '')
     .split(/\s+/)
     .filter(Boolean);

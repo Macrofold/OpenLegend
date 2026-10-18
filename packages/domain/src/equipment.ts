@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { accessiblePossession } from './object-access.js';
 import { attachedItemIds, itemFor } from './objects.js';
 import { itemHasReservations } from './resource-claims.js';
@@ -40,8 +41,8 @@ function attachedEquipment(
   itemId: string,
   use?: EquipmentUse,
 ): ItemInstance | undefined {
-  const body = world.entities[actorId]?.actor?.body;
-  const entity = world.entities[itemId];
+  const body = entityGet(world.entities, actorId)?.actor?.body;
+  const entity = entityGet(world.entities, itemId);
   if (
     !body ||
     entity?.placement?.mode !== 'attached' ||
@@ -65,7 +66,7 @@ export function equippedItems(
   actorId: string,
   use?: EquipmentUse,
 ): ItemInstance[] {
-  if (!world.entities[actorId]?.actor?.body) return [];
+  if (!entityGet(world.entities, actorId)?.actor?.body) return [];
   const result: ItemInstance[] = [];
   for (const id of attachedItemIds(world, actorId)) {
     const item = attachedEquipment(world, actorId, id, use);
@@ -80,7 +81,7 @@ export function equippedItem(
   exactId?: string,
 ): ItemInstance | undefined {
   if (exactId) return attachedEquipment(world, actorId, exactId, use);
-  if (!world.entities[actorId]?.actor?.body) return;
+  if (!entityGet(world.entities, actorId)?.actor?.body) return;
   for (const id of attachedItemIds(world, actorId)) {
     const item = attachedEquipment(world, actorId, id, use);
     if (item) return item;
@@ -112,7 +113,7 @@ export function equipmentProblem(
   itemId: string,
   use?: EquipmentUse,
 ): string | undefined {
-  const actor = world.entities[actorId]?.actor;
+  const actor = entityGet(world.entities, actorId)?.actor;
   const item = itemFor(world, itemId);
   const definition = item && world.itemDefinitions[item.definitionId];
   const profile = definition?.equipment;
@@ -156,7 +157,7 @@ export function validateEquipment(world: WorldState): void {
     )
       throw new Error('A held-tool capability requires its admitted equipment profile.');
   }
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     const ports = entity.actor?.body?.equipmentPorts;
     if (!entity.actor?.body) continue;
     if (

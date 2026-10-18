@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { emit, outcome } from './events.js';
 import { occurrenceFor, renderActivity } from './action-experience.js';
 import { recordSemanticChange } from './dependencies.js';
@@ -337,7 +338,7 @@ export function revokePracticeSupport(
   actorId: string,
   affected: ReadonlySet<string>,
 ): void {
-  for (const actor of Object.values(world.entities)) {
+  for (const actor of entityValues(world.entities)) {
     chargeWork({ tests: 1 });
     for (const progress of Object.values(actor.actor?.practice ?? {})) {
       let edited = false;
@@ -536,7 +537,7 @@ export function validReleaseSupport(
   );
 }
 export function validatePractice(world: WorldState): void {
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     for (const [id, progress] of Object.entries(entity.actor?.practice ?? {})) {
       const definition = practiceDefinition(world, id);
       if (
@@ -587,7 +588,7 @@ export function validatePractice(world: WorldState): void {
     if (
       action?.type === 'practice-shot' &&
       (!action.competencePin ||
-        world.entities[action.targetId ?? '']?.practiceTarget?.attributeId !==
+        entityGet(world.entities, action.targetId ?? '')?.practiceTarget?.attributeId !==
           action.competencePin.id)
     )
       throw new Error('Invalid saved practice target or rule.');

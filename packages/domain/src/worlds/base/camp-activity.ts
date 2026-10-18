@@ -1,3 +1,4 @@
+import { entityGet, entityOwn } from '../../entity-collection.js';
 import type {
   ActivityHostDescriptor,
   ActivityRequest,
@@ -152,18 +153,19 @@ function compile(
   const mode = args.mode;
   if (mode !== 'enqueue' && mode !== 'replace' && mode !== 'interrupt')
     return refuse('Choose whether to enqueue, replace or interrupt current work.');
-  const actor = getOwn(world.entities, actorId),
+  const actor = entityOwn(world.entities, actorId),
     sourceId = String(args.sourceId),
     fireId = String(args.fireId),
     definition = getOwn(world.itemDefinitions, String(args.definitionId));
-  const fire = getOwn(world.entities, fireId),
-    source = getOwn(world.entities, sourceId);
+  const fire = entityOwn(world.entities, fireId),
+    source = entityOwn(world.entities, sourceId);
   const known = (targetId: string) =>
     targetId === actorId ||
     (permitted?.includes(targetId) !== false &&
       (accessiblePossession(world, actorId, targetId) ||
         inspectedContainer(world, actorId)?.id === targetId ||
-        (!!world.entities[targetId] && seesEntity(world, actor!, world.entities[targetId]!))));
+        (!!entityGet(world.entities, targetId) &&
+          seesEntity(world, actor!, entityGet(world.entities, targetId)!))));
   const host = activityHostForCommand(world, 'tend-fire');
   if (
     !actor?.actor ||
@@ -215,7 +217,7 @@ function compile(
   });
   if (request.family === requests[0]!.id) {
     const containerId = String(args.containerId),
-      container = world.entities[containerId];
+      container = entityGet(world.entities, containerId);
     if (
       !source?.resource ||
       source.resource.definitionId !== pin.id ||
@@ -391,7 +393,7 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
       finite = request.family === requests[0]!.id,
       ownSupply =
         String(args.sourceId) === actorId || custodian(world, String(args.sourceId)) === actorId;
-    const actor = world.entities[actorId]!.actor!,
+    const actor = entityGet(world.entities, actorId)!.actor!,
       plan = actor.agency.plan;
     if (
       args.mode !== 'enqueue' &&
@@ -478,7 +480,7 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
   },
   requestChoice(world, actorId, requestId, fieldId, candidateId) {
     const finite = requestId === requests[0]!.id;
-    const target = world.entities[candidateId];
+    const target = entityGet(world.entities, candidateId);
     const choice = (
       id: string,
       label: string,

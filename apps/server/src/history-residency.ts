@@ -1,3 +1,4 @@
+import { cloneEntities, entityDelete, entityGet } from '@open-legend/domain';
 import {
   appendedRecordCount,
   EXPERIENCE_LIMITS,
@@ -7,6 +8,7 @@ import {
   markPartialContributions,
   terminalContributionOwners,
   updateWorld,
+  projectWorldHistory,
   type WorldState,
 } from '@open-legend/domain';
 
@@ -62,8 +64,8 @@ export function compactObjectHistory(world: WorldState): WorldState {
   compactedObjects.add(world.objectState);
   const retired = retiredObjectIds(world);
   if (!retired.length && !Object.keys(world.objectLineage ?? {}).length) return world;
-  const entities = retired.length ? { ...world.entities } : world.entities;
-  for (const id of retired) delete entities[id];
+  const entities = retired.length ? cloneEntities(world.entities) : world.entities;
+  for (const id of retired) entityDelete(entities, id);
   if (retired.length) markPartialObjectHistory(entities);
   return { ...world, entities, ...(world.objectLineage ? { objectLineage: {} } : {}) };
 }
@@ -74,7 +76,7 @@ export function compactContributionHistory(world: WorldState): WorldState {
   // residency-only change using the existing immutable publication path.
   return updateWorld(world, (draft) => {
     for (const id of owners) {
-      const entity = world.entities[id];
+      const entity = entityGet(world.entities, id);
       if (!entity?.statusEffects) continue;
       const statusEffects = Object.fromEntries(
         Object.entries(entity.statusEffects).filter(
@@ -83,7 +85,7 @@ export function compactContributionHistory(world: WorldState): WorldState {
       );
       markPartialContributions(statusEffects);
       retainMapPositions(entity.statusEffects, statusEffects);
-      draft.entities[id]!.statusEffects = statusEffects;
+      entityGet(draft.entities, id)!.statusEffects = statusEffects;
     }
   });
 }
@@ -213,13 +215,10 @@ export function compactHistory(world: WorldState, previous?: WorldState): WorldS
     changed = true;
   }
   return changed
-    ? updateWorld(world, (draft) => {
-        draft.memories = memories;
-        draft.actionExperience.occurrences = occurrences;
-        if (draft.experience) {
-          draft.experience.awareness = awareness;
-          draft.experience.summaries = summaries;
-        }
+    ? projectWorldHistory(world, {
+        memories,
+        occurrences,
+        ...(world.experience ? { awareness, summaries } : {}),
       })
     : world;
 }

@@ -1,3 +1,4 @@
+import { entityGet } from '../../entity-collection.js';
 import { isEquipped } from '../../equipment.js';
 import { activelyParticipates } from '../../participation-state.js';
 import { seesEntity } from '../../perception.js';
@@ -39,8 +40,8 @@ export function baseContextActions(
   targetId?: string,
   observedLaunches: ReadonlySet<number> = new Set(),
 ) {
-  const actor = world.entities[actorId];
-  const target = targetId ? world.entities[targetId] : undefined;
+  const actor = entityGet(world.entities, actorId);
+  const target = targetId ? entityGet(world.entities, targetId) : undefined;
   const livingPair =
     actor?.actor?.alive &&
     target?.actor?.alive &&

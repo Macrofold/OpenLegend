@@ -1,3 +1,4 @@
+import { entityValues } from '../packages/domain/src/index.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 /** Reproducible, idempotent workspace-only provisioning. No model or compute calls.
  * Run: node --env-file=.env --import tsx scripts/macrofold-seed.ts
@@ -12,12 +13,15 @@ import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 
 await initializeCollisionRuntime();
 const config = readConfig();
-const store = new SqlGameRepository(config.dataDirectory, new PostgresDatabase(config.databaseUrl));
+const store = new SqlGameRepository(
+  config.dataDirectory,
+  new PostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups),
+);
 try {
   const saved = await store.load();
   if (!saved) throw new Error('Start Open Legend once to create a local world first.');
   const provisioner = new MacrofoldProvisioner(config, store, saved.state.world.id);
-  for (const entity of Object.values(saved.state.world.entities).filter(
+  for (const entity of entityValues(saved.state.world.entities).filter(
     (e) => e.actor?.controller === 'npc',
   )) {
     const result = await provisioner.ensure(entity.id, entity.name);

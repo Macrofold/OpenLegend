@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { isCookingInputField, preparationDefinition } from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
 import {
@@ -113,7 +114,7 @@ export function activityChoiceView(
         if (definition?.nutrition)
           result.facts.push({
             name: 'consumption',
-            value: consumptionDescription(world, world.entities[actorId]!, definition),
+            value: consumptionDescription(world, entityGet(world.entities, actorId)!, definition),
             critical: true,
           });
       }
@@ -387,12 +388,13 @@ export function learnedActivityCandidates(
   observed = decisionObservation(service.world, actorId),
   methodOffset = 0,
   methodIds?: readonly string[],
+  mode: 'decision' | 'complete' = 'decision',
 ): CandidateAction[] {
   const world = service.world;
   if (!observed) return [];
   const results: CandidateAction[] = [];
   const inspected = inspectedContainer(world, actorId);
-  const plan = world.entities[actorId]?.actor?.agency.plan;
+  const plan = entityGet(world.entities, actorId)?.actor?.agency.plan;
   if (
     plan?.status === 'blocked' &&
     plan.activity?.methodId &&
@@ -411,6 +413,8 @@ export function learnedActivityCandidates(
   }
   // The acquisition owner bounds this to 64 private definitions. No shared
   // catalogue is exposed; one bounded binding per method avoids a Cartesian product.
+  // Explicit menus visit the complete acquired set, including needed inspections;
+  // ordinary decision/context callers retain their four-row suggestion budget.
   const acquired = acquiredActivities(world, actorId);
   const selected = methodIds
     ? methodIds.flatMap((id) => {
@@ -420,7 +424,7 @@ export function learnedActivityCandidates(
     : acquired.slice(methodOffset);
   for (const method of selected) {
     if (!method.executable) continue;
-    if (results.length >= 4) break;
+    if (mode === 'decision' && results.length >= 4) break;
     const bindings: Record<string, ActivityBinding> = {};
     let available = true;
     let rebound = false;
@@ -473,7 +477,7 @@ export function learnedActivityCandidates(
         ];
         const id = candidates.find((id) => {
           if (!activityRoleCompatible(world, actorId, requirement, id)) return false;
-          const entity = world.entities[id]!;
+          const entity = entityGet(world.entities, id)!;
           return (
             (use !== 'harvest' || (!!entity.remains && !entity.remains.harvested)) &&
             (!fields.includes('heatId') || !!entity.heat)
@@ -490,8 +494,8 @@ export function learnedActivityCandidates(
           const inspect =
             stockContainer &&
             [
-              ...(typeof remembered === 'string' && world.entities[remembered]
-                ? [world.entities[remembered]!]
+              ...(typeof remembered === 'string' && entityGet(world.entities, remembered)
+                ? [entityGet(world.entities, remembered)!]
                 : []),
               ...observed.visibleEntities,
             ].find(
@@ -506,7 +510,7 @@ export function learnedActivityCandidates(
             );
           if (
             inspect &&
-            results.length < 4 &&
+            (mode === 'complete' || results.length < 4) &&
             !results.some(
               (result) =>
                 result.command?.type === 'inspect-inventory' &&
@@ -523,7 +527,7 @@ export function learnedActivityCandidates(
         }
       }
     }
-    if (!available || results.length >= 4) continue;
+    if (!available || (mode === 'decision' && results.length >= 4)) continue;
     results.push({
       id: `learned-${method.id}`,
       description: `${rebound ? 'Choose this attempt with the currently described compatible objects in place of an unavailable earlier binding. ' : ''}${renderActivity(activityChoiceView(world, actorId, method, bindings), 'Can do')}. Learned from my own attempts; future success is uncertain.`,
@@ -535,7 +539,7 @@ export function learnedActivityCandidates(
 export function remainingActivityText(
   world: WorldState,
   actorId: string,
-  plan = world.entities[actorId]?.actor?.agency.plan,
+  plan = entityGet(world.entities, actorId)?.actor?.agency.plan,
 ): string {
   if (!plan) return 'No remaining chosen work.';
   // Personal outcomes are selected as required memories. This projection owns only
@@ -592,7 +596,7 @@ export function remainingActivityText(
   const disposition =
     plan.status === 'blocked'
       ? 'Choosing a new action replaces this stopped plan.'
-      : plan === world.entities[actorId]?.actor?.agency.suspended
+      : plan === entityGet(world.entities, actorId)?.actor?.agency.suspended
         ? 'This work is paused; its remaining steps are not currently running.'
         : 'Choosing a different action interrupts this activity.';
   return `${ACTIVITY_SYNTAX}\n${renderActivity({ name: method?.name ?? 'Chosen work', facts, children }, 'Remaining')} ${disposition} Completed effects and spent materials remain.`;

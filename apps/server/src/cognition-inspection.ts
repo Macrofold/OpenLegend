@@ -1,4 +1,4 @@
-import type { WorldState } from '@open-legend/domain';
+import { entityGet, type WorldState } from '@open-legend/domain';
 import type { IntelligenceCall, DecisionInspection } from '@open-legend/protocol';
 import type { JobRecord } from './store.js';
 import { sumRequestCosts } from './cognition-budget.js';
@@ -24,7 +24,7 @@ export function diagnosticTriggerText(text: string): string {
 }
 
 function presentation(call: IntelligenceCall, world?: WorldState) {
-  const entity = call.actorId ? world?.entities[call.actorId] : undefined;
+  const entity = call.actorId && world ? entityGet(world.entities, call.actorId) : undefined;
   const actorKind = entity?.actor
     ? 'actor'
     : entity

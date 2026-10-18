@@ -1,3 +1,4 @@
+import { orderedRecordGet, orderedRecordSet } from './ordered-record.js';
 import { finitePoint, resolveSupport } from '@open-legend/spatial';
 import { draftWorld } from './draft.js';
 import { definitionPin } from './world-modules.js';
@@ -64,7 +65,7 @@ export function validateConstructionProfile(world: WorldState): void {
 /** Reusable finite weather cue; its bounds, timing and meaning are authored inputs. */
 export function beginConstructionShower(original: WorldState, id: string): Transition {
   const digest = canonicalJson({ type: 'construction-shower', id }),
-    prior = original.commandReceipts[id];
+    prior = orderedRecordGet(original.commandReceipts, id);
   if (prior)
     return {
       world: original,
@@ -117,6 +118,6 @@ export function beginConstructionShower(original: WorldState, id: string): Trans
     'shower-started',
     constructionShowerText(cue.resultText, cue.seconds),
   );
-  world.commandReceipts[id] = { digest, outcome: result };
+  orderedRecordSet(world.commandReceipts, id, { digest, outcome: result });
   return finish(world, events, result);
 }

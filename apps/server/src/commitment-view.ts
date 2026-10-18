@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import {
   COMMITMENT_ADMISSION_LIMIT,
   observerDescription,
@@ -83,7 +84,8 @@ export async function commitmentPage(
   service.assertScope(scope);
   const actorId = scope.actorId;
   const permitted = () =>
-    service.mayInspectPrivate(actorId, scope) && !!service.world.entities[actorId]?.actor;
+    service.mayInspectPrivate(actorId, scope) &&
+    !!entityGet(service.world.entities, actorId)?.actor;
   if (!permitted()) throw new AuthorityError('forbidden');
   const memories = service.store.memories,
     records = service.store.records;

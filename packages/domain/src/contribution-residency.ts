@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { isDraft, original } from 'immer';
 import type { Entity, WorldState } from './types.js';
 
@@ -22,7 +23,7 @@ export function terminalContributionOwners(world: WorldState): ReadonlySet<strin
   const cached = Object.isFrozen(world.entities) ? terminalOwners.get(world.entities) : undefined;
   if (cached) return cached;
   const ids = new Set(
-    Object.values(world.entities)
+    entityValues(world.entities)
       .filter(hasTerminal)
       .map((entity) => entity.id),
   );
@@ -38,12 +39,12 @@ export function captureContributionResidency(
     if (base.entities === result.entities) return;
     let updated: Set<string> | undefined;
     for (const id of changed) {
-      const before = base.entities[id]?.statusEffects,
-        after = result.entities[id]?.statusEffects;
+      const before = entityGet(base.entities, id)?.statusEffects,
+        after = entityGet(result.entities, id)?.statusEffects;
       if (before === after) continue;
       if (after && !completeContributionHistory(before)) markPartialContributions(after);
       if (!prior) continue;
-      const terminal = hasTerminal(result.entities[id]);
+      const terminal = hasTerminal(entityGet(result.entities, id));
       if (terminal === prior.has(id)) continue;
       updated ??= new Set(prior);
       if (terminal) updated.add(id);

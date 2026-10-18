@@ -1,3 +1,4 @@
+import { entityValues } from './entity-collection.js';
 import { canonicalName, validName } from '@open-legend/language';
 import type {
   ItemDefinition,
@@ -595,7 +596,7 @@ export function validateInstalledRecipes(world: WorldState): void {
     if (!producer || producer.outputDefinitionId !== definition.id)
       throw new Error('Material metadata needs its exact admitted producer.');
   }
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     const action = entity.actor?.action;
     if (action?.type !== 'craft') continue;
     const recipe = getOwn(world.recipes, action.recipeId);

@@ -25,7 +25,6 @@ export interface CommandInput {
   /** A contextual shortcut must still select this exact offer at command admission.
    * Omitted for an explicitly chosen menu action. Not native command authority. */
   primaryAction?: { targetId: string; actionId: string };
-  volume?: SpeechVolume;
   type:
     | 'construction'
     | 'construction-rest'
@@ -88,6 +87,7 @@ export interface CommandInput {
   expectedScope?: string;
   conversationId?: string;
   text?: string;
+  volume?: SpeechVolume;
   facing?: number;
   aimId?: string;
   autoEquip?: boolean;
@@ -275,8 +275,6 @@ export interface ActionOption {
   id: string;
   label: string;
   icon?: string;
-  /** Same supported action family across currently perceived targets. */
-  shortcut?: { id: string; label: string; icon?: string };
   command: CommandInput;
   enabled: boolean;
   reason?: string;
@@ -316,6 +314,10 @@ export interface ActionContext {
   destinationId?: string;
   quantity?: number;
   position?: SurfacePoint;
+  /** Check this known recipe, rather than expanding every personal choice. */
+  recipeId?: string;
+  /** Exact held-item gesture; only itemId and targetId accompany this flag. */
+  equipped?: true;
 }
 
 export interface ActionCatalogue {
@@ -364,8 +366,8 @@ export interface EntityView extends Named {
   trade?: ItemTradeView;
   bodySize?: { width: number; height: number };
   assembly?: AssemblyView;
-  /** Exact action offered for the controlled character's currently equipped item. */
-  equippedAction?: ActionOption;
+  /** Current consent replies/endings, separate from requested action discovery. */
+  controls?: ActionOption[];
   contents?: Array<{
     id: string;
     definitionId: string;
@@ -403,10 +405,10 @@ export interface EntityView extends Named {
   departureProgress?: number;
   species?: string;
   quantity?: number;
-  actions: ActionOption[];
 }
 
-export interface InventoryItemView extends Named {
+/** Continuous permitted possession facts; native operations are read explicitly. */
+export interface InventoryItemSummary extends Named {
   icon?: string;
   materialCondition?: { label: string; process: 'wetting' | 'drying'; coveredFraction: number };
   revision: number;
@@ -436,6 +438,8 @@ export interface InventoryItemView extends Named {
   description: string;
   equipped: boolean;
   tags: string[];
+}
+export interface InventoryItemView extends InventoryItemSummary {
   actions: ActionOption[];
 }
 
@@ -510,7 +514,6 @@ export interface RecipeView extends RecipeDetailsView {
   id: string;
   origin: 'authored' | 'player' | 'npc';
   provenance: string;
-  actions: ActionOption[];
 }
 
 export type SpeechVolume = 'whisper' | 'normal' | 'shout';
@@ -568,6 +571,7 @@ export interface OwnPromisePage {
 /** One remembered experience as its owner is shown it. */
 export interface MemoryEntryView {
   id: string;
+  sourceKind: 'awareness' | 'memory' | 'summary';
   text: string;
   time: number;
 }
@@ -778,7 +782,7 @@ export interface GameView {
     }>;
     itemOptions: Array<{ id: string; label: string; icon?: string; description: string }>;
   };
-  schemaVersion: 2;
+  schemaVersion: 3;
   revision: number;
   worldId: string;
   profile: PlayerProfile;
@@ -842,8 +846,8 @@ export interface GameView {
     attributes: AttributeView[];
     practice: PracticeProgressView[];
     actionAnimation?: ActionAnimation | null;
-    /** Configured applicable suggestions in authoritative presentation order. */
-    suggestedActionIds: string[];
+    /** World-selected held item for the explicit targeting gesture, without admission work. */
+    equippedTargetItem?: { id: string; name: string };
     alive: boolean;
     /** Public work presence, including queued or paused work, independent of action availability. */
     hasWork: boolean;
@@ -859,9 +863,10 @@ export interface GameView {
       detail?: string;
     } | null;
     traits?: Array<{ id: string; name: string; description: string }>;
-    memories?: MemoryEntryView[];
+    /** Personal history is fetched only by its visible reader; this marks committed changes. */
+    memoryRevision: string;
     history?: string;
-    inventory: InventoryItemView[];
+    inventory: InventoryItemSummary[];
     inventoryRevision: number;
     canUseInventory: boolean;
     actionAttempts: PlayerActionAttempt[];
@@ -872,7 +877,8 @@ export interface GameView {
     work?: WorkView | null;
     /** Example typed requests in this world's own words, for the action form. */
     actionWording?: { examples: string[]; placeholder: string };
-    actions: ActionOption[];
+    /** Cheap current-work, recovery and death controls; discovery uses /api/actions. */
+    controls: ActionOption[];
   };
   entities: EntityView[];
   recipes: RecipeView[];
@@ -905,6 +911,12 @@ export interface GameView {
   persistence: { status: 'saved' | 'error'; message: string };
 }
 
+/** One public entity's top-level change. Nested values replace their complete field. */
+export interface EntityFieldPatch {
+  id: string;
+  set?: Partial<Omit<EntityView, 'id'>>;
+  remove?: Array<keyof Omit<EntityView, 'id'>>;
+}
 export interface GamePatch {
   /** JSON omits undefined. Removed fields are explicit; null remains a meaningful value. */
   remove?: {
@@ -920,14 +932,19 @@ export interface GamePatch {
   worldEventsRevision?: string;
   historyRevision?: string;
   historyEpoch?: string;
-  schemaVersion: 2;
+  schemaVersion: 3;
   baseRevision: number;
   revision: number;
   narrator?: GameView['narrator'];
   profile?: GameView['profile'];
   clock?: Partial<GameView['clock']>;
   player?: Partial<GameView['player']>;
-  entities?: { upsert: EntityView[]; remove: string[]; order?: string[] };
+  entities?: {
+    add: EntityView[];
+    update: EntityFieldPatch[];
+    remove: string[];
+    order?: string[];
+  };
   recipes?: GameView['recipes'];
   events?: GameView['events'];
   conversation?: GameView['conversation'];

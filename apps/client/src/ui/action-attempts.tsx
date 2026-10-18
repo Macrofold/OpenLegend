@@ -165,7 +165,7 @@ export function ActionAttempts({
   const work = view.player.work;
   // Availability still belongs to the native cancel capability. The separate
   // work summary survives a paused world without exposing creator-only steps.
-  const stopAction = view.player.actions.find((action) => action.command.type === 'cancel');
+  const stopAction = view.player.controls.find((action) => action.command.type === 'cancel');
   const hasWork = view.player.hasWork;
   const activeActivity =
     view.player.activity &&

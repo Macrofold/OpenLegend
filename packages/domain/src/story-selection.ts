@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { inventionPermission } from './invention-policy.js';
 import { canonicalJson } from './events.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
@@ -262,13 +263,13 @@ export function editStoryMechanism(
   return updateWorld(world, (draft) => {
     draft.storyPolicy = structuredClone(policy);
     for (const change of changes) {
-      const entity = draft.entities[change.entityId];
+      const entity = entityGet(draft.entities, change.entityId);
       if (!entity) throw new Error('Unknown story entity.');
       entity.mechanismFields ??= {};
       if (change.values === null) delete entity.mechanismFields[policy.id];
       else entity.mechanismFields[policy.id] = { ...change.values };
     }
-    for (const entity of Object.values(draft.entities))
+    for (const entity of entityValues(draft.entities))
       for (const [name, value] of Object.entries(entity.mechanismFields?.[policy.id] ?? {})) {
         const f = policy.fields[name];
         if (!f || !f.appliesTo.includes(entity.actor || entity.animal ? 'actor' : 'object'))

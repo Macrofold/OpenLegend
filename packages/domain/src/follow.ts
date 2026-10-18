@@ -1,3 +1,4 @@
+import { entityGet, entityHas } from './entity-collection.js';
 import { seesEntity } from './perception.js';
 import { canReachEntity, distance, findApproachPath, findPath, isWalkable } from './spatial.js';
 import {
@@ -43,7 +44,7 @@ export function followState(
   if (command.relation === 'behind') state.relation = 'behind';
   else if (command.relation) {
     state.relation = 'beside';
-    const target = world.entities[command.targetId];
+    const target = entityGet(world.entities, command.targetId);
     // "Beside" keeps whichever side the follower starts on, judged from the visible pose.
     const { right } = headingFrame(target?.spatial.heading ?? 0);
     const from = target ? worldPosition(target) : worldPosition(actor);
@@ -64,8 +65,8 @@ export function followState(
 
 function perceived(world: WorldState, actor: Entity, action: Action): Entity | undefined {
   const target =
-    action.targetId && Object.hasOwn(world.entities, action.targetId)
-      ? world.entities[action.targetId]
+    action.targetId && entityHas(world.entities, action.targetId)
+      ? entityGet(world.entities, action.targetId)
       : undefined;
   // Check current evidence before reading a target transform: identity is not tracking permission.
   if (!target || !activelyParticipates(target) || !seesEntity(world, actor, target)) return;

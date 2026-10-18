@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import {
@@ -23,9 +24,10 @@ import { enterLocalWorld, editWorld } from '../../../tests/fixtures/service.js';
 import { WorldService } from './world-service.js';
 import { readPerceivedEvents } from './perceived-events.js';
 import { responseTriggerContext } from './response-context.js';
+import { storyAccountSql, storySourceRow } from './personal-accounts.js';
 
 function place(world: WorldState, id: string, x: number, z = 2) {
-  const entity = world.entities[id]!;
+  const entity = entityGet(world.entities, id)!;
   const point = supportBelow(world.map, { x, y: 10, z })!;
   expect(point).not.toBeNull();
   expect(canStand(world.map, point, bodyProfile(entity))).toBe(true);
@@ -33,19 +35,23 @@ function place(world: WorldState, id: string, x: number, z = 2) {
 }
 function arrange(world: WorldState, targetId: string, visible: boolean) {
   world.paused = false;
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     if (entity.actor && entity.id !== targetId) entity.actor.controller = 'player';
   }
   place(world, NPC_ID, visible ? 6 : 5);
   place(world, PLAYER_ID, 32.5);
   place(world, targetId, 33.5);
-  expect(seesEntity(world, world.entities[NPC_ID]!, world.entities[PLAYER_ID]!)).toBe(true);
-  expect(seesEntity(world, world.entities[NPC_ID]!, world.entities[targetId]!)).toBe(visible);
+  expect(
+    seesEntity(world, entityGet(world.entities, NPC_ID)!, entityGet(world.entities, PLAYER_ID)!),
+  ).toBe(true);
+  expect(
+    seesEntity(world, entityGet(world.entities, NPC_ID)!, entityGet(world.entities, targetId)!),
+  ).toBe(visible);
 }
 function perform(world: WorldState, family: 'gather' | 'strike', visible: boolean) {
   const targetId = family === 'gather' ? 'branches' : 'mara';
   arrange(world, targetId, visible);
-  const before = world.entities[targetId]!.actor?.health;
+  const before = entityGet(world.entities, targetId)!.actor?.health;
   const admitted = executeCommand(
     world,
     family === 'gather'
@@ -59,13 +65,16 @@ function perform(world: WorldState, family: 'gather' | 'strike', visible: boolea
         },
   );
   expect(admitted.outcome.ok, admitted.outcome.message).toBe(true);
-  const completed = advanceWorld(admitted.world, 80);
+  // The arranged actor is already in reach; finish the installed work, not its former duration.
+  const seconds =
+    family === 'gather' ? entityGet(world.entities, targetId)!.resource!.workSeconds + 1 : 80;
+  const completed = advanceWorld(admitted.world, seconds);
   const event = completed.events.find(
     (entry) => entry.type === (family === 'gather' ? 'gathered' : 'struck'),
   )!;
   expect(event).toBeDefined();
   if (family === 'gather') expect(event.data).toMatchObject({ definitionId: 'wood', quantity: 2 });
-  else expect(completed.world.entities[targetId]!.actor!.health).toBeLessThan(before!);
+  else expect(entityGet(completed.world.entities, targetId)!.actor!.health).toBeLessThan(before!);
   return { ...completed, event, targetId, events: [...admitted.events, ...completed.events] };
 }
 function evidence(world: WorldState, event: WorldEvent, actorId = NPC_ID) {
@@ -188,7 +197,7 @@ describe('event-time observer facts', () => {
       events,
       'struck',
       subjectNarration(PLAYER_ID, ['acted with ', person('tavin'), '.']),
-      world.entities[PLAYER_ID],
+      entityGet(world.entities, PLAYER_ID),
       'mara',
       { weaponItemId: 'tavin', privateExecutionDetail: 'secret', damage: 5 },
     );
@@ -205,7 +214,7 @@ describe('event-time observer facts', () => {
       visible,
       'gathered',
       subjectNarration(PLAYER_ID, 'gathered visible material.'),
-      world.entities[PLAYER_ID],
+      entityGet(world.entities, PLAYER_ID),
       'mara',
       { definitionId: 'wood', quantity: 2, privateExecutionDetail: 'secret' },
     );
@@ -226,7 +235,7 @@ describe('event-time observer facts', () => {
       events,
       'projectile-contact',
       subjectNarration('mara', 'was struck by a projectile.'),
-      world.entities.mara,
+      entityGet(world.entities, 'mara'),
       'mara',
       { contactInjury: true, damage: 5, healthAfter: 95 },
     );
@@ -248,7 +257,7 @@ describe('event-time observer facts', () => {
       privateEvents,
       'thought',
       'Private participant fact.',
-      world.entities.mara,
+      entityGet(world.entities, 'mara'),
       undefined,
       { text: 'Private participant fact.' },
       'private',
@@ -282,7 +291,7 @@ describe('event-time observer facts', () => {
           [],
           'thought',
           `Later fixture observation ${i}.`,
-          world.entities[NPC_ID],
+          entityGet(world.entities, NPC_ID),
           undefined,
           undefined,
           'private',
@@ -309,10 +318,10 @@ describe('event-time observer facts', () => {
     expect(publicOccurrence!.text).not.toContain('wood');
     const row = await store.db
       .prepare(
-        'SELECT payload FROM history_perspectives WHERE world_id=? AND actor_id=? AND event_id=?',
+        `SELECT p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.actor_id=? AND p.event_id=?`,
       )
       .get(service.world.id, NPC_ID, event.id);
-    const stored = JSON.parse(String(row!['payload'])) as import('./history.js').StorySource;
+    const stored = storySourceRow(row!);
     expect(stored.type).toBe('activity-observed');
     expect(projectEventEvidence(event, stored.evidence)).toEqual(projectEventEvidence(event, hot));
     const saveId = randomUUID();
@@ -330,12 +339,10 @@ describe('event-time observer facts', () => {
     const savedRow = missingHistoryFacts.history.history_perspectives.find(
       (entry) => entry['event_id'] === event.id && entry['actor_id'] === NPC_ID,
     )!;
-    const savedSource = JSON.parse(
-      String(savedRow['payload']),
-    ) as import('./history.js').StorySource;
-    delete savedSource.evidence.eventType;
+    const savedSource = JSON.parse(String(savedRow['payload'])) as { account?: unknown };
+    delete savedSource.account;
     savedRow['payload'] = JSON.stringify(savedSource);
-    expect(() => store.saves.validatePayload(missingHistoryFacts)).toThrow('observer event type');
+    expect(() => store.saves.validatePayload(missingHistoryFacts)).toThrow('personal account');
 
     // Editing exact history after residency compaction must change the owner's wording
     // without teaching a witness the material or outcome they never saw.

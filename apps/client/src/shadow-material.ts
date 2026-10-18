@@ -9,6 +9,14 @@ export const shadowSettings = {
 // The engine's program cache owns shaders. Weak membership shares preparation
 // across materials using the same program without retaining obsolete devices.
 const prepared = new WeakSet<pc.Shader>();
+export type ShaderVariantParameters = Parameters<pc.Material['getShaderVariant']>[0];
+
+declare global {
+  interface Window {
+    /** Installed only by the local browser profiler; it records program ownership. */
+    __openLegendShaderProbe?: (shader: pc.Shader, material: pc.Material, pass: number) => void;
+  }
+}
 
 /** Prepare quality and day/night variants while creating an already-needed program.
  * PlayCanvas 2.22.2 otherwise first links it during drawing, blocking the render
@@ -17,6 +25,8 @@ const prepared = new WeakSet<pc.Shader>();
  * docs/world-presentation.md#shadow-quality
  */
 export class ShadowMaterial extends pc.StandardMaterial {
+  prepareRelated?: (params: ShaderVariantParameters, shader: pc.Shader) => void;
+
   constructor(private sun?: pc.Light) {
     super();
   }
@@ -29,8 +39,16 @@ export class ShadowMaterial extends pc.StandardMaterial {
     return this;
   }
 
-  override getShaderVariant(params: Parameters<pc.Material['getShaderVariant']>[0]): pc.Shader {
+  private variant(params: ShaderVariantParameters): pc.Shader {
     const shader = super.getShaderVariant(params);
+    window.__openLegendShaderProbe?.(shader, this, params.pass);
+    return shader;
+  }
+
+  override getShaderVariant(params: ShaderVariantParameters): pc.Shader {
+    const shader = this.variant(params);
+    if (params.device.contextLost) return shader;
+    if (params.pass === pc.SHADER_FORWARD) this.prepareRelated?.(params, shader);
     if (params.pass !== pc.SHADER_FORWARD || !this.useLighting || prepared.has(shader))
       return shader;
     prepared.add(shader);
@@ -67,12 +85,17 @@ export class ShadowMaterial extends pc.StandardMaterial {
             };
             return alternate;
           };
-          prepared.add(super.getShaderVariant(params));
+          prepared.add(this.variant(params));
         }
     } finally {
       this.onUpdateShader = original;
       for (const light of copies) light.destroy();
     }
     return shader;
+  }
+
+  override destroy(): void {
+    this.prepareRelated = undefined;
+    super.destroy();
   }
 }

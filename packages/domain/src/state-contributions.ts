@@ -1,10 +1,12 @@
+import { entityGet, entityOwn } from './entity-collection.js';
+import { orderedRecordOwn, orderedRecordSet } from './ordered-record.js';
 import { admitStatusWork, chargeStatusWork } from './native-work.js';
 import { releaseWork } from './work-budget.js';
 import { completeContributionHistory } from './contribution-residency.js';
 import { recordSemanticChange } from './dependencies.js';
 import { objectAncestors } from './objects.js';
 import { activelyParticipates } from './participation-state.js';
-import { draftWorld } from './draft.js';
+import { draftWorld, readOnlyDraftView } from './draft.js';
 import { canonicalJson, contentLabel, finish, outcome } from './events.js';
 import { getOwn, hasRecordFields, isSafeRecordId } from './records.js';
 import {
@@ -105,15 +107,15 @@ export function attachCapabilityContribution(
   )
     return reject('invalid-contribution', 'Invalid contribution binding or lifetime.');
   const digest = canonicalJson(request);
-  const previous = getOwn(input.commandReceipts, request.id);
+  const previous = orderedRecordOwn(input.commandReceipts, request.id);
   if (previous)
     return previous.digest === digest
       ? { world: input, events: [], outcome: previous.outcome }
       : reject('conflict', 'Contribution identity already used.');
   if (!validContributionLifetime(request.lifetime, input.simTime))
     return reject('invalid-contribution', 'The contribution lifetime has already expired.');
-  const source = getOwn(input.entities, request.sourceId);
-  const target = getOwn(input.entities, request.targetId);
+  const source = entityOwn(input.entities, request.sourceId);
+  const target = entityOwn(input.entities, request.targetId);
   if (!completeContributionHistory(target?.statusEffects))
     return reject(
       'history-unavailable',
@@ -145,7 +147,7 @@ export function attachCapabilityContribution(
   )
     return reject('unavailable', 'The supported contribution is unavailable or changed.');
   const world = draftWorld(input);
-  const entity = world.entities[target.id]!;
+  const entity = entityGet(world.entities, target.id)!;
   admitStatusWork(world, entity, definition, request.id);
   recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'contribution' });
   (entity.statusEffects ??= {})[request.id] = {
@@ -164,7 +166,7 @@ export function attachCapabilityContribution(
   };
   invalidateContributionIndex(entity, world);
   const result = outcome(true, 'contribution-attached', 'Capability contribution applied.');
-  world.commandReceipts[request.id] = { digest, outcome: result };
+  orderedRecordSet(world.commandReceipts, request.id, { digest, outcome: result });
   return finish(world, [], result);
 }
 
@@ -195,13 +197,13 @@ export function endCapabilityContribution(
   )
     return reject();
   const digest = canonicalJson(request);
-  const previous = getOwn(input.commandReceipts, request.id);
+  const previous = orderedRecordOwn(input.commandReceipts, request.id);
   if (previous)
     return previous.digest === digest
       ? { world: input, events: [], outcome: previous.outcome }
       : reject();
   const state = getOwn(
-    getOwn(input.entities, request.targetId)?.statusEffects ?? {},
+    entityOwn(input.entities, request.targetId)?.statusEffects ?? {},
     request.contributionId,
   );
   if (
@@ -212,7 +214,9 @@ export function endCapabilityContribution(
   )
     return reject();
   const world = draftWorld(input);
-  const current = world.entities[request.targetId]!.statusEffects![request.contributionId]!;
+  const current = entityGet(world.entities, request.targetId)!.statusEffects![
+    request.contributionId
+  ]!;
   if (current.active) {
     releaseWork(world, current.episode);
     recordSemanticChange(world, {
@@ -224,7 +228,7 @@ export function endCapabilityContribution(
     current.contribution!.revision++;
   }
   const result = outcome(true, 'contribution-ended', 'Capability contribution ended.');
-  world.commandReceipts[request.id] = { digest, outcome: result };
+  orderedRecordSet(world.commandReceipts, request.id, { digest, outcome: result });
   return finish(world, [], result);
 }
 
@@ -262,14 +266,14 @@ export function refreshCapabilityContribution(
   )
     return reject();
   const digest = canonicalJson(request);
-  const previous = getOwn(input.commandReceipts, request.id);
+  const previous = orderedRecordOwn(input.commandReceipts, request.id);
   if (previous)
     return previous.digest === digest
       ? { world: input, events: [], outcome: previous.outcome }
       : reject();
   if (!validContributionLifetime(request.lifetime, input.simTime)) return reject();
   const state = getOwn(
-    getOwn(input.entities, request.targetId)?.statusEffects ?? {},
+    entityOwn(input.entities, request.targetId)?.statusEffects ?? {},
     request.contributionId,
   );
   if (
@@ -286,25 +290,26 @@ export function refreshCapabilityContribution(
   const definition = statusDefinitions(input).find(
     (d) => d.id === state.contribution!.definitionId,
   );
-  const target = input.entities[request.targetId]!;
+  const target = entityGet(input.entities, request.targetId)!;
   if (
     !definition?.enabled ||
     !admittedLifetime(definition, request.lifetime, input.simTime) ||
     (request.lifetime.kind === 'source-sustained' &&
-      (!input.entities[request.sourceId] ||
-        !sourceParticipates(input, input.entities[request.sourceId]!))) ||
+      (!entityGet(input.entities, request.sourceId) ||
+        !sourceParticipates(input, entityGet(input.entities, request.sourceId)!))) ||
     !matchesStatusCondition(input, effectBindings(input, target, state), definition.requires)
   )
     return reject();
   const world = draftWorld(input);
-  const contribution =
-    world.entities[request.targetId]!.statusEffects![request.contributionId]!.contribution!;
+  const contribution = entityGet(world.entities, request.targetId)!.statusEffects![
+    request.contributionId
+  ]!.contribution!;
   if (canonicalJson(contribution.lifetime) !== canonicalJson(request.lifetime)) {
     contribution.lifetime = structuredClone(request.lifetime);
     contribution.revision++;
   }
   const result = outcome(true, 'contribution-refreshed', 'Capability contribution refreshed.');
-  world.commandReceipts[request.id] = { digest, outcome: result };
+  orderedRecordSet(world.commandReceipts, request.id, { digest, outcome: result });
   return finish(world, [], result);
 }
 
@@ -313,16 +318,22 @@ export function advanceCapabilityContributions(
   entity: Entity,
   events: WorldEvent[],
 ): void {
-  if (!entity.statusEffects) return;
-  for (const id in entity.statusEffects) {
-    const state = entity.statusEffects[id]!;
-    const contribution = state.contribution;
-    if (!state.active || !contribution) continue;
+  const entries = readOnlyDraftView(entity).statusEffects;
+  if (!entries) return;
+  for (const id in readOnlyDraftView(entries)) {
+    // Native singleton statuses need no mutable child draft merely to discover
+    // that they carry no independent contribution. Actual lifecycle work stays below.
+    const states = readOnlyDraftView(entity).statusEffects;
+    const stored = states && readOnlyDraftView(states)[id];
+    const candidate = stored && readOnlyDraftView(stored);
+    if (!candidate?.active || !candidate.contribution) continue;
+    const state = entity.statusEffects![id]!;
+    const contribution = state.contribution!;
     const definition = statusDefinitions(world).find(
       (value) => value.id === contribution.definitionId,
     );
-    if (definition) chargeStatusWork(world, entity, definition, state);
-    const source = world.entities[state.sourceId];
+    if (definition) chargeStatusWork(world, entity, definition, id, state);
+    const source = entityGet(world.entities, state.sourceId);
     if (
       !definition ||
       !definition.enabled ||

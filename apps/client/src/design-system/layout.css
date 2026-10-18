@@ -827,11 +827,7 @@ body,
   transform: translateX(-50%);
   z-index: var(--z-panel);
 }
-.ol-quick-position:has(.ol-shortcut-picker, .ol-quick-source, .ol-quick-reason) {
-  /* Lift the owner of these nonportaled controls above an expanded task sheet;
-   * raising a child alone cannot escape this transformed stacking context. */
-  z-index: calc(var(--z-sheet) + 1);
-}
+
 .ol-fps-counter {
   position: absolute;
   left: var(--space-3);
@@ -844,32 +840,7 @@ body,
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
-.ol-qa-edit {
-  position: absolute;
-  top: 100%;
-  opacity: 0;
-}
-.ol-qa-wrap:hover .ol-qa-edit,
-.ol-qa-wrap:focus-within .ol-qa-edit {
-  opacity: 1;
-}
-.ol-qa-edit .ol-ibtn {
-  width: var(--space-6);
-  height: var(--space-6);
-  background: var(--surface);
-}
-.ol-shortcut-picker {
-  position: absolute;
-  bottom: calc(100% + var(--space-6));
-  width: min(460px, calc(100vw / var(--ui-scale) - 32px));
-  left: 50%;
-  translate: -50% 0;
-  padding: var(--space-4);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: var(--space-2);
-}
+
 .ol-camera {
   position: absolute;
   bottom: var(--space-6);
@@ -1535,13 +1506,7 @@ body,
 .ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-quick-position {
   bottom: calc(55% + 70px);
 }
-.ol-hud[data-narrow='true'] .ol-qa {
-  width: var(--control-md);
-  height: var(--control-md);
-}
-.ol-hud[data-narrow='true'] .ol-qagroup {
-  gap: var(--space-2);
-}
+
 .ol-hud[data-narrow='true'] .ol-camera {
   bottom: var(--space-3);
   right: var(--space-3);
@@ -2973,36 +2938,6 @@ body,
 }
 .ol-world-controls[data-bounded] .ol-camera {
   grid-template-columns: repeat(6, minmax(var(--control-sm), 1fr));
-}
-.ol-world-controls[data-bounded] .ol-qabar {
-  display: flex;
-  inline-size: 100%;
-  box-sizing: border-box;
-  align-items: start;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  padding: var(--space-1);
-}
-.ol-world-controls[data-bounded] :is(.ol-qa-section, .ol-qadivider) {
-  flex: none;
-}
-.ol-world-controls[data-bounded] .ol-qa-wrap {
-  display: grid;
-  justify-items: center;
-  gap: var(--space-1);
-}
-.ol-world-controls[data-bounded] .ol-qa-edit {
-  position: static;
-  opacity: 1;
-}
-.ol-world-controls[data-bounded] :is(.ol-shortcut-picker, .ol-quick-source, .ol-quick-reason) {
-  position: static;
-  inset: auto;
-  translate: none;
-  inline-size: 100%;
-  max-inline-size: 100%;
-  max-block-size: none;
-  box-sizing: border-box;
 }
 
 /* Family inspection is a modal creator task with its own bounded reading area. */

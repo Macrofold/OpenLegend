@@ -25,6 +25,7 @@ export async function writeCheckpoint(
     const head = await new WorldRecords(db).head();
     if (
       !head ||
+      head.appliedRevision !== head.revision ||
       head.worldId !== identity.worldId ||
       (options.expectedRevision !== undefined && head.revision !== options.expectedRevision)
     )

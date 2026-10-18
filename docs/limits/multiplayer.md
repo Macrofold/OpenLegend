@@ -56,6 +56,8 @@ Original recommendation: **Keep**.
 
 A verified foreground heartbeat expires after 12 seconds. A successful control return reserves the first heartbeat’s position for the same 12-second window through existing bounded message-order records; it prevents simultaneous acquisition before the stream opens without counting as foreground activity. Counters are ordered within each control generation, so a stable tab ID can reload with a fresh counter. A paused browser closes its stream and heartbeat immediately; only a current controller’s verified presence or admitted connected-background policy can keep the world running. Browser tabs currently always pause on blur; the saved background policy is usable only by clients that deliberately retain a controlling connection. [UIUX14](../maintainers/ui-ux.md#uiux14) retains the accepted browser opt-out, requiring both its missing control and tab control that honors the saved choice.
 
+An existing unexpired foreground lease may renew independently of an unrelated durable save only after fresh SQL authority and synchronous current-control, pause and complete human-participation checks prove no transition is needed. Fresh, expired or hidden reports retain ordinary serialized absence/participation reconciliation; the twelve-second allowance is unchanged.
+
 **Reason / tradeoff:** Keep departure detection while ensuring ordinary browser timer delays do not unexpectedly pause active play.
 
 [Presence, ordering and pause owner](../../apps/server/src/world-service.ts).
@@ -240,7 +242,7 @@ Service connection and projection-cache scopes: three times configured player ca
 
 **Changed · Restrictiveness: Safe.**
 
-Presence-order entries: six times configured player capacity, default 600.
+Presence-order entries: six times configured player capacity, default 600. Temporary counts of consequential presence reports preserve ordering only while their HTTP requests are pending. That inventory is bounded by the existing four-requests-per-player HTTP allowance (default 400), and each count is removed in finally after success or failure; it is not another retained presence lease or a raised allowance.
 
 **Reason / tradeoff:** Retain reconnect/late-heartbeat ordering for the supported connections without an unlimited map. [Configuration](../../apps/server/src/config.ts).
 

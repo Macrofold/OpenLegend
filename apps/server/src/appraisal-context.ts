@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import {
   activeAppraisals,
   renderNarration,
@@ -29,7 +30,7 @@ export function decisionFeelings(world: WorldState, actorId: string): string {
         subjectNarration(actorId, [
           presentVerb(actorId, 'feel'),
           ` ${value.feeling}`,
-          ...(value.targetId && world.entities[value.targetId]
+          ...(value.targetId && entityGet(world.entities, value.targetId)
             ? [
                 ' concerning ',
                 person(value.targetId, value.targetId === actorId ? 'reflexive' : 'object'),
@@ -101,7 +102,11 @@ async function bindAppraisals(
       .filter(permitted)
       .map((definition, index) => [`policy${index + 1}`, definition]),
   );
-  const proof = selected.map((entry) => ({ id: entry.memory.id, revision: entry.revision }));
+  const proof = selected.map((entry) => ({
+    id: entry.memory.id,
+    sourceKind: entry.sourceKind,
+    revision: entry.revision,
+  }));
   const sourcesCurrent = async () =>
     generation === service.generation &&
     worldId === service.world.id &&

@@ -1,3 +1,6 @@
+import { currentAttributeState } from './native-values.js';
+import { entityGet, entitySet } from './entity-collection.js';
+import { orderedRecordGet, orderedRecordOwn, orderedRecordSet } from './ordered-record.js';
 import {
   hasEarnedPractice,
   initializePractice,
@@ -68,7 +71,7 @@ export function spawnWorldEntity(original: WorldState, request: GodSpawnRequest)
     return reject(original, 'identity', 'This creation request is invalid.');
   const { id, ...draft } = request;
   const digest = canonicalJson({ operation: 'spawn', draft });
-  const previous = getOwn(original.commandReceipts, id);
+  const previous = orderedRecordOwn(original.commandReceipts, id);
   // Recover before mutable admission: the first creation now occupies this position.
   // docs/projects/game-interaction-redesign-tech-design.md#recover-item-person-and-environment-creation
   if (previous)
@@ -104,7 +107,7 @@ export function spawnWorldEntity(original: WorldState, request: GodSpawnRequest)
   const world = draftWorld(original);
   const entity = spawnedEntity(world, draft);
   if (!entity) return reject(original, 'invalid-object', 'That object could not be added.');
-  world.entities[entity.id] = entity;
+  entitySet(world.entities, entity.id, entity);
   rootMembershipChanged(world, entity.id);
   try {
     validateStatusInstallation(world, world.statusEffectPolicy);
@@ -143,7 +146,7 @@ export function spawnWorldEntity(original: WorldState, request: GodSpawnRequest)
     ...outcome(true, 'spawned', `${namePhrase(entity, 'definite', { capitalize: true })} added.`),
     entityId: entity.id,
   };
-  world.commandReceipts[id] = { digest, outcome: result };
+  orderedRecordSet(world.commandReceipts, id, { digest, outcome: result });
   return finish(world, events, result);
 }
 
@@ -154,12 +157,12 @@ export function reviveActor(
   expectedRevision?: number,
 ): Transition {
   const digest = canonicalJson({ operation: 'revive', actorId, expectedRevision });
-  const prior = requestId ? original.commandReceipts[requestId] : undefined;
+  const prior = requestId ? orderedRecordGet(original.commandReceipts, requestId) : undefined;
   if (prior)
     return prior.digest === digest
       ? { world: original, events: [], outcome: prior.outcome }
       : reject(original, 'identity', 'Request identity reused.');
-  const current = original.entities[actorId];
+  const current = entityGet(original.entities, actorId);
   if (!current?.actor?.body)
     return reject(original, 'actor', 'Choose an actor with a compatible body.');
   if (current.actor.pendingDeath || (current.remains && current.remains.sourceId !== current.id))
@@ -190,7 +193,7 @@ export function reviveActor(
       'Revival needs a clear supported stance. Wait for the body to land.',
     );
   const world = draftWorld(original);
-  const entity = world.entities[actorId]!;
+  const entity = entityGet(world.entities, actorId)!;
   const actor = entity.actor!;
   if (!Number.isSafeInteger((actor.physicalLife ?? 0) + 1))
     throw new Error('Physical life exhausted.');
@@ -204,7 +207,7 @@ export function reviveActor(
     const definition = attributeDefinition(world, id)!;
     if (
       definition.schema.kind === 'number' &&
-      typeof readAttribute(actor, definition) === 'number' &&
+      typeof readAttribute(world, entity, definition) === 'number' &&
       definition.implementation !== 'native-health-v1'
     )
       setAttribute(world, entity, definition, definition.schema.max, events, 'now', {
@@ -235,18 +238,18 @@ export function reviveActor(
     'revived',
     `${namePhrase(entity, 'definite', { capitalize: true })} revived.`,
   );
-  if (requestId) world.commandReceipts[requestId] = { digest, outcome: result };
+  if (requestId) orderedRecordSet(world.commandReceipts, requestId, { digest, outcome: result });
   return finish(world, events, result);
 }
 
 /** Explicit owner admission; physical identity, species and needs policy do not change. */
 export function enableActorCognition(original: WorldState, actorId: string): Transition {
-  const current = original.entities[actorId];
+  const current = entityGet(original.entities, actorId);
   if (!current?.actor?.body) return reject(original, 'actor', 'Choose a compatible actor.');
   if (current.actor.capabilities?.cognition && canSpeak(current))
     return reject(original, 'unchanged', 'These capabilities are already enabled.');
   const world = draftWorld(original);
-  const entity = world.entities[actorId]!;
+  const entity = entityGet(world.entities, actorId)!;
   entity.actor!.capabilities = {
     ...entity.actor!.capabilities!,
     cognition: true,
@@ -285,7 +288,7 @@ function sameStructure(left: object, right: object, editable: string[]): boolean
 }
 
 export function editPerson(original: WorldState, draft: GodPersonEdit): Transition {
-  const current = original.entities[draft.actorId];
+  const current = entityGet(original.entities, draft.actorId);
   const traits =
     current?.actor &&
     canonicalJson(draft.person.traitIds) ===
@@ -307,7 +310,7 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
       if (
         !definition ||
         definition.schema.kind !== 'number' ||
-        typeof readAttribute(current.actor!, definition) !== 'number'
+        typeof readAttribute(original, current, definition) !== 'number'
       )
         return true;
       try {
@@ -375,7 +378,8 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
         lots.length !== 1 ||
         lots.some(
           (item) =>
-            item.individuality === 'individual' || original.entities[item.id]?.declaredOwner,
+            item.individuality === 'individual' ||
+            entityGet(original.entities, item.id)?.declaredOwner,
         )
       )
         return reject(
@@ -429,7 +433,7 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
   }
 
   const world = draftWorld(original);
-  const entity = world.entities[draft.actorId]!;
+  const entity = entityGet(world.entities, draft.actorId)!;
   const healthBefore = entity.actor!.health;
   const events: WorldEvent[] = [];
   const goals = draft.person.goals.map((goal) => goal.trim());
@@ -441,12 +445,12 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     JSON.stringify(entity.actor!.traits ?? []) !== JSON.stringify(traits) ||
     JSON.stringify(goalTexts(entity.actor!)) !== JSON.stringify(goals);
   const statsChanged = Object.entries(draft.person.meters).some(
-    ([id, value]) => readAttribute(entity.actor!, attributeDefinition(world, id)!) !== value,
+    ([id, value]) => readAttribute(world, entity, attributeDefinition(world, id)!) !== value,
   );
   const healthChanged = Object.entries(draft.person.meters).some(
     ([id, value]) =>
       attributeDefinition(world, id)!.implementation === 'native-health-v1' &&
-      readAttribute(entity.actor!, attributeDefinition(world, id)!) !== value,
+      readAttribute(world, entity, attributeDefinition(world, id)!) !== value,
   );
   if (identityChanged) {
     entity.name = draft.person.name.trim();
@@ -464,7 +468,7 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     for (const [id, value] of Object.entries(draft.person.meters)) {
       const definition = attributeDefinition(world, id)!;
       // Editing another meter must not convert earned evidence into authored support.
-      if (readAttribute(entity.actor!, definition) === value) continue;
+      if (readAttribute(world, entity, definition) === value) continue;
       const progress = entity.actor!.practice?.[id];
       if (
         definition.practice &&
@@ -712,7 +716,7 @@ export function editWorldEvents(
 
   const invalidatedMemoryIds: Record<string, string[]> = {};
   for (const [actorId, sourceIds] of affectedActors) {
-    if (!world.entities[actorId]?.actor) continue;
+    if (!entityGet(world.entities, actorId)?.actor) continue;
     const awareness = new Map(
       (world.experience!.awareness[actorId] ?? []).map((entry) => [entry.eventId, entry]),
     );
@@ -808,12 +812,12 @@ export function editActorAttributes(
   if (!isSafeRecordId(request.id) || !isSafeRecordId(request.actorId))
     return reject(original, 'invalid-id', 'Use bounded record identities.');
   const digest = canonicalJson(request);
-  const prior = getOwn(original.commandReceipts, request.id);
+  const prior = orderedRecordOwn(original.commandReceipts, request.id);
   if (prior)
     return prior.digest === digest
       ? { world: original, events: [], outcome: prior.outcome }
       : reject(original, 'conflict', 'Request identity conflicts.');
-  const actor = original.entities[request.actorId]?.actor;
+  const actor = entityGet(original.entities, request.actorId)?.actor;
   if (
     !actor ||
     original.moduleManifest?.revision !== request.expectedManifestRevision ||
@@ -830,12 +834,16 @@ export function editActorAttributes(
         HOST_IMPLEMENTATIONS[definition.implementation].storage,
       ) ||
       (definition.implementation === 'finite-practice-v1' &&
-        !supportsManualWork(original.entities[request.actorId])) ||
+        !supportsManualWork(entityGet(original.entities, request.actorId))) ||
       (change.expectedRevision === null
         ? actor.attributes?.[change.attributeId] !== undefined ||
           actor.practice?.[change.attributeId] !== undefined
         : (actor.practice?.[change.attributeId]?.revision ??
-            actor.attributes?.[change.attributeId]?.revision) !== change.expectedRevision)
+            currentAttributeState(
+              original,
+              entityGet(original.entities, request.actorId)!,
+              change.attributeId,
+            )?.revision) !== change.expectedRevision)
     )
       return reject(original, 'conflict', 'Attribute changed or is not applicable.');
     try {
@@ -850,12 +858,22 @@ export function editActorAttributes(
     const definition = attributeDefinition(world, change.attributeId)!;
     if (definition.implementation === 'finite-practice-v1') {
       if (change.expectedRevision === null)
-        initializePractice(world.entities[request.actorId]!.actor!, definition, change.value);
-      else setStartingPractice(world, world.entities[request.actorId]!, definition, change.value);
+        initializePractice(
+          entityGet(world.entities, request.actorId)!.actor!,
+          definition,
+          change.value,
+        );
+      else
+        setStartingPractice(
+          world,
+          entityGet(world.entities, request.actorId)!,
+          definition,
+          change.value,
+        );
       continue;
     }
     if (change.expectedRevision === null)
-      initializeAttributes(world.entities[request.actorId]!.actor!, [
+      initializeAttributes(entityGet(world.entities, request.actorId)!.actor!, [
         attributeDefinition(world, change.attributeId)!,
       ]);
     const address = stateAddress(request.actorId, attributeDefinition(world, change.attributeId)!);
@@ -875,6 +893,6 @@ export function editActorAttributes(
       return reject(original, 'conflict', 'Attribute changed or is not applicable.');
   }
   const result = outcome(true, 'attributes-edited', 'Applicable attributes updated.');
-  world.commandReceipts[request.id] = { digest, outcome: result };
+  orderedRecordSet(world.commandReceipts, request.id, { digest, outcome: result });
   return finish(world, events, result);
 }

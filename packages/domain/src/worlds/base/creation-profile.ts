@@ -1,3 +1,4 @@
+import { entityValues } from '../../entity-collection.js';
 import { supportedPosition } from '../../spatial-state.js';
 import type { WorldCreationProfile, WorldOpeningIdentities } from '../../world-creation.js';
 import {
@@ -194,7 +195,7 @@ export const BASE_CREATION_PROFILE: WorldCreationProfile = {
       payoff: activity.payoff,
       notices: readiness?.notices ?? [],
       entries: world
-        ? Object.values(world.entities).flatMap((entity) => {
+        ? entityValues(world.entities).flatMap((entity) => {
             if (entity.placement?.mode !== 'world') return [];
             const position = supportedPosition(entity);
             if (!position) throw new Error('A starting object has no native world position.');

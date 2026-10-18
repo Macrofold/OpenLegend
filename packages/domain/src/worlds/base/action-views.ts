@@ -1,4 +1,6 @@
+import { entityGet } from '../../entity-collection.js';
 import { observedBodyHealth } from './hunting.js';
+import { equippedItem } from '../../equipment.js';
 import { bodyPolicy } from '../../body-policy.js';
 import { BASE_RANGED_TEXT } from './ranged-counterplay.js';
 import { practiceDefinition, toolPracticeDefinition } from '../../practical-competence.js';
@@ -41,8 +43,17 @@ type ViewPossessions = {
   names: ReadonlyMap<string, string>;
 };
 
-/** This world's supported equipped-item uses, selected from already permitted offers.
- * The host retains the offer's admission/result metadata; it never invents an executor. */
+/** This world's preferred held item for the explicit target-use gesture. */
+export function preferredTargetEquipment(world: WorldState, actorId: string) {
+  return (
+    equippedItem(world, actorId, 'ranged') ??
+    equippedItem(world, actorId, 'melee') ??
+    equippedItem(world, actorId, 'gather')
+  );
+}
+
+/** Select the same preferred use regardless of catalogue construction order.
+ * Offers must already describe and check this exact held item; selection grants no execution. */
 export function equippedTargetAction<T extends { command: { type: string; itemId?: string } }>(
   world: WorldState,
   target: Entity,
@@ -51,20 +62,17 @@ export function equippedTargetAction<T extends { command: { type: string; itemId
 ): T | undefined {
   if (!equipment) return;
   const definition = world.itemDefinitions[equipment.definitionId];
-  const selected = offers.find(
-    (offer) =>
-      (offer.command.type === 'strike' && offer.command.itemId === equipment.id) ||
-      (['hunt', 'aim', 'shoot-once'].includes(offer.command.type) &&
-        offer.command.itemId === equipment.id &&
-        !!definition?.launcher) ||
-      (offer.command.type === 'practice-shot' && offer.command.itemId === equipment.id) ||
-      (offer.command.type === 'gather' &&
-        !!definition?.gatheringTool &&
-        definition.gatheringTool.resourceId === target.resource?.definitionId),
+  const exact = offers.filter((offer) => offer.command.itemId === equipment.id);
+  return (
+    (exact.find((offer) => offer.command.type === 'strike') ??
+      (definition?.launcher &&
+        exact.find((offer) => ['aim', 'shoot-once'].includes(offer.command.type))) ??
+      (definition?.gatheringTool?.resourceId === target.resource?.definitionId &&
+        exact.find((offer) => offer.command.type === 'gather')) ??
+      (definition?.launcher && exact.find((offer) => offer.command.type === 'hunt')) ??
+      exact.find((offer) => offer.command.type === 'practice-shot')) ||
+    undefined
   );
-  return selected
-    ? { ...selected, command: { ...selected.command, itemId: equipment.id } }
-    : undefined;
 }
 
 /** Bundled-world disclosure and wording; the engine stores the permitted view.
@@ -80,10 +88,10 @@ function activityView(
   command: Command,
   possessions?: ViewPossessions,
 ): ActivityView {
-  const actor = world.entities[command.actorId];
+  const actor = entityGet(world.entities, command.actorId);
   const targetId =
     'targetId' in command ? command.targetId : 'heatId' in command ? command.heatId : undefined;
-  const target = targetId ? world.entities[targetId] : undefined;
+  const target = targetId ? entityGet(world.entities, targetId) : undefined;
   const perceived =
     !!actor && !!target && (actor.id === target.id || seesEntity(world, actor, target));
   const itemId =

@@ -4,8 +4,9 @@ import { emit } from './events.js';
 import { hasMemory } from './living.js';
 import { activelyParticipates } from './participation-state.js';
 import { capabilityBlocked } from './status-capabilities.js';
-import { readAttribute, type AttributeDefinition } from './world-modules.js';
+import { attributeDefinitions, readAttribute, type AttributeDefinition } from './world-modules.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
+import { readOnlyDraftView } from './draft.js';
 
 /** Authored interpretation of an existing value; never another writable meter.
  * docs/projects/embodied-survival-tech-design.md#body-descriptions-and-transition-lifecycle */
@@ -50,11 +51,13 @@ export function conditionText(
  * still reaches context by projection); physical state is unaffected either way.
  * docs/events-perception-and-reactions.md#7-internal-triggers-and-native-survival */
 export function canNoticeInternalChange(world: WorldState, entity: Entity): boolean {
-  const actor = entity.actor;
+  const stored = readOnlyDraftView(entity).actor;
+  const actor = stored && readOnlyDraftView(stored);
+  const capabilities = actor?.capabilities && readOnlyDraftView(actor.capabilities);
   return (
     !!actor?.alive &&
     !actor.incapacitated &&
-    actor.capabilities?.cognition !== false &&
+    capabilities?.cognition !== false &&
     !capabilityBlocked(world, entity, 'actions')
   );
 }
@@ -63,9 +66,10 @@ export function canNoticeInternalChange(world: WorldState, entity: Entity): bool
 export function reconcileConditions(world: WorldState, entity: Entity, events: WorldEvent[]): void {
   const actor = entity.actor;
   if (!actor || !hasMemory(entity) || !activelyParticipates(entity)) return;
-  for (const definition of world.moduleManifest.definitions) {
+  const definitions = attributeDefinitions(world);
+  for (const definition of definitions) {
     const policy = definition.condition;
-    const value = policy && readAttribute(actor, definition);
+    const value = policy && readAttribute(world, entity, definition);
     if (!policy || typeof value !== 'number') continue;
     const severity = conditionSeverity(policy, value);
     const prior = actor.conditions?.[definition.id];
@@ -140,8 +144,8 @@ export function reconcileConditions(world: WorldState, entity: Entity, events: W
   }
   for (const id of Object.keys(actor.conditions ?? {}))
     if (
-      !world.moduleManifest.definitions.some(
-        (d) => d.id === id && d.condition && typeof readAttribute(actor, d) === 'number',
+      !definitions.some(
+        (d) => d.id === id && d.condition && typeof readAttribute(world, entity, d) === 'number',
       )
     )
       delete actor.conditions![id];
@@ -202,7 +206,7 @@ export function validateConditionEpisodes(world: WorldState, entity: Entity): vo
     const definition = world.moduleManifest.definitions.find((d) => d.id === id);
     if (
       !definition?.condition ||
-      typeof readAttribute(entity.actor!, definition) !== 'number' ||
+      typeof readAttribute(world, entity, definition) !== 'number' ||
       episode.version !== definition.version ||
       !Number.isSafeInteger(episode.revision) ||
       episode.revision < 1 ||

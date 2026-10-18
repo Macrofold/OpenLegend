@@ -8,6 +8,7 @@ export class HoverOutline extends pc.OutlineRenderer {
   private readonly blendLayer: pc.Layer;
   private readonly copies: pc.MeshInstance[] = [];
   private readonly materials = new Map<pc.Material, pc.Material>();
+  private readonly retainedMaterials = new Set<pc.Material>();
   private sources: readonly pc.MeshInstance[] = [];
   private readonly white = new Float32Array([1, 1, 1]);
   private amount = 0;
@@ -44,12 +45,36 @@ export class HoverOutline extends pc.OutlineRenderer {
         }`,
     });
     this.quadRenderer = new pc.QuadRender(this.shaderBlend);
+    const device = app.graphicsDevice;
+    if (device instanceof pc.WebglGraphicsDevice && !device.contextLost) {
+      const profile = window.__openLegendSceneProfile;
+      const started = profile?.isRecording() ? performance.now() : undefined;
+      const previousShader = device.shader;
+      const previousAsyncCompile = device.shaderAsyncCompile;
+      const previousProgram: WebGLProgram | null = device.gl.getParameter(
+        device.gl.CURRENT_PROGRAM,
+      );
+      try {
+        // These two constant programs otherwise first reflect uniforms during a
+        // hover. Use the pinned engine's activation path before scene playback;
+        // selecting a shader alone does not finish this work in PlayCanvas2.22.2.
+        for (const shader of [this.shaderExtend, this.shaderBlend]) {
+          device.setShader(shader);
+          device.activateShader();
+        }
+      } finally {
+        device.setShader(previousShader, previousAsyncCompile);
+        device.gl.useProgram(previousProgram);
+        if (started !== undefined) profile?.recordHoverPreparation(performance.now() - started);
+      }
+    }
     app.on('prerender', this.prepareFrame);
   }
   private material(source: pc.Material): pc.Material {
     let material = this.materials.get(source);
     if (!material) {
       material = source.clone();
+      material.name = `${source.name} / hover mask`;
       material.stencilFront = material.stencilBack = null;
       material.depthFunc = pc.FUNC_LESSEQUAL;
       material.depthWrite = true;
@@ -66,6 +91,18 @@ export class HoverOutline extends pc.OutlineRenderer {
       this.materials.set(source, material);
     }
     return material;
+  }
+  /** Source artwork owns the lifetime of masks prepared before the first hover. */
+  prepareMaterial(source: pc.Material): pc.Material {
+    this.retainedMaterials.add(source);
+    return this.material(source);
+  }
+  releaseMaterial(source: pc.Material): void {
+    const material = this.materials.get(source);
+    if (material && this.copies.some((mesh) => mesh.material === material)) this.clearTarget();
+    this.retainedMaterials.delete(source);
+    material?.destroy();
+    this.materials.delete(source);
   }
   update(sources: readonly pc.MeshInstance[], amount: number, protectPeople: boolean): void {
     const changed =
@@ -112,6 +149,7 @@ export class HoverOutline extends pc.OutlineRenderer {
     this.quadRenderer.render();
   }
   private clearTarget(): void {
+    this.outlineCameraEntity.enabled = false;
     this.renderingLayer.removeMeshInstances(this.copies, true);
     for (const mesh of this.copies) {
       mesh.skinInstance = null;
@@ -120,12 +158,18 @@ export class HoverOutline extends pc.OutlineRenderer {
     }
     this.copies.length = 0;
     this.sources = [];
-    for (const material of this.materials.values()) material.destroy();
-    this.materials.clear();
+    for (const [source, material] of this.materials)
+      if (!this.retainedMaterials.has(source)) {
+        material.destroy();
+        this.materials.delete(source);
+      }
   }
   override destroy(): void {
     this.app.off('prerender', this.prepareFrame);
     this.clearTarget();
+    for (const material of this.materials.values()) material.destroy();
+    this.materials.clear();
+    this.retainedMaterials.clear();
     this.camera.camera!.layers = this.camera.camera!.layers.filter(
       (id) => id !== this.blendLayer.id,
     );

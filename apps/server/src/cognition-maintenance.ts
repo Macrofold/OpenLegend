@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { undispatchedReceipt } from './decision-state.js';
 import { normalizeReceiptCost } from '@open-legend/ai';
 import { CognitionExecution, type ExecutionLease } from './cognition-execution.js';
@@ -14,6 +15,7 @@ import {
 } from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { ActorWork } from './actor-work.js';
+import { activeIntakeChanges, installedThinkingToken } from './interests.js';
 import {
   CONSOLIDATION_INSTRUCTIONS,
   type ConsolidationBatch,
@@ -45,7 +47,7 @@ interface ReflectionRequest {
 }
 class MaintenanceReadFailure extends Error {}
 function availableForMaintenance(world: WorldState, actorId: string): boolean {
-  const entity = world.entities[actorId],
+  const entity = entityGet(world.entities, actorId),
     actor = entity?.actor;
   return (
     !!entity &&
@@ -60,12 +62,159 @@ function availableForMaintenance(world: WorldState, actorId: string): boolean {
   );
 }
 
+/** Snapshot-owned preparation only. Repository revisions and backlog are deliberately
+ * not retained: projection completion can change them without a world publication.
+ * Unknown world changes still rebuild; time/native/source changes read current
+ * availability and dream predicates before selecting changed work.
+ * docs/verification/performance/overhaul-presentation-implementation.md#october-17-continuation-character-scheduling-preparation
+ */
+interface PreparedMaintenanceInputs {
+  available: boolean;
+  dreamEpisode: string | undefined;
+  learning: WorldState['actionExperience']['learning'][string] | undefined;
+  values: readonly unknown[];
+}
+export class MaintenanceIntakeInputs {
+  private world?: WorldState;
+  private scope?: string;
+  private readonly prepared = new Map<string, PreparedMaintenanceInputs>();
+  private readonly external = new Map<string, readonly unknown[]>();
+  private population: string[] = [];
+  /** Local aggregate diagnostic, not actor-private data or a scheduling authority. */
+  preparations = 0;
+  nativeInputReads = 0;
+
+  clear(): void {
+    this.world = undefined;
+    this.scope = undefined;
+    this.prepared.clear();
+    this.external.clear();
+    this.population = [];
+  }
+
+  reconcile(
+    world: WorldState,
+    scope: string,
+    backlog: unknown,
+    sourceRevision: (id: string) => unknown,
+  ): { population: readonly string[]; affected?: ReadonlySet<string> } {
+    const reusable = Object.isFrozen(world) && this.scope === scope;
+    let affected: Set<string> | undefined = reusable ? new Set() : undefined;
+    if (this.world !== world || !reusable) {
+      const changes = reusable && this.world ? activeIntakeChanges(this.world, world) : undefined;
+      affected = changes?.owners;
+      const previousLearning = this.world?.actionExperience.learning;
+      if (
+        affected &&
+        previousLearning &&
+        (Object.keys(previousLearning).length !==
+          Object.keys(world.actionExperience.learning).length ||
+          Object.keys(world.actionExperience.learning).some(
+            (id) => !Object.hasOwn(previousLearning, id) || !Object.hasOwn(world.minds ?? {}, id),
+          ))
+      )
+        affected = undefined;
+      // First use, restore, changed population and incomplete producer coverage
+      // rebuild through the existing complete-population owner.
+      if (!affected)
+        this.population = [
+          ...new Set([
+            ...Object.keys(world.minds ?? {}),
+            ...Object.keys(world.actionExperience.learning),
+          ]),
+        ];
+      if (affected && changes) {
+        for (const id of this.population) {
+          const entity = entityGet(world.entities, id),
+            prior = this.prepared.get(id);
+          if (
+            affected.has(id) ||
+            changes.entities.has(id) ||
+            !prior ||
+            !entity?.actor?.alive ||
+            !hasMemory(entity) ||
+            prior.learning !== world.actionExperience.learning[id]
+          )
+            affected.add(id);
+          else {
+            this.nativeInputReads++;
+            if (
+              prior.available !== availableForMaintenance(world, id) ||
+              prior.dreamEpisode !== dreamStatus(world, entity)?.episode
+            )
+              affected.add(id);
+          }
+        }
+        for (const id of affected) this.prepared.delete(id);
+      } else {
+        this.prepared.clear();
+        this.external.clear();
+      }
+      this.world = world;
+      this.scope = scope;
+    }
+    if (affected)
+      for (const id of this.population) {
+        const prior = this.external.get(id);
+        if (!prior || prior[0] !== backlog || prior[1] !== sourceRevision(id)) affected.add(id);
+      }
+    // Match complete refresh's insertion/generation order.
+    return {
+      population: this.population,
+      ...(affected ? { affected: new Set(this.population.filter((id) => affected.has(id))) } : {}),
+    };
+  }
+
+  read(
+    world: WorldState,
+    id: string,
+    backlog: unknown,
+    sourceRevision: unknown,
+    verify = false,
+  ): unknown[] {
+    // An inspection can finish after a newer publication, before the next
+    // scheduler reconciliation. Its verification must read that newer world.
+    const reusable = world === this.world && Object.isFrozen(world);
+    let prepared = reusable ? this.prepared.get(id) : undefined;
+    if (!prepared) {
+      const entity = entityGet(world.entities, id)!,
+        actor = entity.actor!;
+      this.preparations++;
+      this.nativeInputReads++;
+      const available = availableForMaintenance(world, id),
+        dreamEpisode = dreamStatus(world, entity)?.episode,
+        learning = world.actionExperience.learning[id];
+      const values = [
+        actor.controller,
+        actor.incapacitated,
+        available,
+        installedThinkingToken(world),
+        actor.action?.type,
+        actor.agency.plan?.status,
+        dreamEpisode,
+        world.memories[id],
+        world.experience?.awareness[id],
+        world.experience?.summaries[id],
+        world.minds?.[id],
+        world.innerWorlds?.[id],
+        world.cognitionPolicy,
+        learning,
+      ];
+      prepared = { available, dreamEpisode, learning, values };
+      if (reusable && !verify) this.prepared.set(id, prepared);
+    }
+    if (reusable && !verify) this.external.set(id, [backlog, sourceRevision]);
+    return [...prepared.values, backlog, sourceRevision];
+  }
+}
+
 export class CognitionMaintenance {
   private readonly work = new ActorWork('maintenance', () => this.now(), {
     capture: () => this.service.durabilityTicket(),
     current: (ticket) => this.service.isDurable(ticket),
   });
   private readonly lastStarted = new Map<string, number>();
+  private readonly intakeInputs = new MaintenanceIntakeInputs();
   private budgetActor = 'world-agent';
   private active: AbortController | null = null;
   private pending: Promise<void> | null = null;
@@ -109,7 +258,7 @@ export class CognitionMaintenance {
     if (this.service.config.jevOnly) return;
     if (!this.service.world.cognitionPolicy.reflection) return;
     const world = this.service.world;
-    const actor = world.entities[actorId]?.actor;
+    const actor = entityGet(world.entities, actorId)?.actor;
     if (!actor?.alive) return;
     const current = (await this.readSchedule(() =>
       this.service.store.getIntegration(this.key(actorId)),
@@ -134,7 +283,7 @@ export class CognitionMaintenance {
       kind: 'Reflection opportunity',
       worldId: world.id,
       actorId,
-      actorName: world.entities[actorId]!.name,
+      actorName: entityGet(world.entities, actorId)!.name,
       trigger: 'A meaningful new experience was queued for reflection.',
       triggerType: 'Background reflection opportunity',
       startedAt: new Date(request.at).toISOString(),
@@ -214,44 +363,32 @@ export class CognitionMaintenance {
     try {
       const current = this.service.world;
       const generation = this.service.generation;
-      timedSync('cognition.maintenanceRefresh', () =>
-        this.work.refresh(
+      timedSync('cognition.maintenanceRefresh', () => {
+        const { population, affected } = this.intakeInputs.reconcile(
           current,
-          (id, current) => {
-            const actor = current.entities[id]!.actor!;
-            return [
-              actor.controller,
-              actor.incapacitated,
-              availableForMaintenance(current, id),
-              JSON.stringify([
-                current.moduleManifest.revision,
-                current.moduleManifest.bodyPolicyPin,
-                current.moduleManifest.pins,
-              ]),
-              actor.action?.type,
-              actor.agency.plan?.status,
-              dreamStatus(current, current.entities[id])?.episode,
-              current.memories[id],
-              current.experience?.awareness[id],
-              current.experience?.summaries[id],
-              current.minds?.[id],
-              current.innerWorlds?.[id],
-              current.cognitionPolicy,
-              current.actionExperience.learning[id],
-              this.service.memoryBacklog,
-              this.service.store.memories?.actorRevision(id),
-            ];
-          },
-          this.service.generation,
-          new Set([
-            ...Object.keys(current.minds ?? {}),
-            ...Object.keys(current.actionExperience.learning),
-          ]),
-        ),
-      );
+          generation,
+          this.service.memoryBacklog,
+          (id) => this.service.store.memories?.actorRevision(id),
+        );
+        if (affected) this.work.refreshAffected(current, affected);
+        else
+          this.work.refresh(
+            current,
+            (id, world, verify) =>
+              this.intakeInputs.read(
+                world,
+                id,
+                this.service.memoryBacklog,
+                this.service.store.memories?.actorRevision(id),
+                verify,
+              ),
+            generation,
+            population,
+          );
+      });
       const actors = this.work
         .ready(this.now(), current.simTime)
-        .map((id) => current.entities[id]!);
+        .map((id) => entityGet(current.entities, id)!);
       // Advisory maintenance need not reread SQL for every fresh sighting. Keep
       // changed actors dirty, but admit at most one inspection per real second.
       const nextReadAt = this.now() + 1000;
@@ -273,13 +410,13 @@ export class CognitionMaintenance {
           this.service.memoryMaintenanceStatus(entity.id),
         );
         const world = this.service.world;
-        const actor = world.entities[entity.id]?.actor;
+        const actor = entityGet(world.entities, entity.id)?.actor;
         // Owner edits can remove an actor while schedule records are loading.
         if (!actor?.alive) continue;
         const safe = availableForMaintenance(world, entity.id);
         const reflectionSafe =
-          safe && !bodyThinkingBlocked(world, world.entities[entity.id]!, 'reflection');
-        const dream = dreamStatus(world, world.entities[entity.id]);
+          safe && !bodyThinkingBlocked(world, entityGet(world.entities, entity.id)!, 'reflection');
+        const dream = dreamStatus(world, entityGet(world.entities, entity.id));
         const configuredDream = dreamPolicy(world);
         if (
           safe &&
@@ -554,7 +691,10 @@ export class CognitionMaintenance {
     const admission = {
       actorId,
       generation,
-      fence: bodyEligibilityRevision(this.service.world, this.service.world.entities[actorId]!),
+      fence: bodyEligibilityRevision(
+        this.service.world,
+        entityGet(this.service.world.entities, actorId)!,
+      ),
       purpose: ['consolidation', 'activity-learning'].includes(reason)
         ? ('maintenance' as const)
         : ('reflection' as const),
@@ -632,7 +772,7 @@ export class CognitionMaintenance {
       id,
       worldId: this.service.world.id,
       actorId,
-      actorName: this.service.world.entities[actorId]!.name,
+      actorName: entityGet(this.service.world.entities, actorId)!.name,
       trigger: recurring ? trigger : 'A queued experience is being reconsidered.',
       triggerType:
         trigger === 'Daily dream review'
@@ -749,12 +889,18 @@ export class CognitionMaintenance {
       !admission ||
       admission.generation !== this.service.generation ||
       !availableForMaintenance(world, admission.actorId) ||
-      admission.fence !== bodyEligibilityRevision(world, world.entities[admission.actorId]!) ||
+      admission.fence !==
+        bodyEligibilityRevision(world, entityGet(world.entities, admission.actorId)!) ||
       (admission.purpose === 'reflection' &&
-        (world.entities[admission.actorId]!.actor!.action ||
-          bodyThinkingBlocked(world, world.entities[admission.actorId]!, 'reflection'))) ||
+        (entityGet(world.entities, admission.actorId)!.actor!.action ||
+          bodyThinkingBlocked(
+            world,
+            entityGet(world.entities, admission.actorId)!,
+            'reflection',
+          ))) ||
       (admission.dreamEpisode !== undefined &&
-        dreamStatus(world, world.entities[admission.actorId])?.episode !== admission.dreamEpisode)
+        dreamStatus(world, entityGet(world.entities, admission.actorId))?.episode !==
+          admission.dreamEpisode)
     )
       throw new Error(
         'The body, installed policy or maintenance eligibility changed before completion.',
@@ -769,7 +915,10 @@ export class CognitionMaintenance {
     if (this.activeAdmission)
       this.activeAdmission.requiresBody = batch.mode === 'daily' || batch.routine.length > 0;
     if (batch.mode === 'daily') {
-      const dream = dreamStatus(this.service.world, this.service.world.entities[actorId]),
+      const dream = dreamStatus(
+          this.service.world,
+          entityGet(this.service.world.entities, actorId),
+        ),
         policy = dreamPolicy(this.service.world);
       if (!this.activeAdmission || !dream || !policy || dream.elapsedSeconds < policy.afterSeconds)
         throw new Error('The configured dream opportunity is no longer available.');
@@ -791,7 +940,7 @@ export class CognitionMaintenance {
           const requests = consolidationRequests(
             batch,
             this.service.world.statusEffectPolicy.clockOffsetHours,
-            this.service.world.entities[actorId]?.name,
+            entityGet(this.service.world.entities, actorId)?.name,
           );
           for (const [index, { context, handles }] of requests.entries()) {
             const request: GenerateRequest = {
@@ -1150,10 +1299,15 @@ export class CognitionMaintenance {
     this.active?.abort();
     if (this.queuedId) await this.execution?.cancel(new Set([this.queuedId]));
     this.unsubscribe();
-    await this.schedulingTask;
-    // Queued work can still be saving admission before pending model work exists.
-    // Drain this owner's callback, never another character's shared execution.
-    await this.dispatching;
-    await this.pending;
+    try {
+      await this.schedulingTask;
+      // Queued work can still be saving admission before pending model work exists.
+      // Drain this owner's callback, never another character's shared execution.
+      await this.dispatching;
+      await this.pending;
+    } finally {
+      this.intakeInputs.clear();
+      this.work.clear();
+    }
   }
 }

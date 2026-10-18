@@ -1,3 +1,4 @@
+import { entitySet } from '../../entity-collection.js';
 import { baseSpatial } from './spatial-definitions.js';
 import { addItem } from '../../data.js';
 import { worldPlacement } from '../../spatial-state.js';
@@ -47,7 +48,7 @@ export function installFirstThreat(world: WorldState): void {
       escapeHeading: null,
       calmRate: 0,
       reviewAt: 0,
-      wanderSeconds: 0,
+      wander: { remainingSeconds: 0 },
     },
     threat: {
       policy: {
@@ -121,7 +122,7 @@ export function installFirstThreat(world: WorldState): void {
     }),
   ];
   for (const entity of content) {
-    world.entities[entity.id] = entity;
+    entitySet(world.entities, entity.id, entity);
     rootMembershipChanged(world, entity.id);
   }
   addItem(world, 'stag-cache', 'prepared_fiber', 4);

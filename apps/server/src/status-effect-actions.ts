@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import {
   canActivateStatusEffect,
   activeContributionId,
@@ -12,8 +13,8 @@ export function statusEffectActions(
   source: Entity,
   target: Entity,
 ): Array<{ id: string; label: string; icon?: string; command: CommandInput }> {
-  source = world.entities[source.id]!;
-  target = world.entities[target.id]!;
+  source = entityGet(world.entities, source.id)!;
+  target = entityGet(world.entities, target.id)!;
   return world.statusEffectPolicy.definitions.flatMap((d) => {
     if (!d.actions || (source.id !== target.id && !d.actions.allowOther)) return [];
     const active = d.contribution

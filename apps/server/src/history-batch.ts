@@ -1,9 +1,9 @@
-import { parameterBatchLimit } from './sql-rows.js';
+import { parameterBatchLimit, SqlWriteBatch } from './sql-rows.js';
 import type { SqlDatabase } from './store.js';
-import { gaugeMetric, timed } from './performance.js';
+import { gaugeMetric, timed, beginTiming, elapsedTiming, profilingEnabled } from './performance.js';
 
-type Table = 'history_events' | 'history_perspectives';
-const TABLES: readonly Table[] = ['history_events', 'history_perspectives'];
+type Table = 'mind_source_versions' | 'history_events' | 'history_perspectives';
+const TABLES: readonly Table[] = ['mind_source_versions', 'history_events', 'history_perspectives'];
 const MAX_PARAMETER_BYTES = 262144;
 
 /** Bound construction, not just the eventual SQL. Flush source rows before their dependent
@@ -12,10 +12,12 @@ const MAX_PARAMETER_BYTES = 262144;
  */
 export class HistoryBatch {
   private rows: Record<Table, unknown[][]> = {
+    mind_source_versions: [],
     history_events: [],
     history_perspectives: [],
   };
   private parameters: Record<Table, number> = {
+    mind_source_versions: 0,
     history_events: 0,
     history_perspectives: 0,
   };
@@ -41,7 +43,7 @@ export class HistoryBatch {
       this.rows[table].push(row);
       this.parameters[table] += row.length;
       this.bytes += size;
-      this.peakBytes = Math.max(this.peakBytes, this.bytes);
+      if (profilingEnabled()) this.peakBytes = Math.max(this.peakBytes, this.bytes);
     };
     if (
       this.bytes &&
@@ -52,28 +54,47 @@ export class HistoryBatch {
     append();
   }
 
-  async flush(): Promise<void> {
-    if (!this.bytes) return;
-    const started = performance.now();
+  /** Supply totals only at the single final flush: its delta includes all earlier
+   * intermediate inserts, whose count is cumulative for this history projection. */
+  async flush(
+    total?: { worldId: string; removedEvents: number },
+    sharedWrites?: SqlWriteBatch,
+  ): Promise<void> {
+    const delta =
+      this.insertedEvents + this.rows.history_events.length - (total?.removedEvents ?? 0);
+    if (!this.bytes && (!total || !delta)) return;
+    const started = beginTiming();
     try {
-      for (const table of TABLES) {
-        const rows = this.rows[table];
-        if (!rows.length) continue;
-        await timed('history.write', () =>
-          this.db
-            .prepare(
-              `INSERT INTO ${table} VALUES ${rows.map((row) => `(${row.map(() => '?').join(',')})`).join(',')}`,
-            )
-            .run(...rows.flat()),
-        );
-        if (table === 'history_events') this.insertedEvents += rows.length;
-        this.rows[table] = [];
-        this.parameters[table] = 0;
-      }
+      await timed('history.write', async () => {
+        const writes = sharedWrites ?? new SqlWriteBatch(this.db);
+        for (const table of TABLES) {
+          const rows = this.rows[table];
+          if (!rows.length) continue;
+          await writes.add(
+            table,
+            `INSERT INTO ${table} VALUES ${rows.map((row) => `(${row.map(() => '?').join(',')})`).join(',')}${table === 'mind_source_versions' ? ' ON CONFLICT DO NOTHING' : ''}`,
+            rows.flat(),
+          );
+          if (table === 'history_events') this.insertedEvents += rows.length;
+          this.rows[table] = [];
+          this.parameters[table] = 0;
+        }
+        if (total && delta)
+          await writes.add(
+            'history_totals',
+            'UPDATE history_totals SET event_count=event_count+? WHERE world_id=? RETURNING event_count',
+            [delta, total.worldId],
+            { rows: 1, message: 'Retained history count is missing; commit refused.' },
+          );
+        // Only the final batch can be handed to the transaction's canonical writer.
+        // Its caller must flush before a dependent history consumer or source read.
+        if (!sharedWrites) await writes.flush();
+      });
       this.bytes = 0;
       gaugeMetric('history.peakParameterBytes', this.peakBytes);
     } finally {
-      this.writeMilliseconds += performance.now() - started;
+      const elapsed = elapsedTiming(started);
+      if (elapsed !== undefined) this.writeMilliseconds += elapsed;
     }
   }
 }

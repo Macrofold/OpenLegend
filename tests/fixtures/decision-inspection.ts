@@ -1,5 +1,5 @@
 import { recordDecisionTiming } from '../../apps/server/src/decision-publication.js';
-import { NPC_ID } from '../../packages/domain/src/index.js';
+import { entityGet, NPC_ID } from '../../packages/domain/src/index.js';
 import { decisionRoot } from '../../apps/server/src/decision-state.js';
 import { decisionOrigin, decisionPolicyDigest } from '../../apps/server/src/decision-task.js';
 import { levelLimits } from '../../apps/server/src/cognition-budget.js';
@@ -19,7 +19,7 @@ export async function seedDecisionInspection(service: WorldService) {
     timelineId: service.timelineId,
     generation: service.generation,
     actorId: NPC_ID,
-    physicalLife: service.world.entities[NPC_ID]!.actor!.physicalLife ?? 0,
+    physicalLife: entityGet(service.world.entities, NPC_ID)!.actor!.physicalLife ?? 0,
     cause: { kind: 'intent', id },
     originalWatermark: 0,
     urgency: 0,

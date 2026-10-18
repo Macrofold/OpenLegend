@@ -1,7 +1,11 @@
+import { entityGet, entityOwn, entitySet, entityValues } from './entity-collection.js';
 import { connectActivityItem } from './action-experience.js';
 import { chargeWork, WorkBudgetError } from './work-budget.js';
 import { contributionSourceBound } from './status-capabilities.js';
-import { isDraft, original } from 'immer';
+import { current, isDraft, original } from 'immer';
+import { changedDraftEntityIds, readOnlyDraftView, sensoryDraftWrites } from './draft.js';
+import { worldRootEntities } from './entity-index.js';
+import { countDomainWork } from './diagnostic-counters.js';
 import { recordSemanticChange } from './dependencies.js';
 import { nextEntityId, nextId, reserveEntityId } from './data.js';
 import { canonicalJson } from './events.js';
@@ -79,9 +83,28 @@ export const ITEM_COUNT_PIN: Readonly<DefinitionPin> = Object.freeze({
 export const MAX_CONTAINMENT_DEPTH = 16;
 type Children = ObjectIndexNode<number> | undefined;
 type ChildIndex = ObjectIndexNode<Children> | undefined;
+interface MaterialMembership {
+  owner: object;
+  definitions: object;
+  families: object | undefined;
+  members: ObjectIndexNode<string> | undefined;
+  groups: ObjectIndexNode<ObjectIndexNode<true> | undefined> | undefined;
+  wet: ObjectIndexNode<true> | undefined;
+  roots: ObjectIndexNode<true> | undefined;
+  rootOrder: readonly string[];
+  ids?: readonly string[];
+  wetIds?: readonly string[];
+}
 interface IndexedObjects {
   children: ChildIndex;
   attachments: ChildIndex;
+  materials?: MaterialMembership;
+}
+const materialOwners = new WeakMap<WorldState, object>();
+function materialOwner(world: WorldState): object {
+  let token = materialOwners.get(world);
+  if (!token) materialOwners.set(world, (token = {}));
+  return token;
 }
 const indexes = new WeakMap<object, IndexedObjects>();
 const retiredIndexes = new WeakMap<WorldState['entities'], readonly string[]>();
@@ -102,7 +125,7 @@ export function retiredObjectIds(world: WorldState): readonly string[] {
   const entities = world.entities;
   let ids = Object.isFrozen(entities) ? retiredIndexes.get(entities) : undefined;
   if (!ids) {
-    ids = Object.values(entities)
+    ids = entityValues(entities)
       .filter((entity) => entity.retirement)
       .map((entity) => entity.id);
     if (Object.isFrozen(entities)) retiredIndexes.set(entities, ids);
@@ -121,10 +144,16 @@ function indexFor(world: WorldState): IndexedObjects {
   if (isDraft(world) && original(world)?.objectState) {
     const base = original(world)!;
     const inherited = indexFor(base);
-    index = { children: inherited.children, attachments: inherited.attachments };
+    index = {
+      children: inherited.children,
+      attachments: inherited.attachments,
+      ...(inherited.materials
+        ? { materials: { ...inherited.materials, owner: materialOwner(world) } }
+        : {}),
+    };
   } else {
     index = { children: undefined, attachments: undefined };
-    for (const entity of Object.values(world.entities)) {
+    for (const entity of entityValues(world.entities)) {
       const parent = !entity.retirement && parentOf(entity);
       if (parent) {
         index.children = objectIndexSet(
@@ -148,11 +177,152 @@ function indexFor(world: WorldState): IndexedObjects {
   indexes.set(token, index);
   return index;
 }
+/** The same placement index owns this derived weather subset. Trees are immutable between
+ * edits; a successor receives its own cursors and cannot mutate an older world's membership.
+ * Current positions, moisture and rain are never cached as geometric truth. */
+export function exposedMaterialIds(world: WorldState, wetOnly = false): readonly string[] {
+  const index = indexFor(world);
+  const definitions = isDraft(world.itemDefinitions)
+    ? current(world.itemDefinitions)
+    : world.itemDefinitions;
+  const families =
+    world.assemblyFamilies &&
+    (isDraft(world.assemblyFamilies) ? current(world.assemblyFamilies) : world.assemblyFamilies);
+  const entityView = readOnlyDraftView(world.entities);
+  const entity = (id: string) => {
+    const value = entityGet(entityView, id);
+    return value && readOnlyDraftView(value);
+  };
+  const eligibleRoot = (id: string) => {
+    const root = entity(id);
+    return (
+      !!root &&
+      !root.retirement &&
+      !root.actor?.pendingDeath &&
+      root.remains?.phase !== 'removed' &&
+      root.placement?.mode === 'world' &&
+      !!(root.actor || root.kind === 'item-pile' || root.assembly)
+    );
+  };
+  const changed = isDraft(world) ? changedDraftEntityIds(world) : undefined;
+  const reusable =
+    (isDraft(world) ? changed !== undefined : Object.isFrozen(world)) &&
+    Object.isFrozen(definitions) &&
+    (!families || Object.isFrozen(families));
+  let membership = reusable ? index.materials : undefined;
+  if (
+    membership?.owner !== materialOwner(world) ||
+    membership?.definitions !== definitions ||
+    membership?.families !== families
+  )
+    membership = undefined;
+  const refresh = (current: MaterialMembership, id: string) => {
+    const item = entity(id);
+    const lot = item?.item && readOnlyDraftView(item.item);
+    const definition = lot && definitions[lot.definitionPin.id];
+    const descriptor = definition && readOnlyDraftView(definition).assemblyMaterial;
+    const material = descriptor && readOnlyDraftView(descriptor);
+    const placement = item?.placement && readOnlyDraftView(item.placement);
+    const parent = placement && placement.mode !== 'world' ? placement.parentEntityId : undefined;
+    const nextParent =
+      lot &&
+      !item?.retirement &&
+      parent &&
+      eligibleRoot(parent) &&
+      material &&
+      (material.role === 'cover' || material.role === 'fiber')
+        ? parent
+        : undefined;
+    const oldParent = objectIndexGet(current.members, id);
+    if (oldParent !== nextParent) {
+      if (oldParent)
+        current.groups = objectIndexSet(
+          current.groups,
+          oldParent,
+          objectIndexSet(objectIndexGet(current.groups, oldParent), id, undefined),
+        );
+      if (nextParent)
+        current.groups = objectIndexSet(
+          current.groups,
+          nextParent,
+          objectIndexSet(objectIndexGet(current.groups, nextParent), id, true),
+        );
+      current.members = objectIndexSet(current.members, id, nextParent);
+      delete current.ids;
+      delete current.wetIds;
+      countDomainWork('materialMembershipUpdates');
+    }
+    const family = material && families?.[material.familyId];
+    const attributes = item?.attributes && readOnlyDraftView(item.attributes);
+    const moisture = family && attributes?.[family.moistureAttribute];
+    const wet = !!nextParent && !!moisture && Number(readOnlyDraftView(moisture).value) > 0;
+    if (!!objectIndexGet(current.wet, id) !== wet) {
+      current.wet = objectIndexSet(current.wet, id, wet ? true : undefined);
+      delete current.wetIds;
+    }
+  };
+  if (!membership) {
+    countDomainWork('materialMembershipBuilds');
+    const roots = worldRootEntities(world, true).filter((root) => eligibleRoot(root.id));
+    membership = {
+      owner: materialOwner(world),
+      definitions,
+      families,
+      members: undefined,
+      groups: undefined,
+      wet: undefined,
+      roots: undefined,
+      rootOrder: roots.map((root) => root.id),
+    };
+    for (const root of roots) membership.roots = objectIndexSet(membership.roots, root.id, true);
+    // Cold/unknown input reconstructs actual placement, including direct editor replacements.
+    for (const item of entityValues(entityView)) {
+      countDomainWork('materialMembershipCandidates');
+      if (readOnlyDraftView(item).item) refresh(membership, item.id);
+    }
+  } else if (changed) {
+    let rootsChanged = sensoryDraftWrites(world).orderChanged;
+    for (const id of changed) {
+      const wasRoot = !!objectIndexGet(membership.roots, id),
+        isRoot = eligibleRoot(id);
+      if (wasRoot !== isRoot) {
+        rootsChanged = true;
+        membership.roots = objectIndexSet(membership.roots, id, isRoot ? true : undefined);
+        const children = new Set(
+          [
+            ...objectIndexEntries(objectIndexGet(index.children, id)),
+            ...objectIndexEntries(objectIndexGet(membership.groups, id)),
+          ].map(([child]) => child),
+        );
+        for (const child of children) refresh(membership, child);
+      }
+      refresh(membership, id);
+    }
+    if (rootsChanged) {
+      membership.rootOrder = worldRootEntities(world, true)
+        .filter((root) => eligibleRoot(root.id))
+        .map((root) => root.id);
+      delete membership.ids;
+      delete membership.wetIds;
+    }
+  }
+  if (reusable) index.materials = membership;
+  else delete index.materials;
+  membership.ids ??= membership.rootOrder.flatMap((root) =>
+    [...objectIndexEntries(objectIndexGet(membership.groups, root))].map(([id]) => id),
+  );
+  if (!wetOnly) return membership.ids;
+  membership.wetIds ??= membership.ids.filter((id) => !!objectIndexGet(membership.wet, id));
+  return membership.wetIds;
+}
 /** FinishWorld transfers the rebuildable index; canonical state remains plain JSON. */
 export function captureObjectIndex(
   draft: WorldState,
 ): (committed: WorldState, changed: ReadonlySet<string>) => void {
   const index = draft.objectState && indexes.get(draft.objectState);
+  // The last integration can change wetness after its starting capture. Publish a current
+  // subset so the next immutable rain-free read cannot omit that newly wet material.
+  if (index?.materials) exposedMaterialIds(draft);
   const base = original(draft)!,
     priorRetired = retiredIndexes.get(base.entities);
   return (committed, changed) => {
@@ -161,13 +331,19 @@ export function captureObjectIndex(
       indexes.set(committed.objectState, {
         children: index.children,
         attachments: index.attachments,
+        ...(index.materials
+          ? { materials: { ...index.materials, owner: materialOwner(committed) } }
+          : {}),
       });
     if (priorRetired && base.entities !== committed.entities) {
       let ids: Set<string> | undefined;
       for (const id of changed)
-        if (!!base.entities[id]?.retirement !== !!committed.entities[id]?.retirement) {
+        if (
+          !!entityGet(base.entities, id)?.retirement !==
+          !!entityGet(committed.entities, id)?.retirement
+        ) {
           ids ??= new Set(priorRetired);
-          if (committed.entities[id]?.retirement) ids.add(id);
+          if (entityGet(committed.entities, id)?.retirement) ids.add(id);
           else ids.delete(id);
         }
       retiredIndexes.set(committed.entities, ids ? [...ids] : priorRetired);
@@ -198,7 +374,7 @@ function reindex(
       objectIndexSet(
         objectIndexGet(index.children, newParent),
         id,
-        1 + (world.entities[id]?.container?.height ?? 0),
+        1 + (entityGet(world.entities, id)?.container?.height ?? 0),
       ),
     );
   updateAttachmentIndex(world, index, id, oldParent, newParent);
@@ -216,7 +392,7 @@ function updateAttachmentIndex(
       oldParent,
       objectIndexSet(objectIndexGet(index.attachments, oldParent), id, undefined),
     );
-  if (newParent && world.entities[id]?.placement?.mode === 'attached')
+  if (newParent && entityGet(world.entities, id)?.placement?.mode === 'attached')
     index.attachments = objectIndexSet(
       index.attachments,
       newParent,
@@ -245,7 +421,7 @@ export function* directChildIds(
   }
 }
 export function itemFor(world: WorldState, id: string): ItemInstance | undefined {
-  const entity = getOwn(world.entities, id),
+  const entity = entityOwn(world.entities, id),
     lot = entity?.item,
     ownerId = parentOf(entity);
   if (!entity || !lot || entity.retirement || !ownerId) return undefined;
@@ -277,7 +453,7 @@ export function inventoryTotals(
   return [...totals].map(([definitionId, quantity]) => ({ definitionId, quantity }));
 }
 export function allItems(world: WorldState): ItemInstance[] {
-  return Object.values(world.entities).flatMap((entity) => {
+  return entityValues(world.entities).flatMap((entity) => {
     const item = entity.item && itemFor(world, entity.id);
     return item ? [item] : [];
   });
@@ -286,9 +462,9 @@ export function objectAncestors(world: WorldState, id: string): Entity[] {
   const result: Entity[] = [],
     seen = new Set<string>();
   for (
-    let entity = getOwn(world.entities, id);
+    let entity = entityOwn(world.entities, id);
     entity;
-    entity = getOwn(world.entities, parentOf(entity))
+    entity = entityOwn(world.entities, parentOf(entity))
   ) {
     if (seen.has(entity.id) || result.length > MAX_CONTAINMENT_DEPTH)
       throw new Error('Containment cycle or depth limit.');
@@ -354,7 +530,7 @@ function ancestorDeltas(
     }
   }
   for (const [id, delta] of deltas) {
-    const container = world.entities[id]!.container!;
+    const container = entityGet(world.entities, id)!.container!;
     const definition = world.itemDefinitions[container.definitionPin.id];
     if (
       !definition?.container ||
@@ -380,21 +556,21 @@ function publishDeltas(
   direct: readonly (string | undefined)[],
 ) {
   for (const [id, delta] of deltas) {
-    const container = world.entities[id]!.container!;
+    const container = entityGet(world.entities, id)!.container!;
     container.load += delta;
     container.subtreeRevision = bump(container.subtreeRevision);
     container.loadRevision = container.subtreeRevision;
   }
   const affected = new Set<string>();
   for (const id of direct)
-    if (id && world.entities[id])
+    if (id && entityGet(world.entities, id))
       for (const ancestor of objectAncestors(world, id)) affected.add(ancestor.id);
   // Inner summaries first; whole-root movement never visits the moved subtree.
   const ordered = [...affected].sort(
     (a, b) => objectAncestors(world, b).length - objectAncestors(world, a).length,
   );
   for (const id of ordered) {
-    const entity = world.entities[id]!;
+    const entity = entityGet(world.entities, id)!;
     entity.inventoryRevision = bump(entity.inventoryRevision ?? 0);
     recordSemanticChange(world, { kind: 'membership', family: 'direct-contents', scopeId: id });
     if (entity.container) {
@@ -417,12 +593,12 @@ function publishDeltas(
 /** A hold changes the availability exposed by a contents page without changing
  * quantity or placement. Reuse the same ancestor revision owner for live cursors. */
 export function itemAvailabilityChanged(world: WorldState, id: string): void {
-  const entity = world.entities[id];
+  const entity = entityGet(world.entities, id);
   if (entity?.item && !entity.retirement) publishDeltas(world, new Map(), [parentOf(entity)]);
 }
 function historicalCustodian(world: WorldState, id: string): string | null {
   const root = custodian(world, id);
-  return world.entities[root]?.actor ? root : null;
+  return entityGet(world.entities, root)?.actor ? root : null;
 }
 function lineage(
   world: WorldState,
@@ -433,7 +609,7 @@ function lineage(
   targetId?: string,
 ) {
   connectActivityItem(world, type, sourceId, quantity, cause, targetId);
-  const source = world.entities[sourceId]!,
+  const source = entityGet(world.entities, sourceId)!,
     pin = source.item?.unitPin ?? ITEM_COUNT_PIN;
   const id = nextId(world, 'object-history');
   (world.objectLineage ??= {})[id] = {
@@ -449,8 +625,8 @@ function lineage(
   };
 }
 export function mergeCompatible(world: WorldState, aId: string, bId: string): boolean {
-  const a = world.entities[aId],
-    b = world.entities[bId],
+  const a = entityGet(world.entities, aId),
+    b = entityGet(world.entities, bId),
     first = a?.item,
     second = b?.item;
   return (
@@ -509,7 +685,7 @@ function homogeneousMaterialState(world: WorldState, entity: Entity): string | u
 /** Native process references bind possessions of their acting custodian. Other processes
  * must hold quantities through P1; neither route permits silent identity rebinding. */
 function identityBound(world: WorldState, id: string): boolean {
-  const action = world.entities[custodian(world, id)]?.actor?.action;
+  const action = entityGet(world.entities, custodian(world, id))?.actor?.action;
   return (
     (!!action &&
       [
@@ -518,11 +694,11 @@ function identityBound(world: WorldState, id: string): boolean {
         action.ammoItemId,
         ...Object.values(action.foodPreparation?.inputs ?? {}),
       ].includes(id)) ||
-    Object.values(world.entities[id]?.statusEffects ?? {}).some((state) => state.active)
+    Object.values(entityGet(world.entities, id)?.statusEffects ?? {}).some((state) => state.active)
   );
 }
 export function canReceiveSource(world: WorldState, id: string, definitionId: string): boolean {
-  const entity = world.entities[id],
+  const entity = entityGet(world.entities, id),
     lot = entity?.item,
     definition = world.itemDefinitions[definitionId];
   return (
@@ -549,7 +725,7 @@ export function createItemLot(
   id?: string,
 ): string {
   const definition = getOwn(world.itemDefinitions, definitionId),
-    parent = getOwn(world.entities, parentId);
+    parent = entityOwn(world.entities, parentId);
   if (
     (id !== undefined && !isSafeRecordId(id)) ||
     !definition ||
@@ -557,7 +733,7 @@ export function createItemLot(
     !(parent.actor || parent.kind === 'item-pile' || parent.container) ||
     !quantity ||
     checked(quantity) !== quantity ||
-    (id !== undefined && getOwn(world.entities, id))
+    (id !== undefined && entityOwn(world.entities, id))
   )
     throw new Error('Invalid object source, identity, quantity or destination.');
   const materialRule = materialInventoryRule(world, definition);
@@ -590,7 +766,7 @@ export function createItemLot(
   const deltas = ancestorDeltas(world, undefined, parent, ownLoad(world, lot));
   // Build before inserting, then update only the direct membership paths.
   indexFor(world);
-  world.entities[id] = {
+  entitySet(world.entities, id, {
     id,
     kind: 'item',
     name: definition.name,
@@ -619,7 +795,7 @@ export function createItemLot(
           },
         }
       : {}),
-  };
+  });
   reindex(world, id, undefined, parentId);
   publishDeltas(world, deltas, [parentId]);
   return id;
@@ -636,7 +812,7 @@ function quantityPlan(world: WorldState, changes: readonly QuantityChange[]) {
     if (seen.has(id)) throw new Error('Duplicate quantity destination.');
     seen.add(id);
     checked(quantity);
-    const entity = world.entities[id],
+    const entity = entityGet(world.entities, id),
       lot = entity?.item;
     if (!entity || !lot) throw new Error('Object is unavailable.');
     if (lot.assemblyClaim && quantity !== lot.quantity)
@@ -671,7 +847,7 @@ function quantityPlan(world: WorldState, changes: readonly QuantityChange[]) {
       }
   }
   for (const [id, delta] of deltas) {
-    const container = world.entities[id]!.container!,
+    const container = entityGet(world.entities, id)!.container!,
       rule = world.itemDefinitions[container.definitionPin.id]?.container;
     if (
       !rule ||
@@ -716,7 +892,7 @@ function changeItemQuantities(
   // archive/07-technical-architecture/world-module-runtime.md#5-effects-ownership-and-deterministic-composition
   if (world.resourceReservations)
     for (const { id, quantity } of changes) {
-      const lot = world.entities[id]!.item!;
+      const lot = entityGet(world.entities, id)!.item!;
       if (quantity < lot.quantity)
         assertReservedStock(
           world,
@@ -726,7 +902,7 @@ function changeItemQuantities(
         );
     }
   for (const { id, quantity } of changes) {
-    const entity = world.entities[id]!,
+    const entity = entityGet(world.entities, id)!,
       lot = entity.item!;
     if (lot.quantity === quantity) continue;
     if (quantity) {
@@ -767,7 +943,7 @@ export function splitLot(world: WorldState, id: string, quantity: number, cause:
   return splitHomogeneousLot(world, id, quantity, cause);
 }
 function splitAdmission(world: WorldState, id: string, quantity: number) {
-  const entity = world.entities[id],
+  const entity = entityGet(world.entities, id),
     lot = entity?.item,
     parentId = parentOf(entity);
   if (
@@ -799,12 +975,13 @@ function splitHomogeneousLot(
   changeItemQuantities(world, [{ id, quantity: lot.quantity - quantity }], cause, 'split');
   createItemLot(world, parentId, lot.definitionPin.id, quantity, resultId);
   if (lot.materialOriginIds)
-    world.entities[resultId]!.item!.materialOriginIds = [...lot.materialOriginIds];
+    entityGet(world.entities, resultId)!.item!.materialOriginIds = [...lot.materialOriginIds];
   if (entity.attributes)
-    world.entities[resultId]!.attributes = Object.fromEntries(
+    entityGet(world.entities, resultId)!.attributes = Object.fromEntries(
       Object.entries(entity.attributes).map(([key, state]) => [key, { ...state }]),
     );
-  if (entity!.declaredOwner) world.entities[resultId]!.declaredOwner = { ...entity!.declaredOwner };
+  if (entity!.declaredOwner)
+    entityGet(world.entities, resultId)!.declaredOwner = { ...entity!.declaredOwner };
   lineage(world, 'split', id, quantity, cause, resultId);
   return resultId;
 }
@@ -815,7 +992,7 @@ export function itemPackingLoad(
   id: string,
   quantity?: number,
 ): number | undefined {
-  const entity = world.entities[id],
+  const entity = entityGet(world.entities, id),
     lot = entity?.item;
   if (!entity || !lot || entity.retirement) return undefined;
   const amount = quantity ?? lot.quantity;
@@ -836,10 +1013,10 @@ function itemMovePlan(
   deferCapacity = false,
   assemblyRootId?: string,
 ) {
-  const entity = world.entities[id],
+  const entity = entityGet(world.entities, id),
     lot = entity?.item,
     sourceId = parentOf(entity),
-    destination = world.entities[destinationId];
+    destination = entityGet(world.entities, destinationId);
   if (lot?.assemblyClaim && lot.assemblyClaim.rootId !== assemblyRootId)
     throw new Error(
       'This material belongs to installed or lowered structure work. Use authorized reclaim first.',
@@ -882,7 +1059,7 @@ function itemMovePlan(
     quantity === lot.quantity ? subtreeLoad(world, entity) : ownLoad(world, { ...lot, quantity });
   const deltas = ancestorDeltas(
     world,
-    world.entities[sourceId],
+    entityGet(world.entities, sourceId),
     destination,
     load,
     precedingDeltas,
@@ -968,7 +1145,7 @@ function jointItemMovePlan(world: WorldState, moves: readonly JointItemMove[]) {
       throw new Error('Choose objects with separate contents and destinations.');
   }
   for (const [id, delta] of deltas) {
-    const container = world.entities[id]!.container!;
+    const container = entityGet(world.entities, id)!.container!;
     const capacity = world.itemDefinitions[container.definitionPin.id]!.container!.capacity;
     if (checked(container.load + delta, 'packing load') > capacity)
       throw new Error('The bag does not have enough packing capacity.');
@@ -1006,7 +1183,7 @@ export function moveLotsTogether(
   for (let index = 0; index < plans.length; index++) {
     const plan = plans[index]!,
       movedId = movedIds[index]!;
-    const moved = world.entities[movedId]!,
+    const moved = entityGet(world.entities, movedId)!,
       moving = moved.item!;
     moving.revision = bump(moving.revision);
     moved.placement = {
@@ -1041,9 +1218,9 @@ export function moveLot(
         target = otherId;
         break;
       }
-  if (target) checked(world.entities[target]!.item!.quantity + quantity);
+  if (target) checked(entityGet(world.entities, target)!.item!.quantity + quantity);
   const movedId = quantity === lot.quantity ? id : splitLot(world, id, quantity, cause);
-  const moved = world.entities[movedId]!,
+  const moved = entityGet(world.entities, movedId)!,
     moving = moved.item!;
   moving.revision = bump(moving.revision);
   moved.placement = {
@@ -1055,7 +1232,7 @@ export function moveLot(
   publishDeltas(world, deltas, [sourceId, destinationId]);
   if (target) {
     // The move accounted for the net capacity; merge changes identity, never total load.
-    const survivor = world.entities[target]!.item!;
+    const survivor = entityGet(world.entities, target)!.item!;
     survivor.quantity += quantity;
     survivor.revision = bump(survivor.revision);
     lineage(world, 'merge', movedId, quantity, cause, target);
@@ -1074,8 +1251,8 @@ export function moveLot(
   return movedId;
 }
 export function equipLot(world: WorldState, actorId: string, id: string, cause: string): string {
-  const actor = world.entities[actorId]?.actor,
-    entity = world.entities[id],
+  const actor = entityGet(world.entities, actorId)?.actor,
+    entity = entityGet(world.entities, id),
     lot = entity?.item;
   if (lot?.assemblyClaim) throw new Error('Reclaim this installed material before equipping it.');
   if (!actor || !lot || custodian(world, id) !== actorId || actor.action)
@@ -1086,7 +1263,7 @@ export function equipLot(world: WorldState, actorId: string, id: string, cause: 
   const conflicts = equipmentConflicts(world, actorId, id);
   if (parentOf(entity) !== actorId) moveLot(world, id, actorId, lot.quantity, cause, false);
   for (const conflict of conflicts) {
-    const previous = world.entities[conflict.id]!;
+    const previous = entityGet(world.entities, conflict.id)!;
     previous.placement = {
       mode: 'contained',
       parentEntityId: actorId,
@@ -1095,7 +1272,7 @@ export function equipLot(world: WorldState, actorId: string, id: string, cause: 
     updateAttachmentIndex(world, indexFor(world), conflict.id, actorId, actorId);
   }
   const equippedId = lot.quantity > 1 ? splitLot(world, id, 1, cause) : id;
-  const equipped = world.entities[equippedId]!;
+  const equipped = entityGet(world.entities, equippedId)!;
   equipped.item!.individuality = 'individual';
   equipped.item!.revision = bump(equipped.item!.revision);
   equipped.placement = {
@@ -1118,10 +1295,10 @@ export function validateObjects(world: WorldState): void {
     world.objectState.revision < 0
   )
     throw new Error('Invalid object membership revision.');
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     if (
       !isSafeRecordId(entity.id) ||
-      getOwn(world.entities, entity.id) !== entity ||
+      entityOwn(world.entities, entity.id) !== entity ||
       (entity.inventoryRevision !== undefined &&
         (!Number.isSafeInteger(entity.inventoryRevision) || entity.inventoryRevision < 0))
     )
@@ -1286,7 +1463,7 @@ export function validateObjects(world: WorldState): void {
           !Array.isArray(entity.container.access.actors) ||
           entity.container.access.actors.length > 100 ||
           entity.container.access.actors.some(
-            (id) => !isSafeRecordId(id) || !world.entities[id]?.actor,
+            (id) => !isSafeRecordId(id) || !entityGet(world.entities, id)?.actor,
           ))
       )
         throw new Error('Invalid container access.');
@@ -1299,7 +1476,7 @@ export function validateObjects(world: WorldState): void {
       let load = 0,
         height = 0;
       for (const childId of directChildIds(world, entity.id)) {
-        const child = world.entities[childId]!;
+        const child = entityGet(world.entities, childId)!;
         height = Math.max(height, 1 + (child.container?.height ?? 0));
         const childLoad = subtreeLoad(world, child);
         if (childLoad === undefined) throw new Error('Unknown packing load in container.');
@@ -1348,15 +1525,20 @@ export function attachAssemblyPart(
   attachment: AssemblyAttachment,
   claim: AssemblyClaim,
 ): string {
-  const source = world.entities[id],
+  const source = entityGet(world.entities, id),
     lot = source?.item,
-    root = world.entities[rootId];
+    root = entityGet(world.entities, rootId);
   if (!lot || lot.assemblyClaim || !root?.assembly || itemHasReservations(world, id))
     throw new Error('The selected material cannot be installed.');
   const movedId = lot.quantity === 1 ? id : splitLot(world, id, 1, 'assembly-install');
-  const moved = world.entities[movedId]!,
+  const moved = entityGet(world.entities, movedId)!,
     parentId = parentOf(moved)!;
-  const deltas = ancestorDeltas(world, world.entities[parentId], root, ownLoad(world, moved.item!));
+  const deltas = ancestorDeltas(
+    world,
+    entityGet(world.entities, parentId),
+    root,
+    ownLoad(world, moved.item!),
+  );
   moved.item!.individuality = 'individual';
   moved.item!.assemblyClaim = claim;
   moved.item!.revision = bump(moved.item!.revision);
@@ -1380,7 +1562,7 @@ export function assemblyMovesReason(
   try {
     const deltas = new Map<string, number>();
     for (const id of ids) {
-      if (world.entities[id]?.item?.assemblyClaim?.rootId !== rootId)
+      if (entityGet(world.entities, id)?.item?.assemblyClaim?.rootId !== rootId)
         throw new Error('The selected actual part is no longer available.');
       const plan = itemMovePlan(world, id, destinationId, 1, deltas, false, rootId);
       for (const [key, delta] of plan.deltas) deltas.set(key, (deltas.get(key) ?? 0) + delta);
@@ -1398,7 +1580,7 @@ export function detachAssemblyPart(
   destinationId: string,
   retainClaim = false,
 ): void {
-  const material = world.entities[id],
+  const material = entityGet(world.entities, id),
     claim = material?.item?.assemblyClaim;
   if (!claim || claim.rootId !== rootId)
     throw new Error('The selected material is no longer part of this structure.');
@@ -1415,12 +1597,12 @@ export function declareObjectOwner(
   disclosure: DeclaredOwner['disclosure'],
   sourceId: string,
 ): void {
-  const entity = getOwn(world.entities, id);
+  const entity = entityOwn(world.entities, id);
   if (
     !entity?.item ||
     entity.retirement ||
     (entity.declaredOwner?.revision ?? 0) !== expectedRevision ||
-    (holderId && !getOwn(world.entities, holderId))
+    (holderId && !entityOwn(world.entities, holderId))
   )
     throw new Error('Ownership declaration or holder changed.');
   if (!isSafeRecordId(sourceId) || !['custodian', 'public'].includes(disclosure))
@@ -1436,8 +1618,8 @@ export function mergeLots(
   targetId: string,
   cause: string,
 ): string {
-  const source = world.entities[sourceId],
-    target = world.entities[targetId];
+  const source = entityGet(world.entities, sourceId),
+    target = entityGet(world.entities, targetId);
   if (
     sourceId === targetId ||
     !source?.item ||
@@ -1467,8 +1649,8 @@ export function mergeLots(
   return targetId;
 }
 export function unequipLot(world: WorldState, actorId: string, itemId: string): void {
-  const actor = world.entities[actorId]?.actor;
-  const item = world.entities[itemId];
+  const actor = entityGet(world.entities, actorId)?.actor;
+  const item = entityGet(world.entities, itemId);
   if (!actor || item?.placement?.mode !== 'attached' || item.placement.parentEntityId !== actorId)
     throw new Error('Choose current attached equipment.');
   if (!item.item || itemHasReservations(world, item.id) || actor.action)

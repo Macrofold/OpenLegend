@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import {
   initializePerceivedEventIndexes,
   readPerceivedEvents,
@@ -29,9 +30,20 @@ import type {
   ConversationTransition,
   Awareness,
 } from '@open-legend/domain';
-import { recordDuration } from './performance.js';
+import { beginTiming, endTiming } from './performance.js';
 import { prepareHistory } from './history-preparation.js';
-import { HistoryBatch } from './history-batch.js';
+import { HistoryAppendWriter, perspectiveColumns } from './history-append.js';
+import type { SqlWriteBatch } from './sql-rows.js';
+import type { RecordChanges } from './world-records.js';
+import {
+  encodeStoryAccount,
+  personalAccountKey,
+  personalAccountRevision,
+  personalEventEvidence as eventEvidence,
+  storyAccountSql,
+  storySourceRow,
+  storedStoryAccount,
+} from './personal-accounts.js';
 import type {
   TranscriptPage,
   TranscriptItem,
@@ -55,9 +67,52 @@ export const HISTORY_TABLES = [
 /** Restore admission already has complete history rows; validate without another SQL scan. */
 export function validateHistoryEvidence(
   history: Record<(typeof HISTORY_TABLES)[number], Record<string, unknown>[]>,
+  world: WorldState,
+  versions: readonly Record<string, unknown>[],
 ) {
+  const accounts = new Map<string, string>();
+  for (const [actor, entries] of Object.entries(world.experience?.awareness ?? {}))
+    for (const entry of entries) {
+      const payload = JSON.stringify(entry);
+      accounts.set(
+        personalAccountKey(
+          world.id,
+          actor,
+          'awareness',
+          entry.eventId,
+          personalAccountRevision(payload),
+        ),
+        payload,
+      );
+    }
+  for (const row of versions) {
+    const payload = String(row['payload']);
+    if (row['world_id'] !== world.id || personalAccountRevision(payload) !== row['revision'])
+      throw new Error('Invalid retained personal account version.');
+    accounts.set(
+      personalAccountKey(
+        world.id,
+        String(row['actor_id']),
+        String(row['source_kind']),
+        String(row['source_id']),
+        String(row['revision']),
+      ),
+      payload,
+    );
+  }
   for (const row of history.history_perspectives) {
-    const source = JSON.parse(String(row['payload'])) as StorySource;
+    const source = storedStoryAccount(
+      String(row['payload']),
+      world.id,
+      String(row['actor_id']),
+      accounts,
+    );
+    if (
+      row['world_id'] !== world.id ||
+      source.id !== row['event_id'] ||
+      source.evidence.actorId !== row['actor_id']
+    )
+      throw new Error('Historical personal account scope disagrees with its owner.');
     validateEventEvidence(source.evidence);
     if (source.type !== source.evidence.eventType)
       throw new Error('History event type disagrees with observer facts.');
@@ -95,54 +150,6 @@ export interface StoryJob {
   selection?: { mechanism: string; version: number; policyRevision: number; policyDigest: string };
 }
 const revisionOf = (text: string) => createHash('sha256').update(text).digest('hex');
-function eventEvidence(awareness: EventEvidence): EventEvidence {
-  const {
-    actorId,
-    eventData,
-    references,
-    eventType,
-    text,
-    content,
-    modality,
-    sourceId,
-    targetId,
-    intendedRecipientId,
-    speech,
-    importance,
-    urgency,
-    exposure,
-  } = awareness;
-  return {
-    actorId,
-    eventData,
-    references,
-    eventType,
-    text,
-    content,
-    modality,
-    sourceId,
-    targetId,
-    intendedRecipientId,
-    speech,
-    importance,
-    urgency,
-    exposure,
-  };
-}
-/** Only observer-permitted identities enter participant indexes. */
-function perspectiveColumns(source: StorySource, actorId: string): unknown[] {
-  const { sourceId, targetId } = source.evidence;
-  const peer =
-    source.type !== 'speech'
-      ? null
-      : sourceId === actorId && targetId
-        ? targetId
-        : targetId === actorId || targetId == null
-          ? (sourceId ?? null)
-          : null;
-  return [source.order, source.type, sourceId ?? null, targetId ?? null, peer];
-}
-
 const narrationFailed = 'Narration failed.';
 /** Older failures retain their source evidence in storage, never substitute prose in the UI. */
 function projectNarration(item: TranscriptItem): TranscriptItem {
@@ -165,6 +172,17 @@ export class HistoryRepository {
   private readonly listeners = new Set<() => void>();
   private queuedRevision = 0;
   private notifiedRevision = 0;
+  private narrationRevision = 0;
+  get bannerRevision(): number {
+    return this.narrationRevision;
+  }
+  private bannerChanged() {
+    // One scalar stays bounded across replaced worlds. Only committed banner
+    // changes expire views; ordinary movement and unrelated telemetry do not.
+    const publish = () => this.narrationRevision++;
+    if (this.db.afterCommit) this.db.afterCommit(publish);
+    else publish();
+  }
   subscribe(listener: () => void) {
     this.listeners.add(listener);
     return () => {
@@ -176,6 +194,67 @@ export class HistoryRepository {
     if (this.notifiedRevision === this.queuedRevision) return;
     this.notifiedRevision = this.queuedRevision;
     for (const listener of this.listeners) listener();
+  }
+  /** Story nomination has immediate operational dependencies. Until those decisions
+   * are journal data too, retain the ordinary atomic family for any candidate. */
+  canDeferAppend(world: WorldState, inputs: ReturnType<typeof prepareHistory>): boolean {
+    if (!inputs.fastAppend || inputs.removed.length) return false;
+    const principals = this.bindLocalPrincipal
+      ? Object.entries(world.authorship.playerAccountIds).map(([actorId, ownerId]) => ({
+          actorId,
+          ownerId,
+        }))
+      : this.principals;
+    const policy = world.storyPolicy ?? defaultStoryPolicy();
+    for (const event of inputs.changed) {
+      for (const actorId of event.audience)
+        if (!inputs.forgotten(actorId).has(event.id) && !inputs.perspective(actorId, event.id))
+          return false;
+      for (const principal of principals) {
+        if (
+          inputs.forgotten(principal.actorId).has(event.id) ||
+          !event.audience.includes(principal.actorId)
+        )
+          continue;
+        const awareness = inputs.perspective(principal.actorId, event.id);
+        if (!awareness) return false;
+        const evidence = eventEvidence(awareness);
+        if (
+          this.storySelection(
+            world,
+            event,
+            principal.actorId,
+            { evidence, text: evidence.text },
+            policy,
+          ).selection.kind === 'candidate'
+        )
+          return false;
+      }
+    }
+    return true;
+  }
+  private storySelection(
+    world: WorldState,
+    event: WorldEvent,
+    actorId: string,
+    source: Pick<StorySource, 'evidence' | 'text'>,
+    policy: NonNullable<WorldState['storyPolicy']>,
+  ) {
+    const perceived = projectEventEvidence(event, source.evidence);
+    return {
+      event: perceived,
+      selection: selectStory(
+        {
+          viewerId: actorId,
+          exposure: source.evidence.exposure,
+          event: perceived,
+          sourceText: source.text,
+          source: entityGet(world.entities, perceived.actorId ?? ''),
+          target: entityGet(world.entities, perceived.targetId ?? ''),
+        },
+        policy,
+      ),
+    };
   }
   async nextDue(worldId: string): Promise<number | null> {
     const row = await this.db
@@ -307,9 +386,10 @@ export class HistoryRepository {
     for (const row of rows) {
       const story = String(row['narration_id']),
         owner = String(row['owner_id']);
-      await this.db
-        .prepare('DELETE FROM story_banners WHERE world_id=? AND id=? AND owner_id=?')
-        .run(worldId, story, owner);
+      const removedBanner = await this.db
+        .prepare('DELETE FROM story_banners WHERE world_id=? AND id=? AND owner_id=? RETURNING id')
+        .get(worldId, story, owner);
+      if (removedBanner) this.bannerChanged();
       await this.db
         .prepare('DELETE FROM story_narrations WHERE world_id=? AND id=? AND owner_id=?')
         .run(worldId, story, owner);
@@ -347,7 +427,11 @@ export class HistoryRepository {
     appendCount?: number,
     reapplyForgetting = false,
     prepared?: ReturnType<typeof prepareHistory>,
+    sharedWrites?: SqlWriteBatch,
+    sourceChanges?: RecordChanges,
   ) {
+    // A save can replace rows without passing through saveStory/revokeStories.
+    if (!previous || reapplyForgetting) this.bannerChanged();
     // Stored history perspectives follow explicit account attribution. Current access is checked separately at the request boundary.
     if (this.bindLocalPrincipal) {
       this.principals = Object.entries(world.authorship.playerAccountIds).map(
@@ -375,6 +459,21 @@ export class HistoryRepository {
         ? prepared
         : prepareHistory(previous, world, appendCount);
     const { fastAppend, changed, removed, previousIds, forgotten, perspective } = inputs;
+    // Exact canonical changes, rather than event append status, prove that no old
+    // personal account/privacy relationship needs the edit/revocation path below.
+    const appendSources =
+      !!sourceChanges &&
+      !reapplyForgetting &&
+      !sourceChanges.deletes.has('experience_state') &&
+      !sourceChanges.deletes.has('mind_awareness_owners') &&
+      !sourceChanges.deletes.has('mind_awareness') &&
+      !(sourceChanges.writes.get('mind_awareness') ?? []).some((row) => !row.create) &&
+      [
+        'mind_forgotten',
+        'mind_corrections',
+        'mind_forgotten_owners',
+        'mind_corrections_owners',
+      ].every((table) => !sourceChanges.writes.has(table) && !sourceChanges.deletes.has(table));
     let removedEvents = 0;
     for (const id of removed) removedEvents += await this.removeEvent(world.id, id);
     const candidates: {
@@ -382,10 +481,12 @@ export class HistoryRepository {
       position: number;
       principal: { ownerId: string; actorId: string };
       selection: Extract<StorySelection, { kind: 'candidate' }>;
+      source: StorySource;
     }[] = [];
     const policy = world.storyPolicy ?? defaultStoryPolicy();
-    const batch = new HistoryBatch(this.db);
-    const buildStarted = performance.now();
+    const batch = new HistoryAppendWriter(this.db, world.id);
+    const rewrittenSources = new Map<string, Map<string, StorySource>>();
+    const buildStarted = beginTiming();
     for (const event of changed) {
       const encoded = JSON.stringify(event);
       const eventRevision = revisionOf(encoded);
@@ -398,32 +499,14 @@ export class HistoryRepository {
         if (retained)
           for (const row of await this.db
             .prepare(
-              'SELECT actor_id,payload FROM history_perspectives WHERE world_id=? AND event_id=?',
+              `SELECT p.actor_id,p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.event_id=?`,
             )
             .all(world.id, event.id))
-            retainedPerspectives.set(
-              String(row['actor_id']),
-              JSON.parse(String(row['payload'])) as StorySource,
-            );
+            retainedPerspectives.set(String(row['actor_id']), storySourceRow(row));
         removedEvents += await this.removeEvent(world.id, event.id);
       }
       const perspectives = new Map<string, StorySource>();
-      const position = event.order ?? (Number(event.id.split('-').at(-1)) || event.sequence);
-      const eventFlush = batch.add('history_events', [
-        world.id,
-        event.id,
-        event.conversationId ?? null,
-        position,
-        encoded,
-        typeof event.data?.['responseId'] === 'string' ? event.data['responseId'] : null,
-        [
-          ...new Set(
-            Object.values(event.data ?? {}).filter(
-              (value): value is string => typeof value === 'string' && value !== event.id,
-            ),
-          ),
-        ],
-      ]);
+      const { position, pending: eventFlush } = batch.event(event, encoded);
       if (eventFlush) await eventFlush;
       for (const actorId of new Set(event.audience)) {
         if (forgotten(actorId).has(event.id)) continue;
@@ -444,25 +527,20 @@ export class HistoryRepository {
                 };
         }
         if (!evidence) throw new Error('Committed event audience is missing its perspective.');
-        const source: StorySource = {
-          id: event.id,
-          text: evidence.text,
-          evidence,
-          revision: revisionOf(eventRevision + JSON.stringify(evidence)),
-          time: event.at,
-          order: position,
-          type: evidence.eventType!,
-          ...(evidence.content !== undefined ? { content: evidence.content } : {}),
-        };
-        perspectives.set(actorId, source);
-        const perspectiveFlush = batch.add('history_perspectives', [
-          world.id,
-          event.id,
+        const { source, pending: perspectiveFlush } = batch.perspective(
+          event,
           actorId,
-          JSON.stringify(source),
-          ...perspectiveColumns(source, actorId),
-          event.data?.['responseId'] != null || event.data?.['conversationRelevant'] === true,
-        ]);
+          evidence,
+          awareness,
+          position,
+          eventRevision,
+        );
+        perspectives.set(actorId, source);
+        if (!fastAppend) {
+          const sources = rewrittenSources.get(actorId) ?? new Map<string, StorySource>();
+          sources.set(event.id, source);
+          rewrittenSources.set(actorId, sources);
+        }
         if (perspectiveFlush) await perspectiveFlush;
       }
       // Only newly committed evidence can trigger a story; startup never replays history.
@@ -471,49 +549,36 @@ export class HistoryRepository {
           if (forgotten(principal.actorId).has(event.id)) continue;
           const source = perspectives.get(principal.actorId);
           if (!source) continue;
-          const perceived = projectEventEvidence(event, source.evidence);
-          const selection = selectStory(
-            {
-              viewerId: principal.actorId,
-              exposure: source.evidence.exposure,
-              event: perceived,
-              sourceText: source.text,
-              source: world.entities[perceived.actorId ?? ''],
-              target: world.entities[perceived.targetId ?? ''],
-            },
+          const { event: perceived, selection } = this.storySelection(
+            world,
+            event,
+            principal.actorId,
+            source,
             policy,
           );
           if (selection.kind === 'candidate')
-            candidates.push({ event: perceived, position, principal, selection });
+            candidates.push({ event: perceived, position, principal, selection, source });
         }
     }
     // Persist sources before scheduling; selection follows docs/narration-and-conversations.md#replaceable-story-selection.
-    await batch.flush();
     if (!previous)
       await this.db
         .prepare(
           'INSERT INTO history_totals(world_id,event_count) VALUES (?,0) ON CONFLICT DO NOTHING',
         )
         .run(world.id);
-    if (batch.insertedEvents !== removedEvents) {
-      const total = await this.db
-        .prepare(
-          'UPDATE history_totals SET event_count=event_count+? WHERE world_id=? RETURNING event_count',
-        )
-        .get(batch.insertedEvents - removedEvents, world.id);
-      if (!total) throw new Error('Retained history count is missing; commit refused.');
-    }
-    recordDuration(
-      'history.sourceBuild',
-      Math.max(0, performance.now() - buildStarted - batch.writeMilliseconds),
-    );
+    await batch.flush({ worldId: world.id, removedEvents }, sharedWrites);
+    endTiming('history.sourceBuild', buildStarted, batch.writeMilliseconds);
     candidates.sort(
       (a, b) =>
         b.selection.significance - a.selection.significance ||
         a.position - b.position ||
         a.event.id.localeCompare(b.event.id),
     );
-    for (const { event, principal, selection } of candidates) {
+    // Append-only history can share its final transport with canonical records.
+    // Every following reader/effect must first see those exact history rows.
+    if (candidates.length) await sharedWrites?.flush();
+    for (const { event, principal, selection, source } of candidates) {
       if (
         selection.milestoneKey &&
         (await this.db
@@ -523,14 +588,16 @@ export class HistoryRepository {
           .get(world.id, principal.ownerId, selection.milestoneKey))
       )
         continue;
-      if (await this.schedule(world, event, principal, selection)) {
+      if (await this.schedule(world, event, principal, selection, source)) {
         if (selection.milestoneKey)
           await this.db
             .prepare('INSERT INTO story_milestones VALUES (?,?,?,?) ON CONFLICT DO NOTHING')
             .run(world.id, principal.ownerId, selection.milestoneKey, event.id);
       }
     }
-    for (const [actorId, ids] of Object.entries(world.experience?.forgotten ?? {})) {
+    for (const [actorId, ids] of appendSources
+      ? []
+      : Object.entries(world.experience?.forgotten ?? {})) {
       // Installing a save also replaces historical permissions. Even an unchanged
       // present-day ledger must revoke access restored by that older snapshot.
       // docs/save-and-load.md#external-work-privacy-and-shared-authority
@@ -538,6 +605,7 @@ export class HistoryRepository {
       const old = new Set(reapplyForgetting ? [] : previous?.experience?.forgotten[actorId]);
       for (const id of ids)
         if (!old.has(id)) {
+          await sharedWrites?.flush();
           await this.db
             .prepare(
               'DELETE FROM history_perspectives WHERE world_id=? AND event_id=? AND actor_id=?',
@@ -548,7 +616,7 @@ export class HistoryRepository {
         }
     }
     // Editing awareness changes this actor's source capsule; consolidation alone does not revoke historical access.
-    if (previous)
+    if (previous && !appendSources)
       for (const [actorId, entries] of Object.entries(world.experience?.awareness ?? {})) {
         if (entries === previous.experience?.awareness[actorId]) continue;
         const before = previous.experience?.awareness[actorId] ?? [];
@@ -565,24 +633,32 @@ export class HistoryRepository {
             JSON.stringify(eventEvidence(prior)) === JSON.stringify(eventEvidence(entry))
           )
             continue;
-          const row = await this.db
-            .prepare(
-              'SELECT payload FROM history_perspectives WHERE world_id=? AND event_id=? AND actor_id=?',
-            )
-            .get(world.id, entry.eventId, actorId);
-          if (!row) continue;
-          const source = JSON.parse(String(row['payload'])) as StorySource;
+          await sharedWrites?.flush();
+          // A global-event edit can already have replaced this perspective in the
+          // current transaction, before its new canonical awareness body is written.
+          // Retain that exact owned preparation instead of reading its future reference.
+          let source = rewrittenSources.get(actorId)?.get(entry.eventId);
+          if (!source) {
+            const row = await this.db
+              .prepare(
+                `SELECT p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.event_id=? AND p.actor_id=?`,
+              )
+              .get(world.id, entry.eventId, actorId);
+            if (!row) continue;
+            source = storySourceRow(row);
+          }
           source.text = entry.text;
           source.evidence = eventEvidence(entry);
           if (entry.content !== undefined) source.content = entry.content;
           else delete source.content;
           source.revision = revisionOf(JSON.stringify(entry));
+          const account = encodeStoryAccount(source, entry);
           await this.db
             .prepare(
               'UPDATE history_perspectives SET payload=?,position=?,event_type=?,source_id=?,target_id=?,speech_peer_id=? WHERE world_id=? AND event_id=? AND actor_id=?',
             )
             .run(
-              JSON.stringify(source),
+              account.payload,
               ...perspectiveColumns(source, actorId),
               world.id,
               entry.eventId,
@@ -597,8 +673,10 @@ export class HistoryRepository {
       for (const [id, evidence] of Object.entries(corrections)) {
         if (previous?.experience?.corrections?.[actorId]?.[id] === evidence) continue;
         const eventId = world.memories[actorId]?.find((m) => m.id === id)?.eventId ?? id;
-        for (const principal of this.principals.filter((p) => p.actorId === actorId))
+        for (const principal of this.principals.filter((p) => p.actorId === actorId)) {
+          await sharedWrites?.flush();
           await this.revokeStories(world.id, eventId, principal.ownerId);
+        }
       }
     }
     const transitions = world.conversations?.transitions ?? {};
@@ -611,11 +689,14 @@ export class HistoryRepository {
         )
           for (const principal of this.principals.filter((p) =>
             record.actorIds.includes(p.actorId),
-          ))
+          )) {
+            await sharedWrites?.flush();
             await this.mergeNotice(world.id, record, principal.ownerId);
+          }
     if (transitions !== previous?.conversations?.transitions)
       for (const record of Object.values(previous?.conversations?.transitions ?? {}))
         if (!transitions[record.id]) {
+          await sharedWrites?.flush();
           await this.db
             .prepare('DELETE FROM story_narrations WHERE world_id=? AND id=?')
             .run(world.id, `story:${record.id}`);
@@ -629,6 +710,7 @@ export class HistoryRepository {
     event: WorldEvent,
     { ownerId, actorId }: { ownerId: string; actorId: string },
     selection: Extract<StorySelection, { kind: 'candidate' }>,
+    source: StorySource,
   ) {
     const policy = world.storyPolicy ?? defaultStoryPolicy();
     // Bind environmental events to the player's group at event time, never at dispatch.
@@ -659,13 +741,6 @@ export class HistoryRepository {
         return false;
     }
     const id = base;
-    const row = await this.db
-      .prepare(
-        'SELECT payload FROM history_perspectives WHERE world_id=? AND event_id=? AND actor_id=?',
-      )
-      .get(world.id, event.id, actorId);
-    if (!row) return false;
-    const source = JSON.parse(String(row['payload'])) as StorySource;
     const sources = (combine ? [...prior.sources, source] : [source]).sort(
       (a, b) => a.order - b.order || a.id.localeCompare(b.id),
     );
@@ -732,20 +807,25 @@ export class HistoryRepository {
     return true;
   }
   private async saveStory(worldId: string, job: StoryJob) {
+    let changedBanner: Record<string, unknown> | undefined;
     if (
       job.selection &&
       !job.item.conversationId &&
       ['completed', 'failed', 'fallback', 'uncertain'].includes(job.state)
     )
-      await this.db
+      changedBanner = await this.db
         .prepare(
-          'INSERT INTO story_banners VALUES (?,?,?,?,?) ON CONFLICT(world_id,owner_id,id) DO UPDATE SET position=excluded.position,payload=excluded.payload',
+          `INSERT INTO story_banners VALUES (?,?,?,?,?) ON CONFLICT(world_id,owner_id,id)
+          DO UPDATE SET position=excluded.position,payload=excluded.payload
+          WHERE (story_banners.position,story_banners.payload) IS DISTINCT FROM (excluded.position,excluded.payload)
+          RETURNING id`,
         )
-        .run(worldId, job.ownerId, job.id, job.item.order, JSON.stringify(job.item));
+        .get(worldId, job.ownerId, job.id, job.item.order, JSON.stringify(job.item));
     else
-      await this.db
-        .prepare('DELETE FROM story_banners WHERE world_id=? AND owner_id=? AND id=?')
-        .run(worldId, job.ownerId, job.id);
+      changedBanner = await this.db
+        .prepare('DELETE FROM story_banners WHERE world_id=? AND owner_id=? AND id=? RETURNING id')
+        .get(worldId, job.ownerId, job.id);
+    if (changedBanner) this.bannerChanged();
     if (job.state === 'queued') this.queuedRevision++;
     await this.db
       .prepare(
@@ -861,8 +941,8 @@ export class HistoryRepository {
             exposure: evidence.exposure,
             event,
             sourceText: job.sources.find((s) => s.id === id)?.text ?? '',
-            source: world.entities[event.actorId ?? ''],
-            target: world.entities[event.targetId ?? ''],
+            source: entityGet(world.entities, event.actorId ?? ''),
+            target: entityGet(world.entities, event.targetId ?? ''),
           },
           policy,
         ).kind !== 'candidate'
@@ -923,11 +1003,11 @@ export class HistoryRepository {
   async optionalSources(worldId: string, job: StoryJob): Promise<StorySource[]> {
     const rows = await this.db
       .prepare(
-        'SELECT payload FROM history_perspectives WHERE world_id=? AND actor_id=? AND position<=? ORDER BY position DESC,event_id DESC LIMIT 12',
+        `SELECT p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.actor_id=? AND p.position<=? ORDER BY p.position DESC,p.event_id DESC LIMIT 12`,
       )
       .all(worldId, job.actorId, job.item.order);
     return rows
-      .map((row) => JSON.parse(String(row['payload'])) as StorySource)
+      .map((row) => storySourceRow(row))
       .filter((s) => !job.sources.some((m) => m.id === s.id))
       .slice(0, 8);
   }
@@ -1075,11 +1155,13 @@ export class HistoryRepository {
   async latestNarration(worldId: string, ownerId: string): Promise<TranscriptItem | null> {
     if (!this.principals.some((p) => p.ownerId === ownerId))
       throw new Error('Unsupported history principal.');
+    const revision = this.bannerRevision;
     const row = await this.db
       .prepare(
         'SELECT payload FROM story_banners WHERE world_id=? AND owner_id=? ORDER BY position DESC,id DESC LIMIT 1',
       )
       .get(worldId, ownerId);
+    if (revision !== this.bannerRevision) throw new Error('Narration changed while loading.');
     return row ? projectNarration(JSON.parse(String(row['payload'])) as TranscriptItem) : null;
   }
   async perceivedEvents(
@@ -1159,7 +1241,7 @@ export class HistoryRepository {
     const args = options.conversationId ? [options.conversationId] : [];
     const select = (
       filter: string,
-    ) => `SELECT p.position,p.event_id,e.payload,p.payload AS perspective
+    ) => `SELECT p.position,p.event_id,e.payload,p.payload AS perspective,${storyAccountSql()} AS account_payload
       FROM history_perspectives p JOIN history_events e ON e.world_id=p.world_id AND e.id=p.event_id
       WHERE p.world_id=? AND p.actor_id=? AND p.position<?${options.conversationId ? ' AND e.conversation_id=?' : ''}${filter}
       ORDER BY p.position DESC,p.event_id DESC LIMIT ?`;
@@ -1211,7 +1293,7 @@ export class HistoryRepository {
             )
             .all(worldId, ownerId, boundary, ...args, limit + 1);
     const items: TranscriptItem[] = events.map((row) => {
-      const perspective = JSON.parse(String(row['perspective'])) as StorySource;
+      const perspective = storySourceRow(row, 'perspective');
       const event = projectEventEvidence(
         JSON.parse(String(row['payload'])) as WorldEvent,
         perspective.evidence,

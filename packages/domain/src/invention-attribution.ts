@@ -1,3 +1,4 @@
+import { entityOwn } from './entity-collection.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import type { WorldState } from './types.js';
 
@@ -29,7 +30,7 @@ const validAccounts = (ids: string[], maximum = 65) =>
  * archive/03-design-proposals/invention-governance-and-ownership.md#separate-authority-authorship-and-knowledge
  */
 export function inventionAttribution(world: WorldState, actorId: string): InventionAttribution {
-  const actor = getOwn(world.entities, actorId)?.actor;
+  const actor = entityOwn(world.entities, actorId)?.actor;
   if (!actor) throw new Error('Invention needs an identified actor.');
   const npcCreated = actor.controller !== 'player';
   const accountId = getOwn(world.authorship.playerAccountIds, actorId);

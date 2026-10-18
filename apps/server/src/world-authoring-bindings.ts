@@ -1,3 +1,4 @@
+import { entityGet, entityHas } from '@open-legend/domain';
 import { z } from 'zod';
 import { namePhrase } from '@open-legend/language';
 import {
@@ -32,7 +33,9 @@ export function attributeBindingTarget(world: WorldState, payload: unknown) {
   return authoringBodyTarget(world, parsed.success ? parsed.data.entityId : '');
 }
 export function authoringBodyTarget(world: WorldState, entityId: string) {
-  const entity = Object.hasOwn(world.entities, entityId) ? world.entities[entityId] : undefined;
+  const entity = entityHas(world.entities, entityId)
+    ? entityGet(world.entities, entityId)
+    : undefined;
   return {
     entityId,
     digest: fingerprint(entity?.actor ? [entity.id, entity.kind, entity.actor.bornAt] : null),
@@ -55,7 +58,7 @@ export function bindAuthoringAttributes(
   const parsed = attributeBindingSchema.safeParse(payload);
   if (!parsed.success) return reject('Choose a body and one to sixteen distinct attribute IDs.');
   const { entityId, attributeIds } = parsed.data;
-  if (!Object.hasOwn(world.entities, entityId) || !world.entities[entityId]?.actor)
+  if (!entityHas(world.entities, entityId) || !entityGet(world.entities, entityId)?.actor)
     return reject('The selected entity has no supported body attribute owner.');
   const definitions = new Map(world.moduleManifest.definitions.map((d) => [d.id, d]));
   const changes: { attributeId: string; expectedRevision: null; value: number | string }[] = [];
@@ -69,8 +72,8 @@ export function bindAuthoringAttributes(
         'Only installed custom attributes or finite practice starting support can be attached.',
       );
     if (
-      Object.hasOwn(world.entities[entityId]!.actor!.attributes ?? {}, attributeId) ||
-      Object.hasOwn(world.entities[entityId]!.actor!.practice ?? {}, attributeId)
+      Object.hasOwn(entityGet(world.entities, entityId)!.actor!.attributes ?? {}, attributeId) ||
+      Object.hasOwn(entityGet(world.entities, entityId)!.actor!.practice ?? {}, attributeId)
     )
       return reject(
         'An attribute is already attached. This operation never resets existing values.',
@@ -89,8 +92,8 @@ export function bindAuthoringAttributes(
 export function attributeBindingSummary(world: WorldState, payload: unknown): string {
   const parsed = attributeBindingSchema.safeParse(payload);
   if (!parsed.success) return 'Attach admitted custom attributes without changing existing values.';
-  const entity = Object.hasOwn(world.entities, parsed.data.entityId)
-    ? world.entities[parsed.data.entityId]
+  const entity = entityHas(world.entities, parsed.data.entityId)
+    ? entityGet(world.entities, parsed.data.entityId)
     : undefined;
   const definitions = new Map(world.moduleManifest.definitions.map((d) => [d.id, d]));
   const additions = parsed.data.attributeIds.map((id) => {
@@ -104,8 +107,8 @@ export function attributeBindingSummary(world: WorldState, payload: unknown): st
 export function attributeBindingImpact(world: WorldState, payload: unknown) {
   const parsed = attributeBindingSchema.safeParse(payload);
   const target = attributeBindingTarget(world, payload);
-  const actor = Object.hasOwn(world.entities, target.entityId)
-    ? world.entities[target.entityId]?.actor
+  const actor = entityHas(world.entities, target.entityId)
+    ? entityGet(world.entities, target.entityId)?.actor
     : undefined;
   return {
     token: fingerprint([

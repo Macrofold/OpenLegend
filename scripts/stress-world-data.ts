@@ -1,3 +1,4 @@
+import { entityValues } from '../packages/domain/src/index.js';
 import { createDisposableDatabase } from './disposable-postgres.mjs';
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { worldPosition } from '@open-legend/domain';
@@ -80,7 +81,7 @@ try {
     objects: half ? 500 : 1000,
   };
   const seed = createWorld(73);
-  const base = Object.values(seed.entities);
+  const base = entityValues(seed.entities);
   let world = await measure('setup', () =>
     populateScenario(
       seed,
@@ -104,7 +105,7 @@ try {
       }),
     ),
   );
-  const people = Object.values(world.entities).filter(
+  const people = entityValues(world.entities).filter(
     (entry) => entry.actor && entry.kind !== 'animal',
   );
   people.forEach((entity, index) => {
@@ -134,7 +135,7 @@ try {
   const targetsByActor = new Map(
     people.map((entity) => [
       entity.id,
-      Object.values(world.entities)
+      entityValues(world.entities)
         .filter((target) => target.resource)
         .sort(
           (a, b) =>
@@ -203,7 +204,7 @@ try {
       ];
     }),
   );
-  const entities = Object.values(world.entities);
+  const entities = entityValues(world.entities);
   const report = {
     directory,
     node: process.version,

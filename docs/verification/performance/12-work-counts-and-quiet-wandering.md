@@ -1,0 +1,42 @@
+# Repeated world work and quiet animal wandering
+
+October15,2026. [Plain-language bottlenecks](bottlenecks.md), [removal timing](11-whole-category-removals.md), [plan](../../projects/three-times-scene-performance.md#shared-quiet-animal-wander-boundaries). All results below are native-only and do not establish whole-game3×.
+
+## Actual repeated-work counts
+
+PF16.126 changes only the two existing counter-sink toggles in the qualified native driver, enabling its already implemented process-local counters immediately before the activity loop and disabling them immediately afterward. No trace/compression, input-validation counting, final-summary traversal, new product counter or database is introduced. Instrumented timing is deliberately not used as another performance comparison. One diagnostic per version completes2,400g/80anchors/14walks/32plans/all16actual own-food/physical-return checks. Every final-world SHA matches the exact previously timed version; all40animal objects remain alive. All five442-file source/input/metadata/dependency/sidecar and normal owned-process-closure gates pass under original60-second loop/90-second outer bounds. The corrected optional trace-key read is inherited unchanged.
+
+| Count during actual activity loop       | Baseline | All animals frozen | Bird frozen | Ground animals frozen | Incremental noticing stopped |
+| --------------------------------------- | -------: | -----------------: | ----------: | --------------------: | ---------------------------: |
+| Motion slices                           |      308 |                170 |         220 |                   291 |                          308 |
+| Complete shared forecasts               |      228 |                107 |         220 |                   113 |                          228 |
+| Local forecast refinements              |        0 |                  0 |           0 |                     0 |                            0 |
+| Body-rate materializations              |      307 |                170 |         220 |                   202 |                          307 |
+| Scheduled body-rate actor visits        |   17,499 |              2,890 |      12,320 |                 3,636 |                       17,499 |
+| Shared boundaries                       |      223 |                 91 |         220 |                    93 |                          223 |
+| Native world publications               |      223 |                170 |         220 |                   172 |                          223 |
+| Exact sight tests                       |   84,479 |             65,064 |      75,800 |                78,679 |                        6,306 |
+| Sight/contact crossing pair evaluations |    3,947 |              2,870 |       2,870 |                 4,181 |                        3,947 |
+| Observer rescans                        |    4,738 |              1,229 |       3,175 |                 4,001 |                            0 |
+
+Body-rate visits count participants offered to an integration pass, not distinct bodies or actual attribute writes. Removing animals changes both participant count and scheduling; the decrease cannot all be assigned to either factor. Stopping incremental noticing removes most exact sight checks while leaving every motion slice/body-rate visit/shared forecast unchanged. That explains why its measured CPU gain can be much smaller than the fraction of sight checks removed. Source-level co-occurrence is not proof that every forecast was caused by a quiet wander.
+
+Raw complete result `/private/tmp/ol-pf126-native-counts-20261015-a.json` links five reports/logs. Count driver SHA`8b3fd5be4eda81e817ae4c8d7f02f963d81c2319702aef45c46ffb4d27e39b4c`; full pinned source roles are in `/private/tmp/ol-pf126-source-index-20261015-a.json`. All five final digests are compared against the earlier counterless evidence. Native/event/awareness/spatial/sensory counts not shown here remain in the retained result.
+
+## Shared quiet-wander deadlines: completed and rejected
+
+The earlier source assessment confirms that ordinary non-threatened ground animals make a terrain-checked0.4mhop when their own timer expires, then wait120–239game seconds chosen by the world's random sequence. Thirty-nine independent timers repeatedly create distinct due instants. PF16.127 tests grouping newly scheduled quiet deadlines onto absolute60g boundaries in the world-owned animal behavior function. The product delta is two arithmetic lines plus a reason comment after the existing random wait; there is no extra random draw. All other branches remain unchanged. Initial saved timers remain unchanged until the first quiet hop.
+
+The change deliberately adds0–under60g quiet waiting, reduces ordinary wander frequency, may make several animals hop together, and changes which animal consumes each shared random number. At3× the extra delay is under one third of a real second. It preserves all40animals and the existing actual hop/terrain checks; fleeing, pursuit, attacks and flight return through their existing branches. This is an unaccepted private gameplay compromise, with active behavior/save/actual-service qualification still required before retention.
+
+The one baseline-derived442-file candidate passes pinned owner formatting and focused TypeScript, with normal process closure. Balanced B/C/C/B timing uses the unchanged counterless driver and the same complete input,2,400g/80anchors/14walks/all16food-return gates. Within-version repeat worlds must agree; new animal trajectories are expected. Timing is in progress. No production rule or capacity result is accepted.
+
+All four timing observations pass their full activity/source/normal-closure gates, but the candidate is rejected. TotalCPU10,790.932/11,120.100/11,783.097/9,867.985ms in B/C/C/B order; means10,329.4585→11,451.5985ms (**10.863%worse**). NativeCPU means9,973.680→11,090.429ms. Both versions publish223native worlds. The candidate's repeated end-world SHA is`8d3433b71194934262d44617f524a44b69d0c12fc662af5a1f125dd1f12d3d1b`, RNG7586396; both retain all required human activity and four bird takeoffs/landings. Elapsed means25.245→45.004seconds are highly variable, not capacity evidence. Raw comparison `/private/tmp/ol-pf127-wander-timing-20261015-a.json` links all four observations.
+
+**Correct the original causal assumption.** Actual `nativeMotionInterval` ignores an ordinary idle wander timer at the current1m policy; it uses that timer only when a relevant sensing allowance is smaller than0.4m. Thus ordinary independent wander deadlines were not established as the source of the extra shared steps. The experiment changes animal timing and trajectories but does not reduce publications. Preserve that incorrect hypothesis and negative result; do not design another quiet-wander cadence change around it. Frequent territorial reviews, periodic/health integration flags and mechanical changes remain separate candidates for direct reason counts. None is yet assigned the entire measured animal saving.
+
+## Why body rates were materialized so often
+
+PF16.128 adds private condition counters without changing any decision. It passes pinned formatting/TypeScript and one complete known-world activity diagnostic; all source/progress/routine/normal-group guards pass and the canonical final-world SHA remains exact. Within308motion slices, actual deferred slices are85. Overlapping non-deferral conditions are219interval endings,21work endings and4flight occurrences. Disabled-deferral policy, periodic/health immediacy, serial clamps, movement events, projectiles, flee endings and unexpected mechanical changes are all0. The world performs160territorial reviews, matching the current15g idle-review cadence over2,400g. None of those counts alone assigns CPU cost or proves all interval ends came from that review.
+
+The earlier hypothesis that a health-related global flag disabled deferral is disproved in this workload; removing that guard would accomplish nothing here.85slices did defer rates, yet rates were materialized307times because pending work also materializes before publication and required boundaries. The next scheduling design must address actual interval endings/reviews rather than invent an immediate-health bottleneck. Raw `/private/tmp/ol-pf128-reason-counts-20261015-a.json` and its linked report/log preserve all12reason counters (missing entries mean0in the declared counter inventory), other unchanged counts and the known-world equality. This is instrumented attribution only.

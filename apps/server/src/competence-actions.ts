@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import {
   coachingFor,
   practiceStatus,
@@ -29,7 +30,7 @@ export function competenceOptions(
   target: Entity,
   inventory: readonly ItemInstance[],
 ): CompetenceOption[] {
-  const actor = world.entities[actorId];
+  const actor = entityGet(world.entities, actorId);
   if (!actor?.actor) return [];
   const targetName = namePhrase(observerName(world, actorId, target.id), 'definite');
   const options: CompetenceOption[] = [];

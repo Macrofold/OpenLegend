@@ -1,0 +1,113 @@
+# Performance overhaul: instructions for an implementer
+
+| Status      | Current progress                                                                                     | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Ordinary candidate dispositions and initial compromise trials are recorded; smooth 3× remains unmet. | 2026-10-16   |
+
+**Implementation authorized October 16, 2026.** The latest instruction starts implementation and replaces per-candidate full performance runs with at most five batched non-compromise runs. Follow the [execution plan](execution.md); dated documentation-only restrictions below describe the earlier assignment.
+[Plain-language overview](../performance-overhaul-feature-spec.md) · [Design and order](../performance-overhaul-tech-design.md) · [Candidate status: PF17](../../maintainers/performance.md#pf17--performance-overhaul-ideas) · [Measurement and adoption rules](evaluation.md)
+
+## What these instructions can and cannot establish
+
+The original cards were reasoned proposals, not complete coding recipes. The expanded cards add ordered edits, data ownership, concrete scenarios and stopping conditions. This guide supplies the shared handoff procedure so each card can stay focused on its own change.
+
+No document can guarantee that an AI implements an architectural change flawlessly. Source changes, incomplete dependency knowledge and unmeasured tradeoffs remain possible. A successful implementer follows the defined checks and reports a disproved premise or unresolved decision instead of guessing, weakening a check or declaring success. “Finished the first slice” and “finished the entire candidate” are different claims.
+
+**Current authorization is documentation only.** Do not run the game, services, tests, benchmarks, builds or formatters, or alter runtime code merely because this guide describes future work. Reading/searching source, editing documents and scoped Git inspection/commits remain part of this documentation task. A later chat instruction to implement selects the authorized scope. It does not require another generic permission request for routine reversible choices already settled here. Apply the existing [developer-question rule](../../../AGENTS.md#resolve-developer-questions-before-dependent-work) when an actual unresolved product decision blocks dependent work.
+
+## Read one packet, not the whole archive
+
+For a selected candidate:
+
+1. Read current root and affected package/application instructions, the [performance skill](../../../.agents/skills/openlegend-performance/SKILL.md), and the matching routes in root instructions. The paths below are starting points, not replacements for those routes.
+2. Read this guide, the selected card, its existing tracker owner and the relevant sections of [evaluation](evaluation.md). The reader overview explains purpose; the technical design explains ordering and interactions.
+3. Open the named production functions **and their callers**. Verify the source facts still hold at the actual implementation revision. Follow current symbols if renamed; do not introduce a new path merely to make the document literal.
+4. Read only the relevant historical reports and private prototype identities. Do not copy an old `/private/tmp` path into a new command or assume a private prototype still exists. Missing source or qualification is a named gap, not permission to reconstruct an unreviewed variant and inherit its old results.
+
+| Selected work                                     | Additional semantic owners to read before changing the design                                                                                                                                                                                         |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PF17.1–8: saving/history/search                   | [Storage execution](../../performance.md#storage-execution), [save/load](../../save-and-load.md), [memory](../../memory-architecture.md), [identity](../../identity-and-references.md#contract); affected `apps/server/AGENTS.md`                     |
+| PF17.9–16: native mechanics                       | [Time](../../simulation-time.md), [spatial behavior](../../spatial-world.md), [proportional-step design](../proportional-step-work.md), affected action/status/material contracts; `packages/domain/AGENTS.md` and spatial instructions where touched |
+| PF17.17–21: public views/client                   | [UI essentials](../../../.agents/rules/ui-ux.md), [world presentation](../../world-presentation.md), affected server/protocol/client instructions; PlayCanvas skill for scene/resource work                                                           |
+| PF17.22–23: thought/context preparation           | [AI skill](../../../.agents/skills/openlegend-ai/SKILL.md), [character specification](../compelling-characters-feature-spec.md) and technical design, memory/privacy and affected server instructions                                                 |
+| Any changed fictional rule or gameplay compromise | [Engine/world boundary procedure](../../engine-and-world-boundaries.md#5-a-repeatable-boundary-decision) and the selected world's current rule; keep experimental behavior labelled until adopted                                                     |
+
+## Produce this small handoff before the first code edit
+
+Record the following in the selected experiment's existing report. This is a fill-in record, not another project or duplicate task list:
+
+| Field                    | Required concrete answer                                                                                                                                                                                                                  |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Candidate and slice      | One PF17 ID; the first behavior/caller being changed; what remains outside this slice.                                                                                                                                                    |
+| Baseline                 | Actual source revision and uncommitted runtime changes, dependency versions, inherited private candidates, workload and tool identity. Documentation-only commits do not create a new runtime result.                                     |
+| Production chain         | Input → semantic mutation/read owner → save/projection/consumer. Name exact functions and files; establish that the workload invokes them.                                                                                                |
+| Cost hypothesis          | Growing dimensions, present work and the work removed. Example: one changed target should cause changed-pair sight tests, not all-neighbor tests for every affected observer.                                                             |
+| Implementation map       | Files in edit order; the one authoritative representation; derived data and its lifetime; all callers updated together. Estimate changed logic lines and reassess if scope grows.                                                         |
+| Invalidation and failure | Creation/update/deletion, elapsed time, definition change, permission change, discarded preparation, fork/restore and failure cases that actually affect this result. Mark irrelevant cases with a reason instead of inventing machinery. |
+| Behavioral contract      | Exact facts/order to preserve; any proposed difference, concrete player/character consequence and whether its acceptance is settled.                                                                                                      |
+| Design checkpoint        | Each unresolved fact or contract, how the packet says to resolve it, and the dependent edits withheld until it is resolved. “Need more design” alone is insufficient.                                                                     |
+| Verification selection   | Named existing entrypoints and the card's required scenarios, expected results, owned fixture/setup requirements and relevant static checks.                                                                                              |
+| Performance decision     | Primary outcome, complete workload, comparison order, minimum useful benefit, relevant regression limits and the condition that ends the experiment as inconclusive. Follow [evaluation](evaluation.md).                                  |
+
+If a card supplies several possibilities, use its selected first slice. Do not implement the alternatives together. If current code invalidates the chosen mechanism, document the changed premise and revise this packet before editing; an unused helper does not become a hot path because its code looks expensive.
+
+## Execute a single candidate in this order after authorization
+
+1. **Establish the starting behavior.** Reuse valid existing evidence for unchanged contracts. Obtain the missing baseline only for the actual selected scenario; do not run the entire archive. Preserve the actual completed activities, not just a final clock reading.
+2. **Resolve the named checkpoint.** A code fact is resolved by inspecting its caller or relevant observation. A representation choice needs the packet's concrete contract and consumer mapping. A consequential unsettled gameplay choice needs the developer's answer; finish independent work first. Never treat a failed performance result as permission to drop required behavior.
+3. **Implement the smallest complete slice.** Change its owning producer and all consumers required for that slice together. Keep a correct fallback for genuinely unsupported cases when the card calls for one; do not keep an old API/schema solely for compatibility. An old comparison implementation can remain in a private experimental copy, not as a permanent second authority.
+4. **Exercise the packet's scenarios.** First prove the expected successful work occurs. Then compare the required outcomes and meaningful failure/refusal. Do not count a refused action, missing animal, hidden panel or skipped memory as a faster successful operation.
+5. **Prove the mechanism.** Count actual visits, writes, copies or preparations through the real caller. Include cold construction and invalidation. Verify that the added bookkeeping does not perform the same broad scan under a new name.
+6. **Run the selected matched comparisons.** Use the procedure in [evaluation](evaluation.md), with timing separate from intrusive diagnosis. Stop comparison on an integrity failure. Keep failed attempts and inconclusive results visible; do not rerun until a favorable number appears.
+7. **Review and decide.** Inspect the entire changed path, including restore, cancellation and publication where affected. Use adopt / investigate / reject / inconclusive. A private optimization with incomplete checks remains private. A measured gameplay compromise still needs its stated behavior decision.
+8. **Complete the candidate's continuation.** If its next phase is justified, take the next named slice and repeat. If it is not justified, record the narrower result and why the wider idea is deferred or rejected. Do not check off PF17 because its first prototype runs.
+9. **Integrate and report.** Reconcile current contracts, limits and tracker status for retained changes, then qualify the exact combined build. Remove rejected temporary changes from the integration candidate. Preserve unrelated work and follow the repository's local commit/handoff rules.
+
+## Verification entrypoints: avoid running the wrong workload
+
+The following are source-inspected entrypoints, **not commands run for this documentation**. Re-read their current argument parsing, fixtures, environment and cleanup before later use. Individual packets name focused existing checks; their names do not certify fixture compatibility.
+
+| Purpose                            | Existing entrypoint                                                                                                                                                                                                                                | Important distinction                                                                                                                                                                                                               |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Selected automated checks          | Root `test` script invokes Vitest; supply the selected existing file and, when appropriate, test name. [Verification policy](../../../.agents/rules/verification.md) owns scope.                                                                   | Do not use unfiltered `pnpm test` or recreate the entire suite with temporary helpers. Inspect fixture side effects first.                                                                                                          |
+| Type/build/configuration           | [Root package scripts](../../../package.json): `typecheck`, `build`, `config:check`; pinned Prettier on changed files.                                                                                                                             | `build` generates configuration and builds the client. These are execution, not harmless reading; they remain unrun in this docs-only task.                                                                                         |
+| Native isolation                   | [stress-native.ts](../../../scripts/stress-native.ts), [profile-native.ts](../../../scripts/profile-native.ts) and [native profiling guide](../../maintainers/performance-profiling.md)                                                            | Native throughput excludes saving, server scheduling, browser and provider work. A pending route or incomplete interval is not simulated progress.                                                                                  |
+| Expanded scene investigation       | [scripts/profile-server.ts](../../../scripts/profile-server.ts) takes a fresh report path and duration; current parser uses `OPENLEGEND_STRESS_DATABASE_URL`.                                                                                      | Its expanded/routine/plan/travel/browser flags have dependencies. Browser mode needs fresh ready/start paths. Reuse the exact qualified workload setup or qualify a changed setup; never invent a flag bundle from the script name. |
+| General scenario server comparison | [scripts/performance/profile-server.mjs](../../../scripts/performance/profile-server.mjs), documented in the profiling guide, uses `OPEN_LEGEND_PROFILE_POSTGRES_URL`.                                                                             | This is a different driver and environment variable. A result from it is not automatically comparable with the expanded-scene investigation.                                                                                        |
+| Browser recording                  | [profile-browser.mjs](../../../scripts/performance/profile-browser.mjs), [bounded live protocol](../../verification.md#bounded-live-playtest-protocol), [capture limits](../../limits/observability.md#ob01--explicit-browser-performance-capture) | Actual visible movement and long frame gaps need browser evidence. Draw submissions are not physical presentation; an incomplete capture remains incomplete.                                                                        |
+| Disposable database ownership      | [disposable-postgres.mjs](../../../scripts/disposable-postgres.mjs) and the existing caller fixture                                                                                                                                                | Uses explicit loopback administration to create/drop only its generated database. Do not substitute the normal application's database or reuse someone else's fixture.                                                              |
+
+Default native/fixture work disables paid dispatch under the verification policy. Live provider behavior is a separate selected check with the existing shared authorization/accounting; no model call is needed merely to compare exact locally prepared context. Do not put credentials or old private saved worlds in the experiment note.
+
+## Checkpoints that particularly need judgment
+
+These are **design classifications**, not another progress register. PF17 remains the status owner. Read the precise resolution and continuation in each card.
+
+| Candidates            | What an implementer must establish rather than guess                                                                                                                                                                   |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PF17.1–2              | Prove new-source eligibility/dependency coverage and a real changing collection/caller. A new row can affect old evidence; ordinary HTTP receipts bypass one suspected collection.                                     |
+| PF17.3–4, PF17.8      | Specify authoritative records and revision binding, immediate reads, revocation, commit/rollback/recovery and bounded pending work before moving storage responsibilities. The journal remains a fallback alternative. |
+| PF17.5                | Start with bystander gathering episodes for optional recall, retaining exact history. Verify witnessed intervals, important events and immediate reactions; reducing captured detail later requires its own decision.  |
+| PF17.6–7              | Recover/inspect the actual private candidate and its evidence; verify rollover or large batches occur. Missing or incomplete prototype results do not imply success.                                                   |
+| PF17.9–10, PF17.12–14 | Prove affected participants, ordered effects, deadlines, sight pairs and material membership across actual mutation paths. Existing broad fallbacks remain until the smaller case is complete.                         |
+| PF17.11               | Prove the selected exact operation replay, inventory every value reader, and materialize ordinary saves/checkpoints through a coherent candidate; a field-only delay is incomplete.                                    |
+| PF17.15               | Resolve enumeration order and all direct entity readers/writers before a persistent directory replaces the flat one. Measure lookup and memory costs as well as copying.                                               |
+| PF17.16               | Specify one coarse-capable activity, conservative promotion before interactions and saved continuation. Do not fabricate a general background simulator from a proposed example.                                       |
+| PF17.17–18, PF17.21   | Map every displayed fact to complete dependencies; preserve observer isolation and atomic resets through server, protocol and client.                                                                                  |
+| PF17.19–20            | Qualify actual eligible models, appearance transitions and resource disposal; preserve unchanged seeded scenery during local rebuilds.                                                                                 |
+| PF17.22–23            | Preserve thought fairness/deadlines and exact permitted context through actual production callers. Provider latency is separate from local preparation.                                                                |
+
+## Definition of completion
+
+A candidate is implemented only when its selected production behavior, all affected consumers, lifecycle handling and required checks are complete, its benefit/tradeoff is supported by the selected comparison, and retained changes are reflected in canonical contracts. A rejected idea can be **investigation complete** while having no implementation to retain; the tracker must say which.
+
+The whole game passes only against the existing [acceptance budgets](../../maintainers/performance.md#acceptance-budgets) and [expanded-scene goal](../three-times-scene-performance.md). A successful candidate does not establish smooth 3×, and a near-3× average does not excuse slow clicks, freezes, missing activity or growing delayed work.
+
+For each handoff, report in plain language: what changed; why; exact before/after evidence; behavior retained/lost; current implementation versus private prototype status; remaining candidate scope; and the next justified decision. Do not call an unused optimization a gameplay improvement or claim universal freedom from regressions.
+
+## Maintained records
+
+- Tasks and status: [PF17](../../maintainers/performance.md#pf17--performance-overhaul-ideas).
+- Product intent and proposed tradeoffs: [feature specification](../performance-overhaul-feature-spec.md); architecture and sequence: [technical design](../performance-overhaul-tech-design.md).
+- Per-candidate instructions: [storage](storage.md), [simulation](simulation.md), [presentation/cognition](presentation-and-cognition.md).
+- Measurement/adoption procedure and existing constraint links: [evaluation](evaluation.md). This guide adds no game limits, numeric performance promises or accepted gameplay changes.

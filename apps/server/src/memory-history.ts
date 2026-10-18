@@ -1,5 +1,6 @@
-import type { MemoryRecord } from '@open-legend/domain';
+import { entityGet } from '@open-legend/domain';
 import type { MemoryEntryView, MemoryHistoryPage } from '@open-legend/protocol';
+import type { RetrievedMemory } from './memory-repository.js';
 import { z } from 'zod';
 import { AuthorityError, scopeKey, type RequestScope } from './authority.js';
 import { HistoryCursorError } from './perceived-events.js';
@@ -20,10 +21,14 @@ const cursorSchema = z
   })
   .strict();
 
-/** The single presentation of a memory for its owner; the live snapshot and history pages
- * must render the same text. */
-export function memoryEntryView(memory: MemoryRecord): MemoryEntryView {
-  return { id: memory.id, text: `[${memory.source}] ${memory.summary}`, time: memory.at };
+/** The presentation of an eligible history record for its owner or permitted inspector. */
+export function memoryEntryView({ memory, sourceKind }: RetrievedMemory): MemoryEntryView {
+  return {
+    id: memory.id,
+    sourceKind,
+    text: `[${memory.source}] ${memory.summary}`,
+    time: memory.at,
+  };
 }
 
 /** Paged, optionally searched memory history for the owner or an inspectable NPC. Only
@@ -37,13 +42,15 @@ export async function memoryHistory(
   request: { cursor?: string; query?: string; thoughts?: boolean },
 ): Promise<MemoryHistoryPage> {
   const permitted = () =>
-    service.mayInspectPrivate(actorId, scope) && !!service.world.entities[actorId]?.actor;
+    service.mayInspectPrivate(actorId, scope) &&
+    !!entityGet(service.world.entities, actorId)?.actor;
   if (!permitted()) throw new AuthorityError('forbidden');
   const terms = searchTerms(request.query);
   const memories = service.store.memories,
     records = service.store.records;
   if (!memories || !records) throw new Error('Memory history requires the history database.');
   await service.flushMemorySources(actorId);
+  const historyEpoch = service.historyEpoch;
   const head = await records.head();
   if (!head) throw new Error('Memory history requires the history database.');
   const world = service.world,
@@ -75,6 +82,7 @@ export async function memoryHistory(
   if (
     !permitted() ||
     generation !== service.generation ||
+    historyEpoch !== service.historyEpoch ||
     world.experience?.forgotten[actorId] !== service.world.experience?.forgotten[actorId] ||
     world.experience?.corrections?.[actorId] !== service.world.experience?.corrections?.[actorId]
   )
@@ -83,7 +91,7 @@ export async function memoryHistory(
     ok: true,
     worldId: world.id,
     generation,
-    entries: result.entries.map((entry) => memoryEntryView(entry.memory)).reverse(),
+    entries: result.entries.map(memoryEntryView).reverse(),
     next: result.resume
       ? Buffer.from(JSON.stringify({ v: 1, fence, ...result.resume })).toString('base64url')
       : null,

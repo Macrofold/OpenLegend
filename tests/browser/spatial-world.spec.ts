@@ -1,3 +1,4 @@
+import { entityGet } from '../../packages/domain/src/index.js';
 import { enterGame } from '../fixtures/browser.js';
 import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { worldPosition } from '@open-legend/domain';
@@ -56,18 +57,26 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
       command: { type: 'move', position: { surfaceId: 'lookout-deck' } },
     });
     await expect
-      .poll(() => game.service.world.entities[game.service.controlledEntityId]!.actor!.action?.type)
+      .poll(
+        () =>
+          entityGet(game.service.world.entities, game.service.controlledEntityId)!.actor!.action
+            ?.type,
+      )
       .toBe('move');
     await expect
       .poll(
         () =>
-          game.service.world.entities[game.service.controlledEntityId]!.actor!.action?.navigation,
+          entityGet(game.service.world.entities, game.service.controlledEntityId)!.actor!.action
+            ?.navigation,
         { timeout: 15_000 },
       )
       .toBeUndefined();
     await game.service.transition((world) => advanceWorld(world, 280));
     await expect
-      .poll(() => worldPosition(game.service.world.entities[game.service.controlledEntityId]!).y)
+      .poll(
+        () =>
+          worldPosition(entityGet(game.service.world.entities, game.service.controlledEntityId)!).y,
+      )
       .toBeCloseTo(3);
     await page.getByRole('button', { name: 'Pause world', exact: true }).click();
     await page.getByRole('button', { name: 'Center on player', exact: true }).click();
@@ -89,7 +98,7 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
     await page.getByRole('button', { name: 'Lock rotation', exact: true }).click();
     await page.screenshot({ path: info.outputPath('spatial-lookout-perspective.png') });
     const before = JSON.stringify(
-      worldPosition(game.service.world.entities[game.service.controlledEntityId]!),
+      worldPosition(entityGet(game.service.world.entities, game.service.controlledEntityId)!),
     );
     await page.keyboard.down('Shift');
     await page.mouse.move(rect.x + rect.width * 0.5, rect.y + rect.height * 0.5);
@@ -101,7 +110,9 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
     await page.keyboard.up('Shift');
     expect(commands).toHaveLength(1);
     expect(
-      JSON.stringify(worldPosition(game.service.world.entities[game.service.controlledEntityId]!)),
+      JSON.stringify(
+        worldPosition(entityGet(game.service.world.entities, game.service.controlledEntityId)!),
+      ),
     ).toBe(before);
     await page.reload();
     await enterGame(page);

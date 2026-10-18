@@ -1,3 +1,6 @@
+import { entityGet, entityValues } from './entity-collection.js';
+import { validateEntityCollection } from './entity-collection.js';
+import { validateOrderedRecord } from './ordered-record.js';
 import { validateEventEvidence } from './speech.js';
 import {
   competenceValue,
@@ -66,6 +69,12 @@ import { trustedRecipeImplementations } from './world-composition.js';
 import { validateRangedPolicy, validateRangedActions, type RangedPolicy } from './ranged-policy.js';
 import { validateInstalledRecipes, type RecipeFamilyDescriptor } from './invention-families.js';
 import type { ActorComponent, Entity, ItemDefinition, WorldState, WorldEvent } from './types.js';
+import {
+  currentAttributeState,
+  materializeNativeAttribute,
+  materializeNativeValues,
+  validateNativeValueWindow,
+} from './native-values.js';
 import { canonicalJson, contentLabel, emit } from './events.js';
 import { hasRecordFields, isSafeRecordId, isImmutableData } from './records.js';
 import { validateEquipment } from './equipment.js';
@@ -76,6 +85,7 @@ import { TIME_EPSILON } from './simulation-time.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import { validateOutings, validateCombatHelpReference } from './outings.js';
 import { validateSocialPolicy } from './social-policy.js';
+import { readOnlyDraftView } from './draft.js';
 
 export type AttributeValue = number | string;
 /** Consequences of advanceReservoirs and kernel's native replenish action. These
@@ -611,38 +621,85 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
   )
     throw new Error('Missing exact body policy dependency.');
 }
+/** Installed definitions are read-only during native progression. Read them without
+ * creating a draft for every definition, while retaining edits in an authoring draft.
+ * docs/performance.md#simulation-cpu-and-growing-history */
+export function attributeDefinitions(world: {
+  moduleManifest: Pick<WorldModuleManifest, 'definitions'>;
+}): AttributeDefinition[] {
+  const manifest = readOnlyDraftView(world).moduleManifest;
+  return (isDraft(manifest) ? current(manifest) : manifest).definitions;
+}
 export function attributeDefinition(
   world: { moduleManifest: Pick<WorldModuleManifest, 'definitions'> },
   id: string,
 ): AttributeDefinition | undefined {
-  // Definitions are replaced at admission, never edited during a native step.
-  // docs/performance.md#simulation-cpu-and-growing-history
-  const manifest = world.moduleManifest;
-  return (isDraft(manifest) ? original(manifest)! : manifest)?.definitions.find((d) => d.id === id);
+  return attributeDefinitions(world).find((d) => d.id === id);
+}
+/** One synchronous forecast's installed-rule facts. Never retain dynamic actor values. */
+export interface AttributeForecastPreparation {
+  numeric: readonly AttributeDefinition[];
+  native: readonly { definition: AttributeDefinition; thresholds: readonly number[] }[];
+  byId: ReadonlyMap<string, AttributeDefinition>;
+  healthIds: ReadonlySet<string>;
+}
+export function prepareAttributeForecast(world: WorldState): AttributeForecastPreparation {
+  const latest = attributeDefinitions(world);
+  const manifest = readOnlyDraftView(world).moduleManifest;
+  // Preserve the existing authoring distinction: clock bounds inspect original installed
+  // rules, while predicate metadata and health classification inspect the latest rules.
+  const installed = isDraft(manifest) ? original(manifest)!.definitions : manifest.definitions;
+  const numeric: AttributeDefinition[] = [];
+  const native: Array<{ definition: AttributeDefinition; thresholds: number[] }> = [];
+  const byId = new Map<string, AttributeDefinition>();
+  const healthIds = new Set<string>();
+  for (const definition of latest) {
+    if (!byId.has(definition.id)) byId.set(definition.id, definition);
+    if (definition.implementation === 'native-health-v1') healthIds.add(definition.id);
+  }
+  for (const definition of installed) {
+    if (definition.schema.kind !== 'number') continue;
+    numeric.push(definition);
+    if (!definition.reservoir && !definition.condition) continue;
+    const maximum = definition.schema.max;
+    const thresholds =
+      definition.condition?.bands.flatMap((band) => [
+        band.below,
+        Math.min(maximum, band.below + definition.condition!.recoveryMargin),
+      ]) ?? [];
+    native.push({ definition, thresholds });
+  }
+  return { numeric, native, byId, healthIds };
 }
 export function readAttribute(
-  actor: ActorComponent,
+  world: WorldState,
+  entity: Entity,
   definition: AttributeDefinition,
 ): AttributeValue | undefined {
+  // Pure rule/projection reads must see current writes without drafting every sparse
+  // value merely to inspect it. Mutations continue through their owning setters.
+  const actor = entity.actor && readOnlyDraftView(entity.actor);
+  if (!actor) return undefined;
   const storage = HOST_IMPLEMENTATIONS[definition.implementation].storage;
-  if (storage === 'attributes') return actor.attributes?.[definition.id]?.value;
+  if (storage === 'attributes') {
+    return currentAttributeState(world, entity, definition.id)?.value;
+  }
   if (storage === 'practice') return competenceValue(actor, definition);
+  const body = actor.body && readOnlyDraftView(actor.body);
   // Body health remains raw authoritative points; definition units are only a projection.
   if (
     storage === 'health' &&
     definition.schema.kind === 'number' &&
-    actor.body &&
-    Number.isFinite(actor.body.maxHealth) &&
-    actor.body.maxHealth > 0
+    body &&
+    Number.isFinite(body.maxHealth) &&
+    body.maxHealth > 0
   ) {
     if (definition.nativeHealth?.units === 'points') return actor.health;
     const range = definition.schema.max - definition.schema.min;
     // Keep equal-unit reads exact, and avoid introducing rounding at proportional thresholds.
     return (
       definition.schema.min +
-      (range === actor.body.maxHealth
-        ? actor.health
-        : (actor.health / actor.body.maxHealth) * range)
+      (range === body.maxHealth ? actor.health : (actor.health / body.maxHealth) * range)
     );
   }
   return undefined;
@@ -672,11 +729,10 @@ export function attributeThreshold(
   const range = attributeRange(actor, definition);
   return range.min + value * (range.max - range.min);
 }
-export function applicableAttributes(
-  world: WorldState,
-  actor: ActorComponent,
-): AttributeDefinition[] {
-  return world.moduleManifest.definitions.filter((d) => readAttribute(actor, d) !== undefined);
+export function applicableAttributes(world: WorldState, entity: Entity): AttributeDefinition[] {
+  return world.moduleManifest.definitions.filter(
+    (d) => readAttribute(world, entity, d) !== undefined,
+  );
 }
 export function validateAttributeValue(
   d: AttributeDefinition,
@@ -712,6 +768,7 @@ export function setAttribute(
   if (storage === 'practice') return setStartingPractice(world, entity, d, value);
   if (storage !== 'attributes')
     throw new Error('Native state must use its owning body/need operation.');
+  materializeNativeAttribute(world, entity.id, d.id);
   const prior = (entity.actor?.attributes ?? entity.attributes)?.[d.id];
   if (!prior) throw new Error('Attribute is not applicable to this entity.');
   if (prior.value === value) return false;
@@ -862,10 +919,10 @@ export function projectAttributes(
   audience: 'owner' | 'public',
 ): AttributeView[] {
   if (!entity.actor) return [];
-  return applicableAttributes(world, entity.actor)
+  return applicableAttributes(world, entity)
     .filter((d) => audience === 'owner' || d.disclosure === 'public')
     .map((d) => {
-      const value = readAttribute(entity.actor!, d);
+      const value = readAttribute(world, entity, d);
       const range = d.schema.kind === 'number' ? attributeRange(entity.actor, d) : undefined;
       return {
         id: d.id,
@@ -899,7 +956,7 @@ export function projectAttributes(
           : {}),
         revision:
           entity.actor!.practice?.[d.id]?.revision ??
-          entity.actor!.attributes?.[d.id]?.revision ??
+          currentAttributeState(world, entity, d.id)?.revision ??
           entity.actor!.body?.revision ??
           0,
         ...(d.schema.kind === 'number'
@@ -971,6 +1028,32 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
+  if (world.pendingNativeIntegration !== undefined) {
+    // Validate the existing anchors before any pending operation is read, then the
+    // exact continuation and its current view. Neither validation installs a twin
+    // world or changes the candidate that the save owner actually persists.
+    const anchors = { ...world };
+    delete anchors.pendingNativeIntegration;
+    validateWorldModules(anchors);
+    validateNativeValueWindow(world);
+    validateWorldModules(materializeNativeValues(world));
+    return;
+  }
+  validateEntityCollection(world.entities);
+  validateOrderedRecord(
+    world.commandReceipts,
+    (entry) =>
+      hasRecordFields(entry, ['digest', 'outcome']) &&
+      typeof entry.digest === 'string' &&
+      !!entry.outcome &&
+      typeof entry.outcome === 'object' &&
+      Object.hasOwn(entry.outcome, 'ok') &&
+      typeof (entry.outcome as { ok: unknown }).ok === 'boolean' &&
+      Object.hasOwn(entry.outcome, 'code') &&
+      typeof (entry.outcome as { code: unknown }).code === 'string' &&
+      Object.hasOwn(entry.outcome, 'message') &&
+      typeof (entry.outcome as { message: unknown }).message === 'string',
+  );
   if (
     world.presentation !== undefined &&
     (!hasRecordFields(world.presentation, ['worldName', 'locationName', 'timeLabel']) ||
@@ -1076,7 +1159,7 @@ export function validateWorldModules(world: WorldState): void {
   const healthDefinition = world.moduleManifest.definitions.find(
     (definition) => definition.implementation === 'native-health-v1',
   );
-  for (const e of Object.values(world.entities)) {
+  for (const e of entityValues(world.entities)) {
     if (e.icon !== undefined && typeof e.icon !== 'string')
       throw new Error('Invalid entity presentation.');
     if (!validName(e)) throw new Error('Invalid canonical entity name or name grammar.');
@@ -1098,7 +1181,7 @@ export function validateWorldModules(world: WorldState): void {
       throw new Error('Invalid gathering stock or revision.');
     if (e.actor)
       for (const definition of world.moduleManifest.definitions) {
-        const value = readAttribute(e.actor, definition);
+        const value = readAttribute(world, e, definition);
         if (value !== undefined) validateAttributeValue(definition, value, e.actor);
       }
     if (e.actor?.body && (!Number.isFinite(e.actor.body.maxHealth) || e.actor.body.maxHealth <= 0))
@@ -1128,7 +1211,13 @@ export function validateWorldModules(world: WorldState): void {
         animal.danger > 1 ||
         !Number.isFinite(animal.calmRate) ||
         animal.calmRate < 0 ||
-        !Number.isFinite(animal.wanderSeconds) ||
+        !animal.wander ||
+        typeof animal.wander !== 'object' ||
+        ('dueAt' in animal.wander
+          ? Object.keys(animal.wander).length !== 1 || !Number.isFinite(animal.wander.dueAt)
+          : !hasRecordFields(animal.wander, ['remainingSeconds'], ['running']) ||
+            !Number.isFinite(animal.wander.remainingSeconds) ||
+            (animal.wander.running !== undefined && animal.wander.running !== true)) ||
         (animal.escapeHeading !== null && !Number.isFinite(animal.escapeHeading)) ||
         (animal.threatPosition !== null &&
           ![animal.threatPosition?.x, animal.threatPosition?.y, animal.threatPosition?.z].every(
@@ -1149,9 +1238,9 @@ export function validateWorldModules(world: WorldState): void {
         (remains.sourceId !== e.id &&
           !(
             e.kind === 'remains' &&
-            world.entities[remains.sourceId]?.actor?.controller === 'player' &&
-            world.entities[remains.sourceId]?.kind !== 'remains' &&
-            !world.entities[remains.sourceId]?.remains
+            entityGet(world.entities, remains.sourceId)?.actor?.controller === 'player' &&
+            entityGet(world.entities, remains.sourceId)?.kind !== 'remains' &&
+            !entityGet(world.entities, remains.sourceId)?.remains
           )) ||
         !Number.isFinite(remains.diedAt) ||
         remains.diedAt < 0 ||
@@ -1269,8 +1358,11 @@ export function validateWorldModules(world: WorldState): void {
           definitionPin(world.itemDefinitions[guard.definition.id]!),
         ) ||
         !fireAction.itemId ||
-        !world.entities[fireAction.itemId]?.item ||
-        !sameDefinitionPin(world.entities[fireAction.itemId]!.item!.definitionPin, guard.definition)
+        !entityGet(world.entities, fireAction.itemId)?.item ||
+        !sameDefinitionPin(
+          entityGet(world.entities, fireAction.itemId)!.item!.definitionPin,
+          guard.definition,
+        )
       )
         throw new Error('Invalid saved guarded fuel action.');
     }

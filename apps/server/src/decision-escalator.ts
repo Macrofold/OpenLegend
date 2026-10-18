@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { undispatchedReceipt } from './decision-state.js';
 import {
   createAiClient,
@@ -99,7 +100,7 @@ export class DecisionEscalator {
     this.unsubscribe = service.subscribe(() => {
       const policy = this.scopes.size ? decisionPolicyDigest(service.config) : undefined;
       for (const [id, scope] of this.scopes) {
-        const actor = service.world.entities[scope.state.actorId]?.actor;
+        const actor = entityGet(service.world.entities, scope.state.actorId)?.actor;
         if (
           service.paused ||
           scope.state.policyDigest !== policy ||
@@ -124,7 +125,7 @@ export class DecisionEscalator {
     });
   }
   private eligible(job: JobRecord, state: DecisionState): boolean {
-    const actor = this.service.world.entities[state.actorId]?.actor;
+    const actor = entityGet(this.service.world.entities, state.actorId)?.actor;
     return (
       !this.stopped &&
       !this.service.paused &&

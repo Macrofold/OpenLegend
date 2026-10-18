@@ -1,14 +1,16 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { isDraft, original } from 'immer';
 import type { Entity, WorldState } from './types.js';
 import type { Capability, StatusEffectDefinition, StatusPresentation } from './status-effects.js';
 import { objectAncestors } from './objects.js';
 import { activelyParticipates } from './participation-state.js';
 import { chargeWork } from './work-budget.js';
+import { readOnlyDraftView } from './draft.js';
 
 // Definitions are replaced only at admission; never traverse readonly rules through draft proxies.
 // docs/status-effects.md#admission-and-persistence
 export function statusDefinitions(world: WorldState): StatusEffectDefinition[] {
-  const policy = world.statusEffectPolicy;
+  const policy = readOnlyDraftView(world).statusEffectPolicy;
   return (isDraft(policy) ? original(policy)! : policy).definitions;
 }
 const restrictionDefinitions = new WeakMap<StatusEffectDefinition[], Map<Capability, string[]>>();
@@ -52,7 +54,7 @@ function sources(entities: WorldState['entities']): SourceIndex {
   let index = Object.isFrozen(entities) ? sourceIndexes.get(entities) : undefined;
   if (index) return index;
   index = new Map();
-  for (const entity of Object.values(entities)) {
+  for (const entity of entityValues(entities)) {
     chargeWork({ candidates: 1 });
     for (const [source, binding] of sourceBindings(entity))
       index.set(source, [...(index.get(source) ?? []), binding]);
@@ -65,12 +67,15 @@ function sources(entities: WorldState['entities']): SourceIndex {
 export function contributionSourceBound(world: WorldState, sourceId: string): boolean {
   const base = isDraft(world) ? original(world)! : world;
   const matches = (binding: SourceBinding) => {
-    const state = world.entities[binding.targetId]?.statusEffects?.[binding.contributionId];
+    const state = entityGet(world.entities, binding.targetId)?.statusEffects?.[
+      binding.contributionId
+    ];
     return !!state?.active && !!state.contribution && state.sourceId === sourceId;
   };
   if (sources(base.entities).get(sourceId)?.some(matches)) return true;
   for (const targetId of pendingSources.get(world) ?? [])
-    if (sourceBindings(world.entities[targetId]).some(([id]) => id === sourceId)) return true;
+    if (sourceBindings(entityGet(world.entities, targetId)).some(([id]) => id === sourceId))
+      return true;
   return false;
 }
 export function captureContributionSources(
@@ -83,9 +88,13 @@ export function captureContributionSources(
     if (!prior || base.entities === result.entities) return;
     let index = prior;
     for (const id of changed) {
-      if (base.entities[id]?.statusEffects === result.entities[id]?.statusEffects) continue;
-      const before = sourceBindings(base.entities[id]),
-        after = sourceBindings(result.entities[id]);
+      if (
+        entityGet(base.entities, id)?.statusEffects ===
+        entityGet(result.entities, id)?.statusEffects
+      )
+        continue;
+      const before = sourceBindings(entityGet(base.entities, id)),
+        after = sourceBindings(entityGet(result.entities, id));
       if (!before.length && !after.length) continue;
       if (index === prior) index = new Map(prior);
       for (const source of new Set(before.map(([source]) => source))) {
@@ -100,15 +109,20 @@ export function captureContributionSources(
   };
 }
 function effectiveContribution(world: WorldState, state: States[string] | undefined): boolean {
+  state = state && readOnlyDraftView(state);
   if (!state?.active) return false;
-  const lifetime = state.contribution?.lifetime;
+  const contribution = state.contribution && readOnlyDraftView(state.contribution);
+  const storedLifetime = contribution?.lifetime;
+  const lifetime = storedLifetime && readOnlyDraftView(storedLifetime);
   if (lifetime?.kind === 'fixed') return world.simTime < lifetime.expiresAt;
   if (lifetime?.kind !== 'source-sustained') return true;
-  const source = world.entities[state.sourceId];
+  const storedSource = entityGet(readOnlyDraftView(world.entities), state.sourceId);
+  const source = storedSource && readOnlyDraftView(storedSource);
+  const actor = source?.actor && readOnlyDraftView(source.actor);
   return (
     !!source &&
     !source.retirement &&
-    source.actor?.alive !== false &&
+    actor?.alive !== false &&
     activelyParticipates(objectAncestors(world, source.id).at(-1))
   );
 }
@@ -118,8 +132,11 @@ function contributionIndex(states: States): Map<string, string[]> {
   const cached = contributionIndexes.get(states);
   if (cached) return cached;
   const index = new Map<string, string[]>();
-  for (const id in states) {
-    const definition = states[id]!.contribution?.definitionId;
+  const view = readOnlyDraftView(states);
+  for (const id in view) {
+    const state = readOnlyDraftView(view[id]!);
+    const contribution = state.contribution && readOnlyDraftView(state.contribution);
+    const definition = contribution?.definitionId;
     if (!definition) continue;
     const keys = index.get(definition) ?? [];
     keys.push(id);
@@ -144,13 +161,15 @@ function definitionActive(
   independent: Map<string, string[]>,
   world?: WorldState,
 ): boolean {
-  const native = states[id];
+  const view = readOnlyDraftView(states);
+  const stored = view[id];
+  const native = stored && readOnlyDraftView(stored);
   if (native?.active && !native.contribution) return true;
   return (
-    independent
-      .get(id)
-      ?.some((key) => (world ? effectiveContribution(world, states[key]) : states[key]?.active)) ??
-    false
+    independent.get(id)?.some((key) => {
+      const state = view[key];
+      return world ? effectiveContribution(world, state) : state && readOnlyDraftView(state).active;
+    }) ?? false
   );
 }
 export function activeContributionId(
@@ -158,11 +177,15 @@ export function activeContributionId(
   definitionId: string,
   sourceId: string,
 ): string | undefined {
-  const states = entity.statusEffects;
+  const states = readOnlyDraftView(entity).statusEffects;
   return states
     ? contributionIndex(states)
         .get(definitionId)
-        ?.find((id) => states[id]?.active && states[id]?.sourceId === sourceId)
+        ?.find((id) => {
+          const stored = readOnlyDraftView(states)[id];
+          const state = stored && readOnlyDraftView(stored);
+          return state?.active && state.sourceId === sourceId;
+        })
     : undefined;
 }
 export function isStatusDefinitionActive(
@@ -170,7 +193,7 @@ export function isStatusDefinitionActive(
   definitionId: string,
   world?: WorldState,
 ): boolean {
-  const states = entity.statusEffects;
+  const states = readOnlyDraftView(entity).statusEffects;
   return !!states && definitionActive(states, definitionId, contributionIndex(states), world);
 }
 export function capabilityBlocked(
@@ -178,7 +201,8 @@ export function capabilityBlocked(
   entity: Entity | undefined,
   capability: Capability,
 ): boolean {
-  entity = entity ? (world.entities[entity.id] ?? entity) : undefined;
+  entity = entity ? (entityGet(readOnlyDraftView(world.entities), entity.id) ?? entity) : undefined;
+  entity = entity && readOnlyDraftView(entity);
   const states = entity?.statusEffects;
   if (!states) return false;
   const independent = contributionIndex(states);
@@ -191,7 +215,8 @@ export function activeStatusEffects(
   world: WorldState,
   entity: Entity | undefined,
 ): StatusEffectDefinition[] {
-  entity = entity ? (world.entities[entity.id] ?? entity) : undefined;
+  entity = entity ? (entityGet(readOnlyDraftView(world.entities), entity.id) ?? entity) : undefined;
+  entity = entity && readOnlyDraftView(entity);
   if (!entity?.statusEffects) return [];
   const independent = contributionIndex(entity.statusEffects);
   return statusDefinitions(world).filter((d) =>

@@ -535,14 +535,28 @@ export function physicalIntersections(map: SpatialMap, solid: CollisionSolid) {
   );
   return hits;
 }
-/** A shrunken sight polytope returned by sightObstacles; opaque outside this module. */
+/** A shrunken sight polytope returned by sightSweep; opaque outside this module. */
 export interface SightObstacle {
   readonly planes: readonly Plane[];
 }
 function separated(planes: readonly Plane[], points: readonly WorldPoint[]): boolean {
-  return planes.some(([a, b, c, bound]) =>
-    points.every((p) => a * p.x + b * p.y + c * p.z > bound - EPS),
-  );
+  for (let i = 0; i < planes.length; i++) {
+    const plane = planes[i]!,
+      a = plane[0],
+      b = plane[1],
+      c = plane[2],
+      bound = plane[3];
+    let outside = true;
+    for (let j = 0; j < points.length; j++) {
+      const p = points[j]!;
+      if (!(a * p.x + b * p.y + c * p.z > bound - EPS)) {
+        outside = false;
+        break;
+      }
+    }
+    if (outside) return true;
+  }
+  return false;
 }
 const cross = (u: WorldPoint, v: WorldPoint): WorldPoint => ({
   x: u.y * v.z - u.z * v.y,
@@ -554,54 +568,95 @@ const minus = (u: WorldPoint, v: WorldPoint): WorldPoint => ({
   y: u.y - v.y,
   z: u.z - v.z,
 });
-/** Separating-axis rejection of a ray family's hull (up to four points) from a shape: its
- * face planes, the hull's face normals and edge-by-edge cross products. The shape's unshrunk
- * corners make every rejection conservative for the shrunken polytope clipSegment tests. */
-function hullSeparated(shape: PreparedShape, points: readonly WorldPoint[]): boolean {
-  if (separated(shape.planes, points)) return true;
+/** The ray-family edges and face axes are independent of the obstacle being tested. */
+function prepareSightHull(points: readonly WorldPoint[]) {
   const edges: WorldPoint[] = [];
   for (let i = 0; i < points.length; i++)
     for (let j = i + 1; j < points.length; j++) edges.push(minus(points[j]!, points[i]!));
   const axes: WorldPoint[] = [];
   for (let i = 0; i < edges.length; i++)
     for (let j = i + 1; j < edges.length; j++) axes.push(cross(edges[i]!, edges[j]!));
-  for (const edge of edges) for (const direction of shape.edges) axes.push(cross(edge, direction));
-  return axes.some((axis) => {
-    if (Math.abs(axis.x) + Math.abs(axis.y) + Math.abs(axis.z) < 1e-12) return false;
-    let low = Infinity,
-      high = -Infinity,
-      shapeLow = Infinity,
-      shapeHigh = -Infinity;
-    for (const p of points) {
-      const v = axis.x * p.x + axis.y * p.y + axis.z * p.z;
-      low = Math.min(low, v);
-      high = Math.max(high, v);
-    }
-    for (const p of shape.vertices) {
-      const v = axis.x * p.x + axis.y * p.y + axis.z * p.z;
-      shapeLow = Math.min(shapeLow, v);
-      shapeHigh = Math.max(shapeHigh, v);
-    }
-    return high < shapeLow || shapeHigh < low;
-  });
+  return { edges, axes };
 }
-/** Sight shapes that may block some segment inside the hull of the given points. A shape is
- * skipped exactly when one of its shrunken face planes has every point strictly outside: any
- * segment in their hull then misses it under clipSegment's rules, including the parallel rule. */
-export function sightObstacles(
-  map: SpatialMap,
+/** Keep projection order and arithmetic exact without allocating a vector or iterator
+ * for every ray-edge/obstacle-edge axis. All inputs belong to this one query. */
+function hullAxisSeparated(
+  shape: PreparedShape,
   points: readonly WorldPoint[],
-): readonly SightObstacle[] {
+  x: number,
+  y: number,
+  z: number,
+): boolean {
+  if (Math.abs(x) + Math.abs(y) + Math.abs(z) < 1e-12) return false;
+  let low = Infinity,
+    high = -Infinity,
+    shapeLow = Infinity,
+    shapeHigh = -Infinity;
+  for (let i = 0; i < points.length; i++) {
+    const p = points[i]!,
+      value = x * p.x + y * p.y + z * p.z;
+    low = Math.min(low, value);
+    high = Math.max(high, value);
+  }
+  for (let i = 0; i < shape.vertices.length; i++) {
+    const p = shape.vertices[i]!,
+      value = x * p.x + y * p.y + z * p.z;
+    shapeLow = Math.min(shapeLow, value);
+    shapeHigh = Math.max(shapeHigh, value);
+  }
+  return high < shapeLow || shapeHigh < low;
+}
+/** Separating-axis rejection of a ray family's hull (up to four points) from a shape: its
+ * face planes, the hull's face normals and edge-by-edge cross products. The shape's unshrunk
+ * corners make every rejection conservative for the shrunken polytope clipSegment tests. */
+function hullSeparated(
+  shape: PreparedShape,
+  points: readonly WorldPoint[],
+  hull: () => ReturnType<typeof prepareSightHull>,
+): boolean {
+  if (separated(shape.planes, points)) return true;
+  const prepared = hull();
+  for (let i = 0; i < prepared.axes.length; i++) {
+    const axis = prepared.axes[i]!;
+    if (hullAxisSeparated(shape, points, axis.x, axis.y, axis.z)) return true;
+  }
+  for (let i = 0; i < prepared.edges.length; i++) {
+    const edge = prepared.edges[i]!;
+    for (let j = 0; j < shape.edges.length; j++) {
+      const direction = shape.edges[j]!;
+      if (
+        hullAxisSeparated(
+          shape,
+          points,
+          edge.y * direction.z - edge.z * direction.y,
+          edge.z * direction.x - edge.x * direction.z,
+          edge.x * direction.y - edge.y * direction.x,
+        )
+      )
+        return true;
+    }
+  }
+  return false;
+}
+/** Shapes that may block a segment inside this ray family's hull. Face-plane and
+ * separating-axis rejection conservatively exclude shapes that no such segment can enter. */
+function sightObstacles(map: SpatialMap, points: readonly WorldPoint[]): readonly SightObstacle[] {
   const min = { x: Infinity, y: Infinity, z: Infinity },
     max = { x: -Infinity, y: -Infinity, z: -Infinity };
   for (const p of points) {
     if (!finitePoint(p)) throw new Error('Invalid spatial ray.');
-    for (const axis of ['x', 'y', 'z'] as const) {
-      min[axis] = Math.min(min[axis], p[axis] - EPS);
-      max[axis] = Math.max(max[axis], p[axis] + EPS);
-    }
+    min.x = Math.min(min.x, p.x - EPS);
+    max.x = Math.max(max.x, p.x + EPS);
+    min.y = Math.min(min.y, p.y - EPS);
+    max.y = Math.max(max.y, p.y + EPS);
+    min.z = Math.min(min.z, p.z - EPS);
+    max.z = Math.max(max.z, p.z + EPS);
   }
   const shapes: PreparedShape[] = [];
+  // One moving ray has one hull, regardless of how many nearby shapes are tested.
+  // Delay preparation until a shape survives the cheaper face-plane rejection.
+  let prepared: ReturnType<typeof prepareSightHull> | undefined;
+  const hull = () => (prepared ??= prepareSightHull(points));
   preparedShapes(map).shapeIndex.visit(
     (b) =>
       b.min.x <= max.x &&
@@ -611,7 +666,7 @@ export function sightObstacles(
       b.min.z <= max.z &&
       b.max.z >= min.z,
     (shape) => {
-      if (shape.sight && !hullSeparated(shape, points)) shapes.push(shape);
+      if (shape.sight && !hullSeparated(shape, points, hull)) shapes.push(shape);
       return false;
     },
   );
@@ -644,7 +699,7 @@ export function quadraticRoots(a: number, b: number, c: number, roots: number[])
  * inside the segment (only those can flip enter < exit). Between consecutive fractions the
  * answer is constant; callers classify each piece with clearOf, never from these roots.
  * docs/maintainers/simulation-boundaries.md#perception-sound-and-cognition */
-export function sightChangeFractions(
+function sightChangeFractions(
   obstacles: readonly SightObstacle[],
   from0: WorldPoint,
   from1: WorldPoint,
@@ -657,9 +712,7 @@ export function sightChangeFractions(
     if (slope !== 0) roots.push(-value / slope);
   };
   const dot = (a: number, b: number, c: number, p: WorldPoint) => a * p.x + b * p.y + c * p.z;
-  const points = [from0, from1, to0, to1];
   for (const obstacle of obstacles) {
-    if (hullSeparated(obstacle as PreparedShape, points)) continue;
     const shape = obstacle.planes;
     // origin(t) = o + o'·t, delta(t) = d + d'·t, remaining(t) = limit - origin(t) = p + q·t.
     const planes = shape.map(([a, b, c, bound]) => {
@@ -697,6 +750,23 @@ export function sightChangeFractions(
       }
   }
   return roots.filter((t) => t > 0 && t < 1).sort((a, b) => a - b);
+}
+/** Exact changes and candidate shapes for one moving ray. Both calculations use the same
+ * four-point hull, so accepted candidates need no second separating-axis test. The result
+ * lives only for this query; classification still uses clearOf's exact segment predicate.
+ */
+export function sightSweep(
+  map: SpatialMap,
+  from0: WorldPoint,
+  from1: WorldPoint,
+  to0: WorldPoint,
+  to1: WorldPoint,
+) {
+  const obstacles = sightObstacles(map, [from0, from1, to0, to1]);
+  return {
+    obstacles,
+    fractions: obstacles.length ? sightChangeFractions(obstacles, from0, from1, to0, to1) : [],
+  };
 }
 /** Exact ordered transmission, or null once attenuation proves this threshold impossible.
  * Every admitted factor is in [0,1]: a single weaker crossing can reject before the remaining

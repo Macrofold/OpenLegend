@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { distance3D, type SurfacePoint, type WorldPoint } from '@open-legend/spatial';
 import { hasLineOfSight, interactionAnchor, isWalkable } from './spatial.js';
 import { bodyProfile, worldPosition, worldSupport } from './spatial-state.js';
@@ -172,7 +173,7 @@ export function validateFiniteCasts(world: WorldState): void {
       definition.stanceTolerance <= 0
     )
       throw new Error('Invalid installed cast definition.');
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     const source = entity.resource?.cast;
     if (source) {
       if (
@@ -208,7 +209,7 @@ export function validateFiniteCasts(world: WorldState): void {
     const action = entity.actor?.action;
     const activeDefinition =
       action?.type === 'fish'
-        ? castDefinition(world, world.entities[action.targetId ?? ''])
+        ? castDefinition(world, entityGet(world.entities, action.targetId ?? ''))
         : undefined;
     if (
       action?.type === 'fish' &&
@@ -232,7 +233,7 @@ export function validateFiniteCasts(world: WorldState): void {
         castBindingProblem(
           world,
           entity,
-          world.entities[action.targetId],
+          entityGet(world.entities, action.targetId),
           action.itemId,
           action.fishing,
         ))

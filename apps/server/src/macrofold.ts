@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { foundationCapabilities } from './foundation-capabilities.js';
 import type { WorldAgentReply } from '@open-legend/protocol';
 import type { RequestScope } from './authority.js';
@@ -1097,7 +1098,7 @@ export class MacrofoldBackend implements AiClient {
       if (!lane.worktree) {
         const resource = await this.provisioner.ensure(
           reflection ? name.slice('reflection-v2:'.length) : name,
-          this.service.world.entities[name]?.name ?? name,
+          entityGet(this.service.world.entities, name)?.name ?? name,
           worldAgent
             ? {
                 id: digest(toolPermissions),
@@ -1362,7 +1363,7 @@ export class MacrofoldBackend implements AiClient {
       this.nativeWorkerId();
       const workspace = await this.provisioner.ensure(
         actorId,
-        this.service.world.entities[actorId]?.name ?? actorId,
+        entityGet(this.service.world.entities, actorId)?.name ?? actorId,
       );
       const adapter = new ActorWorkspaceFiles(this.api, this.service.store);
       await adapter.seed(workspace.worktreeId, files, request.requestId, signal);

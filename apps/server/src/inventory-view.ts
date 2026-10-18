@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { inventoryDisplayGroups, inventoryGroupToken } from './inventory-groups.js';
 import { isEquipped, equipmentConflicts } from '@open-legend/domain';
 import { nativeCommandKind } from './native-command-kind.js';
@@ -46,6 +47,7 @@ import type {
   CommandInput,
   ActionOption,
   InventoryItemView,
+  InventoryItemSummary,
   ContainerPage,
   ObjectHistoryPage,
   InventoryDestination,
@@ -124,7 +126,7 @@ export function inventoryStorageHint(
   scope: RequestScope,
   id: string,
 ): EntityView['storage'] {
-  const target = service.world.entities[id];
+  const target = entityGet(service.world.entities, id);
   if (
     !target ||
     target.retirement ||
@@ -149,8 +151,8 @@ export function inventoryAccess(
 ): InventoryAccessView {
   service.assertScope(scope);
   const world = service.world,
-    actor = world.entities[scope.actorId],
-    target = world.entities[request.containerId];
+    actor = entityGet(world.entities, scope.actorId),
+    target = entityGet(world.entities, request.containerId);
   const unavailable: InventoryAccessView = {
     ok: false,
     scope: scopeKey(scope),
@@ -224,11 +226,11 @@ export function containerPage(
   service.assertScope(scope);
   const world = service.world,
     containerId = request.containerId ?? scope.actorId;
-  const entity = world.entities[containerId];
+  const entity = entityGet(world.entities, containerId);
   if (!entity || !canAccessContainer(world, scope.actorId, containerId))
     throw new HistoryCursorError('This container is unavailable.');
   const revision = entity.inventoryRevision ?? 0,
-    rootRevision = world.entities[scope.actorId]!.inventoryRevision ?? 0;
+    rootRevision = entityGet(world.entities, scope.actorId)!.inventoryRevision ?? 0;
   const query = (request.query ?? '').trim().toLocaleLowerCase(),
     source = request.mergeSourceId ?? '';
   if (source && itemFor(world, source)?.ownerId !== containerId)
@@ -419,7 +421,7 @@ export function containerPage(
 function containerLocation(service: WorldService, scope: RequestScope, id: string): string {
   const world = service.world,
     rootId = custodian(world, id),
-    root = world.entities[rootId]!;
+    root = entityGet(world.entities, rootId)!;
   const enclosing = objectAncestors(world, id)
     .slice(1, -1)
     .filter((entry) => entry.container && canAccessContainer(world, scope.actorId, entry.id))
@@ -468,7 +470,7 @@ export function activityStorageReader(
 ): (id: string) => InventoryDestination | undefined {
   service.assertScope(scope);
   const world = service.world,
-    actor = world.entities[scope.actorId]!;
+    actor = entityGet(world.entities, scope.actorId)!;
   const host = activityRequestHost(world, activity.family);
   const field = host?.definition.requests?.find((entry) => entry.id === activity.family)?.fields[
     activity.field
@@ -476,7 +478,7 @@ export function activityStorageReader(
   if (field?.discovery?.source !== 'storage')
     throw new HistoryCursorError('Choose an installed storage field.');
   return (id) => {
-    const target = world.entities[id];
+    const target = entityGet(world.entities, id);
     if (!target || !(target.container || id === scope.actorId)) return;
     const own = custodian(world, id) === scope.actorId;
     const reachable = canAccessContainer(world, scope.actorId, id);
@@ -495,7 +497,7 @@ export function activityStorageReader(
       (target.placement?.mode === 'world' && seesEntity(world, actor, target)) || groundAppearance;
     const granted =
       target.placement?.mode === 'contained' &&
-      world.entities[target.placement.parentEntityId]?.actor &&
+      entityGet(world.entities, target.placement.parentEntityId)?.actor &&
       target.container?.access?.actors.includes(scope.actorId) &&
       reachable;
     if (!(id === scope.actorId || (own && reachable) || visible || observedChild || granted))
@@ -547,7 +549,7 @@ export function inventoryDestinationPage(
 ): InventoryDestinationPage {
   service.assertScope(scope);
   const world = service.world,
-    actor = world.entities[scope.actorId]!,
+    actor = entityGet(world.entities, scope.actorId)!,
     source = request.source;
   if (request.activity && source)
     throw new HistoryCursorError('Activity storage selection has no transfer source.');
@@ -561,8 +563,9 @@ export function inventoryDestinationPage(
       item.revision !== source.revision ||
       item.placementRevision !== source.placementRevision ||
       (source.contentsRevision !== undefined &&
-        (world.entities[item.id]?.inventoryRevision ?? 0) !== source.contentsRevision) ||
-      (world.entities[source.containerId]?.inventoryRevision ?? 0) !== source.containerRevision ||
+        (entityGet(world.entities, item.id)?.inventoryRevision ?? 0) !== source.contentsRevision) ||
+      (entityGet(world.entities, source.containerId)?.inventoryRevision ?? 0) !==
+        source.containerRevision ||
       !Number.isSafeInteger(source.quantity) ||
       source.quantity < 1 ||
       source.quantity > availableItemQuantity(world, source.itemId))
@@ -597,7 +600,7 @@ export function inventoryDestinationPage(
         actor.actor!.alive,
         membershipDependency(world, 'installed-capabilities').revision,
         world.map.spatial.revision,
-        parentId ? (world.entities[parentId]!.inventoryRevision ?? 0) : 0,
+        parentId ? (entityGet(world.entities, parentId)!.inventoryRevision ?? 0) : 0,
       ]),
     )
     .digest('hex');
@@ -615,7 +618,8 @@ export function inventoryDestinationPage(
   if (
     cursor.binding !== binding ||
     ((cursor.phase === 'granted' || cursor.phase === 'ground') &&
-      (world.entities[cursor.grantActorId]?.inventoryRevision ?? 0) !== cursor.grantRevision)
+      (entityGet(world.entities, cursor.grantActorId)?.inventoryRevision ?? 0) !==
+        cursor.grantRevision)
   )
     throw new HistoryCursorError('Destinations, contents or access changed. Refresh destinations.');
   let spatialRevision: string | undefined;
@@ -644,7 +648,7 @@ export function inventoryDestinationPage(
         ? 'This object cannot be moved by this action.'
         : undefined));
   const project = (id: string, recipient = false): InventoryDestination => {
-    const target = world.entities[id]!,
+    const target = entityGet(world.entities, id)!,
       definition = target.container && world.itemDefinitions[target.container.definitionPin.id];
     const offer =
       recipient && source && item
@@ -741,7 +745,7 @@ export function inventoryDestinationPage(
         consumed++;
         cursor.after = id;
         if (
-          world.entities[id]?.container &&
+          entityGet(world.entities, id)?.container &&
           (cursor.phase === 'ground' || canAccessContainer(world, scope.actorId, id))
         )
           add(id);
@@ -853,7 +857,7 @@ export function inventoryDestinationPage(
 /** The same permitted availability drives page refresh and item actions, including
  * silent capability restrictions and incapacitation without a public status label. */
 export function canUseInventory(service: WorldService, scope: RequestScope): boolean {
-  const player = service.world.entities[scope.actorId],
+  const player = entityGet(service.world.entities, scope.actorId),
     actor = player?.actor;
   return (
     !!actor &&
@@ -886,6 +890,15 @@ export function inventoryItemsView(
   return items.map((item) => inventoryItemView(service, scope, item, preview));
 }
 
+/** Deliberate inspection controls method disclosure for both facts and explicit choices. */
+function inventoryRecordRead(service: WorldService, scope: RequestScope, item: ItemInstance) {
+  const world = service.world;
+  return world.itemDefinitions[item.definitionId]!.recipeRecord &&
+    currentInventoryInspection(world, scope.actorId)?.itemIds.includes(item.id)
+    ? readRecipeRecord(world, scope.actorId, item.id)
+    : undefined;
+}
+
 /** Shared item choices; list menus need no comparison, packing or detailed method prose. */
 export function inventoryItemChoices(
   service: WorldService,
@@ -895,7 +908,7 @@ export function inventoryItemChoices(
     service.previewCommand(command, scope.actorId),
 ) {
   const world = service.world,
-    player = world.entities[scope.actorId]!,
+    player = entityGet(world.entities, scope.actorId)!,
     actor = player.actor!;
   const active = canUseInventory(service, scope);
   const action = (
@@ -923,12 +936,9 @@ export function inventoryItemChoices(
 
   const definition = world.itemDefinitions[item.definitionId]!;
   const actions: ActionOption[] = [];
-  let recordRead: ReturnType<typeof readRecipeRecord> | undefined;
-  if (
-    definition.recipeRecord &&
-    currentInventoryInspection(world, player.id)?.itemIds.includes(item.id)
-  ) {
-    const read = (recordRead = readRecipeRecord(world, player.id, item.id));
+  const recordRead = inventoryRecordRead(service, scope, item);
+  if (recordRead) {
+    const read = recordRead;
     if ('recipe' in read) {
       const command = {
         type: 'learn-record' as const,
@@ -1000,7 +1010,7 @@ export function inventoryItemChoices(
           targetId: item.ownerId,
           expectedRevision: item.revision!,
           placementRevision: item.placementRevision!,
-          targetRevision: world.entities[item.ownerId]!.inventoryRevision ?? 0,
+          targetRevision: entityGet(world.entities, item.ownerId)!.inventoryRevision ?? 0,
         },
         !workReason,
         workReason ?? undefined,
@@ -1029,7 +1039,7 @@ export function inventoryItemChoices(
   };
 }
 
-/** Explicit permitted-child projection shared by the compact HUD and paginated browser. */
+/** Requested pages retain complete current item actions; recurring facts do not prepare them. */
 export function inventoryItemView(
   service: WorldService,
   scope: RequestScope,
@@ -1037,12 +1047,22 @@ export function inventoryItemView(
   preview: (command: CommandInput) => ReturnType<WorldService['previewCommand']> = (command) =>
     service.previewCommand(command, scope.actorId),
 ): InventoryItemView {
+  const { actions, recordRead } = inventoryItemChoices(service, scope, item, preview);
+  return { ...inventoryItemSummary(service, scope, item, recordRead), actions };
+}
+
+/** The same permitted item facts, without action availability or disposable execution. */
+export function inventoryItemSummary(
+  service: WorldService,
+  scope: RequestScope,
+  item: ItemInstance,
+  recordRead = inventoryRecordRead(service, scope, item),
+): InventoryItemSummary {
   const world = service.world,
-    player = world.entities[scope.actorId]!,
+    player = entityGet(world.entities, scope.actorId)!,
     actor = player.actor!,
     definition = world.itemDefinitions[item.definitionId]!;
-  const { actions, recordRead } = inventoryItemChoices(service, scope, item, preview);
-  let recipeRecord: InventoryItemView['recipeRecord'];
+  let recipeRecord: InventoryItemSummary['recipeRecord'];
   if (recordRead) {
     if ('recipe' in recordRead) {
       const known = world.knowledge[player.id]?.some(
@@ -1058,7 +1078,7 @@ export function inventoryItemView(
       };
     } else recipeRecord = { message: recordRead.message };
   }
-  const declaration = world.entities[item.id]!.declaredOwner;
+  const declaration = entityGet(world.entities, item.id)!.declaredOwner;
   const characteristics = itemCharacteristics(world, definition).map(({ key: id, ...fact }) => ({
     id,
     ...fact,
@@ -1100,7 +1120,7 @@ export function inventoryItemView(
           container: {
             load: item.container.load,
             capacity: definition.container!.capacity,
-            revision: world.entities[item.id]!.inventoryRevision ?? 0,
+            revision: entityGet(world.entities, item.id)!.inventoryRevision ?? 0,
           },
         }
       : {}),
@@ -1146,6 +1166,5 @@ export function inventoryItemView(
     ),
     equipped: isEquipped(world, scope.actorId, item.id),
     tags: [...definition.properties, ...(definition.portable ? ['Portable'] : [])],
-    actions,
   };
 }

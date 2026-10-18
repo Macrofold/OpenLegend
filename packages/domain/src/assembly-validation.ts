@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import {
   finitePoint,
   spatialBlockers,
@@ -244,7 +245,7 @@ export function validateAssemblies(world: WorldState): void {
   }
   const panels: Array<ReturnType<typeof assemblyShapes>['panels'][number]> = [];
   const completeOrigins = completeObjectHistory(world.entities);
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     const component = entity.assembly;
     const descriptor =
       entity.item && world.itemDefinitions[entity.item.definitionPin.id]?.assemblyMaterial;
@@ -258,7 +259,7 @@ export function validateAssemblies(world: WorldState): void {
         throw new Error('This material needs one actual individual identity.');
       if (
         entity.placement?.mode === 'contained' &&
-        world.entities[entity.placement.parentEntityId]?.container &&
+        entityGet(world.entities, entity.placement.parentEntityId)?.container &&
         family.inventory[descriptor!.role].bagRefusal
       )
         throw new Error('This material has no admitted rule for bag containment.');
@@ -266,7 +267,8 @@ export function validateAssemblies(world: WorldState): void {
       if (
         !origins?.length ||
         !origins.every(
-          (origin) => isSafeRecordId(origin) && (!completeOrigins || !!world.entities[origin]),
+          (origin) =>
+            isSafeRecordId(origin) && (!completeOrigins || !!entityGet(world.entities, origin)),
         ) ||
         new Set(origins).size !== origins.length
       )
@@ -290,7 +292,7 @@ export function validateAssemblies(world: WorldState): void {
     }
     const claim = entity.item?.assemblyClaim;
     if (claim) {
-      const root = world.entities[claim.rootId];
+      const root = entityGet(world.entities, claim.rootId);
       if (
         !family ||
         !root?.assembly ||
@@ -304,7 +306,7 @@ export function validateAssemblies(world: WorldState): void {
       if (
         !root.assembly.parts[entity.id] &&
         (entity.placement?.mode !== 'contained' ||
-          world.entities[entity.placement.parentEntityId]?.kind !== 'item-pile')
+          entityGet(world.entities, entity.placement.parentEntityId)?.kind !== 'item-pile')
       )
         throw new Error('Protected lowered material must have actual exposed ground custody.');
     }
@@ -315,7 +317,8 @@ export function validateAssemblies(world: WorldState): void {
         !action.materialOriginIds.length ||
         new Set(action.materialOriginIds).size !== action.materialOriginIds.length ||
         !action.materialOriginIds.every(
-          (origin) => isSafeRecordId(origin) && (!completeOrigins || !!world.entities[origin]),
+          (origin) =>
+            isSafeRecordId(origin) && (!completeOrigins || !!entityGet(world.entities, origin)),
         ))
     )
       throw new Error('Invalid saved material-production provenance.');
@@ -349,10 +352,10 @@ export function validateAssemblies(world: WorldState): void {
       const candidates =
         action.assemblyPhase.operation === 'reclaim-lowered'
           ? (() => {
-              const material = world.entities[action.assemblyPhase!.itemId];
+              const material = entityGet(world.entities, action.assemblyPhase!.itemId);
               const pile =
                 material?.placement?.mode === 'contained'
-                  ? world.entities[material.placement.parentEntityId]
+                  ? entityGet(world.entities, material.placement.parentEntityId)
                   : undefined;
               const p = pile?.placement;
               return p?.mode === 'world' && p.supportSurfaceId
@@ -408,7 +411,7 @@ export function validateAssemblies(world: WorldState): void {
     const slots = new Set<string>();
     for (const [id, part] of Object.entries(component.parts)) {
       chargeWork({ candidates: 1 });
-      const material = world.entities[id],
+      const material = entityGet(world.entities, id),
         placement = material?.placement,
         rule =
           material?.item && world.itemDefinitions[material.item.definitionPin.id]?.assemblyMaterial;
@@ -496,7 +499,7 @@ export function validateAssemblies(world: WorldState): void {
       )
         throw new Error('Invalid actual attachment joint.');
       bound.add(joint.bindingId);
-      const placement = world.entities[joint.bindingId]!.placement!;
+      const placement = entityGet(world.entities, joint.bindingId)!.placement!;
       const expected = {
         ...postLocal(current, component.parts[joint.postId]!.slot),
         y: materialPostHeight(world, joint.postId)!,
@@ -514,7 +517,7 @@ export function validateAssemblies(world: WorldState): void {
   const blockers = spatialBlockers(spatialMap(world));
   if (blockers.length > SPATIAL_LIMITS.maxBlockers)
     throw new Error('Saved assembly geometry exceeds the physical work limit.');
-  for (const root of Object.values(world.entities)) {
+  for (const root of entityValues(world.entities)) {
     if (!root.assembly || root.assembly.retired) continue;
     const family = world.assemblyFamilies[root.assembly.family.id]!,
       site = assemblySite(root)!;
@@ -551,7 +554,7 @@ export function validateAssemblies(world: WorldState): void {
       }
     }
   }
-  for (const root of Object.values(world.entities)) {
+  for (const root of entityValues(world.entities)) {
     const component = root.assembly;
     if (!component || component.retired) continue;
     const family = world.assemblyFamilies[component.family.id]!;

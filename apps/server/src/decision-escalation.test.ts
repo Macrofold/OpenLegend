@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import {
+  entityGet,
+  entitySet,
   NPC_ID,
   PLAYER_ID,
   createItemLot,
@@ -167,7 +169,7 @@ async function harness(
   await service.control({ paused: false });
   await editWorld(service, (world) => {
     createItemLot(world, NPC_ID, 'berries', 2, 'decision-fixture-food');
-    const attributes = world.entities[NPC_ID]!.actor!.attributes!;
+    const attributes = entityGet(world.entities, NPC_ID)!.actor!.attributes!;
     if (attributes['wilderness:fullness']) attributes['wilderness:fullness'].value = 30;
     if (attributes['clockwork:charge']) attributes['clockwork:charge'].value = 100;
   });
@@ -250,7 +252,7 @@ async function admitted(
       timelineId: h.service.timelineId,
       generation: h.service.generation,
       actorId,
-      physicalLife: h.service.world.entities[actorId]?.actor?.physicalLife ?? 0,
+      physicalLife: entityGet(h.service.world.entities, actorId)?.actor?.physicalLife ?? 0,
       cause: { kind: 'intent', id },
       originalWatermark: 0,
       urgency: 0,
@@ -649,7 +651,7 @@ describe('enabled character decision reconsideration', () => {
     );
     await editWorld(h.service, (world) => {
       const id = 'fixture-other-mind';
-      world.entities[id] = { ...structuredClone(world.entities[NPC_ID]!), id };
+      entitySet(world.entities, id, { ...structuredClone(entityGet(world.entities, NPC_ID)!), id });
     });
     await h.director.considerThought();
     expect(h.calls.primary).toHaveLength(1);
@@ -676,14 +678,14 @@ describe('enabled character decision reconsideration', () => {
       ]);
     const original = decisionValidity(h.service.world, NPC_ID);
     await editWorld(h.service, (world) => {
-      world.entities[NPC_ID]!.actor!.attributes!['wilderness:fullness']!.value = 30.01;
+      entityGet(world.entities, NPC_ID)!.actor!.attributes!['wilderness:fullness']!.value = 30.01;
     });
     const drifting = decisionValidity(h.service.world, NPC_ID);
     released.resolve(value(request.requestId, 'openai', chooseFood(request)));
     expect(drifting).toBe(original);
     expect((await pending).decision?.groups['q0']?.state).toBe('resolved');
     await editWorld(h.service, (world) => {
-      world.entities[NPC_ID]!.actor!.attributes!['wilderness:fullness']!.value = 100;
+      entityGet(world.entities, NPC_ID)!.actor!.attributes!['wilderness:fullness']!.value = 100;
     });
     expect(decisionValidity(h.service.world, NPC_ID)).not.toBe(original);
   });
@@ -699,7 +701,7 @@ describe('enabled character decision reconsideration', () => {
     const pending = h.thought();
     const request = await entered.promise;
     await editWorld(h.service, (world) => {
-      world.entities[NPC_ID]!.actor!.planGeneration++;
+      entityGet(world.entities, NPC_ID)!.actor!.planGeneration++;
     });
     released.resolve(value(request.requestId, 'openai', chooseFood(request)));
     const job = await pending;
@@ -729,7 +731,7 @@ describe('enabled character decision reconsideration', () => {
       expect(request.signal?.aborted).toBe(true);
     } else
       await editWorld(h.service, (world) => {
-        const actor = world.entities[NPC_ID]!.actor!;
+        const actor = entityGet(world.entities, NPC_ID)!.actor!;
         if (change === 'physical life') actor.physicalLife = (actor.physicalLife ?? 0) + 1;
         else if (change === 'control') actor.controller = 'player';
         else if (change === 'installed rules') {
@@ -800,7 +802,7 @@ describe('enabled character decision reconsideration', () => {
     expect(h.service.world.simTime).toBeGreaterThan(before);
     expect(h.food()).toBe(2);
     await editWorld(h.service, (world) => {
-      world.entities[PLAYER_ID]!.description += ' A fixture detail.';
+      entityGet(world.entities, PLAYER_ID)!.description += ' A fixture detail.';
     });
     released.resolve(value(request.requestId, 'openai', chooseFood(request)));
     const job = await pending;
@@ -932,9 +934,9 @@ describe('enabled character decision reconsideration', () => {
         });
       },
     });
-    expect(h.service.world.entities[NPC_ID]!.actor!.species).toBe('construct');
+    expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.species).toBe('construct');
     expect(
-      h.service.world.entities[NPC_ID]!.actor!.attributes?.['wilderness:fullness'],
+      entityGet(h.service.world.entities, NPC_ID)!.actor!.attributes?.['wilderness:fullness'],
     ).toBeUndefined();
     expect(
       h.service.previewCommand(
@@ -943,14 +945,16 @@ describe('enabled character decision reconsideration', () => {
         false,
       ).ok,
     ).toBe(true);
-    const supply = h.service.world.entities['charge-bank']!.replenisher!.remaining;
+    const supply = entityGet(h.service.world.entities, 'charge-bank')!.replenisher!.remaining;
     const job = await h.thought();
     expect(job.decision?.groups['q0']?.state, JSON.stringify(job)).toBe('resolved');
-    expect(h.service.world.entities[NPC_ID]!.actor!.agency.plan?.steps[0]?.command.type).toBe(
-      'replenish',
-    );
+    expect(
+      entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.plan?.steps[0]?.command.type,
+    ).toBe('replenish');
     await h.service.tick(0.1);
-    expect(h.service.world.entities['charge-bank']!.replenisher!.remaining).toBeLessThan(supply);
+    expect(entityGet(h.service.world.entities, 'charge-bank')!.replenisher!.remaining).toBeLessThan(
+      supply,
+    );
   });
 });
 
@@ -1296,7 +1300,7 @@ describe('durable reader publication and bounded scheduling', () => {
           },
           {},
           [NPC_ID],
-          world.entities[NPC_ID]!.actor!.planGeneration,
+          entityGet(world.entities, NPC_ID)!.actor!.planGeneration,
         ),
       undefined,
       undefined,
@@ -1447,7 +1451,7 @@ describe('durable reader publication and bounded scheduling', () => {
             },
             {},
             [NPC_ID],
-            world.entities[NPC_ID]!.actor!.planGeneration,
+            entityGet(world.entities, NPC_ID)!.actor!.planGeneration,
           ),
         undefined,
         undefined,
@@ -1485,7 +1489,7 @@ describe('durable reader publication and bounded scheduling', () => {
           { operations: [] },
           {},
           [NPC_ID],
-          world.entities[NPC_ID]!.actor!.planGeneration,
+          entityGet(world.entities, NPC_ID)!.actor!.planGeneration,
         ),
       undefined,
       undefined,
@@ -1654,7 +1658,10 @@ describe('durable reader publication and bounded scheduling', () => {
           name: `Authored fixture need ${index}`,
           meaning: 'A hypothetical authored need observation.',
         });
-        world.entities[NPC_ID]!.actor!.attributes![id] = { value: 30 + index, revision: 0 };
+        entityGet(world.entities, NPC_ID)!.actor!.attributes![id] = {
+          value: 30 + index,
+          revision: 0,
+        };
       }
       world.moduleManifest.pins = world.moduleManifest.definitions.map(definitionPin);
       world.moduleManifest.revision++;
@@ -1724,7 +1731,11 @@ describe('durable reader publication and bounded scheduling', () => {
     const ids = Array.from({ length: 17 }, (_, index) => `fixture-queue-person-${index}`);
     await editWorld(h.service, (world) => {
       for (const id of ids)
-        world.entities[id] = { ...structuredClone(world.entities[NPC_ID]!), id, name: id };
+        entitySet(world.entities, id, {
+          ...structuredClone(entityGet(world.entities, NPC_ID)!),
+          id,
+          name: id,
+        });
     });
     const blocker = deferred<void>(),
       started = deferred<void>();
@@ -1866,7 +1877,7 @@ describe('durable reader publication and bounded scheduling', () => {
     await entered.promise;
     await editWorld(h.service, (world) => {
       const id = '000-new-index-character';
-      world.entities[id] = { ...structuredClone(world.entities[NPC_ID]!), id };
+      entitySet(world.entities, id, { ...structuredClone(entityGet(world.entities, NPC_ID)!), id });
       world.memories[id] = [
         {
           id: 'new-index-fixture-source',

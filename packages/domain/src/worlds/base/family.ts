@@ -1,3 +1,4 @@
+import { entityGet } from '../../entity-collection.js';
 import type { Transition, WorldState } from '../../types.js';
 import { draftWorld } from '../../draft.js';
 import { finish, outcome } from '../../events.js';
@@ -90,12 +91,12 @@ export function validateFamilyTree(world: WorldState): void {
       !validId(link.parentId) ||
       !validId(link.childId) ||
       link.parentId === link.childId ||
-      !world.entities[link.parentId]?.actor ||
-      !world.entities[link.childId]?.actor
+      !entityGet(world.entities, link.parentId)?.actor ||
+      !entityGet(world.entities, link.childId)?.actor
     )
       throw new Error('Parent links must connect two existing characters.');
-    const parentSpecies = world.entities[link.parentId]!.actor!.species;
-    const childSpecies = world.entities[link.childId]!.actor!.species;
+    const parentSpecies = entityGet(world.entities, link.parentId)!.actor!.species;
+    const childSpecies = entityGet(world.entities, link.childId)!.actor!.species;
     if (!parentSpecies || parentSpecies === 'construct' || parentSpecies !== childSpecies)
       throw new Error(
         'Biological parentage requires characters of the same known biological species.',

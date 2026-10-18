@@ -1,3 +1,4 @@
+import { entityGet } from '../../packages/domain/src/index.js';
 import { enterGame } from '../fixtures/browser.js';
 import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { test, expect } from '@playwright/test';
@@ -43,7 +44,9 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
       0,
     );
     expect(game.service.world.simTime).toBeCloseTo(deadline);
-    expect(game.service.world.entities[actorId]?.actor?.participation?.phase).toBe('inactive');
+    expect(entityGet(game.service.world.entities, actorId)?.actor?.participation?.phase).toBe(
+      'inactive',
+    );
     expect(game.service.world.exitExposures?.[actorId]).toBeUndefined();
   };
   try {
@@ -98,7 +101,9 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     expect(game.service.world.simTime).toBe(departureStartedAt);
     await game.service.tick(1);
     expect(game.service.world.simTime).toBe(departureStartedAt + gameSecondsPerRealSecond);
-    expect(game.service.world.entities[actorId]!.actor!.participation?.phase).toBe('exiting');
+    expect(entityGet(game.service.world.entities, actorId)!.actor!.participation?.phase).toBe(
+      'exiting',
+    );
     expect(game.service.world.exitExposures?.[game.service.controlledEntityId]).toBe(
       departureDeadline,
     );
@@ -113,7 +118,9 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     await expect(page.getByRole('dialog', { name: 'Game is paused.', exact: true })).toBeHidden();
     await enterGame(page);
     await expect.poll(() => game.service.paused).toBe(false);
-    expect(game.service.world.entities[actorId]!.actor!.participation?.phase).toBe('active');
+    expect(entityGet(game.service.world.entities, actorId)!.actor!.participation?.phase).toBe(
+      'active',
+    );
     const resumedAt = game.service.world.simTime;
     await game.service.tick(1);
     expect(game.service.world.simTime).toBe(resumedAt + gameSecondsPerRealSecond);
@@ -215,10 +222,14 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
       .toBe(beforeClose + exposure);
     expect(game.service.present).toBe(false);
     expect(game.service.paused).toBe(false);
-    expect(game.service.world.entities[actorId]!.actor!.participation?.phase).toBe('exiting');
+    expect(entityGet(game.service.world.entities, actorId)!.actor!.participation?.phase).toBe(
+      'exiting',
+    );
     await finishDeparture();
     expect(game.service.world.simTime).toBe(beforeClose + exposure);
-    expect(game.service.world.entities[actorId]!.actor!.participation?.phase).toBe('inactive');
+    expect(entityGet(game.service.world.entities, actorId)!.actor!.participation?.phase).toBe(
+      'inactive',
+    );
     expect(game.service.world.exitExposures?.[actorId]).toBeUndefined();
     await expect.poll(() => game.service.pauseReason).toBe('away');
     await game.service.tick(1);

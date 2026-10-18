@@ -4,7 +4,7 @@ import type { CatalogueAction, EntityView } from '@open-legend/protocol';
  * walking position, animation, distance label or remaining-time update. The
  * current projection already owns native eligibility; the client adds no rules. */
 export function actionSubjectKey(subject: EntityView | undefined): string {
-  const choice = (action: EntityView['actions'][number]) => [
+  const choice = (action: NonNullable<EntityView['controls']>[number]) => [
     action.id,
     action.command,
     action.enabled,
@@ -20,8 +20,7 @@ export function actionSubjectKey(subject: EntityView | undefined): string {
         subject.storage?.revision,
         subject.canTalk,
         subject.statusEffects?.map((effect) => effect.id),
-        subject.actions.map(choice),
-        subject.equippedAction && choice(subject.equippedAction),
+        subject.controls?.map(choice),
       ],
     ) ?? ''
   );

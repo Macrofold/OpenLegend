@@ -1,3 +1,9 @@
+import {
+  entityDraftAudit,
+  entityDraftChanges,
+  entityGet,
+  entityKeys,
+} from './entity-collection.js';
 import { captureOutingIndex } from './outing-index.js';
 import { captureExposureCache } from './encounter-cache.js';
 import { captureAppraisalIndex } from './appraisal-index.js';
@@ -17,6 +23,7 @@ import { captureContributionResidency } from './contribution-residency.js';
 import { Immer, current, isDraft, original, enablePatches, freeze, type Patch } from 'immer';
 import type { Entity, WorldEvent, WorldState } from './types.js';
 import { countDomainWork } from './diagnostic-counters.js';
+import { materializeNativeValuesInPlace } from './native-values.js';
 
 // One isolated instance: drafts never cross the domain boundary. Unchanged branches
 // retain identity for persistence and projection; legacy seed/migration data stays mutable.
@@ -45,6 +52,28 @@ const entitySuccessors = new WeakMap<
   WorldState['entities'],
   { next: WeakRef<WorldState['entities']>; changed: ReadonlySet<string> }
 >();
+const recordMapSuccessors = new WeakMap<
+  object,
+  { next: WeakRef<object>; changed: ReadonlySet<string> }
+>();
+/** Exact changed keys for key-only record maps, certified by publication rather than a caller hint.
+ * Replaced maps, forks and collected/long lineages deliberately use the full codec. */
+export function recordMapChangesBetween(
+  before: object,
+  after: object,
+): ReadonlySet<string> | undefined {
+  if (!Object.isFrozen(before) || !Object.isFrozen(after)) return;
+  const changed = new Set<string>();
+  let cursor = before;
+  for (let steps = 0; cursor !== after && steps < 1024; steps++) {
+    const link = recordMapSuccessors.get(cursor),
+      next = link?.next.deref();
+    if (!link || !next) return;
+    for (const id of link.changed) changed.add(id);
+    cursor = next;
+  }
+  return cursor === after ? changed : undefined;
+}
 /** Exact immutable write lineage, bounded to one routine persistence window. Forks,
  * mutable builders, collected links and long gaps deliberately use the complete diff. */
 export function entityChangesBetween(
@@ -198,28 +227,12 @@ export function readOnlyDraftView<T extends object>(value: T): T {
  * Frozen unchanged branches skip Immer traversal (docs/architecture.md#state-and-transitions).
  */
 export function freezeWorld(world: WorldState): WorldState {
-  const known = frozenPredecessor.get(world);
-  if (!known || known.entities !== world.entities || Object.isFrozen(world)) {
-    freezeData(world);
-    return world;
-  }
-  // Every other entity is the deep-frozen predecessor's own value. Only the patch write set
-  // and the copies Immer published (including ones whose writes cancelled out and left no
-  // patch) need a deep walk; touching every key was O(all entities) per publication (PF08).
-  Object.freeze(world);
-  for (const key of Object.keys(world))
-    if (key !== 'entities') freezeData((world as unknown as Record<string, unknown>)[key]);
-  Object.freeze(world.entities);
-  for (const id of known.changed) freezeData(world.entities[id]);
-  for (const copy of known.copies) freezeData(copy);
-  frozenPredecessor.delete(world);
+  // Entity storage now has persistent tree branches. Ordinary freezing visits the
+  // changed logarithmic paths and stops at unchanged frozen nodes, without a flat
+  // directory walk or a second published-copy special case.
+  freezeData(world);
   return world;
 }
-/** Published transitions whose predecessor entity map was already deep-frozen. */
-const frozenPredecessor = new WeakMap<
-  WorldState,
-  { entities: WorldState['entities']; changed: ReadonlySet<string>; copies: readonly object[] }
->();
 type ImmerState = {
   assigned_?: Record<string, boolean>;
   copy_?: unknown;
@@ -232,30 +245,72 @@ type ImmerState = {
  * fields conservatively revisit a touched sensory branch until this draft finishes.
  * Unknown replacements/builders cannot supply this proof and rebuild instead.
  * docs/projects/completed/parallel-batch-02-foundations-and-usability-tech-design.md#phase-specific-contract */
-export function sensoryDraftWrites(world: WorldState) {
+export function sensoryDraftWrites(
+  world: WorldState,
+  previous?: { ids: ReadonlySet<string>; complete: boolean },
+) {
   const sources = new Set<string>(),
     observers = new Set<string>();
-  const proof = { sources, observers, complete: true, overflow: false };
-  if (!isDraft(world)) return { ...proof, complete: false };
+  const coverage = { ids: new Set(previous?.ids), complete: previous?.complete ?? true };
+  const proof = {
+    sources,
+    observers,
+    complete: coverage.complete,
+    overflow: false,
+    orderChanged: false,
+    coverage,
+  };
+  const unknown = () => {
+    coverage.complete = proof.complete = false;
+    return proof;
+  };
+  if (!isDraft(world)) return unknown();
   const entities = readOnlyDraftView(world).entities;
   if (!isDraft(entities)) {
-    // An unchanged immutable table is safe; a directly installed table is unclassified.
-    return {
-      ...proof,
-      complete: entities === original(world)!.entities && Object.isFrozen(entities),
-    };
+    return entities === original(world)!.entities && Object.isFrozen(entities) && !coverage.ids.size
+      ? proof
+      : unknown();
   }
-  const state = (entities as unknown as Record<symbol, ImmerState>)[IMMER_STATE];
-  const scope = state?.scope_?.drafts_;
-  if (!state || !state.assigned_ || typeof state.assigned_ !== 'object' || !Array.isArray(scope))
-    return { ...proof, complete: false };
-  // Whole-record insertion/replacement may contain unproxied mutable descendants.
-  if (Object.keys(state.assigned_).length) proof.complete = false;
+  if (original(entities) !== original(world)!.entities) return unknown();
+  const audit = entityDraftAudit(entities);
+  if (!audit) return unknown();
+  const include = (id: string, source: boolean, observer: boolean) => {
+    if (proof.overflow) return;
+    const extra = Number(source && !sources.has(id)) + Number(observer && !observers.has(id));
+    if (sources.size + observers.size + extra > MAX_CHANGE_SCOPES) {
+      sources.clear();
+      observers.clear();
+      proof.overflow = true;
+      unknown();
+    } else {
+      if (source) sources.add(id);
+      if (observer) observers.add(id);
+    }
+  };
+  // Assigned IDs cover insertions, replacements and removals exactly. Revisit each on
+  // every phase: a newly installed record can have unproxied descendants mutated later.
+  // Physical records can also change JS root order (including numeric keys/reinsertion).
+  const currentEntities = readOnlyDraftView(entities);
+  for (const id of audit.assigned) {
+    if (!coverage.ids.has(id) && coverage.ids.size === MAX_CHANGE_SCOPES) {
+      unknown();
+      break;
+    }
+    coverage.ids.add(id);
+  }
+  // Immer removes an inserted-then-deleted key from assigned_. A preceding phase
+  // may already have indexed it, so coverage lasts until this working draft ends.
+  for (const id of coverage.ids) {
+    include(id, true, true);
+    proof.orderChanged ||=
+      entityGet(original(world)!.entities, id)?.placement?.mode === 'world' ||
+      entityGet(currentEntities, id)?.placement?.mode === 'world';
+  }
   const changed = (value: object | undefined, keys: readonly string[]): boolean => {
     if (!value || !isDraft(value)) return false;
     const child = (value as Record<symbol, ImmerState>)[IMMER_STATE];
     if (!child || !child.assigned_ || typeof child.assigned_ !== 'object') {
-      proof.complete = false;
+      unknown();
       return true;
     }
     const latest = readOnlyDraftView(value) as Record<string, unknown>;
@@ -266,11 +321,12 @@ export function sensoryDraftWrites(world: WorldState) {
           (latest[key] as Record<symbol, ImmerState>)[IMMER_STATE]?.modified_ === true),
     );
   };
-  for (const value of scope) {
+  for (const value of audit.values.values()) {
     countDomainWork('sensoryDraftsVisited');
-    const child = (value as Record<symbol, ImmerState>)[IMMER_STATE];
-    if (child?.parent_ !== state || child.modified_ !== true) continue;
-    const entity = readOnlyDraftView(value) as WorldState['entities'][string];
+    if (!isDraft(value)) continue;
+    const child = (value as unknown as Record<symbol, ImmerState>)[IMMER_STATE];
+    if (child?.modified_ !== true) continue;
+    const entity = readOnlyDraftView(value) as Entity;
     const source =
       changed(value, ['name', 'kind', 'appearance', 'placement', 'retirement']) ||
       changed(entity.spatial, ['body', 'inactiveBody', 'softFootprint']) ||
@@ -292,54 +348,18 @@ export function sensoryDraftWrites(world: WorldState) {
     const observer = source || changed(entity.actor, ['senses']);
     // Capability restrictions are recomputed in each observer's scalar signature;
     // elapsed status time and needs alone do not invalidate an unchanged view.
-    if (!proof.overflow) {
-      const extra =
-        Number(source && !sources.has(entity.id)) + Number(observer && !observers.has(entity.id));
-      if (sources.size + observers.size + extra > MAX_CHANGE_SCOPES) {
-        sources.clear();
-        observers.clear();
-        proof.overflow = true;
-      } else {
-        if (source) sources.add(entity.id);
-        if (observer) observers.add(entity.id);
-      }
-    }
+    include(entity.id, source, observer);
   }
   return proof;
 }
-/** Entity copies this draft will publish, read from Immer 10's draft scope before finishing
- * revokes it. Undefined when that internal shape is absent, so callers keep the full walk. */
-function publishedEntityCopies(world: WorldState): object[] | undefined {
-  const entities = readOnlyDraftView(world).entities;
-  if (!isDraft(entities)) return [];
-  const state = (entities as unknown as Record<symbol, ImmerState | undefined>)[IMMER_STATE];
-  const drafts = state?.scope_?.drafts_;
-  if (!state || !Array.isArray(drafts) || typeof state.modified_ !== 'boolean') return undefined;
-  const copies: object[] = [];
-  for (const draft of drafts) {
-    const child =
-      draft && typeof draft === 'object'
-        ? (draft as Record<symbol, ImmerState | undefined>)[IMMER_STATE]
-        : undefined;
-    if (child?.parent_ === state && child.modified_ === true && child.copy_)
-      copies.push(child.copy_ as object);
-  }
-  return copies;
-}
-/** Conservative entity write set for consumers inside an unpublished transition. Reuse
- * the publication audit; unknown builders/replacements fall back to a full check. */
+/** Exact collection-owned writes, including inserted-then-deleted identities. Unknown
+ * direct collection replacement cannot certify completeness and retains the full fallback. */
 export function changedDraftEntityIds(world: WorldState): ReadonlySet<string> | undefined {
   if (!isDraft(world)) return;
   const entities = readOnlyDraftView(world).entities;
   if (!isDraft(entities)) return entities === original(world)!.entities ? new Set() : undefined;
-  const state = (entities as unknown as Record<symbol, ImmerState | undefined>)[IMMER_STATE];
-  if (!state?.assigned_ || typeof state.assigned_ !== 'object') return;
-  const copies = publishedEntityCopies(world);
-  if (!copies) return;
-  return new Set([
-    ...Object.keys(state.assigned_),
-    ...copies.map((copy) => (copy as WorldState['entities'][string]).id),
-  ]);
+  if (original(entities) !== original(world)!.entities) return;
+  return entityDraftChanges(entities);
 }
 /** Deep-freeze one owned history record without per-key entry allocation. */
 function frozenRecord<T>(value: T): T {
@@ -365,7 +385,10 @@ function freezeData(value: unknown): void {
   Object.freeze(value);
   for (const key of Object.keys(value)) freezeData((value as Record<string, unknown>)[key]);
 }
-export function draftWorld(world: WorldState): WorldState {
+export function draftWorld(
+  world: WorldState,
+  options: { retainNativeValues?: boolean } = {},
+): WorldState {
   sealAppends(world);
   const base = isDraft(world) ? current(world) : world;
   // A compound command may copy an already modified entity dictionary. Carry its
@@ -374,6 +397,7 @@ export function draftWorld(world: WorldState): WorldState {
   if (!completeObjectHistory(world.entities)) markPartialObjectHistory(base.entities);
   const result = drafts.createDraft(base);
   inheritSensoryChanges(result, world);
+  if (!options.retainNativeValues) materializeNativeValuesInPlace(result);
   return result;
 }
 export function finishWorld(
@@ -418,18 +442,34 @@ export function finishWorld(
   const before = base.events;
   let appendOnly = true;
   const arrays = new Map<unknown[], { path: (string | number)[]; appendOnly: boolean }>();
-  const entityIds = new Set<string>();
-  // Read before finishing: finishing revokes the drafts that identify published entity copies.
-  const copies = publishedEntityCopies(world);
+  const knownEntityIds = changedDraftEntityIds(world);
+  const entityIds = new Set(knownEntityIds ?? entityKeys(base.entities));
+  const perceptionIds = new Map<string, Set<string> | null>();
+  let perceptionRootReplaced = false;
+  const correctionIds = new Map<string, Set<string> | null>();
+  let correctionRootReplaced = false;
   const result = drafts.finishDraft(world, (patches) => {
     capturePatches?.(patches);
     for (const { op, path, value: patchValue } of patches) {
-      if (path[0] === 'entities') {
-        if (typeof path[1] === 'string') entityIds.add(path[1]);
-        else {
-          for (const id of Object.keys(base.entities)) entityIds.add(id);
-          if (patchValue && typeof patchValue === 'object')
-            for (const id of Object.keys(patchValue)) entityIds.add(id);
+      if (path[0] === 'perceptionEpisodes') {
+        const observer = path[1];
+        if (typeof observer !== 'string') perceptionRootReplaced = true;
+        else if (path.length !== 3 || typeof path[2] !== 'string')
+          perceptionIds.set(observer, null);
+        else if (perceptionIds.get(observer) !== null) {
+          const ids = perceptionIds.get(observer) ?? new Set<string>();
+          ids.add(path[2]);
+          perceptionIds.set(observer, ids);
+        }
+      }
+      if (path[0] === 'experience' && (path.length === 1 || path[1] === 'corrections')) {
+        const actorId = path[2];
+        if (typeof actorId !== 'string') correctionRootReplaced = true;
+        else if (path.length !== 4 || typeof path[3] !== 'string') correctionIds.set(actorId, null);
+        else if (correctionIds.get(actorId) !== null) {
+          const ids = correctionIds.get(actorId) ?? new Set<string>();
+          ids.add(path[3]);
+          correctionIds.set(actorId, ids);
         }
       }
       let value: unknown = base;
@@ -466,20 +506,47 @@ export function finishWorld(
   // docs/simulation-time.md#native-interval-contract
   if (result !== base && result.nativeInterval === base.nativeInterval)
     delete result.nativeInterval;
+  if (!knownEntityIds) for (const id of entityKeys(result.entities)) entityIds.add(id);
   changedEntities.set(result, entityIds);
-  // Entity maps are frozen only by the deep boundary freeze; a frozen predecessor lets that
-  // freeze skip every entity it still shares.
-  if (copies && base.entities !== result.entities && Object.isFrozen(base.entities))
-    frozenPredecessor.set(result, {
-      entities: result.entities,
-      changed: entityIds,
-      // A compound custody transition can replace an already modified entity. Its
-      // discarded draft copy is never finalized and contains revoked child proxies.
-      // Freeze only copies actually published; cancelled writes still retain theirs.
-      copies: copies.filter((copy) => result.entities[(copy as Entity).id] === copy),
-    });
   if (base.entities !== result.entities && Object.isFrozen(base.entities))
     entitySuccessors.set(base.entities, { next: new WeakRef(result.entities), changed: entityIds });
+  // Only these key-addressed relationships opt in. Ordered maps cannot use a
+  // changed-key proof: deleting and reinserting a key can change order without
+  // changing its final value. docs/performance.md#storage-execution
+  const publishMap = (
+    before: object | undefined,
+    after: object | undefined,
+    changed: ReadonlySet<string>,
+  ) => {
+    if (before && after && before !== after && Object.isFrozen(before))
+      recordMapSuccessors.set(before, { next: new WeakRef(after), changed });
+  };
+  if (!perceptionRootReplaced) {
+    if (perceptionIds.size)
+      publishMap(base.perceptionEpisodes, result.perceptionEpisodes, new Set(perceptionIds.keys()));
+    for (const [observer, changed] of perceptionIds)
+      if (changed)
+        publishMap(
+          base.perceptionEpisodes?.[observer],
+          result.perceptionEpisodes?.[observer],
+          changed,
+        );
+  }
+  if (!correctionRootReplaced) {
+    if (correctionIds.size)
+      publishMap(
+        base.experience?.corrections,
+        result.experience?.corrections,
+        new Set(correctionIds.keys()),
+      );
+    for (const [actorId, changed] of correctionIds)
+      if (changed)
+        publishMap(
+          base.experience?.corrections?.[actorId],
+          result.experience?.corrections?.[actorId],
+          changed,
+        );
+  }
   publishChanges(result, result !== base);
   publishSensory(result);
   publishRoots(result, entityIds);

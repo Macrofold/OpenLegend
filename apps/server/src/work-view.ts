@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import {
   nativeActivityView,
   type ActivityNode,
@@ -13,7 +14,7 @@ import { gameTime } from './recall.js';
  * docs/action-capabilities.md#18-interface-and-presentation
  */
 export function projectWork(world: WorldState, actorId: string): WorkView | null {
-  const actor = world.entities[actorId]?.actor;
+  const actor = entityGet(world.entities, actorId)?.actor;
   if (!actor) return null;
   const { plan, suspended } = actor.agency;
   // An action started directly (not a plan step) is current work too, and Stop ends it.
@@ -89,7 +90,7 @@ function nodeLabel(node: ActivityNode, iteration: number): string {
 }
 
 function frontier(world: WorldState, actorId: string, plan: ActorPlan, direct: boolean) {
-  const action = world.entities[actorId]!.actor!.action;
+  const action = entityGet(world.entities, actorId)!.actor!.action;
   const steps: WorkStepView[] = plan.steps.map((step) => ({
     id: step.id,
     label: stepLabel(world, step),

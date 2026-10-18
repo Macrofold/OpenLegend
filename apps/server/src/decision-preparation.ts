@@ -1,4 +1,5 @@
 import {
+  entityGet,
   activityRequestDescriptors,
   canSpeak,
   commitActorResponse,
@@ -102,8 +103,8 @@ export async function prepareReconsideration(
     Object.keys(prepared.entityReferences),
     Object.keys(prepared.binding.actions),
     {
-      speech: canSpeak(service.world.entities[actorId]),
-      expressions: supportsManualWork(service.world.entities[actorId]),
+      speech: canSpeak(entityGet(service.world.entities, actorId)),
+      expressions: supportsManualWork(entityGet(service.world.entities, actorId)),
       proposals: false,
     },
     Object.keys(prepared.binding.knowledgeReferences ?? {}),

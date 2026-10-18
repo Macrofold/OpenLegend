@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { accessiblePossession, canAccessContainer, possessionItems } from './object-access.js';
 import { acquireExposure } from './events.js';
 import { cloneValue } from './draft.js';
@@ -126,7 +127,7 @@ function formatObservedLocationLabel(
  * actor's inspection under the server's timeline owner.
  * docs/projects/parallel-batch-01-playable-week-tech-design.md#discovery-and-character-context */
 export function inventoryInspectionScope(world: WorldState, actorId: string, containerId?: string) {
-  const actor = world.entities[actorId];
+  const actor = entityGet(world.entities, actorId);
   if (!actor?.actor) throw new Error('Actor unavailable.');
   const selected = containerId ?? actorId;
   if (!canAccessContainer(world, actorId, selected))
@@ -151,11 +152,11 @@ export function inventoryInspectionScope(world: WorldState, actorId: string, con
 
 /** A stale page supplies neither transfer choices nor learned-method object bindings. */
 export function currentInventoryInspection(world: WorldState, actorId: string) {
-  const prior = world.entities[actorId]?.actor?.inventoryInspection;
+  const prior = entityGet(world.entities, actorId)?.actor?.inventoryInspection;
   if (!prior) return undefined;
   try {
     return prior.revision ===
-      (world.entities[prior.containerId ?? actorId]?.inventoryRevision ?? 0) &&
+      (entityGet(world.entities, prior.containerId ?? actorId)?.inventoryRevision ?? 0) &&
       prior.scope === inventoryInspectionScope(world, actorId, prior.containerId)
       ? prior
       : undefined;
@@ -169,7 +170,7 @@ export function currentInventoryInspection(world: WorldState, actorId: string) {
 export function inspectedContainer(world: WorldState, actorId: string) {
   const inspection = currentInventoryInspection(world, actorId);
   if (!inspection?.containerId) return undefined;
-  const container = world.entities[inspection.containerId]!;
+  const container = entityGet(world.entities, inspection.containerId)!;
   const definition = container.container
     ? world.itemDefinitions[container.container.definitionPin.id]
     : undefined;
@@ -208,9 +209,9 @@ export function inspectPossessions(
   expectedScope?: string,
   selectedItemId?: string,
 ) {
-  const entity = world.entities[actorId];
+  const entity = entityGet(world.entities, actorId);
   if (!entity?.actor) throw new Error('Actor unavailable.');
-  const selected = world.entities[containerId ?? actorId]!;
+  const selected = entityGet(world.entities, containerId ?? actorId)!;
   const scope = inventoryInspectionScope(world, actorId, containerId);
   const revision = selected.inventoryRevision ?? 0;
   const locationForOwner = ownerLocationLookup(world, actorId);
@@ -316,7 +317,7 @@ export function recordInspectedItems(
   actorId: string,
   inspection: Pick<InventoryInspection, 'itemIds'> & { page: string[] },
 ): void {
-  const observer = world.entities[actorId]!;
+  const observer = entityGet(world.entities, actorId)!;
   const locationForOwner = ownerLocationLookup(world, actorId);
   for (const [index, id] of inspection.itemIds.entries()) {
     const item = itemFor(world, id)!;

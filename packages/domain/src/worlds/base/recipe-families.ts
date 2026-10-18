@@ -1,3 +1,4 @@
+import { entityValues } from '../../entity-collection.js';
 import type {
   RecipeFamilyDescriptor,
   RecipeFamilyDefinition,
@@ -336,7 +337,7 @@ const gathering: RecipeFamilyDescriptor = {
       !resource ||
       resource.recipeId ||
       (purpose === 'admission' &&
-        !Object.values(world.entities).some(
+        !entityValues(world.entities).some(
           (entity) => entity.resource?.definitionId === resourceId,
         ))
     )

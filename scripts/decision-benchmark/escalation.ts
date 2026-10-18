@@ -16,7 +16,7 @@ import {
   type GenerateRequest,
 } from '../../packages/ai/src/index.js';
 import { initializeCollisionRuntime } from '../../packages/spatial/src/rapier.js';
-import { NPC_ID } from '../../packages/domain/src/index.js';
+import { NPC_ID, entityGet } from '../../packages/domain/src/index.js';
 import { createDisposableDatabase } from '../disposable-postgres.mjs';
 import { readConfig } from '../../apps/server/src/config.js';
 import { SqlGameRepository, digest, type JobRecord } from '../../apps/server/src/store.js';
@@ -327,7 +327,7 @@ try {
         timelineId: service.timelineId,
         generation: service.generation,
         actorId: NPC_ID,
-        physicalLife: service.world.entities[NPC_ID]!.actor!.physicalLife ?? 0,
+        physicalLife: entityGet(service.world.entities, NPC_ID)!.actor!.physicalLife ?? 0,
         cause: { kind: 'intent', id },
         originalWatermark: 0,
         urgency: 0,

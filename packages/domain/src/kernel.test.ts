@@ -1,8 +1,10 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { BASE_BODY_PROFILES } from './worlds/base/spatial-definitions.js';
 import { cookingChoices } from './food-preparation.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { createItemLot, itemFor, retireItem, setSpatialPosition, worldSupport } from './index.js';
 import { worldPosition } from './spatial-state.js';
+import { materializeNativeValues } from './native-values.js';
 import {
   advanceWithNavigation as advanceWorld,
   prepareWorldNavigation,
@@ -194,24 +196,34 @@ describe('authoritative pure world', () => {
     );
     world = command(world, { type: 'move', destination });
     world = prepareWorldNavigation(world);
-    const path = world.entities[PLAYER_ID]!.actor!.action!.path;
+    const path = entityGet(world.entities, PLAYER_ID)!.actor!.action!.path;
     expect(path.length).toBeGreaterThan(0);
     expect(
       path.every((point) => isWalkable(world, point, point.surfaceId, BASE_BODY_PROFILES.person)),
     ).toBe(true);
     world = advanceWorld(world, 240).world;
-    expect(worldPosition(world.entities[PLAYER_ID]!)).toEqual({
+    expect(worldPosition(entityGet(world.entities, PLAYER_ID)!)).toEqual({
       x: destination.x,
       y: destination.y,
       z: destination.z,
     });
-    expect(world.entities[PLAYER_ID]!.actor!.action).toBeNull();
+    expect(entityGet(world.entities, PLAYER_ID)!.actor!.action).toBeNull();
   });
   it('resumes in-progress native work exactly after a JSON restore', () => {
     const initial = command(createWorld(), { type: 'gather', targetId: 'branches' });
-    const midway = advanceWorld(initial, 30).world;
-    const restored = JSON.parse(JSON.stringify(midway)) as WorldState;
-    expect(advanceWorld(restored, 120).world).toEqual(advanceWorld(midway, 120).world);
+    const midway = advanceWorld(initial, 120).world;
+    expect(entityGet(midway.entities, PLAYER_ID)!.actor!.action!.stage).toBe('working');
+    const restored = JSON.parse(JSON.stringify(materializeNativeValues(midway))) as WorldState;
+    const remaining = entityGet(midway.entities, PLAYER_ID)!.actor!.action!.remainingSeconds;
+    expect(remaining).toBeGreaterThan(0);
+    const completed = advanceWorld(restored, remaining + 1).world;
+    expect(materializeNativeValues(completed)).toEqual(
+      materializeNativeValues(advanceWorld(midway, remaining + 1).world),
+    );
+    expect(entityGet(completed.entities, PLAYER_ID)!.actor!.action).toBeNull();
+    expect(quantityOf(completed, PLAYER_ID, 'wood')).toBeGreaterThan(
+      quantityOf(midway, PLAYER_ID, 'wood'),
+    );
   });
 });
 
@@ -317,26 +329,26 @@ describe('bounded invented mechanisms', () => {
     let world = makeSling();
     // Controlled stationary prey qualifies the successful custody/meal chain; moving misses
     // use the separate flight specimen below. This is not a natural hunting success rate.
-    world.entities['hare-1']!.actor!.incapacitated = true;
+    entityGet(world.entities, 'hare-1')!.actor!.incapacitated = true;
     setSpatialPosition(
       world,
-      world.entities['hare-1']!,
+      entityGet(world.entities, 'hare-1')!,
       {
-        ...worldPosition(world.entities[PLAYER_ID]!),
-        x: worldPosition(world.entities[PLAYER_ID]!).x + 2,
+        ...worldPosition(entityGet(world.entities, PLAYER_ID)!),
+        x: worldPosition(entityGet(world.entities, PLAYER_ID)!).x + 2,
       },
-      worldSupport(world.entities[PLAYER_ID]!),
+      worldSupport(entityGet(world.entities, PLAYER_ID)!),
     );
     world.rngState = 73;
     const ammoBefore = quantityOf(world, PLAYER_ID, 'stone');
     world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
     world = advanceWorld(world, 18).world;
-    world.entities['hare-1']!.actor!.incapacitated = false;
-    world.entities['hare-1']!.animal!.escapeHeading = null;
-    world.entities['hare-1']!.animal!.reviewAt = world.simTime + 40;
+    entityGet(world.entities, 'hare-1')!.actor!.incapacitated = false;
+    entityGet(world.entities, 'hare-1')!.animal!.escapeHeading = null;
+    entityGet(world.entities, 'hare-1')!.animal!.reviewAt = world.simTime + 40;
     world = advanceWorld(world, 24).world;
     expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(ammoBefore - 1);
-    expect(world.entities['hare-1']!.actor!.alive).toBe(false);
+    expect(entityGet(world.entities, 'hare-1')!.actor!.alive).toBe(false);
     world = command(world, { type: 'harvest', targetId: 'hare-1' });
     world = advanceWorld(world, 180).world;
     expect(quantityOf(world, PLAYER_ID, 'raw_meat')).toBe(2);
@@ -369,11 +381,13 @@ describe('bounded invented mechanisms', () => {
     world = advanceWorld(world, 200).world;
     expect(quantityOf(world, PLAYER_ID, 'raw_meat')).toBe(1);
     expect(quantityOf(world, PLAYER_ID, 'cooked_meat')).toBe(1);
-    const fullness = world.entities[PLAYER_ID]!.actor!.attributes!['wilderness:fullness']!.value;
+    const fullness = entityGet(world.entities, PLAYER_ID)!.actor!.attributes![
+      'wilderness:fullness'
+    ]!.value;
     if (typeof fullness !== 'number') throw new Error('Wilderness fixture lacks fullness.');
     world = command(world, { type: 'eat', itemId: itemId(world, 'cooked_meat') });
     expect(
-      world.entities[PLAYER_ID]!.actor!.attributes!['wilderness:fullness']!.value,
+      entityGet(world.entities, PLAYER_ID)!.actor!.attributes!['wilderness:fullness']!.value,
     ).toBeGreaterThan(fullness);
     expect(quantityOf(world, PLAYER_ID, 'cooked_meat')).toBe(0);
   });
@@ -419,41 +433,41 @@ describe('bounded invented mechanisms', () => {
         (event) => event.type === 'projectile-ended' && event.data?.result !== 'hit',
       ),
     ).toBe(true);
-    expect(world.entities['hare-1']!.animal!.danger).toBeGreaterThan(0);
-    expect(world.entities['hare-1']!.actor!.health).toBe(18);
+    expect(entityGet(world.entities, 'hare-1')!.animal!.danger).toBeGreaterThan(0);
+    expect(entityGet(world.entities, 'hare-1')!.actor!.health).toBe(18);
     expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(5);
   });
   it('resolves competing harvesters once and never duplicates finite remains', () => {
     let world = makeSling();
-    world.entities['hare-1']!.actor!.incapacitated = true;
+    entityGet(world.entities, 'hare-1')!.actor!.incapacitated = true;
     setSpatialPosition(
       world,
-      world.entities['hare-1']!,
+      entityGet(world.entities, 'hare-1')!,
       {
-        ...worldPosition(world.entities[PLAYER_ID]!),
-        x: worldPosition(world.entities[PLAYER_ID]!).x + 2,
+        ...worldPosition(entityGet(world.entities, PLAYER_ID)!),
+        x: worldPosition(entityGet(world.entities, PLAYER_ID)!).x + 2,
       },
-      worldSupport(world.entities[PLAYER_ID]!),
+      worldSupport(entityGet(world.entities, PLAYER_ID)!),
     );
     world.rngState = 73;
     world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
     world = advanceWorld(world, 18).world;
-    world.entities['hare-1']!.actor!.incapacitated = false;
-    world.entities['hare-1']!.animal!.escapeHeading = null;
-    world.entities['hare-1']!.animal!.reviewAt = world.simTime + 40;
+    entityGet(world.entities, 'hare-1')!.actor!.incapacitated = false;
+    entityGet(world.entities, 'hare-1')!.animal!.escapeHeading = null;
+    entityGet(world.entities, 'hare-1')!.animal!.reviewAt = world.simTime + 40;
     world = advanceWorld(world, 24).world;
-    const position = worldPosition(world.entities['hare-1']!);
+    const position = worldPosition(entityGet(world.entities, 'hare-1')!);
     setSpatialPosition(
       world,
-      world.entities[PLAYER_ID]!,
+      entityGet(world.entities, PLAYER_ID)!,
       { ...position },
-      worldSupport(world.entities[PLAYER_ID]!),
+      worldSupport(entityGet(world.entities, PLAYER_ID)!),
     );
     setSpatialPosition(
       world,
-      world.entities[NPC_ID]!,
+      entityGet(world.entities, NPC_ID)!,
       { ...position },
-      worldSupport(world.entities[NPC_ID]!),
+      worldSupport(entityGet(world.entities, NPC_ID)!),
     );
     world = command(world, { type: 'harvest', targetId: 'hare-1' });
     world = command(world, { type: 'harvest', targetId: 'hare-1' }, NPC_ID);
@@ -466,11 +480,11 @@ describe('bounded invented mechanisms', () => {
   it('revalidates the animal before spending ammunition on a queued shot', () => {
     let world = makeSling();
     world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
-    world.entities['hare-1']!.actor!.alive = false;
+    entityGet(world.entities, 'hare-1')!.actor!.alive = false;
     world = advanceWorld(world, 24).world;
     expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(6);
     expect(world.events.some((event) => event.type === 'shot-released')).toBe(false);
-    expect(world.entities[PLAYER_ID]!.actor!.action).toBeNull();
+    expect(entityGet(world.entities, PLAYER_ID)!.actor!.action).toBeNull();
   });
   it('requires shaft-capable material for an arrow, not merely any rigid object', () => {
     const world = createWorld();
@@ -517,9 +531,13 @@ describe('bounded invented mechanisms', () => {
     });
     for (let attempt = 0; attempt < 2; attempt++) {
       world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
-      for (let seconds = 0; seconds < 400 && world.entities[PLAYER_ID]!.actor!.action; seconds++)
+      for (
+        let seconds = 0;
+        seconds < 400 && entityGet(world.entities, PLAYER_ID)!.actor!.action;
+        seconds++
+      )
         world = advanceWorld(world, 1).world;
-      expect(world.entities[PLAYER_ID]!.actor!.action).toBeNull();
+      expect(entityGet(world.entities, PLAYER_ID)!.actor!.action).toBeNull();
     }
     expect(world.events.filter((event) => event.type === 'shot-released')).toHaveLength(2);
     expect(
@@ -536,16 +554,16 @@ describe('perception, survival and continuity', () => {
     let world = createWorld();
     setSpatialPosition(
       world,
-      world.entities[NPC_ID]!,
+      entityGet(world.entities, NPC_ID)!,
       { y: 0, x: 26, z: 22 },
-      worldSupport(world.entities[NPC_ID]!),
+      worldSupport(entityGet(world.entities, NPC_ID)!),
     );
     world = command(world, { type: 'say', text: 'The secret is moonflower.', volume: 'whisper' });
     setSpatialPosition(
       world,
-      world.entities[NPC_ID]!,
+      entityGet(world.entities, NPC_ID)!,
       { y: 0, x: 12, z: 13 },
-      worldSupport(world.entities[NPC_ID]!),
+      worldSupport(entityGet(world.entities, NPC_ID)!),
     );
     expect(
       queryMemories(world, NPC_ID).some((record) => record.summary.includes('moonflower')),
@@ -577,14 +595,14 @@ describe('perception, survival and continuity', () => {
   });
   it('preserves physiology without automatically choosing food without a provider', () => {
     let world = createWorld();
-    world.entities[NPC_ID]!.actor!.attributes!['wilderness:fullness']!.value = 20;
+    entityGet(world.entities, NPC_ID)!.actor!.attributes!['wilderness:fullness']!.value = 20;
     for (const item of inventoryFor(world, NPC_ID))
       if (item.definitionId === 'berries') retireItem(world, item.id, 'fixture');
     world = advanceWorld(world, 300).world;
-    expect(world.entities[NPC_ID]!.actor!.alive).toBe(true);
-    expect(world.entities[NPC_ID]!.actor!.attributes!['wilderness:fullness']!.value).toBeLessThan(
-      20,
-    );
+    expect(entityGet(world.entities, NPC_ID)!.actor!.alive).toBe(true);
+    expect(
+      entityGet(world.entities, NPC_ID)!.actor!.attributes!['wilderness:fullness']!.value,
+    ).toBeLessThan(20);
     expect(
       world.events.some(
         (event) => event.actorId === NPC_ID && ['gathered', 'ate'].includes(event.type),
@@ -594,21 +612,26 @@ describe('perception, survival and continuity', () => {
   it('allows NPC death while preserving player continuity across a new physical life', () => {
     let world = createWorld();
     for (const item of inventoryFor(world, NPC_ID)) retireItem(world, item.id, 'fixture');
-    for (const entity of Object.values(world.entities))
+    for (const entity of entityValues(world.entities))
       if (entity.resource) entity.resource.quantity = 0;
-    for (const actor of [world.entities[PLAYER_ID]!, world.entities[NPC_ID]!]) {
+    for (const actor of [
+      entityGet(world.entities, PLAYER_ID)!,
+      entityGet(world.entities, NPC_ID)!,
+    ]) {
       actor.actor!.attributes!['wilderness:fullness']!.value = 0;
       actor.actor!.health = 1;
     }
     world = advanceWorld(world, 300).world;
-    expect(world.entities[NPC_ID]!.actor!.alive).toBe(false);
-    const player = world.entities[PLAYER_ID]!;
+    expect(entityGet(world.entities, NPC_ID)!.actor!.alive).toBe(false);
+    const player = entityGet(world.entities, PLAYER_ID)!;
     expect(player.actor!.alive).toBe(false);
-    expect(world.entities[player.actor!.pendingDeath!.corpseId]!.remains!.sourceId).toBe(PLAYER_ID);
+    expect(entityGet(world.entities, player.actor!.pendingDeath!.corpseId)!.remains!.sourceId).toBe(
+      PLAYER_ID,
+    );
     world = command(world, { type: 'respawn' });
-    expect(world.entities[PLAYER_ID]!.actor!.health).toBe(100);
-    expect(world.entities[PLAYER_ID]!.actor!.physicalLife).toBe(1);
-    expect(Object.values(world.entities[PLAYER_ID]!.actor!.scars!)).toEqual([1]);
+    expect(entityGet(world.entities, PLAYER_ID)!.actor!.health).toBe(100);
+    expect(entityGet(world.entities, PLAYER_ID)!.actor!.physicalLife).toBe(1);
+    expect(Object.values(entityGet(world.entities, PLAYER_ID)!.actor!.scars!)).toEqual([1]);
     expect(world.events.some((event) => event.type === 'death' && event.actorId === NPC_ID)).toBe(
       true,
     );

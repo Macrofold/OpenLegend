@@ -1,3 +1,4 @@
+import { entityValues } from '@open-legend/domain';
 import type { RequestScope } from './authority.js';
 import {
   attributeValueTarget,
@@ -411,7 +412,7 @@ export function authoringImpact(world: WorldState, d: AuthoringDraft) {
       .map((v) => v.id),
   );
   const affected: string[][] = [];
-  for (const e of Object.values(world.entities))
+  for (const e of entityValues(world.entities))
     for (const [id, s] of Object.entries(e.statusEffects ?? {}))
       if (changed.has(id)) affected.push([e.id, id, s.episode, String(s.active)]);
   return { token: fingerprint(affected), affected: affected.length };

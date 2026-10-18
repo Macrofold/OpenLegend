@@ -318,7 +318,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
     !!activity && ['active', 'blocked', 'paused', 'queued', 'waiting'].includes(activity.status);
   const working = stoppable || view.player.hasWork;
   const workTitle = activity && !working ? 'Last task' : 'Current work';
-  const stopAction = view.player.actions.find((action) => action.command.type === 'cancel');
+  const stopAction = view.player.controls.find((action) => action.command.type === 'cancel');
 
   function selectionKey(key: string) {
     const field = descriptor?.fields[key];

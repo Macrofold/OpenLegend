@@ -1,3 +1,4 @@
+import { entityKeys } from '@open-legend/domain';
 import { MEMORY_HISTORY_TABLES } from './memory-repository.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import { HISTORY_TABLES, validateHistoryEvidence } from './history.js';
@@ -54,7 +55,7 @@ export function recoveryFile(payload: unknown, checksum: unknown): string {
     throw new GameSaveError('Recovery pointer integrity check failed.');
   return pointer.data.file;
 }
-export const SAVE_FORMAT = 'development-2026-10-14-foundation-hardening';
+export const SAVE_FORMAT = 'development-2026-10-17-performance-journal';
 type Rows = Record<string, unknown>[];
 export interface SavePayload {
   format: string;
@@ -428,6 +429,7 @@ export class GameSaves {
     };
     const done = Promise.resolve()
       .then(async () => {
+        await this.db.synchronizeProjection?.();
         const prior = await this.files.metadata(id);
         if (prior) {
           if (
@@ -581,7 +583,11 @@ export class GameSaves {
     )
       throw new GameSaveError('Save event count disagrees with retained records.');
     validateCurrentWorldState(payload.state.world);
-    validateHistoryEvidence(payload.history);
+    validateHistoryEvidence(
+      payload.history,
+      payload.state.world,
+      payload.memory?.mind_source_versions ?? [],
+    );
   }
   async install(current: SavedWorld, restore: RestoreSave) {
     this.validatePayload(restore.payload);
@@ -665,8 +671,8 @@ export class GameSaves {
         .run(`integration:${key}`, JSON.stringify(value));
     // These are queued opportunities / derived caches, not billing or attempt records.
     for (const actorId of new Set([
-      ...Object.keys(current.world.entities),
-      ...Object.keys(restore.payload.state.world.entities),
+      ...entityKeys(current.world.entities),
+      ...entityKeys(restore.payload.state.world.entities),
     ]))
       for (const prefix of ['vectors', 'interests', 'reflection-queue', 'semantic-schedule'])
         await this.db

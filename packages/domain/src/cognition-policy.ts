@@ -1,4 +1,5 @@
 import { inventionPermission } from './invention-policy.js';
+import { currentStatusInstance } from './native-values.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { finish, outcome } from './events.js';
 import type { Transition, WorldState } from './types.js';
@@ -97,7 +98,7 @@ export function dreamStatus(
   entity: import('./types.js').Entity | undefined,
 ): import('./status-effects.js').StatusEffectInstance | undefined {
   const policy = dreamPolicy(world);
-  const state = policy && entity?.statusEffects?.[policy.statusEffectId];
+  const state = policy && currentStatusInstance(world, entity, policy.statusEffectId);
   return state?.active ? state : undefined;
 }
 

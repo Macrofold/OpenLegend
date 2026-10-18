@@ -2,7 +2,8 @@ import * as pc from 'playcanvas';
 import type { GameView } from '@open-legend/protocol';
 import { sunlightAtHour } from './sunlight';
 import type { ShadowQuality } from './world-renderer';
-import { shadowSettings } from './shadow-material';
+import { ShadowMaterial, shadowSettings, type ShaderVariantParameters } from './shadow-material';
+import type { HoverOutline } from './hover-outline';
 import {
   characterReadThroughStencil,
   readThroughStencil,
@@ -82,6 +83,13 @@ export interface RevealBinding {
   layer: pc.Layer;
   foreground?: pc.MeshInstance[];
   protection?: pc.MeshInstance[];
+  preparedMaterials: WeakSet<pc.StandardMaterial>;
+}
+interface PreparedVariant {
+  mesh: pc.MeshInstance;
+  layer: pc.Layer;
+  pass?: number;
+  camera?: pc.CameraComponent;
 }
 
 /** Only hidden fragments of currently authorized targets are drawn. This is the compositing
@@ -97,6 +105,15 @@ export class WorldPresentation {
   private revealMaterials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private foregroundMaterials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private protectionMaterials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
+  private readonly variantPreparations = new Map<
+    ShadowMaterial,
+    {
+      layouts: Map<string, PreparedVariant[]>;
+      requested: WeakSet<pc.Shader>;
+    }
+  >();
+  private readonly interactionMeshes = new Set<pc.MeshInstance>();
+  private hover?: HoverOutline;
   private spriteRevealMesh?: pc.Mesh;
   private readonly lights: pc.Entity[] = [];
   private readonly selectedLights = new Set<string>();
@@ -158,6 +175,7 @@ export class WorldPresentation {
     let m = this.revealMaterials.get(source);
     if (m) return m;
     m = source.clone();
+    m.name = `${source.name} / revealed`;
     m.depthFunc = pc.FUNC_GREATER;
     m.depthWrite = false;
     setVisibilityStencil(
@@ -197,6 +215,7 @@ export class WorldPresentation {
     let material = this.foregroundMaterials.get(source);
     if (!material) {
       material = source.clone();
+      material.name = `${source.name} / selected`;
       material.depthFunc = pc.FUNC_ALWAYS;
       material.depthWrite = false;
       material.stencilFront = material.stencilBack = null;
@@ -213,6 +232,7 @@ export class WorldPresentation {
       // Protect the whole alpha silhouette, including the reveal's faded fringe.
       // Otherwise an object would still show through a partially faded person.
       material = source.clone();
+      material.name = `${source.name} / silhouette protection`;
       material.depthFunc = pc.FUNC_GREATER;
       material.depthWrite = false;
       material.opacityDither = pc.DITHER_NONE;
@@ -222,6 +242,113 @@ export class WorldPresentation {
       this.protectionMaterials.set(source, material);
     }
     return material;
+  }
+  /** Prepare actual program inputs, never a hidden draw or a readiness query. A
+   * material/vertex layout is shared by every object using that artwork. The
+   * private instances retain geometry, not scene nodes, until the material dies.
+   */
+  private prepareMaterial(source: pc.StandardMaterial, binding: RevealBinding): void {
+    if (!(source instanceof ShadowMaterial) || binding.preparedMaterials.has(source)) return;
+    binding.preparedMaterials.add(source);
+    let preparation = this.variantPreparations.get(source);
+    if (!preparation) {
+      preparation = { layouts: new Map(), requested: new WeakSet() };
+      this.variantPreparations.set(source, preparation);
+      const owner = preparation;
+      source.prepareRelated = (params, shader) => {
+        if (owner.requested.has(shader)) return;
+        owner.requested.add(shader);
+        for (const targets of owner.layouts.values())
+          for (const target of targets) this.prepareMesh(target, params);
+        for (const mesh of this.interactionMeshes)
+          this.prepareMesh(
+            { mesh, layer: this.app.scene.layers.getLayerById(pc.LAYERID_WORLD)! },
+            params,
+          );
+        this.interactionMeshes.clear();
+      };
+    }
+    for (const mesh of binding.meshes) {
+      // Animated models own their separate pixel renderer. Do not borrow and
+      // retain a skeleton/morph lifetime merely to anticipate a static card.
+      if (mesh.skinInstance || mesh.morphInstance) continue;
+      const hoverMesh = binding.sourceMesh?.mesh ?? mesh.mesh;
+      const key = `${mesh.mesh.vertexBuffer!.format.renderingHashString}|${hoverMesh.vertexBuffer!.format.renderingHashString}|${binding.layer.id}|${!!binding.protection}`;
+      if (preparation.layouts.has(key)) continue;
+      const targets = [
+        { material: this.revealMaterial(source), layer: binding.layer, geometry: mesh.mesh },
+        {
+          material: this.foregroundMaterial(source),
+          layer: this.foregroundLayer,
+          geometry: mesh.mesh,
+        },
+        ...(binding.protection
+          ? [
+              {
+                material: this.protectionMaterial(source),
+                layer: this.protectionLayer,
+                geometry: mesh.mesh,
+              },
+            ]
+          : []),
+        ...(this.hover
+          ? [
+              {
+                material: this.hover.prepareMaterial(source),
+                layer: this.hover.renderingLayer,
+                geometry: hoverMesh,
+                pass: this.hover.outlineShaderPass,
+                camera: this.hover.outlineCameraEntity.camera!,
+              },
+            ]
+          : []),
+      ].map(({ material, layer, geometry, ...inputs }) => {
+        const copy = new pc.MeshInstance(geometry, material, new pc.GraphNode('Prepared variant'));
+        copy.visible = false;
+        copy.castShadow = copy.receiveShadow = false;
+        return { mesh: copy, layer, ...inputs };
+      });
+      preparation.layouts.set(key, targets);
+      preparation.requested = new WeakSet();
+      // A material may already have been drawn before its first reveal binding.
+      source.clearVariants();
+    }
+  }
+  private prepareMesh(
+    { mesh, layer, pass, camera }: PreparedVariant,
+    params: ShaderVariantParameters,
+  ): void {
+    if (camera) {
+      // Match ForwardRenderer 2.22.2's preparation for this actual camera/target.
+      // Its initially disabled outline camera has not received these inputs yet.
+      camera.shaderParams.fog = (camera.camera.fogParams ?? params.scene.fog).type;
+      camera.shaderParams.srgbRenderTarget = camera.renderTarget?.isColorBufferSrgb(0) ?? false;
+    }
+    mesh.material.prepareForRender(params.device, params.scene);
+    mesh.getShaderInstance(
+      pass ?? params.pass,
+      layer.getLightHash(params.scene.clusteredLightingEnabled),
+      params.scene,
+      camera?.shaderParams ?? params.cameraShaderParams,
+      params.viewUniformFormat,
+      layer.splitLights,
+    );
+  }
+  prepareInteraction(mesh: pc.MeshInstance): void {
+    this.interactionMeshes.add(mesh);
+  }
+  prepareHover(hover: HoverOutline): void {
+    this.hover = hover;
+  }
+  private releasePreparation(source: pc.StandardMaterial): void {
+    if (!(source instanceof ShadowMaterial)) return;
+    const preparation = this.variantPreparations.get(source);
+    if (!preparation) return;
+    source.prepareRelated = undefined;
+    for (const targets of preparation.layouts.values())
+      for (const { mesh } of targets) mesh.destroy();
+    this.hover?.releaseMaterial(source);
+    this.variantPreparations.delete(source);
   }
   addReveal(
     sprite: pc.Entity,
@@ -267,6 +394,7 @@ export class WorldPresentation {
       meshes,
       layer,
       protection,
+      preparedMaterials: new WeakSet(),
       sourceMesh: sprite.render?.meshInstances[0],
       strength: 0,
       frame: material,
@@ -283,6 +411,7 @@ export class WorldPresentation {
       mi.setParameter('ol_spriteSize', binding.spriteSize);
       mi.setParameter('ol_revealStrength', 0);
     }
+    this.prepareMaterial(material, binding);
     return binding;
   }
   updateReveal(
@@ -297,6 +426,7 @@ export class WorldPresentation {
     selected: boolean,
     immediate = false,
   ): void {
+    if (source !== binding.frame) this.prepareMaterial(source, binding);
     // Most targets are outside the local reveal. Skip both allocations and uniform writes
     // once hidden, but always process revocation of a previously visible target immediately.
     const target = authorized && !selected ? strength : 0;
@@ -366,6 +496,7 @@ export class WorldPresentation {
     }
   }
   releaseMaterial(source: pc.StandardMaterial): void {
+    this.releasePreparation(source);
     this.revealMaterials.get(source)?.destroy();
     this.revealMaterials.delete(source);
     this.foregroundMaterials.get(source)?.destroy();
@@ -429,6 +560,9 @@ export class WorldPresentation {
     }
   }
   destroy(): void {
+    for (const source of this.variantPreparations.keys()) this.releasePreparation(source);
+    this.interactionMeshes.clear();
+    this.hover = undefined;
     this.frame.destroy();
     this.app.scene.layers.remove(this.layer);
     this.app.scene.layers.remove(this.characterLayer);

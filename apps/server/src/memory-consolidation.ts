@@ -1,5 +1,5 @@
 import { gameTime } from './recall.js';
-import type { MemoryScope } from './memory-repository.js';
+import type { MemoryScope, CurrentMemorySource } from './memory-repository.js';
 import { retainedSpeechIds } from './speech-recall.js';
 import {
   experiences,
@@ -15,7 +15,7 @@ export interface ConsolidationBatch {
   routine: MemoryRecord[];
   selection?: {
     scope: MemoryScope;
-    revisions: { id: string; revision: string }[];
+    revisions: CurrentMemorySource[];
     throughRevision: number;
     after: { at: number; sequence: number; id: string };
     complete: boolean;

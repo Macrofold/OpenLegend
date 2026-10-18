@@ -1,4 +1,9 @@
+import { entityGet } from '../../entity-collection.js';
+import { isDraft } from 'immer';
 import { walkSurfaceLine } from '@open-legend/spatial';
+import { capabilityBlocked } from '../../status-capabilities.js';
+import { readOnlyDraftView } from '../../draft.js';
+import { countDomainWork } from '../../diagnostic-counters.js';
 import { nextRandom } from '../../data.js';
 import { recordSemanticChange } from '../../dependencies.js';
 import { seesEntity } from '../../perception.js';
@@ -11,7 +16,7 @@ import {
 } from '../../spatial-state.js';
 import { TIME_EPSILON } from '../../simulation-time.js';
 import { chargeWork } from '../../work-budget.js';
-import type { Entity, WorldState } from '../../types.js';
+import type { AnimalComponent, Entity, WorldState } from '../../types.js';
 import { nativeMovementSpeed } from './actions.js';
 
 /** Authored native motives, shared by species. No provider, species script or flee timer.
@@ -96,7 +101,86 @@ function chooseEscape(world: WorldState, entity: Entity): void {
   }
 }
 
+const wanderClockWrites = new WeakMap<WorldState, { owner: object; ids: Set<string> }>();
+/** Only the native caller owns every clock writer in a working draft. An unknown draft,
+ * builder or another queue owner needs a full capture before this proof can be reused.
+ * No publication or predecessor world is retained by this disposable notification set. */
+export function takeAnimalWanderClockWrites(
+  world: WorldState,
+  owner: object,
+  beginNative = false,
+): ReadonlySet<string> | undefined {
+  if (!isDraft(world)) return;
+  const previous = wanderClockWrites.get(world);
+  if (!previous || previous.owner !== owner) {
+    const next = { owner, ids: new Set<string>() };
+    wanderClockWrites.set(world, next);
+    return beginNative && !previous ? next.ids : undefined;
+  }
+  const ids = previous.ids;
+  if (ids.size) previous.ids = new Set();
+  return ids;
+}
+function recordWanderClockWrite(world: WorldState, id: string): void {
+  wanderClockWrites.get(world)?.ids.add(id);
+}
+/** A waiting animal's clock stops whenever ordinary wandering cannot run. The two modes
+ * share one authority, rather than retaining a second writable countdown beside a deadline. */
+export function animalWanderNeedsCountdown(world: WorldState): boolean {
+  // Leave generous room below the shared time tolerance. At ancient clock values,
+  // adding a short wait can round all the way back to now; serial subtraction avoids it.
+  return Math.abs(world.simTime) * Number.EPSILON > TIME_EPSILON / 4;
+}
+export function animalWanderRemaining(world: WorldState, entity: Entity): number | undefined {
+  const record = readOnlyDraftView(entity);
+  const animal = record.animal && readOnlyDraftView(record.animal);
+  const clock = animal?.wander && readOnlyDraftView(animal.wander);
+  return clock && ('dueAt' in clock ? clock.dueAt - world.simTime : clock.remainingSeconds);
+}
+export function reconcileAnimalWander(world: WorldState, entity: Entity): void {
+  const record = readOnlyDraftView(entity);
+  const animal = record.animal && readOnlyDraftView(record.animal);
+  if (!animal) return;
+  countDomainWork('animalWanderEligibilityChecks');
+  const actor = record.actor && readOnlyDraftView(record.actor);
+  const spatial = readOnlyDraftView(record.spatial);
+  const eligible =
+    !record.threat &&
+    !!actor?.alive &&
+    !actor.incapacitated &&
+    !actor.action &&
+    !spatial.flight &&
+    spatial.fallVelocity === undefined &&
+    !(animal.danger > 0 && animal.threatPosition) &&
+    !capabilityBlocked(world, entity, 'locomotion');
+  const clock = readOnlyDraftView(animal.wander);
+  let next: AnimalComponent['wander'] | undefined;
+  if (eligible) {
+    if (animalWanderNeedsCountdown(world)) {
+      if ('dueAt' in clock) next = { remainingSeconds: clock.dueAt - world.simTime, running: true };
+      else if (!clock.running) next = { remainingSeconds: clock.remainingSeconds, running: true };
+    } else if ('remainingSeconds' in clock)
+      next = { dueAt: world.simTime + clock.remainingSeconds };
+  } else if ('dueAt' in clock) next = { remainingSeconds: clock.dueAt - world.simTime };
+  else if (clock.running) next = { remainingSeconds: clock.remainingSeconds };
+  if (next) {
+    entity.animal!.wander = next;
+    recordWanderClockWrite(world, entity.id);
+  }
+}
+/** The native caller advances only running precision-fallback clocks for the interval
+ * during which wandering was eligible. Landing and newly removed restrictions therefore
+ * grant future time, exactly as with the ordinary paused/absolute modes. */
+export function advanceAnimalWanderClock(entity: Entity, seconds: number): void {
+  const animal = readOnlyDraftView(entity).animal;
+  const stored = animal && readOnlyDraftView(animal).wander;
+  const clock = stored && readOnlyDraftView(stored);
+  // The queue keeps only running membership; due selection reads this value live.
+  if (clock && 'remainingSeconds' in clock && clock.running)
+    (entity.animal!.wander as { remainingSeconds: number }).remainingSeconds -= seconds;
+}
 export function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void {
+  reconcileAnimalWander(world, entity);
   const animal = entity.animal;
   if (
     !animal ||
@@ -117,7 +201,7 @@ export function advanceAnimal(world: WorldState, entity: Entity, seconds: number
         animal.threatPosition.x,
         animal.threatPosition.z,
       ];
-      const source = animal.threatId ? world.entities[animal.threatId] : undefined;
+      const source = animal.threatId ? entityGet(world.entities, animal.threatId) : undefined;
       if (source?.actor?.alive && seesEntity(world, entity, source)) {
         animal.threatPosition = { ...worldPosition(source) };
         const distance = Math.hypot(
@@ -177,8 +261,9 @@ export function advanceAnimal(world: WorldState, entity: Entity, seconds: number
     }
     return;
   }
-  animal.wanderSeconds -= seconds;
-  if (animal.wanderSeconds <= TIME_EPSILON) {
+  const remaining = animalWanderRemaining(world, entity)!;
+  if (remaining <= TIME_EPSILON) {
+    countDomainWork('animalWanderDecisions');
     const angle = nextRandom(world) * Math.PI * 2,
       position = worldPosition(entity);
     const start = supportedPosition(entity);
@@ -192,6 +277,16 @@ export function advanceAnimal(world: WorldState, entity: Entity, seconds: number
         bodyProfile(entity),
       )?.at(-1);
     if (point) setSpatialPosition(world, entity, point, point.surfaceId);
-    animal.wanderSeconds += 120 + Math.floor(nextRandom(world) * 120);
+    const wait = 120 + Math.floor(nextRandom(world) * 120);
+    // Add to the old deadline, carrying negative remainder and making one hop only.
+    const clock = animal.wander;
+    animal.wander =
+      'dueAt' in clock
+        ? { dueAt: clock.dueAt + wait }
+        : {
+            remainingSeconds: clock.remainingSeconds + wait,
+            ...(clock.running ? { running: true as const } : {}),
+          };
+    recordWanderClockWrite(world, entity.id);
   }
 }

@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { emit, outcome } from './events.js';
 import { nextId } from './data.js';
 import { canSpeak, supportsManualWork } from './living.js';
@@ -22,7 +23,7 @@ import {
   type PracticeProfile,
   type ReleaseSupport,
 } from './practical-competence.js';
-import type { DefinitionPin } from './world-modules.js';
+import type { AttributeDefinition, DefinitionPin } from './world-modules.js';
 import type { Action, Command, Entity, Outcome, WorldEvent, WorldState } from './types.js';
 
 export interface CoachingEpisode {
@@ -60,7 +61,7 @@ const available = (
   !capabilityBlocked(world, entity, 'actions') &&
   !capabilityBlocked(world, entity, 'speech');
 export function coachingFor(world: WorldState, actorId: string): CoachingEpisode | undefined {
-  const id = world.entities[actorId]?.actor?.coachingEpisodeId;
+  const id = entityGet(world.entities, actorId)?.actor?.coachingEpisodeId;
   const episode = id ? world.coachingEpisodes?.[id] : undefined;
   return episode && [episode.learnerId, episode.coachId].includes(actorId) ? episode : undefined;
 }
@@ -85,7 +86,7 @@ function parties(
   world: WorldState,
   episode: CoachingEpisode,
 ): [Entity | undefined, Entity | undefined] {
-  return [world.entities[episode.learnerId], world.entities[episode.coachId]];
+  return [entityGet(world.entities, episode.learnerId), entityGet(world.entities, episode.coachId)];
 }
 function episodeValid(world: WorldState, episode: CoachingEpisode): boolean {
   const [learner, coach] = parties(world, episode),
@@ -132,7 +133,7 @@ export function coachingProblem(
       'coaching-unavailable',
       definition?.practice?.presentation.unavailable ?? 'This selected activity is unavailable.',
     );
-  const other = world.entities[command.targetId];
+  const other = entityGet(world.entities, command.targetId);
   const episode = coachingFor(world, actor.id);
   const matched =
     !!episode &&
@@ -192,6 +193,17 @@ export function coachingProblem(
   }
   return rejected();
 }
+/** The immediate consent choices have no physical work after their shared admission. */
+export function coachingChoiceOutcome(
+  definition: AttributeDefinition,
+  operation: Exclude<CoachingCommand['operation'], 'feedback'>,
+): Outcome {
+  const presentation = definition.practice!.presentation;
+  if (operation === 'request')
+    return outcome(true, 'coaching-requested', presentation.requestResult);
+  if (operation === 'accept') return outcome(true, 'coaching-accepted', presentation.acceptResult);
+  return outcome(true, 'coaching-ended', presentation.endResult);
+}
 export function applyCoaching(
   world: WorldState,
   actor: Entity,
@@ -220,7 +232,7 @@ export function applyCoaching(
     });
     (world.coachingEpisodes ??= {})[episode.id] = episode;
     actor.actor!.coachingEpisodeId = episode.id;
-    world.entities[command.targetId]!.actor!.coachingEpisodeId = episode.id;
+    entityGet(world.entities, command.targetId)!.actor!.coachingEpisodeId = episode.id;
     emit(
       world,
       events,
@@ -236,7 +248,7 @@ export function applyCoaching(
       command.targetId,
       { episodeId: episode.id, semanticTrigger: true },
     );
-    return outcome(true, 'coaching-requested', definition.practice!.presentation.requestResult);
+    return coachingChoiceOutcome(definition, 'request');
   }
   const episode = coachingFor(world, actor.id)!;
   if (command.operation === 'accept') {
@@ -254,7 +266,7 @@ export function applyCoaching(
       episode.learnerId,
       { episodeId: episode.id, semanticTrigger: true },
     );
-    return outcome(true, 'coaching-accepted', definition.practice!.presentation.acceptResult);
+    return coachingChoiceOutcome(definition, 'accept');
   }
   closeCoaching(
     world,
@@ -263,7 +275,10 @@ export function applyCoaching(
     command.operation === 'decline' ? 'declined' : 'withdrawn',
     actor,
   );
-  return outcome(true, 'coaching-ended', definition.practice!.presentation.endResult);
+  return coachingChoiceOutcome(
+    definition,
+    command.operation === 'decline' ? 'decline' : 'withdraw',
+  );
 }
 export function registerFeedback(world: WorldState, actor: Entity, action: Action): void {
   const episode = coachingFor(world, actor.id)!;
@@ -294,8 +309,8 @@ export function observeCoachedRelease(
   const actual = occurrenceFor(world, learner.id, String(event.data?.['actionId']))?.release;
   const profile = practiceDefinition(world, episode.pin.id)?.practice;
   if (!actual?.family || !profile || !sameDefinitionPin(actual.family, profile.family)) return;
-  const coach = world.entities[episode.coachId]!,
-    target = world.entities[event.targetId ?? ''];
+  const coach = entityGet(world.entities, episode.coachId)!,
+    target = entityGet(world.entities, event.targetId ?? '');
   if (
     !event.audience.includes(coach.id) ||
     !target ||
@@ -397,7 +412,7 @@ export function completeFeedback(
 }
 function releaseEpisode(world: WorldState, episode: CoachingEpisode): void {
   for (const id of [episode.learnerId, episode.coachId]) {
-    const actor = world.entities[id]?.actor;
+    const actor = entityGet(world.entities, id)?.actor;
     if (actor?.coachingEpisodeId === episode.id) delete actor.coachingEpisodeId;
   }
   delete world.coachingEpisodes![episode.id];
@@ -412,7 +427,7 @@ export function closeCoaching(
 ): void {
   const profile = practiceDefinition(world, episode.pin.id)?.practice;
   for (const id of [episode.learnerId, episode.coachId]) {
-    const participant = world.entities[id],
+    const participant = entityGet(world.entities, id),
       action = participant?.actor?.action;
     if (action?.coachingEpisodeId === episode.id) {
       finishPlanAction(
@@ -433,7 +448,7 @@ export function closeCoaching(
     events,
     'coaching-ended',
     profile ? practiceText(profile, 'endedEvent', { reason }) : 'The selected activity ended.',
-    source ?? world.entities[episode.learnerId],
+    source ?? entityGet(world.entities, episode.learnerId),
     undefined,
     { episodeId: episode.id, semanticTrigger: true },
   );
@@ -443,7 +458,7 @@ export function reconcileCoaching(world: WorldState, events: WorldEvent[]): void
   for (const episode of Object.values(world.coachingEpisodes ?? {})) {
     reconcileEpisode(world, episode, events);
   }
-  // Prune once at publication, not after every ended episode: simultaneous
+  // Prune once after the sweep, not after every ended episode: simultaneous
   // completions or interruptions must not repeatedly enumerate all other lessons.
   if (world.coachingEpisodes && !Object.keys(world.coachingEpisodes).length)
     delete world.coachingEpisodes;
@@ -463,7 +478,7 @@ function reconcileEpisode(world: WorldState, episode: CoachingEpisode, events: W
   if (
     !episodeValid(world, episode) ||
     Object.entries(episode.actions).some(
-      ([id, action]) => world.entities[id]?.actor?.action?.id !== action,
+      ([id, action]) => entityGet(world.entities, id)?.actor?.action?.id !== action,
     )
   )
     closeCoaching(world, episode, events, 'interrupted');
@@ -480,19 +495,22 @@ export function validateCoaching(world: WorldState): void {
       !['requested', 'observing', 'feedback'].includes(episode.phase) ||
       !world.workState?.invocations[episode.id] ||
       [episode.learnerId, episode.coachId].some(
-        (id) => world.entities[id]?.actor?.coachingEpisodeId !== episode.id,
+        (id) => entityGet(world.entities, id)?.actor?.coachingEpisodeId !== episode.id,
       ) ||
       Object.entries(episode.actions).some(
         ([id, action]) =>
           ![episode.learnerId, episode.coachId].includes(id) ||
-          world.entities[id]?.actor?.action?.id !== action ||
-          world.entities[id]?.actor?.action?.coachingEpisodeId !== episode.id ||
-          world.entities[id]?.actor?.action?.type !== 'coaching' ||
-          world.entities[id]?.actor?.action?.stage !== 'working' ||
-          world.entities[id]?.actor?.action?.targetId !==
+          entityGet(world.entities, id)?.actor?.action?.id !== action ||
+          entityGet(world.entities, id)?.actor?.action?.coachingEpisodeId !== episode.id ||
+          entityGet(world.entities, id)?.actor?.action?.type !== 'coaching' ||
+          entityGet(world.entities, id)?.actor?.action?.stage !== 'working' ||
+          entityGet(world.entities, id)?.actor?.action?.targetId !==
             (id === episode.learnerId ? episode.coachId : episode.learnerId) ||
-          !world.entities[id]?.actor?.action?.competencePin ||
-          !sameDefinitionPin(world.entities[id]!.actor!.action!.competencePin!, episode.pin),
+          !entityGet(world.entities, id)?.actor?.action?.competencePin ||
+          !sameDefinitionPin(
+            entityGet(world.entities, id)!.actor!.action!.competencePin!,
+            episode.pin,
+          ),
       ) ||
       (episode.startedAt !== undefined &&
         (!Number.isFinite(episode.startedAt) ||
@@ -515,7 +533,7 @@ export function validateCoaching(world: WorldState): void {
     )
       throw new Error('Invalid current coaching episode.');
   }
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     const episode = coachingFor(world, entity.id),
       action = entity.actor?.action;
     if (entity.actor?.coachingEpisodeId && !episode)

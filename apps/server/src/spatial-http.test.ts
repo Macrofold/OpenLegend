@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { localHttpClient } from '../../../tests/fixtures/http.js';
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { testRepository } from '../../../tests/fixtures/database.js';
@@ -26,7 +27,7 @@ it('requires exact 3D surface intentions and preserves the HTTP retry boundary',
   const base = `http://127.0.0.1:${address.port}`;
   try {
     const { post, view } = await localHttpClient(base);
-    expect(view.schemaVersion).toBe(2);
+    expect(view.schemaVersion).toBe(3);
     expect(view.player.position.y).toBe(0);
     expect(JSON.stringify(view)).not.toContain('clearing-bird-loop'); // Private future route is not smoothing data.
     await post('/api/control', { paused: false, clientId: 'spatial-test', presenceSequence: 1 });
@@ -45,16 +46,19 @@ it('requires exact 3D surface intentions and preserves the HTTP retry boundary',
       ).status,
     ).toBe(400);
     expect((await (await post('/api/command', envelope)).json()).ok).toBe(true);
-    const first = game.service.world.entities[view.player.id]!.actor!.action!.id;
+    const first = entityGet(game.service.world.entities, view.player.id)!.actor!.action!.id;
     expect((await (await post('/api/command', envelope)).json()).ok).toBe(true);
-    expect(game.service.world.entities[view.player.id]!.actor!.action!.id).toBe(first);
+    expect(entityGet(game.service.world.entities, view.player.id)!.actor!.action!.id).toBe(first);
     await expect
-      .poll(() => game.service.world.entities[view.player.id]!.actor!.action?.navigation, {
-        timeout: 10_000,
-      })
+      .poll(
+        () => entityGet(game.service.world.entities, view.player.id)!.actor!.action?.navigation,
+        {
+          timeout: 10_000,
+        },
+      )
       .toBeUndefined();
     await game.service.transition((world) => advanceWorld(world, 280));
-    expect(worldPosition(game.service.world.entities[view.player.id]!)).toEqual({
+    expect(worldPosition(entityGet(game.service.world.entities, view.player.id)!)).toEqual({
       x: 24,
       y: 3,
       z: 6,
@@ -67,7 +71,9 @@ it('requires exact 3D surface intentions and preserves the HTTP retry boundary',
       })
     ).json();
     expect(incorrect.ok).toBe(false);
-    expect(worldSupport(game.service.world.entities[view.player.id]!)).toBe('lookout-deck');
+    expect(worldSupport(entityGet(game.service.world.entities, view.player.id)!)).toBe(
+      'lookout-deck',
+    );
   } finally {
     await game.close();
   }
@@ -100,20 +106,26 @@ it('preserves elevated position and manual route snapshots while departure cance
       position: { x: 20, y: 3, z: 5.5, surfaceId: 'lookout-deck' },
     });
     await expect
-      .poll(() => game.service.world.entities[actorId]!.actor!.action?.navigation, {
+      .poll(() => entityGet(game.service.world.entities, actorId)!.actor!.action?.navigation, {
         timeout: 10_000,
       })
       .toBeUndefined();
     // Ordinary progress uses the server's buffer; the save below establishes durability.
-    for (let n = 0; n < 250 && worldPosition(game.service.world.entities[actorId]!).y < 0.1; n++)
+    for (
+      let n = 0;
+      n < 250 && worldPosition(entityGet(game.service.world.entities, actorId)!).y < 0.1;
+      n++
+    )
       await game.service.tick(1 / (config.baseRatio * game.service.speed), 0);
-    const snapshot = structuredClone(game.service.world.entities[actorId]);
+    const snapshot = structuredClone(entityGet(game.service.world.entities, actorId));
     expect(worldSupport(snapshot!)).toBe('lookout-ramp');
     const id = randomUUID();
     await game.service.createSave('On the ramp', id);
     const stored = await game.service.store.saves!.read(game.service.world.id, id);
     expect(stored.format).toBe(SAVE_FORMAT);
-    expect(stored.state.world.entities[actorId]!.actor!.action).toEqual(snapshot!.actor!.action);
+    expect(entityGet(stored.state.world.entities, actorId)!.actor!.action).toEqual(
+      snapshot!.actor!.action,
+    );
     await game.close();
     game = await createGameServer({
       config,
@@ -124,7 +136,7 @@ it('preserves elevated position and manual route snapshots while departure cance
     });
     await new Promise<void>((resolve) => game.server.listen(0, '127.0.0.1', resolve));
     await enterLocalWorld(game.service);
-    expect(game.service.world.entities[actorId]).toEqual({
+    expect(entityGet(game.service.world.entities, actorId)).toEqual({
       ...snapshot,
       actor: {
         ...snapshot!.actor,
@@ -141,26 +153,26 @@ it('preserves elevated position and manual route snapshots while departure cance
       position: { x: 20, y: 3, z: 5.5, surfaceId: 'lookout-deck' },
     });
     await expect
-      .poll(() => game.service.world.entities[actorId]!.actor!.action?.navigation, {
+      .poll(() => entityGet(game.service.world.entities, actorId)!.actor!.action?.navigation, {
         timeout: 10_000,
       })
       .toBeUndefined();
     await game.service.transition((world) => advanceWorld(world, 150));
-    expect(worldPosition(game.service.world.entities[actorId]!).y).toBe(3);
+    expect(worldPosition(entityGet(game.service.world.entities, actorId)!).y).toBe(3);
     const epoch = game.service.generation;
     await game.service.restoreSave(
       id,
       randomUUID(),
       await game.service.store.saves!.read(game.service.world.id, id),
     );
-    expect(game.service.world.entities[actorId]).toEqual({
+    expect(entityGet(game.service.world.entities, actorId)).toEqual({
       ...snapshot,
       actor: { ...snapshot!.actor, participation: expect.objectContaining({ phase: 'active' }) },
     });
     expect(game.service.world.paused).toBe(true);
     expect(game.service.generation).not.toBe(epoch);
-    expect(game.service.world.entities['bird-1']!.spatial).toEqual(
-      stored.state.world.entities['bird-1']!.spatial,
+    expect(entityGet(game.service.world.entities, 'bird-1')!.spatial).toEqual(
+      entityGet(stored.state.world.entities, 'bird-1')!.spatial,
     );
     expect(game.service.storageError).toBeNull();
     expect(game.service.pauseReason).toBe('manual');
@@ -170,9 +182,11 @@ it('preserves elevated position and manual route snapshots while departure cance
     // docs/save-and-load.md#continuation-and-identity
     await game.service.control({ paused: false, clientId: 'save-fixture' });
     await game.service.setPresence('save-fixture', false);
-    expect(game.service.world.entities[actorId]!.actor!.participation?.phase).toBe('exiting');
+    expect(entityGet(game.service.world.entities, actorId)!.actor!.participation?.phase).toBe(
+      'exiting',
+    );
     const timeline = game.service.timelineId;
-    const protectedActor = structuredClone(game.service.world.entities[actorId]);
+    const protectedActor = structuredClone(entityGet(game.service.world.entities, actorId));
     const requestId = randomUUID();
     const store = game.service.store;
     const realCommit = store.commit.bind(store);
@@ -208,14 +222,14 @@ it('preserves elevated position and manual route snapshots while departure cance
     expect(game.service.pauseReason).toBe('storage');
     expect(game.service.world.paused).toBe(true);
     expect(game.service.timelineId).not.toBe(timeline);
-    expect(game.service.world.entities[actorId]!.actor!.action).toEqual(
-      idleStored.state.world.entities[actorId]!.actor!.action,
+    expect(entityGet(game.service.world.entities, actorId)!.actor!.action).toEqual(
+      entityGet(idleStored.state.world.entities, actorId)!.actor!.action,
     );
     expect(await store.records?.head()).toMatchObject({ revision: installedRevision });
     expect(await store.getIntegration(`load-request:${requestId}`)).toEqual({ saveId: idleId });
     expect(protectedSaveId).toBeDefined();
     const protection = await store.saves!.read(game.service.world.id, protectedSaveId!);
-    expect(protection.state.world.entities[actorId]).toEqual(protectedActor);
+    expect(entityGet(protection.state.world.entities, actorId)).toEqual(protectedActor);
     const speed = game.service.speed;
     expect(await game.service.control({ speed: speed === 3 ? 1 : 3 })).toMatchObject({
       ok: false,

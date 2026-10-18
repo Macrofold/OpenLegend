@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { isAssemblyPlacement } from './spatial-state.js';
 import { worldRootEntities } from './entity-index.js';
 import type {
@@ -82,7 +83,7 @@ export function postHeightForSlot(
   return assemblyArrangement(family, arrangementId)!.rowHeights[Number(slot.split(':')[1])]!;
 }
 export function materialPostHeight(world: WorldState, id: string): number | undefined {
-  const item = world.entities[id]?.item;
+  const item = entityGet(world.entities, id)?.item;
   return item && world.itemDefinitions[item.definitionPin.id]?.assemblyMaterial?.postHeight;
 }
 /** Actual in-plane cloth dimensions, parallel edges and downward-normal thickness.
@@ -171,7 +172,9 @@ export function assemblyShapes(world: WorldState, root: Entity): AssemblyShapes 
   const cacheable = Object.isFrozen(world);
   const prior = cacheable ? shapeViews.get(component) : undefined;
   const parts = Object.values(component.parts);
-  const placements = cacheable ? parts.map((part) => world.entities[part.itemId]?.placement) : [];
+  const placements = cacheable
+    ? parts.map((part) => entityGet(world.entities, part.itemId)?.placement)
+    : [];
   if (
     prior &&
     prior.placement === root.placement &&
@@ -185,7 +188,7 @@ export function assemblyShapes(world: WorldState, root: Entity): AssemblyShapes 
   const posts: SpatialBlocker[] = [],
     panels: CoverPanel[] = [];
   for (const part of parts) {
-    const material = world.entities[part.itemId];
+    const material = entityGet(world.entities, part.itemId);
     if (!isAssemblyPlacement(material?.placement)) continue;
     chargeWork({ candidates: 1 });
     if (part.role === 'post') {
@@ -224,13 +227,13 @@ export function assemblyShapes(world: WorldState, root: Entity): AssemblyShapes 
 }
 /** Only actual flexible coverings receive the family's overlap exemption. */
 export function isInstalledCover(world: WorldState, id: string): boolean {
-  const item = world.entities[id],
+  const item = entityGet(world.entities, id),
     rootId = item?.item?.assemblyClaim?.rootId;
   return (
     !!rootId &&
     isAssemblyPlacement(item?.placement) &&
     item.placement.parentEntityId === rootId &&
-    world.entities[rootId]?.assembly?.parts[id]?.role === 'cover'
+    entityGet(world.entities, rootId)?.assembly?.parts[id]?.role === 'cover'
   );
 }
 const sharedMaps = new WeakMap<

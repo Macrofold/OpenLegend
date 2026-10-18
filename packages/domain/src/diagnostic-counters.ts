@@ -4,6 +4,59 @@
  * docs/maintainers/events-perception-and-reactions.md#epr00--baseline-invariants-and-task-ownership
  */
 export const DOMAIN_COUNTERS = [
+  /** Native scheduler frequency, independent of host clock and profiling wall time. */
+  'nativeForecasts',
+  'nativeActionCalls',
+  'nativeCoarseActionCallsAvoided',
+  'nativeCoarseEnvelopesTested',
+  'entityDraftLookupHits',
+  'entityDraftTreeLookups',
+  'entityEnumerationEntriesVisited',
+  'orderedRecordBranchesVisited',
+  'animalWanderDecisions',
+  'animalWanderQueueEntriesVisited',
+  'animalWanderEligibilityChecks',
+  'nativeWalkingForecastReuses',
+  'nativeTerritorialDeadlineReuses',
+  'nativeTerritorialReviewFallbacks',
+  'statusFlowPreparations',
+  'statusFlowReuses',
+  'statusRulesConsidered',
+  'statusDormantRulesExcluded',
+  'nativeValueSegmentsRetained',
+  'nativeValuesMaterialized',
+  'nativeValueOperationsReplayed',
+  'nativeValueReadCacheHits',
+  'materialMembershipBuilds',
+  'materialMembershipCandidates',
+  'materialMembershipUpdates',
+  'materialFootprintsBuilt',
+  'materialFootprintsReused',
+  'nativeLocalForecasts',
+  'nativeStatusParticipantsPrepared',
+  'nativeStatusParticipantsReused',
+  'nativeStatusIntegrationReuses',
+  'nativeLocalBodyChanges',
+  'nativeLocalStatusChanges',
+  'nativeLocalAttributeChanges',
+  'nativeLocalActivityChanges',
+  'nativeLocalFallbackCoupled',
+  'nativeLocalFallbackReactive',
+  'nativeLocalFallbackUnknown',
+  'nativeLocalFallbackMembership',
+  'nativeLocalFallbackAllocation',
+  'nativePublicationPreparationInvalidations',
+  'nativeMotionSlices',
+  'nativeSliceActorsVisited',
+  'nativeActionCandidatesPrepared',
+  'nativeFireCandidatesPrepared',
+  'nativeAmbientCandidatesPrepared',
+  'nativeAmbientMoversVisited',
+  'nativeRateMaterializations',
+  'nativeRateParticipants',
+  'nativeSharedBoundaries',
+  'nativePublications',
+  'nativeContinuationsReused',
   'outingIndexed',
   'outingChecked',
   /** Sensory input preparation, certified draft coverage, affected observers and recovery. */
@@ -19,6 +72,8 @@ export const DOMAIN_COUNTERS = [
   'sensoryOverflowRebuilds',
   'sensoryPolicyRebuilds',
   'sensoryObserversSelected',
+  'sensoryPairReuseObservers',
+  'sensoryPairsRetested',
   /** Entries installed in rebuilt or incrementally maintained spatial bins. */
   'spatialEntriesPrepared',
   /** Root-entity enumerations and the roots they returned. */
@@ -55,6 +110,10 @@ export const DOMAIN_COUNTERS = [
   /** Brief sight/contact pair work and derived-cache lifecycle. */
   'crossingPairEvaluations',
   'crossingPairCacheHits',
+  'crossingSightPieces',
+  'crossingSightPrunedPieces',
+  'crossingContactPieces',
+  'crossingContactPrunedPieces',
   'crossingInvalidationKeys',
   'crossingPruneKeys',
   'crossingPairsRetained',
@@ -71,6 +130,11 @@ export type DomainCounter = (typeof DOMAIN_COUNTERS)[number];
 export type DomainCounters = Partial<Record<DomainCounter, number>>;
 
 let sink: DomainCounters | undefined;
+
+/** Callers guard diagnostic-only preparation; no simulation work depends on this. */
+export function domainCountersEnabled(): boolean {
+  return sink !== undefined;
+}
 
 export function countDomainWork(name: DomainCounter, amount = 1): void {
   if (sink) sink[name] = (sink[name] ?? 0) + amount;

@@ -1,3 +1,4 @@
+import { entitySet, entityValues } from '../../entity-collection.js';
 import { baseSpatial } from './spatial-definitions.js';
 import { createItemLot } from '../../objects.js';
 import { hasRecordFields, isSafeRecordId } from '../../records.js';
@@ -283,11 +284,18 @@ export const BASE_OPENING_STOCK_DEFINITIONS = [
   'bone',
 ] as const;
 
-const methods: Record<BaseOpeningMethod, RecipeCandidate> = {
-  'woven-container': BASE_WOVEN_CONTAINER_METHOD,
-  'river-line': RIVER_LINE_METHOD,
-  'wooden-shield': KNOWN_SHIELD_METHOD.candidate,
-};
+// The world module and its starting recipes share imports with native execution.
+// Read a recipe when constructing an opening, after those modules have initialized.
+function openingMethod(method: BaseOpeningMethod): RecipeCandidate {
+  switch (method) {
+    case 'woven-container':
+      return BASE_WOVEN_CONTAINER_METHOD;
+    case 'river-line':
+      return RIVER_LINE_METHOD;
+    case 'wooden-shield':
+      return KNOWN_SHIELD_METHOD.candidate;
+  }
+}
 const text = (
   value: unknown,
   maximum: number = BASE_OPENING_PROFILE.limits.textCharacters,
@@ -633,7 +641,7 @@ export function prepareBaseInitialWorldState(world: WorldState): void {
   initializeIdentity(world);
   migrateCognition(world);
   initializePerception(world, []);
-  for (const entity of Object.values(world.entities)) reconcileConditions(world, entity, []);
+  for (const entity of entityValues(world.entities)) reconcileConditions(world, entity, []);
   world.paused = true;
   validateWorldModules(world);
 }
@@ -669,7 +677,7 @@ export function buildBaseInitialWorld(
   const people = [candidate.player, ...(candidate.resident ? [candidate.resident] : [])];
   for (const person of people) {
     reserveEntityId(world, person.id);
-    world.entities[person.id] = {
+    entitySet(world.entities, person.id, {
       id: person.id,
       name: person.name,
       nameForm: 'proper',
@@ -683,7 +691,7 @@ export function buildBaseInitialWorld(
         traits: person.traits,
         initialGoals: person.initialGoals,
       }),
-    };
+    });
     world.memories[person.id] = [];
     world.knowledge[person.id] = [];
   }
@@ -722,10 +730,10 @@ export function buildBaseInitialWorld(
         calmRate: 0,
         reviewAt: 0,
         danger: 0,
-        wanderSeconds: 150,
+        wander: { remainingSeconds: 150 },
       };
     }
-    world.entities[entity.id] = entity;
+    entitySet(world.entities, entity.id, entity);
   }
   for (const stock of candidate.stock)
     createItemLot(world, stock.ownerId, stock.definition.id, stock.quantity, stock.id);
@@ -733,7 +741,7 @@ export function buildBaseInitialWorld(
   for (const knowledge of candidate.knowledge) {
     let recipeId = installed.get(knowledge.method);
     if (!recipeId) {
-      recipeId = installRecipe(world, methods[knowledge.method], {
+      recipeId = installRecipe(world, openingMethod(knowledge.method), {
         source: 'authored-world',
         profile: { ...world.profile },
       }).recipe.id;
@@ -742,7 +750,7 @@ export function buildBaseInitialWorld(
     learnRecipe(world, knowledge.actorId, recipeId, 'authored', `opening:${knowledge.method}`);
   }
   // Exact support validity alone does not establish body clearance at an authored spawn.
-  for (const entity of Object.values(world.entities))
+  for (const entity of entityValues(world.entities))
     if (
       entity.placement?.mode === 'world' &&
       !isWalkable(

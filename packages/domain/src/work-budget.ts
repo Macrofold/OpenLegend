@@ -1,3 +1,4 @@
+import { entityGet, entityHas } from './entity-collection.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
 import type { DefinitionPin } from './world-modules.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
@@ -5,6 +6,7 @@ import type { WorldState } from './types.js';
 import { isDraft, original } from 'immer';
 import { objectIndexGet, objectIndexSet, type ObjectIndexNode } from './object-index.js';
 import { releaseInvocationResources, resourceReservationWork } from './resource-claims.js';
+import { materializeNativeEpisode } from './native-values.js';
 
 /** Deterministic units, independent of wall time and provider spending. Operational
  * containment, not authored world law. docs/projects/completed/dependency-invalidation-tech-design.md#7-budget-model-and-static-admission */
@@ -123,7 +125,13 @@ export function requireWork(
   limit: WorkDemand,
   code: 'work-unavailable' | 'work-contract' = 'work-unavailable',
 ): void {
-  const required = workVector(demand);
+  requireWorkVector(workVector(demand), limit, code);
+}
+function requireWorkVector(
+  required: WorkVector,
+  limit: WorkDemand,
+  code: WorkBudgetError['code'] = 'work-unavailable',
+): void {
   for (const unit of WORK_UNITS)
     if (limit[unit] !== undefined && required[unit] > limit[unit]!)
       throw new WorkBudgetError(code, unit);
@@ -297,10 +305,12 @@ export function admitWork(
     recurrence?: RecurringWork;
   },
 ): WorkInvocation {
+  materializeNativeEpisode(world, request.id);
+  if (request.parentId) materializeNativeEpisode(world, request.parentId);
   if (
     ![request.id, request.actorId, request.moduleId].every(isSafeRecordId) ||
-    !Object.hasOwn(world.entities, request.actorId) ||
-    world.entities[request.actorId]?.retirement ||
+    !entityHas(world.entities, request.actorId) ||
+    entityGet(world.entities, request.actorId)?.retirement ||
     (request.parentId !== undefined && !isSafeRecordId(request.parentId))
   )
     throw new Error('Invalid native invocation identity.');
@@ -374,24 +384,30 @@ export function admitWork(
   return invocation;
 }
 export function advanceWorkInterval(world: WorldState, id: string): void {
+  materializeNativeEpisode(world, id);
   const root = world.workState?.invocations[id];
-  if (!root || root.rootId !== id || !root.recurrence)
-    throw new Error('No admitted recurring root.');
-  if (
-    world.simTime <= root.intervalAt ||
-    world.simTime < root.intervalAt + root.recurrence.intervalSeconds
-  )
+  if (!root) throw new Error('No admitted recurring root.');
+  advanceInvocationInterval(root, world.simTime);
+}
+/** Shared arithmetic for eager charges and pure deferred-accounting projection. */
+export function advanceInvocationInterval(root: WorkInvocation, simTime: number): void {
+  if (root.rootId !== root.id || !root.recurrence) throw new Error('No admitted recurring root.');
+  if (simTime <= root.intervalAt || simTime < root.intervalAt + root.recurrence.intervalSeconds)
     return;
   if (root.children > 0) throw new Error('Recurring interval still owns pending descendants.');
   // At most this interval's burst; pause/downtime cannot bank unlimited catch-up work.
-  root.intervalAt = world.simTime;
+  root.intervalAt = simTime;
   root.used = workVector();
   root.executions = 0;
   root.revision++;
 }
 export function chargeInvocation(world: WorldState, id: string, demand: WorkDemand): void {
+  materializeNativeEpisode(world, id);
   const invocation = world.workState?.invocations[id];
   if (!invocation) throw new Error('Native work has no admitted invocation.');
+  chargeInvocationValue(invocation, demand);
+}
+export function chargeInvocationValue(invocation: WorkInvocation, demand: WorkDemand): void {
   if (invocation.recurrence && invocation.executions >= invocation.recurrence.burst)
     throw new WorkBudgetError('work-contract', 'effects');
   // A running native episode usually charges two counters. Preflight every changed
@@ -413,6 +429,7 @@ export function chargeInvocation(world: WorldState, id: string, demand: WorkDema
   invocation.revision++;
 }
 export function releaseWork(world: WorldState, id: string): void {
+  materializeNativeEpisode(world, id);
   const records = world.workState?.invocations;
   if (!records?.[id]) return;
   const source = records[id]!;
@@ -476,7 +493,7 @@ export function validateWorkState(world: WorldState): void {
       id !== invocation.id ||
       !isDefinitionPin(invocation.definitionPin) ||
       ![id, invocation.rootId, invocation.actorId, invocation.moduleId].every(isSafeRecordId) ||
-      !world.entities[invocation.actorId] ||
+      !entityGet(world.entities, invocation.actorId) ||
       invocation.children !== (childCounts.get(id) ?? 0) ||
       !Number.isSafeInteger(invocation.executions) ||
       invocation.executions < 0 ||
@@ -547,7 +564,7 @@ export function withWorkMeter<T>(limit: WorkDemand, operation: () => T): T {
     depth: (activeMeter?.depth ?? 0) + 1,
   };
   if (meter.depth > WORK_LIMITS.group.depth) throw new WorkBudgetError('work-contract', 'depth');
-  requireWork(meter.limit, WORK_LIMITS.group);
+  requireWorkVector(meter.limit, WORK_LIMITS.group);
   activeMeter = meter;
   try {
     return operation();
@@ -558,11 +575,18 @@ export function withWorkMeter<T>(limit: WorkDemand, operation: () => T): T {
 export function chargeWork(demand: WorkDemand): void {
   if (!activeMeter) return; // Mutable seed/migration builders are validated before installation.
   const keys = Object.keys(demand) as WorkUnit[];
+  // Validate each input alongside the current meter's preflight, avoiding a second
+  // key traversal for the usual single meter. Ancestors reuse only those inputs.
+  for (const key of keys) {
+    if (!WORK_UNITS.includes(key)) throw new Error('Unknown work unit.');
+    const amount = integer(demand[key]!);
+    const next = integer(activeMeter.used[key] + amount);
+    if (next > activeMeter.limit[key]) throw new WorkBudgetError('work-contract', key);
+  }
   // Preflight the entire chain before charging any meter, including on local exhaustion.
-  for (let meter: WorkMeter | undefined = activeMeter; meter; meter = meter.parent)
+  for (let meter: WorkMeter | undefined = activeMeter.parent; meter; meter = meter.parent)
     for (const key of keys) {
-      if (!WORK_UNITS.includes(key)) throw new Error('Unknown work unit.');
-      const next = integer(meter.used[key] + integer(demand[key]!));
+      const next = integer(meter.used[key] + demand[key]!);
       if (next > meter.limit[key]) throw new WorkBudgetError('work-contract', key);
     }
   for (let meter: WorkMeter | undefined = activeMeter; meter; meter = meter.parent)
@@ -581,7 +605,7 @@ export function meteredIterator<T, Yield = void, Resume = void>(
     parent: activeMeter,
     depth: (activeMeter?.depth ?? 0) + 1,
   };
-  requireWork(meter.limit, WORK_LIMITS.group);
+  requireWorkVector(meter.limit, WORK_LIMITS.group);
   if (meter.depth > WORK_LIMITS.group.depth) throw new WorkBudgetError('work-contract', 'depth');
   const resume = (operation: () => IteratorResult<Yield, T>) => {
     const previous = activeMeter;

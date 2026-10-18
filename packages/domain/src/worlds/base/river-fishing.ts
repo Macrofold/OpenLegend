@@ -1,3 +1,4 @@
+import { entitySet } from '../../entity-collection.js';
 import { baseSpatial } from './spatial-definitions.js';
 import type { CastDefinition } from '../../finite-casts.js';
 import type { RecipeFamilyDescriptor } from '../../invention-families.js';
@@ -163,7 +164,7 @@ export function installRiverReaches(world: WorldState): void {
   ];
   for (const reach of reaches) {
     const stance = starterGroundAt(world.map.spatial!, reach.x, reach.z);
-    world.entities[reach.id] = {
+    entitySet(world.entities, reach.id, {
       id: reach.id,
       name: BASE_CAST_DEFINITIONS[reach.profile]!.name,
       kind: 'resource',
@@ -187,6 +188,6 @@ export function installRiverReaches(world: WorldState): void {
           },
         },
       },
-    };
+    });
   }
 }

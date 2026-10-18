@@ -705,8 +705,7 @@
     color calc(120ms * var(--motion-scale));
   --ol-icon: 24px;
 }
-[data-theme='scifi'] .ol-launcher,
-[data-theme='scifi'] .ol-qa {
+[data-theme='scifi'] .ol-launcher {
   --round: 10px;
 }
 .ol-launcher:hover {
@@ -765,104 +764,6 @@
   right: calc(100% + 12px);
 }
 .ol-launcher-wrap:hover .ol-hover-label {
-  opacity: 1;
-}
-
-/* Quick action bar */
-.ol-qabar {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-}
-.ol-qagroup {
-  display: flex;
-  gap: 10px;
-}
-.ol-qadivider {
-  width: 1px;
-  height: 28px;
-  background: var(--world-text);
-  opacity: 0.35;
-}
-.ol-qa {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  border-radius: var(--round);
-  border: 1px solid var(--line-strong);
-  background: var(--surface-glass);
-  color: var(--ink);
-  cursor: pointer;
-  box-shadow: var(--shadow-float);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  --ol-icon: 24px;
-  transition: background-color calc(120ms * var(--motion-scale));
-}
-.ol-qa:hover {
-  background: var(--surface-hover);
-}
-.ol-qa[data-kind='suggested'] {
-  border-color: var(--accent);
-  border-style: dashed;
-}
-.ol-qa[data-kind='suggested']:hover {
-  background: var(--accent-quiet);
-}
-.ol-qa[data-kind='empty'] {
-  border-style: dashed;
-  background: rgba(0, 0, 0, 0.2);
-  color: var(--world-text);
-  box-shadow: none;
-  --ol-icon: 18px;
-}
-.ol-qa:disabled {
-  color: var(--ink-faint);
-  cursor: not-allowed;
-  opacity: 0.75;
-  box-shadow: none;
-}
-.ol-qa-key {
-  position: absolute;
-  right: -3px;
-  bottom: -3px;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 9px;
-  padding: 0 4px;
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
-  font: 500 11px/16px var(--font-mono);
-  color: var(--ink-muted);
-  text-align: center;
-}
-.ol-qa-ring {
-  position: absolute;
-  inset: -3px;
-  border-radius: 50%;
-  background: conic-gradient(var(--accent) calc(var(--p) * 1turn), transparent 0);
-  -webkit-mask: radial-gradient(
-    farthest-side,
-    transparent calc(100% - 3px),
-    #000 calc(100% - 2.5px)
-  );
-  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
-  pointer-events: none;
-}
-.ol-qa-wrap {
-  position: relative;
-  display: flex;
-  justify-content: center;
-}
-.ol-qa-wrap .ol-hover-label {
-  top: auto;
-  bottom: calc(100% + 10px);
-  left: 50%;
-  transform: translateX(-50%);
-}
-.ol-qa-wrap:hover .ol-hover-label {
   opacity: 1;
 }
 

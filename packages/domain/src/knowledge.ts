@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import type { Outcome, WorldState } from './types.js';
 import { recordSemanticChange } from './dependencies.js';
 import { getOwn, isSafeRecordId } from './records.js';
@@ -86,14 +87,14 @@ export function editKnowledge(
   evidenceIds: readonly string[] = [],
 ): Outcome {
   const policy = world.knowledgePolicy;
-  if (!policy || !world.entities[actorId]?.actor || !isSafeRecordId(actorId))
+  if (!policy || !entityGet(world.entities, actorId)?.actor || !isSafeRecordId(actorId))
     return outcome(false, 'knowledge-unavailable', 'Knowledge is unavailable for this actor.');
   const current = knowledgeDocument(world, actorId, edit.subjectId);
   if (
     edit.subjectId !== null &&
     (!permittedSubjects.includes(edit.subjectId) ||
       !isSafeRecordId(edit.subjectId) ||
-      (!world.entities[edit.subjectId] && !current))
+      (!entityGet(world.entities, edit.subjectId) && !current))
   )
     return outcome(false, 'unpermitted-subject', 'The knowledge subject was not supplied.');
   if (
@@ -144,7 +145,8 @@ export function validateKnowledge(world: WorldState): void {
       throw new Error('Invalid admitted knowledge character limit.');
   if (!world.knowledgePolicy) throw new Error('Knowledge has no admitted policy.');
   for (const [actorId, documents] of Object.entries(world.actorKnowledge ?? {})) {
-    if (!world.entities[actorId]?.actor) throw new Error('Knowledge owner is unavailable.');
+    if (!entityGet(world.entities, actorId)?.actor)
+      throw new Error('Knowledge owner is unavailable.');
     for (const [id, document] of Object.entries(documents)) {
       if (
         !['authored-starting', 'actor-edit'].includes(document.origin) ||

@@ -1,3 +1,4 @@
+import { currentStatusInstance, entityGet } from '@open-legend/domain';
 import { acquiredActivities } from '@open-legend/domain';
 import { continuityView } from './continuity-view.js';
 import { projectStatusEffects } from '@open-legend/domain';
@@ -11,12 +12,12 @@ export async function inspectGodMind(
   scope = service.localScope,
 ): Promise<GodMindView> {
   if (!service.config.godMode) throw new Error('God inspection is disabled by the host.');
-  let entity = service.world.entities[actorId];
+  let entity = entityGet(service.world.entities, actorId);
   if (!entity?.actor) throw new Error('Character not found.');
   if (!service.mayInspectPrivate(actorId, scope))
     throw new Error('Human-private character content is unavailable to this principal.');
   const history = await service.inspectMemoryContext(actorId, scope);
-  entity = service.world.entities[actorId];
+  entity = entityGet(service.world.entities, actorId);
   if (
     !entity?.actor ||
     !service.mayInspectPrivate(actorId, scope) ||
@@ -68,7 +69,7 @@ export async function inspectGodMind(
     statusEffects: projectStatusEffects(service.world, entity, 'owner').map((d) => ({
       id: d.id,
       label: d.label,
-      elapsedSeconds: entity.statusEffects?.[d.id]?.elapsedSeconds ?? 0,
+      elapsedSeconds: currentStatusInstance(service.world, entity, d.id)?.elapsedSeconds ?? 0,
     })),
 
     documents: mind.documents,

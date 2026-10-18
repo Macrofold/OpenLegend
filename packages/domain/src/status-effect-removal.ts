@@ -1,3 +1,4 @@
+import { entityValues } from './entity-collection.js';
 import { validateBodyPolicy } from './body-policy.js';
 import { completeContributionHistory } from './contribution-residency.js';
 import { canonicalJson } from './events.js';
@@ -440,7 +441,7 @@ export function analyzeStatusEffectRemoval(
   );
   const instances: StatusEffectRemovalInstance[] = [];
   const contributionFacts: unknown[] = [];
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     work.entities++;
     if (!completeContributionHistory(entity.statusEffects))
       blockers.push({
@@ -475,6 +476,8 @@ export function analyzeStatusEffectRemoval(
       }
       if (!changedIds.has(recordId) || (retained.has(recordId) && !instance.active)) continue;
       const definition = definitions.get(recordId)!;
+      // Review freshness binds retained ownership/allocation, not elapsed execution
+      // counters. Those fields remain immediate even while exact rate work is pending.
       const invocation = world.workState?.invocations[instance.episode];
       const activity =
         entity.actor?.action?.id === instance.episode ? entity.actor.action : undefined;

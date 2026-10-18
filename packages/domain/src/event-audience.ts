@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { worldRootEntities } from './entity-index.js';
 import { hasMemory } from './living.js';
@@ -102,6 +103,6 @@ export function externalAudience(world: WorldState, source: Entity): string[] {
         ) <= receiver.radius,
     )
     .sort((a, b) => a.order - b.order)
-    .filter((receiver) => seesEntity(world, world.entities[receiver.id]!, source))
+    .filter((receiver) => seesEntity(world, entityGet(world.entities, receiver.id)!, source))
     .map((receiver) => receiver.id);
 }

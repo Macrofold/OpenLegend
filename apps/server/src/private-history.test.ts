@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from '@open-legend/domain';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NPC_ID, PLAYER_ID } from '@open-legend/domain';
 import { appendMemory, emit } from '../../../packages/domain/src/events.js';
@@ -115,7 +116,7 @@ describe('private history disclosure after storage waits', () => {
     '%s rejects another human’s newly bound character while the requester remains authorized',
     async (surface) => {
       const h = await setup();
-      const previousActor = Object.values(h.service.world.entities).find(
+      const previousActor = entityValues(h.service.world.entities).find(
         (entry) => entry.actor && entry.id !== NPC_ID && entry.id !== PLAYER_ID,
       )!;
       await h.store.authority.provision(h.service.world.id, {
@@ -157,7 +158,7 @@ describe('private history disclosure after storage waits', () => {
         events,
         'thought',
         'New correcting evidence.',
-        world.entities[NPC_ID],
+        entityGet(world.entities, NPC_ID),
         undefined,
         undefined,
         'private',

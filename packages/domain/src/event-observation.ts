@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { objectAncestors } from './objects.js';
 import { seesEntity } from './perception.js';
 import { renderNarration, type Narration } from './narration.js';
@@ -69,8 +70,8 @@ export function observeEvent(world: WorldState, event: WorldEvent, observerId: s
   const permits = (id: string) => {
     let permitted = visible.get(id);
     if (permitted === undefined) {
-      const observer = world.entities[observerId],
-        subject = world.entities[id];
+      const observer = entityGet(world.entities, observerId),
+        subject = entityGet(world.entities, id);
       // Visible external attachments share their root's pose; containment never grants
       // observation of bag contents merely because the carrier can be seen.
       const chain = subject?.placement?.mode === 'attached' ? objectAncestors(world, id) : [];

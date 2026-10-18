@@ -1,4 +1,5 @@
 import type { GameView } from '@open-legend/protocol';
+import { memo } from 'react';
 import { Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
 import { Button, Section, SegmentedControl } from '../design-system/components';
 import type { ShadowQuality } from '../world-renderer';
@@ -7,7 +8,11 @@ import { WorldVisualSettings } from './world-visual-settings';
 import icons from '../design-system/icons/icons.json';
 import './settings.css';
 
-export function Settings({
+export type SettingsView = Pick<
+  GameView,
+  'worldId' | 'saveTimeline' | 'godMode' | 'profile' | 'inventionPolicy'
+>;
+export const Settings = memo(function Settings({
   view,
   section,
   setSection,
@@ -27,7 +32,7 @@ export function Settings({
   setPerformance,
   browseActions,
 }: {
-  view: GameView;
+  view: SettingsView;
   section: string;
   setSection(value: string): void;
   theme: string;
@@ -189,7 +194,6 @@ export function Settings({
               ['T', 'Use the equipped item on a target'],
               ['V', 'In view'],
               ['W', 'Create'],
-              ['1–3', 'Pinned shortcuts'],
               ['P', 'Pause or resume the world'],
               ['Shift + ] / [', 'Faster / slower world time'],
               ['Escape', 'Cancel the current choice first; otherwise open or close Game'],
@@ -262,4 +266,4 @@ export function Settings({
       )}
     </Tabs>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { observeEvent } from './event-observation.js';
 import { reconcileCoaching } from './coaching.js';
 import { renderNarration, subjectNarration, personalText, type Narration } from './narration.js';
@@ -61,7 +62,7 @@ export function appendMemory(
   actorId: string,
   memory: Omit<MemoryRecord, 'id' | 'actorId' | 'at' | 'summary'> & { summary: string | Narration },
 ): string | undefined {
-  if (!hasMemory(world.entities[actorId])) return;
+  if (!hasMemory(entityGet(world.entities, actorId))) return;
   const summary = personalText(world, actorId, memory.summary);
   if (!summary.trim()) return;
   const records = world.memories[actorId] ?? (world.memories[actorId] = []);
@@ -173,9 +174,9 @@ function eventAudience(
   // Native callers opt into this additional event-time observation requirement.
   let audience = scope === 'private' || !source ? [] : externalAudience(world, source);
   if (visibleTargetId !== undefined) {
-    const target = world.entities[visibleTargetId];
+    const target = entityGet(world.entities, visibleTargetId);
     audience = target
-      ? audience.filter((id) => seesEntity(world, world.entities[id]!, target))
+      ? audience.filter((id) => seesEntity(world, entityGet(world.entities, id)!, target))
       : [];
   }
   if (source && hasMemory(source) && !audience.includes(source.id)) audience.push(source.id);
@@ -518,10 +519,18 @@ function recordEvent(
   }
   return event;
 }
-export function finish(world: WorldState, events: WorldEvent[], result: Outcome): Transition {
+export function finish(
+  world: WorldState,
+  events: WorldEvent[],
+  result: Outcome,
+  beforePublication?: () => void,
+): Transition {
   reconcileCoaching(world, events);
   advanceCommitments(world, events);
   reconcileConversations(world);
+  // Native preparation observes the exact final owner writes before publication
+  // clears private revision counters; this callback grants no gameplay authority.
+  beforePublication?.();
   world.sequence++;
   const committedEvents = cloneValue(events);
   return { world: finishWorld(world), events: committedEvents, outcome: result };

@@ -1,3 +1,4 @@
+import { entityGet } from '../../packages/domain/src/index.js';
 import { enterGame } from '../fixtures/browser.js';
 import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { PLAYER_ID } from '@open-legend/domain';
@@ -35,7 +36,9 @@ test('scoped React action search, contextual facts and known unavailable choices
     const gather = menu.getByRole('button', { name: /Gather River reeds/ });
     await gather.hover();
     await expect(tip).toBeVisible();
-    await expect(tip).toContainText('36 seconds');
+    const gatheringSeconds = entityGet(game.service.world.entities, 'reeds')?.resource?.workSeconds;
+    expect(gatheringSeconds).toBeDefined();
+    await expect(tip).toContainText(`${gatheringSeconds} game seconds`);
     await expect(tip).toContainText('Yields');
     await search.fill('hunt');
     await expect(menu.locator('[data-catalogue-action]')).toHaveCount(0);
@@ -51,7 +54,7 @@ test('scoped React action search, contextual facts and known unavailable choices
     await expect(gather).toBeFocused();
     await expect(tip).toContainText('Resume the world');
     await page.keyboard.press('Enter');
-    expect(game.service.world.entities[PLAYER_ID]!.actor!.action).toBeNull();
+    expect(entityGet(game.service.world.entities, PLAYER_ID)!.actor!.action).toBeNull();
     await expect(menu).toBeVisible();
     await page.screenshot({ path: info.outputPath('action-menu.png') });
     await page.keyboard.press('Escape');

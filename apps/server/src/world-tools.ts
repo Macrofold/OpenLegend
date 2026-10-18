@@ -1,3 +1,4 @@
+import { entityGet, entityHas, entityKeys } from '@open-legend/domain';
 import { mayDiscloseSubject, type RequestScope } from './authority.js';
 import { EntityDirectory } from './entity-directory.js';
 import { traceRelationships, TRACE_LIMITS } from './relationship-trace.js';
@@ -260,7 +261,7 @@ export class WorldToolService {
     return mayDiscloseSubject(world, id, (actorId) =>
       grant.scope
         ? this.service.mayInspectPrivate(actorId, grant.scope)
-        : world.entities[actorId]?.actor?.controller !== 'player',
+        : entityGet(world.entities, actorId)?.actor?.controller !== 'player',
     );
   }
 
@@ -425,7 +426,7 @@ export class WorldToolService {
           if (input.version && input.version !== projection.root.version)
             throw new GraphReadError('stale', 'Live subject changed.');
           const item = input.kind === 'item' ? itemFor(world, input.id) : undefined;
-          const entity = input.kind === 'entity' ? world.entities[input.id] : undefined;
+          const entity = input.kind === 'entity' ? entityGet(world.entities, input.id) : undefined;
           return {
             ref: projection.root,
             data: item ?? (entity && inspectableEntity(world, entity)),
@@ -483,7 +484,7 @@ export class WorldToolService {
         const input = raw as z.infer<typeof WORLD_READ_TOOLS.ol_instances.schema>;
         let items = this.items;
         if (!items || items.source !== world.entities || !Object.isFrozen(world.entities)) {
-          const keys = Object.keys(world.entities)
+          const keys = entityKeys(world.entities)
             .filter((id) => !!itemFor(world, id))
             .sort();
           if (keys.length > GRAPH_LIMITS.nodes)
@@ -534,7 +535,7 @@ export class WorldToolService {
       }
       case 'ol_evidence': {
         const input = raw as z.infer<typeof WORLD_READ_TOOLS.ol_evidence.schema>;
-        if (!canRead(input.actorId) || !world.entities[input.actorId]?.actor)
+        if (!canRead(input.actorId) || !entityGet(world.entities, input.actorId)?.actor)
           throw new GraphReadError('forbidden', 'Actor evidence is unavailable.');
         const repository = this.service.store.memories;
         if (!repository)
@@ -606,7 +607,9 @@ export class WorldToolService {
         const { actorId } = raw as { actorId: string };
         if (!canRead(actorId))
           throw new GraphReadError('forbidden', 'Actor activity is unavailable.');
-        const entity = Object.hasOwn(world.entities, actorId) ? world.entities[actorId] : undefined;
+        const entity = entityHas(world.entities, actorId)
+          ? entityGet(world.entities, actorId)
+          : undefined;
         if (!entity?.actor) throw new GraphReadError('unavailable', 'Actor is unavailable.');
         const { path, ...action } = entity.actor.action ?? { path: [] };
         return {

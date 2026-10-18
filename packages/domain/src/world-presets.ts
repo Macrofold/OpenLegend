@@ -1,3 +1,4 @@
+import { entityGet, entitySet, entityValues } from './entity-collection.js';
 import { CANOPY_ATTRIBUTES, BASE_CANOPY_ACTIVITY_HOST } from './worlds/base/canopies.js';
 import { SLING_HANDLING } from './worlds/base/practical-competence.js';
 import { directChildIds, unequipLot } from './objects.js';
@@ -114,7 +115,7 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
   );
   world.statusEffectPolicy = { revision: 1, clockOffsetHours: 0, namedTimes: {}, definitions: [] };
   world.cognitionPolicy = { ...world.cognitionPolicy, dream: null };
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     const actor = entity.actor;
     if (!actor) continue;
     // This is new-world composition, not conversion of an existing saved world.
@@ -127,7 +128,8 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
       // Fresh constructs have no wearing ports. Keep inherited equipment as the
       // same carried belongings through the ordinary placement/revision owner.
       for (const id of directChildIds(world, entity.id))
-        if (world.entities[id]?.placement?.mode === 'attached') unequipLot(world, entity.id, id);
+        if (entityGet(world.entities, id)?.placement?.mode === 'attached')
+          unequipLot(world, entity.id, id);
       actor.species = 'construct';
       actor.body = livingBody('construct');
       actor.agency = seedAgency(['Stay charged and explore the clearing.']);
@@ -137,7 +139,7 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
       if (identity) identity.text = `I am ${entity.name}, a clockwork inhabitant of this clearing.`;
     }
   }
-  world.entities['charge-bank'] = {
+  entitySet(world.entities, 'charge-bank', {
     icon: 'meter.energy',
     spatial: baseSpatial('object'),
     id: 'charge-bank',
@@ -145,7 +147,7 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
     kind: 'resource',
     placement: worldPlacement({ y: 0, x: 12, z: 13 }, 'terrain'),
     replenisher: { attributeId: 'clockwork:charge', remaining: 2400 },
-  };
+  });
   validateWorldModules(world);
   return world;
 }
@@ -162,7 +164,7 @@ export function createTouchDemo(seed = 73, accounts?: WorldCreationAccounts): Wo
     manifest.recipeFamilies,
     manifest.activityHosts,
   );
-  const resident = world.entities[defaultResidentEntityId(world)]!;
+  const resident = entityGet(world.entities, defaultResidentEntityId(world))!;
   resident.actor!.senses = [COARSE_TOUCH.id];
   resident.actor!.contacts = {};
   resident.actor!.agency = seedAgency([

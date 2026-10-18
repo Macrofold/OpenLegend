@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import {
   exposureCrossings,
   incidentExposure,
@@ -8,13 +9,15 @@ import {
   type ExposureFootprint,
   type SpatialMap,
 } from '@open-legend/spatial';
+import { readOnlyDraftView } from './draft.js';
 import { assemblyShapes } from './assembly-geometry.js';
 import { bodyProfile, spatialMap, worldPosition } from './spatial-state.js';
 import { worldRootEntities } from './entity-index.js';
-import { directChildIds } from './objects.js';
+import { exposedMaterialIds } from './objects.js';
 import { chargeWork } from './work-budget.js';
 import { readState, stateAddress, writeState } from './state-owners.js';
 import { attributeDefinition } from './world-modules.js';
+import { countDomainWork } from './diagnostic-counters.js';
 import type { AssemblyFamily, FiniteRain } from './assembly-types.js';
 import type { WorldState, WorldEvent } from './types.js';
 
@@ -23,37 +26,26 @@ const panelViews = new WeakMap<
   { panels: CoverPanel[]; byId: Map<string, CoverPanel> }
 >();
 const panelIndexes = new WeakMap<readonly CoverPanel[], BoundsIndex<number>>();
-const materialCandidates = new WeakMap<
-  WorldState['objectState'],
-  {
-    definitions: WorldState['itemDefinitions'];
-    families: WorldState['assemblyFamilies'];
-    ids: string[];
-  }
->();
-/** Custody/quantity changes invalidate through the object owner; definition changes
- * invalidate through their installed records. Position and moisture are read live. */
-function exposedMaterialIds(world: WorldState): readonly string[] {
-  const immutable = Object.isFrozen(world);
-  const cached = immutable ? materialCandidates.get(world.objectState) : undefined;
-  if (cached?.definitions === world.itemDefinitions && cached.families === world.assemblyFamilies)
-    return cached.ids;
-  const ids: string[] = [];
-  for (const root of worldRootEntities(world, true)) {
-    if (!root.actor && root.kind !== 'item-pile' && !root.assembly) continue;
-    for (const id of directChildIds(world, root.id)) {
-      const lot = world.entities[id]?.item;
-      const material = lot && world.itemDefinitions[lot.definitionPin.id]?.assemblyMaterial;
-      if (material && ['cover', 'fiber'].includes(material.role)) ids.push(id);
-    }
-  }
-  if (immutable)
-    materialCandidates.set(world.objectState, {
-      definitions: world.itemDefinitions,
-      families: world.assemblyFamilies,
-      ids,
-    });
-  return ids;
+type MaterialRead = Pick<WorldState, 'entities' | 'itemDefinitions'> & {
+  footprints: Map<string, ExposureFootprint>;
+};
+/** An already-drafted parent may still hold live child drafts. Unwrap only records
+ * inspected immediately; captured rain/families deliberately retain their live path. */
+function readMaterialRecord<T extends object>(record: T | undefined): T | undefined {
+  return record && readOnlyDraftView(record);
+}
+/** Immediate queries only: preserve the actual draft for indexes/writes and retain no
+ * base record across an interval. Captured rain/family references keep their old path. */
+function materialRead(
+  world: WorldState,
+  footprints = new Map<string, ExposureFootprint>(),
+): MaterialRead {
+  const latest = readOnlyDraftView(world);
+  return {
+    entities: readOnlyDraftView(latest.entities),
+    itemDefinitions: readOnlyDraftView(latest.itemDefinitions),
+    footprints,
+  };
 }
 /** The spatial owner supplies a new map whenever actual shelter geometry changes.
  * Moisture updates can reuse the same finite panels and their immutable bounds tree. */
@@ -111,10 +103,17 @@ function nearbyPanels(
 
 /** Exposure is a material form at its actual custody/attachment, never another placement. */
 export function materialFootprint(world: WorldState, id: string): ExposureFootprint | undefined {
-  const item = world.entities[id],
-    lot = item?.item,
-    definition = lot && world.itemDefinitions[lot.definitionPin.id];
-  const descriptor = definition?.assemblyMaterial,
+  return materialFootprintFromRead(world, id, materialRead(world));
+}
+function materialFootprintFromRead(
+  world: WorldState,
+  id: string,
+  read: MaterialRead,
+): ExposureFootprint | undefined {
+  const item = readMaterialRecord(entityGet(read.entities, id)),
+    lot = readMaterialRecord(item?.item),
+    definition = lot && readMaterialRecord(read.itemDefinitions[lot.definitionPin.id]);
+  const descriptor = readMaterialRecord(definition?.assemblyMaterial),
     family = descriptor && world.assemblyFamilies?.[descriptor.familyId];
   if (
     !family ||
@@ -124,7 +123,7 @@ export function materialFootprint(world: WorldState, id: string): ExposureFootpr
     item.retirement
   )
     return;
-  const placement = item.placement;
+  const placement = readMaterialRecord(item.placement)!;
   if (placement.mode === 'attached' && placement.portId === 'assembly') {
     // Installed material reads the spatial owner's existing finite shape, rather
     // than preparing another prism at both ends of every moisture interval.
@@ -132,10 +131,10 @@ export function materialFootprint(world: WorldState, id: string): ExposureFootpr
     return cover && coverFootprint(cover);
   }
   if (placement.mode === 'world') return;
-  const parent = world.entities[placement.parentEntityId];
+  const parent = readMaterialRecord(entityGet(read.entities, placement.parentEntityId));
   if (
     !parent ||
-    parent.placement?.mode !== 'world' ||
+    readMaterialRecord(parent.placement)?.mode !== 'world' ||
     (!parent.actor && parent.kind !== 'item-pile')
   )
     return;
@@ -156,13 +155,24 @@ export function materialFootprint(world: WorldState, id: string): ExposureFootpr
       : 'height' in form
         ? Number(form.height)
         : 0);
-  return {
+  // Equal dimensions at the same current owner's physical point are the same
+  // footprint. This phase-local cache has no moisture/rain/placement lifetime.
+  const key = JSON.stringify([parent.id, point.x, point.z, y, form.width, form.length]);
+  const previous = read.footprints.get(key);
+  if (previous) {
+    countDomainWork('materialFootprintsReused');
+    return previous;
+  }
+  const footprint = {
     minX: point.x - form.width / 2,
     maxX: point.x + form.width / 2,
     minZ: point.z - form.length / 2,
     maxZ: point.z + form.length / 2,
     y,
   };
+  countDomainWork('materialFootprintsBuilt');
+  read.footprints.set(key, footprint);
+  return footprint;
 }
 interface MaterialSample {
   id: string;
@@ -184,17 +194,20 @@ export function captureMaterialExposure(world: WorldState): MaterialExposureInte
     world.simTime >= rain.startsAt - 1e-8 &&
     world.simTime < rain.endsAt - 1e-8 &&
     rain.intensity > 0;
-  for (const id of exposedMaterialIds(world)) {
-    const item = world.entities[id]!;
-    if (!item.item) continue;
+  const read = materialRead(world);
+  for (const id of exposedMaterialIds(world, !raining)) {
+    const item = readMaterialRecord(entityGet(read.entities, id))!,
+      lot = readMaterialRecord(item.item);
+    if (!lot) continue;
     chargeWork({ candidates: 1 });
-    const descriptor = world.itemDefinitions[item.item.definitionPin.id]?.assemblyMaterial;
+    const definition = readMaterialRecord(read.itemDefinitions[lot.definitionPin.id]),
+      descriptor = readMaterialRecord(definition?.assemblyMaterial);
     const family = descriptor && world.assemblyFamilies?.[descriptor.familyId];
-    const moisture = family && item.attributes?.[family.moistureAttribute];
+    const moisture = family && readMaterialRecord(item.attributes)?.[family.moistureAttribute];
     // The native weather boundary ends this interval before any future rain starts.
     // A dry material has no drying work; movement cannot make it wetter without rain.
     if (!family || !moisture || (!raining && moisture.value === 0)) continue;
-    const footprint = materialFootprint(world, item.id);
+    const footprint = materialFootprintFromRead(world, item.id, read);
     if (footprint) materials.push({ id: item.id, family, footprint });
   }
   return {
@@ -233,9 +246,10 @@ export function* integrateMaterialExposure(
     interval.at >= rain.startsAt - 1e-8 &&
     interval.at < rain.endsAt - 1e-8 &&
     rain.intensity > 0;
+  const footprints = new Map<string, ExposureFootprint>();
   for (const sample of interval.materials) {
     yield;
-    const to = materialFootprint(world, sample.id),
+    const to = materialFootprintFromRead(world, sample.id, materialRead(world, footprints)),
       definition = attributeDefinition(world, sample.family.moistureAttribute);
     if (!to || !definition) continue;
     const state = readState(world, stateAddress(sample.id, definition), 'owner');
@@ -289,11 +303,14 @@ export function materialExposureView(
   world: WorldState,
   id: string,
 ): { label: string; process: 'wetting' | 'drying'; coveredFraction: number } | undefined {
-  const item = world.entities[id],
-    descriptor = item?.item && world.itemDefinitions[item.item.definitionPin.id]?.assemblyMaterial,
+  const read = materialRead(world);
+  const item = readMaterialRecord(entityGet(read.entities, id)),
+    lot = readMaterialRecord(item?.item),
+    definition = lot && readMaterialRecord(read.itemDefinitions[lot.definitionPin.id]),
+    descriptor = readMaterialRecord(definition?.assemblyMaterial),
     family = descriptor && world.assemblyFamilies?.[descriptor.familyId];
-  const footprint = materialFootprint(world, id),
-    value = family && item?.attributes?.[family.moistureAttribute]?.value;
+  const footprint = materialFootprintFromRead(world, id, read),
+    value = family && readMaterialRecord(item?.attributes)?.[family.moistureAttribute]?.value;
   if (!family || !footprint || typeof value !== 'number') return;
   const panels = nearbyPanels(materialPanels(world), footprint);
   const incident = incidentExposure(footprint, panels, world.finiteRain);

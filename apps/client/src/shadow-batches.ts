@@ -12,6 +12,24 @@ interface Batch {
   instance: pc.MeshInstance;
   buffer?: pc.VertexBuffer;
   data: Float32Array;
+  bounds?: pc.BoundingBox;
+}
+
+function changedValues(data: Float32Array, offset: number, values: ArrayLike<number>): boolean {
+  for (let i = 0; i < values.length; i++)
+    if (!Object.is(data[offset + i], Math.fround(values[i]!))) return true;
+  return false;
+}
+
+function sameBounds(a: pc.BoundingBox, b: pc.BoundingBox): boolean {
+  return (
+    Object.is(a.center.x, b.center.x) &&
+    Object.is(a.center.y, b.center.y) &&
+    Object.is(a.center.z, b.center.z) &&
+    Object.is(a.halfExtents.x, b.halfExtents.x) &&
+    Object.is(a.halfExtents.y, b.halfExtents.y) &&
+    Object.is(a.halfExtents.z, b.halfExtents.z)
+  );
 }
 
 /** Share shadow submissions, not entity identity or cached illumination. Individual
@@ -73,6 +91,7 @@ export class SpriteShadowBatches {
       }
       const batch = (group.batch ??= this.create(members[0]!, group.opacity));
       const { instance } = batch;
+      let dataChanged = false;
       if (batch.data.length < members.length * 21) {
         batch.buffer?.destroy();
         batch.data = new Float32Array(2 ** Math.ceil(Math.log2(members.length)) * 21);
@@ -80,24 +99,34 @@ export class SpriteShadowBatches {
           usage: pc.BUFFER_DYNAMIC,
         });
         instance.setInstancing(batch.buffer, true);
+        dataChanged = true;
       }
       for (let i = 0; i < members.length; i++) {
         const mesh = members[i]!;
-        batch.data.set(mesh.node.getWorldTransform().data, i * 21);
-        batch.data.set(
-          (mesh.getParameter('ol_spriteFoot') as { data: number[] }).data,
-          i * 21 + 16,
-        );
-        batch.data.set(
-          (mesh.getParameter('ol_spriteSize') as { data: number[] }).data,
-          i * 21 + 19,
-        );
+        const matrix = mesh.node.getWorldTransform().data;
+        const foot = (mesh.getParameter('ol_spriteFoot') as { data: number[] }).data;
+        const size = (mesh.getParameter('ol_spriteSize') as { data: number[] }).data;
+        // Compare actual packed values, including signed zero. A changed member
+        // already requires publication, so later members keep the native copy path.
+        dataChanged ||=
+          changedValues(batch.data, i * 21, matrix) ||
+          changedValues(batch.data, i * 21 + 16, foot) ||
+          changedValues(batch.data, i * 21 + 19, size);
+        batch.data.set(matrix, i * 21);
+        batch.data.set(foot, i * 21 + 16);
+        batch.data.set(size, i * 21 + 19);
         if (i === 0) this.bounds.copy(mesh.aabb);
         else this.bounds.add(mesh.aabb);
       }
-      batch.buffer!.setData(batch.data);
+      if (dataChanged) batch.buffer!.setData(batch.data);
       instance.instancingCount = members.length;
-      instance.setCustomAabb(this.bounds);
+      if (!batch.bounds || !sameBounds(batch.bounds, this.bounds)) {
+        instance.setCustomAabb(this.bounds);
+        if (batch.bounds) batch.bounds.copy(this.bounds);
+        else batch.bounds = this.bounds.clone();
+      }
+      // Components may re-add an individual caster between refreshes without a
+      // final membership change. Preserve engine registration reconciliation.
       this.layer.removeShadowCasters(members);
       this.layer.addShadowCasters([instance]);
     }

@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 import {
   BASE_FAMILY_POLICY,
@@ -40,7 +41,7 @@ export function familyPeople(
   after?: string,
 ): FamilyPeoplePage {
   const text = query.trim().toLocaleLowerCase();
-  const all = Object.values(world.entities)
+  const all = entityValues(world.entities)
     .filter((entity) => entity.actor)
     .map((entity) => ({ id: entity.id, label: entity.name, detail: entity.actor?.description }))
     .sort((a, b) => a.id.localeCompare(b.id));
@@ -58,20 +59,20 @@ export function projectFamily(
   after?: string,
   parentId?: string,
 ): FamilyView {
-  const actor = world.entities[actorId];
+  const actor = entityGet(world.entities, actorId);
   if (!actor?.actor) throw new Error('Choose an existing character.');
   const revision = world.familyTree?.revision ?? 0;
   const rows = familyRelations(world, actorId)
     .map((relation) => {
-      const other = world.entities[relation.actorId]!;
+      const other = entityGet(world.entities, relation.actorId)!;
       return {
         ...relation,
         label: other.name,
         ...(relation.link
           ? {
               deletion: parentLinkSentence(
-                world.entities[relation.link.parentId]!.name,
-                world.entities[relation.link.childId]!.name,
+                entityGet(world.entities, relation.link.parentId)!.name,
+                entityGet(world.entities, relation.link.childId)!.name,
               ),
             }
           : {}),
@@ -81,7 +82,7 @@ export function projectFamily(
       (a, b) => a.actorId.localeCompare(b.actorId) || a.description.localeCompare(b.description),
     );
   const result = page(rows, after, [generation, revision, actorId, rows]);
-  const parent = parentId ? world.entities[parentId] : undefined;
+  const parent = parentId ? entityGet(world.entities, parentId) : undefined;
   return {
     ok: true,
     generation,

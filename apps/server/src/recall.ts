@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from '@open-legend/domain';
 import { isEquipped } from '@open-legend/domain';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { CognitionExecution, ExecutionLease } from './cognition-execution.js';
@@ -5,7 +6,12 @@ import { personalPronoun } from '@open-legend/language';
 import { MemoryPreparationError, RETRIEVAL_ROWS, RETRIEVAL_BYTES } from './memory-repository.js';
 import { stimulusSalience, STIMULUS_POLICY } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
-import type { RetrievedMemory, MemoryScope, CognitionPreparation } from './memory-repository.js';
+import type {
+  RetrievedMemory,
+  MemoryScope,
+  CognitionPreparation,
+  CurrentMemorySource,
+} from './memory-repository.js';
 import { subjectKnowledgeCandidates } from './knowledge-context.js';
 import { recognizesSubject, observerGivenName, observerDescription } from '@open-legend/domain';
 import {
@@ -97,7 +103,7 @@ export function memoryCandidate(
   const matches = (ids: Set<string>) =>
     ids.has(memory.id) || (memory.eventId ? ids.has(memory.eventId) : false);
   let summary = memory.summary.replace(/\(ID:([^()\s]+)\)/g, (marker, id: string) => {
-    const entity = world.entities[id];
+    const entity = entityGet(world.entities, id);
     return entity?.actor && !observerGivenName(world, actorId, entity.id)
       ? observerDescription(world, actorId, entity.id)
       : marker;
@@ -107,8 +113,8 @@ export function memoryCandidate(
   // docs/memory-architecture.md#personal-perspective-and-acquisition
   if (awareness?.eventType === 'speech' && awareness.content !== undefined) {
     const participant = (id: string | undefined) =>
-      id && world.entities[id] && awarenessBindsSubject(world, actorId, awareness, id)
-        ? entityLabel(world, world.entities[id]!, actorId, 'indefinite')
+      id && entityGet(world.entities, id) && awarenessBindsSubject(world, actorId, awareness, id)
+        ? entityLabel(world, entityGet(world.entities, id)!, actorId, 'indefinite')
         : 'an unidentified individual';
     const recipient = awareness.intendedRecipientId;
     const relation =
@@ -126,8 +132,12 @@ export function memoryCandidate(
       [awareness.targetId, 'subject'],
     ] as const;
     for (const [id, role] of roles)
-      if (id && world.entities[id] && awarenessBindsSubject(world, actorId, awareness, id))
-        summary += ` Occurrence ${role}: ${id === actorId ? personalPronoun('object') : entityLabel(world, world.entities[id]!, actorId, 'indefinite')}.`;
+      if (
+        id &&
+        entityGet(world.entities, id) &&
+        awarenessBindsSubject(world, actorId, awareness, id)
+      )
+        summary += ` Occurrence ${role}: ${id === actorId ? personalPronoun('object') : entityLabel(world, entityGet(world.entities, id)!, actorId, 'indefinite')}.`;
   }
   const required =
     matches(requiredIds) ||
@@ -269,7 +279,8 @@ export function candidateSet(
     memory.embeddingText ??= memory.text;
     memory.text = projectEntityMarkers(memory.text, world, actorId);
     const identities = [...new Set(memory.entityIds)].flatMap((id) =>
-      world.entities[id] && !memory.text.includes(`(ID:${entityHandles(world, actorId).get(id)})`)
+      entityGet(world.entities, id) &&
+      !memory.text.includes(`(ID:${entityHandles(world, actorId).get(id)})`)
         ? [`(ID:${entityHandles(world, actorId).get(id)})`]
         : [],
     );
@@ -604,7 +615,7 @@ export class RecallService {
     const config = this.service.config;
     const model = { model: config.embeddingModel, dimensions: config.embeddingDimensions };
     if (!this.indexActors.length || this.indexGeneration !== generation) {
-      this.indexActors = Object.values(this.service.world.entities)
+      this.indexActors = entityValues(this.service.world.entities)
         .filter((entity) => entity.actor?.controller === 'npc')
         .map((entity) => entity.id)
         .sort();
@@ -614,7 +625,7 @@ export class RecallService {
     // One batch per actor per round prevents a long-lived actor monopolizing the index budget.
     while (actors.length && !this.closed) {
       const actorId = actors.shift()!;
-      if (this.service.world.entities[actorId]?.actor?.controller !== 'npc') continue;
+      if (entityGet(this.service.world.entities, actorId)?.actor?.controller !== 'npc') continue;
       const scope: MemoryScope = { worldId: head.worldId, actorId, generation: head.generation };
       const pending = await repository.pending(scope, model);
       const batch =
@@ -624,11 +635,12 @@ export class RecallService {
       if (!batch.length) continue;
       const current = async () =>
         generation === this.service.generation &&
-        this.service.world.entities[actorId]?.actor?.controller === 'npc' &&
+        entityGet(this.service.world.entities, actorId)?.actor?.controller === 'npc' &&
         (await repository.current(
           scope,
           batch.map((source) => ({
             id: source.memory.id,
+            sourceKind: source.sourceKind,
             revision: source.revision,
           })),
         ));
@@ -639,7 +651,7 @@ export class RecallService {
         batch,
         requestId,
         async () =>
-          this.service.world.entities[actorId]?.actor?.controller === 'npc' &&
+          entityGet(this.service.world.entities, actorId)?.actor?.controller === 'npc' &&
           !this.closed &&
           this.service.store.reserve(
             requestId,
@@ -700,8 +712,9 @@ export class RecallService {
       !signal.aborted &&
       generation === this.service.generation &&
       world.id === now.id &&
-      !!now.entities[actorId]?.actor &&
-      now.entities[actorId]?.actor?.controller === world.entities[actorId]?.actor?.controller &&
+      !!entityGet(now.entities, actorId)?.actor &&
+      entityGet(now.entities, actorId)?.actor?.controller ===
+        entityGet(world.entities, actorId)?.actor?.controller &&
       digest(now.experience?.forgotten[actorId] ?? []) ===
         digest(world.experience?.forgotten[actorId] ?? []) &&
       digest(now.experience?.corrections?.[actorId] ?? {}) ===
@@ -715,7 +728,7 @@ export class RecallService {
   >();
   private readonly sourceBindings = new WeakMap<
     AttentionCandidate[],
-    { scope: MemoryScope; sources: Map<string, string> }
+    { scope: MemoryScope; sources: Map<string, CurrentMemorySource> }
   >();
   selectedSources(candidates: AttentionCandidate[], selected: AttentionCandidate[]) {
     const binding = this.sourceBindings.get(candidates);
@@ -723,8 +736,8 @@ export class RecallService {
     // Every member contributes to a grouped candidate's text and freshness binding.
     const ids = new Set(selected.flatMap((candidate) => candidate.sourceIds ?? [candidate.id]));
     return [...ids].flatMap((id) => {
-      const revision = binding.sources.get(id);
-      return revision ? [{ id, revision }] : [];
+      const source = binding.sources.get(id);
+      return source ? [{ ...source }] : [];
     });
   }
   async candidates(
@@ -759,7 +772,7 @@ export class RecallService {
     });
     const count = coverage.eligible;
     const inner = world.innerWorlds?.[actorId];
-    const query = `${stimulus}\nMy current goal: ${projectEntityMarkers(currentGoal(world.entities[actorId]!.actor!), world, actorId)}\n${inner?.text ?? ''}`;
+    const query = `${stimulus}\nMy current goal: ${projectEntityMarkers(currentGoal(entityGet(world.entities, actorId)!.actor!), world, actorId)}\n${inner?.text ?? ''}`;
     const key = `memory-query:${world.id}:${actorId}`;
     const queryKey = digest({ query, generation: scope.generation });
     const cache = (await this.service.store.getIntegration(key)) as
@@ -855,7 +868,12 @@ export class RecallService {
     this.retrieval.set(candidates, { ...coverage, status, generation: scope.generation });
     this.sourceBindings.set(candidates, {
       scope,
-      sources: new Map(sources.map((source) => [source.memory.id, source.revision])),
+      sources: new Map(
+        sources.map((source) => [
+          source.memory.id,
+          { id: source.memory.id, sourceKind: source.sourceKind, revision: source.revision },
+        ]),
+      ),
     });
     return candidates;
   }
@@ -887,7 +905,7 @@ export class RecallService {
     const people = candidates
       .filter((candidate) => candidate.kind === 'entity')
       .flatMap((candidate) => candidate.entityIds)
-      .filter((id) => !!world.entities[id]?.actor);
+      .filter((id) => !!entityGet(world.entities, id)?.actor);
     // Cues are derived from the accepted text, never a second writable biography.
     const cues = (inner?.text ?? '')
       .split(/\n+/)
@@ -895,7 +913,7 @@ export class RecallService {
       .slice(0, 8)
       .join('\n')
       .slice(0, 1600);
-    const query = `${stimulus}\nMy current goal: ${projectEntityMarkers(currentGoal(world.entities[actorId]!.actor!), world, actorId)}\n${cues}`;
+    const query = `${stimulus}\nMy current goal: ${projectEntityMarkers(currentGoal(entityGet(world.entities, actorId)!.actor!), world, actorId)}\n${cues}`;
     if (Buffer.byteLength(query) > 8000)
       throw new Error(
         'The complete semantic stimulus exceeds the embedding input allowance; split this opportunity.',
@@ -1122,7 +1140,7 @@ export class RecallService {
             stimulus,
             ...(cues ? { innerWorldExcerpt: cues } : {}),
             goal: projectEntityMarkers(
-              currentGoal(world.entities[actorId]!.actor!),
+              currentGoal(entityGet(world.entities, actorId)!.actor!),
               world,
               actorId,
             ),
@@ -1181,7 +1199,11 @@ export class RecallService {
         signals: {
           people,
           stimulus,
-          goal: projectEntityMarkers(currentGoal(world.entities[actorId]!.actor!), world, actorId),
+          goal: projectEntityMarkers(
+            currentGoal(entityGet(world.entities, actorId)!.actor!),
+            world,
+            actorId,
+          ),
           innerWorldExcerpt: cues,
           legacyFacetHints: records
             .filter((r) => ['concern', 'belief'].includes(r.kind))

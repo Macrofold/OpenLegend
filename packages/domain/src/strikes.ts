@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { namePhrase, type Named } from '@open-legend/language';
 import { weaponStrikeWording } from './worlds/base/strikes.js';
 import { itemFor } from './objects.js';
@@ -97,10 +98,12 @@ export function availableStrikes(
 ): StrikeDefinition[] {
   const melee = equippedItems(world, actorId, 'melee').flatMap((item) => {
     const definition = strikeDefinition(item.definitionId, world, item.id, target);
-    return definition && supportsStrike(world.entities[actorId], definition) ? [definition] : [];
+    return definition && supportsStrike(entityGet(world.entities, actorId), definition)
+      ? [definition]
+      : [];
   });
   const native = Object.values(world.nativeStrikes ?? {})
-    .filter((definition) => supportsStrike(world.entities[actorId], definition))
+    .filter((definition) => supportsStrike(entityGet(world.entities, actorId), definition))
     .map((definition) =>
       target ? { ...definition, label: `${definition.label} ${namePhrase(target)}` } : definition,
     );
@@ -140,7 +143,7 @@ export function validateNativeStrikes(world: WorldState): void {
       )
     )
       throw new Error('Invalid installed native strike.');
-  for (const entity of Object.values(world.entities))
+  for (const entity of entityValues(world.entities))
     if (
       entity.actor?.naturalStrikeIds &&
       (new Set(entity.actor.naturalStrikeIds).size !== entity.actor.naturalStrikeIds.length ||

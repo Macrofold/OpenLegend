@@ -1,3 +1,4 @@
+import { entityGet } from '../../entity-collection.js';
 import { appraisePerceivedEvent, appraisalPin, type AppraisalPolicy } from '../../appraisals.js';
 import type { Entity, WorldEvent, WorldState } from '../../types.js';
 
@@ -72,7 +73,7 @@ export const BASE_APPRAISAL_POLICY: AppraisalPolicy = {
 /** Preserve the bundled damage mapping, magnitude and explicit decay without new RNG
  * or duplicate evidence. This mapping is a wilderness rule, not a universal emotion law. */
 export function appraiseEvent(world: WorldState, event: WorldEvent): void {
-  if (!event.targetId || !world.entities[event.targetId]?.actor) return;
+  if (!event.targetId || !entityGet(world.entities, event.targetId)?.actor) return;
   const damage =
     event.type === 'struck'
       ? event.data?.['damage']
@@ -93,7 +94,10 @@ export function appraiseEvent(world: WorldState, event: WorldEvent): void {
     appraisalPin(definition),
     {
       kind: 'scaled',
-      value: Math.min(1, damage / (world.entities[event.targetId]!.actor!.body?.maxHealth ?? 100)),
+      value: Math.min(
+        1,
+        damage / (entityGet(world.entities, event.targetId)!.actor!.body?.maxHealth ?? 100),
+      ),
     },
   );
 }

@@ -1,3 +1,4 @@
+import { entityValues } from './entity-collection.js';
 import { equippedItem } from './equipment.js';
 import { definitionPin, type DefinitionPin } from './world-modules.js';
 import { sameDefinitionPin } from './state-owners.js';
@@ -176,7 +177,7 @@ export function validateContactDefense(world: WorldState): void {
   for (const definition of Object.values(world.itemDefinitions))
     if (definition.contactDefense && !validContactDefense(definition.contactDefense))
       throw new Error('Invalid admitted contact defense.');
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     const action = entity.actor?.action,
       guard = action?.guard;
     if (!action || (!guard && action.type !== 'guard')) continue;

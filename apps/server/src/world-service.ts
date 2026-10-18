@@ -1,3 +1,4 @@
+import { entityGet, entityKeys, entityValues, projectWorldHistory } from '@open-legend/domain';
 import { resolveInventoryGroup } from './inventory-groups.js';
 import {
   decisionClaimCurrent,
@@ -7,7 +8,7 @@ import {
 import { DecisionClaimLost } from './decision-state.js';
 import { decisionPolicyDigest } from './decision-task.js';
 import { assemblyView } from './construction.js';
-import { reconcileConstructionAuthority } from '@open-legend/domain';
+import { orderedRecordSet, reconcileConstructionAuthority } from '@open-legend/domain';
 import { endsCoachingConsent, endsOutingConsent } from '@open-legend/domain';
 import {
   inventoryFor,
@@ -110,7 +111,7 @@ import { admitStatusEffectPolicy } from '@open-legend/domain';
 import { completeNavigation, navigationBlocked, spatialMap } from '@open-legend/domain';
 import { initializeCollisionRuntime } from '@open-legend/spatial/rapier';
 import type { NavigationRequest, NavigationResult } from '@open-legend/spatial';
-import type { SpeechVolume } from '@open-legend/domain';
+import { SPEECH_VOLUMES, type SpeechVolume } from '@open-legend/domain';
 import { changeInventionPolicy } from '@open-legend/domain';
 import { goalTexts } from '@open-legend/domain';
 import {
@@ -121,14 +122,21 @@ import {
   type AttributeEditRequest,
   type DefinitionPin,
 } from '@open-legend/domain';
-import { validateWorldModules } from '@open-legend/domain';
 import {
   CheckpointBusyError,
   GameSaveError,
   type SavePayload,
   type RestoreSave,
 } from './game-saves.js';
-import { recordDuration, timed, countMetric, gaugeMetric } from './performance.js';
+import {
+  recordDuration,
+  timed,
+  countMetric,
+  gaugeMetric,
+  beginTiming,
+  endTiming,
+  profilingEnabled,
+} from './performance.js';
 import { retainHotEvents } from './hot-events.js';
 import { COMMAND_RETRY_MS, type CommandEpoch, type GameplayReceipt } from './command-receipts.js';
 import { createPersonMemoryPager, formatMemoryEntry } from './person-memory-page.js';
@@ -290,7 +298,7 @@ export const commandInputSchema = z
     expectedScope: z.string().max(16000).optional(),
     conversationId: id.optional(),
     text: z.string().trim().min(1).max(1500).optional(),
-    volume: z.enum(['whisper', 'normal', 'shout']).optional(),
+    volume: z.enum(SPEECH_VOLUMES).optional(),
     facing: z.number().finite().optional(),
     aimId: id.optional(),
     autoEquip: z.boolean().optional(),
@@ -388,7 +396,7 @@ function updateMilestones(saved: SavedWorld, events: WorldEvent[]): SavedWorld {
   const byActor = { ...saved.actorMilestones };
   if (saved.milestones) byActor[controlledEntityId(saved.world)] ??= saved.milestones;
   const source = { ...saved, actorMilestones: byActor };
-  for (const entity of Object.values(saved.world.entities))
+  for (const entity of entityValues(saved.world.entities))
     if (entity.actor?.controller === 'player')
       byActor[entity.id] = actorMilestones(source, events, entity.id);
   const { milestones: _legacy, ...current } = saved;
@@ -677,7 +685,10 @@ export class WorldService {
     this.pendingOperations++;
     const arrived = performance.now();
     try {
-      if (this.backgroundSave) await this.awaitBackgroundSave(this.mutationLane.waitMs);
+      if (this.backgroundSave)
+        await timed('persistence.backgroundSaveWait', () =>
+          this.awaitBackgroundSave(this.mutationLane.waitMs),
+        );
       // One admission budget covers the wait above and the queue.
       return await this.runMutation(
         operation,
@@ -693,14 +704,14 @@ export class WorldService {
   private runMutation<T>(operation: () => Promise<T>, waitMs?: number): Promise<T> {
     return this.mutationLane.run(() => {
       const scope = { active: true };
-      const startedAt = performance.now();
+      const startedAt = beginTiming();
       return this.mutationContext.run(scope, async () => {
         try {
           return await operation();
         } finally {
           scope.active = false;
           // How long one operation owned the queue (PF00 save-path attribution).
-          recordDuration('mutation.hold', performance.now() - startedAt);
+          endTiming('mutation.hold', startedAt);
         }
       });
     }, waitMs);
@@ -752,6 +763,9 @@ export class WorldService {
     private readonly now = Date.now,
     private readonly startup: { createdActivation?: CreationActivationReceipt } = {},
   ) {
+    this.store.memories?.setBackgroundSearchAdmission(
+      () => this.pendingOperations === 0 && !this.backgroundSave,
+    );
     this.ready = this.initialize();
   }
   private async initialize() {
@@ -764,7 +778,6 @@ export class WorldService {
       throw new Error(
         'The committed created world is unavailable. Existing data was not replaced.',
       );
-    if (existing) validateWorldModules(existing.state.world);
     this.currentProfile = await store.getProfile(
       createdActivation?.controlAccountId ?? 'local-player',
     );
@@ -811,7 +824,7 @@ export class WorldService {
     // Validate identities before either world or grant publication. SQL provisions the entire
     // configured set inside the same startup transaction as the canonical world records.
     for (const actorId of actorBindings.keys())
-      if (!this.saved.world.entities[actorId]?.actor)
+      if (!entityGet(this.saved.world.entities, actorId)?.actor)
         throw new Error('Configured actor binding does not exist in this world.');
     this.persistedRevision = existing?.revision ?? 0;
     this.persistedEvents = this.saved.world.events;
@@ -888,7 +901,7 @@ export class WorldService {
     if (config.authentication.mode === 'local') {
       await this.signInLocal();
     }
-    this.humanActorIds = Object.values(this.world.entities)
+    this.humanActorIds = entityValues(this.world.entities)
       .filter((entity) => entity.actor?.controller === 'player')
       .map((entity) => entity.id);
     store.authority.subscribe(() => this.notify(false));
@@ -918,7 +931,7 @@ export class WorldService {
   }
   get availableDefaultResidentEntityId(): string | undefined {
     const id = this.world.identity?.defaultResidentEntityId;
-    const entity = id ? this.world.entities[id] : undefined;
+    const entity = id ? entityGet(this.world.entities, id) : undefined;
     return entity?.actor?.controller === 'npc' && entity.actor.alive && !entity.retirement
       ? entity.id
       : undefined;
@@ -1196,6 +1209,8 @@ export class WorldService {
     appendEventCount: number | undefined;
     currentAppendCount: number | undefined;
   } {
+    // The bounded exact arithmetic window is canonical continuation data. Saving
+    // must not settle it and discard otherwise unchanged simulation preparation.
     // Measure from durable state, including simulation progress a synchronous save carried.
     const appendEventCount = appendedEventCount(this.persistedEvents, saved.world.events);
     const currentAppendCount = appendedEventCount(this.saved.world.events, saved.world.events);
@@ -1212,12 +1227,15 @@ export class WorldService {
       const hot = retainHotEvents(compactHistory(historyWorld, this.saved.world));
       snapshot = {
         ...snapshot,
-        world: updateWorld(historyWorld, (draft) => {
-          draft.events = hot.events;
-          draft.archivedEventCount = hot.archivedEventCount;
+        world: projectWorldHistory(historyWorld, {
+          events: hot.events,
+          archivedEventCount: hot.archivedEventCount,
         }),
       };
     }
+    // This candidate belongs to the serialized save owner. Seal any hot-history
+    // projection it just created before storage reuses immutable preparation.
+    freezeWorld(snapshot.world);
     return { snapshot, historyWorld, appendEventCount, currentAppendCount };
   }
 
@@ -1548,6 +1566,7 @@ export class WorldService {
     this.unpersisted = false;
     write.sequence = ++this.snapshotSequence;
     const startedAt = performance.now();
+    const measured = beginTiming(startedAt);
     gaugeMetric('persistence.backgroundSavesInFlight', 1);
     // A fresh context: the write outlives this mutation, and its settle hooks must not be
     // mistaken for nested queue work or inherit a request's authority fence.
@@ -1568,7 +1587,7 @@ export class WorldService {
           this.failProgressSave(error, false);
         } finally {
           gaugeMetric('persistence.backgroundSavesInFlight', 0);
-          recordDuration('persistence.backgroundSave', performance.now() - startedAt);
+          endTiming('persistence.backgroundSave', measured);
         }
         this.releaseSnapshotRequest();
       }),
@@ -1806,10 +1825,11 @@ export class WorldService {
   }
 
   async memoryContext(actorId: string, query: string | null, limit: number) {
-    await this.flush();
+    await this.flushMemorySources(actorId);
     const world = this.world,
-      generation = this.generation;
-    if (!world.entities[actorId]?.actor) throw new Error('Actor unavailable.');
+      generation = this.generation,
+      historyEpoch = this.historyEpoch;
+    if (!entityGet(world.entities, actorId)?.actor) throw new Error('Actor unavailable.');
     const head = await this.store.records?.head();
     if (!this.store.memories || !head) return experiences(world, actorId).slice(-limit);
     const scope = { worldId: world.id, actorId, generation: head.generation };
@@ -1819,10 +1839,15 @@ export class WorldService {
     if (
       !(await this.store.memories.current(
         scope,
-        selected.map((entry) => ({ id: entry.memory.id, revision: entry.revision })),
+        selected.map((entry) => ({
+          id: entry.memory.id,
+          sourceKind: entry.sourceKind,
+          revision: entry.revision,
+        })),
       )) ||
       generation !== this.generation ||
-      !this.world.entities[actorId]?.actor ||
+      historyEpoch !== this.historyEpoch ||
+      !entityGet(this.world.entities, actorId)?.actor ||
       world.experience?.forgotten[actorId] !== this.world.experience?.forgotten[actorId] ||
       world.experience?.corrections?.[actorId] !== this.world.experience?.corrections?.[actorId]
     )
@@ -1830,7 +1855,7 @@ export class WorldService {
     return selected.map((entry) => entry.memory);
   }
   async awarenessEvidence(actorId: string, eventIds: string[]) {
-    if (!this.world.entities[actorId]?.actor) throw new Error('Actor unavailable.');
+    if (!entityGet(this.world.entities, actorId)?.actor) throw new Error('Actor unavailable.');
     if (!eventIds.length) return [];
     const ids = new Set(eventIds);
     const forgotten = new Set(this.world.experience?.forgotten[actorId] ?? []);
@@ -1845,7 +1870,7 @@ export class WorldService {
     await this.flush();
     const world = this.world,
       generation = this.generation;
-    if (!world.entities[actorId]?.actor) throw new Error('Actor unavailable.');
+    if (!entityGet(world.entities, actorId)?.actor) throw new Error('Actor unavailable.');
     const head = await this.store.records?.head();
     if (!this.store.memories || !head)
       return (world.experience?.awareness[actorId] ?? []).filter((entry) =>
@@ -1856,10 +1881,14 @@ export class WorldService {
     if (
       !(await this.store.memories.current(
         scope,
-        selected.map((entry) => ({ id: entry.memory.id, revision: entry.revision })),
+        selected.map((entry) => ({
+          id: entry.memory.id,
+          sourceKind: entry.sourceKind,
+          revision: entry.revision,
+        })),
       )) ||
       generation !== this.generation ||
-      !this.world.entities[actorId]?.actor ||
+      !entityGet(this.world.entities, actorId)?.actor ||
       world.experience?.forgotten[actorId] !== this.world.experience?.forgotten[actorId] ||
       world.experience?.corrections?.[actorId] !== this.world.experience?.corrections?.[actorId]
     )
@@ -1905,7 +1934,11 @@ export class WorldService {
       !commitments ||
       (await this.store.memories!.current(
         { worldId: world.id, actorId, generation: head!.generation },
-        commitments.map((entry) => ({ id: entry.memory.id, revision: entry.revision })),
+        commitments.map((entry) => ({
+          id: entry.memory.id,
+          sourceKind: entry.sourceKind,
+          revision: entry.revision,
+        })),
       ));
     if (!current || !stillPrivate()) throw new Error('Private mind changed during inspection.');
     return {
@@ -2125,7 +2158,7 @@ export class WorldService {
         batch.capacityBlocked ||
         this.paused ||
         this.generation !== batch.generation ||
-        !this.world.entities[batch.actorId]?.actor?.alive
+        !entityGet(this.world.entities, batch.actorId)?.actor?.alive
       )
         return false;
       const rows = this.store.records
@@ -2157,8 +2190,8 @@ export class WorldService {
         return false;
       if (
         dispatched &&
-        (this.world.entities[batch.actorId]?.actor?.action ||
-          this.world.entities[batch.actorId]?.actor?.agency.plan?.status === 'active')
+        (entityGet(this.world.entities, batch.actorId)?.actor?.action ||
+          entityGet(this.world.entities, batch.actorId)?.actor?.agency.plan?.status === 'active')
       )
         return false;
       if (this.store.records && this.store.adoptHistory) {
@@ -2355,7 +2388,7 @@ export class WorldService {
         );
         restored.world.archivedEventCount = 0;
         const baseline = structuredClone(restored.world);
-        for (const entity of Object.values(restored.world.entities))
+        for (const entity of entityValues(restored.world.entities))
           if (entity.actor) delete entity.actor.inventoryInspection;
         for (const [actorId, ids] of Object.entries(ledger ?? {}))
           for (const sourceId of ids)
@@ -2409,7 +2442,7 @@ export class WorldService {
         // One mark per revision, only under the new generation; abandoned-timeline waiters fail.
         this.rejectDurableWaiters(new Error('The world timeline was replaced by a load.'));
         this.publishDurable(this.persistedRevision, this.snapshotSequence, this.saved.world);
-        this.humanActorIds = Object.values(this.world.entities)
+        this.humanActorIds = entityValues(this.world.entities)
           .filter((entity) => entity.actor?.controller === 'player')
           .map((entity) => entity.id);
         this.connections.clear();
@@ -2436,7 +2469,7 @@ export class WorldService {
           code: 'replayed',
           message: 'Control request already committed. Refresh to see current control.',
         };
-      const actor = this.world.entities[scope.actorId]?.actor;
+      const actor = entityGet(this.world.entities, scope.actorId)?.actor;
       if (!actor || actor.controller !== 'player') throw new AuthorityError('forbidden');
       if (request.operation !== 'release') {
         this.present; // Prune expired pending returns using the existing owner.
@@ -2510,7 +2543,7 @@ export class WorldService {
       if (await this.store.authority!.bindingReceipt(scope, request))
         return { ok: true, code: 'replayed', message: 'Character binding already committed.' };
       const grant = await this.store.authority!.grant(this.world.id, request.accountId);
-      const entity = this.world.entities[request.actorId];
+      const entity = entityGet(this.world.entities, request.actorId);
       const owner =
         (await this.store.authority!.actorOwners(this.world.id)).get(request.actorId) ??
         this.world.authorship.playerAccountIds[request.actorId];
@@ -2524,7 +2557,7 @@ export class WorldService {
       if (!entity?.actor || entity.retirement || (owner && owner !== request.accountId))
         throw new AuthorityError('forbidden');
       let world = updateWorld(this.world, (draft) => {
-        draft.entities[request.actorId]!.actor!.controller = 'player';
+        entityGet(draft.entities, request.actorId)!.actor!.controller = 'player';
         draft.authorship.playerAccountIds[request.actorId] = request.accountId;
       });
       // Both embodiments settle through the existing departure owner. Native progress and
@@ -2548,7 +2581,7 @@ export class WorldService {
         return { ok: false, code: 'storage', message: this.storageError! };
       this.exits.delete(previousActorId);
       this.exits.delete(request.actorId);
-      this.humanActorIds = Object.values(this.world.entities)
+      this.humanActorIds = entityValues(this.world.entities)
         .filter((entity) => entity.actor?.controller === 'player')
         .map((entity) => entity.id);
       return {
@@ -2563,7 +2596,7 @@ export class WorldService {
     world: WorldState,
     actorId: string,
   ): { ok: true; world: WorldState } | { ok: false; outcome: ApiResult } {
-    const actor = world.entities[actorId]?.actor;
+    const actor = entityGet(world.entities, actorId)?.actor;
     if (!actor) throw new AuthorityError('forbidden');
     if (actor.participation?.phase === 'inactive') return { ok: true, world };
     const attemptId = actor.participation?.exitAttemptId ?? randomUUID();
@@ -2578,7 +2611,7 @@ export class WorldService {
     const departure = changeParticipation(
       world,
       actorId,
-      world.entities[actorId]!.actor!.participation!.revision,
+      entityGet(world.entities, actorId)!.actor!.participation!.revision,
       { type: 'depart', attemptId },
     );
     return departure.outcome.ok
@@ -2596,7 +2629,7 @@ export class WorldService {
   ): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
-      const entity = this.world.entities[actorId];
+      const entity = entityGet(this.world.entities, actorId);
       if (!entity?.actor?.alive || entity.retirement || entity.actor.controller === 'player')
         return {
           ok: false,
@@ -2605,7 +2638,7 @@ export class WorldService {
         };
       const departed = this.departImmediately(
         updateWorld(this.world, (draft) => {
-          draft.entities[actorId]!.actor!.controller = 'player';
+          entityGet(draft.entities, actorId)!.actor!.controller = 'player';
           draft.authorship.playerAccountIds[actorId] = accountId;
         }),
         actorId,
@@ -2624,16 +2657,13 @@ export class WorldService {
       )
         return { ok: false, code: 'storage', message: this.storageError! };
       this.exits.delete(actorId);
-      this.humanActorIds = Object.values(this.world.entities)
+      this.humanActorIds = entityValues(this.world.entities)
         .filter((entity) => entity.actor?.controller === 'player')
         .map((entity) => entity.id);
       return { ok: true, code: 'enrolled', message: 'Character bound to the invited account.' };
     });
   }
-  private readonly awaitingRestoredPresence = new Set<string>();
-  private async reconcileParticipation(pausedRestore = false): Promise<void> {
-    if (pausedRestore) this.awaitingRestoredPresence.clear();
-    this.present; // Prune expired or replaced heartbeat authority first.
+  private participatingHumans(): Set<string> {
     const participating = new Set<string>();
     const scopes = [
       ...this.connections.values(),
@@ -2643,10 +2673,17 @@ export class WorldService {
       if (this.currentScope(scope) && this.currentScope(this.refreshScope(scope), 'play', true))
         participating.add(scope.actorId);
     }
+    return participating;
+  }
+  private readonly awaitingRestoredPresence = new Set<string>();
+  private async reconcileParticipation(pausedRestore = false): Promise<void> {
+    if (pausedRestore) this.awaitingRestoredPresence.clear();
+    this.present; // Prune expired or replaced heartbeat authority first.
+    const participating = this.participatingHumans();
     for (const actorId of this.humanActorIds) {
-      const entity = this.world.entities[actorId];
+      const entity = entityGet(this.world.entities, actorId);
       if (!entity?.actor) continue;
-      let actor = this.world.entities[entity.id]!.actor!;
+      let actor = entityGet(this.world.entities, entity.id)!.actor!;
       if (participating.has(entity.id)) {
         this.awaitingRestoredPresence.delete(entity.id);
         if (actor.participation?.phase === 'exiting' || actor.participation?.phase === 'inactive') {
@@ -2695,7 +2732,7 @@ export class WorldService {
       ) {
         // A restored gameplay phase adopts the current operational attempt and original deadline.
         const baseline = updateWorld(this.world, (draft) => {
-          const state = draft.entities[entity.id]!.actor!.participation;
+          const state = entityGet(draft.entities, entity.id)!.actor!.participation;
           if (state?.phase === 'exiting') {
             state.phase = 'active';
             delete state.exitAttemptId;
@@ -2721,7 +2758,7 @@ export class WorldService {
         )
           continue;
         this.exits.set(entity.id, attempt);
-        actor = this.world.entities[entity.id]!.actor!;
+        actor = entityGet(this.world.entities, entity.id)!.actor!;
       }
       if (
         this.world.participationPolicy?.exitExposureSeconds === undefined &&
@@ -2739,6 +2776,91 @@ export class WorldService {
   private presenceKey(scope: RequestScope) {
     return `${scope.accountId}:${scope.sessionId}:${scope.connectionId}`;
   }
+  /** Reports which can change participation keep the existing world-write ordering.
+   * The count prevents a later renewal overtaking an older queued hidden report. */
+  private readonly pendingPresenceChanges = new Map<string, number>();
+  private steadyPresence(scope: RequestScope): boolean {
+    const key = this.presenceKey(scope);
+    const entry = this.presence.get(key);
+    if (
+      this.pendingPresenceChanges.has(key) ||
+      !entry ||
+      entry.at < this.now() - 12_000 ||
+      !this.currentScope(entry.scope, 'play', true) ||
+      !this.currentScope(scope, 'play', true) ||
+      this.world.paused !== this.paused ||
+      this.exits.size ||
+      this.awaitingRestoredPresence.size
+    )
+      return false;
+    // A heartbeat also used to reconcile every human body. Only omit that work
+    // when the shared query proves there is no return or departure to perform.
+    const participating = this.participatingHumans();
+    return this.humanActorIds.every((id) => {
+      const entity = entityGet(this.world.entities, id);
+      if (!entity?.actor || entity.retirement) return false;
+      // New current-format bodies omit the already-active participation record.
+      const phase = entity.actor.participation?.phase ?? 'active';
+      return participating.has(id) ? phase === 'active' : phase === 'inactive';
+    });
+  }
+  private orderPresence(key: string, sequence: number | undefined, scope: RequestScope): boolean {
+    if (sequence === undefined) return true;
+    const previous = this.presenceOrders.get(key);
+    // Reload keeps the tab identity but acquires a new control generation.
+    if (previous?.controlGeneration === scope.controlGeneration && sequence <= previous.sequence)
+      return false;
+    if (!previous && this.presenceOrders.size >= this.config.capacity.presence)
+      throw new Error('Presence capacity reached. Reconnect before continuing.');
+    this.presenceOrders.set(key, {
+      sequence,
+      at: this.now(),
+      controlGeneration: scope.controlGeneration,
+    });
+    return true;
+  }
+  /** HTTP attention renewal owns its fresh fence, without making arbitrary
+   * authorized work independent of durable saves. Consequential reports fall
+   * back to the original mutation/reconciliation owner. */
+  async reportPresence(
+    clientId: string,
+    visible: boolean,
+    sequence: number | undefined,
+    scope: RequestScope,
+  ): Promise<void> {
+    await this.ready;
+    this.assertScope(scope, 'play', true);
+    if (clientId !== scope.connectionId && this.config.authentication.mode !== 'local')
+      throw new AuthorityError('forbidden');
+    const key = this.presenceKey(scope);
+    if (visible && sequence !== undefined && this.steadyPresence(scope)) {
+      await this.store.authority!.assertFence({
+        scope,
+        capability: 'play',
+        controlling: true,
+        now: this.now,
+      });
+      // The read may span expiry, hidden input, control replacement or restore.
+      // Recheck synchronously before touching operational attention; no world,
+      // body or pause transition is permitted on this path.
+      this.assertScope(scope, 'play', true);
+      if (this.steadyPresence(scope)) {
+        if (this.orderPresence(key, sequence, scope))
+          this.presence.set(key, { at: this.now(), scope });
+        return;
+      }
+    }
+    this.pendingPresenceChanges.set(key, (this.pendingPresenceChanges.get(key) ?? 0) + 1);
+    try {
+      await this.authorized(scope, 'play', true, () =>
+        this.setPresence(clientId, visible, sequence, scope),
+      );
+    } finally {
+      const remaining = this.pendingPresenceChanges.get(key)! - 1;
+      if (remaining) this.pendingPresenceChanges.set(key, remaining);
+      else this.pendingPresenceChanges.delete(key);
+    }
+  }
   async setPresence(
     clientId: string,
     visible: boolean,
@@ -2752,27 +2874,7 @@ export class WorldService {
       if (clientId !== scope.connectionId && this.config.authentication.mode !== 'local')
         throw new AuthorityError('forbidden');
       clientId = this.presenceKey(scope);
-      if (sequence !== undefined) {
-        const previous = this.presenceOrders.get(clientId);
-        // Reload keeps the tab identity but acquires a new control generation.
-        // Order messages within that authority, never against a previous page's
-        // counter; the scope check above still refuses all old-generation input.
-        if (
-          previous?.controlGeneration === scope.controlGeneration &&
-          sequence <= previous.sequence
-        )
-          return;
-        if (
-          !this.presenceOrders.has(clientId) &&
-          this.presenceOrders.size >= this.config.capacity.presence
-        )
-          throw new Error('Presence capacity reached. Reconnect before continuing.');
-        this.presenceOrders.set(clientId, {
-          sequence,
-          at: this.now(),
-          controlGeneration: scope.controlGeneration,
-        });
-      }
+      if (!this.orderPresence(clientId, sequence, scope)) return;
       const wasPaused = this.paused;
       // Observe an expired heartbeat before renewing it. Otherwise a reconnect ahead
       // of the timer can hide the absence transition from pending inference.
@@ -2869,16 +2971,20 @@ export class WorldService {
     });
   }
 
-  /** Boundary-limited elapsed integration; background saves keep their real-time cadence. */
+  /** Boundary-limited integration. A bounded call reports runnable debt so the host
+   * can continue cooperatively while admitting newly elapsed time between batches. */
   async tick(
     elapsedRealSeconds: number,
     suspendedRealSeconds = elapsedRealSeconds > 2 ? elapsedRealSeconds : 0,
-  ): Promise<void> {
+    options: { drain?: boolean; offeredUntil?: number } = {},
+  ): Promise<boolean> {
     if (
       !Number.isFinite(elapsedRealSeconds) ||
       elapsedRealSeconds < 0 ||
       !Number.isFinite(suspendedRealSeconds) ||
-      suspendedRealSeconds < 0
+      suspendedRealSeconds < 0 ||
+      (options.offeredUntil !== undefined &&
+        (!Number.isFinite(options.offeredUntil) || options.offeredUntil < 0))
     )
       throw new Error('Tick durations must be finite nonnegative seconds.');
     do {
@@ -2892,18 +2998,26 @@ export class WorldService {
         countMetric('persistence.backpressureWaits');
         await outstanding.done;
       }
-      await this.tickBatch(elapsedRealSeconds, suspendedRealSeconds);
+      await this.tickBatch(elapsedRealSeconds, suspendedRealSeconds, options.offeredUntil);
       elapsedRealSeconds = 0;
       suspendedRealSeconds = 0;
-      if (this.paused || this.debtSeconds < 1e-6 || navigationBlocked(this.world)) return;
+      // The HTTP wake admits fresh elapsed time on every bounded batch. Draining
+      // here until caught up would delay that admission (and background intake)
+      // indefinitely under load, understating the time actually owed.
+      if (this.paused || this.debtSeconds < 1e-6 || navigationBlocked(this.world)) return false;
+      if (options.drain === false) return true;
       // Release the mutation queue before yielding so commands can interleave with catch-up.
-      const yieldedAt = performance.now();
+      const yieldedAt = beginTiming();
       await new Promise<void>((resolve) => setImmediate(resolve));
-      recordDuration('tick.yieldWait', performance.now() - yieldedAt);
+      endTiming('tick.yieldWait', yieldedAt);
     } while (true);
   }
 
-  private async tickBatch(elapsedRealSeconds: number, suspendedRealSeconds: number): Promise<void> {
+  private async tickBatch(
+    elapsedRealSeconds: number,
+    suspendedRealSeconds: number,
+    offeredUntil?: number,
+  ): Promise<void> {
     return this.mutate(async () => {
       await this.ready;
       await this.refreshCommandEpoch();
@@ -2911,6 +3025,13 @@ export class WorldService {
       await this.reconcileDisconnectedConversation();
       await this.reconcileParticipation();
       if (this.world.paused !== this.paused) await this.syncPause();
+      // The host may have offered this interval before a queued pause/resume
+      // completed. Clip again at admission, after every awaited pause owner.
+      if (offeredUntil !== undefined)
+        elapsedRealSeconds = Math.min(
+          elapsedRealSeconds,
+          Math.max(0, (offeredUntil - this.clockStartedAt) / 1000),
+        );
       if (this.paused || elapsedRealSeconds < 0) return;
       // The host distinguishes missing callbacks from callbacks during a busy batch.
       // Direct callers retain the suspension default (docs/performance.md#simulation-cpu-and-growing-history).
@@ -2939,25 +3060,26 @@ export class WorldService {
         this.memoryBacklog = memoryBacklog;
         this.notify(false);
       }
-      // Keep admitted debt, but do not charge the world hunger/action time for CPU preparation.
-      // A canceled action, failed request or completed route releases this technical barrier.
-      // docs/architecture.md#navigation-preparation
-      if (navigationBlocked(this.world)) {
-        countMetric('clock.navigationExcludedRealSeconds', elapsedRealSeconds);
-        gaugeMetric('navigation.blocked', 1);
-        return;
-      }
-      gaugeMetric('navigation.blocked', 0);
       const requested = elapsedRealSeconds * this.config.baseRatio * this.speed;
       countMetric('clock.activeRealSeconds', elapsedRealSeconds);
       countMetric('clock.requestedSimSeconds', requested);
       gaugeMetric('clock.requestedSpeed', this.speed);
       this.debtSeconds += requested;
       gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
+      // Retain offered elapsed time even if a route became pending during the prior batch.
+      // The native barrier delays integration; later catch-up charges needs, deadlines and travel.
+      // docs/architecture.md#navigation-preparation
+      if (navigationBlocked(this.world)) {
+        countMetric('clock.navigationDeferredRealSeconds', elapsedRealSeconds);
+        gaugeMetric('navigation.blocked', 1);
+        return;
+      }
+      gaugeMetric('navigation.blocked', 0);
       const offered = Math.min(this.debtSeconds, 86400);
       if (offered < 1e-6) return;
       let world = this.world;
       const batchStarted = performance.now();
+      const measured = profilingEnabled();
       let nativeMs = 0;
       let advancedSeconds = 0;
       gaugeMetric('tick.dueSimSeconds', this.debtSeconds);
@@ -2966,54 +3088,58 @@ export class WorldService {
       // A single transition remains atomic even if it exceeds this time budget.
       while (advancedSeconds < offered) {
         if (navigationBlocked(world)) break;
-        const stepStarted = performance.now();
+        const stepStarted = beginTiming();
         const startTime = world.simTime;
         const slices = advanceWorldSlices(world, offered - advancedSeconds, {
           maxIntervals: 1,
           constructionPermissions: this.store.authority!.constructionPermissions(world.id),
         });
         const nextSlice = (boundary?: boolean) => {
-          const started = performance.now();
+          const started = beginTiming();
           try {
             return slices.next(boundary);
           } finally {
-            recordDuration('native.iteratorCall', performance.now() - started);
+            endTiming('native.iteratorCall', started);
           }
         };
         let sliceStarted = performance.now(),
           result = nextSlice();
         while (!result.done) {
           if (performance.now() - sliceStarted >= 8) {
-            recordDuration('native.noYield', performance.now() - sliceStarted);
+            if (measured) recordDuration('native.noYield', performance.now() - sliceStarted);
             await new Promise<void>((resolve) => setImmediate(resolve));
             sliceStarted = performance.now();
           }
-          // Local motion deadlines need not force publication, but they provide a
-          // coherent exit when this batch has used its responsiveness budget.
-          result = nextSlice(result.value === 'boundary' && performance.now() - batchStarted >= 8);
+          // I/O still yields every 8 ms above. Keep the private native draft longer
+          // when uncontended, but let waiting commands/reads take the next coherent
+          // boundary rather than waiting for the 32 ms publication target.
+          result = nextSlice(
+            result.value === 'boundary' &&
+              (this.pendingOperations > 0 || performance.now() - batchStarted >= 32),
+          );
         }
         const advanced = result.value;
         if (!advanced.outcome.ok) {
-          recordDuration('native.noYield', performance.now() - sliceStarted);
+          if (measured) recordDuration('native.noYield', performance.now() - sliceStarted);
           this.storageError = `Required native work stopped before advancing time: ${advanced.outcome.message} Restart after reconciling the admitted workload.`;
           this.notify(false);
           return;
         }
-        const finalizationStarted = performance.now();
+        const finalizationStarted = beginTiming();
         world = freezeWorld(advanced.world);
-        recordDuration('native.finalization', performance.now() - finalizationStarted);
+        endTiming('native.finalization', finalizationStarted);
         // Wall time from one actual yield to the next includes indivisible native calls
         // and finalization; queue, storage and cooperative waiting are measured separately.
-        recordDuration('native.noYield', performance.now() - sliceStarted);
+        if (measured) recordDuration('native.noYield', performance.now() - sliceStarted);
         const delta = world.simTime - startTime;
-        const stepMs = performance.now() - stepStarted;
-        nativeMs += stepMs;
-        recordDuration('native.step', stepMs);
-        recordDuration('native.intervalSimMs', delta * 1000);
+        const stepMs = endTiming('native.step', stepStarted);
+        if (stepMs !== undefined) nativeMs += stepMs;
+        if (measured) recordDuration('native.intervalSimMs', delta * 1000);
         advancedSeconds += delta;
-        if (delta <= 0 || performance.now() - batchStarted >= 8) break;
+        if (delta <= 0 || this.pendingOperations > 0 || performance.now() - batchStarted >= 32)
+          break;
       }
-      recordDuration('tick.nativeWork', nativeMs);
+      if (measured) recordDuration('tick.nativeWork', nativeMs);
       const beforeSimTime = this.world.simTime;
       const saved = { ...this.saved, world };
       // Simulation progress is saved about once per real second as a background save, which no
@@ -3081,11 +3207,12 @@ export class WorldService {
     return this.authorized(scope, 'manage-access', false, async () => {
       if (
         permission.worldId !== this.world.id ||
-        !this.world.entities[permission.actorId]?.actor ||
+        !entityGet(this.world.entities, permission.actorId)?.actor ||
         !this.world.map.spatial.surfaces.some((s) => s.id === permission.site.surfaceId) ||
         permission.materialIds.some(
           (materialId) =>
-            !this.world.entities[materialId]?.item && !this.world.entities[materialId]?.retirement,
+            !entityGet(this.world.entities, materialId)?.item &&
+            !entityGet(this.world.entities, materialId)?.retirement,
         )
       )
         return {
@@ -3144,10 +3271,10 @@ export class WorldService {
     const visible = new Set(
       nearbyEntities(
         world,
-        worldPosition(world.entities[scope.actorId]!),
-        visionRadius(world, world.entities[scope.actorId]!),
+        worldPosition(entityGet(world.entities, scope.actorId)!),
+        visionRadius(world, entityGet(world.entities, scope.actorId)!),
       )
-        .filter((e) => seesEntity(world, world.entities[scope.actorId]!, e))
+        .filter((e) => seesEntity(world, entityGet(world.entities, scope.actorId)!, e))
         .map((e) => e.id),
     );
     const materials = inventoryFor(world, scope.actorId).flatMap((item) => {
@@ -3155,7 +3282,7 @@ export class WorldService {
       if (!descriptor || descriptor.familyId !== family.id) return [];
       const role = descriptor.role;
       const availableQuantity = availableItemQuantity(world, item.id);
-      const reason = world.entities[item.id]?.item?.assemblyClaim
+      const reason = entityGet(world.entities, item.id)?.item?.assemblyClaim
         ? 'This piece belongs to the structure; reclaim it through its building controls.'
         : !permissions.some((p) => materialAuthorized(world, item.id, p))
           ? 'Carrying this material does not grant permission to build with it.'
@@ -3169,7 +3296,7 @@ export class WorldService {
       return [
         {
           id: item.id,
-          name: world.entities[item.id]!.name,
+          name: entityGet(world.entities, item.id)!.name,
           quantity: item.quantity,
           availableQuantity,
           role,
@@ -3180,12 +3307,12 @@ export class WorldService {
         },
       ];
     });
-    const lowered = Object.values(world.entities).flatMap((item) => {
+    const lowered = entityValues(world.entities).flatMap((item) => {
       const rootId = item.item?.assemblyClaim?.rootId;
       return rootId &&
-        world.entities[rootId]?.assembly?.family.id === family.id &&
+        entityGet(world.entities, rootId)?.assembly?.family.id === family.id &&
         visible.has(rootId) &&
-        !world.entities[rootId]?.assembly?.parts[item.id] &&
+        !entityGet(world.entities, rootId)?.assembly?.parts[item.id] &&
         permissions.length
         ? [{ id: item.id, rootId, name: item.name }]
         : [];
@@ -3244,11 +3371,12 @@ export class WorldService {
       plan,
       this.store.authority!.constructionPermissions(this.world.id),
     );
-    const root = plan.rootId ? this.world.entities[plan.rootId] : undefined;
+    const root = plan.rootId ? entityGet(this.world.entities, plan.rootId) : undefined;
     // A refused guessed root must not disclose its position or installed geometry.
     if (
       plan.rootId &&
-      (!root?.assembly || !seesEntity(this.world, this.world.entities[scope.actorId]!, root))
+      (!root?.assembly ||
+        !seesEntity(this.world, entityGet(this.world.entities, scope.actorId)!, root))
     )
       return {
         ...('ok' in checked
@@ -3463,7 +3591,7 @@ export class WorldService {
           return { ...result.outcome };
         const world = receipt
           ? updateWorld(result.world, (draft) => {
-              delete draft.commandReceipts[receipt.id];
+              orderedRecordSet(draft.commandReceipts, receipt.id, undefined);
             })
           : result.world;
         if (
@@ -3582,7 +3710,7 @@ export class WorldService {
           result: result.outcome,
         };
         const world = updateWorld(result.world, (draft) => {
-          delete draft.commandReceipts[id];
+          orderedRecordSet(draft.commandReceipts, id, undefined);
         });
         if (
           !(await this.commit(
@@ -3693,7 +3821,7 @@ export class WorldService {
     return this.mutate(async () => {
       await this.ready;
       this.assertScope(scope, 'create');
-      const actor = this.world.entities[request.actorId];
+      const actor = entityGet(this.world.entities, request.actorId);
       if (
         !this.config.godMode ||
         actor?.actor?.controller !== 'npc' ||
@@ -3954,8 +4082,10 @@ export class WorldService {
   async containerAccess(request: ContainerAccessRequest, scope: RequestScope): Promise<ApiResult> {
     return this.godTransition((world) => {
       this.assertScope(scope, 'create');
-      const root = world.entities[request.itemId] ? custodian(world, request.itemId) : undefined;
-      if (!root || (world.entities[root]?.actor && root !== scope.actorId))
+      const root = entityGet(world.entities, request.itemId)
+        ? custodian(world, request.itemId)
+        : undefined;
+      if (!root || (entityGet(world.entities, root)?.actor && root !== scope.actorId))
         return {
           world,
           events: [],
@@ -4058,7 +4188,7 @@ export class WorldService {
     if (!this.config.godMode)
       return { ok: false, code: 'forbidden', message: 'God access required.' };
     if (!this.mayInspectPrivate(actorId, scope)) throw new AuthorityError('forbidden');
-    const entity = this.world.entities[actorId];
+    const entity = entityGet(this.world.entities, actorId);
     if (!entity?.actor) return { ok: false, code: 'actor', message: 'Choose an actor.' };
     return {
       ok: true,
@@ -4072,7 +4202,7 @@ export class WorldService {
     this.assertScope(scope, 'inspect');
     return {
       accountId: scope.accountId,
-      actorIds: Object.keys(this.world.entities).filter((id) => this.mayInspectPrivate(id, scope)),
+      actorIds: entityKeys(this.world.entities).filter((id) => this.mayInspectPrivate(id, scope)),
       allowUnscoped: this.config.authentication.mode === 'local',
     };
   }
@@ -4097,7 +4227,7 @@ export class WorldService {
    * grant another human's private mind; hosted principals must bind their own actor. */
   mayInspectPrivate(actorId: string, scope = this.localScope): boolean {
     if (!this.currentScope(scope)) return false;
-    const actor = this.world.entities[actorId]?.actor;
+    const actor = entityGet(this.world.entities, actorId)?.actor;
     return (
       !!actor &&
       (actorId === scope.actorId ||
@@ -4135,7 +4265,7 @@ export class WorldService {
       };
     await this.flush();
     const generation = this.generation;
-    const actor = this.world.entities[actorId];
+    const actor = entityGet(this.world.entities, actorId);
     if (!actor?.actor || !hasMemory(actor))
       return { ok: false, code: 'actor', message: 'Choose a person.' };
     const stillPrivate = this.privateReadFence(actorId, () =>
@@ -4157,7 +4287,7 @@ export class WorldService {
       };
     // Database reads may yield while simulation replaces this person. Project all
     // fields from the current actor together with the current meter definitions.
-    const entity = this.world.entities[actorId];
+    const entity = entityGet(this.world.entities, actorId);
     if (!entity?.actor || !hasMemory(entity))
       return { ok: false, code: 'actor', message: 'Choose a person.' };
     const entries = selected?.entries.map(formatMemoryEntry);
@@ -4279,7 +4409,7 @@ export class WorldService {
               'The installed meter definitions or world timeline changed. Refresh and review the form before saving.',
             revision: this.viewRevision,
           };
-        const entity = this.world.entities[actorId];
+        const entity = entityGet(this.world.entities, actorId);
         if (!entity?.actor || !hasMemory(entity))
           return { ok: false, code: 'actor', message: 'Choose a person.' };
         const currentPerson: GodPersonEditorDraft = {
@@ -4759,7 +4889,7 @@ export class WorldService {
           ...envelope,
           type: 'say',
           text: input.text,
-          volume: input.volume ?? 'normal',
+          ...(input.volume ? { volume: input.volume } : {}),
           ...(input.targetId ? { targetId: input.targetId } : {}),
         };
         break;
@@ -5348,7 +5478,7 @@ export class WorldService {
           message: 'Human-private character content is unavailable to this principal.',
         };
 
-      if (!this.world.entities[actorId]?.actor)
+      if (!entityGet(this.world.entities, actorId)?.actor)
         return { ok: false, code: 'actor', message: 'Unknown actor.' };
       const recordedAction =
         this.world.actionExperience.occurrences[actorId]?.some((entry) => entry.id === sourceId) ||

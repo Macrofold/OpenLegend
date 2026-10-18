@@ -1,3 +1,4 @@
+import { entityGet, entityValues } from './entity-collection.js';
 import { subjectNarration } from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { releaseWork } from './work-budget.js';
@@ -61,7 +62,7 @@ export function finishSimulatedExits(world: WorldState, events: WorldEvent[]): b
     // Action remainders and absolute deadlines can differ by floating-point residue.
     // Use the executor's existing time resolution so a tied hit cannot beat protection.
     if (deadline - world.simTime > TIME_EPSILON) continue;
-    const entity = world.entities[id]!;
+    const entity = entityGet(world.entities, id)!;
     const state = entity.actor!.participation!;
     if (!Number.isSafeInteger(state.revision + 1))
       throw new Error('Participation revision exhausted.');
@@ -82,7 +83,7 @@ export function changeParticipation(
   expectedRevision: number,
   operation: { type: 'begin-exit' | 'depart'; attemptId: string } | { type: 'return' },
 ): Transition {
-  const source = input.entities[actorId],
+  const source = entityGet(input.entities, actorId),
     previous = source?.actor?.participation;
   const reject = (message: string): Transition => ({
     world: input,
@@ -139,7 +140,7 @@ export function changeParticipation(
     );
   const world = draftWorld(input);
   if (operation.type === 'depart') leaveConversation(world, actorId, 'disconnect');
-  const entity = world.entities[actorId]!,
+  const entity = entityGet(world.entities, actorId)!,
     actor = entity.actor!,
     events: WorldEvent[] = [];
   const state = (actor.participation ??= { phase: 'active', revision: 0 });
@@ -200,7 +201,7 @@ export function validateParticipation(world: WorldState): void {
       exposure === undefined ||
       !Number.isFinite(deadline) ||
       deadline < 0 ||
-      world.entities[id]?.actor?.participation?.phase !== 'exiting'
+      entityGet(world.entities, id)?.actor?.participation?.phase !== 'exiting'
     )
       throw new Error('Invalid saved departure exposure.');
   const description = world.participationPolicy?.exitDescription;
@@ -213,7 +214,7 @@ export function validateParticipation(world: WorldState): void {
   const validAnchor = (value: unknown): boolean =>
     finitePoint(value) && 'surfaceId' in value && isSafeRecordId(value.surfaceId);
   if (anchor && !validAnchor(anchor)) throw new Error('Invalid authored safe-return anchor.');
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     const state = entity.actor?.participation;
     if (!state) continue;
     if (

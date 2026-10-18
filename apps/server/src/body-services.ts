@@ -20,7 +20,7 @@ export function consumptionDescription(
   const consumption = applicableConsumption(world, entity);
   if (!consumption) return policy?.unavailableText ?? 'Consumption is not available for this body.';
   const definition = attributeDefinition(world, consumption.attributeId)!;
-  const value = readAttribute(entity.actor!, definition);
+  const value = readAttribute(world, entity, definition);
   if (definition.schema.kind !== 'number' || typeof value !== 'number')
     return consumption.unavailableText;
   const refusal = item && consumption.refusals.find((entry) => entry.itemType === item.id);

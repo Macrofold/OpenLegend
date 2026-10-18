@@ -6,7 +6,7 @@ import { playerEntity } from '../entity-view';
 import { UsageRemaining } from './usage-remaining';
 import { ActionAttempts } from './action-attempts';
 import { RecipeDetails } from './recipe-details';
-import { useEffect, useState, type ReactNode } from 'react';
+import { memo, useEffect, useState, type ReactNode } from 'react';
 import { MemoryHistory } from './memory-history';
 import { ActivityHistory } from './activity-history';
 import { Button as AriaButton, Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
@@ -70,11 +70,13 @@ export function Crafting({
   command,
   connected,
   invent,
+  browseRecipe,
 }: {
   view: GameView;
   command(a: ActionOption): void;
   connected: boolean;
   invent(): void;
+  browseRecipe(recipeId: string, opener: Element): void;
 }) {
   const [query, setQuery] = useState('');
   const [creatorFilter, setCreatorFilter] = useState('all');
@@ -118,12 +120,7 @@ export function Crafting({
             >
               <span>
                 <strong>{recipe.output.name}</strong>
-                <span className="ol-caption">
-                  {recipe.name}
-                  {!recipe.actions.some((action) => action.enabled)
-                    ? ' (missing requirements)'
-                    : ''}
-                </span>
+                <span className="ol-caption">{recipe.name}</span>
               </span>
             </Button>
           ))}
@@ -150,7 +147,12 @@ export function Crafting({
               )}
             <h3>{selected.output.name}</h3>
             <RecipeDetails recipe={selected} />
-            <Actions actions={selected.actions} command={command} connected={connected} />
+            <Button
+              disabled={!connected}
+              onPress={(event) => browseRecipe(selected.id, event.target)}
+            >
+              Check crafting options
+            </Button>
           </section>
         ) : (
           selectedId && (
@@ -385,10 +387,20 @@ export function Character({
           </Section>
           <Section title="Memories">
             <MemoryHistory
-              key={`${view.access?.scope}:${view.worldId}:${view.saveTimeline}:${view.historyEpoch}:${view.player.id}`}
+              key={JSON.stringify([
+                view.access?.privateDraftScope,
+                view.worldId,
+                view.saveTimeline,
+                view.player.id,
+              ])}
               actorId={view.player.id}
               owned
-              recent={view.player.memories}
+              requestScope={JSON.stringify([
+                view.access?.scope,
+                view.access?.controlGeneration,
+                view.historyEpoch,
+              ])}
+              revision={view.player.memoryRevision}
               visible={visible && section === 'record'}
             />
           </Section>
@@ -407,97 +419,113 @@ export function Character({
     </div>
   );
 }
-export function AiSettings({ view }: { view: GameView }) {
-  const ai = view.ai,
-    b = ai.budget;
-  const account = b.accounts?.[view.player.id];
-  if (!view.godMode)
+type AiSettingsView = Pick<GameView, 'ai' | 'godMode'> & {
+  player: Pick<GameView['player'], 'id'>;
+  entities: Array<Pick<EntityView, 'id' | 'name'>>;
+};
+export const AiSettings = memo(
+  function AiSettings({ view }: { view: AiSettingsView }) {
+    const ai = view.ai,
+      b = ai.budget;
+    const account = b.accounts?.[view.player.id];
+    if (!view.godMode)
+      return (
+        <>
+          <Section title="Your allowance">
+            <UsageRemaining
+              limit={b.limitUsd}
+              spent={account?.spentUsd ?? 0}
+              reserved={account?.reservedUsd ?? 0}
+              available={ai.llmConfigured && b.limitUsd > 0}
+            />
+            <p>
+              Describing an action or proposing a new invention uses this character's allowance.
+              Existing native actions remain available according to the world's rules.
+            </p>
+            <p className="ol-caption">
+              Allowance includes work already in progress.{' '}
+              {b.period ? `Current period: ${b.period}.` : ''}
+            </p>
+          </Section>
+          <Section title="Intelligence availability">
+            <p>
+              {ai.mode === 'fixture'
+                ? 'This world is using test replies.'
+                : ai.llmConfigured
+                  ? 'Intelligence is connected.'
+                  : 'Intelligence is unavailable. The world owner can configure it.'}
+            </p>
+          </Section>
+        </>
+      );
     return (
       <>
-        <Section title="Your allowance">
-          <UsageRemaining
-            limit={b.limitUsd}
-            spent={account?.spentUsd ?? 0}
-            reserved={account?.reservedUsd ?? 0}
-            available={ai.llmConfigured && b.limitUsd > 0}
-          />
+        <Tag>{ai.mode === 'fixture' ? 'Test fixtures — not live AI' : ai.mode}</Tag>
+        <p>{ai.message}</p>
+        <Section title="Connect intelligence">
           <p>
-            Describing an action or proposing a new invention uses this character's allowance.
-            Existing native actions remain available according to the world's rules.
+            On the computer running Open Legend, configure the backend in <code>.env</code> and
+            choose a nonzero <code>AI_BUDGET_USD</code>, then restart the server.
           </p>
-          <p className="ol-caption">
-            Allowance includes work already in progress.{' '}
-            {b.period ? `Current period: ${b.period}.` : ''}
+          <p className="ol-meta">
+            Macrofold also requires an explicit compute allowance. See the project’s live AI setup
+            guide. Credentials stay on the server.
+          </p>
+          <p>
+            Language model: {ai.llmConfigured ? 'Configured' : 'Not configured'}
+            <br />
+            Jev: {ai.jevConfigured ? 'Configured' : 'Not configured'}
           </p>
         </Section>
-        <Section title="Intelligence availability">
+        <Section title="Monthly agent allowances">
+          <h3 className="ol-heading">
+            ${b.limitUsd.toFixed(2)} per agent · {b.period ?? 'current month'}
+          </h3>
           <p>
-            {ai.mode === 'fixture'
-              ? 'This world is using test replies.'
-              : ai.llmConfigured
-                ? 'Intelligence is connected.'
-                : 'Intelligence is unavailable. The world owner can configure it.'}
+            Total spent ${b.spentUsd.toFixed(4)}
+            {b.estimated ? ' (estimated)' : ''}
+            <br />
+            Reserved ${b.reservedUsd.toFixed(4)}
           </p>
-        </Section>
-      </>
-    );
-  return (
-    <>
-      <Tag>{ai.mode === 'fixture' ? 'Test fixtures — not live AI' : ai.mode}</Tag>
-      <p>{ai.message}</p>
-      <Section title="Connect intelligence">
-        <p>
-          On the computer running Open Legend, configure the backend in <code>.env</code> and choose
-          a nonzero <code>AI_BUDGET_USD</code>, then restart the server.
-        </p>
-        <p className="ol-meta">
-          Macrofold also requires an explicit compute allowance. See the project’s live AI setup
-          guide. Credentials stay on the server.
-        </p>
-        <p>
-          Language model: {ai.llmConfigured ? 'Configured' : 'Not configured'}
-          <br />
-          Jev: {ai.jevConfigured ? 'Configured' : 'Not configured'}
-        </p>
-      </Section>
-      <Section title="Monthly agent allowances">
-        <h3 className="ol-heading">
-          ${b.limitUsd.toFixed(2)} per agent ({b.period ?? 'current month'})
-        </h3>
-        <p>
-          Total spent ${b.spentUsd.toFixed(4)}
-          {b.estimated ? ' (estimated)' : ''}
-          <br />
-          Reserved ${b.reservedUsd.toFixed(4)}
-        </p>
-        {Object.entries(b.accounts ?? {}).map(([id, account]) => (
-          <p key={id}>
-            {view.entities.find((e) => e.id === id)?.name ?? id}: $
-            {Math.max(0, b.limitUsd - account.spentUsd - account.reservedUsd).toFixed(2)} remaining
-          </p>
-        ))}
-        <p className="ol-caption">
-          Connected background play follows your time settings. Requests already sent may still
-          incur usage while paused.
-        </p>
-      </Section>
-      <details>
-        <summary>Execution details</summary>
-        <p>
-          {ai.usage.llmCalls} language model calls; {ai.usage.jevCalls} Jev calls
-          <br />
-          {ai.usage.inputTokens} input / {ai.usage.outputTokens} output tokens
-          <br />
-          Last latency {(ai.usage.lastLatencyMs / 1000).toFixed(1)}s
-        </p>
-        {ai.jobs
-          .filter((job) => job.status === 'failed')
-          .map((job) => (
-            <p key={job.id}>
-              <Tag>Failed</Tag> {job.message}
+          {Object.entries(b.accounts ?? {}).map(([id, account]) => (
+            <p key={id}>
+              {view.entities.find((e) => e.id === id)?.name ?? id}: $
+              {Math.max(0, b.limitUsd - account.spentUsd - account.reservedUsd).toFixed(2)}{' '}
+              remaining
             </p>
           ))}
-      </details>
-    </>
-  );
-}
+          <p className="ol-caption">
+            Connected background play follows your time settings. Requests already sent may still
+            incur usage while paused.
+          </p>
+        </Section>
+        <details>
+          <summary>Execution details</summary>
+          <p>
+            {ai.usage.llmCalls} language model calls · {ai.usage.jevCalls} Jev calls
+            <br />
+            {ai.usage.inputTokens} input / {ai.usage.outputTokens} output tokens
+            <br />
+            Last latency {(ai.usage.lastLatencyMs / 1000).toFixed(1)}s
+          </p>
+          {ai.jobs
+            .filter((job) => job.status === 'failed')
+            .map((job) => (
+              <p key={job.id}>
+                <Tag>Failed</Tag> {job.message}
+              </p>
+            ))}
+        </details>
+      </>
+    );
+  },
+  ({ view: previous }, { view: next }) =>
+    previous.ai === next.ai &&
+    previous.godMode === next.godMode &&
+    previous.player.id === next.player.id &&
+    previous.entities.length === next.entities.length &&
+    previous.entities.every(
+      (entity, index) =>
+        entity.id === next.entities[index]?.id && entity.name === next.entities[index]?.name,
+    ),
+);

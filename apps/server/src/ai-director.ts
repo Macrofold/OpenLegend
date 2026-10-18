@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { undispatchedReceipt } from './decision-state.js';
 import { playerActionIdentity } from './action-request-recovery.js';
 import { humanRequestId } from './human-request-id.js';
@@ -128,7 +129,7 @@ import {
   type JudgeValue,
   type JudgmentAnswer,
 } from '@open-legend/ai';
-import type { DeclarationProvenance } from '@open-legend/domain';
+import type { DeclarationProvenance, WorldState } from '@open-legend/domain';
 import type { ApiResult } from '@open-legend/protocol';
 import { CONTEXT_BYTE_LIMIT, ContextBudgetError } from './context.js';
 import { digest, type JobRecord } from './store.js';
@@ -241,6 +242,8 @@ export class AiDirector {
     current: (ticket) => this.service.isDurable(ticket),
   });
   private readonly thoughtInputs = new ThoughtIntakeInputs();
+  private thoughtInputWorld?: WorldState;
+  private thoughtInputScope?: string;
   private readonly unsubscribe: () => void;
   private stopped = false;
   readonly client: AiClient;
@@ -314,8 +317,8 @@ export class AiDirector {
           active.job.decision &&
           (service.paused ||
             service.generation !== active.generation ||
-            (service.world.entities[active.job.decision.actorId]?.actor?.physicalLife ?? 0) !==
-              active.job.decision.physicalLife ||
+            (entityGet(service.world.entities, active.job.decision.actorId)?.actor?.physicalLife ??
+              0) !== active.job.decision.physicalLife ||
             (active.validity &&
               active.validity !== decisionValidity(service.world, active.job.decision.actorId)) ||
             (active.job.authority && !service.currentScope(active.job.authority, 'play', true)))
@@ -345,7 +348,7 @@ export class AiDirector {
       // docs/status-effects.md#capabilities-and-presentation
       if (run && run.job.kind !== 'invention' && !service.world.responseReceipts?.[run.job.id]) {
         const actorId = this.selectedActorId(run.job);
-        const entity = actorId ? service.world.entities[actorId] : undefined;
+        const entity = actorId ? entityGet(service.world.entities, actorId) : undefined;
         if (
           !entity?.actor?.alive ||
           ((run.job.kind === 'chat' || run.job.kind === 'thought') &&
@@ -419,7 +422,7 @@ export class AiDirector {
         );
         id = identity.id;
         const actorId = authority.actorId;
-        const actor = this.service.world.entities[actorId]?.actor;
+        const actor = entityGet(this.service.world.entities, actorId)?.actor;
         if (
           !text.trim() ||
           text.length > 500 ||
@@ -457,9 +460,13 @@ export class AiDirector {
           return { ok: false, code: 'paused', message: 'Resume before attempting an action.' };
         if (
           !actor?.alive ||
-          (expression && !activelyParticipates(this.service.world.entities[actorId])) ||
+          (expression && !activelyParticipates(entityGet(this.service.world.entities, actorId))) ||
           actor.incapacitated ||
-          capabilityBlocked(this.service.world, this.service.world.entities[actorId], 'actions')
+          capabilityBlocked(
+            this.service.world,
+            entityGet(this.service.world.entities, actorId),
+            'actions',
+          )
         )
           return {
             ok: false,
@@ -854,7 +861,7 @@ export class AiDirector {
       if (
         initiatingActor &&
         (kind !== 'invention' ||
-          this.service.world.entities[initiatingActor]?.actor?.controller !== 'npc')
+          entityGet(this.service.world.entities, initiatingActor)?.actor?.controller !== 'npc')
       )
         return {
           ok: false,
@@ -910,7 +917,7 @@ export class AiDirector {
         kind === 'chat' ? (npcId ?? this.service.availableDefaultResidentEntityId) : undefined;
       if (
         kind === 'chat' &&
-        (!targetId || this.service.world.entities[targetId]?.actor?.controller !== 'npc')
+        (!targetId || entityGet(this.service.world.entities, targetId)?.actor?.controller !== 'npc')
       )
         return {
           ok: false,
@@ -1124,8 +1131,8 @@ export class AiDirector {
           message: 'Resume the world before talking or inventing.',
         };
       if (
-        !this.service.world.entities[inventorId]?.actor?.alive ||
-        this.service.world.entities[inventorId]?.actor?.incapacitated
+        !entityGet(this.service.world.entities, inventorId)?.actor?.alive ||
+        entityGet(this.service.world.entities, inventorId)?.actor?.incapacitated
       )
         return {
           ok: false,
@@ -1155,7 +1162,7 @@ export class AiDirector {
           message: 'Another request is already in progress. You can keep gathering and surviving.',
         };
       if (kind === 'chat') {
-        const target = this.service.world.entities[targetId!];
+        const target = entityGet(this.service.world.entities, targetId!);
         if (!target?.actor || target.actor.controller !== 'npc')
           return { ok: false, code: 'target', message: 'Choose a person to talk with.' };
         if (
@@ -1409,7 +1416,7 @@ export class AiDirector {
       if (!permission.ok) throw new StopJob('stale', permission.message);
     }
     const actorId = this.selectedActorId(run.job);
-    const actor = actorId ? this.service.world.entities[actorId] : undefined;
+    const actor = actorId ? entityGet(this.service.world.entities, actorId) : undefined;
     if (
       !actorId ||
       run.generation !== this.service.generation ||
@@ -1433,7 +1440,10 @@ export class AiDirector {
         nativeProtectionReason(this.service.world, actorId))
     )
       throw new StopJob('stale', 'Native urgent needs superseded semantic work.');
-    if (run.job.kind === 'invention' && this.service.world.entities[actorId]?.actor?.incapacitated)
+    if (
+      run.job.kind === 'invention' &&
+      entityGet(this.service.world.entities, actorId)?.actor?.incapacitated
+    )
       throw new StopJob('stale', 'The inventor became incapacitated; this result was not applied.');
     return actorId;
   }
@@ -1467,7 +1477,7 @@ export class AiDirector {
         timelineId: this.service.timelineId,
         generation: this.service.generation,
         actorId,
-        physicalLife: this.service.world.entities[actorId]?.actor?.physicalLife ?? 0,
+        physicalLife: entityGet(this.service.world.entities, actorId)?.actor?.physicalLife ?? 0,
         cause: cause ? { kind: 'event', id: cause } : { kind: 'intent', id: job.id },
         originalWatermark:
           cursor && typeof cursor.value === 'object' && cursor.value && 'watermark' in cursor.value
@@ -1545,7 +1555,7 @@ export class AiDirector {
       ownerAccountId: job.authority?.accountId,
       worldId: this.service.world.id,
       actorId,
-      actorName: actorId ? this.service.world.entities[actorId]?.name : undefined,
+      actorName: actorId ? entityGet(this.service.world.entities, actorId)?.name : undefined,
       trigger: job.diagnosticTrigger ?? job.request.text,
       triggerType:
         job.diagnosticTriggerType ??
@@ -2299,7 +2309,7 @@ export class AiDirector {
         this.log,
         actorId,
         `${run.job.id}:attempt:${attempt}`,
-        `${currentGoal(this.service.world.entities[actorId]!.actor!)}\n${stimulus}`,
+        `${currentGoal(entityGet(this.service.world.entities, actorId)!.actor!)}\n${stimulus}`,
         refreshed.actionCandidates,
         run.controller.signal,
         async () => {
@@ -2671,8 +2681,8 @@ export class AiDirector {
       Object.keys(prepared.entityReferences),
       Object.keys(prepared.binding.actions),
       {
-        speech: canSpeak(this.service.world.entities[actorId]),
-        expressions: supportsManualWork(this.service.world.entities[actorId]),
+        speech: canSpeak(entityGet(this.service.world.entities, actorId)),
+        expressions: supportsManualWork(entityGet(this.service.world.entities, actorId)),
       },
       Object.keys(prepared.binding.knowledgeReferences ?? {}),
       namedClockTimes(this.service.world),
@@ -3159,7 +3169,15 @@ export class AiDirector {
   /** Meaningful changes are coalesced; native steps never purchase inference. */
   async considerThought(): Promise<void> {
     return this.admission(async () => {
-      if (!this.service.config.macrofoldKey && !this.service.config.jevKey) return;
+      // A zero operator allowance cannot admit new model work. Reject before
+      // scanning people or preparing optional maintenance/search/job records.
+      // Native actions, retained experience and existing completions have their
+      // own owners and continue without this optional admission opportunity.
+      if (
+        !this.service.config.budgetUsd ||
+        (!this.service.config.macrofoldKey && !this.service.config.jevKey)
+      )
+        return;
       if (this.service.config.macrofoldKey || this.service.config.jevKey)
         void this.maintenance.tick(!!this.running).catch(() => {
           this.service.storageError =
@@ -3173,25 +3191,54 @@ export class AiDirector {
       // One change-fed intake: cheap per-character tokens; visibility reruns only for a
       // character whose own exposure or position changed (EPR05).
       this.thoughtInputs.reset(this.service.generation);
-      timedSync('cognition.thoughtRefresh', () =>
-        this.thoughtWork.refresh(
-          world,
-          (id, world, verify) => this.thoughtInputs.read(world, id, verify),
-          this.service.generation,
-        ),
-      );
+      timedSync('cognition.thoughtRefresh', () => {
+        try {
+          if (
+            this.thoughtInputWorld === world &&
+            this.thoughtInputScope === generation &&
+            Object.isFrozen(world)
+          ) {
+            // A repeat poll of the exact same immutable world cannot acquire new
+            // native evidence. Retained native arithmetic replaces that world even
+            // when actor anchors stay identical, so current meter concerns refresh.
+            // Deferred spatial preparation can complete meanwhile,
+            // so those characters still refresh; deadlines/durability stay live below.
+            this.thoughtWork.refreshAffected(world, this.thoughtInputs.pendingExposure());
+          } else {
+            const affected =
+              this.thoughtInputWorld && this.thoughtInputScope === generation
+                ? this.thoughtInputs.affected(this.thoughtInputWorld, world)
+                : undefined;
+            if (affected) {
+              for (const id of this.thoughtInputs.pendingExposure()) affected.add(id);
+              this.thoughtWork.refreshAffected(world, affected);
+            } else {
+              this.thoughtInputs.reconcile(world);
+              this.thoughtWork.refresh(
+                world,
+                (id, world, verify) => this.thoughtInputs.read(world, id, verify),
+                generation,
+              );
+            }
+            this.thoughtInputWorld = world;
+            this.thoughtInputScope = generation;
+          }
+        } finally {
+          this.thoughtInputs.refreshed();
+        }
+      });
       const actors = this.thoughtWork
         .ready(
           this.now(),
           world.simTime,
           (id) =>
-            world.entities[id]?.actor?.controller === 'npc' &&
+            entityGet(world.entities, id)?.actor?.controller === 'npc' &&
             !this.escalator.hasActor(id) &&
             ![...this.activeRuns].some((run) => run.job.decision?.actorId === id) &&
-            !world.entities[id]?.actor?.incapacitated &&
+            !entityGet(world.entities, id)?.actor?.incapacitated &&
             this.thoughtInputs.visible(id) !== undefined,
         )
-        .map((id) => world.entities[id]!);
+        .map((id) => entityGet(world.entities, id)!);
       const generations = new Map(
         actors.map((entity) => [entity.id, this.thoughtWork.capture(world, entity.id)]),
       );
@@ -3296,6 +3343,9 @@ export class AiDirector {
           this.thoughtInputs.visible(entity.id) ?? [],
         );
         const nativeProtection = nativeProtectionReason(world, entity.id);
+        // These descriptions share the same permitted world and character. No
+        // await or mutation separates comparison from the initiating sentence.
+        const attributes = projectAttributes(world, entity, 'owner');
         const fingerprint = digest({
           matches,
           nativeProtection,
@@ -3306,7 +3356,7 @@ export class AiDirector {
           possessions: relevantPossessions(world, entity.id, subscription),
           bodyInputs: bodyReconsiderationInputs(world, entity, 'director'),
           bodyPolicyPin: world.moduleManifest.bodyPolicyPin,
-          concerns: projectAttributes(world, entity, 'owner')
+          concerns: attributes
             .filter(
               (v) =>
                 v.concern &&
@@ -3335,12 +3385,8 @@ export class AiDirector {
               `I notice ${observerDescription(world, entity.id, id, 'indefinite')}, relevant to my current interest.`,
           ),
           `My current goal is ${currentGoal(actor)}.`,
-          ...projectAttributes(world, entity, 'owner').flatMap((v) =>
-            v.concern ? [v.concern] : [],
-          ),
-          ...projectAttributes(world, entity, 'owner').flatMap((v) =>
-            v.condition ? [`${v.name}: ${v.condition}.`] : [],
-          ),
+          ...attributes.flatMap((v) => (v.concern ? [v.concern] : [])),
+          ...attributes.flatMap((v) => (v.condition ? [`${v.name}: ${v.condition}.`] : [])),
         ].join(' ');
         const urgentNeed = nativeProtection;
         const newReview = !!review.key && review.key !== last?.reviewKey && !!review.due.length;
@@ -3544,6 +3590,10 @@ export class AiDirector {
     this.unsubscribe();
     await this.admissionTail;
     await Promise.allSettled([...this.pendingWork]);
+    this.thoughtInputs.reset();
+    this.thoughtInputWorld = undefined;
+    this.thoughtInputScope = undefined;
+    this.thoughtWork.clear();
     await this.recall.close();
     await this.maintenance.close();
     await this.narrator.close();

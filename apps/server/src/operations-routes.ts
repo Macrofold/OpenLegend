@@ -1,3 +1,4 @@
+import { entityValues } from '@open-legend/domain';
 import { z } from 'zod';
 import type { Entity, WorldState } from '@open-legend/domain';
 import type { OperationsView, WorldOverview } from '@open-legend/protocol';
@@ -87,7 +88,7 @@ const tenth = (value: number) => Math.round(value * 10) / 10;
 export function worldOverview(world: WorldState): WorldOverview {
   const bodies: WorldOverview['bodies'] = [];
   let omitted = 0;
-  for (const entity of Object.values(world.entities)) {
+  for (const entity of entityValues(world.entities)) {
     if (
       entity.placement?.mode !== 'world' ||
       entity.retirement ||

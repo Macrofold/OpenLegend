@@ -1,3 +1,4 @@
+import { entityGet, entityOwn } from './entity-collection.js';
 import { atomicObjects, canHandleItems } from './item-handling.js';
 import {
   accessiblePossession,
@@ -108,9 +109,9 @@ function eligibleQuantity(
   pin: DefinitionPin,
   ignoreActionId?: string,
 ): number {
-  const entity = world.entities[item.id],
+  const entity = entityGet(world.entities, item.id),
     lot = entity?.item,
-    action = world.entities[actorId]?.actor?.action;
+    action = entityGet(world.entities, actorId)?.actor?.action;
   if (
     !entity ||
     !lot ||
@@ -183,9 +184,10 @@ export function proveAvailableStock(
       required < 0 ||
       !isDefinitionPin(pin) ||
       !currentDefinition(world, pin) ||
-      !world.entities[actorId]?.actor ||
+      !entityGet(world.entities, actorId)?.actor ||
       (sourceId !== actorId &&
-        (!world.entities[sourceId]?.container || custodian(world, sourceId) !== actorId)) ||
+        (!entityGet(world.entities, sourceId)?.container ||
+          custodian(world, sourceId) !== actorId)) ||
       !canAccessContainer(world, actorId, sourceId)
     )
       return { status: 'unavailable', available: 0, examined: 0 };
@@ -233,9 +235,9 @@ export function prepareStockTransfer(
       'Choose a valid material, exact quantity, minimum and distinct containers.',
     );
   try {
-    const actor = getOwn(world.entities, actorId),
-      source = getOwn(world.entities, request.sourceId),
-      destination = getOwn(world.entities, request.destinationId);
+    const actor = entityOwn(world.entities, actorId),
+      source = entityOwn(world.entities, request.sourceId),
+      destination = entityOwn(world.entities, request.destinationId);
     // Scope is checked before stock/capacity diagnostics, preserving hidden contents.
     if (
       !actor?.actor ||

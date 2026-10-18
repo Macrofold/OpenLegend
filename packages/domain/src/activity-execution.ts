@@ -1,3 +1,4 @@
+import { entityGet } from './entity-collection.js';
 import { activityRoleKinds } from './native-command-contracts.js';
 import { validateInstalledActivityConditions } from './action-experience.js';
 import type { ConstructionPermission } from './assembly-types.js';
@@ -82,13 +83,13 @@ function finishControl(
 ): void {
   const execution = plan.activity;
   if (!execution?.control || execution.terminal) return;
-  cancelPlan(world, world.entities[actorId]!.actor!, actorId, false);
+  cancelPlan(world, entityGet(world.entities, actorId)!.actor!, actorId, false);
   execution.pending = [];
   execution.terminal = true;
   execution.reason = reason;
   plan.status = completed ? 'completed' : 'blocked';
   plan.revision++;
-  world.entities[actorId]!.actor!.agency.revision++;
+  entityGet(world.entities, actorId)!.actor!.agency.revision++;
   recordPlanResult(
     world,
     actorId,
@@ -135,6 +136,12 @@ export function admitActivityAttempt(
 }
 /** Deadlines apply to an in-progress child too. Only a child already completing
  * at this boundary may commit; other work is cancelled by the ordinary owner. */
+/** Only chosen continuing control can end a running activity between its steps.
+ * Ordinary plan membership alone does not make fixed-route movement a body-rule change. */
+export function activeActivityControl(plan: ActorPlan | null | undefined) {
+  const execution = plan?.activity;
+  return plan?.status === 'active' && !execution?.terminal ? execution?.control : undefined;
+}
 export function reconcileActivityControl(
   world: WorldState,
   actorId: string,
@@ -142,9 +149,9 @@ export function reconcileActivityControl(
   completingSeconds = -1,
 ): void {
   const execution = plan?.activity,
-    control = execution?.control;
-  if (!plan || !execution || !control || execution.terminal || plan.status !== 'active') return;
-  const entity = world.entities[actorId],
+    control = activeActivityControl(plan);
+  if (!plan || !execution || !control) return;
+  const entity = entityGet(world.entities, actorId),
     action = entity?.actor?.action;
   if (world.simTime >= control.deadline) {
     if (action?.stage === 'working' && action.remainingSeconds <= completingSeconds) return;
@@ -192,8 +199,8 @@ export function reconcileActivityControl(
     const target = execution.bindings[role];
     if (
       typeof target !== 'string' ||
-      !world.entities[target] ||
-      !canReachEntity(world, entity, world.entities[target]!, world.itemHandling.reach)
+      !entityGet(world.entities, target) ||
+      !canReachEntity(world, entity, entityGet(world.entities, target)!, world.itemHandling.reach)
     ) {
       finishControl(world, actorId, plan, 'The chosen target is no longer within reach.', false);
       return;
@@ -368,8 +375,8 @@ function predicate(
     return false;
   }
   const id = execution.bindings[condition.role];
-  const entity = typeof id === 'string' && world.entities[id],
-    actor = world.entities[actorId];
+  const entity = typeof id === 'string' && entityGet(world.entities, id),
+    actor = entityGet(world.entities, actorId);
   if (!entity || !actor || entity.retirement) return undefined;
   if (
     entity.id !== actorId &&
@@ -452,7 +459,7 @@ export function activityFrontier(
     execution.reason = reason;
     plan.status = 'blocked';
     plan.revision++;
-    world.entities[actorId]!.actor!.agency.revision++;
+    entityGet(world.entities, actorId)!.actor!.agency.revision++;
     recordPlanResult(
       world,
       actorId,
@@ -473,7 +480,7 @@ export function activityFrontier(
     if (!frame) {
       plan.status = 'completed';
       plan.revision++;
-      world.entities[actorId]!.actor!.agency.revision++;
+      entityGet(world.entities, actorId)!.actor!.agency.revision++;
       recordPlanResult(
         world,
         actorId,
@@ -579,7 +586,7 @@ export function activityFrontier(
         if (plan.steps.length >= 8) {
           const old = plan.steps.shift()!;
           execution.archivedSteps = (execution.archivedSteps ?? 0) + 1;
-          const agency = world.entities[actorId]!.actor!.agency;
+          const agency = entityGet(world.entities, actorId)!.actor!.agency;
           agency.history.push(old);
           agency.history = agency.history.slice(-32);
         }
@@ -605,7 +612,7 @@ export function startLearnedActivity(
   humanInitiated?: true,
   combatHelpId?: string,
 ) {
-  const actor = world.entities[actorId]?.actor;
+  const actor = entityGet(world.entities, actorId)?.actor;
   const method = acquiredActivities(world, actorId).find((method) => method.id === methodId);
   if (!actor || !method || !method.executable)
     return outcome(
@@ -703,7 +710,7 @@ export function startRequestedActivity(
   command: Extract<Command, { type: 'compose' }>,
   constructionPermissions: readonly ConstructionPermission[] = [],
 ) {
-  const actor = world.entities[actorId]?.actor;
+  const actor = entityGet(world.entities, actorId)?.actor;
   if (!actor) return outcome(false, 'actor-unavailable', 'The actor is unavailable.');
   let roles: ReturnType<typeof activityRoleKinds>;
   try {
@@ -748,10 +755,10 @@ export function startRequestedActivity(
           ![value.x, value.y, value.z].every(Number.isFinite) ||
           typeof value.surfaceId !== 'string'
         );
-      const entity = world.entities[value];
+      const entity = entityGet(world.entities, value);
       const pile =
         entity?.placement?.mode === 'contained'
-          ? world.entities[entity.placement.parentEntityId]
+          ? entityGet(world.entities, entity.placement.parentEntityId)
           : undefined;
       return (
         !entity ||
@@ -761,19 +768,22 @@ export function startRequestedActivity(
           // A permitted inspection identifies this exact nested ground container;
           // it grants no other unseen objects and access is checked again here.
           !(value === inspectedContainerId && canAccessContainer(world, actorId, value)) &&
-          !seesEntity(world, world.entities[actorId]!, entity) &&
+          !seesEntity(world, entityGet(world.entities, actorId)!, entity) &&
           // A stack lying in a pile is reachable through the pile the actor perceives.
-          !(pile?.kind === 'item-pile' && seesEntity(world, world.entities[actorId]!, pile)) &&
+          !(
+            pile?.kind === 'item-pile' &&
+            seesEntity(world, entityGet(world.entities, actorId)!, pile)
+          ) &&
           // Installed parts are identified through their actually perceived assembly.
           // This grants a reference only; native material/edit admission still owns rights.
           !(
             entity.placement?.mode === 'attached' &&
             entity.placement.portId === 'assembly' &&
-            world.entities[entity.placement.parentEntityId]?.assembly?.parts[value] &&
+            entityGet(world.entities, entity.placement.parentEntityId)?.assembly?.parts[value] &&
             seesEntity(
               world,
-              world.entities[actorId]!,
-              world.entities[entity.placement.parentEntityId]!,
+              entityGet(world.entities, actorId)!,
+              entityGet(world.entities, entity.placement.parentEntityId)!,
             )
           ))
       );

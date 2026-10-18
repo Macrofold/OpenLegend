@@ -1,4 +1,4 @@
-import type { Outcome, WorldState } from '@open-legend/domain';
+import { entityGet, type Outcome, type WorldState } from '@open-legend/domain';
 import { DECISION_LIMITS, DecisionClaimLost, type DecisionState } from './decision-state.js';
 import type { JobRecord, GameRepository } from './store.js';
 import type { DecisionAnswer } from './decision-task.js';
@@ -56,7 +56,7 @@ export function decisionClaimCurrent(
   policyDigest: string,
 ): job is JobRecord & { decision: DecisionState } {
   const state = job?.decision;
-  const actor = state && world.entities[state.actorId]?.actor;
+  const actor = state && entityGet(world.entities, state.actorId)?.actor;
   if (
     !state ||
     state.revision !== claim.expectedRevision ||

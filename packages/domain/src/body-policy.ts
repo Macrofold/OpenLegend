@@ -1,3 +1,4 @@
+import { currentAttributeState } from './native-values.js';
 import { narrationTemplate, type Narration } from './narration.js';
 import { validNarrationTemplate, type Named } from '@open-legend/language';
 import { canonicalJson } from './events.js';
@@ -392,12 +393,14 @@ export function canRecoverAtCamp(world: WorldState, entity: Entity): boolean {
     recovery.floors.every((floor) => {
       const definition = attributeDefinition(world, floor.attributeId);
       if (!definition || definition.schema.kind !== 'number') return false;
-      const value = readAttribute(actor, definition);
+      const value = readAttribute(world, entity, definition);
       return (
         typeof value === 'number' &&
         (value >= floor.value ||
           definition.implementation === 'native-health-v1' ||
-          Number.isSafeInteger((actor.attributes?.[definition.id]?.revision ?? NaN) + 1))
+          Number.isSafeInteger(
+            (currentAttributeState(world, entity, definition.id)?.revision ?? NaN) + 1,
+          ))
       );
     }) &&
     matchesStatusCondition(
@@ -416,7 +419,7 @@ export function applicableConsumption(
   return consumption &&
     definition &&
     entity.actor &&
-    typeof readAttribute(entity.actor, definition) === 'number'
+    typeof readAttribute(world, entity, definition) === 'number'
     ? consumption
     : null;
 }

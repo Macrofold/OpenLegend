@@ -214,7 +214,12 @@ export function commandFacts(
       [
         'Yields',
         `${Math.min(
-          gatheringYield(read.gatheringTools, target.resource.definitionId),
+          gatheringYield(
+            command.itemId
+              ? [read.definitions.get(read.items.get(command.itemId)?.definitionId ?? '')]
+              : read.gatheringTools,
+            target.resource.definitionId,
+          ),
           target.resource.quantity,
         )} ${name(target.resource.definitionId)}`,
       ],

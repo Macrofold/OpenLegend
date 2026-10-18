@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { randomUUID } from 'node:crypto';
 import {
   canSpeak,
@@ -57,8 +58,8 @@ export class NpcReplyPreviews {
       !attempt.current()
     )
       return false;
-    const npc = world.entities[snapshot.npcId];
-    const player = world.entities[scope.actorId];
+    const npc = entityGet(world.entities, snapshot.npcId);
+    const player = entityGet(world.entities, scope.actorId);
     if (
       !npc?.actor?.alive ||
       npc.actor.incapacitated ||

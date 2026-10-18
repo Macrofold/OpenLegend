@@ -1,3 +1,4 @@
+import { entityGet } from '@open-legend/domain';
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { NPC_ID } from '@open-legend/domain';
@@ -62,6 +63,49 @@ afterEach(async () => {
 });
 
 describe('bounded actor context', () => {
+  it('preserves complete context and trimming order with exact UTF-8 accounting', async () => {
+    const service = await setup();
+    const base = buildContext(service, NPC_ID, '');
+    const reference = (query: string) => {
+      const context = structuredClone(base);
+      context.request = query;
+      const bytes = () => {
+        context.coverage.knownRecipeSupplied = context.knownRecipes.length;
+        context.coverage.memorySupplied = context.memories.length;
+        context.coverage.recentEventSupplied = context.recentEvents.length;
+        context.coverage.nearbySupplied = context.nearby.length;
+        return Buffer.byteLength(JSON.stringify(context));
+      };
+      while (bytes() > CONTEXT_BYTE_LIMIT && context.knownRecipes.length > 8)
+        context.knownRecipes.pop();
+      while (bytes() > CONTEXT_BYTE_LIMIT && context.recentEvents.length > 4)
+        context.recentEvents.shift();
+      while (bytes() > CONTEXT_BYTE_LIMIT && context.memories.length > 4) context.memories.pop();
+      while (bytes() > CONTEXT_BYTE_LIMIT && context.knownRecipes.length > 1)
+        context.knownRecipes.pop();
+      while (bytes() > CONTEXT_BYTE_LIMIT && context.nearby.length) context.nearby.pop();
+      while (bytes() > CONTEXT_BYTE_LIMIT && context.recentEvents.length > 1)
+        context.recentEvents.shift();
+      while (bytes() > CONTEXT_BYTE_LIMIT && context.memories.length > 1) context.memories.pop();
+      if (bytes() > CONTEXT_BYTE_LIMIT)
+        for (const material of context.materials) material.name = '';
+      if (bytes() > CONTEXT_BYTE_LIMIT) return undefined;
+      return context;
+    };
+    // Punctuation has no recipe-search terms. Include escaping and multibyte text
+    // at exact fit and progressively deeper trim boundaries through the real builder.
+    const prefix = '🙂\\\"\n';
+    const emptySize = Buffer.byteLength(JSON.stringify(base));
+    const prefixBytes = Buffer.byteLength(JSON.stringify(prefix)) - 2;
+    for (const extra of [-1, 0, 1, 250, 1000, 5000]) {
+      const query =
+        prefix + '.'.repeat(Math.max(0, CONTEXT_BYTE_LIMIT - emptySize - prefixBytes + extra));
+      const expected = reference(query);
+      if (expected) expect(buildContext(service, NPC_ID, query)).toEqual(expected);
+      else expect(() => buildContext(service, NPC_ID, query)).toThrow(ContextBudgetError);
+    }
+  });
+
   it('fails honestly when mandatory request data cannot fit instead of truncating it', async () => {
     const service = await setup();
     expect(() => buildContext(service, NPC_ID, 'x'.repeat(CONTEXT_BYTE_LIMIT + 1))).toThrow(
@@ -122,7 +166,7 @@ describe('actor-scoped native decision candidates', () => {
       ),
     ).toBe(true);
     // Releasing the shot does not resolve its flight or guarantee an impact.
-    expect(service.world.entities['hare-1']!.actor!.alive).toBe(true);
+    expect(entityGet(service.world.entities, 'hare-1')!.actor!.alive).toBe(true);
     const flight = Object.values(service.world.projectiles ?? {}).find(
       (projectile) => projectile.sourceId === NPC_ID && projectile.targetId === 'hare-1',
     );
@@ -141,7 +185,7 @@ describe('actor-scoped native decision candidates', () => {
     expect(result.ok, evidence).toBe(true);
     expect(service.world.simTime, evidence).toBeGreaterThan(before);
     expect(
-      service.world.entities['hare-1']!.actor!.alive,
+      entityGet(service.world.entities, 'hare-1')!.actor!.alive,
       JSON.stringify(service.world.events.slice(-10)),
     ).toBe(false);
     await perform(
