@@ -1,6 +1,8 @@
 import type { CognitionPolicy } from '../../cognition-policy.js';
 
 export const DEFAULT_COGNITION_POLICY: CognitionPolicy = {
+  // Enabled with the connected two-stage consumer and interpreted feeling profile.
+  preparedResponses: null,
   actionGuidance: {
     reasons:
       'Choose a worthwhile next step for this person using current bodily state, feelings, interests, knowledge, commitments and chosen goals. Curiosity, enjoyment, company and rest are reasons to act without material gain or a declared goal. Reassess from actual remembered outcomes and present circumstances whether further work still serves a current reason. Mere availability or possible future usefulness is insufficient. Continuing useful admitted work is legitimate; needless restarting is not.',

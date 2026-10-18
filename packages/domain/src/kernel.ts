@@ -6034,6 +6034,7 @@ export function observeActor(
       }
       if (copy.actor) {
         // Sparse state is owner-private; explicit permitted projections carry public values.
+        delete copy.actor.encounters;
         delete copy.actor.attributes;
         delete copy.actor.contacts;
         delete copy.actor.conditions;

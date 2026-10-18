@@ -3,6 +3,7 @@ import { currentStatusInstance } from './native-values.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { finish, outcome } from './events.js';
 import type { Transition, WorldState } from './types.js';
+import { preparedResponseProfile } from './world-composition.js';
 /** Authored reasons and judgments, consumed only after the server has selected
  * permitted evidence and mechanically offered choices. Prose grants no authority.
  * docs/engine-and-world-boundaries.md#8-minds-agency-and-behavior */
@@ -13,6 +14,7 @@ export interface ActionGuidance {
   criteria: { true: string; false: string };
 }
 export interface CognitionPolicy {
+  preparedResponses: import('./world-modules.js').DefinitionPin | null;
   actionGuidance: ActionGuidance;
   recording: { actionResultImportance: number; exposureImportance: number };
   dream: { statusEffectId: string; afterSeconds: number } | null;
@@ -55,7 +57,8 @@ export function admitCognitionPolicy(
   const p = proposed as CognitionPolicy;
   if (
     Object.keys(p).sort().join(',') !==
-      'actionGuidance,dream,maxImmediateLevel,recording,reflection,revision,significantEventTypes,version' ||
+      'actionGuidance,dream,maxImmediateLevel,preparedResponses,recording,reflection,revision,significantEventTypes,version' ||
+    preparedResponseProfile(p.preparedResponses) === undefined ||
     !validAuthoredJudgments(p) ||
     (p.dream !== null &&
       (!p.dream ||
@@ -111,7 +114,8 @@ export function validateCognitionPolicy(
   const p = policy as CognitionPolicy;
   if (
     Object.keys(p).sort().join(',') !==
-      'actionGuidance,dream,maxImmediateLevel,recording,reflection,revision,significantEventTypes,version' ||
+      'actionGuidance,dream,maxImmediateLevel,preparedResponses,recording,reflection,revision,significantEventTypes,version' ||
+    preparedResponseProfile(p.preparedResponses) === undefined ||
     !validAuthoredJudgments(p) ||
     p.version !== 1 ||
     !Number.isSafeInteger(p.revision) ||

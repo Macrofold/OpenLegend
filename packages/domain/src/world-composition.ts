@@ -23,6 +23,25 @@ import { STOCK_ACTIVITY_HOST } from './stock-activity.js';
 import type { WorldCreationCandidate, WorldCreationProfile } from './world-creation.js';
 import type { WorldState } from './types.js';
 import { isSafeRecordId } from './records.js';
+import { definitionPin, type DefinitionPin } from './world-modules.js';
+import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
+import { BASE_THREAT_RESPONSE_PROFILE } from './worlds/base/threat-response-profile.js';
+import { basePreparedThreatResponses } from './worlds/base/threat-responses.js';
+import type { PreparedResponseSituation } from './prepared-responses.js';
+
+/** A selected pin chooses linked trusted native templates. It cannot load code or
+ * silently reinterpret a saved profile after the authored definition changes. */
+export function preparedResponseProfile(pin: DefinitionPin | null) {
+  if (pin === null) return null;
+  return isDefinitionPin(pin) && sameDefinitionPin(pin, definitionPin(BASE_THREAT_RESPONSE_PROFILE))
+    ? BASE_THREAT_RESPONSE_PROFILE
+    : undefined;
+}
+export function compilePreparedResponses(world: WorldState, input: PreparedResponseSituation) {
+  const profile = preparedResponseProfile(world.cognitionPolicy.preparedResponses);
+  if (profile === undefined) throw new Error('The selected response profile is unavailable.');
+  return profile ? basePreparedThreatResponses(world, profile, input) : null;
+}
 
 /** Explicit application composition: trusted implementations are linked here, never
  * loaded from world data. The installed manifest remains the only capability selector.

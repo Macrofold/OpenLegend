@@ -240,3 +240,26 @@ The wilderness catalogue, two accounted semantic stages, exact source publicatio
 independent Ada baselines, full shared work matrix and broader performance/player
 qualification remain open. Required-option preservation is not evidence that an
 independent character chose any option.
+
+## Catalogue integration checkpoint — October 18, 2026
+
+Review found that the shared physical observation copied another person's new
+private danger component. The view now removes it. A real native strike confirms
+that both people own their respective records, neither receives the other's
+private component through observation, and each still receives their own data.
+The earlier native contact/control checks pass in that run.
+
+A subsequent actual-contact check gives the recipient hearing without vision,
+lands a real native punch and confirms health loss. It currently fails: the
+recipient has no anonymous danger entry because the external strike occurrence's
+ordinary visual audience does not include the unseen attack's recipient. Extending
+the intake alone is insufficient. The physical occurrence/disclosure owner needs
+the felt-target grant and a source-free personal account; preserve this failure
+until that connected native path is repaired. This is unfinished CTR02 work,
+not a character's voluntary choice. No provider calls occurred; additional Jev
+cost is $0 and cumulative task Jev cost is $0.
+
+The authored 24-purpose/ten-utterance data and native compiler are being connected
+through an exact selected cognition-profile pin. The default pin remains absent;
+no new strategy, interpreted fear or anger is enabled. Compiler integration,
+complete-context qualification and both semantic stages remain unfinished.

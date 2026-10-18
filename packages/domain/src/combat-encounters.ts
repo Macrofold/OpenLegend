@@ -138,13 +138,18 @@ export function acquireCombatObservation(
   const observer = entityGet(world.entities, observation.actorId);
   const p = policy(world);
   if (!observer?.actor?.alive || !p || !activelyParticipates(observer)) return;
-  const feltContact = event.type === 'projectile-contact' && event.targetId === observer.id;
+  const projectileContact = event.type === 'projectile-contact' && event.targetId === observer.id;
+  const feltContact =
+    projectileContact ||
+    (event.type === 'struck' &&
+      event.targetId === observer.id &&
+      event.data?.['contactInjury'] === true);
   const directed =
     observation.targetId === observer.id &&
     observation.sourceId !== observer.id &&
     ['struck', 'shot-released', 'attack-cue'].includes(observation.eventType ?? '');
   if (!feltContact && !directed) return;
-  const sourceId = feltContact ? event.data?.['contactSourceId'] : observation.sourceId;
+  const sourceId = projectileContact ? event.data?.['contactSourceId'] : observation.sourceId;
   const source = typeof sourceId === 'string' ? entityGet(world.entities, sourceId) : undefined;
   const state = owner(world, observer);
   if (!state) return;
