@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## October 18, 2026 — Sea of Stars environmental art principles
+
+Mike's [art preference](../art-direction/decisions.md#current-visual-requirements--october-16-2026) adds Sea of Stars for expressive pixels, distinctive environments, varied color and purposeful light while retaining believable anatomy, practical construction and OpenLegend's survival mood. The [creative brief](../art-direction/final-board/creative-brief.md#sea-of-stars--expressive-environments-in-a-grounded-world) and [illustrated study](../art-direction/research/sea-of-stars/README.md) translate the preference into composition, material, identity and scene-review criteria. The [G178 dossier](../archive/02-research/game-inspiration/dossiers/sea-of-stars.md) documents mechanics, lore, production, reception and business evidence; its combat lessons remain research. Existing renderer, art-acceptance and implementation tasks retain their scope.
+
 ## October 18, 2026 — Speak naturally to the player
 
 The [player-facing language standard](ui-ux/player-facing-language.md) makes the player the audience of every displayed or spoken message, including authored, generated and accessible text. It replaces mechanical descriptions of simulation objects with natural explanations of the player's situation and choices; “can result in death” is the accepted alternative to “can kill this body.” Clear perspective, truthful consequences, permitted knowledge and distinct character voices constrain rewrites. Literal anatomical language and useful specialist terms remain valid when they serve the reader.

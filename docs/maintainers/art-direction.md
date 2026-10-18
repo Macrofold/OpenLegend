@@ -4,6 +4,8 @@
 
 This tracker is the entry point for visual work, individual studies and Mike's art-review decisions. The [creative brief](../../art-direction/final-board/creative-brief.md), [reference boards](../../art-direction/README.md) and [recorded decisions](../../art-direction/decisions.md) remain the aesthetic owners. A working asset or passing renderer check does not establish final style approval.
 
+**Sea of Stars environmental preference:** Mike endorses expressive pixel detail, environmental novelty, varied color and purposeful light within the existing believable-proportion target. The [illustrated study](../../art-direction/research/sea-of-stars/README.md) owns screenshot analysis and scene-review criteria; the [game dossier](../../archive/02-research/game-inspiration/dossiers/sea-of-stars.md) owns mechanics, lore, production and reception. [Research completion](../../archive/02-research/game-inspiration/research-progress-sea-of-stars-2026-10-18.md) is tracked separately from the art, motion and performance acceptance work below.
+
 ## Where the work lives
 
 Use [Asset workflows](../asset-workflow.md) to create independent external workspaces from exact published files. The original OpenLegend-art package, editable sources and dated milestone archive are preserved in the [verified source collection](https://assets.openlegend.ai/studies/public/blobs/sha256/4a/4a349cc6546c47d5542f47f8f5034cdbbb171fa1fd6283fb5d088449162aeff4); its [original cape-study viewer](https://assets.openlegend.ai/studies/public/viewers/source-5186378a84f892865537563c1adb1e1ebb5b694af7494d9101ff66e93c7272ff/mercenary/study/index.html) retains its earlier renderer and recorded limitations. Keep new editable work outside Git and publish verified revisions before recording permanent links.
@@ -42,3 +44,4 @@ When a body, material, camera treatment or animation changes, identify the expor
 Give each new study one record under `art/` with its intent, source/viewer/Blender links, completed milestones, specific feedback, remaining art decisions and references to technical owners. Do not duplicate the V3D/SW/PF task bodies or treat successful integration as art approval.
 
 Use `<study>/study/` for the active editable work and `<study>/snapshots/<date>-rN/` for immutable milestone packages. For a milestone, record the art revision, matching game commit when integrated, review result and remaining limitations. Update the study record when Mike accepts or rejects an artistic choice; reconcile any broader direction change in the existing creative brief/decision owner. Preserve earlier useful comparisons and provenance.
+

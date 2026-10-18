@@ -18,10 +18,25 @@ Beautiful dimensional pixel art with believable real-world proportions, expressi
 - Give trees layered, open boughs, varied greens and diffuse leaf shading; opaque paper-like tiers, crushed undersides and unexplained bright patches are rejected.
 - Let campfires, water and shadows connect people to their surroundings. Compose light around an identifiable source and preserve readable values.
 - Add meaningful lived-in objects, not uniform visual noise. Use fine detail where it describes identity, material or use.
+- Compose each place around recognizable large forms, a clear activity or route, and a few distinctive environmental features. Let geology, water, growth, weather and human use explain those features; novelty should make a place understandable and memorable.
+- Build color variety through material, species, moisture, exposure and light. Reserve the strongest accents for selected focal features and preserve quieter ground, water and shadow. A rich palette does not require every surface to compete.
+- Preserve physical identity through changes of pose and view: scars, handed tools, clothing asymmetry and carried equipment remain attached to the same person and side. Expressiveness comes from gesture, posture, deliberate pixels and lighting within believable anatomy.
 - Keep human scale, environment scale and close-up scale explicit when evaluating artwork. A large portrait or promotional illustration is not a runtime feasibility result.
 - Keep detail grouped and restrained: the October 17 feedback rejects the preceding uniformly fine treatment. Give small tools and animals only enough extra fixed pixel density to preserve identity. Check their actual screen footprint before adding detail, and keep all dated comparisons in the [study archive](../studies/README.md). Poly Haven is an endorsed source starting point; anatomy and construction still need visual review.
 
 ## Favorites and their contributions
+
+### Sea of Stars — Expressive environments in a grounded world
+
+**Mike's preference:** The beauty of its expressive pixel art, environmental detail and novelty, varied colors and lighting. OpenLegend should retain a more real, believable world and people; the cartoon JRPG character treatment is outside the target.
+
+**Creative interpretation:** Organize richness around large landforms and purposeful pixel groups. Distinctive roots, rock, water, vegetation and structures should explain a place's character and use. Let local light affect nearby bodies and materials, give colorful accents quieter surroundings, and support warmth, curiosity, danger and loss within the same visual language. Natural proportions and practical construction remain the foundation.
+
+![Official Sea of Stars screenshot: a large curved tree forms a route over dark teal water](https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1244090/ss_e7ac3a6e5ebe5f4561fc46d116c33678cf4ba811.1920x1080.jpg?t=1780931183)
+
+The broad curve establishes the route; bark marks follow its form; leaf and moss clusters sit beside larger quiet areas of water. This is a useful example of organized detail rather than a demand for uniformly finer texture. Source: [official Steam gallery](https://store.steampowered.com/app/1244090/Sea_of_Stars_Sunset_Edition/), inspected October 18, 2026. Publicity imagery; exact captured build is unspecified. Copyright remains with its owners; reference use does not grant production reuse.
+
+**Use in art review:** Read the [illustrated study and scene criteria](../research/sea-of-stars/README.md) with the [current visual requirements](../decisions.md#current-visual-requirements--october-16-2026). Review actual gameplay scale, movement, overlap, natural foliage gaps and light response. This reference does not establish a 2D camera, a renderer technique, a performance result or approval of an unseen OpenLegend scene. The [full dossier](../../archive/02-research/game-inspiration/dossiers/sea-of-stars.md) keeps mechanics and production findings separate from accepted art preferences.
 
 ### Dimensional pixel art — October 14 direction
 
@@ -195,3 +210,4 @@ Source: https://www.neoseeker.com/ori-and-the-will-of-the-wisps/Gorlek_Ore
 ## Provenance and rights
 
 Six screenshots were supplied by the user and copied unchanged into images/ so temporary clipboard files are not dependencies. Other images remain at the credited remote hosts. Artwork belongs to its respective owners; no production reuse rights or AGPL license are asserted for these third-party images. Steam Autumn Sale is identified by the supplied image, with artist/year unverified. Earlier boards, ratings and feedback are preserved.
+

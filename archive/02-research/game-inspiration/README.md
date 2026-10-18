@@ -4,8 +4,7 @@
 
 ## Start here
 
-- **[Sea of Stars — G178](research-progress-sea-of-stars-2026-10-18.md):** full-game research, timed combat, lore, production, reception and expressive environmental pixel art; the scoped ledger records progress and version limits.
-
+- **[Sea of Stars — G178](dossiers/sea-of-stars.md):** full-game research, timed combat, lore, production, reception and community. The [illustrated art study](../../../art-direction/research/sea-of-stars/README.md) translates its expressive environmental pixel art into the grounded OpenLegend brief; the [scoped ledger](research-progress-sea-of-stars-2026-10-18.md) records completion and evidence limits.
 - **[Why Umamusume made billions — and what OpenLegend can take forward](essays/mobile-success-failure-and-umamusume.md):** positive experience routes through all ten games, concrete OpenLegend possibilities, commercial interpretation and dated financial evidence. The [OpenLegend section](essays/mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity) connects adventure, invention, independent people, expressive creation and lasting consequences to current project goals.
 - **[Ten mobile successes and unsuccessful services — G168–G177](research-progress-mobile-2026-10-17.md):** full mechanics, reception and commercial studies of the ten October 17 additions, beginning with Umamusume. The scoped ledger owns actual completion and links each dossier.
 - **[Full 178-subject research roster](research-roster.md):** canonical title/edition list. The seventeen G150–G166 additions are **roster only; research has not started and must wait for Mike's authorization**.
