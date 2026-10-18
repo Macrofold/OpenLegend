@@ -1599,77 +1599,93 @@ function validateExecution(
     if (method && requireInstalled && method.manifest !== manifest)
       throw new Error('Saved resumable activity requires its current exact world definitions.');
     validateInstalledActivityConditions(world, root, execution.bindings, requireInstalled);
-    if (execution.control !== undefined) {
+    const control = execution.control;
+    if (control !== undefined) {
       if (!execution.request || execution.methodId !== undefined)
         throw new Error('A chosen watch cannot be a learned activity control.');
       validateChosenActivityControl(
         world,
         root,
         execution.bindings,
-        execution.control,
+        control,
         false,
         requireInstalled,
       );
-      const attemptPrefix = `${plan.id}:step:`,
-        attemptParts =
-          typeof execution.lastAttemptId === 'string'
-            ? execution.lastAttemptId.slice(attemptPrefix.length).split(':r')
-            : [];
-      const validAttemptId =
-        isSafeRecordId(execution.lastAttemptId) &&
-        execution.lastAttemptId.startsWith(attemptPrefix) &&
-        attemptParts.every(
-          (part, index) =>
-            /^[1-9]\d*$/u.test(part) &&
-            Number.isSafeInteger(Number(part)) &&
-            Number(part) <= (index === 0 ? execution.serial : plan.revision),
-        );
-      let retainedAttempts = 0,
-        retainedSpent = 0;
-      const retainedIds = new Set<string>();
-      for (const step of [
-        ...plan.steps,
-        ...entityGet(world.entities, actorId)!.actor!.agency.history,
-      ]) {
-        if (
-          !step.id.startsWith(attemptPrefix) ||
-          !step.activityKey ||
-          step.command.type !== execution.control.budget.command ||
-          retainedIds.has(step.id)
-        )
-          continue;
-        retainedIds.add(step.id);
-        if (step.actionId !== undefined) retainedAttempts++;
-        const spent = step.outcome?.spent;
-        const ceiling =
-          'itemFromStep' in step.command
-            ? undefined
-            : activitySpendCeiling(world, step.command, requireInstalled);
-        if (spent === undefined) {
-          if (step.status === 'completed' && step.outcome?.ok)
-            throw new Error('A completed counted action needs its spending receipt.');
-          continue;
+      if (control.kind === 'counted') {
+        const attemptPrefix = `${plan.id}:step:`,
+          attemptParts =
+            typeof execution.lastAttemptId === 'string'
+              ? execution.lastAttemptId.slice(attemptPrefix.length).split(':r')
+              : [];
+        const validAttemptId =
+          isSafeRecordId(execution.lastAttemptId) &&
+          execution.lastAttemptId.startsWith(attemptPrefix) &&
+          attemptParts.every(
+            (part, index) =>
+              /^[1-9]\d*$/u.test(part) &&
+              Number.isSafeInteger(Number(part)) &&
+              Number(part) <= (index === 0 ? execution.serial : plan.revision),
+          );
+        let retainedAttempts = 0,
+          retainedSpent = 0;
+        const retainedIds = new Set<string>();
+        for (const step of [
+          ...plan.steps,
+          ...entityGet(world.entities, actorId)!.actor!.agency.history,
+        ]) {
+          if (
+            !step.id.startsWith(attemptPrefix) ||
+            !step.activityKey ||
+            step.command.type !== control.budget.command ||
+            retainedIds.has(step.id)
+          )
+            continue;
+          retainedIds.add(step.id);
+          if (step.actionId !== undefined) retainedAttempts++;
+          const spent = step.outcome?.spent;
+          const ceiling =
+            'itemFromStep' in step.command
+              ? undefined
+              : activitySpendCeiling(world, step.command, requireInstalled);
+          if (spent === undefined) {
+            if (step.status === 'completed' && step.outcome?.ok)
+              throw new Error('A completed counted action needs its spending receipt.');
+            continue;
+          }
+          if (
+            !Number.isSafeInteger(spent) ||
+            spent < 0 ||
+            ceiling === undefined ||
+            spent > ceiling ||
+            (spent > 0 && (!step.outcome?.ok || step.actionId === undefined))
+          )
+            throw new Error('Invalid saved chosen activity spending receipt.');
+          retainedSpent += spent;
         }
+        // Older steps can leave the frontier and bounded history; available evidence
+        // still prevents resetting counters below native attempts and committed costs.
         if (
-          !Number.isSafeInteger(spent) ||
-          spent < 0 ||
-          ceiling === undefined ||
-          spent > ceiling ||
-          (spent > 0 && (!step.outcome?.ok || step.actionId === undefined))
+          !Number.isSafeInteger(execution.attempts) ||
+          execution.attempts! < retainedAttempts ||
+          execution.attempts! > control.budget.maximumAttempts ||
+          (execution.attempts === 0 ? execution.lastAttemptId !== undefined : !validAttemptId) ||
+          !Number.isSafeInteger(execution.spent) ||
+          execution.spent! < retainedSpent ||
+          execution.spent! > control.budget.maximumSpent ||
+          typeof execution.interrupted !== 'boolean' ||
+          typeof execution.terminal !== 'boolean' ||
+          (entityGet(world.entities, actorId)?.actor?.agency.suspended?.activity === execution &&
+            !execution.interrupted) ||
+          (execution.terminal &&
+            (plan.status === 'active' ||
+              execution.pending.length > 0 ||
+              plan.steps.some((step) => step.status === 'queued' || step.status === 'running')))
         )
-          throw new Error('Invalid saved chosen activity spending receipt.');
-        retainedSpent += spent;
-      }
-      // Older steps can leave the frontier and bounded history; available evidence
-      // still prevents resetting counters below native attempts and committed costs.
-      if (
-        !Number.isSafeInteger(execution.attempts) ||
-        execution.attempts! < retainedAttempts ||
-        execution.attempts! > execution.control.budget.maximumAttempts ||
-        (execution.attempts === 0 ? execution.lastAttemptId !== undefined : !validAttemptId) ||
-        !Number.isSafeInteger(execution.spent) ||
-        execution.spent! < retainedSpent ||
-        execution.spent! > execution.control.budget.maximumSpent ||
+          throw new Error('Invalid saved chosen activity counters or terminal work.');
+      } else if (
+        execution.attempts !== undefined ||
+        execution.spent !== undefined ||
+        execution.lastAttemptId !== undefined ||
         typeof execution.interrupted !== 'boolean' ||
         typeof execution.terminal !== 'boolean' ||
         (entityGet(world.entities, actorId)?.actor?.agency.suspended?.activity === execution &&
@@ -1678,8 +1694,9 @@ function validateExecution(
           (plan.status === 'active' ||
             execution.pending.length > 0 ||
             plan.steps.some((step) => step.status === 'queued' || step.status === 'running')))
-      )
-        throw new Error('Invalid saved chosen activity counters or terminal work.');
+      ) {
+        throw new Error('Invalid saved finite activity continuation.');
+      }
     } else if (
       [
         execution.attempts,
@@ -1703,7 +1720,7 @@ function validateExecution(
       if (node.kind === 'repeat') visit(node.body);
     };
     visit(root);
-    if (execution.control && execution.lastAttemptId !== undefined) {
+    if (control?.kind === 'counted' && execution.lastAttemptId !== undefined) {
       const lastAttempt = [
         ...plan.steps,
         ...entityGet(world.entities, actorId)!.actor!.agency.history,
@@ -1712,14 +1729,14 @@ function validateExecution(
         (step) =>
           step.status === 'running' &&
           step.activityKey !== undefined &&
-          step.command.type === execution.control!.budget.command,
+          step.command.type === control!.budget.command,
       );
       // Paused watches can outlive bounded history. Check retained evidence without
       // making that history's residency a new promise about suspended work.
       if (
         (runningAttempt && runningAttempt.id !== execution.lastAttemptId) ||
         (lastAttempt &&
-          (lastAttempt.command.type !== execution.control.budget.command ||
+          (lastAttempt.command.type !== control.budget.command ||
             !lastAttempt.activityKey ||
             !keys.has(lastAttempt.activityKey)))
       )

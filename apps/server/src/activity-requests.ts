@@ -72,11 +72,15 @@ export function projectActivityStatus(
     ...(reason ? { reason } : {}),
     ...(execution.control
       ? {
-          spent: execution.spent ?? 0,
-          maximumSpent: execution.control.budget.maximumSpent,
-          spendingUnit: activityHostForCommand(world, execution.control.budget.command)?.definition
-            .spending?.unit,
-          attempts: execution.attempts ?? 0,
+          ...(execution.control.kind === 'counted'
+            ? {
+                spent: execution.spent ?? 0,
+                maximumSpent: execution.control.budget.maximumSpent,
+                spendingUnit: activityHostForCommand(world, execution.control.budget.command)
+                  ?.definition.spending?.unit,
+                attempts: execution.attempts ?? 0,
+              }
+            : {}),
           interrupted: execution.interrupted ?? false,
           deadline: execution.control.deadline,
         }

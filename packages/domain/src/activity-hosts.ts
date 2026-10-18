@@ -116,6 +116,19 @@ export function nativeCommandSupported(world: WorldState, command: Command['type
   }
   return true;
 }
+/** Core physical work can stop through its ordinary cancellation owner. Optional
+ * installed families must separately declare that their committed effects survive it. */
+export function deadlineSafeActivityCommand(
+  world: WorldState,
+  command: Command['type'],
+  requireInstalled = true,
+): boolean {
+  if (['move', 'follow', 'strike', 'guard', 'evade', 'pickup'].includes(command)) return true;
+  const host = requireInstalled
+    ? activityHostForCommand(world, command)
+    : trustedActivityHostForCommand(command);
+  return host?.definition.deadlineSafeCommands.includes(command) ?? false;
+}
 export function itemOutputFamilies(world: WorldState, namedPorts = false): string[] {
   const result = new Set<string>(['pickup']);
   for (const [command, meaning] of installedActionMeanings(world))

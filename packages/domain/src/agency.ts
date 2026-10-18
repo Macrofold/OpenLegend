@@ -777,7 +777,7 @@ function summarizeStoppedActivity(
       world,
       ownerId,
       plan,
-      `${execution.request?.name ?? 'Chosen activity'}: ${execution.reason} Used ${execution.spent ?? 0} selected units in ${execution.attempts ?? 0} attempts. The chosen stopping time was simulation time ${execution.control.deadline}.${execution.interrupted ? ' Attendance was interrupted.' : ''}`,
+      `${execution.request?.name ?? 'Chosen activity'}: ${execution.reason}${execution.control.kind === 'counted' ? ` Used ${execution.spent ?? 0} selected units in ${execution.attempts ?? 0} attempts.` : ''} The chosen stopping time was simulation time ${execution.control.deadline}.${execution.interrupted ? ' Attendance was interrupted.' : ''}`,
     );
   }
 }
@@ -849,7 +849,11 @@ export function finishPlanAction(
     (entry) => entry.status === 'running' && entry.actionId === actionId,
   );
   if (!step) return;
-  if (step.activityKey && plan!.activity?.control?.budget.command === step.command.type) {
+  if (
+    step.activityKey &&
+    plan!.activity?.control?.kind === 'counted' &&
+    plan!.activity!.control.budget.command === step.command.type
+  ) {
     const ceiling =
       'itemFromStep' in step.command ? undefined : activitySpendCeiling(world, step.command);
     if (

@@ -554,7 +554,7 @@ export function remainingActivityText(
       value: `${execution.archivedSteps} earlier steps are recorded separately; they are not included in this summary`,
       critical: true,
     });
-  if (execution?.control) {
+  if (execution?.control?.kind === 'counted') {
     const budget = execution.control.budget;
     const unit =
       activityHostForCommand(world, budget.command)?.definition.spending?.unit ?? 'units';
@@ -564,6 +564,12 @@ export function remainingActivityText(
       critical: true,
     });
   }
+  if (execution?.control?.kind === 'finite')
+    facts.push({
+      name: 'chosen stopping conditions',
+      value: `Stop no later than simulation time ${execution.control.deadline}.${execution.control.boundary ? ` Stay within ${execution.control.boundary.radius} m of the chosen starting position.` : ''}${Object.keys(execution.control.subjects).length ? ' Stop if a selected visible participant is lost or changes physical life.' : ''}${execution.interrupted ? ' The activity was interrupted.' : ''}`,
+      critical: true,
+    });
   const terminal = plan.status === 'completed' || plan.status === 'cancelled';
   if (terminal)
     return `Chosen work is ${plan.status}. No remaining steps in this plan. Actual outcomes are in my selected memories; finishing steps does not establish goal fulfillment.`;

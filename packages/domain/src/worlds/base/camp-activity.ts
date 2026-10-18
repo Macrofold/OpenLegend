@@ -347,6 +347,7 @@ function compile(
     mode,
     bindings: { fire: fireId, ...(cache ? { supply: sourceId, self: actorId } : {}) },
     control: {
+      kind: 'counted',
       deadline,
       observation: { definition: activityHostPin(host), role: 'fire' },
       accessRoles: cache ? ['supply'] : [],

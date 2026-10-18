@@ -5,7 +5,10 @@ import type { ConstructionPermission } from './assembly-types.js';
 import { isEquipped } from './equipment.js';
 import { isCookingInputField } from './food-preparation.js';
 import { executeCommand, nativeOperationAvailable } from './kernel.js';
-import type { Command, WorldState } from './types.js';
+import type { Command, Position, WorldState } from './types.js';
+import { worldPosition } from './spatial-state.js';
+import { nativeMovementSpeed } from './worlds/base/actions.js';
+import { distance3D } from '@open-legend/spatial';
 import type { ActorPlan, PlanStep } from './agency.js';
 import {
   isActivityCommand,
@@ -15,6 +18,7 @@ import {
   recordPlanResult,
 } from './agency.js';
 import { captureActionTargets } from './action-targets.js';
+import { subjectReferenceCurrent } from './worlds/base/knowledge.js';
 import { acquiredActivities, activityRoleCompatible } from './activity-learning.js';
 import {
   validateActivityNode,
@@ -33,6 +37,7 @@ import {
   installedActivityHost,
   activityHostForCommand,
   activitySpendCeiling,
+  deadlineSafeActivityCommand,
   trustedActivityHost,
   trustedActivityHostForCommand,
 } from './activity-hosts.js';
@@ -43,13 +48,23 @@ import type { DefinitionPin } from './world-modules.js';
 import { isDefinitionPin } from './state-owners.js';
 import { currentInventoryInspection } from './inventory-inspection.js';
 
-export interface ChosenActivityControl {
+export interface CountedActivityControl {
+  kind: 'counted';
   deadline: number;
   observation: { definition: DefinitionPin; role: string };
   accessRoles: string[];
   reachRoles: string[];
   budget: { command: Command['type']; maximumAttempts: number; maximumSpent: number };
 }
+export interface FiniteActivityControl {
+  kind: 'finite';
+  deadline: number;
+  /** Historical world position, not a live support reference or navigation grant. */
+  boundary: { origin: Position; radius: number } | null;
+  /** Only currently perceived bodies may be bound here; remembered points need no live subject. */
+  subjects: Record<string, { physicalLife: number; episode: string | null }>;
+}
+export type ChosenActivityControl = CountedActivityControl | FiniteActivityControl;
 
 export interface ActivityExecution {
   combatHelpId?: string;
@@ -94,7 +109,7 @@ function finishControl(
     world,
     actorId,
     plan,
-    `${execution.request?.name ?? 'Chosen activity'}: ${reason} Used ${execution.spent ?? 0} selected units in ${execution.attempts ?? 0} attempts. The chosen stopping time was simulation time ${execution.control.deadline}.${execution.interrupted ? ' This activity was interrupted; attendance was not continuous.' : ''} Completed transfers and other actions remain recorded; no remaining work was performed.`,
+    `${execution.request?.name ?? 'Chosen activity'}: ${reason}${execution.control.kind === 'counted' ? ` Used ${execution.spent ?? 0} selected units in ${execution.attempts ?? 0} attempts.` : ''} The chosen stopping time was simulation time ${execution.control.deadline}.${execution.interrupted ? ' This activity was interrupted; attendance was not continuous.' : ''} Completed transfers and other actions remain recorded; no remaining work was performed.`,
   );
 }
 /** Each fresh native admission counts once, including a restarted unfinished step. */
@@ -109,6 +124,7 @@ export function admitActivityAttempt(
   if (
     !execution ||
     !control ||
+    control.kind !== 'counted' ||
     !step.activityKey ||
     step.command.type !== control.budget.command ||
     execution.lastAttemptId === step.id
@@ -156,6 +172,11 @@ export function reconcileActivityControl(
   if (world.simTime >= control.deadline) {
     if (action?.stage === 'working' && action.remainingSeconds <= completingSeconds) return;
     finishControl(world, actorId, plan, 'The chosen stopping time was reached.', true);
+    return;
+  }
+  if (control.kind === 'finite') {
+    const stop = finiteControlStop(world, actorId, control);
+    if (stop) finishControl(world, actorId, plan, stop.reason, stop.completed);
     return;
   }
   const id = execution.bindings[control.observation.role];
@@ -207,6 +228,41 @@ export function reconcileActivityControl(
     }
   }
 }
+function finiteControlStop(
+  world: WorldState,
+  actorId: string,
+  control: FiniteActivityControl,
+): { reason: string; completed: boolean } | null {
+  const entity = entityGet(world.entities, actorId);
+  if (
+    !entity?.actor?.alive ||
+    entity.actor.incapacitated ||
+    capabilityBlocked(world, entity, 'actions')
+  )
+    return {
+      reason: 'The ability to continue the chosen activity became unavailable.',
+      completed: false,
+    };
+  for (const [id, expected] of Object.entries(control.subjects)) {
+    const target = entityGet(world.entities, id);
+    // Sight precedes private physical state: hidden death/body changes never give a different reason.
+    if (
+      !target ||
+      !seesEntity(world, entity, target) ||
+      !subjectReferenceCurrent(world, actorId, id, expected.episode) ||
+      !target.actor?.alive ||
+      (target.actor.physicalLife ?? 0) !== expected.physicalLife
+    )
+      return {
+        reason: 'A chosen visible participant is no longer available to this activity.',
+        completed: false,
+      };
+  }
+  return control.boundary &&
+    distance3D(worldPosition(entity), control.boundary.origin) >= control.boundary.radius - 1e-8
+    ? { reason: 'The chosen distance boundary was reached.', completed: true }
+    : null;
+}
 /** The trusted condition owner predicts only its chosen target's next transition. */
 export function nextActivityBoundary(
   world: WorldState,
@@ -214,6 +270,20 @@ export function nextActivityBoundary(
   execution: ActivityExecution,
 ): number {
   let boundary = execution.control?.deadline ?? Infinity;
+  if (execution.control?.kind === 'finite' && execution.control.boundary) {
+    const entity = entityGet(world.entities, actorId);
+    if (entity) {
+      const length = remainingControlTravel(
+        worldPosition(entity),
+        capabilityBlocked(world, entity, 'locomotion') ? [] : (entity.actor?.action?.path ?? []),
+        execution.control.boundary,
+      );
+      const speed = nativeMovementSpeed(world, entity);
+      if (length === 0) boundary = Math.min(boundary, world.simTime);
+      else if (Number.isFinite(length) && speed > 0)
+        boundary = Math.min(boundary, world.simTime + length / speed);
+    }
+  }
   const frame = execution.pending.at(-1);
   if (frame?.node.kind === 'wait') {
     const condition = frame.node.until;
@@ -233,6 +303,42 @@ export function nextActivityBoundary(
   }
   return boundary;
 }
+
+/** Walk the actual remaining route, not its start/end chord: an intermediate turn
+ * can leave the selected sphere even when the final point lies inside it. */
+function remainingControlTravel(
+  from: Position,
+  path: readonly Position[],
+  boundary: NonNullable<FiniteActivityControl['boundary']>,
+): number {
+  if (distance3D(from, boundary.origin) >= boundary.radius - 1e-8) return 0;
+  let length = 0;
+  for (const point of path) {
+    const segment = distance3D(from, point);
+    if (segment > 0 && distance3D(point, boundary.origin) >= boundary.radius) {
+      const dx = point.x - from.x,
+        dy = point.y - from.y,
+        dz = point.z - from.z;
+      const ox = from.x - boundary.origin.x,
+        oy = from.y - boundary.origin.y,
+        oz = from.z - boundary.origin.z;
+      const dot = ox * dx + oy * dy + oz * dz;
+      const square = segment * segment;
+      const outside = ox * ox + oy * oy + oz * oz - boundary.radius * boundary.radius;
+      return (
+        length +
+        segment *
+          Math.max(
+            0,
+            Math.min(1, (-dot + Math.sqrt(Math.max(0, dot * dot - square * outside))) / square),
+          )
+      );
+    }
+    length += segment;
+    from = point;
+  }
+  return Infinity;
+}
 export function validateChosenActivityControl(
   world: WorldState,
   root: ActivityNode,
@@ -250,7 +356,63 @@ export function validateChosenActivityControl(
     )
       throw new Error('Invalid chosen activity control.');
   };
-  exact(control, ['deadline', 'observation', 'accessRoles', 'reachRoles', 'budget']);
+  if (control.kind === 'finite') {
+    exact(control, ['kind', 'deadline', 'boundary', 'subjects']);
+    if (
+      !Number.isFinite(control.deadline) ||
+      control.deadline < 0 ||
+      (admission &&
+        (control.deadline <= world.simTime ||
+          control.deadline - world.simTime > ACTIVITY_LIMITS.waitSeconds))
+    )
+      throw new Error('Unsupported finite activity deadline.');
+    if (control.boundary) {
+      exact(control.boundary, ['origin', 'radius']);
+      exact(control.boundary.origin, ['x', 'y', 'z']);
+      if (
+        ![
+          control.boundary.origin.x,
+          control.boundary.origin.y,
+          control.boundary.origin.z,
+          control.boundary.radius,
+        ].every(Number.isFinite) ||
+        control.boundary.radius <= 0
+      )
+        throw new Error('Invalid finite activity distance boundary.');
+    } else if (control.boundary !== null)
+      throw new Error('Invalid finite activity distance boundary.');
+    if (
+      !control.subjects ||
+      typeof control.subjects !== 'object' ||
+      Array.isArray(control.subjects) ||
+      Object.keys(control.subjects).length > 8
+    )
+      throw new Error('Invalid finite activity subjects.');
+    for (const [id, subject] of Object.entries(control.subjects)) {
+      exact(subject, ['physicalLife', 'episode']);
+      if (
+        !isSafeRecordId(id) ||
+        (subject.episode !== null && !isSafeRecordId(subject.episode)) ||
+        !Number.isSafeInteger(subject.physicalLife) ||
+        subject.physicalLife < 0
+      )
+        throw new Error('Invalid finite activity subject.');
+    }
+    const visit = (node: ActivityNode): void => {
+      if (node.kind === 'invoke') {
+        if (!deadlineSafeActivityCommand(world, node.command, requireInstalled))
+          throw new Error('This child cannot safely end at a whole-activity deadline.');
+      } else if (node.kind === 'sequence') node.children.forEach(visit);
+      else if (node.kind === 'branch') {
+        visit(node.yes);
+        if (node.no) visit(node.no);
+      } else if (node.kind === 'repeat') visit(node.body);
+    };
+    visit(root);
+    return;
+  }
+  exact(control, ['kind', 'deadline', 'observation', 'accessRoles', 'reachRoles', 'budget']);
+  if (control.kind !== 'counted') throw new Error('Unsupported chosen activity control.');
   exact(control.observation, ['definition', 'role']);
   exact(control.budget, ['command', 'maximumAttempts', 'maximumSpent']);
   const host = requireInstalled
@@ -550,7 +712,7 @@ export function activityFrontier(
         return;
       }
       case 'invoke': {
-        if (execution.control) {
+        if (execution.control?.kind === 'counted') {
           const budget = execution.control.budget;
           if (
             (execution.attempts ?? 0) >= budget.maximumAttempts ||
@@ -794,6 +956,10 @@ export function startRequestedActivity(
       'invalid-bindings',
       'The activity needs current things you can perceive or carry.',
     );
+  if (command.control?.kind === 'finite') {
+    const stop = finiteControlStop(world, actorId, command.control);
+    if (stop) return outcome(false, 'activity-limit', stop.reason);
+  }
   const execution: ActivityExecution = {
     ...(command.combatHelpId ? { combatHelpId: command.combatHelpId } : {}),
     ...(command.humanInitiated ? { humanInitiated: true } : {}),
@@ -806,8 +972,7 @@ export function startRequestedActivity(
     ...(command.control
       ? {
           control: cloneValue(command.control),
-          attempts: 0,
-          spent: 0,
+          ...(command.control.kind === 'counted' ? { attempts: 0, spent: 0 } : {}),
           interrupted: false,
           terminal: false,
         }
