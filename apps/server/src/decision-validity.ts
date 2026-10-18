@@ -44,22 +44,13 @@ export function preparedResponseValidity(
     mind: world.innerWorlds?.[actorId]?.revision ?? world.minds?.[actorId]?.revision,
     forgotten: world.experience?.forgotten[actorId],
     corrections: world.experience?.corrections?.[actorId],
-    feelings: scopedAppraisals(world, actorId, scopes).map((feeling) => {
-      const definition = appraisalDefinition(world, feeling.definitionPin);
-      return {
-        id: feeling.id,
-        revision: feeling.revision,
-        value:
-          definition?.lifetime.kind === 'decays' && feeling.value.kind === 'scaled'
-            ? {
-                kind: 'band',
-                band: definition.lifetime.bands.findIndex(
-                  (boundary) => feeling.value.kind === 'scaled' && feeling.value.value >= boundary,
-                ),
-              }
-            : feeling.value,
-      };
-    }),
+    // The appraisal owner advances revisions at actual subscribed decay boundaries,
+    // explicit interpretation and resolution. Reclassifying its continuously read
+    // value here would invent an immediate boundary for a newly selected 0.5.
+    feelings: scopedAppraisals(world, actorId, scopes).map(({ id, revision }) => ({
+      id,
+      revision,
+    })),
   });
 }
 

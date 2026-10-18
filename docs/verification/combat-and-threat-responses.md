@@ -374,3 +374,49 @@ independent success or whole combat completion is claimed.
 
 No external provider calls occurred. Additional Jev cost is $0 and cumulative
 task Jev cost is $0; fixture accounting receipts are explicitly synthetic.
+
+## Fixed ordinary Ada baseline preparation — October 18, 2026
+
+The fixed sample is idle, moving and actually gathering fallen wood, each unarmed
+and holding her ordinary knife, with fresh seeds 1086 and 1087: twelve independent
+ordinary decision opportunities, no rerolls. Unarmed setup drops her owned melee
+weapon through native inventory; the item remains in the world. Both people start
+able to act at 1 m on the existing ordinary terrain. Each incoming ordinary punch
+must actually land. For the moving setup, an ordinary movement to `(7,0,11)` is
+admitted during the incoming wind-up's last two game seconds, before contact, so
+Ada is actually moving at impact. That starting movement is a declared fixture;
+no movement, target, equipment, goal or decision is forced after the hit. Gathering
+uses the existing 840-game-second fallen-branch action. Initial cognition enrollment
+occurs after the personally recorded hit; these runs do not measure a possible
+pre-impact decision from the earlier cue. The later real-browser checks retain that
+full interaction requirement.
+
+Six no-inference preparations cover both equipment setups in all three activities
+at seed 1086. Actual hit, ongoing movement/gathering, full bodily-autonomy and
+proportionate-force identity, complete choices and feasible exact counterattack all
+pass. These contexts retain 339–362 choices and 40,816–41,625 bytes in this run.
+Their actual current-format manual checkpoints were read back successfully before
+their owned databases were removed. Raw setup/context/checkpoint and operational
+backup data remain outside Git in
+`/var/folders/tp/s408jds97dn41bs0p94lfq4h0000gn/T/openlegend-ctr-baselines-1Rhh7B`.
+Earlier no-cost setup failures are retained: the tool first inspected the empty
+pre-offer binding map instead of prepared candidates, then used two incorrect wire
+fields for movement. These were tool setup errors, not independent character results.
+
+Native temporal qualification also confirms that one game second of sub-boundary
+feeling decay preserves the prepared choice. The guard uses the appraisal owner's
+actual revisions for meaningful decay crossings, replacement and resolution;
+recalculating a separate numeric band would invent a new immediate boundary for a
+freshly selected 0.5 interpretation.
+
+Paid execution has a **$2 aggregate ceiling inside the shared $10 task ceiling**,
+including all reservations, reported estimates and uncertain commitments. A shared
+private ledger wraps the existing durable reservation/settlement owner across all
+twelve disposable worlds. Macrofold's existing borrowed server is healthy on port
+3210; no service or Worker is started. Native reflection Worker execution and
+embeddings are unavailable in this bounded immediate-decision qualification.
+The actual immediate model/billing configuration and 20-second provider timeout,
+ordinary 60:1 speed, achieved simulation progress, requests, native receipts and
+verified continuation checkpoints are retained per run. Every result, including
+failures, remains part of the fixed sample. No paid baseline has run at this
+preparation checkpoint; additional and cumulative task Jev cost are $0.
