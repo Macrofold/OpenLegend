@@ -16,6 +16,7 @@ import {
 import { competenceOptions, competenceContext } from './competence-actions.js';
 import { cookingOptions, fishingOptions, fishingTools } from './food-actions.js';
 import { cookingPreparations } from '@open-legend/domain';
+import { resourcesAfterEnding } from '@open-legend/domain';
 import { namePhrase, type Named } from '@open-legend/language';
 import { learnedActivityCandidates } from './activity-context.js';
 import { consumptionDescription } from './body-services.js';
@@ -137,6 +138,7 @@ function describeTargets(
               description: BASE_COMBAT_HELP.separateActionDescription(candidate.description),
             },
         {
+          ...candidate,
           id: `help:${index}`,
           description: BASE_COMBAT_HELP.actionDescription(
             help!.combat!.labels[actorId]!,
@@ -148,6 +150,19 @@ function describeTargets(
     });
   return choices.map((candidate) => {
     const command = candidate.command;
+    candidate = {
+      ...candidate,
+      transition: candidate.transition ?? suggestedWorkTransition(command),
+    };
+    if (entityGet(service.world.entities, actorId)?.actor?.action && command)
+      candidate.description +=
+        candidate.transition === 'replace'
+          ? ' Choosing this replaces my current work; spent materials and committed effects remain.'
+          : candidate.transition === 'interrupt'
+            ? ' Choosing this pauses the supported current plan; its unfinished step restarts later.'
+            : candidate.transition === 'enqueue'
+              ? ' Choosing this queues it after my current work.'
+              : ' This choice keeps my current work.';
     const id = command && 'targetId' in command ? command.targetId : undefined;
     const target = id ? entityGet(service.world.entities, id) : undefined;
     if (target && !health.has(target.id)) {
@@ -397,6 +412,42 @@ export interface CandidateAction {
   id: string;
   description: string;
   command: CommandInput | null;
+  /** Once offered, retain the initiator's exact handling of current work. */
+  transition?: import('@open-legend/domain').WorkTransitionMode;
+}
+
+function suggestedWorkTransition(
+  command: CommandInput | null,
+): import('@open-legend/domain').WorkTransitionMode {
+  return !command ||
+    [
+      'say',
+      'inspect-inventory',
+      'inspect-activities',
+      'learn-record',
+      'conversation',
+      'teach',
+      'handover',
+      'outing',
+      'transfer-item',
+      'withdraw-attempt',
+      'confirm-attempt',
+    ].includes(command.type)
+    ? 'continue'
+    : 'replace';
+}
+
+export function candidateChoice(
+  candidate: CandidateAction,
+  actorId: string,
+  decisionId: string,
+  expectedWork: import('@open-legend/domain').ProspectiveWork['expected'],
+): import('@open-legend/domain').ActionChoice {
+  return {
+    invocation: candidate.command ? domainCommand(candidate.command, actorId, decisionId) : null,
+    transition: candidate.transition ?? suggestedWorkTransition(candidate.command),
+    expectedWork,
+  };
 }
 export function npcCandidates(
   service: WorldService,
@@ -407,10 +458,57 @@ export function npcCandidates(
   // Explicit player-action callers share these native suggestions. Only implicit
   // resident selection may be absent; never substitute the controlled person.
   if (!actorId || !observed || !actor?.alive || actor.incapacitated || service.paused) return [];
+  const temporary = new WeakMap<CommandInput, { message: string; nextAt?: number }>();
+  const checked = new WeakMap<CommandInput, ReturnType<WorldService['previewCommand']>>();
+  const previewChoice = (command: CommandInput) => {
+    const prior = checked.get(command);
+    if (prior) return prior;
+    const result = service.prepareCommandChoice(command, actorId, suggestedWorkTransition(command));
+    const available = 'outcome' in result ? result.outcome : result;
+    checked.set(command, available);
+    return available;
+  };
+  const canOfferPhysical = (command: CommandInput) => {
+    const result = service.prepareCommandChoice(command, actorId, 'replace');
+    const available = 'outcome' in result ? result.outcome : result;
+    checked.set(command, available);
+    if (available.ok) return true;
+    if (!['combat-recovery', 'evasion-recovery'].includes(available.code ?? '')) return false;
+    temporary.set(command, {
+      message: available.message ?? 'Temporarily unavailable.',
+      ...('nextAt' in result ? { nextAt: result.nextAt } : {}),
+    });
+    return true;
+  };
+  const finishChoices = (choices: CandidateAction[]) =>
+    describeTargets(
+      service,
+      actorId,
+      choices
+        .filter(
+          (candidate) =>
+            !candidate.command ||
+            temporary.has(candidate.command) ||
+            previewChoice(candidate.command).ok,
+        )
+        .map((candidate) => {
+          const blocker = candidate.command && temporary.get(candidate.command);
+          return blocker
+            ? {
+                ...candidate,
+                description: `${candidate.description} Temporarily unavailable: ${blocker.message}${blocker.nextAt !== undefined ? ` Recovery ends at game time ${blocker.nextAt}.` : ''}`,
+              }
+            : candidate;
+        }),
+    );
   const definitions = new Map(
     observed.itemDefinitions.map((definition) => [definition.id, definition]),
   );
   const inventory = observed.inventory.filter((item) => item.quantity > 0);
+  const afterReplacement = resourcesAfterEnding(
+    service.world,
+    actor.action ? [actor.action.id] : [],
+  );
   let shotView: ReturnType<typeof nativeActivityViews> | undefined;
   const castTools = fishingTools(service.world, inventory);
   const gatheringTools = carriedGatheringTools(observed);
@@ -431,7 +529,7 @@ export function npcCandidates(
       targetId: target.id,
       attributeId: definition.id,
     };
-    return service.previewCommand(command, actorId, false).ok
+    return previewChoice(command).ok
       ? [
           {
             id: `replenish-${target.id}`,
@@ -478,7 +576,7 @@ export function npcCandidates(
     ...inspectedRecipeRecords(service.world, actorId).flatMap(({ definition, recipe, command }) => {
       if (service.world.knowledge[actorId]?.some((record) => record.recipeId === recipe.id))
         return [];
-      return service.previewCommand(command, actorId, false).ok
+      return previewChoice(command).ok
         ? [
             {
               id: `learn-record-${command.itemId}`,
@@ -490,9 +588,7 @@ export function npcCandidates(
     }),
     ...replenishments,
     ...observed.visibleEntities.flatMap((target) =>
-      pickupActions(service.world, observed.actor, target, (command) =>
-        service.previewCommand(command, actorId, false),
-      )
+      pickupActions(service.world, observed.actor, target, (command) => previewChoice(command))
         .filter((option) => option.availability.ok)
         .map((option) => ({
           id: option.id,
@@ -593,7 +689,7 @@ export function npcCandidates(
         if (item.ownerId === destination || item.id === destination) continue;
         const available = availableItemQuantity(service.world, item.id);
         if (!available) continue;
-        const command: CommandInput = {
+        let command: CommandInput = {
           type: 'transfer-item',
           itemId: item.id,
           quantity: available,
@@ -604,10 +700,10 @@ export function npcCandidates(
         };
         // The same native owner checks unknown load, nesting, reservations and access.
         // If the whole lot will not fit, offer one exact unit only when it is admitted.
-        if (!service.previewCommand(command, actorId, false).ok) {
+        if (!previewChoice(command).ok) {
           if (available === 1) continue;
-          command.quantity = 1;
-          if (!service.previewCommand(command, actorId, false).ok) continue;
+          command = { ...command, quantity: 1 };
+          if (!previewChoice(command).ok) continue;
         }
         suggestions++;
         const name = service.world.itemDefinitions[item.definitionId]!.name;
@@ -632,7 +728,7 @@ export function npcCandidates(
     .filter((e) => e.actor?.alive && e.id !== actorId)
     .slice(0, 4)) {
     const command: CommandInput = { type: 'follow', targetId: target.id };
-    if (service.previewCommand(command, actorId, false).ok)
+    if (previewChoice(command).ok)
       actions.push({
         id: `follow:${target.id}`,
         description: `Follow ${namePhrase(target, 'definite')} while visible; no stealth or automatic sunset stop.`,
@@ -711,24 +807,21 @@ export function npcCandidates(
         option.command.handoverOperation === 'offer' ||
         option.command.handoverOperation === 'counter';
       if (isOffer && offerCandidates >= (typed ? 24 : 12)) continue;
-      if (!service.previewCommand(option.command, actorId, false).ok) continue;
+      if (!previewChoice(option.command).ok) continue;
       if (isOffer) offerCandidates++;
       actions.push({ id: option.id, description: option.description, command: option.command });
     }
   }
   for (const choice of outingActions(service.world, actorId)) {
-    if (service.previewCommand(choice.command, actorId, false).ok)
+    if (previewChoice(choice.command).ok)
       actions.push({ id: choice.id, description: choice.description, command: choice.command });
   }
-  // Starting another timed task would discard actual work/materials. The actor can
-  // explicitly cancel work; listing alternatives must not silently interrupt it.
+  // Timed alternatives declare their handling of current work; admission rechecks
+  // the exact action before a transition can stop that work.
   const practiceContext = competenceContext(service.world, observed.actor);
   for (const target of observed.visibleEntities)
     for (const option of competenceOptions(service.world, actorId, target, inventory))
-      if (
-        !(actor.action && option.command.type === 'practice-shot') &&
-        service.previewCommand(option.command, actorId, false).ok
-      )
+      if (previewChoice(option.command).ok)
         actions.push({
           id: option.id,
           description: `${option.description} ${practiceContext}`,
@@ -742,14 +835,13 @@ export function npcCandidates(
   )
     for (const choice of evasionChoices(service.world, observed.actor)) {
       const command: CommandInput = { type: 'evade', position: choice.destination };
-      if (service.previewCommand(command, actorId, false).ok)
+      if (canOfferPhysical(command))
         actions.push({
           id: `evade:${choice.label}`,
           description: `${choice.label}. ${choice.description} ${BASE_EVASION_TEXT.destinationScope}`,
           command,
         });
     }
-  if (actor.action) return describeTargets(service, actorId, actions);
 
   if (visionRadius(service.world, observed.actor) === 0) {
     // Offer probes independently of hidden walkability; native admission supplies blocked feedback.
@@ -773,7 +865,7 @@ export function npcCandidates(
             ) ?? undefined,
         },
       });
-    return describeTargets(service, actorId, actions);
+    return finishChoices(actions);
   }
   // Locomotion is available to every capable body, independently of hand/tool work.
   // Bind a perceived destination, not continuous tracking: docs/agent-agency.md#5-trying-something-outside-the-shortlist.
@@ -796,14 +888,14 @@ export function npcCandidates(
       approach?.status === 'pending' ? approach.request.destinations[0] : approach?.path.at(-1);
     if (!position) continue;
     const command: CommandInput = { type: 'move', position };
-    if (service.previewCommand(command, actorId, false).ok)
+    if (previewChoice(command).ok)
       actions.push({
         id: `approach:${entity.id}`,
         description: `Move near the currently observed position of ${observerDescription(service.world, actorId, entity.id, 'definite')}, currently ${Math.hypot(worldPosition(observed.actor).x - worldPosition(entity).x, worldPosition(observed.actor).y - worldPosition(entity).y, worldPosition(observed.actor).z - worldPosition(entity).z).toFixed(1)} m away. Stop at the selected reachable place within ${SIMULATION_RULES.interactionRadius} m of that observed position; route length is not known. This moves to that location once; it does not follow later movement.`,
         command,
       });
   }
-  if (!supportsManualWork(observed.actor)) return describeTargets(service, actorId, actions);
+  if (!supportsManualWork(observed.actor)) return finishChoices(actions);
   for (const [preparation, recipe] of Object.entries(NATIVE_PREPARATIONS)) {
     if (quantity(recipe.input) >= recipe.inputQuantity)
       actions.push({
@@ -821,9 +913,6 @@ export function npcCandidates(
     if (kind && !ammunitionByKind.has(kind)) ammunitionByKind.set(kind, item);
   }
   const compatibleAmmo = (kind: string) => ammunitionByKind.get(kind);
-  const combatActor = entityGet(service.world.entities, actorId);
-  const readyForCombat =
-    !!combatActor && combatRecoveryDeadline(service.world, combatActor) <= service.world.simTime;
   // Offers reuse current native admission: a carried component does not grant a supported
   // equipment use, permission to move reserved gear, or freedom from committed recovery.
   for (const item of inventory) {
@@ -837,7 +926,7 @@ export function npcCandidates(
         (definition.launcher && compatibleAmmo(definition.launcher.ammunitionKind)))
     ) {
       const command: CommandInput = { type: 'equip', itemId: item.id };
-      if (!service.previewCommand(command, actorId, false).ok) continue;
+      if (!previewChoice(command).ok) continue;
       actions.push({
         id: `equip:${item.id}`,
         description: `Equip ${namePhrase(definition)}: ${definition.description}`,
@@ -845,14 +934,14 @@ export function npcCandidates(
       });
     }
   }
-  const launchers = (readyForCombat ? inventory : []).flatMap((item) => {
+  const launchers = inventory.flatMap((item) => {
     const definition = definitions.get(item.definitionId);
     const launcher = definition?.launcher;
     const ammunition = launcher && compatibleAmmo(launcher.ammunitionKind);
     return definition &&
       launcher &&
       ammunition &&
-      !equipmentProblem(service.world, actorId, item.id, 'ranged') &&
+      !equipmentProblem(service.world, actorId, item.id, 'ranged', afterReplacement) &&
       (isEquipped(service.world, actorId, item.id) || item.quantity === 1)
       ? [{ item, definition, launcher, ammunition }]
       : [];
@@ -860,29 +949,27 @@ export function npcCandidates(
   const cuttingTool = inventory.some((item) =>
     definitions.get(item.definitionId)?.properties.includes('point'),
   );
-  const strikes = readyForCombat
-    ? [
-        ...availableStrikes(service.world, actorId),
-        ...inventory
-          .filter(
-            (item) =>
-              !isEquipped(service.world, actorId, item.id) &&
-              item.quantity === 1 &&
-              definitions.get(item.definitionId)?.melee &&
-              !equipmentProblem(service.world, actorId, item.id, 'melee'),
-          )
-          .flatMap((item) => {
-            const strike = strikeDefinition(item.definitionId, service.world, item.id);
-            return strike ? [strike] : [];
-          }),
-      ]
-    : [];
+  const strikes = [
+    ...availableStrikes(service.world, actorId),
+    ...inventory
+      .filter(
+        (item) =>
+          !isEquipped(service.world, actorId, item.id) &&
+          item.quantity === 1 &&
+          definitions.get(item.definitionId)?.melee &&
+          !equipmentProblem(service.world, actorId, item.id, 'melee', afterReplacement),
+      )
+      .flatMap((item) => {
+        const strike = strikeDefinition(item.definitionId, service.world, item.id);
+        return strike ? [strike] : [];
+      }),
+  ];
   // Visible contact or ranged preparation makes supported defense relevant here. A guard
   // offer neither selects it nor binds an unperceived attacker or future pursuit.
-  const shields = (readyForCombat ? inventory : []).filter(
+  const shields = inventory.filter(
     (item) =>
       definitions.get(item.definitionId)?.contactDefense &&
-      !equipmentProblem(service.world, actorId, item.id, 'guard'),
+      !equipmentProblem(service.world, actorId, item.id, 'guard', afterReplacement),
   );
   for (const target of observed.visibleEntities.filter(
     (e) => e.actor?.alive && observedAttackPreparation(service.world, observed.actor, e),
@@ -895,7 +982,7 @@ export function npcCandidates(
         targetId: target.id,
         autoEquip: true,
       };
-      if (service.previewCommand(command, actorId, false).ok)
+      if (canOfferPhysical(command))
         actions.push({
           id: `guard:${shield.id}:${target.id}`,
           description: `${equipmentChangeDescription(service.world, actorId, shield.id)}${guardChoiceLabel(definitions.get(shield.definitionId)!.name, target.name)}. ${guardDescription(profile)}`,
@@ -928,7 +1015,7 @@ export function npcCandidates(
           itemId: item.id,
           ammunitionId: ammunition.id,
         };
-        if (!service.previewCommand(command, actorId, false).ok) continue;
+        if (!canOfferPhysical(command)) continue;
         actions.push({
           id: `shot:${item.id}:${entity.id}`,
           description: `${equipmentChangeDescription(service.world, actorId, item.id)}${description} ${definition.name}: ${definition.description} ${(shotView ??=
@@ -963,7 +1050,7 @@ export function npcCandidates(
           itemId: definition.weaponItemId,
           targetId: entity.id,
         };
-        if (!service.previewCommand(command, actorId, false).ok) continue;
+        if (!canOfferPhysical(command)) continue;
         actions.push({
           id: `${definition.id}:${definition.weaponItemId ?? 'unarmed'}:${entity.id}`,
           description: `${definition.weaponItemId ? equipmentChangeDescription(service.world, actorId, definition.weaponItemId) : ''}${description ?? `${strikeDefinition(definition.id, service.world, definition.weaponItemId, entity)?.label ?? definition.label}. Approach and attempt one attack.`} ${definition.weaponItemId ? `${tool}: ${definitions.get(definition.id)!.description}` : `${definition.label} with bare hands.`} ${describeAttack(definition)}`,
@@ -1000,7 +1087,7 @@ export function npcCandidates(
         command: { type: 'harvest', targetId: entity.id },
       });
     for (const option of fishingOptions(service.world, castTools, entity))
-      if (service.previewCommand(option.command, actorId, false).ok)
+      if (previewChoice(option.command).ok)
         actions.push({
           id: option.id,
           description: `${option.label} at ${entity.name}. ${option.description}`,
@@ -1009,7 +1096,7 @@ export function npcCandidates(
     // Fire care is offered per perceived fire from current state; native admission rechecks it.
     if (entity.heat)
       for (const option of fireCareOptions(service.world, inventory, entity))
-        if (service.previewCommand(option.command, actorId, false).ok)
+        if (previewChoice(option.command).ok)
           actions.push({ id: option.id, description: option.description, command: option.command });
     if (entity.heat?.lit) {
       let previous = worldPosition(observed.actor);
@@ -1034,14 +1121,16 @@ export function npcCandidates(
     }
   }
   fires.sort((a, b) => a.travelSeconds - b.travelSeconds || a.id.localeCompare(b.id));
-  for (const preparation of fires.length ? cookingPreparations(service.world, inventory) : []) {
+  for (const preparation of fires.length
+    ? cookingPreparations(service.world, inventory, undefined, afterReplacement)
+    : []) {
     const cookingFire = fires.find(
       (fire) => fire.fuelSeconds > fire.travelSeconds + preparation.definition.workSeconds + 2,
     );
     if (!cookingFire) continue;
     const option = cookingOptions([preparation], cookingFire.id)[0]!;
     const command = option.command;
-    if (service.previewCommand(command, actorId, false).ok)
+    if (previewChoice(command).ok)
       actions.push({
         id: option.id,
         description: `${option.definition.description} Work takes ${option.definition.workSeconds} game seconds after approach; spent inputs are not returned on interruption.`,
@@ -1059,7 +1148,7 @@ export function npcCandidates(
         command: { type: 'craft', recipeId: recipe.id },
       });
   }
-  return describeTargets(service, actorId, actions);
+  return finishChoices(actions);
 }
 
 /** Known techniques are valid planning vocabulary before their materials are owned.

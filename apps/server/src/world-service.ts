@@ -1,4 +1,10 @@
 import { entityGet, entityKeys, entityValues, projectWorldHistory } from '@open-legend/domain';
+import {
+  prepareNativeChoice,
+  isActivityCommand,
+  type WorkTransitionMode,
+  type PreparedNativeChoice,
+} from '@open-legend/domain';
 import { resolveInventoryGroup } from './inventory-groups.js';
 import {
   decisionClaimCurrent,
@@ -4928,6 +4934,26 @@ export class WorldService {
       return { ...result, message: [result.message, ...notes].join(' ') };
     }
     return result;
+  }
+
+  /** Prepare work consequences through the same exact command binder as execution. */
+  prepareCommandChoice(
+    input: CommandInput,
+    actorId: string,
+    transition: WorkTransitionMode,
+    humanInitiated = false,
+  ): PreparedNativeChoice | Outcome | ApiResult {
+    const bound = this.bindCommand('prepared-choice', input, actorId, humanInitiated);
+    if ('ok' in bound) return bound;
+    if (!isActivityCommand(bound) && bound.type !== 'learn-record')
+      return this.previewCommand(input, actorId, humanInitiated);
+    return prepareNativeChoice(
+      this.world,
+      actorId,
+      bound,
+      transition,
+      this.store.authority!.constructionPermissions(this.world.id),
+    );
   }
 
   /** Family binding is shared by UI commands and reviewed agent commands. */

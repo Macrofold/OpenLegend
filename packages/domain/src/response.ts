@@ -29,6 +29,8 @@ import {
   type IntentSlots,
   type ActionInvocation,
   type ActionFulfillment,
+  choiceWorkCurrent,
+  type ActionChoice,
 } from './action-capabilities.js';
 import { discardSuspended, proposeActionRevision } from './agency.js';
 import { isSpeechVolume, type SpeechVolume } from './acoustics.js';
@@ -41,6 +43,7 @@ import {
   changeGoal,
   type GoalChange,
   type PlannedCommand,
+  isActivityCommand,
 } from './agency.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import { current, isDraft } from 'immer';
@@ -346,7 +349,7 @@ export function commitActorResponse(
   id: string,
   actorId: string,
   response: ActorResponse,
-  actions: Record<string, Command | null>,
+  actions: Record<string, ActionChoice>,
   entityIds: string[],
   expectedPlan: number,
   attemptBindings: AttemptBinding[] = [],
@@ -509,10 +512,12 @@ export function commitActorResponse(
     };
     const actionCommands: ActionTarget[] =
       op.act?.kind === 'known'
-        ? [actions[op.act.actionId ?? '']].filter((c): c is Command => !!c)
+        ? [actions[op.act.actionId ?? '']?.invocation].filter((c): c is Command => !!c)
         : op.plan
           ? op.plan.steps.flatMap((step) =>
-              step.actionId && actions[step.actionId] ? [actions[step.actionId]!] : [],
+              step.actionId && actions[step.actionId]?.invocation
+                ? [actions[step.actionId]!.invocation!]
+                : [],
             )
           : [];
     const directTarget =
@@ -698,13 +703,21 @@ export function commitActorResponse(
         'The proposed action was not offered.',
       );
     } else if (act?.kind === 'known') {
-      const selected = actions[act.actionId!];
+      const choice = actions[act.actionId!]!,
+        selected = choice.invocation;
       if (
-        act.mode !== 'enqueue' &&
-        entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan
+        !choiceWorkCurrent(world, actorId, choice) ||
+        (choice.transition !== 'continue' && act.mode !== choice.transition) ||
+        (act.mode !== 'enqueue' &&
+          entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan)
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
-      else if (
+      else if (selected && choice.transition === 'continue' && isActivityCommand(selected)) {
+        const prepared = prepareNativeChoice(world, actorId, selected, 'continue');
+        const available = 'ok' in prepared ? prepared : prepared.outcome;
+        if (!available.ok) components[localId] = available;
+        else command('act', { ...selected, actorId, id: `${id}:${localId}` });
+      } else if (
         selected &&
         [
           'activity',
@@ -720,17 +733,32 @@ export function commitActorResponse(
           'confirm-attempt',
         ].includes(selected.type)
       ) {
-        if (selected.type === 'activity' && !selected.resume && act.mode === 'replace')
+        const beforeAction = world,
+          beforeEventCount = events.length;
+        const beforeAppendOnly: boolean = appendOnlyCommands;
+        let start = true;
+        if (selected.type === 'activity' && !selected.resume && act.mode === 'replace') {
           command('act', { type: 'cancel', actorId, id: `${id}:${localId}:cancel` });
+          start = components[localId]?.ok === true;
+        }
         // The kernel pauses and starts together, so a refused start leaves work running.
-        command('act', {
-          ...selected,
-          ...(selected.type === 'activity' && !selected.resume && act.mode === 'interrupt'
-            ? { interrupt: true }
-            : {}),
-          actorId,
-          id: `${id}:${localId}`,
-        });
+        if (start)
+          command('act', {
+            ...selected,
+            ...(selected.type === 'activity' && !selected.resume && act.mode === 'interrupt'
+              ? { interrupt: true }
+              : {}),
+            actorId,
+            id: `${id}:${localId}`,
+          });
+        // A chosen method may become unavailable during the decision wait. Its
+        // replacement and start form one operation; retain independently accepted
+        // speech, but never commit just the cancellation when the start refuses.
+        if (!components[localId]?.ok && selected.type === 'activity') {
+          world = beforeAction;
+          events.length = beforeEventCount;
+          appendOnlyCommands = beforeAppendOnly;
+        }
       } else if (selected)
         components[localId] = admitPlan(
           world,
@@ -1077,7 +1105,7 @@ export function commitActorResponse(
             (step, index): PlannedCommand =>
               step.actionId !== null
                 ? {
-                    ...actions[step.actionId]!,
+                    ...actions[step.actionId]!.invocation!,
                     actorId,
                     id: `${id}:${localId}:${index}`,
                   }

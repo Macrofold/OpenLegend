@@ -11,7 +11,7 @@ import { itemFor } from './objects.js';
 import { SIMULATION_RULES } from './kernel.js';
 import { combatRecoveryDeadline } from './contact-defense.js';
 import { cloneValue } from './draft.js';
-import { outcome } from './events.js';
+import { canonicalJson, outcome } from './events.js';
 import { isSafeRecordId } from './records.js';
 import { seesEntity } from './perception.js';
 import { activityRequestDescriptors, bindActivityRequest } from './activity-hosts.js';
@@ -38,6 +38,49 @@ export interface ProspectiveWork {
   outcome: Outcome;
 }
 
+/** Exact offered meaning retained across a decision wait. This is a binding for
+ * subsequent native admission, never a cached prerequisite result. */
+export interface ActionChoice {
+  invocation: Command | null;
+  transition: WorkTransitionMode;
+  expectedWork: ProspectiveWork['expected'];
+}
+export function bindNativeChoice(
+  world: WorldState,
+  actorId: string,
+  invocation: Command | null,
+  transition: WorkTransitionMode,
+): ActionChoice {
+  return { invocation, transition, expectedWork: currentWorkIdentity(world, actorId) };
+}
+export function choiceWorkCurrent(
+  world: WorldState,
+  actorId: string,
+  choice: ActionChoice,
+): boolean {
+  return (
+    !!entityGet(world.entities, actorId)?.actor &&
+    canonicalJson(currentWorkIdentity(world, actorId)) === canonicalJson(choice.expectedWork)
+  );
+}
+export function currentWorkIdentity(
+  world: WorldState,
+  actorId: string,
+): ProspectiveWork['expected'] {
+  const actor = entityGet(world.entities, actorId)?.actor;
+  if (!actor) throw new Error('This actor is unavailable.');
+  const plan = actor.agency.plan,
+    suspended = actor.agency.suspended;
+  return {
+    generation: actor.planGeneration,
+    life: actor.physicalLife ?? 0,
+    controller: actor.controller,
+    actionId: actor.action?.id ?? null,
+    plan: plan ? { id: plan.id, revision: plan.revision } : null,
+    suspended: suspended ? { id: suspended.id, revision: suspended.revision } : null,
+  };
+}
+
 export function prospectiveWork(
   world: WorldState,
   actorId: string,
@@ -47,19 +90,11 @@ export function prospectiveWork(
     actor = entity?.actor;
   if (!actor || !entity) return outcome(false, 'actor-unavailable', 'This actor is unavailable.');
   const action = actor.action,
-    plan = actor.agency.plan,
-    suspended = actor.agency.suspended;
+    plan = actor.agency.plan;
   const ending = mode === 'replace' || mode === 'interrupt';
   return {
     mode,
-    expected: {
-      generation: actor.planGeneration,
-      life: actor.physicalLife ?? 0,
-      controller: actor.controller,
-      actionId: action?.id ?? null,
-      plan: plan ? { id: plan.id, revision: plan.revision } : null,
-      suspended: suspended ? { id: suspended.id, revision: suspended.revision } : null,
-    },
+    expected: currentWorkIdentity(world, actorId),
     lostWorkSeconds:
       ending && action?.stage === 'working'
         ? Math.max(0, action.totalSeconds - action.remainingSeconds)

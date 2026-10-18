@@ -1,4 +1,5 @@
 import { entityGet } from '@open-legend/domain';
+import { currentWorkIdentity } from '@open-legend/domain';
 import { dreamStatus } from '@open-legend/domain';
 import { bodyThinkingBlocked, bodyEligibilityRevision } from '@open-legend/domain';
 import { z } from 'zod';
@@ -12,7 +13,7 @@ import {
   type MindProposal,
 } from '@open-legend/domain';
 import type { CommandInput } from '@open-legend/protocol';
-import { buildContext, npcCandidates } from './context.js';
+import { buildContext, npcCandidates, candidateChoice } from './context.js';
 import type { WorldService } from './world-service.js';
 
 export const COGNITION_INSTRUCTIONS_VERSION = 'open-legend-cognition-v1';
@@ -430,7 +431,7 @@ export function cognitionContext(
     actions: Object.fromEntries(
       candidates.map((c) => [
         c.id,
-        c.command ? domainCommand(c.command, actorId, decisionId) : null,
+        candidateChoice(c, actorId, decisionId, currentWorkIdentity(service.world, actorId)),
       ]),
     ),
     restEpisode:

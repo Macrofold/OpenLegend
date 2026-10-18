@@ -1,4 +1,10 @@
 import { entityGet } from '@open-legend/domain';
+import {
+  bindNativeChoice,
+  currentWorkIdentity,
+  prospectiveWork,
+  canonicalJson,
+} from '@open-legend/domain';
 import { outingContext } from './outing-view.js';
 import { remainingActivityText, learnedActivityCandidates } from './activity-context.js';
 import { MemoryReadCache, type CognitionPreparation } from './memory-repository.js';
@@ -47,6 +53,7 @@ import {
   CONTEXT_BYTE_LIMIT,
   npcCandidates,
   planningCandidates,
+  candidateChoice,
   type CandidateAction,
 } from './context.js';
 import { domainCommand } from './cognition.js';
@@ -161,7 +168,10 @@ function distinctActions(candidates: CandidateAction[]): CandidateAction[] {
     ...new Map(
       candidates.map((candidate) => [
         // Different perceived targets may share an approach tile; keep each intent selectable.
-        candidate.command?.type === 'move' ? candidate.id : JSON.stringify(candidate.command),
+        canonicalJson([
+          candidate.command?.type === 'move' ? candidate.id : candidate.command,
+          candidate.transition,
+        ]),
         candidate,
       ]),
     ).values(),
@@ -252,6 +262,31 @@ function pausedWorkText(world: import('@open-legend/domain').WorldState, actorId
   const paused = entityGet(world.entities, actorId)?.actor?.agency.suspended;
   if (!paused) return null;
   return `Earlier work is paused. ${remainingActivityText(world, actorId, paused)} It resumes, after rechecking its targets, when my current work ends; stopping or replacing work discards it.`;
+}
+
+function workTransitionContext(world: import('@open-legend/domain').WorldState, actorId: string) {
+  return (['continue', 'replace', 'interrupt'] as const).map((mode) => {
+    const work = prospectiveWork(world, actorId, mode);
+    if ('ok' in work) return { handling: mode, available: false, reason: work.message };
+    return {
+      handling: mode,
+      available: work.outcome.ok,
+      explanation: work.outcome.message,
+      lostGameSecondsOfWork: work.lostWorkSeconds,
+      spentMaterialsNotRefunded: work.spentInputs.map((input) => ({
+        material: world.itemDefinitions[input.definitionId]?.name ?? 'Unknown material',
+        quantity: input.quantity,
+      })),
+      pausedWork:
+        work.pausedWork === 'discarded'
+          ? 'Earlier paused work is discarded.'
+          : work.pausedWork === 'restart-current-step'
+            ? 'Current unfinished step restarts when resumed.'
+            : 'Earlier paused work is unchanged.',
+      combatRecoveryUntilGameTime: work.recovery.combatUntil,
+      evasionRecoveryUntilGameTime: work.recovery.evadeUntil,
+    };
+  });
 }
 
 export async function prepareDecision(
@@ -473,6 +508,7 @@ export async function prepareDecision(
       goals: snapshotActor.agency.goals,
       plan: remainingActivityText(service.world, actorId),
       paused: pausedWorkText(service.world, actorId),
+      choicesForCurrentWork: workTransitionContext(world, actorId),
       planRevision: snapshotActor.agency.plan?.revision ?? 0,
       attempts: snapshotActor.agency.attempts,
     },
@@ -578,8 +614,21 @@ export async function prepareDecision(
     Buffer.byteLength(RESPONSE_INSTRUCTIONS);
   const planActions = Object.fromEntries(
     planOffers
-      .map((candidate) => [candidate.id, domainCommand(candidate.command!, actorId, jobId)])
-      .concat(intentActions.map((candidate) => [candidate.id, candidate.command])),
+      .map((candidate) => [
+        candidate.id,
+        bindNativeChoice(
+          world,
+          actorId,
+          domainCommand(candidate.command!, actorId, jobId),
+          candidate.transition ?? 'replace',
+        ),
+      ])
+      .concat(
+        intentActions.map((candidate) => [
+          candidate.id,
+          bindNativeChoice(world, actorId, candidate.command, 'continue'),
+        ]),
+      ),
   );
   const selection = await recall
     .select(
@@ -890,6 +939,7 @@ export async function prepareDecision(
     // retain their known producer type for the typed activity chooser.
     activityRequests: context['activityRequests'] as typeof currentActivity.activityRequests,
     binding,
+    choiceWork: currentWorkIdentity(currentWorld, actorId),
     offered,
     actionCandidates: availableActions,
     actionInspection,
@@ -991,13 +1041,12 @@ export async function selectDecisionActions(
         const index = candidates.indexOf(candidate);
         return [
           `a${index}`,
-          candidate.command
-            ? domainCommand(
-                candidate.command,
-                prepared.binding.actorId,
-                prepared.binding.decisionId,
-              )
-            : null,
+          candidateChoice(
+            candidate,
+            prepared.binding.actorId,
+            prepared.binding.decisionId,
+            prepared.choiceWork,
+          ),
         ];
       }),
     ),
@@ -1043,6 +1092,7 @@ export function refreshDecisionActions(
   const observed = decisionObservation(service.world, prepared.binding.actorId);
   return {
     ...prepared,
+    choiceWork: currentWorkIdentity(service.world, prepared.binding.actorId),
     actionCandidates: decisionActionCandidates(
       service,
       prepared.binding.actorId,
@@ -1074,9 +1124,12 @@ export function fallbackDecisionActions(
     ...Object.fromEntries(
       candidates.map((candidate, index) => [
         `a${index}`,
-        candidate.command
-          ? domainCommand(candidate.command, prepared.binding.actorId, prepared.binding.decisionId)
-          : null,
+        candidateChoice(
+          candidate,
+          prepared.binding.actorId,
+          prepared.binding.decisionId,
+          prepared.choiceWork,
+        ),
       ]),
     ),
   };

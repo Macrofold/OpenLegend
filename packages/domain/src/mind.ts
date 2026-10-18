@@ -3,10 +3,11 @@ import { dreamStatus, dreamPolicy } from './cognition-policy.js';
 import { bodyThinkingBlocked, bodyEligibilityRevision } from './body-policy.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { experiences } from './experience.js';
-import type { Command, MemoryRecord, Transition, WorldState } from './types.js';
+import type { MemoryRecord, Transition, WorldState } from './types.js';
 import { canonicalJson, finish, outcome } from './events.js';
-import { executeCommand } from './kernel.js';
+import { commitActorResponse } from './response.js';
 import { actionTargetsCurrent } from './action-targets.js';
+import { choiceWorkCurrent, type ActionChoice } from './action-capabilities.js';
 
 export const MIND_POLICY = 'mind-v1';
 export const MIND_LIMITS = {
@@ -97,7 +98,7 @@ export interface CognitionBinding {
   entityIds: string[];
   expectedPlan: number;
   entityEpisodes?: Record<string, string>;
-  actions: Record<string, Command | null>;
+  actions: Record<string, ActionChoice>;
   restEpisode: string | null;
   bodyEligibility: string;
 }
@@ -348,18 +349,49 @@ export function commitCognition(
       actor.planGeneration !== binding.expectedPlan
     )
       return reject('Action candidate or plan is stale.');
-    const command = binding.actions[proposal.actionId];
+    const choice = binding.actions[proposal.actionId]!;
+    if (!choiceWorkCurrent(input, binding.actorId, choice))
+      return reject('The work affected by this choice changed.');
+    const command = choice.invocation;
     if (command) {
       // Unchanged work cannot re-identify a person whose observation ended during thinking.
       // docs/identity-and-references.md#contract
       if (!actionTargetsCurrent(input, binding.actorId, [command], binding.entityEpisodes))
         return reject('The selected action target changed observation.');
-      const transition = executeCommand(world, {
-        ...command,
-        id: `${binding.decisionId}:action`,
-        actorId: binding.actorId,
-      });
-      if (!transition.outcome.ok) return reject(transition.outcome.message);
+      const transition = commitActorResponse(
+        world,
+        `${binding.decisionId}:action`,
+        binding.actorId,
+        {
+          operations: [
+            {
+              localId: 'choice',
+              requiresAccepted: [],
+              talk: null,
+              act: {
+                kind: 'known',
+                actionId: proposal.actionId,
+                mode: choice.transition === 'continue' ? 'enqueue' : choice.transition,
+                verb: null,
+                targetEntityId: null,
+                description: null,
+              },
+              think: null,
+              goal: null,
+              plan: null,
+            },
+          ],
+        },
+        binding.actions,
+        binding.entityIds,
+        binding.expectedPlan,
+        [],
+        binding.entityEpisodes,
+      );
+      const result =
+        transition.world.responseReceipts?.[`${binding.decisionId}:action`]?.components['choice'];
+      if (!transition.outcome.ok || !result?.ok)
+        return reject(result?.message ?? transition.outcome.message);
       world = draftWorld(transition.world);
       events = transition.events;
     }

@@ -1126,6 +1126,12 @@ function operationAfterWork(
     return withWorkMeter(WORK_LIMITS.group, () => {
       chargeWork({ inputBytes: (JSON.stringify(command)?.length ?? 0) * 3 });
       const prepared = prepareNativeOperation(world, command, { constructionPermissions, work });
+      if (work?.mode === 'continue' && !('ok' in prepared))
+        return outcome(
+          false,
+          'work-transition',
+          'Starting this activity requires choosing how to replace or pause the current work.',
+        );
       if (work && !('ok' in prepared && !prepared.ok) && isRecordedActivityCommand(command)) {
         const capture = prepareActivity(
           world,
@@ -1176,7 +1182,13 @@ export function prepareNativeChoice(
       ? invocation.actorId !== actorId
         ? outcome(false, 'actor-unavailable', 'Choose work for this actor.')
         : operationAfterWork(world, invocation, constructionPermissions, work)
-      : outcome(true, 'continued', 'Existing behavior continues.');
+      : mode === 'continue'
+        ? outcome(true, 'continued', 'Existing behavior continues.')
+        : outcome(
+            false,
+            'work-transition',
+            'Choose the exact action to begin after changing current work.',
+          );
   const nextAt =
     result.code === 'combat-recovery'
       ? work.recovery.combatUntil

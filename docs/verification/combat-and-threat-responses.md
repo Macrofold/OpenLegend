@@ -132,3 +132,24 @@ and cumulative task Jev cost is $0.
 This is partial CTR05 evidence. The full busy-work matrix, complete choices,
 purpose/condition preservation, player details, independent character choice and
 remaining material/record preflight qualification stay open.
+
+The connected service scenario now passes with real disposable PostgreSQL storage:
+Ada doing actual gathering retains ordinary walking and unarmed attack alternatives.
+Body recovery leaves that attack explained as temporarily unavailable. Preparing
+the complete ordinary suggestion list preserves the serialized world. A supplied
+spoken line through the response owner keeps the exact gathering action; selecting
+the offered strike replaces it through ordinary plan admission. Selection is
+forced in this native fixture, so it is not independent Ada behavior.
+
+Offered bindings now retain exact affected work and selected handling across the
+decision wait. Both existing decision consumers use the response admission owner.
+Review also fixed learned-method replacement: refusal to start cannot commit only
+its preceding cancellation. The evolving scenario supplies an unavailable method
+and confirms the original action and reservation remain, with no cancellation
+event. Three focused existing mind checks and two ordinary catalogue checks pass.
+Three existing context checks also pass, including its fixture-based learned-tool/food loop and honest context overflow. The production build passes with the existing externalization/large-chunk warnings;
+the asset guard passes. No provider calls occurred; additional Jev cost is $0 and
+cumulative task Jev cost is $0.
+
+This does not close the purpose/condition binding, complete-required option set,
+player detail/control, full work-transition matrix or preparation-cost requirements.

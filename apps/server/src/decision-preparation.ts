@@ -30,10 +30,11 @@ export function knownDecisionResponse(
 ): ActorResponse {
   if (!Object.hasOwn(prepared.binding.actions, selected))
     throw new Error('Unknown offered action.');
-  if (prepared.binding.actions[selected] === null) return { operations: [] };
+  const choice = prepared.binding.actions[selected]!;
+  if (choice.invocation === null) return { operations: [] };
   return actionResponse({
     kind: 'known',
-    mode: prepared.replaceChosenPlan ? 'replace' : 'enqueue',
+    mode: choice.transition === 'continue' ? 'enqueue' : choice.transition,
     actionId: selected,
     verb: null,
     targetEntityId: null,

@@ -154,11 +154,12 @@ export function cookingPreparations(
   world: WorldState,
   inventory: readonly ItemInstance[],
   selectedItemId?: string,
+  availability?: ResourceAvailability,
 ): CookingPreparation[] {
   // Choice reads can run outside a native transition; retain the same work ceiling
   // when exact ingredient assignment needs to try more than the first set of lots.
   return withWorkMeter(WORK_LIMITS.group, () =>
-    cookingPreparationsWithinWork(world, inventory, selectedItemId),
+    cookingPreparationsWithinWork(world, inventory, selectedItemId, availability),
   );
 }
 export function cookingCommand(choice: CookingPreparation, heatId: string): CookCommand {
@@ -178,6 +179,7 @@ function cookingPreparationsWithinWork(
   world: WorldState,
   inventory: readonly ItemInstance[],
   selectedItemId?: string,
+  availability?: ResourceAvailability,
 ): CookingPreparation[] {
   const choices: CookingPreparation[] = [];
   const lotsByDefinition = new Map<string, ItemInstance[]>();
@@ -185,7 +187,7 @@ function cookingPreparationsWithinWork(
   let selected: ItemInstance | undefined;
   chargeWork({ tests: inventory.length });
   for (const item of inventory) {
-    free.set(item.id, availableItemQuantity(world, item.id));
+    free.set(item.id, availableItemQuantity(world, item.id, undefined, availability));
     const lots = lotsByDefinition.get(item.definitionId);
     if (item.id === selectedItemId) selected = item;
     if (lots && item.id === selectedItemId) lots.unshift(item);

@@ -1,4 +1,5 @@
 import { entityGet } from './entity-collection.js';
+import { bindNativeChoice } from './action-capabilities.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { setSpatialPosition, worldSupport } from './index.js';
 import { worldPosition } from './spatial-state.js';
@@ -50,7 +51,7 @@ function setup() {
     evidenceIds: recall.entries.map((e) => e.id),
     entityIds: [NPC_ID, PLAYER_ID],
     expectedPlan: entityGet(world.entities, NPC_ID)!.actor!.planGeneration,
-    actions: { continue: null },
+    actions: { continue: bindNativeChoice(world, NPC_ID, null, 'continue') },
     restEpisode: null,
     bodyEligibility: bodyEligibilityRevision(world, entityGet(world.entities, NPC_ID)!),
   };
@@ -192,7 +193,12 @@ describe('fixture: bounded authored minds', () => {
   });
   it('rejects coupled invalid actions without committing a thought or mind', () => {
     const { world, binding, proposal } = setup();
-    binding.actions.bad = { id: 'bad', actorId: NPC_ID, type: 'gather', targetId: 'missing' };
+    binding.actions.bad = bindNativeChoice(
+      world,
+      NPC_ID,
+      { id: 'bad', actorId: NPC_ID, type: 'gather', targetId: 'missing' },
+      'replace',
+    );
     proposal.actionId = 'bad';
     const result = commitCognition(world, binding, proposal);
     expect(result.outcome.ok).toBe(false);

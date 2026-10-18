@@ -1,6 +1,7 @@
 import { entityGet } from '../../packages/domain/src/index.js';
 import {
   commitActorResponse,
+  bindNativeChoice,
   captureActionTargets,
   worldPosition,
   type ActorResponse,
@@ -98,7 +99,12 @@ export function prepareRoutinePlan(
   const actions = Object.fromEntries(
     selected.map((offer, i) => [
       handles[i]!,
-      domainCommand(offer!.command!, actorId, `${id}:offer:${i}`),
+      bindNativeChoice(
+        service.world,
+        actorId,
+        domainCommand(offer!.command!, actorId, `${id}:offer:${i}`),
+        'replace',
+      ),
     ]),
   );
   const attemptBindings: AttemptBinding[] = [];

@@ -25,7 +25,10 @@ inputs, paused-work consequence and persistent recovery. Ordinary response-plan
 admission checks materials after releasing only the exact replaced invocation’s
 holds, before cancelling work. A gather-to-cook replacement and a refused
 replacement retaining the original work pass natively; complete busy choices and
-the remaining prepared-choice consumers stay open in CTR05.
+the remaining prepared-choice consumers stay open in CTR05. Busy NPC menus now
+retain physical alternatives and explain recovery. Exact affected-work bindings
+and selected handling reach shared response admission, including speech that
+preserves work. A refused learned-method start retains the original work.
 
 ## October 18, 2026 — Review optional measurement and carry its lessons forward
 

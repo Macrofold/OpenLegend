@@ -2605,7 +2605,7 @@ export class AiDirector {
       level1 = resolveLevel1({
         offered: offeredForSelection,
         answers: actionAnswers,
-        isContinue: (handle) => chosenPrepared.binding.actions[handle] === null,
+        isContinue: (handle) => chosenPrepared.binding.actions[handle]?.invocation === null,
         escalation: generationAvailable
           ? { available: true, level: escalationLevel(routeAnswer, offeredRoutes) }
           : { available: false, blocked: 'generation-unavailable' },
