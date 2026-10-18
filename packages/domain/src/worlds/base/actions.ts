@@ -48,6 +48,9 @@ export const BASE_FAMILY_FACTS = {
     fish: ['itemId'],
   } as Readonly<Record<string, readonly string[]>>,
   unitPerCommand: ['eat'],
+  // Cancelling unreleased work releases its claims; a released projectile keeps
+  // its independent contact and accounting owner after this activity ends.
+  deadlineSafeCommands: ['hunt', 'shoot-once'],
   unpausableWhileWorking: ['strike', 'hunt', 'aim', 'shoot-once', 'practice-shot', 'coaching'],
 } as const;
 

@@ -176,9 +176,17 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
     case 'harvest':
       return { ...base, type: input.type, targetId: input.targetId! };
     case 'cancel':
+      return { ...base, type: 'cancel', expectedActionId: input.expectedActionId };
     case 'recover':
     case 'respawn':
       return { ...base, type: input.type };
+    case 'resume-work':
+      return {
+        ...base,
+        type: 'resume-work',
+        planId: input.planId!,
+        expectedRevision: input.expectedRevision!,
+      };
     case 'treat-scar':
       return { ...base, type: 'treat-scar', targetId: input.targetId!, scarId: input.scarId! };
     case 'unequip':

@@ -125,7 +125,9 @@ export function basePreparedThreatResponses(
   );
   const original = worldPosition(actor);
   const currentWork =
-    !!actor.actor.action || ['active', 'blocked'].includes(actor.actor.agency.plan?.status ?? '');
+    !!actor.actor.action ||
+    !!actor.actor.agency.suspended ||
+    ['active', 'blocked'].includes(actor.actor.agency.plan?.status ?? '');
   const local: SituationBinding = { roles: {}, sources: new Set(), flags: new Set() };
   const bindings = new Map<string, SituationBinding>([['local', local]]);
   const appraisalOccurrences: Array<{
@@ -411,6 +413,36 @@ export function basePreparedThreatResponses(
         sourceIds,
       };
       const options: PreparedResponseOption[] = [];
+      if (definition.means.includes('resume') && actor.actor.agency.suspended) {
+        const paused = actor.actor.agency.suspended;
+        const name =
+          paused.activity?.request?.name ??
+          world.actionExperience.methods[paused.activity?.methodId ?? '']?.name ??
+          paused.steps.find((step) => step.status === 'queued')?.command.purpose ??
+          'my paused work';
+        const action = actor.actor.action;
+        const lostSeconds =
+          action?.stage === 'working'
+            ? Math.max(0, action.totalSeconds - action.remainingSeconds)
+            : 0;
+        options.push({
+          id: 'resume',
+          purpose,
+          firstActionDescription: `Return to ${name}`,
+          description: `End the intervening activity and return to ${name}. Its stopped step restarts with original remaining materials, recorded outputs and stopping limits. Ending the current step loses ${lostSeconds} game seconds of work; already consumed materials and released effects remain committed. Refused resumption preserves the current and paused work.`,
+          invocation: {
+            id: 'prepared-response',
+            actorId: actor.id,
+            type: 'resume-work',
+            planId: paused.id,
+            expectedRevision: paused.revision,
+            chosenPurpose: purpose,
+          },
+          // This exact control operation owns the transition; a generic replace
+          // before it would discard the very paused frontier being selected.
+          transition: 'continue',
+        });
+      }
       const addMethod = (
         method: PreparedResponseMethod,
         participants: string[] = [],

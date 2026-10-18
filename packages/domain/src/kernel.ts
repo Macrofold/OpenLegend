@@ -138,6 +138,7 @@ import {
   reconcileActivityControl,
   requestedActivityProblem,
   firstRequestedActivityCommand,
+  firstRemainingActivityCommand,
   admitActivityAttempt,
   activeActivityControl,
 } from './activity-execution.js';
@@ -306,6 +307,8 @@ import {
   readyPlanStep,
   isActivityCommand,
   resolvePlanCommand,
+  suspendedWorkProblem,
+  resumeWorkByChoice,
 } from './agency.js';
 import {
   bodyPolicy,
@@ -1131,6 +1134,25 @@ function operationAfterWork(
       chargeWork({ inputBytes: (JSON.stringify(command)?.length ?? 0) * 3 });
       if (command.chosenPurpose !== undefined && !validResponsePurpose(command.chosenPurpose))
         return outcome(false, 'invalid-purpose', 'The selected purpose binding is malformed.');
+      if (command.type === 'resume-work') {
+        const problem =
+          nativeActorProblem(world, command) ??
+          suspendedWorkProblem(world, command.actorId, command.planId, command.expectedRevision);
+        if (problem) return problem;
+        const plan = entityGet(world.entities, command.actorId)!.actor!.agency.suspended!;
+        const first = firstRemainingActivityCommand(world, command.actorId, plan);
+        if (first && 'ok' in first) return first;
+        if (!first)
+          return outcome(
+            true,
+            'available',
+            'The remaining paused work can resume at its existing boundary.',
+          );
+        const ending = prospectiveWork(world, command.actorId, 'replace');
+        return 'ok' in ending
+          ? ending
+          : operationAfterWork(world, first, constructionPermissions, ending, preparation);
+      }
       if (command.type === 'compose') {
         const actorProblem = nativeActorProblem(world, command);
         if (actorProblem) return actorProblem;
@@ -2818,6 +2840,17 @@ function executeCommandNative(
         if (!prepared || !('ok' in prepared) || prepared.code !== 'no-longer-needed')
           return reject('unsupported', 'This command is not supported.');
         result = { ...prepared, spent: 0 };
+        break;
+      }
+      case 'resume-work': {
+        const available = nativeOperationAvailable(world, command, options.constructionPermissions);
+        if (!available.ok) return reject(available.code, available.message);
+        resumeWorkByChoice(world, actor.id);
+        result = outcome(
+          true,
+          'resumed',
+          'Returned to the exact paused work. The stopped step restarts; committed effects and original limits remain.',
+        );
         break;
       }
       case 'cancel': {

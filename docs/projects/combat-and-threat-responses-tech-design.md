@@ -94,6 +94,26 @@ decision consumers; qualify the complete selected repertoire and shared behavior
    through the existing scheduling/execution owners, then continue the remaining
    combat controls, animal breadth and qualification.
 
+The remaining repertoire work uses the existing native command and agency owners.
+Complete threat preparation requests all permitted physical follow targets rather
+than the compact ordinary suggestions. Ranged one-shot children declare safe
+deadline cancellation in their installed world host: unreleased ammunition remains
+unspent, and a released projectile continues through its independent native owner.
+Explicit return to paused work needs an exact paused-plan ID/revision operation,
+not the ordinary Stop operation, which deliberately discards paused work. Its
+read-only preflight examines the remaining frontier and original control before
+ending the intervention; refusal preserves both. Admission reuses the existing
+resumption owner and personal result records. This is approximately 200–300 logic
+lines across agency/activity inspection, native admission and the public command
+boundary. Verify actual interruption/resumption, lost target or material,
+expired original limits and a stale paused-plan selection without discarding work.
+Review also requires retaining original actor-reference associations for activity
+steps not yet expanded when an intervention begins. Extend the existing saved
+activity binding/validation owner and shared dispatch/resumption checks; a later
+sighting cannot silently rebind an unfamiliar person. Do not add another history
+store or reconstruct forgotten identity from world truth. This adds approximately
+100–150 logic lines and needs native loss/reacquisition and cold-storage checks.
+
 Steps 1–4 have connected native implementations and partial controlled service
 qualification. Complete requests retain their full sets; supplied callbacks reach
 an admitted exact strike and its next ordinary native step. The ordinary world now selects the connected profile, interpreted fear/anger and Ada’s general assertiveness together, with both automatic fear producers removed. Both fixed twelve-case live samples failed 0/12 counterattacks and remain

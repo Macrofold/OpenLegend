@@ -632,3 +632,44 @@ independent counterattack and complete combat qualification remain open.
 Additional Jev cost is **$0**; cumulative provider-reported Jev estimates remain
 **$0.290701**, other-provider estimates **$0.088246**, uncertain commitments
 **$4.105220**, and conservative task exposure **$4.484167**.
+
+## Follow, ranged choices and explicit return to paused work — October 18, 2026
+
+Complete physical preparation retains all permitted follow targets; ordinary compact
+suggestions keep their existing four-target page. The threat compiler binds the
+existing visible follow and one-shot ranged methods to the exact perceived person.
+Installed ranged hosts permit stopping their bounded work: unreleased ammunition
+claims end normally, while an already released flight keeps its existing owner.
+No movement or projectile executor was added.
+
+The connected native scenario observes an actual departing assailant, selects the
+exact offered follow and starts it with its original finite deadline. A launcher
+definition admitted through the native declaration owner, owned launcher and real
+compatible ammunition produce an offered exact ranged attack that starts normally.
+These are controlled setup/selection checks, not independent invention or choice.
+The first ranged check exposed missing deadline support in the installed host;
+the repaired check passes. Two setup-script errors (a non-exported helper and
+mutation of immutable output) occurred before that check and remain tool failures.
+
+Explicit return to paused work binds its exact plan ID and revision. The existing
+activity owner inspects remaining commands, actual preceding outputs, current
+conditions, original deadlines and attempt/debit ceilings without mutation. Native
+admission proves the remaining first action after ending the intervention before
+restoring the paused frontier. Ordinary Stop still discards paused work. The
+current known-choice response path admits this explicit control without running
+a generic replacement first. Requested speech text is distinguished from object
+bindings during resumption checks.
+
+Actual finite travel interrupted by an actual chosen wait passes pure preparation,
+public-command return and the offered known-choice return. The original time and
+distance limits survive. An outdated plan revision and an expired original time
+limit refuse return while preserving both frontiers. The evolving complete native
+scenario and 31 existing native checks pass; TypeScript passes. Broader paused
+reference/material/capability races and full combat qualification remain open.
+The production build and asset guard pass with the existing externalization and
+large-chunk warnings. Review identified unexpanded activity references as remaining
+work; a paused activity must retain its original unfamiliar-person association.
+
+Additional Jev cost is **$0**; cumulative provider-reported Jev estimates remain
+**$0.290701**, other-provider estimates **$0.088246**, uncertain commitments
+**$4.105220**, and conservative task exposure **$4.484167**.

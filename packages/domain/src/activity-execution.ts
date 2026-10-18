@@ -16,6 +16,7 @@ import {
   suspendCurrentWork,
   cancelPlan,
   recordPlanResult,
+  resolvePlanCommand,
 } from './agency.js';
 import { captureActionTargets } from './action-targets.js';
 import { subjectReferenceCurrent } from './worlds/base/knowledge.js';
@@ -131,13 +132,7 @@ export function admitActivityAttempt(
     execution.lastAttemptId === step.id
   )
     return true;
-  const maximumDebit =
-    'itemFromStep' in step.command ? undefined : activitySpendCeiling(world, step.command);
-  if (
-    maximumDebit === undefined ||
-    (execution.attempts ?? 0) >= control.budget.maximumAttempts ||
-    (execution.spent ?? 0) + maximumDebit > control.budget.maximumSpent
-  ) {
+  if (activityAttemptExceedsLimit(world, execution, step.command, step.id)) {
     finishControl(
       world,
       actorId,
@@ -150,6 +145,28 @@ export function admitActivityAttempt(
   execution.attempts = (execution.attempts ?? 0) + 1;
   execution.lastAttemptId = step.id;
   return true;
+}
+/** Read the same attempt/debit ceiling before either automatic admission or an
+ * explicit return. An interrupted child is a fresh attempt, never a refunded one. */
+function activityAttemptExceedsLimit(
+  world: WorldState,
+  execution: ActivityExecution,
+  command: PlanStep['command'],
+  id: string,
+): boolean {
+  const control = execution.control;
+  if (
+    control?.kind !== 'counted' ||
+    command.type !== control.budget.command ||
+    execution.lastAttemptId === id
+  )
+    return false;
+  const maximumDebit = 'itemFromStep' in command ? undefined : activitySpendCeiling(world, command);
+  return (
+    maximumDebit === undefined ||
+    (execution.attempts ?? 0) >= control.budget.maximumAttempts ||
+    (execution.spent ?? 0) + maximumDebit > control.budget.maximumSpent
+  );
 }
 /** Only chosen continuing control can end a running activity between its steps.
  * Ordinary plan membership alone does not make fixed-route movement a body-rule change. */
@@ -175,11 +192,19 @@ export function reconcileActivityControl(
     finishControl(world, actorId, plan, 'The chosen stopping time was reached.', true);
     return;
   }
-  if (control.kind === 'finite') {
-    const stop = finiteControlStop(world, actorId, control);
-    if (stop) finishControl(world, actorId, plan, stop.reason, stop.completed);
-    return;
-  }
+  const stop = continuingControlStop(world, actorId, execution!, control);
+  if (stop) finishControl(world, actorId, plan, stop.reason, stop.completed);
+}
+function continuingControlStop(
+  world: WorldState,
+  actorId: string,
+  execution: ActivityExecution,
+  control: ChosenActivityControl,
+): { reason: string; completed: boolean } | null {
+  if (world.simTime >= control.deadline)
+    return { reason: 'The chosen stopping time was reached.', completed: true };
+  if (control.kind === 'finite') return finiteControlStop(world, actorId, control);
+  const entity = entityGet(world.entities, actorId);
   const id = execution.bindings[control.observation.role];
   const observed =
     typeof id === 'string' &&
@@ -194,28 +219,18 @@ export function reconcileActivityControl(
     capabilityBlocked(world, entity, 'actions') ||
     !observed ||
     observed.value === undefined
-  ) {
-    finishControl(
-      world,
-      actorId,
-      plan,
-      'The chosen observation or ability to attend became unavailable.',
-      false,
-    );
-    return;
-  }
+  )
+    return {
+      reason: 'The chosen observation or ability to attend became unavailable.',
+      completed: false,
+    };
   for (const role of control.accessRoles) {
     const target = execution.bindings[role];
-    if (typeof target !== 'string' || !canAccessContainer(world, actorId, target)) {
-      finishControl(
-        world,
-        actorId,
-        plan,
-        'The chosen supply is no longer reachable and accessible.',
-        false,
-      );
-      return;
-    }
+    if (typeof target !== 'string' || !canAccessContainer(world, actorId, target))
+      return {
+        reason: 'The chosen supply is no longer reachable and accessible.',
+        completed: false,
+      };
   }
   for (const role of control.reachRoles) {
     const target = execution.bindings[role];
@@ -223,12 +238,12 @@ export function reconcileActivityControl(
       typeof target !== 'string' ||
       !entityGet(world.entities, target) ||
       !canReachEntity(world, entity, entityGet(world.entities, target)!, world.itemHandling.reach)
-    ) {
-      finishControl(world, actorId, plan, 'The chosen target is no longer within reach.', false);
-      return;
-    }
+    )
+      return { reason: 'The chosen target is no longer within reach.', completed: false };
   }
+  return null;
 }
+
 function finiteControlStop(
   world: WorldState,
   actorId: string,
@@ -992,6 +1007,89 @@ export function firstRequestedActivityCommand(
     combatHelpId: command.combatHelpId,
     request: { name: command.name, root: command.root, chosenPurpose: command.chosenPurpose },
   };
+  return firstActivityCommand(world, command.actorId, `${command.id}:first`, execution, [
+    { node: command.root, iteration: 0 },
+  ]);
+}
+
+/** Inspect the saved remaining frontier without allocating steps, replaying outputs,
+ * evaluating future physical work, or renewing the original selected limits. */
+export function firstRemainingActivityCommand(
+  world: WorldState,
+  actorId: string,
+  plan: ActorPlan,
+): Command | import('./types.js').Outcome | null {
+  const execution = plan.activity;
+  if (execution) {
+    if (execution.terminal || execution.processed >= ACTIVITY_LIMITS.expandedWork)
+      return outcome(
+        false,
+        'activity-limit',
+        'The paused activity has reached its original stopping limit.',
+      );
+    if (execution.control) {
+      const stop = continuingControlStop(world, actorId, execution, execution.control);
+      if (stop) return outcome(false, 'activity-limit', stop.reason);
+    }
+    if (
+      !execution.request &&
+      !acquiredActivities(world, actorId).some(
+        (method) => method.id === execution.methodId && method.executable,
+      )
+    )
+      return outcome(
+        false,
+        'unknown-method',
+        'The paused method no longer has permitted supporting knowledge.',
+      );
+  }
+  const queued = plan.steps.find((step) => step.status === 'queued');
+  const first = queued
+    ? (resolvePlanCommand(plan, queued) ??
+      outcome(
+        false,
+        'invalid-bindings',
+        'The paused step’s actual preceding output is unavailable.',
+      ))
+    : execution
+      ? firstActivityCommand(
+          world,
+          actorId,
+          `${plan.id}:resume-first`,
+          execution,
+          [...execution.pending].reverse(),
+        )
+      : null;
+  if (
+    execution &&
+    first &&
+    !('ok' in first) &&
+    (!queued || queued.activityKey) &&
+    activityAttemptExceedsLimit(
+      world,
+      execution,
+      first,
+      queued?.id ?? `${plan.id}:step:${execution.serial + 1}`,
+    )
+  )
+    return outcome(
+      false,
+      'activity-limit',
+      'Another needed attempt would exceed the chosen limit.',
+    );
+  return first;
+}
+
+function firstActivityCommand(
+  world: WorldState,
+  actorId: string,
+  id: string,
+  execution: Pick<
+    ActivityExecution,
+    'bindings' | 'outputs' | 'humanInitiated' | 'combatHelpId' | 'request'
+  >,
+  frames: readonly { node: ActivityNode; iteration: number }[],
+): Command | import('./types.js').Outcome | null {
   const visit = (node: ActivityNode): Command | import('./types.js').Outcome | null | undefined => {
     if (node.kind === 'sequence') {
       for (const child of node.children) {
@@ -1001,20 +1099,18 @@ export function firstRequestedActivityCommand(
       return;
     }
     if (node.kind === 'invoke') {
-      const bound = bindActivityCommand(node, execution, command.actorId, `${command.id}:first`);
+      const bound = bindActivityCommand(node, execution, actorId, id);
       if (!bound)
         return outcome(
           false,
           'invalid-bindings',
           'A required actual output or compatible binding is unavailable.',
         );
-      return bound.type === 'equip' && isEquipped(world, command.actorId, bound.itemId)
-        ? undefined
-        : bound;
+      return bound.type === 'equip' && isEquipped(world, actorId, bound.itemId) ? undefined : bound;
     }
     const answer = predicate(
       world,
-      command.actorId,
+      actorId,
       execution,
       node.kind === 'branch' ? node.when : node.until,
     );
@@ -1037,7 +1133,21 @@ export function firstRequestedActivityCommand(
     }
     return answer ? undefined : null;
   };
-  return visit(command.root) ?? null;
+  for (const { node, iteration } of frames) {
+    if (
+      node.kind === 'repeat' &&
+      iteration >= node.maximum &&
+      predicate(world, actorId, execution, node.until) !== true
+    )
+      return outcome(
+        false,
+        'activity-limit',
+        'The paused activity has reached its chosen attempt limit.',
+      );
+    const first = visit(node);
+    if (first !== undefined) return first;
+  }
+  return null;
 }
 
 /** Admit a requested composition through the same executor and plan owner as

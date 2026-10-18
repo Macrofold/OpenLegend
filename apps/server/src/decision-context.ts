@@ -278,7 +278,7 @@ function decisionActionCandidates(
 function pausedWorkText(world: import('@open-legend/domain').WorldState, actorId: string) {
   const paused = entityGet(world.entities, actorId)?.actor?.agency.suspended;
   if (!paused) return null;
-  return `Earlier work is paused. ${remainingActivityText(world, actorId, paused)} It resumes, after rechecking its targets, when my current work ends; stopping or replacing work discards it.`;
+  return `Earlier work is paused. ${remainingActivityText(world, actorId, paused)} It resumes, after rechecking its targets, when my current work ends. An explicitly offered return checks its remaining first action before ending the intervention and retains its original limits. Ordinary stopping or replacement discards paused work.`;
 }
 
 function workTransitionContext(world: import('@open-legend/domain').WorldState, actorId: string) {

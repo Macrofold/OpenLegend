@@ -68,6 +68,7 @@ export interface CommandInput {
     | 'inspect-inventory'
     | 'inspect-activities'
     | 'cancel'
+    | 'resume-work'
     | 'recover'
     | 'respawn'
     | 'treat-scar'
@@ -135,6 +136,8 @@ export interface CommandInput {
   expectedRevision?: number;
   /** A scoped Stop must not cancel work that replaced the selected action. */
   expectedActionId?: string;
+  /** Exact paused frontier selected for return; grants no replacement work. */
+  planId?: string;
   placementRevision?: number;
   /** The reviewed contents of a container item, independent of its placement. */
   expectedContentsRevision?: number;

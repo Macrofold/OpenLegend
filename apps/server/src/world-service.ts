@@ -269,6 +269,7 @@ export const commandInputSchema = z
       'inspect-inventory',
       'inspect-activities',
       'cancel',
+      'resume-work',
       'recover',
       'respawn',
       'treat-scar',
@@ -364,6 +365,7 @@ export const commandInputSchema = z
     knownPlace: knownPlaceReference.optional(),
     expectedRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
     expectedActionId: id.optional(),
+    planId: id.optional(),
     placementRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
     expectedContentsRevision: z
       .number()
@@ -5149,6 +5151,20 @@ export class WorldService {
         break;
       case 'cancel':
         command = { ...envelope, type: 'cancel', expectedActionId: input.expectedActionId };
+        break;
+      case 'resume-work':
+        if (!input.planId || input.expectedRevision === undefined)
+          return {
+            ok: false,
+            code: 'paused-work',
+            message: 'Choose the exact current paused work.',
+          };
+        command = {
+          ...envelope,
+          type: 'resume-work',
+          planId: input.planId,
+          expectedRevision: input.expectedRevision,
+        };
         break;
       case 'status-effect':
         if (!input.targetId || !input.definitionId || !input.effectOperation)

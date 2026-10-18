@@ -1,6 +1,6 @@
 import { entityGet, entityHas, entityValues } from './entity-collection.js';
 import { validResponsePurpose } from './action-capabilities.js';
-import { validExactInventorySources } from './native-command-contracts.js';
+import { activityRoleKinds, validExactInventorySources } from './native-command-contracts.js';
 import {
   isCookingInputRole,
   preparationDefinition,
@@ -645,12 +645,73 @@ export function suspendCurrentWork(world: WorldState, actorId: string): Outcome 
 function activityObjectBindings(world: WorldState, plan: ActorPlan): string[] {
   const activity = plan.activity;
   if (!activity) return [];
+  const requestedRoles = activity.request && activityRoleKinds(activity.request.root);
   const roles = activity.methodId
     ? world.actionExperience.methods[activity.methodId]?.roles
     : undefined;
   return Object.entries(activity.bindings).flatMap(([role, value]) =>
-    typeof value === 'string' && (!roles || roles[role]?.kind === 'object') ? [value] : [],
+    typeof value === 'string' &&
+    (requestedRoles ? requestedRoles.get(role) === 'object' : roles?.[role]?.kind === 'object')
+      ? [value]
+      : [],
   );
+}
+
+/** Shared identity/goal checks for automatic and explicitly chosen return. */
+function suspendedWorkReason(world: WorldState, actorId: string, paused: ActorPlan): string | null {
+  const actor = entityGet(world.entities, actorId)!.actor!;
+  // A paused goal only defers dispatch (readyPlanStep); a finished or missing one blocks.
+  const goal = paused.goalId
+    ? actor.agency.goals.find((entry) => entry.id === paused.goalId)
+    : undefined;
+  const objects = activityObjectBindings(world, paused);
+  const changed = paused.steps.find(
+    (step) =>
+      step.status === 'queued' &&
+      !('itemFromStep' in step.command) &&
+      !actionTargetsCurrent(world, actorId, [step.command], step.targetEpisodes),
+  );
+  return paused.goalId && (!goal || (goal.status !== 'active' && goal.status !== 'paused'))
+    ? 'its goal is no longer active.'
+    : changed
+      ? 'a target is no longer the one I saw.'
+      : objects.some(
+            (id) => !entityHas(world.entities, id) || entityGet(world.entities, id)!.retirement,
+          )
+        ? 'something the activity uses no longer exists.'
+        : null;
+}
+export function suspendedWorkProblem(
+  world: WorldState,
+  actorId: string,
+  planId: string,
+  revision: number,
+): Outcome | null {
+  const paused = entityGet(world.entities, actorId)?.actor?.agency.suspended;
+  if (!paused || paused.id !== planId || paused.revision !== revision)
+    return outcome(false, 'stale-plan', 'That paused work has ended or changed.');
+  const reason = suspendedWorkReason(world, actorId, paused);
+  return reason ? outcome(false, 'resume-refused', `Could not resume: ${reason}`) : null;
+}
+/** Called only after complete remaining-step preflight by the native command owner.
+ * End the intervention without discarding the saved frontier or committed effects. */
+export function resumeWorkByChoice(world: WorldState, actorId: string): void {
+  const actor = entityGet(world.entities, actorId)!.actor!;
+  if (actor.action) {
+    endActivity(
+      world,
+      actorId,
+      actor.action.id,
+      outcome(
+        false,
+        'cancelled',
+        'Ended by choice to return to paused work; committed effects remain.',
+      ),
+    );
+    releaseInvocationResources(world, actor.action.id);
+    actor.action = null;
+  }
+  resumeSuspended(world, actorId);
 }
 
 /** After the interrupting work ends, revalidate and reinstate the paused frontier. An
@@ -663,33 +724,18 @@ function resumeSuspended(world: WorldState, actorId: string): void {
   // that plan ran can never match the resumed one.
   const latest = Math.max(paused.revision, actor.agency.plan?.revision ?? 0);
   if (actor.agency.plan) retirePlan(world, actor, actorId);
-  // A paused goal only defers dispatch (readyPlanStep); a finished or missing one blocks.
-  const goal = paused.goalId
-    ? actor.agency.goals.find((entry) => entry.id === paused.goalId)
-    : undefined;
-  const objects = activityObjectBindings(world, paused);
-  // Named before any step is marked, so the memory names the work that was stopped.
   const name =
     paused.activity?.request?.name ??
     world.actionExperience.methods[paused.activity?.methodId ?? '']?.name ??
     paused.steps.find((step) => step.status === 'queued')?.command.purpose ??
     'my paused work';
+  const reason = suspendedWorkReason(world, actorId, paused);
   const changed = paused.steps.find(
     (step) =>
       step.status === 'queued' &&
       !('itemFromStep' in step.command) &&
       !actionTargetsCurrent(world, actorId, [step.command], step.targetEpisodes),
   );
-  const reason =
-    paused.goalId && (!goal || (goal.status !== 'active' && goal.status !== 'paused'))
-      ? 'its goal is no longer active.'
-      : changed
-        ? 'a target is no longer the one I saw.'
-        : objects.some(
-              (id) => !entityHas(world.entities, id) || entityGet(world.entities, id)!.retirement,
-            )
-          ? 'something the activity uses no longer exists.'
-          : null;
   paused.status = reason ? 'blocked' : 'active';
   if (reason && paused.activity) paused.activity.reason = `Could not resume: ${reason}`;
   else if (reason) {

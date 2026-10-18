@@ -706,6 +706,7 @@ export type Command = Envelope &
       }
     | { type: 'inspect-activities'; after: number; methodAfter?: number }
     | { type: 'cancel'; expectedActionId?: string }
+    | { type: 'resume-work'; planId: string; expectedRevision: number }
     | { type: 'recover' }
     | { type: 'respawn' }
     | {

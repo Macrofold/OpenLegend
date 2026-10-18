@@ -35,7 +35,9 @@ function host(
       interface: 'activity-host-v1',
       implementationVersion: 1,
       commands,
-      deadlineSafeCommands: [],
+      deadlineSafeCommands: commands.filter((command) =>
+        (BASE_FAMILY_FACTS.deadlineSafeCommands as readonly string[]).includes(command),
+      ),
       actions,
     },
     supportsCommand(world, command) {

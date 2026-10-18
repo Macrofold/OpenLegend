@@ -732,6 +732,7 @@ export function commitActorResponse(
           'outing',
           'transfer-item',
           'cancel',
+          'resume-work',
           'recover',
           'withdraw-attempt',
           'confirm-attempt',
