@@ -4,9 +4,11 @@
 
 ## Start here
 
+- **[Sea of Stars — G178](research-progress-sea-of-stars-2026-10-18.md):** full-game research, timed combat, lore, production, reception and expressive environmental pixel art; the scoped ledger records progress and version limits.
+
 - **[Why Umamusume made billions — and what OpenLegend can take forward](essays/mobile-success-failure-and-umamusume.md):** positive experience routes through all ten games, concrete OpenLegend possibilities, commercial interpretation and dated financial evidence. The [OpenLegend section](essays/mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity) connects adventure, invention, independent people, expressive creation and lasting consequences to current project goals.
 - **[Ten mobile successes and unsuccessful services — G168–G177](research-progress-mobile-2026-10-17.md):** full mechanics, reception and commercial studies of the ten October 17 additions, beginning with Umamusume. The scoped ledger owns actual completion and links each dossier.
-- **[Full 177-subject research roster](research-roster.md):** canonical title/edition list. The seventeen G150–G166 additions are **roster only; research has not started and must wait for Mike's authorization**.
+- **[Full 178-subject research roster](research-roster.md):** canonical title/edition list. The seventeen G150–G166 additions are **roster only; research has not started and must wait for Mike's authorization**.
 - **[Research requirements](research-requirements.md):** R01–R14 completion standard, including five written reviews per game and Steam review sampling where applicable. The [October 13 amendment](research-economics-engagement-and-creation.md) explicitly covers revenue estimates and economic outcomes, why play is enjoyable or frustrating, replay/abandonment, fictional economies, deep lore and creator tooling.
 - **[October 13 expansion and amendment coverage](research-progress-expansion-2026-10-13.md):** current scope, new roster-only subjects, targeted additions and verification on `research/game-library-expansion`.
 - **[Earlier research progress](research-progress.md):** G01–G149 completion provenance and the separate whole-library gates; its dated branch instructions and counts do not override the current expansion boundary.
@@ -203,3 +205,4 @@ The existing engineering, product, and world-design owners remain authoritative 
 ## Supplementary Dungeons & Dragons studies
 
 The [tabletop research hub](games/dungeons-and-dragons.md) distinguishes the [2024 revision](dossiers/dungeons-and-dragons-2024.md), [v.3.5](dossiers/dungeons-and-dragons-3-5.md), [GM adjudication](mechanics/dungeons-and-dragons-adjudication.md), and [complete-SRD systems study](mechanics/dungeons-and-dragons-srd-systems.md). The related [world dossier](../worldbuilding/worlds/29-dungeons-and-dragons.md) and [planes and lived-magic supplement](../worldbuilding/dungeons-and-dragons-planes-and-lived-magic.md) retain setting, edition and source-access distinctions. These additions do not renumber the existing game roster or claim exhaustive source review.
+
