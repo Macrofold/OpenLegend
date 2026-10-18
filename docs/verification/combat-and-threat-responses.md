@@ -437,7 +437,7 @@ outside Git in
 
 The sample dispatched 126 Jev requests, including subsequent ordinary work:
 125 have provider-reported estimates totaling **$0.116294**, and one remains
-uncertain with a **$0.021043008 reservation**. Seven dispatched requests through
+uncertain with a **$0.021043008 raw allowance**, reserved canonically at **$0.021044**. Seven dispatched requests through
 another provider remain unpriced, reserved at $0.25 each (**$1.75 total**).
 Conservative task exposure is approximately **$1.88734** inside the $2 sample
 ceiling and shared $10 task ceiling. Missing prices are not treated as zero.
@@ -535,3 +535,52 @@ twelve observed $0.25 ordinary-generation commitments plus bounded judgments;
 actual reservations remain under the canonical owner and shared private task
 ledger. A detected strike after the observation boundary cannot pass. No second
 sample has run at this preparation checkpoint.
+
+## Changed-build fixed sample and disposition comparison — October 18, 2026
+
+Build `48cc23fde` completed the second declared fixed twelve-case sample: **0/12
+counterattacks**. It retains the same seeds, real incoming contact, equipment,
+idle/moving/gathering setup and ordinary 60:1 clock. A detected strike after the
+900-game-second boundary cannot pass. All twelve current-format checkpoints were
+read back before removing their owned databases. Private requests, exact choices,
+receipts, saves and operational backups remain in
+`/var/folders/tp/s408jds97dn41bs0p94lfq4h0000gn/T/openlegend-ctr-baselines-ZZpuOq`.
+
+The inspected first case now has a second actual Ada decision opportunity after
+its admitted evasion. That choice deferred with a best rating of 0.64 for staying
+still to assess. Inspected knife cases likewise first select evasion, then favor
+assessment or words below the existing confidence threshold. This distinguishes
+the repaired scheduling path from the still-failed independent counterattack
+requirement. No threshold, forced goal, action ordering or personality was changed
+to obtain a result. The original sample and frozen rendering failure remain part
+of the evidence. Complete reaction, repeated-assault, animal and browser gates
+remain open.
+
+This sample's provider-reported Jev estimates total **$0.171379**; cumulative
+Jev estimates after it are **$0.289186**. Other-provider estimates total
+**$0.088246**. Five Jev completions and sixteen other-provider commitments remain
+uncertain/unpriced, held canonically at **$0.105220** and **$4.00** respectively.
+The private task ledger was reconciled to the same whole-microdollar upward
+reservation precision as canonical accounting; original receipts remain intact.
+At this point conservative task exposure is **$4.482652**, within the shared $10
+ceiling. These are estimates and reservations, not final invoices.
+
+One subsequent frozen diagnostic added a general priority for bodily autonomy
+and self-respect over discomfort, favoring direct proportionate confrontation and
+tolerance of pain/risk. All offered actions, questions, facts, goals and actual
+feelings remained identical to the captured rendering comparison. This was an
+explicit alternative disposition, with no conditional counterattack instruction,
+no game effect and no change to the installed Ada. It favored saying “Back away”
+at 0.70, not striking. The failed comparison remains private in
+`/var/folders/tp/s408jds97dn41bs0p94lfq4h0000gn/T/openlegend-ctr-frozen-question-Gjab84`.
+Its Jev estimate is **$0.001515**, bringing cumulative Jev estimates to
+**$0.290701** and conservative task exposure to **$4.484167**. No further
+persona intervention is installed from this result.
+
+An uncertain supplied choice now reports that no further AI request is enabled
+for this decision; it no longer incorrectly says generation is disabled across
+the application. The connected scenario with enabled higher-model policy supplies
+uncertain ratings through both actual stages, retains existing native work,
+creates no fabricated physical receipt and sends no third request. TypeScript,
+the connected scenario and all 102 existing independent-selection checks pass.
+This is mechanical/outcome evidence, not independent character acceptance.

@@ -13,7 +13,7 @@ export type Level1Reason =
   | 'invalid-answers';
 
 /** Why an otherwise warranted escalation could not run. */
-export type EscalationBlock = 'generation-unavailable' | 'budget-exhausted';
+export type EscalationBlock = 'generation-unavailable' | 'budget-exhausted' | 'no-additional-stage';
 
 export type GenerativeLevel = 2 | 3 | 4;
 
@@ -151,7 +151,9 @@ export function level1Message(outcome: Level1Outcome): string {
       ? ' Escalation is unavailable because generation is disabled.'
       : outcome.escalationBlocked === 'budget-exhausted'
         ? ' The escalation allowance could not be reserved.'
-        : '';
+        : outcome.escalationBlocked === 'no-additional-stage'
+          ? ' No further AI request is enabled for this decision.'
+          : '';
   return `Level-1 decision deferred: ${cause}.${blocked} No automatic paid retry.`;
 }
 

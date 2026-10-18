@@ -218,7 +218,7 @@ Combat's scoped private-feeling preparation, target replacement, finite work,
 complete purpose/action bindings and two accounted stages are connected. The
 ordinary installed profile includes interpreted fear/anger, removal of automatic
 fear and Ada's general assertiveness. Native component checks are partial evidence;
-the first fixed twelve-case live sample failed its counterattack gate (0/12),
+both fixed twelve-case live samples failed their counterattack gate (0/12 each),
 with all failures and uncertain costs retained in the combat verification owner.
 
 Current work repairs concrete action-question clarity and scheduling failures
@@ -233,7 +233,7 @@ and both planned stages within the original lifetime with no automatic third cal
 Selected physical-action results now retain urgent review without inventing new
 public awareness or hostility; provider saturation leaves the pending opportunity
 unacknowledged. A frozen rendering-only comparison still favored evasion. Ada's
-identity remains unchanged while these concrete scheduling causes are repaired.
+identity remains unchanged; a separate frozen general-disposition diagnostic also favored words. Repaired scheduling now supplies later opportunities, while independent counterattack quality remains unmet.
 Remaining combat repertoire, meaningful subscriptions, animals, controls and full
 qualification precede speech and all later agreed phases. The phase trackers
 remain the detailed incomplete-work owners.

@@ -2218,7 +2218,7 @@ export class AiDirector {
       offered: choice.prepared.offered.map(({ id, description }) => ({ handle: id, description })),
       answers: answer.answers,
       isContinue: (handle) => choice.prepared.binding.actions[handle]?.invocation === null,
-      escalation: { available: false, blocked: 'generation-unavailable' },
+      escalation: { available: false, blocked: 'no-additional-stage' },
     });
     run.level1 = level1.outcome;
     await current();

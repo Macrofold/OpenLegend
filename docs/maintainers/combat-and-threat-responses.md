@@ -123,12 +123,15 @@ Contract: [existing-path integration](../projects/combat-and-threat-responses-te
 
 ## CTR10 — Independent acceptance and reconciliation
 
-The first fixed live sample on `2a050bd7a` retained **0/12 counterattacks**.
-The first inspected case voluntarily chose an admitted evasion; later ordinary
-work occupied the former shared path. Question clarity and scheduling repairs are
-in progress. [The evidence record](../verification/combat-and-threat-responses.md#fixed-ordinary-ada-baseline-result--october-18-2026)
-retains every failure, provider estimate and uncertain commitment. This gate is
-not complete, and later phases have not begun.
+Both fixed live samples retain **0/12 counterattacks**: `2a050bd7a` and the
+changed build `48cc23fde`. The repaired director provides later Ada opportunities
+after evasion; inspected later choices still prefer assessment/words or defer
+below the unchanged confidence threshold. A frozen rendering comparison and a
+separate general-disposition diagnostic also failed to select a counterattack;
+neither diagnostic changes installed personality or game effects. The evidence
+owner retains every result, precise provider estimates and uncertain commitments.
+Independent counterattack quality remains an unmet gate alongside the remaining
+combat implementation; later phases have not begun.
 
 - [ ] Pass the native physical, animal, evidence, prospective-transition, appraisal and scheduling matrices in the technical contract. Restore current-format active work and pending decisions without replay or authority leakage.
 - [ ] Run and retain the twelve fixed ordinary Ada baselines at the early connected-path gate, with genuine relevance and choice, no injected goals or forced responses, and their selected 900-game-second maximum observation window. All twelve must enter actual strike preparation/contact; approach or speech alone does not pass. Retain failures. Counterfactual cases remain separate.
