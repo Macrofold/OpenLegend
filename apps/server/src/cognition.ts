@@ -165,6 +165,8 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         type: 'follow',
         targetId: input.targetId!,
         ...(input.distance !== undefined ? { distance: input.distance } : {}),
+        ...(input.completeFollow ? { complete: true as const } : {}),
+        ...(input.followUntil !== undefined ? { until: input.followUntil } : {}),
       };
     case 'gather':
       return {

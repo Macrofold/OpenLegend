@@ -121,6 +121,36 @@ includes the historical observation, and continuation inherits the matching
 original pursuit's time/distance bounds. Check unseen relocation, loss of an
 unfamiliar-person association and cold restoration through actual native movement.
 
+The next CTR08 slice first extends the existing follow owner with explicitly finite
+arrival: a selected distance, original absolute deadline, actual sight/identity
+and an arrival result distinct from reaching the time limit. Ordinary relational
+following retains its existing minimum separation and continuing behavior; finite
+proximity movement may close to a real available strike's reach, with native body
+clearance still controlling its route. The threat compiler selects that physical
+distance from existing methods and supplies no automatic attack. This is roughly
+150–250 logic lines across follow preparation, saved action validation, shared
+native composition and public command binding. Verify actual approach/arrival,
+source movement, cancellation, original deadline, lost sight and cold restoration.
+Existing fixed-point pursuit still needs its corresponding reach-stop condition;
+the follow slice alone does not complete pursuit qualification.
+
+Meaningful observation subscriptions then extend the existing private encounter
+index, temporal due calculation, world-selected response adapter and ordinary
+intake. Capture passive selected participants separately from prerequisites that
+must remain true for physical execution. Persist stable/pending visibility,
+preparation, movement and actual-method reach bands with original game-time
+deadlines and exact native sources. Emit one actor-private native change receipt
+per stable transition; immediate actual harm/preparation remains independent.
+Never infer ceased preparation from lost sight, or erase historical evidence
+because an unseen body changed elsewhere. This is approximately 500–800 logic
+lines; no second mover, decision queue or history store is planned. Native checks
+must cover band jitter/reversal, the 0.75 m/12-game-second exit rule, brief and real
+sight loss, changed protected people, source/body loss, old-source forgetting,
+clock splits and PostgreSQL restart without duplicate notices. Measure work on
+the actually affected observers and route/geometry owner; do not scan all history
+or create a paid call on each movement update. Full dynamic crossing and shared
+combat qualification remain required before closing CTR08.
+
 Steps 1–4 have connected native implementations and partial controlled service
 qualification. Complete requests retain their full sets; supplied callbacks reach
 an admitted exact strike and its next ordinary native step. The ordinary world now selects the connected profile, interpreted fear/anger and Ada’s general assertiveness together, with both automatic fear producers removed. Both fixed twelve-case live samples failed 0/12 counterattacks and remain

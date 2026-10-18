@@ -21,6 +21,9 @@ import type {
 import type { ResponsePurposeBinding } from '../../action-capabilities.js';
 import type { Awareness } from '../../experience.js';
 import { sameDefinitionPin } from '../../state-owners.js';
+import { strikeDefinition } from '../../strikes.js';
+import { canReachEntity } from '../../spatial.js';
+import { FOLLOW_RULES } from './navigation.js';
 
 /** A completed selected response is a new choice boundary even when it produces
  * private action memory instead of public awareness. It is priority, not new harm
@@ -343,6 +346,19 @@ export function basePreparedThreatResponses(
   }
 
   const profilePin = definitionPin(profile);
+  // These methods already passed the common prospective-work preparation. Read
+  // their actual reach once; no new route search or invented attack range.
+  const directReach = new Map<string, number>();
+  for (const method of input.methods) {
+    const command = method.invocation;
+    if (command?.type !== 'strike') continue;
+    const strike = strikeDefinition(command.definitionId, world, command.weaponItemId);
+    if (strike)
+      directReach.set(
+        command.targetId,
+        Math.min(directReach.get(command.targetId) ?? Infinity, strike.range),
+      );
+  }
   const purposes: PreparedResponsePurpose[] = [];
   const unavailable: Array<{ purposeId: string; roles: Record<string, string>; reason: string }> =
     [];
@@ -353,8 +369,9 @@ export function basePreparedThreatResponses(
     participants: readonly string[],
     radius: boolean,
     inherited?: FiniteActivityControl,
+    followRange?: number,
   ): PreparedResponseOption | undefined => {
-    const command = method.invocation;
+    let command = method.invocation;
     if (!command)
       return {
         ...method,
@@ -373,6 +390,22 @@ export function basePreparedThreatResponses(
       !['move', 'follow', 'strike', 'shoot-once', 'hunt', 'guard', 'evade'].includes(command.type)
     )
       return;
+    if (command.type === 'follow') {
+      const distance = followRange ?? command.distance ?? FOLLOW_RULES.defaultDistance;
+      const target = visible.get(command.targetId);
+      if (!target || canReachEntity(world, actor, target, distance)) return;
+      command = {
+        ...command,
+        distance,
+        complete: true,
+        until: inherited?.deadline ?? world.simTime + seconds,
+      };
+      method = {
+        ...method,
+        firstActionDescription: `Move toward ${label(command.targetId)} until within ${distance} m, then stop`,
+        description: `Follow the currently perceived ${label(command.targetId)} only until within the selected ${distance} m proximity, then end this movement. This does not equip a weapon or attack. Arrival is not guaranteed; lost sight ends this choice.`,
+      };
+    }
     const args: Record<string, ActivityArgument> = {},
       values: Record<string, ActivityBinding> = {};
     for (const [field, value] of Object.entries(activityCommandFields(command))) {
@@ -513,6 +546,7 @@ export function basePreparedThreatResponses(
         participants: string[] = [],
         radius = false,
         inherited?: FiniteActivityControl,
+        followRange?: number,
       ) => {
         const option = primitive(
           method,
@@ -521,6 +555,7 @@ export function basePreparedThreatResponses(
           participants,
           radius,
           inherited,
+          followRange,
         );
         if (option) options.push(option);
       };
@@ -560,7 +595,7 @@ export function basePreparedThreatResponses(
           target === roles.assailant &&
           visible.has(target)
         )
-          addMethod(method, [target], true);
+          addMethod(method, [target], true, undefined, directReach.get(target));
         if (
           definition.means.includes('follow-helper') &&
           command?.type === 'follow' &&

@@ -60,6 +60,7 @@ export function followState(
   }
   if (command.onLost) state.onLost = command.onLost;
   if (command.until !== undefined) state.until = command.until;
+  if (command.complete) state.complete = true;
   return state;
 }
 
@@ -94,6 +95,8 @@ export function followUnavailable(world: WorldState, actor: Entity, action: Acti
       ? null
       : 'the followed target is no longer perceived.';
   if (!target.actor?.alive) return 'the followed actor is no longer alive.';
+  if ((target.actor.physicalLife ?? 0) !== action.targetLife)
+    return 'the physical participant selected for following has changed.';
   return null;
 }
 
@@ -209,16 +212,18 @@ export function updateFollowPath(
   }
   const slot = relationSlot(world, actor, action, target);
   const holding = action.stage === 'working';
-  const held = slot
-    ? distance(worldPosition(actor), slot) <=
-        FOLLOW_RULES.slotTolerance + (holding ? FOLLOW_RULES.resumeMargin : 0) &&
-      canReachEntity(world, actor, target, follow.distance + FOLLOW_RULES.slotTolerance)
-    : canReachEntity(
-        world,
-        actor,
-        target,
-        follow.distance + (holding ? FOLLOW_RULES.resumeMargin : 0),
-      );
+  const held = follow.complete
+    ? canReachEntity(world, actor, target, follow.distance)
+    : slot
+      ? distance(worldPosition(actor), slot) <=
+          FOLLOW_RULES.slotTolerance + (holding ? FOLLOW_RULES.resumeMargin : 0) &&
+        canReachEntity(world, actor, target, follow.distance + FOLLOW_RULES.slotTolerance)
+      : canReachEntity(
+          world,
+          actor,
+          target,
+          follow.distance + (holding ? FOLLOW_RULES.resumeMargin : 0),
+        );
   if (held) {
     action.stage = 'working';
     delete action.navigation;

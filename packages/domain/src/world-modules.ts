@@ -1371,6 +1371,9 @@ export function validateWorldModules(world: WorldState): void {
     const activeAction = e.actor?.action;
     if (
       activeAction?.targetLife !== undefined &&
+      // Follow's required participant binding is validated with its complete
+      // continuation record by validateAgency above.
+      activeAction.type !== 'follow' &&
       (!['strike', 'hunt', 'aim', 'shoot-once'].includes(activeAction.type) ||
         !Number.isSafeInteger(activeAction.targetLife) ||
         activeAction.targetLife < 0)

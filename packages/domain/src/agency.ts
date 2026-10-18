@@ -995,8 +995,11 @@ export function validateAgency(world: WorldState): void {
       action?.type === 'follow' &&
       (!action.follow ||
         !isSafeRecordId(action.targetId) ||
+        !Number.isSafeInteger(action.targetLife) ||
+        action.targetLife! < 0 ||
         !Number.isFinite(action.follow.distance) ||
-        action.follow.distance < FOLLOW_RULES.minimumDistance ||
+        action.follow.distance <= 0 ||
+        (!action.follow.complete && action.follow.distance < FOLLOW_RULES.minimumDistance) ||
         action.follow.distance > FOLLOW_RULES.maximumDistance ||
         !Number.isFinite(action.follow.nextRepathAt) ||
         action.follow.nextRepathAt < 0 ||
@@ -1014,7 +1017,12 @@ export function validateAgency(world: WorldState): void {
         (action.follow.onLost !== undefined && action.follow.onLost !== 'last-seen') ||
         (action.follow.pursuing !== undefined &&
           (action.follow.pursuing !== true || !action.follow.lastSeen)) ||
-        (action.follow.until !== undefined && !Number.isFinite(action.follow.until)))
+        (action.follow.until !== undefined && !Number.isFinite(action.follow.until)) ||
+        (action.follow.complete !== undefined &&
+          (action.follow.complete !== true ||
+            action.follow.until === undefined ||
+            action.follow.relation !== undefined ||
+            action.follow.onLost !== undefined)))
     )
       throw new Error('Invalid saved follow activity.');
     const agency = entity.actor.agency;
@@ -1369,12 +1377,18 @@ export function isPhysicalCommand(command: Command): boolean {
         isSafeRecordId(command.targetId) &&
         (command.distance === undefined ||
           (Number.isFinite(command.distance) &&
-            command.distance >= FOLLOW_RULES.minimumDistance &&
+            command.distance > 0 &&
+            (command.complete || command.distance >= FOLLOW_RULES.minimumDistance) &&
             command.distance <= FOLLOW_RULES.maximumDistance)) &&
         (command.relation === undefined ||
           ['behind', 'beside', 'left', 'right'].includes(command.relation)) &&
         (command.onLost === undefined || command.onLost === 'last-seen') &&
-        (command.until === undefined || (Number.isFinite(command.until) && command.until >= 0))
+        (command.until === undefined || (Number.isFinite(command.until) && command.until >= 0)) &&
+        (command.complete === undefined ||
+          (command.complete === true &&
+            command.until !== undefined &&
+            command.relation === undefined &&
+            command.onLost === undefined))
       );
     case 'gather':
     case 'harvest':

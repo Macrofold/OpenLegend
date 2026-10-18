@@ -165,7 +165,7 @@ export interface Action {
   constructionGrant?: { id: string; revision: number };
   materialOriginIds?: string[];
   requiresLethalReview?: boolean;
-  /** A physical life, rather than the continuing identity, is an attack's target. */
+  /** The selected physical participant of an attack or follow, independent of continuing identity. */
   targetLife?: number;
   lethalPermission?: import('./combat-consent.js').LethalPermission;
   scarId?: string;
@@ -193,6 +193,8 @@ export interface Action {
     pursuing?: boolean;
     /** Absolute simulation deadline; reaching it completes the activity. */
     until?: number;
+    /** Finite proximity movement ends on actual arrival, rather than holding. */
+    complete?: true;
   };
   id: string;
   type: ActionType;
@@ -608,6 +610,7 @@ export type Command = Envelope &
         relation?: 'behind' | 'beside' | 'left' | 'right';
         onLost?: 'last-seen';
         until?: number;
+        complete?: true;
       }
     | { type: 'gather'; targetId: string; itemId?: string }
     | { type: 'harvest'; targetId: string }

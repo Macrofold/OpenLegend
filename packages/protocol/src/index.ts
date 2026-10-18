@@ -127,6 +127,8 @@ export interface CommandInput {
   /** Resolve the retained observer evidence on the server; the client supplies no location. */
   knownPlace?: { id: string; sourceId: string; revision: string };
   distance?: number;
+  completeFollow?: true;
+  followUntil?: number;
   attemptId?: string;
   scarId?: string;
   lethalReviewId?: string;

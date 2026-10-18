@@ -1445,7 +1445,8 @@ function prepareNativeOperation(
       if (
         command.targetId === actor.id ||
         !Number.isFinite(desiredDistance) ||
-        desiredDistance < FOLLOW_RULES.minimumDistance ||
+        desiredDistance <= 0 ||
+        (!command.complete && desiredDistance < FOLLOW_RULES.minimumDistance) ||
         desiredDistance > FOLLOW_RULES.maximumDistance
       )
         return reject(
@@ -1454,8 +1455,14 @@ function prepareNativeOperation(
         );
       if (command.until !== undefined && command.until <= world.simTime)
         return reject('invalid-follow', 'That stopping time has already passed.');
+      if (command.complete && (command.until === undefined || command.relation || command.onLost))
+        return reject(
+          'invalid-follow',
+          'Finite proximity movement needs an original stopping time and current sight, without a continuing formation or lost-sight policy.',
+        );
       action = temporary('follow', 0);
       action.targetId = command.targetId;
+      action.targetLife = entityGet(world.entities, command.targetId)!.actor?.physicalLife ?? 0;
       action.follow = followState(world, actor, command, desiredDistance);
       const error = updateFollowPath(world, actor, action, false);
       if (error) return reject('follow-unavailable', error);
@@ -3841,6 +3848,7 @@ function advanceAction(
     return;
   }
   if (
+    action.type !== 'follow' &&
     action.targetLife !== undefined &&
     (entityGet(world.entities, action.targetId ?? '')?.actor?.physicalLife ?? 0) !==
       action.targetLife
@@ -3923,7 +3931,17 @@ function advanceAction(
   }
   if (action.type === 'follow') {
     if (action.follow?.until !== undefined && world.simTime >= action.follow.until) {
-      completeAction(world, actor, action, events, constructionPermissions);
+      finishPlanAction(
+        world,
+        actor.id,
+        action.id,
+        outcome(
+          true,
+          'follow-time-limit',
+          'The original following time ended; arrival is not implied.',
+        ),
+      );
+      actor.actor!.action = null;
       return;
     }
     if (
@@ -3946,7 +3964,27 @@ function advanceAction(
       !moveAlongPath(world, actor, action.path, nativeMovementSpeed(world, actor) * seconds)
     )
       failAction(world, actor, events, 'the following route became physically blocked.');
-    return; // Holding is still an active activity, never a completed arrival.
+    if (actor.actor!.action && action.follow?.complete) {
+      const target = entityGet(world.entities, action.targetId!);
+      if (
+        target &&
+        !followUnavailable(world, actor, action) &&
+        canReachEntity(world, actor, target, action.follow.distance)
+      ) {
+        finishPlanAction(
+          world,
+          actor.id,
+          action.id,
+          outcome(
+            true,
+            'follow-arrived',
+            `Reached the selected ${action.follow.distance} m proximity. This movement has ended; no attack was performed.`,
+          ),
+        );
+        actor.actor!.action = null;
+      }
+    }
+    return; // Ordinary relational following continues to hold; finite proximity ends.
   }
   if (action.stage === 'approaching') {
     if (action.navigation?.failure) {

@@ -22,6 +22,7 @@ import { attributeDefinition } from '../../world-modules.js';
 import { reincarnationPolicy } from '../../reincarnation.js';
 import { guardDescription, equipmentChangeDescription } from './shield-defense.js';
 import { evasionDescription } from './combat-views.js';
+import { FOLLOW_RULES } from './navigation.js';
 
 export const BASE_FOOD_ACTION_WORDING = {
   cookingDescription:
@@ -156,6 +157,12 @@ function activityView(
     view.facts.push({
       name: 'chosen purpose',
       value: command.chosenPurpose.description,
+      critical: true,
+    });
+  if (command.type === 'follow' && command.complete)
+    view.facts.push({
+      name: 'finite approach',
+      value: `End on reaching the selected ${command.distance ?? FOLLOW_RULES.defaultDistance} m proximity, or at game time ${command.until}. This movement performs no attack.`,
       critical: true,
     });
   if (command.type === 'treat-scar') {

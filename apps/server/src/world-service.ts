@@ -341,7 +341,9 @@ export const commandInputSchema = z
     inventoryGroup: z.string().min(1).max(4096).optional(),
     targetId: id.optional(),
     definitionId: id.optional(),
-    distance: z.number().min(1.5).max(12).optional(),
+    distance: z.number().finite().positive().optional(),
+    completeFollow: z.literal(true).optional(),
+    followUntil: z.number().finite().nonnegative().optional(),
     attemptId: id.optional(),
     scarId: id.optional(),
     lethalReviewId: id.optional(),
@@ -5262,6 +5264,8 @@ export class WorldService {
           type: 'follow',
           targetId: input.targetId,
           ...(input.distance !== undefined ? { distance: input.distance } : {}),
+          ...(input.completeFollow ? { complete: true as const } : {}),
+          ...(input.followUntil !== undefined ? { until: input.followUntil } : {}),
         };
         break;
       case 'gather':
