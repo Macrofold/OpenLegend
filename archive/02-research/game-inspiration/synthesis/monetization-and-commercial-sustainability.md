@@ -31,11 +31,13 @@ The [Forever commercial record](../dossiers/world-of-warcraft-forever.md#require
 ## Consolidated lessons and tradeoffs
 
 <a id="business-l001"></a>
+
 ### BUSINESS-L001 — Measure the commercial result that belongs to the product
 
 Attention, activity, purchases, gross spending, recognized revenue, developer/publisher receipts and profit answer different questions. A bundled service can create value by retaining someone who would otherwise leave, but moving an already-paying customer's hours between included products does not automatically add revenue. A defensible estimate needs a purchase/price basis and a justified allocation. When those inputs are missing, explaining the uncertainty is more useful than a fabricated numerical range.
 
 <a id="business-l002"></a>
+
 ### BUSINESS-L002 — Treat identity and continued belonging as part of purchase design
 
 An offer can be clearly explained and still conflict with a player's sense of fairness. Evaluate what another person sees, what a nonbuyer can do and whether friends can continue together. Appearance, practical advantage, a new origin story and early testing are different benefits. Their boundaries matter even before a price can be judged against operating costs.
@@ -78,4 +80,3 @@ None registered yet. These research questions are not implementation tasks. Use 
 
 | Subtopic ID | Intended experience and scope | Research lesson / evidence | Design register entry | Feature specification | Technical design |
 | ----------- | ----------------------------- | -------------------------- | --------------------- | --------------------- | ---------------- |
-

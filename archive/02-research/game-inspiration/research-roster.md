@@ -249,4 +249,3 @@ G178 is an independent full prelaunch study of World of Warcraft: Forever, inclu
 ## Supplementary tabletop research
 
 [D&D 2024](dossiers/dungeons-and-dragons-2024.md) and [D&D v.3.5](dossiers/dungeons-and-dragons-3-5.md) are distinct additional tabletop subjects, tracked by the [D&D research hub](games/dungeons-and-dragons.md#evidence-and-completion-status). They do not replace or renumber the existing G01–G167 slots. Related adjudication, SRD and worldbuilding studies are supporting material with their own evidence limits.
-

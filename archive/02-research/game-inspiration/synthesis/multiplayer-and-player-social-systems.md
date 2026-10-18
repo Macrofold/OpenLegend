@@ -31,11 +31,13 @@ The current incorporation is limited to [Forever's beta social evidence](../doss
 ## Consolidated lessons and tradeoffs
 
 <a id="multi-l001"></a>
+
 ### MULTI-L001 — Evaluate what continues after the shared objective
 
 Recognition, an understandable contribution and another worthwhile opportunity can make a person a preferred companion. Group creation is only one step. Rewarding proximity can make that step common without making the encounter memorable. Conversely, a brief, useful exchange can succeed without creating a friendship. Compare both outcomes with the player's own intention.
 
 <a id="multi-l002"></a>
+
 ### MULTI-L002 — Give dependence a proportionate cost
 
 Useful differences make help valuable, but a missing specialist can consume everyone's available time. Cooperation can widen the options or reduce danger without being mandatory for every small activity. More demanding group undertakings remain a legitimate alternative. Joining, reaching the activity, leaving and meeting again belong in the evaluation alongside the exciting middle of the encounter.
@@ -78,4 +80,3 @@ None registered yet. These research questions are not implementation tasks. Use 
 
 | Subtopic ID | Intended experience and scope | Research lesson / evidence | Design register entry | Feature specification | Technical design |
 | ----------- | ----------------------------- | -------------------------- | --------------------- | --------------------- | ---------------- |
-

@@ -205,4 +205,3 @@ The existing engineering, product, and world-design owners remain authoritative 
 ## Supplementary Dungeons & Dragons studies
 
 The [tabletop research hub](games/dungeons-and-dragons.md) distinguishes the [2024 revision](dossiers/dungeons-and-dragons-2024.md), [v.3.5](dossiers/dungeons-and-dragons-3-5.md), [GM adjudication](mechanics/dungeons-and-dragons-adjudication.md), and [complete-SRD systems study](mechanics/dungeons-and-dragons-srd-systems.md). The related [world dossier](../worldbuilding/worlds/29-dungeons-and-dragons.md) and [planes and lived-magic supplement](../worldbuilding/dungeons-and-dragons-planes-and-lived-magic.md) retain setting, edition and source-access distinctions. These additions do not renumber the existing game roster or claim exhaustive source review.
-

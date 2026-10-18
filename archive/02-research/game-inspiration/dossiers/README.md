@@ -21,12 +21,12 @@ Companions: [GM adjudication and simulation research](../mechanics/dungeons-and-
 
 The October 17, 2026 study separates announced design, beta observations and later outcomes. These routes lead to the evidence and its limits:
 
-| Read | Purpose |
-| --- | --- |
-| [G178 — World of Warcraft: Forever](world-of-warcraft-forever.md) | Full service study: interactions, world, reception, production and commercial context. |
-| [A world worth returning to](../essays/wow-forever-and-a-world-worth-returning-to.md) | Open Legend interpretations, alternatives and four hypothetical situations. |
-| [Addons and the creator ecosystem](../references/wow-forever-addon-ecosystem.md) | Client authoring, compatibility, local memory, distribution and the boundary with server-world behavior. |
-| [Forever research ledger](../research-progress-forever-2026-10-17.md) | Completion evidence, source-access limits and questions requiring later observation. |
+| Read                                                                                  | Purpose                                                                                                  |
+| ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| [G178 — World of Warcraft: Forever](world-of-warcraft-forever.md)                     | Full service study: interactions, world, reception, production and commercial context.                   |
+| [A world worth returning to](../essays/wow-forever-and-a-world-worth-returning-to.md) | Open Legend interpretations, alternatives and four hypothetical situations.                              |
+| [Addons and the creator ecosystem](../references/wow-forever-addon-ecosystem.md)      | Client authoring, compatibility, local memory, distribution and the boundary with server-world behavior. |
+| [Forever research ledger](../research-progress-forever-2026-10-17.md)                 | Completion evidence, source-access limits and questions requiring later observation.                     |
 
 The [general World of Warcraft dossier (G97)](world-of-warcraft.md) retains the franchise comparison and its own capture. Use the Forever study for this service's evidence.
 

@@ -191,10 +191,9 @@ This is a scoped four-source comparison of creature escape, tactical pursuit, ta
 
 **Evidence limits:** The dated announcement does not prove a present account's settings, universal auto-retaliation behavior or a particular grace period. Broader OSRS combat details were context and were not independently rechecked as new current facts. The inference is limited to input design.
 
-
 ## Forever prelaunch assessment — October 17, 2026
 
-**Source scope:** G178, World of Warcraft: Forever, documented design and beta through October 17. The [dossier](../dossiers/world-of-warcraft-forever.md), [creator supplement](../references/wow-forever-addon-ecosystem.md) and [Open Legend interpretation](../essays/wow-forever-and-a-world-worth-returning-to.md) are published on `codex/wow-forever-research-20261017`, based on inspected main `4f9ab001ffb74d565ae8cd9dd68fe12cec36ebe2`. Dossier snapshot `0946536065a3396218a5000c92ef4e1ba4889caf` contains the integrated evidence; later same-branch corrections and final relative links are recorded by repository history. The G97 context retains its independent scope.
+**Source scope:** G178, World of Warcraft: Forever, documented design and beta through October 17. The [dossier](../dossiers/world-of-warcraft-forever.md), [creator supplement](../references/wow-forever-addon-ecosystem.md) and [Open Legend interpretation](../essays/wow-forever-and-a-world-worth-returning-to.md) are published on `codex/wow-forever-research-20261017`, based on inspected main `4f9ab001ffb74d565ae8cd9dd68fe12cec36ebe2`. Reviewed source snapshot `edf6d5b540dbd907915171ee47d5f7a28e8e7578` supplies the integrated evidence. Relative links resolve the current branch documents. The G97 context retains its independent scope.
 
 **Reviewer:** ChatGPT research and documentation review, October 17, 2026. Source-to-lesson review is complete for the three declared prelaunch assessments. The review checked supporting and contrary evidence, destination lessons, current gameplay priorities, source links and the scoped CSV diff. Official intentions, dated beta changes, original player/critic accounts and our interpretations remain distinct; no gameplay execution or financial result is inferred. The matrix owns current assessment status.
 

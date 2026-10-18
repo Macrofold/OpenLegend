@@ -31,11 +31,13 @@ The focused source is [Forever's progression design](../dossiers/world-of-warcra
 ## Consolidated lessons and tradeoffs
 
 <a id="growth-l001"></a>
+
 ### GROWTH-L001 — Name what an investment retains
 
 An item can retain practical usefulness, a home can retain familiarity, a route can retain strategic value and a relationship can retain recognition. They need not all remain optimal sources of power. A new reward should have an understandable benefit without automatically erasing every earlier accomplishment. The alternative of continual replacement supplies clear goals, but makes return and group compatibility more demanding.
 
 <a id="growth-l002"></a>
+
 ### GROWTH-L002 — Separate optional replay from compulsory repetition
 
 Trying another identity can renew discovery and mastery. Repeating a solved path merely to maintain access can feel like an obligation. Account recognition can support experimentation while also pressuring players to complete an external checklist. Test what the player wants to retain, what varies on another attempt and how soon meaningful choices return; a nominally optional activity may still feel required by a group.
@@ -78,4 +80,3 @@ None registered yet. These research questions are not implementation tasks. Use 
 
 | Subtopic ID | Intended experience and scope | Research lesson / evidence | Design register entry | Feature specification | Technical design |
 | ----------- | ----------------------------- | -------------------------- | --------------------- | --------------------- | ---------------- |
-

@@ -46,4 +46,3 @@ None registered yet. Research headings are not implementation tasks. Add scoped 
 ## Ownership and integration boundary
 
 Existing essays retain substantive research ownership. This page provides local design references and scope questions; it creates no new test suite, budget, approval ritual or delivery commitment. Coverage remains X until its actual source evidence is reconciled.
-
