@@ -1,3 +1,4 @@
+import type { PreparedDiagnosticRecord } from './diagnostic-capture.js';
 import {
   readDecisionState,
   undispatchedReceipt,
@@ -35,7 +36,13 @@ import {
 } from './history-residency.js';
 import { MemoryRepository, type PreparedMemorySources } from './memory-repository.js';
 import { WorldRecords } from './world-records.js';
-import { readAttemptBudget, type AttemptBudgetSnapshot } from './attempt-budget.js';
+import {
+  assertAttemptReceiptContinuity,
+  readAttemptBudget,
+  retainKnownAttemptCost,
+  uncertainAttemptMicroUsd,
+  type AttemptBudgetSnapshot,
+} from './attempt-budget.js';
 import { WorldAgentStore } from './world-agent-store.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import { CreationTargetRepository } from './creation-target.js';
@@ -91,12 +98,61 @@ export interface DiagnosticAccess {
   actorIds: string[];
   allowUnscoped: boolean;
 }
+/** List presentation needs these outcome fields, never full prompts or exchanges. */
+export type DiagnosticRootSummary = Omit<IntelligenceCall, 'input' | 'output' | 'exchanges'> & {
+  input: { reason?: unknown; text?: unknown };
+  output: {
+    ok?: unknown;
+    code?: unknown;
+    message?: unknown;
+    reason?: unknown;
+    error?: unknown;
+    receipt?: { requestId: string; estimatedCostUsd?: number };
+  };
+  exchanges: [];
+};
 function diagnosticPredicate(access: DiagnosticAccess): { sql: string; params: string[] } {
   const ids = access.actorIds;
   return {
     sql: `((payload::jsonb #>> '{ownerAccountId}')=? OR ((payload::jsonb #>> '{ownerAccountId}') IS NULL AND (${ids.length ? `(payload::jsonb #>> '{actorId}') IN (${ids.map(() => '?').join(',')})` : '1=0'}${access.allowUnscoped ? " OR (payload::jsonb #>> '{actorId}') IS NULL" : ''})))`,
     params: [access.accountId, ...ids],
   };
+}
+function diagnosticRootSelection(filters: Record<string, string>, access?: DiagnosticAccess) {
+  const clauses = ["(payload::jsonb #>> '{parentId}') IS NULL"];
+  const params: unknown[] = [];
+  if (access) {
+    const permitted = diagnosticPredicate(access);
+    clauses.push(permitted.sql);
+    params.push(...permitted.params);
+  }
+  const fields: Record<string, string> = { actor: 'actorName', route: 'route' };
+  for (const [key, value] of Object.entries(filters)) {
+    if (!value) continue;
+    if (key === 'search') {
+      clauses.push('LOWER(payload) LIKE LOWER(?)');
+      params.push(`%${value}%`);
+    } else if (key === 'from' || key === 'to') {
+      clauses.push(`started_at ${key === 'from' ? '>=' : '<='} ?`);
+      params.push(value);
+    } else if (key === 'stage') {
+      clauses.push(
+        "id IN (SELECT (payload::jsonb #>> '{parentId}') FROM intelligence_calls WHERE LOWER((payload::jsonb #>> '{kind}')) LIKE LOWER(?))",
+      );
+      params.push(`%${value}%`);
+    } else if (key === 'outcome') {
+      // Panel labels cover both root status and finer dispositions such as cancelled.
+      const term = `%${value.replace(/canceled/i, 'cancel')}%`;
+      clauses.push(
+        "(LOWER((payload::jsonb ->> 'disposition')) LIKE LOWER(?) OR LOWER((payload::jsonb ->> 'status')) LIKE LOWER(?))",
+      );
+      params.push(term, term);
+    } else if (fields[key]) {
+      clauses.push(`LOWER((payload::jsonb ->> '${fields[key]}')) LIKE LOWER(?)`);
+      params.push(`%${value}%`);
+    }
+  }
+  return { where: clauses.join(' AND '), params };
 }
 import { digest } from './content-digest.js';
 export { digest } from './content-digest.js';
@@ -305,15 +361,15 @@ export interface GameRepository extends WorldStore {
   records?: WorldRecords;
   memories?: MemoryRepository;
   readonly persistence?: 'postgres';
-  putIntelligenceCall(call: IntelligenceCall): Promise<void>;
-  putIntelligenceCalls?(calls: IntelligenceCall[]): Promise<void>;
+  putIntelligenceCalls(calls: PreparedDiagnosticRecord[]): Promise<void>;
   intelligenceCalls(offset: number, access?: DiagnosticAccess): Promise<IntelligenceCall[]>;
   intelligenceCall(id: string): Promise<IntelligenceCall | undefined>;
-  diagnosticRoots(
+  latestDiagnosticRootId(access?: DiagnosticAccess): Promise<string | undefined>;
+  diagnosticRootSummaries(
     offset: number,
     filters: Record<string, string>,
     access?: DiagnosticAccess,
-  ): Promise<IntelligenceCall[]>;
+  ): Promise<DiagnosticRootSummary[]>;
   diagnosticStages(parentIds: string[], details?: boolean): Promise<IntelligenceCall[]>;
   getIntegration(key: string): Promise<unknown>;
   putIntegration(key: string, value: unknown): Promise<void>;
@@ -430,16 +486,13 @@ export class SqlGameRepository implements GameRepository {
       .get(id);
     return row ? (JSON.parse(String(row['payload'])) as IntelligenceCall) : undefined;
   }
-  async putIntelligenceCall(call: IntelligenceCall): Promise<void> {
-    await this.putIntelligenceCalls([call]);
-  }
-  async putIntelligenceCalls(calls: IntelligenceCall[]): Promise<void> {
+  async putIntelligenceCalls(calls: PreparedDiagnosticRecord[]): Promise<void> {
     await this.ready;
     if (!calls.length) return;
     await insertRows(
       this.db,
       'intelligence_calls (id, started_at, payload)',
-      calls.map((call) => [call.id, call.startedAt, JSON.stringify(call)]),
+      calls.map((call) => [call.id, call.startedAt, call.json]),
       'ON CONFLICT(id) DO UPDATE SET payload = excluded.payload',
     );
     // Diagnostic retention is approximate between periodic pruning passes.
@@ -467,57 +520,43 @@ export class SqlGameRepository implements GameRepository {
     return rows.map((row) => JSON.parse(String(row['payload'])) as IntelligenceCall);
   }
 
-  async diagnosticRoots(
+  async latestDiagnosticRootId(access?: DiagnosticAccess): Promise<string | undefined> {
+    await this.ready;
+    const selection = diagnosticRootSelection({}, access);
+    const row = await this.db
+      .prepare(
+        `SELECT id FROM intelligence_calls WHERE ${selection.where} ORDER BY started_at DESC,id DESC LIMIT 1`,
+      )
+      .get(...selection.params);
+    return row ? String(row['id']) : undefined;
+  }
+  async diagnosticRootSummaries(
     offset: number,
     filters: Record<string, string>,
     access?: DiagnosticAccess,
-  ): Promise<IntelligenceCall[]> {
+  ): Promise<DiagnosticRootSummary[]> {
     await this.ready;
-
-    const clauses = ["(payload::jsonb #>> '{parentId}') IS NULL"];
-    const params: unknown[] = [];
-    if (access) {
-      const permitted = diagnosticPredicate(access);
-      clauses.push(permitted.sql);
-      params.push(...permitted.params);
-    }
-    const fields: Record<string, string> = {
-      actor: 'actorName',
-      route: 'route',
-    };
-    for (const [key, value] of Object.entries(filters)) {
-      if (!value) continue;
-      if (key === 'search') {
-        clauses.push('LOWER(payload) LIKE LOWER(?)');
-        params.push(`%${value}%`);
-      } else if (key === 'from' || key === 'to') {
-        clauses.push(`started_at ${key === 'from' ? '>=' : '<='} ?`);
-        params.push(value);
-      } else if (key === 'stage') {
-        clauses.push(
-          "id IN (SELECT (payload::jsonb #>> '{parentId}') FROM intelligence_calls WHERE LOWER((payload::jsonb #>> '{kind}')) LIKE LOWER(?))",
-        );
-        params.push(`%${value}%`);
-      } else if (key === 'outcome') {
-        // Panel outcome labels (Failed, Canceled) cover both the root status and its finer
-        // disposition, such as `refused` or `cancelled`.
-        const term = `%${value.replace(/canceled/i, 'cancel')}%`;
-        clauses.push(
-          "(LOWER((payload::jsonb ->> 'disposition')) LIKE LOWER(?) OR LOWER((payload::jsonb ->> 'status')) LIKE LOWER(?))",
-        );
-        params.push(term, term);
-      } else if (fields[key]) {
-        clauses.push(`LOWER((payload::jsonb ->> '${fields[key]}')) LIKE LOWER(?)`);
-        params.push(`%${value}%`);
-      }
-    }
-    return (
-      await this.db
-        .prepare(
-          `SELECT payload FROM intelligence_calls WHERE ${clauses.join(' AND ')} ORDER BY started_at DESC,id DESC LIMIT 26 OFFSET ?`,
-        )
-        .all(...params, offset)
-    ).map((row) => JSON.parse(String(row['payload'])) as IntelligenceCall);
+    const selection = diagnosticRootSelection(filters, access);
+    // Select the bounded page before decoding each body once. Keep SELECT outermost
+    // so the PostgreSQL adapter uses its reader rather than the gameplay writer.
+    const rows = await this.db
+      .prepare(
+        `SELECT summary FROM (
+          WITH selected AS MATERIALIZED (
+            SELECT id,started_at,payload::jsonb AS body FROM intelligence_calls
+            WHERE ${selection.where} ORDER BY started_at DESC,id DESC LIMIT 26 OFFSET ?
+          )
+          SELECT id,started_at,((body - 'input' - 'output' - 'exchanges') || jsonb_build_object(
+            'input', jsonb_build_object('reason',body #> '{input,reason}','text',body #> '{input,text}'),
+            'output', jsonb_build_object(
+              'ok',body #> '{output,ok}','code',body #> '{output,code}',
+              'message',body #> '{output,message}','reason',body #> '{output,reason}',
+              'error',body #> '{output,error}','receipt',body #> '{output,receipt}'),
+            'exchanges','[]'::jsonb))::text AS summary FROM selected
+          ) roots ORDER BY started_at DESC,id DESC`,
+      )
+      .all(...selection.params, offset);
+    return rows.map((row) => JSON.parse(String(row['summary'])) as DiagnosticRootSummary);
   }
   async diagnosticStages(parentIds: string[], details = false): Promise<IntelligenceCall[]> {
     await this.ready;
@@ -1739,42 +1778,52 @@ export class SqlGameRepository implements GameRepository {
     receipt = normalizeReceiptCost(receipt);
     await this.db.transaction(async () => {
       const row = await this.db
-        .prepare('SELECT status,reserved,receipt FROM attempts WHERE id = ?')
+        .prepare('SELECT status,reserved,spent,receipt FROM attempts WHERE id = ?')
         .get(id);
       if (!row) return;
       const prior = row['receipt'] ? (JSON.parse(String(row['receipt'])) as AiReceipt) : undefined;
-      // Late pricing can settle the original work, but cannot retract evidence
-      // that it may have started and manufacture a zero-charge non-dispatch.
-      if (prior?.dispatched && !receipt.dispatched)
-        throw new Error('Spending receipt cannot retract dispatch evidence.');
-      if (prior?.providerRequestId && prior.providerRequestId !== receipt.providerRequestId)
-        throw new Error('Spending receipt changed its external request identity.');
+      assertAttemptReceiptContinuity(prior, receipt);
       if (row['status'] === 'settled') {
         // A final priced receipt is immutable; an unpriced attempt may receive
         // definitive billing later without authorizing another dispatch.
         if (!prior?.dispatched || usdToMicroUsd(prior.estimatedCostUsd) !== undefined) return;
       }
-      if (row['status'] === 'uncertain' && receipt.completionUncertain) return;
+      receipt = retainKnownAttemptCost(receipt, prior?.estimatedCostUsd);
       const reserve = Number(row['reserved']);
       const estimated = receipt.estimatedCostUsd;
-      // Missing/ambiguous provider evidence conservatively consumes the reservation.
+      const uncertain =
+        receipt.dispatched && (receipt.completionUncertain || estimated === undefined);
+      // A later uncertain observation can increase the obligation without proving
+      // completion. Missing/smaller evidence cannot restore spending headroom.
       const spent = !receipt.dispatched
         ? 0
-        : receipt.completionUncertain || estimated === undefined
-          ? reserve
-          : micro(estimated);
+        : uncertain
+          ? uncertainAttemptMicroUsd(
+              reserve,
+              Number(row['spent']),
+              prior?.estimatedCostUsd,
+              estimated,
+            )
+          : micro(estimated!);
+      const priorCharge = usdToMicroUsd(prior?.estimatedCostUsd) ?? -1;
+      const observedCharge = usdToMicroUsd(estimated) ?? -1;
+      // Repeated uncertain polling must not rewrite an unchanged obligation.
+      // A higher known charge is worth retaining even while below the reserve.
+      if (
+        row['status'] === 'uncertain' &&
+        receipt.completionUncertain &&
+        prior?.providerRequestId === receipt.providerRequestId &&
+        prior?.completionUncertain === receipt.completionUncertain &&
+        prior?.macrofoldBillingMode === receipt.macrofoldBillingMode &&
+        spent === Number(row['spent']) &&
+        observedCharge <= priorCharge
+      )
+        return;
       await this.db
         .prepare(
           "UPDATE attempts SET status=?,spent=?,receipt=? WHERE id=? AND status IN ('reserved','uncertain','settled')",
         )
-        .run(
-          receipt.dispatched && (receipt.completionUncertain || estimated === undefined)
-            ? 'uncertain'
-            : 'settled',
-          spent,
-          JSON.stringify(receipt),
-          id,
-        );
+        .run(uncertain ? 'uncertain' : 'settled', spent, JSON.stringify(receipt), id);
       const notify = () => {
         for (const listener of this.settlementListeners) listener();
       };

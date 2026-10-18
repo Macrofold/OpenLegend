@@ -12,7 +12,7 @@ import {
   configuredCreationTargetSchema,
   creationDestinationSchema,
 } from './creation-target-contracts.js';
-import type { ModelTokenPrices, TokenPrices } from '@open-legend/ai';
+import type { MacrofoldBillingMode, ModelTokenPrices, TokenPrices } from '@open-legend/ai';
 import { captureModelPrices } from '@open-legend/ai';
 import { BASE_STARTING_WORLD_PRESETS, isSafeRecordId } from '@open-legend/domain';
 
@@ -108,10 +108,11 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
   } catch {
     throw new Error('OPEN_LEGEND_DATABASE_URL is required and must be a PostgreSQL URL.');
   }
-  const macrofoldBillingMode = env['MACROFOLD_BILLING_MODE'] ?? 'byok';
+  const configuredBillingMode = env['MACROFOLD_BILLING_MODE'] ?? 'byok';
   const sqlWriteGroups = z.enum(['on', 'off']).parse(env['OPEN_LEGEND_SQL_WRITE_GROUPS'] ?? 'on');
-  if (macrofoldBillingMode !== 'byok' && macrofoldBillingMode !== 'managed')
+  if (configuredBillingMode !== 'byok' && configuredBillingMode !== 'managed')
     throw new Error('MACROFOLD_BILLING_MODE must be byok or managed.');
+  const macrofoldBillingMode: MacrofoldBillingMode = configuredBillingMode;
   if (
     env['OPENAI_MODEL'] &&
     env['OPENAI_MODEL'] !== 'gpt-5.6-luna' &&

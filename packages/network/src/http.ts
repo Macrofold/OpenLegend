@@ -59,7 +59,10 @@ export interface NetworkExchange {
   completedAt: number;
 }
 
-export type NetworkExchangeObserver = (exchange: NetworkExchange) => undefined;
+export type NetworkExchangeObserver = ((exchange: NetworkExchange) => undefined) & {
+  /** Optional diagnostic interest is checked before preparing or copying content. */
+  captureContent?: () => boolean;
+};
 
 const observers = new WeakMap<NetworkOperation, NetworkExchangeObserver>();
 
@@ -218,6 +221,14 @@ async function consume<T>(
     const scope = scopeOf(effective);
     const startedAt = scope.clock.wallNow();
     const observer = request.diagnostics === 'omit' ? undefined : exchangeObserver(effective);
+    const interested = () => {
+      try {
+        return !!observer && (observer.captureContent?.() ?? true);
+      } catch {
+        return false;
+      }
+    };
+    let captureContent = interested();
     let owned: OwnedHttp | undefined;
     let status: number | undefined;
     let failure: NetworkError | undefined;
@@ -261,7 +272,11 @@ async function consume<T>(
           }
           total += result.value.byteLength;
           if (!framed) checkBodyLength(total, request.bodyPolicy, status);
-          if (observer && streaming && !isStream && !diagnosticOverflow) {
+          if (captureContent && !interested()) {
+            captureContent = false;
+            diagnosticChunks.length = 0;
+          }
+          if (captureContent && streaming && !isStream && !diagnosticOverflow) {
             diagnosticLength += result.value.byteLength;
             const remaining = 1_000_000 - (diagnosticLength - result.value.byteLength);
             if (remaining > 0) diagnosticChunks.push(result.value.subarray(0, remaining).slice());
@@ -287,10 +302,14 @@ async function consume<T>(
     } finally {
       if (observer) {
         try {
-          const completeBytes = isStream
-            ? undefined
-            : (observedBytes?.() ??
-              joinBytes(diagnosticChunks, Math.min(1_000_000, diagnosticLength)));
+          // A capture can finish while its abandoned transport is still settling.
+          // Recheck before copying required caller bytes into optional observation.
+          captureContent &&= interested();
+          const completeBytes =
+            !captureContent || isStream
+              ? undefined
+              : (observedBytes?.() ??
+                joinBytes(diagnosticChunks, Math.min(1_000_000, diagnosticLength)));
           const truncated = diagnosticOverflow || (completeBytes?.byteLength ?? 0) > 1_000_000;
           // Diagnostics receive their own bounded prefix; an observer must not
           // be able to change the bytes the semantic caller will decode.
@@ -298,7 +317,10 @@ async function consume<T>(
           observer({
             url: String(request.url),
             method: request.init?.method ?? 'GET',
-            requestBody: typeof request.init?.body === 'string' ? request.init.body : undefined,
+            requestBody:
+              captureContent && typeof request.init?.body === 'string'
+                ? request.init.body
+                : undefined,
             status,
             bytes,
             truncated,

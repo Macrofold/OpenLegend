@@ -101,6 +101,21 @@ export interface BlockingWorldCreationOperation extends WorldCreationReceiptCurs
     'dispatching' | 'uncertain' | 'created' | 'host-unavailable' | 'ready'
   >;
 }
+type AgentRecordKind =
+  | 'turn'
+  | 'draft'
+  | 'revision'
+  | 'plan'
+  | 'packet'
+  | 'operation'
+  | 'creation-operation'
+  | 'removal';
+function recordPayload(value: unknown): string {
+  const payload = JSON.stringify(value);
+  if (Buffer.byteLength(payload) > 128 * 1024)
+    throw new Error('Authoring record exceeds its byte limit.');
+  return payload;
+}
 export class WorldAgentStore {
   constructor(readonly db: SqlDatabase) {}
   async initialize() {
@@ -186,25 +201,42 @@ export class WorldAgentStore {
       .get(sessionId, kind, id);
     return row ? (JSON.parse(String(row['payload'])) as T) : undefined;
   }
-  async put(sessionId: string, kind: string, id: string, value: unknown) {
-    if (kind === 'turn') {
-      // Every turn write is serialized by the session owner. Questions, answers
-      // and cancellation must outrank held snapshots just as growing text does.
-      const prior = await this.get<AgentTurnRecord>(sessionId, kind, id);
-      value = { ...(value as AgentTurnRecord), revision: (prior?.revision ?? 0) + 1 };
-    }
-    // Optional preview must not crowd out an immutable question or required terminal
-    // outcome. Control characters can occupy more JSON bytes than UTF-8 source bytes.
-    const retained = kind === 'turn' ? boundedTurn(value as AgentTurnRecord) : value;
-    const payload = JSON.stringify(retained);
-    if (Buffer.byteLength(payload) > 128 * 1024)
-      throw new Error('Authoring record exceeds its byte limit.');
+  async put(sessionId: string, kind: Exclude<AgentRecordKind, 'turn'>, id: string, value: unknown) {
+    const payload = recordPayload(value);
     await this.db
       .prepare(
         `INSERT INTO world_agent_records VALUES (?,?,?,?)
       ON CONFLICT(session_id,kind,id) DO UPDATE SET payload=excluded.payload`,
       )
       .run(sessionId, kind, id, payload);
+  }
+  /** The session owner supplies its already-read turn. Exact revision admission
+   * protects newer questions/cancellation without fetching the large body again.
+   * docs/world-agent-runtime.md#incremental-owner-replies */
+  async putTurn(sessionId: string, id: string, turn: AgentTurnRecord): Promise<number> {
+    const previous = turn.revision;
+    const revision = (previous ?? 0) + 1;
+    // Optional preview cannot crowd out a required question or terminal outcome.
+    const payload = recordPayload(boundedTurn({ ...turn, revision }));
+    if (previous === undefined) {
+      await this.db
+        .prepare('INSERT INTO world_agent_records VALUES (?,?,?,?)')
+        .run(sessionId, 'turn', id, payload);
+    } else {
+      const saved = await this.db
+        .prepare(
+          `UPDATE world_agent_records SET payload=? WHERE session_id=? AND kind='turn' AND id=?
+           AND (payload::jsonb->>'revision')::bigint=? RETURNING id`,
+        )
+        .get(payload, sessionId, id, previous);
+      if (!saved)
+        throw new Error(
+          'This message changed before it could be saved. Refresh to see its current result.',
+        );
+    }
+    // A caller can write the same owned turn twice inside its transaction.
+    turn.revision = revision;
+    return revision;
   }
   async list<T>(sessionId: string, kind: string, after = '', limit = 50): Promise<T[]> {
     return (
@@ -375,29 +407,60 @@ export class WorldAgentStore {
       ORDER BY COALESCE(CAST((payload::jsonb #>> '{sequence}') AS BIGINT),0) DESC,id DESC LIMIT ?`,
       )
       .all(sessionId, cursor.sequence, cursor.id, limit + 1);
-    const items: WorldAgentTurnView[] = rows.slice(0, limit).map((row) => {
-      const turn = JSON.parse(String(row['payload'])) as AgentTurnRecord;
-      return {
-        id: String(row['id']),
-        revision: turn.revision ?? 0,
-        sequence: turn.sequence ?? 0,
-        text: turn.text ?? null,
-        createdAt: turn.createdAt ?? null,
-        cancelRequested: !!turn.cancelRequested,
-        response: turn.response ?? null,
-        ...(turn.progress ? { progress: publicProgress(turn.progress) } : {}),
-        ...(turn.question ? { question: projectQuestion(turn.question) } : {}),
-      };
-    });
+    const items = rows
+      .slice(0, limit)
+      .map((row) =>
+        publicTurn(
+          String(row['id']),
+          JSON.parse(String(row['payload'])) as AgentTurnRecord,
+          projectQuestion,
+        ),
+      );
     const last = items.at(-1);
     return {
       turns: items,
       next: rows.length > limit && last ? { sequence: last.sequence, id: last.id } : null,
     };
   }
+  async latestTurn(
+    sessionId: string,
+    projectQuestion: (question: NonNullable<AgentTurnRecord['question']>) => WorldAgentQuestion,
+  ): Promise<WorldAgentTurnView | null> {
+    const row = await this.db
+      .prepare(
+        `SELECT id,payload FROM world_agent_records WHERE session_id=? AND kind='turn'
+         ORDER BY COALESCE(CAST((payload::jsonb #>> '{sequence}') AS BIGINT),0) DESC,id DESC LIMIT 1`,
+      )
+      .get(sessionId);
+    return row
+      ? publicTurn(
+          String(row['id']),
+          JSON.parse(String(row['payload'])) as AgentTurnRecord,
+          projectQuestion,
+        )
+      : null;
+  }
   exposure(budgetId: string) {
     return readAttemptBudget(this.db, budgetId);
   }
+}
+
+export function publicTurn(
+  id: string,
+  turn: AgentTurnRecord,
+  projectQuestion: (question: NonNullable<AgentTurnRecord['question']>) => WorldAgentQuestion,
+): WorldAgentTurnView {
+  return {
+    id,
+    revision: turn.revision ?? 0,
+    sequence: turn.sequence ?? 0,
+    text: turn.text ?? null,
+    createdAt: turn.createdAt ?? null,
+    cancelRequested: !!turn.cancelRequested,
+    response: turn.response ?? null,
+    ...(turn.progress ? { progress: publicProgress(turn.progress) } : {}),
+    ...(turn.question ? { question: projectQuestion(turn.question) } : {}),
+  };
 }
 
 export function publicProgress(

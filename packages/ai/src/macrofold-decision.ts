@@ -8,14 +8,15 @@ import {
   usdToMicroUsd,
 } from './cost.js';
 import {
-  compileSchema,
+  prepareSchema,
+  PreparedJson,
   decodeJudge,
   decodeUsage,
   digest,
   InvalidData,
   record,
   serialize,
-  validateQuestions,
+  prepareQuestions,
 } from './validation.js';
 import type {
   AiReceipt,
@@ -30,7 +31,7 @@ import type {
 } from './types.js';
 
 export type MacrofoldDecisionModel = 'typesafe/jev-1.13' | 'microsoft/microsoft-decision-1';
-export type MacrofoldBillingMode = 'managed' | 'byok';
+export type MacrofoldBillingMode = NonNullable<AiReceipt['macrofoldBillingMode']>;
 
 export interface MacrofoldGenerationConfig {
   baseUrl: string;
@@ -63,6 +64,79 @@ export interface MacrofoldDecisionRequest extends JudgeRequest {
 }
 
 const terminal = new Set(['succeeded', 'failed', 'cancelled', 'timed_out']);
+
+/** A finalized immediate response carries the same identity facts as a Run read.
+ * No extra observation is needed merely to reconstruct that control projection. */
+export function macrofoldTerminalStatus(
+  accepted: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  if (!accepted['result'] || !terminal.has(String(accepted['status']))) return undefined;
+  return {
+    id: accepted['run_id'],
+    kind: accepted['kind'],
+    status: accepted['status'],
+    wait_seconds: accepted['wait_seconds'],
+  };
+}
+
+/** Run execution includes platform finalization; it is never model-only latency. */
+export function captureMacrofoldRunTiming(
+  status: Record<string, unknown>,
+  receipt: AiReceipt,
+): void {
+  const began = typeof status['started_at'] === 'string' ? Date.parse(status['started_at']) : NaN;
+  const ended =
+    typeof status['completed_at'] === 'string' ? Date.parse(status['completed_at']) : NaN;
+  if (Number.isFinite(began) && Number.isFinite(ended))
+    receipt.intermediaryRunLatencyMs = Math.max(0, Math.round(ended - began));
+  if (typeof status['wait_seconds'] === 'number' && Number.isFinite(status['wait_seconds']))
+    receipt.intermediaryQueueLatencyMs = Math.max(0, Math.round(status['wait_seconds'] * 1000));
+}
+
+/** Shared completion/accounting meaning for immediate calls and their recovery.
+ * Missing billing stays unknown; it does not trigger a report query or a new call. */
+export function captureMacrofoldInferenceReceipt(
+  run: string,
+  status: Record<string, unknown>,
+  result: Record<string, unknown>,
+  receipt: AiReceipt,
+): Record<string, unknown> {
+  receipt.completionUncertain = macrofoldInferenceEvidence(run, status, result).completionUncertain;
+  const inference = object(result['inference']);
+  const admittedMode = receipt.macrofoldBillingMode;
+  const reportedMode = record(inference['billing'])
+    ? inference['billing']['billing_mode']
+    : undefined;
+  // Current host configuration cannot reinterpret an older Run's zero BYOK
+  // platform charge as a paid model's complete bill. Conflicting evidence is unpriced.
+  const billingMode =
+    (admittedMode === 'managed' || admittedMode === 'byok') &&
+    (reportedMode === undefined || reportedMode === admittedMode)
+      ? admittedMode
+      : undefined;
+  if (billingMode === undefined) delete receipt.estimatedCostUsd;
+  captureEmbeddedInferenceUsage(inference, receipt, billingMode);
+  // A fetched terminal Run independently reports the same managed charge. Keep
+  // the larger usable observation; never add overlapping reports of one bill.
+  // Immediate response projections contain no Run charge to manufacture here.
+  const runCharge = billingMode === 'managed' ? microUsdToUsd(status['cost_micro_usd']) : undefined;
+  if (runCharge !== undefined)
+    receipt.estimatedCostUsd = Math.max(receipt.estimatedCostUsd ?? 0, runCharge);
+  captureMacrofoldRunTiming(status, receipt);
+  if (
+    typeof inference['model_revision'] === 'string' &&
+    /^[\w./:-]{1,128}$/.test(inference['model_revision'])
+  ) {
+    receipt.model = inference['model_revision'];
+    receipt.modelVersionStatus = 'reported';
+  }
+  const providerMs = record(inference['timings_ms'])
+    ? inference['timings_ms']['provider']
+    : undefined;
+  if (typeof providerMs === 'number' && Number.isFinite(providerMs) && providerMs >= 0)
+    receipt.providerLatencyMs = providerMs;
+  return inference;
+}
 
 /** Shared by gameplay and standalone evaluation: a charge alone does not prove completion. */
 export function macrofoldInferenceEvidence(
@@ -119,7 +193,7 @@ export function macrofoldInferenceEvidence(
 function captureEmbeddedInferenceUsage(
   inference: Record<string, unknown>,
   receipt: AiReceipt,
-  billingMode: MacrofoldBillingMode,
+  billingMode: MacrofoldBillingMode | undefined,
 ): void {
   const usage = record(inference['usage']) ? inference['usage'] : {};
   const billing =
@@ -147,7 +221,7 @@ function captureEmbeddedInferenceUsage(
     written = cacheCount(usage['cache_write_input_tokens']);
   const reasoning =
     nativeUsage?.outputTokens === output ? nativeUsage?.reasoningOutputTokens : undefined;
-  receipt.usage =
+  const embeddedUsage =
     usage['completeness'] === 'complete' && input !== undefined && output !== undefined
       ? decodeUsage({
           usage: {
@@ -163,31 +237,40 @@ function captureEmbeddedInferenceUsage(
           },
         })
       : undefined;
-  receipt.estimatedCostUsd =
+  const estimatedCostUsd =
     billingMode === 'managed'
       ? microUsdToUsd(billing['charged_micro_usd'])
-      : billing['provisional'] === false && receipt.usage
+      : billingMode === 'byok' && billing['provisional'] === false && embeddedUsage
         ? microUsdToUsd(billing['reported_micro_usd'])
         : undefined;
   const reported = billing['provider_reported_cost_usd'];
-  receipt.providerReportedCostUsd =
+  const providerReportedCostUsd =
     billing['provider_reported_cost_status'] === 'reported' &&
     typeof reported === 'number' &&
     usdToMicroUsd(reported) !== undefined
       ? reported
       : undefined;
+  // Exact-Run reconciliation can add evidence, but a missing field cannot erase
+  // previously established usage, a platform charge or a provider-reported amount.
+  if (embeddedUsage !== undefined) receipt.usage = embeddedUsage;
+  if (estimatedCostUsd !== undefined)
+    receipt.estimatedCostUsd = Math.max(receipt.estimatedCostUsd ?? 0, estimatedCostUsd);
+  if (providerReportedCostUsd !== undefined)
+    receipt.providerReportedCostUsd = providerReportedCostUsd;
 }
 
-/** Exact-Run complete usage, shared with the gameplay adapter. Missing billing stays unpriced. */
+/** Complete exact-Run native harness usage. Inferences use their embedded receipt. */
 export async function captureMacrofoldRunUsage(
   api: Pick<MacrofoldTransport, 'request'>,
   receipt: AiReceipt,
   signal: AbortSignal,
-  billingMode: string,
-  uninvokedInferenceChargeUsd?: number,
 ): Promise<void> {
   if (!receipt.providerRequestId) return;
-  if (billingMode === 'byok') delete receipt.estimatedCostUsd;
+  const billingMode = receipt.macrofoldBillingMode;
+  if (billingMode !== 'managed' && billingMode !== 'byok') {
+    delete receipt.estimatedCostUsd;
+    return;
+  }
   try {
     const query = new URLSearchParams({
       from: receipt.startedAt,
@@ -213,11 +296,11 @@ export async function captureMacrofoldRunUsage(
     const models = entries
       .filter((entry) => entry['kind'] === 'model')
       .map((entry) => object(entry['model_usage']));
-    // An exact not-invoked Run can omit model usage. Its known platform
-    // charge still needs complete usage; an empty page may precede billing rows.
+    // A native harness's usage-based estimate needs complete model rows;
+    // an empty page may precede billing and cannot prove free execution.
     // docs/ai-providers.md#receipts-outcomes-and-accounting
     if (
-      (!models.length && uninvokedInferenceChargeUsd === undefined) ||
+      !models.length ||
       models.some((model) => model['completeness'] !== 'complete' || model['provisional'] !== false)
     )
       return;
@@ -274,11 +357,8 @@ export async function captureMacrofoldRunUsage(
       ];
       const charged = sumSafeIntegers(charges);
       const cost = charged === undefined ? undefined : microUsdToUsd(String(charged));
-      if (
-        cost !== undefined &&
-        (uninvokedInferenceChargeUsd === undefined || cost >= uninvokedInferenceChargeUsd)
-      )
-        receipt.estimatedCostUsd = cost;
+      if (cost !== undefined)
+        receipt.estimatedCostUsd = Math.max(receipt.estimatedCostUsd ?? 0, cost);
     }
   } catch {
     // Reporting failure cannot turn completed work into free execution or trigger paid retries.
@@ -324,6 +404,7 @@ function createMacrofoldExecutor(
     const receipt: AiReceipt = {
       requestId: request.requestId,
       provider: 'macrofold',
+      macrofoldBillingMode: config.billingMode,
       requestedModel: config.model,
       model: config.model,
       modelVersionStatus: 'unavailable',
@@ -375,7 +456,7 @@ function createMacrofoldExecutor(
             model_binding: {
               provider: 'openrouter',
               model: config.model,
-              billing_mode: config.billingMode,
+              billing_mode: receipt.macrofoldBillingMode,
               ...(config.providerConnectionId
                 ? { provider_connection_id: config.providerConnectionId }
                 : {}),
@@ -387,7 +468,8 @@ function createMacrofoldExecutor(
               timeout_seconds: Math.ceil(remaining / 1000),
             },
           };
-          receipt.providerRequestDigest = digest(serialize(body, 500_000));
+          const preparedBody = new PreparedJson(body, 500_000);
+          receipt.providerRequestDigest = digest(preparedBody.text(500_000));
           signal.throwIfAborted();
           receipt.dispatched = true;
           receipt.completionUncertain = true;
@@ -412,7 +494,7 @@ function createMacrofoldExecutor(
             accepted = object(
               await api.request(
                 '/v1/inferences',
-                body,
+                preparedBody,
                 digest(request.requestId),
                 signal,
                 undefined,
@@ -435,21 +517,7 @@ function createMacrofoldExecutor(
           }
           run = await rememberAccepted(accepted);
           const embeddedResult = accepted['result'] ? object(accepted['result']) : undefined;
-          // A terminal POST already proves this Run's status; keep polling only for
-          // an exceptional recovery receipt.
-          const embeddedInference = embeddedResult && object(embeddedResult['inference']);
-          const embeddedBilling =
-            embeddedInference && record(embeddedInference['billing'])
-              ? embeddedInference['billing']
-              : undefined;
-          let status: Record<string, unknown> | undefined =
-            embeddedResult && terminal.has(String(accepted['status']))
-              ? {
-                  ...accepted,
-                  id: accepted['run_id'],
-                  cost_micro_usd: embeddedBilling?.['charged_micro_usd'],
-                }
-              : undefined;
+          let status = macrofoldTerminalStatus(accepted);
           const readRun = async (path: string): Promise<Record<string, unknown>> => {
             for (;;) {
               signal.throwIfAborted();
@@ -473,37 +541,11 @@ function createMacrofoldExecutor(
           }
           const result =
             embeddedResult ?? (await readRun(`/v1/runs/${encodeURIComponent(run)}/result`));
-          const evidence = macrofoldInferenceEvidence(run, status, result);
-          receipt.completionUncertain = evidence.completionUncertain;
-          const inference = object(result['inference']);
+          const inference = captureMacrofoldInferenceReceipt(run, status, result, receipt);
           const raw = inference['value'];
-          captureEmbeddedInferenceUsage(inference, receipt, config.billingMode);
           // Caller cancellation during acceptance persistence or recovery still
           // withdraws the answer; no paid request is retried.
           signal.throwIfAborted();
-          if (
-            typeof inference['model_revision'] === 'string' &&
-            /^[\w./:-]{1,128}$/.test(inference['model_revision'])
-          ) {
-            receipt.model = inference['model_revision'];
-            receipt.modelVersionStatus = 'reported';
-          }
-          const began =
-            typeof status['started_at'] === 'string' ? Date.parse(status['started_at']) : NaN;
-          const ended =
-            typeof status['completed_at'] === 'string' ? Date.parse(status['completed_at']) : NaN;
-          if (Number.isFinite(began) && Number.isFinite(ended))
-            receipt.intermediaryRunLatencyMs = Math.max(0, Math.round(ended - began));
-          const providerMs = record(inference['timings_ms'])
-            ? inference['timings_ms']['provider']
-            : undefined;
-          if (typeof providerMs === 'number' && Number.isFinite(providerMs) && providerMs >= 0)
-            receipt.providerLatencyMs = providerMs;
-          if (typeof status['wait_seconds'] === 'number' && Number.isFinite(status['wait_seconds']))
-            receipt.intermediaryQueueLatencyMs = Math.max(
-              0,
-              Math.round(status['wait_seconds'] * 1000),
-            );
           if (receipt.completionUncertain)
             return { outcome: 'uncertain', reason: 'provider_completion_unknown', receipt };
           if (status['status'] === 'cancelled')
@@ -593,11 +635,10 @@ export function createMacrofoldDecisionClient(configuration: MacrofoldDecisionCo
   return {
     judge: (request) =>
       execute(request, () => {
-        validateQuestions(request.questions);
-        // Validate JSON before cloning without canonical key sorting: the first
-        // offered choice must still win an exact tie after the provider wait.
-        serialize({ state: request.state, questions: request.questions }, 500_000);
-        const input = structuredClone({ state: request.state, questions: request.questions });
+        const input = {
+          state: JSON.parse(serialize(request.state, 500_000)) as unknown,
+          questions: prepareQuestions(request.questions, 500_000),
+        };
         return {
           input,
           maxOutputTokens: Math.min(
@@ -626,8 +667,7 @@ export function createMacrofoldGenerationClient(configuration: MacrofoldGenerati
         const name =
           request.schemaName ?? request.task.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64);
         if (!/^[a-zA-Z0-9_-]{1,64}$/.test(name)) throw new InvalidData('invalid_schema_name');
-        const schema: unknown = JSON.parse(serialize(request.schema, 500_000));
-        const validate = compileSchema(schema);
+        const { schema, validate } = prepareSchema(request.schema, 500_000);
         const maxOutputTokens = request.maxOutputTokens ?? 4096;
         if (
           !Number.isSafeInteger(maxOutputTokens) ||

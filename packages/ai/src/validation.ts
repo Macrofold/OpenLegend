@@ -1,6 +1,12 @@
 import { createHash } from 'node:crypto';
 import Ajv, { type ValidateFunction } from 'ajv';
-import type { JudgmentAnswer, JudgeValue, TypedQuestionMap, TokenUsage } from './types.js';
+import type {
+  JudgmentAnswer,
+  JudgeValue,
+  TypedQuestionMap,
+  TokenUsage,
+  JsonSchema,
+} from './types.js';
 
 export class InvalidData extends Error {
   constructor(readonly code: string) {
@@ -55,6 +61,21 @@ export function serialize(value: unknown, maxBytes: number): string {
   return result;
 }
 
+/** One operation owns these validated bytes through hashing, journaling and HTTP.
+ * This is not a reusable authority check or a cache of a mutable caller object. */
+export class PreparedJson {
+  readonly #text: string;
+  readonly #bytes: number;
+  constructor(value: unknown, maxBytes: number) {
+    this.#text = serialize(value, maxBytes);
+    this.#bytes = Buffer.byteLength(this.#text);
+  }
+  text(maxBytes: number): string {
+    if (this.#bytes > maxBytes) throw new InvalidData('request_too_large');
+    return this.#text;
+  }
+}
+
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const nonempty = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0;
 
@@ -92,6 +113,22 @@ export function validateQuestions(value: unknown): asserts value is TypedQuestio
         throw new InvalidData('invalid_noul_question');
     } else throw new InvalidData('invalid_question_type');
   }
+}
+
+/** Keep offered choice order as well as values through asynchronous execution.
+ * Canonical JSON sorts object keys, so its parsed copy cannot own tie-breaking. */
+export function prepareQuestions(value: unknown, maxBytes: number): TypedQuestionMap {
+  serialize(value, maxBytes);
+  const captured: unknown = structuredClone(value);
+  validateQuestions(captured);
+  freezeJson(captured);
+  return captured;
+}
+
+function freezeJson(value: unknown): void {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return;
+  for (const child of Object.values(value)) freezeJson(child);
+  Object.freeze(value);
 }
 
 // Conservative application estimates (4 characters/token), not a provider question-count limit.
@@ -225,6 +262,17 @@ export function compileSchema(schema: unknown): ValidateFunction {
     throw new InvalidData('invalid_schema');
   }
 }
+
+/** Capture the exact schema once; later caller mutation cannot change its request
+ * or the validator retained across the provider wait. No cross-request cache. */
+export function prepareSchema(schema: unknown, maxBytes: number) {
+  const captured: unknown = JSON.parse(serialize(schema, maxBytes));
+  const validate = compileSchema(captured);
+  freezeJson(captured);
+  return Object.freeze({ schema: captured as JsonSchema, validate });
+}
+
+export type PreparedSchema = ReturnType<typeof prepareSchema>;
 
 export function decodeUsage(data: unknown): TokenUsage | undefined {
   if (!record(data) || !record(data.usage)) return undefined;

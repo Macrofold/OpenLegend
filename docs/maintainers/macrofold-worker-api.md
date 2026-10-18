@@ -22,6 +22,8 @@ Accepted target: application/world compute ownership, separate actor Worktrees a
 
 ## MW02 — Lifecycle and accounting
 
+- [x] Shared complete inference receipts serve gameplay, standalone execution and exact-Run reconciliation; ordinary completion avoids status/billing rereads, known independent charges remain protected and timing names match measured intervals. Schemas, questions and encoded request bodies retain operation-owned immutable preparation. Native harness accounting stays separate. Review fixes bind continued native Sessions to their original model/billing mode, preserve larger known uncertain spending holds and share request/Run/mode continuity checks across spending owners. [Plan](../projects/completed/macrofold-efficiency-followup-plan.md) · [focused evidence and limits](../verification/macrofold-efficiency-followup.md).
+
 - [x] Closing a conversation cancels only its own Run, including close during admission; never pause/destroy shared compute. Check cancellation after journal awaits before dispatch, then preserve an already-sent acceptance response for cancellation by Run ID.
 - [x] Keep Worker allocation economics separate from Run/model charges. Do not reinterpret the old finite Sandbox allowance as an hourly Worker ceiling or refund historical compute holds without authoritative reconciliation.
 - [x] Document missing/paused/expired/destroyed Worker behavior and explicit owner recovery without automatic paid renewal.

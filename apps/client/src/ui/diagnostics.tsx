@@ -12,7 +12,7 @@ import {
 import { createPortal } from 'react-dom';
 import { ActivityHistory } from './activity-history';
 import { Focusable } from 'react-aria-components';
-import { PointerTooltip } from '../design-system/pointer-tooltip';
+import { PointerTooltip, type PointerTooltipTriggerProps } from '../design-system/pointer-tooltip';
 import type {
   AuthoredAppraisalRequest,
   GodMindView,
@@ -691,6 +691,8 @@ export type DiagnosticSelection = IntelligenceCall & {
 type Row = DiagnosticSelection;
 type RawView = { title: string; value: unknown };
 
+type PreviewChild = ComponentProps<typeof Focusable>['children'];
+
 /** The existing row or disclosure owns focus; a preview adds no nested tab stop. */
 function Preview({
   title,
@@ -699,7 +701,7 @@ function Preview({
 }: {
   title: string;
   value: ReactNode;
-  children: ComponentProps<typeof Focusable>['children'];
+  children: PreviewChild | ((props: PointerTooltipTriggerProps) => PreviewChild);
 }) {
   return (
     <PointerTooltip
@@ -712,7 +714,11 @@ function Preview({
         </>
       }
     >
-      <Focusable>{children}</Focusable>
+      {typeof children === 'function' ? (
+        (props) => <Focusable>{children(props)}</Focusable>
+      ) : (
+        <Focusable>{children}</Focusable>
+      )}
     </PointerTooltip>
   );
 }
@@ -944,8 +950,19 @@ function StageMetrics({ call }: { call: IntelligenceCall }) {
                 ? 'No provider dispatch'
                 : 'Not reported'}
           </Labeled>
-          {typeof receipt['providerQueueLatencyMs'] === 'number' && (
-            <Labeled label="Provider queue">{String(receipt['providerQueueLatencyMs'])} ms</Labeled>
+          {(
+            [
+              ['providerLatencyMs', 'Provider request'],
+              ['providerQueueLatencyMs', 'Provider queue'],
+              ['intermediaryQueueLatencyMs', 'Macrofold wait'],
+              ['intermediaryRunLatencyMs', 'Macrofold execution'],
+            ] as const
+          ).map(([field, label]) =>
+            typeof receipt[field] === 'number' ? (
+              <Labeled key={field} label={label}>
+                {String(receipt[field])} ms
+              </Labeled>
+            ) : null,
           )}
         </>
       )}
@@ -2266,14 +2283,18 @@ function Stage({
             </>
           }
         >
-          <summary>
-            <StatusIcon status={outcomeKind(failure ? 'failed' : call.status, call.disposition)} />
-            <span className="ol-stage-heading">
-              <strong>{stageTitle(call)}</strong>
-              <span className="ol-stage-peek ol-truncate">Input: {stageInput(call)}</span>
-              <span className="ol-stage-peek ol-truncate">Output: {stageResult(call)}</span>
-            </span>
-          </summary>
+          {(props) => (
+            <summary {...props}>
+              <StatusIcon
+                status={outcomeKind(failure ? 'failed' : call.status, call.disposition)}
+              />
+              <span className="ol-stage-heading">
+                <strong>{stageTitle(call)}</strong>
+                <span className="ol-stage-peek ol-truncate">Input: {stageInput(call)}</span>
+                <span className="ol-stage-peek ol-truncate">Output: {stageResult(call)}</span>
+              </span>
+            </summary>
+          )}
         </Preview>
         <details className="ol-stage-technical">
           <summary>Timing, usage and stage ID</summary>

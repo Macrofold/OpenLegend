@@ -117,13 +117,15 @@ export interface AiReceipt {
   model: string;
   modelVersionStatus: 'reported' | 'unavailable';
   providerRequestId?: string;
+  /** Macrofold billing admitted for this exact request, retained across configuration changes. */
+  macrofoldBillingMode?: 'managed' | 'byok';
   contextDigest: string;
   providerRequestDigest?: string;
   startedAt: string;
   completedAt: string;
   /** Open Legend wall time around the adapter call. */
   latencyMs: number;
-  /** Reported execution duration; standalone Macrofold measures provider transport and normalization, not isolated model compute. */
+  /** Reported execution duration; Macrofold measures provider transport and normalization, not isolated model compute. */
   providerLatencyMs?: number;
   /** Intermediary Run start to completion, including its finalization. */
   intermediaryRunLatencyMs?: number;

@@ -226,6 +226,9 @@ interface ThoughtSchedule {
 
 /** One bounded actor workflow at a time; provider completions never bypass authoritative rules. */
 export class AiDirector {
+  diagnosticCaptureSnapshot() {
+    return this.log.captureSnapshot();
+  }
   readonly replyPreviews: NpcReplyPreviews;
   private running: Running | null = null;
   private pendingWork = new Set<Promise<void>>();
@@ -1909,13 +1912,13 @@ export class AiDirector {
       run.failure =
         result.outcome === 'value' ? undefined : { outcome: result.outcome, reason: result.reason };
       if (result.receipt.completionUncertain) lease?.uncertain();
+      run.ledger?.settle(id, result.receipt, result.outcome);
       if (result.receipt.completionUncertain)
         throw new StopJob(
           'failed',
           'The original provider execution is still uncertain; no world effect or second request was allowed.',
           'uncertain',
         );
-      run.ledger?.settle(id, result.receipt, result.outcome);
       await this.log.record(
         `${id}:accounting`,
         'Accounting',

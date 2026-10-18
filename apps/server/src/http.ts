@@ -1062,7 +1062,10 @@ async function initializeGameServer(
         if (request.method === 'GET' && url.pathname === '/api/performance') {
           responseCapability = 'inspect';
           service.assertScope(scope, 'inspect');
-          return send(response, 200, performanceSnapshot());
+          return send(response, 200, {
+            ...performanceSnapshot(),
+            diagnosticCapture: director.diagnosticCaptureSnapshot(),
+          });
         }
         if (request.method === 'GET' && url.pathname === '/api/world-events') {
           const options = z
@@ -2643,9 +2646,9 @@ async function initializeGameServer(
                 worldId: service.world.id,
                 ...(peek
                   ? {
-                      roots: (await store.diagnosticRoots(0, {}, service.diagnosticAccess(scope)))
-                        .slice(0, 1)
-                        .map(({ id }) => ({ id })),
+                      roots: await store
+                        .latestDiagnosticRootId(service.diagnosticAccess(scope))
+                        .then((id) => (id === undefined ? [] : [{ id }])),
                     }
                   : await traceHistory(
                       store,

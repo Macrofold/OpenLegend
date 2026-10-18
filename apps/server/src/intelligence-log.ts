@@ -6,56 +6,20 @@ import type { AiClient, GenerateRequest } from '@open-legend/ai';
 import type { IntelligenceCall } from '@open-legend/protocol';
 import type { GameRepository } from './store.js';
 import { recordBackgroundFailure } from './performance.js';
+import {
+  captureDiagnosticValue,
+  prepareDiagnosticRecord,
+  diagnosticValueBytes,
+  DiagnosticRetention,
+  DIAGNOSTIC_LIMITS,
+  type PreparedDiagnosticRecord,
+} from './diagnostic-capture.js';
 
-function clean(value: unknown): unknown {
-  const ancestors = new WeakSet<object>();
-  const visit = (item: unknown, key = '', embeddingContext = false): unknown => {
-    if (typeof item === 'function') return undefined;
-    if (
-      /authorization|context[_-]?handle|api[_-]?key|secret|password|access[_-]?token|refresh[_-]?token/i.test(
-        key,
-      )
-    )
-      return '[redacted]';
-    if (/signal|abort/i.test(key) || item instanceof AbortSignal || item instanceof AbortController)
-      return undefined;
-    if (typeof item === 'string') {
-      // Provider bodies can themselves be encoded JSON; sanitize those before capture too.
-      if (/^\s*[\[{]/.test(item)) {
-        try {
-          return visit(JSON.parse(item), key, embeddingContext);
-        } catch {}
-      }
-      return item
-        .replace(/Bearer\s+[A-Za-z0-9._~+\/-]+=*/gi, 'Bearer [redacted]')
-        .replace(
-          /((?:api[_-]?key|password|secret|access[_-]?token|refresh[_-]?token)\s*[=:]\s*)[^\s&,;]+/gi,
-          '$1[redacted]',
-        );
-    }
-    if (!item || typeof item !== 'object') return item ?? null;
-    if (ancestors.has(item)) return '[circular]';
-    if (ArrayBuffer.isView(item))
-      return { dimensions: item.byteLength, unavailable: 'Binary capture omitted.' };
-    if (
-      Array.isArray(item) &&
-      (/embedding|vectors?/i.test(key) ||
-        ((embeddingContext || item.length > 32) && item.every((v) => typeof v === 'number')))
-    )
-      return { dimensions: item.length };
-    embeddingContext ||= 'kind' in item && /embedding/i.test(String(item.kind));
-    ancestors.add(item);
-    const result = Array.isArray(item)
-      ? item.map((value) => visit(value, '', embeddingContext))
-      : Object.fromEntries(
-          Object.entries(item)
-            .map(([name, value]) => [name, visit(value, name, embeddingContext)])
-            .filter(([, value]) => value !== undefined),
-        );
-    ancestors.delete(item);
-    return result;
-  };
-  return visit(value);
+interface ActiveCapture {
+  call?: IntelligenceCall;
+  exchangeBytes: number;
+  exchangeSizes: number[];
+  release: () => void;
 }
 
 /** Private diagnostic records, separate from simulation state and public projections. */
@@ -86,69 +50,99 @@ export class IntelligenceLog {
         },
       },
       status: 'completed',
-      input: clean(input),
-      output: clean(output),
+      input,
+      output,
       exchanges: [],
     });
   }
-  private context = new AsyncLocalStorage<IntelligenceCall>();
+  private context = new AsyncLocalStorage<ActiveCapture | undefined>();
+  private captures = new Set<ActiveCapture>();
   readonly network = createNetworkOwner({
     role: 'server-ai',
     capacity: 32,
-    onExchange: (exchange) => this.observeExchange(exchange),
+    onExchange: Object.assign(
+      (exchange: Parameters<NetworkExchangeObserver>[0]) => this.observeExchange(exchange),
+      {
+        captureContent: () => {
+          const active = this.context.getStore();
+          return !!active?.call && !this.closed;
+        },
+      },
+    ),
   });
   constructor(private store: GameRepository) {}
-  private pending = new Map<string, { call: IntelligenceCall; bytes: number }>();
-  private pendingBytes = 0;
+  private pending = new Map<string, PreparedDiagnosticRecord>();
+  private retention = new DiagnosticRetention();
   private draining?: Promise<void>;
   private drainTimer?: ReturnType<typeof setTimeout>;
-  private dropped = false;
-  private latest = new Map<string, IntelligenceCall>();
+  private latest = new Map<string, PreparedDiagnosticRecord>();
   private closed = false;
-  /** Workflow updates use log-owned state; durable diagnostics are eventually consistent. */
+  private omitted = { content: 0, records: 0, captures: 0 };
+  private omitContent = () => {
+    this.omitted.content++;
+  };
+  /** Workflow updates receive an owned copy; encoded snapshots are shared internally. */
   get(id: string): IntelligenceCall | undefined {
-    const call = this.latest.get(id);
-    return call ? structuredClone(call) : undefined;
+    const record = this.latest.get(id);
+    return record ? (JSON.parse(record.json) as IntelligenceCall) : undefined;
+  }
+  captureSnapshot() {
+    return {
+      ...this.retention.snapshot(),
+      pending: this.pending.size,
+      recent: this.latest.size,
+      omitted: { ...this.omitted },
+    };
+  }
+  private remove(map: Map<string, PreparedDiagnosticRecord>, id: string): void {
+    const prior = map.get(id);
+    if (!prior) return;
+    map.delete(id);
+    this.retention.release(prior);
+  }
+  private makeRoom(bytes: number): boolean {
+    while (!this.retention.canRetain(bytes)) {
+      // Recently completed or running snapshots are optional. SQL batches and
+      // active capture reservations remain pinned until their actual owners finish.
+      let candidate = this.pending.values().next().value;
+      if (!candidate)
+        for (const record of this.latest.values()) {
+          if (this.retention.referenceCount(record) !== 1) continue;
+          candidate = record;
+          break;
+        }
+      if (!candidate) return false;
+      if (this.latest.get(candidate.id) === candidate) this.remove(this.latest, candidate.id);
+      if (this.pending.get(candidate.id) === candidate) this.remove(this.pending, candidate.id);
+      this.omitted.records++;
+    }
+    return true;
   }
   async save(call: IntelligenceCall): Promise<void> {
     if (this.closed) return;
     try {
-      const captured = clean(call) as IntelligenceCall;
-      if (Buffer.byteLength(JSON.stringify(captured.input ?? null)) > 500000)
-        captured.input = { unavailable: 'Diagnostic input exceeded capture limit.' };
-      if (Buffer.byteLength(JSON.stringify(captured)) > 1000000) {
-        captured.exchanges = [];
-        if (Buffer.byteLength(JSON.stringify(captured)) > 1000000)
-          captured.output = {
-            unavailable: 'Capture limit exceeded; receipt remains in accounting.',
-          };
+      if (!this.makeRoom(DIAGNOSTIC_LIMITS.recordBytes)) {
+        this.omitted.records++;
+        return;
       }
-      this.latest.delete(captured.id);
+      const captured = prepareDiagnosticRecord(call, this.omitContent);
+      if (!captured) {
+        this.omitted.records++;
+        return;
+      }
+      this.remove(this.latest, captured.id);
+      this.remove(this.pending, captured.id);
+      if (!this.makeRoom(captured.bytes)) {
+        this.omitted.records++;
+        return;
+      }
       this.latest.set(captured.id, captured);
-      // Preserve running workflow roots while bounding completed diagnostic lookup state.
-      if (this.latest.size > 1000) {
-        const completed = [...this.latest].find(([, value]) => value.status !== 'running');
-        if (completed) this.latest.delete(completed[0]);
-      }
-      const previous = this.pending.get(captured.id);
-      if (previous) this.pendingBytes -= previous.bytes;
-      this.pending.delete(captured.id);
-      const bytes = Buffer.byteLength(JSON.stringify(captured));
-      this.pending.set(captured.id, { call: captured, bytes });
-      this.pendingBytes += bytes;
-      // Diagnostics are replaceable snapshots, not accounting or command receipts.
-      // Bound stalled-storage capture and retain the newest update for each call.
-      // docs/limits/observability.md#diagnostic-write-backlog
-      while (this.pending.size > 1000 || this.pendingBytes > 16 * 1024 * 1024) {
-        const first = this.pending.entries().next().value!;
-        this.pending.delete(first[0]);
-        this.pendingBytes -= first[1].bytes;
-        if (!this.dropped)
-          console.error('Intelligence diagnostic backlog full; oldest capture omitted.');
-        this.dropped = true;
-      }
+      this.retention.retain(captured);
+      this.pending.set(captured.id, captured);
+      this.retention.retain(captured);
       this.startDrain();
     } catch {
+      this.omitted.records++;
       console.error('Could not capture intelligence diagnostics.');
     }
   }
@@ -165,30 +159,20 @@ export class IntelligenceLog {
   private drain(): Promise<void> {
     if (this.draining) return this.draining;
     this.draining = (async () => {
-      const batch: IntelligenceCall[] = [];
+      const batch: PreparedDiagnosticRecord[] = [];
       for (const [id, entry] of this.pending) {
         this.pending.delete(id);
-        this.pendingBytes -= entry.bytes;
-        batch.push(entry.call);
+        // Transfer the existing reference from the pending queue to this SQL batch.
+        batch.push(entry);
         if (batch.length >= 64) break;
       }
-      if (this.store.putIntelligenceCalls) {
-        try {
-          await this.store.putIntelligenceCalls(batch);
-        } catch (error: unknown) {
-          recordBackgroundFailure('intelligence-write', error, { attemptedCalls: batch.length });
-        }
-      } else
-        for (const call of batch) {
-          // A repository without batch writes must still attempt later, unrelated
-          // snapshots after one fails. Diagnostics never prevent shutdown.
-          try {
-            await this.store.putIntelligenceCall(call);
-          } catch (error: unknown) {
-            recordBackgroundFailure('intelligence-write', error, { attemptedCalls: 1 });
-          }
-        }
-      this.dropped = false;
+      try {
+        await this.store.putIntelligenceCalls(batch);
+      } catch (error: unknown) {
+        recordBackgroundFailure('intelligence-write', error, { attemptedCalls: batch.length });
+      } finally {
+        for (const record of batch) this.retention.release(record);
+      }
     })().finally(() => {
       this.draining = undefined;
       this.startDrain();
@@ -205,8 +189,18 @@ export class IntelligenceLog {
   }
   async close(): Promise<void> {
     this.closed = true;
+    for (const capture of this.captures) this.retireCapture(capture);
     await this.flush();
-    this.latest.clear();
+    for (const id of this.latest.keys()) this.remove(this.latest, id);
+  }
+  private retireCapture(capture: ActiveCapture): void {
+    if (!this.captures.delete(capture)) return;
+    // Abandoned network callbacks inherit this context after local completion.
+    // Drop content as well as admission so they cannot extend its lifetime.
+    capture.call = undefined;
+    capture.exchangeBytes = 0;
+    capture.exchangeSizes.length = 0;
+    capture.release();
   }
   async run<T>(
     kind: string,
@@ -226,26 +220,50 @@ export class IntelligenceLog {
       >
     > = {},
   ): Promise<T> {
-    const call: IntelligenceCall = {
-      ...metadata,
-      id: metadata.id ?? randomUUID(),
-      parentId: this.triggerContext.getStore(),
-      kind,
-      startedAt: new Date().toISOString(),
-      status: 'running',
-      input: clean(input),
-      exchanges: [],
-      timings: {},
+    const reservationBytes = DIAGNOSTIC_LIMITS.recordBytes * 3;
+    const release =
+      !this.closed && this.makeRoom(reservationBytes)
+        ? this.retention.reserveCapture(reservationBytes)
+        : undefined;
+    if (!release) {
+      this.omitted.captures++;
+      return this.context.run(undefined, execute);
+    }
+    const prepared = prepareDiagnosticRecord(
+      {
+        ...metadata,
+        id: metadata.id ?? randomUUID(),
+        parentId: this.triggerContext.getStore(),
+        kind,
+        startedAt: new Date().toISOString(),
+        status: 'running',
+        input,
+        exchanges: [],
+        timings: {},
+      },
+      this.omitContent,
+    );
+    if (!prepared) {
+      release();
+      this.omitted.captures++;
+      return this.context.run(undefined, execute);
+    }
+    const capture: ActiveCapture = {
+      call: { ...prepared.value, exchanges: [], timings: {} },
+      exchangeBytes: 0,
+      exchangeSizes: [],
+      release,
     };
-    if (Buffer.byteLength(JSON.stringify(call.input)) > 500000)
-      call.input = { unavailable: 'Diagnostic input exceeded capture limit.' };
-    await this.save(call);
-    return this.context.run(call, async () => {
+    this.captures.add(capture);
+    await this.save(capture.call!);
+    return this.context.run(capture, async () => {
       try {
         const output = await execute();
+        const call = capture.call;
+        if (!call) return output;
         // Scores and source coverage explain retrieval; thousands of raw vector
         // coordinates only obscure the inspector and exhaust capture capacity.
-        call.output = clean(
+        call.output = captureDiagnosticValue(
           kind === 'Embeddings' &&
             output &&
             typeof output === 'object' &&
@@ -256,6 +274,8 @@ export class IntelligenceLog {
                 value: { vectors: output.value.length, dimensions: output.value[0]?.length },
               }
             : output,
+          DIAGNOSTIC_LIMITS.recordBytes,
+          this.omitContent,
         );
         const outcome =
           output && typeof output === 'object' && 'outcome' in output
@@ -271,17 +291,30 @@ export class IntelligenceLog {
           : (outcome ?? 'completed');
         return output;
       } catch (error) {
+        const call = capture.call;
+        if (!call) throw error;
         call.status = 'failed';
-        call.output = { error: error instanceof Error ? error.message : String(error) };
+        call.output = captureDiagnosticValue(
+          { error: error instanceof Error ? error.message : String(error) },
+          DIAGNOSTIC_LIMITS.recordBytes,
+          this.omitContent,
+        );
         throw error;
       } finally {
-        call.completedAt = new Date().toISOString();
-        call.timings!['application'] = {
-          startedAt: call.startedAt,
-          completedAt: call.completedAt,
-          durationMs: Math.max(0, Date.parse(call.completedAt) - Date.parse(call.startedAt)),
-        };
-        await this.save(call);
+        try {
+          const call = capture.call;
+          if (call) {
+            call.completedAt = new Date().toISOString();
+            call.timings!['application'] = {
+              startedAt: call.startedAt,
+              completedAt: call.completedAt,
+              durationMs: Math.max(0, Date.parse(call.completedAt) - Date.parse(call.startedAt)),
+            };
+            await this.save(call);
+          }
+        } finally {
+          this.retireCapture(capture);
+        }
       }
     });
   }
@@ -302,7 +335,8 @@ export class IntelligenceLog {
     };
   }
   private readonly observeExchange: NetworkExchangeObserver = (observed) => {
-    const call = this.context.getStore();
+    const active = this.context.getStore();
+    const call = active?.call;
     if (!call || this.closed) return;
     const exchange: IntelligenceCall['exchanges'][number] = {
       path: new URL(observed.url).pathname,
@@ -319,17 +353,28 @@ export class IntelligenceLog {
           ? this.decode(new TextDecoder().decode(observed.bytes))
           : { unavailable: observed.error?.kind ?? 'Response body unavailable.' },
     };
-    call.exchanges.push(exchange);
-    if (call.exchanges.length > 100) {
-      const oldestPoll = call.exchanges.findIndex((item) => item.method === 'GET');
-      call.exchanges.splice(oldestPoll >= 0 ? oldestPoll : 0, 1);
+    const captured = captureDiagnosticValue(
+      exchange,
+      DIAGNOSTIC_LIMITS.recordBytes,
+      this.omitContent,
+    );
+    if (!captured || typeof captured !== 'object' || !('path' in captured)) return;
+    const bytes = diagnosticValueBytes(captured);
+    while (
+      call.exchanges.length &&
+      (call.exchanges.length >= 100 || active.exchangeBytes + bytes > DIAGNOSTIC_LIMITS.recordBytes)
+    ) {
+      const poll = call.exchanges.findIndex((item) => item.method === 'GET');
+      const index = poll >= 0 ? poll : 0;
+      call.exchanges.splice(index, 1);
+      active.exchangeBytes -= active.exchangeSizes.splice(index, 1)[0]!;
+      this.omitContent();
     }
+    active.exchangeBytes += bytes;
+    active.exchangeSizes.push(bytes);
+    call.exchanges.push(captured as IntelligenceCall['exchanges'][number]);
   };
   private decode(text: string): unknown {
-    try {
-      return clean(JSON.parse(text));
-    } catch {
-      return text;
-    }
+    return captureDiagnosticValue(text, DIAGNOSTIC_LIMITS.recordBytes, this.omitContent);
   }
 }

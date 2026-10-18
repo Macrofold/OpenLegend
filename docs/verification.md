@@ -1,5 +1,7 @@
 # Verification
 
+[Macrofold efficiency follow-through](verification/macrofold-efficiency-followup.md) records shared inference receipts, bounded diagnostics, narrow PostgreSQL reads and authoring revision checks, including requested-review fixes and the integrated private-inspection ordering correction.
+
 - [Network request waiting](verification/bounded-network-requests.md) — shared lifetime and resource ownership, actual browser journeys, pinned SDK fixtures, generated cloud source and anonymous public-asset verification; the requested review corrections pass all 937 repository tests and the complete check/build chain; NET01–NET11 is complete.
 
 - [Optional performance collection](verification/performance/profiling-controls.md) — default-off server/worker collection, capture cleanup, tool modes, actual functional checks and required overhead-comparison limits.

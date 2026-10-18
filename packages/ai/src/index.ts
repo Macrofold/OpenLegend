@@ -9,6 +9,9 @@ export {
   createMacrofoldGenerationClient,
   macrofoldInferenceEvidence,
   captureMacrofoldRunUsage,
+  macrofoldTerminalStatus,
+  captureMacrofoldRunTiming,
+  captureMacrofoldInferenceReceipt,
 } from './macrofold-decision.js';
 export type {
   MacrofoldDecisionConfig,
@@ -40,6 +43,9 @@ export * from './embedding.js';
 
 export {
   compileSchema,
+  prepareSchema,
+  prepareQuestions,
+  PreparedJson,
   serialize,
   InvalidData,
   validateQuestions,
@@ -49,5 +55,6 @@ export {
   decodeJudge,
   decodeUsage,
 } from './validation.js';
+export type { PreparedSchema } from './validation.js';
 
 export { OpenAiRateGate } from './rate-gate.js';

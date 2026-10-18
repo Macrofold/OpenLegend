@@ -9,7 +9,7 @@ import {
   type NetworkOwner,
 } from '@open-legend/network';
 import { providerOwner } from './provider-http.js';
-import { serialize, record, compileSchema, InvalidData } from './validation.js';
+import { serialize, record, PreparedJson, InvalidData, type PreparedSchema } from './validation.js';
 import type { FetchTransport, GenerateRequest } from './types.js';
 
 /** Structured HTTP failure; application code decides whether admission was rejected. */
@@ -258,7 +258,14 @@ export class MacrofoldTransport {
                 ...(matchVersion === undefined ? {} : { 'If-Match': JSON.stringify(matchVersion) }),
                 ...(operationId ? { 'Idempotency-Key': operationId } : {}),
               },
-              ...(body === undefined ? {} : { body: serialize(body, 500_000) }),
+              ...(body === undefined
+                ? {}
+                : {
+                    body: (body instanceof PreparedJson
+                      ? body
+                      : new PreparedJson(body, 500_000)
+                    ).text(500_000),
+                  }),
             },
             bodyPolicy: { kind: 'bounded', maxBytes: maxResponseBytes * 4 },
           },
@@ -327,8 +334,8 @@ export function macrofoldString(value: unknown): string {
     throw new InvalidData('Missing Macrofold response field.');
   return value;
 }
-export function validateMacrofoldValue<T>(schema: unknown, value: unknown): T {
-  if (!compileSchema(schema)(value))
+export function validateMacrofoldValue<T>(prepared: PreparedSchema, value: unknown): T {
+  if (!prepared.validate(value))
     throw new InvalidData('Macrofold output did not match the requested schema.');
   return value as T;
 }

@@ -183,7 +183,7 @@ export async function traceHistory(
   access?: DiagnosticAccess,
 ) {
   const { offset, ...filters } = filter;
-  const roots = await store.diagnosticRoots(
+  const roots = await store.diagnosticRootSummaries(
     offset,
     Object.fromEntries(
       Object.entries(filters).filter(

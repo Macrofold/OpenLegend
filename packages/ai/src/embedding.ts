@@ -33,13 +33,14 @@ export function createEmbeddingClient(config: {
   return {
     async embed(request) {
       const started = Date.now();
+      const contextJson = JSON.stringify(request.texts);
       const receipt: AiReceipt = {
         requestId: request.requestId,
         provider: 'openai',
         requestedModel: config.model,
         model: config.model,
         modelVersionStatus: 'unavailable',
-        contextDigest: createHash('sha256').update(JSON.stringify(request.texts)).digest('hex'),
+        contextDigest: createHash('sha256').update(contextJson).digest('hex'),
         startedAt: new Date(started).toISOString(),
         completedAt: new Date(started).toISOString(),
         latencyMs: 0,
@@ -61,7 +62,7 @@ export function createEmbeddingClient(config: {
           request.texts.some(
             (t) => !t.trim() || Buffer.byteLength(t) > EMBEDDING_LIMITS.textBytes,
           ) ||
-          Buffer.byteLength(JSON.stringify(request.texts)) > EMBEDDING_LIMITS.batchBytes
+          Buffer.byteLength(contextJson) > EMBEDDING_LIMITS.batchBytes
         )
           return result('invalid', 'Embedding input exceeds batch limits.');
         const body = JSON.stringify({

@@ -58,7 +58,7 @@ import {
 } from './world-opening-authoring.js';
 import {
   WorldAgentStore,
-  publicProgress,
+  publicTurn,
   type AgentSession,
   type AgentTurnRecord,
 } from './world-agent-store.js';
@@ -857,8 +857,8 @@ export class WorldAuthoringService {
     // current owner operation so a status refresh observes the saved work too.
     await this.tails.get(id)?.catch(() => {});
     const session = await this.ownedSession(id, scope);
-    const [page, workRevision, exposure] = await Promise.all([
-      this.records.turns(id, undefined, (q) => this.questionView(session, q), 1),
+    const [turn, workRevision, exposure] = await Promise.all([
+      this.records.latestTurn(id, (q) => this.questionView(session, q)),
       this.records.workRevision(id),
       this.records.exposure(sessionBudgetId(session)),
     ]);
@@ -879,7 +879,7 @@ export class WorldAuthoringService {
         workRevision,
         exposure,
       }),
-      turn: page.turns[0] ?? null,
+      turn,
       activeTurn: session.activeTurn ?? null,
       questionTurn: session.questionTurn ?? null,
       recovering: !!session.recoveryTurn,
@@ -941,7 +941,7 @@ export class WorldAuthoringService {
           turn.nextRunRequestId !== undefined && turn.nextRunRequestId === run.applicationRequestId;
         if (admittedNext) delete turn.nextRunRequestId;
         if (turn.progress?.runId === run.runId) {
-          if (admittedNext) await this.records.put(id, 'turn', turnId, turn);
+          if (admittedNext) await this.records.putTurn(id, turnId, turn);
           return;
         }
         turn.progress = {
@@ -956,7 +956,7 @@ export class WorldAuthoringService {
           omittedBytes: turn.progress?.omittedBytes ?? 0,
           completeness: turn.progress?.completeness === 'incomplete' ? 'incomplete' : 'live',
         };
-        await this.records.put(id, 'turn', turnId, turn);
+        await this.records.putTurn(id, turnId, turn);
       }),
     );
   }
@@ -1009,7 +1009,7 @@ export class WorldAuthoringService {
             providerOmittedBytes,
             omittedBytes: providerOmittedBytes + (previous.projectionOmittedBytes ?? 0),
           };
-          await this.records.put(id, 'turn', turnId, turn);
+          await this.records.putTurn(id, turnId, turn);
           return;
         }
         turn.progress = {
@@ -1032,7 +1032,7 @@ export class WorldAuthoringService {
           projectionOmittedBytes: 0,
           omittedBytes: (previous.prefixOmittedBytes ?? 0) + (progress.omittedBytes ?? 0),
         };
-        await this.records.put(id, 'turn', turnId, turn);
+        await this.records.putTurn(id, turnId, turn);
       }),
     );
   }
@@ -1222,17 +1222,7 @@ export class WorldAuthoringService {
     const turn = await this.records.get<AgentTurnRecord>(id, 'turn', requestId);
     await this.ownedSession(id, scope);
     return turn
-      ? {
-          id: requestId,
-          revision: turn.revision ?? 0,
-          sequence: turn.sequence ?? 0,
-          text: turn.text ?? null,
-          createdAt: turn.createdAt ?? null,
-          cancelRequested: !!turn.cancelRequested,
-          response: turn.response ?? null,
-          ...(turn.progress ? { progress: publicProgress(turn.progress) } : {}),
-          ...(turn.question ? { question: this.questionView(session, turn.question) } : {}),
-        }
+      ? publicTurn(requestId, turn, (question) => this.questionView(session, question))
       : null;
   }
   async cancelTurn(id: string, requestId: string, scope = this.service.localScope) {
@@ -1244,7 +1234,7 @@ export class WorldAuthoringService {
         if (s.questionTurn === requestId && turn.question) {
           turn.question.view.state = 'abandoned';
           delete s.questionTurn;
-          await this.records.put(id, 'turn', requestId, turn);
+          await this.records.putTurn(id, requestId, turn);
           await this.records.saveSession(s);
         }
         if (turn.response || s.activeTurn !== requestId) return false;
@@ -1252,7 +1242,7 @@ export class WorldAuthoringService {
         // Fence subsequent MCP writes before signalling the remote worker. A committed
         // effect stays committed; cancelling is never a refund or rollback.
         s.contextHash = contextHash(randomBytes(32).toString('hex'));
-        await this.records.put(id, 'turn', requestId, turn);
+        await this.records.putTurn(id, requestId, turn);
         await this.records.saveSession(s);
         return true;
       }),
@@ -1325,7 +1315,7 @@ export class WorldAuthoringService {
         await this.records.db.transaction(async () => {
           const turn = await this.records.get<AgentTurnRecord>(s.id, 'turn', s.activeTurn!);
           if (turn && !turn.response)
-            await this.records.put(s.id, 'turn', s.activeTurn!, {
+            await this.records.putTurn(s.id, s.activeTurn!, {
               ...turn,
               ...(turn.progress
                 ? {
@@ -1482,7 +1472,7 @@ export class WorldAuthoringService {
         // Persist the exact question and fence writes together, before remote cancellation.
         s.contextHash = contextHash(randomBytes(32).toString('hex'));
         delete s.pendingProfile;
-        await this.records.put(id, 'turn', requestId, turn);
+        await this.records.putTurn(id, requestId, turn);
         await this.records.saveSession(s);
       }),
     );
@@ -1552,7 +1542,7 @@ export class WorldAuthoringService {
           if (!running) throw new Error('Missing admitted continuation.');
           running.cancelRequested = true;
           s.contextHash = contextHash(randomBytes(32).toString('hex'));
-          await this.records.put(id, 'turn', s.activeTurn, running);
+          await this.records.putTurn(id, s.activeTurn, running);
           cancelTurnId = s.activeTurn;
         }
         s.turnSequence = (s.turnSequence ?? 0) + 1;
@@ -1562,7 +1552,7 @@ export class WorldAuthoringService {
         const text = questionAnswerSources(question.view, value)
           .map((q) => q.text)
           .join('\n\n');
-        await this.records.put(id, 'turn', answerId, {
+        await this.records.putTurn(id, answerId, {
           fingerprint: hash,
           text,
           sequence: s.turnSequence,
@@ -1574,7 +1564,7 @@ export class WorldAuthoringService {
             message: 'Your answer is saved. Continue when ready.',
           },
         } satisfies AgentTurnRecord);
-        await this.records.put(id, 'turn', questionTurnId, source);
+        await this.records.putTurn(id, questionTurnId, source);
         await this.records.saveSession(s);
         return { answer: value, created: true, ...(cancelTurnId ? { cancelTurnId } : {}) };
       }),
@@ -1721,7 +1711,7 @@ export class WorldAuthoringService {
         s.requirements = packet.requirements;
         // Commit both identity and handle before any external dispatch.
         await this.records.db.transaction(async () => {
-          await this.records.put(sessionId, 'turn', requestId, {
+          await this.records.putTurn(sessionId, requestId, {
             fingerprint: hash,
             text,
             sequence: s.turnSequence,
@@ -1736,7 +1726,7 @@ export class WorldAuthoringService {
             );
             if (!source) throw new Error('Missing source question.');
             answered.view.answer.continuationId = requestId;
-            await this.records.put(s.id, 'turn', continuation.questionTurnId, {
+            await this.records.putTurn(s.id, continuation.questionTurnId, {
               ...source,
               question: answered,
             });
@@ -1783,7 +1773,7 @@ export class WorldAuthoringService {
       if (record.cancelRequested && !response.ok && response.code !== 'uncertain')
         response = { ...response, code: 'cancelled' };
       await this.records.db.transaction(async () => {
-        await this.records.put(sessionId, 'turn', requestId, {
+        await this.records.putTurn(sessionId, requestId, {
           ...record,
           response,
           ...(record.progress
@@ -1881,7 +1871,7 @@ export class WorldAuthoringService {
           turn.question.view.state = 'invalidated';
           if (current.questionTurn === turnId) delete current.questionTurn;
         }
-        await this.records.put(id, 'turn', turnId, {
+        await this.records.putTurn(id, turnId, {
           ...turn,
           response: outcome,
           ...(turn.progress
@@ -1952,7 +1942,7 @@ export class WorldAuthoringService {
         if (!this.permitted(s, scope))
           throw new AuthoringRequestError('Recipe continuation permission changed.');
         this.service.assertScope(scope, 'play', true);
-        await this.records.put(s.id, 'turn', requestId, {
+        await this.records.putTurn(s.id, requestId, {
           ...turn,
           nextRunRequestId: nextRequestId,
         });

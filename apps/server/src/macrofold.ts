@@ -20,17 +20,19 @@ import {
   macrofoldObject as object,
   macrofoldString as string,
   validateMacrofoldValue,
-  compileSchema,
-  serialize,
+  prepareSchema,
+  PreparedJson,
   InvalidData,
-  validateQuestions,
+  prepareQuestions,
   validateJudgmentSize,
   decodeJudge,
-  decodeUsage,
   usdToMicroUsd,
   microUsdToUsd,
-  macrofoldInferenceEvidence,
   captureMacrofoldRunUsage,
+  macrofoldTerminalStatus,
+  captureMacrofoldInferenceReceipt,
+  captureMacrofoldRunTiming,
+  type PreparedSchema,
   type AiClient,
   type AiReceipt,
   type AiResult,
@@ -52,7 +54,11 @@ import {
 
 type Lane = {
   worktree?: string;
-  session?: string;
+  session?: {
+    id: string;
+    billingMode: NonNullable<AiReceipt['macrofoldBillingMode']>;
+    model: string;
+  };
   run?: string;
   blocked?: boolean;
   closed?: boolean;
@@ -241,12 +247,11 @@ function inferenceFailure<T>(
 /** One terminal-evidence rule for original execution and later receipt recovery.
  * A terminal intermediary status or a price cannot prove an uncertain provider finished.
  * docs/ai-providers.md#receipts-outcomes-and-accounting */
-function terminalEvidence(
+function nativeTerminalEvidence(
   run: string,
   status: Record<string, unknown>,
   result: Record<string, unknown>,
-  execution: 'inference' | 'native',
-): { completionUncertain: boolean; uninvokedInferenceChargeUsd?: number } {
+): { completionUncertain: boolean } {
   if (
     status['id'] !== run ||
     typeof status['status'] !== 'string' ||
@@ -255,7 +260,6 @@ function terminalEvidence(
     result['final'] !== true
   )
     throw new InvalidData('Macrofold terminal identity could not be verified.');
-  if (execution === 'inference') return macrofoldInferenceEvidence(run, status, result);
   const nativeOutcomes: Record<string, string> = {
     succeeded: 'success',
     failed: 'failure',
@@ -338,6 +342,7 @@ export class MacrofoldBackend implements AiClient {
     return {
       requestId: id,
       provider,
+      macrofoldBillingMode: this.service.config.macrofoldBillingMode,
       requestedModel: model,
       model,
       modelVersionStatus: 'unavailable',
@@ -348,16 +353,6 @@ export class MacrofoldBackend implements AiClient {
       dispatched: false,
       completionUncertain: false,
     };
-  }
-  private captureProviderTiming(status: Record<string, unknown>, receipt: AiReceipt): void {
-    const started =
-      typeof status['started_at'] === 'string' ? Date.parse(status['started_at']) : NaN;
-    const completed =
-      typeof status['completed_at'] === 'string' ? Date.parse(status['completed_at']) : NaN;
-    if (Number.isFinite(started) && Number.isFinite(completed))
-      receipt.providerLatencyMs = Math.max(0, Math.round(completed - started));
-    if (typeof status['wait_seconds'] === 'number' && Number.isFinite(status['wait_seconds']))
-      receipt.providerQueueLatencyMs = Math.max(0, Math.round(status['wait_seconds'] * 1000));
   }
   private async mutation(
     name: string,
@@ -371,7 +366,7 @@ export class MacrofoldBackend implements AiClient {
     onProgress?: GenerateRequest['onProgress'],
   ): Promise<Record<string, unknown>> {
     // Local serialization must fail before transport marks possible dispatch.
-    serialize(body, 500_000);
+    const preparedBody = new PreparedJson(body, 500_000);
     const fingerprint = digest({ path, body });
     const previous = await this.load<{
       fingerprint: string;
@@ -424,7 +419,7 @@ export class MacrofoldBackend implements AiClient {
         const result = object(
           await (privateContent ? this.privateApi : this.api).request(
             path,
-            body,
+            preparedBody,
             digest(this.key(name)),
             signal,
             1_000_000,
@@ -814,7 +809,6 @@ export class MacrofoldBackend implements AiClient {
       turnId: string;
       runId?: string;
       receipt: AiReceipt;
-      billingMode: 'managed' | 'byok';
       stage: 'investigating' | 'replying';
       requestId: string;
       applicationRequestId: string;
@@ -912,13 +906,9 @@ export class MacrofoldBackend implements AiClient {
         signal,
       ),
     );
-    if (terminalEvidence(original.runId, status, result, 'native').completionUncertain) return;
     const receipt = { ...original.receipt };
-    if (original.billingMode === 'managed')
-      receipt.estimatedCostUsd = microUsdToUsd(status['cost_micro_usd']);
-    await this.captureRunUsage(receipt, signal, original.billingMode, true);
-    if (receipt.estimatedCostUsd === undefined) return;
-    receipt.completionUncertain = false;
+    await this.captureNativeReceipt(original.runId, status, result, receipt, signal, true);
+    if (receipt.completionUncertain || receipt.estimatedCostUsd === undefined) return;
     receipt.completedAt = new Date().toISOString();
     receipt.latencyMs = Date.now() - Date.parse(receipt.startedAt);
     await this.service.store.settle(receipt.requestId, receipt);
@@ -1023,20 +1013,30 @@ export class MacrofoldBackend implements AiClient {
   }
   /** Read billing facts once after completion; diagnostics must never rerun a
    * provider call. BYOK provider charges and platform charges are separate. */
-  private async captureRunUsage(
+  private async captureNativeReceipt(
+    run: string,
+    status: Record<string, unknown>,
+    result: Record<string, unknown>,
     receipt: AiReceipt,
     signal: AbortSignal,
-    billingMode = this.service.config.macrofoldBillingMode,
     privateContent = false,
-    uninvokedInferenceChargeUsd?: number,
   ): Promise<void> {
-    await captureMacrofoldRunUsage(
-      privateContent ? this.privateApi : this.api,
-      receipt,
-      signal,
-      billingMode,
-      uninvokedInferenceChargeUsd,
-    );
+    receipt.completionUncertain = nativeTerminalEvidence(run, status, result).completionUncertain;
+    captureMacrofoldRunTiming(status, receipt);
+    const billingMode = receipt.macrofoldBillingMode;
+    if (billingMode !== 'managed' && billingMode !== 'byok') {
+      delete receipt.estimatedCostUsd;
+      return;
+    }
+    if (billingMode === 'managed') {
+      const charge = microUsdToUsd(status['cost_micro_usd']);
+      if (charge !== undefined)
+        receipt.estimatedCostUsd = Math.max(receipt.estimatedCostUsd ?? 0, charge);
+    }
+    // A contradictory terminal result cannot settle or publish this receipt;
+    // itemized billing would only add another wait before the same refusal.
+    if (!receipt.completionUncertain)
+      await captureMacrofoldRunUsage(privateContent ? this.privateApi : this.api, receipt, signal);
   }
 
   private nativeWorkerId(): string {
@@ -1101,7 +1101,6 @@ export class MacrofoldBackend implements AiClient {
           'World Agent is waiting for confirmation of its earlier run. No duplicate will be started.',
         );
       const config = this.service.config;
-      const billingMode = config.macrofoldBillingMode;
       const toolPermissions = worldAgent
         ? {
             ...permissions,
@@ -1125,6 +1124,26 @@ export class MacrofoldBackend implements AiClient {
       }
       const continuingSession = persistent && !worldAgent ? lane.session : undefined;
       // Existing sessions retain the configuration accepted at creation.
+      // Model and billing belong to that exact identity, not this host's current defaults.
+      if (continuingSession !== undefined) {
+        if (
+          !continuingSession ||
+          typeof continuingSession !== 'object' ||
+          typeof continuingSession.id !== 'string' ||
+          !continuingSession.id ||
+          typeof continuingSession.model !== 'string' ||
+          !continuingSession.model.trim() ||
+          !['managed', 'byok'].includes(continuingSession.billingMode)
+        )
+          throw new InvalidData('Macrofold session configuration is unavailable.');
+        receipt.macrofoldBillingMode = continuingSession.billingMode;
+        receipt.requestedModel = continuingSession.model;
+        receipt.model = continuingSession.model;
+        receipt.modelVersionStatus = 'unavailable';
+      }
+      const billingMode = receipt.macrofoldBillingMode;
+      if (billingMode !== 'managed' && billingMode !== 'byok')
+        throw new InvalidData('Macrofold billing admission is unavailable.');
       if (!continuingSession) {
         const models = object(
           await this.api.request('/v1/models?limit=100', undefined, undefined, signal),
@@ -1134,7 +1153,7 @@ export class MacrofoldBackend implements AiClient {
           models['data'].some((value) => {
             const model = object(value);
             return (
-              model['id'] === config.macrofoldModel &&
+              model['id'] === receipt.requestedModel &&
               model['enabled'] === true &&
               Array.isArray(model['harnesses']) &&
               model['harnesses'].includes(config.macrofoldHarness) &&
@@ -1174,9 +1193,8 @@ export class MacrofoldBackend implements AiClient {
           applicationRequestId: worldAgent.applicationRequestId ?? worldAgent.turnId,
           workerId,
           worktreeId: lane.worktree,
-          ...(continuingSession ? { sessionId: continuingSession } : {}),
+          ...(continuingSession ? { sessionId: continuingSession.id } : {}),
           receipt: { ...receipt, dispatched: true, completionUncertain: true },
-          billingMode,
           stage: worldAgent.streamStage ?? 'replying',
           protectedValues: [worldAgent.contextHandle],
         });
@@ -1188,11 +1206,11 @@ export class MacrofoldBackend implements AiClient {
         '/v1/runs',
         {
           ...(continuingSession
-            ? { session_id: continuingSession }
+            ? { session_id: continuingSession.id }
             : {
                 worktree_id: lane.worktree,
                 harness: config.macrofoldHarness,
-                model: config.macrofoldModel,
+                model: receipt.requestedModel,
                 billing_mode: billingMode,
                 ...(config.macrofoldProviderConnectionId
                   ? { provider_connection_id: config.macrofoldProviderConnectionId }
@@ -1237,11 +1255,11 @@ export class MacrofoldBackend implements AiClient {
       if (accepted['worker_id'] !== workerId || accepted['worktree_id'] !== lane.worktree)
         throw new Error('Macrofold returned an unexpected execution target.');
       const session = string(accepted['session_id']);
-      if (continuingSession && session !== continuingSession)
+      if (continuingSession && session !== continuingSession.id)
         throw new Error('Macrofold returned an unexpected conversation identity.');
       runTargetVerified = true;
       delete lane.targetUnconfirmed;
-      lane.session = session;
+      lane.session = { id: session, billingMode, model: receipt.requestedModel };
       await save();
       if (worldAgent) {
         const stage = worldAgent.streamStage ?? 'replying';
@@ -1257,13 +1275,12 @@ export class MacrofoldBackend implements AiClient {
           turnId: worldAgent.turnId,
           runId: lane.run,
           receipt,
-          billingMode,
           stage,
           requestId: id,
           applicationRequestId: worldAgent.applicationRequestId ?? worldAgent.turnId,
           workerId,
           worktreeId: lane.worktree,
-          ...(continuingSession ? { sessionId: continuingSession } : {}),
+          ...(continuingSession ? { sessionId: continuingSession.id } : {}),
           protectedValues: [worldAgent.contextHandle],
         });
         if (!retainedEvents)
@@ -1312,16 +1329,7 @@ export class MacrofoldBackend implements AiClient {
           );
         throw error;
       });
-      this.captureProviderTiming(status, receipt);
-      receipt.completionUncertain = terminalEvidence(
-        lane.run,
-        status,
-        result,
-        'native',
-      ).completionUncertain;
-      if (billingMode === 'managed')
-        receipt.estimatedCostUsd = microUsdToUsd(status['cost_micro_usd']);
-      await this.captureRunUsage(receipt, signal, billingMode, !!worldAgent);
+      await this.captureNativeReceipt(lane.run, status, result, receipt, signal, !!worldAgent);
       if (receipt.completionUncertain)
         throw new InvalidData('Macrofold execution evidence is contradictory.');
       if (!nativePersistenceSettled(status, result['persistence_status']))
@@ -1420,7 +1428,7 @@ export class MacrofoldBackend implements AiClient {
           if (!this.service.config.macrofoldKey)
             throw new MacrofoldUnavailable('The AI service is not configured.');
           signal.throwIfAborted();
-          compileSchema(request.schema);
+          const preparedSchema = prepareSchema(request.schema, 500_000);
           this.nativeWorkerId();
           const workspace = await this.provisioner.ensure(
             actorId,
@@ -1434,7 +1442,7 @@ export class MacrofoldBackend implements AiClient {
             JSON.stringify({
               instructions: request.instructions,
               context: request.context,
-              schema: request.schema,
+              schema: preparedSchema.schema,
               workspace: {
                 directory: 'mind',
                 files: files.map((file) => `mind/${file.path}`),
@@ -1453,7 +1461,7 @@ export class MacrofoldBackend implements AiClient {
             goalChanges: import('@open-legend/domain').GoalChange[];
             knowledgeChanges: import('@open-legend/domain').KnowledgeEdit[];
             nameChanges: import('@open-legend/domain').GivenNameEdit[];
-          }>(request.schema, JSON.parse(output));
+          }>(preparedSchema, JSON.parse(output));
           const exported = await adapter.export(workspace.worktreeId, signal);
           signal.throwIfAborted();
           return { outcome: 'value', value: { ...value, ...exported }, receipt };
@@ -1503,16 +1511,16 @@ export class MacrofoldBackend implements AiClient {
             throw new MacrofoldUnavailable('The AI service is not configured.');
           signal.throwIfAborted();
           // Validate caller contracts before spending, including schema-keyword field names.
-          compileSchema(request.schema);
+          const preparedSchema = prepareSchema(request.schema, 500_000);
           if (request.execution === 'fast' || request.execution === 'complex')
-            return await this.singleInference<T>(request, receipt, signal);
+            return await this.singleInference<T>(request, receipt, signal, preparedSchema);
           // Fresh history for each bounded inference; only explicitly permitted context
           // enters the call. Compute is reusable without accumulating private memories.
           if (
             Buffer.byteLength(
               JSON.stringify({
                 instructions: request.instructions,
-                schema: request.schema,
+                schema: preparedSchema.schema,
                 context: request.context,
               }),
             ) > 98000
@@ -1524,14 +1532,14 @@ export class MacrofoldBackend implements AiClient {
             JSON.stringify({
               instructions: request.instructions,
               response_format: 'Return only a JSON value matching this schema. Do not use tools.',
-              schema: request.schema,
+              schema: preparedSchema.schema,
               context: request.context,
             }),
             false,
             signal,
             receipt,
           );
-          const value = validateMacrofoldValue<T>(request.schema, JSON.parse(output));
+          const value = validateMacrofoldValue<T>(preparedSchema, JSON.parse(output));
           signal.throwIfAborted();
           return { outcome: 'value', value, receipt };
         },
@@ -1547,6 +1555,7 @@ export class MacrofoldBackend implements AiClient {
     request: GenerateRequest,
     receipt: AiReceipt,
     signal: AbortSignal,
+    preparedSchema: PreparedSchema,
   ): Promise<AiResult<T>> {
     const config = this.service.config;
     const provider = 'openrouter';
@@ -1566,7 +1575,7 @@ export class MacrofoldBackend implements AiClient {
         model_binding: {
           provider,
           model,
-          billing_mode: config.macrofoldBillingMode,
+          billing_mode: receipt.macrofoldBillingMode,
           ...(config.macrofoldProviderConnectionId
             ? { provider_connection_id: config.macrofoldProviderConnectionId }
             : {}),
@@ -1589,7 +1598,7 @@ export class MacrofoldBackend implements AiClient {
             json_schema: {
               name: request.schemaName ?? 'decision',
               strict: true,
-              schema: request.schema,
+              schema: preparedSchema.schema,
             },
           },
           max_tokens: limits.max_output_tokens,
@@ -1627,7 +1636,7 @@ export class MacrofoldBackend implements AiClient {
         throw new InvalidData('Model completion was truncated or requested unsupported tools.');
       return {
         outcome: 'value',
-        value: validateMacrofoldValue<T>(request.schema, JSON.parse(string(message['content']))),
+        value: validateMacrofoldValue<T>(preparedSchema, JSON.parse(string(message['content']))),
         receipt,
       };
     } catch (error) {
@@ -1659,8 +1668,8 @@ export class MacrofoldBackend implements AiClient {
           if (!this.service.config.macrofoldKey)
             throw new MacrofoldUnavailable('The AI service is not configured.');
           signal.throwIfAborted();
-          validateQuestions(request.questions);
-          validateJudgmentSize(request.state, request.questions);
+          const questions = prepareQuestions(request.questions, 500_000);
+          validateJudgmentSize(request.state, questions);
           signal.throwIfAborted();
           const accepted = await this.mutation(
             `inference:${request.requestId}`,
@@ -1669,17 +1678,17 @@ export class MacrofoldBackend implements AiClient {
               model_binding: {
                 provider: 'openrouter',
                 model: config.macrofoldJevModel,
-                billing_mode: config.macrofoldBillingMode,
+                billing_mode: receipt.macrofoldBillingMode,
                 ...(config.macrofoldJevConnectionId
                   ? { provider_connection_id: config.macrofoldJevConnectionId }
                   : {}),
               },
-              input: { state: request.state, questions: request.questions },
+              input: { state: request.state, questions },
               limits: {
                 max_cost_micro_usd: microdollarLimit(decisionAllowance(config, 'jev')),
                 max_output_tokens: Math.min(
                   16384,
-                  Math.max(1024, Object.keys(request.questions).length * 64),
+                  Math.max(1024, Object.keys(questions).length * 64),
                 ),
                 timeout_seconds: Math.ceil(config.aiTimeoutMs / 1000),
               },
@@ -1699,8 +1708,7 @@ export class MacrofoldBackend implements AiClient {
           const failure = inferenceFailure<JudgeValue>(inference, receipt);
           if (failure) return failure;
           const raw = object(inference['value']);
-          receipt.usage = decodeUsage(raw) ?? receipt.usage;
-          return { outcome: 'value', value: decodeJudge(raw, request.questions), receipt };
+          return { outcome: 'value', value: decodeJudge(raw, questions), receipt };
         },
       );
     } catch (error) {
@@ -1732,37 +1740,15 @@ export class MacrofoldBackend implements AiClient {
   ) {
     const run = string(accepted['run_id']);
     receipt.providerRequestId = run;
-    const resolved = accepted['result']
-      ? {
-          result: object(accepted['result']),
-          status: object(
-            await this.api.request(
-              `/v1/runs/${encodeURIComponent(run)}`,
-              undefined,
-              undefined,
-              signal,
-            ),
-          ),
-        }
+    const embeddedStatus = macrofoldTerminalStatus(accepted);
+    const resolved = embeddedStatus
+      ? { result: object(accepted['result']), status: embeddedStatus }
       : await this.waitRun(run, object(accepted['urls']), signal);
-    const inference = object(resolved.result['inference']);
-    const evidence = terminalEvidence(run, resolved.status, resolved.result, 'inference');
-    receipt.completionUncertain = evidence.completionUncertain;
-    this.captureProviderTiming(resolved.status, receipt);
-    // Managed billing comes only from the verified Run; BYOK model invoices are separate.
-    const raw =
-      inference['value'] && typeof inference['value'] === 'object'
-        ? object(inference['value'])
-        : {};
-    const usage = raw['usage'] && typeof raw['usage'] === 'object' ? object(raw['usage']) : {};
-    if (this.service.config.macrofoldBillingMode === 'managed')
-      receipt.estimatedCostUsd = microUsdToUsd(resolved.status['cost_micro_usd']);
-    await this.captureRunUsage(
+    const inference = captureMacrofoldInferenceReceipt(
+      run,
+      resolved.status,
+      resolved.result,
       receipt,
-      signal,
-      this.service.config.macrofoldBillingMode,
-      false,
-      evidence.uninvokedInferenceChargeUsd,
     );
     if (
       !receipt.completionUncertain &&
@@ -1774,25 +1760,12 @@ export class MacrofoldBackend implements AiClient {
           ? 'deadline_exceeded'
           : 'The provider request was cancelled.',
       );
-    receipt.usage =
-      decodeUsage(raw) ??
-      decodeUsage({
-        usage: {
-          ...usage,
-          input_tokens: usage['prompt_tokens'],
-          output_tokens: usage['completion_tokens'],
-        },
-      }) ??
-      receipt.usage;
-    if (
-      typeof inference['model_revision'] === 'string' &&
-      /^[\w./:-]{1,128}$/.test(inference['model_revision'])
-    ) {
-      receipt.model = inference['model_revision'];
-      receipt.modelVersionStatus = 'reported';
-    }
     await this.save(`result:${run}`, resolved);
-    if (!receipt.completionUncertain && resolved.status['failure_code'] === 'run_budget_exhausted')
+    if (
+      !receipt.completionUncertain &&
+      (inference['reason_code'] === 'run_budget_exhausted' ||
+        resolved.status['failure_code'] === 'run_budget_exhausted')
+    )
       throw new MacrofoldTerminalFailure(
         'failed',
         'The AI request exceeded its per-call spending limit.',
@@ -2176,27 +2149,23 @@ export class MacrofoldBackend implements AiClient {
               signal,
             ),
           );
-          const evidence = terminalEvidence(
-            receipt.providerRequestId!,
-            status,
-            result,
-            status['kind'] === 'inference' ? 'inference' : 'native',
-          );
-          if (evidence.completionUncertain)
+          if (status['kind'] === 'inference') {
+            captureMacrofoldInferenceReceipt(receipt.providerRequestId!, status, result, receipt);
+          } else {
+            await this.captureNativeReceipt(
+              receipt.providerRequestId!,
+              status,
+              result,
+              receipt,
+              signal,
+              privateContent,
+            );
+          }
+          if (receipt.completionUncertain)
             return {
               runs: results,
               note: 'Provider completion is still unconfirmed; its original reservation remains counted.',
             };
-          receipt.completionUncertain = false;
-          if (this.service.config.macrofoldBillingMode === 'managed')
-            receipt.estimatedCostUsd = microUsdToUsd(status['cost_micro_usd']);
-          await this.captureRunUsage(
-            receipt,
-            signal,
-            this.service.config.macrofoldBillingMode,
-            privateContent,
-            evidence.uninvokedInferenceChargeUsd,
-          );
           if (receipt.estimatedCostUsd !== undefined) {
             await this.service.store.settle(receipt.requestId, receipt);
             this.log?.save({ ...call, output: { ...output, receipt } });

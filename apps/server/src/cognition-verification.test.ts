@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   compileSchema,
   createAiClient,
+  usdToMicroUsd,
   type AiClient,
   type AiReceipt,
   type AiResult,
@@ -29,7 +30,7 @@ import type { IntelligenceLog } from './intelligence-log.js';
 import { traceDetails } from './cognition-inspection.js';
 import { LEVEL_LIMITS, RESPONSE_INSTRUCTIONS } from './cognition-contracts.js';
 import { prepareActorInvention } from './actor-invention.js';
-import { decisionAllowance } from './cognition-budget.js';
+import { decisionAllowance, sumRequestCosts } from './cognition-budget.js';
 import type { JobRecord } from './store.js';
 import type { Level1Rating } from './level1-selection.js';
 
@@ -888,21 +889,39 @@ describe(
       h.state.policy = { route: 'level2', reflection: 'no', possibleAction: 'no' };
       // A known adapter failure is the control for `uncertain`: only unknown completion maps there.
       const generationOutcomes = [...FAILURES, 'failed'] as const;
+      const knownUncertainCost = sumRequestCosts([decisionAllowance(h.config, 'openai'), 0.01]);
       for (const kind of generationOutcomes) {
-        h.state.generate = (request) => failure(request.requestId, 'openai', kind);
-        const spent = await h.spent();
+        h.state.generate = (request) => {
+          const result = failure(request.requestId, 'openai', kind);
+          if (kind === 'uncertain') result.receipt.estimatedCostUsd = knownUncertainCost;
+          return result;
+        };
+        const spent = usdToMicroUsd(await h.spent())!;
         const job = await h.chat(`outcome-${kind}`, `Fixture ${kind} request.`);
         expect(job.status).toBe('failed');
         expect(job.result).toEqual({ disposition: kind });
         expect(h.service.world.responseReceipts?.[job.id]).toBeUndefined();
         const trace = await h.trace(job.id);
         expect(trace).toMatchObject({ route: 'level2', status: 'failed', disposition: kind });
-        const charged = (await h.spent()) - spent;
-        // Unknown completion keeps the generation reservation charged; the others settle their receipts.
+        const charged = usdToMicroUsd(await h.spent())! - spent;
+        // Unknown completion preserves a larger known charge and keeps execution occupied.
         if (kind === 'uncertain') {
-          expect(charged).toBeGreaterThanOrEqual(decisionAllowance(h.config, 'openai'));
+          expect(charged).toBeGreaterThanOrEqual(usdToMicroUsd(knownUncertainCost)!);
+          expect(
+            trace.children.find((child) => child.kind === 'Decision accounting'),
+          ).toMatchObject({
+            output: {
+              entries: expect.arrayContaining([
+                expect.objectContaining({
+                  requestId: h.npcResponses().at(-1)!.requestId,
+                  settledUsd: knownUncertainCost,
+                  uncertain: true,
+                }),
+              ]),
+            },
+          });
           await h.confirmCompletion(h.npcResponses().at(-1)!.requestId, 'openai');
-        } else expect(charged).toBeLessThan(0.01);
+        } else expect(charged).toBeLessThan(10_000);
       }
       expect(h.npcResponses()).toHaveLength(generationOutcomes.length);
 
@@ -912,16 +931,18 @@ describe(
           request.requestId.endsWith(':attempt:0:route')
             ? failure(request.requestId, 'jev', kind)
             : value(request.requestId, 'jev', { answers: answers(request, h.state.policy) });
-        const spent = await h.spent();
+        const spent = usdToMicroUsd(await h.spent())!;
         const job = await h.chat(`outcome-jev-${kind}`, `Fixture Jev ${kind}.`);
         expect(job.status).toBe('failed');
         expect(job.result).toEqual({ disposition: kind });
         expect(await h.trace(job.id)).toMatchObject({ status: 'failed', disposition: kind });
-        const charged = (await h.spent()) - spent;
+        const charged = usdToMicroUsd(await h.spent())! - spent;
         if (kind === 'uncertain') {
-          expect(charged).toBeGreaterThanOrEqual(decisionAllowance(h.config, 'jev'));
+          expect(charged).toBeGreaterThanOrEqual(
+            usdToMicroUsd(decisionAllowance(h.config, 'jev'))!,
+          );
           await h.confirmCompletion(routeRequest(h, job.id)!.requestId, 'jev');
-        } else expect(charged).toBeLessThan(0.01);
+        } else expect(charged).toBeLessThan(10_000);
       }
       expect(h.npcResponses()).toHaveLength(generationOutcomes.length);
       delete h.state.judge;

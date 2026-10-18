@@ -4,7 +4,7 @@ import {
   InvalidData,
   record,
   serialize,
-  validateQuestions,
+  prepareQuestions,
 } from './validation.js';
 import { estimateCostUsd } from './usage.js';
 import { captureHttpErrorDiagnostics, captureResponseRateLimits } from './http-diagnostics.js';
@@ -22,13 +22,15 @@ import type {
 
 /** Official /v1/decisions protocol; Noul is our probability-of-predicate representation. */
 export function openAiDecisionInput(request: Pick<JudgeRequest, 'state' | 'questions'>) {
-  validateQuestions(request.questions);
-  if (Object.keys(request.questions).length > 200)
-    throw new InvalidData('decisions_question_limit');
+  return decisionInput(request.state, prepareQuestions(request.questions, 500_000));
+}
+
+function decisionInput(state: unknown, questions: TypedQuestionMap) {
+  if (Object.keys(questions).length > 200) throw new InvalidData('decisions_question_limit');
   return {
     model: 'gpt-6-luna',
-    input: serialize(request.state, 480_000),
-    questions: Object.entries(request.questions).map(([name, q]) =>
+    input: serialize(state, 480_000),
+    questions: Object.entries(questions).map(([name, q]) =>
       q.type === 'noul'
         ? {
             type: 'predicate',
@@ -199,10 +201,8 @@ export function createOpenAiDecisionClient(configuration: {
           { state: request.state, questions: request.questions },
           500_000,
         );
-        // Keep the submitted rubric through the provider wait without sorting
-        // offered choices; their insertion order determines exact ties.
-        const questions = structuredClone(request.questions);
-        const body = openAiDecisionInput({ state: request.state, questions });
+        const questions = prepareQuestions(request.questions, 500_000);
+        const body = decisionInput(request.state, questions);
         const serialized = serialize(body, 500_000);
         receipt.contextDigest = digest(contextJson);
         receipt.providerRequestDigest = digest(serialized);

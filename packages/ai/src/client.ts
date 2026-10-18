@@ -2,14 +2,14 @@ import { captureHttpErrorDiagnostics, captureResponseRateLimits } from './http-d
 import { NetworkError } from '@open-legend/network';
 import { providerOwner, providerText, uncertainHttpStatus } from './provider-http.js';
 import {
-  compileSchema,
+  prepareSchema,
   decodeJudge,
   decodeUsage,
   digest,
   InvalidData,
   record,
   serialize,
-  validateQuestions,
+  prepareQuestions,
   validateJudgmentSize,
 } from './validation.js';
 import { captureModelPrices, estimateCostUsd, modelTokenPrices } from './usage.js';
@@ -25,7 +25,6 @@ import type {
   JudgeValue,
   ProviderConfig,
   RequestControl,
-  TypedQuestionMap,
 } from './types.js';
 
 const DEFAULTS = {
@@ -279,12 +278,11 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
           !Array.isArray(request.state)
         )
           throw new InvalidData('invalid_judgment_state');
-        const questions: unknown = JSON.parse(serialize(request.questions, maxRequestBytes));
-        validateQuestions(questions);
+        const questions = prepareQuestions(request.questions, maxRequestBytes);
         validateJudgmentSize(request.state, questions);
         return {
           body: { model, state: JSON.parse(contextJson) as unknown, questions },
-          decode: (data) => decodeJudge(data, questions as TypedQuestionMap),
+          decode: (data) => decodeJudge(data, questions),
         };
       });
     },
@@ -295,8 +293,7 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
         const name =
           request.schemaName ?? request.task.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64);
         if (!/^[a-zA-Z0-9_-]{1,64}$/.test(name)) throw new InvalidData('invalid_schema_name');
-        const schema: unknown = JSON.parse(serialize(request.schema, maxRequestBytes));
-        const validate = compileSchema(schema);
+        const { schema, validate } = prepareSchema(request.schema, maxRequestBytes);
         const outputLimit = request.maxOutputTokens ?? maxOutputTokens;
         if (!Number.isSafeInteger(outputLimit) || outputLimit < 1 || outputLimit > maxOutputTokens)
           throw new InvalidData('output_limit_exceeded');

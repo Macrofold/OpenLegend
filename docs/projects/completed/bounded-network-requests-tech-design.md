@@ -25,7 +25,7 @@ The key distinction is between **ending a caller's wait**, **ending local transp
 
 ## 2. Owners and dependency direction
 
-Create `packages/network`, exported as `@open-legend/network`. Its default entry is browser-safe: Web APIs, plain TypeScript and no `Buffer`, Node imports, AI validation, world state, credentials, billing or UI dependencies. Use `Uint8Array`, `TextEncoder` and fatal `TextDecoder`. Keep strict ESM, explicit package entrypoints and the pinned workspace/lockfile conventions.
+`packages/network`, exported as `@open-legend/network`, owns the shared transport lifetime. Its default entry is browser-safe: Web APIs, plain TypeScript and no `Buffer`, Node imports, AI validation, world state, credentials, billing or UI dependencies. Use `Uint8Array`, `TextEncoder` and fatal `TextDecoder`. Keep strict ESM, explicit package entrypoints and the pinned workspace/lockfile conventions.
 
 | Module                                                                           | Sole responsibility                                                                                                           |
 | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
@@ -128,7 +128,7 @@ HTTP functions take an admitted `NetworkOperation`, its owner's injected transpo
 - `requestBytes`: returns the entire permitted body and actual status/headers. `requestText` can be a small fatal UTF-8 convenience wrapper. Domain JSON parse/shape validation remains at its adapter.
 - `consumeHttp`: owns the original response and reader while calling a narrowly typed chunk/event consumer; it does not return an unowned network `Response` or reader to ordinary application code. The callback executes under the same operation and publication checks. Exact asset streaming and finite provider SSE use this path.
 
-The optional owner-level exchange observer is synchronous with an explicit `undefined` return type, rejecting async observer callbacks at compile time. It receives a bounded copy of bytes already consumed by the owned reader (at most 1,000,000 bytes with explicit truncation), status and timing. It never creates another reader, clone or tee; private exchanges explicitly omit it. Required final Run receipts remain independently recorded. Optional `idle` callbacks are serialized with chunk callbacks under the same operation; the private Run adapter uses 250 ms to observe current permission/continuation state even when no provider chunk arrives.
+The optional owner-level exchange observer is synchronous with an explicit `undefined` return type, rejecting async observer callbacks at compile time. It receives a bounded copy of bytes already consumed by the owned reader (at most 1,000,000 bytes with explicit truncation), status and timing. An optional synchronous content-interest predicate is checked before preparation, each retained chunk and final copying; ended capture interest drops optional prefixes and cannot change required delivery. It never creates another reader, clone or tee; private exchanges explicitly omit it. Required final Run receipts remain independently recorded. Optional `idle` callbacks are serialized with chunk callbacks under the same operation; the private Run adapter uses 250 ms to observe current permission/continuation state even when no provider chunk arrives.
 
 The concrete consumption and subscription contracts are:
 
@@ -335,7 +335,7 @@ JSON parsing and schemas remain at existing trust boundaries. Invalid encoding, 
 
 ### 6.3 Diagnostics
 
-Remove network-body cloning from `IntelligenceLog.fetch`. The shared consumption path can report bounded already-read metadata/bytes to an optional synchronous diagnostic tap; final typed receipt logging remains its existing owner. The tap cannot start another reader, await persistence before returning the network value, retain streaming private token frames, or throw an error that changes the operation result. Keep the existing log privacy/redaction, exchange-count and retained-byte limits.
+The shared consumption path reports bounded already-read metadata/bytes to the optional synchronous Intelligence diagnostic observer; final typed receipt logging remains its existing owner. The observer cannot start another reader, await persistence before returning the network value, retain streaming private token frames, or throw an error that changes the operation result. Keep the existing log privacy/redaction, exchange-count and retained-byte limits.
 
 Use consumed bytes only up to the current diagnostic cap; mark unavailable/truncated when necessary. For streams, retain the current omission of raw frames and final typed receipt. Do not turn diagnostics into a general network recorder. Required durable acceptance/billing writes are **not** optional diagnostic taps and retain their separate contract.
 
