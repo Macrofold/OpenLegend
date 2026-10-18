@@ -71,6 +71,17 @@ These are scope distinctions, not implementation estimates from a fresh code aud
 
 Sort catalogue entries by Priority and then stable ID, or stable heading for entries without IDs. This supports navigation, not a delivery order among equally useful alternatives. Build estimates and F/U/C/D are not priority tie-breakers.
 
+## Keep play worthwhile as players learn and return
+
+When comparing proposals of similar priority and scope, consider the questions relevant to the intended activity. A one-time discovery, a repeatable hunt and a shared home can provide different kinds of lasting value.
+
+- **Useful investment after improvement.** Better equipment and greater power can be satisfying while earlier knowledge, tools, places or relationships retain another purpose. Identify what the new opportunity preserves, broadens or replaces. Continuing value need not mean permanently optimal gear or mandatory revisits to every old activity.
+- **Enjoyment after learning an efficient method.** For activities intended to repeat, consider a player who understands a reliable approach or consults a guide. Look for satisfying execution, mastery, meaningful choices, different circumstances, expression or a wanted result. Optimization can itself be enjoyable. Surprise alone does not establish repeat value, and a good one-time discovery need not become a recurring grind.
+- **Relationships beyond a shared task.** Distinguish useful help, pleasant company and voluntarily meeting again. Ask whether participants can recognize contributions, retain meaningful roles and choose how to continue. Brief exchanges, quiet participation and solo play remain legitimate; rivalry and shared competitive mastery can also give people a reason to return. Friendship is one possible outcome, not a compulsory reward.
+- **The whole activity's time cost.** Include arrival, preparation, waiting and recovery when judging the payoff. Consider what a player can meaningfully accomplish before stopping and what it takes to resume within the supported world's rules. Deliberate travel and demanding group expeditions can earn their time through interest and stakes; repeated administration or compulsory upkeep needs its own justification.
+
+These are selection prompts. The [player-learning plan](../projects/first-playable-playtest-plan.md#step-4--observe-distinct-player-journeys) owns how to examine effort, payoff and return, including the applicable handling of test progress; existing world acceptance and delivery owners define required scope. The [Forever synthesis](https://github.com/Macrofold/OpenLegend/blob/14ac519648f4dd0c681db8fa168479fb9ed4e387/archive/02-research/game-inspiration/essays/wow-forever-and-a-world-worth-returning-to.md) supplies comparative reasoning and counterexamples from prelaunch evidence, not proof of long-term outcomes.
+
 ## Completion checks for the first playable game
 
 Use the [world's full acceptance requirements](../worlds/base/playable-openings.md#full-experience-acceptance-and-scope) and [FPV09](../maintainers/first-playable-validation.md#fpv09--complete-first-playable-and-next-commitment-decision). The [playtest plan](../projects/first-playable-playtest-plan.md) distinguishes mechanical correctness, actual invention/independent behavior, player understanding/enjoyment, continuing value and delivery cost.
