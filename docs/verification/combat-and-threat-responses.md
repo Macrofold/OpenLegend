@@ -995,3 +995,36 @@ checking, production build/asset guard and the three existing context checks pas
 No external calls were made. Additional Jev cost is **$0**; cumulative reported
 estimates remain Jev **$0.440786** and other providers **$0.207513**, uncertain
 commitments **$5.939396**, and conservative aggregate exposure **$6.587695**.
+
+## Body separation and executed distance bands
+
+The spatial substrate now exposes surface distance and full-piece relative-motion
+minimum/entry/exit queries for the movement owner's nominal upright capsule or
+short-cylinder shapes. Existing movement skin is excluded from nominal body
+surface distance. Predetermined geometric checks cover two bodies passing within
+range and then separating, opposing movement, a stationary observed region whose
+uncertainty grows, mixed shapes on sloped pieces and equivalence after splitting a
+transient interval. Explicit capsule-axis calculations and a low projectile path
+through a diameter-height sphere pass. The latter exposed the old projectile
+query's strict height comparison: it treated the equality case as a cylinder,
+while movement already uses a sphere. The query now agrees with that convention.
+
+A diagnostic compared 300 scalar distances with Rapier's shape-contact query.
+Rapier minus the analytic result ranged from **-0.0000007704294384680566 m** to
+**0.004989763521244306 m** in this sample. The initial 0.00002 m comparison failed;
+that failure is retained. These library outputs are reported as a comparison,
+not used as a precision reference or claimed to agree within spatial tolerance. The
+explicit geometric and moving-piece checks above pass independently of that
+comparison; actual body collision still uses its existing owner. No gameplay
+clearance or tuning was changed to improve the comparison.
+
+Forty-one existing spatial/domain checks pass across three selected files, and
+the full evolving native contact/server scenario passes. Full TypeScript checking
+and the production build/asset guard pass; existing bundle warnings remain. The
+new animal controller still needs its danger, route, timing and physical callers
+connected and qualified. This checkpoint alone demonstrates no animal escape
+behavior or population performance.
+
+Additional Jev cost is **$0**. Cumulative estimates remain Jev **$0.440786** and
+other providers **$0.207513**, with **$5.939396** uncertain commitments and
+**$6.587695** conservative aggregate exposure.

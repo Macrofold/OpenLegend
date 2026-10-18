@@ -434,6 +434,13 @@ above, the canonical qualification matrix below, and truthful remaining evidence
 The ordinary supplied Main opening remains selected. Broader feeding, packs and
 roaming stay in the later already-authorized RW phase and must extend this owner.
 
+The spatial substrate now provides nominal upright-body separation, full-piece
+minimum separation and complete distance-band intervals. Ordinary capsule routes
+use a quadratic minimum; mixed short-cylinder slopes or a growing region use a
+bounded convex search below spatial tolerance. This is shared geometry preparation,
+not a second mover or completed animal controller. Diameter-height projectile
+contact now follows the existing movement sphere convention.
+
 Installed native response definitions use the existing world record catalogue,
 with a structured key containing their complete definition pin. A body selects a
 profile and locomotion binding; its running episode retains its own exact pin.
