@@ -549,24 +549,27 @@ export function pauseRefusal(action: ActorComponent['action']): string | null {
   return null;
 }
 
-/** Pause the current frontier for other work. The running step stops at a safe boundary and
- * is re-queued to restart from scratch later: effects already committed stay, elapsed work
- * on that step is not kept. One paused frontier at most. */
-export function suspendCurrentWork(world: WorldState, actorId: string): Outcome | null {
-  const actor = entityGet(world.entities, actorId)!.actor!;
+/** Read the same pause boundary used at commit, before offering an interruption. */
+export function suspensionProblem(world: WorldState, actorId: string): Outcome | null {
+  const actor = entityGet(world.entities, actorId)?.actor;
+  if (!actor) return outcome(false, 'actor-unavailable', 'This actor is unavailable.');
   const plan = actor.agency.plan;
-  if (!plan || plan.status !== 'active') return null;
+  if (!plan || plan.status !== 'active')
+    return actor.action
+      ? outcome(
+          false,
+          'cannot-pause',
+          'This work is not a chosen plan that can be paused; replace it or let it finish.',
+        )
+      : null;
   if (actor.agency.suspended)
     return outcome(
       false,
       'already-paused',
       'Other paused work is already waiting to resume; let it resume, or replace it.',
     );
-  const running = plan.steps.findIndex((step) => step.status === 'running');
-  const step = running >= 0 ? plan.steps[running]! : undefined;
-  // Every refusal is decided before anything stops. Only the plan's own running step can
-  // restart later; a separate direct action is not chosen work that can be paused.
-  if (actor.action && step?.actionId !== actor.action.id)
+  const running = plan.steps.find((step) => step.status === 'running');
+  if (actor.action && running?.actionId !== actor.action.id)
     return outcome(
       false,
       'cannot-pause',
@@ -574,10 +577,24 @@ export function suspendCurrentWork(world: WorldState, actorId: string): Outcome 
     );
   const refusal = pauseRefusal(actor.action);
   if (refusal) return outcome(false, 'cannot-pause', refusal);
+  if (running && !isSafeRecordId(`${running.id}:r${plan.revision}`))
+    return outcome(false, 'cannot-pause', 'This work has been paused too many times.');
+  return null;
+}
+
+/** Pause the current frontier for other work. The running step stops at a safe boundary and
+ * is re-queued to restart from scratch later: effects already committed stay, elapsed work
+ * on that step is not kept. One paused frontier at most. */
+export function suspendCurrentWork(world: WorldState, actorId: string): Outcome | null {
+  const actor = entityGet(world.entities, actorId)!.actor!;
+  const problem = suspensionProblem(world, actorId);
+  if (problem) return problem;
+  const plan = actor.agency.plan;
+  if (!plan || plan.status !== 'active') return null;
+  const running = plan.steps.findIndex((step) => step.status === 'running');
+  const step = running >= 0 ? plan.steps[running]! : undefined;
   if (plan.activity?.control) plan.activity.interrupted = true;
   const restartId = step && `${step.id}:r${plan.revision}`;
-  if (restartId && !isSafeRecordId(restartId))
-    return outcome(false, 'cannot-pause', 'This work has been paused too many times.');
   if (actor.action) {
     if (step)
       step.resultMemoryId = endActivity(

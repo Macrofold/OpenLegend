@@ -6,6 +6,7 @@ import {
   itemDefinitionPin,
   RESOURCE_GROUP_OPERATION_LIMIT,
   type ResourceOperation,
+  type ResourceAvailability,
 } from './resource-claims.js';
 import { definitionPin, type DefinitionPin } from './world-modules.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
@@ -106,6 +107,7 @@ export function cookingClaims(
   actorId: string,
   definition: FoodPreparationDefinition,
   inputs: Record<string, string>,
+  availability?: ResourceAvailability,
 ): ResourceOperation[] | undefined {
   chargeWork({ tests: definition.inputs.length });
   if (Object.keys(inputs).length !== definition.inputs.length) return;
@@ -120,7 +122,7 @@ export function cookingClaims(
     )
       return;
     const amount = (amounts.get(item.id) ?? 0) + input.quantity;
-    if (availableItemQuantity(world, item.id) < amount) return;
+    if (availableItemQuantity(world, item.id, undefined, availability) < amount) return;
     amounts.set(item.id, amount);
     claims.push({
       source: {

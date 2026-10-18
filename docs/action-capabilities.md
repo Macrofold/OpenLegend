@@ -170,7 +170,7 @@ Retrieve metadata from an actor-scoped capability view using installed family/in
 
 ### Prepared choices and prospective work transitions
 
-**Accepted target; implementation and qualification remain tracked.** A prepared choice preserves what the initiator is choosing, what can begin, and what that choice means for existing work. It is one request's read-only preparation under this capability contract, not another goal store, plan, queue or permission. [Agency response preparation](../archive/07-technical-architecture/agent-agency-runtime.md#25-shared-deliberation-and-prepared-choices) owns operation composition and the admitted decision job's selected strategy, lifecycle and accounting.
+**Accepted target; implementation and qualification remain tracked.** Native prospective work preparation and ordinary response-plan admission are implemented in part: they share pause refusal, exact resource release and subsequent native prerequisites. Complete purpose/condition bindings and all discovery consumers remain [CTR05](maintainers/combat-and-threat-responses.md#ctr05--complete-choices-while-working) work. A prepared choice preserves what the initiator is choosing, what can begin, and what that choice means for existing work. It is one request's read-only preparation under this capability contract, not another goal store, plan, queue or permission. [Agency response preparation](../archive/07-technical-architecture/agent-agency-runtime.md#25-shared-deliberation-and-prepared-choices) owns operation composition and the admitted decision job's selected strategy, lifecycle and accounting.
 
 Retain these meanings through discovery, selection, grounding and native response admission:
 

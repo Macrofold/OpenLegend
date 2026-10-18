@@ -105,6 +105,8 @@ export {
   executeCommand,
   lethalAttackOffer,
   nativeOperationAvailable,
+  prepareNativeChoice,
+  type PreparedNativeChoice,
   advanceWorld,
   projectWorldHistory,
   navigationBlocked,

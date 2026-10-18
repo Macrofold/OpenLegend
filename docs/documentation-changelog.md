@@ -20,6 +20,13 @@ while removing whole-projectile/history scans from that preference. Native and
 PostgreSQL component evidence does not establish the unfinished response strategy
 or player-control qualification.
 
+Read-only work-transition preparation now exposes the real lost progress, spent
+inputs, paused-work consequence and persistent recovery. Ordinary response-plan
+admission checks materials after releasing only the exact replaced invocation’s
+holds, before cancelling work. A gather-to-cook replacement and a refused
+replacement retaining the original work pass natively; complete busy choices and
+the remaining prepared-choice consumers stay open in CTR05.
+
 ## October 18, 2026 — Review optional measurement and carry its lessons forward
 
 The [complete implementation review](verification/performance/profiling-controls.md#complete-implementation-review--october-18-2026-0008-edt) corrects malformed-request observation, failed-setup and shutdown cleanup, off-mode peak calculation and unsampled-delay reporting. Current gameplay, world/engine ownership and authoritative checks remain intact. [Performance guidance](performance.md#optional-measurement) gains one focused section with an explicit conditional read from its already-mandatory skill; root instructions and existing policy owners are not duplicated. Both feature specs record synchronization datetimes and both designs record use datetimes. PSF01–PSF06 remain complete; PC06's unmatched-activity qualification remains open and the full-game run allowance is unchanged.

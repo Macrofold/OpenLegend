@@ -1,12 +1,12 @@
 # Combat and threat responses: technical design
 
-| Status      | Current progress                                                                                                     | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Actual contact and personal danger evidence are in progress; complete combat delivery and qualification remain open. | 2026-10-18   |
+| Status      | Current progress                                                                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Contact, personal danger evidence and prospective work transitions are in progress; complete combat delivery and qualification remain open. | 2026-10-18   |
 
 ## Design baseline and integration
 
-The implementation baseline is `Macrofold/OpenLegend` main at `0eb7358f251d1ab706592ccb6e9829e98c729fe9`. The [feature specification](combat-and-threat-responses-feature-spec.md) defines the accepted scope; [repertoire scope](combat-and-threat-responses-repertoire-review.md) relates it to broader possibilities. Implementation crosses domain mechanics, world policy, server cognition and player controls, so delivery requires staged integration and separate runtime qualification.
+The active implementation baseline is `https://github.com/Macrofold/OpenLegend.git`, local `main` and freshly fetched `origin/main` at `19a0c303a89d3cb278db1cbbbe5b95e2e6e26fe1`, containing the reviewed `d261c94f50875edd88e8eb4a69cf8f4a413563cb`. Implementation uses `codex/implement-complete-first-playable`. The [feature specification](combat-and-threat-responses-feature-spec.md) defines the accepted scope; [repertoire scope](combat-and-threat-responses-repertoire-review.md) relates it to broader possibilities. Implementation crosses domain mechanics, world policy, server cognition and player controls, so delivery requires staged integration and separate runtime qualification.
 
 Implementation must measure actual calls, receipts, latency and costs. A faster model alone does not establish faster complete reactions.
 

@@ -45,7 +45,7 @@ import {
 import { getOwn, isSafeRecordId } from './records.js';
 import { current, isDraft } from 'immer';
 import { appendSnapshot, appendedEventCount, cloneValue, draftWorld } from './draft.js';
-import { executeCommand, nativeOperationAvailable, SIMULATION_RULES } from './kernel.js';
+import { executeCommand, prepareNativeChoice, SIMULATION_RULES } from './kernel.js';
 import { appendMemory, canonicalJson, contentLabel, emit, finish, outcome } from './events.js';
 import { seesEntity } from './perception.js';
 import { distance, hasLineOfSight } from './spatial.js';
@@ -257,10 +257,11 @@ export const RESPONSE_RECEIPT_LIMIT = 300;
  * docs/projects/parallel-batch-01-playable-week-tech-design.md#admission-before-execution
  */
 function admitPlan(...args: Parameters<typeof arrangePlan>): Outcome {
-  const [world, , , commands] = args;
+  const [world, , , commands, mode] = args;
   const first = commands[0];
   if (first && !('itemFromStep' in first)) {
-    const available = nativeOperationAvailable(world, first);
+    const prepared = prepareNativeChoice(world, first.actorId, first, mode);
+    const available = 'ok' in prepared ? prepared : prepared.outcome;
     if (!available.ok) return available;
   }
   return arrangePlan(...args);

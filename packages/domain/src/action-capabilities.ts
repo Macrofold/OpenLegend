@@ -2,18 +2,89 @@ import { entityGet, entityHas } from './entity-collection.js';
 import { surfaceContains, surfaceHeight, type SurfacePoint } from '@open-legend/spatial';
 import { FOLLOW_RULES, headingFrame } from './follow.js';
 export { FOLLOW_RULES } from './follow.js';
-import { rememberedPlace } from './agency.js';
+import { rememberedPlace, suspensionProblem } from './agency.js';
 import { canReachEntity, findApproachPath, sameSurfacePoint } from './spatial.js';
 import { supportedPosition, worldPosition } from './spatial-state.js';
 import { portableItems } from './item-handling.js';
 import { accessiblePossession } from './object-access.js';
 import { itemFor } from './objects.js';
 import { SIMULATION_RULES } from './kernel.js';
+import { combatRecoveryDeadline } from './contact-defense.js';
+import { cloneValue } from './draft.js';
 import { outcome } from './events.js';
 import { isSafeRecordId } from './records.js';
 import { seesEntity } from './perception.js';
 import { activityRequestDescriptors, bindActivityRequest } from './activity-hosts.js';
-import type { Command, Entity, Outcome, WorldState } from './types.js';
+import type { Action, Command, Entity, Outcome, WorldState } from './types.js';
+
+export type WorkTransitionMode = 'continue' | 'enqueue' | 'replace' | 'interrupt';
+/** One read-only proposal, not permission or another work queue. Recompute its
+ * prerequisites at admission. docs/action-capabilities.md#prepared-choices-and-prospective-work-transitions */
+export interface ProspectiveWork {
+  mode: WorkTransitionMode;
+  expected: {
+    generation: number;
+    life: number;
+    controller: string;
+    actionId: string | null;
+    plan: { id: string; revision: number } | null;
+    suspended: { id: string; revision: number } | null;
+  };
+  lostWorkSeconds: number;
+  spentInputs: Action['consumed'];
+  pausedWork: 'unchanged' | 'discarded' | 'restart-current-step';
+  releasedInvocations: string[];
+  recovery: { combatUntil: number; evadeUntil: number };
+  outcome: Outcome;
+}
+
+export function prospectiveWork(
+  world: WorldState,
+  actorId: string,
+  mode: WorkTransitionMode,
+): ProspectiveWork | Outcome {
+  const entity = entityGet(world.entities, actorId),
+    actor = entity?.actor;
+  if (!actor || !entity) return outcome(false, 'actor-unavailable', 'This actor is unavailable.');
+  const action = actor.action,
+    plan = actor.agency.plan,
+    suspended = actor.agency.suspended;
+  const ending = mode === 'replace' || mode === 'interrupt';
+  return {
+    mode,
+    expected: {
+      generation: actor.planGeneration,
+      life: actor.physicalLife ?? 0,
+      controller: actor.controller,
+      actionId: action?.id ?? null,
+      plan: plan ? { id: plan.id, revision: plan.revision } : null,
+      suspended: suspended ? { id: suspended.id, revision: suspended.revision } : null,
+    },
+    lostWorkSeconds:
+      ending && action?.stage === 'working'
+        ? Math.max(0, action.totalSeconds - action.remainingSeconds)
+        : 0,
+    spentInputs: cloneValue(ending ? (action?.consumed ?? []) : []),
+    pausedWork:
+      mode === 'replace'
+        ? 'discarded'
+        : mode === 'interrupt' && plan
+          ? 'restart-current-step'
+          : 'unchanged',
+    releasedInvocations: ending && action ? [action.id] : [],
+    recovery: {
+      combatUntil: combatRecoveryDeadline(world, entity),
+      evadeUntil: actor.evasionReadyAt ?? 0,
+    },
+    outcome:
+      (mode === 'interrupt' ? suspensionProblem(world, actorId) : null) ??
+      outcome(
+        true,
+        'available',
+        'This handling of current work is supported; committed effects remain.',
+      ),
+  };
+}
 
 /** Consequential request details carried as exact references, not re-derived from prose.
  * Admission checks the bound result keeps each one; an unkept slot is never exact.

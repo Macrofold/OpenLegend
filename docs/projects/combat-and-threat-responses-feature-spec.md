@@ -1,8 +1,8 @@
 # Combat and threat responses: feature specification
 
-| Status      | Current progress                                                                                                     | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Actual contact and personal danger evidence are in progress; complete combat delivery and qualification remain open. | 2026-10-18   |
+| Status      | Current progress                                                                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Contact, personal danger evidence and prospective work transitions are in progress; complete combat delivery and qualification remain open. | 2026-10-18   |
 
 ## Purpose and authority
 

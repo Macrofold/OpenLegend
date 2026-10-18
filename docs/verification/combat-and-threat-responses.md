@@ -108,3 +108,27 @@ passes after the contextual consumer and exact action-ending changes.
 CTR02 remains open for the complete perception/disclosure/lifecycle matrix,
 contextual controls and required density/performance evidence. Stabilized response scheduling remains
 CTR08 work; recording movement does not itself choose a response or renew hostility.
+
+## Prospective work implementation checkpoint — October 18, 2026
+
+Native preparation describes the exact current action, chosen and paused plans,
+body/control generation, spent materials, elapsed work lost and combat/evasion
+recovery. It computes availability after release of the exact ending invocation's
+holds, through the existing reservation, equipment and cooking owners. The
+ordinary response-plan path performs this read-only check before replacing work.
+Pause preparation shares the committed owner's refusal calculation. Direct work
+without a restartable plan is refused as an interruption, rather than silently
+replaced under the promise that it could resume.
+
+The evolving native scenario passes a controlled gathering-to-cooking case: an
+ingredient held by the gathering invocation is unavailable before replacement,
+available in prospective replacement, still reserved after a missing-fire refusal,
+and actually cooked after accepted replacement. All prospective reads preserve
+the exact serialized input world. The sixteen contact checks and personal evidence
+checks also pass in this run. Three existing reservation ownership checks pass.
+TypeScript checking passes. No provider calls occurred; additional Jev cost is $0
+and cumulative task Jev cost is $0.
+
+This is partial CTR05 evidence. The full busy-work matrix, complete choices,
+purpose/condition preservation, player details, independent character choice and
+remaining material/record preflight qualification stay open.

@@ -4,6 +4,11 @@ import {
 } from './worlds/base/animal-wander-queue.js';
 import { entityGet, entityOwn } from './entity-collection.js';
 import {
+  prospectiveWork,
+  type ProspectiveWork,
+  type WorkTransitionMode,
+} from './action-capabilities.js';
+import {
   selectOffense,
   reconcileCombatSight,
   expireCombatEncounters,
@@ -231,6 +236,9 @@ import {
   availableResource,
   itemDefinitionPin,
   readResource,
+  resourcesAfterEnding,
+  resourceGroupProblem,
+  type ResourceAvailability,
   type ResourceOperation,
 } from './resource-claims.js';
 import { sameDefinitionPin } from './state-owners.js';
@@ -430,6 +438,7 @@ function itemClaims(
   actorId: string,
   definitionId: string,
   quantity: number,
+  availability?: ResourceAvailability,
 ): ResourceOperation[] | null {
   let remaining = quantity;
   const operations: ResourceOperation[] = [];
@@ -440,7 +449,7 @@ function itemClaims(
     .filter((item) => item.definitionId === definitionId)
     .sort((a, b) => a.id.localeCompare(b.id))) {
     const source = { kind: 'item', itemId: item.id, definition: pin } as const;
-    const amount = Math.min(remaining, availableResource(world, source) ?? 0);
+    const amount = Math.min(remaining, availableResource(world, source, availability) ?? 0);
     if (amount <= 0) continue;
     operations.push({ source, sourceRevision: item.revision ?? 0, amount });
     remaining -= amount;
@@ -499,11 +508,12 @@ export function ammoFor(
   actorId: string,
   kind: string,
   requested?: string,
+  availability?: ResourceAvailability,
 ): ItemInstance | undefined {
   return inventoryFor(world, actorId).find(
     (item) =>
       (!requested || item.id === requested) &&
-      availableItemQuantity(world, item.id) > 0 &&
+      availableItemQuantity(world, item.id, undefined, availability) > 0 &&
       world.itemDefinitions[item.definitionId]?.ammunition?.kind === kind,
   );
 }
@@ -750,6 +760,7 @@ function workMaterials(
   world: WorldState,
   actor: Entity,
   action: Action,
+  availability?: ResourceAvailability,
 ): ResourceOperation[] | Outcome {
   if (action.type === 'fish') {
     const target = entityGet(world.entities, action.targetId ?? '');
@@ -773,7 +784,13 @@ function workMaterials(
         'stale-preparation',
         'The selected preparation or ingredient/output definition changed.',
       );
-    const claims = cookingClaims(world, actor.id, definition, action.foodPreparation!.inputs);
+    const claims = cookingClaims(
+      world,
+      actor.id,
+      definition,
+      action.foodPreparation!.inputs,
+      availability,
+    );
     if (!claims)
       return outcome(
         false,
@@ -786,7 +803,7 @@ function workMaterials(
   }
   const claims: ResourceOperation[] = [];
   for (const input of materialRequirements(world, action)) {
-    const selected = itemClaims(world, actor.id, input.definitionId, input.quantity);
+    const selected = itemClaims(world, actor.id, input.definitionId, input.quantity, availability);
     if (!selected)
       return outcome(
         false,
@@ -1096,11 +1113,28 @@ export function nativeOperationAvailable(
   command: Command,
   constructionPermissions: readonly ConstructionPermission[] = [],
 ): Outcome {
+  return operationAfterWork(world, command, constructionPermissions);
+}
+function operationAfterWork(
+  world: WorldState,
+  command: Command,
+  constructionPermissions: readonly ConstructionPermission[],
+  work?: ProspectiveWork,
+): Outcome {
   const nested = inWorkGroup();
   try {
     return withWorkMeter(WORK_LIMITS.group, () => {
       chargeWork({ inputBytes: (JSON.stringify(command)?.length ?? 0) * 3 });
-      const prepared = prepareNativeOperation(world, command, { constructionPermissions });
+      const prepared = prepareNativeOperation(world, command, { constructionPermissions, work });
+      if (work && !('ok' in prepared && !prepared.ok) && isRecordedActivityCommand(command)) {
+        const capture = prepareActivity(
+          world,
+          command,
+          command.id,
+          startingActivityView(world, command, 'ok' in prepared ? undefined : prepared),
+        );
+        if ('ok' in capture) return capture;
+      }
       return 'ok' in prepared
         ? prepared
         : outcome(
@@ -1114,6 +1148,47 @@ export function nativeOperationAvailable(
       throw error;
     return outcome(false, error.code, error.message);
   }
+}
+
+export interface PreparedNativeChoice {
+  invocation: Command | null;
+  work: ProspectiveWork;
+  outcome: Outcome;
+  /** A temporary mechanical refusal can be reconsidered at this game time. */
+  nextAt?: number;
+}
+
+/** Complete next-step preflight after the selected handling of current work. No
+ * cancellation, IDs, reservations, randomness or disposable gameplay transition.
+ * docs/action-capabilities.md#prepared-choices-and-prospective-work-transitions */
+export function prepareNativeChoice(
+  world: WorldState,
+  actorId: string,
+  invocation: Command | null,
+  mode: WorkTransitionMode,
+  constructionPermissions: readonly ConstructionPermission[] = [],
+): PreparedNativeChoice | Outcome {
+  const work = prospectiveWork(world, actorId, mode);
+  if ('ok' in work) return work;
+  const result = !work.outcome.ok
+    ? work.outcome
+    : invocation
+      ? invocation.actorId !== actorId
+        ? outcome(false, 'actor-unavailable', 'Choose work for this actor.')
+        : operationAfterWork(world, invocation, constructionPermissions, work)
+      : outcome(true, 'continued', 'Existing behavior continues.');
+  const nextAt =
+    result.code === 'combat-recovery'
+      ? work.recovery.combatUntil
+      : result.code === 'evasion-recovery'
+        ? work.recovery.evadeUntil
+        : undefined;
+  return {
+    invocation,
+    work,
+    outcome: result,
+    ...(nextAt !== undefined && nextAt > world.simTime ? { nextAt } : {}),
+  };
 }
 /** Resolve the same exact tools/ammunition as admission, without granting consent or
  * spending. The server binds its opaque, authenticated review to this single command. */
@@ -1157,6 +1232,7 @@ function prepareNativeOperation(
     executing?: boolean;
     skipLethalReview?: true;
     constructionPermissions?: readonly ConstructionPermission[];
+    work?: ProspectiveWork;
   } = {},
 ): Action | Outcome {
   const reject = (code: string, message: string) => outcome(false, code, message);
@@ -1169,6 +1245,9 @@ function prepareNativeOperation(
   const actor = entityGet(world.entities, command.actorId)!;
   const source = actor;
   const component = actor.actor!;
+  const replacing = options.work?.releasedInvocations.includes(component.action?.id ?? '') ?? false;
+  const availability =
+    options.work && resourcesAfterEnding(world, options.work.releasedInvocations);
   let action: Action | undefined;
   const temporary = (type: Action['type'], seconds: number): Action => ({
     id: command.id,
@@ -1335,7 +1414,13 @@ function prepareNativeOperation(
       )
         return reject('weapon-unavailable', 'Equip that exact accessible weapon first.');
       if (command.weaponItemId && command.autoEquip) {
-        const problem = equipmentProblem(world, actor.id, command.weaponItemId, 'melee');
+        const problem = equipmentProblem(
+          world,
+          actor.id,
+          command.weaponItemId,
+          'melee',
+          availability,
+        );
         if (problem) return reject('weapon-unavailable', problem);
       }
       const permission = attackPermissionProblem(world, actor, target, {
@@ -1364,7 +1449,8 @@ function prepareNativeOperation(
     case 'guard': {
       if (combatRecoveryDeadline(world, actor) > world.simTime)
         return reject('combat-recovery', BASE_GUARD_TEXT.recovery);
-      if (component.action?.type === 'guard') return reject('guard-active', BASE_GUARD_TEXT.active);
+      if (!replacing && component.action?.type === 'guard')
+        return reject('guard-active', BASE_GUARD_TEXT.active);
       const shield = command.autoEquip
         ? itemFor(world, command.itemId)
         : equippedItem(world, actor.id, 'guard', command.itemId);
@@ -1373,7 +1459,7 @@ function prepareNativeOperation(
       if (!profile || !accessiblePossession(world, actor.id, command.itemId))
         return reject('shield-unavailable', BASE_GUARD_TEXT.unavailable);
       if (command.autoEquip) {
-        const problem = equipmentProblem(world, actor.id, command.itemId, 'guard');
+        const problem = equipmentProblem(world, actor.id, command.itemId, 'guard', availability);
         if (problem) return reject('shield-unavailable', problem);
       }
       const target = command.targetId ? entityGet(world.entities, command.targetId) : undefined;
@@ -1474,9 +1560,9 @@ function prepareNativeOperation(
         !world.itemDefinitions[item.definitionId]?.equipment
       )
         return reject('not-equippable', 'Choose a tool in this actor’s inventory.');
-      if (itemHasReservations(world, item.id) || component.action)
+      if (itemHasReservations(world, item.id, availability) || (!replacing && component.action))
         return reject('not-equippable', 'Choose a free tool in this inventory.');
-      const problem = equipmentProblem(world, actor.id, item.id);
+      const problem = equipmentProblem(world, actor.id, item.id, undefined, availability);
       if (problem) return reject('not-equippable', problem);
       break;
     }
@@ -1514,10 +1600,16 @@ function prepareNativeOperation(
       )
         return reject('no-weapon', 'Equip a suitable ranged tool first.');
       if (autoEquip) {
-        const problem = equipmentProblem(world, actor.id, item.id, 'ranged');
+        const problem = equipmentProblem(world, actor.id, item.id, 'ranged', availability);
         if (problem) return reject('weapon-unavailable', problem);
       }
-      const ammo = ammoFor(world, actor.id, launcher.ammunitionKind, command.ammoItemId);
+      const ammo = ammoFor(
+        world,
+        actor.id,
+        launcher.ammunitionKind,
+        command.ammoItemId,
+        availability,
+      );
       if (!ammo)
         return reject('no-ammunition', `Need compatible ${launcher.ammunitionKind} ammunition.`);
       const competence = toolPracticeDefinition(world, world.itemDefinitions[item.definitionId]!);
@@ -1808,8 +1900,17 @@ function prepareNativeOperation(
       const error = approach(world, actor, action);
       if (error) return error;
     }
-    const materials = workMaterials(world, actor, action);
+    const materials = workMaterials(world, actor, action, availability);
     if ('ok' in materials) return materials;
+    if (
+      materials.length &&
+      resourceGroupProblem(
+        world,
+        { invocationId: action.id, fulfillment: 'all-or-nothing', operations: materials },
+        availability,
+      )
+    )
+      return reject('missing-material', 'The required materials are no longer available.');
     if (
       component.action?.type === 'status-effect' &&
       !world.statusEffectPolicy.definitions
