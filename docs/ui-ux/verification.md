@@ -2,6 +2,8 @@
 
 [Handbook](README.md) · [Repository policy](../../.agents/rules/verification.md) · [Follow-through](../maintainers/ui-ux.md)
 
+For wording changes on any surface, apply the [player-facing language review](player-facing-language.md#review-the-complete-player-experience), including relevant composed/generated text and accessible context. [UIUX20](../maintainers/ui-ux.md#uiux20) owns existing-copy follow-through; document checks alone do not qualify runtime language.
+
 ## What this evidence establishes
 
 Research conducted September 30–October 1, 2026 inspected UI structure, relevant design owners and selected implementation bodies at runtime baseline `0382be76648879cf8a8397ad6c3534b4431916f5`, then evaluated the handbook against authoritative sources and pinned company code. Handbook revision `e8d6c8950cadd715cfed97df4a0e379ff1593d02` identifies the version critiqued, not a different runtime baseline. No game launch, computed-style inspection, assistive-technology run or user study was performed. This coverage map routes work; it does not certify components.

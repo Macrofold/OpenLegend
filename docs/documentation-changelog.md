@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 18, 2026 — Speak naturally to the player
+
+The [player-facing language standard](ui-ux/player-facing-language.md) makes the player the audience of every displayed or spoken message, including authored, generated and accessible text. It replaces mechanical descriptions of simulation objects with natural explanations of the player's situation and choices; “can result in death” is the accepted alternative to “can kill this body.” Clear perspective, truthful consequences, permitted knowledge and distinct character voices constrain rewrites. Literal anatomical language and useful specialist terms remain valid when they serve the reader.
+
+[Root routing](../AGENTS.md#load-only-relevant-context) requires the shared writing rule across all layers. The [research ledger](ui-ux/research.md#player-facing-language) owns supporting sources; [UIUX20](maintainers/ui-ux.md#uiux20) separates the delivered standard from existing-copy implementation, and [CG05](maintainers/agent-guidance.md#cg05--read-only-routing-cases) retains unrun installed-agent qualification. This is a writing-policy decision, not changed runtime mechanics or a claim that existing messages have all been rewritten.
+
 ## October 18, 2026 — Review optional measurement and carry its lessons forward
 
 The [complete implementation review](verification/performance/profiling-controls.md#complete-implementation-review--october-18-2026-0008-edt) corrects malformed-request observation, failed-setup and shutdown cleanup, off-mode peak calculation and unsampled-delay reporting. Current gameplay, world/engine ownership and authoritative checks remain intact. [Performance guidance](performance.md#optional-measurement) gains one focused section with an explicit conditional read from its already-mandatory skill; root instructions and existing policy owners are not duplicated. Both feature specs record synchronization datetimes and both designs record use datetimes. PSF01–PSF06 remain complete; PC06's unmatched-activity qualification remains open and the full-game run allowance is unchanged.

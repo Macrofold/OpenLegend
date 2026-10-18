@@ -16,6 +16,8 @@ For UI/UX design, implementation or review, and frontend code changes including 
 10. **Preserve authority and privacy.** Search, hover, comparison and inspection use permitted projections only. Proposal, approval and execution are distinct. Classify persistence: sharable navigation may belong in a URL; private drafts, hidden facts and credentials do not. Convenience does not authorize new storage, permissions or spending.
 11. **Verify the changed task.** Exercise ordinary and relevant failure/cancellation behavior with interaction and visual inspection when available; inspect other callers of shared components. Follow [verification policy](verification.md), not a new blanket test-writing requirement. Report unrun browser, assistive-technology and native agent-dispatch checks honestly.
 
+For visible or spoken wording, read [Player-facing language](player-facing-language.md) before creating, changing or reviewing it, including content supplied by worlds, servers or models.
+
 ## Read only the matching detail
 
 Match the work being planned, implemented or reviewed.
