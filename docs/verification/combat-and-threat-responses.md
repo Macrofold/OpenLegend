@@ -183,3 +183,33 @@ and cumulative task Jev cost is $0.
 Complete required-set/source integration, live appraisals, cold duplicate-source
 admission, the full source-correction matrix and complete-path cost/memory
 qualification remain CTR06–CTR10 work.
+
+## Finite chosen-activity checkpoint — October 18, 2026
+
+At `c6c668a70`, the evolving ad-hoc native scenario qualifies the existing activity
+owner's additional finite control. Actual travel stops 2 m from its selected
+origin, with equal results for one 200-second advance and twenty 10-second
+advances. A controlled route whose intermediate point lies outside the boundary
+and endpoint lies inside still stops at the outward crossing. The scenario starts
+real travel before altering that route; an earlier attempt to edit a queued,
+not-yet-started action was invalid fixture setup and is excluded.
+
+A ten-second interruption followed by resumption keeps the original anchor and
+deadline. Current-format JSON continuation validates before and after the stop;
+PostgreSQL stores/reloads an active finite movement and it stops at the same
+original boundary. A finite observation ends on a changed selected physical life
+or lost sight with the same generic reason; a stale-life request refuses without
+changing the accepted prior work. A restored wait ends at its original deadline.
+
+The existing authored fire-watch request still binds a counted control, consumes
+exactly one chosen wood unit in one admitted attempt, terminates natively and
+validates through JSON continuation. The same run passes the earlier native,
+service and PostgreSQL contact/evidence/work/appraisal checks. These checks use
+controlled native choices and route geometry, not independent character decisions.
+The production build and asset guard pass with the existing externalization and
+large-chunk warnings. TypeScript checking passes. No provider calls occurred;
+additional Jev cost is $0 and cumulative task Jev cost is $0.
+
+The selected threat profile is still uninstalled. Full pursuit/reconsideration,
+changing supports, released effects at these boundaries, shared-menu preparation,
+performance and voluntary behavior remain CTR05/CTR07/CTR08/CTR10 obligations.
