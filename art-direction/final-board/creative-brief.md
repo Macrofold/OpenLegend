@@ -24,6 +24,16 @@ Beautiful dimensional pixel art with believable real-world proportions, expressi
 - Keep human scale, environment scale and close-up scale explicit when evaluating artwork. A large portrait or promotional illustration is not a runtime feasibility result.
 - Keep detail grouped and restrained: the October 17 feedback rejects the preceding uniformly fine treatment. Give small tools and animals only enough extra fixed pixel density to preserve identity. Check their actual screen footprint before adding detail, and keep all dated comparisons in the [study archive](../studies/README.md). Poly Haven is an endorsed source starting point; anatomy and construction still need visual review.
 
+## A living place with visible causes
+
+> A stream has risen after rain. Mud darkens near its banks. Moss and exposed roots differ from the dry slope. Someone has placed stepping stones because they cross here every day. One stone has shifted. A person's wet boots darken differently near the fire. Their backpack is sitting under an overhang rather than in the rain. A freshly cut branch has a different interior value from old bark. Someone recognizes that a plant has appeared because the wetter season began. A wounded deer chooses the open bank differently because two people are nearby.
+
+This illustrates the desired relationship between **visual beauty and a world that actually lives**. A few interconnected causes—rain, water level, ground condition, growth, habitual travel, work, shelter and perceived danger—produce many distinctive details. Their relationships make the place recognizable, understandable and worth observing. The ambition is not maximum texture or maximum simulation: it is for the player to see meaningful evidence of a place's materials, use, circumstances and history.
+
+An authored starting place can establish coherent existing objects and conditions. As the world changes, the environment should depict its **actual** weather, physical objects and conditions, people's admitted actions and animals' behavior—not create those facts from visual decoration. A person noticing a new plant depends on what that person can perceive and know; a deer avoiding people depends on its available perception and chosen movement. Renderer light, color and animation communicate permitted world facts without becoming their authority. Do not imply a stone was physically displaced, an object is wet, a route is usable or someone knows something solely because an attractive effect suggests it.
+
+This is a **design vignette, not a claim of implemented behavior or a mandate that every scene simulate every example**. A useful scene can realize a subset coherently, from its terrain and light to one grounded interaction and later consequence. Use the [scene production workflow](../../docs/production-workflows/scenes-and-interfaces.md) for translating this goal into practical scene design; use the existing world, action, perception and art owners for real capabilities.
+
 ## Favorites and their contributions
 
 ### Sea of Stars — Expressive environments in a grounded world
