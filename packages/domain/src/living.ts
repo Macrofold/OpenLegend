@@ -1,3 +1,4 @@
+import { reconcileNativeControl } from './native-response-controller.js';
 import { entityGet } from './entity-collection.js';
 import { orderedRecordGet, orderedRecordSet } from './ordered-record.js';
 import { person } from './narration.js';
@@ -128,6 +129,7 @@ export function reconcileBody(
       { significant: true, cause },
     );
   }
+  reconcileNativeControl(world, entity);
   reconcileConditions(world, entity, events);
   if (world.innerWorlds?.[entity.id]) world.innerWorlds[entity.id]!.reconsiderationRequired = true;
 }

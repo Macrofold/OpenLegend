@@ -34,11 +34,38 @@ import { interruptStatusEffects } from './status-effects.js';
 import { readEntityAttribute } from './status-effects.js';
 import { nextRandom } from './data.js';
 import { activelyParticipates } from './participation-state.js';
+import { releaseInvocationResources } from './resource-claims.js';
 
 function changed(world: WorldState, animal: Entity): void {
   recordAnimalClockWrite(world, animal.id);
   recordSensoryChange(world, animal.id, true);
   recordSemanticChange(world, { kind: 'state', entityId: animal.id, field: 'behavior' });
+}
+
+/** Control and body-life writers retire only this controller's uncommitted
+ * movement. A released projectile or physical flight retains its own owner. */
+export function reconcileNativeControl(world: WorldState, entity: Entity): void {
+  const state = entity.animal,
+    actor = entity.actor;
+  if (
+    !state ||
+    !actor ||
+    (actor.controller === 'native' &&
+      actor.alive &&
+      state.physicalLife === (actor.physicalLife ?? 0))
+  )
+    return;
+  const owned = actor.action?.nativeLocomotion;
+  if (!state.episode && !owned && state.physicalLife === (actor.physicalLife ?? 0)) return;
+  delete state.episode;
+  state.physicalLife = actor.physicalLife ?? 0;
+  if (owned && actor.action) {
+    releaseInvocationResources(world, actor.action.id);
+    actor.action = null;
+    actor.planGeneration++;
+  }
+  reconcileAnimalWander(world, entity);
+  changed(world, entity);
 }
 
 /** Receives the exact committed occurrence, with independently checked sight or
@@ -63,6 +90,7 @@ export function acquireNativeResponseEvent(
   if (
     !animal?.animal ||
     !animal.actor?.alive ||
+    animal.actor.controller !== 'native' ||
     !activelyParticipates(animal) ||
     (animal.threat && !animal.threat.relinquished)
   )
@@ -175,6 +203,7 @@ export function observeNativeAttackPreparation(
     !animal ||
     !animal.animal ||
     !animal.actor?.alive ||
+    animal.actor.controller !== 'native' ||
     !activelyParticipates(animal) ||
     (animal.threat && !animal.threat.relinquished) ||
     action?.targetLife !== (animal.actor.physicalLife ?? 0) ||
@@ -209,7 +238,7 @@ export function reconcileNativeExposure(
   candidates?: Iterable<Entity>,
 ): void {
   const episode = animal.animal?.episode;
-  if (!episode || !animal.actor?.alive) return;
+  if (!episode || !animal.actor?.alive || animal.actor.controller !== 'native') return;
   const frame = reconcileNativeDangers(world, animal, episode, candidates);
   let reconsider = false,
     meaningful = false;
@@ -289,6 +318,10 @@ export function nativeResponseDecision(
   const state = animal.animal,
     actor = animal.actor;
   if (!state || !actor) return { status: 'none' };
+  if (actor.controller !== 'native') {
+    reconcileNativeControl(world, animal);
+    return { status: 'none' };
+  }
   if (!actor.alive || state.physicalLife !== (actor.physicalLife ?? 0)) {
     delete state.episode;
     state.physicalLife = actor.physicalLife ?? 0;
@@ -471,6 +504,7 @@ export function nativeWanderRoute(
     !state ||
     !from ||
     !animal.actor?.alive ||
+    animal.actor.controller !== 'native' ||
     animal.actor.incapacitated ||
     !activelyParticipates(animal) ||
     capabilityBlocked(world, animal, 'actions') ||
@@ -567,6 +601,7 @@ export function reconcileAnimalWander(world: WorldState, entity: Entity): void {
   const eligible =
     !record.threat &&
     !!actor?.alive &&
+    actor.controller === 'native' &&
     !actor.incapacitated &&
     !actor.action &&
     !spatial.flight &&

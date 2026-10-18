@@ -68,7 +68,11 @@ open. Four existing files pass all 36 checks. Actual perceived near-passage now 
 first-screen interception, split/whole and PostgreSQL deduplication checks.
 Bird flight and stag withdrawal remain unfinished. The first ordinary close bow
 hunt released but struck terrain after the hare retreated. The aiming-contract
-question is awaiting the owner's answer; that dependent work stays open. This does not close CTR03 or CTR04.
+decision is approved: lead using personally observed motion while retaining fixed
+post-release travel and current tuning. Implementation and a repeated hunt-to-meal
+check remain open. Native-to-character/player control transfer now retires the
+native alarm and its pending ground movement; current-format and nine existing
+server disclosure checks pass. This does not close CTR03 or CTR04.
 
 Contract: [native execution](../projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04) and [animal world profile](../worlds/base/animal-responses.md).
 

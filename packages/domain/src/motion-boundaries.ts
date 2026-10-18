@@ -672,7 +672,7 @@ function bodyCertificate(
   const body = bodyProfile(entity);
   const alive = !!entity.actor?.alive,
     memory = hasMemory(entity);
-  const nativeResponse = !!entity.animal?.episode;
+  const nativeResponse = entity.actor?.controller === 'native' && !!entity.animal?.episode;
   const senses = alive && (memory || nativeResponse) ? sensesFor(world, entity) : [];
   return {
     alive,

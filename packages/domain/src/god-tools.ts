@@ -1,3 +1,4 @@
+import { reconcileNativeControl } from './native-response-controller.js';
 import { currentAttributeState } from './native-values.js';
 import { entityGet, entitySet } from './entity-collection.js';
 import { orderedRecordGet, orderedRecordOwn, orderedRecordSet } from './ordered-record.js';
@@ -258,6 +259,7 @@ export function enableActorCognition(original: WorldState, actorId: string): Tra
     speech: true,
   };
   if (entity.actor!.controller === 'native') entity.actor!.controller = 'npc';
+  reconcileNativeControl(world, entity);
   entity.actor!.planGeneration++;
   world.memories[actorId] ??= [];
   world.knowledge[actorId] ??= [];

@@ -90,7 +90,7 @@ export interface ProjectileFlight {
 const passageLife = (entity: Entity) =>
   JSON.stringify([entity.id, entity.actor?.physicalLife ?? 0]);
 function nativePassageDistance(world: WorldState, entity: Entity): number {
-  return entity.animal && entity.actor?.alive
+  return entity.animal && entity.actor?.alive && entity.actor.controller === 'native'
     ? (nativeResponseProfile(world, entity.animal.episode?.profilePin ?? entity.animal.profile)
         ?.passageDistance ?? 0)
     : 0;

@@ -100,7 +100,7 @@ export function captureExposure(entity: Entity): ExposureCapture | null {
       radius: profile.radius,
       alive: !!entity.actor?.alive,
       memory: hasMemory(entity),
-      nativeResponse: !!entity.animal?.episode,
+      nativeResponse: entity.actor?.controller === 'native' && !!entity.animal?.episode,
       object: !entity.actor && !entity.animal,
       ...visibleFeature(entity),
     };

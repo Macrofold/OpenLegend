@@ -1,3 +1,4 @@
+import { reconcileNativeControl } from '@open-legend/domain';
 import { entityGet, entityKeys, entityValues, projectWorldHistory } from '@open-legend/domain';
 import {
   prepareNativeChoice,
@@ -2773,6 +2774,7 @@ export class WorldService {
         throw new AuthorityError('forbidden');
       let world = updateWorld(this.world, (draft) => {
         entityGet(draft.entities, request.actorId)!.actor!.controller = 'player';
+        reconcileNativeControl(draft, entityGet(draft.entities, request.actorId)!);
         draft.authorship.playerAccountIds[request.actorId] = request.accountId;
       });
       // Both embodiments settle through the existing departure owner. Native progress and
@@ -2854,6 +2856,7 @@ export class WorldService {
       const departed = this.departImmediately(
         updateWorld(this.world, (draft) => {
           entityGet(draft.entities, actorId)!.actor!.controller = 'player';
+          reconcileNativeControl(draft, entityGet(draft.entities, actorId)!);
           draft.authorship.playerAccountIds[actorId] = accountId;
         }),
         actorId,

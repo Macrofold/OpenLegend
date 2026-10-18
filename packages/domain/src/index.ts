@@ -26,6 +26,7 @@ export * from './combat-encounters.js';
 export * from './combat-means.js';
 export * from './native-response.js';
 export * from './native-response-navigation.js';
+export { reconcileNativeControl } from './native-response-controller.js';
 export * from './ranged.js';
 export * from './worlds/base/ranged-counterplay.js';
 export { describeBodyRemains } from './worlds/base/bodies.js';

@@ -187,7 +187,6 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
   if (
     !hasRecordFields(state, ['profile', 'locomotion', 'physicalLife', 'wander'], ['episode']) ||
     !entity.actor ||
-    entity.actor.controller !== 'native' ||
     !profile?.locomotion[state.locomotion] ||
     !life(state.physicalLife) ||
     state.physicalLife !== (entity.actor.physicalLife ?? 0) ||
@@ -219,6 +218,7 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
         ['clearSince', 'proposal', 'refuge', 'movement', 'blocked', 'preparations'],
       ) ||
       !entity.actor?.alive ||
+      entity.actor.controller !== 'native' ||
       !isSafeRecordId(episode.id) ||
       !time(episode.startedAt) ||
       !time(episode.reviewAt) ||

@@ -1169,3 +1169,25 @@ used to obtain this result.
 No external calls were made. Additional Jev cost is **$0**; cumulative reported
 estimates remain Jev **$0.440786** and other providers **$0.207513**, uncertain
 commitments **$5.939396**, and conservative aggregate exposure **$6.587695**.
+
+## Native control transfer checkpoint
+
+Giving an escaping animal an AI character mind now retires only the native
+controller's pending ground movement and alarm. Taking player control uses the
+same cleanup. The animal's installed future native profile remains valid saved
+body metadata; it cannot issue native choices while another controller owns the
+body. Released projectiles and physical flight retain their independent owners.
+The actual creator control-change probe passes current-format validation and
+performs no later native random draw or movement. Full TypeScript checking and
+the production build pass, including the asset guard. The nine existing server
+event-disclosure checks pass with the explicit disposable PostgreSQL setup.
+The existing 600-game-second whole/split continuation remains passing.
+
+Mike approved observed-motion leading for release aiming after the failed
+practical hunt above. Leading must use only motion actually seen by the shooter;
+speed, range, preparation, accuracy and fixed post-release travel remain unchanged.
+Implementation and the repeated hunt-to-meal check remain open at this checkpoint.
+
+No external calls were made. Additional Jev cost is **$0**; cumulative reported
+estimates remain Jev **$0.440786** and other providers **$0.207513**, uncertain
+commitments **$5.939396**, and conservative aggregate exposure **$6.587695**.
