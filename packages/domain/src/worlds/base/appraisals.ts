@@ -86,20 +86,22 @@ export function appraiseEvent(world: WorldState, event: WorldEvent): void {
     (entry) => entry.id === `wilderness:${label}`,
   );
   if (!definition) return;
-  appraisePerceivedEvent(
-    world,
-    event,
-    event.targetId,
-    event.actorId ?? event.targetId,
-    appraisalPin(definition),
-    {
-      kind: 'scaled',
-      value: Math.min(
-        1,
-        damage / (entityGet(world.entities, event.targetId)!.actor!.body?.maxHealth ?? 100),
-      ),
-    },
-  );
+  const perceived = world.experience?.awareness[event.targetId]?.at(-1);
+  // Feeling the impact grants no identity of an unseen performer. The existing
+  // automatic profile remains selected until interpreted fear is connected.
+  const subject =
+    event.type === 'struck'
+      ? perceived?.eventId === event.id
+        ? (perceived.sourceId ?? null)
+        : null
+      : (event.actorId ?? event.targetId);
+  appraisePerceivedEvent(world, event, event.targetId, subject, appraisalPin(definition), {
+    kind: 'scaled',
+    value: Math.min(
+      1,
+      damage / (entityGet(world.entities, event.targetId)!.actor!.body?.maxHealth ?? 100),
+    ),
+  });
 }
 
 /** A personally felt projectile contact can retain fear of an identified shooter.

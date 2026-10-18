@@ -38,7 +38,7 @@ Contract: [physical attack/contact](../projects/combat-and-threat-responses-tech
 
 ## CTR02 — Observer-scoped encounter evidence
 
-Review removes other people’s private danger records from shared physical observation. A new actual-contact check with no vision exposes a remaining gap: real injury arrives, but the recipient needs a source-free felt-contact observation and anonymous danger record. Repair and qualify that occurrence/disclosure path before completing this item.
+Other people’s private danger records are excluded from shared physical observation. Actual contact now grants its recipient a personally felt account without requiring sight of the performer. Native and PostgreSQL checks retain anonymous danger and bodily results without revealing an unseen attacker, weapon or location; the still-selected automatic fear profile also preserves that anonymity. Complete encounter qualification below remains open.
 
 Contract: [personal evidence](../projects/combat-and-threat-responses-tech-design.md#observer-scoped-encounter-evidence--ctr02) and [world encounter continuity](../worlds/base/combat.md#selected-threat-and-encounter-continuity).
 

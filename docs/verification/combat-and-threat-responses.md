@@ -250,13 +250,19 @@ private component through observation, and each still receives their own data.
 The earlier native contact/control checks pass in that run.
 
 A subsequent actual-contact check gives the recipient hearing without vision,
-lands a real native punch and confirms health loss. It currently fails: the
-recipient has no anonymous danger entry because the external strike occurrence's
-ordinary visual audience does not include the unseen attack's recipient. Extending
-the intake alone is insufficient. The physical occurrence/disclosure owner needs
-the felt-target grant and a source-free personal account; preserve this failure
-until that connected native path is repaired. This is unfinished CTR02 work,
-not a character's voluntary choice. No provider calls occurred; additional Jev
+lands a real native punch and confirms health loss. It first failed: the
+recipient had no anonymous danger entry because the external strike occurrence's
+ordinary visual audience did not include the unseen attack's recipient. Extending
+the intake alone was insufficient. The selected disclosure policy now grants the
+contacted person a felt account. Source visibility remains independently checked;
+partial contact retains bodily metrics and omits the hidden source, weapon,
+execution identity and location. Recognition uses the admitted source rather
+than the raw performer. The recipient's anonymous danger record now passes, as do
+felt modality, exact contact kind, source-free player projection and PostgreSQL
+reopen. The still-selected automatic fear producer uses this admitted source and
+keeps an unseen performer anonymous. Nine existing disclosure checks and the
+production build pass, with the existing warnings and asset guard. This is native
+correctness evidence, not a character's voluntary choice; wider CTR02 remains open. No provider calls occurred; additional Jev
 cost is $0 and cumulative task Jev cost is $0.
 
 The authored 24-purpose/ten-utterance data and native compiler are being connected

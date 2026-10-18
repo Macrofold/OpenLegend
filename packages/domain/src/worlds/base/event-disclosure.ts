@@ -61,7 +61,12 @@ const physicalReferences = [
   'destinationId',
 ];
 const shared = ['responseId', 'conversationRelevant', 'semanticTrigger'];
+const contactMetrics = ['rawInjury', 'preventedInjury', 'healthBefore', 'healthAfter', 'damage'];
 export const BASE_EVENT_DISCLOSURE: EventDisclosurePolicy = {
+  feltTarget: (event) =>
+    ['struck', 'projectile-contact'].includes(event.type) && event.data?.['contactInjury'] === true
+      ? event.targetId
+      : undefined,
   // Seeing two people does not disclose their carried lot's exact terms. Native
   // handover explicitly grants the parties that knowledge; witnesses get the act.
   permitsDetails: (event, observerId) =>
@@ -73,13 +78,24 @@ export const BASE_EVENT_DISCLOSURE: EventDisclosurePolicy = {
       typeof event.data?.[key] === 'string' ? [event.data[key] as string] : [],
     ),
   partial: (event, sourceId, targetId) =>
-    sourceId
-      ? subjectNarration(sourceId, activity[event.type] ?? 'was active.')
-      : targetId
-        ? subjectNarration(targetId, 'was involved in activity.')
-        : 'Activity was observed.',
+    !sourceId && targetId && event.data?.['contactInjury'] === true
+      ? subjectNarration(targetId, 'felt a physical impact from an unseen source.')
+      : sourceId
+        ? subjectNarration(sourceId, activity[event.type] ?? 'was active.')
+        : targetId
+          ? subjectNarration(targetId, 'was involved in activity.')
+          : 'Activity was observed.',
   data: (event, observerId, detailed) => {
-    if (!detailed) return {};
+    if (!detailed) {
+      // An impact grants one's bodily result, not the unseen weapon/definition,
+      // performer, execution identity or position referenced by the raw occurrence.
+      if (event.targetId !== observerId || event.data?.['contactInjury'] !== true) return {};
+      return Object.fromEntries(
+        ['contactInjury', ...contactMetrics].flatMap((key) =>
+          event.data?.[key] !== undefined ? [[key, event.data[key]]] : [],
+        ),
+      );
+    }
     const owned = event.scope === 'private' || event.actorId === observerId;
     const keys = owned ? Object.keys(event.data ?? {}) : [...shared, ...(fields[event.type] ?? [])];
     // Feeling a contact does not reveal another person's exact bodily meters, even to
@@ -88,7 +104,7 @@ export const BASE_EVENT_DISCLOSURE: EventDisclosurePolicy = {
       event.type === 'body-effect'
         ? ['healthDelta', 'injuryDelta', 'wetnessDelta', 'burningDelta']
         : event.data?.['contactInjury'] === true
-          ? ['rawInjury', 'preventedInjury', 'healthBefore', 'healthAfter', 'damage']
+          ? contactMetrics
           : [];
     if (observerId === event.targetId) keys.push(...privateMetrics);
     return Object.fromEntries(

@@ -56,6 +56,12 @@ Use existing permitted activity/event presentation for the cue, with world-autho
 
 Renewed visibility of the **same already known preparation/aim commitment** restores its observed-active association but is not a new hostile occurrence and does not clear a deliberate Speak override. Use the existing admitted observation/occurrence identity to establish prior exposure, even if the short UI grace already expired. A first observation of previously unknown directed preparation, a new commitment, a newly witnessed release or a fresh qualifying outcome can advance hostility. When renewed exposure later ends, use the actual last-known boundary for grace; neither repeated visibility updates nor incidental phase rendering renew it. Private plans and ordinary approach remain undisclosed even when the server knows their eventual target.
 
+Actual physical contact is personally felt even when the performer cannot be
+seen. The recipient retains the impact and their own bodily result; an unseen
+performer, weapon and location remain unidentified. Their personal danger record
+and any native interpretation preserve that uncertainty. Merely observing another
+person does not disclose that person's private danger records or chosen methods.
+
 ### Recent-hostility grace
 
 The bundled world selects **600 game seconds**, ten real seconds at its normal 60:1 clock, of contextual continuity after the last personally observed hostile occurrence or the observed end of an active directed attack. An ongoing personally observed attack or one's own admitted current attack remains current regardless of that deadline. A new observed attempt, miss, block or hit renews the relevant pair; ordinary proximity, hovering, merely thinking about retaliation and repeated reads do not. A lost-sight transition starts the grace from the last time the directed activity was actually known; it does not keep refreshing an invisible attacker.

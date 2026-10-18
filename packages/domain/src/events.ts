@@ -28,6 +28,8 @@ import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
 import { MIND_LIMITS, byteCount } from './mind.js';
 import { selectedSocialPolicy } from './social-policy.js';
+import { selectedEventDisclosure } from './world-composition.js';
+import { activelyParticipates } from './participation-state.js';
 import { acquireCombatObservation } from './combat-encounters.js';
 import type {
   Entity,
@@ -360,6 +362,18 @@ function recordEvent(
     importancePolicy: 'native-v1',
     importanceReason: data?.['significant'] ? 'significant' : type,
   };
+  const feltTargetId = selectedEventDisclosure(world).feltTarget(event);
+  const feltTarget = feltTargetId && entityGet(world.entities, feltTargetId);
+  if (
+    scope === 'external' &&
+    feltTarget &&
+    hasMemory(feltTarget) &&
+    activelyParticipates(feltTarget) &&
+    !audience.includes(feltTarget.id)
+  ) {
+    audience.push(feltTarget.id);
+    event.audience = [...audience];
+  }
   const speechAwareness = new Map<string, Awareness>();
   if (type === 'speech' && source && scope !== 'system') {
     const volume = isSpeechVolume(data?.['volume']) ? data['volume'] : 'normal';
@@ -460,22 +474,27 @@ function recordEvent(
         at: event.at,
         sequence: world.nextId,
         modality:
-          scope === 'private' && source?.id === actorId && data?.['acquisition'] !== true
-            ? type === 'contact'
-              ? 'felt'
-              : type === 'encounter'
-                ? 'observed'
-                : 'internal'
-            : type === 'speech'
-              ? 'heard'
-              : 'observed',
+          feltTargetId === actorId
+            ? 'felt'
+            : scope === 'private' && source?.id === actorId && data?.['acquisition'] !== true
+              ? type === 'contact'
+                ? 'felt'
+                : type === 'encounter'
+                  ? 'observed'
+                  : 'internal'
+              : type === 'speech'
+                ? 'heard'
+                : 'observed',
         entityEpisodes: Object.fromEntries(
           [perceived.sourceId, perceived.targetId].flatMap((id) => {
             const episode = id && world.perceptionEpisodes?.[actorId]?.[id];
             return id && episode ? [[id, episode]] : [];
           }),
         ),
-        recognized: type !== 'contact' && !!source && recognizesSubject(world, actorId, source.id),
+        recognized:
+          type !== 'contact' &&
+          !!perceived.sourceId &&
+          recognizesSubject(world, actorId, perceived.sourceId),
         intelligible: true,
         entityIds: [perceived.sourceId, perceived.targetId].filter((id): id is string => !!id),
         importance: event.importance ?? importance,

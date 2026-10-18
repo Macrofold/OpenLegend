@@ -49,6 +49,12 @@ composition and private action history; ordinary optional suggestions keep their
 existing behavior. This supplies shared binding/preparation for the still
 uninstalled wilderness threat strategy.
 
+Actual contact now grants its recipient a felt event account even without seeing
+the performer. The account preserves bodily results and anonymous danger while
+withholding an unseen source, weapon and position; private danger components are
+excluded from other people's observations. The native and PostgreSQL evidence
+retains the initial failed check and the repaired result.
+
 ## October 18, 2026 — Review optional measurement and carry its lessons forward
 
 The [complete implementation review](verification/performance/profiling-controls.md#complete-implementation-review--october-18-2026-0008-edt) corrects malformed-request observation, failed-setup and shutdown cleanup, off-mode peak calculation and unsampled-delay reporting. Current gameplay, world/engine ownership and authoritative checks remain intact. [Performance guidance](performance.md#optional-measurement) gains one focused section with an explicit conditional read from its already-mandatory skill; root instructions and existing policy owners are not duplicated. Both feature specs record synchronization datetimes and both designs record use datetimes. PSF01–PSF06 remain complete; PC06's unmatched-activity qualification remains open and the full-game run allowance is unchanged.

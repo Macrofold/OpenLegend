@@ -6,6 +6,9 @@ import { selectedEventDisclosure } from './world-composition.js';
 import type { WorldEvent, WorldState } from './types.js';
 
 export interface EventDisclosurePolicy {
+  /** Native physical consequences can be felt without seeing their performer.
+   * This grants the contacted person an account, never the hidden source. */
+  feltTarget(event: Pick<WorldEvent, 'type' | 'targetId' | 'data'>): string | undefined;
   /** Physical references whose exposure is required for the supplied detailed account. */
   references(event: WorldEvent): string[];
   permitsDetails(event: WorldEvent, observerId: string): boolean;
@@ -66,7 +69,21 @@ export function observeEvent(world: WorldState, event: WorldEvent, observerId: s
   // Private acquisition is the common path; its producer already supplied the grant.
   if (owned) return complete();
   // The trusted audience resolver already tested this source at this occurrence.
-  const visible = new Map<string, boolean>(event.actorId ? [[event.actorId, true]] : []);
+  const felt = policy.feltTarget(event) === observerId;
+  const observer = felt ? entityGet(world.entities, observerId) : undefined;
+  const source = felt && event.actorId ? entityGet(world.entities, event.actorId) : undefined;
+  const visible = new Map<string, boolean>(
+    event.actorId
+      ? [
+          [
+            event.actorId,
+            !felt ||
+              event.actorId === observerId ||
+              !!(observer && source && seesEntity(world, observer, source)),
+          ],
+        ]
+      : [],
+  );
   const permits = (id: string) => {
     let permitted = visible.get(id);
     if (permitted === undefined) {
@@ -107,7 +124,7 @@ export function observeEvent(world: WorldState, event: WorldEvent, observerId: s
     sourceId,
     targetId,
     text: typeof narration === 'string' ? narration : renderNarration(world, narration, observerId),
-    eventType: 'activity-observed',
+    eventType: felt ? event.type : 'activity-observed',
     eventData: policy.data(event, observerId, false),
     references: names(sourceId, targetId),
   };

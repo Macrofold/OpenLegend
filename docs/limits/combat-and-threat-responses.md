@@ -1,6 +1,6 @@
 # Combat and threat responses: limits and constraints
 
-**Selected design, implementation and measurement pending — 2026-10-17.** This inventory owns the new encounter/decision restrictions. Existing physical limits remain in [ranged/evasion](parallel-batch-06-rivals-and-contested-ground.md), animal values in [BW12](base-world.md#bw12--remains-and-native-escape), appraisal representation/tuning in [feelings](feelings.md), provider/context bounds in [cognition](cognition.md) and [AI execution](ai-execution.md), and navigation/native budgets in [spatial](spatial.md) and [native work](native-work.md). Do not copy those limits into competing policy constants.
+**Implementation in progress; complete qualification and measurement pending — 2026-10-18.** This inventory owns the new encounter/decision restrictions. Existing physical limits remain in [ranged/evasion](parallel-batch-06-rivals-and-contested-ground.md), animal values in [BW12](base-world.md#bw12--remains-and-native-escape), appraisal representation/tuning in [feelings](feelings.md), provider/context bounds in [cognition](cognition.md) and [AI execution](ai-execution.md), and navigation/native budgets in [spatial](spatial.md) and [native work](native-work.md). Do not copy those limits into competing policy constants.
 
 ## CTR-L01 — Short per-opponent presentation continuity
 
@@ -17,6 +17,16 @@ The [world attack-cue table](../worlds/base/combat.md#readable-attack-cues) deli
 This avoids mandatory generated thoughts while preserving meaningful motives. The selected [three-option Choice contract](../projects/combat-and-threat-responses-tech-design.md#stage-one-situation-relevance-and-independent-appraisals) preserves explicit uncertainty and uses a conservative exact-tie order across both adapters; it adds no numerical confidence threshold or change to ordinary noncombat relevance. It excludes unsupported grapple/disarm/compulsory help and infinite attack loops. Definition count alone does not bound work: target/tool/destination bindings grow with visible density and usable possessions. Filter and share actor/tool preparation before expansion; use existing complete-context/byte/work admission with explicit refusal/defer, not silent truncation. A future catalogue expansion must fit the same supported action, context and installation owners; this file does not grant unbounded provider payloads.
 
 The [shared prepared-choice contract](../action-capabilities.md#prepared-choices-and-prospective-work-transitions) preserves each purpose and its exact work transition through selection and native admission while sharing identical physical preparation. Command-only deduplication and ordinary optional-candidate trimming cannot implement this complete-required route. Stage two retains the existing independent per-option ratings representation; it does not acquire a smaller option ceiling from a replacement single Choice question. Ordinary optional suggestions keep their separately declared policy.
+
+The shared selected-purpose binding currently admits at most **8 named roles**,
+**48 distinct source IDs** and **500 characters of selected-purpose description**.
+These match the current finite-composition participant, appraisal-source and
+activity-text envelopes and protect retained action records. They are native
+admission bounds, not a purpose/option shortlist: a complete required binding
+that cannot fit refuses rather than trimming its participants or evidence. The
+initial world templates bind at most an assailant, protectee and helper. Revisit
+these bounds only when an actual supported template requires more and the full
+record/input path is qualified; broader relevant-option retention remains unchanged.
 
 ## CTR-L03 — Two-stage work and urgent capacity
 

@@ -737,7 +737,7 @@ export function appraisePerceivedEvent(
   world: WorldState,
   event: WorldEvent,
   actorId: string,
-  targetId: string,
+  targetId: string | null,
   pin: DefinitionPin,
   value: AppraisalValue,
 ): void {
@@ -751,7 +751,7 @@ export function appraisePerceivedEvent(
     occurrenceId: event.id,
     sourceVersion: contentLabel(canonicalJson(event)),
     coverage: 'personally experienced',
-    subjectIds: [targetId],
+    subjectIds: targetId === null ? [] : [targetId],
   };
   // Optional interpretation cannot reject native injury. On capacity exhaustion,
   // its existing EPR evidence remains available for later admitted interpretation.
