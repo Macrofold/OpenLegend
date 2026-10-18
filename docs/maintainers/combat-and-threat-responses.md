@@ -54,7 +54,7 @@ records are now available. Exact full pins preserve separate authored revisions;
 unsupported families refuse before installation. The authored animal profile is
 encoded, but existing animals are not bound to the new controller yet. Its danger
 intake, refuge execution, continuous clearance, passage, rest and flight integration
-remain unfinished. Definition/SQL checks do not qualify animal behavior. The first native danger-preparation helper now reads complete local sight, retains observed body extents and old-life regions, and distinguishes unavailable exposure from an empty danger set. Focused native-data checks cover real contact provenance, actual death/Continue, hidden old remains and visible corpse resolution. It is not connected to ordinary animal movement yet.
+remain unfinished. Definition/SQL checks do not qualify animal behavior. The first native danger-preparation helper now reads complete local sight, retains observed body extents and old-life regions, and distinguishes unavailable exposure from an empty danger set. Focused native-data checks cover real contact provenance, actual death/Continue, hidden old remains and visible corpse resolution. It is not connected to ordinary animal movement yet. Refuge preparation now uses real supported visible terrain, shorter frontier points, complete route exposure and ordered all-danger scoring. The evolving native probe and twelve existing perception/spatial checks pass; navigation-worker publication and actual controller movement remain open.
 
 Contract: [native execution](../projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04) and [animal world profile](../worlds/base/animal-responses.md).
 

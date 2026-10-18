@@ -1054,3 +1054,26 @@ was replaced with actual supported ground. Full TypeScript checking passes.
 No external calls were made. Additional Jev cost is **$0**; cumulative reported
 estimates remain Jev **$0.440786** and other providers **$0.207513**, uncertain
 commitments **$5.939396**, and conservative aggregate exposure **$6.587695**.
+
+## Native refuge preparation foundation
+
+The new preparation helper proposes twelve actual supported routes on an open
+flat scene, without consuming the world's saved randomness. In a controlled
+physical screen scene, the ring endpoint is first proved hidden, and the helper
+proposes a visible supported frontier before that screen. A separate destination
+is proved visible while an intermediate route segment is hidden; that complete
+corridor is refused as outside personal planning scope. These use the ordinary
+perception eye, range and occlusion, including exact sight-change fractions and
+range crossings. No proxy entity or copied destination height supplies terrain.
+
+Pure comparison cases preserve the ordered safety rules: lower worsening beats a
+larger destination margin; a small margin improvement retains the existing
+refuge; a two-metre improvement or transition to a clear arrival permits a new
+choice. Candidate preparation and comparison do not draw from saved randomness.
+Full TypeScript checking and the evolving native/SQL probe pass. These are
+preparation checks: ordinary animals still use the old controller, and worker,
+canonical commit, real movement, clearance timing and flight remain unfinished.
+
+No external calls were made. Additional Jev cost is **$0**; cumulative reported
+estimates remain Jev **$0.440786** and other providers **$0.207513**, uncertain
+commitments **$5.939396**, and conservative aggregate exposure **$6.587695**.

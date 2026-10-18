@@ -26,6 +26,27 @@ export function walkSurfaceLine(
   z: number,
   body: BodyProfile,
 ): SurfacePoint[] | null {
+  return surfaceLine(map, from, x, z, body);
+}
+
+/** Support topology for geometric exposure queries only. This proves neither
+ * body clearance nor permission to move; walking still uses walkSurfaceLine. */
+export function traceSupportLine(
+  map: SpatialMap,
+  from: SurfacePoint,
+  x: number,
+  z: number,
+): SurfacePoint[] | null {
+  return surfaceLine(map, from, x, z);
+}
+
+function surfaceLine(
+  map: SpatialMap,
+  from: SurfacePoint,
+  x: number,
+  z: number,
+  body?: BodyProfile,
+): SurfacePoint[] | null {
   const initial = surfaceById(map, from.surfaceId);
   if (!initial) return null;
   let surface: WalkableSurface = initial;
@@ -52,7 +73,7 @@ export function walkSurfaceLine(
       z: pz,
       surfaceId: surface.id,
     };
-    if (!canWalkSegment(map, start, end, body)) return null;
+    if (body && !canWalkSegment(map, start, end, body)) return null;
     path.push(end);
     if (exit === 1) return path;
     const tolerance = SPATIAL_LIMITS.supportTolerance;
@@ -66,14 +87,16 @@ export function walkSurfaceLine(
         exitAt(candidate) <= exit
       )
         return false;
-      return canWalkSegment(
-        map,
-        end,
-        { ...end, y: surfaceHeight(candidate, px, pz), surfaceId: candidate.id },
-        body,
-      );
+      return body
+        ? canWalkSegment(
+            map,
+            end,
+            { ...end, y: surfaceHeight(candidate, px, pz), surfaceId: candidate.id },
+            body,
+          )
+        : Math.abs(surfaceHeight(candidate, px, pz) - end.y) <= tolerance;
     });
-    if (!next) return null;
+    if (!next) return body ? null : path;
     surface = next;
     fraction = exit;
     start = { ...end, y: surfaceHeight(next, px, pz), surfaceId: next.id };

@@ -286,7 +286,7 @@ export function visionRadius(world: WorldState, entity: Entity): number {
   return resolveSenses(world, entity).vision;
 }
 interface SightTarget {
-  id: string;
+  id?: string;
   position: Position;
   height: number;
 }
@@ -315,6 +315,15 @@ export function visionQuery(world: WorldState, observer: Entity): (source: Sight
   if (!activelyParticipates(observer) || capabilityBlocked(world, observer, 'perception'))
     return () => false;
   return unblockedVisionQuery(world, observer);
+}
+/** Terrain exposure uses the same eye, range and occlusion as ordinary sight.
+ * Geometric points have no entity identity and never enter the entity sight cache. */
+export function pointVisionQuery(
+  world: WorldState,
+  observer: Entity,
+): (point: Position) => boolean {
+  const sees = visionQuery(world, observer);
+  return (position) => sees({ position, height: 0 });
 }
 function unblockedVisionQuery(
   world: WorldState,
@@ -350,7 +359,7 @@ function unblockedVisionQuery(
     const p = source.position;
     if (radius <= 0 || distance(from, p) > radius) return false;
     if (source.id === observerId) return true;
-    const old = cached?.get(source.id);
+    const old = source.id === undefined ? undefined : cached?.get(source.id);
     if (old && samePoint(old.position, p) && old.height === source.height) {
       countDomainWork('senseCacheHits');
       return old.seen;
@@ -363,7 +372,11 @@ function unblockedVisionQuery(
     // Keep the admitted stable transforms when a dense scan exceeds capacity. Evicting
     // its first entry on every miss makes a 513-target scan miss all 512 entries forever.
     // docs/performance.md#simulation-cpu-and-growing-history
-    if (cached && (cached.has(source.id) || cached.size < SIGHT_CACHE_LIMITS.targets)) {
+    if (
+      source.id !== undefined &&
+      cached &&
+      (cached.has(source.id) || cached.size < SIGHT_CACHE_LIMITS.targets)
+    ) {
       cached.set(source.id, { position: { x: p.x, y: p.y, z: p.z }, height: source.height, seen });
     }
     return seen;
