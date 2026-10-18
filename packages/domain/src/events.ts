@@ -28,6 +28,7 @@ import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
 import { MIND_LIMITS, byteCount } from './mind.js';
 import { selectedSocialPolicy } from './social-policy.js';
+import { acquireCombatObservation } from './combat-encounters.js';
 import type {
   Entity,
   MemoryRecord,
@@ -501,6 +502,7 @@ function recordEvent(
           ? { change: data['change'] }
           : {}),
       };
+      acquireCombatObservation(world, awareness, event);
       if (awarenessBatch)
         awarenessBatch.push({ operation: 'add', entry: { source: 'awareness', value: awareness } });
       else acquired.push(awareness);

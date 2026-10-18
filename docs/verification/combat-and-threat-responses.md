@@ -54,3 +54,36 @@ whole-world database continuation and observer disclosure. CTR02–CTR10's evide
 native escape, complete choices, appraisal, two-stage decisions, reconsideration,
 controls, twelve ordinary Ada baselines, practical hunting, browser and complete
 performance qualification remain open in the [tracker](../maintainers/combat-and-threat-responses.md).
+
+## Personal evidence implementation checkpoint — October 18, 2026
+
+CTR02's working changes extend existing sensory preparation and personal event
+recording. Directed preparation requires seeing the performer and the exact
+target (or being that target); approach and recovery remain target-free.
+Unphased unarmed strikes now receive the same visible preparation description.
+Current-format actor-owned records distinguish incoming causes, exact active
+action/projectile bindings, own accepted offense, observed motion and independent
+absolute grace deadlines. PostgreSQL records split the growing per-opponent and
+anonymous entries under their actor owner. Death/departure and personal evidence
+revocation clear their dependent short-lived facts.
+
+The evolving native contact scenario still passes all fifteen contact checks. It
+also passes directed preparation and same-cue deduplication, own accepted offense,
+observed cancellation without renewed hostility, exact stationary expiry and JSON
+continuation. A one-way sight fixture lets a shooter retain aim while the intended
+recipient loses sight for more than the grace interval. Reacquiring a recognized
+shooter preserves the same cue and a deliberate Speak value; a witnessed release
+creates fresh evidence. Reacquiring an unfamiliar shooter establishes only the new
+permitted cue. The Speak value is set explicitly in this native fixture; this
+does not claim delivery or qualification of the player control.
+
+Five existing focused kernel checks pass again. The existing cold PostgreSQL
+observer-history/cognition check also passes using one disposable loopback database,
+which its fixture removes. That database check covers retained observer facts,
+not yet a saved active danger record. No provider calls occurred; additional Jev
+cost is $0 and cumulative task Jev cost is $0.
+
+CTR02 remains open for the complete perception/disclosure/lifecycle matrix, direct
+database continuation of these new records, contextual preference integration and
+required density/performance evidence. Stabilized response scheduling remains
+CTR08 work; recording movement does not itself choose a response or renew hostility.

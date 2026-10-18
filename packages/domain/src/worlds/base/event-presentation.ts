@@ -72,6 +72,7 @@ register(
     'guarded',
     'evasion-ended',
     'attack-preparation',
+    'attack-cue',
     'aim-ready',
     'shot-ended',
     'projectile-ended',

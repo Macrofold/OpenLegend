@@ -113,6 +113,7 @@ export function nativeInterval(
     }
     if (action?.evasion) at(action.evasion.endsAt);
     const plan = actor.agency.plan;
+    if (actor.encounters?.nextAt !== undefined) at(actor.encounters.nextAt);
     if (plan?.status === 'active' && plan.activity)
       at(nextActivityBoundary(world, id, plan.activity));
     const waiting = plan?.status === 'active' && !action && plan.activity?.pending.at(-1);

@@ -112,6 +112,7 @@ export function reconcileBody(
       separateDeadLife(world, entity, events);
     }
     if (!actor.alive) {
+      delete actor.encounters;
       // Death ends live sensory continuity, not retained knowledge or historical evidence.
       // docs/knowledge.md#subject-binding
       if (actor.contacts && Object.keys(actor.contacts).length) actor.contacts = {};

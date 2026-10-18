@@ -3,6 +3,11 @@ import {
   type AnimalWanderPreparation,
 } from './worlds/base/animal-wander-queue.js';
 import { entityGet, entityOwn } from './entity-collection.js';
+import {
+  selectOffense,
+  reconcileCombatSight,
+  expireCombatEncounters,
+} from './combat-encounters.js';
 import { orderedRecordOwn, orderedRecordSet } from './ordered-record.js';
 import { inventoryGroupReason, moveInventoryGroup, dropInventoryGroup } from './inventory-group.js';
 import { BASE_EVASION_TEXT, BASE_RANGED_TEXT } from './worlds/base/ranged-counterplay.js';
@@ -2933,6 +2938,7 @@ function executeCommandNative(
       );
     }
     component.action = action;
+    selectOffense(world, actor, action, command);
     if (action.evasion) component.evasionReadyAt = action.evasion.repeatAt;
     if (action.ranged) {
       const problem = holdAim(world, actor, action);
@@ -5541,6 +5547,15 @@ function* updateEncounters(
   // Loss of sensory/memory participation cannot retain a recognition grant.
   for (const id of actorIds) {
     const observer = entityGet(world.entities, id);
+    if (
+      observer?.actor?.encounters &&
+      (observer.actor.encounters.life !== (observer.actor.physicalLife ?? 0) ||
+        !observer.actor.alive ||
+        !activelyParticipates(observer) ||
+        (observer.actor.encounters.nextAt !== undefined &&
+          observer.actor.encounters.nextAt <= world.simTime))
+    )
+      expireCombatEncounters(world, observer);
     if (observer?.actor?.alive && hasMemory(observer) && activelyParticipates(observer)) continue;
     if (world.visiblePeople?.[id]?.length) world.visiblePeople[id] = [];
     if (world.visibleObjects?.[id]?.length) world.visibleObjects[id] = [];
@@ -5586,6 +5601,7 @@ function* updateEncounters(
       if (Object.keys(world.visiblePlaces?.[actor.id] ?? {}).length)
         world.visiblePlaces![actor.id] = {};
       retirePerceptionEpisodes(world, actor.id);
+      reconcileCombatSight(world, entityGet(world.entities, actor.id)!, [], events);
       continue;
     }
     const previous = original.visiblePeople?.[actor.id] ?? [];
@@ -5744,6 +5760,7 @@ function* updateEncounters(
       }
     if (!original.visiblePeople?.[actor.id] || !samePeople)
       (world.visiblePeople ??= {})[actor.id] = seen;
+    reconcileCombatSight(world, entityGet(world.entities, actor.id)!, seen, events);
     if (!sameObjects) {
       // Unchanged frozen membership needs neither a set rebuild nor another exposure scan.
       // Captions/speech still resolve event-time evidence independently of this visual cache.

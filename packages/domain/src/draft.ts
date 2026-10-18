@@ -339,6 +339,7 @@ export function sensoryDraftWrites(
         'capabilities',
         'controller',
         'participation',
+        'action',
       ]) ||
       // Component installation/removal also changes participation and outward facts.
       (changed(value, ['actor', 'animal', 'spatial', 'heat', 'resource', 'remains']) &&

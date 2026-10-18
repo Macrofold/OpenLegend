@@ -23,6 +23,7 @@ function interruptDepartureWork(world: WorldState, entity: Entity): void {
   cancelPlan(world, actor, entity.id);
   discardSuspended(world, actor, entity.id);
   actor.action = null;
+  delete actor.encounters;
   actor.planGeneration++;
   for (const definition of world.statusEffectPolicy.definitions)
     if (definition.occupiesAction) {

@@ -30,6 +30,15 @@ export interface BodyPolicy {
     targets: Record<'player' | 'npc' | 'native', Array<'player' | 'npc' | 'native'>>;
     humanIssuedTargets: Array<'player' | 'npc' | 'native'>;
     projectileContact: 'injure-vulnerable-body' | 'stop-only';
+    encounters: null | {
+      recentSeconds: number;
+      visiblePreparation: boolean;
+      preparingStrike: string;
+      aiming: string;
+      ended: string;
+      closing: string;
+      withdrawing: string;
+    };
     impactAttention: { importance: number; urgency: number };
     unavailableText: string;
   };
@@ -146,11 +155,37 @@ export function validateBodyPolicy(
       'targets',
       'humanIssuedTargets',
       'projectileContact',
+      'encounters',
       'impactAttention',
       'unavailableText',
     ]);
     if (!['injure-vulnerable-body', 'stop-only'].includes(policy.combat.projectileContact))
       throw new Error('Invalid installed projectile contact response.');
+    const encounter = policy.combat.encounters;
+    if (encounter !== null) {
+      fields(encounter, [
+        'recentSeconds',
+        'visiblePreparation',
+        'preparingStrike',
+        'aiming',
+        'ended',
+        'closing',
+        'withdrawing',
+      ]);
+      if (
+        ![encounter.recentSeconds].every((n) => Number.isFinite(n) && n > 0) ||
+        typeof encounter.visiblePreparation !== 'boolean'
+      )
+        throw new Error('Invalid installed encounter policy.');
+      for (const value of [
+        encounter.preparingStrike,
+        encounter.aiming,
+        encounter.ended,
+        encounter.closing,
+        encounter.withdrawing,
+      ])
+        text(value);
+    }
     fields(policy.combat.impactAttention, ['importance', 'urgency']);
     if (
       !Object.values(policy.combat.impactAttention).every(

@@ -45,7 +45,7 @@ const lethalAttackDescription =
   'This attack could kill the target. Death leaves a body; ordinary animal and NPC revival is unavailable. Confirm one attack; a hit is not guaranteed. Choosing does not pause the world.';
 export const BASE_BODY_POLICY: BodyPolicy = {
   id: 'wilderness:body-policy',
-  version: 10,
+  version: 11,
   evasion: {
     bodyPlans: ['biped'],
     maximumDistance: 2,
@@ -63,6 +63,15 @@ export const BASE_BODY_POLICY: BodyPolicy = {
     },
     humanIssuedTargets: ['player', 'npc', 'native'],
     projectileContact: 'injure-vulnerable-body',
+    encounters: {
+      recentSeconds: 600,
+      visiblePreparation: true,
+      preparingStrike: 'is preparing to strike',
+      aiming: 'is aiming at',
+      ended: 'is no longer observed preparing an attack.',
+      closing: 'is drawing closer.',
+      withdrawing: 'is moving farther away.',
+    },
     // A perceived impact warrants prompt reconsideration, never a prescribed retaliation.
     // docs/worlds/base/lifecycle-and-protection.md#npc-combat-participation
     impactAttention: { importance: 8, urgency: 8 },

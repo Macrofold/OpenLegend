@@ -152,6 +152,8 @@ export type ActionType =
   | 'tend-fire'
   | 'assemble';
 export interface Action {
+  /** Exact personal cue receipts for this committed activity, never target authority. */
+  attackObservers?: Record<string, import('./combat-encounters.js').AttackObservationReceipt>;
   combatHelpId?: string;
   evasion?: import('./evasion.js').EvasionState;
   ranged?: import('./ranged.js').AimState;
@@ -230,6 +232,8 @@ export interface CharacterTrait {
 }
 
 export interface ActorComponent {
+  /** Personally acquired short-lived danger and own offense; never public actor data. */
+  encounters?: import('./combat-encounters.js').PersonalEncounters;
   practice?: Record<string, import('./practical-competence.js').PracticeProgress>;
   coachingEpisodeId?: string;
   /** Authored natural actions for bodies that do not use the manual-work family. */

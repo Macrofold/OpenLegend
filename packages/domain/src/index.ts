@@ -22,6 +22,7 @@ export * from './finite-casts.js';
 export { BASE_DEATH_COMMAND_DESCRIPTIONS } from './worlds/base/death.js';
 export * from './reincarnation.js';
 export * from './combat-consent.js';
+export * from './combat-encounters.js';
 export * from './ranged.js';
 export * from './worlds/base/ranged-counterplay.js';
 export { describeBodyRemains } from './worlds/base/bodies.js';

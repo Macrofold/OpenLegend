@@ -62,6 +62,7 @@ import { validateAgency } from './agency.js';
 import { assertReservedStock, validateResourceReservations } from './resource-claims.js';
 import { DEFAULT_SENSES, SENSE_IMPLEMENTATIONS, type SenseDefinition } from './perception.js';
 import { bodyPolicy, validateBodyPolicy, type BodyPolicy } from './body-policy.js';
+import { validateCombatEncounters } from './combat-encounters.js';
 import { validateReincarnation } from './reincarnation.js';
 import { validateTerritorialThreats } from './territorial-threat.js';
 import { validateCognitionPolicy } from './cognition-policy.js';
@@ -1063,6 +1064,7 @@ export function validateWorldModules(world: WorldState): void {
   for (const entries of Object.values(world.experience?.awareness ?? {}))
     for (const entry of entries) validateEventEvidence(entry);
   validateSocialPolicy(world);
+  validateCombatEncounters(world);
   for (const event of world.events)
     if (event.narration !== undefined) validateNarration(event.narration);
   const interval = world.nativeInterval;

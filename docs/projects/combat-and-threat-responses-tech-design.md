@@ -1,8 +1,8 @@
 # Combat and threat responses: technical design
 
-| Status      | Current progress                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Actual contact and human attack permission are implemented; complete combat delivery and qualification remain open. | 2026-10-18   |
+| Status      | Current progress                                                                                                     | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Actual contact and personal danger evidence are in progress; complete combat delivery and qualification remain open. | 2026-10-18   |
 
 ## Design baseline and integration
 

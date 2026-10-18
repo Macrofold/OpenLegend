@@ -1,5 +1,6 @@
 import { entityGet, entityHas, entityValues } from './entity-collection.js';
 import { revokePracticeSupport } from './practical-competence.js';
+import { revokeCombatEvidence } from './combat-encounters.js';
 import { revokeActivityEvidence } from './activity-learning.js';
 import {
   invalidateAppraisals,
@@ -947,6 +948,7 @@ export function invalidateExperience(
   }
   revokeActivityEvidence(world, actorId, [...affected]);
   revokePracticeSupport(world, actorId, affected);
+  revokeCombatEvidence(world, actorId, affected);
   if (forget) {
     state.forgotten[actorId] = [...new Set([...(state.forgotten[actorId] ?? []), ...affected])];
     state.awareness[actorId] = (state.awareness[actorId] ?? []).filter(

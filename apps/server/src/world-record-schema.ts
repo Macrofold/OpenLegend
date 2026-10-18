@@ -107,6 +107,10 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
             }),
             attributes: map('sim_actor_attributes'),
             practice: map('sim_actor_practice'),
+            encounters: one('sim_personal_encounters', {
+              pairs: map('sim_encounter_pairs'),
+              unknown: map('sim_unknown_dangers'),
+            }),
             conditions: map('sim_actor_conditions'),
             traits: list('sim_actor_traits', 'id'),
           }),

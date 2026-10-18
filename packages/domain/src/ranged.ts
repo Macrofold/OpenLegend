@@ -579,6 +579,11 @@ export function advanceProjectiles(
         {
           projectileId: flight.id,
           contactLife: target.actor?.physicalLife ?? -1,
+          ...(source?.actor &&
+          (source.actor.physicalLife ?? 0) === flight.sourceLife &&
+          seesEntity(world, target, source)
+            ? { contactSourceId: source.id, contactSourceLife: flight.sourceLife }
+            : {}),
           incomingX: -flight.direction.x,
           incomingY: -flight.direction.y,
           incomingZ: -flight.direction.z,
