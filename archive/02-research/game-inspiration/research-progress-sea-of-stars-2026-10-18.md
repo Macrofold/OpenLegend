@@ -21,6 +21,18 @@ All ten selected image files were visually inspected, and their byte counts, SHA
 
 The full affected documentation diff received content review, including independent checks of art integration, mechanics/version boundaries and reception/economic claims. A malformed interview link was corrected and a repeated developer-source explanation consolidated. New relative paths and section anchors resolve. The new dossier, illustrated study, manifest and this ledger are formatted with the repository's pinned Prettier 3.6.2. No runtime code or image binaries are part of the change; no game stress, motion, performance or gameplay tests were run for this documentation task.
 
+## Post-completion integration review
+
+Mike's follow-up review asked whether the completed research was positioned to influence the wider game rather than remain an isolated dossier. The integration pass routed G178 through the existing cross-game synthesis layer instead of creating a second design system:
+
+- [PRESENT](synthesis/art-audio-and-game-feel.md) now owns reusable lessons about organized visual richness, purposeful light, execution feedback and persistent physical identity.
+- [EXPLORE](synthesis/exploration-and-world-design.md) now owns reusable lessons about landmarks that explain place, variety through relationships and discoveries that change another worthwhile activity.
+- [COMBAT](synthesis/combat-and-encounters.md#combat-l005) now owns the caution that skillful execution should amplify a changing tactical decision rather than substitute for one.
+- Existing [gameplay priorities](../../../docs/repertoires/gameplay-priorities.md), [3D pixel-art design](../../../docs/projects/3d-pixel-art-feature-spec.md) and [scene-production workflow](../../../docs/production-workflows/scenes-and-interfaces.md) consume the accepted lessons. No parallel Sea-of-Stars-specific art or exploration project was created.
+- [ND38](../../../docs/maintainers/needs-design.md#nd38--player-skill-during-action-execution) records the genuinely new unresolved design boundary: optional human skill during execution after an exact action is selected. It is not implementation approval and does not modify the current combat-response design.
+
+The synthesis source inventory was also refreshed to include G168–G178. The ten mobile dossiers remain unassessed in that synthesis; G178 is marked incorporated only in COMBAT, EXPLORE and PRESENT because those are the scopes actually reviewed.
+
 ## Commit and scope record
 
 Working branch: `codex/sea-of-stars-research-art-direction`, created from `Macrofold/OpenLegend` main at `80c094c25b12e39182df109d721e91b7abd9414d`.
