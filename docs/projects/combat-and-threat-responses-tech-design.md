@@ -61,6 +61,49 @@ Invalidate reuse for the actual entity life, control or timeline, observed evide
 
 Measure complete caller paths, including cold preparation, dense danger, obstacle invalidation, provider-stage delay and persisted continuation. Retain deterministic native ordering and saved random choices. Report planned targets separately from measured results.
 
+### Active implementation sequence for the connected human response
+
+The delivered work-transition and scoped-feeling foundations precede the following
+connected changes. Keep the selected profile uninstalled until its native and
+decision consumers agree.
+
+1. Extend the existing chosen-activity control with optional observation/counting
+   requirements and an exact selected distance boundary. Preserve its original
+   deadline, cancellation, actual-cost and completing-child rules. Reuse native
+   movement and boundary prediction, including complete route segments; no second
+   mover or pursuit loop is introduced. Preserve exact physical-life references
+   through prepared attack/follow selection and final native admission.
+2. Install the catalogue's authored data through the cognition policy and a
+   selected-world compiler at the existing world-composition seam. Purpose/role,
+   source, exact method, work handling and finite terms remain one offered binding;
+   admitted plans/activities and action records retain that selected meaning.
+3. Extend decision preparation with an explicitly complete-required set before any
+   provider callback. Preserve its members or refuse preparation; optional ordinary
+   suggestions keep their existing policy. Select this strategy before ordinary
+   routing and action retrieval.
+4. Use the existing accounted job for the required relevance/appraisal call,
+   source-bound native appraisal publication and independent Noul action choice.
+   Revalidate post-publication from accepted feeling revisions, preserve newer
+   external evidence, and suppress only this pipeline's own derived receipts.
+   No routing/generation gate or automatic paid fallback is added.
+5. Enable the profile, target-stacked interpreted fear/anger and the selected new
+   Ada dispositions together with removal of both automatic fear producers. Run
+   the twelve ordinary baselines and complete reaction timings at this first
+   connected minimum, before expanding animal/species breadth. Retain failures.
+6. Finish bounded refresh, meaningful subscriptions and two immediate job slots
+   through the existing scheduling/execution owners, then continue the remaining
+   combat controls, animal breadth and qualification.
+
+The next native-control change is approximately 150–300 logic lines; the catalogue
+and decision integration is expected to affect another 1,000–2,000 logic lines.
+Relevant recurring growth is active controlled work × remaining route segments,
+plus actual perceived threat pairs × supported methods. Reuse actor/tool and
+source preparation only within an unchanged read; invalidate for path/body,
+geometry, life/control, source/policy revision and original time boundaries.
+Measure actual admission, simulation progress, collision/stop outcomes and
+PostgreSQL continuation, then whole reaction preparation/queue/provider/commit/
+render latency. Existing chosen camp-watch checks remain regression obligations.
+
 ## Physical attack and contact contract — CTR01
 
 ### Permission before commitment
