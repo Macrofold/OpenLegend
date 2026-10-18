@@ -1,5 +1,6 @@
 import { entityGet, entityValues } from './entity-collection.js';
 import { BASE_BODY_PROFILES } from './worlds/base/spatial-definitions.js';
+import { BASE_RANGED_TEXT } from './worlds/base/ranged-counterplay.js';
 import { cookingChoices } from './food-preparation.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { createItemLot, itemFor, retireItem, setSpatialPosition, worldSupport } from './index.js';
@@ -413,6 +414,8 @@ describe('bounded invented mechanisms', () => {
     world = command(world, { type: 'craft', recipeId });
     world = advanceWorld(world, 72).world;
     expect(quantityOf(world, PLAYER_ID, world.recipes[recipeId]!.outputDefinitionId)).toBe(1);
+    // This checks compatible ammunition, not a healthy animal's escape/range balance.
+    entityGet(world.entities, 'hare-1')!.actor!.incapacitated = true;
     world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
     world = advanceWorld(world, 30).world;
     expect(quantityOf(world, PLAYER_ID, world.recipes[recipeId]!.outputDefinitionId)).toBe(0);
@@ -427,6 +430,15 @@ describe('bounded invented mechanisms', () => {
     draft.parameters.accuracy = 0.6;
     let world = makeSling(73, draft);
     world.rngState = 12345;
+    // Start within real preparation range. The faster native escape can outrun a
+    // distant approach; this specimen needs an actual released miss and alarm.
+    const prey = worldPosition(entityGet(world.entities, 'hare-1')!);
+    setSpatialPosition(
+      world,
+      entityGet(world.entities, PLAYER_ID)!,
+      { ...prey, x: prey.x - 1 },
+      'terrain',
+    );
     world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
     world = advanceWorld(world, 40).world;
     expect(
@@ -520,7 +532,7 @@ describe('bounded invented mechanisms', () => {
     expect(world).toEqual(snapshot);
     expect(rejected.events).toEqual([]);
   });
-  it('approaches close enough to fire a short-range tool at an already fleeing animal', () => {
+  it('retains ammunition when fast prey leave a short-range tool during preparation', () => {
     const draft = sling();
     draft.parameters.range = 3;
     draft.parameters.damage = 10;
@@ -532,6 +544,13 @@ describe('bounded invented mechanisms', () => {
       itemId: itemId(world, world.recipes[admitted.recipeId]!.outputDefinitionId),
     });
     for (let attempt = 0; attempt < 2; attempt++) {
+      const prey = entityGet(world.entities, 'hare-1')!;
+      setSpatialPosition(
+        world,
+        entityGet(world.entities, PLAYER_ID)!,
+        { ...worldPosition(prey), x: worldPosition(prey).x - 1 },
+        worldSupport(prey)!,
+      );
       world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
       for (
         let seconds = 0;
@@ -541,13 +560,14 @@ describe('bounded invented mechanisms', () => {
         world = advanceWorld(world, 1).world;
       expect(entityGet(world.entities, PLAYER_ID)!.actor!.action).toBeNull();
     }
-    expect(world.events.filter((event) => event.type === 'shot-released')).toHaveLength(2);
+    expect(world.events.filter((event) => event.type === 'shot-released')).toHaveLength(0);
     expect(
       world.events.some(
-        (event) => event.type === 'action-stopped' && event.text.includes('out of range'),
+        (event) =>
+          event.type === 'action-stopped' && event.text.includes(BASE_RANGED_TEXT.rangeLost),
       ),
-    ).toBe(false);
-    expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(4);
+    ).toBe(true);
+    expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(6);
   });
 });
 

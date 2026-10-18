@@ -1,5 +1,16 @@
 # Documentation changelog
 
+## October 18, 2026 — Lead only personally observed motion at release
+
+Mike approved leading after the early practical bow hunt's observed-point shot
+struck terrain behind retreating prey. The [bundled aiming contract](worlds/base/ranged-counterplay.md#ranged-tools-and-preparation)
+now extrapolates one actually executed movement segment seen by the shooter,
+within existing projectile range. It never reads a target's future route. This
+changes release direction while preserving preparation, speed, range, steadiness
+draws and fixed released flight; turns and lost evidence still permit misses.
+[CTR03–CTR04](maintainers/combat-and-threat-responses.md) retain practical hunting
+and complete continuation/character/player qualification.
+
 ## October 18, 2026 — Actual projectile contact and human attack permission
 
 CTR01 installs the selected bundled-world permission for attacks on vulnerable

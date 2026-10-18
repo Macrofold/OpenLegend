@@ -32,6 +32,8 @@ import {
   bindAim,
   holdAim,
   aimProblem,
+  captureAimMotion,
+  observeAimMotion,
   releaseShot,
   captureProjectileBodies,
   advanceProjectiles,
@@ -5608,6 +5610,7 @@ function* advanceWorldNative(
       : undefined;
     if (projectileBodies)
       seconds = projectileBoundary(world, projectileBodies, projectileIds, seconds);
+    const aimMotion = captureAimMotion(world, mechanics.actionCandidates, seconds);
     const materialExposure = captureMaterialExposure(world);
     // Fixed contributions become ineffective at the endpoint. Their release grants only
     // future movement, never movement over the interval they restricted.
@@ -5765,6 +5768,7 @@ function* advanceWorldNative(
     yield* integrateMaterialExposure(world, materialExposure, seconds, events);
     const flightSources = flushFlight();
     const movedWithOccurrences = flightSources.length > 0;
+    observeAimMotion(world, aimMotion);
     const beforeEffects = events.length;
     // Work that ends or changes phase in this slice has effects (a hit, a meal, a completion);
     // pending rates must reach every entity before them. Status-effect work such as sleep is

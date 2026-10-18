@@ -1191,3 +1191,43 @@ Implementation and the repeated hunt-to-meal check remain open at this checkpoin
 No external calls were made. Additional Jev cost is **$0**; cumulative reported
 estimates remain Jev **$0.440786** and other providers **$0.207513**, uncertain
 commitments **$5.939396**, and conservative aggregate exposure **$6.587695**.
+
+## Observed-motion release checkpoint
+
+The owner-approved release predictor now uses one personally seen, actually
+executed linear segment through the existing physical movement and sight owners.
+A controlled creature given character cognition walks an ordinary admitted clear
+route; it moves from x=16.325110687055194 to x=18.305110687055194 during the
+18-game-second aim. The predicted intercept is x=18.85977214011861. An actual
+released arrow contacts that moving body and applies its 18 remaining health loss.
+This is controlled geometry evidence, not native animal hunting or independent
+character choice. The first attempted control fixture's route was refused and its
+target remained stationary; that specimen did not qualify moving-target leading.
+The corrected scenario asserts actual movement before claiming it.
+
+Whole advancement and 36 half-second advances produce intercepts differing by
+less than 1e-7 metres. The held observation round-trips through disposable
+PostgreSQL, and same-clock release after restore preserves the exact direction.
+Static, stale, changed-endpoint and impossible-intercept inputs fall back to the
+current observed point. Lost sight and changed target life refuse release without
+a projectile. Malformed future/reversed observed times fail current validation.
+No future route is read at release and no new random draw is added by prediction.
+
+The repeated ordinary close hare bow hunt still misses: release occurs at
+248.45642744985065, the hare selects a different refuge at that release boundary,
+and the straight arrow exhausts range at 261.78976078318397. This retains actual
+native avoidance and fixed projectile travel; it is not a successful hunt-to-meal
+claim. Three older focused hunting checks now pass with their purposes explicit:
+compatible-arrow release uses an incapacitated specimen, an actual released miss
+starts close enough for preparation, and a short-range refusal retains ammunition
+when fast prey leave range. The previous slow-prey guaranteed-release assertion
+is superseded by the accepted species speed and real range-loss contract.
+Full TypeScript checking and the production build pass, including the asset
+guard; existing browser externalization/chunk warnings remain. The exact
+near-passage/screen/SQL continuation probe still passes after aiming changes.
+Broader combat, flight, practical hunting, browser and performance qualification
+remain open.
+
+No external calls were made. Additional Jev cost is **$0**; cumulative reported
+estimates remain Jev **$0.440786** and other providers **$0.207513**, uncertain
+commitments **$5.939396**, and conservative aggregate exposure **$6.587695**.

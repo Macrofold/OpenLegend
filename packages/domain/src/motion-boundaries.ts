@@ -236,6 +236,23 @@ function walkerTracks(
   return [track, { at: [0, seconds], pose: [start, start] }];
 }
 
+/** Possible physical paths for a selected body, never personal knowledge. A caller
+ * recording an observation must match actual execution and check sight afterward. */
+export function physicalObservationTracks(
+  world: WorldState,
+  entity: Entity,
+  seconds: number,
+): MotionTrack[] | undefined {
+  if (entity.spatial.fallVelocity !== undefined) return;
+  if (motionReach(world, entity, seconds) === 0) {
+    const point = { ...worldPosition(entity) };
+    return [{ at: [0, seconds], pose: [point, point] }];
+  }
+  if (entity.spatial.flight) return flightTracks(world, entity, seconds);
+  const tracks = walkerTracks(world, entity, seconds);
+  return tracks === 'sampled' ? undefined : tracks;
+}
+
 export interface Run {
   start: number;
   end: number;

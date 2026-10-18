@@ -5,6 +5,7 @@ import {
   movingBodyContact,
   movingBodiesDistanceInterval,
   rayHits,
+  SPATIAL_LIMITS,
   type WorldPoint,
 } from '@open-legend/spatial';
 import { rangedTargetAllowed, rangedAccuracy, rangedPolicy } from './ranged-policy.js';
@@ -40,14 +41,18 @@ import { occurrenceFor } from './action-experience.js';
 import { noteTerritorialInjury } from './territorial-threat.js';
 import { chargeWork } from './work-budget.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
-import { baseShotDirection, BASE_RANGED_TEXT } from './worlds/base/ranged-counterplay.js';
+import {
+  baseShotDirection,
+  baseObservedAimPoint,
+  BASE_RANGED_TEXT,
+} from './worlds/base/ranged-counterplay.js';
 import { nativeMovementSpeed } from './worlds/base/actions.js';
 import { flightTracks, motionTrackPosition, type MotionTrack } from './flight.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { readOnlyDraftView } from './draft.js';
 import { nativeResponseProfile } from './native-response.js';
-import { movingPointVisionRuns } from './motion-boundaries.js';
+import { movingPointVisionRuns, physicalObservationTracks } from './motion-boundaries.js';
 import type { Action, Entity, Outcome, WorldEvent, WorldState } from './types.js';
 
 export interface AimState {
@@ -57,6 +62,107 @@ export interface AimState {
   reservationId: string;
   manual: boolean;
   ready: boolean;
+  observedMotion?: {
+    fromAt: number;
+    at: number;
+    from: WorldPoint;
+    to: WorldPoint;
+  };
+}
+
+interface AimMotionPreparation {
+  actorId: string;
+  actionId: string;
+  targetId: string;
+  targetLife?: number;
+  startedAt: number;
+  seconds: number;
+  own: MotionTrack[];
+  target: MotionTrack[];
+  visible: { own: number; target: number; from: number }[];
+}
+
+/** Prepare only existing aims and their exact target's physical paths. These are
+ * disposable predictions until movement and personal sight establish evidence. */
+export function captureAimMotion(
+  world: WorldState,
+  actorIds: readonly string[],
+  seconds: number,
+): AimMotionPreparation[] {
+  if (seconds <= TIME_EPSILON) return [];
+  const prepared: AimMotionPreparation[] = [];
+  for (const id of actorIds) {
+    const actor = entityGet(world.entities, id),
+      action = actor?.actor?.action,
+      target = entityGet(world.entities, action?.targetId ?? '');
+    if (!actor || !action?.ranged || action.stage !== 'working' || !target) continue;
+    const own = physicalObservationTracks(world, actor, seconds),
+      targetTracks = physicalObservationTracks(world, target, seconds);
+    if (!own || !targetTracks || !seesEntity(world, actor, target)) continue;
+    const lift = interactionAnchor(target).y - worldPosition(target).y;
+    const aimed = targetTracks.map((track) => ({
+      ...track,
+      pose: track.pose.map((point) => ({ ...point, y: point.y + lift })),
+    }));
+    const visible: AimMotionPreparation['visible'] = [];
+    for (let i = 0; i < own.length; i++)
+      for (let j = 0; j < aimed.length; j++) {
+        const run = movingPointVisionRuns(world, actor, own[i]!, aimed[j]!, seconds).at(-1);
+        if (run?.value && run.end === seconds) visible.push({ own: i, target: j, from: run.start });
+      }
+    prepared.push({
+      actorId: id,
+      actionId: action.id,
+      targetId: target.id,
+      targetLife: action.targetLife,
+      startedAt: world.simTime,
+      seconds,
+      own,
+      target: aimed,
+      visible,
+    });
+  }
+  return prepared;
+}
+
+/** Call after physical movement and before endpoint releases. No future intention
+ * is read here: only a uniquely matched, actually seen executed segment is saved. */
+export function observeAimMotion(world: WorldState, prepared: AimMotionPreparation[]): void {
+  for (const entry of prepared) {
+    const actor = entityGet(world.entities, entry.actorId),
+      action = actor?.actor?.action,
+      target = entityGet(world.entities, entry.targetId);
+    if (!actor || action?.id !== entry.actionId || !action.ranged) continue;
+    delete action.ranged.observedMotion;
+    if (
+      !target ||
+      entry.targetLife !== action.targetLife ||
+      (entry.targetLife !== undefined && entry.targetLife !== (target.actor?.physicalLife ?? 0)) ||
+      !seesEntity(world, actor, target)
+    )
+      continue;
+    const ownPoint = worldPosition(actor),
+      targetPoint = interactionAnchor(target);
+    const matches = entry.visible.filter(
+      (pair) =>
+        distance3D(motionTrackPosition(entry.own[pair.own]!, entry.seconds), ownPoint) <
+          SPATIAL_LIMITS.epsilon &&
+        distance3D(motionTrackPosition(entry.target[pair.target]!, entry.seconds), targetPoint) <
+          SPATIAL_LIMITS.epsilon,
+    );
+    if (matches.length !== 1) continue;
+    const match = matches[0]!,
+      track = entry.target[match.target]!,
+      from = Math.max(match.from, track.at.at(-2)!),
+      fromAt = entry.startedAt + from;
+    if (entry.seconds - from <= TIME_EPSILON || fromAt >= world.simTime) continue;
+    action.ranged.observedMotion = {
+      fromAt,
+      at: world.simTime,
+      from: motionTrackPosition(track, from),
+      to: { ...targetPoint },
+    };
+  }
 }
 export interface ProjectileFlight {
   nearPassObservedLives?: Record<string, true>;
@@ -284,7 +390,14 @@ export function releaseShot(
   if (debit.status !== 'applied')
     return outcome(false, 'ammunition-unavailable', BASE_RANGED_TEXT.releaseUnavailable);
   const origin = interactionAnchor(actor),
-    point = interactionAnchor(target);
+    point = baseObservedAimPoint(
+      origin,
+      interactionAnchor(target),
+      aim.observedMotion,
+      world.simTime,
+      launcher.flightSpeed,
+      launcher.range,
+    );
   const delta = { x: point.x - origin.x, y: point.y - origin.y, z: point.z - origin.z };
   const steadiness = Math.max(
     0,
@@ -819,6 +932,8 @@ export function advanceProjectiles(
   }
 }
 export function validateRanged(world: WorldState): void {
+  const vector = (v: WorldPoint) =>
+    !!v && ['x', 'y', 'z'].every((key) => Number.isFinite(v[key as keyof WorldPoint]));
   for (const definition of Object.values(world.itemDefinitions)) {
     const launcher = definition.launcher;
     if (launcher && (!Number.isFinite(launcher.flightSpeed) || launcher.flightSpeed <= 0))
@@ -831,14 +946,22 @@ export function validateRanged(world: WorldState): void {
     const hold = aim && world.resourceReservations?.[aim.reservationId];
     if (
       !aim ||
-      !hasRecordFields(aim, [
-        'sourceLife',
-        'tool',
-        'ammunition',
-        'reservationId',
-        'manual',
-        'ready',
-      ]) ||
+      !hasRecordFields(
+        aim,
+        ['sourceLife', 'tool', 'ammunition', 'reservationId', 'manual', 'ready'],
+        ['observedMotion'],
+      ) ||
+      (aim.observedMotion !== undefined &&
+        (!hasRecordFields(aim.observedMotion, ['fromAt', 'at', 'from', 'to']) ||
+          !Number.isFinite(aim.observedMotion.fromAt) ||
+          !Number.isFinite(aim.observedMotion.at) ||
+          aim.observedMotion.fromAt < 0 ||
+          aim.observedMotion.fromAt >= aim.observedMotion.at ||
+          aim.observedMotion.at > world.simTime ||
+          !hasRecordFields(aim.observedMotion.from, ['x', 'y', 'z']) ||
+          !hasRecordFields(aim.observedMotion.to, ['x', 'y', 'z']) ||
+          !vector(aim.observedMotion.from) ||
+          !vector(aim.observedMotion.to))) ||
       !Number.isSafeInteger(aim.sourceLife) ||
       aim.sourceLife !== (entity.actor!.physicalLife ?? 0) ||
       typeof aim.manual !== 'boolean' ||
@@ -869,8 +992,6 @@ export function validateRanged(world: WorldState): void {
   }
   const releases = new Set<string>();
   for (const [id, flight] of Object.entries(world.projectiles ?? {})) {
-    const vector = (v: WorldPoint) =>
-      !!v && ['x', 'y', 'z'].every((key) => Number.isFinite(v[key as keyof WorldPoint]));
     if (
       !hasRecordFields(
         flight,

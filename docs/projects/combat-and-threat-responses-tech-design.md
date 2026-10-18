@@ -429,6 +429,24 @@ Implementation proceeds through these connected checkpoints under this assignmen
    ranged, flight, save and BW12 descriptions and the CTR tracker with measured
    limits; no phase checkbox closes from a fixture alone.
 
+The failed early bow hunt exposed the observed-point ray striking the ground
+behind retreating prey. Mike approved observed-motion leading on October 18.
+Before repeating that journey, extend the existing held aim with one personally
+seen, actually executed linear movement segment. The shared physical forecast
+may prepare that segment, but it becomes evidence only after actual movement
+matches it and ordinary sight covers its observed portion. Unsupported or
+ambiguous physical motion supplies no lead. Capture only active aims and their
+exact targets; do not scan unrelated animals or inspect future route choices at
+release. Current target life, visibility and observed endpoint must still match.
+The bundled release law solves the constant-velocity intercept within the
+launcher's existing flight range, otherwise aiming at the current observed point.
+It preserves preparation, speed, range, steadiness draws and fixed released flight.
+Approximately 200–300 logic lines affect physical-motion preparation, held aiming,
+release and current-format validation. Verify static and moving shots, turns,
+loss of sight, changed life, same-clock release, save/load and split continuation,
+then repeat the actual hunt–harvest–cook–eat path. This is an approved aiming
+contract change, not evidence that hunting is qualified.
+
 Completion requires the single installed controller and every connected consumer
 above, the canonical qualification matrix below, and truthful remaining evidence.
 The ordinary supplied Main opening remains selected. Broader feeding, packs and
