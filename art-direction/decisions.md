@@ -136,4 +136,3 @@ Mike explicitly authorized the comprehensive plan in full, retaining autonomous 
 Date · decision · relevant reference IDs · user rationale · open implications.
 
 Record explicit user choices here after discussion. Keep exploratory ratings and assistant suggestions in `feedback.md` until adopted.
-

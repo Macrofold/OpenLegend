@@ -44,4 +44,3 @@ When a body, material, camera treatment or animation changes, identify the expor
 Give each new study one record under `art/` with its intent, source/viewer/Blender links, completed milestones, specific feedback, remaining art decisions and references to technical owners. Do not duplicate the V3D/SW/PF task bodies or treat successful integration as art approval.
 
 Use `<study>/study/` for the active editable work and `<study>/snapshots/<date>-rN/` for immutable milestone packages. For a milestone, record the art revision, matching game commit when integrated, review result and remaining limitations. Update the study record when Mike accepts or rejects an artistic choice; reconcile any broader direction change in the existing creative brief/decision owner. Preserve earlier useful comparisons and provenance.
-

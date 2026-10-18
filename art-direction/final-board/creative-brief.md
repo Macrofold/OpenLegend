@@ -210,4 +210,3 @@ Source: https://www.neoseeker.com/ori-and-the-will-of-the-wisps/Gorlek_Ore
 ## Provenance and rights
 
 Six screenshots were supplied by the user and copied unchanged into images/ so temporary clipboard files are not dependencies. Other images remain at the credited remote hosts. Artwork belongs to its respective owners; no production reuse rights or AGPL license are asserted for these third-party images. Steam Autumn Sale is identified by the supplied image, with artist/year unverified. Earlier boards, ratings and feedback are preserved.
-

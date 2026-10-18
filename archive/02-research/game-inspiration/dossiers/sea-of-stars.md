@@ -312,7 +312,7 @@ The July 2023 cover feature reports that the director declined to explain the li
 
 ### Concept, usable action, animation and integration
 
-Boulanger describes a process beginning with a narrative/gameplay brief, followed by Kho's concepts, colors and turnarounds, then an approved pixel idle/turnaround, animation and integration with gameplay, effects, sound and balance. Spatial puzzles were prototyped in empty Unity scenes. The original ScreenRant page was blocked; its interview body was read through a republication. [ScreenRant interview, August 29, 2023, accessed via Canada News Media](https://canadanewsmedia.ca/sea-stars-thierry-boulanger-interview-aiming-at-holding-up-amidst-all-these-classics-screen-rant/).
+Boulanger describes a process beginning with a narrative/gameplay brief, followed by Kho's concepts, colors and turnarounds, then an approved pixel idle/turnaround, animation and integration with gameplay, effects, sound and balance. Spatial puzzles were prototyped in empty Unity scenes. The original ScreenRant page was blocked; its interview body was read through a republication. [ScreenRant interview, August 29, 2023, accessed via Canada News Media](https://canadanewsmedia.ca/sea-of-stars-thierry-boulanger-interview-aiming-at-holding-up-amidst-all-these-classics-screen-rant/).
 
 Animation was expensive by design. A 2022 developer Q&A identifies frame-by-frame animation as the largest spending category and explains that equipment appearance stayed fixed to protect animation scope and recognizable character identities. This explains a production compromise; it does not imply that visible equipment changes are undesirable in a game built around individual people and possessions. [Lords of Gaming developer Q&A, March 1, 2022](https://lordsofgaming.net/2022/03/sea-of-stars-hands-off-demo-developer-qa/).
 
@@ -405,7 +405,7 @@ Player descriptions also require factual separation. A complaint about “everyt
 
 ### What later updates change about the evidence
 
-**Dawn of Equinox, November 12, 2024**, deliberately revisited combat and the opening. Boulanger explained that scarce combo points prevented the intended small character kits from exposing enough of their combined possibilities. The update addressed that constraint and other feedback. This is a documented developer response, not a measured improvement in retention or proof that writing and pacing objections disappeared. [Developer explanation](https://blog.playstation.com/2024/11/12/sea-of-stars-dawn-of-equinox-devs-deep-dive-into-3-player-co-op-and-combat-2-0-live-today/)
+Dawn's documented redesign is described in the [mechanics section](#the-2024-redesign-addresses-access-to-variety). Its release does not establish improved retention or show that writing and pacing objections disappeared.
 
 Watchmaker launched free on **May 20, 2025**. The **April 7, 2026** mobile launch offered the main adventure without ads or microtransactions but explicitly excluded Watchmaker; a mobile DLC port was only prospective. **Sunset, June 8, 2026**, added cinematics, balancing and GOG/Switch 2 availability. [Dated backer notices](https://sea-of-stars.backerkit.com/hosted_preorders/project_updates?page=1) Sabotage identified Sunset as its final update and said the studio had moved to Project Sparrow. [Official Sunset statement](https://sabotagestudio.com/press-release/but-what-a-beautiful-sunset-it-is-sea-of-stars-sunset-edition-marks-the-final-update-for-the-game-available-now/)
 
