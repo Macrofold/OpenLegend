@@ -35,6 +35,8 @@ import { readEntityAttribute } from './status-effects.js';
 import { nextRandom } from './data.js';
 import { activelyParticipates } from './participation-state.js';
 import { releaseInvocationResources } from './resource-claims.js';
+import type { SurfacePoint } from '@open-legend/spatial';
+import { retireTerritorialControl } from './territorial-threat.js';
 
 function changed(world: WorldState, animal: Entity): void {
   recordAnimalClockWrite(world, animal.id);
@@ -45,6 +47,7 @@ function changed(world: WorldState, animal: Entity): void {
 /** Control and body-life writers retire only this controller's uncommitted
  * movement. A released projectile or physical flight retains its own owner. */
 export function reconcileNativeControl(world: WorldState, entity: Entity): void {
+  retireTerritorialControl(world, entity);
   const state = entity.animal,
     actor = entity.actor;
   if (
@@ -188,6 +191,28 @@ function beginNativeAlarm(
     );
   changed(world, animal);
   return episode;
+}
+
+/** An existing native policy may hand over a chosen withdrawal, with its exact
+ * committed cause. The preferred point grants neither terrain sight nor a route. */
+export function beginNativeEscape(
+  world: WorldState,
+  animal: Entity,
+  cause: Readonly<WorldEvent>,
+  preferredRefuge: SurfacePoint,
+  events: WorldEvent[],
+): void {
+  if (!animal.animal || !animal.actor?.alive || animal.actor.controller !== 'native') return;
+  const episode = beginNativeAlarm(
+    world,
+    animal,
+    { kind: 'event', id: cause.id, at: cause.at },
+    events,
+  );
+  if (episode) {
+    episode.preferredRefuge = { ...preferredRefuge };
+    changed(world, animal);
+  }
 }
 
 /** A real committed windup/aim can begin after travel, without another command.

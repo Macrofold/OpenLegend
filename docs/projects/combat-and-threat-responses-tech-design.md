@@ -365,11 +365,13 @@ Authoring inspection must explain what is supported: native danger classes, refu
 
 ### Active native animal implementation plan
 
-CTR03–CTR04 are not delivered by the connected human response. The current
-adapter still stores one threat, chooses short steering headings, decays alarm
-exponentially and moves ordinary wandering instantaneously. The implementation
-replaces those meanings together; retaining the old fields as another writable
-controller or a compatibility path is excluded. Approximately 2,000–4,000 logic
+Ground animals now use the installed response family, complete personal danger
+records, prepared refuges and ordinary timed movement. Continuous settling, exact
+perceived projectile passage and current-format continuation have partial native
+evidence. Bird flight, remaining boundary/performance cases and complete player
+qualification stay open in CTR03–CTR04. The former single-threat steering,
+exponential alarm and instantaneous wandering adapter is removed; it must not
+return as another writable controller or a compatibility path. Approximately 2,000–4,000 logic
 lines are expected across the controller and its existing consumers. This is a
 cross-layer, current-format change with material movement, privacy, ordering and
 continuation risk.
@@ -451,6 +453,22 @@ Completion requires the single installed controller and every connected consumer
 above, the canonical qualification matrix below, and truthful remaining evidence.
 The ordinary supplied Main opening remains selected. Broader feeding, packs and
 roaming stay in the later already-authorized RW phase and must extend this owner.
+
+For the territorial withdrawal connection, the existing territorial owner commits
+relinquishment and its exact withdrawal occurrence, then delegates to the shared
+native response before further movement. Capture its authored former refuge as
+one preferred known candidate, alongside the twelve generated local destinations
+and any actual retained route. Preference breaks otherwise interchangeable clear
+choices; it cannot override worse corridor safety, an unsafe arrival, unexposed
+terrain, body clearance or continuity of an admitted refuge. The known authored
+point is outside the twelve-point generation allocation, and uses the same bounded
+complete navigation batch when needed. Keep only the selected action's path.
+The territorial owner issues no return move during delegated escape and becomes
+idle, still relinquished, after settling. Minor disengagement before relinquishment
+keeps its existing return-home behavior. Approximately 150–250 logic lines affect
+handoff, complete candidate preparation, exact saved continuation and control loss.
+Qualify real threshold injury, unchanged pursuit/antlers, clear versus dangerous
+preferred refuges, no competing movement, whole/split clocks and SQL restoration.
 
 The spatial substrate now provides nominal upright-body separation, full-piece
 minimum separation and complete distance-band intervals. Ordinary capsule routes

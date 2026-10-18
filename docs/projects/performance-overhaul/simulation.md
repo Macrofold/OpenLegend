@@ -200,7 +200,7 @@ Existing entrypoints are the physiology/pause/restore checks in [kernel.test.ts]
 
 **Priority/status:** next; refinement of proportional-step stage 6. **Scope:** medium, expand one participant family at a time. **Intended behavior:** unchanged.
 
-**Code fact.** [kernel.ts](../../../packages/domain/src/kernel.ts) repeatedly constructs or scans working, burning, wandering, landing and approaching participants within each slice. The world-owned [animal behavior](../../../packages/domain/src/worlds/base/animal-behavior.ts) decrements ordinary wander countdowns even when no decision is due.
+**Recorded baseline before CTR03–CTR04.** [kernel.ts](../../../packages/domain/src/kernel.ts) repeatedly constructs or scans working, burning, wandering, landing and approaching participants within each slice. The world-owned [animal behavior](https://github.com/Macrofold/OpenLegend/blob/19a0c303a89d3cb278db1cbbbe5b95e2e6e26fe1/packages/domain/src/worlds/base/animal-behavior.ts) decrements ordinary wander countdowns even when no decision is due.
 
 **Implementation.** Extend existing participant preparation with moving, working, burning and due-decision subsets. First replace ordinary idle wander countdown updates with absolute game-time deadlines and select only due animals at the existing endpoints. Preserve endpoint execution and carried timer remainder: do not silently add global stops at every due time or replay extra overdue hops. Preserve the existing order among simultaneous choices and landings, including which animal takes each saved random number. Continue to use one simulation clock.
 
@@ -212,7 +212,7 @@ Existing entrypoints are the physiology/pause/restore checks in [kernel.test.ts]
 
 ### Implementation packet
 
-**Selected first slice.** Change only ordinary idle animal wandering, leaving flight, fleeing, threats, work and fires on their existing paths. `advanceWorldNative` currently filters/sorts eligible wanderers and calls `advanceAnimal`; `advanceAnimal` in [worlds/base/animal-behavior.ts](../../../packages/domain/src/worlds/base/animal-behavior.ts) subtracts elapsed seconds, makes at most one hop per invocation, and adds the next random wait to the remaining countdown. There is also a zero-duration start-phase call. Preserve those actual invocation phases; do not invent a new global animal scheduler.
+**Recorded first slice.** Change only ordinary idle animal wandering, leaving flight, fleeing, threats, work and fires on their existing paths. `advanceWorldNative` currently filters/sorts eligible wanderers and calls `advanceAnimal`; `advanceAnimal` in [worlds/base/animal-behavior.ts](https://github.com/Macrofold/OpenLegend/blob/19a0c303a89d3cb278db1cbbbe5b95e2e6e26fe1/packages/domain/src/worlds/base/animal-behavior.ts) subtracts elapsed seconds, makes at most one hop per invocation, and adds the next random wait to the remaining countdown. There is also a zero-duration start-phase call. Preserve those actual invocation phases; do not invent a new global animal scheduler.
 
 **Correction to an earlier experiment's premise.** Ordinary wander deadlines do not normally create shared global stops. `nativeMotionInterval` in [motion-boundaries.ts](../../../packages/domain/src/motion-boundaries.ts) uses that timer only when the allowed displacement is below the 0.4-metre hop. The rejected alignment experiment therefore did not remove the supposed ordinary global-stop cost. This proposal targets countdown writes, filtering and sorting, and must count those costs directly.
 

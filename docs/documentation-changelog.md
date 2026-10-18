@@ -11,6 +11,22 @@ draws and fixed released flight; turns and lost evidence still permit misses.
 [CTR03–CTR04](maintainers/combat-and-threat-responses.md) retain practical hunting
 and complete continuation/character/player qualification.
 
+## October 18, 2026 — Shared native escape and territorial withdrawal
+
+Grounded animals use one installed response family and ordinary timed movement,
+with complete personally perceived danger and continuously checked settling.
+The stag's injury-selected relinquishment now hands movement to that same owner
+while preserving its pursuit and antler timing. Its old fixed refuge becomes a
+known preferred option only within otherwise interchangeable clear choices.
+This prevents territorial return from overwriting escape and preserves cache
+relinquishment after settling. Native control transfer retires both policies
+before another mind/player chooses work. The complete preparation envelope
+reserves slots for the preferred and retained points, while the bundled twelve
+generated destinations remain unchanged. [CTR03–CTR04](maintainers/combat-and-threat-responses.md)
+retain bird, broader boundary, performance and player qualification; the
+[evidence](verification/combat-and-threat-responses.md) distinguishes an actual
+hunt-to-meal journey from independent invention and real-player acceptance.
+
 ## October 18, 2026 — Actual projectile contact and human attack permission
 
 CTR01 installs the selected bundled-world permission for attacks on vulnerable

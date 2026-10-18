@@ -35,7 +35,12 @@ export type NativeRefugeRouteResult =
   | { status: 'pending'; request: Extract<RoutePlan, { status: 'pending' }>['request'] }
   | {
       status: 'refused';
-      reason: 'unsupported' | 'outside-planning-scope' | 'unreachable' | 'occupied';
+      reason:
+        | 'unsupported'
+        | 'outside-planning-scope'
+        | 'unreachable'
+        | 'occupied'
+        | 'unsafe-preferred';
     };
 
 /** The first unseen interval matters, including an occluded middle with a visible
@@ -133,6 +138,19 @@ export function nativeRefugeCandidates(
         candidate.point.surfaceId === point.surfaceId &&
         distance3D(candidate.point, point) <= SPATIAL_LIMITS.epsilon,
     );
+  const preferred = observer.animal?.episode?.preferredRefuge;
+  if (
+    preferred &&
+    !sameEndpoint(preferred) &&
+    exposure.sees(preferred) &&
+    canStand(map, preferred, body) &&
+    frame.records.every(
+      ({ danger }) =>
+        nativeDangerSeparation(observer, preferred, danger, profile, world.simTime) >=
+        profile.avoidanceDistance + profile.clearanceMargin - SPATIAL_LIMITS.epsilon,
+    )
+  )
+    candidates.push({ id: 'preferred', point: { ...preferred }, preferred: true });
   for (const [ringIndex, ring] of profile.candidates.rings.entries()) {
     for (let index = 0; index < ring.count; index++) {
       chargeWork({ tests: 1 });
@@ -239,6 +257,8 @@ export function scoreNativeRefugeRoute(
       nativeDangerSeparation(observer, candidate.point, danger, profile, world.simTime) - clear,
     );
   }
+  if (candidate.preferred && arrivalMargin < -SPATIAL_LIMITS.epsilon)
+    return { status: 'refused', reason: 'unsafe-preferred' };
   return { status: 'complete', route: { candidate, path, length, worsening, arrivalMargin } };
 }
 
@@ -288,11 +308,15 @@ export function nativeRefugeChoices(
     )
       return [retained];
   }
-  return routes.filter(
+  const interchangeable = routes.filter(
     (route) =>
       !route.candidate.retained &&
       Math.abs(route.worsening - best.worsening) <= epsilon &&
       route.arrivalMargin >= -epsilon === best.arrivalMargin >= -epsilon &&
       route.arrivalMargin >= best.arrivalMargin - profile.candidates.tieMargin - epsilon,
   );
+  const preferred = interchangeable.find(
+    (route) => route.candidate.preferred && route.arrivalMargin >= -epsilon,
+  );
+  return preferred ? [preferred] : interchangeable;
 }

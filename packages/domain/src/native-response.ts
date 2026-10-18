@@ -84,7 +84,7 @@ export interface NativeRefugeProposal {
   origin: SurfacePoint;
   movementId: string | null;
   body: { radius: number; height: number; maxSlope: number };
-  candidates: Array<{ id: string; point: SurfacePoint; retained?: true }>;
+  candidates: Array<{ id: string; point: SurfacePoint; retained?: true; preferred?: true }>;
 }
 
 export interface NativeResponseEpisode {
@@ -92,6 +92,8 @@ export interface NativeResponseEpisode {
   startedAt: number;
   latestCause: { kind: 'event' | 'action'; id: string; at: number };
   preparations?: Record<string, string>;
+  /** A prior owner's authored destination is an option, never an admitted route. */
+  preferredRefuge?: SurfacePoint;
   /** Referenced installed definitions survive selection of future defaults. */
   profilePin: DefinitionPin;
   locomotion: string;
@@ -215,11 +217,20 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
           'reviewAt',
           'proposalGeneration',
         ],
-        ['clearSince', 'proposal', 'refuge', 'movement', 'blocked', 'preparations'],
+        [
+          'clearSince',
+          'proposal',
+          'refuge',
+          'movement',
+          'blocked',
+          'preparations',
+          'preferredRefuge',
+        ],
       ) ||
       !entity.actor?.alive ||
       entity.actor.controller !== 'native' ||
       !isSafeRecordId(episode.id) ||
+      (episode.preferredRefuge !== undefined && !point(episode.preferredRefuge)) ||
       !time(episode.startedAt) ||
       !time(episode.reviewAt) ||
       !hasRecordFields(episode.latestCause, ['kind', 'id', 'at']) ||
@@ -328,13 +339,20 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
         proposal.candidates.length > NATIVE_RESPONSE_LIMITS.maximumCandidates ||
         new Set(proposal.candidates.map((candidate) => candidate.id)).size !==
           proposal.candidates.length ||
+        proposal.candidates.filter((candidate) => candidate.preferred).length > 1 ||
+        proposal.candidates.filter((candidate) => candidate.retained).length > 1 ||
         !proposal.candidates.every(
           (candidate) =>
-            hasRecordFields(candidate, ['id', 'point'], ['retained']) &&
+            hasRecordFields(candidate, ['id', 'point'], ['retained', 'preferred']) &&
             typeof candidate.id === 'string' &&
             candidate.id.length > 0 &&
             point(candidate.point) &&
-            (candidate.retained === undefined || candidate.retained === true),
+            (candidate.retained === undefined || candidate.retained === true) &&
+            (candidate.preferred === undefined || candidate.preferred === true) &&
+            (!candidate.preferred ||
+              (episode.preferredRefuge !== undefined &&
+                canonicalJson(candidate.point) === canonicalJson(episode.preferredRefuge))) &&
+            !(candidate.retained && candidate.preferred),
         )
       )
         fail();
@@ -477,7 +495,7 @@ export function validateNativeResponseProfile(profile: NativeResponseProfile): v
         ring.count > 0 &&
         positive(ring.distance),
     ) ||
-    candidates.rings.reduce((count, ring) => count + ring.count, 0) + 1 >
+    candidates.rings.reduce((count, ring) => count + ring.count, 0) + 2 >
       NATIVE_RESPONSE_LIMITS.maximumCandidates ||
     ![
       candidates.maximumRouteLength,

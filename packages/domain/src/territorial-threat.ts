@@ -13,6 +13,7 @@ import { finishPlanAction } from './agency.js';
 import { outcome } from './events.js';
 import type { Command, Entity, WorldState, WorldEvent } from './types.js';
 import { countDomainWork } from './diagnostic-counters.js';
+import { beginNativeEscape } from './native-response-controller.js';
 
 export interface TerritorialPolicy {
   id: string;
@@ -74,18 +75,41 @@ function stopAction(world: WorldState, entity: Entity): void {
   );
   entity.actor!.action = null;
 }
+/** Called at the control boundary, before another mind/player can choose work. */
+export function retireTerritorialControl(world: WorldState, entity: Entity): void {
+  const threat = entity.threat;
+  if (!threat || entity.actor?.controller === 'native' || threat.mode === 'idle') return;
+  stopAction(world, entity);
+  threat.mode = 'idle';
+  delete threat.targetId;
+  delete threat.targetLife;
+  delete threat.lastSeen;
+  delete threat.searchUntil;
+  delete threat.episodeUntil;
+  recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'behavior' });
+}
 function returnToSafety(world: WorldState, entity: Entity, events: WorldEvent[]): void {
   const threat = entity.threat!;
-  if (threat.mode !== 'return') {
+  const delegate = threat.relinquished && entity.animal && !entity.animal.episode;
+  if (threat.mode !== 'return' || delegate) {
     stopAction(world, entity);
     threat.mode = 'return';
     delete threat.targetId;
     delete threat.targetLife;
     delete threat.lastSeen;
     delete threat.searchUntil;
-    emit(world, events, 'threat-withdrew', threat.policy.withdrawalText, entity, undefined, {
-      significant: true,
-    });
+    const event = emit(
+      world,
+      events,
+      'threat-withdrew',
+      threat.policy.withdrawalText,
+      entity,
+      undefined,
+      {
+        significant: true,
+      },
+    );
+    if (delegate) beginNativeEscape(world, entity, event, threat.policy.refuge, events);
   }
 }
 /** A hit supplies no hidden identity/position. Misses do not invoke this controller at all. */
@@ -97,7 +121,8 @@ export function noteTerritorialInjury(
   events: WorldEvent[],
 ): void {
   const threat = entity.threat;
-  if (!threat || damage <= 0 || !entity.actor?.alive) return;
+  if (!threat || damage <= 0 || !entity.actor?.alive || entity.actor.controller !== 'native')
+    return;
   if (entity.actor.health <= entity.actor.body!.maxHealth * threat.policy.relinquishHealthFraction)
     threat.relinquished = true;
   if (
@@ -125,6 +150,7 @@ export function territorialReviewDue(world: WorldState, entity: Entity): boolean
   const threat = entity.threat;
   return (
     !!threat &&
+    entity.actor?.controller === 'native' &&
     (world.simTime >= threat.reviewAt ||
       (['pursuit', 'search'].includes(threat.mode) &&
         threat.episodeUntil !== undefined &&
@@ -144,6 +170,7 @@ export function renewQuietTerritorialReview(world: WorldState, entity: Entity): 
   if (
     !threat ||
     !actor?.alive ||
+    actor.controller !== 'native' ||
     actor.incapacitated ||
     !activelyParticipates(entity) ||
     !territorialReviewDue(world, entity) ||
@@ -181,6 +208,7 @@ export function nextTerritorialReview(world: WorldState, ids: readonly string[])
     if (
       !threat ||
       !entity.actor?.alive ||
+      entity.actor.controller !== 'native' ||
       entity.actor.incapacitated ||
       !activelyParticipates(entity) ||
       (threat.relinquished && threat.mode === 'idle') ||
@@ -228,8 +256,25 @@ export function territorialIntention(
     ['pursuit', 'search'].includes(threat.mode)
   )
     threat.exhaustedTarget = { id: threat.targetId, life: threat.targetLife! };
-  if (actor.health <= actor.body!.maxHealth * policy.relinquishHealthFraction)
-    threat.relinquished = true;
+  const newlyRelinquished =
+    !threat.relinquished && actor.health <= actor.body!.maxHealth * policy.relinquishHealthFraction;
+  if (newlyRelinquished) threat.relinquished = true;
+  // The response owner now owns all escape movement and settling. Territorial
+  // pursuit cannot overwrite that action or restart the alarm after it ends.
+  if (threat.relinquished && entity.animal) {
+    if (newlyRelinquished || threat.mode === 'pursuit' || threat.mode === 'search')
+      returnToSafety(world, entity, events);
+    if (!entity.animal.episode) {
+      threat.mode = 'idle';
+      delete threat.episodeUntil;
+      delete threat.searchUntil;
+      delete threat.targetId;
+      delete threat.targetLife;
+      delete threat.lastSeen;
+      threat.detoursSpent = 0;
+    }
+    return null;
+  }
   if (
     threat.relinquished ||
     distance3D(worldPosition(entity), policy.home) > policy.territoryRadius ||

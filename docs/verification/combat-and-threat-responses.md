@@ -1231,3 +1231,48 @@ remain open.
 No external calls were made. Additional Jev cost is **$0**; cumulative reported
 estimates remain Jev **$0.440786** and other providers **$0.207513**, uncertain
 commitments **$5.939396**, and conservative aggregate exposure **$6.587695**.
+
+## Practical meal and territorial handoff checkpoint
+
+A second ordinary stance in the same supplied Main opening succeeds without
+changing seed 73, prey, starting materials, tool values, preparation or native
+escape. Ordinary walking reaches half a metre from the hare instead of the
+previous 1.2 metres. The bow releases at 248.45642744985065 and actually contacts
+the escaping hare at 257.35145155099855. Actual finite harvest supplies meat and
+bone; ordinary movement returns to the existing campfire, cooking completes and
+eating increases fullness. An early harness cooking call incorrectly retained
+an empty performer from the offered command; binding the actual controlled
+performer fixes that harness refusal. The complete native meal journey now passes.
+The wider stance and a separate second-hare attempt remain recorded misses.
+This native declared bow/arrow specimen proves obtainable-material mechanics; it
+does not establish independent model invention, general hit rate, comprehension
+or enjoyment. No prey was held, teleported or given a slower escape.
+
+An actual bow wound reduces the authored stag from 36 to 12 health and crosses
+its existing relinquishment threshold. Shared deer escape then owns the timed
+movement, with its actual injury factor applied once. The original refuge beside
+the personally known shooter is excluded as unsafe. Pure comparison also keeps
+preferred selection behind corridor safety, clear arrival, continuity and the
+existing interchangeable-choice band. Its captured known point and active
+action/episode round-trip through PostgreSQL. Actual creator cognition admission
+retires both native policies and their unreleased action without clearing
+relinquishment. From the connected wound scenario, 700 game seconds as one span
+and ten 70-second spans end at the same actual point
+(32.27775322671641, 0.04860681467537233, 0.5998124822059268), saved random state
+2916001518, no active alarm, idle territory and a still-relinquished cache.
+
+The first stag stance produced an existing bodily overlap during ordinary travel;
+the new escape correctly refused all occupied sweeps and remained blocked. A
+second requested stance lay against the actual stone screen and was refused as
+unwalkable. The successful approach uses ordinary travel to exposed ground east
+of the stag. These failures remain distinct from a clear supported escape; no
+body pushing, overlap immunity, support snapping or wall passage was added.
+Sixteen existing perception/simulation checks, full TypeScript checking and the
+evolving complete native/server fixture scenario pass. The production build
+passes with its asset guard and existing bundle warnings. Complete native worker,
+bird, continuous-boundary, browser, density and live-character qualification remain
+open.
+
+No external calls were made. Additional Jev cost is **$0**; cumulative reported
+estimates remain Jev **$0.440786** and other providers **$0.207513**, uncertain
+commitments **$5.939396**, and conservative aggregate exposure **$6.587695**.

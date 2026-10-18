@@ -47,6 +47,15 @@ One optional territorial stag/cache is implemented with physical signs, real byp
 
 CTR01 installs direct human PvP permission and physical projectile collateral, with a captured contact policy, source-independent injury and shield protection on the actual contacted body. Sixteen controlled contact cases, personal-evidence and PostgreSQL continuation checks pass. CTR05 supplies read-only work-transition preparation, ordinary gather-to-cook replacement, busy physical alternatives and exact selected-work handling through response admission. The chosen-activity owner now enforces original finite deadlines, route-distance boundaries and selected visible participant lives through interruption and restoration; the existing counted fire watch still passes. Complete required choices and exact selected-purpose metadata now reach native admission/history, with overflow and changed-binding refusal before inference. The world catalogue and two-stage independent threat choices remain unfinished. Complete caller, browser, character-response and gameplay qualification remain open in [CTR](../../docs/maintainers/combat-and-threat-responses.md) and its [evidence](../../docs/verification/combat-and-threat-responses.md).
 
+Ground animals now use one installed response family, complete personal danger,
+prepared refuges and ordinary timed movement. Rest, actual perceived projectile
+passage, saved continuation and the stag's relinquishing withdrawal have partial
+native/PostgreSQL evidence. Release aiming leads only personally seen executed
+motion; one ordinary starting-material bow hunt completes through harvesting,
+cooking and eating, while wider-stance misses remain recorded. Bird escape,
+complete boundary/density/browser qualification, independent invention and real
+player evidence remain open in CTR03–CTR04 and CTR10.
+
 ## Gameplay availability
 
 Source-reviewed against `56b8c383` (2026-09-26), with later UI updates identified here. This is the current exposure summary, not a second task or limits inventory. **Native support**, **automatic NPC use**, **player controls**, **creator controls** and **verified acceptance** are independent. A registered definition, API or completed foundation does not establish all five. The October 4 conversation, physical-item and chosen-task changes are now part of the October 5 whole-interface candidate: Character/native actions, world-visible subject choice, reading/chat, settings/checkpoints, creator/private inspection and operations share a coherent task hierarchy. Authored labels and a finite recharge task extend presentation across existing supported worlds. The [current coverage map](../../docs/ui-ux/interface-coverage.md#current-runtime-candidate) and [evidence](../../docs/verification/game-interaction-redesign.md) distinguish implementation from remaining qualification. This documentation update adds no runtime acceptance; other subsystem rows retain their separately recorded history and evidence.

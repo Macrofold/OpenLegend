@@ -66,12 +66,17 @@ rest predicates pass controlled native checks. Exact continuous motion/sight and
 region-growth boundaries are connected; their specific transient cases remain
 open. Four existing files pass all 36 checks. Actual perceived near-passage now passes native timing, hidden-source,
 first-screen interception, split/whole and PostgreSQL deduplication checks.
-Bird flight and stag withdrawal remain unfinished. The first ordinary close bow
+Bird flight remains unfinished. The stag now delegates relinquishing withdrawal
+to the common deer response; its known former refuge only breaks interchangeable
+clear choices, and complete integration qualification remains open. The first ordinary close bow
 hunt released but struck terrain after the hare retreated. The aiming-contract
 decision is approved: lead using personally observed motion while retaining fixed
 post-release travel and current tuning. Observed-motion leading now passes controlled moving contact, exact restored
 release, split continuation and refusal checks. The ordinary hare hunt still
-misses after a real release-time turn; the hunt-to-meal check remains open. Native-to-character/player control transfer now retires the
+misses after a real release-time turn at the wider stance. A separate ordinary
+half-metre approach now completes actual contact, harvest, return to fire, cooking
+and eating with starting materials; independent invention and player acceptance
+remain open. Native-to-character/player control transfer now retires the
 native alarm and its pending ground movement; current-format and nine existing
 server disclosure checks pass. This does not close CTR03 or CTR04.
 

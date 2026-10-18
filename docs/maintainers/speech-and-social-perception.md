@@ -160,7 +160,7 @@ SPK10 is a cross-stage obligation, not permission to postpone serializers or val
 
 ## SPK08 — Animal decisions that execute and finish
 
-**Owners:** the one installed native response/profile owner; [base bodies](../../packages/domain/src/worlds/base/bodies.ts), [base animal behavior](../../packages/domain/src/worlds/base/animal-behavior.ts), body/spawn/world-definition admission, current navigation/movement/flight/territorial/status/temporal/save owners. Contracts: technical design §10 and [animal acoustic policy](../worlds/base/animal-sound-responses.md).
+**Owners:** the one installed native response/profile owner; [base bodies](../../packages/domain/src/worlds/base/bodies.ts), [native response controller](../../packages/domain/src/native-response-controller.ts), body/spawn/world-definition admission, current navigation/movement/flight/territorial/status/temporal/save owners. Contracts: technical design §10 and [animal acoustic policy](../worlds/base/animal-sound-responses.md).
 
 **Implementation dependency:** the relevant [CTR03–CTR04 native controller and species-profile work](combat-and-threat-responses.md#ctr03--one-native-animal-response-owner) is designed but not implemented. Implement and jointly qualify that seam before claiming this task complete. Do not install a temporary sound-specific controller or path/action, or expand this task to unrelated combat implementation. There is no reciprocal SPK07 dependency on this response task.
 
