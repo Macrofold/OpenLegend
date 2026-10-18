@@ -153,3 +153,33 @@ cumulative task Jev cost is $0.
 
 This does not close the purpose/condition binding, complete-required option set,
 player detail/control, full work-transition matrix or preparation-cost requirements.
+
+## Scoped feeling read checkpoint — October 18, 2026
+
+The existing private appraisal index now supports exact actor/definition/subject
+reads, and target replacement visits that scope rather than all retained history.
+The convenience page remains optional; required scoped records are added intact.
+Decision rendering supplies current intensity, installed scale and decline rate.
+The interpreted fear/anger profile and two-stage threat strategy remain uninstalled.
+
+The evolving native scenario creates actual personally received gesture events,
+then supplies controlled native interpretations. With 286 unrelated active records,
+the sought fear record lies outside the actual first 24 records. Exact read,
+duplicate-scope handling, observer isolation, numerical decision rendering and
+unchanged read anchors pass. JSON reconstruction and real draft publication retain
+membership; a newer cause replaces the previous interpretation, and replaying the
+old resident cause does not resurrect it. Expiry reads and correction remove the
+record from the result. PostgreSQL retains and selects the active interpretation
+beyond the convenience page. These are controlled correctness checks, not natural
+emotion or independent behavior evidence.
+
+Current-format validation refuses a changed stack identity and an old array shape,
+while preserving deliberate absence of optional appraisal rules. The unused old
+converter had no executable caller beyond its export; both are removed. No save
+was converted or replaced. TypeScript checking and production build pass, with
+the existing build warnings. No provider calls occurred; additional Jev cost is $0
+and cumulative task Jev cost is $0.
+
+Complete required-set/source integration, live appraisals, cold duplicate-source
+admission, the full source-correction matrix and complete-path cost/memory
+qualification remain CTR06–CTR10 work.

@@ -30,6 +30,13 @@ retain physical alternatives and explain recovery. Exact affected-work bindings
 and selected handling reach shared response admission, including speech that
 preserves work. A refused learned-method start retains the original work.
 
+Private feeling reads now select exact installed definitions and subjects beyond
+convenience paging, and decision rendering preserves current intensity, scale and
+decay. The same index supports target replacement. Cause-derived identity
+validation and retirement of the unused old feeling converter preserve the
+current-format boundary. This prepares CTR06; interpreted fear/anger and the
+two-stage strategy remain uninstalled.
+
 ## October 18, 2026 — Review optional measurement and carry its lessons forward
 
 The [complete implementation review](verification/performance/profiling-controls.md#complete-implementation-review--october-18-2026-0008-edt) corrects malformed-request observation, failed-setup and shutdown cleanup, off-mode peak calculation and unsampled-delay reporting. Current gameplay, world/engine ownership and authoritative checks remain intact. [Performance guidance](performance.md#optional-measurement) gains one focused section with an explicit conditional read from its already-mandatory skill; root instructions and existing policy owners are not duplicated. Both feature specs record synchronization datetimes and both designs record use datetimes. PSF01–PSF06 remain complete; PC06's unmatched-activity qualification remains open and the full-game run allowance is unchanged.

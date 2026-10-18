@@ -7,12 +7,17 @@ import {
 } from './object-index.js';
 import type { Appraisal } from './appraisals.js';
 import type { WorldState } from './types.js';
+import type { DefinitionPin } from './world-modules.js';
 
-type Entry = { actorId: string; id: string; at?: number };
+type Entry = { actorId: string; id: string; scope: string; at?: number };
 interface Index {
   active?: ObjectIndexNode<string>;
   due?: ObjectIndexNode<Entry>;
   locations?: ObjectIndexNode<Entry>;
+  scoped?: ObjectIndexNode<string>;
+}
+function scopeKey(actorId: string, pin: DefinitionPin, targetId: string | null): string {
+  return `${JSON.stringify([actorId, pin.id, pin.version, pin.digest, targetId])}\0`;
 }
 const snapshots = new WeakMap<object, Index>();
 const drafts = new WeakMap<WorldState, Index>();
@@ -26,6 +31,7 @@ function add(index: Index, record: Appraisal): void {
   const previous = objectIndexGet(index.locations, record.id);
   if (previous) {
     index.active = objectIndexSet(index.active, `${previous.actorId}\0${record.id}`, undefined);
+    index.scoped = objectIndexSet(index.scoped, `${previous.scope}${record.id}`, undefined);
     if (previous.at !== undefined)
       index.due = objectIndexSet(index.due, dueKey(previous), undefined);
   }
@@ -34,9 +40,11 @@ function add(index: Index, record: Appraisal): void {
     next = {
       actorId: record.actorId,
       id: record.id,
+      scope: scopeKey(record.actorId, record.definitionPin, record.targetId),
       ...(record.nextAt !== undefined ? { at: record.nextAt } : {}),
     };
     index.active = objectIndexSet(index.active, `${record.actorId}\0${record.id}`, record.id);
+    index.scoped = objectIndexSet(index.scoped, `${next.scope}${record.id}`, record.id);
     if (next.at !== undefined) index.due = objectIndexSet(index.due, dueKey(next), next);
   }
   index.locations = objectIndexSet(index.locations, record.id, next);
@@ -75,6 +83,20 @@ export function* activeAppraisalIds(
 ): Generator<string> {
   const prefix = `${actorId}\0`;
   for (const [key, id] of objectIndexEntries(indexFor(world).active, `${prefix}${after}`)) {
+    if (!key.startsWith(prefix)) break;
+    yield id;
+  }
+}
+/** Exact owner/definition/subject membership, independent of retained history and
+ * the convenience page. Values and permission remain with the appraisal owner. */
+export function* scopedAppraisalIds(
+  world: WorldState,
+  actorId: string,
+  pin: DefinitionPin,
+  targetId: string | null,
+): Generator<string> {
+  const prefix = scopeKey(actorId, pin, targetId);
+  for (const [key, id] of objectIndexEntries(indexFor(world).scoped, prefix)) {
     if (!key.startsWith(prefix)) break;
     yield id;
   }

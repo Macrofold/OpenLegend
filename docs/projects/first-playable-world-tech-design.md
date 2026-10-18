@@ -214,6 +214,20 @@ logic lines, excluding tests; refine this as each existing owner is inspected.
 This estimate is planning guidance, not a delivery limit. No new mechanic or
 policy decision is implied by it.
 
+CTR06's next owner change is a scoped private-feeling read and numerical context
+projection, approximately 150–250 logic lines. Cost grows with active feelings
+for the selected definitions/subjects, rather than every retained historical
+interpretation on every read or replacement. Extend the existing appraisal
+index with those exact keys; share its cold preparation and existing native
+value/decay projection. Appraisal writes, correction and restore invalidate or
+rebuild the index through its existing lifecycle. Qualify the actual decision
+context and target replacement with more than one convenience page, simultaneous
+subjects, decay, correction and database reopen; measure cold versus warm reads
+and retained bytes separately. Required records must fit the admitted preparation
+and context budgets as a complete set or preparation refuses. The interpreted
+fear/anger installation and removal of automatic fear producers remain one
+coordinated integration with the connected threat strategy.
+
 | Phase                    | Implementation and owners                                                                                                                                                                       | Verification checkpoint                                                                                                                                                              |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Combat                   | CTR01–CTR10: shared attack/contact owners, personal encounter records, the existing animal movement owner, complete action preparation, appraisals/director and contextual controls.            | Native contact/evidence/continuation failures; twelve ordinary Ada baselines and hunt-to-meal at their first connected paths; browser and complete reaction measurements.            |

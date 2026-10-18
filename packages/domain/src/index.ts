@@ -274,7 +274,6 @@ export { initializeNativeWork, installedWorkAllocation } from './native-work.js'
 
 export * from './appraisals.js';
 export { markPartialAppraisals, completeAppraisalHistory } from './appraisal-residency.js';
-export { upgradeAppraisals } from './appraisal-migration.js';
 export { BASE_APPRAISAL_POLICY, appraiseEvent } from './worlds/base/appraisals.js';
 
 export { MAX_CONTAINMENT_DEPTH, ITEM_COUNT_PIN } from './objects.js';

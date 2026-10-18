@@ -4,6 +4,7 @@ import {
   prepareAppraisalIndex,
   indexAppraisal,
   activeAppraisalIds,
+  scopedAppraisalIds,
   nextDueAppraisal,
 } from './appraisal-index.js';
 import { canonicalJson, contentLabel, emit, finish, outcome } from './events.js';
@@ -25,6 +26,8 @@ import {
   chargeWork,
   releaseWork,
   WorkBudgetError,
+  withWorkMeter,
+  WORK_LIMITS,
 } from './work-budget.js';
 import type { DefinitionPin } from './world-modules.js';
 import type { WorldState, WorldEvent, Outcome, Transition } from './types.js';
@@ -155,6 +158,15 @@ export interface AppraisalBindings {
   /** Exact scoped repository outcomes, checked in the current publication lane. */
   completeCreates?: readonly string[];
   priorOutcomes?: Readonly<Record<string, Appraisal>>;
+}
+function causeEpisode(cause: AppraisalCause): string {
+  return cause.kind === 'condition'
+    ? cause.episodeId
+    : cause.kind === 'disposition'
+      ? cause.opportunityId
+      : cause.kind === 'authored'
+        ? cause.authorizationReceipt
+        : cause.occurrenceId;
 }
 export function appraisalCreationIdentity(
   actorId: string,
@@ -468,14 +480,7 @@ function install(
     !definition.causes.includes(cause.kind)
   )
     return outcome(false, 'appraisal-rejected', 'The appraisal is not applicable.');
-  const episode =
-    cause.kind === 'condition'
-      ? cause.episodeId
-      : cause.kind === 'disposition'
-        ? cause.opportunityId
-        : cause.kind === 'authored'
-          ? cause.authorizationReceipt
-          : cause.occurrenceId;
+  const episode = causeEpisode(cause);
   const { stackKey, id } = appraisalCreationIdentity(
     actorId,
     appraisalPin(definition),
@@ -502,13 +507,7 @@ function install(
     return prior.state !== 'invalidated' &&
       prior.stackKey === stackKey &&
       !!prior.cause &&
-      (prior.cause.kind === 'condition'
-        ? prior.cause.episodeId
-        : prior.cause.kind === 'disposition'
-          ? prior.cause.opportunityId
-          : prior.cause.kind === 'authored'
-            ? prior.cause.authorizationReceipt
-            : prior.cause.occurrenceId) === episode &&
+      causeEpisode(prior.cause) === episode &&
       (prior.state === 'active' || prior.creationOperation.id === operationId) &&
       (prior.creationOperation.id !== operationId || prior.creationOperation.body === body)
       ? outcome(true, 'duplicate', 'This cause already has an appraisal outcome.')
@@ -548,9 +547,8 @@ function install(
   // Target aggregation replaces only this family's prior active interpretation. Its
   // source outcome remains a tombstone, preventing an older cause from reappearing.
   if (definition.stacking === 'target')
-    for (const prior of Object.values(records))
-      if (prior.state === 'active' && prior.stackKey === stackKey)
-        endAppraisal(world, prior, 'resolved');
+    for (const previousId of scopedAppraisalIds(world, actorId, record.definitionPin, targetId))
+      endAppraisal(world, records[previousId]!, 'resolved');
   records[id] = record;
   indexAppraisal(world, record);
   changed(world, actorId);
@@ -770,6 +768,36 @@ export interface AppraisalView {
   coverage: string;
   definitionPin: DefinitionPin;
 }
+function appraisalView(
+  world: WorldState,
+  record: Appraisal,
+  definition = appraisalDefinition(world, record.definitionPin),
+): AppraisalView | null {
+  if (!definition) throw new Error('An appraisal definition is unavailable.');
+  const value = currentValue(world, record, definition);
+  if (
+    (record.lifetime.kind === 'expires' && record.lifetime.at <= world.simTime) ||
+    (value.kind === 'scaled' &&
+      definition.value.kind === 'scaled' &&
+      value.value <= definition.value.min)
+  )
+    return null;
+  return {
+    id: record.id,
+    revision: record.revision,
+    feeling: definition.label,
+    targetId: record.targetId,
+    value,
+    lifetime: record.lifetime.kind,
+    definitionPin: record.definitionPin,
+    coverage:
+      record.interpretationSource?.coverage ??
+      (record.cause && 'coverage' in record.cause
+        ? record.cause.coverage
+        : (record.cause?.kind ?? 'unavailable')),
+  };
+}
+
 export function appraisalPage(
   world: WorldState,
   actorId: string,
@@ -790,30 +818,8 @@ export function appraisalPage(
     scanned++;
     cursor = id;
     const record = appraisalById(world, actorId, id)!;
-    const definition = appraisalDefinition(world, record.definitionPin);
-    if (!definition) throw new Error('An appraisal definition is unavailable.');
-    const value = currentValue(world, record, definition);
-    if (
-      (record.lifetime.kind === 'expires' && record.lifetime.at <= world.simTime) ||
-      (value.kind === 'scaled' &&
-        definition.value.kind === 'scaled' &&
-        value.value <= definition.value.min)
-    )
-      continue;
-    values.push({
-      id: record.id,
-      revision: record.revision,
-      feeling: definition.label,
-      targetId: record.targetId,
-      value,
-      lifetime: record.lifetime.kind,
-      definitionPin: record.definitionPin,
-      coverage:
-        record.interpretationSource?.coverage ??
-        (record.cause && 'coverage' in record.cause
-          ? record.cause.coverage
-          : (record.cause?.kind ?? 'unavailable')),
-    });
+    const view = appraisalView(world, record);
+    if (view) values.push(view);
   }
   chargeWork({ candidates: scanned, outputBytes: JSON.stringify(values).length * 3 });
   return { values, next: more ? cursor : null };
@@ -821,6 +827,51 @@ export function appraisalPage(
 /** Hot cognition is explicitly bounded; paging does not evict durable feelings. */
 export function activeAppraisals(world: WorldState, actorId: string): AppraisalView[] {
   return appraisalPage(world, actorId).values;
+}
+
+/** Complete actor-owned read for exact installed definitions and personally relevant
+ * subjects. It never uses a convenience-page prefix to establish absence. */
+export interface AppraisalScope {
+  definitionPin: DefinitionPin;
+  targetId: string | null;
+}
+export function scopedAppraisals(
+  world: WorldState,
+  actorId: string,
+  scopes: readonly AppraisalScope[],
+): AppraisalView[] {
+  return withWorkMeter(WORK_LIMITS.group, () => {
+    const values: AppraisalView[] = [];
+    const seen = new Set<string>();
+    const definitions = new Map(
+      (world.moduleManifest.appraisals?.definitions ?? []).map((definition) => [
+        definition.id,
+        definition,
+      ]),
+    );
+    const examined = new Set<string>();
+    for (const scope of scopes) {
+      chargeWork({ tests: 1 });
+      const definition = definitions.get(scope.definitionPin.id);
+      if (!definition || !sameDefinitionPin(appraisalPin(definition), scope.definitionPin))
+        throw new Error('An appraisal definition is unavailable.');
+      const key = canonicalJson([scope.definitionPin, scope.targetId]);
+      if (examined.has(key)) continue;
+      examined.add(key);
+      for (const id of scopedAppraisalIds(world, actorId, scope.definitionPin, scope.targetId)) {
+        if (seen.has(id)) continue;
+        seen.add(id);
+        const record = appraisalById(world, actorId, id)!;
+        chargeWork({ candidates: 1, inputBytes: JSON.stringify(record).length * 3 });
+        const view = appraisalView(world, record, definition);
+        if (view) {
+          chargeWork({ outputBytes: JSON.stringify(view).length * 3 });
+          values.push(view);
+        }
+      }
+    }
+    return values;
+  });
 }
 
 /** Explicit opt-in native enrollment. No trait text, kinship or memory-page read calls this. */
@@ -1049,6 +1100,7 @@ export function ownsAppraisalWork(
 export function validateAppraisals(world: WorldState): void {
   validateAppraisalPolicy(world.moduleManifest.appraisals);
   const ids = new Set<string>();
+  const activeStacks = new Set<string>();
   for (const [actorId, records] of Object.entries(world.appraisals ?? {})) {
     if (!hasMemory(entityGet(world.entities, actorId)) || Array.isArray(records))
       throw new Error('Invalid appraisal owner or unmigrated records.');
@@ -1174,6 +1226,20 @@ export function validateAppraisals(world: WorldState): void {
       )
         throw new Error('Invalid saved appraisal interpretation source.');
       const life = record.lifetime;
+      const expectedIdentity = appraisalCreationIdentity(
+        actorId,
+        record.definitionPin,
+        record.targetId,
+        causeEpisode(cause),
+        definition.stacking,
+      );
+      if (
+        id !== expectedIdentity.id ||
+        record.stackKey !== expectedIdentity.stackKey ||
+        (record.state === 'active' && activeStacks.has(record.stackKey))
+      )
+        throw new Error('Invalid saved appraisal cause identity or active interpretation.');
+      if (record.state === 'active') activeStacks.add(record.stackKey);
       if (
         (life.kind === 'persistent' && !hasRecordFields(life, ['kind'])) ||
         (life.kind === 'expires' &&

@@ -1,6 +1,7 @@
 import { entityGet } from '@open-legend/domain';
 import {
   activeAppraisals,
+  scopedAppraisals,
   renderNarration,
   subjectNarration,
   person,
@@ -13,6 +14,7 @@ import {
   type AppraisalChange,
   type AppraisalEvidence,
   type WorldState,
+  type AppraisalScope,
 } from '@open-legend/domain';
 import type { WorldService } from './world-service.js';
 import type { DecisionAppraisalProposal, AppraisalProposal } from './cognition-contracts.js';
@@ -22,8 +24,22 @@ import { z } from 'zod';
 /** Feelings are the actor's interpretation, not knowledge of somebody else's mind.
  * A missing target does not mean that the accepted feeling has an unknown cause.
  * docs/projects/parallel-batch-03-personal-game-tech-design.md#representation-choices */
-export function decisionFeelings(world: WorldState, actorId: string): string {
-  return activeAppraisals(world, actorId)
+function selectedFeelings(world: WorldState, actorId: string, required: readonly AppraisalScope[]) {
+  return [
+    ...new Map(
+      [
+        ...activeAppraisals(world, actorId),
+        ...(required.length ? scopedAppraisals(world, actorId, required) : []),
+      ].map((value) => [value.id, value]),
+    ).values(),
+  ];
+}
+export function decisionFeelings(
+  world: WorldState,
+  actorId: string,
+  required: readonly AppraisalScope[] = [],
+): string {
+  return selectedFeelings(world, actorId, required)
     .map((value) => {
       return renderNarration(
         world,
@@ -36,7 +52,19 @@ export function decisionFeelings(world: WorldState, actorId: string): string {
                 person(value.targetId, value.targetId === actorId ? 'reflexive' : 'object'),
               ]
             : []),
-          `. Source: ${value.coverage}; lifetime: ${value.lifetime}.`,
+          (() => {
+            const definition = appraisalDefinition(world, value.definitionPin);
+            if (!definition) throw new Error('An appraisal definition is unavailable.');
+            const amount =
+              value.value.kind === 'scaled' && definition.value.kind === 'scaled'
+                ? `; current intensity ${value.value.value} on the installed ${definition.value.min}–${definition.value.max} scale`
+                : '';
+            const duration =
+              definition.lifetime.kind === 'decays'
+                ? `decays by ${definition.lifetime.perHour} per game hour without a new interpretation`
+                : value.lifetime;
+            return `${amount}. Source: ${value.coverage}; lifetime: ${duration}.`;
+          })(),
         ]),
         actorId,
       );
@@ -54,6 +82,7 @@ async function bindAppraisals(
   subjects: Record<string, string>,
   purpose: 'reflection' | 'decision',
   triggerEvidenceId?: string,
+  requiredFeelings: readonly AppraisalScope[] = [],
 ) {
   await service.flush();
   const world = service.world,
@@ -89,7 +118,10 @@ async function bindAppraisals(
   const permitted = (definition: NonNullable<typeof installed>['definitions'][number]) =>
     purpose === 'decision' ? definition.decision : definition.reflection;
   const records = new Map(
-    activeAppraisals(world, actorId).map((value, index) => [`feeling${index + 1}`, value]),
+    selectedFeelings(world, actorId, requiredFeelings).map((value, index) => [
+      `feeling${index + 1}`,
+      value,
+    ]),
   );
   const recordDefinitions = new Map(
     [...records].map(([handle, record]) => [
@@ -268,6 +300,7 @@ export async function bindDecisionAppraisals(
   evidenceIds: string[],
   subjects: Record<string, string>,
   triggerEvidenceId?: string,
+  requiredFeelings: readonly AppraisalScope[] = [],
 ) {
   const ids = [...new Set([...(triggerEvidenceId ? [triggerEvidenceId] : []), ...evidenceIds])];
   const bound = await bindAppraisals(
@@ -278,6 +311,7 @@ export async function bindDecisionAppraisals(
     subjects,
     'decision',
     triggerEvidenceId,
+    requiredFeelings,
   );
   return {
     ...bound,
