@@ -1,17 +1,19 @@
 # First-playable shared integration
 
-| Status      | Current progress                                                                                                                                       | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | The complete selected world design is ready for implementation; shared configuration, integrated Main construction and full-path evidence remain open. | 2026-10-17   |
+| Status      | Current progress                                                                                                                                    | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The combined combat, speech and world sequence is specified; shared configuration, integrated Main construction and full-path evidence remain open. | 2026-10-18   |
 
 [Feature specification](../projects/first-playable-world-feature-spec.md) · [Technical design](../projects/first-playable-world-tech-design.md) · [Layout](../worlds/base/first-playable-layout.md) · [Limits](../limits/first-playable-world.md). [FPV](first-playable-validation.md) remains the sole whole-experience/participant-evidence coordinator. This tracker owns only shared integration work; SV, SH, CP, RW, CTR and SPK keep their detailed tasks/status.
+
+Follow the [single-AI sequence and shared-change checks](../projects/first-playable-world-tech-design.md#implementation-order-and-independent-task-boundaries): combat, speech, then FPW foundations/survival, camps, cooperation, roaming and complete Main. CTR/SPK implementation is part of that assignment, not an external prerequisite or separate merge.
 
 ## FPW01 — One authored bundle and exact authority publication
 
 - [ ] Extend existing `config:generate/check` with typed first-playable schemas and deterministic generated output. Keep current status/knowledge checks; remove the circular dependency on yesterday's generated Main bundle during validation. Construct native definitions and actual source entities before admitting source-dependent gathering families, then install recipes and initial learned methods; cover both a new-source tool and missing-source refusal through this exact order.
 - [ ] Install one authored registry through the base package. Bind all current consumers of new recipes, material properties, world labels, gate operations, social lifetimes and animal profiles; no engine/prompt copies or runtime YAML.
 - [ ] Add the narrow same-transaction extension for exact gameplay output/origin/site facts, current operational grants and durable receipts. Existing authority/command owners retain validation and after-commit publication. Derive changes only for eligible construction-material origins not already covered; food-only outcomes/replays do not grow grants or force authority work, and the current complete-grant input bound refuses without partial effects.
-- [ ] Pin shared recipe-output, construction-material, animal-movement and cooperation interfaces before parallel implementations modify their owners. Use each pair's current-format shape, not compatibility aliases.
+- [ ] Pin shared recipe-output, construction-material, animal-movement and cooperation interfaces before dependent phases modify their owners. Reuse the already delivered CTR/SPK owners and each pair's current-format shape, not compatibility aliases.
 
 **Exit:** source validation and a deliberately scoped real resource → output → usable material → permitted phase route establish the shared boundary, without selecting the unfinished replacement Main. Changed rights/unknown outcome cannot duplicate stock or mint unearned authority. A different supported world can omit/substitute these laws without changing shared code.
 
@@ -38,6 +40,7 @@
 - [ ] Run current-format continuation across partial manufacture/construction, gate/impact, feeding/pursuit, offer/episode and death before camp creation. Retain exact originals and committed effects; no replay/resupply.
 - [ ] Exercise grant changes, unknown acknowledgements, restored worlds, competing material/food use, participant removal/life change and scoped disclosure after asynchronous work.
 - [ ] Measure cold preparation, warm command/catalogue, dense local danger/social work, actual persistence/publication and browser paths under existing performance gates. Record dimensions, cache eligibility and remaining coverage.
+- [ ] Qualify the [combined shared-owner cases](../projects/first-playable-world-tech-design.md#cross-project-qualification-after-shared-changes), including speech during assault, recognition versus physical targeting, one animal continuation, consent endings, changed gate geometry and material exposure/authority. Reuse valid component evidence and rerun cases whose actual assumptions changed.
 - [ ] Reconcile affected existing specifications/limits and source evidence after the combined implementation; no broad pending research becomes an asserted dependency or delivered capability.
 
 **Exit:** actual native/server/browser evidence covers integrated failures and costs, with limitations explicit. Model fixtures do not establish independent human behavior or invention quality.
@@ -53,3 +56,5 @@
 ## Source baseline and design handoff
 
 Design baseline is local `main` / `origin/main` commit `0543f9ec61301240c5c4ec3cd007063f4f1c25d6` in `https://github.com/Macrofold/OpenLegend.git`. Design-only verification consists of source/contract inspection, paper traces, independent cross-system review, link checks and formatting. No new game execution, provider call, performance measurement or player test occurred in this design task. The selected design gaps are closed; every unchecked implementation/evidence task above remains real work.
+
+The October 18 combined-design review used local `main` / freshly fetched `origin/main` at `dd73df13bc44593c0f259db6b4d08f26e334904a` in the same repository. It corrected dependency references and the rain-scope contradiction and defined the one-AI sequence and shared-change qualification. This is design/source review, not delivered runtime or measured performance evidence.

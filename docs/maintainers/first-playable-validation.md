@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                                | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Complete selected world/subsystem design and implementation tasks are specified. Runtime integration, actual-build readiness and player acceptance remain open. | 2026-10-17   |
+| In progress | Complete selected world/subsystem design and implementation tasks are specified. Runtime integration, actual-build readiness and player acceptance remain open. | 2026-10-18   |
 
 **Start here:** [complete design map](../projects/first-playable-world-feature-spec.md#complete-design-map) → [required scenario](../worlds/base/playable-openings.md#first-playable-game-target) → [playtest plan](../projects/first-playable-playtest-plan.md) → the tasks below. This is the coordination owner for **DG03 / ND26**. The world document owns the experience; [gameplay priorities](../repertoires/gameplay-priorities.md) owns selection; subsystem trackers own detailed delivery. [CO01](commercial-offers.md) owns commercial adoption independently of ordinary playtesting.
 
@@ -28,6 +28,8 @@ FPV01 selects a meaningful testable activity and identifies its actual gaps. Com
 
 Prepare audience material and investigate offers alongside game work. Outreach, participant access and spending require the applicable authorization and readiness. Work packages with unfinished shared prerequisites are sequential, not independent parallel assignments.
 
+For the combined implementation assignment, follow the [single-AI combat → speech → world sequence](../projects/first-playable-world-tech-design.md#implementation-order-and-independent-task-boundaries). Run the existing early combat/hunting and usable-subset checks within those phases, then the linked shared-owner cases after integration. All subsystem runtime work belongs to that assignment; human participants and authorization for outreach remain actual external requirements. Complete available technical work and session preparation, but keep unperformed human acceptance open.
+
 ## FPV01 — Baseline and requirement coverage
 
 - [ ] Pin the available build/branch and map each required experience to its implementation task, applicable evidence and remaining design, delivery or player-evidence gap.
@@ -37,7 +39,7 @@ Prepare audience material and investigate offers alongside game work. Outreach, 
 
 ### October 17 design source baseline
 
-Local `main` and `origin/main` at `0543f9ec61301240c5c4ec3cd007063f4f1c25d6` in `https://github.com/Macrofold/OpenLegend.git` were inspected for this design. The [source table](../projects/first-playable-world-tech-design.md#scope-and-current-source-baseline) records supplied-player/empty-berry, open-shelter, wandering-animal and existing social/creation behavior against the required changes. This is not an executed build/readiness record and does not close FPV01's actual-build checks. The implementation sequence begins with the shared bundle/authority contract and a complete bare-hand food/tool/material route; no new player-evidence report is created for design-only work.
+Local `main` and `origin/main` at `0543f9ec61301240c5c4ec3cd007063f4f1c25d6` in `https://github.com/Macrofold/OpenLegend.git` were inspected for this design. The [source table](../projects/first-playable-world-tech-design.md#scope-and-current-source-baseline) records supplied-player/empty-berry, open-shelter, wandering-animal and existing social/creation behavior against the required changes. This is not an executed build/readiness record and does not close FPV01's actual-build checks. Within the combined sequence, world implementation begins after combat/speech with the shared bundle/authority contract and a complete bare-hand food/tool/material route; no new player-evidence report is created for design-only work.
 
 ## FPV02 — Finish the necessary detailed design in existing owners
 

@@ -2,13 +2,15 @@
 
 | Status      | Current progress                                                                                                                                       | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | The complete selected opening and its required subsystems are designed; implementation, integrated qualification and real player evidence remain open. | 2026-10-17   |
+| In progress | The complete selected opening and its required subsystems are designed; implementation, integrated qualification and real player evidence remain open. | 2026-10-18   |
 
 ## The game this design delivers
 
 Arrive empty-handed in a particular woodland, understand how to feed yourself, make useful tools, choose a site and build a camp that can become a defensible home. Meet four people with different values and lives. Choose company, barter, help or solitude. Travel for useful resources, knowledge and equipment; invent an alternative that actually changes what you can do. Encounter wildlife and distant people through their real activities, and return to a world changed by those choices.
 
 This pair completes the **design** of the initial playable world requested October 17, 2026. It integrates existing owners instead of replacing their implementations or broad long-term proposals. [Playable openings](../worlds/base/playable-openings.md) remains the scenario requirement owner; [gameplay priorities](../repertoires/gameplay-priorities.md) remains the selection owner. [FPV](../maintainers/first-playable-validation.md) coordinates implementation/evidence and [FPW](../maintainers/first-playable-world.md) owns the new shared integration work. The paired [technical design](first-playable-world-tech-design.md) defines exact contracts, dependencies and verification.
+
+The [combined delivery sequence](first-playable-world-tech-design.md#implementation-order-and-independent-task-boundaries) assigns combat, speech and the complete world to one AI in successive phases, with early playable checks and final cross-project qualification. The subsystem pairs remain the detailed design owners; completing one phase does not complete the combined assignment.
 
 No interactions are scripted. Authored initial people, history, geography, material properties, recipes and finite mechanical rules establish circumstances. Actual perception, independent choices, consent, physical actions and consequences determine what happens. The world never forces the player to talk, guarantees an NPC answer, assigns a companion, spawns a raid, completes a quest on a dialogue keyword or tells a hidden actor where the player built.
 

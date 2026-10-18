@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                   | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Native wildlife, independent human opportunity inputs and their shared lifecycle are designed; RW delivery and measured qualification are pending. | 2026-10-17   |
+| In progress | Native wildlife, independent human opportunity inputs and their shared lifecycle are designed; RW delivery and measured qualification are pending. | 2026-10-18   |
 
 ## Scope and baseline
 
@@ -129,7 +129,7 @@ Measure cold opening construction, warm ordinary simulation, dense local prey/pr
 
 ## Implementation order and verification
 
-RW01 locks authored profile compilation and current-format state. RW02 implements animal needs/feeding and single-controller arbitration after CTR06–CTR08's escape foundation is reconciled. RW03 adds local hunt/flank/territorial behavior. RW04 adds actor-scoped human opportunity inputs and actual trip discovery, reusing CP/SPK/CTR. RW05 covers UI/history and continuation. RW06 qualifies actual independent behavior, ordinary pacing and full callers with FPV. Each task has exact exits in the [tracker](../maintainers/first-playable-roaming.md).
+RW01 locks authored profile compilation and current-format state. RW02 implements animal needs/feeding and single-controller arbitration after CTR03–CTR04's escape foundation is delivered. RW03 adds local hunt/flank/territorial behavior using CTR01's actual contact owner. RW04 adds actor-scoped human opportunity inputs and actual trip discovery, reusing CP/SPK and CTR05–CTR08's human choices/reconsideration. RW05 covers UI/history and continuation. RW06 qualifies actual independent behavior, ordinary pacing and full callers with FPV. Each task has exact exits in the [tracker](../maintainers/first-playable-roaming.md); the [combined sequence](first-playable-world-tech-design.md#implementation-order-and-independent-task-boundaries) supplies these dependencies within one assignment.
 
 Required negative journeys: unseen player moves; packmate sees a target the focal wolf cannot; prey dies or changes life during windup; caller reaches a blocked ring; food disappears/rots; unknown route budget exhausts; a wall changes during travel; owner disconnects; old save has absent new required fields; model says it arrived without traveling; a character refuses a trip; an attack begins while an offer is pending. Verify no hidden movement, manufactured knowledge, duplicate yields or lost previously committed consequences.
 

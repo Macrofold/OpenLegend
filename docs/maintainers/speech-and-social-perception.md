@@ -24,22 +24,22 @@ The selected ordinary-speech/social-perception slice of [ND16](needs-design.md#n
 
 Use the same semantic owner for a mutation, its dependent updates and its derived invalidation. Current producer/consumer/schema changes form one current-format contract; do not publish a mixed interpretation of the old and new target fields. A stage is delivered only when all required callers and storage paths use the selected meaning.
 
-| Work  | Depends on                                                                    | Deliverable and acceptance boundary                                                                        |
-| ----- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| SPK00 | This design task                                                              | Cross-linked selected design, reconciled owners and executable task breakdown.                             |
-| SPK01 | SPK00                                                                         | Single-address linguistic evidence and reusable acoustic calculation; memoryless audience waits for SPK07. |
-| SPK02 | SPK01                                                                         | Installed direct-address and reliable-recognition rules with separate names.                               |
-| SPK03 | SPK01–SPK02                                                                   | Shared participant, speech presentation and complete model-evidence projection.                            |
-| SPK04 | SPK01–SPK03                                                                   | Full structured memory, typed lineage, cold recall and faithful consolidation.                             |
-| SPK05 | SPK01–SPK04                                                                   | Ordinary dialogue without membership and bounded source-owned preparation.                                 |
-| SPK06 | SPK01–SPK02, SPK05                                                            | Consistent player admission and ambient/directed NPC speech.                                               |
-| SPK07 | SPK01–SPK03                                                                   | Atomic memoryless hearing cut: sensory records, validation, storage and shared sound presentation.         |
-| SPK08 | SPK07; relevant external CTR03–CTR04 native controller/profile implementation | Native acoustic reaction through one alarm/refuge/movement owner; zero animal model calls.                 |
-| SPK09 | SPK03, SPK05–SPK06                                                            | Coherent composer, captions, history and accessibility.                                                    |
-| SPK10 | Starts with SPK01; completes across SPK01–SPK09                               | Current-format persistence, authority, late-result and receipt integrity for every changed record.         |
-| SPK11 | SPK01–SPK10                                                                   | Integrated behavior, privacy, recovery and workload qualification with reconciled final status.            |
+| Work  | Depends on                                                  | Deliverable and acceptance boundary                                                                        |
+| ----- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| SPK00 | This design task                                            | Cross-linked selected design, reconciled owners and executable task breakdown.                             |
+| SPK01 | SPK00                                                       | Single-address linguistic evidence and reusable acoustic calculation; memoryless audience waits for SPK07. |
+| SPK02 | SPK01                                                       | Installed direct-address and reliable-recognition rules with separate names.                               |
+| SPK03 | SPK01–SPK02                                                 | Shared participant, speech presentation and complete model-evidence projection.                            |
+| SPK04 | SPK01–SPK03                                                 | Full structured memory, typed lineage, cold recall and faithful consolidation.                             |
+| SPK05 | SPK01–SPK04                                                 | Ordinary dialogue without membership and bounded source-owned preparation.                                 |
+| SPK06 | SPK01–SPK02, SPK05                                          | Consistent player admission and ambient/directed NPC speech.                                               |
+| SPK07 | SPK01–SPK03                                                 | Atomic memoryless hearing cut: sensory records, validation, storage and shared sound presentation.         |
+| SPK08 | SPK07; CTR03–CTR04 native controller/profile implementation | Native acoustic reaction through one alarm/refuge/movement owner; zero animal model calls.                 |
+| SPK09 | SPK03, SPK05–SPK06                                          | Coherent composer, captions, history and accessibility.                                                    |
+| SPK10 | Starts with SPK01; completes across SPK01–SPK09             | Current-format persistence, authority, late-result and receipt integrity for every changed record.         |
+| SPK11 | SPK01–SPK10                                                 | Integrated behavior, privacy, recovery and workload qualification with reconciled final status.            |
 
-SPK10 is a cross-stage obligation, not permission to postpone serializers or validation until after new records ship. SPK01 establishes shared acoustic calculation with complete linguistic evidence; SPK07 widens actual memoryless receiver eligibility only in the same cut as sound-only records, validators, storage and presentation. SPK01 does not depend on SPK07, and SPK07 may run alongside membership/UI work once shared evidence/presentation is stable. SPK08 adds native reaction after SPK07 and the relevant external CTR03–CTR04 controller seam, without a reciprocal dependency. Coordinate shared speech, record, profile and schema writes explicitly.
+SPK10 is a cross-stage obligation, not permission to postpone serializers or validation until after new records ship. SPK01 establishes shared acoustic calculation with complete linguistic evidence; SPK07 widens actual memoryless receiver eligibility only in the same cut as sound-only records, validators, storage and presentation. SPK01 does not depend on SPK07, and SPK07 may run alongside membership/UI work once shared evidence/presentation is stable. SPK08 adds native reaction after SPK07 and the CTR03–CTR04 controller seam, without a reciprocal dependency. In the [single-AI combined assignment](../projects/first-playable-world-tech-design.md#implementation-order-and-independent-task-boundaries), combat supplies this seam in an earlier phase of the same branch; no other assignment or intermediate merge is required. Keep shared speech, record, profile and schema changes coherent at each stage.
 
 ## SPK00 — Complete the selected design and reconcile its owners
 

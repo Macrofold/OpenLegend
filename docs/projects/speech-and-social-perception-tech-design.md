@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                             | Last updated |
 | ----------- | ------------------------------------------------------------ | ------------ |
-| In progress | Detailed design is complete; implementation has not started. | 2026-10-17   |
+| In progress | Detailed design is complete; implementation has not started. | 2026-10-18   |
 
 This is the implementation design for the [feature specification](speech-and-social-perception-feature-spec.md). The accepted target changes ordinary speech, recognition, experience preparation and conversation coordination together. It does not describe delivered runtime behavior. Implementation, dependencies and unsatisfied acceptance belong to [SPK00–SPK11](../maintainers/speech-and-social-perception.md), not this document.
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                      | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The selected behavior is designed; implementation and behavioral qualification remain in SPK01–SPK11. | 2026-10-17   |
+| In progress | The selected behavior is designed; implementation and behavioral qualification remain in SPK01–SPK11. | 2026-10-18   |
 
 ## Purpose and design status
 
@@ -18,7 +18,7 @@ Use the compact Speak/Act composer, world captions and shared perceived Events h
 
 - Implementation, dependencies and remaining acceptance: [Speech and social perception tasks](../maintainers/speech-and-social-perception.md), SPK00–SPK11. This is the sole owner of new task bodies.
 - Mechanism and exact source-owner map: [Technical design](speech-and-social-perception-tech-design.md).
-- Bundled native reaction rules: [Animal acoustic policy](../worlds/base/animal-sound-responses.md), including the pinned CTR03–CTR04 implementation dependency.
+- Bundled native reaction rules: [Animal acoustic policy](../worlds/base/animal-sound-responses.md), including the CTR03–CTR04 implementation dependency.
 - Limits and constraints: [Narration](../limits/narration.md), [Hearing and speech](../limits/hearing-and-speech.md), [Memory](../limits/memory.md), with existing [Cognition](../limits/cognition.md) and [Native work](../limits/native-work.md) bounds reused.
 - Related work: [Character experience](../maintainers/character-experience.md), [Cognition redesign](../maintainers/cognition-redesign.md), [Attention and scenes](attention-and-scenes-feature-spec.md) and [Continuing lives](continuing-lives-feature-spec.md). A speech event may affect these systems; it does not deliver their whole remaining scope.
 
@@ -133,7 +133,7 @@ Ordinary bundled animals use native rules and saved randomness, with cognition, 
 
 Initial outcomes are continue current behavior or enter/update the shared native alarm. That controller supplies actual escape travel, alert settling and truthful blocked behavior. This explicitly replaces the earlier SPK model-selected hold/approach/retreat and separate sound-flight proposal following Mike's later native-animal decision. Distinct curiosity approaches, deliberate listening holds and exceptional cognitive creatures remain documented future repertoire. Continuing to graze is not presented as an investigation, and native alarm is not a human thought or a claim that someone intended harm.
 
-The selected [CTR03–CTR04 native animal design](https://github.com/Macrofold/OpenLegend/blob/ff68a9b4035bff08025af7b0b579fe2316ed1263/docs/projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04) owns complete locally perceived dangers, reachable refuges, species speeds, route/flight continuation and continuous-safe settling. It is an unmerged design dependency at the linked revision, not existing runtime. Speech supplies its now-selected acoustic trigger; unrelated combat/PvP/appraisal work is outside this integration. SPK08 remains pending until that relevant native seam is implemented and qualified.
+The selected [CTR03–CTR04 native animal design](combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04) owns complete locally perceived dangers, reachable refuges, species speeds, route/flight continuation and continuous-safe settling. Its design is integrated into local main; implementation and qualification remain open. Speech supplies its selected acoustic trigger and reuses that delivered controller. A speech-only assignment does not own unrelated combat/PvP/appraisal work; the [combined delivery sequence](first-playable-world-tech-design.md#implementation-order-and-independent-task-boundaries) implements combat first within the same assignment. SPK08 remains pending until its actual native dependency is implemented and qualified.
 
 A heard bearing can favor a safe route away without supplying a guessed source point or distance. Every genuinely perceived danger still matters: another human can make that apparent away direction unsafe. Unknown direction can still lead to a physically valid route selected from existing heading/order, without pretending the animal localized the sound. A safe refuge permits settling; an unsafe arrival requires another escape leg. A trapped animal remains truthfully blocked and follows the shared review rules. It cannot become calm merely because the old fixed speech-flight timer expired.
 

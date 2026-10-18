@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                    | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The selected wildlife and independent human-trip design is complete; RW implementation, real choices and integrated encounter evidence remain open. | 2026-10-17   |
+| In progress | The selected wildlife and independent human-trip design is complete; RW implementation, real choices and integrated encounter evidence remain open. | 2026-10-18   |
 
 ## Player experience and scope
 

@@ -2,7 +2,7 @@
 
 | Status                           | Current progress                                                                                                                                             | Last updated |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Designed; implementation pending | Finite wildlife needs, perceived pack hunting and independently chosen human supply trips are selected; RW owns delivery and actual encounter qualification. | 2026-10-17   |
+| Designed; implementation pending | Finite wildlife needs, perceived pack hunting and independently chosen human supply trips are selected; RW owns delivery and actual encounter qualification. | 2026-10-18   |
 
 This is the authored rule owner for [the roaming specification](../../projects/first-playable-roaming-feature-spec.md). [Animal responses](animal-responses.md) continues to own alarm, all-danger escape and locomotion. [Player Danger](player-danger.md) owns the existing territorial stag. This extension adds ordinary lives to the other woodland animals and purposes/opportunities to Kest and Orin. It never schedules an encounter with the player.
 
@@ -10,7 +10,7 @@ This is the authored rule owner for [the roaming specification](../../projects/f
 
 Use the [Main opening layout](first-playable-layout.md), with its existing hares, deer, birds, three wolves, two bears and single territorial stag. Preserve exact existing animal identities when relocating their initial placements. No respawning, reproduction, simulated offscreen population, invisible reinforcements or periodic resource renewal is selected. Death and consumed stock change subsequent play. Birds retain their existing flight circuit and CTR escape, without a new feeding simulation.
 
-The installed clock remains 60 game seconds per real second at normal speed. The current clock's dawn/dusk names remain 06:00/18:00. Predator activity reads those installed boundaries; it does not infer night from renderer color. Darkness supplies atmosphere and a different animal activity preference, **not a new hidden sight penalty**. Existing supported fire lighting remains useful presentation; fires do not repel wolves, reveal unseen people or supply an immunity circle. Moving light, smell, footprints that track current actors, weather exposure and fire spread are not needed for this opening.
+The installed clock remains 60 game seconds per real second at normal speed. The current clock's dawn/dusk names remain 06:00/18:00. Predator activity reads those installed boundaries; it does not infer night from renderer color. Darkness supplies atmosphere and a different animal activity preference, **not a new hidden sight penalty**. Existing supported fire lighting remains useful presentation; fires do not repel wolves, reveal unseen people or supply an immunity circle. Moving light, smell, footprints that track current actors, weather-related body harm and fire spread are not selected for this opening. [Ordinary daily rain and material exposure](editable-shelters.md#ordinary-daily-rain-and-the-roofs-benefit) are required camp behavior under SH; they add no animal or human temperature/damage rule.
 
 ## Finite animal needs and food
 

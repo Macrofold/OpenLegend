@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                            | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Selected design is complete; native wildlife, independent human trips and actual first-playable evidence are unimplemented. | 2026-10-17   |
+| In progress | Selected design is complete; native wildlife, independent human trips and actual first-playable evidence are unimplemented. | 2026-10-18   |
 
 [Feature specification](../projects/first-playable-roaming-feature-spec.md) · [Technical design](../projects/first-playable-roaming-tech-design.md) · [Authored rules](../worlds/base/first-playable-roaming.md) · [Limits](../limits/first-playable-roaming.md). This owns the selected ND06/ND11 roaming slice, coordinated by [FPV](first-playable-validation.md). It does not reopen the completed stag or claim CTR escape has shipped.
 
@@ -14,7 +14,7 @@
 - [ ] Compile the optional moving-preparation strike discriminator and its single referenced locomotion definition; preserve stationary-strike admission semantics and current-format validation for other profiles.
 - [ ] Exercise a non-animal moving strike with different body/start/contact/work values and no hunt owner; require a hunt linkage only when that controller actually owns the action.
 
-**Dependencies:** FPW01 compiler/initialization contract; CTR escape interface. **Exit:** native profile/definition fixtures and current-format state prove optional installation and a non-hostile alternate need profile; no simultaneous movement owners.
+**Dependencies:** FPW01 compiler/initialization contract and delivered CTR03–CTR04 escape owner. The [combined sequence](../projects/first-playable-world-tech-design.md#implementation-order-and-independent-task-boundaries) supplies these in earlier phases of the same assignment. **Exit:** native profile/definition fixtures and current-format state prove optional installation and a non-hostile alternate need profile; no simultaneous movement owners.
 
 ## RW02 — Needs, finite feeding and physical routine
 
