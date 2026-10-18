@@ -74,6 +74,10 @@ function perceived(world: WorldState, actor: Entity, action: Action): Entity | u
   // After a disappearance, a new sighting is the same subject only through recognition,
   // never because the server knows it is the same entity.
   const episode = action.follow?.episode;
+  // A native follower may have no episodic-memory association. Once sight was
+  // broken, absence of that proof cannot become permission to re-identify a body.
+  if (episode === undefined && action.follow?.pursuing)
+    return subjectReferenceCurrent(world, actor.id, target.id, undefined) ? target : undefined;
   return episode === undefined || subjectReferenceCurrent(world, actor.id, target.id, episode)
     ? target
     : undefined;

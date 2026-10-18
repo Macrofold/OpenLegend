@@ -729,3 +729,34 @@ independent counterattack and complete combat qualification remain unfinished.
 Additional Jev cost is **$0**; cumulative provider-reported Jev estimates remain
 **$0.290701**, other-provider estimates **$0.088246**, uncertain commitments
 **$4.105220**, and conservative task exposure **$4.484167**.
+
+## Finite proximity movement — October 18, 2026
+
+The supplied approach choices use the existing follower to reach the selected
+distance once, within their original absolute time limit. Ordinary following
+retains its existing minimum distance and continuing hold. Reaching a person does
+not attack them. The actual participant's physical life is retained through
+current-format storage; death or a replacement body cannot silently substitute a
+participant. An unseen replacement reports only that the person is no longer
+perceived. Absence of an optional sighting association cannot identify an
+unfamiliar person after sight breaks.
+
+The evolving native scenario reaches the actual 1.3 m distance, saves/restores
+mid-approach through PostgreSQL and then continues to arrival. A short original
+deadline ends with non-arrival. Ordinary following continues holding and refuses
+the shorter distance. A person actually moving toward the follower produces one
+arrival without body overlap or a renewed deadline. Native death and creator
+revival end the old follow in visible and unseen cases. Controlled sight loss and
+reappearance with the optional association omitted retain the original last-seen
+point; this is a focused identity counterfactual, not natural animal travel.
+
+The complete evolving native scenario, 40 existing native/disclosure checks,
+TypeScript, production build and asset guard pass. The existing build warnings
+remain. The supplied catalogue retains 475 choices in 154,991 characters, below
+the unchanged 220,000-character limit. An already-reached proximity option is not
+offered. Fixed-point pursuit reach termination, meaningful movement observations,
+independent counterattack and complete combat qualification remain unfinished.
+
+Additional Jev cost is **$0**; cumulative provider-reported Jev estimates remain
+**$0.290701**, other-provider estimates **$0.088246**, uncertain commitments
+**$4.105220**, and conservative task exposure **$4.484167**.
