@@ -3724,6 +3724,13 @@ export class AiDirector {
         );
         const unseen = all
           .filter((memory) => {
+            // Spoken output and its native completion stay in memory. Neither is
+            // a new external cause for its own speaker to purchase another turn.
+            if (
+              memory.speakerId === entity.id &&
+              (memory.eventType === 'speech' || memory.eventType === 'speech-result')
+            )
+              return false;
             const event = this.service.worldEvent(memory.eventId ?? '');
             const speechJob = speechJobs.get(memory.eventId ?? memory.id);
             const handledByChat = !!speechJob && speechJob.request.npcId === entity.id;

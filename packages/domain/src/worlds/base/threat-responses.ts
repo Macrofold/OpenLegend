@@ -40,6 +40,7 @@ export function basePreparedThreatResult(
   const entry = world.actionExperience.occurrences[actorId]?.find(
     (record) => record.resultMemoryId === resultId,
   );
+  if (entry?.command.type === 'say') return false;
   const forgotten = world.experience?.forgotten[actorId] ?? [];
   if (forgotten.includes(resultId)) return false;
   const plan = agency?.plan;

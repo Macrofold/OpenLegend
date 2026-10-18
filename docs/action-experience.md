@@ -2,6 +2,13 @@
 
 Characters record their own attempted actions, notice their actual results, and can learn connected methods during eligible downtime. A learned method is a tentative way to attempt something. It neither assigns a goal nor guarantees its outcome.
 
+A completed speech step links its result to the speaker's actual utterance when
+recorded; an additional private result, when needed, retains native speaker
+attribution. The speaker's own words and that completion remain readable history,
+but do not themselves initiate another autonomous decision. Another
+person's actually heard words and subsequent physical results remain separate
+possible causes for reconsideration.
+
 ## Maintained records
 
 - Implementation and acceptance: [AE01–AE10](maintainers/action-experience.md).

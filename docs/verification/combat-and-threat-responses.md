@@ -760,3 +760,38 @@ independent counterattack and complete combat qualification remain unfinished.
 Additional Jev cost is **$0**; cumulative provider-reported Jev estimates remain
 **$0.290701**, other-provider estimates **$0.088246**, uncertain commitments
 **$4.105220**, and conservative task exposure **$4.484167**.
+
+## Own speech and historical participant evidence — October 18, 2026
+
+An actual selected ordinary speech operation retains its personally attributed
+utterance and linked action result. Neither the speaker's own speech nor a private
+speech completion is a new autonomous cause for that speaker. A speech result is
+also excluded from the supplied physical-result priority. Other people's heard
+words and actual physical results retain their own admission paths.
+
+The evolving native scenario uses a fresh disposable service with a real punch,
+controlled relevance/continuation scores and no external provider. After the
+initial observed-interest subscription is considered, an actual selected speech
+operation adds no autonomous callback; another person's actually heard reply
+reaches ordinary intake. The original probe mixed unread failed work, changing
+interest subscriptions and repeatedly selected/replaced strikes into the control.
+Those failures are retained locally. The corrected probe selects the actual
+continuation option and separates the independent interest cue from own output.
+This qualifies native scheduling, not independent social judgment.
+
+Controlled unseen removal and changed physical life preserve the observer's exact
+historical point. Current exposure to the changed life retires the old pair.
+Unseen truth cannot erase personal history. These counterfactuals use the native
+reconciliation/validation owners; actual native death/revival has separate follow
+coverage above. The connected evolving scenario and TypeScript pass. Complete
+movement observations, independent choice and overall qualification remain open.
+All 40 existing native/disclosure checks, production build and asset guard pass.
+The longer combined scenario subsequently reached a headless presence timeout;
+its public command correctly refused while paused. Full rerun with a maintained
+headless session remains required.
+An initial existing disclosure check omitted its required database URL and failed
+before database creation; the corrected explicit-loopback run passes all nine.
+
+Additional Jev cost is **$0**; cumulative provider-reported Jev estimates remain
+**$0.290701**, other-provider estimates **$0.088246**, uncertain commitments
+**$4.105220**, and conservative task exposure **$4.484167**.

@@ -304,14 +304,17 @@ export function reconcileCombatSight(
   if (!state) return;
   for (const [id, pair] of Object.entries(state.pairs)) {
     const other = entityGet(world.entities, id);
-    if (!other?.actor || pair.otherLife !== life(other)) {
+    // Only current exposure can resolve the remembered participant. An unseen
+    // removal or new body is world truth, not a new observation by this person.
+    if (other && exposed.has(id) && (!other.actor || pair.otherLife !== life(other))) {
       delete state.pairs[id];
       continue;
     }
-    const visibleNow = exposed.has(id) && currentPair(world, observer, other) === pair;
+    const visibleNow = !!other && exposed.has(id) && currentPair(world, observer, other) === pair;
     const hadActive = Object.keys(pair.active).length > 0;
     for (const [token, active] of Object.entries(pair.active)) {
-      const action = active.kind === 'action' ? attackPreparation(world, other) : undefined;
+      const action =
+        visibleNow && active.kind === 'action' ? attackPreparation(world, other) : undefined;
       const flight = active.kind === 'projectile' ? world.projectiles?.[active.id] : undefined;
       const current =
         active.kind === 'action'
@@ -328,7 +331,7 @@ export function reconcileCombatSight(
       pair.incomingUntil = world.simTime + p.recentSeconds;
       pair.movementRevision++;
     }
-    if (visibleNow && (pair.lastCause || pair.own)) {
+    if (visibleNow && other && (pair.lastCause || pair.own)) {
       const point = worldPosition(other);
       const distance = distance3D(worldPosition(observer), point);
       if (!pair.lastObserved)

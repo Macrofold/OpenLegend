@@ -134,6 +134,20 @@ source movement, cancellation, original deadline, lost sight and cold restoratio
 Existing fixed-point pursuit still needs its corresponding reach-stop condition;
 the follow slice alone does not complete pursuit qualification.
 
+Fixed-point pursuit uses an optional selected proximity stop on the existing
+finite control, bound to one of its exact visible participants. The compiler
+supplies the currently offered method's distance; remembered-place searches keep
+their separate point-only meaning. Native continuation checks the same reach and
+line-of-effect owner. Extend the existing piecewise motion-crossing owner with
+that interaction-anchor sphere/ray predicate so two moving people cannot pass
+through the stopping interval between samples. Reuse its body/geometry/track
+certificates and bounded active participants, without a second trajectory cache.
+This is approximately 150–250 logic lines across finite-control validation,
+world-owned compilation, movement boundaries and descriptions. Qualification
+requires actual static/moving approaches, an intervening wall, lost sight/life,
+split clocks, original limits and current-format restoration. A stop offers a new
+choice; it never attacks or retargets automatically.
+
 Meaningful observation subscriptions then extend the existing private encounter
 index, temporal due calculation, world-selected response adapter and ordinary
 intake. Capture passive selected participants separately from prerequisites that
@@ -150,6 +164,19 @@ clock splits and PostgreSQL restart without duplicate notices. Measure work on
 the actually affected observers and route/geometry owner; do not scan all history
 or create a paid call on each movement update. Full dynamic crossing and shared
 combat qualification remain required before closing CTR08.
+
+Own spoken output is retained as personal speech evidence and a native attributed
+speech result. Neither is a fresh autonomous cause for its speaker. The shared
+intake filter and supplied physical-result predicate distinguish that output from
+another person's heard reply and actual physical completion. This small repair
+uses existing native memory attribution, with no additional history or scheduling
+owner. Actual chosen speech through ordinary intake and a real heard reply have
+controlled native coverage. An unrelated observed-interest subscription change is
+considered independently before isolating own output. Historical encounter
+reconciliation retains the last personally observed point when an unseen source
+vanishes or changes body life; current exposure, not hidden world truth, resolves
+that association. Focused native counterfactuals pass; broader subscriptions and
+independent choice remain unfinished.
 
 Steps 1–4 have connected native implementations and partial controlled service
 qualification. Complete requests retain their full sets; supplied callbacks reach

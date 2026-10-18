@@ -793,6 +793,9 @@ export function endActivity(
       source: 'internal',
       importance: world.cognitionPolicy.recording.actionResultImportance,
       activityId: entry.id,
+      // Retain the completed speech in personal history without making a speaker
+      // answer their own output after the original decision's saved watermark.
+      ...(entry.command.type === 'say' ? { eventType: 'speech-result', speakerId: actorId } : {}),
       summary: {
         parts: [
           person(actorId, 'possessive'),
