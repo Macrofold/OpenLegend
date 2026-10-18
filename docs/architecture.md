@@ -18,6 +18,16 @@ A selected trusted creation profile owns prospective identities, candidate valid
 
 Released projectiles capture the installed body's contact policy separately from historical aiming intent. The supported contact responses are injury to the actual vulnerable body or harmless stopping; current shields and susceptibility apply through the common contact owner, even when the source is gone. Launch-body overlap is exempt only until actual exit. The bundled policy permits human PvP and bodily collateral, including practice ammunition. [CTR01 native evidence and remaining qualification](verification/combat-and-threat-responses.md) retain the limits.
 
+Actor-owned short-lived danger records distinguish personally observed incoming
+attacks, anonymous contact, own admitted offense and observed movement. Current
+preparation requires exposed performer and target, and its per-activity observation
+receipts prevent a recognized continuing aim from becoming a fresh assault on
+reappearance. Exact action results start own-offense retention; native due work
+expires grace without movement. The selected contextual ranking reads one permitted
+pair instead of scanning all projectiles. Database continuation is qualified in the
+[personal evidence checkpoint](verification/combat-and-threat-responses.md#personal-evidence-implementation-checkpoint--october-18-2026);
+the remaining controls, response strategy and performance qualification stay open.
+
 These are the finite shipped boundaries, not an external package loader, general projectile system or completed optional-health extraction. [Scope and actual native/SQL/browser evidence](verification/world-engine-boundaries.md) retain the limits; broader EWF, CF, CE, creation and human-play qualifications remain with their existing trackers.
 
 ## Unified-agent design and current delivery boundary

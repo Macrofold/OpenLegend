@@ -83,7 +83,28 @@ which its fixture removes. That database check covers retained observer facts,
 not yet a saved active danger record. No provider calls occurred; additional Jev
 cost is $0 and cumulative task Jev cost is $0.
 
-CTR02 remains open for the complete perception/disclosure/lifecycle matrix, direct
-database continuation of these new records, contextual preference integration and
-required density/performance evidence. Stabilized response scheduling remains
+The same scenario saves an active strike and these new records through the real
+PostgreSQL repository, closes/reopens, compares the records and observation
+receipts, continues the strike, then saves/reopens its completed result. Original
+injury is retained and no second strike is replayed. The disposable database and
+temporary directory are removed. Two focused existing ordinary-action catalogue
+checks also pass: target-scoped menus and pause/hidden-target availability.
+
+Contextual preference now reads this observer's exact pair directly; it no longer
+scans world projectiles or the resident awareness tail. Retained methods include
+their exact ammunition, and own-offense grace begins at the actual action-result
+boundary rather than a later read. An unrecognized projectile impact now alarms
+the actually contacted animal using its local contact area, without supplying the
+unseen shooter's coordinates. Native animals without personal memory do not
+accumulate the human controller's own-offense preferences.
+
+The extended contact scenario now includes sixteen controlled physical cases. The
+additional case establishes an actual nonlethal animal contact before checking
+anonymous alarm and its local position; a ray above the small body was excluded
+as invalid fixture evidence. Source-removal contact also checks the recipient's
+anonymous record and absence of a guessed attacker pair. TypeScript checking
+passes after the contextual consumer and exact action-ending changes.
+
+CTR02 remains open for the complete perception/disclosure/lifecycle matrix,
+contextual controls and required density/performance evidence. Stabilized response scheduling remains
 CTR08 work; recording movement does not itself choose a response or renew hostility.

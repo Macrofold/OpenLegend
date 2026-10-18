@@ -1,4 +1,5 @@
 import { entityGet, entityValues } from './entity-collection.js';
+import { endOwnOffense } from './combat-encounters.js';
 import { validExactInventorySources } from './native-command-contracts.js';
 import {
   invocationFields,
@@ -760,6 +761,8 @@ export function endActivity(
 ): string | undefined {
   const entry = occurrenceFor(world, actorId, actionId);
   if (!entry || entry.status !== 'running') return entry?.resultMemoryId;
+  if ('targetId' in entry.command && entry.command.targetId !== undefined)
+    endOwnOffense(world, actorId, entry.command.targetId, actionId);
   applyActivityResult(world, entry, result);
   for (const output of entry.outputs) {
     const sources = (world.actionExperience.items[output.itemId] ??= []);

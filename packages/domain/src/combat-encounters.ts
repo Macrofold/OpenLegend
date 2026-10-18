@@ -10,6 +10,7 @@ import { person, subjectNarration } from './narration.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
 import type { Action, Command, Entity, Position, WorldEvent, WorldState } from './types.js';
 import type { Awareness } from './experience.js';
+import { hasMemory } from './living.js';
 
 export interface AttackObservationReceipt {
   life: number;
@@ -186,7 +187,7 @@ export function selectOffense(
   action: Action,
   command: Command,
 ): void {
-  if (!offensive(action) || !action.targetId) return;
+  if (!hasMemory(actor) || !offensive(action) || !action.targetId) return;
   const other = entityGet(world.entities, action.targetId);
   if (!other?.actor || !seesEntity(world, actor, other)) return;
   const pair = pairFor(world, actor, other);
@@ -204,6 +205,22 @@ export function selectOffense(
   };
   delete pair.speak;
   reschedule(actor.actor!.encounters!);
+}
+
+/** The action-result owner supplies its exact terminal boundary, including replacement,
+ * failure and cancellation. Re-reading a completed result never renews this deadline. */
+export function endOwnOffense(
+  world: WorldState,
+  actorId: string,
+  targetId: string,
+  invocationId: string,
+): void {
+  const state = entityGet(world.entities, actorId)?.actor?.encounters;
+  const own = state?.pairs[targetId]?.own;
+  const p = policy(world);
+  if (!state || !own || own.invocationId !== invocationId || own.until !== undefined || !p) return;
+  own.until = world.simTime + p.recentSeconds;
+  reschedule(state);
 }
 
 /** Existing sensory preparation supplies only the observer's currently exposed people.
@@ -297,12 +314,6 @@ export function reconcileCombatSight(
       pair.incomingUntil = world.simTime + p.recentSeconds;
       pair.movementRevision++;
     }
-    if (
-      pair.own &&
-      observer.actor.action?.id !== pair.own.invocationId &&
-      pair.own.until === undefined
-    )
-      pair.own.until = world.simTime + p.recentSeconds;
     if (visibleNow && (pair.lastCause || pair.own)) {
       const point = worldPosition(other);
       const distance = distance3D(worldPosition(observer), point);
@@ -337,8 +348,15 @@ export function expireCombatEncounters(world: WorldState, observer: Entity): voi
     if (pair.incomingUntil !== undefined && pair.incomingUntil <= world.simTime)
       delete pair.incomingUntil;
     if (pair.own?.until !== undefined && pair.own.until <= world.simTime) delete pair.own;
-    if (!pair.incomingUntil && !pair.own && !pair.speak && !Object.keys(pair.active).length)
-      delete state.pairs[id];
+    if (!pair.incomingUntil && !pair.own && !Object.keys(pair.active).length) {
+      if (!pair.speak) delete state.pairs[id];
+      else {
+        // A deliberate social preference needs its exact pair/revision, not expired
+        // attack details or a second permanent history of the encounter.
+        delete pair.lastCause;
+        delete pair.lastObserved;
+      }
+    }
   }
   for (const [id, unknown] of Object.entries(state.unknown))
     if (unknown.until <= world.simTime) delete state.unknown[id];
@@ -352,7 +370,8 @@ export function personalEncounter(
 ): PersonalEncounter | undefined {
   const observer = entityGet(world.entities, observerId),
     other = entityGet(world.entities, otherId);
-  return observer?.actor?.alive &&
+  return policy(world) &&
+    observer?.actor?.alive &&
     other?.actor?.alive &&
     activelyParticipates(observer) &&
     activelyParticipates(other) &&
@@ -480,6 +499,10 @@ export function validateCombatEncounters(world: WorldState): void {
             ['definitionId', 'weaponItemId', 'ammoItemId'],
           ) ||
           !offensive(pair.own.method) ||
+          (pair.own.method.type === 'strike'
+            ? !isSafeRecordId(pair.own.method.definitionId)
+            : !isSafeRecordId(pair.own.method.weaponItemId) ||
+              !isSafeRecordId(pair.own.method.ammoItemId)) ||
           Object.entries(pair.own.method).some(
             ([key, value]) => key !== 'type' && !isSafeRecordId(value),
           ) ||

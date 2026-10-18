@@ -12,6 +12,14 @@ protection and pre-release review. [Native checkpoint evidence](verification/com
 is partial; [CTR](maintainers/combat-and-threat-responses.md) retains complete
 caller, continuation, character and player qualification.
 
+Personal danger records now retain exact observer/life bindings, observed preparation,
+separate movement and hostility changes, own chosen methods and original deadlines.
+The existing perception/event/action-result owners produce those facts; contextual
+ranking consumes the exact personal pair. This preserves uncertainty and recognition
+while removing whole-projectile/history scans from that preference. Native and
+PostgreSQL component evidence does not establish the unfinished response strategy
+or player-control qualification.
+
 ## October 18, 2026 — Review optional measurement and carry its lessons forward
 
 The [complete implementation review](verification/performance/profiling-controls.md#complete-implementation-review--october-18-2026-0008-edt) corrects malformed-request observation, failed-setup and shutdown cleanup, off-mode peak calculation and unsampled-delay reporting. Current gameplay, world/engine ownership and authoritative checks remain intact. [Performance guidance](performance.md#optional-measurement) gains one focused section with an explicit conditional read from its already-mandatory skill; root instructions and existing policy owners are not duplicated. Both feature specs record synchronization datetimes and both designs record use datetimes. PSF01–PSF06 remain complete; PC06's unmatched-activity qualification remains open and the full-game run allowance is unchanged.

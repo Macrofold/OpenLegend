@@ -63,7 +63,6 @@ import type {
 } from '@open-legend/protocol';
 import type { WorldService } from './world-service.js';
 import { ACTION_DESCRIPTIONS, actionDescriptions } from './action-descriptions.js';
-import { awarenessBindsSubject } from './entity-references.js';
 
 /** Safe selected-subject failures; other exceptions remain generic at the HTTP boundary. */
 export class ActionCatalogueUnavailable extends Error {}
@@ -978,19 +977,7 @@ export function actionCatalogue(
   // Prepare once per explicit catalogue request, never per frame or per offer.
   // The world ranks permitted exact choices; ordinary command dispatch still admits
   // the selected binding and obtains any required lethal confirmation.
-  // Active flight alone cannot identify a shooter the character never witnessed.
-  // Reuse the bounded resident evidence tail and its continuous-recognition guard.
-  const observedLaunches = new Set<number>();
-  if (selected?.actor)
-    for (const aware of world.experience?.awareness[scope.actorId] ?? [])
-      if (
-        aware.eventType === 'shot-released' &&
-        aware.sourceId === selected.id &&
-        aware.targetId === scope.actorId &&
-        awarenessBindsSubject(world, scope.actorId, aware, selected.id)
-      )
-        observedLaunches.add(aware.at);
-  const present = selectedContextActions(world, scope.actorId, selected?.id, observedLaunches);
+  const present = selectedContextActions(world, scope.actorId, selected?.id);
   let preferred: CatalogueAction | undefined;
   for (const action of actions) {
     const intent = action.intent;
@@ -1000,6 +987,7 @@ export function actionCatalogue(
             command: nativeCommandKind(intent.command.type),
             definitionId: intent.command.definitionId,
             itemId: intent.command.itemId,
+            ammoItemId: intent.command.ammunitionId,
           }
         : {}),
       speech: intent.kind === 'compose' && intent.mode === 'chat',

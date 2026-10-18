@@ -102,12 +102,7 @@ export function selectedEventPresentation(world: WorldState) {
 }
 
 /** A requested object's menu and direct shortcut use the same selected world preference. */
-export function selectedContextActions(
-  world: WorldState,
-  actorId: string,
-  targetId?: string,
-  observedLaunches?: ReadonlySet<number>,
-) {
+export function selectedContextActions(world: WorldState, actorId: string, targetId?: string) {
   selectedCreationProfileForWorld(world);
-  return baseContextActions(world, actorId, targetId, observedLaunches);
+  return baseContextActions(world, actorId, targetId);
 }

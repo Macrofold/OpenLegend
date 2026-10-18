@@ -561,6 +561,14 @@ export function advanceProjectiles(
           damage,
           events,
         );
+      else if (target.animal)
+        rememberAttack(
+          world,
+          target,
+          source?.actor && (source.actor.physicalLife ?? 0) === flight.sourceLife
+            ? source
+            : undefined,
+        );
     } else if (target?.practiceTarget && target.id === flight.targetId && flight.practice) {
       result = 'hit';
     }

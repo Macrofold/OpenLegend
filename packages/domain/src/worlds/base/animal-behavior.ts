@@ -33,12 +33,13 @@ export const ANIMAL_ESCAPE = {
   continuityWeight: 0.4,
 } as const;
 
-export function rememberAttack(world: WorldState, animal: Entity, source: Entity): void {
+export function rememberAttack(world: WorldState, animal: Entity, source?: Entity): void {
   if (!animal.animal || !animal.actor?.alive) return;
   const behavior = animal.animal;
-  behavior.threatPosition = { ...worldPosition(source) };
-  // The impact gives a direction; tracking identity requires sight.
-  behavior.threatId = seesEntity(world, animal, source) ? source.id : null;
+  const seen = source && seesEntity(world, animal, source) ? source : undefined;
+  // Unidentified contact supplies the local danger area, never hidden source coordinates.
+  behavior.threatPosition = { ...worldPosition(seen ?? animal) };
+  behavior.threatId = seen?.id ?? null;
   behavior.danger = 1;
   behavior.escapeHeading = null;
   behavior.reviewAt = world.simTime;
