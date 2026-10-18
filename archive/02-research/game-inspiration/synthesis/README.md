@@ -1,6 +1,6 @@
 # Cross-game and world learning guides
 
-**Created and reviewed October 14, 2026; focused combat-response incorporation October 17 and Sea of Stars incorporation October 18, 2026.** [Game library](../README.md) · [World library](../../worldbuilding/README.md) · [Source and goal map](source-and-goal-map.md) · [Template](main-topic-template.md) · [Progress](progress.md) · [Game coverage](coverage.csv) · [World coverage](world-coverage.csv) · [Assessment evidence](assessment-records.md).
+**Synthesis scope as of October 18, 2026.** [Game library](../README.md) · [World library](../../worldbuilding/README.md) · [Source and goal map](source-and-goal-map.md) · [Template](main-topic-template.md) · [Progress](progress.md) · [Game coverage](coverage.csv) · [World coverage](world-coverage.csv) · [Assessment evidence](assessment-records.md).
 
 This is the bridge between **what the researched games and fictional worlds do** and **which design choices we can learn from them**. It is not another feature catalogue or an approved OpenLegend roadmap. [Repertoires](../../../../docs/repertoires/README.md) own ideas; current specifications, project designs and maintainer trackers own accepted behavior and delivery.
 
@@ -111,7 +111,7 @@ Before proposing a feature, check the current contracts and [Future work needing
 
 The original framework inspected published main `74e081a2ddc39a18da1ffe3357ffc298a4f14dce`. It includes the [167-subject roster](../research-roster.md), Songs of Syx as G149, Starfield as G167, and the expanded research requirements. The previous Starfield/Songs numbering conflict and branch-only warnings were resolved in that snapshot. The focused NPC pass uses main `0c12398e32e7c9578e18de07bbe79d39b4827208` as its source base; exact assessed revisions remain in the evidence records.
 
-The [game source inventory](subjects.csv) now includes all 178 roster subjects, EVE Online as an explicitly unnumbered scoped essay case, and eight new unnumbered topic-only game sources. G159 Shadows of Doubt has gained a topic-only dossier rather than being renumbered or marked fully researched. [Game coverage](coverage.csv) tracks 187 source keys across 35 topics, including 30 scoped NPC, five scoped COMBAT and one focused PRESENT and EXPLORE incorporation each.
+The [game source inventory](subjects.csv) includes 178 roster subjects, EVE Online as an explicitly unnumbered scoped essay case, and eight unnumbered topic-only game sources. G159 Shadows of Doubt has gained a topic-only dossier rather than being renumbered or marked fully researched. [Game coverage](coverage.csv) tracks 187 source keys across 35 topics, including 30 scoped NPC, five scoped COMBAT and one focused PRESENT and EXPLORE incorporation each.
 
 [World coverage](world-coverage.csv) remains separate and unchanged: 29 world dossiers listed in the [world library](../../worldbuilding/README.md), using dossier basenames rather than G numbers. Both matrices follow the same [status and evidence rules](progress.md), without counting literary analysis as game-player evidence. The source map identifies supporting essays and current goals; these are not additional independent confirmations of each dossier.
 

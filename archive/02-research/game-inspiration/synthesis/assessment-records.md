@@ -194,11 +194,11 @@ This is a scoped four-source comparison of creature escape, tactical pursuit, ta
 
 ## Sea of Stars focused incorporation — October 18, 2026
 
-Reviewer: ChatGPT, conducting Mike's requested post-dossier integration review. Source: [G178 dossier](../dossiers/sea-of-stars.md) and [illustrated art study](../../../../art-direction/research/sea-of-stars/README.md) on branch `codex/sea-of-stars-research-art-direction`, reviewed after commit `ce0d4cd324c64d3d6c5c2bff5d36f6c7b59b93f3`. The dossier's source register distinguishes launch and later rules, critic/player testimony and creator accounts. No gameplay session, renderer reproduction or player study was performed.
+**Evidence basis:** G178 [game dossier](../dossiers/sea-of-stars.md) and [illustrated art study](../../../../art-direction/research/sea-of-stars/README.md), source revision `ce0d4cd324c64d3d6c5c2bff5d36f6c7b59b93f3`. Assessment dated October 18, 2026 (ChatGPT). The dossier distinguishes launch and later rules, critic/player testimony and creator accounts. No firsthand gameplay, motion verification or player study is claimed.
 
 ### PRESENT--sea-of-stars
 
-**Identity and scope:** G178 Sea of Stars, PRESENT. Read the dossier's art/audio, production and reception sections plus the complete ten-image visual study.
+**Identity and scope:** G178 Sea of Stars, PRESENT. Evidence from the dossier's art/audio, production and reception sections and the ten-image visual study.
 
 **Evidence and contribution:** Official stills support [PRESENT-L001](art-audio-and-game-feel.md#present-l001) and [PRESENT-L002](art-audio-and-game-feel.md#present-l002): recognizable large forms, selective detail, quiet regions and coherent local light can make pixel environments rich without uniform noise. Combat mechanics and reviews support [PRESENT-L003](art-audio-and-game-feel.md#present-l003): action-specific timing can make execution expressive, while repeated inputs can become tiring when tactical variety narrows. Creator testimony about deliberately mirrored scar art supports [PRESENT-L004](art-audio-and-game-feel.md#present-l004) as a useful counterexample for OpenLegend's persistent physical identity.
 
@@ -206,7 +206,7 @@ Reviewer: ChatGPT, conducting Mike's requested post-dossier integration review. 
 
 ### EXPLORE--sea-of-stars
 
-**Identity and scope:** G178 Sea of Stars, EXPLORE. Read traversal, puzzles, fishing, Mirth, collectibles, world-access and visual-place sections.
+**Identity and scope:** G178 Sea of Stars, EXPLORE. Evidence from traversal, puzzles, fishing, Mirth, collectibles, world-access and visual-place sections.
 
 **Evidence and contribution:** Distinctive environmental forms that also indicate routes support [EXPLORE-L001](exploration-and-world-design.md#explore-l001). Region differentiation through landform, material, traversal and activity supports [EXPLORE-L002](exploration-and-world-design.md#explore-l002). Cross-activity rewards and the disputed completion burden support [EXPLORE-L003](exploration-and-world-design.md#explore-l003): discovery can change another worthwhile activity, while broad checklist gating can turn optional exploration into obligation.
 
@@ -214,7 +214,7 @@ Reviewer: ChatGPT, conducting Mike's requested post-dossier integration review. 
 
 ### COMBAT--sea-of-stars
 
-**Identity and scope:** G178 Sea of Stars, COMBAT. Read the version table; combat/resources/timing and Dawn redesign; six critic reviews; sampled Steam reactions.
+**Identity and scope:** G178 Sea of Stars, COMBAT. Evidence from the version table, combat/resources/timing and Dawn redesign, six critic reviews and sampled Steam reactions.
 
 **Evidence and contribution:** Turn selection followed by distinct timing gestures supplies a clean separation between tactical intent and physical execution. Dawn's persistent combo points and revised information loop show a developer response to intended move variety being inaccessible. Praise for tactile execution alongside criticism of repetitive choices supports [COMBAT-L005](combat-and-encounters.md#combat-l005): execution skill can amplify an encounter, but cannot substitute for changing tactics.
 

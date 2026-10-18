@@ -1,15 +1,10 @@
 # Documentation changelog
 
-## 2026-10-18 — Sea of Stars research integration and action-execution design gap
+## October 18, 2026 — Sea of Stars art direction and player action execution
 
-- Integrated G178 into the cross-game PRESENT, EXPLORE and COMBAT synthesis owners rather than leaving its lessons only in a per-game dossier. The focused evidence supports organized environmental richness, purposeful light, place novelty grounded in use/ecology and the distinction between satisfying execution and continuing tactical choice.
-- Strengthened the existing 3D pixel-art and scene-production owners with those accepted visual criteria; no new renderer, camera or art project is selected.
-- Added ND38 for player skill during action execution. The need explicitly separates action selection, character/world capability, human input, trusted interpretation and authoritative outcome. It is **not selected for implementation**; CTR remains unchanged and a paired feature/technical design should be created only after a concrete action scope and human-vs-human trust boundary are chosen.
+[Sea of Stars](../archive/02-research/game-inspiration/dossiers/sea-of-stars.md) is a reference for expressive environmental pixel art, distinctive landforms, varied natural color and purposeful lighting, not cartoon proportions or its turn-based combat. [Visual requirements](../art-direction/decisions.md#current-visual-requirements--october-16-2026), the [creative brief](../art-direction/final-board/creative-brief.md#sea-of-stars--expressive-environments-in-a-grounded-world) and [scene production](production-workflows/scenes-and-interfaces.md) require organized detail, coherent materials, readable people and physically consistent identity.
 
-
-## October 18, 2026 — Sea of Stars environmental art principles
-
-Mike's [art preference](../art-direction/decisions.md#current-visual-requirements--october-16-2026) adds Sea of Stars for expressive pixels, distinctive environments, varied color and purposeful light while retaining believable anatomy, practical construction and OpenLegend's survival mood. The [creative brief](../art-direction/final-board/creative-brief.md#sea-of-stars--expressive-environments-in-a-grounded-world) and [illustrated study](../art-direction/research/sea-of-stars/README.md) translate the preference into composition, material, identity and scene-review criteria. The [G178 dossier](../archive/02-research/game-inspiration/dossiers/sea-of-stars.md) documents mechanics, lore, production, reception and business evidence; its combat lessons remain research. Existing renderer, art-acceptance and implementation tasks retain their scope.
+[ND38](maintainers/needs-design.md#nd38--player-skill-during-action-execution) identifies a separate, unselected design need for optional human skill during action execution. The [combat-response design](projects/combat-and-threat-responses-feature-spec.md) remains unchanged in scope; no timing-input mechanic or renderer change is adopted. [Presentation](../archive/02-research/game-inspiration/synthesis/art-audio-and-game-feel.md), [exploration](../archive/02-research/game-inspiration/synthesis/exploration-and-world-design.md) and [combat](../archive/02-research/game-inspiration/synthesis/combat-and-encounters.md) retain the source-grounded principles and limitations.
 
 ## October 18, 2026 — Speak naturally to the player
 

@@ -19,7 +19,7 @@ PRESENT owns expressive execution and immediate feedback. Navigation/controls be
 
 ## Focused evidence — Sea of Stars
 
-The October 18 pass read the [full G178 dossier](../dossiers/sea-of-stars.md), its [ten-image art study](../../../../art-direction/research/sea-of-stars/README.md), six independent reviews, player testimony and creator accounts. It supplies one deep source rather than a cross-game conclusion.
+Evidence: [G178 dossier](../dossiers/sea-of-stars.md), [ten-image art study](../../../../art-direction/research/sea-of-stars/README.md), six independent reviews, player testimony and creator accounts. This is a single-game source, not cross-game consensus.
 
 Sea of Stars is useful because it exposes both sides of presentation quality. Reviewers repeatedly praise its color, lighting, animation, movement and music, while several of the same reviewers criticize repeated combat decisions or timing inputs. Beautiful feedback can amplify a worthwhile action, but cannot create strategic variety by itself.
 

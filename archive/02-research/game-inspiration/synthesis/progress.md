@@ -6,18 +6,18 @@
 
 ## Current snapshot — October 18, 2026
 
-The focused intelligence/simulation pass retains published `Macrofold/OpenLegend` main at `0c12398e32e7c9578e18de07bbe79d39b4827208` as its source base. The October 17 combat-response pass retains its named four-source provenance; the October 18 Sea of Stars incorporation reads G178 from branch `codex/sea-of-stars-research-art-direction` after `ce0d4cd324c64d3d6c5c2bff5d36f6c7b59b93f3`. Counts come from the actual matrices and inventory, not a second per-source status list.
+The [coverage matrix](coverage.csv) records current per-source/per-topic status. Earlier intelligence and combat sources retain their cited revisions in [assessment evidence](assessment-records.md); the Sea of Stars evidence is anchored to the G178 dossier and art study at `ce0d4cd324c64d3d6c5c2bff5d36f6c7b59b93f3`.
 
 | Measure                     | State |
 | --------------------------- | ----- |
 | Topic pages                 | 35: 27 unfilled synthesis shells; focused NPC, COMBAT, PRESENT and EXPLORE guides; and FUN, CREATE, DISCOVERY and PRODUCTION routes to existing research. |
 | Game/case sources           | 187 stable keys: 178 roster subjects, the unnumbered EVE Online essay case and eight unnumbered topic-only subjects. |
 | Available game/case sources | 161 full dossier files and ten scoped sources: EVE Online plus nine topic-only dossiers. Availability is not full research certification. |
-| Queued game sources         | 16 of G150–G166 remain queued; G159 has a focused dossier. No claim about unpublished branch work. |
+| Queued game sources         | G150–G166 remain roster-only except G159's focused study; G168–G177 are available but unassessed in this synthesis. |
 | Game matrix                 | 187 × 35 = 6,545 cells: 37 I, 5310 U, 526 W, 672 X. |
 | NPC column                  | 30 scoped incorporations; wider coverage remains open. |
 | COMBAT column               | Five scoped incorporations after adding G178; wider combat research remains open. |
-| PRESENT / EXPLORE           | One focused G178 incorporation each; both remain partial single-source guides. |
+| PRESENT / EXPLORE           | G178 incorporated in each at a single-game scope; broader comparison remains open. |
 | World matrix                | Unchanged: 29 listed world dossiers × 35 = 1,015 cells: 903 U and 112 X. |
 | Existing owners             | X retains unreconciled evidence, not an assertion that earlier learning is absent. |
 
@@ -110,9 +110,3 @@ The broader review used main `74e081a2ddc39a18da1ffe3357ffc298a4f14dce`, added f
 
 The focused October 14 intelligence/simulation pass changes 21 existing available NPC cells from U to I and G159's NPC cell from W to I, backed by assessment records. It adds eight topic-only rows with NPC I and every other topic U. Other inherited topic statuses and the world matrix remain unchanged. This advances useful research without claiming a full pass over every source, changing full-game completion or allocating implementation work.
 
-
-## October 18 Sea of Stars incorporation
-
-G168–G178 are now present in the synthesis source inventory as available full dossiers; the ten mobile cases remain unassessed here. G178 is incorporated only into COMBAT, PRESENT and EXPLORE at the reviewed scope recorded in [assessment evidence](assessment-records.md#sea-of-stars-focused-incorporation--october-18-2026). Other G178 topic cells remain U rather than being inferred from the dossier's existence.
-
-The PRESENT and EXPLORE guides become useful focused guides without claiming broad topic completion. COMBAT gains one lesson about execution skill versus tactical variety. ND38 is a design-register handoff, not implementation approval. The source matrix and topic status therefore record exactly what was synthesized rather than treating the full dossier as automatic incorporation into every relevant topic.
