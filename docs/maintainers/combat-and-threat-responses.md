@@ -64,8 +64,11 @@ randomness across whole/split advances, and actual episode/action/danger records
 round-trip through PostgreSQL. Installed quiet-night, alarm-night and zero-energy
 rest predicates pass controlled native checks. Exact continuous motion/sight and
 region-growth boundaries are connected; their specific transient cases remain
-open. Four existing files pass all 36 checks. Near-passage, bird flight and stag
-withdrawal are still unfinished. This does not close CTR03 or CTR04.
+open. Four existing files pass all 36 checks. Actual perceived near-passage now passes native timing, hidden-source,
+first-screen interception, split/whole and PostgreSQL deduplication checks.
+Bird flight and stag withdrawal remain unfinished. The first ordinary close bow
+hunt released but struck terrain after the hare retreated. The aiming-contract
+question is awaiting the owner's answer; that dependent work stays open. This does not close CTR03 or CTR04.
 
 Contract: [native execution](../projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04) and [animal world profile](../worlds/base/animal-responses.md).
 

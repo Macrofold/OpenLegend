@@ -1139,3 +1139,33 @@ remain unfinished. No external calls were made. Additional Jev cost is **$0**;
 cumulative reported estimates remain Jev **$0.440786** and other providers
 **$0.207513**, uncertain commitments **$5.939396**, and conservative aggregate
 exposure **$6.587695**.
+
+## Exact perceived projectile passage checkpoint
+
+An actual released flight supplies the near-passage scenario. The native clock
+stops at 4.920186208320617 game seconds after the scenario boundary, and one
+personally perceived passage occurs at simulation time 82.92018620832062 after
+release at 78. The hare receives no invented injury and no hidden shooter's body
+location. Whole and split advances preserve the occurrence time within 1e-7 game
+seconds and the saved random state. The live projectile's exact body-life receipt
+survives PostgreSQL restoration and suppresses a repeated passage from that flight.
+A separate actual projectile strikes an intervening screen; no path behind that
+screen alarms the hidden animal. Candidate and actual ground movement also reuse
+the existing occupied-body sweep owner, rather than adding another collision law.
+The previous 600-game-second continuation still passes with that physical check.
+TypeScript checking passes.
+
+The early practical hunt was run with real starting materials, native declared
+bow/arrow specimens and ordinary movement to a close stance. The healthy hare
+escaped; the bow released at 248.45642744985065, and the arrow struck terrain at
+258.4088979305293. No harvest or meal is claimed. The aiming contract currently
+uses the observed body point; the owner has been asked whether to add leading from
+personally observed motion, retain current aiming with ambush/trap/sleep hunting,
+or change authored ranged tuning. Dependent aiming changes wait for that answer;
+other combat integration continues. This native declaration is not evidence of
+independent model invention. No prey holding, speed/range edit or paid reroll was
+used to obtain this result.
+
+No external calls were made. Additional Jev cost is **$0**; cumulative reported
+estimates remain Jev **$0.440786** and other providers **$0.207513**, uncertain
+commitments **$5.939396**, and conservative aggregate exposure **$6.587695**.

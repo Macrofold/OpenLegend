@@ -3,6 +3,7 @@ import {
   distance3D,
   interpolate,
   movingBodyContact,
+  movingBodiesDistanceInterval,
   rayHits,
   type WorldPoint,
 } from '@open-legend/spatial';
@@ -45,6 +46,8 @@ import { flightTracks, motionTrackPosition, type MotionTrack } from './flight.js
 import { capabilityBlocked } from './status-capabilities.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { readOnlyDraftView } from './draft.js';
+import { nativeResponseProfile } from './native-response.js';
+import { movingPointVisionRuns } from './motion-boundaries.js';
 import type { Action, Entity, Outcome, WorldEvent, WorldState } from './types.js';
 
 export interface AimState {
@@ -56,6 +59,7 @@ export interface AimState {
   ready: boolean;
 }
 export interface ProjectileFlight {
+  nearPassObservedLives?: Record<string, true>;
   id: string;
   actionId: string;
   sourceId: string;
@@ -81,6 +85,51 @@ export interface ProjectileFlight {
   speed: number;
   remainingRange: number;
   injury: number;
+}
+
+const passageLife = (entity: Entity) =>
+  JSON.stringify([entity.id, entity.actor?.physicalLife ?? 0]);
+function nativePassageDistance(world: WorldState, entity: Entity): number {
+  return entity.animal && entity.actor?.alive
+    ? (nativeResponseProfile(world, entity.animal.episode?.profilePin ?? entity.animal.profile)
+        ?.passageDistance ?? 0)
+    : 0;
+}
+/** Query only the path physically traversed before first contact. Predictions
+ * bound native time; actual integration calls this again with executed poses. */
+function projectilePassage(
+  world: WorldState,
+  animal: Entity,
+  from: WorldPoint,
+  to: WorldPoint,
+  ownFrom: WorldPoint,
+  ownTo: WorldPoint,
+  body: ReturnType<typeof bodyProfile>,
+  seconds: number,
+  separation: number,
+): { at: number; point: WorldPoint } | undefined {
+  if (!(seconds > 0) || !animal.actor?.alive || !activelyParticipates(animal) || separation <= 0)
+    return;
+  const close = movingBodiesDistanceInterval(
+    from,
+    to,
+    { radius: 0, height: 0 },
+    ownFrom,
+    ownTo,
+    body,
+    separation,
+  );
+  if (!close) return;
+  const own: MotionTrack = { at: [0, seconds], pose: [ownFrom, ownTo] },
+    point: MotionTrack = { at: [0, seconds], pose: [from, to] };
+  for (const run of movingPointVisionRuns(world, animal, own, point, seconds)) {
+    if (!run.value) continue;
+    const start = Math.max(close.enter * seconds, run.start),
+      end = Math.min(close.exit * seconds, run.end);
+    if (start > end) continue;
+    const at = start + Math.min(TIME_EPSILON, (end - start) / 2);
+    return { at, point: interpolate(from, to, at / seconds) };
+  }
 }
 export function bindAim(
   world: WorldState,
@@ -384,6 +433,7 @@ export function projectileBoundary(
       ...entry,
       end,
       restricted,
+      passageDistance: nativePassageDistance(world, entry.entity),
       extent:
         entry.profile.height +
         entry.profile.radius +
@@ -407,7 +457,10 @@ export function projectileBoundary(
     }
     return entry.tracks;
   };
-  const extent = bodies.reduce((maximum, entry) => Math.max(maximum, entry.extent), 0);
+  const extent = bodies.reduce(
+    (maximum, entry) => Math.max(maximum, entry.extent + entry.passageDistance),
+    0,
+  );
   const query = spatialCandidates(bodies);
   let bound = seconds;
   for (const id of ids) {
@@ -425,7 +478,9 @@ export function projectileBoundary(
     if (solid) bound = Math.min(bound, Math.max(TIME_EPSILON, duration * solid.fraction));
     const midpoint = interpolate(from, to, 0.5);
     const candidates = query(midpoint, travel / 2 + extent).filter(
-      (entry) => distance3D(midpoint, entry.position) <= travel / 2 + entry.extent + TIME_EPSILON,
+      (entry) =>
+        distance3D(midpoint, entry.position) <=
+        travel / 2 + entry.extent + entry.passageDistance + TIME_EPSILON,
     );
     // A chord cannot represent a corridor turn. Split only a nearby body's relevant
     // interval; distant birds keep their private turns and paths are prepared once.
@@ -449,6 +504,23 @@ export function projectileBoundary(
         chargeWork({ tests: 1 });
         if (fraction !== undefined)
           bound = Math.min(bound, Math.max(TIME_EPSILON, duration * fraction));
+        if (
+          entry.passageDistance > 0 &&
+          !flight.nearPassObservedLives?.[passageLife(entry.entity)]
+        ) {
+          const passage = projectilePassage(
+            world,
+            entry.entity,
+            from,
+            shortTo,
+            entry.position,
+            motionTrackPosition(track, duration),
+            entry.profile,
+            duration,
+            entry.passageDistance,
+          );
+          if (passage) bound = Math.min(bound, Math.max(TIME_EPSILON, passage.at));
+        }
       }
     }
   }
@@ -468,13 +540,17 @@ export function advanceProjectiles(
     ...entry,
     id: entry.entity.id,
     order,
+    passageDistance: nativePassageDistance(world, entry.entity),
     end: { ...worldPosition(entityGet(world.entities, entry.entity.id) ?? entry.entity) },
   }));
   const maximum = candidates.reduce(
     (max, entry) =>
       Math.max(
         max,
-        entry.profile.height + entry.profile.radius + distance3D(entry.position, entry.end),
+        entry.profile.height +
+          entry.profile.radius +
+          distance3D(entry.position, entry.end) +
+          entry.passageDistance,
       ),
     0,
   );
@@ -503,6 +579,55 @@ export function advanceProjectiles(
           (fraction === contact.fraction && entry.id.localeCompare(contact.id) < 0))
       )
         contact = { fraction, id: entry.id, body: entityGet(world.entities, entry.id) };
+    }
+    const stoppedAt = contact?.fraction ?? 1,
+      actualTo = interpolate(from, to, stoppedAt);
+    for (const entry of query(
+      interpolate(from, actualTo, 0.5),
+      (travel * stoppedAt) / 2 + maximum,
+    )) {
+      if (
+        !entry.entity.animal ||
+        entry.passageDistance <= 0 ||
+        flight.nearPassObservedLives?.[passageLife(entry.entity)]
+      )
+        continue;
+      const actualAnimal = entityGet(world.entities, entry.id);
+      if (!actualAnimal) continue;
+      const passage = projectilePassage(
+        world,
+        actualAnimal,
+        from,
+        actualTo,
+        entry.position,
+        interpolate(entry.position, entry.end, stoppedAt),
+        entry.profile,
+        seconds * stoppedAt,
+        entry.passageDistance,
+      );
+      if (!passage) continue;
+      (flight.nearPassObservedLives ??= {})[passageLife(actualAnimal)] = true;
+      const profile = nativeResponseProfile(
+        world,
+        actualAnimal.animal!.episode?.profilePin ?? actualAnimal.animal!.profile,
+      );
+      if (!profile) continue;
+      emit(
+        world,
+        events,
+        'projectile-passage',
+        subjectNarration(actualAnimal, profile.presentation.alarmed),
+        actualAnimal,
+        actualAnimal.id,
+        {
+          projectileId: flight.id,
+          incomingX: -flight.direction.x,
+          incomingY: -flight.direction.y,
+          incomingZ: -flight.direction.z,
+        },
+        'external',
+        passage.point,
+      );
     }
     flight.position = interpolate(from, to, contact?.fraction ?? 1);
     flight.remainingRange = Math.max(0, flight.remainingRange - travel * (contact?.fraction ?? 1));
@@ -771,7 +896,7 @@ export function validateRanged(world: WorldState): void {
           'injury',
           'attackDigest',
         ],
-        ['targetLife', 'lethalPermission'],
+        ['targetLife', 'lethalPermission', 'nearPassObservedLives'],
       ) ||
       !isDefinitionPin(flight.tool) ||
       !isDefinitionPin(flight.ammunition) ||
@@ -827,6 +952,30 @@ export function validateRanged(world: WorldState): void {
         : !Number.isSafeInteger(flight.targetLife) || flight.targetLife! < 0)
     )
       throw new Error('Invalid committed projectile continuation.');
+    if (flight.nearPassObservedLives) {
+      if (
+        typeof flight.nearPassObservedLives !== 'object' ||
+        Array.isArray(flight.nearPassObservedLives)
+      )
+        throw new Error('Invalid projectile passage receipts.');
+      for (const [key, seen] of Object.entries(flight.nearPassObservedLives)) {
+        let parts: unknown;
+        try {
+          parts = JSON.parse(key);
+        } catch {
+          throw new Error('Invalid projectile passage identity.');
+        }
+        if (
+          seen !== true ||
+          !Array.isArray(parts) ||
+          parts.length !== 2 ||
+          !isSafeRecordId(parts[0]) ||
+          !Number.isSafeInteger(parts[1]) ||
+          parts[1] < 0
+        )
+          throw new Error('Invalid projectile passage receipt.');
+      }
+    }
     releases.add(flight.actionId);
   }
 }

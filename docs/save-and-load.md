@@ -350,7 +350,9 @@ exact active-episode profile and locomotion, committed event or action cause,
 observed-preparation identities, danger estimates and uncertainty times, current
 refuge, ordinary action/flight binding, proposal generation and original review
 and settling deadlines. Danger and preparation maps have separate database child
-records. Navigation answers remain disposable host preparation bound to the exact
+records. Each live projectile retains exact once-per-animal-life passage receipts
+in separate child records; restoration never repeats that flight's perceived
+passage for the same physical life. Navigation answers remain disposable host preparation bound to the exact
 proposal, map and current timeline; restoration recomputes them without drawing or
 installing movement. Current validation rejects obsolete steering fields and
 malformed body-life, profile, proposal or active movement relationships.

@@ -236,10 +236,31 @@ function walkerTracks(
   return [track, { at: [0, seconds], pose: [start, start] }];
 }
 
-interface Run {
+export interface Run {
   start: number;
   end: number;
   value: boolean;
+}
+/** Projectile passage uses the same exact moving eye/range/occlusion predicate
+ * as ordinary sight, with no invented projectile entity or identity grant. */
+export function movingPointVisionRuns(
+  world: WorldState,
+  observer: Entity,
+  own: MotionTrack,
+  point: MotionTrack,
+  seconds: number,
+): Run[] {
+  const radius =
+    sensesFor(world, observer).find((sense) => sense.implementation === 'vision-geometry-v1')
+      ?.radius ?? 0;
+  return radius > 0 && activelyParticipates(observer)
+    ? visionRuns(
+        world,
+        { track: own, radius, eye: bodyProfile(observer).eyeHeight },
+        { track: point, height: 0 },
+        seconds,
+      )
+    : [];
 }
 /** Constant-predicate runs over [0, horizon]; `cuts` must hold every time it can change. */
 function runsOf(horizon: number, cuts: number[], holds: (t: number) => boolean): Run[] {

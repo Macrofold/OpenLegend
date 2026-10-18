@@ -49,9 +49,14 @@ export function acquireNativeResponseEvent(
   events: WorldEvent[],
 ): void {
   if (
-    !['struck', 'projectile-contact', 'shot-released', 'attack-cue', 'action-started'].includes(
-      event.type,
-    )
+    ![
+      'struck',
+      'projectile-contact',
+      'projectile-passage',
+      'shot-released',
+      'attack-cue',
+      'action-started',
+    ].includes(event.type)
   )
     return;
   const animal = event.targetId ? entityGet(world.entities, event.targetId) : undefined;
@@ -66,6 +71,7 @@ export function acquireNativeResponseEvent(
   const source = event.actorId ? entityGet(world.entities, event.actorId) : undefined;
   const felt =
     event.type === 'projectile-contact' ||
+    event.type === 'projectile-passage' ||
     (event.type === 'struck' && event.data?.['contactInjury'] === true);
   const preparation = event.type === 'action-started' || event.type === 'attack-cue';
   if (
@@ -88,7 +94,7 @@ export function acquireNativeResponseEvent(
   if (felt) {
     const projectileId = event.data?.['projectileId'];
     const origin =
-      event.type === 'projectile-contact'
+      event.type === 'projectile-contact' || event.type === 'projectile-passage'
         ? (event.origin ?? worldPosition(animal))
         : worldPosition(animal);
     const regionSource =

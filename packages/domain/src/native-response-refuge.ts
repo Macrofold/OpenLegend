@@ -15,6 +15,7 @@ import {
 import { pointVisionQuery, visionRadius } from './perception.js';
 import { bodyProfile, spatialMap, supportedPosition, worldPosition } from './spatial-state.js';
 import { chargeWork } from './work-budget.js';
+import { occupiedBodySweepClear } from './spatial.js';
 import { nativeDangerSeparation, nativeRouteDangerSeparation } from './native-response-danger.js';
 import type { NativeDangerFrame } from './native-response-danger.js';
 import type { NativeRefugeProposal, NativeResponseProfile } from './native-response.js';
@@ -32,7 +33,10 @@ export interface NativeRefugeRoute {
 export type NativeRefugeRouteResult =
   | { status: 'complete'; route: NativeRefugeRoute }
   | { status: 'pending'; request: Extract<RoutePlan, { status: 'pending' }>['request'] }
-  | { status: 'refused'; reason: 'unsupported' | 'outside-planning-scope' | 'unreachable' };
+  | {
+      status: 'refused';
+      reason: 'unsupported' | 'outside-planning-scope' | 'unreachable' | 'occupied';
+    };
 
 /** The first unseen interval matters, including an occluded middle with a visible
  * endpoint. Sight critical fractions and range roots share ordinary perception's
@@ -195,6 +199,12 @@ export function scoreNativeRefugeRoute(
   length: number,
 ): NativeRefugeRouteResult {
   const profile = frame.profile;
+  let previousBodyPoint = from;
+  for (const point of path) {
+    if (!occupiedBodySweepClear(world, observer, previousBodyPoint, point))
+      return { status: 'refused', reason: 'occupied' };
+    previousBodyPoint = point;
+  }
   if (length > profile.candidates.maximumRouteLength + SPATIAL_LIMITS.epsilon)
     return { status: 'refused', reason: 'outside-planning-scope' };
   if (!candidate.retained) {

@@ -145,7 +145,9 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       objectState: one('sim_object_state'),
       objectLineage: map('sim_object_lineage'),
       resourceReservations: map('sim_resource_reservations'),
-      projectiles: map('sim_projectiles'),
+      projectiles: map('sim_projectiles', {
+        nearPassObservedLives: map('sim_projectile_passages'),
+      }),
       workState: one('sim_work_state', { invocations: map('sim_work_invocations') }),
       outings: map('activity_outings'),
       itemDefinitions: map('definition_items'),

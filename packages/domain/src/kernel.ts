@@ -4206,7 +4206,15 @@ function advanceAction(
         }
         if (action.navigation) return;
       }
-      if (!moveAlongPath(world, actor, action.path, nativeMovementSpeed(world, actor) * seconds)) {
+      if (
+        !moveAlongPath(
+          world,
+          actor,
+          action.path,
+          nativeMovementSpeed(world, actor) * seconds,
+          !!action.nativeLocomotion,
+        )
+      ) {
         action.path = [];
         if ((action.replans ?? 0) >= MOVEMENT.maxReplans)
           failAction(world, actor, events, 'the route became physically blocked.');
