@@ -210,6 +210,8 @@ The guidance checker, both edited skills' validators, seven-file formatting, fou
 
 ## CG05 — Read-only routing cases
 
+The [player-facing language route](../../.agents/rules/player-facing-language.md) requires four additional read-only samples: an existing menu/warning rewrite at the root, generated event wording in a not-yet-created server file, a wording task started from `packages/domain`, and an internal-only prose correction that merely mentions UI text. The first three must load the writing rule and relevant chapter sections alongside applicable owners; the last must retain documentation-only routing. These samples remain unqualified until actual injected context and reads are observed in installed agents; static route review does not close them.
+
 Use an isolated checkout, deny edits and paid calls, and start with the relevant agent's normal root entrypoint. Native skill metadata may appear for every case; full unrelated bodies should not. Already-injected context counts as loaded. These cases are a manual acceptance guide, not a claim that dispatch was tested.
 
 | Prompt / starting directory                                                                                  | Relevant context                                                                             | Must not happen                                                                                         |
