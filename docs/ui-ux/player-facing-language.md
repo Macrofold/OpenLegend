@@ -18,11 +18,13 @@ Changing only “this” to “your” does not resolve unnecessary abstraction.
 
 ## General principles
 
-### 1. Start with the player's question
+### 1. Start with the player's needs
 
 Decide what the text helps the player understand: what this is, what happened, why an option is unavailable, what choosing it will do, or what they can do next. Put that information first. Do not display a technical field merely because the engine has it.
 
 An ordinary action explanation should name a useful effect or consequence. Details about scheduling, storage or internal classification belong only where they help the user perform the actual task.
+
+Narration and dialogue can also serve the player through atmosphere, emotional stakes, humor, personality or suspense. They do not need to turn every sentence into an explanation, instruction or next step.
 
 ### 2. Use the right point of view and clear references
 
@@ -44,15 +46,17 @@ Prefer an active construction when it clarifies who did what. Passive or imperso
 
 ### 5. Keep truth and permission ahead of fluency
 
-Present only information available to that surface and recipient. Use an unknown person's permitted description rather than a hidden name. An event report must not invent intent, feelings, causes or unseen results. A character's opinion can remain an opinion; it must not silently become the narrator's established fact.
+Present only information available to that surface and recipient. Use an unknown person's permitted description rather than a hidden name. System messages and narrator claims preserve established facts and uncertainty; they must not invent intent, feelings, causes or unseen results. Attributed character speech may contain mistakes, exaggeration or deception when existing character and world behavior permits it. Writing style must not turn a character's claim into established fact or give the speaker extra knowledge.
 
 The player's information needs and the character's knowledge are related but distinct. Connection errors, controls, settings and other genuine interface facts may be explained directly. World perception and narration still follow their existing disclosure rules. A privileged inspection view must identify its scope; its wider knowledge does not license ordinary event text to become omniscient.
+
+Clear language preserves intentional discovery. Explain known consequences and permitted evidence while preserving rules, outcomes and solutions that the player is meant to discover. Describe uncertainty when the available information is uncertain.
 
 ### 6. Be compact without becoming cryptic
 
 Remove filler, repetition and needless qualification. Keep the words needed to identify the subject, understand the consequence and choose the next step. Short labels can be fragments; explanations should use ordinary grammar. Brevity is measured by how readily the player understands the message, not by the lowest character count.
 
-Put essential information in the relevant surface. Defer optional depth using existing help and disclosure patterns; do not hide a material risk in an optional tooltip. If truthful wording does not fit, adapt the presentation instead of dropping its meaning. Do not impose a universal word count or reading-grade target on all game writing.
+Put essential information in the relevant surface. Defer optional depth using existing help and disclosure patterns; do not hide a known, relevant risk in an optional tooltip. If truthful wording does not fit, adapt the presentation instead of dropping its meaning. Do not impose a universal word count or reading-grade target on all game writing.
 
 ### 7. Make labels and recovery useful
 
@@ -76,7 +80,7 @@ The installed world owns its specific vocabulary and explanations; generic inter
 
 Check the words with their heading, selected subject, nearby controls and accessible name. Include enough context for an event read later or a control announced on its own. Avoid instructions that depend only on color, position or a mouse gesture. Refer to the actual control label and supported input when necessary.
 
-Names, counts, units and translated word order can change a sentence's grammar. Prefer complete message structures over assembling unrelated English fragments. Keep a visible control's wording recognizable in its accessible name, adding the subject where needed. Essential information must remain understandable with enlarged text and screen narration; a well-written source string alone does not establish that.
+Names, counts, units and translated word order can change a sentence's grammar. Prefer complete message structures over assembling unrelated English fragments. A control's accessible name must include its visible text label, adding subject context where needed; see [Label in Name](research.md#f06). Essential information must remain understandable with enlarged text and screen narration; a well-written source string alone does not establish that.
 
 ## Match the surface and speaker
 
@@ -122,12 +126,14 @@ These are meaning-preserving rewrites only under the stated context. They are ex
 
 The same standard applies whether a person wrote the string, a template assembled it or a model generated it. Internal instructions can use technical language for their own task; their player-facing output must be written for the intended reader.
 
+Keep meaning separate from presentation. Derive wording from existing permitted facts and participant roles for the recipient; share authored meaning and reusable grammar through their existing owners. Different recipients or surfaces may need different complete sentences. Preserve structured facts and source references independently of display text, following [precise-history ownership](../engine-and-world-boundaries.md#preserve-precise-history-and-solve-the-general-cause) and [narration's truth boundaries](../narration-and-conversations.md#2-three-kinds-of-truth). Rendering or rewording an existing event, explanation or narration does not replace its structured source or create another gameplay trigger. Character speech retains its existing admission and event behavior.
+
 For generated-text work, the relevant instructions and examples must establish:
 
 - The output's audience, surface and speaker, including whether it is interface guidance, narration or quoted character speech.
 - The subject and perspective: who “you” means, which names/descriptions are permitted, and which people or objects the text concerns.
-- The facts, uncertainty and disclosure limits already supplied by the owning contract. Good prose never grants more knowledge or changes an outcome.
-- The information the player needs, appropriate tone and degree of detail, with representative natural examples and ordinary fallback wording.
+- The owning contract's facts, uncertainty and disclosure limits, keeping attributed character claims distinct from established facts. Good prose never grants more knowledge or changes an outcome.
+- The text's purpose for the player, appropriate tone and degree of detail, with representative natural examples and ordinary fallback wording.
 
 Share common requirements through existing owners rather than copying divergent prompt rules. Keep world vocabulary and laws with their authored source. Follow the [AI workflow](../../.agents/skills/openlegend-ai/SKILL.md) when changing prompts or model behavior; this writing standard grants no extra generation calls, retries or new output filtering.
 
@@ -137,11 +143,11 @@ Review complete outputs, not just prompt intent or isolated string fragments. In
 
 For each affected surface, ask:
 
-1. **Audience:** What is the player trying to understand, choose or do here? Does the text answer that question?
+1. **Audience:** What should this text help the player understand, choose, do or experience? Does it serve that purpose?
 2. **Naturalness:** Would someone naturally say this to a person playing the game, or does it sound like an explanation of an internal object to the engine? Read the complete sentence aloud.
 3. **Perspective:** Who is speaking, who is addressed and who or what is described? Are “you,” names and pronouns unambiguous in this context?
-4. **Truth:** Does the wording preserve the actual result, cause, quantity, risk, timing and certainty? Does it stay within this recipient's permitted knowledge?
-5. **Usefulness:** Are the relevant consequence, obstacle and available next step clear? Are labels consistent with the real action?
+4. **Truth:** Do reported facts preserve the actual result, cause, quantity, risk, timing and certainty? Does the text stay within this recipient's permitted information and distinguish character claims from established facts?
+5. **Usefulness:** When explaining a choice or problem, are the relevant consequence, obstacle and available next step clear? Are labels consistent with the real action?
 6. **Fit:** Is it compact without losing meaning, appropriate to the speaker, and understandable in the rendered and accessible contexts?
 7. **Coverage:** Have affected templates, shared callers, generated examples and fallbacks received the same treatment?
 

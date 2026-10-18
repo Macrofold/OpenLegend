@@ -1,6 +1,6 @@
 # UI/UX rules for every frontend task
 
-For UI/UX design, implementation or review, and frontend code changes including new files, read this short rule once per task, then only matching detail below. Reuse current loaded context. Backend-only work or a prose mention of React does not trigger the handbook. Guidance is not authorization to implement future features.
+For UI/UX design, implementation or review, and frontend code changes including new files, read this short rule once per task, then only matching detail below. Reuse current loaded context. Backend work that affects neither player-facing text nor another UI contract does not trigger the handbook; neither does a prose mention of React. Guidance is not authorization to implement future features.
 
 ## Essential rules
 
