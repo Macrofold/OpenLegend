@@ -344,3 +344,13 @@ usable finite parameters before writing; loading validates both content and key.
 Referenced authored revisions remain available for a running episode after a
 future default changes. These are current authored definitions, not legacy save
 readers or migrations. The registry itself starts no behavior or physical action.
+
+Native animal records retain the current body life, future profile selection,
+exact active-episode profile and locomotion, committed event or action cause,
+observed-preparation identities, danger estimates and uncertainty times, current
+refuge, ordinary action/flight binding, proposal generation and original review
+and settling deadlines. Danger and preparation maps have separate database child
+records. Navigation answers remain disposable host preparation bound to the exact
+proposal, map and current timeline; restoration recomputes them without drawing or
+installing movement. Current validation rejects obsolete steering fields and
+malformed body-life, profile, proposal or active movement relationships.

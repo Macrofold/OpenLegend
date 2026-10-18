@@ -57,7 +57,7 @@ export interface NativeResponseProfile {
 
 /** A body estimate is retained evidence, never a live hidden tracking reference.
  * Its observed extent continues to mean the body actually seen at that time. */
-export type NativeDanger =
+export type NativeDanger = (
   | {
       kind: 'body';
       sourceId: string;
@@ -74,7 +74,8 @@ export type NativeDanger =
       point: Position;
       observedAt: number;
       incoming?: Position;
-    };
+    }
+) & { insideAvoidance?: boolean };
 
 export interface NativeRefugeProposal {
   generation: number;
@@ -89,7 +90,8 @@ export interface NativeRefugeProposal {
 export interface NativeResponseEpisode {
   id: string;
   startedAt: number;
-  latestCause: { id: string; at: number };
+  latestCause: { kind: 'event' | 'action'; id: string; at: number };
+  preparations?: Record<string, string>;
   /** Referenced installed definitions survive selection of future defaults. */
   profilePin: DefinitionPin;
   locomotion: string;
@@ -214,13 +216,14 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
           'reviewAt',
           'proposalGeneration',
         ],
-        ['clearSince', 'proposal', 'refuge', 'movement', 'blocked'],
+        ['clearSince', 'proposal', 'refuge', 'movement', 'blocked', 'preparations'],
       ) ||
       !entity.actor?.alive ||
       !isSafeRecordId(episode.id) ||
       !time(episode.startedAt) ||
       !time(episode.reviewAt) ||
-      !hasRecordFields(episode.latestCause, ['id', 'at']) ||
+      !hasRecordFields(episode.latestCause, ['kind', 'id', 'at']) ||
+      !['event', 'action'].includes(episode.latestCause.kind) ||
       !isSafeRecordId(episode.latestCause.id) ||
       !time(episode.latestCause.at) ||
       !activeProfile?.locomotion[episode.locomotion] ||
@@ -233,14 +236,42 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
       Array.isArray(episode.dangers)
     )
       fail();
+    if (
+      episode.preparations &&
+      (typeof episode.preparations !== 'object' ||
+        Array.isArray(episode.preparations) ||
+        !Object.values(episode.preparations).every(isSafeRecordId))
+    )
+      fail();
+    for (const key of Object.keys(episode.preparations ?? {})) {
+      let parts: unknown;
+      try {
+        parts = JSON.parse(key);
+      } catch {
+        fail();
+      }
+      if (
+        !Array.isArray(parts) ||
+        parts.length !== 2 ||
+        !isSafeRecordId(parts[0]) ||
+        typeof parts[1] !== 'number' ||
+        !life(parts[1])
+      )
+        fail();
+    }
     for (const [key, danger] of Object.entries(episode.dangers)) {
-      if (!finitePoint(danger.point) || !time(danger.observedAt)) fail();
+      if (
+        !finitePoint(danger.point) ||
+        !time(danger.observedAt) ||
+        (danger.insideAvoidance !== undefined && typeof danger.insideAvoidance !== 'boolean')
+      )
+        fail();
       if (danger.kind === 'body') {
         if (
           !hasRecordFields(
             danger,
             ['kind', 'sourceId', 'physicalLife', 'point', 'extent', 'observedAt', 'visible'],
-            ['lostAt'],
+            ['lostAt', 'insideAvoidance'],
           ) ||
           !isSafeRecordId(danger.sourceId) ||
           !life(danger.physicalLife) ||
@@ -256,7 +287,11 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
           fail();
       } else if (danger.kind === 'region') {
         if (
-          !hasRecordFields(danger, ['kind', 'source', 'point', 'observedAt'], ['incoming']) ||
+          !hasRecordFields(
+            danger,
+            ['kind', 'source', 'point', 'observedAt'],
+            ['incoming', 'insideAvoidance'],
+          ) ||
           !hasRecordFields(danger.source, ['kind', 'id']) ||
           !['event', 'projectile'].includes(danger.source.kind) ||
           !isSafeRecordId(danger.source.id) ||
@@ -284,7 +319,11 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
         !point(proposal.origin) ||
         (proposal.movementId !== null && !isSafeRecordId(proposal.movementId)) ||
         !hasRecordFields(proposal.body, ['radius', 'height', 'maxSlope']) ||
-        !Object.values(proposal.body).every((value) => Number.isFinite(value) && value > 0) ||
+        ![proposal.body.radius, proposal.body.height].every(
+          (value) => Number.isFinite(value) && value > 0,
+        ) ||
+        !Number.isFinite(proposal.body.maxSlope) ||
+        proposal.body.maxSlope < 0 ||
         !Array.isArray(proposal.candidates) ||
         proposal.candidates.length > NATIVE_RESPONSE_LIMITS.maximumCandidates ||
         new Set(proposal.candidates.map((candidate) => candidate.id)).size !==
@@ -345,6 +384,10 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
         (!episode ||
           binding.episodeId !== episode.id ||
           !life(binding.generation!) ||
+          episode.movement?.kind !== 'action' ||
+          episode.movement.id !== action?.id ||
+          episode.refuge?.generation !== binding.generation ||
+          canonicalJson(episode.refuge?.point) !== canonicalJson(action?.destination) ||
           !sameDefinitionPin(binding.profile, episode.profilePin) ||
           binding.locomotion !== episode.locomotion)))
   )

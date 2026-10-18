@@ -1,3 +1,4 @@
+import { nativeDangerExpiresAt } from './native-response-danger.js';
 import { nativeResponseProfile } from './native-response.js';
 import { entityGet } from './entity-collection.js';
 import { nextOutingDeadline } from './outings.js';
@@ -82,6 +83,16 @@ export function nativeInterval(
     }
     if (animal?.episode) {
       at(animal.episode.reviewAt);
+      const definition = nativeResponseProfile(world, animal.episode.profilePin);
+      if (definition)
+        for (const danger of Object.values(animal.episode.dangers)) {
+          at(nativeDangerExpiresAt(definition, danger));
+          if (definition.uncertaintyPerSecond > 0 && (danger.kind !== 'body' || !danger.visible))
+            at(
+              (danger.kind === 'body' ? danger.lostAt! : danger.observedAt) +
+                definition.maximumUncertainty / definition.uncertaintyPerSecond,
+            );
+        }
       if (animal.episode.clearSince !== undefined) {
         const profile = nativeResponseProfile(world, animal.episode.profilePin);
         if (profile) at(animal.episode.clearSince + profile.settlingSeconds);

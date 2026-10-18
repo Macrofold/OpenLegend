@@ -66,7 +66,14 @@ export type StatusCondition =
   | {
       field: {
         target: EntityReference;
-        name: 'controller' | 'alive' | 'incapacitated' | 'grounded' | 'activeWork' | 'kind';
+        name:
+          | 'controller'
+          | 'alive'
+          | 'incapacitated'
+          | 'grounded'
+          | 'activeWork'
+          | 'nativeResponseActive'
+          | 'kind';
         operator: 'equal' | 'notEqual';
         value: string | boolean;
       };
@@ -276,12 +283,14 @@ function prepareCondition(condition: StatusCondition): {
         ? (e: Entity) => e.kind
         : name === 'grounded'
           ? (e: Entity) => worldSupport(e) !== null
-          : name === 'activeWork'
-            ? (e: Entity) =>
-                !!(e.actor && readOnlyDraftView(e.actor).action) ||
-                worldSupport(e) === null ||
-                !!(e.animal && readOnlyDraftView(e.animal).episode)
-            : (e: Entity) => (e.actor ? readOnlyDraftView(e.actor)[name] : undefined);
+          : name === 'nativeResponseActive'
+            ? (e: Entity) => !!(e.animal && readOnlyDraftView(e.animal).episode)
+            : name === 'activeWork'
+              ? (e: Entity) =>
+                  !!(e.actor && readOnlyDraftView(e.actor).action) ||
+                  worldSupport(e) === null ||
+                  !!(e.animal && readOnlyDraftView(e.animal).episode)
+              : (e: Entity) => (e.actor ? readOnlyDraftView(e.actor)[name] : undefined);
     matches = (_world, bindings) => {
       const entity = resolve(target, bindings);
       return !!entity && compare(read(readOnlyDraftView(entity)), operator, value);

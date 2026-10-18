@@ -229,6 +229,8 @@ import {
 import { advanceRemains } from './remains.js';
 import {
   nativeResponseDecision,
+  reconcileNativeExposure,
+  observeNativeAttackPreparation,
   nativeWanderRoute,
   recordAnimalClockWrite,
   advanceAnimalWanderClock,
@@ -655,6 +657,13 @@ export function navigationBlocked(
       entity.actor.incapacitated ||
       !request ||
       request.failure
+    )
+      return false;
+    if (
+      entity.actor.action?.nativeLocomotion?.mode === 'escape' &&
+      entity.animal?.episode &&
+      entity.animal.episode.reviewAt <= world.simTime &&
+      !entity.animal.episode.proposal
     )
       return false;
     // Lost follow authority must reach native cancellation without waiting for an obsolete route.
@@ -5294,6 +5303,7 @@ function* advanceWorldNative(
         discardMechanics();
       // Work begun here starts silently; the next prediction must bound its completion.
       if (priorStage === 'approaching' && component.action?.stage === 'working') {
+        observeNativeAttackPreparation(world, actor, events);
         countDomainWork('nativeLocalActivityChanges');
         localize([actorId]);
       }
@@ -5390,6 +5400,18 @@ function* advanceWorldNative(
               );
         world = draftWorld(transition.world);
         events.push(...transition.events);
+        if (!transition.outcome.ok) {
+          const current = entityGet(world.entities, id)!,
+            episode = current.animal?.episode;
+          const profile = episode && nativeResponseProfile(world, episode.profilePin);
+          if (episode && profile) {
+            episode.mode = 'blocked';
+            episode.reviewAt = world.simTime + profile.blockedReviewSeconds;
+            episode.blocked = { reason: transition.outcome.code, basis: 'movement-admission' };
+            delete episode.proposal;
+            recordAnimalClockWrite(world, id);
+          }
+        }
         participants = nativeParticipants(world);
         discardMechanics();
       }
@@ -5831,6 +5853,7 @@ function* advanceWorldNative(
         advanceAction(world, actor, 0, events, options.constructionPermissions);
         // advanceAction mutates the action; read its stage afresh.
         const stage: string | undefined = entityGet(world.entities, id)?.actor?.action?.stage;
+        if (stage === 'working') observeNativeAttackPreparation(world, actor, events);
         startedWork ||= stage === 'working';
       }
     }
@@ -5982,6 +6005,20 @@ function* updateEncounters(
   for (const actor of frame.observers) {
     yield;
     const radius = visionRadius(world, actor.entity);
+    if (actor.nativeResponse) {
+      const episode = actor.entity.animal?.episode;
+      const due = episode && episode.reviewAt <= world.simTime;
+      if (frame.affected.has(actor.id) || due) {
+        reconcileNativeExposure(
+          world,
+          entityGet(world.entities, actor.id)!,
+          frame
+            .nearby(actor.position, radius, 'contact')
+            .flatMap((source) => entityGet(world.entities, source.id) ?? []),
+        );
+      }
+      continue;
+    }
     const sees = visionQuery(world, actor.entity);
     const touch = sensesFor(world, actor.entity).find(
       (s) => s.implementation === 'body-contact-v1',

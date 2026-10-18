@@ -20,6 +20,7 @@ export interface ExposureInput {
   radius: number;
   alive: boolean;
   memory: boolean;
+  nativeResponse: boolean;
   object: boolean;
   feature: string;
 }
@@ -99,6 +100,7 @@ export function captureExposure(entity: Entity): ExposureCapture | null {
       radius: profile.radius,
       alive: !!entity.actor?.alive,
       memory: hasMemory(entity),
+      nativeResponse: !!entity.animal?.episode,
       object: !entity.actor && !entity.animal,
       ...visibleFeature(entity),
     };
@@ -179,6 +181,7 @@ const equal = (a: ExposureInput | undefined, b: ExposureInput) =>
   a.radius === b.radius &&
   a.alive === b.alive &&
   a.memory === b.memory &&
+  a.nativeResponse === b.nativeResponse &&
   a.object === b.object &&
   a.feature === b.feature;
 const snapshot = <T extends object>(value: T): T => (isDraft(value) ? current(value) : value);
@@ -368,7 +371,7 @@ export function* prepareExposure(
     : new Set([...changes.sources, ...changes.observers]);
   for (const id of observerIds) {
     const source = prepared.inputs.get(id);
-    if (source?.alive && source.memory) {
+    if (source?.alive && (source.memory || source.nativeResponse)) {
       if (!prepared.observers.has(id))
         prepared.observers.set(id, {
           id,

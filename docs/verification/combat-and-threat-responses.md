@@ -1107,3 +1107,35 @@ withdrawal. The phase is not complete. No external calls were made. Additional
 Jev cost is **$0**; cumulative reported estimates remain Jev **$0.440786** and
 other providers **$0.207513**, uncertain commitments **$5.939396**, and conservative
 aggregate exposure **$6.587695**.
+
+## Native continuation and rest checkpoint
+
+The connected hare scenario advances to 600 game seconds through the ordinary
+navigation-aware native caller. Its alarm ends after escape and settling. One
+599-second continuation from the first movement boundary and ten shorter
+continuations reach the same end mode and saved random state (3613943297).
+This is one deterministic native scenario, not a density or gameplay-capacity
+measurement. Actual native episode, danger child records, selected action/refuge
+and observed-preparation bindings also round-trip through disposable PostgreSQL.
+
+Controlled clock and energy setup exercises the installed rest predicates:
+night energy 50 permits quiet sleep, the same night and energy during an actual
+alarm refuse routine sleep, and actual zero energy still activates rest during
+that alarm. This is a native policy check, not a natural fatigue/waking trial.
+The authored status policy is revision 4. Actual committed preparation begun after
+travel now reaches the same controller; action identities distinguish it from
+committed event causes. Exact body-distance and sight crossings share the existing
+motion forecast, including remembered-region growth and expiry boundaries.
+Specific transient-crossing and interval-partition cases for those new boundaries
+remain open. Unavailable complete route preparation blocks selection rather than
+silently choosing from partial answers; unchanged failed inputs retain blocked
+review without another worker request.
+
+Full TypeScript checking passes. Four focused existing files pass all 36 checks
+(perception, spatial world, simulation continuation and native values). The three
+previously recorded firing/escape cases remain open. Near-passage, finite bird
+escape, territorial withdrawal, browser, live character and density qualification
+remain unfinished. No external calls were made. Additional Jev cost is **$0**;
+cumulative reported estimates remain Jev **$0.440786** and other providers
+**$0.207513**, uncertain commitments **$5.939396**, and conservative aggregate
+exposure **$6.587695**.

@@ -59,7 +59,13 @@ sleep, flight and territorial withdrawal qualification remain unfinished. The
 first 32 existing checks passed 27; five hunting/custody assumptions failed. Two
 custody fixtures now use controlled missing sight rather than retaining incapacity
 through death, and those two checks pass. The remaining firing/escape cases are
-under investigation. This does not close CTR03 or CTR04.
+under investigation. A connected 600-game-second continuation now ends the alarm with identical saved
+randomness across whole/split advances, and actual episode/action/danger records
+round-trip through PostgreSQL. Installed quiet-night, alarm-night and zero-energy
+rest predicates pass controlled native checks. Exact continuous motion/sight and
+region-growth boundaries are connected; their specific transient cases remain
+open. Four existing files pass all 36 checks. Near-passage, bird flight and stag
+withdrawal are still unfinished. This does not close CTR03 or CTR04.
 
 Contract: [native execution](../projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04) and [animal world profile](../worlds/base/animal-responses.md).
 

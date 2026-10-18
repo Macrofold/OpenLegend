@@ -87,6 +87,7 @@ export function reconcileNativeDangers(
   world: WorldState,
   observer: Entity,
   episode: NativeResponseEpisode,
+  candidates?: Iterable<Entity>,
 ): NativeDangerFrame {
   const profile = nativeResponseProfile(world, episode.profilePin);
   if (!profile) return { status: 'unavailable', reason: 'profile-missing' };
@@ -102,7 +103,9 @@ export function reconcileNativeDangers(
   const newlyVisible: string[] = [];
   let changed = false;
   countDomainWork('nativeResponseDangerQueries');
-  for (const source of complete ? nearbyEntities(world, worldPosition(observer), radius) : []) {
+  for (const source of complete
+    ? (candidates ?? nearbyEntities(world, worldPosition(observer), radius))
+    : []) {
     countDomainWork('nativeResponseDangerCandidates');
     chargeWork({ tests: 1 });
     if (source.id === observer.id || !source.actor) continue;
@@ -140,6 +143,7 @@ export function reconcileNativeDangers(
         extent: { radius: extent.radius, height: extent.height },
         observedAt: world.simTime,
         visible: true,
+        ...(old?.insideAvoidance === undefined ? {} : { insideAvoidance: old.insideAvoidance }),
       };
       changed = true;
     }

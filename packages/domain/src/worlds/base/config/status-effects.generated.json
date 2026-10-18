@@ -1,5 +1,5 @@
 {
-  "revision": 3,
+  "revision": 4,
   "clockOffsetHours": 8,
   "namedTimes": { "dawn": 6, "dusk": 18 },
   "definitions": [
@@ -80,6 +80,14 @@
                     }
                   },
                   {
+                    "field": {
+                      "target": "$subject",
+                      "name": "nativeResponseActive",
+                      "operator": "equal",
+                      "value": false
+                    }
+                  },
+                  {
                     "compare": {
                       "target": "$subject",
                       "attribute": "wilderness:energy",
@@ -103,7 +111,14 @@
       },
       "reactivationDelaySeconds": 300,
       "occupiesAction": true,
-      "interruptOn": ["injury", "recovery", "new-action", "voluntary", "revived"],
+      "interruptOn": [
+        "perceived-danger",
+        "injury",
+        "recovery",
+        "new-action",
+        "voluntary",
+        "revived"
+      ],
       "whileActive": [
         {
           "changeRate": {

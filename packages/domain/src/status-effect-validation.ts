@@ -102,9 +102,15 @@ export function validateStatusCondition(
     object(c, ['target', 'name', 'operator', 'value']);
     reference(c.target);
     if (
-      !['controller', 'alive', 'incapacitated', 'grounded', 'activeWork', 'kind'].includes(
-        c.name,
-      ) ||
+      ![
+        'controller',
+        'alive',
+        'incapacitated',
+        'grounded',
+        'activeWork',
+        'nativeResponseActive',
+        'kind',
+      ].includes(c.name) ||
       !['equal', 'notEqual'].includes(c.operator)
     )
       fail('unsupported field.');

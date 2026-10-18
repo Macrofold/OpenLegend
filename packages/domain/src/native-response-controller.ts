@@ -6,12 +6,13 @@ import { TIME_EPSILON } from './simulation-time.js';
 import type { AnimalComponent, Entity, WorldState, WorldEvent } from './types.js';
 import { entityGet } from './entity-collection.js';
 import { bodyProfile, spatialMap, supportedPosition, worldPosition } from './spatial-state.js';
-import { distance3D, walkSurfaceLine } from '@open-legend/spatial';
+import { distance3D, walkSurfaceLine, SPATIAL_LIMITS } from '@open-legend/spatial';
 import { nativeResponseProfile } from './native-response.js';
 import {
   nativeRegionDangerKey,
   nativeDangerExpiresAt,
   nativeDangerSeparation,
+  nativeRouteDangerSeparation,
   reconcileNativeDangers,
 } from './native-response-danger.js';
 import {
@@ -26,7 +27,7 @@ import {
 } from './native-response-navigation.js';
 import { attackPreparation } from './combat-encounters.js';
 import { seesEntity } from './perception.js';
-import { recordSemanticChange } from './dependencies.js';
+import { recordSemanticChange, recordSensoryChange } from './dependencies.js';
 import { canonicalJson, contentLabel, emit } from './events.js';
 import { subjectNarration } from './narration.js';
 import { interruptStatusEffects } from './status-effects.js';
@@ -36,6 +37,7 @@ import { activelyParticipates } from './participation-state.js';
 
 function changed(world: WorldState, animal: Entity): void {
   recordAnimalClockWrite(world, animal.id);
+  recordSensoryChange(world, animal.id, true);
   recordSemanticChange(world, { kind: 'state', entityId: animal.id, field: 'behavior' });
 }
 
@@ -72,33 +74,17 @@ export function acquireNativeResponseEvent(
   )
     return;
   if (!felt && (!source || source.id === animal.id || !seesEntity(world, animal, source))) return;
-  const state = animal.animal;
-  const profile = nativeResponseProfile(world, state.episode?.profilePin ?? state.profile);
-  if (!profile) return;
-  const episode = (state.episode ??= {
-    id: event.id,
-    startedAt: event.at,
-    latestCause: { id: event.id, at: event.at },
-    profilePin: { ...state.profile },
-    locomotion: state.locomotion,
-    mode: 'escaping',
-    dangers: {},
-    reviewAt: world.simTime,
-    proposalGeneration: 0,
-  });
-  // Multiple observer accounts of one occurrence do not renew its deadline.
-  if (
-    episode.latestCause.id === event.id &&
-    episode.latestCause.at === event.at &&
-    episode.proposalGeneration > 0
-  )
+  if (preparation && source) {
+    observeNativeAttackPreparation(world, source, events);
     return;
-  episode.latestCause = { id: event.id, at: event.at };
-  episode.mode = 'escaping';
-  episode.reviewAt = world.simTime;
-  delete episode.clearSince;
-  delete episode.proposal;
-  delete episode.blocked;
+  }
+  const episode = beginNativeAlarm(
+    world,
+    animal,
+    { kind: 'event', id: event.id, at: event.at },
+    events,
+  );
+  if (!episode) return;
   if (felt) {
     const projectileId = event.data?.['projectileId'];
     const origin =
@@ -122,17 +108,169 @@ export function acquireNativeResponseEvent(
         : {}),
     };
   }
-  const wake = profile.wake;
-  const energy = wake && readEntityAttribute(world, animal, wake.attributeId);
-  if (wake && !animal.actor.incapacitated && typeof energy === 'number' && energy > wake.above)
-    interruptStatusEffects(world, animal, events, wake.reason);
   changed(world, animal);
+}
+
+function beginNativeAlarm(
+  world: WorldState,
+  animal: Entity,
+  cause: NonNullable<AnimalComponent['episode']>['latestCause'],
+  events: WorldEvent[],
+) {
+  const state = animal.animal!;
+  const profile = nativeResponseProfile(world, state.episode?.profilePin ?? state.profile);
+  if (!profile) return undefined;
+  const fresh = !state.episode;
+  const episode = (state.episode ??= {
+    id: cause.id,
+    startedAt: cause.at,
+    latestCause: cause,
+    profilePin: { ...state.profile },
+    locomotion: state.locomotion,
+    mode: 'escaping',
+    dangers: {},
+    reviewAt: world.simTime,
+    proposalGeneration: 0,
+  });
+  if (!fresh && episode.latestCause.kind === cause.kind && episode.latestCause.id === cause.id)
+    return episode;
+  episode.latestCause = { ...cause };
+  episode.mode = 'escaping';
+  episode.reviewAt = world.simTime;
+  delete episode.clearSince;
+  delete episode.proposal;
+  delete episode.blocked;
+  const wake = profile.wake,
+    energy = wake && readEntityAttribute(world, animal, wake.attributeId);
+  if (wake && !animal.actor!.incapacitated && typeof energy === 'number' && energy > wake.above)
+    interruptStatusEffects(world, animal, events, wake.reason);
+  if (fresh)
+    emit(
+      world,
+      events,
+      'animal-response',
+      subjectNarration(animal, profile.presentation.alarmed),
+      animal,
+    );
+  changed(world, animal);
+  return episode;
+}
+
+/** A real committed windup/aim can begin after travel, without another command.
+ * Its action identity is evidence of preparation, never a fabricated world event. */
+export function observeNativeAttackPreparation(
+  world: WorldState,
+  source: Entity,
+  events: WorldEvent[],
+): void {
+  const action = attackPreparation(world, source),
+    animal = action?.targetId && entityGet(world.entities, action.targetId);
+  if (
+    !animal ||
+    !animal.animal ||
+    !animal.actor?.alive ||
+    !activelyParticipates(animal) ||
+    (animal.threat && !animal.threat.relinquished) ||
+    action?.targetLife !== (animal.actor.physicalLife ?? 0) ||
+    !seesEntity(world, animal, source)
+  )
+    return;
+  const key = JSON.stringify([source.id, source.actor?.physicalLife ?? 0]);
+  if (animal.animal.episode?.preparations?.[key] === action.id) return;
+  const episode = beginNativeAlarm(
+    world,
+    animal,
+    { kind: 'action', id: action.id, at: world.simTime },
+    events,
+  );
+  if (episode) {
+    (episode.preparations ??= {})[key] = action.id;
+    changed(world, animal);
+  }
 }
 
 export type NativeResponseDecision =
   | { status: 'none' | 'pending' }
   | { status: 'choices'; routes: NativeRefugeRoute[] }
   | { status: 'stop' };
+
+/** The existing sensory phase selects changed observers and supplies its complete
+ * local candidates. Native animals retain physical evidence without the person's
+ * sighting, recognition, memory or model-decision machinery. */
+export function reconcileNativeExposure(
+  world: WorldState,
+  animal: Entity,
+  candidates?: Iterable<Entity>,
+): void {
+  const episode = animal.animal?.episode;
+  if (!episode || !animal.actor?.alive) return;
+  const frame = reconcileNativeDangers(world, animal, episode, candidates);
+  let reconsider = false,
+    meaningful = false;
+  if (frame.status !== 'complete') {
+    meaningful = episode.clearSince !== undefined;
+    delete episode.clearSince;
+    reconsider = episode.mode !== 'blocked';
+  } else {
+    const profile = frame.profile,
+      clear = profile.avoidanceDistance + profile.clearanceMargin;
+    for (const { key, danger } of frame.records) {
+      const inside =
+        nativeDangerSeparation(animal, worldPosition(animal), danger, profile, world.simTime) <
+        profile.avoidanceDistance - SPATIAL_LIMITS.epsilon;
+      if (danger.insideAvoidance === false && inside) reconsider = true;
+      if (danger.insideAvoidance !== inside) episode.dangers[key]!.insideAvoidance = inside;
+    }
+    const nearest = frame.records.reduce(
+      (minimum, { danger }) =>
+        Math.min(
+          minimum,
+          nativeDangerSeparation(animal, worldPosition(animal), danger, profile, world.simTime),
+        ),
+      Infinity,
+    );
+    if (nearest < clear - SPATIAL_LIMITS.epsilon && episode.clearSince !== undefined) {
+      delete episode.clearSince;
+      meaningful = true;
+      reconsider = true;
+    }
+    if (nearest < profile.avoidanceDistance && episode.mode === 'settling') reconsider = true;
+    const action = animal.actor.action;
+    if (frame.newlyVisible.length) {
+      const fresh = new Set(frame.newlyVisible);
+      reconsider ||= frame.records.some(
+        ({ key, danger }) =>
+          fresh.has(key) &&
+          (nativeDangerSeparation(animal, worldPosition(animal), danger, profile, world.simTime) <
+            clear ||
+            (action?.path.length &&
+              nativeRouteDangerSeparation(
+                animal,
+                supportedPosition(animal)!,
+                action.path,
+                danger,
+                profile,
+                world.simTime,
+              ) < profile.avoidanceDistance)),
+      );
+    }
+    if (episode.movement?.kind === 'action' && action?.id !== episode.movement.id)
+      reconsider = true;
+    if (
+      !action &&
+      episode.mode === 'blocked' &&
+      nearest >= clear &&
+      !capabilityBlocked(world, animal, 'actions') &&
+      !capabilityBlocked(world, animal, 'locomotion')
+    )
+      reconsider = true;
+  }
+  if (reconsider && episode.reviewAt > world.simTime) {
+    episode.reviewAt = world.simTime;
+    meaningful = true;
+  }
+  if (meaningful) changed(world, animal);
+}
 
 /** Native decisions prepare intentions only. The kernel admits a chosen ordinary
  * movement and its saved random draw in one atomic transition. */
@@ -259,6 +397,24 @@ export function nativeResponseDecision(
       candidates: candidates.candidates,
     };
   }
+  const basis = contentLabel(
+    canonicalJson([
+      spatialMap(world).spatial.revision,
+      episode.proposal.origin,
+      episode.proposal.body,
+      episode.proposal.candidates,
+      frame.records.map(({ key, danger }) => {
+        const { insideAvoidance: _band, ...geometry } = danger;
+        return { key, danger: geometry };
+      }),
+    ]),
+  );
+  if (episode.blocked?.basis === basis) {
+    delete episode.proposal;
+    episode.reviewAt = world.simTime + profile.blockedReviewSeconds;
+    changed(world, animal);
+    return { status: 'none' };
+  }
   const routes = preparedNativeRefugeRoutes(world, animal, frame, prepared);
   if (routes === undefined) {
     changed(world, animal);
@@ -266,18 +422,7 @@ export function nativeResponseDecision(
   }
   if (routes === 'unavailable') {
     episode.mode = 'blocked';
-    episode.blocked = {
-      reason: 'navigation-unavailable',
-      basis: contentLabel(
-        canonicalJson([
-          spatialMap(world).spatial.revision,
-          episode.proposal?.origin,
-          episode.proposal?.body,
-          episode.proposal?.candidates,
-          frame.records,
-        ]),
-      ),
-    };
+    episode.blocked = { reason: 'navigation-unavailable', basis };
     delete episode.proposal;
     episode.reviewAt = world.simTime + profile.blockedReviewSeconds;
     changed(world, animal);
@@ -285,13 +430,6 @@ export function nativeResponseDecision(
   }
   const choices = nativeRefugeChoices(routes, profile);
   if (!choices.length) {
-    const basis = contentLabel(
-      canonicalJson([
-        spatialMap(world).spatial.revision,
-        episode.proposal?.candidates,
-        frame.records,
-      ]),
-    );
     if (episode.blocked?.basis !== basis)
       emit(
         world,

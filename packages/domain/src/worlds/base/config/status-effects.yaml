@@ -1,6 +1,6 @@
 # Authored default-world status effects. Edit this file, then run pnpm config:generate.
 # Sleep/waking uses generic status-effect operations; no named runtime behavior.
-revision: 3
+revision: 4
 clockOffsetHours: 8
 # Clock hours a request may name as a stopping time ("until dawn"). This world's names and
 # hours; engine code reads them from the saved world. docs/worlds/base/time.md#named-clock-times
@@ -57,6 +57,11 @@ definitions:
                     clock: localTime
                     start: 22
                     end: 6
+                - field:
+                    target: $subject
+                    name: nativeResponseActive
+                    operator: equal
+                    value: false
                 - compare:
                     target: $subject
                     attribute: wilderness:energy
@@ -71,6 +76,7 @@ definitions:
     reactivationDelaySeconds: 300
     occupiesAction: true
     interruptOn:
+      - perceived-danger
       - injury
       - recovery
       - new-action
