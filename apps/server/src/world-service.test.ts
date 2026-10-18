@@ -15,6 +15,7 @@ import { projectView } from './view.js';
 import { WorldService } from './world-service.js';
 
 const stores = new Set<SqlGameRepository>();
+const services = new Map<WorldService, SqlGameRepository>();
 const directories: string[] = [];
 async function setup(path: string | undefined = undefined, existingClock?: { now: number }) {
   const store = await testRepository(path);
@@ -26,6 +27,7 @@ async function setup(path: string | undefined = undefined, existingClock?: { now
     OPENAI_API_KEY: 'private-llm-key',
   });
   const service = new WorldService(store, config, () => clock.now);
+  services.set(service, store);
   await enterLocalWorld(service);
   return { store, clock, service };
 }
@@ -51,8 +53,22 @@ async function run(
   }
 }
 afterEach(async () => {
-  for (const store of stores) await store.close();
+  // A native tick may return before its owned background snapshot is published.
+  // Follow host shutdown ordering before stopping the repository's journal worker.
+  for (const [service, store] of services) {
+    try {
+      if (stores.has(store)) {
+        await service.settleBackgroundSaves();
+        if (!service.storageError) await service.flush();
+      }
+    } finally {
+      service.releaseHostWork();
+    }
+  }
+  services.clear();
+  const closing = [...stores];
   stores.clear();
+  for (const store of closing) await store.close();
   for (const path of directories.splice(0)) rmSync(path, { recursive: true, force: true });
 });
 
@@ -377,6 +393,7 @@ describe('world presence, time and durable commands', () => {
     await service.tick(1);
     expect(service.world.simTime).toBe(0);
     const restored = new WorldService(store, service.config, () => clock.now);
+    services.set(restored, store);
     await enterLocalWorld(restored);
     await activate(restored);
     expect((await restored.command('ambiguous-eat', { type: 'eat', itemId: berry.id })).code).toBe(

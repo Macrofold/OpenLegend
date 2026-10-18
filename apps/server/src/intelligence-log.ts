@@ -1,7 +1,8 @@
+import { createNetworkOwner, type NetworkExchangeObserver } from '@open-legend/network';
 import { normalizeReceiptCost } from '@open-legend/ai';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
-import type { AiClient, FetchTransport, GenerateRequest } from '@open-legend/ai';
+import type { AiClient, GenerateRequest } from '@open-legend/ai';
 import type { IntelligenceCall } from '@open-legend/protocol';
 import type { GameRepository } from './store.js';
 import { recordBackgroundFailure } from './performance.js';
@@ -91,6 +92,11 @@ export class IntelligenceLog {
     });
   }
   private context = new AsyncLocalStorage<IntelligenceCall>();
+  readonly network = createNetworkOwner({
+    role: 'server-ai',
+    capacity: 32,
+    onExchange: (exchange) => this.observeExchange(exchange),
+  });
   constructor(private store: GameRepository) {}
   private pending = new Map<string, { call: IntelligenceCall; bytes: number }>();
   private pendingBytes = 0;
@@ -295,64 +301,28 @@ export class IntelligenceLog {
         }),
     };
   }
-  readonly fetch: FetchTransport = async (url, init) => {
+  private readonly observeExchange: NetworkExchangeObserver = (observed) => {
     const call = this.context.getStore();
-    if (!call) return await fetch(url, init);
-    const path = new URL(url).pathname;
+    if (!call || this.closed) return;
     const exchange: IntelligenceCall['exchanges'][number] = {
-      path,
-      method: init.method ?? 'GET',
-      startedAt: new Date().toISOString(),
-      input: typeof init.body === 'string' ? this.decode(init.body) : null,
+      path: new URL(observed.url).pathname,
+      method: observed.method,
+      startedAt: new Date(observed.startedAt).toISOString(),
+      input: observed.requestBody === undefined ? null : this.decode(observed.requestBody),
+      httpStatus: observed.status,
+      completedAt: new Date(observed.completedAt).toISOString(),
+      durationMs: Math.max(0, observed.completedAt - observed.startedAt),
+      truncated: observed.truncated || undefined,
+      output: observed.streaming
+        ? { unavailable: 'Streaming body omitted; final result is recorded.' }
+        : observed.bytes
+          ? this.decode(new TextDecoder().decode(observed.bytes))
+          : { unavailable: observed.error?.kind ?? 'Response body unavailable.' },
     };
     call.exchanges.push(exchange);
     if (call.exchanges.length > 100) {
       const oldestPoll = call.exchanges.findIndex((item) => item.method === 'GET');
       call.exchanges.splice(oldestPoll >= 0 ? oldestPoll : 0, 1);
-    }
-    try {
-      const response = await fetch(url, init);
-      exchange.httpStatus = response.status;
-      if (response.headers.get('content-type')?.includes('text/event-stream')) {
-        // Draining a clone here delays live delivery and retains private token frames.
-        // The ordinary final typed result/receipt is still recorded by run().
-        exchange.output = { unavailable: 'Streaming body omitted; final result is recorded.' };
-        return response;
-      }
-      // Bound diagnostic capture while leaving the original provider response untouched.
-      const reader = response.clone().body?.getReader();
-      if (reader) {
-        const chunks: Uint8Array[] = [];
-        let size = 0;
-        try {
-          for (;;) {
-            const chunk = await reader.read();
-            if (chunk.done) break;
-            const remaining = 1_000_000 - size;
-            chunks.push(chunk.value.subarray(0, remaining));
-            size += chunk.value.byteLength;
-            if (size > 1_000_000) {
-              exchange.truncated = true;
-              break;
-            }
-          }
-          exchange.output = this.decode(Buffer.concat(chunks).toString('utf8'));
-        } catch {
-          exchange.output = { error: 'Response capture interrupted.' };
-        } finally {
-          void reader.cancel().catch(() => undefined);
-        }
-      }
-      return response;
-    } catch (error) {
-      exchange.output = { error: error instanceof Error ? error.message : String(error) };
-      throw error;
-    } finally {
-      exchange.completedAt = new Date().toISOString();
-      exchange.durationMs = Math.max(
-        0,
-        Date.parse(exchange.completedAt) - Date.parse(exchange.startedAt),
-      );
     }
   };
   private decode(text: string): unknown {

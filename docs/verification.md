@@ -1,5 +1,7 @@
 # Verification
 
+- [Network request waiting](verification/bounded-network-requests.md) — shared lifetime and resource ownership, actual browser journeys, pinned SDK fixtures, generated cloud source and anonymous public-asset verification; the requested review corrections pass all 937 repository tests and the complete check/build chain; NET01–NET11 is complete.
+
 - [Optional performance collection](verification/performance/profiling-controls.md) — default-off server/worker collection, capture cleanup, tool modes, actual functional checks and required overhead-comparison limits.
 - [Asset storage and preservation](verification/game-asset-storage.md) — exact publication, shared-cache failures, real public/private delivery, historical preservation, asset-free builds and recovery evidence; incomplete migration/browser/restore gates remain explicit.
 

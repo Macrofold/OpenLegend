@@ -452,7 +452,11 @@ async function initializeGameServer(
   };
   if (config.creation.startup === 'awaiting-creation' && !options.createdActivation) {
     const assets =
-      options.clientAssets ?? (await createClientAssets(options.production, { authorizeAsset }));
+      options.clientAssets ??
+      (await createClientAssets(options.production, {
+        authorizeAsset,
+        networkCapacity: config.capacity.requests,
+      }));
     if (!options.clientAssets) onFailure(() => assets.close());
     return createAwaitingCreationHost({
       assets,
@@ -581,6 +585,14 @@ async function initializeGameServer(
   };
   const channels = new Map<string, Channel>();
   const streams = new Map<ServerResponse, StreamState>();
+  const writeStream = (stream: ServerResponse, state: StreamState, message: string): boolean => {
+    if (state.blocked || stream.destroyed) return false;
+    if (!stream.write(message)) {
+      state.blocked = true;
+      state.timeout = setTimeout(() => stream.destroy(), 30_000);
+    }
+    return !state.blocked;
+  };
   const privateStreams = new Set<{ check(): boolean; close(): void }>();
   let pendingStreams = 0;
   const projectionLane = new WorkLane('projection', config.capacity.requests);
@@ -671,11 +683,7 @@ async function initializeGameServer(
       const patch = channel.patches.get(state.revision);
       const message = patch?.message ?? `event: reset\ndata: ${JSON.stringify(channel.view)}\n\n`;
       state.revision = patch?.revision ?? channel.view.revision;
-      if (!stream.write(message)) {
-        state.blocked = true;
-        state.timeout = setTimeout(() => stream.destroy(), 30_000);
-        break;
-      }
+      if (!writeStream(stream, state, message)) break;
     }
   };
   let publishTimer: ReturnType<typeof setTimeout> | undefined;
@@ -684,6 +692,17 @@ async function initializeGameServer(
   let publishQueued = false;
   let nextPublicationAt = 0;
   let disposed = false;
+  // Quiet and paused worlds still prove transport liveness. One cadence visits
+  // existing streams without projecting the world or accumulating blocked writes.
+  const streamHeartbeat = setInterval(() => {
+    if (disposed) return;
+    for (const [stream, state] of streams) {
+      if (!service.currentScope(state.scope)) invalidateStream(stream);
+      else writeStream(stream, state, ': heartbeat\n\n');
+    }
+  }, 15_000);
+  streamHeartbeat.unref();
+  onFailure(() => clearInterval(streamHeartbeat));
   let shuttingDown: Promise<ShutdownReport> | undefined;
   const publish = () => {
     if (disposed) return;
@@ -757,7 +776,11 @@ async function initializeGameServer(
   const unsubscribe = service.subscribe(publish);
   onFailure(unsubscribe);
   const clientAssets =
-    options.clientAssets ?? (await createClientAssets(options.production, { authorizeAsset }));
+    options.clientAssets ??
+    (await createClientAssets(options.production, {
+      authorizeAsset,
+      networkCapacity: config.capacity.requests,
+    }));
   if (!options.clientAssets) onFailure(() => clientAssets.close());
   const server = createServer(async (request, response) => {
     const arrivedAt = options.profileCommand ? performance.now() : 0;
@@ -801,6 +824,12 @@ async function initializeGameServer(
         ? config.authentication.origin
         : `http://${request.headers.host}`;
     if (request.method === 'GET' && url.pathname.startsWith('/auth/')) {
+      const cancellation = new AbortController();
+      const disconnect = () => {
+        if (!response.writableFinished) cancellation.abort();
+      };
+      request.once('aborted', disconnect);
+      response.once('close', disconnect);
       try {
         if (url.pathname === '/auth/invite') {
           // The bearer token survives only the OIDC round trip; redemption needs verified identity.
@@ -827,7 +856,9 @@ async function initializeGameServer(
           const destination = await authentication.begin(
             browserToken,
             url.searchParams.get('change-account') === 'true',
+            cancellation.signal,
           );
+          cancellation.signal.throwIfAborted();
           response.setHeader('Set-Cookie', cookie('ol_login', browserToken, 300));
           response.writeHead(303, { Location: destination.href, 'Cache-Control': 'no-store' });
           response.end();
@@ -835,46 +866,63 @@ async function initializeGameServer(
         }
         if (url.pathname === '/auth/callback') {
           const callback = new URL(request.url!, ownOrigin);
-          const identity = await authentication.complete(callback, readCookie(request, 'ol_login'));
           const previous = readCookie(request, 'ol_session');
-          const login = await service.authenticationMutation(() =>
-            store.db.transaction(async () => {
-              const replacement = await store.authority.login(
-                identity,
-                now(),
-                config.authentication.sessionMs,
-                config.capacity.sessions,
-              );
-              if (previous) {
-                try {
-                  const oldSession = await store.authority.authenticate(previous, now());
-                  await store.authority.revokeSession(oldSession.id, now());
-                } catch (error) {
-                  if (!(error instanceof AuthorityError)) throw error;
-                }
-              }
-              return replacement;
-            }),
+          await authentication.complete(
+            callback,
+            readCookie(request, 'ol_login'),
+            async (identity, context) => {
+              const login = await service.authenticationMutation(() => {
+                context.throwIfStopped();
+                return store.db.transaction(async () => {
+                  const replacement = await store.authority.login(
+                    identity,
+                    now(),
+                    config.authentication.sessionMs,
+                    config.capacity.sessions,
+                  );
+                  if (previous) {
+                    try {
+                      const oldSession = await store.authority.authenticate(previous, now());
+                      await store.authority.revokeSession(oldSession.id, now());
+                    } catch (error) {
+                      if (!(error instanceof AuthorityError)) throw error;
+                    }
+                  }
+                  return replacement;
+                });
+              });
+              context.throwIfStopped();
+              const invite = readCookie(request, 'ol_invite');
+              const location = invite
+                ? await operations.completeInvite(invite, login.session.accountId, context)
+                : '/';
+              context.throwIfStopped();
+              response.setHeader('Set-Cookie', [
+                cookie(
+                  'ol_session',
+                  login.token,
+                  Math.floor(config.authentication.sessionMs / 1000),
+                ),
+                cookie('ol_login', '', 0),
+                cookie('ol_invite', '', 0),
+              ]);
+              response.writeHead(303, { Location: location, 'Cache-Control': 'no-store' });
+              response.end();
+            },
+            cancellation.signal,
           );
-          const invite = readCookie(request, 'ol_invite');
-          const location = invite
-            ? await operations.completeInvite(invite, login.session.accountId)
-            : '/';
-          response.setHeader('Set-Cookie', [
-            cookie('ol_session', login.token, Math.floor(config.authentication.sessionMs / 1000)),
-            cookie('ol_login', '', 0),
-            cookie('ol_invite', '', 0),
-          ]);
-          response.writeHead(303, { Location: location, 'Cache-Control': 'no-store' });
-          response.end();
           return;
         }
       } catch {
+        if (cancellation.signal.aborted || response.destroyed) return;
         return send(response, 401, {
           ok: false,
           code: 'session',
           message: 'Sign-in could not be verified. Start sign-in again.',
         });
+      } finally {
+        request.off('aborted', disconnect);
+        response.off('close', disconnect);
       }
       return send(response, 404, { ok: false, code: 'route' });
     }
@@ -1232,7 +1280,7 @@ async function initializeGameServer(
             });
             response.flushHeaders();
             // An up-to-date paused world still needs a live, established stream.
-            response.write(': connected\n\n');
+            writeStream(response, streams.get(response)!, ': connected\n\n');
             pump(response);
             publish();
           } catch (error) {
@@ -3618,6 +3666,7 @@ async function initializeGameServer(
    * report states whether the final save completed and the last revision confirmed durable. */
   async function shutdownOnce(deadlineMs: number): Promise<ShutdownReport> {
     disposed = true;
+    clearInterval(streamHeartbeat);
     creationRecoveryStop.abort();
     maintenance.close();
     const until = performance.now() + deadlineMs;
@@ -3708,7 +3757,15 @@ async function initializeGameServer(
         }),
       0.5,
     );
-    if (!options.clientAssets) await stage('Client assets', () => clientAssets.close(), 0.5);
+    if (!options.clientAssets)
+      await stage(
+        'Client assets',
+        () =>
+          clientAssets.close({
+            timeoutMs: Math.max(1, Math.floor((until - performance.now()) * 0.5)),
+          }),
+        0.5,
+      );
     service.releaseHostWork();
     await stage('Storage', () => store.close(), 1);
     // A final save that finished after its stage deadline still counts as saved.

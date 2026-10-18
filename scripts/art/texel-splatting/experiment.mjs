@@ -12,7 +12,18 @@ import { createDirect } from '/upstream/demo/direct.ts';
 import { lookAt, multiply, perspective } from '/upstream/src/math.ts';
 import { createSky, sampleGradient, uploadSky, uploadSkyScene } from '/upstream/src/sky.ts';
 
-const geometry = await (await fetch('/geometry.json')).json();
+import { createNetworkOwner, requestText } from '/network.mjs';
+import { geometryBytes } from '/geometry-policy.mjs';
+const network = createNetworkOwner({ role: 'tool-experiment-geometry', capacity: 8 });
+const geometry = await network.run({ timeoutMs: 15_000 }, async (operation) => {
+  const response = await requestText(operation, {
+    url: '/geometry.json',
+    bodyPolicy: { kind: 'bounded', maxBytes: geometryBytes, exactBytes: geometryBytes },
+  });
+  if (response.status !== 200) throw new Error('The exact study geometry could not be loaded.');
+  operation.throwIfStopped();
+  return JSON.parse(response.text);
+});
 const adapter = await navigator.gpu?.requestAdapter();
 if (!adapter) throw new Error('E07 requires a WebGPU adapter.');
 const timestamps = adapter.features.has('timestamp-query');

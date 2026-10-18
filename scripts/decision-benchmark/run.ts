@@ -506,9 +506,13 @@ export async function runBenchmark(
       throw new Error(
         `Untracked benchmark source is missing from the phase snapshot; add or commit it first: ${untrackedSource.join(', ')}`,
       );
-    const sourceDiff = execFileSync('git', ['diff', 'HEAD', '--', ...sourcePaths], {
-      encoding: 'utf8',
-    });
+    const sourceDiff = execFileSync(
+      'git',
+      ['diff', '--no-ext-diff', '--no-textconv', 'HEAD', '--', ...sourcePaths],
+      {
+        encoding: 'utf8',
+      },
+    );
     await writeFile(join(directory, `source-diff-${executionPhase}.patch`), sourceDiff, {
       flag: 'wx',
       mode: 0o600,

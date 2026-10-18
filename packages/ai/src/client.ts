@@ -1,5 +1,6 @@
 import { captureHttpErrorDiagnostics, captureResponseRateLimits } from './http-diagnostics.js';
-import { readResponseBody } from './http-response.js';
+import { NetworkError } from '@open-legend/network';
+import { providerOwner, providerText, uncertainHttpStatus } from './provider-http.js';
 import {
   compileSchema,
   decodeJudge,
@@ -64,7 +65,7 @@ function httpError(status: number): OutcomeError {
   if (status === 404) return new OutcomeError('unavailable', 'provider_or_model_unavailable');
   if (status === 429 || status === 529)
     return new OutcomeError('unavailable', 'provider_rate_limited');
-  if (status >= 500 || status === 408)
+  if (uncertainHttpStatus(status))
     return new OutcomeError('uncertain', 'provider_completion_unknown', true);
   if (status === 400 || status === 413 || status === 422)
     return new OutcomeError('invalid', 'provider_rejected_request');
@@ -77,7 +78,7 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
   const maxRequestBytes = limit(config.maxRequestBytes, 500_000, 1_048_576);
   const maxResponseBytes = limit(config.maxResponseBytes, 262_144, 2_097_152);
   const maxOutputTokens = limit(config.maxOutputTokens, 2048, 16_384);
-  const fetcher = config.fetch ?? ((url: string, init: RequestInit) => fetch(url, init));
+  const network = providerOwner(config.network, config.fetch);
   // Capture server configuration; later caller mutation must not change an admitted request.
   const capture = <T extends ProviderConfig>(provider: 'jev' | 'openai', options: T | undefined) =>
     options
@@ -126,14 +127,7 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
       dispatched: false,
       completionUncertain: false,
     };
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const controller = new AbortController();
-    let callerCancelled = false;
     let httpFailure: OutcomeError | undefined;
-    const externalAbort = () => {
-      callerCancelled = true;
-      controller.abort();
-    };
     const finish = () => {
       receipt.completedAt = new Date().toISOString();
       receipt.latencyMs = Math.max(0, Date.now() - started);
@@ -165,107 +159,114 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
         (request.deadlineMs ?? started + timeoutMs) - Date.now(),
       );
       if (remaining <= 0) throw new OutcomeError('failed', 'deadline_expired');
-      request.signal?.addEventListener('abort', externalAbort, { once: true });
-      if (request.signal?.aborted) externalAbort();
-      timer = setTimeout(() => controller.abort(), remaining);
-      const aborted = new Promise<never>((_, reject) => {
-        const rejectAbort = () =>
-          reject(
-            httpFailure ??
-              new OutcomeError(
-                callerCancelled ? 'cancelled' : 'uncertain',
-                callerCancelled ? 'caller_cancelled' : 'deadline_exceeded',
-                receipt.dispatched,
-              ),
+      const value = await network.run(
+        {
+          timeoutMs: Math.max(1, Math.floor(remaining)),
+          deadlineAtMs: request.deadlineMs,
+          signal: request.signal,
+        },
+        async (operation): Promise<T> => {
+          operation.throwIfStopped();
+          receipt.dispatched = true;
+          const raw = await providerText(
+            operation,
+            {
+              url: endpoint,
+              init: {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${options.apiKey}`,
+                },
+                body,
+                redirect: 'error',
+              },
+              bodyPolicy: { kind: 'bounded', maxBytes: maxResponseBytes },
+            },
+            (metadata) => {
+              receipt.httpStatus = metadata.status;
+              captureResponseRateLimits(receipt, metadata.headers);
+              const traceId = metadata.headers.get('x-request-id');
+              if (traceId && /^[\w.:-]{1,256}$/.test(traceId)) receipt.providerRequestId = traceId;
+              if (metadata.status < 200 || metadata.status >= 300)
+                httpFailure = httpError(metadata.status);
+            },
           );
-        controller.signal.addEventListener('abort', rejectAbort, { once: true });
-        if (controller.signal.aborted) rejectAbort();
-      });
-      const operation = async (): Promise<T> => {
-        if (controller.signal.aborted) throw new OutcomeError('cancelled', 'caller_cancelled');
-        receipt.dispatched = true;
-        const response = await fetcher(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${options.apiKey}`,
-          },
-          body,
-          signal: controller.signal,
-          redirect: 'error',
-        });
-        // An injected transport may ignore abort. Never consume its late response.
-        if (controller.signal.aborted) {
-          void response.body?.cancel().catch(() => undefined);
-          throw new OutcomeError('uncertain', 'late_response', true);
-        }
-        receipt.httpStatus = response.status;
-        captureResponseRateLimits(receipt, response.headers);
-        const traceId = response.headers.get('x-request-id');
-        if (traceId && /^[\w.:-]{1,256}$/.test(traceId)) receipt.providerRequestId = traceId;
-        if (!response.ok) {
-          httpFailure = httpError(response.status);
-          await captureHttpErrorDiagnostics(response, receipt, controller.signal, maxResponseBytes);
-          throw httpFailure;
-        }
-        const raw = await readResponseBody(response, maxResponseBytes, controller.signal);
-        if (controller.signal.aborted)
-          throw new OutcomeError(
-            callerCancelled ? 'cancelled' : 'uncertain',
-            callerCancelled ? 'caller_cancelled' : 'deadline_exceeded',
-            true,
-          );
-        let data: unknown;
-        try {
-          data = JSON.parse(raw);
-        } catch {
-          throw new InvalidData('invalid_response_json');
-        }
-        // Bound nesting before decoder/schema traversal as well as bounding bytes on the wire.
-        serialize(data, maxResponseBytes);
-        if (record(data)) {
-          if (typeof data.model === 'string' && /^[\w./:-]{1,128}$/.test(data.model)) {
-            receipt.model = data.model;
-            receipt.modelVersionStatus = 'reported';
+          if (httpFailure) {
+            captureHttpErrorDiagnostics(raw, receipt);
+            throw httpFailure;
           }
-          if (typeof data.id === 'string' && /^[\w.:-]{1,256}$/.test(data.id))
-            receipt.providerRequestId = data.id;
-          const usage = decodeUsage(data);
-          if (usage) {
-            receipt.usage = usage;
-            const cost = estimateCostUsd(
-              usage,
-              modelTokenPrices(
-                options.modelPrices ?? [],
-                model,
-                data.model === undefined ? model : typeof data.model === 'string' ? data.model : '',
-              ),
-            );
-            if (cost !== undefined) receipt.estimatedCostUsd = cost;
+          let data: unknown;
+          try {
+            data = JSON.parse(raw);
+          } catch {
+            throw new InvalidData('invalid_response_json');
           }
-        }
-        return prepared.decode(data);
-      };
-      const value = await Promise.race([aborted, operation()]);
+          // Bound nesting before decoder/schema traversal as well as bounding bytes on the wire.
+          serialize(data, maxResponseBytes);
+          if (record(data)) {
+            if (typeof data.model === 'string' && /^[\w./:-]{1,128}$/.test(data.model)) {
+              receipt.model = data.model;
+              receipt.modelVersionStatus = 'reported';
+            }
+            if (typeof data.id === 'string' && /^[\w.:-]{1,256}$/.test(data.id))
+              receipt.providerRequestId = data.id;
+            const usage = decodeUsage(data);
+            if (usage) {
+              receipt.usage = usage;
+              const cost = estimateCostUsd(
+                usage,
+                modelTokenPrices(
+                  options.modelPrices ?? [],
+                  model,
+                  data.model === undefined
+                    ? model
+                    : typeof data.model === 'string'
+                      ? data.model
+                      : '',
+                ),
+              );
+              if (cost !== undefined) receipt.estimatedCostUsd = cost;
+            }
+          }
+          const decoded = prepared.decode(data);
+          operation.throwIfStopped();
+          return decoded;
+        },
+      );
       finish();
       return { outcome: 'value', value, receipt };
     } catch (error) {
       const normalized =
-        error instanceof OutcomeError
-          ? error
-          : error instanceof InvalidData
-            ? new OutcomeError('invalid', error.code)
-            : new OutcomeError(
-                receipt.dispatched ? 'uncertain' : 'failed',
-                receipt.dispatched ? 'transport_completion_unknown' : 'request_preparation_failed',
-                receipt.dispatched,
-              );
+        httpFailure ??
+        (error instanceof NetworkError &&
+        ['body_too_large', 'invalid_encoding', 'body_length_mismatch'].includes(error.kind)
+          ? new OutcomeError(
+              'invalid',
+              error.kind === 'body_too_large' ? 'response_too_large' : 'invalid_response_encoding',
+            )
+          : error instanceof NetworkError && error.kind === 'cancelled'
+            ? new OutcomeError('cancelled', 'caller_cancelled', receipt.dispatched)
+            : error instanceof NetworkError && error.kind === 'deadline_exceeded'
+              ? new OutcomeError(
+                  receipt.dispatched ? 'uncertain' : 'failed',
+                  'deadline_exceeded',
+                  receipt.dispatched,
+                )
+              : error instanceof OutcomeError
+                ? error
+                : error instanceof InvalidData
+                  ? new OutcomeError('invalid', error.code)
+                  : new OutcomeError(
+                      receipt.dispatched ? 'uncertain' : 'failed',
+                      receipt.dispatched
+                        ? 'transport_completion_unknown'
+                        : 'request_preparation_failed',
+                      receipt.dispatched,
+                    ));
       receipt.completionUncertain = normalized.uncertain;
       finish();
       return { outcome: normalized.outcome, reason: normalized.reason, receipt };
-    } finally {
-      if (timer) clearTimeout(timer);
-      request.signal?.removeEventListener('abort', externalAbort);
     }
   }
 

@@ -623,7 +623,7 @@ export class DecisionEscalator {
             modelPrices: c.llmModelPrices,
             reasoningEffort: DECISION_EFFORT,
           },
-          fetch: this.log.fetch,
+          network: this.log.network,
           timeoutMs: Math.max(1, child.publishBy - this.now()),
           maxRequestBytes: 500_000,
           maxResponseBytes: 500_000,

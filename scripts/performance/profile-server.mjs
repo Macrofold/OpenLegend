@@ -1,3 +1,4 @@
+import { toolHttp, toolStream } from '../network.ts';
 import { profilingOptions } from './profiling-options.ts';
 import { readFile, writeFile, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir, cpus, loadavg } from 'node:os';
@@ -41,8 +42,8 @@ const distribution = (values) => ({
 // Drive presence/control with the measured login's current lease. The process-local
 // setup lease can become stale when HTTP entry or a restart replaces control.
 async function controlWorld(base, cookie, input) {
-  const view = await (await fetch(base + '/api/state', { headers: { cookie } })).json();
-  const response = await fetch(base + '/api/control', {
+  const view = await (await toolHttp(base + '/api/state', { headers: { cookie } })).json();
+  const response = await toolHttp(base + '/api/control', {
     method: 'POST',
     headers: {
       cookie,
@@ -57,8 +58,8 @@ async function controlWorld(base, cookie, input) {
     throw Error(result.message ?? 'Could not control profiling world');
 }
 async function resumeWorld(base, cookie) {
-  const view = await (await fetch(base + '/api/state', { headers: { cookie } })).json();
-  const response = await fetch(base + '/api/embodiment', {
+  const view = await (await toolHttp(base + '/api/state', { headers: { cookie } })).json();
+  const response = await toolHttp(base + '/api/embodiment', {
     method: 'POST',
     headers: {
       cookie,
@@ -75,7 +76,7 @@ async function resumeWorld(base, cookie) {
   const result = await response.json();
   if (!response.ok || !result.ok)
     throw Error(result.message ?? 'Could not take control of profiling fixture');
-  return (await fetch(base + '/api/state', { headers: { cookie } })).json();
+  return (await toolHttp(base + '/api/state', { headers: { cookie } })).json();
 }
 
 // A separate process keeps a busy server event loop from silently delaying the load generator.
@@ -97,21 +98,17 @@ async function clientLoad() {
   };
   process.on('message', measurementMessage);
   const streamAbort = new AbortController();
-  const stream = await fetch(base + '/api/events', {
-    headers: { cookie },
-    signal: streamAbort.signal,
-  });
-  if (!stream.ok || !stream.body) throw Error('SSE connection failed: ' + stream.status);
   const chunks = [];
-  const reading = (async () => {
-    try {
-      for await (const chunk of stream.body) {
-        chunks.push({ at: timestamp(), bytes: chunk.byteLength });
-      }
-    } catch (error) {
-      if (!streamAbort.signal.aborted) throw error;
-    }
-  })();
+  const stream = toolStream(
+    base + '/api/events',
+    { headers: { cookie }, signal: streamAbort.signal },
+    (chunk) => chunks.push({ at: timestamp(), bytes: chunk.byteLength }),
+    Math.ceil((seconds + 180) * 1000),
+  );
+  await stream.ready;
+  const reading = stream.done.catch((error) => {
+    if (!streamAbort.signal.aborted) throw error;
+  });
   const go = once(process, 'message');
   process.send({ ready: true });
   const [begin] = await go;
@@ -145,7 +142,7 @@ async function clientLoad() {
   };
   await Promise.all([
     periodic(3000, async (i) => {
-      const response = await fetch(base + '/api/presence', {
+      const response = await toolHttp(base + '/api/presence', {
         method: 'POST',
         headers: {
           cookie,
@@ -165,7 +162,7 @@ async function clientLoad() {
         i % 3 === 2
           ? { type: 'cancel' }
           : { type: 'move', position: { ...position, x: position.x + (i % 2 ? 0 : 0.5) } };
-      const response = await fetch(base + '/api/command', {
+      const response = await toolHttp(base + '/api/command', {
         method: 'POST',
         headers: {
           cookie,
@@ -187,7 +184,7 @@ async function clientLoad() {
     }),
     periodic(250, async () => {
       const at = performance.now();
-      const response = await fetch(base + '/api/state', {
+      const response = await toolHttp(base + '/api/state', {
         headers: { cookie },
         signal: AbortSignal.timeout(15000),
       });
@@ -480,7 +477,7 @@ async function main() {
     game = await startGame(false);
     await new Promise((done) => game.server.listen(0, config.host, done));
     let base = 'http://' + config.host + ':' + game.server.address().port;
-    let response = await fetch(base + '/api/state');
+    let response = await toolHttp(base + '/api/state');
     let cookie = response.headers.get('set-cookie')?.split(';')[0];
     await response.arrayBuffer();
     if (!cookie) throw Error('No local session');
@@ -504,7 +501,7 @@ async function main() {
     game = await startGame(true);
     await new Promise((done) => game.server.listen(0, config.host, done));
     base = 'http://' + config.host + ':' + game.server.address().port;
-    response = await fetch(base + '/api/state');
+    response = await toolHttp(base + '/api/state');
     cookie = response.headers.get('set-cookie')?.split(';')[0];
     await response.arrayBuffer();
     if (!cookie) throw Error('No restarted local session');

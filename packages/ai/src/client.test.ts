@@ -361,6 +361,7 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
     [401, 'unavailable'],
     [429, 'unavailable'],
     [422, 'invalid'],
+    [408, 'uncertain'],
     [503, 'uncertain'],
   ] as const)('classifies HTTP %s as %s without retries', async (status, outcome) => {
     const fetcher = vi.fn<FetchTransport>(async () =>
@@ -571,32 +572,41 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
   });
 
   it('preserves a known 429 refusal if the diagnostic body stalls past the deadline', async () => {
-    const cancel = vi.fn();
-    const result = await createAiClient({
-      openai: { apiKey: 'fixture' },
-      timeoutMs: 15,
-      fetch: async () =>
-        new Response(
-          new ReadableStream({
-            start(controller) {
-              controller.enqueue(new TextEncoder().encode('{'));
-            },
-            cancel,
-          }),
-          { status: 429, headers: { 'retry-after': '10' } },
-        ),
-    }).generate(generation);
-    expect(result).toMatchObject({
-      outcome: 'unavailable',
-      reason: 'provider_rate_limited',
-      receipt: {
-        httpStatus: 429,
-        retryAfterMs: 10000,
-        completionUncertain: false,
-      },
-    });
-    expect(cancel).toHaveBeenCalledOnce();
-    expect(result.receipt.estimatedCostUsd).toBeUndefined();
+    vi.useFakeTimers();
+    try {
+      const cancel = vi.fn();
+      const pending = createAiClient({
+        openai: { apiKey: 'fixture' },
+        timeoutMs: 15,
+        fetch: async () =>
+          new Response(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(new TextEncoder().encode('{'));
+              },
+              cancel,
+            }),
+            { status: 429, headers: { 'retry-after': '10' } },
+          ),
+      }).generate(generation);
+      // Advance only after the injected headers can arrive; cold schema compilation
+      // must not turn a body-timeout fixture into a pre-dispatch timeout.
+      await vi.advanceTimersByTimeAsync(15);
+      const result = await pending;
+      expect(result).toMatchObject({
+        outcome: 'unavailable',
+        reason: 'provider_rate_limited',
+        receipt: {
+          httpStatus: 429,
+          retryAfterMs: 10000,
+          completionUncertain: false,
+        },
+      });
+      expect(cancel).toHaveBeenCalledOnce();
+      expect(result.receipt.estimatedCostUsd).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('times out even when the transport ignores AbortSignal', async () => {

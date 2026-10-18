@@ -1,3 +1,5 @@
+import { NetworkError, type NetworkOwner } from '@open-legend/network';
+import { providerOwner, providerText, uncertainHttpStatus } from './provider-http.js';
 import { createHash } from 'node:crypto';
 import type {
   AiReceipt,
@@ -22,10 +24,12 @@ export function createEmbeddingClient(config: {
   dimensions: number;
   modelPrices?: readonly ModelTokenPrices[];
   fetch?: FetchTransport;
+  network?: NetworkOwner;
   timeoutMs?: number;
 }): EmbeddingClient {
   const modelPrices = captureModelPrices(config.modelPrices ?? []);
   config = { ...config };
+  const network = providerOwner(config.network, config.fetch);
   return {
     async embed(request) {
       const started = Date.now();
@@ -60,11 +64,6 @@ export function createEmbeddingClient(config: {
           Buffer.byteLength(JSON.stringify(request.texts)) > EMBEDDING_LIMITS.batchBytes
         )
           return result('invalid', 'Embedding input exceeds batch limits.');
-        const signal = AbortSignal.any([
-          ...(request.signal ? [request.signal] : []),
-          AbortSignal.timeout(config.timeoutMs ?? 15000),
-        ]);
-        signal.throwIfAborted();
         const body = JSON.stringify({
           model: config.model,
           input: request.texts,
@@ -72,97 +71,121 @@ export function createEmbeddingClient(config: {
           encoding_format: 'float',
         });
         receipt.providerRequestDigest = createHash('sha256').update(body).digest('hex');
-        receipt.dispatched = true;
-        const response = await (config.fetch ?? fetch)('https://api.openai.com/v1/embeddings', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${config.apiKey}`,
-            'Content-Type': 'application/json',
-            // Recoverable from the retained receipt even when no response arrives.
-            // A digest avoids raw caller text and satisfies the ASCII header contract.
-            'X-Client-Request-Id': createHash('sha256').update(receipt.requestId).digest('hex'),
+        return await network.run(
+          {
+            timeoutMs: config.timeoutMs ?? 15000,
+            deadlineAtMs: request.deadlineMs,
+            signal: request.signal,
           },
-          body,
-          signal,
-          redirect: 'error',
-        });
-        receipt.httpStatus = response.status;
-        const externalId = response.headers.get('x-request-id');
-        if (externalId && /^[\w.:-]{1,256}$/.test(externalId))
-          receipt.providerRequestId = externalId;
-        if (!response.ok) {
-          void response.body?.cancel();
-          receipt.completionUncertain = response.status >= 500;
-          return result(
-            receipt.completionUncertain ? 'uncertain' : 'unavailable',
-            `Embedding HTTP ${response.status}.`,
-          );
-        }
-        const reader = response.body!.getReader();
-        const chunks: Uint8Array[] = [];
-        let bytes = 0;
-        try {
-          for (;;) {
-            const next = await reader.read();
-            if (next.done) break;
-            bytes += next.value.byteLength;
-            if (bytes > 2000000) throw new Error('Embedding response too large.');
-            chunks.push(next.value);
-          }
-        } finally {
-          void reader.cancel().catch(() => {});
-        }
-        const data: unknown = JSON.parse(Buffer.concat(chunks).toString());
-        if (!record(data)) return result('invalid', 'Invalid embedding response.');
-        if (typeof data.model === 'string' && /^[\w./:-]{1,128}$/.test(data.model)) {
-          receipt.model = data.model;
-          receipt.modelVersionStatus = 'reported';
-        }
-        // Billing survives unusable vectors: a completed malformed result can still cost money.
-        // docs/ai-providers.md#receipts-outcomes-and-accounting
-        const usage = decodeUsage({
-          usage: {
-            input_tokens: record(data.usage) ? data.usage.prompt_tokens : undefined,
-            output_tokens: 0,
+          async (operation) => {
+            operation.throwIfStopped();
+            receipt.dispatched = true;
+            const raw = await providerText(
+              operation,
+              {
+                url: 'https://api.openai.com/v1/embeddings',
+                init: {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${config.apiKey}`,
+                    'Content-Type': 'application/json',
+                    'X-Client-Request-Id': createHash('sha256')
+                      .update(receipt.requestId)
+                      .digest('hex'),
+                  },
+                  body,
+                  redirect: 'error',
+                },
+                bodyPolicy: { kind: 'bounded', maxBytes: 2000000 },
+              },
+              (metadata) => {
+                receipt.httpStatus = metadata.status;
+                const externalId = metadata.headers.get('x-request-id');
+                if (externalId && /^[\w.:-]{1,256}$/.test(externalId))
+                  receipt.providerRequestId = externalId;
+              },
+            );
+            if (
+              receipt.httpStatus !== undefined &&
+              (receipt.httpStatus < 200 || receipt.httpStatus >= 300)
+            ) {
+              receipt.completionUncertain = uncertainHttpStatus(receipt.httpStatus);
+              return result(
+                receipt.completionUncertain ? 'uncertain' : 'unavailable',
+                `Embedding HTTP ${receipt.httpStatus}.`,
+              );
+            }
+            const data: unknown = JSON.parse(raw);
+            if (!record(data)) return result('invalid', 'Invalid embedding response.');
+            if (typeof data.model === 'string' && /^[\w./:-]{1,128}$/.test(data.model)) {
+              receipt.model = data.model;
+              receipt.modelVersionStatus = 'reported';
+            }
+            // Billing survives unusable vectors: a completed malformed result can still cost money.
+            // docs/ai-providers.md#receipts-outcomes-and-accounting
+            const usage = decodeUsage({
+              usage: {
+                input_tokens: record(data.usage) ? data.usage.prompt_tokens : undefined,
+                output_tokens: 0,
+              },
+            });
+            if (usage) {
+              receipt.usage = usage;
+              receipt.estimatedCostUsd = estimateCostUsd(
+                usage,
+                modelTokenPrices(
+                  modelPrices,
+                  config.model,
+                  data.model === undefined
+                    ? config.model
+                    : typeof data.model === 'string'
+                      ? data.model
+                      : '',
+                ),
+              );
+            }
+            if (!Array.isArray(data.data) || data.data.length !== request.texts.length)
+              return result('invalid', 'Missing embeddings.');
+            if (data.data.some((value) => !record(value) || !Number.isSafeInteger(value.index)))
+              return result('invalid', 'Invalid embedding vector.');
+            const vectors = data.data as { index: number; embedding: unknown }[];
+            vectors.sort((a, b) => a.index - b.index);
+            if (
+              vectors.some(
+                (v, i) =>
+                  v.index !== i ||
+                  !Array.isArray(v.embedding) ||
+                  v.embedding.length !== config.dimensions ||
+                  v.embedding.some((x) => !Number.isFinite(x)) ||
+                  !v.embedding.some((x) => x !== 0),
+              )
+            )
+              return result('invalid', 'Invalid embedding vector.');
+            operation.throwIfStopped();
+            return {
+              outcome: 'value' as const,
+              value: vectors.map((v) => v.embedding as number[]),
+              receipt,
+            };
           },
-        });
-        if (usage) {
-          receipt.usage = usage;
-          receipt.estimatedCostUsd = estimateCostUsd(
-            usage,
-            modelTokenPrices(
-              modelPrices,
-              config.model,
-              data.model === undefined
-                ? config.model
-                : typeof data.model === 'string'
-                  ? data.model
-                  : '',
-            ),
-          );
-        }
-        if (!Array.isArray(data.data) || data.data.length !== request.texts.length)
-          return result('invalid', 'Missing embeddings.');
-        if (data.data.some((value) => !record(value) || !Number.isSafeInteger(value.index)))
-          return result('invalid', 'Invalid embedding vector.');
-        const vectors = data.data as { index: number; embedding: unknown }[];
-        vectors.sort((a, b) => a.index - b.index);
+        );
+      } catch (error) {
         if (
-          vectors.some(
-            (v, i) =>
-              v.index !== i ||
-              !Array.isArray(v.embedding) ||
-              v.embedding.length !== config.dimensions ||
-              v.embedding.some((x) => !Number.isFinite(x)) ||
-              !v.embedding.some((x) => x !== 0),
-          )
-        )
-          return result('invalid', 'Invalid embedding vector.');
-        return { outcome: 'value', value: vectors.map((v) => v.embedding as number[]), receipt };
-      } catch {
+          receipt.httpStatus !== undefined &&
+          receipt.httpStatus >= 300 &&
+          receipt.httpStatus < 500 &&
+          !uncertainHttpStatus(receipt.httpStatus)
+        ) {
+          receipt.completionUncertain = false;
+          return result('unavailable', `Embedding HTTP ${receipt.httpStatus}.`);
+        }
         receipt.completionUncertain = receipt.dispatched;
         return result(
-          request.signal?.aborted ? 'cancelled' : 'uncertain',
+          error instanceof NetworkError && error.kind === 'cancelled'
+            ? 'cancelled'
+            : receipt.dispatched
+              ? 'uncertain'
+              : 'unavailable',
           'Embedding completion unknown; no retry.',
         );
       } finally {

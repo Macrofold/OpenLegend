@@ -19,7 +19,6 @@ export type {
   MacrofoldBillingMode,
 } from './macrofold-decision.js';
 export { JsonObjectStream } from './json-stream.js';
-export { consumeEventStream } from './event-stream.js';
 export { captureModelPrices, estimateCostUsd, modelTokenPrices } from './usage.js';
 export {
   usdToMicroUsd,

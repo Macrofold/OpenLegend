@@ -83,7 +83,17 @@ const source = {
 };
 await writeFile(
   join(out, 'source.patch'),
-  execFileSync('git', ['diff', '--binary', 'HEAD', '--', 'apps', 'packages', 'scripts']),
+  execFileSync('git', [
+    'diff',
+    '--no-ext-diff',
+    '--no-textconv',
+    '--binary',
+    'HEAD',
+    '--',
+    'apps',
+    'packages',
+    'scripts',
+  ]),
   { mode: 0o600 },
 );
 await writeFile(join(out, 'manifest.json'), JSON.stringify(source, null, 2), { mode: 0o600 });

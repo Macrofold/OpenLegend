@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import type { NetworkOperation } from '@open-legend/network';
 import type { AssetConfiguration } from '../../apps/server/src/asset-configuration.js';
 import type { AssetPrincipal, AssetRepository } from '../../apps/server/src/asset-repository.js';
 import { S3AssetStorage } from '../../apps/server/src/asset-storage.js';
@@ -18,6 +19,7 @@ export async function mutateAssetAuthority<T>(
     operationId?: string;
     change: unknown;
     bootstrap: boolean;
+    operation?: NetworkOperation;
   },
   mutation: () => Promise<T>,
 ): Promise<T> {
@@ -25,7 +27,9 @@ export async function mutateAssetAuthority<T>(
   const directory = await mkdtemp(join(tmpdir(), 'openlegend-asset-authority-'));
   const fingerprint = createHash('sha256').update(JSON.stringify(options.change)).digest('hex');
   try {
+    options.operation?.throwIfStopped();
     const marker = await storage.readRecoveryMarker(options.domain);
+    options.operation?.throwIfStopped();
     if (!marker && options.bootstrap) return mutation();
     return await withRecoveryAuthority(
       options.repository,
@@ -36,6 +40,7 @@ export async function mutateAssetAuthority<T>(
         operationId: options.operationId ?? 'authority-' + fingerprint.slice(0, 32),
         fingerprint,
         principal: options.principal,
+        operation: options.operation,
       },
       mutation,
     );

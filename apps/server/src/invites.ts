@@ -1,6 +1,7 @@
 import { entityGet, entityValues } from '@open-legend/domain';
 import { createHash, randomBytes } from 'node:crypto';
 import { z } from 'zod';
+import type { ConsumptionContext } from '@open-legend/network';
 import type { InviteView } from '@open-legend/protocol';
 import {
   AuthorityError,
@@ -247,8 +248,10 @@ export async function redeemInvite(
   token: string,
   accountId: string,
   now: () => number,
+  context: ConsumptionContext,
 ): Promise<RedeemOutcome> {
   return service.authenticationMutation(async () => {
+    context.throwIfStopped();
     const invite = await store.invites.byToken(token);
     if (!invite || invite.worldId !== service.world.id || inviteStatus(invite, now()) !== 'pending')
       return { ok: false, code: 'invite-unavailable' };
@@ -273,12 +276,14 @@ export async function redeemInvite(
       );
     };
     if (!invite.actorId) {
+      context.throwIfStopped();
       await store.db.transaction(persist);
       return { ok: true, role: invite.role };
     }
     if (!isInvitable(service.world, invite.actorId, await ownedActors(store, invite.worldId)))
       return { ok: false, code: 'character-unavailable' };
-    const result = await service.enrollCharacter(invite.actorId, accountId, persist);
+    context.throwIfStopped();
+    const result = await service.enrollCharacter(invite.actorId, accountId, persist, context);
     return result.ok
       ? { ok: true, role: invite.role }
       : { ok: false, code: result.code === 'storage' ? 'storage' : 'character-unavailable' };

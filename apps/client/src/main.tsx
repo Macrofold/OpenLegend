@@ -1,3 +1,5 @@
+import { browserSubscription } from './browser-network';
+import type { Subscription } from '@open-legend/network';
 import { WorldComposer, type WorldIntent } from './ui/world-composer';
 import { NearbyEntities } from './ui/nearby-entities';
 import { AimControls } from './ui/aim-controls';
@@ -185,15 +187,20 @@ function equippedTargetIdentity(view: GameView) {
 function App({
   resetApplication,
   onCharacterless,
+  entryFailure,
+  authenticationRejected,
   tab,
 }: {
   resetApplication: () => void;
   onCharacterless: () => void;
+  entryFailure?: 'signed-out' | 'forbidden';
+  authenticationRejected: (failure: 'signed-out' | 'forbidden') => void;
   tab: TabControl;
 }) {
+  const blockedEntry = useRef(entryFailure);
   const [view, setView] = useState<GameView | null>(null),
     [transportReady, setConnected] = useState(false),
-    [entryStatus, setEntryStatus] = useState<EntryStatus>({ kind: 'loading' }),
+    [entryStatus, setEntryStatus] = useState<EntryStatus>({ kind: entryFailure ?? 'loading' }),
     [sceneError, setSceneError] = useState(''),
     [sceneCreated, setSceneCreated] = useState(false),
     [notice, setNotice] = useState('');
@@ -476,11 +483,13 @@ function App({
     let streamView: GameView | undefined;
     let bootstrapVersion = 0;
     let active = true,
-      source: EventSource | undefined,
+      source: Subscription | undefined,
       timer: ReturnType<typeof setTimeout> | undefined;
     const schedule = (delay: number) => {
       if (!active || isPaused()) return;
-      source?.close();
+      const previous = source;
+      source = undefined;
+      previous?.close();
       setConnected(false);
       clearTimeout(timer);
       timer = setTimeout(() => void bootstrap(), delay);
@@ -490,57 +499,79 @@ function App({
       if (!active || !current || isPaused()) return;
       clearTimeout(timer);
       source?.close();
-      const connection = new EventSource(eventsUrl(current));
-      source = connection;
-      source.onopen = () => {
-        if (active && source === connection) {
+      const controller = new AbortController();
+      const connection = browserSubscription(
+        eventsUrl(current),
+        controller.signal,
+        'game',
+        (frame, context) => {
+          context.throwIfStopped();
+          if (!active || source !== connection) return;
           clearTimeout(timer);
           setConnected(true);
-        }
-      };
-      source.addEventListener('timeline-changed', () => {
-        if (!active || source !== connection) return;
-        // The server proved that only the saved timeline changed. Old gameplay
-        // commands and other private drafts still disappear; checkpoint recovery
-        // is read-only and fresh state rechecks the exact retained owner.
-        pauseTab();
-        clearAccess({ preserveCheckpointResultsFor: current.checkpoint?.recoveryScope });
-        resetApplication();
-      });
-      source.addEventListener('access-changed', () => {
-        if (!active || source !== connection) return;
-        pauseTab();
-        clearAccess();
-        resetApplication();
-      });
-      source.addEventListener('reset', (event) => {
-        try {
+          if (frame.kind === 'comment') return;
+          if (frame.event === 'timeline-changed') {
+            source = undefined;
+            connection.close();
+            pauseTab();
+            clearAccess({ preserveCheckpointResultsFor: current.checkpoint?.recoveryScope });
+            resetApplication();
+          } else if (frame.event === 'access-changed') {
+            source = undefined;
+            connection.close();
+            pauseTab();
+            clearAccess();
+            resetApplication();
+          } else if (frame.event === 'reset') {
+            try {
+              const reset = JSON.parse(frame.data) as GameView;
+              streamView = reset;
+              scene.current?.resetTransientCaptions();
+              accept(reset, true);
+            } catch {
+              notify('A world update could not be read. Reconnecting…');
+              schedule(250);
+            }
+          } else if (frame.event === 'patch') {
+            try {
+              if (!streamView) return;
+              const next = applyGamePatch(streamView, JSON.parse(frame.data) as GamePatch);
+              streamView = next;
+              accept(next);
+            } catch {
+              schedule(250);
+            }
+          }
+        },
+      );
+      source = connection;
+      void connection.done
+        .then((result) => {
           if (!active || source !== connection) return;
-          const reset = JSON.parse((event as MessageEvent<string>).data) as GameView;
-          streamView = reset;
-          scene.current?.resetTransientCaptions();
-          accept(reset, true);
-        } catch {
-          notify('A world update could not be read. Reconnecting…');
-          schedule(250);
-        }
-      });
-      source.addEventListener('patch', (event) => {
-        try {
-          if (!active || source !== connection || !streamView) return;
-          const patch = JSON.parse((event as MessageEvent<string>).data) as GamePatch;
-          const next = applyGamePatch(streamView, patch);
-          streamView = next;
-          accept(next);
-        } catch {
-          schedule(250);
-        }
-      });
-      source.onerror = () => {
-        if (source === connection) schedule(6000);
-      };
+          source = undefined;
+          setConnected(false);
+          if (result.reason === 'closed') return;
+          if (result.reason === 'connection_failed' && result.failure.kind === 'http_status') {
+            const status = result.failure.status;
+            if (status === 204) return;
+            if (status === 401 || status === 403) {
+              pauseTab();
+              clearAccess();
+              authenticationRejected(status === 401 ? 'signed-out' : 'forbidden');
+              return;
+            }
+          }
+          schedule(6000);
+        })
+        .catch(() => {
+          if (active && source === connection) schedule(6000);
+        });
     }
     async function bootstrap(foreground = false) {
+      if (blockedEntry.current) {
+        setEntryStatus({ kind: blockedEntry.current });
+        return;
+      }
       const attempt = ++bootstrapVersion;
       clearTimeout(timer);
       source?.close();
@@ -617,7 +648,10 @@ function App({
         }
       }
     }
-    retry.current = () => void bootstrap();
+    retry.current = () => {
+      blockedEntry.current = undefined;
+      void bootstrap();
+    };
     void bootstrap();
     const hide = () => {
         clearTimeout(timer);
@@ -642,7 +676,17 @@ function App({
       window.removeEventListener('pagehide', hide);
       window.removeEventListener('pageshow', show);
     };
-  }, [accept, notify, onCharacterless, tabPaused, pauseTab, isPaused, enter, resetApplication]);
+  }, [
+    accept,
+    notify,
+    onCharacterless,
+    tabPaused,
+    pauseTab,
+    isPaused,
+    enter,
+    resetApplication,
+    authenticationRejected,
+  ]);
   // A wide, short window can leave less room than one action button below the
   // condition card. Reuse the existing sheet without shrinking text or drafts.
   // docs/projects/parallel-batch-01-playable-week/camp-activities.md#engineer-3-implementation-plan--october-2-2026
@@ -2789,10 +2833,18 @@ function App({
 }
 function ApplicationScope() {
   const [generation, setGeneration] = useState(0);
+  const [entryFailure, setEntryFailure] = useState<'signed-out' | 'forbidden'>();
   const [operations, setOperations] = useState(
     () => new URLSearchParams(location.search).get('view') === 'operations',
   );
-  const resetApplication = useCallback(() => setGeneration((value) => value + 1), []);
+  const resetApplication = useCallback(() => {
+    setEntryFailure(undefined);
+    setGeneration((value) => value + 1);
+  }, []);
+  const authenticationRejected = useCallback((failure: 'signed-out' | 'forbidden') => {
+    setEntryFailure(failure);
+    setGeneration((value) => value + 1);
+  }, []);
   const openOperations = useCallback(() => setOperations(true), []);
   const tab = useTabControl();
   // Characterless operator/spectator accounts, or an explicit ?view=operations tab.
@@ -2801,6 +2853,8 @@ function ApplicationScope() {
     <App
       key={generation}
       resetApplication={resetApplication}
+      entryFailure={entryFailure}
+      authenticationRejected={authenticationRejected}
       onCharacterless={openOperations}
       tab={tab}
     />

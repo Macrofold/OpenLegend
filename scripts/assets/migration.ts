@@ -812,6 +812,8 @@ export async function prepareHistoricalAssetMigration(options: {
   const commits = [...new Set(refs.map((ref) => ref.commit))];
   const log = await git(root, [
     'log',
+    '--no-ext-diff',
+    '--no-textconv',
     ...commits,
     '-m',
     '--raw',
@@ -1196,6 +1198,8 @@ export async function prepareHistoricalStudyViewers(options: {
       ...(
         await git(root, [
           'log',
+          '--no-ext-diff',
+          '--no-textconv',
           ...refs.map((ref) => ref.commit),
           '--format=%H',
           '--',

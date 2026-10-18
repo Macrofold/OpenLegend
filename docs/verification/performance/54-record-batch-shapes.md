@@ -28,17 +28,16 @@ The owned process closes normally, all fourteen requests remain within the origi
 
 Those results release exactly one 30-second actual game, using the frozen PF16.174 compact candidate and corrected independent presence. Plan: `ol-pf175-current30-launch-plan-20261016-a.json`, SHA-256 `79e0f2259921fda637bea25f5cd3f53f1ac31a288dd17c24985b6f9c3b64b1f0`. Release: `ol-pf175-current30-release-20261016-a.json`, SHA-256 `b5d59de57028165fec83256374477ce8616170ad9860ab3deaaeee2fc0e4b9e5`. Gameplay results are pending. This recording adds measurement overhead and cannot establish an uninstrumented capacity gain.
 
-
 ## What the actual game shows
 
 The 30.109-second game runs at **2.059×**. Its 27 confirmed walks have **978 ms** delay at the 95th percentile, with two scheduled slots missed. All seventeen people and forty animals survive; all sixteen residents travel and complete real food cycles, with 35 accepted plans and 19 matched meals. Ordinary presence stays active, the clock never pauses, errors/provider calls are zero, and all source, worker, report-bound and exact owned-cleanup checks pass. Speed and responsiveness remain failures.
 
-| Actual requests during measured play | Requests | Batches of records | Time inside PostgreSQL |
-| --- | ---: | ---: | ---: |
-| Only one-row compact batches | 7 | 18 | **18 ms** |
-| Only larger compact batches | 124 | 323 | **1,569 ms** |
-| Mixture of one-row and larger batches | 228 | 1,589 | **3,790 ms** |
-| Other requests | 1,238 | — | **6,457 ms** |
+| Actual requests during measured play  | Requests | Batches of records | Time inside PostgreSQL |
+| ------------------------------------- | -------: | -----------------: | ---------------------: |
+| Only one-row compact batches          |        7 |                 18 |              **18 ms** |
+| Only larger compact batches           |      124 |                323 |           **1,569 ms** |
+| Mixture of one-row and larger batches |      228 |              1,589 |           **3,790 ms** |
+| Other requests                        |    1,238 |                  — |           **6,457 ms** |
 
 Every request appears once. All compact requests have only compact parameters; their times still include conflict checking, grouping and other SQL execution. A request containing several batches does not reveal the time of each batch. The 642 one-row batches are **33.3% of the 1,930 batches**, but only **8.4% of encoded bytes**, and almost all share a request with larger batches. Consequently these data do **not** establish that small writes dominate or justify a special one-row fast path as the next priority.
 

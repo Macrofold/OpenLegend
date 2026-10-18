@@ -206,9 +206,11 @@ Original recommendation: **Review**.
 
 ## LA097
 
-**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-18 · Restrictiveness: Safe.**
 
-The embedding adapter defaults to a 15-second abort timeout and combines it with the caller's abort signal. Game callers such as action retrieval supply the configured AI timeout instead. This adapter does not independently consume the request's absolute `deadlineMs` field; a caller needing that earlier deadline must include it in its signal. Missing/uncertain completion retains the original accounting exposure and does not trigger a retry.
+The embedding adapter defaults to a 15-second operation budget and combines it with caller cancellation and the earlier absolute `deadlineMs`. Game callers such as action retrieval supply the configured AI timeout instead. The budget includes headers, body consumption and required callbacks, and ends local waiting even when cancellation is ignored. Missing/uncertain completion retains the original accounting exposure and does not trigger a retry.
+
+The [NET04 migration](../maintainers/bounded-network-requests.md#net04--migrate-all-aimacrofold-and-diagnostic-consumers) enforces the earlier absolute deadline and complete response/cleanup lifetime without changing this configured default or accounting policy.
 
 **Reason / tradeoff:** Keep a finite wait for optional search preparation and preserve directly retrieved required facts when the service is unavailable.
 

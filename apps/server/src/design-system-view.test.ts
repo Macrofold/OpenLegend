@@ -11,7 +11,7 @@ it('native fixture: look-closer prose and berry facts describe actual resource m
   const observation = observeActor(world, PLAYER_ID)!;
   expect(commandFacts({ type: 'gather', targetId: 'berries-west' }, observation)).toEqual([
     ['Yields', '2 Wild berries'],
-    ['Time', '5 minutes of game time, plus travel'],
+    ['Time', '10 minutes of game time, plus travel'],
   ]);
   expect(
     describeEntity(

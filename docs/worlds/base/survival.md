@@ -18,7 +18,7 @@ The base world uses bounded health, fullness and energy attributes, initial valu
 
 **Integrated character target:** [Compelling characters](../../projects/compelling-characters-feature-spec.md#needs-experience-and-choice) distinguishes the native bodily condition, experienced hunger, personal interpretation and chosen response. Its complete flows require later behavior to reflect actual feeding and other concerns, including company, belonging and enjoyment. They preserve the current meters, admitted actions and unavailable-cognition behavior above; no automatic feeding or psychological depletion rule is introduced by the documentation.
 
-Longer [everyday gathering/preparation](time.md#everyday-work-durations) does not reduce these needs rates or grant food. The five-step fiber/cord/berry/meal cycle spends 1,740 game seconds before its meal; ordinary hunger, exhaustion, Sleep and interruption remain active throughout. Producing the same material now spends more food/energy and takes longer, rather than skipping the work or its survival consequences.
+Longer [everyday gathering/preparation](time.md#everyday-work-durations) does not reduce these needs rates or grant food. The five-step fiber/cord/berry/meal cycle spends 3,480 game seconds before its meal; ordinary hunger, exhaustion, Sleep and interruption remain active throughout. Producing the same material now spends more food/energy and takes longer, rather than skipping the work or its survival consequences.
 
 ## Installed meters and body services
 

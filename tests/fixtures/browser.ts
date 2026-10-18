@@ -1,5 +1,16 @@
 import { expect, type Page } from '@playwright/test';
 
+/** Network lifecycle qualification stays loopback-only. Missing external art
+ * remains a rendering limitation, never permission to contact a live service. */
+export async function blockExternalBrowserRequests(page: Page): Promise<void> {
+  await page.context().route(/^https?:\/\//, (route) => {
+    const host = new URL(route.request().url()).hostname;
+    return ['127.0.0.1', 'localhost', '[::1]'].includes(host)
+      ? route.fallback()
+      : route.abort('blockedbyclient');
+  });
+}
+
 /** Ordinary entry and reload automatically enter the sole game tab. */
 export async function enterGame(page: Page): Promise<void> {
   // These journeys exercise active play. Another browser window can own focus

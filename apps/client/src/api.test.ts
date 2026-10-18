@@ -1,15 +1,139 @@
 import { afterEach, expect, it, vi } from 'vitest';
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.resetModules();
 });
 
-it('sends a stable page identity and increasing presence order with Resume', async () => {
-  const fetch = vi.fn().mockResolvedValue({
-    ok: true,
-    json: async () => ({ ok: true, code: 'control', message: 'Resumed.' }),
+it('ends an ignored fetch wait without a replacement mutation or late result adoption', async () => {
+  let release!: (response: Response) => void;
+  const send = vi.fn().mockImplementation(
+    () =>
+      new Promise<Response>((resolve) => {
+        release = resolve;
+      }),
+  );
+  vi.stubGlobal('fetch', send);
+  const api = await import('./api.js');
+  // Finish the already bounded tab identity probe before controlling network time.
+  await (
+    await import('./tab-session.js')
+  ).tabIdentityReady;
+  vi.useFakeTimers();
+  const body = { id: 'original-item', name: 'The retained item' };
+  const result = api.post('/api/god/items', body).catch((error) => error);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(send).toHaveBeenCalledOnce();
+  await vi.advanceTimersByTimeAsync(30_000);
+  const failure = await result;
+  expect(failure).toMatchObject({ failure: { kind: 'deadline_exceeded', dispatch: 'started' } });
+  expect(failure.message).toContain('unconfirmed');
+  expect(JSON.parse(send.mock.calls[0]![1].body)).toEqual(body);
+  release(Response.json({ ok: true, message: 'Late completion' }));
+  await vi.advanceTimersByTimeAsync(0);
+  expect(send).toHaveBeenCalledOnce();
+  expect(await result).toBe(failure);
+});
+
+it('records consumed acknowledgments without changing dispatch and drops a stopped capture', async () => {
+  let release!: (response: Response) => void;
+  const send = vi.fn().mockImplementation(
+    () =>
+      new Promise<Response>((resolve) => {
+        release = resolve;
+      }),
+  );
+  vi.stubGlobal('fetch', send);
+  const api = await import('./api.js');
+  const { observeBrowserRequests } = await import('./browser-network.js');
+  await (
+    await import('./tab-session.js')
+  ).tabIdentityReady;
+  const observations: string[] = [];
+  const stop = observeBrowserRequests((value) => {
+    observations.push(value.phase);
+    // Optional diagnostics cannot stop the server from handling the request.
+    throw new Error('Recorder unavailable');
   });
+  const request = { commandId: 'original-command', command: { type: 'cancel' } };
+  const pending = api.post('/api/command', request);
+  await vi.waitFor(() => expect(send).toHaveBeenCalledOnce());
+  expect(observations).toEqual(['started']);
+  stop();
+  release(Response.json({ ok: true, message: 'Confirmed' }));
+  await expect(pending).resolves.toMatchObject({ ok: true });
+  expect(observations).toEqual(['started']);
+  expect(JSON.parse(send.mock.calls[0]![1].body)).toEqual(request);
+});
+
+it('preserves a known sign-in rejection when its error body never arrives', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn()
+      .mockImplementation(
+        async () => new Response(new ReadableStream({ start() {} }), { status: 401 }),
+      ),
+  );
+  const api = await import('./api.js');
+  await (
+    await import('./tab-session.js')
+  ).tabIdentityReady;
+  vi.useFakeTimers();
+  const result = api.getState().catch((error) => error);
+  await vi.advanceTimersByTimeAsync(15_000);
+  expect(await result).toBeInstanceOf(api.SignInRequiredError);
+});
+
+it('coalesces presence updates while the previous request is still waiting', async () => {
+  let release!: (response: Response) => void;
+  const send = vi
+    .fn()
+    .mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          release = resolve;
+        }),
+    )
+    .mockImplementation(async () => Response.json({ ok: true }));
+  const listeners = new Map<string, () => void>();
+  let heartbeat = () => {};
+  const addEventListener = (name: string, callback: () => void) => listeners.set(name, callback);
+  vi.stubGlobal('fetch', send);
+  vi.stubGlobal('navigator', { sendBeacon: vi.fn().mockReturnValue(true) });
+  vi.stubGlobal('document', {
+    visibilityState: 'visible',
+    hasFocus: () => true,
+    addEventListener,
+    removeEventListener: vi.fn(),
+  });
+  vi.stubGlobal('window', {
+    addEventListener,
+    removeEventListener: vi.fn(),
+    setInterval: (callback: () => void) => {
+      heartbeat = callback;
+    },
+  });
+  const stop = (await import('./api.js')).startPresence('original-scope');
+  await vi.waitFor(() => expect(send).toHaveBeenCalledOnce());
+  for (let index = 0; index < 20; index++) heartbeat();
+  listeners.get('blur')!();
+  listeners.get('focus')!();
+  expect(send).toHaveBeenCalledOnce();
+  release(Response.json({ ok: true }));
+  await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(2));
+  expect(JSON.parse(send.mock.calls[1]![1].body)).toMatchObject({ visible: true });
+  expect(send.mock.calls[1]![1].headers['X-OL-Scope']).toBe('original-scope');
+  stop();
+});
+
+it('sends a stable page identity and increasing presence order with Resume', async () => {
+  const fetch = vi
+    .fn()
+    .mockImplementation(async () =>
+      Response.json({ ok: true, code: 'control', message: 'Resumed.' }),
+    );
   vi.stubGlobal('fetch', fetch);
   const { setWorldPaused } = await import('./api.js');
   await setWorldPaused(false);
@@ -27,7 +151,7 @@ it('sends a stable page identity and increasing presence order with Resume', asy
 });
 
 it('uses the same identity and ordering for heartbeats, hiding and explicit Resume', async () => {
-  const send = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
+  const send = vi.fn().mockImplementation(async () => Response.json({ ok: true }));
   const beacons = vi.fn().mockReturnValue(true);
   const events = new Map<string, () => void>();
   const page = {
@@ -66,7 +190,7 @@ it('uses the same identity and ordering for heartbeats, hiding and explicit Resu
 });
 
 it('reports lost window focus immediately and does not let a visible-tab heartbeat override it', async () => {
-  const send = vi.fn().mockResolvedValue({ ok: true });
+  const send = vi.fn().mockImplementation(async () => Response.json({ ok: true }));
   const beacons = vi.fn().mockReturnValue(true);
   const events = new Map<string, () => void>();
   const addEventListener = (name: string, callback: () => void) => events.set(name, callback);
@@ -91,9 +215,14 @@ it('reports lost window focus immediately and does not let a visible-tab heartbe
   expect(JSON.parse(await (beacons.mock.calls[0]![1] as Blob).text())).toMatchObject({
     visible: false,
   });
+  await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+  await new Promise((resolve) => setTimeout(resolve, 0));
   heartbeat();
+  await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(2));
   expect(JSON.parse(send.mock.calls.at(-1)![1].body)).toMatchObject({ visible: false });
+  await new Promise((resolve) => setTimeout(resolve, 0));
   events.get('focus')!();
+  await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(3));
   expect(JSON.parse(send.mock.calls.at(-1)![1].body)).toMatchObject({ visible: true });
   stop();
 });
@@ -441,22 +570,27 @@ it('reloads only a successful selected save acknowledgment across access changes
       scenario.operation === 'post'
         ? api.post('/api/memories', {})
         : scenario.operation === 'private'
-          ? api.getScoped('/api/private-history')
+          ? api.getScoped('/api/history')
           : api.loadGameSave(request);
     if (scenario.operation === 'logout') api.clearAccess();
     else api.acceptAccess({ ...publicView(), historyEpoch: `after-${index}:1` });
-    respond({
-      ok: scenario.status === 200,
-      status: scenario.status,
-      json: async () => {
-        if (scenario.operation === 'unreadable') throw new Error('Uncertain acknowledgment.');
-        return {
-          ok: scenario.ok,
-          message: 'Obsolete private text must never be adopted.',
-          entries: [{ text: 'Obsolete private text' }],
-        };
-      },
-    });
+    // The bounded adapter observes tab preparation before dispatch. Wait until
+    // this exact native response is installed, then change authority while it waits.
+    await vi.waitFor(() => expect(respond).toBeDefined());
+    if (scenario.operation === 'logout') api.clearAccess();
+    else api.acceptAccess({ ...publicView(), historyEpoch: `after-dispatch-${index}:1` });
+    respond(
+      scenario.operation === 'unreadable'
+        ? new Response('unreadable', { status: scenario.status })
+        : Response.json(
+            {
+              ok: scenario.ok,
+              message: 'Obsolete private text must never be adopted.',
+              entries: [{ text: 'Obsolete private text' }],
+            },
+            { status: scenario.status },
+          ),
+    );
     if (scenario.succeeds) {
       await expect(pending).resolves.toBeUndefined();
       expect(reload).toHaveBeenCalledOnce();

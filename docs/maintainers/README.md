@@ -125,6 +125,8 @@ Useful entry points: [gameplay availability](../../archive/05-project/implementa
 
 [Action experience (AE01–AE10)](action-experience.md) follows [action records and learned activities](../action-experience.md). [Macrofold Worker API (MW01–MW04)](macrofold-worker-api.md) owns caller migration and coordinated delivery. For invention and World Agent work, [the handoff](../invention-handoff.md) maps settled decisions, source files and existing owners.
 
+[Network requests with bounded waiting (NET01–NET11)](bounded-network-requests.md) owns the shared deadline, cancellation, resource ownership and network-boundary migration. The [feature specification](../projects/completed/bounded-network-requests-feature-spec.md) and [technical design](../projects/completed/bounded-network-requests-tech-design.md) define the delivered contract; the tracker records its implementation and focused qualification. Existing AI accounting, authentication, assets, multiplayer and hosted-release owners retain their distinct acceptance gates.
+
 ## Invention foundation packet
 
 [Invention foundation](../invention-foundation.md) coordinates [world constitution](../world-constitution.md), [validation/composition](../invention-validation.md), [runtime art](../invention-art-pipeline.md) and [budgets/cost](../invention-budgets.md). Detailed work remains in INV and its linked consumers.

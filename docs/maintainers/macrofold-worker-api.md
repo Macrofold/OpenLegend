@@ -2,6 +2,8 @@
 
 Canonical integration: [AI providers](../ai-providers.md) and [Worker ownership](../architecture.md#macrofold-worker-ownership). Creator-specific behavior remains in the [world-agent handoff](../macrofold-world-agent-handoff.md). This tracker replaces the obsolete Sandbox-specific validation targets in [TODO](TODO.md#macrofold-worker-reuse--deferred-validation); historical ledger/provisioning obligations remain there.
 
+The completed [shared network design](../projects/completed/bounded-network-requests-tech-design.md) records application-wide finite waiting and Macrofold request/file/stream delivery under [NET02–NET04](bounded-network-requests.md), with final qualification under NET11. Preserve original Run identity, late-acceptance handling, conservative accounting and no automatic paid replay; NET does not close MW04's deployment/recovery gates or MW05's forwarding coverage.
+
 ## Scope and baseline
 
 Authorized implementation on `feat/macrofold-worker-api`, created from OpenLegend `main` at `fba16a249d38328db5c2386d4be8ce5b0abbd5e7`; no conflicts. Target Macrofold `feat/worker-economics-autoscaling`, inspected at `31c8136def29930d1bca238a4e79c14f0dc6d0ba`, especially `docs/features/execution/workers.md` and the actual Run/Worker contracts. Upstream was rechecked at `68ebce827d96e0f427aaa43315e5a81762cc62c4`; only a temporary workflow changed, not the API. No Macrofold repository changes are part of this task.

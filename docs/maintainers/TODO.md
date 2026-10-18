@@ -9,6 +9,10 @@
 
 - [x] Reconcile the five missing-heading references recorded by the October 3 batch-numbering audit. The IW03 creator-editor layout record is restored in its [interface inventory](../limits/interface.md#iw03--creator-editor-layout), and BW22 retains its explicit [observer-safe event-name anchor](base-world.md#bw22--observer-safe-names-in-event-text). The current incoming references and their source documents resolve; the October 15 audit separately checked all 29,821 relative file/heading references across 639 non-archived Markdown files. This closes the link repair, not broader layout, privacy or gameplay acceptance.
 
+## Shared network waiting and recovery
+
+[NET01–NET11](bounded-network-requests.md) records delivery of common finite request lifetimes, stream ownership, adapter migration and enforcement. Its adversarial checks extend the existing WAC01, UWA01/UWA04/UWA10, MW06 and WAF03 caller cases below; do not duplicate those broader recovery, permission, accounting and real-harness obligations or mark them complete from transport-only checks. The existing stale-result and coalesced-refresh evidence remains valid within its recorded scope.
+
 ## Validation with a concrete purpose
 
 - [x] Remove rejection of usable provider decision scores, select the highest offered choice, audit production validation for demonstrated redundancy or harm, and add purpose-based coding guidance. The [completed scope](../projects/completed/validation-purpose-audit.md) and [audit evidence](../verification/validation-purpose.md) record removal of provider mathematical/metadata assertions, duplicate speech-preview parsing and trusted caption-clock checks. Permissions, current-format save integrity, actual world preconditions and spending remain protected. Existing broader qualification is unchanged.

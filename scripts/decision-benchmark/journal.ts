@@ -311,7 +311,12 @@ export function assertBenchmarkRecord(
         ),
       'individual question refusals',
     );
-  for (const field of ['providerLatencyMs', 'providerQueueLatencyMs'])
+  for (const field of [
+    'providerLatencyMs',
+    'providerQueueLatencyMs',
+    'intermediaryRunLatencyMs',
+    'intermediaryQueueLatencyMs',
+  ])
     requireValue(
       receipt[field] === undefined || (finite(receipt[field]) && receipt[field] >= 0),
       'provider timing',

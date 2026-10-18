@@ -216,7 +216,7 @@ export function clientViteConfiguration(
   const studies = options.studies ?? false;
   const input: Record<string, string> = studies
     ? { study: `${root}art-study.html`, worldStudy: `${root}scene-study.html` }
-    : { game: `${root}index.html` };
+    : { game: `${root}index.html`, 'network-tools': `${root}src/network-tools.ts` };
   return {
     root,
     base: studies ? './' : '/',
@@ -240,6 +240,11 @@ export function clientViteConfiguration(
       target: 'es2022',
       rolldownOptions: {
         input,
+        preserveEntrySignatures: 'exports-only',
+        output: {
+          entryFileNames: (entry) =>
+            entry.name === 'network-tools' ? 'assets/network-tools.js' : 'assets/[name]-[hash].js',
+        },
         // Font URLs intentionally resolve through the verified asset service,
         // rather than becoming generated files in the application build.
         external: (id) => id.startsWith('/__assets/'),

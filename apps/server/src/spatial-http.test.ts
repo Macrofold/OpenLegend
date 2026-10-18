@@ -1,4 +1,4 @@
-import { entityGet } from '@open-legend/domain';
+import { entityGet, materializeNativeEntity, type WorldState } from '@open-legend/domain';
 import { localHttpClient } from '../../../tests/fixtures/http.js';
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { testRepository } from '../../../tests/fixtures/database.js';
@@ -13,6 +13,14 @@ import type { GameView } from '@open-legend/protocol';
 import { createGameServer } from './http.js';
 import { SAVE_FORMAT } from './game-saves.js';
 import { readConfig } from '../../../tests/fixtures/database.js';
+
+// Cold participation reconciliation may write out already-earned native meter
+// additions. Compare exact current entity meaning without mutating the live world.
+function currentEntity(world: WorldState, actorId: string) {
+  const current = structuredClone(world);
+  materializeNativeEntity(current, actorId);
+  return entityGet(current.entities, actorId);
+}
 
 it('requires exact 3D surface intentions and preserves the HTTP retry boundary', async () => {
   const game = await createGameServer({
@@ -117,15 +125,13 @@ it('preserves elevated position and manual route snapshots while departure cance
       n++
     )
       await game.service.tick(1 / (config.baseRatio * game.service.speed), 0);
-    const snapshot = structuredClone(entityGet(game.service.world.entities, actorId));
+    const snapshot = currentEntity(game.service.world, actorId);
     expect(worldSupport(snapshot!)).toBe('lookout-ramp');
     const id = randomUUID();
     await game.service.createSave('On the ramp', id);
     const stored = await game.service.store.saves!.read(game.service.world.id, id);
     expect(stored.format).toBe(SAVE_FORMAT);
-    expect(entityGet(stored.state.world.entities, actorId)!.actor!.action).toEqual(
-      snapshot!.actor!.action,
-    );
+    expect(currentEntity(stored.state.world, actorId)).toEqual(snapshot);
     await game.close();
     game = await createGameServer({
       config,
@@ -136,7 +142,7 @@ it('preserves elevated position and manual route snapshots while departure cance
     });
     await new Promise<void>((resolve) => game.server.listen(0, '127.0.0.1', resolve));
     await enterLocalWorld(game.service);
-    expect(entityGet(game.service.world.entities, actorId)).toEqual({
+    expect(currentEntity(game.service.world, actorId)).toEqual({
       ...snapshot,
       actor: {
         ...snapshot!.actor,
@@ -165,7 +171,7 @@ it('preserves elevated position and manual route snapshots while departure cance
       randomUUID(),
       await game.service.store.saves!.read(game.service.world.id, id),
     );
-    expect(entityGet(game.service.world.entities, actorId)).toEqual({
+    expect(currentEntity(game.service.world, actorId)).toEqual({
       ...snapshot,
       actor: { ...snapshot!.actor, participation: expect.objectContaining({ phase: 'active' }) },
     });

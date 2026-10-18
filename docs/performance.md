@@ -164,6 +164,10 @@ The simulation timer must not await a full cognition-maintenance scheduling scan
 
 ### Browser and provider polling
 
+The [shared-network lifetime design](projects/completed/bounded-network-requests-tech-design.md) supplies the common finite-wait mechanism for requests that ignore cancellation, including complete body consumption, cleanup, subscriptions and SDK preparation. [NET](maintainers/bounded-network-requests.md) owns delivery. Current coalescing and stale-result checks remain necessary; they do not themselves prove a stalled wait ends. The shared owner retains capacity for unresolved underlying work instead of releasing it on timeout, and does not add another queue or automatic paid retry. Complete-view memory and hosted workload qualification remain with their existing owners.
+
+Within one operation, repeated SDK/pipeline adoption of a physical Node stream reuses its existing ownership handle and listeners through weak identity keys; no completed stream history accumulates. Conditional exact transfer retries wait for actual predecessor closure inside the original budget, so a locally timed-out or completed consumer cannot multiply still-open transfer resources. Service-owned identity discovery remains shared while each workflow subscriber keeps its own deadline.
+
 Cache display-only usage totals by accounting changes and UTC month, sharing concurrent reads. Reservation, settlement (including late billing) and recovery invalidate the display snapshot only after their writes succeed. Budget admission must continue to query current durable spending; a display cache never authorizes a call.
 
 Use scoped conversation/narration revisions on the existing SSE stream to invalidate visible history pages. Load once on opening, once on reconnect/reset and when that scope changes; fetch older pages only on demand. Keep a slow, backoff-based fallback only if the notification contract is unavailable. Hidden panels perform no history polling.

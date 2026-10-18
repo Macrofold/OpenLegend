@@ -1,13 +1,11 @@
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
+import { toolRemote as execute, toolSequence, toolDelay, remoteErrorMatches } from '../network.js';
 import { createHash } from 'node:crypto';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { setTimeout } from 'node:timers/promises';
 import type { AssetRevisionReference, ArtifactReference } from '@open-legend/assets';
 import type { AssetConfiguration } from '../../apps/server/src/asset-configuration.js';
-import { S3AssetStorage } from '../../apps/server/src/asset-storage.js';
+import { S3AssetStorage, withAssetStorageOperation } from '../../apps/server/src/asset-storage.js';
 import {
   assetPhysicalKey,
   type AssetControlledRemovalPlan,
@@ -17,7 +15,6 @@ import {
 import { assetInfrastructureOutputs } from './infrastructure.js';
 import { mutateAssetAuthority } from './authority-workflows.js';
 
-const execute = promisify(execFile);
 const digest = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 /** Exact controlled views of an origin. A new distribution must be registered in
  * the deployment owner before a withdrawal can claim its caches were purged. */
@@ -94,6 +91,10 @@ async function cloudfront(
       '--output',
       'json',
       '--no-cli-pager',
+      '--cli-connect-timeout',
+      '10',
+      '--cli-read-timeout',
+      '60',
     ],
     { maxBuffer: 2 * 1024 * 1024, env: { ...process.env, AWS_MAX_ATTEMPTS: '1' } },
   );
@@ -144,7 +145,7 @@ async function purge(
             invalidationId,
             paths: batch.length,
           });
-        await setTimeout(2000);
+        await toolDelay(2000);
         status = (
           await cloudfront(configuration, [
             'get-invalidation',
@@ -175,120 +176,150 @@ export async function withdrawAssetRevision(options: {
   prohibited?: ArtifactReference[];
   progress?: (value: unknown) => void;
 }) {
-  const change = <T>(phase: string, details: unknown, mutation: () => Promise<T>) =>
-    mutateAssetAuthority(
-      {
-        repository: options.repository,
-        configuration: options.configuration,
-        principal: options.principal,
-        domain: options.authorityDomain,
-        operationId: 'withdraw-' + digest([options.operationId, phase]).slice(0, 40),
-        change: { phase, operationId: options.operationId, ...(details as object) },
-        bootstrap: false,
-      },
-      mutation,
-    );
-  const affected = await change(
-    'logical',
-    { reference: options.reference, reason: options.reason, prohibited: options.prohibited ?? [] },
-    () =>
-      options.prohibited
-        ? options.repository.prohibitArtifacts(
-            options.principal,
-            options.prohibited,
-            options.reason,
-          )
-        : options.repository.withdraw(options.principal, options.reference, options.reason),
-  );
-  // Logical denial commits first. Failure to prepare or purge a physical copy must
-  // never roll that denial back or make an old page selected again.
-  await change('plan', { references: affected }, async () => {
-    const plan = await options.repository.planControlledRemoval(
-      options.principal,
-      options.operationId,
-      affected,
-    );
-    return { id: plan.id, generation: plan.generation };
-  });
-  const plan = await options.repository.controlledRemoval(options.principal, options.operationId);
-  if (plan.status === 'complete')
-    return change('complete', { plan: plan.id }, async () => ({
-      id: plan.id,
-      status: plan.status,
-      removed: plan.files.length,
-      preservedShared: plan.keptShared.length,
-    }));
-  const configurations = [options.configuration, ...options.sourceConfigurations];
-  const adapters = new Map<string, S3AssetStorage>();
-  const directory = await mkdtemp(join(tmpdir(), 'openlegend-asset-withdrawal-'));
-  try {
-    const { outputs } = await assetInfrastructureOutputs();
-    const groups = controlledInvalidations(plan, outputs);
-    for (const location of plan.files) {
-      const configuration = configurations.find(
-        (configuration) =>
-          configuration.accountId === location.accountId &&
-          configuration.region === location.region &&
-          configuration.buckets[location.reference.boundary] === location.bucket,
+  return toolSequence(1800000, (operation) =>
+    withAssetStorageOperation(operation, async () => {
+      const change = <T>(phase: string, details: unknown, mutation: () => Promise<T>) =>
+        mutateAssetAuthority(
+          {
+            repository: options.repository,
+            configuration: options.configuration,
+            principal: options.principal,
+            domain: options.authorityDomain,
+            operationId: 'withdraw-' + digest([options.operationId, phase]).slice(0, 40),
+            change: { phase, operationId: options.operationId, ...(details as object) },
+            bootstrap: false,
+            operation,
+          },
+          mutation,
+        );
+      const affected = await change(
+        'logical',
+        {
+          reference: options.reference,
+          reason: options.reason,
+          prohibited: options.prohibited ?? [],
+        },
+        () =>
+          options.prohibited
+            ? options.repository.prohibitArtifacts(
+                options.principal,
+                options.prohibited,
+                options.reason,
+              )
+            : options.repository.withdraw(options.principal, options.reference, options.reason),
       );
-      if (!configuration)
-        throw new Error('No trusted deployment configuration covers a recorded removal location.');
-      const key = digest([configuration.accountId, configuration.region, configuration.buckets]);
-      if (!adapters.has(key)) {
-        const adapter = new S3AssetStorage(configuration, 'withdrawal');
-        if ((await adapter.principal()) !== options.principal.accountId) {
-          adapter.close();
-          throw new Error('Withdrawal storage identity differs from admitted operator.');
+      // Logical denial commits first. Failure to prepare or purge a physical copy must
+      // never roll that denial back or make an old page selected again.
+      await change('plan', { references: affected }, async () => {
+        const plan = await options.repository.planControlledRemoval(
+          options.principal,
+          options.operationId,
+          affected,
+        );
+        return { id: plan.id, generation: plan.generation };
+      });
+      operation.throwIfStopped();
+      const plan = await options.repository.controlledRemoval(
+        options.principal,
+        options.operationId,
+      );
+      if (plan.status === 'complete')
+        return change('complete', { plan: plan.id }, async () => ({
+          id: plan.id,
+          status: plan.status,
+          removed: plan.files.length,
+          preservedShared: plan.keptShared.length,
+        }));
+      const configurations = [options.configuration, ...options.sourceConfigurations];
+      const adapters = new Map<string, S3AssetStorage>();
+      const directory = await mkdtemp(join(tmpdir(), 'openlegend-asset-withdrawal-'));
+      try {
+        const { outputs } = await assetInfrastructureOutputs();
+        const groups = controlledInvalidations(plan, outputs);
+        for (const location of plan.files) {
+          const configuration = configurations.find(
+            (configuration) =>
+              configuration.accountId === location.accountId &&
+              configuration.region === location.region &&
+              configuration.buckets[location.reference.boundary] === location.bucket,
+          );
+          if (!configuration)
+            throw new Error(
+              'No trusted deployment configuration covers a recorded removal location.',
+            );
+          const key = digest([
+            configuration.accountId,
+            configuration.region,
+            configuration.buckets,
+          ]);
+          if (!adapters.has(key)) {
+            const adapter = new S3AssetStorage(configuration, 'withdrawal');
+            // Own it before identity discovery, which can reject or expire.
+            adapters.set(key, adapter);
+            if ((await adapter.principal()) !== options.principal.accountId) {
+              throw new Error('Withdrawal storage identity differs from admitted operator.');
+            }
+          }
         }
-        adapters.set(key, adapter);
+        operation.throwIfStopped();
+        const prior = await options.repository.controlledRemovalReceipts(
+          options.principal,
+          plan.id,
+        );
+        const removed = new Set(prior.map((receipt) => assetPhysicalKey(receipt, receipt.key)));
+        let count = removed.size;
+        for (const location of plan.files) {
+          if (removed.has(assetPhysicalKey(location, location.key))) continue;
+          operation.throwIfStopped();
+          await options.repository.assertControlledRemovalLocation(
+            options.principal,
+            plan.id,
+            location,
+          );
+          const configuration = configurations.find(
+            (configuration) =>
+              configuration.accountId === location.accountId &&
+              configuration.region === location.region &&
+              configuration.buckets[location.reference.boundary] === location.bucket,
+          )!;
+          const adapter = adapters.get(
+            digest([configuration.accountId, configuration.region, configuration.buckets]),
+          )!;
+          const receipt = await adapter.removeCurrent(location.reference, location.key);
+          operation.throwIfStopped();
+          await options.repository.recordControlledRemoval(options.principal, plan.id, receipt);
+          count++;
+          options.progress?.({
+            phase: 'origin-removal',
+            completed: count,
+            total: plan.files.length,
+          });
+        }
+        const cache = await purge(options.configuration, plan, groups, directory, options.progress);
+        const result = await change('complete', { plan: plan.id }, async () => {
+          const receipts = await options.repository.controlledRemovalReceipts(
+            options.principal,
+            plan.id,
+          );
+          operation.throwIfStopped();
+          const completed = await options.repository.completeControlledRemoval(
+            options.principal,
+            plan.id,
+            receipts,
+            cache,
+          );
+          return {
+            id: completed.id,
+            status: completed.status,
+            removed: completed.files.length,
+            preservedShared: completed.keptShared.length,
+          };
+        });
+        return result;
+      } finally {
+        for (const adapter of adapters.values()) adapter.close();
+        await rm(directory, { recursive: true, force: true });
       }
-    }
-    const prior = await options.repository.controlledRemovalReceipts(options.principal, plan.id);
-    const removed = new Set(prior.map((receipt) => assetPhysicalKey(receipt, receipt.key)));
-    let count = removed.size;
-    for (const location of plan.files) {
-      if (removed.has(assetPhysicalKey(location, location.key))) continue;
-      await options.repository.assertControlledRemovalLocation(
-        options.principal,
-        plan.id,
-        location,
-      );
-      const configuration = configurations.find(
-        (configuration) =>
-          configuration.accountId === location.accountId &&
-          configuration.region === location.region &&
-          configuration.buckets[location.reference.boundary] === location.bucket,
-      )!;
-      const adapter = adapters.get(
-        digest([configuration.accountId, configuration.region, configuration.buckets]),
-      )!;
-      const receipt = await adapter.removeCurrent(location.reference, location.key);
-      await options.repository.recordControlledRemoval(options.principal, plan.id, receipt);
-      count++;
-      options.progress?.({ phase: 'origin-removal', completed: count, total: plan.files.length });
-    }
-    const cache = await purge(options.configuration, plan, groups, directory, options.progress);
-    const result = await change('complete', { plan: plan.id }, async () => {
-      const receipts = await options.repository.controlledRemovalReceipts(
-        options.principal,
-        plan.id,
-      );
-      const completed = await options.repository.completeControlledRemoval(
-        options.principal,
-        plan.id,
-        receipts,
-        cache,
-      );
-      return {
-        id: completed.id,
-        status: completed.status,
-        removed: completed.files.length,
-        preservedShared: completed.keptShared.length,
-      };
-    });
-    return result;
-  } finally {
-    for (const adapter of adapters.values()) adapter.close();
-    await rm(directory, { recursive: true, force: true });
-  }
+    }),
+  );
 }

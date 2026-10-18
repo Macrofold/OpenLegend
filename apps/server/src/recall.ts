@@ -451,7 +451,7 @@ export class RecallService {
         model: c.embeddingModel,
         modelPrices: c.embeddingModelPrices,
         dimensions: c.embeddingDimensions,
-        fetch: log.fetch,
+        network: log.network,
         timeoutMs: c.aiTimeoutMs,
       });
     this.unsubscribe = service.subscribe(() => {

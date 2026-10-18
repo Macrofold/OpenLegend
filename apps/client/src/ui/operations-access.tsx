@@ -54,7 +54,28 @@ export function AccessSection({
   const [hours, setHours] = useState(168);
   const [chosen, setChosen] = useState<AccessCapability[]>(['spectate']);
   const [busy, setBusy] = useState(false);
+  const nextAttempt = useRef(0);
+  const running = useRef<{ id: number; scope: string } | undefined>(undefined);
+  const audience = useRef(view.scope);
+  audience.current = view.scope;
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  useEffect(() => {
+    setBusy(false);
+  }, [view.scope]);
   const [message, setMessage] = useState('');
+  // The account/world owner remounts this section when either identity changes.
+  // A renewed authority scope must not erase an unresolved invitation's identity.
+  const [unconfirmedInvite, setUnconfirmedInvite] = useState<{
+    id: string;
+    label: string;
+    scope: string;
+  }>();
   const [link, setLink] = useState<{
     url: string;
     label: string;
@@ -77,30 +98,44 @@ export function AccessSection({
   async function run(
     request: () => Promise<{ ok: boolean; message?: string; link?: string }>,
   ): Promise<boolean> {
+    if (running.current?.scope === view.scope) return false;
+    const attempt = ++nextAttempt.current;
+    const scope = view.scope;
+    running.current = { id: attempt, scope };
+    const current = () =>
+      mounted.current && audience.current === scope && running.current?.id === attempt;
     setBusy(true);
     setMessage('');
     try {
       const result = await request();
+      if (!current()) return false;
       setMessage(result.message ?? (result.ok ? 'Done.' : 'The request was not accepted.'));
       return result.ok;
     } catch (reason) {
+      if (!current()) return false;
       setMessage(
         `The result was not confirmed. Review the refreshed lists before making another change. ${reason instanceof Error ? reason.message : String(reason)}`,
       );
       return false;
     } finally {
-      setBusy(false);
-      onChanged();
+      const stillCurrent = current();
+      if (running.current?.id === attempt) running.current = undefined;
+      if (stillCurrent) {
+        setBusy(false);
+        onChanged();
+      }
     }
   }
   const create = () =>
     run(async () => {
       setLink(undefined);
       setCopyMessage('');
+      const original = { id: crypto.randomUUID(), label, scope: view.scope };
+      setUnconfirmedInvite(original);
       const result = await post<{ ok: boolean; message?: string; link?: string }>(
         '/api/invites/create',
         {
-          id: crypto.randomUUID(),
+          id: original.id,
           role,
           label,
           expiresInHours: hours,
@@ -108,6 +143,8 @@ export function AccessSection({
           ...(role === 'operator' ? { capabilities: chosen } : {}),
         },
       );
+      if (!mounted.current || audience.current !== original.scope) return { ok: false };
+      setUnconfirmedInvite(undefined);
       if (result.ok && result.link)
         setLink({
           url: result.link,
@@ -248,6 +285,14 @@ export function AccessSection({
           </form>
         )}
         {message && <p role="status">{message}</p>}
+        {unconfirmedInvite && !busy && (
+          <p role="status">
+            The invitation for {unconfirmedInvite.label} is unconfirmed. Check the entry marked
+            “Original unconfirmed invitation” in the refreshed list below. Its absence does not
+            confirm that creation failed. Its link cannot be recovered from the list; revoke an
+            unwanted invitation before creating a replacement.
+          </p>
+        )}
         {link && (
           <div className="ol-operations-link-result">
             <strong>Invitation link created</strong>
@@ -296,6 +341,9 @@ export function AccessSection({
               <li key={invite.id}>
                 <div className="ol-operations-row">
                   <strong>{invite.label}</strong>
+                  {unconfirmedInvite?.id === invite.id && (
+                    <Tag>Original unconfirmed invitation</Tag>
+                  )}
                   <Tag>{invite.role}</Tag>
                   <Tag tone={invite.status === 'pending' ? 'accent' : 'neutral'}>
                     {invite.status}

@@ -1,5 +1,5 @@
 import { entityGet } from '../../packages/domain/src/index.js';
-import { enterGame } from '../fixtures/browser.js';
+import { enterGame, blockExternalBrowserRequests } from '../fixtures/browser.js';
 import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
@@ -8,6 +8,7 @@ import { readConfig } from '../fixtures/database.js';
 test('time settings persist with sole-tab entry, explicit transfer, logout and manual world pause', async ({
   page,
 }, info) => {
+  await blockExternalBrowserRequests(page);
   // Native, zero-budget fixture with explicit server ticks, independent of browser speed.
   const clock = { now: Date.now() };
   const game = await createGameServer({
@@ -53,6 +54,7 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     await page.goto('http://127.0.0.1:' + address.port);
     await focus(true);
     await enterGame(page);
+    const identity = await page.evaluate(() => sessionStorage.getItem('open-legend:tab-id'));
     const settings = page.getByRole('button', { name: 'Time settings', exact: true });
     await settings.click();
     await expect(page.locator('.ol-time-settings .ol-caption')).toHaveText(
@@ -71,6 +73,7 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     expect(game.service.world.simTime).toBe(90);
     await page.reload();
     await enterGame(page);
+    expect(await page.evaluate(() => sessionStorage.getItem('open-legend:tab-id'))).toBe(identity);
     await settings.click();
     await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeChecked();
     await page.screenshot({ path: info.outputPath('time-settings.png') });
@@ -137,7 +140,6 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     await expect.poll(() => game.service.paused).toBe(false);
 
     // Both headless pages report focus. Replacement must still fence the old page.
-    const identity = await page.evaluate(() => sessionStorage.getItem('open-legend:tab-id'));
     const other = await page.context().newPage();
     // Fixture for a duplicated tab's copied session storage; identity must split
     // before it can send commands as the original page.

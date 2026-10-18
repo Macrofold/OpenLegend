@@ -34,6 +34,7 @@ const schema = z
       )
       .optional(),
     maxObjectBytes: positive,
+    transferTimeoutMs: positive.optional(),
     cache: z.object({
       root: z.string().min(1).optional(),
       maxBytes: positive,

@@ -1,3 +1,4 @@
+import type { NetworkOwner } from '@open-legend/network';
 export type JsonValue =
   | null
   | boolean
@@ -122,8 +123,12 @@ export interface AiReceipt {
   completedAt: string;
   /** Open Legend wall time around the adapter call. */
   latencyMs: number;
-  /** Provider execution time when the intermediary reports authoritative timestamps. */
+  /** Reported execution duration; standalone Macrofold measures provider transport and normalization, not isolated model compute. */
   providerLatencyMs?: number;
+  /** Intermediary Run start to completion, including its finalization. */
+  intermediaryRunLatencyMs?: number;
+  /** Intermediary Run admission wait; not the upstream model queue. */
+  intermediaryQueueLatencyMs?: number;
   /** Provider queue time before execution, when reported separately. */
   providerQueueLatencyMs?: number;
   dispatched: boolean;
@@ -169,6 +174,8 @@ export interface OpenAiProviderConfig extends ProviderConfig {
 }
 
 export interface AiClientConfig {
+  /** Shared service-lifetime network admission; never construct per request. */
+  network?: NetworkOwner;
   jev?: ProviderConfig;
   openai?: OpenAiProviderConfig;
   fetch?: FetchTransport;

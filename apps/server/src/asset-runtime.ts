@@ -23,7 +23,7 @@ export interface AssetResolver {
   reference(repositoryPath: string): ArtifactReference;
   releaseSha256: string;
   release: AssetRevisionReference;
-  close(): Promise<void>;
+  close(budget?: { timeoutMs: number; signal?: AbortSignal }): Promise<void>;
 }
 export async function createAssetResolver(
   options: {
@@ -61,6 +61,7 @@ export async function createAssetResolver(
     maxBytes: configuration.cache.maxBytes,
     maxEntries: configuration.cache.maxEntries,
     maxConcurrent: configuration.cache.maxConcurrent,
+    transferTimeoutMs: configuration.transferTimeoutMs,
   });
   const referenceFor = (repositoryPath: string): ArtifactReference => {
     const reference = indexedAsset(index, repositoryPath);
@@ -75,15 +76,15 @@ export async function createAssetResolver(
       const reference = referenceFor(repositoryPath);
       return cache.acquire(
         reference,
-        async (temporary, transferSignal) => {
+        async (operation, sink) => {
           if (options.publicOnly)
             return copyPublicAssetToCache(
               reference,
-              temporary,
-              transferSignal,
+              sink,
+              operation,
               configuration.runtimeEnvironment,
             );
-          await storageFor(reference).download(reference, temporary, transferSignal);
+          await storageFor(reference).downloadInto(reference, sink, operation);
         },
         signal,
       );
@@ -92,9 +93,9 @@ export async function createAssetResolver(
       reference: referenceFor,
       releaseSha256: index.release.manifestSha256,
       release: index.release,
-      close: async () => {
+      close: async (budget?: { timeoutMs: number; signal?: AbortSignal }) => {
         try {
-          await cache.close();
+          await cache.close(budget);
         } finally {
           for (const storage of stores.values()) storage.close();
         }

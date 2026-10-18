@@ -38,6 +38,8 @@ Selected [combat and threat responses](projects/combat-and-threat-responses-feat
 
 ## Feature inventories
 
+Implemented [bounded network requests](projects/completed/bounded-network-requests-feature-spec.md): [NET-L01–NET-L08](limits/bounded-network-requests.md) records finite operation profiles, continuous-stream liveness, active/unresolved capacity, cleanup, explicit complete-projection memory exposure and retry/enforcement boundaries. [NET01–NET11](maintainers/bounded-network-requests.md) owns implementation and qualification. Existing AI, multiplayer, invention and asset limit IDs retain their own numerical policies; focused network qualification establishes the inventoried runtime boundaries, while broader hosted/provider/capacity evidence remains with its original owners.
+
 | Feature                                                                                               | Inventory                                       | Implementation tasks                                                                                                 |
 | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | [Combat and threat responses](projects/combat-and-threat-responses-feature-spec.md)                   | [Limits](limits/combat-and-threat-responses.md) | [Tracker](maintainers/combat-and-threat-responses.md)                                                                |

@@ -1,5 +1,5 @@
 import { setTimeout as delay } from 'node:timers/promises';
-import { awaitWithSignal } from './http-response.js';
+import { NetworkError, type NetworkOwner } from '@open-legend/network';
 import { MacrofoldTransport, MacrofoldHttpError, macrofoldObject as object } from './macrofold.js';
 import {
   microUsdToUsd,
@@ -42,6 +42,7 @@ export interface MacrofoldGenerationConfig {
   maxCostUsd: number;
   timeoutMs?: number;
   fetch?: FetchTransport;
+  network?: NetworkOwner;
 }
 
 export interface MacrofoldDecisionConfig extends Omit<MacrofoldGenerationConfig, 'model'> {
@@ -110,6 +111,71 @@ export function macrofoldInferenceEvidence(
         ? microUsdToUsd(status['cost_micro_usd'])
         : undefined,
   };
+}
+
+/** Decode accounting independently: unusable usage must not discard a valid answer
+ * or a separately known charge. Missing usage never falls back to the model body.
+ * docs/ai-providers.md#receipts-outcomes-and-accounting */
+function captureEmbeddedInferenceUsage(
+  inference: Record<string, unknown>,
+  receipt: AiReceipt,
+  billingMode: MacrofoldBillingMode,
+): void {
+  const usage = record(inference['usage']) ? inference['usage'] : {};
+  const billing =
+    record(inference['billing']) && inference['billing']['billing_mode'] === billingMode
+      ? inference['billing']
+      : {};
+  const raw = inference['value'];
+  const nativeUsage =
+    record(raw) && record(raw.usage) && raw.usage.prompt_tokens !== undefined
+      ? decodeUsage({
+          usage: {
+            input_tokens: raw.usage.prompt_tokens,
+            output_tokens: raw.usage.completion_tokens,
+            input_tokens_details: raw.usage.prompt_tokens_details,
+            output_tokens_details: raw.usage.completion_tokens_details,
+          },
+        })
+      : decodeUsage(raw);
+  const input = parseNonnegativeSafeInteger(usage['input_tokens']),
+    output = parseNonnegativeSafeInteger(usage['output_tokens']);
+  // Null means unreported; malformed supplied cache counts invalidate usage.
+  const cacheCount = (value: unknown) =>
+    value === null ? undefined : (parseNonnegativeSafeInteger(value) ?? NaN);
+  const cached = cacheCount(usage['cached_input_tokens']),
+    written = cacheCount(usage['cache_write_input_tokens']);
+  const reasoning =
+    nativeUsage?.outputTokens === output ? nativeUsage?.reasoningOutputTokens : undefined;
+  receipt.usage =
+    usage['completeness'] === 'complete' && input !== undefined && output !== undefined
+      ? decodeUsage({
+          usage: {
+            input_tokens: input,
+            output_tokens: output,
+            input_tokens_details: {
+              ...(cached === undefined ? {} : { cached_tokens: cached }),
+              ...(written === undefined ? {} : { cache_write_tokens: written }),
+            },
+            ...(reasoning === undefined
+              ? {}
+              : { output_tokens_details: { reasoning_tokens: reasoning } }),
+          },
+        })
+      : undefined;
+  receipt.estimatedCostUsd =
+    billingMode === 'managed'
+      ? microUsdToUsd(billing['charged_micro_usd'])
+      : billing['provisional'] === false && receipt.usage
+        ? microUsdToUsd(billing['reported_micro_usd'])
+        : undefined;
+  const reported = billing['provider_reported_cost_usd'];
+  receipt.providerReportedCostUsd =
+    billing['provider_reported_cost_status'] === 'reported' &&
+    typeof reported === 'number' &&
+    usdToMicroUsd(reported) !== undefined
+      ? reported
+      : undefined;
 }
 
 /** Exact-Run complete usage, shared with the gameplay adapter. Missing billing stays unpriced. */
@@ -249,7 +315,7 @@ function createMacrofoldExecutor(
     !['managed', 'byok'].includes(config.billingMode)
   )
     throw new Error('Invalid Macrofold inference configuration.');
-  const api = new MacrofoldTransport(config.baseUrl, config.apiKey, config.fetch);
+  const api = new MacrofoldTransport(config.baseUrl, config.apiKey, config.fetch, config.network);
   return async function execute<T>(
     request: InferenceRequest,
     prepare: () => PreparedInference<T>,
@@ -268,14 +334,6 @@ function createMacrofoldExecutor(
       dispatched: false,
       completionUncertain: false,
     };
-    const controller = new AbortController();
-    let callerCancelled = false;
-    const cancel = () => {
-      if (controller.signal.aborted) return;
-      callerCancelled = true;
-      controller.abort();
-    };
-    let timer: ReturnType<typeof setTimeout> | undefined;
     let run: string | undefined;
     try {
       if (
@@ -304,182 +362,193 @@ function createMacrofoldExecutor(
       const remaining = Math.min(timeout, (request.deadlineMs ?? started + timeout) - Date.now());
       if (!Number.isFinite(remaining) || remaining <= 0)
         return { outcome: 'unavailable', reason: 'deadline_expired', receipt };
-      request.signal?.addEventListener('abort', cancel, { once: true });
-      if (request.signal?.aborted) cancel();
-      timer = setTimeout(() => controller.abort(), remaining);
-      const body = {
-        ...(request.stream ? { stream: true } : {}),
-        model_binding: {
-          provider: 'openrouter',
-          model: config.model,
-          billing_mode: config.billingMode,
-          ...(config.providerConnectionId
-            ? { provider_connection_id: config.providerConnectionId }
-            : {}),
+      return await api.run(
+        {
+          timeoutMs: Math.max(1, Math.floor(remaining)),
+          deadlineAtMs: request.deadlineMs,
+          signal: request.signal,
         },
-        input,
-        limits: {
-          max_cost_micro_usd: String(maxCost),
-          max_output_tokens: prepared.maxOutputTokens,
-          timeout_seconds: Math.ceil(remaining / 1000),
-        },
-      };
-      receipt.providerRequestDigest = digest(serialize(body, 500_000));
-      controller.signal.throwIfAborted();
-      receipt.dispatched = true;
-      receipt.completionUncertain = true;
-      let acceptance: Promise<void> | undefined;
-      const rememberAccepted = async (value: Record<string, unknown>) => {
-        const id = value['run_id'];
-        if (typeof id !== 'string' || !id) throw new InvalidData('macrofold_run_missing');
-        if (run !== undefined && run !== id)
-          throw new InvalidData('macrofold_run_identity_invalid');
-        if (!acceptance) {
-          run = id;
-          receipt.providerRequestId = id;
-          // The stream can detach after acceptance. Retain the same persistence
-          // promise, including its failure, when ordinary Run observation resumes.
-          acceptance = Promise.resolve().then(() => request.onAccepted?.(id));
-        }
-        await awaitWithSignal(acceptance, controller.signal);
-        return id;
-      };
-      let accepted: Record<string, unknown>;
-      try {
-        accepted = object(
-          await api.request(
-            '/v1/inferences',
-            body,
-            digest(request.requestId),
-            controller.signal,
-            undefined,
-            request.stream
-              ? {
-                  text: request.onProgress ?? (() => {}),
-                  accepted: async (value) => {
-                    await rememberAccepted(value);
-                  },
-                }
-              : undefined,
-          ),
-        );
-      } catch (error) {
-        if (error instanceof MacrofoldHttpError && error.admissionRejected) {
-          receipt.dispatched = false;
-          receipt.completionUncertain = false;
-        }
-        throw error;
-      }
-      run = await rememberAccepted(accepted);
-      let status: Record<string, unknown>;
-      const readRun = async (path: string): Promise<Record<string, unknown>> => {
-        for (;;) {
-          controller.signal.throwIfAborted();
-          try {
-            return object(await api.request(path, undefined, undefined, controller.signal));
-          } catch (error) {
-            if (!(error instanceof MacrofoldHttpError) || error.status !== 429) throw error;
-            // Reading the same accepted Run never creates another funded request.
-            await delay(Math.max(1000, error.retryAfterMs ?? 60_000), undefined, {
-              signal: controller.signal,
-            });
-          }
-        }
-      };
-      for (;;) {
-        controller.signal.throwIfAborted();
-        status = await readRun(`/v1/runs/${encodeURIComponent(run)}`);
-        if (status['id'] !== run) throw new InvalidData('macrofold_run_identity_invalid');
-        if (terminal.has(String(status['status']))) break;
-        await delay(250, undefined, { signal: controller.signal });
-      }
-      const result = accepted['result']
-        ? object(accepted['result'])
-        : await readRun(`/v1/runs/${encodeURIComponent(run)}/result`);
-      const evidence = macrofoldInferenceEvidence(run, status, result);
-      receipt.completionUncertain = evidence.completionUncertain;
-      const inference = object(result['inference']);
-      const raw = inference['value'];
-      receipt.usage = decodeUsage(raw);
-      if (record(raw) && record(raw.usage)) {
-        const usage = raw.usage;
-        if (usage.prompt_tokens !== undefined)
-          receipt.usage = decodeUsage({
-            usage: {
-              input_tokens: usage.prompt_tokens,
-              output_tokens: usage.completion_tokens,
-              input_tokens_details: usage.prompt_tokens_details,
-              output_tokens_details: usage.completion_tokens_details,
+        async (operation) => {
+          const signal = operation.signal;
+          const body = {
+            ...(request.stream ? { stream: true } : {}),
+            model_binding: {
+              provider: 'openrouter',
+              model: config.model,
+              billing_mode: config.billingMode,
+              ...(config.providerConnectionId
+                ? { provider_connection_id: config.providerConnectionId }
+                : {}),
             },
-          });
-        if (typeof usage.cost === 'number' && Number.isFinite(usage.cost) && usage.cost >= 0)
-          receipt.providerReportedCostUsd = usage.cost;
-      }
-      if (config.billingMode === 'managed')
-        receipt.estimatedCostUsd = microUsdToUsd(status['cost_micro_usd']);
-      else
-        await captureMacrofoldRunUsage(
-          api,
-          receipt,
-          controller.signal,
-          config.billingMode,
-          evidence.uninvokedInferenceChargeUsd,
-        );
-      // Billing observation is awaited and may absorb a reporting failure.
-      // Caller cancellation during that wait still withdraws the answer.
-      controller.signal.throwIfAborted();
-      if (
-        typeof inference['model_revision'] === 'string' &&
-        /^[\w./:-]{1,128}$/.test(inference['model_revision'])
-      ) {
-        receipt.model = inference['model_revision'];
-        receipt.modelVersionStatus = 'reported';
-      }
-      const began =
-        typeof status['started_at'] === 'string' ? Date.parse(status['started_at']) : NaN;
-      const ended =
-        typeof status['completed_at'] === 'string' ? Date.parse(status['completed_at']) : NaN;
-      if (Number.isFinite(began) && Number.isFinite(ended))
-        receipt.providerLatencyMs = Math.max(0, Math.round(ended - began));
-      if (typeof status['wait_seconds'] === 'number' && Number.isFinite(status['wait_seconds']))
-        receipt.providerQueueLatencyMs = Math.max(0, Math.round(status['wait_seconds'] * 1000));
-      if (receipt.completionUncertain)
-        return { outcome: 'uncertain', reason: 'provider_completion_unknown', receipt };
-      if (status['status'] === 'cancelled')
-        return { outcome: 'cancelled', reason: 'provider_cancelled', receipt };
-      if (status['status'] === 'timed_out')
-        return { outcome: 'failed', reason: 'deadline_exceeded', receipt };
-      const outcome = inference['outcome'];
-      if (outcome !== 'value')
-        return {
-          outcome:
-            outcome === 'unknown' || outcome === 'refused'
-              ? outcome
-              : outcome === 'invalid_output'
-                ? 'invalid'
-                : 'failed',
-          reason: `provider_${String(outcome)}`,
-          receipt,
-        };
-      const decoded = prepared.decode(raw);
-      return 'refused' in decoded
-        ? { outcome: 'refused', reason: 'provider_refused', receipt }
-        : { outcome: 'value', value: decoded.value, receipt };
+            input,
+            limits: {
+              max_cost_micro_usd: String(maxCost),
+              max_output_tokens: prepared.maxOutputTokens,
+              timeout_seconds: Math.ceil(remaining / 1000),
+            },
+          };
+          receipt.providerRequestDigest = digest(serialize(body, 500_000));
+          signal.throwIfAborted();
+          receipt.dispatched = true;
+          receipt.completionUncertain = true;
+          let acceptance: Promise<void> | undefined;
+          const rememberAccepted = async (value: Record<string, unknown>) => {
+            const id = value['run_id'];
+            if (typeof id !== 'string' || !id) throw new InvalidData('macrofold_run_missing');
+            if (run !== undefined && run !== id)
+              throw new InvalidData('macrofold_run_identity_invalid');
+            if (!acceptance) {
+              run = id;
+              receipt.providerRequestId = id;
+              // The stream can detach after acceptance. Retain the same persistence
+              // promise, including its failure, when ordinary Run observation resumes.
+              acceptance = Promise.resolve().then(() => request.onAccepted?.(id));
+            }
+            await operation.wait('callback', () => acceptance!);
+            return id;
+          };
+          let accepted: Record<string, unknown>;
+          try {
+            accepted = object(
+              await api.request(
+                '/v1/inferences',
+                body,
+                digest(request.requestId),
+                signal,
+                undefined,
+                request.stream
+                  ? {
+                      text: request.onProgress ?? (() => {}),
+                      accepted: async (value) => {
+                        await rememberAccepted(value);
+                      },
+                    }
+                  : undefined,
+              ),
+            );
+          } catch (error) {
+            if (error instanceof MacrofoldHttpError && error.admissionRejected) {
+              receipt.dispatched = false;
+              receipt.completionUncertain = false;
+            }
+            throw error;
+          }
+          run = await rememberAccepted(accepted);
+          const embeddedResult = accepted['result'] ? object(accepted['result']) : undefined;
+          // A terminal POST already proves this Run's status; keep polling only for
+          // an exceptional recovery receipt.
+          const embeddedInference = embeddedResult && object(embeddedResult['inference']);
+          const embeddedBilling =
+            embeddedInference && record(embeddedInference['billing'])
+              ? embeddedInference['billing']
+              : undefined;
+          let status: Record<string, unknown> | undefined =
+            embeddedResult && terminal.has(String(accepted['status']))
+              ? {
+                  ...accepted,
+                  id: accepted['run_id'],
+                  cost_micro_usd: embeddedBilling?.['charged_micro_usd'],
+                }
+              : undefined;
+          const readRun = async (path: string): Promise<Record<string, unknown>> => {
+            for (;;) {
+              signal.throwIfAborted();
+              try {
+                return object(await api.request(path, undefined, undefined, signal));
+              } catch (error) {
+                if (!(error instanceof MacrofoldHttpError) || error.status !== 429) throw error;
+                // Reading the same accepted Run never creates another funded request.
+                await delay(Math.max(1000, error.retryAfterMs ?? 60_000), undefined, {
+                  signal: signal,
+                });
+              }
+            }
+          };
+          while (!status || !terminal.has(String(status['status']))) {
+            signal.throwIfAborted();
+            status = await readRun(`/v1/runs/${encodeURIComponent(run)}`);
+            if (status['id'] !== run) throw new InvalidData('macrofold_run_identity_invalid');
+            if (terminal.has(String(status['status']))) break;
+            await delay(250, undefined, { signal: signal });
+          }
+          const result =
+            embeddedResult ?? (await readRun(`/v1/runs/${encodeURIComponent(run)}/result`));
+          const evidence = macrofoldInferenceEvidence(run, status, result);
+          receipt.completionUncertain = evidence.completionUncertain;
+          const inference = object(result['inference']);
+          const raw = inference['value'];
+          captureEmbeddedInferenceUsage(inference, receipt, config.billingMode);
+          // Caller cancellation during acceptance persistence or recovery still
+          // withdraws the answer; no paid request is retried.
+          signal.throwIfAborted();
+          if (
+            typeof inference['model_revision'] === 'string' &&
+            /^[\w./:-]{1,128}$/.test(inference['model_revision'])
+          ) {
+            receipt.model = inference['model_revision'];
+            receipt.modelVersionStatus = 'reported';
+          }
+          const began =
+            typeof status['started_at'] === 'string' ? Date.parse(status['started_at']) : NaN;
+          const ended =
+            typeof status['completed_at'] === 'string' ? Date.parse(status['completed_at']) : NaN;
+          if (Number.isFinite(began) && Number.isFinite(ended))
+            receipt.intermediaryRunLatencyMs = Math.max(0, Math.round(ended - began));
+          const providerMs = record(inference['timings_ms'])
+            ? inference['timings_ms']['provider']
+            : undefined;
+          if (typeof providerMs === 'number' && Number.isFinite(providerMs) && providerMs >= 0)
+            receipt.providerLatencyMs = providerMs;
+          if (typeof status['wait_seconds'] === 'number' && Number.isFinite(status['wait_seconds']))
+            receipt.intermediaryQueueLatencyMs = Math.max(
+              0,
+              Math.round(status['wait_seconds'] * 1000),
+            );
+          if (receipt.completionUncertain)
+            return { outcome: 'uncertain', reason: 'provider_completion_unknown', receipt };
+          if (status['status'] === 'cancelled')
+            return { outcome: 'cancelled', reason: 'provider_cancelled', receipt };
+          if (status['status'] === 'timed_out')
+            return { outcome: 'failed', reason: 'deadline_exceeded', receipt };
+          const outcome = inference['outcome'];
+          if (outcome !== 'value')
+            return {
+              outcome:
+                outcome === 'unknown' || outcome === 'refused'
+                  ? outcome
+                  : outcome === 'invalid_output'
+                    ? 'invalid'
+                    : 'failed',
+              reason: `provider_${String(outcome)}`,
+              receipt,
+            };
+          const decoded = prepared.decode(raw);
+          return 'refused' in decoded
+            ? { outcome: 'refused', reason: 'provider_refused', receipt }
+            : { outcome: 'value', value: decoded.value, receipt };
+        },
+      );
     } catch (error) {
-      if (controller.signal.aborted && run) {
+      const stopped =
+        error instanceof NetworkError && ['cancelled', 'deadline_exceeded'].includes(error.kind);
+      const callerCancelled = error instanceof NetworkError && error.kind === 'cancelled';
+      if (stopped && run) {
+        const originalRun = run;
         try {
-          await api.request(
-            `/v1/runs/${encodeURIComponent(run)}/cancel`,
-            {},
-            digest(`cancel:${request.requestId}`),
-            AbortSignal.timeout(5000),
+          await api.runCleanup(() =>
+            api.request(
+              `/v1/runs/${encodeURIComponent(originalRun)}/cancel`,
+              {},
+              digest(`cancel:${request.requestId}`),
+              undefined,
+            ),
           );
         } catch {
           /* Original reservation remains uncertain. */
         }
       }
       if (error instanceof MacrofoldHttpError) receipt.httpStatus = error.status;
-      const outcome = controller.signal.aborted
+      const outcome = stopped
         ? callerCancelled
           ? 'cancelled'
           : receipt.dispatched
@@ -496,7 +565,7 @@ function createMacrofoldExecutor(
               : 'failed';
       return {
         outcome,
-        reason: controller.signal.aborted
+        reason: stopped
           ? callerCancelled
             ? 'caller_cancelled'
             : 'deadline_exceeded'
@@ -508,8 +577,6 @@ function createMacrofoldExecutor(
         receipt,
       };
     } finally {
-      if (timer) clearTimeout(timer);
-      request.signal?.removeEventListener('abort', cancel);
       receipt.completedAt = new Date().toISOString();
       receipt.latencyMs = Date.now() - started;
     }

@@ -63,7 +63,7 @@ export async function searchInventions(
     apiKey: config.embeddingKey,
     model: config.embeddingModel,
     dimensions: config.embeddingDimensions,
-    fetch: log.fetch,
+    network: log.network,
     modelPrices: config.embeddingModelPrices,
     timeoutMs: config.aiTimeoutMs,
   });

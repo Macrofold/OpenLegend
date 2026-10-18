@@ -36,12 +36,12 @@ The 30.223-second game completes with 48 accepted resident plans, 32 matched mea
 
 All four selected examples finish; all three potentially changed tables match completely before/after every explanation. The probe adds 64 diagnostic requests and compares 4.92 million bytes. All bounds pass. Both initial requests are already large, so these are initial/later samples rather than a promised small-versus-large comparison.
 
-| Operation during real play | Input parameters | Existing searchable rows | Planning | Actual execution |
-| --- | ---: | ---: | ---: | ---: |
-| Insert 228 new searchable experiences | 4,332 | 768 | 1.340 ms | **18.261 ms** |
-| Reconcile 228 affected experiences | 461 | 996 | 1.270 ms | **4.533 ms** |
-| Insert 15 new searchable experiences | 285 | 996 | 0.572 ms | **0.965 ms** |
-| Reconcile 119 affected experiences | 243 | 1,417 | 1.440 ms | **3.097 ms** |
+| Operation during real play            | Input parameters | Existing searchable rows | Planning | Actual execution |
+| ------------------------------------- | ---------------: | -----------------------: | -------: | ---------------: |
+| Insert 228 new searchable experiences |            4,332 |                      768 | 1.340 ms |    **18.261 ms** |
+| Reconcile 228 affected experiences    |              461 |                      996 | 1.270 ms |     **4.533 ms** |
+| Insert 15 new searchable experiences  |              285 |                      996 | 0.572 ms |     **0.965 ms** |
+| Reconcile 119 affected experiences    |              243 |                    1,417 | 1.440 ms |     **3.097 ms** |
 
 The 228-row insert's incoming-row scan takes **0.543 ms**; its complete insert node takes **16.544 ms**, plus separately reported foreign-key trigger work. It reports 6,263 shared-buffer hits, no shared-buffer reads and forty shared-buffer writes. These counters include repeated accesses and are not unique pages or disk time. This points toward insertion/constraint/index maintenance rather than expensive generation of the incoming rows in that sample. It does **not** assign all insertion time to indexes. The table has fourteen secondary lookup indexes in addition to its primary key; an explicit index-removal diagnostic can test their contribution.
 

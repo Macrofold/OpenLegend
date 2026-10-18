@@ -15,12 +15,18 @@ importers:
       '@open-legend/assets':
         specifier: workspace:*
         version: link:packages/assets
+      '@open-legend/network':
+        specifier: workspace:*
+        version: link:packages/network
       '@playwright/test':
         specifier: 1.58.2
         version: 1.58.2
       '@types/node':
         specifier: 22.20.4
         version: 22.20.4
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
       prettier:
         specifier: 3.6.2
         version: 3.6.2
@@ -45,6 +51,9 @@ importers:
       '@open-legend/language':
         specifier: workspace:*
         version: link:../../packages/language
+      '@open-legend/network':
+        specifier: workspace:*
+        version: link:../../packages/network
       '@open-legend/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
@@ -100,12 +109,18 @@ importers:
       '@open-legend/language':
         specifier: workspace:*
         version: link:../../packages/language
+      '@open-legend/network':
+        specifier: workspace:*
+        version: link:../../packages/network
       '@open-legend/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
       '@open-legend/spatial':
         specifier: workspace:*
         version: link:../../packages/spatial
+      '@smithy/node-http-handler':
+        specifier: 4.12.1
+        version: 4.12.1
       openid-client:
         specifier: 6.8.8
         version: 6.8.8
@@ -125,6 +140,9 @@ importers:
 
   packages/ai:
     dependencies:
+      '@open-legend/network':
+        specifier: workspace:*
+        version: link:../network
       '@streamparser/json':
         specifier: 0.0.26
         version: 0.0.26
@@ -147,6 +165,8 @@ importers:
         version: 10.1.1
 
   packages/language: {}
+
+  packages/network: {}
 
   packages/protocol:
     dependencies:

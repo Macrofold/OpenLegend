@@ -6,6 +6,8 @@
 
 This is the cross-functional release checklist under [D5/D6](production-data.md), not a replacement for MP/PF/SL/MW/INV/V3D or the scaling branch's SC/SF/LT work. Each PD item coordinates the named owners; close their existing acceptance there and link the evidence here rather than copying task bodies. Limits live in the [deployment inventory](../limits/production-deployment.md). The playbook owns command/lifecycle procedures; do not copy them into a second task list.
 
+[NET01–NET11](bounded-network-requests.md) supplies the shared network lifetime implementation and focused qualification across authentication, service communication, AI, assets, streams and repository-owned cloud tooling. PD03–PD09 consume the applicable migration and fault evidence before qualifying enabled hosted journeys. A local timeout neither confirms remote cancellation nor releases uncertain authority, storage or spending obligations. NET does not provision infrastructure, choose release service objectives, qualify actual cloud termination or close these production gates.
+
 ## Fastest path
 
 **PD01 → PD02/PD03/PD05 in parallel → PD04 → PD06 and PD07 → PD08 → invitation pilot → PD09 public gate.** PD08 observability/security starts alongside infrastructure; its final rehearsal uses the completed deployment. Native-only staging precedes paid AI qualification. A native-only pilot may leave paid features explicitly disabled; it must not claim NPC dialogue qualification. Complete PD10 before enabling the corresponding optional feature. PD11/PD12 are expansion, not reasons to delay a correctly scoped pilot.

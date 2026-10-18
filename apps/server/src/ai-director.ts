@@ -281,7 +281,7 @@ export class AiDirector {
                 modelPrices: config.llmModelPrices,
                 reasoningEffort: 'low',
               },
-              fetch: log.fetch,
+              network: log.network,
               timeoutMs: config.aiTimeoutMs,
               maxRequestBytes: 500_000,
               maxResponseBytes: 500_000,

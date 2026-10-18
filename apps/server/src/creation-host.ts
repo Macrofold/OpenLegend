@@ -483,7 +483,9 @@ export async function createAwaitingCreationHost(
       });
       if (options.closeStore && !adopting) await stage('Creation storage', () => store.close());
     }
-    await stage('Client assets', () => options.assets.close());
+    await stage('Client assets', () =>
+      options.assets.close({ timeoutMs: Math.max(1, Math.floor(until - performance.now())) }),
+    );
     await stage(
       'Public listener',
       () =>

@@ -1,4 +1,5 @@
 import { entityGet, entityKeys, entityValues, projectWorldHistory } from '@open-legend/domain';
+import type { ConsumptionContext } from '@open-legend/network';
 import { resolveInventoryGroup } from './inventory-groups.js';
 import {
   decisionClaimCurrent,
@@ -2083,13 +2084,22 @@ export class WorldService {
     if (!this.config.godMode || !this.mayInspectPrivate(actorId, scope))
       throw new Error('Private mind inspection is unavailable.');
     await this.flush();
-    const world = this.world,
+    const worldId = this.world.id,
       generation = this.generation;
+    // Preparing the canonical read can apply already-accepted journal sources
+    // and publish their actor revision. Capture the disclosure fence afterward.
+    const head = await this.store.records?.head();
+    if (
+      worldId !== this.world.id ||
+      generation !== this.generation ||
+      !this.mayInspectPrivate(actorId, scope)
+    )
+      throw new Error('Private mind changed during inspection.');
+    const world = this.world;
     const sourceRevision = this.store.memories?.actorRevision(actorId);
     const stillPrivate = this.privateReadFence(actorId, () =>
       this.mayInspectPrivate(actorId, scope),
     );
-    const head = await this.store.records?.head();
     const commitments =
       this.store.memories && head
         ? await this.store.memories.commitments({
@@ -2805,9 +2815,11 @@ export class WorldService {
     actorId: string,
     accountId: string,
     persist: () => Promise<void>,
+    context: ConsumptionContext,
   ): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
+      context.throwIfStopped();
       const entity = entityGet(this.world.entities, actorId);
       if (!entity?.actor?.alive || entity.retirement || entity.actor.controller === 'player')
         return {
@@ -2823,6 +2835,7 @@ export class WorldService {
         actorId,
       );
       if (!departed.ok) return departed.outcome;
+      context.throwIfStopped();
       if (
         !(await this.commit(
           { ...this.saved, world: departed.world },
