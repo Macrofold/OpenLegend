@@ -198,6 +198,15 @@ Interruption is a general prospective work transition. Prepare replacing gatheri
 
 Deduplicate semantic alternatives only when their invocation, optional purpose/subject, transition and finite conditions have the same meaning. Two motives beginning with one punch remain separate choices. Share actor/tool prerequisites, geometry, material assignment and other physical preparation only within the same synchronous unchanged-world read unless the existing owner proves broader dependency-correct reuse. Retain immutable descriptions and exact bindings across waits; recompute expired prerequisite preparation and revalidate current admission.
 
+The shared actor combat-means query prepares native/equippable strikes, supported
+launchers, compatible available ammunition and shields before target expansion.
+It uses native equipment and reservation checks with the caller's exact prospective
+resource view. Ammunition stays grouped by admitted kind until actual targets are
+offered. Each compatible exact lot remains a distinct choice, including different
+admitted damage profiles; a first lot cannot hide the others. This read grants no
+permission, releases no hold and promises no future action. Exact native admission
+still proves each selected combination.
+
 The requesting consumer declares whether its finite supplied options are **complete-required** or **optional suggestions**. Admit the required set's size and work before provider dispatch, rejecting provably excessive construction before needless expansion. Preserve the complete-required set or report preparation as incomplete/refused; byte fitting, ranking or ordinary retrieval must not silently delete its members. This does not require enumerating every possible world action or argument. Optional suggestions may retain their documented selection policy, while scoped capability discovery and unlisted attempts remain available. Carry the selected full binding through response admission; converting it back to a bare command must not discard the initiator's chosen meaning.
 
 ## 5. Intent envelope and semantic fidelity

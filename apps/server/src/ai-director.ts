@@ -3765,19 +3765,30 @@ export class AiDirector {
           })
           .sort((a, b) => (b.sequence ?? 0) - (a.sequence ?? 0));
         const unseenIds = new Set(unseen.map((entry) => entry.eventId ?? entry.id));
+        const interruptions = this.responseInterruptions(entity.id, last?.watermark ?? 0).filter(
+          (entry) => unseenIds.has(entry.eventId),
+        );
+        const preparedResult = preparedResponseResult(world, entity.id, [...unseenIds]);
         const urgent =
           (this.thoughtWork.pending(entity.id)?.urgency ?? 0) >= INTAKE_LIMITS.urgent ||
-          preparedResponseResult(world, entity.id, [...unseenIds]) ||
+          preparedResult ||
           // First enrollment has no previous change sample. Personally retained,
           // unread danger still qualifies; never infer it from another body's state.
-          this.responseInterruptions(entity.id, last?.watermark ?? 0).some((entry) =>
-            unseenIds.has(entry.eventId),
-          );
+          interruptions.length > 0;
         // Capacity refusal leaves this character's coalesced ticket and evidence
         // untouched. Ordinary aging still orders eligible work in the same queue.
         if (!this.canAdmit(entity.id, urgent)) continue;
         if (!(await this.execution.primaryAvailable(urgent))) continue;
-        const latest = unseen.slice(0, 8);
+        // Native urgency identifies the initiating experience, not just queue
+        // priority. A later incidental sighting cannot replace an actual blow
+        // as the cause sentence. Other coalesced evidence keeps its own order.
+        const priorityId =
+          interruptions[0]?.eventId ??
+          (preparedResult ? actor.agency.lastResultMemoryId : undefined);
+        const priority = unseen.find((memory) => (memory.eventId ?? memory.id) === priorityId);
+        const latest = priority
+          ? [priority, ...unseen.filter((memory) => memory !== priority)].slice(0, 8)
+          : unseen.slice(0, 8);
         // This is a wakeup snapshot, not a queue of memories owed future model calls.
         // docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence
         // Awareness and personal-memory sequences share the native allocation counter,

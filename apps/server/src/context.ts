@@ -7,7 +7,6 @@ import { domainCommand } from './cognition.js';
 import { outingActions } from './outing-view.js';
 import {
   isEquipped,
-  equipmentProblem,
   combatRecoveryDeadline,
   guardDescription,
   guardChoiceLabel,
@@ -38,7 +37,7 @@ import { dropItemReason } from '@open-legend/domain';
 import { pickupActions } from './item-actions.js';
 import { statusEffectActions } from './status-effect-actions.js';
 import {
-  availableStrikes,
+  prepareCombatMeans,
   strikeDefinition,
   huntingDescription,
   rangedChoiceLabel,
@@ -939,12 +938,13 @@ export function npcCandidates(
         command: { type: 'prepare', preparation: preparation as 'fiber' | 'cord' },
       });
   }
-  const ammunitionByKind = new Map<string, (typeof inventory)[number]>();
-  for (const item of inventory) {
-    const kind = definitions.get(item.definitionId)?.ammunition?.kind;
-    if (kind && !ammunitionByKind.has(kind)) ammunitionByKind.set(kind, item);
-  }
-  const compatibleAmmo = (kind: string) => ammunitionByKind.get(kind);
+  const { launchers, strikes, shields, ammunitionByKind } = prepareCombatMeans(
+    service.world,
+    actorId,
+    inventory,
+    afterReplacement,
+  );
+  const compatibleAmmo = (kind: string) => ammunitionByKind.get(kind)?.length;
   // Offers reuse current native admission: a carried component does not grant a supported
   // equipment use, permission to move reserved gear, or freedom from committed recovery.
   for (const item of inventory) {
@@ -966,43 +966,11 @@ export function npcCandidates(
       });
     }
   }
-  const launchers = inventory.flatMap((item) => {
-    const definition = definitions.get(item.definitionId);
-    const launcher = definition?.launcher;
-    const ammunition = launcher && compatibleAmmo(launcher.ammunitionKind);
-    return definition &&
-      launcher &&
-      ammunition &&
-      !equipmentProblem(service.world, actorId, item.id, 'ranged', afterReplacement) &&
-      (isEquipped(service.world, actorId, item.id) || item.quantity === 1)
-      ? [{ item, definition, launcher, ammunition }]
-      : [];
-  });
   const cuttingTool = inventory.some((item) =>
     definitions.get(item.definitionId)?.properties.includes('point'),
   );
-  const strikes = [
-    ...availableStrikes(service.world, actorId),
-    ...inventory
-      .filter(
-        (item) =>
-          !isEquipped(service.world, actorId, item.id) &&
-          item.quantity === 1 &&
-          definitions.get(item.definitionId)?.melee &&
-          !equipmentProblem(service.world, actorId, item.id, 'melee', afterReplacement),
-      )
-      .flatMap((item) => {
-        const strike = strikeDefinition(item.definitionId, service.world, item.id);
-        return strike ? [strike] : [];
-      }),
-  ];
   // Visible contact or ranged preparation makes supported defense relevant here. A guard
   // offer neither selects it nor binds an unperceived attacker or future pursuit.
-  const shields = inventory.filter(
-    (item) =>
-      definitions.get(item.definitionId)?.contactDefense &&
-      !equipmentProblem(service.world, actorId, item.id, 'guard', afterReplacement),
-  );
   if (personallyThreatened)
     for (const shield of shields) {
       const profile = definitions.get(shield.definitionId)!.contactDefense!;
@@ -1045,7 +1013,7 @@ export function npcCandidates(
     // for contact. Equal ranges share geometry work within this observed snapshot.
     if (rangedTargetAllowed(service.world, entity) && entity.id !== actorId) {
       const reachable = new Map<number, boolean>();
-      for (const { item, definition, launcher, ammunition } of launchers) {
+      for (const { item, definition, launcher, ammunition: ammunitionLots } of launchers) {
         const description =
           huntingDescription(entity.actor?.species, 'launcher', entity, definition) ??
           `${rangedChoiceLabel('shoot-once', namePhrase(entity), namePhrase(definition))}.`;
@@ -1056,29 +1024,31 @@ export function npcCandidates(
               !!findApproachPath(service.world, observed.actor, entity, launcher.range),
           );
         if (!reachable.get(launcher.range)) continue;
-        const command: CommandInput = {
-          type: entity.animal ? 'hunt' : 'shoot-once',
-          autoEquip: true,
-          targetId: entity.id,
-          itemId: item.id,
-          ammunitionId: ammunition.id,
-        };
-        if (!canOfferPhysical(command)) continue;
-        actions.push({
-          id: `shot:${item.id}:${entity.id}`,
-          firstActionDescription: rangedChoiceLabel(
-            'shoot-once',
-            namePhrase(entity),
-            namePhrase(definition),
-          ),
-          description: `${equipmentChangeDescription(service.world, actorId, item.id)}${description} ${definition.name}: ${definition.description} ${(shotView ??=
-            nativeActivityViews(service.world, [...possessionItems(service.world, actorId)]))(
-            domainCommand(command, actorId, 'offered-shot'),
-          )
-            .facts.map((fact) => `${fact.name}: ${String(fact.value)}`)
-            .join('; ')}`,
-          command,
-        });
+        for (const ammunition of ammunitionLots) {
+          const command: CommandInput = {
+            type: entity.animal ? 'hunt' : 'shoot-once',
+            autoEquip: true,
+            targetId: entity.id,
+            itemId: item.id,
+            ammunitionId: ammunition.id,
+          };
+          if (!canOfferPhysical(command)) continue;
+          actions.push({
+            id: `shot:${JSON.stringify([item.id, ammunition.id, entity.id])}`,
+            firstActionDescription: `${rangedChoiceLabel(
+              'shoot-once',
+              namePhrase(entity),
+              namePhrase(definition),
+            )} using ${namePhrase(service.world.itemDefinitions[ammunition.definitionId]!)}`,
+            description: `${equipmentChangeDescription(service.world, actorId, item.id)}${description} ${definition.name}: ${definition.description} ${(shotView ??=
+              nativeActivityViews(service.world, [...possessionItems(service.world, actorId)]))(
+              domainCommand(command, actorId, 'offered-shot'),
+            )
+              .facts.map((fact) => `${fact.name}: ${String(fact.value)}`)
+              .join('; ')}`,
+            command,
+          });
+        }
       }
     }
     const route = approaches.get(entity.id);

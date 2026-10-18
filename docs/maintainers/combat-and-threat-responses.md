@@ -91,6 +91,13 @@ Contract: [interpreted threat reactions](../worlds/base/psychological-reactions.
 
 ## CTR07 — Relevance followed by independent choice
 
+Actor/tool preparation now has one shared domain query for strikes, launchers,
+ammunition and shields. The real complete catalogue retains every compatible exact
+ammunition lot and admitted damage profile. Native selection of a second lot,
+actual aiming holds and the read-only replacement view have focused coverage.
+This removes the first-ammunition-per-kind omission; it does not qualify independent
+selection or complete inventory/density scaling.
+
 Native catalogue compilation now uses the exact selected world profile and shared purpose/method tables. One controlled service preparation retains all 475 distinct choices within the unchanged context allowance, sharing 51 primitive physical checks; both complete judgment requests pass size admission and supplied-score decoding. The connected director admits the exact selected strike through two controlled callbacks and starts it on the next ordinary native step; independent choices and full runtime races remain unqualified. Shared preparation now distinguishes complete required choices from optional suggestions. It keeps different purposes for the same action, reuses identical physical preflight within the request, refuses whole-set overflow before inference and prevents ordinary relevance/fallback or a new post-judgment binding from replacing the required set. Chosen purpose definitions, roles and source IDs reach native compositions, private action records and current-format validation. Controlled service/native checks pass; the selected world catalogue and two-stage pipeline are installed for new ordinary worlds; complete repertoire, scheduling, races and independent qualification remain open.
 
 Contract: [technical stages](../projects/combat-and-threat-responses-tech-design.md#stage-one-situation-relevance-and-independent-appraisals) and the canonical [24-purpose catalogue](../worlds/base/threat-response-options.md).

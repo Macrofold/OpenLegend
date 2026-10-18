@@ -1083,8 +1083,13 @@ describe(
       });
     });
 
-    it('hazard: another actor strikes Ada; attention, combined routing and a level-3 payload', async () => {
+    it('hazard under ordinary routing: attention, combined routing and a level-3 payload', async () => {
       const h = await harness({ script: { route: { level3: 0.9 } } });
+      // This CR01 specimen inspects the ordinary route, including a world which
+      // omits the optional supplied-threat strategy. CTR owns that two-stage route.
+      await editWorld(h.service, (world) => {
+        world.cognitionPolicy.preparedResponses = null;
+      });
       const health = entityGet(h.service.world.entities, NPC_ID)!.actor!.health;
       const struck = await h.service.command('fixture-punch', {
         type: 'strike',

@@ -833,3 +833,42 @@ open.
 Additional Jev cost is **$0**; cumulative provider-reported Jev estimates remain
 **$0.290701**, other-provider estimates **$0.088246**, uncertain commitments
 **$4.105220**, and conservative task exposure **$4.484167**.
+
+## Shared combat means and exact ammunition — October 18, 2026
+
+The real character catalogue now reuses one domain query for native/equippable
+strikes, launchers, shields and compatible available ammunition. Native equipment
+and reservation owners still perform their checks. Ammunition is indexed once by
+admitted kind before target expansion; every compatible exact lot remains offered,
+with a structured weapon/ammunition/target identity. The query releases no hold,
+changes no equipment and selects no preferred ammunition. Its intended native
+observation consumer remains part of the unfinished subscription work.
+
+The evolving connected native/service scenario creates a second actual ammunition
+lot and proves that both reach the real complete-purpose catalogue. Selecting the
+second one starts native aiming with that exact lot. Its actual one-unit hold
+excludes it from another invocation; the pure replacement view includes the stock
+which ending that aim would release, without releasing the real hold. Two distinct
+arrow definitions are admitted through the native family with damage bonuses 1
+and 5. Both are separately offered for a real compatible bow. Native cancellation
+and inventory drop retain the resulting specimens as ground objects. This is
+controlled native authoring/selection, not independent invention or judgment.
+
+TypeScript, production build, asset guard and 69 existing native/perception/
+spatial/simulation/disclosure checks pass. The three existing catalogue checks
+pass. The broader cognition payload file initially failed its ordinary-route
+hazard specimen because the ordinary opening now selects the supplied threat
+strategy. That specimen now explicitly omits the optional strategy, retaining its
+ordinary-route coverage rather than asserting an obsolete default. Its rerun then
+exposed an actual cause-selection defect: an incidental later sighting could replace
+the unread punch as the initiating sentence. The director now reuses its native
+urgent-evidence selection before newer incidental records, with a selected physical
+result next. Focused verification of this repair is pending. The connected threat
+strategy has separate controlled two-stage coverage;
+the failed independent Ada cohorts remain failed and retained. Complete inventory
+scaling, stable observations and full qualification remain open.
+
+Additional Jev cost is **$0**; cumulative provider-reported Jev estimates remain
+**$0.290701**, other-provider estimates **$0.088246**, uncertain commitments
+**$4.105220**, and conservative task exposure **$4.484167**. Automated providers
+and their accounting receipts are synthetic; no external transport ran.

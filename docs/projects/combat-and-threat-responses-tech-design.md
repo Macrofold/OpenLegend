@@ -168,6 +168,42 @@ the actually affected observers and route/geometry owner; do not scan all histor
 or create a paid call on each movement update. Full dynamic crossing and shared
 combat qualification remain required before closing CTR08.
 
+Before those subscriptions, the current actor/tool preparation is extracted from
+the server catalogue into one domain read query for catalogue and observation
+preparation. It preserves native equipment/reservation/body checks and supplied
+permitted inventory; group ammunition by admitted kind once, without crossing
+every lot with every perceived target during actor preparation. All compatible
+available lots are retained, expanded only for actual offered targets, with each
+exact combination receiving a structured identity. Native admission remains the
+authority. This is roughly 100–150 logic lines plus caller reconciliation. Real
+catalogue/native cases cover distinct lots and admitted damage profiles, actual
+aiming holds, a pure replacement view and the unchanged ordinary complete request.
+Broader inventory scaling remains part of complete qualification.
+
+The ordinary-route hazard specimen also exposed cause selection: a later incidental
+sighting could headline an unread actual blow. Reuse the existing actor-scoped
+urgent-evidence read to select the initiating cause before incidental newer records;
+an actual selected physical result has the next priority. Preserve the remaining
+coalesced records and their original evidence cut. This is a small scheduling repair,
+not a new urgency rule or queue. The ordinary-route specimen explicitly omits the
+optional threat strategy; both routes require their own qualification.
+
+The observation slice distinguishes hard execution participants from passively
+watched selected people in the same finite-control owner. Preflight proves both
+at selection; continued execution stops only for its hard requirements. Native
+encounter records retain profile-pinned stable/pending sight, observed preparation,
+movement and actual supported-method reach bands. Temporal due work and the
+existing piecewise crossing owner establish their real boundaries; private native
+notices enter ordinary intake. Include current and paused finite commitments
+without rebuilding identity from hidden bodies. Combined with shared actor/tool
+preparation this is approximately 900–1,200 logic lines. Cost grows with active
+observers' own admitted means and relevant pairs/ranges, not retained history or
+every world resident. Share actor preparation once per observation pass and
+retain only certified geometric runs; equipment/custody/holds, body, geometry,
+perception, profile or selected work changes invalidate affected preparation.
+Measure actual native/service preparation, changed-pair visits and full reaction
+paths, including jitter, missing evidence, restart, density and provider waits.
+
 Own spoken output is retained as personal speech evidence and a native attributed
 speech result. Neither is a fresh autonomous cause for its speaker. The shared
 intake filter and supplied physical-result predicate distinguish that output from
