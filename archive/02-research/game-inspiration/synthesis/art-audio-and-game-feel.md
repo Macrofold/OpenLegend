@@ -51,6 +51,12 @@ A distinctive scar, handed tool, closure, missing part or carried object should 
 
 This is more than polish for a world of remembered individuals. Recognition, equipment and later evidence can refer to persistent physical facts, while the renderer remains only their depiction.
 
+### PRESENT-L005 — Let the soundscape acknowledge lived activity
+
+A [GamesRadar+ review](https://www.gamesradar.com/sea-of-stars-review/) reports that an inn musician's instrument disappears from the music when the player talks to the musician. The particular detail suggests a powerful relationship between atmosphere and apparent everyday life: music is not only an abstract soundtrack but can make a performed activity feel present in the place. This is an attributed reviewer observation, not a firsthand audio test or proof of a particular implementation.
+
+For Open Legend, where a person actually works, performs, stops or moves out of audible reach, the corresponding sound may change as permitted by the world's existing action and hearing rules. Do not infer musicianship, interruptions or proximity merely from decorative audio, or make real simulation depend on the soundtrack. Audible human life may be important even where it grants no combat advantage. [Sound and feedback production](../../../../docs/production-workflows/audio-and-feedback.md) owns how to explore an appropriate sound treatment.
+
 ## Current OpenLegend baseline and existing design owners
 
 The [creative brief](../../../../art-direction/final-board/creative-brief.md), [current art decisions](../../../../art-direction/decisions.md), [3D pixel-art feature specification](../../../../docs/projects/3d-pixel-art-feature-spec.md) and [scene production workflow](../../../../docs/production-workflows/scenes-and-interfaces.md) already own the selected visual direction and production route. This pass strengthens their acceptance questions; it does not select a renderer or reopen the current believable-proportion requirement.
