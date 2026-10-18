@@ -2036,6 +2036,14 @@ export class AiDirector {
   ): Promise<void> {
     const started = performance.now();
     run.preparedResponse = true;
+    // A remembered point or continuing purpose may cite an older actual cause
+    // outside this wake's intake. Capture it through the same private source guard.
+    const requiredEvidenceIds = [
+      ...new Set([
+        ...evidenceIds,
+        ...catalogue.purposes.flatMap((purpose) => purpose.purpose.sourceIds),
+      ]),
+    ];
     const subjects = Object.fromEntries(
       [
         ...new Set([
@@ -2063,7 +2071,7 @@ export class AiDirector {
       actorId,
       run.job.id,
       stimulus,
-      evidenceIds,
+      requiredEvidenceIds,
       async () => {
         throw new Error('Supplied preparation cannot buy another judgment.');
       },

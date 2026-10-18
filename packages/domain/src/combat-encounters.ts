@@ -3,8 +3,8 @@ import { entityGet, entityValues } from './entity-collection.js';
 import { bodyPolicy } from './body-policy.js';
 import { seesEntity, visionQuery } from './perception.js';
 import { activelyParticipates } from './participation-state.js';
-import { worldPosition } from './spatial-state.js';
-import { subjectReferenceCurrent } from './worlds/base/knowledge.js';
+import { worldPosition, worldSupport } from './spatial-state.js';
+import { subjectReferenceCurrent, observerDescription } from './worlds/base/knowledge.js';
 import { emitPrivateObservation } from './events.js';
 import { person, subjectNarration } from './narration.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
@@ -25,7 +25,13 @@ export interface PersonalEncounter {
   lastCause?: { id: string; at: number; kind: 'preparation' | 'release' | 'attempt' | 'contact' };
   incomingUntil?: number;
   active: Record<string, { kind: 'action' | 'projectile'; id: string }>;
-  lastObserved?: { point: Position; at: number; distance: number };
+  lastObserved?: {
+    point: Position;
+    surfaceId: string | null;
+    label: string;
+    at: number;
+    distance: number;
+  };
   own?: {
     intentionId: string;
     revision: number;
@@ -180,6 +186,8 @@ export function acquireCombatObservation(
   }
   pair.lastObserved = {
     point: { ...worldPosition(source) },
+    surfaceId: worldSupport(source),
+    label: observerDescription(world, observer.id, source.id).slice(0, 120),
     at: event.at,
     distance: distance3D(worldPosition(observer), worldPosition(source)),
   };
@@ -323,10 +331,18 @@ export function reconcileCombatSight(
     if (visibleNow && (pair.lastCause || pair.own)) {
       const point = worldPosition(other);
       const distance = distance3D(worldPosition(observer), point);
-      if (
-        pair.lastObserved &&
-        (Math.abs(distance - pair.lastObserved.distance) > SPATIAL_LIMITS.epsilon ||
-          distance3D(point, pair.lastObserved.point) > SPATIAL_LIMITS.epsilon)
+      if (!pair.lastObserved)
+        pair.lastObserved = {
+          point: { ...point },
+          surfaceId: worldSupport(other),
+          label: observerDescription(world, observer.id, other.id).slice(0, 120),
+          at: world.simTime,
+          distance,
+        };
+      else if (
+        Math.abs(distance - pair.lastObserved.distance) > SPATIAL_LIMITS.epsilon ||
+        distance3D(point, pair.lastObserved.point) > SPATIAL_LIMITS.epsilon ||
+        worldSupport(other) !== pair.lastObserved.surfaceId
       ) {
         // Compare both source positions from the observer's present position, so
         // the observer's own walking is not mistaken for the source withdrawing.
@@ -338,7 +354,13 @@ export function reconcileCombatSight(
               ? 'closing'
               : 'lateral';
         pair.movementRevision++;
-        pair.lastObserved = { point: { ...point }, at: world.simTime, distance };
+        pair.lastObserved = {
+          point: { ...point },
+          surfaceId: worldSupport(other),
+          label: observerDescription(world, observer.id, other.id).slice(0, 120),
+          at: world.simTime,
+          distance,
+        };
       }
     }
   }
@@ -485,7 +507,11 @@ export function validateCombatEncounters(world: WorldState): void {
         throw new Error('Invalid encounter cause.');
       if (
         pair.lastObserved &&
-        (!hasRecordFields(pair.lastObserved, ['point', 'at', 'distance']) ||
+        (!hasRecordFields(pair.lastObserved, ['point', 'surfaceId', 'label', 'at', 'distance']) ||
+          (pair.lastObserved.surfaceId !== null && !isSafeRecordId(pair.lastObserved.surfaceId)) ||
+          typeof pair.lastObserved.label !== 'string' ||
+          !pair.lastObserved.label.trim() ||
+          pair.lastObserved.label.length > 120 ||
           !pair.lastObserved.point ||
           ![
             pair.lastObserved.point.x,

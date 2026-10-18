@@ -1,9 +1,13 @@
 import { entityGet } from './entity-collection.js';
-import { activityRoleKinds } from './native-command-contracts.js';
+import {
+  activityRoleKinds,
+  activityEntityReferences,
+  commandEntityFields,
+} from './native-command-contracts.js';
 import { validateInstalledActivityConditions } from './action-experience.js';
 import type { ConstructionPermission } from './assembly-types.js';
 import { isEquipped } from './equipment.js';
-import { isCookingInputField } from './food-preparation.js';
+import { activityCommandFields, isCookingInputField } from './food-preparation.js';
 import { executeCommand, nativeOperationAvailable, prepareNativeChoice } from './kernel.js';
 import type { Command, Position, WorldState } from './types.js';
 import { worldPosition } from './spatial-state.js';
@@ -18,7 +22,11 @@ import {
   recordPlanResult,
   resolvePlanCommand,
 } from './agency.js';
-import { captureActionTargets } from './action-targets.js';
+import {
+  captureActionTargets,
+  actionTargetsCurrent,
+  type ActionTargetEpisodes,
+} from './action-targets.js';
 import { subjectReferenceCurrent } from './worlds/base/knowledge.js';
 import { acquiredActivities, activityRoleCompatible } from './activity-learning.js';
 import {
@@ -77,6 +85,7 @@ export interface ActivityExecution {
   /** A requested composition carries its own validated root and chosen name. */
   request?: { name: string; root: ActivityNode; chosenPurpose?: Command['chosenPurpose'] };
   bindings: Record<string, ActivityBinding>;
+  targetEpisodes: ActionTargetEpisodes;
   pending: { node: ActivityNode; iteration: number; startedAt?: number }[];
   outputs: Record<string, ActivityOutput[]>;
   serial: number;
@@ -758,6 +767,11 @@ export function activityFrontier(
           block('A required actual output or compatible binding is unavailable.');
           return;
         }
+        if (!activityCommandReferencesCurrent(world, actorId, execution, command)) {
+          execution.pending.push(frame);
+          block('A selected person is no longer the person originally observed for this activity.');
+          return;
+        }
         if (command.type === 'equip' && isEquipped(world, actorId, command.itemId)) continue;
         const step: PlanStep = {
           id,
@@ -832,6 +846,7 @@ export function startLearnedActivity(
         'This activity stopped after a failed native step; choose a new attempt explicitly.',
       );
     plan.activity.bindings = cloneValue(bindings);
+    plan.activity.targetEpisodes = captureActivityTargets(world, actorId, method.root, bindings);
     plan.status = 'active';
     plan.revision++;
     return outcome(true, 'resumed', 'Continue only the remaining work.');
@@ -850,6 +865,7 @@ export function startLearnedActivity(
       ...(humanInitiated ? { humanInitiated } : {}),
       methodId,
       bindings: cloneValue(bindings),
+      targetEpisodes: captureActivityTargets(world, actorId, method.root, bindings),
       pending: [{ node: cloneValue(method.root), iteration: 0 }],
       outputs: {},
       serial: 0,
@@ -1077,7 +1093,48 @@ export function firstRemainingActivityCommand(
       'activity-limit',
       'Another needed attempt would exceed the chosen limit.',
     );
+  if (
+    execution &&
+    first &&
+    !('ok' in first) &&
+    !activityCommandReferencesCurrent(world, actorId, execution, first)
+  )
+    return outcome(
+      false,
+      'stale-target',
+      'A selected person is no longer the person originally observed for this activity.',
+    );
   return first;
+}
+
+function captureActivityTargets(
+  world: WorldState,
+  actorId: string,
+  root: ActivityNode,
+  bindings: Record<string, ActivityBinding>,
+): ActionTargetEpisodes {
+  return captureActionTargets(
+    world,
+    actorId,
+    activityEntityReferences(root, bindings).map((targetId) => ({ actorId, targetId })),
+  );
+}
+function activityCommandReferencesCurrent(
+  world: WorldState,
+  actorId: string,
+  execution: ActivityExecution,
+  command: Command,
+): boolean {
+  const fields = activityCommandFields(command);
+  return actionTargetsCurrent(
+    world,
+    actorId,
+    commandEntityFields(command).flatMap((field) => {
+      const value = fields[field];
+      return typeof value === 'string' ? [{ actorId, targetId: value }] : [];
+    }),
+    execution.targetEpisodes,
+  );
 }
 
 function firstActivityCommand(
@@ -1184,6 +1241,7 @@ export function startRequestedActivity(
       ...(command.chosenPurpose ? { chosenPurpose: cloneValue(command.chosenPurpose) } : {}),
     },
     bindings: cloneValue(command.bindings),
+    targetEpisodes: captureActivityTargets(world, actorId, command.root, command.bindings),
     pending: [{ node: cloneValue(command.root), iteration: 0 }],
     outputs: {},
     serial: 0,

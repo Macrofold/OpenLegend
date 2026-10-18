@@ -1,4 +1,4 @@
-import { distance3D } from '@open-legend/spatial';
+import { distance3D, type SurfacePoint } from '@open-legend/spatial';
 import { entityGet } from '../../entity-collection.js';
 import { definitionPin } from '../../world-modules.js';
 import { worldPosition } from '../../spatial-state.js';
@@ -94,6 +94,15 @@ interface SituationBinding {
   roles: Record<string, string>;
   sources: Set<string>;
   flags: Set<string>;
+  /** Historical only: never published as a live subject role or targeting grant. */
+  lastSeen?: {
+    subjectId: string;
+    episode: string | null;
+    causeId: string;
+    point: SurfacePoint;
+    at: number;
+    label: string;
+  };
 }
 
 /** This world's finite templates attach meaning to existing prepared native means.
@@ -160,7 +169,6 @@ export function basePreparedThreatResponses(
       value.flags.add('personal-danger');
     }
     if (visible.has(id)) value.flags.add('visible-assailant');
-    else if (rememberedPlace(actor.actor, id)) value.flags.add('last-seen');
     if (!Object.keys(pair.active).length) value.flags.add('withdrawal-or-ended');
     const other = visible.get(id);
     if (
@@ -169,6 +177,41 @@ export function basePreparedThreatResponses(
       ['move', 'follow', 'evade'].includes(other.actor.action.type)
     )
       value.flags.add('withdrawing');
+  }
+  // Leaving sight ends an unfamiliar body's current association. The observed
+  // point remains personal historical evidence, without identifying any live body.
+  for (const [subjectId, pair] of Object.entries(state?.pairs ?? {})) {
+    const observed = pair.lastObserved;
+    if (
+      !observed?.surfaceId ||
+      !pair.lastCause ||
+      (visible.has(subjectId) && subjectReferenceCurrent(world, actor.id, subjectId, pair.episode))
+    )
+      continue;
+    const lastSeen = {
+      subjectId,
+      episode: pair.episode,
+      causeId: pair.lastCause.id,
+      point: { ...observed.point, surfaceId: observed.surfaceId },
+      at: observed.at,
+      label: observed.label,
+    };
+    bindings.set(
+      JSON.stringify([
+        'last-seen',
+        subjectId,
+        pair.episode,
+        observed.at,
+        observed.point,
+        observed.surfaceId,
+      ]),
+      {
+        roles: {},
+        sources: new Set([pair.lastCause.id]),
+        flags: new Set(['last-seen', 'encounter']),
+        lastSeen,
+      },
+    );
   }
   for (const evidence of input.evidence) {
     if (evidence.actorId !== actor.id)
@@ -295,6 +338,7 @@ export function basePreparedThreatResponses(
     seconds: number,
     participants: readonly string[],
     radius: boolean,
+    inherited?: FiniteActivityControl,
   ): PreparedResponseOption | undefined => {
     const command = method.invocation;
     if (!command)
@@ -338,8 +382,12 @@ export function basePreparedThreatResponses(
     }
     const control: FiniteActivityControl = {
       kind: 'finite',
-      deadline: world.simTime + seconds,
-      boundary: radius ? { origin: { ...original }, radius: profile.limits.pursuitRadius } : null,
+      deadline: inherited?.deadline ?? world.simTime + seconds,
+      boundary: inherited?.boundary
+        ? { origin: { ...inherited.boundary.origin }, radius: inherited.boundary.radius }
+        : radius
+          ? { origin: { ...original }, radius: profile.limits.pursuitRadius }
+          : null,
       subjects: Object.fromEntries(
         participants.flatMap((id) => {
           const person = visible.get(id);
@@ -385,6 +433,7 @@ export function basePreparedThreatResponses(
   };
   for (const definition of profile.purposes)
     for (const binding of bindings.values()) {
+      if (binding.lastSeen && !definition.means.includes('last-seen')) continue;
       if (binding.roles.helper && !definition.requires.includes('known-helper')) continue;
       if (
         binding.roles.protectee &&
@@ -395,7 +444,7 @@ export function basePreparedThreatResponses(
         continue;
       if (!definition.requires.every((requirement) => binding.flags.has(requirement))) continue;
       const roles = binding.roles;
-      const description = `${definition.label}${
+      const description = `${definition.label}${binding.lastSeen ? ` (where I saw ${binding.lastSeen.label} at game time ${binding.lastSeen.at})` : ''}${
         Object.keys(roles).length
           ? ` (${Object.entries(roles)
               .map(([role, id]) => `${role}: ${label(id)}`)
@@ -447,6 +496,7 @@ export function basePreparedThreatResponses(
         method: PreparedResponseMethod,
         participants: string[] = [],
         radius = false,
+        inherited?: FiniteActivityControl,
       ) => {
         const option = primitive(
           method,
@@ -454,6 +504,7 @@ export function basePreparedThreatResponses(
           profile.limits.pursuitSeconds,
           participants,
           radius,
+          inherited,
         );
         if (option) options.push(option);
       };
@@ -557,8 +608,25 @@ export function basePreparedThreatResponses(
             transition: 'replace',
           });
         }
-      if (definition.means.includes('last-seen') && roles.assailant) {
-        const place = rememberedPlace(actor.actor, roles.assailant);
+      if (definition.means.includes('last-seen') && binding.lastSeen) {
+        const place = binding.lastSeen;
+        const previous = actor.actor.agency.plan;
+        const previousPurpose = previous?.activity?.request?.chosenPurpose;
+        const priorMeans = profile.purposes.find(
+          (entry) => entry.id === previousPurpose?.id,
+        )?.means;
+        const inherited =
+          previous &&
+          ['active', 'blocked'].includes(previous.status) &&
+          previous.activity?.control?.kind === 'finite' &&
+          previousPurpose &&
+          sameDefinitionPin(previousPurpose.definition, profilePin) &&
+          (previousPurpose.roles.assailant === place.subjectId ||
+            (previousPurpose.id === definition.id &&
+              previousPurpose.sourceIds.includes(place.causeId))) &&
+          priorMeans?.some((mean) => ['pursue', 'last-seen'].includes(mean))
+            ? previous.activity.control
+            : undefined;
         if (place && supportedPosition(actor))
           addMethod(
             {
@@ -575,6 +643,7 @@ export function basePreparedThreatResponses(
             },
             [],
             true,
+            inherited,
           );
       }
       if (definition.means.includes('speech') && canSpeak(actor))
@@ -613,7 +682,18 @@ export function basePreparedThreatResponses(
         }
       if (options.length)
         purposes.push({
-          id: JSON.stringify([definition.id, roles]),
+          id: JSON.stringify([
+            definition.id,
+            roles,
+            ...(binding.lastSeen
+              ? [
+                  binding.lastSeen.causeId,
+                  binding.lastSeen.episode,
+                  binding.lastSeen.at,
+                  binding.lastSeen.point,
+                ]
+              : []),
+          ]),
           purpose,
           description: `${description}. ${definition.meaning}`,
           options,

@@ -1,3 +1,4 @@
+import { validActionTargets } from './action-targets.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { validResponsePurpose } from './action-capabilities.js';
 import { endOwnOffense } from './combat-encounters.js';
@@ -1528,6 +1529,7 @@ function validateExecution(
     'methodId',
     'request',
     'bindings',
+    'targetEpisodes',
     'pending',
     'outputs',
     'serial',
@@ -1545,6 +1547,7 @@ function validateExecution(
   if (
     (execution.combatHelpId !== undefined && !isSafeRecordId(execution.combatHelpId)) ||
     (execution.humanInitiated !== undefined && execution.humanInitiated !== true) ||
+    !validActionTargets(execution.targetEpisodes) ||
     !execution.bindings ||
     typeof execution.bindings !== 'object' ||
     Array.isArray(execution.bindings) ||

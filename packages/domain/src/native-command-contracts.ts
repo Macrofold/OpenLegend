@@ -127,6 +127,22 @@ export function commandBindingFields(command: Command): string[] {
   );
 }
 
+/** Entity references selected for an activity. Text and places never become
+ * entity IDs; future produced outputs bind separately at their native dispatch. */
+export function activityEntityReferences(
+  root: ActivityNode,
+  bindings: Record<string, ActivityBinding>,
+): string[] {
+  return [
+    ...new Set(
+      [...activityRoleKinds(root)].flatMap(([role, kind]) => {
+        const value = bindings[role];
+        return kind === 'object' && typeof value === 'string' ? [value] : [];
+      }),
+    ),
+  ];
+}
+
 export function activityRoleKinds(
   node: ActivityNode,
   roles = new Map<string, 'object' | 'place' | 'text'>(),

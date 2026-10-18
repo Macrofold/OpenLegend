@@ -113,6 +113,13 @@ activity binding/validation owner and shared dispatch/resumption checks; a later
 sighting cannot silently rebind an unfamiliar person. Do not add another history
 store or reconstruct forgotten identity from world truth. This adds approximately
 100–150 logic lines and needs native loss/reacquisition and cold-storage checks.
+Last-seen preparation distinguishes a remembered point from a currently
+identifiable body. Record the personally observed support and label with the
+existing encounter point. A historical-point purpose binds that point and its
+actual source, with no live actor role or targeting grant. Its instance identity
+includes the historical observation, and continuation inherits the matching
+original pursuit's time/distance bounds. Check unseen relocation, loss of an
+unfamiliar-person association and cold restoration through actual native movement.
 
 Steps 1–4 have connected native implementations and partial controlled service
 qualification. Complete requests retain their full sets; supplied callbacks reach

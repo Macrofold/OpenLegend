@@ -1,6 +1,9 @@
 import { entityGet, entityHas, entityValues } from './entity-collection.js';
 import { validResponsePurpose } from './action-capabilities.js';
-import { activityRoleKinds, validExactInventorySources } from './native-command-contracts.js';
+import {
+  activityEntityReferences,
+  validExactInventorySources,
+} from './native-command-contracts.js';
 import {
   isCookingInputRole,
   preparationDefinition,
@@ -645,16 +648,9 @@ export function suspendCurrentWork(world: WorldState, actorId: string): Outcome 
 function activityObjectBindings(world: WorldState, plan: ActorPlan): string[] {
   const activity = plan.activity;
   if (!activity) return [];
-  const requestedRoles = activity.request && activityRoleKinds(activity.request.root);
-  const roles = activity.methodId
-    ? world.actionExperience.methods[activity.methodId]?.roles
-    : undefined;
-  return Object.entries(activity.bindings).flatMap(([role, value]) =>
-    typeof value === 'string' &&
-    (requestedRoles ? requestedRoles.get(role) === 'object' : roles?.[role]?.kind === 'object')
-      ? [value]
-      : [],
-  );
+  const root =
+    activity.request?.root ?? world.actionExperience.methods[activity.methodId ?? '']?.root;
+  return root ? activityEntityReferences(root, activity.bindings) : [];
 }
 
 /** Shared identity/goal checks for automatic and explicitly chosen return. */
