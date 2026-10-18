@@ -416,6 +416,8 @@ export interface CandidateAction {
   nativeInvocation?: import('@open-legend/domain').Command;
   subjectIds?: string[];
   purpose?: import('@open-legend/domain').ResponsePurposeBinding;
+  /** Request-local supplied-purpose question, never an entity or executable command. */
+  purposeHandle?: string;
   /** Once offered, retain the initiator's exact handling of current work. */
   transition?: import('@open-legend/domain').WorkTransitionMode;
 }

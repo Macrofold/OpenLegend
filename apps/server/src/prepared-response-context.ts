@@ -44,6 +44,7 @@ export function preparedResponseChoices(
         command: null,
         ...(option.invocation ? { nativeInvocation: option.invocation } : {}),
         purpose: option.purpose,
+        purposeHandle,
         transition: option.transition,
       });
     }

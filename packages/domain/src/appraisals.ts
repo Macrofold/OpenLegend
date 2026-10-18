@@ -290,8 +290,7 @@ export function validateAppraisalPolicy(policy: AppraisalPolicy | undefined): vo
     } else throw new Error('Unsupported appraisal lifetime.');
     if (
       (definition.reflection || definition.decision) &&
-      (definition.stacking !== 'cause' ||
-        definition.causes.some((kind) => kind !== 'remembered' && kind !== 'perceived-event'))
+      definition.causes.some((kind) => kind !== 'remembered' && kind !== 'perceived-event')
     )
       throw new Error('AI interpretation cannot install internal native processes.');
   }
