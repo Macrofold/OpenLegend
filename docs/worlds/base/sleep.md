@@ -35,3 +35,7 @@ The authored templates are **“{subject.subject:definite} fell asleep.”** and
 ## Persistence and presentation
 
 The generic registry and entity instances are saved with the world, following the [active development policy](../../save-and-load.md#active-development-policy). Public projections carry generic labels/pose/particle data. Dreams are optional cognition work: [memory architecture](../../memory-architecture.md#9-sleep-dreams-forgetting-and-consolidation) owns their configured effect-episode requirement. Native recovery never waits for provider credentials, paid work or dream completion. A world can explicitly set its dream policy to null; that omits dreaming without adding a default rest rule. Quiet configured starvation does not wake this world's sleeper.
+
+## Selected first-playable foraging integration
+
+[RW](../../maintainers/first-playable-roaming.md) selects a read-only `nativeForagingActive` fact for admitted feeding, stalking, pursuit and searching. The ordinary native night-rest branch will require that it is false, alongside CTR's existing selected alarm predicate. The exhausted-rest branch, full-energy completion, perception restrictions, recovery and fresh-alarm waking remain under this sleep/status owner. A profile with no active foraging episode resolves false. The [roaming design](../../projects/first-playable-roaming-tech-design.md) distinguishes awake home idling from actual Sleep; it supplies no extra recovery effect or omniscient wake-up. Runtime implementation remains open.

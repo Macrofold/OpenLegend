@@ -1,12 +1,16 @@
 # Playable starting worlds
 
-| Status                                                  | Current progress                                                                                                                                                                           | Last updated |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Implemented openings and required first-playable target | Main world and Solo testing ground exist. The complete survival-first camp, social and roaming-conflict experience requires remaining design, delivery and player qualification under FPV. | 2026-10-17   |
+| Status                                                  | Current progress                                                                                                                                                                                       | Last updated |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Implemented openings and required first-playable target | Main world and Solo testing ground exist. The complete survival-first camp, social and roaming-conflict experience is fully designed; runtime delivery and player qualification remain open under FPV. | 2026-10-17   |
 
 This document owns the bundled openings and required first-playable scenario. [Gameplay priorities](../../repertoires/gameplay-priorities.md) owns selection; subsystem specifications own detailed mechanics. [FPV](../../maintainers/first-playable-validation.md) coordinates delivery and the [playtest plan](../../projects/first-playable-playtest-plan.md) selects observations of a named build.
 
 The bundled `base:playable-opening` creation profile currently offers **Main world** and **Solo testing ground**. The application's explicit trusted composition selects its implementation; shared creation transport receives only the candidate's profile and world identity and invokes that profile's real validator. The profile owns supported identity slots, candidate fields, construction, editable fields, preview meaning and readiness. Account binding, exact human approval, target admission and atomic publication remain application responsibilities. It does not copy a running world, produce fictional historical work or create omitted people and then remove them.
+
+## Complete selected design
+
+**Design completed October 17, 2026.** The [integrated feature specification](../../projects/first-playable-world-feature-spec.md) and [technical design](../../projects/first-playable-world-tech-design.md) connect the exact [layout](first-playable-layout.md), [survival/recipes](first-playable-survival.md), [camp construction](editable-shelters.md), [people/cooperation](first-playable-people.md) and [roaming](first-playable-roaming.md). World content uses typed build-time YAML; reviewed native mechanics fill missing calculations, while choices and encounters remain unscripted. [FPW](../../maintainers/first-playable-world.md), SV, SH, CP and RW own implementation. The current supplied openings below remain the runtime baseline until those tasks land; design completion does not certify playability or fun.
 
 ## First-playable game target
 
@@ -81,7 +85,7 @@ Agreement is not remote control. Knowledge is needed for teaching, resources for
 
 ### Wildlife, darkness and predators
 
-Include prey/resource animals and aggressive-animal danger. **Night-roaming wolves, including possible group encirclement of a lone traveler, are the working predator example.** The stag is useful existing content but does not qualify roaming predators or packs. Species, numbers, sensing, pursuit/group behavior and tuning require scoped authored design; this is not a claim about real wolf biology.
+Include prey/resource animals and aggressive-animal danger. **Night-roaming wolves, including possible group encirclement of a lone traveler, are the working predator example.** The stag is useful existing content but does not qualify roaming predators or packs. The [selected roaming profile](first-playable-roaming.md) now pins species, numbers, sensing, pursuit/group behavior and tuning; this is not a claim about real wolf biology.
 
 Animals have real locations, perception and behavior. Darkness follows selected sight/hearing/light rules rather than granting hidden player coordinates. Sounds, tracks or silhouettes reveal only actually supported information. A pack cannot teleport around someone because they crossed a timer.
 
@@ -157,7 +161,7 @@ Creation preparation occurs after explicit selection/edit/check/start. It perfor
 
 ## Maintained records
 
-- [FPV coordination and owner map](../../maintainers/first-playable-validation.md) — required target delivery and remaining design.
+- [FPV coordination and owner map](../../maintainers/first-playable-validation.md) — required target delivery and actual acceptance.
 - [First-playable playtest plan](../../projects/first-playable-playtest-plan.md) — test preparation and evidence requirements.
 - [OC06 delivery and remaining parent acceptance](../../maintainers/parallel-batch-07-playable-world-creation.md#oc01--construct-the-selected-fresh-opening) — existing opening implementation.
 - [Creation limits](../../limits/world-creation.md) — fixed Main template and editable small-opening bounds. New camp/material/conflict tuning belongs with its selected subsystem design and inventory.

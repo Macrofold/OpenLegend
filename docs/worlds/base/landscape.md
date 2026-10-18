@@ -20,6 +20,10 @@ Broadleaf, birch and conifer silhouettes vary in height and width. Sparse trees 
 
 Static scenery travels as public saved artwork records with stable identities, trusted appearance keys, seeds, positions and sizes. It cannot disclose actors or private contents. The client resolves keys through finite original Canvas generators; no supplied JavaScript, URLs, external artwork or new model-generation service is involved. Ground detail shares instanced draws and tree artwork/materials are shared by inputs. Existing scene and shadow owners release their resources when rebuilding or disposing the view. See [the reusable spatial contract](../../spatial-world.md#static-scenery) and [presentation](../../world-presentation.md#static-landscape).
 
+## Selected first-playable layout
+
+The [new layout](first-playable-layout.md) selects 128×112m supported Main terrain while preserving the existing northwest landmarks/geometry and useful scenario content, relocating the complete Watchpost and outer predators, and adding finite natural sources and three physically justified camp suggestions. [FPW02](../../maintainers/first-playable-world.md#fpw02--construct-the-complete-main-content-union) owns implementation and actual native validation. The 62×54m landscape described above is current runtime; new dimensions, placements and animal behavior are design targets until delivered. Saved worlds are not silently reseeded.
+
 ## Maintained records
 
 - Implementation: [BW24](../../maintainers/base-world.md#bw24--fuller-starting-wilderness).

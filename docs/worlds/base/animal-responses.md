@@ -214,6 +214,10 @@ The following primary sources were read on 2026-10-17. They provide narrow examp
 - [National Park Service: Yellowstone wolf facts](https://www.nps.gov/yell/learn/ys-24-1-yellowstone-wolf-facts.htm): ordinary travel and short maximum speed differ. Only that narrow locomotion distinction informs this design; dated population figures are not used.
 - [National Park Service: bear safety in Katmai](https://www.nps.gov/katm/planyourvisit/bear-safety-in-katmai.htm): bears can move faster than people and respond differently with their perceived situation. This is design context, not player-facing wildlife advice.
 
+## First-playable feeding and predation integration
+
+The [roaming profile](first-playable-roaming.md) and [technical design](../../projects/first-playable-roaming-tech-design.md) now complete the selected finite animal feeding, local pack hunting and bear-territory design. [RW](../../maintainers/first-playable-roaming.md) owns its implementation. CTR remains the owner of alarm, all-danger refuge navigation and escape speeds. RW must use the same single movement owner, and a fresh attack takes precedence over uncommitted hunting. Actual sleep retains the installed perception/action restrictions; routine awake idling is not restorative sleep. This closes that selected first-playable design slice, without claiming runtime predation, complete ecology, reproduction or broader pack communication.
+
 ## Maintained records
 
 - Implementation: [combat and threat response tasks](../../maintainers/combat-and-threat-responses.md); the existing animal adapter dependency remains linked from [base-world work](../../maintainers/base-world.md).

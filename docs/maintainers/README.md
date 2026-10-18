@@ -8,6 +8,8 @@ Start with [first-playable delivery and validation (FPV01–FPV09)](first-playab
 
 [Commercial offers](commercial-offers.md) and the [initial-offer decision brief](../projects/initial-commercial-offer-decision-brief.md) own browser-feasible offer comparison and adoption. Payment is not a prerequisite for ordinary game learning.
 
+The complete selected design is now in the [integrated pair](../projects/first-playable-world-feature-spec.md). Implementation owners are [FPW shared integration](first-playable-world.md), [SV survival/making](first-playable-survival.md), [SH natural camp](editable-shelters.md), [CP people/cooperation](first-playable-cooperation.md) and [RW wildlife/roaming](first-playable-roaming.md). Required CTR/SPK and existing foundation tasks retain their owners. All runtime and player acceptance remains explicit in those trackers and FPV.
+
 ## Game production methods
 
 [Production workflows](../production-workflows/README.md) connect ideas to editable art, working assets, animation, scenes, interfaces, character situations and coordinated feedback. The [research collection](../../archive/02-research/ai-game-development/README.md) explains the evidence and OpenLegend-specific creative opportunities; [remaining preparation](needs-design.md#ai-assisted-game-production-research-and-design-integration) maps choices into existing owners. Art studies, V3D/INV, CE, UIUX and playability work retain their task and acceptance records.

@@ -58,3 +58,7 @@ Clock displays (the HUD clock, event times and God-tool time labels) read the wo
 ## Review trigger
 
 Revisit these bounds when fleeting encounters matter to a mechanic, new movement/sense ranges create excessive global interval splitting, an admitted operation has unknown within-interval changes, or mixed-load evidence identifies fallback work as a bottleneck. Keep the authored policy, its adapter, the catalogue and [RP06](../../maintainers/revisitable-policies.md#rp06--elapsed-time-fidelity-and-integration-limits) aligned. Changing fidelity is a visible behavioral decision; rendering performance alone cannot authorize it.
+
+## Selected first-playable clock consumers
+
+The [integrated design](../../projects/first-playable-world-tech-design.md#time-daylight-needs-and-decision-latency) keeps the current 60:1 clock and physical perception, and selects one installed clock source for renderer daylight and HUD day/night. [FPW03](../../maintainers/first-playable-world.md#fpw03--ordinary-actions-readable-work-and-readiness) owns that correction. Roaming and the selected daily material-rain window use game-time boundaries through their existing native owners, never browser color or wall time. This is designed work, not a current display fix or a new light-sensitive sight rule.

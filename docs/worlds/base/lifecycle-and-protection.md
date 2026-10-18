@@ -26,7 +26,7 @@ Native admission still requires an authorized controlling issuer, an available p
 
 Human death remains recoverable without permanent character loss: a random half of carried item types is retained, the remainder is lootable at the corpse, and death scars can be treated. The one-minute-distance campfire respawn, exact custody partition, new-life continuity and treatment are current in [Player Death](player-death.md). The vulnerable departure interval and fully inactive protection remain unchanged. Do not add an automatic PvP cooldown, invulnerability period, safe zone or forced hostility state as part of this design. Broader rescue/incapacitation, dedicated conflict modes, background fairness, legal/social consequences and nonprojectile indirect hazards remain separately scoped work.
 
-Buildings and other world property are **not protected merely because their owner is offline**. The long-term building/property protection policy is TBD; do not infer protection from the human body's inactive state.
+Buildings and other world property are **not protected merely because their owner is offline**. The long-term building/property protection policy remains separately scoped; do not infer protection from the human body's inactive state. The selected [first-playable camp design](editable-shelters.md) now pins one narrow case: registered camp barriers are physically vulnerable under exact operational exposure grants while the world advances, including when their owner is offline. SH and [FPW](../../maintainers/first-playable-world.md) own delivery; this grants no damage rights over other protected/unregistered property.
 
 ## NPC death, ghosts and revival
 

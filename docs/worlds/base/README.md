@@ -2,6 +2,10 @@
 
 This directory owns the accepted rules and authored content of Open Legend's bundled world. New discussions of its balance, named mechanics, items, creatures and defaults belong here. Engine specifications link here rather than duplicating those rules. Current implementation facts remain in [Architecture](../../architecture.md), evidence in [Verification](../../verification.md), and delivery work in the [base-world tracker](../../maintainers/base-world.md).
 
+## Complete first-playable design
+
+[Integrated specification](../../projects/first-playable-world-feature-spec.md) · [layout](first-playable-layout.md) · [survival/recipes](first-playable-survival.md) · [natural camp](editable-shelters.md) · [people/cooperation](first-playable-people.md) · [roaming wildlife/people](first-playable-roaming.md). These selected additions are designed; the current implemented contracts below retain their stated evidence. [FPW](../../maintainers/first-playable-world.md) and [FPV](../../maintainers/first-playable-validation.md) coordinate delivery and acceptance.
+
 ## Mechanics
 
 - [Starting wilderness, terrain and population](landscape.md)
