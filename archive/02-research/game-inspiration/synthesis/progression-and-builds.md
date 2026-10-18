@@ -1,6 +1,6 @@
 # Progression, skills and build diversity
 
-**Status: Not started — shell only. Topic: GROWTH.** No game has been assessed or incorporated into this guide.
+**Status: Focused Forever incorporation complete. Topic: GROWTH.** The wider topic remains unassessed.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md)
 
@@ -22,11 +22,25 @@ Owns advancement and build choices. Immediate power delivery belongs to MAGIC/GE
 
 ## Desired experiences and contrasting approaches
 
-<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+Growth can improve power, broaden practical options, express identity or deepen knowledge. A player may want a clear stronger reward while also wanting earlier places, tools and relationships to retain purpose. These goals can coexist, but preserving every old activity as compulsory maintenance can make continued relevance burdensome.
 
 ## Cross-game evidence and counterexamples
 
+The focused source is [Forever's progression design](../dossiers/world-of-warcraft-forever.md#2-a-durable-world-with-continuing-progression), its class/Legacy/PvP account and the [return evidence](../dossiers/world-of-warcraft-forever.md#return-loss-and-the-limits-of-beta-evidence). The source distinguishes a fixed level cap from continuing equipment growth, and intentions from what beta players could experience. It contributes a useful unresolved case, not demonstrated long-term success or completion of the other candidate games.
+
 ## Consolidated lessons and tradeoffs
+
+<a id="growth-l001"></a>
+
+### GROWTH-L001 — Name what an investment retains
+
+An item can retain practical usefulness, a home can retain familiarity, a route can retain strategic value and a relationship can retain recognition. They need not all remain optimal sources of power. A new reward should have an understandable benefit without automatically erasing every earlier accomplishment. The alternative of continual replacement supplies clear goals, but makes return and group compatibility more demanding.
+
+<a id="growth-l002"></a>
+
+### GROWTH-L002 — Separate optional replay from compulsory repetition
+
+Trying another identity can renew discovery and mastery. Repeating a solved path merely to maintain access can feel like an obligation. Account recognition can support experimentation while also pressuring players to complete an external checklist. Test what the player wants to retain, what varies on another attempt and how soon meaningful choices return; a nominally optional activity may still feel required by a group.
 
 ## Current OpenLegend baseline and existing design owners
 
@@ -34,13 +48,17 @@ Use the [source and goal map](source-and-goal-map.md#topic-growth) to locate rel
 
 ## Complete situations and cross-topic consequences
 
-<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+**Hypothetical Open Legend situation:** an earlier lifting rig helps a returning player reach the first ledge of a newly accessible quarry. A lighter climbing tool and a tougher combat route offer alternatives. Better equipment remains desirable, while the original invention retains a purpose. The player can complete a delivery and stop before committing to the larger encounter. This fails if return begins with a long mandatory repair routine, if the old invention is arbitrarily disabled, or if no new choice exists beyond a larger opponent health total.
+
+The example links GEAR, CRAFT, EXPLORE and PACING. It is an experience to investigate, not a claim of present implementation or a universal save/reset rule for all authored worlds.
 
 ## Possible OpenLegend applications and limits
 
+Use the [full synthesis](../essays/wow-forever-and-a-world-worth-returning-to.md) alongside the existing [early invention and adventure priorities](../../../../docs/repertoires/gameplay-priorities.md). A small, actual new use of known materials can broaden capability without requiring a massive skill tree. Selected power growth and authored routes are valid alternatives; neither invention nor social complexity should become a compulsory clever answer to every obstacle.
+
 ## Open questions and missing evidence
 
-<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
+Forever has not supplied observed ordinary progression through its full launch game, multiple content additions or repeated complete seasons. Mature optimal strategies, the usefulness of older equipment and natural account-progression pacing remain consequential uncertainties. Open Legend also needs its own evidence that a new combination changes worthwhile decisions; a larger option count alone does not establish build diversity.
 
 ## OpenLegend-specific research subtopics
 

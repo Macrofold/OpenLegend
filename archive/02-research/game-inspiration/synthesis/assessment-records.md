@@ -2,7 +2,7 @@
 
 [Topic map](README.md) · [Game coverage](coverage.csv) · [World coverage](world-coverage.csv) · [Record requirements](progress.md) · [Structural source/goal review](source-and-goal-map.md).
 
-The October 14, 2026 intelligence/simulation pass contributes 30 scoped NPC assessments below. The October 17 combat-response pass adds four scoped COMBAT assessments. Other source/topic cells remain unassessed, awaiting sources or historical coverage as recorded in their matrices. Earlier essays are not discarded or automatically credited. Reading sources for the framework's structural review remains distinct from substantive incorporation.
+The October 14, 2026 intelligence/simulation pass contributes 30 scoped NPC assessments below. The October 17 combat-response pass adds four scoped COMBAT assessments. The Forever records below assess MULTI, GROWTH and BUSINESS at a prelaunch scope. Other source/topic cells remain unassessed, awaiting sources or historical coverage as recorded in their matrices. Earlier essays are not discarded or automatically credited. Reading sources for the framework's structural review remains distinct from substantive incorporation.
 
 ## Record structure for authorized work
 
@@ -190,3 +190,23 @@ This is a scoped four-source comparison of creature escape, tactical pursuit, ta
 **Evidence and contribution:** Deliberately different default interaction access supports [COMBAT-L004](combat-and-encounters.md#combat-l004). The source is a counterexample to copying the entire category rule: OpenLegend's independently acting resident is also a normal conversation partner, so being an NPC is not sufficient grounds for a default attack.
 
 **Evidence limits:** The dated announcement does not prove a present account's settings, universal auto-retaliation behavior or a particular grace period. Broader OSRS combat details were context and were not independently rechecked as new current facts. The inference is limited to input design.
+
+## Forever prelaunch assessment — October 17, 2026
+
+**Source scope:** G178, World of Warcraft: Forever, documented design and beta through October 17. The [dossier](../dossiers/world-of-warcraft-forever.md), [creator supplement](../references/wow-forever-addon-ecosystem.md) and [Open Legend interpretation](../essays/wow-forever-and-a-world-worth-returning-to.md) are published on `codex/wow-forever-research-20261017`, based on inspected main `4f9ab001ffb74d565ae8cd9dd68fe12cec36ebe2`. Reviewed source snapshot `edf6d5b540dbd907915171ee47d5f7a28e8e7578` supplies the integrated evidence. Relative links resolve the current branch documents. The G97 context retains its independent scope.
+
+**Reviewer:** ChatGPT research and documentation review, October 17, 2026. Source-to-lesson review is complete for the three declared prelaunch assessments. The review checked supporting and contrary evidence, destination lessons, current gameplay priorities, source links and the scoped CSV diff. Official intentions, dated beta changes, original player/critic accounts and our interpretations remain distinct; no gameplay execution or financial result is inferred. The matrix owns current assessment status.
+
+### MULTI--world-of-warcraft-forever
+
+Read the complete ruleset/identity, guild/recovery, written-criticism, direct-player and return-loop sections. The contrast between extended encounters and immediate group dissolution supports [MULTI-L001](multiplayer-and-player-social-systems.md#multi-l001). Compatibility, communication and unequal time costs qualify [MULTI-L002](multiplayer-and-player-social-systems.md#multi-l002). Brief useful contact remains a legitimate success. The source does not establish reunion frequency, social retention or a representative sentiment distribution.
+
+### GROWTH--world-of-warcraft-forever
+
+Read the continuing-progression, class, Legacy, PvP, item, recovery and return sections, including test-granted points and announced endgame. The distinction between retaining usefulness and retaining optimal power supports [GROWTH-L001](progression-and-builds.md#growth-l001). Voluntary alternative-character play, satisfied beta stopping and perceived schedule pressure qualify [GROWTH-L002](progression-and-builds.md#growth-l002). The guide preserves the absence of mature-world evidence and does not assume no seasons, no item replacement or compulsory alts.
+
+### BUSINESS--world-of-warcraft-forever
+
+Read the entire product/access, commercial evidence/method, production, marketing and purchase-reaction account. Unavailable attributable results and shared-subscription counterfactuals support [BUSINESS-L001](monetization-and-commercial-sustainability.md#business-l001). Identity entitlements, temporary access and conflicting player judgments support [BUSINESS-L002](monetization-and-commercial-sustainability.md#business-l002). Commercial outcome remains indeterminate; no crowd or download count is converted into paid users or profit.
+
+PRODUCTION receives a reading route to the completed essay, with X indicating evidence that has not been reconciled into that guide. Other Forever topic cells remain U; a comprehensive game dossier does not automatically incorporate every topic.
