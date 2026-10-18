@@ -303,7 +303,7 @@ export * from './item-characteristics.js';
 export { availableItemQuantity } from './resource-claims.js';
 
 export * from './body-policy.js';
-export { DEFAULT_COGNITION_POLICY } from './worlds/base/cognition.js';
+export { baseCognitionPolicy } from './worlds/base/cognition.js';
 
 export { basePlaytestMilestones } from './worlds/base/playtest.js';
 

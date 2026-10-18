@@ -26,7 +26,11 @@ import { isSafeRecordId } from './records.js';
 import { definitionPin, type DefinitionPin } from './world-modules.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
 import { BASE_THREAT_RESPONSE_PROFILE } from './worlds/base/threat-response-profile.js';
-import { basePreparedThreatResponses } from './worlds/base/threat-responses.js';
+import {
+  basePreparedThreatResponses,
+  basePreparedThreatOpportunity,
+} from './worlds/base/threat-responses.js';
+import type { Awareness } from './experience.js';
 import type { PreparedResponseSituation } from './prepared-responses.js';
 
 /** A selected pin chooses linked trusted native templates. It cannot load code or
@@ -41,6 +45,15 @@ export function compilePreparedResponses(world: WorldState, input: PreparedRespo
   const profile = preparedResponseProfile(world.cognitionPolicy.preparedResponses);
   if (profile === undefined) throw new Error('The selected response profile is unavailable.');
   return profile ? basePreparedThreatResponses(world, profile, input) : null;
+}
+export function preparedResponseOpportunity(
+  world: WorldState,
+  actorId: string,
+  evidence: readonly Awareness[],
+): boolean {
+  const profile = preparedResponseProfile(world.cognitionPolicy.preparedResponses);
+  if (profile === undefined) throw new Error('The selected response profile is unavailable.');
+  return !!profile && basePreparedThreatOpportunity(world, profile, actorId, evidence);
 }
 
 /** Explicit application composition: trusted implementations are linked here, never

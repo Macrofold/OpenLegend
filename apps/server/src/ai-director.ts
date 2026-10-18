@@ -66,6 +66,7 @@ import { npcCandidates, planningCandidates, candidateChoice } from './context.js
 import {
   compilePreparedResponses,
   preparedResponseProfile,
+  preparedResponseOpportunity,
   currentWorkIdentity,
   type Awareness,
   type PreparedResponseProfile,
@@ -2103,7 +2104,9 @@ export class AiDirector {
         think: null,
       })),
     };
+    let interpretationAdmission: unknown;
     if (response.operations.length) {
+      await this.prepareResponseAdmission(run);
       const commit = () =>
         this.service.transition(
           (world) => {
@@ -2136,8 +2139,9 @@ export class AiDirector {
       const result = run.job.authority
         ? await this.service.authorized(run.job.authority, 'play', true, commit)
         : await commit();
-      if (!result.ok && ['paused', 'actor-unavailable'].includes(result.code))
-        throw new StopJob('stale', result.message);
+      interpretationAdmission = result;
+      if (!result.ok)
+        throw new StopJob(result.code === 'storage' ? 'failed' : 'stale', result.message);
     }
     await this.log.record(
       `${run.job.id}:attempt:${attempt}:threat-relevance`,
@@ -2149,6 +2153,13 @@ export class AiDirector {
       },
       {
         relevance,
+        appraisalAnswers: Object.fromEntries(
+          Object.entries(first.answers).filter(([handle]) =>
+            Object.hasOwn(interpretations.questions, handle),
+          ),
+        ),
+        proposedInterpretations: interpreted.changes,
+        interpretationAdmission,
         individualRefusals: interpreted.refused,
         receipt: this.service.world.responseReceipts?.[appraisalId],
         elapsedMs: performance.now() - started,
@@ -2520,7 +2531,10 @@ export class AiDirector {
     );
     if (selectedProfile === undefined)
       throw new StopJob('failed', 'The installed response strategy is unavailable.', 'unavailable');
-    if (selectedProfile) {
+    if (
+      selectedProfile &&
+      preparedResponseOpportunity(this.service.world, actorId, decisionEvidence)
+    ) {
       const observed = decisionObservation(this.service.world, actorId);
       if (!observed) throw new StopJob('stale', 'The responding person is unavailable.');
       const work = currentWorkIdentity(this.service.world, actorId);

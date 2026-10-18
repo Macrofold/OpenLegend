@@ -96,10 +96,7 @@ decision consumers agree.
 
 Steps 1–4 have connected native implementations and partial controlled service
 qualification. Complete requests retain their full sets; supplied callbacks reach
-an admitted exact strike and its next ordinary native step. Atomic world
-installation, independent interpretation/choice, source and stale races, bounded
-refresh and concurrency qualification remain unfinished. The default response
-profile remains absent until that installation is coherent.
+an admitted exact strike and its next ordinary native step. The ordinary world now selects the connected profile, interpreted fear/anger and Ada’s general assertiveness together, with both automatic fear producers removed. Independent interpretation/choice, remaining repertoire, source and stale races, bounded refresh and concurrency qualification remain unfinished.
 
 The native-control change is approximately 150–300 logic lines; the catalogue
 and decision integration is expected to affect another 1,000–2,000 logic lines.

@@ -6,7 +6,7 @@ import {
   readConfig,
 } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld, editWorld } from '../../../tests/fixtures/service.js';
-import { applyBodyEffects, DEFAULT_COGNITION_POLICY, NPC_ID } from '@open-legend/domain';
+import { applyBodyEffects, baseCognitionPolicy, NPC_ID } from '@open-legend/domain';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   compileSchema,
@@ -734,7 +734,7 @@ describe(
     });
 
     it('forwards the actual model, effort and output limit per level and never substitutes a missing capability', async () => {
-      expect(DEFAULT_COGNITION_POLICY.maxImmediateLevel).toBe(4);
+      expect(baseCognitionPolicy().maxImmediateLevel).toBe(4);
       let policy: JudgePolicy = {};
       const transport = fixtureTransport(
         () => policy,

@@ -34,7 +34,7 @@ Private feeling reads now select exact installed definitions and subjects beyond
 convenience paging, and decision rendering preserves current intensity, scale and
 decay. The same index supports target replacement. Cause-derived identity
 validation and retirement of the unused old feeling converter preserve the
-current-format boundary. The connected two-stage strategy now preserves complete relevance/choice requests, source-bound independent interpretation and canonical publication provenance. Controlled native callbacks admit and start an exact selected strike. Personally seen projectile sources persist as permitted participants; unseen sources stay anonymous. Interpreted fear/anger and the strategy remain uninstalled pending atomic world integration and qualification.
+current-format boundary. The connected two-stage strategy now preserves complete relevance/choice requests, source-bound independent interpretation and canonical publication provenance. Controlled native callbacks admit and start an exact selected strike. Personally seen projectile sources persist as permitted participants; unseen sources stay anonymous. New ordinary worlds now select interpreted fear/anger and the strategy together, with both automatic fear producers removed and Ada’s general assertiveness authored without a forced goal. Independent character and remaining runtime qualification stay open.
 
 Finite chosen physical work now uses the existing activity and movement owners
 for original deadlines, distance boundaries and exact visible participants.

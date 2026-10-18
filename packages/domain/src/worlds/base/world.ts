@@ -48,7 +48,7 @@ import { definitionPin } from '../../world-modules.js';
 import { DEFAULT_ATTRIBUTES } from './attributes.js';
 import { DEFAULT_SENSES } from '../../perception.js';
 import { BASE_BODY_POLICY } from './body-policy.js';
-import { DEFAULT_COGNITION_POLICY } from './cognition.js';
+import { baseCognitionPolicy } from './cognition.js';
 import { initializeAttributes, createModuleManifest } from '../../world-modules.js';
 import { SLING_TARGET, SLING_HANDLING } from './practical-competence.js';
 import { setStartingPractice } from '../../practical-competence.js';
@@ -207,7 +207,7 @@ export function createFreshBaseWorld(
       ].map(activityHostPin),
       BASE_RANGED_POLICY,
     ),
-    cognitionPolicy: structuredClone(DEFAULT_COGNITION_POLICY),
+    cognitionPolicy: baseCognitionPolicy(),
     storyPolicy: defaultStoryPolicy(),
     socialPolicy: structuredClone(BASE_SOCIAL_POLICY),
     knowledgePolicy: structuredClone(BASE_KNOWLEDGE_POLICY),

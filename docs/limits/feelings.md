@@ -22,9 +22,9 @@ Original finding and recommendation superseded by the merged implementation; the
 
 **Current — source-inspected 2026-09-26 · Restrictiveness: Medium.**
 
-The bundled fear/discomfort definitions decay by 0.25 intensity per game hour. This is an explicit world policy, not a default lifetime for every feeling; other installed policies can persist or follow conditions.
+The bundled fear/discomfort definitions decay by 0.25 intensity per game hour; interpreted anger decays by 0.125. This is an explicit world policy, not a default lifetime for every feeling; other installed policies can persist or follow conditions.
 
-**October 17 selected target:** [FL24](#fl24--interpreted-threat-reactions) replaces automatic fear production with source-linked interpretation and adds anger through the two-stage threat route. Discomfort remains bodily experience. This future selection does not report a runtime change to the baseline above.
+**October 18 installed selection:** [FL24](#fl24--interpreted-threat-reactions) replaces automatic fear production with source-linked interpretation and adds anger through the two-stage threat route. Discomfort remains bodily experience. Mechanical integration is qualified separately from independent character behavior.
 
 **Reason / tradeoff:** Review this fading rate as a behavior rule rather than removing it as an unnecessary processing limit.
 
@@ -88,7 +88,7 @@ Reflection may propose **8 feeling changes**. Source preparation considers only 
 
 **October 17 selected consumer:** [FL24](#fl24--interpreted-threat-reactions) requires complete relevant subject/source-bound feeling acquisition for threat decisions through this same owner, using exact lookup or continued pages. The current reflection prefix remains a baseline fact; copying it cannot satisfy that selected required-context contract.
 
-The implemented, currently unselected threat preparation uses exact feeling scopes
+The installed threat preparation uses exact feeling scopes
 and complete source binding: more than 48 required IDs or an unavailable required
 source refuses preparation. It offers at most one question per exact definition
 and target, checks stored cause outcomes before offering a fresh intensity, and

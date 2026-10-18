@@ -42,7 +42,6 @@ import { hasRecordFields, isSafeRecordId } from './records.js';
 import { baseShotDirection, BASE_RANGED_TEXT } from './worlds/base/ranged-counterplay.js';
 import { nativeMovementSpeed } from './worlds/base/actions.js';
 import { rememberAttack } from './worlds/base/animal-behavior.js';
-import { appraiseProjectileContact } from './worlds/base/appraisals.js';
 import { flightTracks, motionTrackPosition, type MotionTrack } from './flight.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { TIME_EPSILON } from './simulation-time.js';
@@ -580,7 +579,7 @@ export function advanceProjectiles(
         seesEntity(world, target, source)
           ? source
           : undefined;
-      const contactEvent = emit(
+      emit(
         world,
         events,
         'projectile-contact',
@@ -610,12 +609,6 @@ export function advanceProjectiles(
         'external',
         flight.position,
       );
-      if (
-        source &&
-        (source.actor?.physicalLife ?? 0) === flight.sourceLife &&
-        seesEntity(world, target, source)
-      )
-        appraiseProjectileContact(world, contactEvent, source, target);
     }
     emit(
       world,

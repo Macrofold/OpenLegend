@@ -343,9 +343,34 @@ timing. Invalidated-source/race, failure, scheduling and live cases remain open.
 
 TypeScript checking and the production build pass for this integration checkpoint;
 the build retains the existing externalization/chunk warnings and passes the asset
-guard. A further controlled case that asks stage one to replace both feelings
-before choosing the strike is under diagnosis; its expected-intensity assertion
-has not passed and must not be counted as post-publication director qualification.
+guard. A further controlled case initially failed to publish either chosen
+interpretation: the durable job had not been marked ready for native publication,
+so the existing service correctly refused it. The director now uses its ordinary
+readiness method before first-stage publication and stops on a whole-publication
+refusal. The rerun accepts both new 0.75 interpretations and reaches stage two and
+the actual strike without invalidating itself. A second controlled submission
+accepts both new interpretations, then receives explicit second-stage
+unavailability: it retains those exact cause-bound feelings and earlier native
+work, creates no physical-choice receipt and buys no fallback.
+
+## Installed ordinary profile checkpoint — October 18, 2026
+
+New ordinary worlds now select the connected two-stage profile, target-stacked
+interpreted fear revision 2 and anger revision 1. Both automatic fear producers
+are removed in the same change. Native harm and discomfort remain immediate.
+Ada retains her existing history, practical curiosity and consideration, with
+general assertiveness, bodily autonomy and willingness to use proportionate force;
+no initial goal or conditional counterattack instruction is added. Existing
+accepted character identities are not overwritten.
+
+The initial module-level pin construction exposed a circular startup dependency.
+Constructing the world-owned default policy after definitions initialize fixes
+startup while retaining the shared exact-pin owner; all current consumers use the
+constructor. Native connected checks, TypeScript and production build pass. Nine
+existing disclosure checks and the independent-selection checks also pass; three
+focused ordinary decision checks retain continuation, stale-food refusal and
+generated conversation. The twelve fixed live baselines are the next gate; no
+independent success or whole combat completion is claimed.
 
 No external provider calls occurred. Additional Jev cost is $0 and cumulative
 task Jev cost is $0; fixture accounting receipts are explicitly synthetic.

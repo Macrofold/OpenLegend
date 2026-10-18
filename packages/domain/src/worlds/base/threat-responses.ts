@@ -19,6 +19,47 @@ import type {
   PreparedResponseOption,
 } from '../../prepared-responses.js';
 import type { ResponsePurposeBinding } from '../../action-capabilities.js';
+import type { Awareness } from '../../experience.js';
+
+/** Select a deliberation strategy from personal causes/active commitments before
+ * preparing its physical repertoire. Old encounter history alone is not a new wake. */
+export function basePreparedThreatOpportunity(
+  world: WorldState,
+  profile: PreparedResponseProfile,
+  actorId: string,
+  evidence: readonly Awareness[],
+): boolean {
+  const actor = entityGet(world.entities, actorId)?.actor;
+  if (!actor?.alive) return false;
+  if (
+    evidence.some(
+      (entry) =>
+        entry.actorId === actorId &&
+        ['attack-cue', 'struck', 'shot-released', 'projectile-contact'].includes(
+          entry.eventType ?? '',
+        ),
+    )
+  )
+    return true;
+  const state = actor.encounters?.life === (actor.physicalLife ?? 0) ? actor.encounters : undefined;
+  if (Object.values(state?.unknown ?? {}).some((entry) => entry.until > world.simTime)) return true;
+  if (
+    Object.entries(state?.pairs ?? {}).some(
+      ([id, pair]) =>
+        subjectReferenceCurrent(world, actorId, id, pair.episode) &&
+        (Object.keys(pair.active).length > 0 ||
+          (pair.incomingUntil ?? 0) > world.simTime ||
+          !!pair.own),
+    )
+  )
+    return true;
+  const purpose = actor.agency.plan?.activity?.request?.chosenPurpose;
+  return (
+    purpose?.definition.id === profile.id &&
+    purpose.definition.version === profile.version &&
+    actor.agency.plan?.status === 'active'
+  );
+}
 
 interface SituationBinding {
   roles: Record<string, string>;
@@ -494,17 +535,7 @@ export function basePreparedThreatResponses(
             'No currently supplied native means supports this exact purpose and participants.',
         });
     }
-  const commitment = actor.actor.agency.plan?.activity?.request?.chosenPurpose;
-  const eligible =
-    appraisalOccurrences.length > 0 ||
-    Object.keys(state?.unknown ?? {}).length > 0 ||
-    pairs.some(
-      ([, pair]) =>
-        Object.keys(pair.active).length > 0 ||
-        (pair.incomingUntil ?? 0) > world.simTime ||
-        !!pair.own,
-    ) ||
-    (commitment?.definition.id === profile.id && actor.actor.agency.plan?.status === 'active');
+  const eligible = basePreparedThreatOpportunity(world, profile, actor.id, input.evidence);
   const subjectDescriptions = Object.fromEntries(
     [
       ...new Set([

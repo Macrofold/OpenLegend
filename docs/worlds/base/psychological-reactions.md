@@ -1,10 +1,10 @@
 # Compact personal reactions — selected wilderness profiles
 
-| Status      | Current progress                                                                                                                         | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The joy pilot and interpreted threat reactions are designed; installation, runtime integration and behavioral qualification remain open. | 2026-10-17   |
+| Status      | Current progress                                                                                                             | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Interpreted fear/anger are installed and connected; complete combat qualification and the independent joy pilot remain open. | 2026-10-18   |
 
-**Selected design, not installed behavior.** A person may privately experience a feeling after interpreting something they actually perceived or recalled, without composing a thought or saying anything. The joy pilot remains the smallest independent consumer of the [continuing-life reaction contract](../../projects/continuing-lives-tech-design.md#55-numerical-personal-reactions-without-required-prose). The October 17 [threat-response design](../../projects/combat-and-threat-responses-tech-design.md) also selects a contextual replacement for automatic hit-to-fear arithmetic. These are fictional character models, not measured human psychology. Current runtime fear/discomfort, grief, calm and restlessness behavior is unchanged by this documentation; the scoped target below supersedes only the automatic fear rule when CTR06 is implemented.
+The ordinary world installs interpreted fear and anger through the [two-stage threat route](../../projects/combat-and-threat-responses-tech-design.md). Both automatic damage-to-fear producers are removed; bodily discomfort, physical injury and urgent evidence retain their native owners. Controlled service checks cover interpretation publication and subsequent action admission, including a failed second judgment. Independent character behavior, complete repertoire and scheduling qualification remain open. These fictional character models do not claim measured human psychology. The joy pilot below remains a separate uninstalled consumer of the [continuing-life reaction contract](../../projects/continuing-lives-tech-design.md#55-numerical-personal-reactions-without-required-prose).
 
 ## Selected first profile
 
