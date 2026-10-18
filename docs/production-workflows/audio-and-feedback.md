@@ -36,6 +36,8 @@ Coordinate with the [asset and animation route](assets-and-animation.md) and [sc
 
 Balance activity with quiet. An ordinary successful action can use a restrained cue; a rare discovery or meaningful consequence can deserve more attention. Repeated effects should not make every moment equally urgent or overwhelm conversation, important threats and readable status.
 
+**Let the soundscape participate in lived activity.** A [Sea of Stars review](https://www.gamesradar.com/sea-of-stars-review/) describes an inn musician's instrument dropping out of the score while the player speaks with that musician. The reusable idea is a perceptible relationship between somebody's action and what nearby listeners hear, not a requirement for music to interrupt every conversation. Where the selected world supports playing an instrument, working to a rhythm, stopping to speak or responding to surroundings, corresponding local sound can begin, vary or stop with those actual events and permitted hearing. Musical layering and ambience must not invent a person's action, private knowledge or physical source. This remains a production possibility, not an installed music-performance mechanic or a new audio engine.
+
 **Useful result:** the planned palette supports identity and hierarchy. If all cues have the same intensity or character, revise the palette before producing many assets.
 
 ## 3. Create and edit the source assets

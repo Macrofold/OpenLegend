@@ -37,7 +37,7 @@ The project favors distinct authored lives over a universal enemy state. Ada may
 
 Long-term relationship change, reconciliation, reputation, law and communal punishment remain separate work. This project retains causal evidence for their eventual consumers but does not invent new relationship scores.
 
-Richer animal ecology—offspring, den protection, packs and herds, predation, hunger-driven hunting, taming and learning—and optional animal cognition are recorded as later possibilities. They are not prerequisites for useful fleeing now. General ranged penetration, ricochet, automatic repeated attacks, universal tactical command systems and new combat pausing are also outside this first implementation.
+Richer animal ecology—offspring, den protection, packs and herds, predation, hunger-driven hunting, taming and learning—and optional animal cognition are recorded as later possibilities. They are not prerequisites for useful fleeing now. General ranged penetration, ricochet, automatic repeated attacks, universal tactical command systems and new combat pausing are also outside this first implementation. Player-execution skill interactions such as hold/release aiming or timing windows are also outside this selected project; [ND38](../maintainers/needs-design.md#nd38--player-skill-during-action-execution) owns whether such interactions should later compose with an admitted attack. Do not retrofit a timing minigame into CTR merely from comparative research.
 
 ## Journeys and acceptance structure
 
