@@ -907,3 +907,41 @@ are **$0.292213**, other-provider estimates **$0.088246**, uncertain commitments
 **$4.105220**, and conservative task exposure **$4.485679**. The call used a $0.03
 local ceiling and an upward-rounded $0.021044 reservation before dispatch; it
 completed with a known receipt and no retry.
+
+## Corrected-cause cohort and observation implementation checkpoint
+
+The fixed twelve ordinary Ada cases were repeated on
+`429c4d7d9dcd77c36c052bd9e18ed006d525dc72`. Every case reached its original
+900-game-second window. None began the required counterattack: **0/12**. These
+failures remain open. Native cause selection repaired a demonstrated input defect;
+it did not establish independent character willingness. Private ordinary inputs,
+receipts, case summaries and operational backups remain outside Git under the
+retained `openlegend-ctr-baselines-3NZDnw` workspace. No character goals, selection
+thresholds, physical rules or post-hit instructions were changed for this cohort.
+
+This cohort's provider-reported estimates total Jev **$0.148573** and other
+providers **$0.119267**. Cumulative estimates are Jev **$0.440786** and other
+providers **$0.207513**. Uncertain commitments total **$5.939396**; conservative
+aggregate task exposure is **$6.587695**, against the standing $10 limit. These
+figures are estimates and retained commitments, not confirmed final charges.
+
+The subsequent observation working diff made no additional provider calls
+(additional Jev cost **$0**). A focused native scenario uses an actual punch and
+ordinary movement, then controlled physical placements to isolate band reversals.
+It exercises range departure/re-entry, the 0.75 m outer margin, 12-game-second
+stability, original pending JSON continuation, repeated identical samples, brief
+and sustained loss of sight, observer-only loss evidence, unchanged hidden
+last-seen points, actual cancelled preparation and refusal to assert hidden
+cessation. A selected passive protected person remains watched without cancelling
+otherwise valid work; stale admission refuses before replacement. These narrow
+checks pass. They do not qualify natural travel timing, every shared subscription,
+independent choices or population performance.
+
+The existing connected native/server scenario passes after preserving physical
+method sharing across passive purpose bindings. Its first run exposed a real
+complete-request size refusal for Kest (171,018 serialized characters), before
+provider dispatch. Repeated passive bindings are excluded only from the identity
+of the shared explanatory method row; every exact native candidate retains them,
+and their meaning is described once. No candidate or supported constraint is
+removed. Twenty focused existing server checks pass. Full TypeScript checking passes after repairing the typed method-row
+normalization. This checkpoint is not a phase completion or merge-readiness claim.

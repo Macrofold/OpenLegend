@@ -17,6 +17,7 @@ import type {
   PreparedResponseMethod,
   PreparedResponsePurpose,
   PreparedResponseOption,
+  PreparedResponseObservation,
 } from '../../prepared-responses.js';
 import type { ResponsePurposeBinding } from '../../action-capabilities.js';
 import type { Awareness } from '../../experience.js';
@@ -24,6 +25,34 @@ import { sameDefinitionPin } from '../../state-owners.js';
 import { strikeDefinition } from '../../strikes.js';
 import { canReachEntity } from '../../spatial.js';
 import { FOLLOW_RULES } from './navigation.js';
+
+/** Physical observations only; none states another person's motive or intention. */
+export function baseThreatObservation(
+  change: PreparedResponseObservation,
+  label: string,
+  range?: number,
+): string {
+  switch (change) {
+    case 'lost-sight':
+      return `I can no longer see ${label}.`;
+    case 'reacquired-sight':
+      return `I can again see ${label}.`;
+    case 'preparation-ended':
+      return `${label} is no longer visibly preparing that attack.`;
+    case 'closing':
+      return `${label} is moving closer to my position.`;
+    case 'withdrawing':
+      return `${label} is moving away from my position.`;
+    case 'lateral':
+      return `${label} is moving across my view.`;
+    case 'still':
+      return `${label} has stopped changing position.`;
+    case 'range-entered':
+      return `${label} is now within the ${range} m reach of a strike or shot I have the means to attempt.`;
+    case 'range-left':
+      return `${label} has stayed beyond the ${range} m reach I was considering.`;
+  }
+}
 
 /** A completed selected response is a new choice boundary even when it produces
  * private action memory instead of public awareness. It is priority, not new harm
@@ -80,9 +109,13 @@ export function basePreparedThreatOpportunity(
     evidence.some(
       (entry) =>
         entry.actorId === actorId &&
-        ['attack-cue', 'struck', 'shot-released', 'projectile-contact'].includes(
-          entry.eventType ?? '',
-        ),
+        [
+          'attack-cue',
+          'struck',
+          'shot-released',
+          'projectile-contact',
+          'response-observation',
+        ].includes(entry.eventType ?? ''),
     )
   )
     return true;
@@ -145,8 +178,10 @@ export function basePreparedThreatResponses(
   const physicalLife = (entity: Entity) => entity.actor?.physicalLife ?? 0;
   const state =
     actor.actor.encounters?.life === physicalLife(actor) ? actor.actor.encounters : undefined;
-  const pairs = Object.entries(state?.pairs ?? {}).filter(([id, pair]) =>
-    subjectReferenceCurrent(world, actor.id, id, pair.episode),
+  const pairs = Object.entries(state?.pairs ?? {}).filter(
+    ([id, pair]) =>
+      subjectReferenceCurrent(world, actor.id, id, pair.episode) &&
+      !!(pair.lastCause || pair.own || Object.keys(pair.active).length),
   );
   const original = worldPosition(actor);
   const currentWork =
@@ -363,6 +398,26 @@ export function basePreparedThreatResponses(
   const purposes: PreparedResponsePurpose[] = [];
   const unavailable: Array<{ purposeId: string; roles: Record<string, string>; reason: string }> =
     [];
+  const subjectsFor = (purpose: ResponsePurposeBinding, participants: readonly string[]) => {
+    const hard = new Set(participants);
+    return Object.fromEntries(
+      [...new Set([...participants, ...Object.values(purpose.roles)])].flatMap((id) => {
+        const person = visible.get(id);
+        return person?.actor
+          ? [
+              [
+                id,
+                {
+                  physicalLife: physicalLife(person),
+                  episode: world.perceptionEpisodes?.[actor.id]?.[id] ?? null,
+                  ...(!hard.has(id) ? { observationOnly: true as const } : {}),
+                },
+              ],
+            ]
+          : [];
+      }),
+    );
+  };
   const primitive = (
     method: PreparedResponseMethod,
     purpose: ResponsePurposeBinding,
@@ -442,22 +497,7 @@ export function basePreparedThreatResponses(
         : radius
           ? { origin: { ...original }, radius: profile.limits.pursuitRadius }
           : null,
-      subjects: Object.fromEntries(
-        participants.flatMap((id) => {
-          const person = visible.get(id);
-          return person?.actor
-            ? [
-                [
-                  id,
-                  {
-                    physicalLife: physicalLife(person),
-                    episode: world.perceptionEpisodes?.[actor.id]?.[id] ?? null,
-                  },
-                ],
-              ]
-            : [];
-        }),
-      ),
+      subjects: subjectsFor(purpose, participants),
       ...(command.type === 'move' && followRange !== undefined && participants[0]
         ? { stopWithin: { subjectId: participants[0], distance: followRange } }
         : {}),
@@ -580,16 +620,13 @@ export function basePreparedThreatResponses(
           target === roles.assailant &&
           visible.has(target)
         )
-          addMethod(method, [target, ...(roles.protectee ? [roles.protectee] : [])], true);
+          addMethod(method, [target], true);
         if (
           definition.means.includes('guard') &&
           command?.type === 'guard' &&
           (!target || target === roles.assailant)
         )
-          addMethod(method, [
-            ...(target ? [target] : []),
-            ...(roles.protectee ? [roles.protectee] : []),
-          ]);
+          addMethod(method, target ? [target] : []);
         if (definition.means.includes('evade') && command?.type === 'evade') addMethod(method);
         if (
           (definition.means.includes('approach') || definition.means.includes('pursue')) &&
@@ -670,7 +707,12 @@ export function basePreparedThreatResponses(
               root,
               bindings: {},
               mode: 'replace',
-              control: { kind: 'finite', deadline: at, boundary: null, subjects: {} },
+              control: {
+                kind: 'finite',
+                deadline: at,
+                boundary: null,
+                subjects: subjectsFor(purpose, []),
+              },
             },
             transition: 'replace',
           });

@@ -5818,7 +5818,13 @@ function* updateEncounters(
     const contacts = Object.values(actor.entity.actor!.contacts ?? {});
     const movingContacts = contacts.some((contact) => contact.detail === 'moving');
     const blocked = capabilityBlocked(world, actor.entity, 'perception');
-    if (!frame.affected.has(actor.id) && !movingContacts && !placesChanged) {
+    const encounterDue = actor.entity.actor?.encounters?.nextAt;
+    if (
+      !frame.affected.has(actor.id) &&
+      !movingContacts &&
+      !placesChanged &&
+      !(encounterDue !== undefined && encounterDue <= world.simTime)
+    ) {
       countDomainWork('observersSkipped');
       continue;
     }

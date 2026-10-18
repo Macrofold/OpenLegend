@@ -2,6 +2,17 @@ import type { Awareness } from './experience.js';
 import type { Command, Entity } from './types.js';
 import type { ResponsePurposeBinding, WorkTransitionMode } from './action-capabilities.js';
 
+export type PreparedResponseObservation =
+  | 'lost-sight'
+  | 'reacquired-sight'
+  | 'preparation-ended'
+  | 'closing'
+  | 'withdrawing'
+  | 'lateral'
+  | 'still'
+  | 'range-entered'
+  | 'range-left';
+
 /** Data for one supported supplied-response strategy. World composition owns its
  * native templates and validation; text can choose no new executable behavior. */
 export interface PreparedResponseProfile {

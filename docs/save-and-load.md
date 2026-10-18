@@ -312,3 +312,19 @@ A marker-`3` database with the preceding generated memory-search column is also 
 ## Current flat-shelter continuity
 
 Current-format capture retains exact installed/lowered materials, root/attachment/joint membership, selected definition pins, material attributes, finite shower time, phase/corner progress, holds and receipts. Restore validates the graph and supported geometry before publication; an invalid saved roof is rejected, never lowered or repaired during load. Operational construction-use grants remain current outside gameplay rewind. Missing/revoked authority releases unfinished work while retaining completed parts; a stale grant revision refuses the SQL commit. Derived geometry and worker routes rebuild under the new timeline. [AV04 native/PostgreSQL/browser evidence](verification/editable-shelters.md#postgresql-and-current-format-continuity) distinguishes cold restoration from an ordinary browser departure that cancels work. Development compatibility remains governed by the root policy above.
+
+### Personal threat observations
+
+Personal encounter records retain their exact observer and other-body lives and
+recognition episode. Their selected response-profile pin owns sight, preparation,
+movement and supported-method reach bands. A pending band keeps its original
+simulation-time onset; restoring a save neither renews that onset nor emits an
+additional notice for an unchanged stable value. Current-format validation checks
+the profile, supported values, pending times and the derived next deadline. Hidden
+movement cannot replace the personally recorded last-seen point.
+
+Finite selected activities distinguish people needed to execute their physical
+work from people being passively observed for the selected purpose. Both bindings
+must be personally available at admission. Later loss of a passive person prompts
+reconsideration without cancelling work that has no physical dependency on them.
+A positive proximity stopping condition requires a hard execution participant.

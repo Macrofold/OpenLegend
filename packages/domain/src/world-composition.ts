@@ -30,9 +30,13 @@ import {
   basePreparedThreatResponses,
   basePreparedThreatOpportunity,
   basePreparedThreatResult,
+  baseThreatObservation,
 } from './worlds/base/threat-responses.js';
 import type { Awareness } from './experience.js';
-import type { PreparedResponseSituation } from './prepared-responses.js';
+import type {
+  PreparedResponseSituation,
+  PreparedResponseObservation,
+} from './prepared-responses.js';
 
 /** A selected pin chooses linked trusted native templates. It cannot load code or
  * silently reinterpret a saved profile after the authored definition changes. */
@@ -41,6 +45,16 @@ export function preparedResponseProfile(pin: DefinitionPin | null) {
   return isDefinitionPin(pin) && sameDefinitionPin(pin, definitionPin(BASE_THREAT_RESPONSE_PROFILE))
     ? BASE_THREAT_RESPONSE_PROFILE
     : undefined;
+}
+export function preparedResponseObservation(
+  pin: DefinitionPin,
+  change: PreparedResponseObservation,
+  label: string,
+  range?: number,
+): string {
+  if (!preparedResponseProfile(pin))
+    throw new Error('The response observation profile is unavailable.');
+  return baseThreatObservation(change, label, range);
 }
 export function compilePreparedResponses(world: WorldState, input: PreparedResponseSituation) {
   const profile = preparedResponseProfile(world.cognitionPolicy.preparedResponses);

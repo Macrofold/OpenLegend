@@ -48,6 +48,8 @@ import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import type { Entity, WorldState } from './types.js';
 import { current, isDraft } from 'immer';
 import { readOnlyDraftView } from './draft.js';
+import { subjectReferenceCurrent } from './worlds/base/knowledge.js';
+import { preparedResponseProfile } from './world-composition.js';
 
 /** An unavailable landing closer than this retries at the flyer's sensing cadence instead of
  * at its remaining gap, which an unrelated boundary can make arbitrarily small. */
@@ -310,6 +312,14 @@ function firstEntry(runs: readonly Run[], from: number, to: number): number {
     }
   return Infinity;
 }
+/** A watched condition needs both entry and reversal. Sample just after the
+ * shared geometric crossing, so a short reversal cancels its original timer. */
+function firstChange(runs: readonly Run[], from: number, to: number): number {
+  for (const run of runs)
+    if (run.start > from + TIME_EPSILON / 2 && run.start < to && run.end > run.start)
+      return run.start + Math.min(TIME_EPSILON, (run.end - run.start) / 2);
+  return Infinity;
+}
 function mergedCuts(first: MotionTrack, second: MotionTrack): number[] {
   return [...new Set([...first.at, ...second.at])].sort((a, b) => a - b);
 }
@@ -531,7 +541,7 @@ interface BodyCertificate {
 }
 interface CrossingPair {
   ids: readonly [string, string];
-  kind: 'sight' | 'contact' | `reach:${number}`;
+  kind: 'sight' | 'contact' | 'watch-sight' | `reach:${number}` | `watch-reach:${number}`;
   at: number;
   until: number;
   runs: Run[];
@@ -657,7 +667,8 @@ function sameBody(a: BodyCertificate, b: BodyCertificate): boolean {
 function pairEligible(pair: CrossingPair, a: BodyCertificate, b: BodyCertificate): boolean {
   // A selected physical stop does not require autobiographical memory. Its
   // native control separately checks current perception and exact participant.
-  if (pair.kind.startsWith('reach:')) return a.alive && a.active && a.actor && b.active && b.alive;
+  if (pair.kind.startsWith('reach:') || pair.kind.startsWith('watch-reach:'))
+    return a.alive && a.active && a.actor && b.active && b.alive;
   return (
     a.alive &&
     a.memory &&
@@ -986,9 +997,12 @@ export function sensoryCrossingBound(
   };
   const moving = (id: string) => certain.has(id) || outcomes.has(id);
   const proximityObservers: Entity[] = [];
+  const watchedObservers: Entity[] = [];
   const observers = actorIds.flatMap((id) => {
     const entity = entityGet(entities, id);
     if (!entity) return [];
+    if (Object.values(entity.actor?.encounters?.pairs ?? {}).some((pair) => pair.watch))
+      watchedObservers.push(entity);
     const plan = entity.actor?.agency.plan;
     if (
       plan?.status === 'active' &&
@@ -1004,7 +1018,7 @@ export function sensoryCrossingBound(
       ? [{ entity, radius: body.radius, touch: body.touch }]
       : [];
   });
-  if (!observers.length && !proximityObservers.length) return seconds;
+  if (!observers.length && !proximityObservers.length && !watchedObservers.length) return seconds;
   // Moving targets for every observer; static targets only matter to a moving observer.
   const targets = !observers.length
     ? []
@@ -1050,7 +1064,11 @@ export function sensoryCrossingBound(
     target: Entity,
     evaluate: (first: MotionTrack, second: MotionTrack, horizon: number) => Run[],
   ) => {
-    const nextCrossing = kind.startsWith('reach:') ? firstEntry : interiorOf;
+    const nextCrossing = kind.startsWith('watch-')
+      ? firstChange
+      : kind.startsWith('reach:')
+        ? firstEntry
+        : interiorOf;
     const own =
         certain.get(observer.id) ?? (outcomes.has(observer.id) ? undefined : still(observer)),
       other = certain.get(target.id) ?? (outcomes.has(target.id) ? undefined : still(target));
@@ -1144,6 +1162,45 @@ export function sensoryCrossingBound(
           span,
         ),
       );
+  }
+  for (const observer of watchedObservers) {
+    const body = certificate(observer);
+    if (!body.alive || !body.active || !body.perceiving || body.radius <= 0) continue;
+    for (const [id, pair] of Object.entries(observer.actor!.encounters!.pairs)) {
+      const watch = pair.watch,
+        target = entityGet(entities, id);
+      if (
+        !watch ||
+        !target?.actor?.alive ||
+        pair.otherLife !== (target.actor.physicalLife ?? 0) ||
+        !subjectReferenceCurrent(world, observer.id, id, pair.episode) ||
+        !(world.visiblePeople?.[observer.id] ?? []).includes(id) ||
+        (!moving(observer.id) && !moving(id))
+      )
+        continue;
+      constrain('watch-sight', observer, target, (first, second, span) =>
+        visionRuns(
+          world,
+          { track: first, radius: body.radius, eye: body.eye },
+          { track: second, height: certificate(target).height },
+          span,
+        ),
+      );
+      const profile = preparedResponseProfile(watch.definition);
+      if (watch.range && profile) {
+        const distance =
+          watch.range.distance + (watch.range.band.value ? profile.limits.rangeMargin : 0);
+        constrain(`watch-reach:${distance}`, observer, target, (first, second, span) =>
+          reachRuns(
+            world,
+            { track: first, entity: observer },
+            { track: second, entity: target },
+            distance,
+            span,
+          ),
+        );
+      }
+    }
   }
   return Math.max(TIME_EPSILON, bound);
 }

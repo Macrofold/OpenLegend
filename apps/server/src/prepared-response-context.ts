@@ -28,10 +28,25 @@ export function preparedResponseChoices(
       } = option.invocation ?? {};
       // A requested activity's personal name is retained in its exact binding,
       // but is not another physical method or another copy of its instructions.
-      const physical =
+      let physical =
         'type' in invocation && invocation.type === 'compose'
           ? (({ name: _name, ...method }) => method)(invocation)
           : invocation;
+      const control = option.invocation?.type === 'compose' ? option.invocation.control : undefined;
+      if (control?.kind === 'finite') {
+        // Passive people belong to the purpose, not a different physical method.
+        // Keep every candidate's exact native invocation below; only share its
+        // repeated explanatory row when hard execution requirements agree.
+        physical = {
+          ...physical,
+          control: {
+            ...control,
+            subjects: Object.fromEntries(
+              Object.entries(control.subjects).filter(([, subject]) => !subject.observationOnly),
+            ),
+          },
+        };
+      }
       const key = canonicalJson([physical, option.transition, option.description]);
       let method = methods.get(key);
       if (!method) {
@@ -65,7 +80,7 @@ export function preparedResponseChoices(
     facts: {
       instructions,
       reading:
-        'Each offered choice names one fully described purpose and one first action below. Judge that entire bound combination, including its exact people, work handling and stopping conditions. A shared method does not merge its different purposes. Work handling refers to the current and paused work and consequences supplied in this same context.',
+        'Each offered choice names one fully described purpose and one first action below. Judge that entire bound combination, including its exact people, work handling and stopping conditions. A shared method does not merge its different purposes. Selected visible people remain personally bound observations: losing a passive person prompts reconsideration but stops physical work only when that work requires them. Work handling refers to the current and paused work and consequences supplied in this same context.',
       purposes,
       methods: [...methods.values()],
       unavailable: catalogue.unavailable,

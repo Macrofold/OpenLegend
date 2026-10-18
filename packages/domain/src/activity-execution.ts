@@ -72,7 +72,10 @@ export interface FiniteActivityControl {
   /** Historical world position, not a live support reference or navigation grant. */
   boundary: { origin: Position; radius: number } | null;
   /** Only currently perceived bodies may be bound here; remembered points need no live subject. */
-  subjects: Record<string, { physicalLife: number; episode: string | null }>;
+  subjects: Record<
+    string,
+    { physicalLife: number; episode: string | null; observationOnly?: true }
+  >;
   /** Positive arrival condition on one exact visible participant, never an attack. */
   stopWithin?: { subjectId: string; distance: number };
 }
@@ -259,6 +262,7 @@ function finiteControlStop(
   world: WorldState,
   actorId: string,
   control: FiniteActivityControl,
+  admission = false,
 ): { reason: string; completed: boolean } | null {
   const entity = entityGet(world.entities, actorId);
   if (
@@ -271,6 +275,7 @@ function finiteControlStop(
       completed: false,
     };
   for (const [id, expected] of Object.entries(control.subjects)) {
+    if (expected.observationOnly && !admission) continue;
     const target = entityGet(world.entities, id);
     // Sight precedes private physical state: hidden death/body changes never give a different reason.
     if (
@@ -430,8 +435,9 @@ export function validateChosenActivityControl(
     )
       throw new Error('Invalid finite activity subjects.');
     for (const [id, subject] of Object.entries(control.subjects)) {
-      exact(subject, ['physicalLife', 'episode']);
       if (
+        !hasRecordFields(subject, ['physicalLife', 'episode'], ['observationOnly']) ||
+        (subject.observationOnly !== undefined && subject.observationOnly !== true) ||
         !isSafeRecordId(id) ||
         (subject.episode !== null && !isSafeRecordId(subject.episode)) ||
         !Number.isSafeInteger(subject.physicalLife) ||
@@ -444,6 +450,7 @@ export function validateChosenActivityControl(
       if (
         !isSafeRecordId(control.stopWithin.subjectId) ||
         !Object.hasOwn(control.subjects, control.stopWithin.subjectId) ||
+        control.subjects[control.stopWithin.subjectId]?.observationOnly ||
         !Number.isFinite(control.stopWithin.distance) ||
         control.stopWithin.distance <= 0
       )
@@ -1018,7 +1025,7 @@ export function requestedActivityProblem(
       'The activity needs current things you can perceive or carry.',
     );
   if (command.control?.kind === 'finite') {
-    const stop = finiteControlStop(world, actorId, command.control);
+    const stop = finiteControlStop(world, actorId, command.control, true);
     if (stop) return outcome(false, 'activity-limit', stop.reason);
   }
   const current = actor.agency.plan;
