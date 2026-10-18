@@ -267,6 +267,7 @@ function populateGroup(
       body: { ...bird!.spatial.body },
       speed: 0.6,
       climbSpeed: 0.3,
+      continuation: { kind: 'loop' },
       points: [
         { position: { x, y, z }, waitSeconds: 0 },
         { position: { x: x + 12, y, z }, waitSeconds: 0 },

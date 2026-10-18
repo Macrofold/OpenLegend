@@ -66,7 +66,9 @@ rest predicates pass controlled native checks. Exact continuous motion/sight and
 region-growth boundaries are connected; their specific transient cases remain
 open. Four existing files pass all 36 checks. Actual perceived near-passage now passes native timing, hidden-source,
 first-screen interception, split/whole and PostgreSQL deduplication checks.
-Bird flight remains unfinished. The stag now delegates relinquishing withdrawal
+Flight now supports explicit finite landings, exact joins and saved terminal rest,
+with native/SQL and 27 existing spatial/simulation checks passing. The bird’s
+actual danger-driven corridor selection remains unfinished. The stag now delegates relinquishing withdrawal
 to the common deer response; its known former refuge only breaks interchangeable
 clear choices, and complete integration qualification remains open. The first ordinary close bow
 hunt released but struck terrain after the hare retreated. The aiming-contract

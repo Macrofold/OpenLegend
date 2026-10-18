@@ -307,7 +307,13 @@ import {
   type NavigationResult,
   type SurfacePoint,
 } from '@open-legend/spatial';
-import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';
+import {
+  bodyProfile,
+  setSpatialPosition,
+  spatialMap,
+  supportedPosition,
+  releasePerchedFlight,
+} from './spatial-state.js';
 import { advanceFlight, landingDue, LandingOccupancy } from './flight.js';
 import {
   withdrawAttempt,
@@ -3297,6 +3303,7 @@ function executeCommandNative(
       );
     }
     component.action = action;
+    if (action.stage === 'approaching') releasePerchedFlight(actor);
     selectOffense(world, actor, action, command);
     if (action.evasion) {
       component.evasionReadyAt = action.evasion.repeatAt;

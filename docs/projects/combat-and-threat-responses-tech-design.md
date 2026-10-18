@@ -470,6 +470,33 @@ handoff, complete candidate preparation, exact saved continuation and control lo
 Qualify real threshold injury, unchanged pursuit/antlers, clear versus dangerous
 preferred refuges, no competing movement, whole/split clocks and SQL restoration.
 
+The remaining bird connection extends the existing flight family in two connected
+steps (approximately 600–1,000 logic lines across flight, prediction, response,
+authored routes and current validation). First make route completion explicit:
+ordinary loops, finite supported landings and exact joins to another admitted
+route. Retain terminal perched progress so settling cannot restart a loop, and
+allow a physically authored return connection only after the alarm ends. Every
+forecast, swept contact and actual flight must traverse the same completion rule;
+no second flight updater or position path is saved in the response episode.
+
+Then author two finite alternative landing corridors on distinct sides of the
+clearing, resolving their actual ground support during initialization. Explicit
+source-route connections authorize only a currently exposed, swept-clear physical
+join from the bird's actual position; a route identity cannot move the body to its
+entry. Compare complete three-dimensional corridors and actual supported endings
+against the same complete danger set. Preserve current refuge continuity and one
+canonical weighted choice. An unsafe ending is not a landing permission: retain
+a valid airborne corridor or report the explicit unsupported/blocked flight
+outcome. A grounded bird without usable takeoff can use ordinary ground escape.
+The selected flight binds its episode/profile/generation, while the flight owner
+retains the route and current progress. Its escape cruise comes from the selected
+profile, with the existing route climb constraint and body movement factors
+applied once. Native control loss ends new choices and stops at a real landing;
+released projectiles and actual falling retain their existing owners. Qualify
+waiting/takeoff, mid-edge joins, blocked and changed supports, unsafe perches,
+ground fallback, rest/incapacity/death, continuation and actual server/browser
+motion before declaring the animal phase delivered.
+
 The spatial substrate now provides nominal upright-body separation, full-piece
 minimum separation and complete distance-band intervals. Ordinary capsule routes
 use a quadratic minimum; mixed short-cylinder slopes or a growing region use a

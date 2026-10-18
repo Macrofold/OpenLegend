@@ -1276,3 +1276,36 @@ open.
 No external calls were made. Additional Jev cost is **$0**; cumulative reported
 estimates remain Jev **$0.440786** and other providers **$0.207513**, uncertain
 commitments **$5.939396**, and conservative aggregate exposure **$6.587695**.
+
+## Finite flight continuation checkpoint
+
+Flight definitions now explicitly loop, land finitely or join another admitted
+route at an exact shared point. In the native fixture an actual takeoff, vertical
+flight and return to the existing deck produce one landing, retain supported
+terminal rest, and emit no repeated takeoff/landing during a further quiet span.
+One 100-game-second advance and ten ten-second advances preserve flight progress,
+physical position and saved randomness. The terminal record and route definitions
+round-trip through disposable PostgreSQL. An ordinary admitted ground approach
+retires the finished routine before any subsequent movement.
+
+A separate real flight joins the ordinary bird loop at its exact mid-air waypoint;
+the shared predicted and executed 50-second positions agree within 1e-7 metres.
+An offset join fails current validation. A slower corridor joining a faster one
+also preserves the exact predicted/executed path, and its candidate reach includes
+the faster continuation. Ordinary non-joining routes keep their direct speed
+lookup. An actual perceived punch preparation creates an alarm during the finite
+flight; that alarm holds the terminal perch. A controlled removal of the alarm
+then permits the authored return at the next start boundary, with no backdated
+movement. This isolates continuation permission; it is not a natural settling or
+escape-selection trial.
+
+Full TypeScript checking, 27 existing spatial/simulation checks and the production
+build with asset guard pass. The supplied bird still uses its existing ordinary
+loop. Authored alternative escape corridors, full-danger aerial comparison,
+selected flight speed, unsafe-perch refusal, control loss, ground fallback and
+combined browser/density qualification remain unfinished. No new landing or
+placeholder output is counted as completing CTR03 or CTR04.
+
+No external calls were made. Additional Jev cost is **$0**; cumulative reported
+estimates remain Jev **$0.440786** and other providers **$0.207513**, uncertain
+commitments **$5.939396**, and conservative aggregate exposure **$6.587695**.

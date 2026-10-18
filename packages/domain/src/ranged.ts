@@ -52,7 +52,11 @@ import { capabilityBlocked } from './status-capabilities.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { readOnlyDraftView } from './draft.js';
 import { nativeResponseProfile } from './native-response.js';
-import { movingPointVisionRuns, physicalObservationTracks } from './motion-boundaries.js';
+import {
+  motionReach,
+  movingPointVisionRuns,
+  physicalObservationTracks,
+} from './motion-boundaries.js';
 import type { Action, Entity, Outcome, WorldEvent, WorldState } from './types.js';
 
 export interface AimState {
@@ -553,7 +557,7 @@ export function projectileBoundary(
         (restricted
           ? 0
           : entry.entity.spatial.flight
-            ? world.flightRoutes[entry.entity.spatial.flight.routeId]!.speed * seconds
+            ? motionReach(world, entry.entity, seconds)
             : distance3D(entry.position, end)),
       tracks: undefined as MotionTrack[] | undefined,
     };

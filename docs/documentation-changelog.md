@@ -19,7 +19,10 @@ The stag's injury-selected relinquishment now hands movement to that same owner
 while preserving its pursuit and antler timing. Its old fixed refuge becomes a
 known preferred option only within otherwise interchangeable clear choices.
 This prevents territorial return from overwriting escape and preserves cache
-relinquishment after settling. Native control transfer retires both policies
+relinquishment after settling. Flight now distinguishes loops, finite landings and
+exact route joins through one predictor/executor. Supported terminal rest holds
+during alarm, and an authored return starts only at the actual perch. This
+foundation does not yet connect the bird’s danger-driven escape choices. Native control transfer retires both policies
 before another mind/player chooses work. The complete preparation envelope
 reserves slots for the preferred and retained points, while the bundled twelve
 generated destinations remain unchanged. [CTR03–CTR04](maintainers/combat-and-threat-responses.md)

@@ -80,6 +80,7 @@ export function starterFlightRoutes(): Record<string, FlightRoute> {
       body: { ...BASE_BODY_PROFILES.bird },
       speed: 0.12,
       climbSpeed: 0.06,
+      continuation: { kind: 'loop' },
       points: [
         { position: { x: 22, y: 3, z: 5.5 }, landingSurfaceId: 'lookout-deck', waitSeconds: 180 },
         { position: { x: 22, y: 5.5, z: 5.5 }, waitSeconds: 0 },

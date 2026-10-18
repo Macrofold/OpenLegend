@@ -23,6 +23,7 @@ import {
   admittedLanding,
   fallingDuration,
   flightPathSeconds,
+  flightMaximumSpeed,
   flightTracks,
   motionTrackPosition as poseAt,
   LandingOccupancy,
@@ -71,8 +72,7 @@ export function motionReach(world: WorldState, entity: Entity, seconds: number):
     return entity.actor.action.stage === 'approaching'
       ? nativeMovementSpeed(world, entity) * seconds
       : 0;
-  if (entity.spatial.flight)
-    return world.flightRoutes[entity.spatial.flight.routeId]!.speed * seconds;
+  if (entity.spatial.flight) return flightMaximumSpeed(world, entity) * seconds;
   return 0;
 }
 /** A distant tiny sense must not split every flyer's travel. Reachable envelopes include
@@ -180,6 +180,7 @@ export function nativeMotionInterval(
     if (!entity.actor?.alive || entity.actor.incapacitated || entity.actor.action) continue;
     const flight = entity.spatial.flight;
     if (flight) {
+      if (flight.atRest) continue;
       if (flight.waitSeconds > 0) bound = Math.min(bound, flight.waitSeconds);
       else {
         const path = flightPathSeconds(world, entity, travelFor(id));
@@ -802,7 +803,11 @@ function freshCertainTrack(
     body.locomotion &&
     (body.actor || body.ambient)
   ) {
-    if (entity.spatial.flight && entity.spatial.flight.waitSeconds <= 0) {
+    if (
+      entity.spatial.flight &&
+      !entity.spatial.flight.atRest &&
+      entity.spatial.flight.waitSeconds <= 0
+    ) {
       const ahead = flightTracks(world, entity, horizon);
       if (ahead?.length !== 1 || !poseMoves(ahead[0]!) || !(ahead[0]!.until! > 0)) return;
       return { at: now, until: now + ahead[0]!.until!, track: ahead[0]!, body };
@@ -812,7 +817,7 @@ function freshCertainTrack(
       return track ? { at: now, until: now + horizon, track, body } : undefined;
     }
   }
-  const wait = entity.spatial.flight?.waitSeconds;
+  const wait = entity.spatial.flight?.atRest ? undefined : entity.spatial.flight?.waitSeconds;
   const wander = !entity.spatial.flight ? animalWanderRemaining(world, entity) : undefined;
   const span =
     wait === undefined

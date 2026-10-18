@@ -138,9 +138,19 @@ Original recommendation: **Completed removals**.
 
 ## LA145
 
-**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-18 · Restrictiveness: Very safe.**
 
 A flight route's speed cannot exceed 1 world unit per simulation second, climbing cannot exceed its total speed, and waypoint waits cannot exceed 86,400 seconds.
+
+The supported route family explicitly loops, lands finitely or joins another
+route at the same mid-air point. Finite terminal landing has zero waypoint wait
+and retained supported rest; an optional return must start at that actual perch.
+Grounded handoff uses landing/resumption instead of a mid-air join. These current
+family meanings preserve one physical path and prevent teleporting or restarting
+a loop during settling. They add no route-count or waypoint-count ceiling.
+[CTR03–CTR04](../maintainers/combat-and-threat-responses.md) retain danger-driven
+aerial selection and complete qualification. Arbitrary free flight remains
+outside this finite family.
 
 **Reason / tradeoff:** Review speed and wait ceilings as flight-mechanic choices, preserving valid motion calculations when they change.
 

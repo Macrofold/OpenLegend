@@ -2,11 +2,13 @@ import { entityValues } from './entity-collection.js';
 import { recordSemanticChange } from './dependencies.js';
 import { assemblySpatialMap } from './assembly-geometry.js';
 import { activelyParticipates } from './participation-state.js';
+import { hasRecordFields } from './records.js';
 import {
   canFlySegment,
   canStand,
   finitePoint,
   horizontalDistance,
+  distance3D,
   resolveSupport,
   surfaceById,
   SPATIAL_LIMITS,
@@ -26,6 +28,8 @@ export interface FlightProgress {
   routeId: string;
   next: number;
   waitSeconds: number;
+  /** A finite admitted flight has actually reached supported rest. */
+  atRest?: true;
 }
 export interface EntitySpatial {
   /** The current physical shape, initialized from authored content and saved with this body. */
@@ -44,6 +48,10 @@ export interface FlightRoute {
   body: BodyProfile;
   speed: number;
   climbSpeed: number;
+  continuation:
+    | { kind: 'loop' }
+    | { kind: 'land'; resumeRouteId?: string }
+    | { kind: 'join'; routeId: string; next: number };
   points: Array<{ position: WorldPoint; landingSurfaceId?: string; waitSeconds: number }>;
 }
 export type Placement =
@@ -164,9 +172,18 @@ export function setSpatialPosition(
     before: placement.position,
     after: point,
   });
+  // Actual relocation retires a finished perched routine. The flight owner
+  // clears this flag before an admitted continuation takes off.
+  releasePerchedFlight(entity);
   placement.position = { x: point.x, y: point.y, z: point.z };
   placement.supportSurfaceId = supportSurfaceId;
   placement.revision++;
+}
+
+/** A newly chosen ground approach or actual relocation replaces a finished
+ * perched routine; its old route cannot restart from a different ground point. */
+export function releasePerchedFlight(entity: Entity): void {
+  if (entity.spatial.flight?.atRest) delete entity.spatial.flight;
 }
 /** Unchanged Immer map branches reuse derived geometry/navigation caches. A modified candidate
  * receives its own snapshot; querying an original map would ignore uncommitted geometry edits. */
@@ -193,6 +210,13 @@ export function validateSpatialWorld(world: WorldState): void {
       !Number.isFinite(route.climbSpeed) ||
       route.climbSpeed <= 0 ||
       route.climbSpeed > route.speed ||
+      !route.continuation ||
+      !['loop', 'land', 'join'].includes(route.continuation.kind) ||
+      !hasRecordFields(
+        route.continuation,
+        route.continuation.kind === 'join' ? ['kind', 'routeId', 'next'] : ['kind'],
+        route.continuation.kind === 'land' ? ['resumeRouteId'] : [],
+      ) ||
       !Array.isArray(route.points) ||
       route.points.length < 2 ||
       route.points.some(
@@ -207,7 +231,54 @@ export function validateSpatialWorld(world: WorldState): void {
     )
       throw new Error('Invalid native flight route.');
     validateBodyProfile(route.body);
-    for (let index = 0; index < route.points.length; index++) {
+    for (const point of route.points)
+      if (
+        point.landingSurfaceId &&
+        !canStand(map, { ...point.position, surfaceId: point.landingSurfaceId }, route.body)
+      )
+        throw new Error('Flight landing has no valid stance.');
+    const terminal = route.points.at(-1)!;
+    if (route.continuation.kind === 'land') {
+      if (!terminal.landingSurfaceId || terminal.waitSeconds !== 0)
+        throw new Error('A finite flight must end at supported rest.');
+      const resumeId = route.continuation.resumeRouteId,
+        resume =
+          typeof resumeId === 'string' && Object.hasOwn(world.flightRoutes, resumeId)
+            ? world.flightRoutes[resumeId]
+            : undefined;
+      if (
+        resumeId !== undefined &&
+        (!resume ||
+          !sameBody(route.body, resume.body) ||
+          !resume.points.length ||
+          distance3D(terminal.position, resume.points[0]!.position) > SPATIAL_LIMITS.epsilon ||
+          terminal.landingSurfaceId !== resume.points[0]!.landingSurfaceId)
+      )
+        throw new Error('A resting flight continuation must begin on its actual perch.');
+    } else if (route.continuation.kind === 'join') {
+      const join = route.continuation,
+        destination =
+          typeof join.routeId === 'string' && Object.hasOwn(world.flightRoutes, join.routeId)
+            ? world.flightRoutes[join.routeId]
+            : undefined,
+        previous =
+          destination?.points[join.next === 0 ? destination.points.length - 1 : join.next - 1];
+      if (
+        terminal.landingSurfaceId !== undefined ||
+        !destination ||
+        !sameBody(route.body, destination.body) ||
+        !Number.isSafeInteger(join.next) ||
+        join.next < 0 ||
+        join.next >= destination.points.length ||
+        (join.next === 0 && destination.continuation.kind !== 'loop') ||
+        !previous ||
+        distance3D(terminal.position, previous.position) > SPATIAL_LIMITS.epsilon ||
+        terminal.landingSurfaceId !== previous.landingSurfaceId
+      )
+        throw new Error('A flight join must retain its exact physical position and support.');
+    }
+    const edgeCount = route.points.length - (route.continuation.kind === 'loop' ? 0 : 1);
+    for (let index = 0; index < edgeCount; index++) {
       const from = route.points[index]!,
         to = route.points[(index + 1) % route.points.length]!;
       // This small family uses vertical takeoff/landing and prevalidated public corridors.
@@ -227,11 +298,6 @@ export function validateSpatialWorld(world: WorldState): void {
         )
       )
         throw new Error('Flight corridor intersects geometry.');
-      if (
-        to.landingSurfaceId &&
-        !canStand(map, { ...to.position, surfaceId: to.landingSurfaceId }, route.body)
-      )
-        throw new Error('Flight landing has no valid stance.');
     }
   }
   for (const entity of entityValues(world.entities)) {
@@ -288,7 +354,15 @@ export function validateSpatialWorld(world: WorldState): void {
         s.flight.next >= route.points.length ||
         !Number.isFinite(s.flight.waitSeconds) ||
         s.flight.waitSeconds < 0 ||
-        s.flight.waitSeconds > 86400
+        s.flight.waitSeconds > 86400 ||
+        (s.flight.atRest !== undefined &&
+          (s.flight.atRest !== true ||
+            route.continuation.kind !== 'land' ||
+            s.flight.next !== route.points.length - 1 ||
+            s.flight.waitSeconds !== 0 ||
+            worldSupport(entity) !== route.points.at(-1)!.landingSurfaceId ||
+            distance3D(worldPosition(entity), route.points.at(-1)!.position) >
+              SPATIAL_LIMITS.epsilon))
       )
         throw new Error('Invalid flight progress.');
     }
