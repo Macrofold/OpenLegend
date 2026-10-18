@@ -115,7 +115,11 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
             conditions: map('sim_actor_conditions'),
             traits: list('sim_actor_traits', 'id'),
           }),
-          animal: one('sim_animal_behavior'),
+          animal: one('sim_animal_behavior', {
+            episode: one('sim_native_response_episodes', {
+              dangers: map('sim_native_response_dangers'),
+            }),
+          }),
           threat: one('sim_territorial_threat'),
           resource: one('sim_resources'),
           remains: one('sim_remains'),

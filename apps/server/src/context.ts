@@ -256,7 +256,12 @@ export function buildContext(
           }
         : {}),
       ...(entity.animal
-        ? { animal: { alive: entity.actor!.alive, fleeing: entity.animal.danger > 0 } }
+        ? {
+            animal: {
+              alive: entity.actor!.alive,
+              fleeing: entity.animal.episode?.mode === 'escaping',
+            },
+          }
         : {}),
       ...(entity.actor
         ? {

@@ -1,4 +1,11 @@
 import {
+  nativeRefugePreparationReady,
+  type NativeRefugePreparations,
+} from './native-response-navigation.js';
+import { nativeResponseProfile, type NativeLocomotion } from './native-response.js';
+import type { NativeRefugeRoute } from './native-response-refuge.js';
+import { navigationResultProblem } from './navigation-result.js';
+import {
   AnimalWanderQueue,
   type AnimalWanderPreparation,
 } from './worlds/base/animal-wander-queue.js';
@@ -221,13 +228,14 @@ import {
 } from './reincarnation.js';
 import { advanceRemains } from './remains.js';
 import {
-  advanceAnimal,
+  nativeResponseDecision,
+  nativeWanderRoute,
+  recordAnimalClockWrite,
   advanceAnimalWanderClock,
   animalWanderNeedsCountdown,
-  rememberAttack,
   animalWanderRemaining,
   reconcileAnimalWander,
-} from './worlds/base/animal-behavior.js';
+} from './native-response-controller.js';
 import { actionTargetsCurrent } from './action-targets.js';
 import { observerDescription, observerName } from './worlds/base/knowledge.js';
 import { setBodyHealth } from './body-state.js';
@@ -629,11 +637,17 @@ function approach(world: WorldState, actor: Entity, action: Action): Outcome | n
  * block time: the next native step reconciles them. Never include another actor's destination
  * in the public barrier indicator. docs/architecture.md#navigation-preparation
  */
-export function navigationBlocked(world: WorldState, actorIds?: readonly string[]): boolean {
+export function navigationBlocked(
+  world: WorldState,
+  actorIds?: readonly string[],
+  prepared?: NativeRefugePreparations,
+): boolean {
   const actors = actorIds
     ? actorIds.map((id) => entityGet(world.entities, id)!)
     : worldRootEntities(world);
   return actors.some((entity) => {
+    if (entity?.animal?.episode?.proposal && !nativeRefugePreparationReady(world, entity, prepared))
+      return true;
     const request = entity.actor?.action?.navigation;
     if (
       !entity.actor?.alive ||
@@ -699,34 +713,7 @@ export function completeNavigation(
     profile.maxSlope !== request.body.maxSlope
   )
     return stale();
-  let failure =
-    result.status === 'reached'
-      ? undefined
-      : result.status === 'no-route'
-        ? 'no supported route reaches that destination.'
-        : result.status === 'unavailable'
-          ? 'navigation preparation is unavailable; retry the action later.'
-          : result.status === 'budget-exceeded'
-            ? 'the route exceeds the current navigation budget.'
-            : 'the proposed route does not fit this body or its supporting surfaces.';
-  if (result.status === 'reached') {
-    let previous = request.from;
-    if (!Array.isArray(result.path) || result.path.length > SPATIAL_LIMITS.maxPathPoints)
-      failure = 'navigation returned an invalid route.';
-    for (const point of failure ? [] : result.path) {
-      if (!finitePoint(point) || !canWalkSegment(spatialMap(original), previous, point, profile)) {
-        failure = 'the prepared route became physically blocked.';
-        break;
-      }
-      previous = point;
-    }
-    if (
-      !request.destinations.some(
-        (p) => p.surfaceId === previous.surfaceId && distance(p, previous) < 1e-6,
-      )
-    )
-      failure = 'navigation returned only a partial route.';
-  }
+  const failure = navigationResultProblem(spatialMap(original), request, result, profile);
   const world = draftWorld(original),
     current = entityGet(world.entities, actorId)!.actor!.action!;
   if (failure) current.navigation!.failure = failure;
@@ -2023,6 +2010,112 @@ function prepareNativeOperation(
   );
 }
 
+/** Every candidate passes ordinary admission before one saved choice is drawn.
+ * A failed final admission discards the tentative RNG and action together. */
+function nativeMovementTransition(
+  original: WorldState,
+  actorId: string,
+  routes: NativeRefugeRoute[],
+  mode: 'travel' | 'escape',
+): Transition {
+  const animal = entityGet(original.entities, actorId)!,
+    state = animal.animal!,
+    episode = state.episode;
+  const pin = mode === 'escape' ? episode!.profilePin : state.profile;
+  const profile = nativeResponseProfile(original, pin);
+  if (!profile)
+    return {
+      world: original,
+      events: [],
+      outcome: outcome(
+        false,
+        'missing-native-profile',
+        'The native movement profile is unavailable.',
+      ),
+    };
+  const binding: NativeLocomotion = {
+    profile: { ...pin },
+    locomotion: mode === 'escape' ? episode!.locomotion : state.locomotion,
+    mode,
+    ...(mode === 'escape'
+      ? { episodeId: episode!.id, generation: episode!.proposalGeneration }
+      : {}),
+  };
+  const command = (route: NativeRefugeRoute): Command => ({
+    id: `native-move-${original.nextId}`,
+    actorId,
+    type: 'move',
+    destination: { ...route.candidate.point },
+  });
+  const available = routes.filter(
+    (route) =>
+      executeCommand(original, command(route), {
+        preview: true,
+        nativeController: true,
+        nativeMovement: { binding, path: route.path },
+      }).outcome.ok,
+  );
+  if (!available.length)
+    return {
+      world: original,
+      events: [],
+      outcome: outcome(
+        false,
+        'native-movement-unavailable',
+        'No proposed native movement remains available.',
+      ),
+    };
+  const selecting = draftWorld(original);
+  let selected = available[0]!,
+    draw: number | undefined;
+  if (available.length > 1) {
+    draw = nextRandom(selecting);
+    const weights = available.map(
+      (route) => 1 / (1 + route.length / profile.candidates.distanceWeightScale),
+    );
+    let remainder = draw * weights.reduce((sum, weight) => sum + weight, 0);
+    for (let index = 0; index < available.length; index++) {
+      selected = available[index]!;
+      remainder -= weights[index]!;
+      if (remainder < 0) break;
+    }
+  }
+  const transition = executeCommand(selecting, command(selected), {
+    nativeController: true,
+    nativeMovement: { binding, path: selected.path },
+  });
+  if (!transition.outcome.ok) return { ...transition, world: original, events: [] };
+  const world = draftWorld(transition.world),
+    current = entityGet(world.entities, actorId)!,
+    action = current.actor!.action!;
+  if (mode === 'escape') {
+    const active = current.animal!.episode!;
+    active.refuge = {
+      point: { ...selected.candidate.point },
+      selectedAt: world.simTime,
+      generation: active.proposalGeneration,
+      ...(draw === undefined ? {} : { draw }),
+    };
+    active.movement = { kind: 'action', id: action.id };
+    active.mode = 'escaping';
+    active.reviewAt = world.simTime + profile.reviewSeconds;
+    delete active.proposal;
+    delete active.blocked;
+    delete active.clearSince;
+    emit(
+      world,
+      transition.events,
+      'animal-response',
+      subjectNarration(current, profile.presentation.escaping),
+      current,
+    );
+  }
+  reconcileAnimalWander(world, current);
+  recordAnimalClockWrite(world, actorId);
+  recordSemanticChange(world, { kind: 'state', entityId: actorId, field: 'behavior' });
+  return finish(world, transition.events, transition.outcome);
+}
+
 /** Accepted commands are idempotent by id+body. Rejections cause no physical effects. */
 export function executeCommand(
   original: WorldState,
@@ -2030,6 +2123,7 @@ export function executeCommand(
   options: {
     preview?: boolean;
     nativeController?: true;
+    nativeMovement?: { binding: NativeLocomotion; path: SurfacePoint[] };
     constructionPermissions?: readonly ConstructionPermission[];
   } = {},
 ): Transition {
@@ -2052,6 +2146,7 @@ function executeCommandNative(
   options: {
     preview?: boolean;
     nativeController?: true;
+    nativeMovement?: { binding: NativeLocomotion; path: SurfacePoint[] };
     constructionPermissions?: readonly ConstructionPermission[];
   },
   standalone: boolean,
@@ -2100,6 +2195,45 @@ function executeCommandNative(
   if (prepared && 'ok' in prepared && !prepared.ok)
     return { world: original, events: [], outcome: prepared };
   const action = prepared && !('ok' in prepared) ? prepared : undefined;
+  if (options.nativeMovement) {
+    const actor = entityGet(original.entities, command.actorId)!;
+    const binding = options.nativeMovement.binding,
+      state = actor.animal;
+    const pin = binding.mode === 'escape' ? state?.episode?.profilePin : state?.profile;
+    const locomotion = binding.mode === 'escape' ? state?.episode?.locomotion : state?.locomotion;
+    if (
+      !options.nativeController ||
+      actor.actor?.controller !== 'native' ||
+      !state ||
+      !action ||
+      action.type !== 'move' ||
+      !action.destination ||
+      canonicalJson(pin) !== canonicalJson(binding.profile) ||
+      locomotion !== binding.locomotion ||
+      (binding.mode === 'escape' &&
+        (binding.episodeId !== state.episode?.id ||
+          binding.generation !== state.episode?.proposalGeneration))
+    )
+      return reject('stale-native-movement', 'The selected native movement is no longer current.');
+    const from = supportedPosition(actor);
+    if (!from) return reject('unsupported', 'Native movement requires actual support.');
+    const request: NavigationRequest = {
+      from,
+      destinations: [action.destination],
+      body: bodyProfile(actor),
+      geometryRevision: spatialMap(original).spatial.revision,
+    };
+    const problem = navigationResultProblem(
+      spatialMap(original),
+      request,
+      { status: 'reached', path: options.nativeMovement.path, length: 0 },
+      bodyProfile(actor),
+    );
+    if (problem) return reject('invalid-native-route', problem);
+    action.path = options.nativeMovement.path.map((point) => ({ ...point }));
+    delete action.navigation;
+    action.nativeLocomotion = { ...binding, profile: { ...binding.profile } };
+  }
   let result = outcome(true, 'accepted', 'Action started.');
   const statusDefinition =
     options.preview && command.type === 'status-effect'
@@ -2192,11 +2326,11 @@ function executeCommandNative(
   if (options.preview && standalone && command.type === 'learn-record')
     return { world: original, events: [], outcome: result };
   const source = entityOwn(original.entities, command.actorId)!;
-  if (options.nativeController && (source.actor?.controller !== 'native' || !source.threat))
-    return reject(
-      'unsupported-controller',
-      'This entity has no installed native threat controller.',
-    );
+  if (
+    options.nativeController &&
+    (source.actor?.controller !== 'native' || (!source.threat && !source.animal))
+  )
+    return reject('unsupported-controller', 'This entity has no installed native controller.');
   if (options.preview && command.type === 'handover') {
     if ('itemId' in command) {
       const offer = prepareItemOffer(original, source, command);
@@ -3178,28 +3312,29 @@ function executeCommandNative(
         },
       ];
     component.planGeneration++;
-    emit(
-      world,
-      events,
-      'action-started',
-      (action.type === 'move' || action.type === 'assemble') && action.destination
-        ? subjectNarration(
-            actor,
-            `started moving to ${action.destination.x}, ${action.destination.z}.`,
-          )
-        : action.type === 'tend-fire'
+    if (!action.nativeLocomotion)
+      emit(
+        world,
+        events,
+        'action-started',
+        (action.type === 'move' || action.type === 'assemble') && action.destination
           ? subjectNarration(
               actor,
-              `${fireCareStartText(action.fireOperation!, entityGet(world.entities, action.targetId!) ?? 'fire')}.`,
+              `started moving to ${action.destination.x}, ${action.destination.z}.`,
             )
-          : subjectNarration(
-              actor,
-              `started ${action.type === 'practice-shot' || action.type === 'coaching' ? `the activity “${nativeActivityView(world, command).name}”` : action.type === 'prepare' ? `preparing ${action.preparation}` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
-            ),
-      actor,
-      action.targetId,
-      { actionType: action.type },
-    );
+          : action.type === 'tend-fire'
+            ? subjectNarration(
+                actor,
+                `${fireCareStartText(action.fireOperation!, entityGet(world.entities, action.targetId!) ?? 'fire')}.`,
+              )
+            : subjectNarration(
+                actor,
+                `started ${action.type === 'practice-shot' || action.type === 'coaching' ? `the activity “${nativeActivityView(world, command).name}”` : action.type === 'prepare' ? `preparing ${action.preparation}` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
+              ),
+        actor,
+        action.targetId,
+        { actionType: action.type },
+      );
   }
   if (options.preview) return { world: original, events: [], outcome: result };
   if (!action && experience) endActivity(world, actor.id, command.id, result);
@@ -3320,13 +3455,14 @@ function completeAction(
         failAction(world, actor, events, 'the destination was not reached.');
         return;
       }
-      emit(
-        world,
-        events,
-        'moved',
-        subjectNarration(actor, `moved to ${worldPosition(actor).x}, ${worldPosition(actor).z}.`),
-        actor,
-      );
+      if (!action.nativeLocomotion)
+        emit(
+          world,
+          events,
+          'moved',
+          subjectNarration(actor, `moved to ${worldPosition(actor).x}, ${worldPosition(actor).z}.`),
+          actor,
+        );
       break;
     case 'replenish':
       emit(
@@ -3488,7 +3624,6 @@ function completeAction(
       const damage = contact.damage;
       if (target.animal && target.actor.alive) {
         if (target.threat) noteTerritorialInjury(world, target, actor, damage, events);
-        else rememberAttack(world, target, actor);
       }
       emit(
         world,
@@ -4259,7 +4394,6 @@ function advanceAction(
     const damage = contact?.damage ?? 0;
     if (target.animal && target.actor!.alive) {
       if (target.threat) noteTerritorialInjury(world, target, actor, damage, events);
-      else rememberAttack(world, target, actor);
     }
     action.strikeOutcome = hit ? 'hit' : 'miss';
     action.strikePhase = 'recovery';
@@ -4744,6 +4878,7 @@ export function advanceWorld(
   elapsedSimSeconds: number,
   options: {
     maxIntervals?: number;
+    nativeRefuges?: NativeRefugePreparations;
     constructionPermissions?: readonly ConstructionPermission[];
   } = {},
 ): Transition {
@@ -4759,6 +4894,7 @@ export function* advanceWorldSlices(
   elapsedSimSeconds: number,
   options: {
     maxIntervals?: number;
+    nativeRefuges?: NativeRefugePreparations;
     constructionPermissions?: readonly ConstructionPermission[];
   } = {},
 ): Generator<void | 'boundary', Transition, boolean | undefined> {
@@ -4780,6 +4916,7 @@ function* advanceWorldNative(
   elapsedSimSeconds: number,
   options: {
     maxIntervals?: number;
+    nativeRefuges?: NativeRefugePreparations;
     constructionPermissions?: readonly ConstructionPermission[];
   } = {},
 ): Generator<void | 'boundary', Transition, boolean | undefined> {
@@ -4801,7 +4938,11 @@ function* advanceWorldNative(
         'Supply zero to one game day and a bounded positive interval count.',
       ),
     };
-  if (original.paused || elapsedSimSeconds === 0 || navigationBlocked(original))
+  if (
+    original.paused ||
+    elapsedSimSeconds === 0 ||
+    navigationBlocked(original, undefined, options.nativeRefuges)
+  )
     return {
       world: original,
       events: [],
@@ -4809,7 +4950,7 @@ function* advanceWorldNative(
         true,
         original.paused
           ? 'paused'
-          : navigationBlocked(original)
+          : navigationBlocked(original, undefined, options.nativeRefuges)
             ? 'navigation-pending'
             : 'unchanged',
         'No game time advanced.',
@@ -5012,7 +5153,7 @@ function* advanceWorldNative(
     remaining > 0 &&
     intervals < maxIntervals &&
     motionSlices < 4096 &&
-    !navigationBlocked(world, participants.actors)
+    !navigationBlocked(world, participants.actors, options.nativeRefuges)
   ) {
     // A tiny retained remainder is a forecast, not authority to advance the clock.
     // Recompute from current state; only a real predicate may require a micro-interval.
@@ -5197,7 +5338,7 @@ function* advanceWorldNative(
         continue;
       }
       advanceFlight(world, entity, 0, events, landingOccupancy, deferFlight);
-      advanceAnimal(world, entity, 0);
+      reconcileAnimalWander(world, entity);
       trackOccupancy(entity);
     }
     const takeoffs = flushFlight();
@@ -5227,12 +5368,38 @@ function* advanceWorldNative(
     if (events.length !== afterFlight || world.nextId !== statusAllocation) discardMechanics();
     else if (mechanicalRevision(world) !== statusState)
       localizeState(statusChanges, statusManifest);
+    for (const id of [...participants.animals].sort(
+      (a, b) =>
+        (entityGet(world.entities, a)?.animal?.episode?.reviewAt ?? Infinity) -
+          (entityGet(world.entities, b)?.animal?.episode?.reviewAt ?? Infinity) ||
+        a.localeCompare(b),
+    )) {
+      const animal = entityGet(world.entities, id)!;
+      if (!animal.animal?.episode) continue;
+      const decision = nativeResponseDecision(world, animal, events, options.nativeRefuges);
+      if (decision.status === 'pending') break;
+      if (decision.status === 'choices' || decision.status === 'stop') {
+        yield* materialize();
+        const transition =
+          decision.status === 'choices'
+            ? nativeMovementTransition(world, id, decision.routes, 'escape')
+            : executeCommand(
+                world,
+                { id: `native-stop-${world.nextId}`, actorId: id, type: 'cancel' },
+                { nativeController: true },
+              );
+        world = draftWorld(transition.world);
+        events.push(...transition.events);
+        participants = nativeParticipants(world);
+        discardMechanics();
+      }
+    }
     if (perceiving !== undefined && perceivers() !== perceiving) {
       yield* updateEncounters(world, before, events, participants.actors);
       reconcileOutings(world, events, { companyObserved: true });
       before = snapshotEncounters(world);
     }
-    if (navigationBlocked(world, participants.actors)) break;
+    if (navigationBlocked(world, participants.actors, options.nativeRefuges)) break;
     const intervalState = mechanicalRevision(world);
     if (mechanics && localChanges) {
       countDomainWork('nativeLocalForecasts');
@@ -5492,7 +5659,7 @@ function* advanceWorldNative(
         }
       }
     }
-    const movementEffects = events.length !== beforeMovementEffects;
+    let movementEffects = events.length !== beforeMovementEffects;
     // Non-emitting, bounded 0.4 m wander impulses retain their local timer remainder.
     // Order due RNG draws by deadline then identity, independently of callback chunk size.
     // Whole-second timers often fall due together; compare them at TIME_EPSILON resolution so
@@ -5507,13 +5674,22 @@ function* advanceWorldNative(
         !e.actor.action &&
         !e.spatial.flight &&
         e.spatial.fallVelocity === undefined &&
-        !(e.animal.danger > 0 && e.animal.threatPosition) &&
+        !e.animal.episode &&
         !movementRestricted.has(id) &&
         animalWanderRemaining(world, e)! <= TIME_EPSILON
       );
     });
     const wandered = new Set(wanderers);
-    for (const id of wanderers) advanceAnimal(world, entityGet(world.entities, id)!, seconds);
+    for (const id of wanderers) {
+      const route = nativeWanderRoute(world, entityGet(world.entities, id)!);
+      if (!route) continue;
+      yield* materialize();
+      const transition = nativeMovementTransition(world, id, [route], 'travel');
+      world = draftWorld(transition.world);
+      events.push(...transition.events);
+      participants = nativeParticipants(world);
+      movementEffects = true;
+    }
     occupancy = undefined;
     // Wandering already used the due queue, and a quiet grounded animal has no flight
     // or fleeing time to integrate. Keep all movers after an occurrence during approach:
@@ -5532,7 +5708,7 @@ function* advanceWorldNative(
           if (
             entity.spatial.flight ||
             entity.spatial.fallVelocity !== undefined ||
-            entity.animal?.danger ||
+            entity.animal?.episode ||
             entity.actor?.action
           )
             preparedMovers.push(id);
@@ -5545,27 +5721,14 @@ function* advanceWorldNative(
       ...ambientMovingCandidates.filter((id) => !landings.has(id)),
       ...landings,
     ];
-    let fleeEnded = false;
     for (const id of movementOrder) {
       countDomainWork('nativeAmbientMoversVisited');
       yield;
       const entity = entityGet(world.entities, id);
       if (!entity) continue;
       if (!movementRestricted.has(id)) {
-        const flightOwned = !!entity.spatial.flight || entity.spatial.fallVelocity !== undefined;
-        const fleeing = !!entity.animal?.danger;
         advanceFlight(world, entity, seconds, events, landingOccupancy, deferFlight);
-        // Landing grants future animal movement, never the flight interval just consumed.
-        if (
-          !flightOwned &&
-          !wandered.has(id) &&
-          ((entity.animal?.danger ?? 0) > 0 ||
-            animalWanderRemaining(world, entity)! <= TIME_EPSILON)
-        )
-          advanceAnimal(world, entity, seconds);
         reconcileAnimalWander(world, entity);
-        // A flee end silently changes activeWork, so its captured energy rate ends here.
-        fleeEnded ||= fleeing && !entity.animal?.danger;
       }
       trackOccupancy(entity);
     }
@@ -5596,7 +5759,6 @@ function* advanceWorldNative(
       !movementEffects &&
       !movedWithOccurrences &&
       !projectileIds.length &&
-      !fleeEnded &&
       mechanicalRevision(world) === intervalState;
     // Time deferred from earlier slices is applied for everyone before this endpoint's work, so
     // a death or other effect there cannot erase it. (This slice keeps main's per-actor order.)
@@ -5691,7 +5853,7 @@ function* advanceWorldNative(
       intervals++;
       slicesSinceBoundary = 0;
     }
-    if (sharedBoundary || fleeEnded || startedWork || workEnds) discardMechanics();
+    if (sharedBoundary || startedWork || workEnds) discardMechanics();
     else {
       if (mechanics.interval.privateWalkers.size) countDomainWork('nativeWalkingForecastReuses');
       localize(flightSources);
@@ -5746,7 +5908,7 @@ function* advanceWorldNative(
     events,
     outcome(
       true,
-      navigationBlocked(world, participants.actors)
+      navigationBlocked(world, participants.actors, options.nativeRefuges)
         ? 'navigation-pending'
         : remaining > 0
           ? 'advance-budget'

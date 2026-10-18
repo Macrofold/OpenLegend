@@ -15,8 +15,7 @@ export const BASE_RANGED_POLICY: RangedPolicy = {
   conditionAdjustment: 'none',
   conditionAccuracyFactor: 0.85,
   windupSeconds: BASE_ACTION_DEFAULTS.shotSeconds,
-  approachBuffer:
-    BASE_ACTION_DEFAULTS.animalFleeTilesPerSecond * BASE_ACTION_DEFAULTS.shotSeconds + 0.25,
+  approachBuffer: 0.055 * BASE_ACTION_DEFAULTS.shotSeconds + 0.25,
   minimumApproachRange: 0.5,
   invalidTargetText: 'Choose a living permitted target.',
   unavailableText: 'the target or ranged tool is no longer available.',

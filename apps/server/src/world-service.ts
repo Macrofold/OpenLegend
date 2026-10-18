@@ -114,7 +114,15 @@ import { createGodItem, type GodItemRequest } from '@open-legend/domain';
 import { declareOwnership, custodian, type OwnershipRequest } from '@open-legend/domain';
 import { inventoryTotals, projectStatusEffects } from '@open-legend/domain';
 import { admitStatusEffectPolicy } from '@open-legend/domain';
-import { completeNavigation, navigationBlocked, spatialMap } from '@open-legend/domain';
+import {
+  completeNavigation,
+  navigationBlocked,
+  spatialMap,
+  nativeRefugeBatch,
+  type NativeRefugeBatch,
+  type NativeRefugePreparations,
+  type PreparedNativeRefuges,
+} from '@open-legend/domain';
 import { initializeCollisionRuntime } from '@open-legend/spatial/rapier';
 import type { NavigationRequest, NavigationResult } from '@open-legend/spatial';
 import { SPEECH_VOLUMES, type SpeechVolume } from '@open-legend/domain';
@@ -503,6 +511,24 @@ interface PresentationReleaseSelection {
 }
 
 export class WorldService {
+  private readonly nativeRefugeResults = new Map<string, PreparedNativeRefuges>();
+  private nativeRefugeMap?: WorldState['map'];
+  private nativeRefugeTimeline?: string;
+  get nativeRefugePreparations(): NativeRefugePreparations {
+    const map = spatialMap(this.world);
+    if (this.nativeRefugeMap !== map || this.nativeRefugeTimeline !== this.timelineId) {
+      this.nativeRefugeResults.clear();
+      this.nativeRefugeMap = map;
+      this.nativeRefugeTimeline = this.timelineId;
+    }
+    for (const [id, answer] of this.nativeRefugeResults) {
+      const actor = entityGet(this.world.entities, id);
+      if (!actor || nativeRefugeBatch(this.world, actor)?.key !== answer.key)
+        this.nativeRefugeResults.delete(id);
+    }
+    return this.nativeRefugeResults;
+  }
+
   private saved!: SavedWorld;
   private assetAuthorityUnsubscribe?: () => void;
   private readonly personMemoryPage = createPersonMemoryPager();
@@ -3193,7 +3219,12 @@ export class WorldService {
       // The HTTP wake admits fresh elapsed time on every bounded batch. Draining
       // here until caught up would delay that admission (and background intake)
       // indefinitely under load, understating the time actually owed.
-      if (this.paused || this.debtSeconds < 1e-6 || navigationBlocked(this.world)) return false;
+      if (
+        this.paused ||
+        this.debtSeconds < 1e-6 ||
+        navigationBlocked(this.world, undefined, this.nativeRefugePreparations)
+      )
+        return false;
       if (options.drain === false) return true;
       // Release the mutation queue before yielding so commands can interleave with catch-up.
       const yieldedAt = beginTiming();
@@ -3258,7 +3289,7 @@ export class WorldService {
       // Retain offered elapsed time even if a route became pending during the prior batch.
       // The native barrier delays integration; later catch-up charges needs, deadlines and travel.
       // docs/architecture.md#navigation-preparation
-      if (navigationBlocked(this.world)) {
+      if (navigationBlocked(this.world, undefined, this.nativeRefugePreparations)) {
         countMetric('clock.navigationDeferredRealSeconds', elapsedRealSeconds);
         gaugeMetric('navigation.blocked', 1);
         return;
@@ -3276,11 +3307,12 @@ export class WorldService {
       // interval at a time and retain actual unadvanced time as debt. docs/simulation-time.md
       // A single transition remains atomic even if it exceeds this time budget.
       while (advancedSeconds < offered) {
-        if (navigationBlocked(world)) break;
+        if (navigationBlocked(world, undefined, this.nativeRefugePreparations)) break;
         const stepStarted = beginTiming();
         const startTime = world.simTime;
         const slices = advanceWorldSlices(world, offered - advancedSeconds, {
           maxIntervals: 1,
+          nativeRefuges: this.nativeRefugePreparations,
           constructionPermissions: this.store.authority!.constructionPermissions(world.id),
         });
         const nextSlice = (boundary?: boolean) => {
@@ -3820,6 +3852,31 @@ export class WorldService {
         return { ok: false, code: 'stale-publication', message: error.message };
       throw error;
     }
+  }
+
+  async preparedNativeNavigation(
+    actorId: string,
+    batch: NativeRefugeBatch,
+    results: NavigationResult[],
+    map: WorldState['map'],
+    timeline: string,
+  ): Promise<void> {
+    await this.mutate(async () => {
+      if (this.storageError || spatialMap(this.world) !== map || this.timelineId !== timeline)
+        return;
+      const actor = entityGet(this.world.entities, actorId),
+        current = actor && nativeRefugeBatch(this.world, actor);
+      if (!current || current.key !== batch.key || results.length !== batch.requests.length) return;
+      // The shared coordinator owns at most 64 queued batches. Derived answers
+      // disappear with their exact proposal and never commit movement or RNG.
+      this.nativeRefugePreparations;
+      if (this.nativeRefugeResults.size >= 64 && !this.nativeRefugeResults.has(actorId)) return;
+      this.nativeRefugeResults.set(actorId, {
+        key: batch.key,
+        results: batch.requests.map((entry, index) => ({ ...entry, result: results[index]! })),
+      });
+      this.notify(false);
+    }, true);
   }
 
   async preparedNavigation(

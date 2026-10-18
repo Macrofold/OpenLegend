@@ -1,3 +1,4 @@
+import { baseAnimalResponse } from './animal-response-profile.js';
 import { entityGet, entitySet, entityValues } from '../../entity-collection.js';
 import { emptyEntities } from '../../entity-collection.js';
 import { BASE_NATIVE_ACTIVITY_HOSTS } from './native-activities.js';
@@ -429,15 +430,7 @@ export function createWorld(
         ),
       ),
       placement: worldPlacement({ y: 0, x: 16, z: 13 }, 'terrain'),
-      animal: {
-        threatPosition: null,
-        threatId: null,
-        escapeHeading: null,
-        calmRate: 0,
-        reviewAt: 0,
-        danger: 0,
-        wander: { remainingSeconds: 150 },
-      },
+      animal: baseAnimalResponse(world, 'hare', 150),
     },
     {
       spatial: baseSpatial('hare'),
@@ -452,15 +445,7 @@ export function createWorld(
         ),
       ),
       placement: worldPlacement({ y: 0, x: 21, z: 11 }, 'terrain'),
-      animal: {
-        threatPosition: null,
-        threatId: null,
-        escapeHeading: null,
-        calmRate: 0,
-        reviewAt: 0,
-        danger: 0,
-        wander: { remainingSeconds: 100 },
-      },
+      animal: baseAnimalResponse(world, 'hare', 100),
     },
     {
       spatial: baseSpatial('deer'),
@@ -476,15 +461,7 @@ export function createWorld(
         ),
       ),
       placement: worldPlacement({ y: 0, x: 21, z: 19 }, 'terrain'),
-      animal: {
-        threatPosition: null,
-        threatId: null,
-        escapeHeading: null,
-        calmRate: 0,
-        reviewAt: 0,
-        danger: 0,
-        wander: { remainingSeconds: 200 },
-      },
+      animal: baseAnimalResponse(world, 'deer', 200),
     },
     {
       id: 'lookout-cache',
@@ -517,15 +494,7 @@ export function createWorld(
           (definition) => definition.id === 'wilderness:energy',
         ),
       ),
-      animal: {
-        threatPosition: null,
-        threatId: null,
-        escapeHeading: null,
-        calmRate: 0,
-        reviewAt: 0,
-        danger: 0,
-        wander: { remainingSeconds: 0 },
-      },
+      animal: baseAnimalResponse(world, 'bird', 0),
     },
   ];
   for (const entity of entities) {

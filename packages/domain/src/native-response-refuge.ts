@@ -121,7 +121,7 @@ export function nativeRefugeCandidates(
       danger.incoming &&
       Math.hypot(danger.incoming.x, danger.incoming.z) > SPATIAL_LIMITS.epsilon
     )
-      bearing = Math.atan2(danger.incoming.z, danger.incoming.x);
+      bearing = Math.atan2(-danger.incoming.z, -danger.incoming.x);
   }
   const sameEndpoint = (point: SurfacePoint) =>
     candidates.some(

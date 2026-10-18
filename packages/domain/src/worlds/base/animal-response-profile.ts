@@ -1,4 +1,19 @@
 import type { NativeResponseProfile } from '../../native-response.js';
+import { installNativeResponseProfile, type NativeResponseState } from '../../native-response.js';
+import type { WorldState } from '../../types.js';
+
+export function baseAnimalResponse(
+  world: WorldState,
+  locomotion: string,
+  remainingSeconds: number,
+): NativeResponseState {
+  return {
+    profile: installNativeResponseProfile(world, BASE_ANIMAL_RESPONSE_PROFILE),
+    locomotion,
+    physicalLife: 0,
+    wander: { remainingSeconds },
+  };
+}
 
 /** Selected world rules, not measured biomechanics or a second movement owner.
  * docs/worlds/base/animal-responses.md */

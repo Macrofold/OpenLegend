@@ -32,7 +32,7 @@ export function describeEntity(
   if (entity.actor && !entity.animal)
     return `${entity.actor.description?.trim() || `${namePhrase(entity, 'definite', { capitalize: true })} is here.`}${entity.actor.alive ? '' : ' Their life has ended.'}`;
   if (entity.animal)
-    return `${namePhrase(entity, 'indefinite', { capitalize: true })} of the clearing. ${entity.actor!.alive ? (entity.animal.danger > 0 ? 'It is fleeing.' : 'It is foraging nearby.') : 'It is no longer alive.'}`;
+    return `${namePhrase(entity, 'indefinite', { capitalize: true })} of the clearing. ${entity.actor!.alive ? (entity.animal.episode?.mode === 'escaping' ? 'It is fleeing.' : 'It is foraging nearby.') : 'It is no longer alive.'}`;
   if (entity.heat)
     return entity.heat.lit
       ? `A burning fire that provides heat for food preparation, with ${fireFuelDescription(entity.heat)}.`

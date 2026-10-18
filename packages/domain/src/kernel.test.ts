@@ -344,8 +344,9 @@ describe('bounded invented mechanisms', () => {
     world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
     world = advanceWorld(world, 18).world;
     entityGet(world.entities, 'hare-1')!.actor!.incapacitated = false;
-    entityGet(world.entities, 'hare-1')!.animal!.escapeHeading = null;
-    entityGet(world.entities, 'hare-1')!.animal!.reviewAt = world.simTime + 40;
+    // Controlled missing sight prevents anticipatory flight without preventing
+    // actual zero-health death. This fixture qualifies custody, not hunting.
+    entityGet(world.entities, 'hare-1')!.actor!.senses = [];
     world = advanceWorld(world, 24).world;
     expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(ammoBefore - 1);
     expect(entityGet(world.entities, 'hare-1')!.actor!.alive).toBe(false);
@@ -433,7 +434,7 @@ describe('bounded invented mechanisms', () => {
         (event) => event.type === 'projectile-ended' && event.data?.result !== 'hit',
       ),
     ).toBe(true);
-    expect(entityGet(world.entities, 'hare-1')!.animal!.danger).toBeGreaterThan(0);
+    expect(entityGet(world.entities, 'hare-1')!.animal!.episode).toBeDefined();
     expect(entityGet(world.entities, 'hare-1')!.actor!.health).toBe(18);
     expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(5);
   });
@@ -453,8 +454,9 @@ describe('bounded invented mechanisms', () => {
     world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
     world = advanceWorld(world, 18).world;
     entityGet(world.entities, 'hare-1')!.actor!.incapacitated = false;
-    entityGet(world.entities, 'hare-1')!.animal!.escapeHeading = null;
-    entityGet(world.entities, 'hare-1')!.animal!.reviewAt = world.simTime + 40;
+    // Controlled missing sight prevents anticipatory flight without preventing
+    // actual zero-health death. This fixture qualifies custody, not hunting.
+    entityGet(world.entities, 'hare-1')!.actor!.senses = [];
     world = advanceWorld(world, 24).world;
     const position = worldPosition(entityGet(world.entities, 'hare-1')!);
     setSpatialPosition(

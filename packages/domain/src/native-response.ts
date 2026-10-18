@@ -1,5 +1,5 @@
-import type { SurfacePoint } from '@open-legend/spatial';
-import type { Position, WorldState } from './types.js';
+import { finitePoint, type SurfacePoint } from '@open-legend/spatial';
+import type { Entity, Position, WorldState } from './types.js';
 import type { DefinitionPin } from './world-modules.js';
 import { definitionPin } from './world-modules.js';
 import type { LivingBody } from './living.js';
@@ -78,6 +78,7 @@ export type NativeDanger =
 
 export interface NativeRefugeProposal {
   generation: number;
+  geometryRevision: number;
   at: number;
   origin: SurfacePoint;
   movementId: string | null;
@@ -91,6 +92,7 @@ export interface NativeResponseEpisode {
   latestCause: { id: string; at: number };
   /** Referenced installed definitions survive selection of future defaults. */
   profilePin: DefinitionPin;
+  locomotion: string;
   mode: 'escaping' | 'settling' | 'blocked';
   dangers: Record<string, NativeDanger>;
   reviewAt: number;
@@ -106,6 +108,16 @@ export interface NativeResponseEpisode {
   };
   movement?: { kind: 'action' | 'flight'; id: string };
   blocked?: { reason: string; basis: string };
+}
+
+/** Trusted physical-action binding; clients cannot choose a native controller
+ * profile through a command. The action keeps its actual speed definition. */
+export interface NativeLocomotion {
+  profile: DefinitionPin;
+  locomotion: string;
+  mode: 'travel' | 'escape';
+  episodeId?: string;
+  generation?: number;
 }
 
 export interface NativeResponseState {
@@ -156,6 +168,187 @@ export function validateNativeResponseProfiles(world: WorldState): void {
     if (key !== nativeResponseProfileKey(definitionPin(profile)))
       throw new Error('Invalid installed native response definition identity.');
   }
+}
+
+/** Current-format integrity, not an old-state reader. Stale physical preparation
+ * can be cancelled at execution, but its identity and data must remain usable. */
+export function validateNativeResponse(world: WorldState, entity: Entity): void {
+  const state = entity.animal;
+  if (!state) return;
+  const fail = (): never => {
+    throw new Error('Invalid saved native animal response.');
+  };
+  const time = (value: number) => Number.isFinite(value) && value >= 0;
+  const life = (value: number) => Number.isSafeInteger(value) && value >= 0;
+  const point = (value: SurfacePoint) => finitePoint(value) && isSafeRecordId(value.surfaceId);
+  const profile = nativeResponseProfile(world, state.profile);
+  if (
+    !hasRecordFields(state, ['profile', 'locomotion', 'physicalLife', 'wander'], ['episode']) ||
+    !entity.actor ||
+    entity.actor.controller !== 'native' ||
+    !profile?.locomotion[state.locomotion] ||
+    !life(state.physicalLife) ||
+    state.physicalLife !== (entity.actor.physicalLife ?? 0) ||
+    !state.wander ||
+    ('dueAt' in state.wander
+      ? !hasRecordFields(state.wander, ['dueAt']) || !Number.isFinite(state.wander.dueAt)
+      : !hasRecordFields(state.wander, ['remainingSeconds'], ['running']) ||
+        !Number.isFinite(state.wander.remainingSeconds) ||
+        (state.wander.running !== undefined && state.wander.running !== true))
+  )
+    fail();
+  const episode = state.episode;
+  if (episode) {
+    const activeProfile = nativeResponseProfile(world, episode.profilePin);
+    if (
+      !hasRecordFields(
+        episode,
+        [
+          'id',
+          'startedAt',
+          'latestCause',
+          'profilePin',
+          'locomotion',
+          'mode',
+          'dangers',
+          'reviewAt',
+          'proposalGeneration',
+        ],
+        ['clearSince', 'proposal', 'refuge', 'movement', 'blocked'],
+      ) ||
+      !entity.actor?.alive ||
+      !isSafeRecordId(episode.id) ||
+      !time(episode.startedAt) ||
+      !time(episode.reviewAt) ||
+      !hasRecordFields(episode.latestCause, ['id', 'at']) ||
+      !isSafeRecordId(episode.latestCause.id) ||
+      !time(episode.latestCause.at) ||
+      !activeProfile?.locomotion[episode.locomotion] ||
+      !['escaping', 'settling', 'blocked'].includes(episode.mode) ||
+      !life(episode.proposalGeneration) ||
+      (episode.clearSince !== undefined &&
+        (!time(episode.clearSince) || episode.clearSince > world.simTime)) ||
+      !episode.dangers ||
+      typeof episode.dangers !== 'object' ||
+      Array.isArray(episode.dangers)
+    )
+      fail();
+    for (const [key, danger] of Object.entries(episode.dangers)) {
+      if (!finitePoint(danger.point) || !time(danger.observedAt)) fail();
+      if (danger.kind === 'body') {
+        if (
+          !hasRecordFields(
+            danger,
+            ['kind', 'sourceId', 'physicalLife', 'point', 'extent', 'observedAt', 'visible'],
+            ['lostAt'],
+          ) ||
+          !isSafeRecordId(danger.sourceId) ||
+          !life(danger.physicalLife) ||
+          !hasRecordFields(danger.extent, ['radius', 'height']) ||
+          !Number.isFinite(danger.extent.radius) ||
+          danger.extent.radius <= 0 ||
+          !Number.isFinite(danger.extent.height) ||
+          danger.extent.height <= 0 ||
+          typeof danger.visible !== 'boolean' ||
+          (danger.visible ? danger.lostAt !== undefined : !time(danger.lostAt!)) ||
+          key !== JSON.stringify(['body', danger.sourceId, danger.physicalLife])
+        )
+          fail();
+      } else if (danger.kind === 'region') {
+        if (
+          !hasRecordFields(danger, ['kind', 'source', 'point', 'observedAt'], ['incoming']) ||
+          !hasRecordFields(danger.source, ['kind', 'id']) ||
+          !['event', 'projectile'].includes(danger.source.kind) ||
+          !isSafeRecordId(danger.source.id) ||
+          (danger.incoming !== undefined && !finitePoint(danger.incoming)) ||
+          key !== JSON.stringify(['region', danger.source.kind, danger.source.id])
+        )
+          fail();
+      } else fail();
+    }
+    if (episode.proposal) {
+      const proposal = episode.proposal;
+      if (
+        !hasRecordFields(proposal, [
+          'generation',
+          'geometryRevision',
+          'at',
+          'origin',
+          'movementId',
+          'body',
+          'candidates',
+        ]) ||
+        proposal.generation !== episode.proposalGeneration ||
+        !life(proposal.geometryRevision) ||
+        !time(proposal.at) ||
+        !point(proposal.origin) ||
+        (proposal.movementId !== null && !isSafeRecordId(proposal.movementId)) ||
+        !hasRecordFields(proposal.body, ['radius', 'height', 'maxSlope']) ||
+        !Object.values(proposal.body).every((value) => Number.isFinite(value) && value > 0) ||
+        !Array.isArray(proposal.candidates) ||
+        proposal.candidates.length > NATIVE_RESPONSE_LIMITS.maximumCandidates ||
+        new Set(proposal.candidates.map((candidate) => candidate.id)).size !==
+          proposal.candidates.length ||
+        !proposal.candidates.every(
+          (candidate) =>
+            hasRecordFields(candidate, ['id', 'point'], ['retained']) &&
+            typeof candidate.id === 'string' &&
+            candidate.id.length > 0 &&
+            point(candidate.point) &&
+            (candidate.retained === undefined || candidate.retained === true),
+        )
+      )
+        fail();
+    }
+    if (
+      episode.refuge &&
+      (!hasRecordFields(
+        episode.refuge,
+        ['point', 'selectedAt', 'generation'],
+        ['draw', 'flightRouteId'],
+      ) ||
+        !point(episode.refuge.point) ||
+        !time(episode.refuge.selectedAt) ||
+        !life(episode.refuge.generation) ||
+        (episode.refuge.draw !== undefined &&
+          (!Number.isFinite(episode.refuge.draw) ||
+            episode.refuge.draw < 0 ||
+            episode.refuge.draw >= 1)) ||
+        (episode.refuge.flightRouteId !== undefined &&
+          !world.flightRoutes[episode.refuge.flightRouteId]))
+    )
+      fail();
+    if (
+      episode.movement &&
+      (!hasRecordFields(episode.movement, ['kind', 'id']) ||
+        !['action', 'flight'].includes(episode.movement.kind) ||
+        !isSafeRecordId(episode.movement.id))
+    )
+      fail();
+    if (
+      episode.blocked &&
+      (!hasRecordFields(episode.blocked, ['reason', 'basis']) ||
+        typeof episode.blocked.reason !== 'string' ||
+        typeof episode.blocked.basis !== 'string')
+    )
+      fail();
+  }
+  const action = entity.actor!.action,
+    binding = action?.nativeLocomotion;
+  if (
+    binding &&
+    (!hasRecordFields(binding, ['profile', 'locomotion', 'mode'], ['episodeId', 'generation']) ||
+      action?.type !== 'move' ||
+      !nativeResponseProfile(world, binding.profile)?.locomotion[binding.locomotion] ||
+      !['travel', 'escape'].includes(binding.mode) ||
+      (binding.mode === 'escape' &&
+        (!episode ||
+          binding.episodeId !== episode.id ||
+          !life(binding.generation!) ||
+          !sameDefinitionPin(binding.profile, episode.profilePin) ||
+          binding.locomotion !== episode.locomotion)))
+  )
+    fail();
 }
 
 export function validateNativeResponseProfile(profile: NativeResponseProfile): void {

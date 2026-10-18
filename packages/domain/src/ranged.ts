@@ -41,7 +41,6 @@ import { chargeWork } from './work-budget.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
 import { baseShotDirection, BASE_RANGED_TEXT } from './worlds/base/ranged-counterplay.js';
 import { nativeMovementSpeed } from './worlds/base/actions.js';
-import { rememberAttack } from './worlds/base/animal-behavior.js';
 import { flightTracks, motionTrackPosition, type MotionTrack } from './flight.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { TIME_EPSILON } from './simulation-time.js';
@@ -313,8 +312,6 @@ export function releaseShot(
     };
   const support = creditRelease(world, actor, definition, released, events);
   observeCoachedRelease(world, actor, released, support, events);
-  if (target.animal && !target.threat && seesEntity(world, target, actor))
-    rememberAttack(world, target, actor);
   releaseInvocationResources(world, action.id);
   return outcome(true, 'released', BASE_RANGED_TEXT.released);
 }
@@ -366,18 +363,6 @@ function predictedPosition(world: WorldState, entity: Entity, seconds: number): 
       to,
       distance > 0 ? Math.min(1, (nativeMovementSpeed(world, entity) * seconds) / distance) : 1,
     );
-  }
-  if (
-    entity.animal?.danger &&
-    entity.animal.escapeHeading !== null &&
-    entity.animal.escapeHeading !== undefined
-  ) {
-    const travel = nativeMovementSpeed(world, entity, true) * seconds;
-    return {
-      x: from.x + Math.cos(entity.animal.escapeHeading) * travel,
-      y: from.y,
-      z: from.z + Math.sin(entity.animal.escapeHeading) * travel,
-    };
   }
   return from;
 }
@@ -559,14 +544,6 @@ export function advanceProjectiles(
           source?.actor?.physicalLife === flight.sourceLife ? source : undefined,
           damage,
           events,
-        );
-      else if (target.animal)
-        rememberAttack(
-          world,
-          target,
-          source?.actor && (source.actor.physicalLife ?? 0) === flight.sourceLife
-            ? source
-            : undefined,
         );
     } else if (target?.practiceTarget && target.id === flight.targetId && flight.practice) {
       result = 'hit';

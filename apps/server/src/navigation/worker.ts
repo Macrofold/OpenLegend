@@ -21,6 +21,11 @@ parentPort.on('message', (message: NavigationMessage) => {
     startupMs = undefined;
   }
   try {
+    if (
+      message.requests &&
+      (message.request || !message.requests.length || message.requests.length > 64)
+    )
+      throw new Error('Invalid complete navigation batch.');
     if (key !== message.key || message.map) {
       planner?.destroy();
       planner = undefined;
@@ -28,7 +33,8 @@ parentPort.on('message', (message: NavigationMessage) => {
       if (!message.map) throw new Error('Navigation geometry is not prepared.');
       planner = new RecastPlanner(message.map, { profiling });
       if (timing) timing.prepareMapMs = planner.prepareMapMs;
-      if (message.request) planner.prepare(message.request.body, 'map');
+      if (message.request ?? message.requests?.[0])
+        planner.prepare((message.request ?? message.requests![0]!).body, 'map');
       else if (message.warmBody) {
         try {
           planner.prepare(message.warmBody, 'map');
@@ -44,9 +50,16 @@ parentPort.on('message', (message: NavigationMessage) => {
       reply.result = planner.route(message.request);
       if (timing && start !== undefined) timing.queryMs = performance.now() - start;
     }
+    if (message.requests) {
+      const start = profiling ? performance.now() : undefined;
+      reply.results = message.requests.map((request) => planner!.route(request));
+      if (timing && start !== undefined) timing.queryMs = performance.now() - start;
+    }
   } catch {
     reply.error = 'Navigation preparation failed.';
     reply.result = { status: 'unavailable', path: [] };
+    if (message.requests)
+      reply.results = message.requests.map(() => ({ status: 'unavailable', path: [] }));
   }
   if (timing) {
     timing.builds = planner?.takeBuilds() ?? [];

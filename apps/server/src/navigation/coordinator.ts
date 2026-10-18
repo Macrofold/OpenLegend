@@ -3,6 +3,9 @@ import { Worker } from 'node:worker_threads';
 import type { BodyProfile, NavigationRequest } from '@open-legend/spatial';
 import {
   navigationBlocked,
+  nativeRefugeBatch,
+  nativeRefugePreparationReady,
+  type NativeRefugeBatch,
   bodyProfile,
   activelyParticipates,
   worldSupport,
@@ -22,14 +25,16 @@ import {
 } from '../performance.js';
 import { OverloadError } from '../work-lane.js';
 import type { NavigationMessage, NavigationReply } from './messages.js';
-interface Task {
+type Task = {
   actorId: string;
-  actionId: string;
-  request: NavigationRequest;
   map: WorldState['map'];
   timeline: string;
   queuedAt?: number;
-}
+} & (
+  | { kind: 'action'; actionId: string; request: NavigationRequest }
+  | { kind: 'native-refuge'; batch: NativeRefugeBatch }
+);
+const taskIdentity = (task: Task) => (task.kind === 'action' ? task.actionId : task.batch.key);
 
 /** This is derived preparation, never route admission. Resolve one actual grounded body only
  * when a geometry/timeline key changes; every real request still supplies its exact body. */
@@ -96,30 +101,42 @@ export class NavigationCoordinator {
         return;
       }
     }
-    const previous = new Map(this.queue.map((t) => [t.actionId, t]));
+    const previous = new Map(this.queue.map((task) => [taskIdentity(task), task]));
     this.queue = [];
     for (const actor of worldRootEntities(world)) {
-      const a = actor.actor?.action;
-      // Admit only requests that still hold the clock. A stale one (moved body, changed
-      // geometry or lost follow authority) is cleared by the next native step; while paused,
-      // re-queuing it would recompute and discard the same route indefinitely.
-      if (!a?.navigation || !navigationBlocked(world, [actor.id])) continue;
+      const batch = actor.animal?.episode?.proposal ? nativeRefugeBatch(world, actor) : undefined;
+      const action = actor.actor?.action;
+      let task: Task;
       if (
-        this.active?.task?.actionId === a.id &&
+        batch?.requests.length &&
+        !nativeRefugePreparationReady(world, actor, this.service.nativeRefugePreparations)
+      )
+        task = { kind: 'native-refuge', actorId: actor.id, batch, map, timeline: timelineId };
+      else if (
+        action?.navigation &&
+        navigationBlocked(world, [actor.id], this.service.nativeRefugePreparations)
+      )
+        task = {
+          kind: 'action',
+          actorId: actor.id,
+          actionId: action.id,
+          request: action.navigation.request,
+          map,
+          timeline: timelineId,
+        };
+      else continue;
+      const identity = taskIdentity(task);
+      if (
+        this.active?.task &&
+        taskIdentity(this.active.task) === identity &&
         this.active.task.map === map &&
         this.active.task.timeline === timelineId
       )
         continue;
-      if (this.queue.length >= 64) break; // Additional saved actions remain pending; do not mislabel queue pressure as no-route.
-      const prior = previous.get(a.id);
-      this.queue.push({
-        actorId: actor.id,
-        actionId: a.id,
-        request: a.navigation.request,
-        map,
-        timeline: timelineId,
-        ...(this.profiling ? { queuedAt: prior?.queuedAt ?? performance.now() } : {}),
-      });
+      if (this.queue.length >= 64) break;
+      const prior = previous.get(identity);
+      if (this.profiling) task.queuedAt = prior?.queuedAt ?? performance.now();
+      this.queue.push(task);
     }
     gaugeMetric('navigation.queued', this.queue.length);
     this.reportQueueAge();
@@ -172,7 +189,11 @@ export class NavigationCoordinator {
         ...(this.preparedKey !== this.key
           ? { map: this.map, ...(!task && this.warmBody ? { warmBody: this.warmBody } : {}) }
           : {}),
-        ...(task ? { request: task.request } : {}),
+        ...(task?.kind === 'action'
+          ? { request: task.request }
+          : task
+            ? { requests: task.batch.requests.map((entry) => entry.request) }
+            : {}),
       };
       if (task?.queuedAt !== undefined)
         recordDuration('navigation.queueWait', performance.now() - task.queuedAt);
@@ -222,7 +243,16 @@ export class NavigationCoordinator {
     let deferred = false;
     const publishing = this.profiling ? beginTiming() : undefined;
     try {
-      if (active.task && reply.result)
+      if (active.task?.kind === 'native-refuge')
+        await this.service.preparedNativeNavigation(
+          active.task.actorId,
+          active.task.batch,
+          reply.results ??
+            active.task.batch.requests.map(() => ({ status: 'unavailable', path: [] })),
+          active.task.map,
+          active.task.timeline,
+        );
+      else if (active.task && reply.result)
         await this.service.preparedNavigation(
           active.task.actorId,
           active.task.actionId,
@@ -246,7 +276,7 @@ export class NavigationCoordinator {
       } else this.commitFailed();
     } finally {
       if (!deferred) {
-        if (active.task && reply.result) {
+        if (active.task && (reply.result || reply.results)) {
           endTiming('navigation.publish', publishing);
           if (active.task.queuedAt !== undefined)
             recordDuration('navigation.requestLatency', performance.now() - active.task.queuedAt);

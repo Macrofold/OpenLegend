@@ -149,9 +149,13 @@ A deadline stops remaining child work under the existing completion/cancellation
 
 **Current · Restrictiveness: Medium for ecology; Safe for presentation and current-format lifecycle.** Every actual death starts rot after **3 game days** and physical removal after **7 game days**. Fresh animal harvest is unavailable after rot. Removal preserves identity and releases carried possessions to a supported ground pile. Other installed body policies may choose no decay. Base players now leave separate lootable corpses and Continue under [FT07](#ft07--accepted-danger-reincarnation-and-simulated-fade), replacing living collapse. These durations prevent indefinite bodies without silently destroying possessions; they are initial authored tuning, not universal biology or a promise of manual burial.
 
-Native escape scores **16 directions**, with **4 clearance samples** up to **4 metres**, using separation/open-space/continuity weights **3/1.5/0.4**. A **9-metre** safety scale and **40-second** distance-weighted exponential calming scale settle danger at **0.04**. These replace the hard 110-second timer and three-direction choice. A saved decision deadline reviews steering after one metre of potential travel, rather than once per host callback. Work is bounded per threatened animal and decision boundary; completely blocked animals may hold. Values are shared by species and local to the base world. Long-range refuge planning, scent and predator ecology remain unsupported. [Contract](../worlds/base/survival.md#animal-escape), [implementation](../../packages/domain/src/worlds/base/animal-behavior.ts), [evidence](../verification/embodied-feedback.md).
-
-**Selected replacement — October 17; runtime pending, Restrictiveness: Medium.** [CTR03–CTR04](../maintainers/combat-and-threat-responses.md) replace the steering paragraph above with the [native animal response profile](../worlds/base/animal-responses.md). The profile owns **12 m** avoidance plus a **3 m** clear margin and **240 game seconds** of continuous clearance. The **12-game-second** active route review is separate from exact clearance entry, exposure, uncertainty and completion boundaries; a danger entering and leaving between reviews still resets settling. After current exposure ends, retain the last-observed region for **480 game seconds**, growing uncertainty by **0.025 m/game second** up to **6 m**. A still-visible body does not expire. A blocked response retries no more than once per **60 game seconds** without a meaningful dependency change.
+**Current implementation in progress · Restrictiveness: Medium.** Existing animals
+now select the installed [native response profile](../worlds/base/animal-responses.md).
+The old sampled steering and routine position jumps are removed. Native alarm,
+complete refuge comparison and ordinary timed ground movement are connected, with
+one focused actual-movement check. Continuous clearance, passage, physical rest,
+flight and territorial withdrawal remain unfinished and unqualified under
+[CTR03–CTR04](../maintainers/combat-and-threat-responses.md). The profile owns **12 m** avoidance plus a **3 m** clear margin and **240 game seconds** of continuous clearance. The **12-game-second** active route review is separate from exact clearance entry, exposure, uncertainty and completion boundaries; a danger entering and leaving between reviews still resets settling. After current exposure ends, retain the last-observed region for **480 game seconds**, growing uncertainty by **0.025 m/game second** up to **6 m**. A still-visible body does not expire. A blocked response retries no more than once per **60 game seconds** without a meaningful dependency change.
 
 Prepare at most **12 new endpoints** along the profile's **12/24 m** bearings inside **24 m** of currently permitted local terrain. An occluded ring point may become one visible frontier point on the same bearing, with body-radius-plus-**0.25 m** retreat from the exposure boundary and at least **0.5 m** advance. This keeps the same candidate ceiling while permitting successive short legs around nearby corners; it grants neither hidden terrain knowledge nor a complete long-range planner. Preserve the **0.25 m** worsening allowance, **2 m** meaningful arrival improvement, **1 m** weighted-tie band and **6 m** useful-arrival-margin cap. The canonical profile owns comparison order and saved RNG. An arrived unsafe refuge cannot remain as a zero-length winning route.
 
@@ -163,7 +167,7 @@ The native-family definition admission owner now bounds a complete candidate
 preparation envelope at **64 destinations including any retained refuge**. The
 selected animal data still requests only twelve new points plus at most one
 retained point. This is a supported preparation-data limit, not a danger cutoff,
-population capacity claim or a running replacement controller. Exact installed
+population capacity claim. Exact installed
 definition records grow with actual authored revisions rather than duplicating
 rules per animal; their runtime behavior remains under CTR03–CTR04.
 

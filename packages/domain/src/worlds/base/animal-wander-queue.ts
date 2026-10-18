@@ -3,7 +3,7 @@ import { readOnlyDraftView } from '../../draft.js';
 import { TIME_EPSILON } from '../../simulation-time.js';
 import { countDomainWork } from '../../diagnostic-counters.js';
 import type { WorldState } from '../../types.js';
-import { takeAnimalWanderClockWrites } from './animal-behavior.js';
+import { takeAnimalWanderClockWrites } from '../../native-response-controller.js';
 
 interface DueAnimal {
   id: string;
@@ -99,7 +99,8 @@ export class AnimalWanderQueue {
       const entity = entityGet(entities, id),
         animal = entity?.animal && readOnlyDraftView(entity.animal);
       const clock = animal?.wander && readOnlyDraftView(animal.wander);
-      const dueAt = clock && 'dueAt' in clock ? clock.dueAt : undefined;
+      const dueAt =
+        animal?.episode?.reviewAt ?? (clock && 'dueAt' in clock ? clock.dueAt : undefined);
       if (dueAt !== this.byId.get(id)) changes.set(id, dueAt);
       const relative = !!clock && 'remainingSeconds' in clock && !!clock.running;
       if (relative !== this.relative.has(id)) {

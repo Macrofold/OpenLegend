@@ -280,7 +280,7 @@ function prepareCondition(condition: StatusCondition): {
             ? (e: Entity) =>
                 !!(e.actor && readOnlyDraftView(e.actor).action) ||
                 worldSupport(e) === null ||
-                !!(e.animal && readOnlyDraftView(e.animal).danger)
+                !!(e.animal && readOnlyDraftView(e.animal).episode)
             : (e: Entity) => (e.actor ? readOnlyDraftView(e.actor)[name] : undefined);
     matches = (_world, bindings) => {
       const entity = resolve(target, bindings);

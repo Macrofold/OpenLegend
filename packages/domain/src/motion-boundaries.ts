@@ -43,7 +43,7 @@ import { TIME_EPSILON } from './simulation-time.js';
 import { chargeWork } from './work-budget.js';
 import { countDomainWork, maximumDomainWork } from './diagnostic-counters.js';
 import { BASE_ACTION_DEFAULTS, nativeMovementSpeed } from './worlds/base/actions.js';
-import { escapeDuration, animalWanderRemaining } from './worlds/base/animal-behavior.js';
+import { animalWanderRemaining } from './native-response-controller.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import type { Entity, WorldState } from './types.js';
 import { current, isDraft } from 'immer';
@@ -68,11 +68,7 @@ export function motionReach(world: WorldState, entity: Entity, seconds: number):
       : 0;
   if (entity.spatial.flight)
     return world.flightRoutes[entity.spatial.flight.routeId]!.speed * seconds;
-  return entity.animal
-    ? entity.animal.danger > 0 && entity.animal.threatPosition
-      ? BASE_ACTION_DEFAULTS.animalFleeTilesPerSecond * seconds + 0.4
-      : 0.4
-    : 0;
+  return 0;
 }
 /** A distant tiny sense must not split every flyer's travel. Reachable envelopes include
  * both moving participants and their extents; false positives only shorten a slice.
@@ -160,9 +156,7 @@ export function nativeMotionInterval(
     // Only falls, flight, fleeing and small-sense wander can bound a slice; check those first.
     if (
       !entity ||
-      (entity.spatial.fallVelocity === undefined &&
-        !entity.spatial.flight &&
-        !(entity.animal && (entity.animal.danger > 0 || travelFor(id) < 0.4))) ||
+      (entity.spatial.fallVelocity === undefined && !entity.spatial.flight && !entity.animal) ||
       capabilityBlocked(world, entity, 'locomotion')
     )
       continue;
@@ -207,13 +201,7 @@ export function nativeMotionInterval(
     } else if (entity.animal && !entity.threat) {
       const travel = travelFor(id);
       const animal = entity.animal;
-      if (animal.danger > 0 && animal.threatPosition)
-        bound = Math.min(
-          bound,
-          escapeDuration(entity),
-          travel / nativeMovementSpeed(world, entity, true),
-        );
-      else if (travel < 0.4 && animalWanderRemaining(world, entity)! > TIME_EPSILON)
+      if (animalWanderRemaining(world, entity)! > TIME_EPSILON)
         bound = Math.min(bound, animalWanderRemaining(world, entity)!);
     }
   }
@@ -241,34 +229,6 @@ function walkerTracks(
   if (!track) return 'sampled';
   const start = { ...worldPosition(entity) };
   return [track, { at: [0, seconds], pose: [start, start] }];
-}
-/** Steering is chosen at the start boundary. Predict that saved heading and refusal,
- * keeping sight crossings consistent with actual movement. */
-function fleeTracks(world: WorldState, entity: Entity, seconds: number): MotionTrack[] | undefined {
-  const animal = entity.animal;
-  if (!animal || !(animal.danger > 0) || !animal.threatPosition) return;
-  const start = supportedPosition(entity);
-  if (!start) return;
-  const outcomes: MotionTrack[] = [{ at: [0, seconds], pose: [start, start] }];
-  if (animal.escapeHeading === null) return outcomes;
-  const step = nativeMovementSpeed(world, entity, true) * seconds;
-  const end = {
-    x: start.x + Math.cos(animal.escapeHeading) * step,
-    z: start.z + Math.sin(animal.escapeHeading) * step,
-  };
-  const path = walkSurfaceLine(spatialMap(world), start, end.x, end.z, bodyProfile(entity));
-  // A refused full horizon can still admit a shorter slice before the obstruction.
-  // Leave it under the existing sampled travel bound rather than certify staying put.
-  if (!path) return;
-  if (step > 0)
-    outcomes.push({
-      at: [
-        0,
-        ...path.map((point) => (Math.hypot(point.x - start.x, point.z - start.z) / step) * seconds),
-      ],
-      pose: [start, ...path],
-    });
-  return outcomes;
 }
 
 interface Run {
@@ -755,7 +715,6 @@ function freshCertainTrack(
       const track = walkerCertainTrack(world, entity, horizon);
       return track ? { at: now, until: now + horizon, track, body } : undefined;
     }
-    if ((entity.animal?.danger ?? 0) > 0) return;
   }
   const wait = entity.spatial.flight?.waitSeconds;
   const wander = !entity.spatial.flight ? animalWanderRemaining(world, entity) : undefined;
@@ -930,14 +889,7 @@ export function sensoryCrossingBound(
   for (const id of new Set([...ambientIds, ...actorIds])) {
     const entity = entityGet(entities, id);
     // Only flight, an approach or a flee can move a body continuously within the slice.
-    if (
-      !entity ||
-      !(
-        entity.spatial.flight ||
-        entity.actor?.action?.stage === 'approaching' ||
-        (entity.animal?.danger ?? 0) > 0
-      )
-    )
+    if (!entity || !(entity.spatial.flight || entity.actor?.action?.stage === 'approaching'))
       continue;
     const body = certificate(entity);
     if (!body.alive || body.incapacitated || !body.active || !body.locomotion) continue;
@@ -958,9 +910,6 @@ export function sensoryCrossingBound(
         const tracks = walkerTracks(world, entity, horizon);
         if (tracks && tracks !== 'sampled') outcomes.set(id, tracks);
       }
-    } else {
-      const tracks = fleeTracks(world, entity, horizon);
-      if (tracks) outcomes.set(id, tracks);
     }
   }
   function remember(id: string, track: MotionTrack, until: number) {

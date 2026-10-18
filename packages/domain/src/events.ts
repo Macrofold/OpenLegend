@@ -1,3 +1,4 @@
+import { acquireNativeResponseEvent } from './native-response-controller.js';
 import { entityGet } from './entity-collection.js';
 import { observeEvent } from './event-observation.js';
 import { reconcileCoaching } from './coaching.js';
@@ -412,6 +413,7 @@ function recordEvent(
   chargeWork({ effects: 1, outputBytes: eventEncoder.encode(JSON.stringify(event)).byteLength });
   countDomainWork('eventsRecorded');
   events.push(event);
+  acquireNativeResponseEvent(world, event, events);
   if (
     [
       'action-started',

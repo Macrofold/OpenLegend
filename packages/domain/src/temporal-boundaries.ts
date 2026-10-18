@@ -1,3 +1,4 @@
+import { nativeResponseProfile } from './native-response.js';
 import { entityGet } from './entity-collection.js';
 import { nextOutingDeadline } from './outings.js';
 import { nextItemOfferDeadline } from './handover.js';
@@ -79,7 +80,14 @@ export function nativeInterval(
         at(threat.episodeUntil);
       if (threat.mode === 'search' && threat.searchUntil !== undefined) at(threat.searchUntil);
     }
-    if (animal && animal.danger > 0) at(animal.reviewAt);
+    if (animal?.episode) {
+      at(animal.episode.reviewAt);
+      if (animal.episode.clearSince !== undefined) {
+        const profile = nativeResponseProfile(world, animal.episode.profilePin);
+        if (profile) at(animal.episode.clearSince + profile.settlingSeconds);
+      }
+    }
+    if (animal?.wander && 'dueAt' in animal.wander) at(animal.wander.dueAt);
   }
   // Serial clamps depend on how an interval is divided; such values integrate every slice.
   // Conserved replenishment against a reservoir drain retains this one-second fallback.

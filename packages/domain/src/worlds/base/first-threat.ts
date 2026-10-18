@@ -1,3 +1,4 @@
+import { baseAnimalResponse } from './animal-response-profile.js';
 import { entitySet } from '../../entity-collection.js';
 import { baseSpatial } from './spatial-definitions.js';
 import { addItem } from '../../data.js';
@@ -42,15 +43,7 @@ export function installFirstThreat(world: WorldState): void {
       world.simTime,
       world.moduleManifest.definitions.filter((d) => d.id === 'wilderness:energy'),
     ),
-    animal: {
-      danger: 0,
-      threatPosition: null,
-      threatId: null,
-      escapeHeading: null,
-      calmRate: 0,
-      reviewAt: 0,
-      wander: { remainingSeconds: 0 },
-    },
+    animal: baseAnimalResponse(world, 'deer', 0),
     threat: {
       policy: {
         id: 'wilderness:territorial-contact',

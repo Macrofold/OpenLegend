@@ -49,12 +49,17 @@ Contract: [personal evidence](../projects/combat-and-threat-responses-tech-desig
 
 ## CTR03 — One native animal response owner
 
-Native family definitions, current-format validation and dedicated PostgreSQL
-records are now available. Exact full pins preserve separate authored revisions;
-unsupported families refuse before installation. The authored animal profile is
-encoded, but existing animals are not bound to the new controller yet. Its danger
-intake, refuge execution, continuous clearance, passage, rest and flight integration
-remain unfinished. Definition/SQL checks do not qualify animal behavior. The first native danger-preparation helper now reads complete local sight, retains observed body extents and old-life regions, and distinguishes unavailable exposure from an empty danger set. Focused native-data checks cover real contact provenance, actual death/Continue, hidden old remains and visible corpse resolution. It is not connected to ordinary animal movement yet. Refuge preparation now uses real supported visible terrain, shorter frontier points, complete route exposure and ordered all-danger scoring. The evolving native probe and twelve existing perception/spatial checks pass; navigation-worker publication and actual controller movement remain open.
+All existing animal producers now install the selected profile, and the old
+steering/position-jump adapter is removed. A connected native probe verifies
+visible punch preparation, complete refuge comparison, a pinned ordinary timed
+movement action, current-format validation, and no destination narration or native
+autobiography. The existing coordinator now accepts complete candidate batches;
+actual worker, PostgreSQL episode restoration, continuous clearance, near-passage,
+sleep, flight and territorial withdrawal qualification remain unfinished. The
+first 32 existing checks passed 27; five hunting/custody assumptions failed. Two
+custody fixtures now use controlled missing sight rather than retaining incapacity
+through death, and those two checks pass. The remaining firing/escape cases are
+under investigation. This does not close CTR03 or CTR04.
 
 Contract: [native execution](../projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04) and [animal world profile](../worlds/base/animal-responses.md).
 

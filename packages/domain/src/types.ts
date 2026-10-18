@@ -152,6 +152,7 @@ export type ActionType =
   | 'tend-fire'
   | 'assemble';
 export interface Action {
+  nativeLocomotion?: import('./native-response.js').NativeLocomotion;
   /** Exact personal cue receipts for this committed activity, never target authority. */
   attackObservers?: Record<string, import('./combat-encounters.js').AttackObservationReceipt>;
   combatHelpId?: string;
@@ -282,16 +283,7 @@ export interface ActorComponent {
   action: Action | null;
   planGeneration: number;
 }
-export interface AnimalComponent {
-  threatPosition: Position | null;
-  threatId: string | null;
-  danger: number;
-  escapeHeading: number | null;
-  calmRate: number;
-  reviewAt: number;
-  /** Exactly one clock mode: waiting while eligible, paused while another activity owns movement. */
-  wander: { dueAt: number } | { remainingSeconds: number; running?: true };
-}
+export type AnimalComponent = import('./native-response.js').NativeResponseState;
 export interface ResourceComponent {
   cast?: import('./finite-casts.js').CastSource;
   revision?: number;

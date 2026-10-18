@@ -1077,3 +1077,33 @@ canonical commit, real movement, clearance timing and flight remain unfinished.
 No external calls were made. Additional Jev cost is **$0**; cumulative reported
 estimates remain Jev **$0.440786** and other providers **$0.207513**, uncertain
 commitments **$5.939396**, and conservative aggregate exposure **$6.587695**.
+
+## First connected native animal migration checkpoint
+
+All ordinary animal constructors now install explicit native-profile bindings.
+The old direct steering and routine position-jump adapter is removed. One connected
+native scenario starts an actual player punch preparation and advances one game
+second: the hare selects a refuge through the complete comparison and moves
+through an ordinary admitted timed action by 0.24 metres. The action keeps its
+profile and the animal keeps its selected refuge. Current-format validation passes;
+no movement-start destination text or character autobiography is produced for the
+animal. This does not qualify continued escape, exact safe time or hunting.
+
+The shared persistent navigation coordinator now accepts complete independent
+candidate batches; callbacks retain derived preparation only. The host fences
+answers by exact proposal, geometry and timeline, with bounded disposable answers.
+Actual worker execution and saved episode/danger restoration remain unverified.
+TypeScript checking passes at the checkpoint. The first focused existing run
+passed 27 of 32 checks; five ranged/custody cases failed. Two custody specimens
+incorrectly retained incapacity through zero health, which prevents the existing
+body owner from entering death. Controlled missing sight now holds those specimens
+stationary without changing death policy; both focused custody checks pass. The
+three firing/escape cases remain open. No animal speeds, firing ranges or selected
+world rules were changed to satisfy those old assumptions.
+
+Known unfinished integration includes continuous danger crossings and settling,
+near-passage intake, wake/night predicates, finite bird escape and territorial
+withdrawal. The phase is not complete. No external calls were made. Additional
+Jev cost is **$0**; cumulative reported estimates remain Jev **$0.440786** and
+other providers **$0.207513**, uncertain commitments **$5.939396**, and conservative
+aggregate exposure **$6.587695**.

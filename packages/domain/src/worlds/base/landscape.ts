@@ -1,3 +1,4 @@
+import { baseAnimalResponse } from './animal-response-profile.js';
 import { entitySet } from '../../entity-collection.js';
 import { BASE_RESOURCE_GATHERING_SECONDS } from './resources.js';
 import { baseSpatial } from './spatial-definitions.js';
@@ -232,15 +233,7 @@ export function populateOuterWilderness(world: WorldState): void {
       spatial: baseSpatial(species === 'hare' ? 'hare' : 'deer'),
       placement: worldPlacement(p, p.surfaceId),
       actor: nativeActor(species, world.simTime, energy),
-      animal: {
-        threatPosition: null,
-        threatId: null,
-        escapeHeading: null,
-        calmRate: 0,
-        reviewAt: 0,
-        danger: 0,
-        wander: { remainingSeconds: 120 + index * 7 },
-      },
+      animal: baseAnimalResponse(world, species, 120 + index * 7),
     };
     entitySet(world.entities, id, entity);
   }

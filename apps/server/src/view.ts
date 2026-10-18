@@ -537,7 +537,7 @@ export async function projectView(
               entity.description,
               entity.actor?.description,
               entity.actor?.alive,
-              entity.animal?.danger,
+              entity.animal?.episode?.mode,
               entity.heat,
             ],
             () =>
@@ -732,14 +732,14 @@ export async function projectView(
                       : entity.threat
                         ? ''
                         : entity.animal
-                          ? entity.animal.danger > 0
+                          ? entity.animal.episode?.mode === 'escaping'
                             ? 'Fleeing'
                             : 'Foraging'
                           : 'Watching the surroundings'))
               : entity.animal
                 ? !entity.actor!.alive
                   ? 'Dead'
-                  : entity.animal.danger > 0
+                  : entity.animal.episode?.mode === 'escaping'
                     ? 'Fleeing'
                     : 'Foraging'
                 : entity.remains

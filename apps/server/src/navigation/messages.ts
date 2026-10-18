@@ -9,6 +9,7 @@ export type NavigationMessage = {
   key: string;
   map?: SpatialMap;
   request?: NavigationRequest;
+  requests?: NavigationRequest[];
   /** One existing body for optional idle map warmup; never replaces a real request body. */
   warmBody?: BodyProfile;
 };
@@ -31,6 +32,7 @@ export interface NavigationReply {
   id: number;
   key: string;
   result?: NavigationResult;
+  results?: NavigationResult[];
   timing?: NavigationTiming;
   error?: string;
 }

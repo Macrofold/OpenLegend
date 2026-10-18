@@ -92,13 +92,7 @@ export function reconcileBody(
     if (lifecycle[actor.controller] === 'incapacitate') actor.incapacitated = true;
     else {
       actor.alive = false;
-      if (entity.animal) {
-        entity.animal.danger = 0;
-        entity.animal.threatPosition = null;
-        entity.animal.threatId = null;
-        entity.animal.escapeHeading = null;
-        entity.animal.calmRate = 0;
-      }
+      if (entity.animal) delete entity.animal.episode;
       const decay = bodyPolicy(world)?.remains;
       entity.remains = {
         diedAt: world.simTime,

@@ -36,11 +36,11 @@ import {
 } from './status-effects.js';
 import { reconcileStatusEffects } from './status-effects.js';
 import {
-  advanceAnimal,
+  nativeWanderRoute,
   advanceAnimalWanderClock,
   animalWanderRemaining,
   reconcileAnimalWander,
-} from './worlds/base/animal-behavior.js';
+} from './native-response-controller.js';
 import { AnimalWanderQueue } from './worlds/base/animal-wander-queue.js';
 
 function result<T>(iterator: Generator<void, T>): T {
@@ -210,7 +210,7 @@ describe('simulation overhaul ownership and continuation', () => {
     expect(entityGet(base.entities, 'replacement-animal')).toBeUndefined();
   });
 
-  it('pauses one animal wait during incapacity and preserves an overdue one-hop remainder', () => {
+  it('pauses one animal wait during incapacity and preserves an overdue one-intention remainder', () => {
     const world = createWorld(),
       hare = entityGet(world.entities, 'hare-1')!;
     hare.animal!.wander = { remainingSeconds: 150 };
@@ -228,7 +228,7 @@ describe('simulation overhaul ownership and continuation', () => {
     const reference = structuredClone(world);
     nextRandom(reference);
     const wait = 120 + Math.floor(nextRandom(reference) * 120);
-    advanceAnimal(world, hare, 500);
+    nativeWanderRoute(world, hare);
     expect(world.rngState).toBe(reference.rngState);
     expect(animalWanderRemaining(world, hare)).toBe(prior + wait);
     expect(animalWanderRemaining(world, hare)).toBeLessThan(0);
@@ -268,7 +268,7 @@ describe('simulation overhaul ownership and continuation', () => {
     for (const id of ['animal-a', 'animal-z']) {
       nextRandom(reference);
       const wait = 120 + Math.floor(nextRandom(reference) * 120);
-      advanceAnimal(world, entityGet(world.entities, id)!, 1);
+      nativeWanderRoute(world, entityGet(world.entities, id)!);
       expect(animalWanderRemaining(world, entityGet(world.entities, id)!)).toBe(wait);
     }
     expect(world.rngState).toBe(reference.rngState);
@@ -303,7 +303,7 @@ describe('simulation overhaul ownership and continuation', () => {
     const reference = structuredClone(world);
     nextRandom(reference);
     const nextWait = 120 + Math.floor(nextRandom(reference) * 120);
-    advanceAnimal(world, animal, 0.00006);
+    nativeWanderRoute(world, animal);
     expect(animalWanderRemaining(world, animal)).toBe(wait - 0.00005 - 0.00006 + nextWait);
     expect(world.rngState).toBe(reference.rngState);
   });

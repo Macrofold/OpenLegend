@@ -1,3 +1,4 @@
+import { baseAnimalResponse } from './animal-response-profile.js';
 import { entitySet, entityValues } from '../../entity-collection.js';
 import { baseSpatial } from './spatial-definitions.js';
 import { createItemLot } from '../../objects.js';
@@ -723,15 +724,7 @@ export function buildBaseInitialWorld(
           (definition) => definition.id === 'wilderness:energy',
         ),
       );
-      entity.animal = {
-        threatPosition: null,
-        threatId: null,
-        escapeHeading: null,
-        calmRate: 0,
-        reviewAt: 0,
-        danger: 0,
-        wander: { remainingSeconds: 150 },
-      };
+      entity.animal = baseAnimalResponse(world, 'hare', 150);
     }
     entitySet(world.entities, entity.id, entity);
   }

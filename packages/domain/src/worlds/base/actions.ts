@@ -1,3 +1,4 @@
+import { nativeResponseProfile } from '../../native-response.js';
 import { WILDERNESS_NEEDS } from './needs.js';
 import { PERCEPTION_RULES } from './senses.js';
 import { scarFactor } from '../../scar-effects.js';
@@ -9,7 +10,6 @@ export const BASE_ACTION_DEFAULTS = {
   movementTilesPerSecond: 0.11,
   sightRadius: PERCEPTION_RULES.sightRadius,
   interactionRadius: 1.6,
-  animalFleeTilesPerSecond: 0.055,
   ...WILDERNESS_NEEDS,
   gatherQuantity: BASE_GATHER_QUANTITY,
   harvestSeconds: 84,
@@ -58,15 +58,17 @@ export const BASE_FAMILY_FACTS = {
 export function nativeMovementSpeed(
   world: import('../../types.js').WorldState,
   entity: import('../../types.js').Entity,
-  fleeing = false,
 ): number {
   if (entity.actor?.action?.evasion) return entity.actor.action.evasion.speed;
+  const binding = entity.actor?.action?.nativeLocomotion;
+  const profile = binding && nativeResponseProfile(world, binding.profile);
+  const nativeSpeed = binding && profile?.locomotion[binding.locomotion]?.[binding.mode];
+  if (binding && nativeSpeed === undefined)
+    throw new Error('Native movement lost its pinned locomotion definition.');
   return (
-    (fleeing
-      ? BASE_ACTION_DEFAULTS.animalFleeTilesPerSecond
-      : BASE_ACTION_DEFAULTS.movementTilesPerSecond) *
+    (nativeSpeed ??
+      BASE_ACTION_DEFAULTS.movementTilesPerSecond * (entity.threat?.policy.movementFactor ?? 1)) *
     (1 - (entity.actor?.body?.conditions.injury ?? 0) / 200) *
-    (entity.threat?.policy.movementFactor ?? 1) *
     scarFactor(world, entity, 'movementFactor')
   );
 }

@@ -1,3 +1,4 @@
+import { validateNativeResponse } from './native-response.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { validateEntityCollection } from './entity-collection.js';
 import { validateOrderedRecord } from './ordered-record.js';
@@ -1205,33 +1206,7 @@ export function validateWorldModules(world: WorldState): void {
       throw new Error('Invalid authoritative body health.');
     if (e.actor?.body && !world.moduleManifest.bodyPolicy)
       throw new Error('Living bodies require an installed body policy.');
-    if (e.animal) {
-      const animal = e.animal;
-      if (
-        !Number.isFinite(animal.reviewAt) ||
-        animal.reviewAt < 0 ||
-        !Number.isFinite(animal.danger) ||
-        animal.danger < 0 ||
-        animal.danger > 1 ||
-        !Number.isFinite(animal.calmRate) ||
-        animal.calmRate < 0 ||
-        !animal.wander ||
-        typeof animal.wander !== 'object' ||
-        ('dueAt' in animal.wander
-          ? Object.keys(animal.wander).length !== 1 || !Number.isFinite(animal.wander.dueAt)
-          : !hasRecordFields(animal.wander, ['remainingSeconds'], ['running']) ||
-            !Number.isFinite(animal.wander.remainingSeconds) ||
-            (animal.wander.running !== undefined && animal.wander.running !== true)) ||
-        (animal.escapeHeading !== null && !Number.isFinite(animal.escapeHeading)) ||
-        (animal.threatPosition !== null &&
-          ![animal.threatPosition?.x, animal.threatPosition?.y, animal.threatPosition?.z].every(
-            Number.isFinite,
-          )) ||
-        (animal.threatId !== null && (typeof animal.threatId !== 'string' || !animal.threatId)) ||
-        (animal.danger > 0 && animal.threatPosition === null)
-      )
-        throw new Error('Invalid saved animal threat memory.');
-    }
+    validateNativeResponse(world, e);
     if (e.actor?.body && !e.actor.alive && !e.remains && !e.actor.pendingDeath)
       throw new Error('Dead bodies require saved remains.');
     if (e.remains) {
