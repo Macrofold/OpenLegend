@@ -1028,3 +1028,29 @@ behavior or population performance.
 Additional Jev cost is **$0**. Cumulative estimates remain Jev **$0.440786** and
 other providers **$0.207513**, with **$5.939396** uncertain commitments and
 **$6.587695** conservative aggregate exposure.
+
+## Native danger preparation foundation
+
+A native-data probe starts with an actual punch injuring a hare. It separately
+passes that committed occurrence into a proposed episode and exercises the new
+preparation helper. Existing animals still execute the old controller; this is
+not new escape behavior. Every currently seen eligible person is retained,
+including an unarmed NPC alongside the player. Controlled hidden relocation
+preserves the old observed point and loss time. Pure deadline/uncertainty reads
+show 480-game-second retention, 0.025 m/game-second growth capped at 6 m, and no
+expiry for continuously visible bodies. Continuous native timing remains open.
+
+Actual player death and Continue create distinct physical lives. With the old
+corpse deliberately hidden and the new body visible, both the old estimate and
+new observed body remain distinct. Actual exposure to the old corpse then retires
+only the old-life estimate. Each visibility assertion precedes its disclosure
+check. Controlled removal of sight and an unavailable profile return explicit
+unavailable outcomes, without an empty all-clear result. A geometric route case
+finds a person between distant endpoints; an empty route reports its real starting
+separation. These checks do not establish route admission, animal choice or
+natural travel. An attempted unsupported fixture placement correctly refused and
+was replaced with actual supported ground. Full TypeScript checking passes.
+
+No external calls were made. Additional Jev cost is **$0**; cumulative reported
+estimates remain Jev **$0.440786** and other providers **$0.207513**, uncertain
+commitments **$5.939396**, and conservative aggregate exposure **$6.587695**.
