@@ -299,6 +299,17 @@ function interiorOf(runs: readonly Run[], from: number, to: number): number {
   }
   return Infinity;
 }
+/** A chosen positive stopping condition needs its first entry, including an
+ * interval that remains true at the requested endpoint. Step just inside the
+ * proved interval to avoid a floating-point root landing outside the predicate. */
+function firstEntry(runs: readonly Run[], from: number, to: number): number {
+  for (const run of runs)
+    if (run.value && run.end > from && run.start < to) {
+      const start = Math.max(from, run.start);
+      return start + Math.min(TIME_EPSILON, (run.end - start) / 2);
+    }
+  return Infinity;
+}
 function mergedCuts(first: MotionTrack, second: MotionTrack): number[] {
   return [...new Set([...first.at, ...second.at])].sort((a, b) => a - b);
 }
@@ -444,6 +455,56 @@ function contactRuns(
   });
 }
 
+/** Mirrors canReachEntity: an interaction-anchor sphere and a clear interaction
+ * ray over the same executed piecewise trajectories as sight and contact. */
+function reachRuns(
+  world: WorldState,
+  first: { track: MotionTrack; entity: Entity },
+  second: { track: MotionTrack; entity: Entity },
+  distance: number,
+  horizon: number,
+): Run[] {
+  const map = spatialMap(world),
+    a = bodyProfile(first.entity).interactionHeight,
+    b = bodyProfile(second.entity).interactionHeight;
+  const pieces = mergedCuts(first.track, second.track),
+    cuts = [...pieces],
+    blockers: SightObstacle[] = [];
+  for (let i = 0; i + 1 < pieces.length; i++) {
+    const t0 = pieces[i]!,
+      t1 = pieces[i + 1]!;
+    if (t1 <= t0) continue;
+    chargeWork({ tests: 1 });
+    countDomainWork('crossingReachPieces');
+    const f0 = lift(poseAt(first.track, t0), a),
+      f1 = lift(poseAt(first.track, t1), a),
+      s0 = lift(poseAt(second.track, t0), b),
+      s1 = lift(poseAt(second.track, t1), b);
+    const x = s0.x - f0.x,
+      y = s0.y - f0.y,
+      z = s0.z - f0.z,
+      dx = s1.x - f1.x - x,
+      dy = s1.y - f1.y - y,
+      dz = s1.z - f1.z - z;
+    const roots: number[] = [];
+    quadraticRoots(
+      dx * dx + dy * dy + dz * dz,
+      2 * (x * dx + y * dy + z * dz),
+      x * x + y * y + z * z - distance * distance,
+      roots,
+    );
+    const sweep = sightSweep(map, f0, f1, s0, s1);
+    blockers.push(...sweep.obstacles);
+    roots.push(...sweep.fractions);
+    for (const u of roots) if (u > 0 && u < 1) cuts.push(t0 + u * (t1 - t0));
+  }
+  return runsOf(horizon, cuts, (t) => {
+    const from = lift(poseAt(first.track, t), a),
+      to = lift(poseAt(second.track, t), b);
+    return distance3D(from, to) <= distance && clearOf(blockers, from, to);
+  });
+}
+
 /** A track that holds for sure until `until` (absolute time) unless its body deviates. */
 interface CertainTrack {
   at: number;
@@ -470,7 +531,7 @@ interface BodyCertificate {
 }
 interface CrossingPair {
   ids: readonly [string, string];
-  kind: 'sight' | 'contact';
+  kind: 'sight' | 'contact' | `reach:${number}`;
   at: number;
   until: number;
   runs: Run[];
@@ -594,6 +655,9 @@ function sameBody(a: BodyCertificate, b: BodyCertificate): boolean {
   return true;
 }
 function pairEligible(pair: CrossingPair, a: BodyCertificate, b: BodyCertificate): boolean {
+  // A selected physical stop does not require autobiographical memory. Its
+  // native control separately checks current perception and exact participant.
+  if (pair.kind.startsWith('reach:')) return a.alive && a.active && a.actor && b.active && b.alive;
   return (
     a.alive &&
     a.memory &&
@@ -921,9 +985,17 @@ export function sensoryCrossingBound(
     return entry;
   };
   const moving = (id: string) => certain.has(id) || outcomes.has(id);
+  const proximityObservers: Entity[] = [];
   const observers = actorIds.flatMap((id) => {
     const entity = entityGet(entities, id);
     if (!entity) return [];
+    const plan = entity.actor?.agency.plan;
+    if (
+      plan?.status === 'active' &&
+      plan.activity?.control?.kind === 'finite' &&
+      plan.activity.control.stopWithin
+    )
+      proximityObservers.push(entity);
     // No world mutation occurs during this query. Reuse this invocation's current copied
     // dependencies for observer/target geometry instead of rereading them through drafts.
     const body = certificate(entity);
@@ -932,11 +1004,13 @@ export function sensoryCrossingBound(
       ? [{ entity, radius: body.radius, touch: body.touch }]
       : [];
   });
-  if (!observers.length) return seconds;
+  if (!observers.length && !proximityObservers.length) return seconds;
   // Moving targets for every observer; static targets only matter to a moving observer.
-  const targets = observers.some((o) => moving(o.entity.id))
-    ? worldRootEntities(world, true).filter((e) => activelyParticipates(e))
-    : [...certain.keys(), ...outcomes.keys()].map((id) => entityGet(entities, id)!);
+  const targets = !observers.length
+    ? []
+    : observers.some((o) => moving(o.entity.id))
+      ? worldRootEntities(world, true).filter((e) => activelyParticipates(e))
+      : [...certain.keys(), ...outcomes.keys()].map((id) => entityGet(entities, id)!);
   // Outcomes span the horizon; only this slice's displacement widens the pair search.
   const reaches = new Map<string, number>();
   const reach = (id: string) => {
@@ -971,11 +1045,12 @@ export function sensoryCrossingBound(
   );
   let bound = seconds;
   const constrain = (
-    kind: 'sight' | 'contact',
+    kind: CrossingPair['kind'],
     observer: Entity,
     target: Entity,
     evaluate: (first: MotionTrack, second: MotionTrack, horizon: number) => Run[],
   ) => {
+    const nextCrossing = kind.startsWith('reach:') ? firstEntry : interiorOf;
     const own =
         certain.get(observer.id) ?? (outcomes.has(observer.id) ? undefined : still(observer)),
       other = certain.get(target.id) ?? (outcomes.has(target.id) ? undefined : still(target));
@@ -1006,7 +1081,7 @@ export function sensoryCrossingBound(
       } else countDomainWork('crossingPairCacheHits');
       bound = Math.min(
         bound,
-        interiorOf(pair.runs, now - pair.at, now - pair.at + bound) + pair.at - now,
+        nextCrossing(pair.runs, now - pair.at, now - pair.at + bound) + pair.at - now,
       );
       return;
     }
@@ -1020,7 +1095,7 @@ export function sensoryCrossingBound(
           cache.outcomes.set(key, (runs = evaluate(first, second, horizon)));
           maximumDomainWork('crossingOutcomePeak', cache.outcomes.size);
         } else countDomainWork('crossingPairCacheHits');
-        bound = Math.min(bound, interiorOf(runs, 0, bound));
+        bound = Math.min(bound, nextCrossing(runs, 0, bound));
       }
   };
   for (const observer of observers) {
@@ -1053,6 +1128,22 @@ export function sensoryCrossingBound(
           ),
         );
     }
+  }
+  for (const observer of proximityObservers) {
+    const plan = observer.actor?.agency.plan,
+      control = plan?.status === 'active' ? plan.activity?.control : undefined,
+      stop = control?.kind === 'finite' ? control.stopWithin : undefined,
+      target = stop && entityGet(entities, stop.subjectId);
+    if (stop && target && (moving(observer.id) || moving(target.id)))
+      constrain(`reach:${stop.distance}`, observer, target, (first, second, span) =>
+        reachRuns(
+          world,
+          { track: first, entity: observer },
+          { track: second, entity: target },
+          stop.distance,
+          span,
+        ),
+      );
   }
   return Math.max(TIME_EPSILON, bound);
 }

@@ -121,7 +121,7 @@ includes the historical observation, and continuation inherits the matching
 original pursuit's time/distance bounds. Check unseen relocation, loss of an
 unfamiliar-person association and cold restoration through actual native movement.
 
-The next CTR08 slice first extends the existing follow owner with explicitly finite
+The CTR08 movement slice extends the existing follow owner with explicitly finite
 arrival: a selected distance, original absolute deadline, actual sight/identity
 and an arrival result distinct from reaching the time limit. Ordinary relational
 following retains its existing minimum separation and continuing behavior; finite
@@ -129,24 +129,27 @@ proximity movement may close to a real available strike's reach, with native bod
 clearance still controlling its route. The threat compiler selects that physical
 distance from existing methods and supplies no automatic attack. This is roughly
 150–250 logic lines across follow preparation, saved action validation, shared
-native composition and public command binding. Verify actual approach/arrival,
-source movement, cancellation, original deadline, lost sight and cold restoration.
-Existing fixed-point pursuit still needs its corresponding reach-stop condition;
-the follow slice alone does not complete pursuit qualification.
+native composition and public command binding. Actual approach/arrival, source
+movement, cancellation, original deadline, lost sight/life and cold restoration
+have focused native coverage. Complete pursuit and reconsideration qualification
+remain open.
 
 Fixed-point pursuit uses an optional selected proximity stop on the existing
 finite control, bound to one of its exact visible participants. The compiler
 supplies the currently offered method's distance; remembered-place searches keep
 their separate point-only meaning. Native continuation checks the same reach and
-line-of-effect owner. Extend the existing piecewise motion-crossing owner with
+line-of-effect owner. The existing piecewise motion-crossing owner now includes
 that interaction-anchor sphere/ray predicate so two moving people cannot pass
-through the stopping interval between samples. Reuse its body/geometry/track
+through the stopping interval between samples. It reuses body/geometry/track
 certificates and bounded active participants, without a second trajectory cache.
 This is approximately 150–250 logic lines across finite-control validation,
-world-owned compilation, movement boundaries and descriptions. Qualification
-requires actual static/moving approaches, an intervening wall, lost sight/life,
-split clocks, original limits and current-format restoration. A stop offers a new
-choice; it never attacks or retargets automatically.
+world-owned compilation, movement boundaries and descriptions. Actual static and
+crossing approaches, an intervening low wall, split clocks, original limits and
+PostgreSQL restoration have native coverage. Current-format validation refuses an
+unbound stopping participant. The same finite participant checks retain their
+sight/life boundaries. A stop offers a new choice; it never attacks or retargets
+automatically. Broader source/capability races and complete subscriptions remain
+required.
 
 Meaningful observation subscriptions then extend the existing private encounter
 index, temporal due calculation, world-selected response adapter and ordinary

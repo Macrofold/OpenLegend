@@ -113,6 +113,7 @@ export const DOMAIN_COUNTERS = [
   'crossingSightPieces',
   'crossingSightPrunedPieces',
   'crossingContactPieces',
+  'crossingReachPieces',
   'crossingContactPrunedPieces',
   'crossingInvalidationKeys',
   'crossingPruneKeys',

@@ -786,11 +786,49 @@ reconciliation/validation owners; actual native death/revival has separate follo
 coverage above. The connected evolving scenario and TypeScript pass. Complete
 movement observations, independent choice and overall qualification remain open.
 All 40 existing native/disclosure checks, production build and asset guard pass.
-The longer combined scenario subsequently reached a headless presence timeout;
-its public command correctly refused while paused. Full rerun with a maintained
-headless session remains required.
+The longer combined scenario initially reached a headless presence timeout;
+its public command correctly refused while paused. The full rerun with an explicit
+connected headless session and its matching visibility preference passes.
 An initial existing disclosure check omitted its required database URL and failed
 before database creation; the corrected explicit-loopback run passes all nine.
+
+Additional Jev cost is **$0**; cumulative provider-reported Jev estimates remain
+**$0.290701**, other-provider estimates **$0.088246**, uncertain commitments
+**$4.105220**, and conservative task exposure **$4.484167**.
+
+## Fixed-point pursuit proximity — October 18, 2026
+
+An actual offered fixed-point pursuit now carries its selected positive proximity
+stop on the existing finite activity. It refers to an exact visible participant,
+retains the original deadline/boundary and uses the ordinary physical reach and
+line-of-effect predicate. An already reached movement is not offered. Remembered
+place searches retain their point-only meaning. No attack or target substitution
+follows arrival.
+
+The existing motion-crossing owner now finds the first positive interaction-anchor
+sphere/ray interval over its piecewise paths, using its existing geometry/body/track
+certificates and work accounting. This is distinct from its fleeting sensory
+sampling: a stopping condition needs its first entry even when it remains true at
+the requested endpoint. Physical proximity does not depend on autobiographical
+memory. Current-format validation requires the stopping participant to belong to
+the exact visible-participant set and the distance to be finite and positive.
+
+The evolving native scenario verifies the actual compiler offer and actual
+movement stopping at 1.3 m. PostgreSQL preserves the distance and original deadline;
+continuation agrees across one and split simulation calls. An unbound stopping
+participant refuses validation. A hidden participant ends the movement without
+using their hidden point. Two actually crossing walking routes stop within a
+transient reach interval which has ended by the requested endpoint. A low physical
+wall prevents a premature stop despite visible nearby people; actual travel around
+its end reaches the clear interaction ray without traversing the wall. These are
+native/control checks with supplied selections, not independent-character evidence.
+
+TypeScript and the connected native scenario pass. The seven selected existing
+native, perception, spatial, simulation and disclosure files pass 69 checks;
+production build and asset guard pass, including reruns after review separated the
+physical predicate from autobiographical-memory requirements. Complete stable observations,
+source/capability races, independent choice and overall combat qualification stay
+open.
 
 Additional Jev cost is **$0**; cumulative provider-reported Jev estimates remain
 **$0.290701**, other-provider estimates **$0.088246**, uncertain commitments

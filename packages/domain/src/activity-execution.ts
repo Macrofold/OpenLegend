@@ -38,7 +38,7 @@ import {
   type ActivityBinding,
 } from './action-experience.js';
 import { cloneValue } from './draft.js';
-import { isSafeRecordId } from './records.js';
+import { hasRecordFields, isSafeRecordId } from './records.js';
 import { validResponsePurpose } from './action-capabilities.js';
 import { accessiblePossession, possessionItems } from './object-access.js';
 import { seesEntity } from './perception.js';
@@ -73,6 +73,8 @@ export interface FiniteActivityControl {
   boundary: { origin: Position; radius: number } | null;
   /** Only currently perceived bodies may be bound here; remembered points need no live subject. */
   subjects: Record<string, { physicalLife: number; episode: string | null }>;
+  /** Positive arrival condition on one exact visible participant, never an attack. */
+  stopWithin?: { subjectId: string; distance: number };
 }
 export type ChosenActivityControl = CountedActivityControl | FiniteActivityControl;
 
@@ -283,6 +285,19 @@ function finiteControlStop(
         completed: false,
       };
   }
+  if (
+    control.stopWithin &&
+    canReachEntity(
+      world,
+      entity,
+      entityGet(world.entities, control.stopWithin.subjectId)!,
+      control.stopWithin.distance,
+    )
+  )
+    return {
+      reason: `The chosen participant is within the selected ${control.stopWithin.distance} m distance.`,
+      completed: true,
+    };
   return control.boundary &&
     distance3D(worldPosition(entity), control.boundary.origin) >= control.boundary.radius - 1e-8
     ? { reason: 'The chosen distance boundary was reached.', completed: true }
@@ -382,7 +397,8 @@ export function validateChosenActivityControl(
       throw new Error('Invalid chosen activity control.');
   };
   if (control.kind === 'finite') {
-    exact(control, ['kind', 'deadline', 'boundary', 'subjects']);
+    if (!hasRecordFields(control, ['kind', 'deadline', 'boundary', 'subjects'], ['stopWithin']))
+      throw new Error('Invalid chosen activity control.');
     if (
       !Number.isFinite(control.deadline) ||
       control.deadline < 0 ||
@@ -422,6 +438,16 @@ export function validateChosenActivityControl(
         subject.physicalLife < 0
       )
         throw new Error('Invalid finite activity subject.');
+    }
+    if (control.stopWithin !== undefined) {
+      exact(control.stopWithin, ['subjectId', 'distance']);
+      if (
+        !isSafeRecordId(control.stopWithin.subjectId) ||
+        !Object.hasOwn(control.subjects, control.stopWithin.subjectId) ||
+        !Number.isFinite(control.stopWithin.distance) ||
+        control.stopWithin.distance <= 0
+      )
+        throw new Error('Invalid finite activity proximity condition.');
     }
     const visit = (node: ActivityNode): void => {
       if (node.kind === 'invoke') {

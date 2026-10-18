@@ -567,7 +567,7 @@ export function remainingActivityText(
   if (execution?.control?.kind === 'finite')
     facts.push({
       name: 'chosen stopping conditions',
-      value: `Stop no later than simulation time ${execution.control.deadline}.${execution.control.boundary ? ` Stay within ${execution.control.boundary.radius} m of the chosen starting position.` : ''}${Object.keys(execution.control.subjects).length ? ' Stop if a selected visible participant is lost or changes physical life.' : ''}${execution.interrupted ? ' The activity was interrupted.' : ''}`,
+      value: `Stop no later than simulation time ${execution.control.deadline}.${execution.control.boundary ? ` Stay within ${execution.control.boundary.radius} m of the chosen starting position.` : ''}${Object.keys(execution.control.subjects).length ? ' Stop if a selected visible participant is lost or changes physical life.' : ''}${execution.control.stopWithin ? ` Stop when the chosen participant comes within ${execution.control.stopWithin.distance} m with a clear interaction path; no attack follows.` : ''}${execution.interrupted ? ' The activity was interrupted.' : ''}`,
       critical: true,
     });
   const terminal = plan.status === 'completed' || plan.status === 'cancelled';

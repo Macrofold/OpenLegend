@@ -205,6 +205,12 @@ For a selected material rule, require its initial per-item values and validate e
 
 Related deadlines, remaining progress and physical bounds must agree with the admitted definition and phase; individually finite fields are insufficient. Preserve legitimate partial progress and qualify independently malformed copies through the same current-format boundary. [The rivals review](verification/rivals-and-contested-ground.md#continued-native-collision-and-continuation-review--october-14-2026) ties saved evasion timing, speed and remaining path to its installed rule.
 
+A finite activity's optional proximity stop retains its selected positive distance
+and refers to one of that activity's exact visible participants. Restoration
+validates that relationship, alongside the participant's original life/sighting
+binding and the original deadline. Derived motion crossings rebuild from the
+saved physical routes; loading does not move, retarget or attack.
+
 Reject an unusable candidate before installation, retaining both the source and active world. The [shelter review](verification/editable-shelters.md#delivery-review) found missing required dimensions and a multi-unit lot admitted where the selected profile required an individual post. These are current-model integrity checks, not universal material laws or permission for compatibility work; the [development save policy](../AGENTS.md#development-save-policy) remains controlling.
 
 ## Loading as an authority transition

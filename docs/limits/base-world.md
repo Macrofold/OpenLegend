@@ -62,6 +62,14 @@ Visual follow defaults to three world units, accepts 1.5–12 units, resumes aft
 
 **Finite arrival variant — October 18, 2026 · Restrictiveness: Low.** A one-session proximity choice requires a positive distance no greater than the same **12-unit** upper bound and an original finite stopping time. It can close below the ordinary **1.5-unit** minimum, so a real **1.3-unit** punch reach is usable; this exemption does not lower the ordinary relational-follow minimum. Native body clearance and current sight still apply. Arrival ends movement without attacking; reaching the original deadline reports the time limit without claiming arrival. Continuing formations and last-seen loss policy remain separate choices. The lower bound is representability/meaning (positive distance), not a new fictional crowding rule. [CTR08](../maintainers/combat-and-threat-responses.md#ctr08--reconsideration-and-prompt-service) retains full dynamic qualification.
 
+Fixed-point pursuit can also stop at a selected visible participant's proximity,
+using the offered method's reach or the ordinary following distance when no such
+method is offered. The original pursuit time/distance limits remain. Both distance
+and a clear interaction path must hold; two moving people and a changing ray
+around an obstruction use the existing piecewise motion calculation. A remembered
+place search retains its separate point-only meaning. This introduces no attack,
+additional pursuit time or lower ordinary-follow separation.
+
 **Reason / tradeoff:** A finite authored proximity activity with hysteresis avoids route churn. These are base-world tuning choices, not universal pursuit laws. [Authored rules](../../packages/domain/src/worlds/base/navigation.ts), [AC05](../maintainers/action-capabilities.md#ac05--target-relative-ongoing-navigation).
 
 ## BW07

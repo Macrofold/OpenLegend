@@ -407,6 +407,10 @@ export function basePreparedThreatResponses(
         description: `Follow the currently perceived ${label(command.targetId)} only until within the selected ${distance} m proximity, then end this movement. This does not equip a weapon or attack. Arrival is not guaranteed; lost sight ends this choice.`,
       };
     }
+    if (command.type === 'move' && followRange !== undefined && participants[0]) {
+      const target = visible.get(participants[0]);
+      if (!target || canReachEntity(world, actor, target, followRange)) return;
+    }
     const args: Record<string, ActivityArgument> = {},
       values: Record<string, ActivityBinding> = {};
     for (const [field, value] of Object.entries(activityCommandFields(command))) {
@@ -454,12 +458,15 @@ export function basePreparedThreatResponses(
             : [];
         }),
       ),
+      ...(command.type === 'move' && followRange !== undefined && participants[0]
+        ? { stopWithin: { subjectId: participants[0], distance: followRange } }
+        : {}),
     };
     return {
       ...method,
       purpose,
       firstActionDescription: method.firstActionDescription ?? method.description,
-      description: `${method.description} Stop no later than game time ${control.deadline}.${control.boundary ? ` Stop at ${control.boundary.radius} m from the original selected position.` : ''}${participants.length ? ' Stop if a selected visible participant is lost or changes physical life.' : ''}`,
+      description: `${method.description} Stop no later than game time ${control.deadline}.${control.boundary ? ` Stop at ${control.boundary.radius} m from the original selected position.` : ''}${participants.length ? ' Stop if a selected visible participant is lost or changes physical life.' : ''}${control.stopWithin ? ` Stop when ${label(control.stopWithin.subjectId)} comes within the selected ${control.stopWithin.distance} m distance with a clear interaction path; no attack follows.` : ''}`,
       invocation: {
         id: 'prepared-response',
         actorId: actor.id,
@@ -588,7 +595,15 @@ export function basePreparedThreatResponses(
           (definition.means.includes('approach') || definition.means.includes('pursue')) &&
           approach
         )
-          addMethod(method, [roles.assailant!], true);
+          addMethod(
+            method,
+            [roles.assailant!],
+            true,
+            undefined,
+            definition.means.includes('pursue')
+              ? (directReach.get(roles.assailant!) ?? FOLLOW_RULES.defaultDistance)
+              : undefined,
+          );
         if (
           definition.means.includes('pursue') &&
           command?.type === 'follow' &&
