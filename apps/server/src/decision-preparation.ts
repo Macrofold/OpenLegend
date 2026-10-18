@@ -31,7 +31,7 @@ export function knownDecisionResponse(
   if (!Object.hasOwn(prepared.binding.actions, selected))
     throw new Error('Unknown offered action.');
   const choice = prepared.binding.actions[selected]!;
-  if (choice.invocation === null) return { operations: [] };
+  if (choice.invocation === null && !choice.purpose) return { operations: [] };
   return actionResponse({
     kind: 'known',
     mode: choice.transition === 'continue' ? 'enqueue' : choice.transition,

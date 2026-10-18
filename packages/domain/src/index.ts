@@ -335,3 +335,5 @@ export * from './worlds/base/combat-views.js';
 
 export * from './worlds/base/watchpost.js';
 export * from './native-values.js';
+
+export type { ResponsePurposeBinding } from './action-capabilities.js';

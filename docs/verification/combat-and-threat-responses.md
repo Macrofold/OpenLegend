@@ -213,3 +213,30 @@ additional Jev cost is $0 and cumulative task Jev cost is $0.
 The selected threat profile is still uninstalled. Full pursuit/reconsideration,
 changing supports, released effects at these boundaries, shared-menu preparation,
 performance and voluntary behavior remain CTR05/CTR07/CTR08/CTR10 obligations.
+
+## Complete required-choice preparation checkpoint — October 18, 2026
+
+The evolving native/service scenario uses controlled purpose definitions rather
+than the uninstalled wilderness catalogue. Two purposes sharing one exact movement
+remain distinct, alongside a purposeful continuation. Read-only required-set
+preparation preserves actual gathering. Ordinary relevance/fallback is refused;
+oversized complete input refuses with zero provider callbacks. A post-judgment
+purpose substitution also refuses. Selecting continuation retains the gathering
+and its purpose in the response receipt. Selecting the supplied movement replaces
+work through the shared response/activity owners, respects its original distance
+limit and records the exact chosen purpose on the actual native movement. JSON
+continuation validates, and malformed saved purpose-role data refuses.
+
+The preceding contact, personal-evidence, prospective-resource, private-feeling,
+finite-control and counted fire-watch checks also pass through the evolving
+scenario with real disposable PostgreSQL storage. These are supplied native
+choices, not independent threat relevance or behavior. Four existing context
+checks pass, including coalesced speech evidence and the fixture-based learned
+food/tool path. TypeScript checking and production build pass at this checkpoint,
+with the existing build warnings and passing asset guard. No provider calls
+occurred; additional Jev cost is $0 and cumulative task Jev cost is $0.
+
+The wilderness catalogue, two accounted semantic stages, exact source publication,
+independent Ada baselines, full shared work matrix and broader performance/player
+qualification remain open. Required-option preservation is not evidence that an
+independent character chose any option.

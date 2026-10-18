@@ -524,6 +524,7 @@ interface Envelope {
   humanInitiated?: true;
   /** Selected meaning only; never native effect authority. */
   purpose?: string;
+  chosenPurpose?: import('./action-capabilities.js').ResponsePurposeBinding;
   id: string;
   actorId: string;
 }

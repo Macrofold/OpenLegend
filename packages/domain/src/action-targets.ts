@@ -11,6 +11,7 @@ export type ActionTarget = {
   bindings?: Record<string, unknown>;
   /** What a composition is about beyond its bindings (see the compose command). */
   subjects?: readonly string[];
+  chosenPurpose?: Pick<import('./action-capabilities.js').ResponsePurposeBinding, 'roles'>;
 };
 export type ActionTargetEpisodes = Record<string, string | null>;
 const targets = (command: ActionTarget) =>
@@ -19,6 +20,7 @@ const targets = (command: ActionTarget) =>
     command.heatId,
     ...Object.values(command.bindings ?? {}),
     ...(command.subjects ?? []),
+    ...Object.values(command.chosenPurpose?.roles ?? {}),
   ].filter((id): id is string => typeof id === 'string' && !!id && id !== command.actorId);
 
 /** A saved entity ID is not proof that an anonymous person was re-identified.

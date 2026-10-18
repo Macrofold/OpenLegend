@@ -4945,11 +4945,16 @@ export class WorldService {
   ): PreparedNativeChoice | Outcome | ApiResult {
     const bound = this.bindCommand('prepared-choice', input, actorId, humanInitiated);
     if ('ok' in bound) return bound;
-    if (!isActivityCommand(bound) && bound.type !== 'learn-record')
+    if (!isActivityCommand(bound) && bound.type !== 'learn-record' && bound.type !== 'compose')
       return this.previewCommand(input, actorId, humanInitiated);
+    return this.prepareNativeCommandChoice(bound, transition);
+  }
+
+  /** Trusted compiled activities use the same read-only owner and permission view. */
+  prepareNativeCommandChoice(bound: Command, transition: WorkTransitionMode) {
     return prepareNativeChoice(
       this.world,
-      actorId,
+      bound.actorId,
       bound,
       transition,
       this.store.authority!.constructionPermissions(this.world.id),

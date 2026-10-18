@@ -412,6 +412,9 @@ export interface CandidateAction {
   id: string;
   description: string;
   command: CommandInput | null;
+  /** A trusted world compiler can bind a native finite composition directly. */
+  nativeInvocation?: import('@open-legend/domain').Command;
+  purpose?: import('@open-legend/domain').ResponsePurposeBinding;
   /** Once offered, retain the initiator's exact handling of current work. */
   transition?: import('@open-legend/domain').WorkTransitionMode;
 }
@@ -444,7 +447,20 @@ export function candidateChoice(
   expectedWork: import('@open-legend/domain').ProspectiveWork['expected'],
 ): import('@open-legend/domain').ActionChoice {
   return {
-    invocation: candidate.command ? domainCommand(candidate.command, actorId, decisionId) : null,
+    invocation: candidate.nativeInvocation
+      ? {
+          ...candidate.nativeInvocation,
+          actorId,
+          id: decisionId,
+          ...(candidate.purpose ? { chosenPurpose: candidate.purpose } : {}),
+        }
+      : candidate.command
+        ? {
+            ...domainCommand(candidate.command, actorId, decisionId),
+            ...(candidate.purpose ? { chosenPurpose: candidate.purpose } : {}),
+          }
+        : null,
+    ...(candidate.purpose ? { purpose: candidate.purpose } : {}),
     transition: candidate.transition ?? suggestedWorkTransition(candidate.command),
     expectedWork,
   };

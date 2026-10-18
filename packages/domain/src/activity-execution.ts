@@ -4,7 +4,7 @@ import { validateInstalledActivityConditions } from './action-experience.js';
 import type { ConstructionPermission } from './assembly-types.js';
 import { isEquipped } from './equipment.js';
 import { isCookingInputField } from './food-preparation.js';
-import { executeCommand, nativeOperationAvailable } from './kernel.js';
+import { executeCommand, nativeOperationAvailable, prepareNativeChoice } from './kernel.js';
 import type { Command, Position, WorldState } from './types.js';
 import { worldPosition } from './spatial-state.js';
 import { nativeMovementSpeed } from './worlds/base/actions.js';
@@ -30,6 +30,7 @@ import {
 } from './action-experience.js';
 import { cloneValue } from './draft.js';
 import { isSafeRecordId } from './records.js';
+import { validResponsePurpose } from './action-capabilities.js';
 import { accessiblePossession, possessionItems } from './object-access.js';
 import { seesEntity } from './perception.js';
 import { outcome } from './events.js';
@@ -73,7 +74,7 @@ export interface ActivityExecution {
   /** A personally learned method, or absent for a requested composition. */
   methodId?: string;
   /** A requested composition carries its own validated root and chosen name. */
-  request?: { name: string; root: ActivityNode };
+  request?: { name: string; root: ActivityNode; chosenPurpose?: Command['chosenPurpose'] };
   bindings: Record<string, ActivityBinding>;
   pending: { node: ActivityNode; iteration: number; startedAt?: number }[];
   outputs: Record<string, ActivityOutput[]>;
@@ -150,14 +151,14 @@ export function admitActivityAttempt(
   execution.lastAttemptId = step.id;
   return true;
 }
-/** Deadlines apply to an in-progress child too. Only a child already completing
- * at this boundary may commit; other work is cancelled by the ordinary owner. */
 /** Only chosen continuing control can end a running activity between its steps.
  * Ordinary plan membership alone does not make fixed-route movement a body-rule change. */
 export function activeActivityControl(plan: ActorPlan | null | undefined) {
   const execution = plan?.activity;
   return plan?.status === 'active' && !execution?.terminal ? execution?.control : undefined;
 }
+/** Deadlines apply to an in-progress child too. Only a child already completing
+ * at this boundary may commit; other work is cancelled by the ordinary owner. */
 export function reconcileActivityControl(
   world: WorldState,
   actorId: string,
@@ -508,7 +509,7 @@ export function validateChosenActivityControl(
 function predicate(
   world: WorldState,
   actorId: string,
-  execution: ActivityExecution,
+  execution: Pick<ActivityExecution, 'bindings' | 'outputs'>,
   condition: ActivityPredicate,
 ): boolean | undefined {
   if (condition.test === 'registered') {
@@ -559,7 +560,10 @@ function predicate(
 }
 export function bindActivityCommand(
   node: Extract<ActivityNode, { kind: 'invoke' }>,
-  execution: Pick<ActivityExecution, 'bindings' | 'outputs' | 'humanInitiated' | 'combatHelpId'>,
+  execution: Pick<
+    ActivityExecution,
+    'bindings' | 'outputs' | 'humanInitiated' | 'combatHelpId' | 'request'
+  >,
   actorId: string,
   id: string,
 ): Command | undefined {
@@ -568,6 +572,9 @@ export function bindActivityCommand(
     actorId,
     type: node.command,
     purpose: node.name,
+    ...(execution.request?.chosenPurpose
+      ? { chosenPurpose: cloneValue(execution.request.chosenPurpose) }
+      : {}),
     ...(execution.humanInitiated ? { humanInitiated: true } : {}),
     ...(execution.combatHelpId ? { combatHelpId: execution.combatHelpId } : {}),
   } as Command & Record<string, unknown>;
@@ -579,6 +586,7 @@ export function bindActivityCommand(
         'type',
         'humanInitiated',
         'combatHelpId',
+        'chosenPurpose',
         '__proto__',
         'constructor',
         'prototype',
@@ -859,21 +867,17 @@ function timeConditions(node: ActivityNode): number[] {
     return [...(node.until.test === 'time' ? [node.until.at] : []), ...timeConditions(node.body)];
   return node.until.test === 'time' ? [node.until.at] : [];
 }
-/** Roles an activity structure binds through its invocation arguments. */
-
-/** Admit a requested composition through the same executor, plan owner and native admission
- * as learned methods. The structure is data: registered controls, predicates and command
- * families only. docs/action-capabilities.md#8-native-activity-composition
- */
-export function startRequestedActivity(
+/** Shared structural/reference admission. This read never changes current work.
+ * docs/action-capabilities.md#8-native-activity-composition */
+export function requestedActivityProblem(
   world: WorldState,
   actorId: string,
-  id: string,
   command: Extract<Command, { type: 'compose' }>,
-  constructionPermissions: readonly ConstructionPermission[] = [],
-) {
+): import('./types.js').Outcome | null {
   const actor = entityGet(world.entities, actorId)?.actor;
   if (!actor) return outcome(false, 'actor-unavailable', 'The actor is unavailable.');
+  if (command.chosenPurpose !== undefined && !validResponsePurpose(command.chosenPurpose))
+    return outcome(false, 'invalid-purpose', 'The selected purpose binding is malformed.');
   let roles: ReturnType<typeof activityRoleKinds>;
   try {
     validateActivityNode(command.root);
@@ -960,10 +964,115 @@ export function startRequestedActivity(
     const stop = finiteControlStop(world, actorId, command.control);
     if (stop) return outcome(false, 'activity-limit', stop.reason);
   }
+  const current = actor.agency.plan;
+  if (
+    command.control &&
+    command.mode === 'enqueue' &&
+    (actor.action || current?.status === 'active' || current?.status === 'blocked')
+  )
+    return outcome(
+      false,
+      'activity-busy',
+      'Finish current work, or explicitly replace or interrupt it before starting this activity.',
+    );
+  return null;
+}
+
+/** Find only the first presently needed child, using the executor's own predicates
+ * and binding rules. Future output-dependent steps remain future admission, never
+ * a promise that their current prerequisites are already satisfied. */
+export function firstRequestedActivityCommand(
+  world: WorldState,
+  command: Extract<Command, { type: 'compose' }>,
+): Command | import('./types.js').Outcome | null {
+  const execution = {
+    bindings: command.bindings,
+    outputs: {},
+    humanInitiated: command.humanInitiated,
+    combatHelpId: command.combatHelpId,
+    request: { name: command.name, root: command.root, chosenPurpose: command.chosenPurpose },
+  };
+  const visit = (node: ActivityNode): Command | import('./types.js').Outcome | null | undefined => {
+    if (node.kind === 'sequence') {
+      for (const child of node.children) {
+        const first = visit(child);
+        if (first !== undefined) return first;
+      }
+      return;
+    }
+    if (node.kind === 'invoke') {
+      const bound = bindActivityCommand(node, execution, command.actorId, `${command.id}:first`);
+      if (!bound)
+        return outcome(
+          false,
+          'invalid-bindings',
+          'A required actual output or compatible binding is unavailable.',
+        );
+      return bound.type === 'equip' && isEquipped(world, command.actorId, bound.itemId)
+        ? undefined
+        : bound;
+    }
+    const answer = predicate(
+      world,
+      command.actorId,
+      execution,
+      node.kind === 'branch' ? node.when : node.until,
+    );
+    if (answer === undefined)
+      return outcome(false, 'unknown-condition', 'Whether the next condition is met is unknown.');
+    if (node.kind === 'branch')
+      return answer ? visit(node.yes) : node.no ? visit(node.no) : undefined;
+    if (node.kind === 'repeat') {
+      if (answer) return;
+      const first = visit(node.body);
+      // Without a child or an actual wait, nothing can change the false stopping
+      // condition. The executor would exhaust this bounded repetition immediately.
+      return first === undefined
+        ? outcome(
+            false,
+            'activity-limit',
+            'The chosen attempt limit would be reached without starting useful work.',
+          )
+        : first;
+    }
+    return answer ? undefined : null;
+  };
+  return visit(command.root) ?? null;
+}
+
+/** Admit a requested composition through the same executor and plan owner as
+ * learned methods. Its data can select only registered controls and commands. */
+export function startRequestedActivity(
+  world: WorldState,
+  actorId: string,
+  id: string,
+  command: Extract<Command, { type: 'compose' }>,
+  constructionPermissions: readonly ConstructionPermission[] = [],
+) {
+  const problem = requestedActivityProblem(world, actorId, command);
+  if (problem) return problem;
+  const actor = entityGet(world.entities, actorId)!.actor!;
+  // Queued work may depend on the preceding work's future outputs. Work that
+  // starts now must pass its complete first-child check before cancellation.
+  if (command.mode !== 'enqueue' || (!actor.action && actor.agency.plan?.status !== 'active')) {
+    const prepared = prepareNativeChoice(
+      world,
+      actorId,
+      command,
+      command.mode,
+      constructionPermissions,
+    );
+    const available = 'ok' in prepared ? prepared : prepared.outcome;
+    if (!available.ok) return available;
+  }
   const execution: ActivityExecution = {
     ...(command.combatHelpId ? { combatHelpId: command.combatHelpId } : {}),
     ...(command.humanInitiated ? { humanInitiated: true } : {}),
-    request: { name: command.name.trim(), root: cloneValue(command.root) },
+    request: {
+      name: command.name.trim(),
+      root: cloneValue(command.root),
+      ...(command.chosenPurpose ? { chosenPurpose: cloneValue(command.chosenPurpose) } : {}),
+    },
     bindings: cloneValue(command.bindings),
     pending: [{ node: cloneValue(command.root), iteration: 0 }],
     outputs: {},
@@ -979,18 +1088,6 @@ export function startRequestedActivity(
       : {}),
   };
   const current = actor.agency.plan;
-  // A deadline cannot acquire cancellation authority over unrelated queued work.
-  // The first chosen watch starts here; finish existing work or explicitly replace/interrupt it.
-  if (
-    command.control &&
-    command.mode === 'enqueue' &&
-    (actor.action || current?.status === 'active' || current?.status === 'blocked')
-  )
-    return outcome(
-      false,
-      'watch-busy',
-      'Finish current work, or explicitly replace or interrupt it before starting this watch.',
-    );
   if (
     command.mode === 'enqueue' &&
     current &&

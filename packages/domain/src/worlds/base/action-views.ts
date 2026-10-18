@@ -152,6 +152,12 @@ function activityView(
     name: command.purpose ?? reservoir?.actionLabel ?? names[command.type] ?? 'Act',
     facts: [],
   };
+  if (command.chosenPurpose)
+    view.facts.push({
+      name: 'chosen purpose',
+      value: command.chosenPurpose.description,
+      critical: true,
+    });
   if (command.type === 'treat-scar') {
     const treatment = reincarnationPolicy(world)?.treatment;
     if (treatment)

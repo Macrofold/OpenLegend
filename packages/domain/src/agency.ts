@@ -1,4 +1,5 @@
 import { entityGet, entityHas, entityValues } from './entity-collection.js';
+import { validResponsePurpose } from './action-capabilities.js';
 import { validExactInventorySources } from './native-command-contracts.js';
 import {
   isCookingInputRole,
@@ -105,6 +106,7 @@ export interface GoalChange {
 }
 export type ItemOutputCommand = {
   purpose?: string;
+  chosenPurpose?: import('./action-capabilities.js').ResponsePurposeBinding;
   id: string;
   actorId: string;
   type: 'equip' | 'eat' | 'cook';
@@ -1131,6 +1133,8 @@ export function validateAgency(world: WorldState): void {
         (step.targetEpisodes !== undefined && !validActionTargets(step.targetEpisodes)) ||
         !isSafeRecordId(step.id) ||
         !isPlannedCommand(step.command) ||
+        (step.command.chosenPurpose !== undefined &&
+          !validResponsePurpose(step.command.chosenPurpose)) ||
         step.command.id !== step.id ||
         step.command.actorId !== entity.id ||
         !['queued', 'running', 'completed', 'blocked', 'cancelled'].includes(step.status) ||

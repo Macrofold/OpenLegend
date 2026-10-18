@@ -191,7 +191,11 @@ export function normalizeActivity(
     const args: Extract<ActivityNode, { kind: 'invoke' }>['args'] = {};
     const entityFields = new Set(commandEntityFields(entry.command));
     for (const [field, value] of Object.entries(activityCommandFields(entry.command))) {
-      if (['id', 'actorId', 'type', 'purpose'].includes(field) || value === undefined) continue;
+      if (
+        ['id', 'actorId', 'type', 'purpose', 'chosenPurpose'].includes(field) ||
+        value === undefined
+      )
+        continue;
       // An absolute deadline belongs to one occasion, not a reusable method.
       if (entry.command.type === 'follow' && field === 'until') return;
       if (typeof value === 'string' && entityFields.has(field)) {

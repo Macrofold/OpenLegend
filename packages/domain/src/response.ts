@@ -721,6 +721,7 @@ export function commitActorResponse(
         selected &&
         [
           'activity',
+          'compose',
           'inspect-activities',
           'conversation',
           'teach',
@@ -769,7 +770,14 @@ export function commitActorResponse(
           entityGet(world.entities, actorId)!.actor!.agency.plan?.revision ?? 0,
           null,
         );
-      else components[localId] = outcome(true, 'continued', 'Existing behavior continues.');
+      else
+        components[localId] = outcome(
+          true,
+          'continued',
+          choice.purpose
+            ? `Selected purpose: ${choice.purpose.description}. Existing behavior continues.`
+            : 'Existing behavior continues.',
+        );
     } else if (act?.kind === 'expression') {
       const source = entityGet(world.entities, actorId)!;
       const target = act.targetEntityId ? entityGet(world.entities, act.targetEntityId) : undefined;

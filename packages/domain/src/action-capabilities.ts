@@ -13,6 +13,7 @@ import { combatRecoveryDeadline } from './contact-defense.js';
 import { cloneValue } from './draft.js';
 import { canonicalJson, outcome } from './events.js';
 import { isSafeRecordId } from './records.js';
+import { isDefinitionPin } from './state-owners.js';
 import { seesEntity } from './perception.js';
 import { activityRequestDescriptors, bindActivityRequest } from './activity-hosts.js';
 import type { Action, Command, Entity, Outcome, WorldState } from './types.js';
@@ -38,10 +39,42 @@ export interface ProspectiveWork {
   outcome: Outcome;
 }
 
+/** Selected meaning, never permission, a new goal or proof of success. Exact
+ * subjects and source IDs stay attached through selection, execution and history. */
+export interface ResponsePurposeBinding {
+  definition: import('./world-modules.js').DefinitionPin;
+  id: string;
+  description: string;
+  roles: Record<string, string>;
+  sourceIds: string[];
+}
+export function validResponsePurpose(value: unknown): value is ResponsePurposeBinding {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const p = value as ResponsePurposeBinding;
+  return (
+    Object.keys(p).sort().join(',') === 'definition,description,id,roles,sourceIds' &&
+    isDefinitionPin(p.definition) &&
+    isSafeRecordId(p.id) &&
+    typeof p.description === 'string' &&
+    p.description.trim().length > 0 &&
+    p.description.length <= 500 &&
+    !!p.roles &&
+    typeof p.roles === 'object' &&
+    !Array.isArray(p.roles) &&
+    Object.keys(p.roles).length <= 8 &&
+    Object.entries(p.roles).every(([role, id]) => isSafeRecordId(role) && isSafeRecordId(id)) &&
+    Array.isArray(p.sourceIds) &&
+    p.sourceIds.length <= 48 &&
+    p.sourceIds.every(isSafeRecordId) &&
+    new Set(p.sourceIds).size === p.sourceIds.length
+  );
+}
+
 /** Exact offered meaning retained across a decision wait. This is a binding for
  * subsequent native admission, never a cached prerequisite result. */
 export interface ActionChoice {
   invocation: Command | null;
+  purpose?: ResponsePurposeBinding;
   transition: WorkTransitionMode;
   expectedWork: ProspectiveWork['expected'];
 }

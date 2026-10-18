@@ -5,6 +5,7 @@ import {
 import { entityGet, entityOwn } from './entity-collection.js';
 import {
   prospectiveWork,
+  validResponsePurpose,
   type ProspectiveWork,
   type WorkTransitionMode,
 } from './action-capabilities.js';
@@ -135,6 +136,8 @@ import {
   startLearnedActivity,
   startRequestedActivity,
   reconcileActivityControl,
+  requestedActivityProblem,
+  firstRequestedActivityCommand,
   admitActivityAttempt,
   activeActivityControl,
 } from './activity-execution.js';
@@ -1125,6 +1128,30 @@ function operationAfterWork(
   try {
     return withWorkMeter(WORK_LIMITS.group, () => {
       chargeWork({ inputBytes: (JSON.stringify(command)?.length ?? 0) * 3 });
+      if (command.chosenPurpose !== undefined && !validResponsePurpose(command.chosenPurpose))
+        return outcome(false, 'invalid-purpose', 'The selected purpose binding is malformed.');
+      if (command.type === 'compose') {
+        const actorProblem = nativeActorProblem(world, command);
+        if (actorProblem) return actorProblem;
+        if (work && work.mode !== command.mode)
+          return outcome(
+            false,
+            'work-transition',
+            'The chosen activity and its handling of current work must agree.',
+          );
+        const problem = requestedActivityProblem(world, command.actorId, command);
+        if (problem) return problem;
+        const first = firstRequestedActivityCommand(world, command);
+        return first === null
+          ? outcome(
+              true,
+              'available',
+              'The selected bounded wait can begin; future work is checked when needed.',
+            )
+          : 'ok' in first
+            ? first
+            : operationAfterWork(world, first, constructionPermissions, work);
+      }
       const prepared = prepareNativeOperation(world, command, { constructionPermissions, work });
       if (work?.mode === 'continue' && !('ok' in prepared))
         return outcome(

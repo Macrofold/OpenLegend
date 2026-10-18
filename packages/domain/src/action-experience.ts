@@ -1,4 +1,5 @@
 import { entityGet, entityValues } from './entity-collection.js';
+import { validResponsePurpose } from './action-capabilities.js';
 import { endOwnOffense } from './combat-encounters.js';
 import { validExactInventorySources } from './native-command-contracts.js';
 import {
@@ -470,6 +471,12 @@ export function prepareActivity(
     const { lethalPermission: _permission, ...physical } = command;
     command = physical;
   }
+  if (command.chosenPurpose !== undefined && !validResponsePurpose(command.chosenPurpose))
+    return {
+      ok: false,
+      code: 'invalid-purpose',
+      message: 'The selected purpose binding is malformed.',
+    };
   const state = world.actionExperience;
   const entries = state.occurrences[command.actorId] ?? [];
   const existing = entries.find((entry) => entry.commandId === command.id);
@@ -1305,6 +1312,8 @@ export function validateActionExperience(world: WorldState): void {
         entry.command.id !== entry.id ||
         entry.command.actorId !== actorId ||
         !isRecordedActivityCommand(entry.command) ||
+        (entry.command.chosenPurpose !== undefined &&
+          !validResponsePurpose(entry.command.chosenPurpose)) ||
         !Number.isFinite(entry.at) ||
         entry.at < 0 ||
         !['running', 'completed', 'blocked', 'cancelled'].includes(entry.status) ||
@@ -1555,10 +1564,12 @@ function validateExecution(
         : undefined;
     const root = execution.request?.root ?? method?.root;
     if (execution.request !== undefined) {
-      if (!hasRecordFields(execution.request, ['name', 'root']))
+      if (!hasRecordFields(execution.request, ['name', 'root'], ['chosenPurpose']))
         throw new Error('Invalid saved requested activity shape.');
       if (
         execution.methodId !== undefined ||
+        (execution.request.chosenPurpose !== undefined &&
+          !validResponsePurpose(execution.request.chosenPurpose)) ||
         typeof execution.request.name !== 'string' ||
         !execution.request.name.trim() ||
         execution.request.name.length > ACTIVITY_LIMITS.text
