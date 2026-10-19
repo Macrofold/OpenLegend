@@ -725,7 +725,7 @@ Likewise, ordinary travel does not need invitation-dependent distance, normal re
 
 Fictional memory forks, restored districts, world migration or creator succession do not authorize real permission changes or override the [development save policy](../../AGENTS.md#development-save-policy). Preserve identity, actual outcomes, observer boundaries and participant agency whenever the selected fictional capability requires them.
 
-## October 18 selected design connections
+## Selected design connections
 
 UNR-248's transferred method and UNR-250's world continuing after a final enemy contain smaller lessons used by the selected next work: a useful idea can have a second life, and victory can leave people free to do something else. [DG12](../projects/world-creation-tech-design.md) transfers an authorised recipe between configured operator worlds at the account/creator layer; it does not install fictional inter-world travel, shared minds or a mail cosmology. [Ash Road](../projects/shared-campaigns-feature-spec.md) is a finite same-world expedition, and [experience-shaped people](../projects/experience-shaped-characters-feature-spec.md) gives ordinary encountered events continuing personal meaning.
 

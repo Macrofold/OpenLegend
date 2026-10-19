@@ -592,7 +592,7 @@ ECON-163 is a proposed outfitting-budget arrangement, not evidence that inventor
 
 Deeper competition, price response and debt stories follow as Depth. Concrete useful local magical services and ingredient markets (ECON-202/ECON-211) remain Complete; broader magical supply/contract administration follows only when that selected activity needs it. Dedicated industrial networks, alternative-world commerce and complex licensing or service settings are Specialist for this survival-adventure, not real-world financial recommendations or a prohibition on future worlds. Existing fictional ownership, agency, source qualifications and implementation boundaries remain preserved.
 
-## October 18 selected design connections
+## Selected design connections
 
 ECON-195's teaching that reduces dependence and ECON-278's method that creates a real competitor make [DG12's local physical sharing](../worlds/base/invention-reuse.md) more compelling than another catalogue score. A method sheet is actual portable stock which can be offered through existing recipient/custody rules. Its learner may obtain finished intermediate cord and make a bag without learning cord manufacture, then use the result for their own work. Neither trading the physical sheet nor learning it grants account-level export/licensing rights.
 

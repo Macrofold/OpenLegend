@@ -647,7 +647,7 @@ Performance, creative expression and beautiful spaces retain genuine value. Elab
 
 Finite costs, actual destinations, sensible release and counterplay are mandatory for every selected effect. A summoned construct, a corpse, a recorded voice and an independent person remain different things. Coercion is not consent or friendship, private observations are not omniscience, and a source's magical exception cannot bypass trusted engine authority or the development save policy. These constraints govern implementation without making every related supporting feature urgent.
 
-## October 18 selected design connections
+## Selected design connections
 
 The next selected designs use the ordinary supported world before adding another magical tradition. [DG12](../projects/world-creation-tech-design.md) requires an actually installed family/interface for every transferred method; a magical name, apparent similarity or compatible-looking number cannot install a new effect. MG-074's finite borrowed help and MG-291's distinction between a working trace and an independent maker are useful design cautions for future magical reuse: a record of a method is not the person, their memories or their consent.
 

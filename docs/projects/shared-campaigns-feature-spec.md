@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                       | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Selected local Ash Road design is complete; implementation and real-player qualification remain open, with advertised service and federation deferred. | 2026-10-18   |
+| In progress | Selected local Ash Road design is complete; implementation and real-player qualification remain open, with advertised service and federation deferred. | 2026-10-19   |
 
 ## 1. The Ash Road: something worth doing before the battle
 
@@ -14,11 +14,11 @@ Inside are physical methods for a bow made from the relay's springwood yoke and 
 
 The player can keep a scarce component, make something useful, give someone else a better chance, leave the machine dormant, start its one limited attempt, or prevent it entirely. The return crosses the actual changed place. Someone who did not join may later use the reopened road. The finished machine stays finished; no replacement boss, new yoke or reward-reset appears to restore the intended spectacle.
 
-## 2. Scope, source authority and what this design changes
+## 2. Scope and source authority
 
-This owner develops the accepted [shared-campaign direction](../product-scalability/shared-campaigns.md) through one substantial local expedition. The [technical design](shared-campaigns-tech-design.md) and [world profile](../worlds/base/shared-campaigns.md) now resolve installation, exact geography, native gate/shutter interfaces, useful finite salvage, resident beginnings, ordinary callers, timing, authority, save/load and work bounds. This is design completion, not runtime delivery or measured enjoyment.
+This owner develops the accepted [shared-campaign direction](../product-scalability/shared-campaigns.md) through one substantial local expedition. The [technical design](shared-campaigns-tech-design.md) owns implementation, and the [world profile](../worlds/base/shared-campaigns.md) owns geography, people, materials and tuning. Runtime delivery and measured enjoyment remain open in PS07.
 
-The October 18 selection changes the former proposal in four concrete ways: local initiation is an ordinary reached action with no campaign administrator; the authored place has an exact eastern map addition and useful real alternate routes; compatible tools need a positive fitted-drive interface; and the two finite yokes have an actual pinned production/use path. The existing 24-hour-notice service remains in sections 5, 7 and 9 as **separately deferred scope**, with its broader economics and expansion in sections 11–12. Those proposals are not current local prerequisites or adopted release terms.
+Local initiation is an ordinary reached action. The useful outing depends on actual alternate routes, tools that fit a supported mechanism and springwood that can become a working bow. The 24-hour-notice service in sections 5, 7 and 9 is **separately deferred scope**, with broader economics and expansion in sections 11–12. Its staffing, schedules and reservations are not local prerequisites or adopted release terms.
 
 The first playable already designs survival, known elementary making, camps and damageable/sliding gates, small cooperation, wildlife and meaningful roaming. This feature consumes those owners instead of relabeling their work as a new adventure. Existing tactical combat remains its own designed implementation program. This selection adds no general damaging siege, NPC army, institution, compulsory alliance, currency, durable commission service, unattended community or cross-world campaign authority.
 
@@ -54,13 +54,23 @@ The second relay releases its own exact yoke. The physical case holds the exact 
 
 Source/target signals are narrowly mechanical. Their physical connection is authored and inspectable, not a universal world-state subscription or telepathic report. An individual learns from actual permitted inspection, witness or communication through the existing personal evidence path.
 
+### 3.4 A worthwhile trip after learning the route
+
+The place must still support an interesting choice when a player knows the route and has read a guide. A first visitor may want a bow, a scarce component, a look at the old mechanism or an encounter with its neighbors. Someone already equipped may care more about a dependable crossing or helping a particular person. The game does not withhold an ordinary tool, hide a known control again or require paid invention to preserve a puzzle.
+
+Opening both road gates creates the shortcut immediately. A gate or shutter left open stays at that actual endpoint until someone changes it; no return visit repeats the work automatically. Disconnection adds prevention and a material choice, rather than being a compulsory extra step before passage. The turning bar remains usable afterward, and the old sling retains its own available ammunition and suitable targets. New discoveries need not invalidate earlier useful preparation.
+
+A small contribution is a legitimate stopping point: open a gate, detach one yoke, learn a surviving method, share current route information, or leave a useful object with someone who accepts it. On a later visit, ordinary company, an intended exchange, a remaining discovery or the shorter route should provide the reason to return. Inspecting an exhausted site may instead give enough information to leave. Emptying its finite case is not a repeatable task, and completion creates no obligation to revisit.
+
+Qualification separates three situations: a newcomer discovering the place, a player who knows its solution and comes for a wanted result, and a later arrival after someone else has taken the salvage. In each, retain the actual stock and history and compare the complete activity with that person's known alternatives. The test is whether choosing, executing or sharing the result is worthwhile, including preparation, reading, waiting, stopping and the journey home.
+
 ## 4. One operation, genuine prevention and an ending
 
 ### 4.1 What the Warden can actually do
 
 The Warden is one **nonliving** supported body with one charge and one purpose: close at most one open connected road gate. It has no health/hunger façade, paid mind, hidden second body, player-harm operation or autonomous strategist. Its optional local Start is a deliberately chosen reached action under an exact current operation grant. It requires neither a public announcement nor an operator standing by. The player sees the one-closure consequence and prevention/shutdown alternatives before starting.
 
-At launch it selects the shortest complete current route to a reachable open connected gate; the world profile supplies a west tie-break. The chosen target stays fixed. It spends the charge once and moves at 0.011 m per game second within 3,600 total game seconds, including 120 seconds to close. The unobstructed authored route to the parked leaf’s reached inside handle is about 9.22 m, giving about 15.97 real seconds through closure at normal speed. Its bounded native actuator must pass the ordinary gate-use reach and sweep checks; the machine acquires no general human capability. This is a brief optional mechanical confrontation; neither a two-hour battle nor a guarantee of spectacle is implied.
+At launch it selects the shortest complete current route to a reachable open connected gate; the world profile supplies a west tie-break. The chosen target stays fixed. It spends the charge once and moves at 0.011 m per game second within 3,600 total game seconds, including 120 seconds to close. The unobstructed authored route to the parked leaf’s reached inside handle is about 9.22 m, giving about 15.97 real seconds through closure at normal speed. Its bounded native actuator must pass the ordinary gate-use reach and sweep checks; the machine acquires no general human capability. Starting it offers a brief chance to watch, understand or interrupt a working machine. It supplies no prize or progress unavailable through preparation and prevention; a substantial battle is outside this local scope.
 
 The Warden obeys actual water, supports, walls, bodies and current gate geometry. Physical obstruction can use up its remaining time. If the selected relay is severed, the target is closed or removed, or the required current operation grant is withdrawn, it ends spent at its actual position. It does not retarget the other gate, recover its charge, shove someone or teleport around a blockage. A required navigation/storage failure is an operational hold and cannot be passed off as elapsed fictional travel.
 
@@ -76,7 +86,7 @@ The player may prevent the operation entirely, stop it after movement, let one g
 
 ## 5. Forecasts that can change without lying
 
-**Deferred advertised-service proposal.** This section preserves the previously reviewed service scope and values. It is not a local Ash Road prerequisite, adopted release term or implemented service. The complete local operation follows sections 3–4 and the paired technical design.
+**Deferred advertised-service proposal.** These service arrangements need their own selection and qualification. The complete local operation follows sections 3–4 and the paired technical design, without scheduling or staffing prerequisites.
 
 ### 5.1 Two kinds of time, displayed separately
 
@@ -145,7 +155,7 @@ Preparation can change the route and make a useful tool even if the machine neve
 
 ## 7. Capacity, readiness and fair access
 
-**Deferred advertised-service proposal.** This section preserves the previously reviewed service scope and values. It is not a local Ash Road prerequisite, adopted release term or implemented service. The complete local operation follows sections 3–4 and the paired technical design.
+**Deferred advertised-service proposal.** These service arrangements need their own selection and qualification. The complete local operation follows sections 3–4 and the paired technical design, without scheduling or staffing prerequisites.
 
 ### 7.1 Announce only an actual service envelope
 
@@ -197,7 +207,7 @@ There are no campaign points, last-hit privilege, attendance streak, mandatory d
 
 ## 9. A host can operate this without becoming its full-time director
 
-**Deferred advertised-service proposal.** This section preserves the previously reviewed service scope and values. It is not a local Ash Road prerequisite, adopted release term or implemented service. The complete local operation follows sections 3–4 and the paired technical design.
+**Deferred advertised-service proposal.** These service arrangements need their own selection and qualification. The complete local operation follows sections 3–4 and the paired technical design, without scheduling or staffing prerequisites.
 
 The host first selects the optional authored profile in an appropriate supported world, checks that its actual map has two useful communities/routes, and verifies the named fixtures, public-state policy, finite objects and nonlethal boundaries. Existing worlds are not silently reseeded. Installing content does not grant account access, manufacture people or retrofit hidden narrative history. Nessa and Orrin require deliberate lawful authoring if they are new residents.
 
@@ -293,13 +303,11 @@ AR01–AR25 define the implementation acceptance matrix. It includes both instal
 
 Real players must be able to discover a route, choose between genuinely different approaches, make a meaningful finite possession or relationship decision and understand the changed return. Compare the complete journey with the best actually known accessible alternative, including travel, gathering/making, reading, tool use and genuine provider delay. A 120-game-second mechanic alone is not a two-second user journey. Current first-playable Food lasts roughly nine real minutes from full while continuously running; ordinary preparation and meals must be feasible without a hidden new survival tax.
 
-Qualify local preparation/prevention and a deliberately launched Warden separately. If the machine adds little, retain the useful workshop, people, discovery and altered route before adding threat, grind or scheduling. A refused offer, a rival making the bow or a person preferring the long bank can be a coherent enjoyable outcome; successful completion need not equal the author's preferred story. Actual independent character behavior, technical correctness, user comprehension/enjoyment and full cost remain distinct evidence. This documentation pass ran no runtime, paid-model, game or player tests.
+Qualify local preparation/prevention and a deliberately launched Warden separately. If the machine adds little, retain the useful workshop, people, discovery and altered route before adding threat, grind or scheduling. A refused offer, a rival making the bow or a person preferring the long bank can be a coherent enjoyable outcome; successful completion need not equal the author's preferred story. Actual independent character behavior, technical correctness, user comprehension/enjoyment and full cost remain distinct evidence. Include the newcomer, familiar-route and later-arrival situations in §3.4; a solved first encounter alone does not qualify repeat play.
 
 ## 14. Research and the choices it informs
 
-**Retained research baseline.** The twelve official-source observations below were independently reviewed in the earlier proposal. This documentation change preserves them as historical design evidence; it performs no fresh product/entitlement lookup and draws no new current-service claim from them.
-
-These twelve primary records were retrieved on **2026-10-09 UTC**. Observations describe what the named developer published; inferences are Open Legend recommendations. Historical announcements do not establish current balance or measured enjoyment. No foreign event price, reward rate, population cap or schedule becomes an Open Legend rule by citation.
+These twelve official-source records were retrieved on **2026-10-09 UTC** and remain historical design evidence. Observations describe what the named developer published; inferences are Open Legend recommendations. Historical announcements do not establish current balance or measured enjoyment. No foreign event price, reward rate, population cap or schedule becomes an Open Legend rule by citation.
 
 ### SC-R01 — Difficulty and admission are different problems
 
@@ -421,15 +429,15 @@ These twelve primary records were retrieved on **2026-10-09 UTC**. Observations 
 
 **Access/status:** Historical official article read through the developer feed. Inaccessible direct campaign/Galnet pages support no claim. This is not verification of current entitlements or evidence that forcing upgrades improves enjoyment.
 
-## 15. Final critique and selected cuts
+## 15. Product risks and expansion boundaries
 
-The October 18 design resolves the previous open geography, tool and salvage gaps. A tiny empty corner of Main would have offered only a few metres of shortcut, so the selected addition uses an actual flooded cut, checked short crossing and always available initial bank route. Fresh Main remains a smaller option; existing-world extension refuses incompatibility without sacrificing prior work. The workshop rewards include exact useful methods and real finite components, with a rival's independent stake.
+The flooded cut, short crossing and initial bank route give the workshop a place in an actual journey. Ordinary Main remains a smaller option, and an incompatible existing-world extension leaves prior work intact. The workshop's finite components and methods matter when they support a wanted use, an exchange or another person's independent ambition; novelty alone does not establish their value.
 
-The Warden remains deliberately modest and nonliving. At the authored clear-route distance it may finish in about sixteen real seconds, and prevention may be more interesting than activating it. A public twenty-four-hour announcement and staffed two-hour window are therefore **deferred**, not imposed on local players. Turning that burden into a release prerequisite would make the service larger than the adventure. The accepted broader campaign ambition survives in its separate scope; the local feature can complete first.
+The Warden remains deliberately modest and nonliving. At the authored clear-route distance it may finish in about sixteen real seconds, and prevention may be more interesting than activating it. A public twenty-four-hour announcement and staffed two-hour window are therefore **deferred**, not imposed on local players. Turning that burden into a release prerequisite would make the service larger than the adventure. The broader campaign ambition remains separately scoped, so the local feature can complete first.
 
 The chosen manual-drive seam uses a positive fitted tool and exact linear work/sweep with real hands and space. It refuses unimplemented rotary physics and generic rigidity as substitute evidence. This is a concrete interface to extend when a wanted new mechanism needs it; it is not an assertion that arbitrary inventions now work. Library use is optional and cannot make an incompatible family executable.
 
-The remaining selected risks require evidence: are the places worth revisiting, does the bow improve this person's real choices, do independent residents create worthwhile negotiation or competition, do the controls fit the running clock, and does the optional machine add pleasure? The response to weak value is to improve or simplify the local experience, not to force gratitude, manufacture a prize shortage, refill a unique component, teleport a target or spawn a replacement boss. Later public service, intelligent damaging opposition, cross-world outcomes and commission administration need their own actual consumer and qualified authority/cost contracts.
+Qualification must establish whether the places are worth revisiting, the bow improves this person's choices, independent residents create worthwhile negotiation or competition, the controls fit the running clock, and the optional machine adds pleasure. The response to weak value is to improve or simplify the local experience, not to force gratitude, manufacture a prize shortage, refill a unique component, teleport a target or spawn a replacement boss. Later public service, intelligent damaging opposition, cross-world outcomes and commission administration need their own actual consumer and qualified authority/cost contracts.
 
 ## Maintained records
 
@@ -438,6 +446,7 @@ The remaining selected risks require evidence: are the places worth revisiting, 
 - Accepted broader direction: [Shared campaigns, local sieges and canonical adversaries](../product-scalability/shared-campaigns.md); [worlds and belonging](../product-scalability/worlds-and-belonging.md).
 - Delivery and evidence: [PS07.1–PS07.7](../maintainers/product-scalability.md#dg34--linked-local-campaign-opportunities), [PS08](../maintainers/product-scalability.md#ps08--broader-experience-and-scale-qualification), and [AR01–AR25](shared-campaigns-tech-design.md#required-cases).
 - Selected local limits and explicitly deferred service choices: [PS-L42–PS-L49](../limits/product-scalability.md#ps-l42--first-finite-campaign); broader PS-D05 remains in the [central decision register](../../archive/05-project/open-decisions.md#product-scalability-integration-choices).
+- Player-facing wording: [shared language standard](../ui-ux/player-facing-language.md), applied to the actual recipient and permitted facts.
 - Shared consumers: [first playable](first-playable-world-tech-design.md), [SH camp geometry](editable-shelters-tech-design.md#11-first-playable-camp-construction-and-defense), [physical production-method records](../knowledge.md#physical-production-method-records), [simulation time](../simulation-time.md), [save/load](../save-and-load.md) and [engine/world boundaries](../engine-and-world-boundaries.md).
 - Separate proposals: [DG29 travel](participants-and-world-travel-feature-spec.md), [DG25 restoration](corrections-and-shared-restoration-feature-spec.md), [DG17 continuing lives](continuing-lives-feature-spec.md), [DG18 scenes](attention-and-scenes-feature-spec.md), [DG22 agreements](durable-agreements-feature-spec.md) and [DG27 offers](customer-and-supporter-offers-feature-spec.md).
 - Queue scope: [DG34 — Shared campaigns with local opportunities](../maintainers/needs-design.md#dg34--shared-campaigns-with-local-opportunities).

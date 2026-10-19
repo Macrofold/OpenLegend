@@ -669,7 +669,7 @@ The found weapon worth restoring (AD-107) is Complete because the quest delivers
 
 Richer personal obligations, extensive memory models, detailed institutional consequences, evolving ecology and wider campaign settlements deepen a smaller already-playable version. A specific remembered encounter or independent preference can matter early. Shared-dream journeys, changing laws of space or time, alien body-sharing and specialist modern or adult-life scenarios remain available as Specialist proposals. Their source-world recommendations and descriptions are preserved; a priority is not a claim that the base world has adopted their lore or mechanics.
 
-## October 18 selected design connections
+## Selected design connections
 
 The [Ash Road design](../projects/shared-campaigns-feature-spec.md) is the selected larger expedition after the already-designed opening routes. AD-125's rival who can share something useful, AD-228's crossing others really use, AD-233's one finite prize and AD-271's alternative recipe point towards destinations where preparation changes the available approach and the result lasts. A real route/tool/record is preferable to a quest flag that merely announces ingenuity. These connections select useful principles; they do not add a rival, public fast travel or a new prize to Ash Road without its world-owned contract.
 

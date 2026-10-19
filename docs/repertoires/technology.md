@@ -638,7 +638,7 @@ More elaborate mechanisms and bounded fictional materials follow as Depth. Much 
 
 The SC proposal's no-piloting and abstract-journey boundaries remain intact. Blueprint descriptions do not supply matter, authority or trusted execution. Measurements remain limited to actual channels and evidence; correct controls, private access and finite resources stay mandatory when a device is selected. These are fictional game-design priorities, not real construction, medical or technical performance claims.
 
-## October 18 selected design connections
+## Selected design connections
 
 TE-110's compatible modular connection, TE-116's reversible assembly and TE-202's manual fallback make a useful test for [Ash Road's selected physical mechanisms](../projects/shared-campaigns-feature-spec.md): an ordinary tool or admitted compatible invention should operate a real interface, and a disconnection should change an actual mechanical possibility. A name/key check or generic rigid-material tag is not proof of fit, load or clearance. The expedition's world profile owns its selected fixture interface and finite operation; this connection does not imply a general machinery solver, industrial network or repair profession.
 

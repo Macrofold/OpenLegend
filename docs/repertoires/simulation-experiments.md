@@ -777,7 +777,7 @@ Specialist covers dedicated psychological, institutional, ecological and compara
 
 SIM-180 and other revision, import or restoration experiments do not override the [development save policy](../../AGENTS.md#development-save-policy). This catalogue authorizes neither legacy compatibility nor live-data replacement. Fictional institutional comparisons are model explorations, not rankings or recommendations about real politics. The source interpretation boundary continues to apply to psychology, medicine, ecology and engineering as well.
 
-## October 18 selected design connections
+## Selected design connections
 
 SIM-084's copied steps versus a reusable relation, SIM-241's real learning conditions, SIM-244's document information versus entitlement and SIM-267's threat that actually ends supply focused qualification cases for the [next three designs](../projects/completed/next-three-gameplay-design-plan.md). For [DG12](../projects/world-creation-tech-design.md), separately observe retention, definition installation, exact record learning, material debit, manufacturing and a useful action; do not treat a library card or equivalent output as proof of each preceding event. For [Ash Road](../projects/shared-campaigns-feature-spec.md), compare actual alternative approaches and lasting world outcomes, not only a triggered quest-success flag.
 

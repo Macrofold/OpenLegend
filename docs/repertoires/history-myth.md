@@ -562,7 +562,7 @@ The defense that really succeeded (HMY053), a tyrant's genuine defeat (HMY088), 
 
 Signed repairs (HMY015), maintenance-credit reconstruction (HMY043), the return ledger (HMY217), summiter contribution records (HMY219), homecomings dated by repairs (HMY225) and inherited fuel tallies (HMY254) are Detail. Their small authored form need not be complex. Deeply layered family and civic interpretations follow as Depth; alternate timelines, copied towns and setting-specific industrial or alien histories remain Specialist. Historical authored rulesets are not permission to add legacy runtime compatibility. Source attribution, disclosure boundaries and the distinction between observed events and later interpretation remain intact.
 
-## October 18 selected design connections
+## Selected design connections
 
 HMY044's failed prototype with a new present use and HMY238's apprentice returning with their own useful work support [DG12's retained method and independent reuse](../projects/world-creation-feature-spec.md#15-dg12-expansion--a-useful-invention-follows-its-creator). Keep the exact earlier design and actual inventor/contribution separate from a later adaptation, learner or imported equivalent. A new use can be the discovery: the player need not find a more powerful version every time. A method sheet exposes its permitted method, not a fictional maker's private life or an omniscient account of its journey.
 

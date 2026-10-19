@@ -774,7 +774,7 @@ The first-matching-rule inspector (ACR-257) is Complete, not a requirement to bu
 
 Privacy, authority, independent participation, actual resource accounting and isolated rehearsals remain mandatory whenever the corresponding capability is selected. An optional platform feature's later score never authorizes incorrect behavior. These ranks choose fictional gameplay and authoring possibilities, not real-world autonomy, spending or access permissions.
 
-## October 18 selected design connections
+## Selected design connections
 
 The selected three designs use ACR-098's teachable operator method, ACR-177's finished project that becomes ordinary life, ACR-197's finite opposing installation and ACR-241's goal distinct from mandatory choreography. [Useful invention reuse](../projects/world-creation-tech-design.md) retains a real method and lets a person independently learn a physical sheet; [experience-shaped people](../projects/experience-shaped-characters-feature-spec.md) retains revisable personal consequences; [Ash Road](../projects/shared-campaigns-feature-spec.md) supplies a larger literal destination and preventable finite operation. These are complete selected designs, not delivered behaviour or scripted evidence of fun.
 

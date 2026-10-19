@@ -886,7 +886,7 @@ Industrial flow elaboration, nuanced relationships, causal composition and creat
 
 Peaceful creation and performance retain real value: appearance can be the reward, calm can be a successful outcome, and players may perform a solved routine personally for pleasure. The priority change removes compulsory busyness, not those activities. Privacy, authority, independent participation, cancellation and accounting remain requirements whenever a selected feature relies on them, regardless of the score of a particular optional elaboration.
 
-## October 18 selected design connections
+## Selected design connections
 
 MEC-182's demonstrated routine, MEC-186's retained interesting choices and MEC-280's separation of instructions, tools and authority guide [useful invention reuse](../projects/world-creation-tech-design.md). A retained recipe can be installed without generation, but its local knowledge, inputs, manufacturing and eventual purpose remain real separate facts. A maker-written method sheet creates a finite opportunity for another person's own learn/use choice; no new automatic copying or goal controller is implied.
 

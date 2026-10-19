@@ -647,7 +647,7 @@ Kitchen precision, load-packing judgment, darning, household scheduling, tool-ed
 
 Broader social fluency, generalized adaptive practice, specialized curricula and detailed careers remain Depth; selected practical teaching and witnessed rival study can be Complete. No refusal, boundary or control right depends on a character having learned a social skill. Other bodies, dream curricula, transferred skills and new magical schools remain Specialist; Level D is not itself the reason for a low gameplay priority. The ranking does not adopt any particular class system, spell tradition, biological law or skill-decay rule as current runtime behavior.
 
-## October 18 selected design connections
+## Selected design connections
 
 [DG12's selected reuse and sharing design](../projects/world-creation-feature-spec.md#15-dg12-expansion--a-useful-invention-follows-its-creator) applies AP-092's useful material substitution, AP-100's inspectable method and AP-207's peer with their own methods to an actual retained recipe, deliberate adaptation and physical method sheet. It preserves AP-202's distinction between possessing a record and acquiring a method: the selected existing native record action teaches one exact recipe only after the actor's own eligible inspection/choice. Account import grants no technique, proficiency, ingredient or compulsory use.
 
