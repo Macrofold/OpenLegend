@@ -60,22 +60,80 @@ Do not use a hidden client 'hit=true', retargeting, automatic prediction, extra 
 
 ## The chosen noncombat proof: fitted woven container
 
-The [existing woven-container recipe family](camp-containers.md) makes a real individual pouch/bag with capacity **four packing-load units per compatible pouch-material unit**; it also requires actual binding material and the family's actual labor. A current six-unit pouch yields a normal base **24** capacity. Recipe, input quantities, stock, knowledge and native work are still ordinary prerequisites.
+This section owns the selected first-slice fitting defaults. They are a complete implementation/playtest proposal, not implemented behavior or measured proof that the exercise is enjoyable. The [camp-container family](camp-containers.md) continues to own material compatibility, quantities, binding, ordinary capacity, empty load and labor. The [technical design](../../projects/action-execution-and-skill-expression-tech-design.md#4-noncombat-proof-quality-sensitive-woven-container) owns action, exact-item, save and transfer integration.
 
-**Normal craft remains fully functional.** An admitted known woven method can optionally expose **Finish carefully**. During the same finite craft the player sees a workpiece guide and chooses an alignment point for a seam/fastening location. **The player decides before starting whether to make an ordinary bag or to finish it carefully.** A careful craft that finishes its normal material work before hand-finishing simply waits in an explicit **Ready to finish** work state; the world and other residents do not pause. The player may finish with a bounded fitting input, choose ordinary neutral completion, or cancel. A retained workpiece is never silently made excellent/ordinary due to server speed or disconnection. Actual injury/physical interruption and retained spent materials still apply. This is **a placement/fit exercise**, rather than the combat concentric release ring. Actual material/recipe and possible setup determine the visible fitting problem; the selected world accepts one finite committed choice. The native craft still produces one bag, only at ordinary successful work completion; no input grants an extra bag, saves resources, cancels work costs or upgrades an already manufactured bag.
+### Ordinary material work and the optional finish
 
-The world's initially proposed continuous property is **fit**, whose actual supported effect is a change to the *individual container's effective carrying capacity*. Candidates for playtest:
+Only an already admitted and learned woven-container method with exact installed `pouch-fit` support exposes **Finish carefully**. It requires the family's real flexible material and binding; this initial family adds no tool or station requirement. Ordinary **Craft** produces its normal useful individual pouch automatically. The player selects ordinary or careful work before starting and sees that materials are consumed at the start. Cancel or genuine native interruption after that point retains the ordinary loss of those materials and produces no pouch.
 
-| Finish quality | Proposed relative fit | Base 24 pouch example |
-| --- | --- | --- |
-| Normal craft / accessible neutral | 1.00 | 24 units |
-| Excellent optional fit | Up to 1.25 | Up to 30 units |
-| Poor optional fit | Not below 0.90 | At least 22 units, using `round` |
-| Selected categorical display | Optional `roughly fitted` / `ordinary` / `well fitted` derived from effective fit | Grade isn't separately stored or authoritative |
+Careful work accepts one placement while the normal labor proceeds. If labor ends first, that same action waits at **Ready to finish** for one placement, **Finish normally**, or Cancel. The actor stays occupied while the rest of the world continues. Finishing never charges materials twice or creates an item before both work and the selected finishing choice permit completion. Same-version restore retains that action when it has not been interrupted; genuine departure cannot leave a craft to resurrect on reconnect. There is no separate transferable unfinished workpiece.
 
-The numerical factor is captured **on that individual finished object** through the object/containment owner. Its actual permitted capacity, occupied load, available space and inventory interactions use the same effective value. It survives ordinary custody, storage, repair limitations, transfer, death-drop and same-version restore, with exact provenance and current perception. An invented bag of another admitted size still uses its own `4p` base. Two pouches do not merge simply because their invented names and material families match. A player must be able to inspect the real effect and decide whether six extra units are useful for a trip; without that payoff, hand-finishing is not a required game feature.
+### Exact visible fixture and score
 
-**Flexible option C is selected:** world families may express meaningful **continuous qualities and optional derived grades**, or deliberately use discrete family-owned qualities. There is **no required universal quality tier, durability or scalar on all items**. A future sharper sword, watertight container or ornamental finish needs a separately supported native property/consumer, not copying this pouch's capacity rule into generic infrastructure.
+Let `p` be the actual admitted quantity of pouch material, an integer from 2 through 8, and let `b = ceil(p/2)` be the binding quantity required by this family. Preparation takes these role quantities from the successful material selection before debit. The greatest supported recipe uses twelve input units, so its exact consumed-input snapshot needs at most twelve positive-quantity contributing lots. Material names or item IDs do not manufacture texture, grain or strength that the current material definitions do not possess.
+
+Use a normalized square workpiece with coordinates in `[0,1]²`. Define:
+
+\[
+a=(p-2)/6,\qquad z=(b-1)/3,
+\]
+
+\[
+A=(0.20+0.20a,\;0.25),\qquad B=(0.75,\;0.35+0.35z),
+\]
+
+\[
+g=\bigl((2p+53)/120,\;(7b+29)/120\bigr)=(A+B)/2.
+\]
+
+Show seam reference marks `A` and `B` and the instruction **Place the shared fastening halfway between the two marks**. Show the player's marker, but no pre-drawn perfect-answer dot or continuously revealed score. Both marks and their relationship are disclosed; `g` is the server-derived midpoint, never a client-chosen target or hidden random answer. Equal admitted role quantities and material capabilities produce the same fixture despite different names or identities. A later material-specific fixture requires a real supported native material property and pinned rule.
+
+Pointer, touch and keyboard routes position the same marker in these local coordinates; browser pixels and viewport scale do not change scoring. The marker starts at the frame center. Keyboard movement uses one 120th of the frame as its fine step and ten 120ths as its coarse step, clamps to the frame edges and commits through the same input owner. Retain integer step positions from the initial `(60,60)` and normalize by 120 when submitting, so every authored midpoint is reachable without floating-step drift or snapping to a winning point. Pointer/touch placement may use free finite local coordinates. Both routes permit the same maximum effective capacity without numeric coordinate entry. Accept one finite in-range `(u,v)`, and define:
+
+\[
+d=\operatorname{hypot}(u-g_u,\;v-g_v),\qquad
+s(d)=
+\begin{cases}
+1-d/0.08 & 0\le d\le0.08,\\
+0 & 0.08<d\le0.20,\\
+-\min(1,(d-0.20)/0.50) & d>0.20.
+\end{cases}
+\]
+
+The score is continuous and bounded in `[-1,1]`. The `0.50` constant is an authored penalty-tail width, not the square's maximum diagonal distance; the negative result saturates at `d ≥ 0.70`. **Finish normally** is exactly `s = 0` and carries no coordinates. The server evaluates the first accepted choice once under this pinned profile. The single visible alignment exercise is a trial of a distinct input family; its complete rules do not establish that repeating it will be meaningful to a player.
+
+### Fit factor, integer capacity and initial bounds
+
+The initial continuous factor and actual positive-integer capacity are:
+
+\[
+f=1+0.25\max(s,0)+0.10\min(s,0),\qquad
+C=\lfloor 4p\,f+0.5\rfloor.
+\]
+
+The ordinary base is the family's existing `4p`. The factor is in `[0.90,1.25]` before integer rounding, and neutral work has factor one. Apply the rounding once to the product; do not round the score/factor first or clamp the result at the ordinary family's maximum capacity. The chosen family bounds yield actual fitted capacities from 7 through 40 packing-load units, compared with ordinary capacities from 8 through 32. These are derived bounds for this family, not a global item limit.
+
+| Pouch-material units | Poor endpoint | Ordinary / Finish normally | Best endpoint |
+| --- | --- | --- | --- |
+| 2 | 7 | 8 | 10 |
+| 3 | 11 | 12 | 15 |
+| 4 | 14 | 16 | 20 |
+| 5 | 18 | 20 | 25 |
+| 6 | 22 | 24 | 30 |
+| 7 | 25 | 28 | 35 |
+| 8 | 29 | 32 | 40 |
+
+For the six-unit pouch, `24 × 0.90 = 21.6` rounds to 22, and the best fit gives 30. The factor bound is not a promise of at most ten percent loss in the rounded capacity: an eight-unit capacity becoming seven loses one eighth. A small positive score may still give the ordinary integer capacity. **Select no categorical grade initially.** Show actual capacity; do not call an unchanged result an improvement merely because its unrounded score was positive. Optional future descriptive grades must have exact world-owned meanings tied to observable effective properties.
+
+### Useful kit, lasting individual result and qualification
+
+Stamp the admitted factor on the one completed individual pouch through the existing object owner. Every packing check, permitted inspection, item comparison and disclosed trade term uses that same effective capacity. Ordinary recipe facts continue to state the base result. Custody, nested storage, death-drop and same-version restore preserve the item and its capacity; two bags do not merge because their material or invented name matches. Public capacity does not disclose hidden contents, private performance or learned recipe knowledge.
+
+Actors currently have no finite carrying-load limit. The intended benefit is a larger kit held and moved as one item, and acceptance must compare that use with an ordinary pouch and direct carrying. Nested storage still counts every contained item's load: a six-unit pouch fitted to 30 and filled to that capacity contributes 32 units, including its two-unit empty load, to an outer container. An ordinary eight-unit pouch with capacity 32 can contain that loaded inner pouch; an ordinary six-unit outer pouch with capacity 24 refuses it. Transfers preserve identities and either commit the full legal move or leave all objects in place.
+
+The initial bundled world has no native clothworking competence modifier, so ordinary human and resident manufacture uses neutral fit. An actually installed future craftsmanship rule may affect both through the same native creation owner; residents never submit fabricated pointer input or receive an automatic perfect score. Ordinary shared-play trade preserves fitted goods under the technical design's bounded noncompetitive trust policy. That policy does not establish adversarial input authenticity or complete competitive fairness.
+
+**Flexible option C remains selected:** families may supply useful continuous properties and optional derived grades, or a separately meaningful discrete property. There is no mandatory global quality tier, durability field or capacity effect on unrelated items. Qualify these defaults with an uncoached player making and moving a real kit. If the midpoint task becomes repetitive free capacity, or the extra room has no useful consequence, the playability/value gate fails and the first exercise needs revision before implementation acceptance.
 
 ## Residents, observers and inventions
 
