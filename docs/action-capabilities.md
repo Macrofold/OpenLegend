@@ -517,6 +517,8 @@ An ordinary transfer conserves the relevant quantity according to its family, bu
 
 Starting or configuring an existing automatic process is ordinary use if its accepted parameter envelope permits it. Defining new triggering/effect semantics belongs to INV. Process updates remain native/module-owned even when the initiating actor leaves, rests or dies, according to the process's lifetime policy. The action service cannot secretly disable passive combustion or growth when no actor is looking.
 
+**Selected Ash Road drive/operation consumer — designed, implementation open.** The [local technical design](projects/shared-campaigns-tech-design.md#5-physical-drive-ordinary-gates-and-material-alternatives) extends ordinary manipulation with a positive drive interface, exact kept tool, supported two-hand working pose, socket/stroke/leaf geometry and current use rights. Menu, inventory, typed, NPC and saved-activity callers consume the same admission. The finite nonliving operation uses a separately declared native actuator and exact linked target authority; it neither impersonates a human actor nor gains general device powers. Source severance, shutdown, endpoint effects and continuation use the existing native-work/receipt owners in the [selected phase order](projects/shared-campaigns-tech-design.md#6-finite-linked-operation-and-phase-order). This is a required extension under PS07, not a claim that current generic activation already supplies it.
+
 ## 13. Social actions, consent and joint work
 
 ### Communication versus consequences

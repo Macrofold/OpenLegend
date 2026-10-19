@@ -6,6 +6,10 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 
 [Integrated specification](../../projects/first-playable-world-feature-spec.md) · [layout](first-playable-layout.md) · [survival/recipes](first-playable-survival.md) · [natural camp](editable-shelters.md) · [people/cooperation](first-playable-people.md) · [roaming wildlife/people](first-playable-roaming.md). These selected additions are designed; the current implemented contracts below retain their stated evidence. [FPW](../../maintainers/first-playable-world.md) and [FPV](../../maintainers/first-playable-validation.md) coordinate delivery and acceptance.
 
+## Selected experiences after the first playable
+
+The [next-design record](../../projects/next-three-gameplay-design-plan.md) selects [invention reuse and physical method sheets](invention-reuse.md), [people changed by living](experience-shaped-characters.md) and [local Ash Road expeditions](shared-campaigns.md). Their feature/technical pairs are complete; LIB, EC01–EC04 and the selected PS07 local stages own implementation and qualification. The existing Main first-playable definition remains its own prerequisite. Ash Road is an explicit optional eastern addition, not a silent change to ordinary Main or every created world. These profiles preserve distinct authoring, actual character knowledge and independent choices.
+
 ## Mechanics
 
 - [Starting wilderness, terrain and population](landscape.md)
@@ -19,6 +23,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Light canopies and useful shelter](editable-shelters.md) — implemented flat one/two-bay canopies, a single-bay lean-to, reversible work and nonpunitive moisture; wider homes and scale qualification remain open.
 - [Sling handling, practice and coaching](practical-competence.md) — implemented finite competence gain, real quiet practice and voluntary instruction; [PC04’s delayed-shot observation repair](../../maintainers/practical-competence.md#pc04--voluntary-coaching), human appreciation and broader stat proposals remain open.
 - [Manufactured cordage](items.md#cordage-manufacture-and-reuse) supplies the delivered binding-material family and verified container reuse; this does not imply unrestricted invented-input composition.
+- [Useful inventions and physical method sheets](invention-reuse.md) — selected DG12/LIB design for a knowledgeable maker's finite written record and another person's deliberate learning/use; operational library admission grants no object or character knowledge. Implementation and useful round-trip evidence remain open.
 - [Optional connection-study outing](connection-study-outing.md) — proposed finite study-world preparation and ordinary self-care; no study operation or ordinary-world reset is authorized.
 - [Sleep and waking](sleep.md)
 - [Body, senses and survival](survival.md)
@@ -39,8 +44,8 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Generations and family life](generations-and-family-life.md) — DG31's proposed adult-family visit, age continuity and childhood/care design, completed after Mike's adult-audience and non-explicit-presentation choice; mechanical adoption, technical delivery and qualification remain open.
 - [Shared equipment and institutions](shared-equipment-and-institutions.md) — DG32's optional useful bow loan, willing keeper and real return, with separate optional security; no currency or compulsory membership.
 - [Extraordinary minds and life after death](extraordinary-minds-and-afterlife.md) — DG33's separately selected willing spirit, finite ordinary revival and deliberate telepathic messages; these are proposed families, with existing identity, knowledge and human protection intact.
-- [The Ash Road campaign](shared-campaigns.md) — DG34's proposed two-site route problem, finite shared power, optional forecast operation and actual aftermath; no new harm, unattended service or mass-capacity claim.
-- [A resident revises an outlook](experience-shaped-characters.md) — DG23's proposed specific revisable understanding and later voluntary conduct; current reflection is reused, while dreams and older coarsening remain optional.
+- [The Ash Road expedition](shared-campaigns.md) — completed selected DG34 local design for an optional eastern addition, useful alternate routes, finite salvage and one preventable nonliving operation. Implementation/qualification remain open; advertised service and cross-world fronts are deferred.
+- [A resident revises an outlook](experience-shaped-characters.md) — completed selected DG23/EC01–EC04 design for particular company, rivalry, solitary pleasure and older interpretation expressed in later independent conduct. Current owners are reused; implementation/quality remain open and EC05/EC06 dreams/coarsening stay deferred.
 - [A small wilderness commission](durable-agreements.md) — DG22’s proposed finite barter commission, exact later settlement and independently selected advance/association; no currency or new starting institution.
 - [Finite continuing communities](continuing-communities.md) — DG17's proposed current-clock supplies, horizon and actual food/rest pacing, following useful attended continuity; no overnight service is adopted.
 - [Heat and materials](heat-and-materials.md) — DG20's separately selectable human firing, material-fire, moisture and resident/food-fire activities, with finite sources and recovery; current cooking fires retain their existing behavior.

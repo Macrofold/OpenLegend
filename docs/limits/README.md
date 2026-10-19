@@ -4,6 +4,8 @@ A limit is a chosen restriction on capacity, access to supported features, selec
 
 The selected first-playable design has linked inventories for [shared integration](first-playable-world.md), [survival/making](first-playable-survival.md), [camp construction](editable-shelters.md), [cooperation](first-playable-cooperation.md) and [roaming](first-playable-roaming.md). Their authored numbers are selected starting values, with runtime/player qualification still open.
 
+The three selected subsequent designs use existing inventories: [WC-L06–WC-L12 and WC-L14–WC-L16](world-creation.md) for operational invention retention/reuse/free release and finite physical writing, [EC-L01–EC-L08](memory.md#ec-l01--existing-authored-capacity) for existing mind/context/source limits and selected longitudinal use, and [PS-L42–PS-L49](product-scalability.md#ps-l42--first-finite-campaign) for the local Ash Road installation/operation and separately deferred service envelope. These complete selected design, not runtime or capacity qualification; no parallel limit register is created.
+
 ## One owner per purpose
 
 The accepted [shared NPC text design](../projects/npc-speech-streaming-feature-spec.md) is inventoried in [NST-L01–NST-L09](npc-speech-streaming.md). Shared hearing, cognition, memory, response and HTTP/caption limits retain their existing owners; the new inventory distinguishes selected batching/presentation constraints from unmeasured multiplayer capacity.

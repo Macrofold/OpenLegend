@@ -126,6 +126,8 @@ A complete supplied candidate takes the direct validation path. Optional duplica
 
 A selected base stays pinned through clarification. Reusing it is not constructing it. A modification is a candidate or fork, not an in-place change to the base. Internal equivalent-result reuse preserves independent attribution and does not reveal private source methods.
 
+**Selected DG12 library consumer — designed, implementation open.** The [world-creation feature](projects/world-creation-feature-spec.md) and [technical counterpart](projects/world-creation-tech-design.md) specify same-operator retention, complete dependency/grant closure, exact destination binding and adaptation, install-only imported provenance, and one immutable eligible free release to a known account. [LIB01–LIB09](maintainers/invention-library.md) is the selected delivery owner beneath INV-8/EWF11. Reuse itself requires no generation; admission installs definitions without an inventor receipt, physical output or character knowledge. A [maker-written physical method sheet](worlds/base/invention-reuse.md) has its own real materials/work and permits another person's deliberate learning and independent later use. Existing creator Apply and live invention retain their distinct learning/attribution behavior. Broader pack terms, complete-world distributions and cross-operator trust remain separate.
+
 ### 5.2 Parallel work and paid speculation
 
 Mechanics and art are coordinated, not synchronized at every stage. Simple supported-family candidates normally complete mechanical admission before paid asset production. For a longer verified workflow, a stable candidate may permit a cheap speculative concept after basic policy/feasibility checks and explicit funding.
