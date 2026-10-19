@@ -71,7 +71,7 @@ For Open Legend, where a person actually works, performs, stops or moves out of 
 
 The [creative brief](../../../../art-direction/final-board/creative-brief.md), [current art decisions](../../../../art-direction/decisions.md), [3D pixel-art feature specification](../../../../docs/projects/3d-pixel-art-feature-spec.md) and [scene production workflow](../../../../docs/production-workflows/scenes-and-interfaces.md) already own the selected visual direction and production route. This pass strengthens their acceptance questions; it does not select a renderer or reopen the current believable-proportion requirement.
 
-Player interaction is separately owned by the UI handbook and action contracts. [ND38](../../../../docs/maintainers/needs-design.md#nd38--player-skill-during-action-execution) records the newly explicit design gap between choosing an action and skillfully executing it. Existing combat response design remains authoritative until a later scoped design is selected.
+Player interaction is separately owned by the UI handbook and action contracts. [ND38](../../../../docs/maintainers/needs-design.md#nd38--player-skill-during-action-execution) is **Done — designed**, with a [feature specification](../../../../docs/projects/action-execution-and-skill-expression-feature-spec.md) and [technical design](../../../../docs/projects/action-execution-and-skill-expression-tech-design.md) for optional timed combat and a distinct fitted-container finishing choice. [ASE01–ASE12](../../../../docs/maintainers/action-execution-and-skill-expression.md) owns implementation and player qualification. The combat-response design retains physical consequence, permission and autonomous-response ownership; the ND38 pair extends player execution without claiming delivered gameplay.
 
 ## Complete situations and cross-topic consequences
 
@@ -86,10 +86,11 @@ Player interaction is separately owned by the UI handbook and action contracts. 
 
 This is a one-source incorporation. Wider PRESENT research should compare games with very different budgets, cameras and action models before generalizing production cost or feedback intensity. Motion stability, ordinary-play readability and OpenLegend player enjoyment still require direct evidence.
 
-For action execution specifically, future design must separate the selected world's mechanics, character competence, human input skill, accessibility, client authority and multiplayer fairness. Sea of Stars does not answer those OpenLegend-specific contracts.
+For action execution specifically, the ND38 design separates the selected world's mechanics, character competence, human input skill, accessibility and client authority. Competitive input authenticity remains a deferred decision, and optional execution must still demonstrate a worthwhile choice after mastery. Sea of Stars supplies a comparison, not evidence that OpenLegend's selected timing or finishing interactions are enjoyable.
 
 ## Design subtopics
 
 | Subtopic ID | Intended experience and scope | Research lesson / evidence | Design register entry | Feature specification | Technical design |
 | --- | --- | --- | --- | --- | --- |
-| ND38 | Optional player skill during the execution of an already admitted action, without making every action a timing test. | PRESENT-L003 and the G178 combat/reception evidence. | [ND38](../../../../docs/maintainers/needs-design.md#nd38--player-skill-during-action-execution) | Not yet selected; create a pair only after the product scope/trust boundary is chosen. | Not yet selected. |
+| ND38 | Optional player skill during the execution of an already admitted action, without making every action a timing test. | PRESENT-L003 and the G178 combat/reception evidence. | [ND38 — Done, designed](../../../../docs/maintainers/needs-design.md#nd38--player-skill-during-action-execution) | [Skilled action execution](../../../../docs/projects/action-execution-and-skill-expression-feature-spec.md) | [Authoritative execution, physical contact and fitted items](../../../../docs/projects/action-execution-and-skill-expression-tech-design.md); implementation remains open in ASE. |
+
