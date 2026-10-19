@@ -38,9 +38,9 @@ The first bundled manual timing cue places a green/yellow shaded annular target 
 
 The player controls **when** to release; on pointer-down the same native preparation starts whether the player ultimately taps or holds. Releasing before native readiness retains only one captured release intention that resolves at earliest legal readiness; cancel stops it. These are first implementation values to test and retune through the single world owner. The world may install different timing profiles per weapon or another authorized noncombat family. The renderer reads this profile; it must not invent a second set of band widths, speed constants or weapon rules. Weapon expertise and conditions contribute only where supported; a world without these scores simply retains ordinary execution.
 
-## Weapon-specific consequences (candidate authoring envelope)
+## Weapon-specific consequences (selected initial testing profiles)
 
-All values below are **proposed initial relative scaling for an excellent score**. These are not current live weapon bonuses, guaranteed outcomes or fixed balance after playtesting. Baseline native statistics (including existing sling practice, applicable bodily conditions and equipped item) are evaluated once before manual scaling.
+All values below are **selected initial relative scaling for an excellent score**, still subject to actual playtesting and later authored retuning. These are not current live weapon bonuses, guaranteed outcomes or fixed balance after playtesting. Baseline native statistics (including existing sling practice, applicable bodily conditions and equipped item) are evaluated once before manual scaling.
 
 | Supported installed tool/technique | Excellent release could improve | Poor release could reduce | Unchanged reality |
 | --- | --- | --- | --- |
@@ -79,7 +79,7 @@ The numerical factor is captured **on that individual finished object** through 
 
 ## Residents, observers and inventions
 
-Autonomous characters have real competence, material supplies and chosen motives. They can make and use fitted pouches or aim weapons through ordinary native action/quality decisions, without fake pointer histories or automatic green rings. The resulting real object may enter exchange, favor, learning, memory, a new invention's inputs and consequences visible to others through existing world rules. Neither a skill-score result nor a crafted item grants every observer the maker's private biography or hidden technique.
+Autonomous characters have real competence, material supplies and chosen motives. They can make and use fitted pouches or aim weapons through ordinary native actions, without fake pointer histories or automatic green rings. **In the initial bundled world, ordinary resident woven-container craftsmanship yields neutral fit** because there is no installed clothwork proficiency; later worlds may select a real craft-competence contribution for both human and autonomous makers through the same quality owner. The resulting real object may enter exchange, favor, learning, memory, a new invention's inputs and consequences visible to others through existing world rules. Neither a skill-score result nor a crafted item grants every observer the maker's private biography or hidden technique.
 
 A player may invent a compatible woven-container method under the existing finite family; it inherits only the family's admitted optional fitting interface if the installed definition/parameters actually support it. Arbitrary generated effect names, labels like 'legendary' or unrestricted player-authored `+25% accuracy` do not create mechanics or bypass native review. Other installed worlds can omit the input family entirely, use other possible senses/body profiles or substitute their own quality meaning through qualified native operators.
 
