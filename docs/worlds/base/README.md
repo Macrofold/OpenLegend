@@ -8,7 +8,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 
 ## Selected experiences after the first playable
 
-The [next-design record](../../projects/completed/next-three-gameplay-design-plan.md) selects [invention reuse and physical method sheets](invention-reuse.md), [people changed by living](experience-shaped-characters.md) and [local Ash Road expeditions](shared-campaigns.md). Their feature/technical pairs are complete; LIB, EC01–EC04 and the selected PS07 local stages own implementation and qualification. The existing Main first-playable definition remains its own prerequisite. Ash Road is an explicit optional eastern addition, not a silent change to ordinary Main or every created world. These profiles preserve distinct authoring, actual character knowledge and independent choices.
+The [next gameplay designs](../../projects/completed/next-three-gameplay-design-plan.md) select [invention reuse and physical method sheets](invention-reuse.md), [people changed by living](experience-shaped-characters.md) and [local Ash Road expeditions](shared-campaigns.md). Their feature/technical pairs are complete; LIB, EC01–EC04 and the selected PS07 local stages own implementation and qualification. The existing Main first-playable definition remains its own prerequisite. Ash Road is an explicit optional eastern addition, not a silent change to ordinary Main or every created world. These profiles preserve distinct authoring, actual character knowledge and independent choices.
 
 ## Mechanics
 

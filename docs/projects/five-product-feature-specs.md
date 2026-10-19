@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                                                       | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Selected continuing-life, attention, shelter and DG12 invention-reuse technical designs are complete; their remaining implementation and qualification stay with the focused trackers. | 2026-10-18   |
+| In progress | Selected continuing-life, attention, shelter and DG12 invention-reuse technical designs are complete; their remaining implementation and qualification stay with the focused trackers. | 2026-10-19   |
 
 **Status: all five researched product proposals and the game-first critique complete, October 3, 2026. Wider technical design and runtime implementation remain open; PX05’s narrow shelter pair is now complete.**
 
@@ -10,7 +10,7 @@ The [groups 11–15 assignment](completed/product-design-groups-11-15.md) preser
 
 [PX05’s technical counterpart](editable-shelters-tech-design.md) separately completes the selected one-builder open-shelter contracts and paper arrangements. AV04 delivers the flat canopy/two-bay journey with [native, PostgreSQL and browser evidence](../verification/editable-shelters.md). Later selected slope and lean-to cases are also delivered within their recorded native/browser scope. [SH01–SH06](../maintainers/editable-shelters.md) retains broader terrain, home, structural, thermal and performance qualification under INV/SW/PO/BW/SC; the narrow delivered cases do not close those gates.
 
-The October 18 [DG12 technical counterpart](world-creation-tech-design.md) now completes the selected invention-reuse design: exact retained methods and dependencies, supported adaptation, physical method sheets, voluntary local use and a same-operator free release to a known account. [LIB01–LIB09](../maintainers/invention-library.md) own its unstarted implementation and qualification. This later design completion leaves the original five-proposal history intact and retains broader world creation, commercial distribution and unselected native families as separate work.
+The [DG12 technical design](world-creation-tech-design.md) specifies exact retained methods and dependencies, supported adaptation, physical method sheets, voluntary local use and a same-operator free release to a known account. [LIB01–LIB09](../maintainers/invention-library.md) own implementation and qualification. Broader world creation, commercial distribution and unselected native families remain separately scoped.
 
 ## Purpose and scope
 
