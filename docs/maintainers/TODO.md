@@ -1,5 +1,9 @@
 # Maintainer TODO — cross-cutting work
 
+## Shared NPC speech streaming
+
+The selected immediate-text design is complete. [NST01–NST10](npc-speech-streaming.md) owns its implementation and qualification tasks, with the [paired specification/design](../projects/npc-speech-streaming-feature-spec.md) and [limits](../limits/npc-speech-streaming.md). NC19/ND16's public NPC streaming slice leaves the needs-design queue; remaining private callers, broader acoustics/media and runtime acceptance retain their focused owners. Do not create a second streaming checklist here.
+
 ## Foundation review follow-through
 
 - [x] Complete the prioritized [foundation review tasks](foundation-review-todos.md), starting with private reads, stale private comparison text and observer-specific action facts. That document owns FR01–FR13, implementation instructions and acceptance; do not duplicate task bodies here. The [review](../verification/foundation-review.md) distinguishes reproduced behavior, static traces and existing unfinished work.
@@ -742,3 +746,4 @@ The authorized [next playable week feature specification](../projects/parallel-b
 - [x] Remove the actual hidden monthly $50 reservation clamp and reconcile [LA182](../limits/ai-execution.md#la182) and Architecture with the already accepted $0–$100 range. [NP01 evidence](../verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026) demonstrates $75, episode/background and concurrent caps without live spending.
 
 - [ ] [CE01](creator-edits.md#ce01--reviewed-explicit-dependency-cascades): earlier approved explicit-dependency deletion previews; [CE02](creator-edits.md#ce02--optional-memory-propagation-tools): later optional semantic memory search/multiselect/manual or AI-assisted edits. No automatic memory propagation.
+

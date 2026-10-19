@@ -22,6 +22,8 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 
 [Speech and social perception (SPK00–SPK11)](speech-and-social-perception.md) owns the [feature specification](../projects/speech-and-social-perception-feature-spec.md) and [technical design](../projects/speech-and-social-perception-tech-design.md). The selected ordinary-speech portion of ND16 is designed; implementation, qualification and broader hearing/media acceptance retain their owners.
 
+[Shared NPC speech streaming (NST00–NST10)](npc-speech-streaming.md) owns the additional designed public-text slice of NC19/ND16: all public NPC producers, one growing durable occurrence, fixed initial hearing and one terminal semantic boundary. The [paired design](../projects/npc-speech-streaming-feature-spec.md) is complete; runtime/provider/UI qualification remains unchecked. It consumes the relevant SPK core without waiting for animal controllers, timed speech or optional media.
+
 ## Intelligent individuals and efficient simulation
 
 [The research-to-design map](intelligent-simulation.md) links all nine selected refinements to four feature/technical pairs and existing delivery owners. Design is complete; implementation and behavioral/capacity evidence remain open.
@@ -178,3 +180,4 @@ Actual evidence: [continuation](../verification/workshop-continuation.md), [tran
 | Integration and art         | [Macrofold handoff](../macrofold-world-agent-handoff.md), [hybrid art methods](../../archive/03-design-proposals/procedural-art-and-animation.md)                                                                                                                             |
 
 Editable knowledge is tracked in [CR13](cognition-redesign.md#cr13--editable-knowledge-documents); bundled naming and recognition in [BW08–BW09](base-world.md).
+

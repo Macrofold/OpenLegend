@@ -12,6 +12,10 @@ Preserve the compact world composer, captions, shared Events history, exact requ
 
 ## Design disposition and existing work
 
+**Additional public-text design complete:** [Shared NPC speech streaming](../projects/npc-speech-streaming-feature-spec.md) and its [technical design](../projects/npc-speech-streaming-tech-design.md) extend the selected SPK contract with one growing accepted utterance and fixed first-publication hearing. [NST01–NST10](npc-speech-streaming.md) owns its task bodies; no SPK runtime box is checked by that design. SPK01–SPK06 plus affected SPK09/SPK10 are the coordinated core baseline; SPK07–SPK08 animal/controllers and optional media remain independent. The projects can be implemented in one branch without an intermediate deployment or a parallel legacy speech schema.
+
+Coordinate SPK01's event/observer representation with NST01; SPK02's exact-event introduction/recognition and SPK03's participant/presentation projections with the frozen capsule and terminal word meaning; SPK04–SPK05's recall/compaction/history with NST02–NST03's open-source exclusion and readiness; SPK06's public producers with NST04–NST06; SPK09's captions/Events with NST07–NST08; and SPK10–SPK11's persistence/qualification with NST02/NST09. A growing prefix is already committed speech, while private preview data retains its separate non-authoritative boundary.
+
 The selected ordinary-speech/social-perception slice of [ND16](needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech) is **Done — designed** through this pair and SPK00–SPK11. Broader propagation, new language/voice/timed-speech/waking and optional media remain with their existing decision/work owners. This project does not close the entire ND16 entry.
 
 - [NC05–NC06](narration-and-conversations.md) retain the evidence of the old implementation, while their ordinary enrollment/merge requirements are superseded by SPK05. NC14–NC17's delivered compaction, retention and source-integrity foundations remain useful; removing membership must preserve those guarantees.
@@ -221,3 +225,4 @@ SPK10 is a cross-stage obligation, not permission to postpone serializers or val
 - [ ] Commit all implementation/review/doc changes using the authorized workflow, verify no task-owned edits remain, and report delivered behavior, consequential tradeoffs, actual checks and remaining in-scope blockers honestly.
 
 **Exit:** the selected feature works end to end with faithful memory, readable UI, independent human response, native animal sensing/reaction with zero animal model calls, privacy/recovery and meaningful workload evidence. The relevant CTR03–CTR04 dependency is integrated and qualified. If a required human live-model, running-game/browser or capacity check cannot run, its acceptance remains open and the project is not reported fully qualified.
+

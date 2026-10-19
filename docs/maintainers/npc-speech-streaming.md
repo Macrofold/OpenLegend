@@ -48,9 +48,11 @@ NST01 data-shape changes include all current-format validators/serializers in th
 
 - [ ] Extend `WorldService.commit`/history preparation with the narrow trusted speech delta. Validate unchanged immutable facts, update exact event lookup and persist before publication. Preserve benign content updates without raising transcript/security epochs.
 - [ ] Amend canonical speech, changed observer bodies and exact history/source references atomically through the existing repository transaction. Preserve original row/order and avoid delete/reinsert or cumulative-prefix archival per batch.
+- [ ] Carry exact amendment keys through `applyWorldTables`, journal encoding/reconstruction, `applyRecordSources`, `MemoryRepository.project` and record-source writes. Exempt only these open-prefix changes from archives/lexical/compaction churn; preserve unrelated corrections in mixed writes.
 - [ ] Retain bounded active event/account references across recent-view and hot-awareness rollover. Use actual complete audience indexes; do not scan/hydrate all retained history or sample listeners.
 - [ ] Ensure forgetting, erasure, authority revocation and actor retirement suppress future projection without recreating revoked accounts. Update all relevant source hashes/references without exposing raw global revision changes.
 - [ ] Persist/recover the accepted prefix, mask continuation, pins and operation binding. Startup/restore closes captured open speech interrupted once, allocates readiness without provider dispatch and keeps operational charges outside gameplay rewind. Inject failures before commit, during save, after commit/before notification and at recovery.
+- [ ] Reject an unsupported open mask pin before installing/projection/closure of a candidate save; leave the current world intact. Persist closure under the old supported pin before a planned runtime upgrade. Terminal stored fragments do not require remasking.
 
 **Exit:** Q06–Q08 and Q11 preserve exact saved words and history position in the supported database lifecycle. A failed commit exposes no new words; a committed terminal missed by notification is found through normal readiness reconstruction. No fallback to periodic unsaved publication.
 
@@ -102,6 +104,7 @@ NST01 data-shape changes include all current-format validators/serializers in th
 - [ ] Add permitted lifecycle/revision to speech observations and same-ID cumulative speech upserts to the existing GamePatch. Update server projection, public schemas, validators and client application coherently with outer scope/base/next revision checks.
 - [ ] Include entitled open speech beyond the ordinary recent tail in full snapshots. Retain a closed final snapshot through the next applicable scoped publication handoff before retiring its delivery pin; never wait for client acknowledgement.
 - [ ] Merge only changed observer-permitted bodies. Global source length, mask offsets, hidden identities and provider/record counters never enter DTOs or observer-local revisions.
+- [ ] Return validated speech changes from the pure patch reducer and synchronously hand them to existing caption/loaded-history owners before React batching. Keep a synchronously current accepted view/scope; remove duplicate live speech admission from scene `setView`, and use explicit baseline/reset entry. No absent-consumer queue.
 - [ ] Reuse existing connection admission, bounded replay, coalescing, blocked-write behavior and resets. Distinguish bytes accepted by `write(false)` from unsent bytes. One stalled client cannot block native commits or other channels.
 - [ ] Clear obsolete projections on revocation/timeline/control reset. Resume only currently open permitted speech after reconnect; no completed-caption replay or new generation/hearing.
 

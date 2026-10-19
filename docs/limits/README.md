@@ -6,6 +6,8 @@ The selected first-playable design has linked inventories for [shared integratio
 
 ## One owner per purpose
 
+The accepted [shared NPC text design](../projects/npc-speech-streaming-feature-spec.md) is inventoried in [NST-L01–NST-L09](npc-speech-streaming.md). Shared hearing, cognition, memory, response and HTTP/caption limits retain their existing owners; the new inventory distinguishes selected batching/presentation constraints from unmeasured multiplayer capacity.
+
 - The feature specification owns behavior and accepted requirements.
 - `docs/limits/<feature>.md` owns that feature’s limit inventory, reason and restrictiveness. A shared mechanism belongs to its owning feature once; consumers link to it. Do not create a second inventory in each project that touches it.
 - The focused maintainer tracker owns implementation tasks, dependencies and acceptance. [Limits to revisit](../maintainers/limits-audit.md) ranks proposed limit changes and links those tasks; it does not duplicate their checklists.
@@ -90,3 +92,4 @@ Use the backlog’s [ranking method](../maintainers/limits-audit.md#ranking-meth
 Prior evidence: [exact retrieval and cold-source residency](../verification/data-foundation.md#data-foundation-runtime), [private-note candidate preparation](../verification/items-and-knowledge.md#editable-knowledge-and-observer-names) and [dense-work gaps](../maintainers/performance.md#pf09--population-work-follows-relevance). Figures are fixture observations on their recorded versions/hardware, not current natural-session forecasts.
 
 Still outside this focused inspection: exhaustive native family/controller loops, all legacy migration branches, every projection/editor query, browser rendering and every external provider path. Their existing inventories and PF/EPR/CR qualification remain; do not infer they are bounded because they are absent here. Inspect their input/iteration boundary when a consuming feature or measurement makes them relevant.
+

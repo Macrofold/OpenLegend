@@ -38,6 +38,8 @@ Selected [combat and threat responses](projects/combat-and-threat-responses-feat
 
 ## Feature inventories
 
+Accepted design, runtime pending: [Shared NPC speech streaming](projects/npc-speech-streaming-feature-spec.md) has [NST-L01–NST-L09](limits/npc-speech-streaming.md) for fixed occurrence/audience, aggregate record bounds, 250 ms durable continuation coalescing, stable partial evidence, terminal readiness, active-reference growth and reused delivery/display limits. [NST01–NST10](maintainers/npc-speech-streaming.md) owns implementation. Ten/twenty/fifty listeners are qualification workloads, not a new audience cap or measured capacity.
+
 Implemented [bounded network requests](projects/completed/bounded-network-requests-feature-spec.md): [NET-L01–NET-L08](limits/bounded-network-requests.md) records finite operation profiles, continuous-stream liveness, active/unresolved capacity, cleanup, explicit complete-projection memory exposure and retry/enforcement boundaries. [NET01–NET11](maintainers/bounded-network-requests.md) owns implementation and qualification. Existing AI, multiplayer, invention and asset limit IDs retain their own numerical policies; focused network qualification establishes the inventoried runtime boundaries, while broader hosted/provider/capacity evidence remains with its original owners.
 
 | Feature                                                                                               | Inventory                                       | Implementation tasks                                                                                                 |
@@ -110,3 +112,4 @@ All 238 original numbers are preserved. `LA014` is audit number 14. Most old row
 The [source-review coverage](limits/README.md#growth-path-review-coverage) distinguishes no search/input-work cap from bounded results, batches and pages. New entries: memory MH01–MH07 and KG01, cognition CG01, native work NW10–NW11, and save catalog SV17. The [backlog ranking](maintainers/limits-audit.md#ranking-method) uses near-term permitted gameplay exposure and impact; absence of a cap does not automatically recommend deleting data or adding a fixed content limit.
 
 Hearing, spatial captions and perceived-event history: [HR01–HR08](limits/hearing-and-speech.md).
+

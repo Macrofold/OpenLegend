@@ -243,6 +243,8 @@ Reuse [authored stats](../projects/authored-stats-feature-spec.md), its [technic
 
 #### DG26 — Voice, calls and selected hearing extensions
 
+**Independent text slice designed:** [NST00](npc-speech-streaming.md#nst00--complete-the-selected-design-and-reconcile-owners) settles immediate shared public NPC text, with fixed first-publication hearing and no physical speaking duration. It does not wait for or close this group's voice/call, timed doorway or propagation decisions.
+
 ND15, ND14's calls and separately selected ND16 propagation/media families. Settle audio, committed words, transcripts, speed, interruptions and per-listener eligibility before dividing playback, speech input and human voice. The [SPK design](speech-and-social-perception.md) already owns the earlier ordinary text-speech, stable recognition and native sound-reaction slice; those capabilities do not wait for a voice provider or this group's media implementation.
 
 [Voice and calls](../projects/voice-and-calls-feature-spec.md), its [profile](../worlds/base/voice-and-calls.md), [HE07](hearing-and-speech.md) and [NC23](narration-and-conversations.md) propose permitted committed-word playback, reviewed microphone drafts, explicitly enabled private two-human calls, a later timed doorway exchange and separately qualified raw human voice.
@@ -619,7 +621,9 @@ Preserve committed-word/transcript timing, partial listener eligibility, recogni
 
 ### ND16 — Hearing and communication beyond direct-path speech
 
-**Selected ordinary-speech/social-perception design complete; broader extensions remain conditional.** Sources: [deliberate hearing extension boundaries](../hearing-and-speech.md#12-deliberate-extension-boundaries), [HE deferred expansion](hearing-and-speech.md#deferred-expansion), and [hearing limits](../limits/hearing-and-speech.md).
+**Selected ordinary-speech/social-perception and shared public-text streaming designs complete; broader extensions remain conditional.** Sources: [deliberate hearing extension boundaries](../hearing-and-speech.md#12-deliberate-extension-boundaries), [HE deferred expansion](hearing-and-speech.md#deferred-expansion), and [hearing limits](../limits/hearing-and-speech.md).
+
+**Shared progressive NPC text — Done — designed, October 18, 2026.** Mike selected immediate display of approved accepted text for all public NPC dialogue. [The feature specification](../projects/npc-speech-streaming-feature-spec.md) and [technical design](../projects/npc-speech-streaming-tech-design.md) settle one authoritative append-only utterance, its fixed first-publication hearing/identity snapshot, durable prefixes, stable partial evidence, one terminal semantic opportunity, existing SSE fan-out and coherent caption/history/recovery behavior. [NST00](npc-speech-streaming.md#nst00--complete-the-selected-design-and-reconcile-owners) is done; NST01–NST10 own implementation and qualification. This overlapping NC19 public-text slice leaves the missing-design queue. No natural speaking pace, physical duration, moving hearing boundary, environment-driven interruption or audio is adopted. Broader ND16, DG26 and residual non-public NC19 caller work remain open under their existing owners.
 
 **Existing coverage:** present hearing, recognition uncertainty and captions are specified. PS04/PS-D02 already own crowd competition, aggregate commotion, stable focus and the timing choice needed for overlapping speech; do not duplicate those tasks here.
 
@@ -786,3 +790,4 @@ Test a useful bounded outcome with feedback/debrief or trustworthy scoring, sour
 [Production workflows](../production-workflows/README.md) connect the existing art studies and V3D/INV delivery owners to in-game review. Source rights, useful-asset cost, human review and device qualification remain with those owners.
 
 Use canonical contracts and the actual selected revision's project/tracker evidence over broad statements in older proposals. Research and examples inform selection; they do not adopt features or waive acceptance. [Development save policy](../../AGENTS.md#development-save-policy), privacy/authority and existing verification requirements remain controlling for every selected extension.
+
