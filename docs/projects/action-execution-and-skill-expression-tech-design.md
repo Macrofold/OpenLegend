@@ -81,7 +81,7 @@ If the mouse starts over empty perceived ground, a compatible ready launcher can
 
 **Lethal review cannot be evaded by changing command shape.** If the down-gesture was actually aimed at a currently recognized human, the same exact source/subject lethal/PvP review applies even when the client sends an aim point. A no-subject point shot in the bundled world requires an explicitly disclosed general chance of hurting any physical interceptor; the preview may not scan/reveal hidden bystanders. CTR01's released-world contact permission remains binding on the actual collider, and no newly lethal interception cancels a committed flight after release. Point-only shots are unavailable in another world that does not install their permitted family.
 
-Crossing the controlled actor's own visible projected capsule within its world-overlay cancellation region while held cancels before mouse-up; Escape and a reachable Cancel button are identical action cancellation. Do not treat every incidental pointer crossing as a new selected target. The highlight can be local presentation and does not require the server to know each hover sample.
+Deliberate mouse movement entering the controlled character's visible cancellation area while holding cancels before release; character movement or camera follow alone never triggers cancellation under a stationary pointer. Escape and a reachable Cancel button are identical action cancellation. Do not treat every incidental pointer crossing as a new selected target. The highlight can be local presentation and does not require the server to know each hover sample.
 
 ## 2. Typed execution interaction and score
 
