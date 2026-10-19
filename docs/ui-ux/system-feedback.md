@@ -114,4 +114,3 @@ Future cloud-conflict UI should compare meaningful identities/timestamps, offer 
 Use concrete copy such as **Could not save this world. Your previous save is unchanged. Retry.** only when the backend establishes those facts. Say **Save outcome not confirmed** when uncertain. Avoid a lone **Something went wrong**, raw codes as titles or cheerful wording that minimizes possible loss.
 
 Offer diagnostic details progressively without secrets, private records or unfiltered provider payloads. Keep recovery near the error and retain input rather than sending the player through global Settings to repair a local issue. Alerts should earn their interruption with an important actionable consequence; a common genuinely undoable operation does not need repetitive confirmation. Existing protected approvals remain. [S14](research.md#s14)
-

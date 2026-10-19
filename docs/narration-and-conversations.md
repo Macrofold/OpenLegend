@@ -325,4 +325,3 @@ The [DG18 crowd/scene proposal](projects/attention-and-scenes-feature-spec.md) i
 - Implementation: retained [NC feature tasks](maintainers/narration-and-conversations.md), selected [SPK replacement](maintainers/speech-and-social-perception.md) and [NST shared speech delivery](maintainers/npc-speech-streaming.md).
 - Related design: [speech and social perception feature specification](projects/speech-and-social-perception-feature-spec.md) and [technical design](projects/speech-and-social-perception-tech-design.md); [shared NPC speech feature specification](projects/npc-speech-streaming-feature-spec.md) and [technical design](projects/npc-speech-streaming-tech-design.md).
 - Limits and constraints: [Narration and conversations inventory](limits/narration.md) and [shared NPC speech inventory](limits/npc-speech-streaming.md).
-

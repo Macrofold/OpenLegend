@@ -281,14 +281,14 @@ Follow the [save/load contract](save-and-load.md) and [development save policy](
 
 Classify new state explicitly:
 
-| State                                                                 | Treatment                                                                                  |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Spatial bins, reverse adjacency, ready queues                         | Rebuildable indexes if reconstruction preserves behavior                                   |
-| Active perception/threshold episode and pending simulation deadline   | Save or deterministically reconstruct; cannot be discarded if it changes the next reaction |
-| Accepted occurrence, permitted acquisition, consumed/attempted cursor | Existing durable authority and retention rules                                             |
+| State                                                                                   | Treatment                                                                                                                                          |
+| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Spatial bins, reverse adjacency, ready queues                                           | Rebuildable indexes if reconstruction preserves behavior                                                                                           |
+| Active perception/threshold episode and pending simulation deadline                     | Save or deterministically reconstruct; cannot be discarded if it changes the next reaction                                                         |
+| Accepted occurrence, permitted acquisition, consumed/attempted cursor                   | Existing durable authority and retention rules                                                                                                     |
 | NST open speech body, frozen observer account, mask continuation and terminal readiness | Accepted target: save through the same occurrence/evidence owner; restore closes an open prefix once, with no new occurrence or provider execution |
-| In-flight provider operation                                          | Existing non-rewindable attempt/accounting; never recreate by replaying a wakeup           |
-| Runtime listener handles/timers                                       | Recreate, never serialize                                                                  |
+| In-flight provider operation                                                            | Existing non-rewindable attempt/accounting; never recreate by replaying a wakeup                                                                   |
+| Runtime listener handles/timers                                                         | Recreate, never serialize                                                                                                                          |
 
 Restore must invalidate indexes and pending callbacks using the actual authority generation, not just world ID. Keep the restore generation distinct from time-rotating command retry epochs where their purposes differ.
 
@@ -317,4 +317,3 @@ Keep a perceived group distinct from its physical members, their private goals a
 - Implementation: [Events and reactions](maintainers/events-perception-and-reactions.md); cross-feature target integration in [PS04](maintainers/product-scalability.md).
 - Limits and constraints: [Native work](limits/native-work.md) and [cognition](limits/cognition.md) own their existing shared mechanisms; proposed product choices are in [PS-L02/PS-L06/PS-L07](limits/product-scalability.md).
 - Related design: [Memory](memory-architecture.md) and [hearing](hearing-and-speech.md) retain attention/recall and acoustic ownership.
-

@@ -1,7 +1,7 @@
 # Speech and social perception: technical design
 
-| Status      | Current progress                                             | Last updated |
-| ----------- | ------------------------------------------------------------ | ------------ |
+| Status      | Current progress                                                                                        | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Detailed design and shared-streaming coordination are complete; runtime implementation remains pending. | 2026-10-18   |
 
 This is the implementation design for the [feature specification](speech-and-social-perception-feature-spec.md). The accepted target changes ordinary speech, recognition, experience preparation and conversation coordination together. It does not describe delivered runtime behavior. Implementation, dependencies and unsatisfied acceptance belong to [SPK00–SPK11](../maintainers/speech-and-social-perception.md), not this document.
@@ -697,4 +697,3 @@ No unresolved product decision is required to implement this selected baseline. 
 - Source registration: [ND16](../maintainers/needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech) and its [hearing extension source topic](../hearing-and-speech.md#12-deliberate-extension-boundaries).
 - Canonical contracts: [Hearing and speech](../hearing-and-speech.md), [Narration and conversations](../narration-and-conversations.md), [Memory architecture](../memory-architecture.md), [Knowledge](../knowledge.md), [Identity](../identity-and-references.md), [Save/load](../save-and-load.md), [Engine/world boundaries](../engine-and-world-boundaries.md) and [Performance](../performance.md).
 - Bundled policy and character integration: [Observer knowledge](../worlds/base/knowledge.md), [Embodied survival](../worlds/base/survival.md), [Character feature specification](compelling-characters-feature-spec.md) and [Character technical design](compelling-characters-tech-design.md).
-

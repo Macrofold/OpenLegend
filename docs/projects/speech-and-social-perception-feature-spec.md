@@ -1,7 +1,7 @@
 # Speech and social perception — feature specification
 
-| Status      | Current progress                                                                                      | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                               | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
 | In progress | Selected behavior and shared-streaming coordination are designed; SPK01–SPK11 implementation and qualification remain pending. | 2026-10-18   |
 
 ## Purpose and design status
@@ -209,4 +209,3 @@ The scenarios below are the feature acceptance owner. The implementation tracker
 First establish authoritative speech direction, permitted perception and stable recognition so a direct unseen call has one correct meaning everywhere. Then carry that complete experience through shared presentation, memory and source-linked summaries. Replace ordinary membership only when actor-scoped history, decision preparation, preview ownership and independent commitments have complete replacements. Align player/NPC submissions and all visible surfaces with the same meaning and availability rules.
 
 SPK01 first provides the reusable acoustic calculation and complete linguistic evidence. SPK07 widens memoryless receiver eligibility only when its sound-only records, validators, persistence and presentation ship together; no intermediate release may expose an animal audience whose records still require words. SPK08 then connects those cues to the relevant CTR03–CTR04 native controller and selected acoustic policy. It adds no animal cognition or second escape action. Current-format persistence and authority handling cross every stage. Final integrated qualification exercises all scenarios while preserving unrelated character-life, media and broader population gaps. Exact dependencies and exit criteria remain in [SPK](../maintainers/speech-and-social-perception.md).
-

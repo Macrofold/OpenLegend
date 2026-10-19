@@ -86,4 +86,3 @@ Implementation sequencing is in [the hearing tracker](maintainers/hearing-and-sp
 - Limits and constraints: [hearing, captions and perceived history](limits/hearing-and-speech.md), [Batch 08 limits](limits/parallel-batch-08-the-missing-belonging.md).
 - Related contracts: [Hearing evidence](hearing-and-speech.md#5-one-occurrence-listener-specific-evidence), [Memory architecture](memory-architecture.md).
 - Current integration evidence: [combined verification](verification/hearing-main-integration.md), [Batch 08 verification](verification/parallel-batch-08-the-missing-belonging.md).
-

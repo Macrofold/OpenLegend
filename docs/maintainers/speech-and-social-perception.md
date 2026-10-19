@@ -225,4 +225,3 @@ SPK10 is a cross-stage obligation, not permission to postpone serializers or val
 - [ ] Commit all implementation/review/doc changes using the authorized workflow, verify no task-owned edits remain, and report delivered behavior, consequential tradeoffs, actual checks and remaining in-scope blockers honestly.
 
 **Exit:** the selected feature works end to end with faithful memory, readable UI, independent human response, native animal sensing/reaction with zero animal model calls, privacy/recovery and meaningful workload evidence. The relevant CTR03–CTR04 dependency is integrated and qualified. If a required human live-model, running-game/browser or capacity check cannot run, its acceptance remains open and the project is not reported fully qualified.
-

@@ -77,4 +77,3 @@ Speech already shares the pure fraction/ring and lifetime helper. This delivered
 - Limits and constraints: [hearing, captions and perceived history](limits/hearing-and-speech.md).
 - Related contracts: [Hearing captions](hearing-and-speech.md#7-caption-component-and-lifetime).
 - Current integration evidence: [combined verification](verification/hearing-main-integration.md).
-

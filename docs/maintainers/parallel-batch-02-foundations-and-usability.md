@@ -92,4 +92,3 @@ The feature specification, technical design and prompt document cover the whole 
 - [x] NP03 + NP02 + NP04: real manufactured cord fed an actual crafted pouch, retained through current-format reopen; ordinary drop/observation advancement made it discoverable, and the browser camp picker selected and explicitly inspected that exact container. Browser Review/Start then led to completed native gathering, return, packing one wood into the pouch and fueling the fire. [Evidence](../verification/camp-life.md#combined-invention-observation-and-camp-selection--october-3-2026).
 
 No runtime implementation fix was required. Existing broader parent verification and the authorized multilingual deferral remain separately tracked; they are not silently closed by this batch. Actual additional and cumulative Jev/provider cost for the combined checks are $0.
-

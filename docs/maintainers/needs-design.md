@@ -334,46 +334,46 @@ Investigate independent questions while an input is pending, but do not settle d
 
 Each ND entry retains one preparation description below. Multiple DGs indicate distinct slices, not duplicate ownership or permission to close the whole need from one consumer.
 
-| Need | Groups           | Boundary                                                                                                          |
-| ---- | ---------------- | ----------------------------------------------------------------------------------------------------------------- |
-| ND01 | DG12             | Opening assembly; broader worlds selected separately                                                              |
-| ND02 | DG08             | Discovery, settlement and admission                                                                               |
-| ND03 | DG14             | Additional useful stat/check consumers                                                                            |
-| ND04 | DG14, DG23       | Practical competence versus personality change                                                                    |
-| ND05 | DG21, DG31       | Care versus deeper biology                                                                                        |
-| ND06 | DG19, DG31       | Renewal versus generations; first-playable resources/predators stay in FPV/BW/AG                                  |
-| ND07 | DG13             | Required camp wall/entrance versus broader homes                                                                  |
-| ND08 | DG13, DG20       | Shelter exposure versus thermal effects                                                                           |
-| ND09 | DG06, DG22, DG32 | Immediate trade, deferred agreements and complex obligations                                                      |
-| ND10 | DG06, DG22, DG32 | Required small cooperation versus associations/institutions                                                       |
-| ND11 | DG07, DG33       | Human/conflict rules versus NPC afterlife                                                                         |
-| ND12 | DG12, DG28       | Free library reuse versus commercial distribution                                                                 |
-| ND13 | DG01, DG35       | Ordinary controls versus selected device expansion                                                                |
-| ND14 | DG24, DG26       | Text versus calls                                                                                                 |
-| ND15 | DG26             | Speech media                                                                                                      |
+| Need | Groups           | Boundary                                                                                                                                                  |
+| ---- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ND01 | DG12             | Opening assembly; broader worlds selected separately                                                                                                      |
+| ND02 | DG08             | Discovery, settlement and admission                                                                                                                       |
+| ND03 | DG14             | Additional useful stat/check consumers                                                                                                                    |
+| ND04 | DG14, DG23       | Practical competence versus personality change                                                                                                            |
+| ND05 | DG21, DG31       | Care versus deeper biology                                                                                                                                |
+| ND06 | DG19, DG31       | Renewal versus generations; first-playable resources/predators stay in FPV/BW/AG                                                                          |
+| ND07 | DG13             | Required camp wall/entrance versus broader homes                                                                                                          |
+| ND08 | DG13, DG20       | Shelter exposure versus thermal effects                                                                                                                   |
+| ND09 | DG06, DG22, DG32 | Immediate trade, deferred agreements and complex obligations                                                                                              |
+| ND10 | DG06, DG22, DG32 | Required small cooperation versus associations/institutions                                                                                               |
+| ND11 | DG07, DG33       | Human/conflict rules versus NPC afterlife                                                                                                                 |
+| ND12 | DG12, DG28       | Free library reuse versus commercial distribution                                                                                                         |
+| ND13 | DG01, DG35       | Ordinary controls versus selected device expansion                                                                                                        |
+| ND14 | DG24, DG26       | Text versus calls                                                                                                                                         |
+| ND15 | DG26             | Speech media                                                                                                                                              |
 | ND16 | DG02, DG18, DG26 | Ordinary speech/social evidence designed under SPK and immediate shared NPC text under NST; selected media and further hearing extensions remain separate |
-| ND17 | DG25             | Attributed correction versus administrative retcon                                                                |
-| ND18 | DG01             | Static discovery versus broader place/narration families                                                          |
-| ND19 | DG23             | Older interpretation and optional dreams                                                                          |
-| ND20 | DG04             | Conditional retrieval comparison                                                                                  |
-| ND21 | DG33             | Deliberate telepathy versus broader mental families                                                               |
-| ND22 | DG27             | Offer adoption and customer lifecycle                                                                             |
-| ND23 | DG28             | Allocation, marketplace rights and payouts                                                                        |
-| ND24 | DG27             | Optional recognition/dedication                                                                                   |
-| ND25 | DG30             | Conditional fund/governance operation                                                                             |
-| ND26 | DG03, DG27       | Player learning versus paid-offer evidence                                                                        |
-| ND27 | DG09             | Selected service conduct/audience policy                                                                          |
-| ND28 | DG05             | Optional session/return experience                                                                                |
-| ND29 | DG11             | Optional well-being study                                                                                         |
-| ND30 | DG16             | Personal edition versus shared/print extensions                                                                   |
-| ND31 | DG10             | Conditional human social pilot                                                                                    |
-| ND32 | DG36             | Selected beyond-game use                                                                                          |
-| ND33 | DG19             | Food condition and preservation                                                                                   |
-| ND34 | DG35             | Browser retained; other platforms conditional                                                                     |
-| ND35 | DG25             | Protected shared restore versus broader portability/history                                                       |
-| ND36 | DG15             | Selected external perspective versus other cutaways                                                               |
-| ND37 | DG08             | Public reporting and operator authority                                                                           |
-| ND38 | DG01             | Player skill during action execution versus action selection/native outcome                                       |
+| ND17 | DG25             | Attributed correction versus administrative retcon                                                                                                        |
+| ND18 | DG01             | Static discovery versus broader place/narration families                                                                                                  |
+| ND19 | DG23             | Older interpretation and optional dreams                                                                                                                  |
+| ND20 | DG04             | Conditional retrieval comparison                                                                                                                          |
+| ND21 | DG33             | Deliberate telepathy versus broader mental families                                                                                                       |
+| ND22 | DG27             | Offer adoption and customer lifecycle                                                                                                                     |
+| ND23 | DG28             | Allocation, marketplace rights and payouts                                                                                                                |
+| ND24 | DG27             | Optional recognition/dedication                                                                                                                           |
+| ND25 | DG30             | Conditional fund/governance operation                                                                                                                     |
+| ND26 | DG03, DG27       | Player learning versus paid-offer evidence                                                                                                                |
+| ND27 | DG09             | Selected service conduct/audience policy                                                                                                                  |
+| ND28 | DG05             | Optional session/return experience                                                                                                                        |
+| ND29 | DG11             | Optional well-being study                                                                                                                                 |
+| ND30 | DG16             | Personal edition versus shared/print extensions                                                                                                           |
+| ND31 | DG10             | Conditional human social pilot                                                                                                                            |
+| ND32 | DG36             | Selected beyond-game use                                                                                                                                  |
+| ND33 | DG19             | Food condition and preservation                                                                                                                           |
+| ND34 | DG35             | Browser retained; other platforms conditional                                                                                                             |
+| ND35 | DG25             | Protected shared restore versus broader portability/history                                                                                               |
+| ND36 | DG15             | Selected external perspective versus other cutaways                                                                                                       |
+| ND37 | DG08             | Public reporting and operator authority                                                                                                                   |
+| ND38 | DG01             | Player skill during action execution versus action selection/native outcome                                                                               |
 
 ## Product scalability: substantial plans already exist
 
@@ -790,4 +790,3 @@ Test a useful bounded outcome with feedback/debrief or trustworthy scoring, sour
 [Production workflows](../production-workflows/README.md) connect the existing art studies and V3D/INV delivery owners to in-game review. Source rights, useful-asset cost, human review and device qualification remain with those owners.
 
 Use canonical contracts and the actual selected revision's project/tracker evidence over broad statements in older proposals. Research and examples inform selection; they do not adopt features or waive acceptance. [Development save policy](../../AGENTS.md#development-save-policy), privacy/authority and existing verification requirements remain controlling for every selected extension.
-

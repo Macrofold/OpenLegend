@@ -1,8 +1,8 @@
 # Shared NPC speech streaming — feature specification
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | Selected behavior is designed; NST01–NST10 implementation and qualification remain pending. | 2026-10-18 |
+| Status      | Current progress                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Selected behavior is designed; NST01–NST10 implementation and qualification remain pending. | 2026-10-18   |
 
 ## Purpose and selected decisions
 
@@ -57,14 +57,14 @@ An initially hidden fragment must not remove an originally eligible partial list
 
 The following producers use the same speech publication owner:
 
-| Producer | Expected behavior |
-| --- | --- |
-| NPC reply to a player | Eligible nearby observers share the accepted utterance; the requester has no exclusive claim to its public words. |
-| NPC reply to another NPC | Same publication and hearing rules, including when no human is present. |
-| Response to overheard speech | Same publication path; overhearing does not compel a response or make the listener the addressee. |
-| Autonomous remark | Same publication path, with an optional explicit addressee. |
-| Permitted higher-model response | Same original decision/operation ownership; it cannot race or repeat an already publishing answer. Observe-only evaluation remains private. |
-| Completed generated or authored public speech | The same native speech owner admits the complete text in one transaction; no artificial streaming is added. |
+| Producer                                      | Expected behavior                                                                                                                           |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| NPC reply to a player                         | Eligible nearby observers share the accepted utterance; the requester has no exclusive claim to its public words.                           |
+| NPC reply to another NPC                      | Same publication and hearing rules, including when no human is present.                                                                     |
+| Response to overheard speech                  | Same publication path; overhearing does not compel a response or make the listener the addressee.                                           |
+| Autonomous remark                             | Same publication path, with an optional explicit addressee.                                                                                 |
+| Permitted higher-model response               | Same original decision/operation ownership; it cannot race or repeat an already publishing answer. Observe-only evaluation remains private. |
+| Completed generated or authored public speech | The same native speech owner admits the complete text in one transaction; no artificial streaming is added.                                 |
 
 The feature does not turn every generated string into dialogue. Private thoughts, reflections, model reasoning, appraisals, Narrator prose, invention descriptions, World Agent authoring messages and private remote channels retain their separate owners. A current public-speech route that has not passed progressive-output qualification uses the same completed-output admission path. It must not advertise early streaming or use a second paid request to manufacture it.
 

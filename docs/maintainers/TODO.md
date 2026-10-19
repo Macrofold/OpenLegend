@@ -746,4 +746,3 @@ The authorized [next playable week feature specification](../projects/parallel-b
 - [x] Remove the actual hidden monthly $50 reservation clamp and reconcile [LA182](../limits/ai-execution.md#la182) and Architecture with the already accepted $0–$100 range. [NP01 evidence](../verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026) demonstrates $75, episode/background and concurrent caps without live spending.
 
 - [ ] [CE01](creator-edits.md#ce01--reviewed-explicit-dependency-cascades): earlier approved explicit-dependency deletion previews; [CE02](creator-edits.md#ce02--optional-memory-propagation-tools): later optional semantic memory search/multiselect/manual or AI-assisted edits. No automatic memory propagation.
-

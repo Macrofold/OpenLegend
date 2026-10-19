@@ -481,4 +481,3 @@ Cooking discovery requires choosing an exact perceived fire; inventory no longer
 ## SA01 — Player descriptive Act
 
 **Current · Restrictiveness: Safe.** Act accepts 1–500 characters and makes one request through the existing configured nano cleanup model, with a 512-token output ceiling and a 1–240-character admitted past-tense predicate. It records an expressly non-mechanical perceived expression and cannot execute commands. Explicit target tokens preserve the clicked object and observer-specific identities. Speak retains the existing 1–1,500-character native speech limit and authored acoustic presets. No automatic retry or model fallback is added. These bounds keep a short status usable and spending bounded; the existing overhead queue/lifetime can still shorten its display, while canonical event text remains intact. [Contract](../narration-and-conversations.md#player-speak-and-descriptive-act).
-

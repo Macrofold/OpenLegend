@@ -10,19 +10,19 @@ This completes the public-text design slice of [NC19](narration-and-conversation
 
 The implementation baseline is the accepted **SPK01–SPK06 ordinary speech/evidence/context contract**, with SPK09's affected caption/composer/history presentation and the applicable SPK10 persistence/authority obligations integrated in the same coordinated work. If they have not landed, implement those prerequisite core tasks first, or earlier in the same branch; do not create an alternate conversation-era schema and a later compatibility adapter. SPK07–SPK08 animal/controller work, media and completion of all wider SPK/HE/NC qualification are not prerequisites. If sound-only SPK receivers are already enabled, NST must preserve them through the same lifecycle and readiness contract.
 
-| Task | Depends on | Concrete result |
-| --- | --- | --- |
-| NST00 | This design task | Settled paired design, limit inventory and reconciled owners. |
-| NST01 | Relevant SPK core contract | Native appendable speech, frozen evidence, exact mask, current-format validation and ready-order representation. |
-| NST02 | NST01 | Atomic durable amendments, history references, restore and privacy integrity. |
-| NST03 | NST01–NST02 | Every semantic read/scheduler consumes only terminal evidence using its readiness order. |
-| NST04 | Shared response contract; may run alongside NST01–NST03 | Strict generated records, canonicalization, final normalizer and complete-record parser. |
-| NST05 | NST04 | Qualified provider progress interfaces for ordinary Macrofold/direct and apply-mode escalation. |
-| NST06 | NST01–NST05 | Bounded screened publication attempt, exact decision ownership and terminal/accounting coordination. |
-| NST07 | NST01–NST02; shared public schema | Scoped cumulative upserts, active pins and coherent server/client patch application. |
-| NST08 | NST07 and affected SPK09 baseline | Growing captions and Events/source readers with continuous reading/accessibility. |
-| NST09 | NST01–NST08 | Integrated native/provider/database/browser/privacy/workload evidence and enablement disposition. |
-| NST10 | NST09 | Reviewed coordinated cutover and accurate maintained records. |
+| Task  | Depends on                                              | Concrete result                                                                                                  |
+| ----- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| NST00 | This design task                                        | Settled paired design, limit inventory and reconciled owners.                                                    |
+| NST01 | Relevant SPK core contract                              | Native appendable speech, frozen evidence, exact mask, current-format validation and ready-order representation. |
+| NST02 | NST01                                                   | Atomic durable amendments, history references, restore and privacy integrity.                                    |
+| NST03 | NST01–NST02                                             | Every semantic read/scheduler consumes only terminal evidence using its readiness order.                         |
+| NST04 | Shared response contract; may run alongside NST01–NST03 | Strict generated records, canonicalization, final normalizer and complete-record parser.                         |
+| NST05 | NST04                                                   | Qualified provider progress interfaces for ordinary Macrofold/direct and apply-mode escalation.                  |
+| NST06 | NST01–NST05                                             | Bounded screened publication attempt, exact decision ownership and terminal/accounting coordination.             |
+| NST07 | NST01–NST02; shared public schema                       | Scoped cumulative upserts, active pins and coherent server/client patch application.                             |
+| NST08 | NST07 and affected SPK09 baseline                       | Growing captions and Events/source readers with continuous reading/accessibility.                                |
+| NST09 | NST01–NST08                                             | Integrated native/provider/database/browser/privacy/workload evidence and enablement disposition.                |
+| NST10 | NST09                                                   | Reviewed coordinated cutover and accurate maintained records.                                                    |
 
 NST01 data-shape changes include all current-format validators/serializers in that same cut. NST02 is not permission to write unsupported records first. No early public path is enabled until NST03's semantic gating, NST06's durable/screened owner and NST07–NST08's consumers are present. The work can use intermediate commits, but there must be one current generated/public/save contract at the cutover, with no old-shape fallback.
 

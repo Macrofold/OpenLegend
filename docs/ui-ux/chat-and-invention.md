@@ -121,4 +121,3 @@ Historical transcript-focused component evidence covers explicit person/item ent
 ### Current conversation layout
 
 The ordinary player uses a bounded growing Speak/Act bar with horizontal volume, explicit recipient selection and draft-local submission/recovery feedback. Committed speech appears in the world and Events; invention remains in Create. The earlier fixed Talk/Invent header, transcript and vertical-volume layout is historical. [CV01](../limits/interface.md#cv01--conversation-reading-space) records that earlier reading-space constraint; it is not a requirement to restore the retired player transcript.
-
