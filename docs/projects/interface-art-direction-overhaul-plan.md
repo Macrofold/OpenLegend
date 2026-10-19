@@ -1,8 +1,8 @@
 # Interface art direction overhaul — direct method plan
 
-| Status      | Current progress                                                                                                                              | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared comparison inputs are frozen; art direction exploration waits on the owner's budget and storage decisions and a Claude Design sign-in. | 2026-10-19   |
+| Status      | Current progress                                                                                                                         | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Shared inputs are frozen and the budget and storage decisions are made; exploration waits on the OpenAI key and a Claude Design sign-in. | 2026-10-19   |
 
 ## Purpose and authorization
 
@@ -24,7 +24,7 @@ Out of scope: new gameplay, progression, slots or currencies; changes to camera 
 
 ## Method and stages
 
-1. **Shared preparation (done).** Base selection, branches, isolated databases restored from one operational backup, original-interface captures, a 36-image reference board across 12 games, sample content, surface/state map and evaluation tasks; frozen 2026-10-19 05:02 UTC.
+1. **Shared preparation (done).** Base selection, branches, isolated databases restored from one operational backup, original-interface captures, sample content, surface/state map, evaluation tasks and an interface reference board. At Mike's request the board was rebuilt by judgment rather than per-game quota: 80 screenshots from 38 games, mostly 2020 or later, chosen from about 316 reviewed images and grouped by interface task. Re-frozen 2026-10-19 20:49 UTC before the second method started, so both methods share identical inputs.
 2. **Three directions.** Claude Design develops three distinct original directions, each with four compositions over the real world capture (ordinary play, inventory with inspection, reading and identity, contextual action and creation) using real content.
 3. **Artwork for contenders.** Reference-guided GPT Image edits produce representative item, material and emblem art for each direction; results return to the editable compositions and are judged at display size over the world.
 4. **Owner choice.** One A/B board with two finalists; Mike chooses.
@@ -37,7 +37,7 @@ Out of scope: new gameplay, progression, slots or currencies; changes to camera 
 - Text, numbers, controls, focus and accessibility stay native DOM through the existing React Aria components. Artwork supplies illustration and material only; frames use scalable CSS/SVG or border-image slices, never a painted screenshot behind live controls.
 - Item, resource, creature and action art binds to world-authored semantic symbol keys through the trusted catalogue, never by guessing from names. Content without authored art keeps an immediate, readable fallback. Saved worlds carry their own item definitions, so newly authored keys reach new worlds; any change for existing worlds needs an explicit owner decision.
 - Theme-specific materials and fonts live in the existing theme layer (`apps/client/src/design-system/tokens/`, `components.css`, `layout.css`); one component owner per pattern.
-- Artwork files follow the repository's external-storage contract unless Mike decides otherwise (open decision below).
+- Artwork files follow the repository's [external-storage contract](../asset-workflow.md#where-files-belong): payloads are published to the OpenLegend asset store and Git holds catalogues, exact locks, prompts and provenance (decided by Mike, 2026-10-19).
 
 ### Performance
 
@@ -52,12 +52,13 @@ Actual interaction in the running game at 1440×900, 1280×720 and the narrow bo
 
 ## Spending
 
-Mike's standing ceiling is $10 per task. A complete-allowance proposal of an $80 hard cap for OpenAI image generation is awaiting his decision; the per-call ledger, reservations and reconciliation live with the method's external art workspace. AWS recovery reads during preparation are an estimated $0–1.20 (data transfer may fall within the free allowance).
+Mike approved an **$80 hard cap for OpenAI image generation** on 2026-10-19, replacing the standing $10 ceiling for that category; it covers every generation and edit by any agent in this method, with each call reserved before dispatch, reconciled from reported usage, and no automatic paid retries or top-up. The per-call ledger lives with the method's external art workspace. AWS recovery reads during preparation are an estimated $0–1.20 under the standing ceiling (data transfer may fall within the free allowance). Claude Design uses Mike's claude.ai plan; no extra usage is purchased.
 
-## Open decisions
+## Decisions
 
-1. **Image budget** — approve the proposed $80 cap or set another.
-2. **Artwork storage** — the request asked to commit binary artwork to Git; the repository's [asset policy](../asset-workflow.md#where-files-belong) forbids any art payload in Git and `pnpm assets:check` enforces it. Recommendation: publish through the asset store and commit only catalogues, locks and provenance.
+1. **Image budget (2026-10-19):** $80 hard cap for OpenAI image generation.
+2. **Artwork storage (2026-10-19):** follow the repository's asset policy. The original request asked to commit binary artwork to Git, but the policy forbids any art payload in Git and `pnpm assets:check` enforces it, so artwork is published through the asset store with catalogues, locks and provenance in Git.
+3. **Reference board (2026-10-19):** chosen by judgment with no per-game quota, preferring modern games; Baldur's Gate 3 is a prominent modern model.
 
 ## Completion criteria
 
