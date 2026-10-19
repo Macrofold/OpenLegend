@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                         | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | The agreed persistent-object and custody slices were delivered; broader object and hosted qualification remain separate. | 2026-10-16   |
+| Completed | The agreed persistent-object and custody slices were delivered; broader object and hosted qualification remain separate. | 2026-10-19   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Original foundation priority 3. [Technical design](persistent-objects-tech-design.md) defines storage and algorithms; [PO01–PO09](../../maintainers/persistent-objects.md) decomposes DF01/BW07 and coordinates INV-6/SL00. [Foundation package](foundations-1-5.md) applies.
 
@@ -50,7 +50,7 @@ The current `ownerId` field means custody and must not be migrated into a claim 
 
 ### E. Work is interrupted or contested
 
-A recipe reserves ingredients, then another request attempts to move or consume them. Current reservations and action policy decide admission, with one atomic result. Cancellation releases unused reservations; completed consumption is not refunded. A failed action cannot leave its ingredients debited and its output missing.
+A recipe reserves ingredients, then another request attempts to move or consume them. Current reservations and action policy decide admission, with one atomic result. Cancellation releases unused reservations; completed consumption is not refunded. A refused or failed atomic object transaction cannot publish only its ingredient debit. Once admitted work has consumed inputs, a later interruption follows its ordinary costs and may produce no output.
 
 Two humans pick up the last food or bag. One receives the real object; the other sees a stale/unavailable outcome. A lost response and retry cannot duplicate either the bag or its nested contents. P2 supplies current principals/control; the same mechanical transaction is used by native NPC actions.
 
@@ -107,3 +107,9 @@ recursive own ingredient/tool discovery and dependency-aware inventory moves. Th
 contract is [Items](../../worlds/base/items.md); [PO10](../../maintainers/persistent-objects.md#po10--shared-access-and-dependency-aware-handling)
 records its delivered scope and verification. Existing identity, capacity, exact
 pins, reservations, privacy and atomic publication rules still apply.
+
+## Planned skilled-manufacture consumer
+
+[ND38 skilled execution](../action-execution-and-skill-expression-feature-spec.md#hand-finish-a-useful-storage-pouch-first-distinct-noncombat-proof) selects an optional fitted-container result; it is **designed, not implemented** and is outside this completed foundation's delivered scope. A successfully finished pouch will keep its own capacity through movement, nested storage, gift/trade and same-version restore. Characters currently have no finite total carrying-load limit: the intended benefit is organizing and moving a larger useful kit in one object. Normal crafting remains usable, and no global item grade or character encumbrance is introduced. Public capacity may be disclosed without revealing hidden contents or private manufacturing knowledge.
+
+The same native craft consumes materials at work start and creates one individual pouch only on successful completion. An unanswered optional finish may keep that actor's action at **Ready to finish**. Saving and reopening preserves the exact working or waiting action only when native work has not actually been interrupted; a genuine departure or accepted cancellation leaves spent materials spent and no output. Reconnecting cannot resurrect it or duplicate a recorded result. The [ND38 technical owner](../action-execution-and-skill-expression-tech-design.md#4-noncombat-proof-quality-sensitive-woven-container) defines this integration; the [selected world](../../worlds/base/skilled-action-execution.md#the-chosen-noncombat-proof-fitted-woven-container) owns fitting values, and [ASE08](../../maintainers/action-execution-and-skill-expression.md#ase08--real-quality-producing-noncombat-proof) retains implementation and qualification.

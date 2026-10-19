@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                         | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | The agreed persistent-object and custody slices were delivered; broader object and hosted qualification remain separate. | 2026-10-16   |
+| Completed | The agreed persistent-object and custody slices were delivered; broader object and hosted qualification remain separate. | 2026-10-19   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](persistent-objects-feature-spec.md) owns behavior. [PO01–PO09](../../maintainers/persistent-objects.md) refines DF01/BW07; P1 owns claims, P2 current authority, P4 dependency invalidation, and SL00 consistent capture.
 
@@ -172,3 +172,11 @@ recursive own ingredient/tool discovery and dependency-aware inventory moves. Th
 contract is [Items](../../worlds/base/items.md); [PO10](../../maintainers/persistent-objects.md#po10--shared-access-and-dependency-aware-handling)
 records its delivered scope and verification. Existing identity, capacity, exact
 pins, reservations, privacy and atomic publication rules still apply.
+
+## Planned skilled-manufacture consumer
+
+[ND38](../action-execution-and-skill-expression-tech-design.md#4-noncombat-proof-quality-sensitive-woven-container) is an **unimplemented extension** to this owner. It selects one optional fitted-container facet on the existing `ItemLot`, with exact supported output-profile meaning and a finite creation-time factor. One exact-item capacity reader must serve packing plans, nested/reciprocal transfers, current-format validation, inspection, characteristics and disclosed trade terms. Current containers still use their admitted definition capacity; this shared fitted-instance reader is not already delivered. The [world profile](../../worlds/base/skilled-action-execution.md#the-chosen-noncombat-proof-fitted-woven-container) owns its formula and bounds. No second quality record, per-grade definition, global baseline mutation or private-history read becomes a competing capacity authority.
+
+Containers remain quantity-one individuals; split/merge and source-credit guards must preserve every admitted retained facet. Existing ancestor-load, exact identity/revision, access and atomic movement rules apply. Save validation checks facet support and pins before actual contents; a malformed present facet cannot fall back to ordinary capacity. Public capacity and historical disclosed offer facts do not expose hidden contents or private manufacture evidence.
+
+The planned finishing binding captures exact consumed-input evidence on the existing action before the successful start debit; those historical lots are not reserved or charged again during finishing. Same-version save/reopen retains the exact action and accepted choice only if native work was not interrupted, under the existing presence/control contract. Real departure or cancellation ends the attempt with spent materials and no output. Terminal receipts prevent duplicate finishing or output; no independent unfinished-workpiece storage is added. [ASE08](../../maintainers/action-execution-and-skill-expression.md#ase08--real-quality-producing-noncombat-proof) owns this extension's open implementation and acceptance.
