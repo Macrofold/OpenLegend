@@ -2,7 +2,7 @@
 
 ## Status and ownership
 
-**Shared design in review; specialist design and runtime implementation remain open.** This tracker owns the cross-project dependency graph and acceptance state for [the feature specification](../projects/stealth-awareness-feature-spec.md) and [shared technical design](../projects/stealth-awareness-tech-design.md). It does not duplicate SPK speech, CTR combat, CE character experience, EPR observation, CL continuing-lives, action, clock or save tasks.
+**Shared design complete; specialist design and runtime implementation remain open.** This tracker owns the cross-project dependency graph and acceptance state for [the feature specification](../projects/stealth-awareness-feature-spec.md) and [shared technical design](../projects/stealth-awareness-tech-design.md). It does not duplicate SPK speech, CTR combat, CE character experience, EPR observation, CL continuing-lives, action, clock or save tasks.
 
 This assignment is **design-only**. The branch is `Macrofold/OpenLegend:codex/design-stealth-00-contracts`, based exactly on source commit `86a21ce50aa0633d81b38a430b7727c0c543017e` from `codex/sneak-perception-design-20261018`. No application code, executable tests, deployment or runtime qualification is part of SA00. New inherited source behavior remains part of the inspected base, not a deliverable of this task.
 
@@ -10,7 +10,7 @@ The shared scope completes only selected architecture within [ND11](needs-design
 
 ## SA00 — Shared contracts and source-grounded feature design
 
-**Status: In progress — integration review.** Owner: shared-contract design agent. Dependencies: pinned source inspection and accepted task decisions. Output: the exact feature/technical paths above, this tracker, directly affected owner reconciliation and topical repertoire integration.
+**Status: Completed — shared design only, 2026-10-19.** Owner: shared-contract design agent. Dependencies: pinned source inspection and accepted task decisions. Output: the exact feature/technical paths above, this tracker, directly affected owner reconciliation and topical repertoire integration.
 
 - [x] Inspect root/applicable repository instructions, canonical owners and actual source behavior; distinguish implemented foundations from accepted targets.
 - [x] Define representative complete player/NPC/native journeys, meaningful failure and the ordinary-route benefit/burden.
@@ -21,9 +21,9 @@ The shared scope completes only selected architecture within [ND11](needs-design
 - [x] Separate native bodily startle, private interpreted emotions, effective mechanics and finite internally due reconsideration.
 - [x] Keep SA-D01 explicitly unresolved with viable alternatives, conditional recommendation and a bounded dependency.
 - [x] Inventory all repertoire file scopes and relevant entries; improve selected topical entries without changing central priorities/indexes.
-- [ ] Complete directly affected persistent-owner, limits, design-register and decision reconciliation.
-- [ ] Review the full resulting documentation diff; resolve cross-module inconsistencies and verify new/changed links and status.
-- [ ] Commit every task-owned documentation change to the remote branch and confirm that the branch contains only documentation changes relative to the selected base.
+- [x] Complete directly affected persistent-owner, limits, design-register and decision reconciliation.
+- [x] Review the full resulting documentation diff; resolve cross-module inconsistencies and verify new/changed links and status.
+- [x] Commit every task-owned documentation change to the remote branch and confirm that the branch contains only documentation changes relative to the selected base.
 
 **Exit:** shared meanings are complete, internally consistent, assigned and reviewable; every downstream specialist can start design with one contract for each shared responsibility. No unresolved cross-module contract blocker remains other than the explicitly bounded SA-D01 producer choice. Runtime design, implementation, measurements and play acceptance remain open below.
 

@@ -190,4 +190,3 @@ Qualify a real hunt early using ordinary, practically obtainable supplies and ex
 - Limits and constraints: [Combat/threat inventory](../limits/combat-and-threat-responses.md), [base-world inventory](../limits/base-world.md), [ranged and evasion inventory](../limits/parallel-batch-06-rivals-and-contested-ground.md), and [interface tuning](../limits/ui-ux.md).
 - Mechanism and delivery: [Technical design](combat-and-threat-responses-tech-design.md).
 - Current physical behavior: [Combat](../worlds/base/combat.md), [ranged counterplay](../worlds/base/ranged-counterplay.md), and [player danger](../worlds/base/player-danger.md).
-

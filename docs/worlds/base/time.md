@@ -11,10 +11,10 @@ The base clock converts one real second to one game minute at normal speed. Spee
 **Selected target, not a delivered bodily-startle mechanism.** The [shared emotion/time contract](../../projects/stealth-awareness-tech-design.md#time-and-lifecycle) keeps this world's 60:1 normal clock. A provisional startle of **three normal-speed seconds** admits 180 simulation seconds once through the installed clock/effect owner:
 
 | Runtime speed | Elapsed real time for an uninterrupted 180-simulation-second episode |
-| --- | ---: |
-| 1× | 3 seconds |
-| 3× | 1 second |
-| 8× | 0.375 seconds |
+| ------------- | -------------------------------------------------------------------: |
+| 1×            |                                                            3 seconds |
+| 3×            |                                                             1 second |
+| 8×            |                                                        0.375 seconds |
 
 These conversions assume the simulation makes the corresponding progress; technical delay does not spend unadvanced game time. Pause freezes the remaining episode. A speed change affects subsequent clock advance without restarting or rescaling admitted progress. Restore resumes the same cause/life-bound episode and does not create a second onset. The selected G controls expose acceleration only through current creator/debug authority; their presence in local tooling gives an ordinary player no speed or inspection permission.
 
@@ -76,4 +76,3 @@ Revisit these bounds when fleeting encounters matter to a mechanic, new movement
 ## Selected first-playable clock consumers
 
 The [integrated design](../../projects/first-playable-world-tech-design.md#time-daylight-needs-and-decision-latency) keeps the current 60:1 clock and physical perception, and selects one installed clock source for renderer daylight and HUD day/night. [FPW03](../../maintainers/first-playable-world.md#fpw03--ordinary-actions-readable-work-and-readiness) owns that correction. Roaming and the selected daily material-rain window use game-time boundaries through their existing native owners, never browser color or wall time. This is designed work, not a current display fix or a new light-sensitive sight rule.
-

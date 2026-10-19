@@ -42,7 +42,7 @@ Selected [stealth, awareness and surprise](projects/stealth-awareness-feature-sp
 
 | Feature                                                                                               | Inventory                                       | Implementation tasks                                                                                                 |
 | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| [Stealth, awareness and surprise](projects/stealth-awareness-feature-spec.md) | [Limits](limits/stealth-awareness.md) | [Tracker](maintainers/stealth-awareness.md) |
+| [Stealth, awareness and surprise](projects/stealth-awareness-feature-spec.md)                         | [Limits](limits/stealth-awareness.md)           | [Tracker](maintainers/stealth-awareness.md)                                                                          |
 | [Combat and threat responses](projects/combat-and-threat-responses-feature-spec.md)                   | [Limits](limits/combat-and-threat-responses.md) | [Tracker](maintainers/combat-and-threat-responses.md)                                                                |
 | [Cognition and action selection](agent-agency.md)                                                     | [Limits](limits/cognition.md)                   | [Tracker](maintainers/cognition-redesign.md)                                                                         |
 | [Memory, knowledge and consolidation](memory-architecture.md)                                         | [Limits](limits/memory.md)                      | [Tracker](maintainers/cognition-redesign.md)                                                                         |
@@ -111,4 +111,3 @@ All 238 original numbers are preserved. `LA014` is audit number 14. Most old row
 The [source-review coverage](limits/README.md#growth-path-review-coverage) distinguishes no search/input-work cap from bounded results, batches and pages. New entries: memory MH01–MH07 and KG01, cognition CG01, native work NW10–NW11, and save catalog SV17. The [backlog ranking](maintainers/limits-audit.md#ranking-method) uses near-term permitted gameplay exposure and impact; absence of a cap does not automatically recommend deleting data or adding a fixed content limit.
 
 Hearing, spatial captions and perceived-event history: [HR01–HR08](limits/hearing-and-speech.md).
-

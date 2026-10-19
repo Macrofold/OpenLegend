@@ -793,4 +793,3 @@ If a required native condition or supported API cannot implement the exact decla
 - Limits: [Combat/threat](../limits/combat-and-threat-responses.md), [base world](../limits/base-world.md), [ranged/evasion](../limits/parallel-batch-06-rivals-and-contested-ground.md), and [interface](../limits/ui-ux.md).
 - Player behavior and scope: [Feature specification](combat-and-threat-responses-feature-spec.md).
 - Shared contracts: [Engine/world boundaries](../engine-and-world-boundaries.md), [targeted actions](../targeted-actions.md), [spatial world](../spatial-world.md), and [save/load](../save-and-load.md).
-

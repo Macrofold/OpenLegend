@@ -1,8 +1,8 @@
 # Stealth, awareness and surprise — feature specification
 
-| Status      | Current progress                                                                                              | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared design is being integrated; specialist designs, implementation and gameplay qualification remain open. | 2026-10-19   |
+| Status      | Current progress                                                                                      | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Shared design is complete; specialist designs, implementation and gameplay qualification remain open. | 2026-10-19   |
 
 ## Purpose and selected scope
 

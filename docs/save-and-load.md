@@ -372,4 +372,3 @@ passage for the same physical life. Navigation answers remain disposable host pr
 proposal, map and current timeline; restoration recomputes them without drawing or
 installing movement. Current validation rejects obsolete steering fields and
 malformed body-life, profile, proposal or active movement relationships.
-

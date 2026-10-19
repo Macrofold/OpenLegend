@@ -779,4 +779,3 @@ Test a useful bounded outcome with feedback/debrief or trustworthy scoring, sour
 [Production workflows](../production-workflows/README.md) connect the existing art studies and V3D/INV delivery owners to in-game review. Source rights, useful-asset cost, human review and device qualification remain with those owners.
 
 Use canonical contracts and the actual selected revision's project/tracker evidence over broad statements in older proposals. Research and examples inform selection; they do not adopt features or waive acceptance. [Development save policy](../../AGENTS.md#development-save-policy), privacy/authority and existing verification requirements remain controlling for every selected extension.
-

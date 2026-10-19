@@ -140,4 +140,3 @@ Policy, instances, elapsed time and bindings serialize with the world. Periodic 
 - Implementation: [Feature tasks](maintainers/state-contributions.md).
 - Reviewed removal: [RD01–RD05](maintainers/parallel-batch-09-reviewed-content-removal.md), under [CE01](maintainers/creator-edits.md#ce01--reviewed-explicit-dependency-cascades).
 - Limits and constraints: [Shared state, resources and effects inventory](limits/state-effects.md).
-

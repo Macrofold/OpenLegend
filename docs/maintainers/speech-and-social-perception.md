@@ -32,7 +32,7 @@ Use the same semantic owner for a mutation, its dependent updates and its derive
 | ----- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | SPK00 | This design task                                            | Cross-linked selected design, reconciled owners and executable task breakdown.                             |
 | SPK01 | SPK00                                                       | Single-address linguistic evidence and reusable acoustic calculation; memoryless audience waits for SPK07. |
-| SPK02 | SPK01                                                       | Installed direct-address and shared evidence-dependent recognition rules with separate names.                               |
+| SPK02 | SPK01                                                       | Installed direct-address and shared evidence-dependent recognition rules with separate names.              |
 | SPK03 | SPK01–SPK02                                                 | Shared participant, speech presentation and complete model-evidence projection.                            |
 | SPK04 | SPK01–SPK03                                                 | Full structured memory, typed lineage, cold recall and faithful consolidation.                             |
 | SPK05 | SPK01–SPK04                                                 | Ordinary dialogue without membership and bounded source-owned preparation.                                 |
@@ -225,4 +225,3 @@ SPK10 is a cross-stage obligation, not permission to postpone serializers or val
 - [ ] Commit all implementation/review/doc changes using the authorized workflow, verify no task-owned edits remain, and report delivered behavior, consequential tradeoffs, actual checks and remaining in-scope blockers honestly.
 
 **Exit:** the selected feature works end to end with faithful memory, readable UI, independent human response, native animal sensing/reaction with zero animal model calls, privacy/recovery and meaningful workload evidence. The relevant CTR03–CTR04 dependency is integrated and qualified. If a required human live-model, running-game/browser or capacity check cannot run, its acceptance remains open and the project is not reported fully qualified.
-

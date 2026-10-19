@@ -16,15 +16,15 @@ Give external stimuli, private internal changes, perception changes, and relevan
 
 This document owns **stimulus scope, perception-change identity, and reaction intake**. It does not replace these existing owners:
 
-| Existing owner                                                                     | Responsibility retained                                                                  |
-| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| [Sensory design](../archive/07-technical-architecture/perception-and-attention.md) | Geometry, hearing, recognition/detail, physical sensory exposure and authorized camera presentation, sensory overlays            |
-| [Memory architecture](memory-architecture.md)                                      | Recall, Jev attention, reasoning levels, reflection, forgetting, mental privacy          |
-| [Performance](performance.md)                                                      | Runtime cadence, work budgets, optional I/O, profiling, scale gates                      |
-| [Narration](narration-and-conversations.md)                                        | Conversation lifecycle, story selection, private prose and transcript behavior           |
-| [Production data](../archive/07-technical-architecture/production-data-model.md)   | Record/transaction authority, queries and storage conventions                            |
-| [Save/load](save-and-load.md)                                                      | Consistent capture, restoration, generation fencing and active-development compatibility |
-| [Declarations](../archive/07-technical-architecture/declarations-and-evolution.md) | Admission of new mechanics and trusted configurable behavior                             |
+| Existing owner                                                                     | Responsibility retained                                                                                               |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| [Sensory design](../archive/07-technical-architecture/perception-and-attention.md) | Geometry, hearing, recognition/detail, physical sensory exposure and authorized camera presentation, sensory overlays |
+| [Memory architecture](memory-architecture.md)                                      | Recall, Jev attention, reasoning levels, reflection, forgetting, mental privacy                                       |
+| [Performance](performance.md)                                                      | Runtime cadence, work budgets, optional I/O, profiling, scale gates                                                   |
+| [Narration](narration-and-conversations.md)                                        | Conversation lifecycle, story selection, private prose and transcript behavior                                        |
+| [Production data](../archive/07-technical-architecture/production-data-model.md)   | Record/transaction authority, queries and storage conventions                                                         |
+| [Save/load](save-and-load.md)                                                      | Consistent capture, restoration, generation fencing and active-development compatibility                              |
+| [Declarations](../archive/07-technical-architecture/declarations-and-evolution.md) | Admission of new mechanics and trusted configurable behavior                                                          |
 
 [Agent agency](agent-agency.md) owns operational goals, plan execution and decision composition. Agency goal-review/action-result/invention-result causes use this document’s single reaction intake; they do not introduce a second event pipeline. Private invention feedback uses owner-private scope, while unprojected execution receipts remain system-only.
 
@@ -321,4 +321,3 @@ Keep a perceived group distinct from its physical members, their private goals a
 - Implementation: [Events and reactions](maintainers/events-perception-and-reactions.md); cross-feature target integration in [PS04](maintainers/product-scalability.md).
 - Limits and constraints: [Native work](limits/native-work.md) and [cognition](limits/cognition.md) own their existing shared mechanisms; proposed product choices are in [PS-L02/PS-L06/PS-L07](limits/product-scalability.md).
 - Related design: [Memory](memory-architecture.md) and [hearing](hearing-and-speech.md) retain attention/recall and acoustic ownership.
-

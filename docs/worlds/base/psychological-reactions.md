@@ -1,7 +1,7 @@
 # Compact personal reactions — selected wilderness profiles
 
-| Status      | Current progress                                                                                                             | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                                 | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
 | In progress | Interpreted fear/anger are installed; native startle and adaptive reconsideration are designed targets, with broader qualification and joy open. | 2026-10-19   |
 
 The ordinary world installs interpreted fear and anger through the [two-stage threat route](../../projects/combat-and-threat-responses-tech-design.md). Both automatic damage-to-fear producers are removed; bodily discomfort, physical injury and urgent evidence retain their native owners. Controlled service checks cover interpretation publication and subsequent action admission, including a failed second judgment. Independent character behavior, complete repertoire and scheduling qualification remain open. These fictional character models do not claim measured human psychology. The joy pilot below remains a separate uninstalled consumer of the [continuing-life reaction contract](../../projects/continuing-lives-tech-design.md#55-numerical-personal-reactions-without-required-prose).
@@ -136,4 +136,3 @@ Revisit the vocabulary, available amounts, rate and notification bands when that
 - Implementation: [CTR06–CTR08 threat reactions](../../maintainers/combat-and-threat-responses.md), [CE02/CE03/CE05](../../maintainers/character-experience.md), [intelligent-simulation delivery mapping](../../maintainers/intelligent-simulation.md) and the existing [appraisal owner](../../maintainers/actor-model.md#advanced-emotional-state-foundation); ACT09 process authoring remains separate.
 - Limits and constraints: [FL21–FL23](../../limits/feelings.md#fl21--compact-numerical-personal-reactions) and existing [cognition](../../limits/cognition.md), [memory](../../limits/memory.md) and [AI execution](../../limits/ai-execution.md) admission.
 - Related contract/design: [continuing-life behavior](../../projects/continuing-lives-feature-spec.md#166-compact-personal-reactions-can-change-a-feeling), [technical integration](../../projects/continuing-lives-tech-design.md#55-numerical-personal-reactions-without-required-prose), [current social feelings](social.md#feelings) and [compelling-character episodes](../../projects/compelling-characters-feature-spec.md#complete-behavioral-flows).
-

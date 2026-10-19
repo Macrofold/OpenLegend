@@ -1,8 +1,8 @@
 # Stealth, awareness and surprise — shared technical design
 
-| Status      | Current progress                                                                                                        | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared contracts and source audit are drafted; integration review, specialist designs and runtime delivery remain open. | 2026-10-19   |
+| Status      | Current progress                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Shared contracts and source audit are complete; specialist designs, runtime delivery and qualification remain open. | 2026-10-19   |
 
 ## Authority and scope
 
@@ -252,8 +252,7 @@ Effective mechanical emotion is a read-only composition over the exact body's el
 type CommittedReactionCauseRef =
   | { kind: 'physical-outcome'; cause: ExistingPhysicalCauseRef }
   | { kind: 'acquired-occurrence'; cause: OccurrenceRef }
-  | { kind: 'acquired-exposure'; exposure: ExposureRef;
-      cause: ExistingExposureTransitionRef };
+  | { kind: 'acquired-exposure'; exposure: ExposureRef; cause: ExistingExposureTransitionRef };
 type BodyReactionInput = Readonly<{
   target: ActorLifeRef;
   cause: CommittedReactionCauseRef;

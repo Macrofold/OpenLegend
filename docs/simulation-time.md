@@ -85,4 +85,3 @@ See [the integrated sound/elapsed-time record](maintainers/speech-time-integrati
 - Implementation: [Existing subsystem work](maintainers/simulation-time.md); future product integration in [PS01–PS08](maintainers/product-scalability.md).
 - Limits and constraints: [Native-work inventory](limits/native-work.md); proposed product choices in [PS-L01–PS-L18](limits/product-scalability.md).
 - Related design: [Product-scalability suite](product-scalability/README.md) retains strategic scope without replacing current execution.
-

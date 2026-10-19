@@ -211,4 +211,3 @@ Qualify changed ordinary routing alongside the two-call threat route, including 
 - Concrete restrictions: [Combat/threat limits](../limits/combat-and-threat-responses.md), [base world](../limits/base-world.md), [ranged/evasion](../limits/parallel-batch-06-rivals-and-contested-ground.md), [feelings](../limits/feelings.md), [UI tuning](../limits/ui-ux.md).
 - Design dispositions: [ND11](needs-design.md#nd11--human-conflictrecovery-and-npc-ghost-continuity), [ND13](needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization).
 - Related delivery: [Base world](base-world.md), [Batch 06](parallel-batch-06-rivals-and-contested-ground.md), [character experience](character-experience.md), [cognition](cognition-redesign.md), [UI/UX](ui-ux.md).
-

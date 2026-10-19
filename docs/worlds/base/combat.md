@@ -119,4 +119,3 @@ The [native animal response profile](animal-responses.md) instead supplies effic
 - Implementation: [Action capabilities](../../maintainers/action-capabilities.md), [batch 06](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md), and [CTR01–CTR10](../../maintainers/combat-and-threat-responses.md).
 - Limits: [Base-world combat](../../limits/base-world.md), [ranged/evasion](../../limits/parallel-batch-06-rivals-and-contested-ground.md), and [threat-response limits](../../limits/combat-and-threat-responses.md).
 - Design: [Feature specification](../../projects/combat-and-threat-responses-feature-spec.md), [technical design](../../projects/combat-and-threat-responses-tech-design.md).
-
