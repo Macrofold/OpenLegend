@@ -58,7 +58,7 @@ NST01 data-shape changes include all current-format validators/serializers in th
 
 ## NST03 — Terminal semantic readers and readiness
 
-- [ ] Add one shared semantic eligibility/order selector: open speech is ineligible; terminal streaming speech uses saved ready order; ordinary evidence uses its existing order.
+- [ ] Add one shared semantic eligibility/order selector: open speech-origin evidence is ineligible; every current-format terminal speech record uses saved `semanticReadyOrder`, including atomic player/authored speech and enabled sound-only accounts; other already-terminal evidence families use their existing order. Select by speech-origin source and common lifecycle, not optional linguistic payload presence. Missing or contradictory speech lifecycle/readiness is a validation error, never an ordinary-evidence fallback.
 - [ ] Change experience conversion, unseen selection, director filters/maxima and response-interruption scans to that meaning. Remove occurrence-order early exits that can miss an older occurrence closed after the considered watermark.
 - [ ] Audit hot/cold recall, selected-source reads, response context, compaction, lexical/vector model indexes, summaries, reflection/dreams, Narrator, appraisal/name/commitment and action-experience consumers. All must omit open text, including incidental reads during unrelated work.
 - [ ] Make terminal readiness/consequences idempotent through existing actor-work/decision/source ownership. Preserve exactly one ordinary awareness account and one semantic opportunity; no new scheduler or per-part decision.
