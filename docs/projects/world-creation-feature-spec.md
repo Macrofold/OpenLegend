@@ -532,7 +532,7 @@ The [LIB tracker](../maintainers/invention-library.md) owns future execution. Ea
 | LIB-A14 | Current-format restore preserves installed method meaning, physical record access, actual knowledge and in-progress writing/crafting while operational library/account history remains outside gameplay rewind. |
 | LIB-A15 | Library search is correct for empty/absent/failed/partial/stale cases; filters, keyboard, IME, long/identical labels, stable selection and lost access work through the actual UI. |
 | LIB-A16 | With growing unrelated histories and another world's records, selection happens before payload hydration; complete-caller reads, writes, startup/recovery, storage and dependency work are measured at their admitted envelopes. |
-| LIB-A17 | A player can explain what their invention changes and choose a worthwhile next use without a required authoring interview, shopping loop or developer explanation. Uncoached enjoyment and balance remain open until actually observed. |
+| LIB-A17 | A player can explain what their invention changes and choose a worthwhile next use without a required authoring interview, shopping loop or developer explanation. For intended repeat use, also examine a familiar or guide-informed approach: the wanted result, choices or execution should remain worthwhile after discovery. Assess the complete arrival/preparation/waiting/work/return cost, a useful stopping point and resumption, and the earlier method’s remaining or replaced purpose through the existing player-learning owner. One-time project completion remains valid. Uncoached enjoyment and balance remain open until actually observed. |
 
 ### 15.11 Delivery and decisions
 
