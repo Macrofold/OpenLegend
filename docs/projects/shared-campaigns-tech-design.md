@@ -1,6 +1,6 @@
 # Shared campaigns: local Ash Road technical design
 
-| Status | Current progress | Updated |
+| Status | Current progress | Last updated |
 | --- | --- | --- |
 | In progress | Implementation-ready selected local design; runtime implementation, independent technical evidence and real-player qualification open. The advertised-service and federation stages remain explicitly deferred proposals. | 2026-10-18 |
 

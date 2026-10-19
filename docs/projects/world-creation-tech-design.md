@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| Not started | Selected DG12 implementation design is complete. Existing opening delivery remains with OC; LIB implementation, native/browser/live acceptance and capacity qualification have not begun. | 2026-10-18 |
+| In progress | Selected DG12 design is complete; opening qualification remains with OC, and LIB implementation, gameplay acceptance and capacity qualification remain open. | 2026-10-18 |
 
 This is the technical counterpart to [world creation](world-creation-feature-spec.md). Sections 1–14 of that feature retain the opening product; [OC01–OC06](parallel-batch-07-playable-world-creation-tech-design.md) already owns the supported candidate, World Agent, exact empty-host activation and current-format recovery. Reuse those contracts unchanged for an opening. This file fully specifies the next selected consumer: retaining a useful supported invention, binding/adapting it, voluntarily learning/using it through a real local method record, and a zero-price immutable release to a known account on the same operator. [LIB01–LIB09](../maintainers/invention-library.md) delegates this work from INV-8/EWF11. Design completion is not delivery or evidence of fun.
 
