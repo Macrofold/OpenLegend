@@ -13,7 +13,7 @@ Current status must not be read as delivery. Today aim and walking are incompati
 ### ASE01 — One admitted execution profile and family-specific score
 
 - [ ] Extend the *existing* action/install descriptor authority with finite optional input styles (`timed-release`, `point-placement`), pinned parameters, relevant world status/competence contributions, bounds and permission to use named supported effect channels. No second mod registry, trusted generated code or universal skill stat.
-- [ ] Implement one deterministic pure score evaluator and public-safe projection from a selected installed profile; ordinary/assisted score is neutral; unknown profile/missing applicability refuses the optional gesture while normal action remains available.
+- [ ] Implement one deterministic pure score evaluator and public-safe projection from a selected installed profile; ordinary tap or skipped challenge is neutral, while an accessible skilled alternative retains the same possible excellent score; unknown profile/missing applicability refuses the optional gesture while normal action remains available.
 - [ ] The only first supported effects are native ranged contact, melee contact/injury, and selected woven-container fit; world name, tool appearance and arbitrary `statPath` cannot install a writer. Same mechanics work in a contrasting registered world with no bonus or no profile.
 - [ ] Preserve exact version/digest pins and selected world resolution through menus, requested actions, actor decisions and restoration.
 
@@ -24,13 +24,13 @@ Current status must not be read as delivery. Today aim and walking are incompati
 - [ ] Implement camera-relative 3D WASD movement through the existing spatial/nav/mutation owner and server-authenticated intent; normalize diagonals, preserve slope/support/collision, stop safely on blur/reconnect/lost keys/life switch. Keep camera orbit independent.
 - [ ] Implement visible attack-mode on/off with remapping and reachable toggle; propose Shift+T only if the actual hotkey registry has no collision. Ordinary click retains existing select/walk outside mode; right-click menus, Command shortcuts, text focus, IME and construction picking continue working.
 - [ ] Auto-enter mode after actual own admitted attack or personally delivered present hostile/hurt evidence, never a private plan, general nearby fight or retained threat expiry; deliberate Off is not overridden until fresh qualifying evidence.
-- [ ] In attack mode, capture exact displayed attack/tool/target or permitted point aim at pointer-down, and use one ordinary one-shot request for a quick tap. Disabled/cooling-down capabilities do not queue/auto-switch to another target.
+- [ ] In attack mode, capture exact attack/tool and either an intended **recognized subject** or a visible **point-only** ranged shot on pointer-down. Start **one native preparation at pointer-down** for both tap and hold; a quick release commits its ordinary score-zero aim, not a separate attack path. Disabled/cooling-down capabilities do not queue/auto-switch to another target.
 
 **Exit:** ordinary navigation remains playable, keys never trigger while typing or in conflicting UI, camera heading doesn't become body heading, mode remains predictable after two people fight nearby and after one actual directed hit.
 
 ### ASE03 — Gesture, scoped commitment and receipt continuity
 
-- [ ] Add finite client hold/tap/cancel state with one captured pointer ID and one exact server-selected action. Ring only starts after the hold threshold; drag-to-track is not a camera drag. Holding never autofires.
+- [ ] Add finite client hold/tap/cancel state with one captured pointer ID and one exact server-selected action. **Begin native windup at pointer-down**; the ring only starts locally after the 150 ms hold threshold. If mouse-up precedes native readiness or admission reply, retain exactly one captured release for later native ready/admission; a subsequent cancel revokes it. Drag-to-track is not a camera drag. Holding never autofires.
 - [ ] Begin/prepare an actual native action once, then submit one release/finish with the final pointer world aim or workpiece-local placement; attach authenticated actor/life, tool/target/method profile pins, control epoch, world/load epoch and stable request identity at the existing command owner.
 - [ ] Use current admission and receipts for invalid target, lost sight, bad range, no equipment/ammo, stale tool/recipe/definition, current actor work, recovery, lethal review, denied source and paused world; previews must not debit/draw randomness.
 - [ ] Cancel cursor-over-self, Escape, visible Cancel, modal takeover, pointercancel, disconnection and control loss without stray release. Late HTTP responses, duplicate releases and save/reopen cannot spend twice or complete somebody else's attempt.
@@ -47,7 +47,7 @@ Current status must not be read as delivery. Today aim and walking are incompati
 
 ### ASE05 — Exact mouse-directed flight and genuine local evasion
 
-- [ ] Replace the bundled shot-direction error law for this installed family: capture the **release pointer's physical world aim point** and actual launch anchor, fix one straight finite ray, never aim at the target's unseen center or randomly divert it. Ordinary tap uses the clicked point.
+- [ ] Replace the bundled shot-direction error law for this installed family: capture the **release pointer's physical world aim point** and actual launch anchor, fix one straight finite ray, never aim at the target's unseen center or randomly divert it. **Admit selected point-only shots on visible ground/scenery without an entity**, and retain an optional observed intended subject separately for attack review. Lost target sight does not secretly grant hidden position or invalidate an already legal point-directed shot. Ordinary tap uses the clicked point.
 - [ ] Extend existing ranged/body-contact evaluation to permit a real, one-per-flight/body-life local posture or reactive avoidance when there is a genuine swept capsule contact candidate, using world native conditions, observed/unknown awareness and saved RNG. A body need not take a navigation step; don't label an unaware flinch a chosen dodge.
 - [ ] A successful local avoidance creates a truthful evasion event and continues the *same* ray past that life to eligible later solid/body contacts. Preserve first actual stopping collision, material shield/armor consequences, canonical ties, stationary obstacles and actual body/target identity.
 - [ ] Integrate with [CTR01 collateral/release](combat-and-threat-responses.md#ctr01--authoritative-contact-and-human-permission) rather than reinstating target-only immunity. Injury/contact/observer state are committed once before publication; source death does not unshoot a released arrow.
@@ -65,7 +65,7 @@ Current status must not be read as delivery. Today aim and walking are incompati
 ### ASE07 — Readable input feedback and accessible alternatives
 
 - [ ] Create a reusable input presentation over the exact pointer point: fading green/yellow rings with white moving radius; score/color/pattern/label derive from one installed profile and evaluator. Provide mode/status/ready/cooldown/blocked reason and explicit timing versus **actual observed** contact feedback.
-- [ ] Reuse design-system events, focus order, keyboard/one-handed release/cancel, color-independent markings, reduced motion and high-contrast text. Give a neutral skip/assisted route without a hidden difficulty exploit.
+- [ ] Reuse design-system events, focus order, keyboard/one-handed release/cancel, color-independent markings, reduced motion and high-contrast text. Give an explicitly neutral **Skip** and an accessible alternate skill-control route that can earn the **same maximum possible bonus** in noncompetitive play; do not impose worse craftsmanship on someone who cannot use precise mouse movements.
 - [ ] Preserve action-menu/speech/read-through/private sight boundary, focus/popup hierarchy, narrow-screen legibility, zoom/floor picking, scaled HUD, loading/reconnect preservation and actual effect receipts.
 
 **Exit:** no accidental actions during text entry, modal dismissal or drag; a player can distinguish green release with actual miss from bad timing with actual hit.
@@ -74,7 +74,7 @@ Current status must not be read as delivery. Today aim and walking are incompati
 
 - [ ] In the existing admitted woven-container family, add an optional **one finite seam-alignment point-placement finish** as part of real work. Normal craft remains complete, spend/cost/known method are unchanged, and manual work does not fabricate a second craft or reroll on completion.
 - [ ] Store only an exact finite **per-individual-item** admitted fit contribution on the ordinary item owner. Effective container capacity uses one owning accessor; no global definition mutation, independent grade stat, fabricated inventory or general durability system. Preserve recipe's original `4p` material-size relationship.
-- [ ] Apply selected candidate quality to a 24-capacity bag (ordinary 24, best up to 30, worst approximately 22) within installed limits; label/grade is a derived optional view. Verify actual nested contents, overflow prevention, capacity after transfer, output provenance, current-format restore and incompatible/stacking rules.
+- [ ] Apply selected candidate quality to a 24-capacity bag (ordinary 24, best up to 30, worst approximately 22) within installed limits; label/grade is a derived optional view. Verify actual nested contents, overflow prevention, capacity after **gift/trade to another player**, output provenance, current-format restore and incompatible/stacking rules; no transfer-related downgrade.
 - [ ] World without admitted finishing option offers ordinary recipe only. NPCs make usable bags using native applicable skill/materials, never simulated mouse accuracy or constant legendary output. Observers learn only permitted item quality.
 
 **Exit:** quality makes a *practical difference* to the same existing object through native inventory, not a cosmetic quality score; a second installed profile can omit or vary the feature without engine fallback.
@@ -91,8 +91,8 @@ Current status must not be read as delivery. Today aim and walking are incompati
 ### ASE10 — Time, latency and competitive safety
 
 - [ ] Keep real-time gesture display independent of simulated duration, and weapon native windup/recovery/movement independent of ring speed. Verify speed 0.5×/1×/3×/8×, paused world, model delay, reconnect and browser render variation.
-- [ ] Prevent raw browser timestamps/perfect phase/effect claim from becoming a competitive damage or traded high-value item authority. Default manually reported bonuses to neutral in human PvP or shared competitive item/economy scope until separately approved trust design; keep ordinary PvP admissible under current world policy.
-- [ ] Make the noncompetitive/competitive scope restriction visible, classify rejected/late/conflicted submissions and retain stable receipt identity and authoritative world randomness. Do not claim anti-cheat verification from clamped inputs.
+- [ ] Prevent raw browser timestamps/perfect phase/effect claims from becoming a **human-PvP advantage at the actual contacted body**, including collateral impact. For an ordinary crafted bag, the server recalculates bounded fit from real method/input; sharing or trading never strips that genuine quality. An explicitly high-stakes ranked crafting contest uses a neutral creation route until separately approved trust design; keep ordinary PvP admissible under current world policy.
+- [ ] Make the human-PvP competitive-skill restriction visible, classify rejected/late/conflicted submissions and retain stable receipt identity and authoritative world randomness. Do not claim anti-cheat verification from clamped inputs.
 
 **Exit:** no silent competitive advantage from untrusted input, no extra work during pause/timeout, no missed native cooldown from faster clicks.
 
@@ -108,8 +108,8 @@ Current status must not be read as delivery. Today aim and walking are incompati
 ### ASE12 — Integrated verification, performance and player enjoyment
 
 - [ ] Existing focused native check with genuine projectile body contact, evasion, shield/armor, line-of-fire, source removal, malformed claim, exact point/camera/floor, normal/green/poor hit/miss and duplicate release.
-- [ ] Actual browser interaction with WASD+mouse held tracking while deer moves, mode toggling and surprise auto mode, safe nearby conversation, rapidly moving targets, different frame rates, reduced motion, keyboard alternative, text-field focus and explicit cancel.
-- [ ] Full native craft before/after/failed/assisted, material stock, one resultant bag, capacity across transfer/nested inventory, NPC producing usable equipment, saving/reopening, remembered observation rather than remote truth.
+- [ ] Actual browser interaction with WASD+mouse held tracking while deer moves or leaves sight, **point-only shot into permitted scenery**, mode toggling and surprise auto mode, safe nearby conversation, rapidly moving targets, different frame rates, reduced motion, keyboard skilled alternative with equal potential reward, text-field focus and explicit cancel.
+- [ ] Full native craft before/after/failed/skipped/**accessible skilled** completion, material stock, one resultant bag, effective capacity across real player-to-player transfer and nested inventory, NPC producing usable equipment, saving/reopening, remembered observation rather than remote truth.
 - [ ] Browser/server performance measurement through complete input-to-physical-effect path: local rendered frames, API/native admission, collision candidate count, 100/500 nearby actors, idle world and one held aim, menu burst with many tools, 3×/8× game pace and actual network delay.
 - [ ] Uncoached player usefulness: observe whether normal tap remains viable, whether deliberate attacks feel worthwhile rather than compulsory, whether tracking an actual animal provides tension, whether changes after mastery remain interesting, and whether someone prefers/gifts/trades the better pouch *because* its capacity matters. Compare real experience against doing the same activity without handwork.
 - [ ] Review complete task diff, reconcile all docs/limits/assumptions, execute required relevant checks and commit the entire task before declaring implementation complete.
@@ -130,7 +130,7 @@ All **ASE01–ASE12** are **Open**. They can be implemented and committed increm
 
 **Designed and closed:** ND38 (player execution, two distinct examples and world/engine ownership) is **Done — designed**; no functionality or playability acceptance is completed by that disposition. [ND13](needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization) still owns generic key-remapping and other controls beyond this concrete attack-mode slice, while selected CTR retains already designed contextual combat choices. Other ND entries for general world-authored stats, crafting/composition, broader bodies or clock policy remain open outside this feature.
 
-**Explicit later decision:** competitive PvP and shared-economy input authenticity, acceptable latency, server challenge verification and assist fairness. Do not enable those bonuses until chosen and qualified. The neutral competitive fallback permits safe first implementation without inventing a security guarantee. Later critical effects, generic forging minigames, item wear/repair, fully general authored effects and new platform clients remain separate candidate projects.
+**Explicit later decision:** human-PvP and separately ranked/high-stakes production input authenticity, acceptable latency, server challenge verification and fairness. Do not enable manually claimed human-PvP advantages until chosen and qualified. Ordinary bounded fitted goods can be exchanged in shared play without retroactively changing their physical properties. Later critical effects, generic forging minigames, item wear/repair, fully general authored effects and new platform clients remain separate candidate projects.
 
 ## Maintained records
 

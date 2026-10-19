@@ -14,22 +14,29 @@ Make actual hunting, confrontation and meaningful craftsmanship fun. A character
 - Moving during a held aim is supported for compatible bodies/tools, replacing the current selected ranged rule that movement cancels preparation. Chosen guard and unrelated physical work remain incompatible, and native injury can still interrupt.
 - Moving the held cursor to the player's own character cancels the unreleased attempt. Escape and a reachable Cancel control are equivalent. A quick tap performs the ordinary attack after any required native windup; release after deliberate hold captures that final physical aim point and any permitted bounded timing quality. There is no auto-fire or guaranteed hit.
 
+## Ranged point fire and intended subjects
+
+**Selected for the bundled world's first usable attack-mode control:** a compatible ranged weapon may fire at a **visible 3D world point** under the mouse, even with no creature clicked. A recognized animal/person under the initial pointer can be recorded as the intended subject and receive exact attack/PvP review, but it is never a guaranteed shot target. The player may move the aim ahead of fleeing prey or aim into a formerly visible clearing without being given hidden animal coordinates; losing the creature's sight is not itself a reason to block a lawful point-directed shot. The actor's own weapon, source, permission, physical launch geometry, ready state and ammunition remain mandatory. An unresolvable floor or nonfinite/ambiguous ray is refused before material is spent; a melee attack still needs a currently eligible observed subject.
+
+Point fire is **not a bypass for consequential violence**. A shooter directing the initial press toward an observed person gets the same selected exact lethal review as a subject attack. An unselected shot carries the visible world-authored warning that **any actual physical interceptor may be injured**, without previewing hidden identities. After release, [CTR01](ranged-counterplay.md#selected-contact-consequences) owns genuine first-impact injury/collateral, and the world does not 'undo' an unintended fatality after a shot commits. Other installed worlds can disable point fire entirely.
+
+
 ## Concentric release interaction
 
 The first bundled manual timing cue places a green/yellow shaded annular target at the current pointer-aim location and a contrasting white concentric moving radius. The user continues following a moving target with the pointer. The ring may expand and contract repeatedly while held. Green represents a potentially strong release; yellow a normal one; outside yellow a weaker release. **'Missed timing' is not an automatic physical miss.** The native projectile/strike result is a separate later event.
 
-Candidate initial **tuning for playtest, not implemented values**:
+**Selected initial implementation tuning for playtests (not implemented, not verified as optimal):**
 
 | Selectable input/display policy | Proposed initial value or rule | Why / adjustment evidence |
 | --- | --- | --- |
-| Tap/hold boundary | Approximately 150 real milliseconds | A tap remains responsive; accidental tiny holds should not summon a challenge |
-| Ring cycle | Approximately 0.9 real seconds | A player can respond without making a weapon's native cooldown depend on ring speed |
-| Green/yellow space | Green about 12% and yellow about 30% of radial traversal, subject to sizing/legibility | Dexterity-like coordination may widen tolerances; do not force a universal base stat |
+| Tap/hold boundary | 150 real milliseconds | A tap remains responsive; accidental tiny holds should not summon a challenge |
+| Ring cycle | 900 real milliseconds for one full expansion/contraction | A player can respond without making a weapon's native cooldown depend on ring speed |
+| Green/yellow space | Normalized target radius 0.5; green within ±0.06, ordinary yellow through ±0.15; pure signed score as in the technical design | Dexterity-like coordination may widen tolerances; do not force a universal base stat |
 | High focus/steadiness | Slower visible ring only where a declared applicable skill/status contribution supports it | Changes how controllable holding feels, not native cooldown or game clock |
 | Low focus/drunkenness | Faster or more difficult *displayed* interaction where installed status mechanics actually exist | No hardcoded alcohol status in the engine and no hidden unreported penalty |
 | Poor/ordinary/good | Normal score 0; poor release bounded negative; green positive normalized [-1, 1] | No forced contact, free action, guarantee or automatic miss |
 
-The world may install different timing profiles per weapon or another authorized noncombat family. The renderer reads this profile; it must not invent a second set of band widths, speed constants or weapon rules. Weapon expertise and conditions contribute only where supported; a world without these scores simply retains ordinary execution.
+The player controls **when** to release; on pointer-down the same native preparation starts whether the player ultimately taps or holds. Releasing before native readiness retains only one captured release intention that resolves at earliest legal readiness; cancel stops it. These are first implementation values to test and retune through the single world owner. The world may install different timing profiles per weapon or another authorized noncombat family. The renderer reads this profile; it must not invent a second set of band widths, speed constants or weapon rules. Weapon expertise and conditions contribute only where supported; a world without these scores simply retains ordinary execution.
 
 ## Weapon-specific consequences (candidate authoring envelope)
 
@@ -80,9 +87,16 @@ A player may invent a compatible woven-container method under the existing finit
 
 The **human ring and optional placement input are measured in real interactive time**. The physical world still advances under its selected 60-game-seconds-per-real-second baseline and available multipliers. Weapon windup/recovery and actual animals' movements obey simulation time; a faster world can be harder to track, but no tool's native cooldown is bypassed, and manual input is not artificially sped 8×. Qualify 0.5×/1×/3×/8×; no silent slowdown of NPCs, physics or committed objects.
 
-Handwork is optional. Include the regular quick and ordinary craft route, reduced-motion/non-color cues, accessible manual alternatives and a neutral assist path without hidden disclosure or impossible input demands. The initial objective is a *chosen advantage*, not an inaccessible mandatory quality gate. No artificial loss or failure is added to ordinary basic survival crafting.
+Handwork is optional. Include the regular quick and ordinary craft route, reduced-motion/non-color cues, accessible manual alternatives and a neutral assist path without hidden disclosure or impossible input demands. Skipping remains an ordinary neutral action; **accessible skilled variants can earn the same maximum benefit** through keyboard/toggle or a more legible precision interaction, rather than being forcibly neutral. The initial objective is a *chosen advantage*, not an inaccessible mandatory quality gate. No artificial loss or failure is added to ordinary basic survival crafting.
 
-The initially permitted optional bonus is **noncompetitive/solo only** until a separate trusted PvP and shared-economy input protocol is approved. Existing ordinary PvP, collision, lethal review and unmodified manufacturing remain functional under their own authority. This temporary limit is disclosed; it is not claimed to prevent modified clients from automating noncompetitive timing.
+The initial optional combat bonus is neutral **when the real contacted body belongs to a human-controlled player**, including incidental contact on an animal-directed shot, until a separately approved PvP fairness contract exists. Existing ordinary PvP, collision, lethal review and baseline manufacturing remain functional. **A normally made quality-bearing bag can be traded or gifted without losing its genuine fitted capacity.** Its server-derived bounded fit, real inputs, provenance and single output are enforced at crafting; modified clients may optimize an unranked manual input, so high-stakes competitive manufacture still needs a separate trust policy. No later transfer silently downgrades an already finished bag.
+
+## Human interaction scoring and meaningfulness
+
+Use the [technical design's chosen initial evaluator](../../projects/action-execution-and-skill-expression-tech-design.md#selected-initial-timing-curve-and-accessible-parity): for a green release the normalized ring's difference from 0.5 is at most 0.06, yellow extends to 0.15, and outside yellow the score decreases smoothly toward -1. This is a visible release-quality measure, **not** a collision verdict or guaranteed damage. Normal taps and explicitly skipped handwork use score zero; accessible variants may reach the same allowed excellent score.
+
+For the pouch's distinct input, the first guide is a visible workpiece-local fastening position; accepted selected placement uses a **single** `(u,v)` with values 0–1 and an installed guide. Its world-specific initial radius score is defined [once](../../projects/action-execution-and-skill-expression-tech-design.md#selected-initial-placement-profile), then turned into a fitted **property of the one real produced bag**. The initial guide must have enough meaningful variation that uncoached people can demonstrate the choice; a trivial always-perfect click is a failed **fun criterion**, even if the mathematics and persistence pass. Do not impose this workpiece guide on every craft or build a speculative full sewing simulator.
+
 
 ## Qualification and ownership
 
