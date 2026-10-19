@@ -1,5 +1,7 @@
 # Conflict, tactics, rescue and aftermath
 
+**Selected optional human execution (ND38; not implemented):** [The action feature](../projects/action-execution-and-skill-expression-feature-spec.md) introduces WASD, explicit/observed-attack mode, useful normal tap, optional held release and real mouse-directed projectile aim. Green timing improves tool-specific odds but never guarantees collision; a true local body evasion can turn geometric crossing into a miss, and bad timing may still strike. [CTR](../projects/combat-and-threat-responses-feature-spec.md) continues to own physical consequence and NPC response. Competitive browser timing bonuses remain disabled pending a trusted policy.
+
 **Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. Entry rows own individual priorities; worked examples provide context without a second ranking. These are proposals, not delivered features.
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
