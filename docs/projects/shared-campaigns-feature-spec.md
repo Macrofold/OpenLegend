@@ -1,8 +1,8 @@
 # Shared campaigns with local opportunities
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | DG34 local Ash Road design and paired technical design complete: actual installable geography, two useful linked outings, finite discoveries, independent people and one optional local operation. Implementation and real-player qualification remain open. Advertised service and federation are deferred distinct proposals. | 2026-10-18 |
+| Status      | Current progress                                                                                                                                       | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Selected local Ash Road design is complete; implementation and real-player qualification remain open, with advertised service and federation deferred. | 2026-10-18   |
 
 ## 1. The Ash Road: something worth doing before the battle
 
@@ -44,13 +44,13 @@ The second relay releases its own exact yoke. The physical case holds the exact 
 
 ### 3.3 What each source actually changes
 
-| Actual change | Mechanical consequence | What remains independently true |
-| --- | --- | --- |
-| Open a connected road gate | The actual gate admits passage while open | Warden may still select it; no relay severance or yoke reward follows. |
-| Disconnect one relay | Its link is permanently severed; its exact yoke is detached; Warden stop control unlocks | Its gate remains at its current endpoint. The other link and gate still have their own current state. |
-| Disconnect the second before launch | The one operation is prevented and its charge is unavailable | Workshop, ordinary gates, possessions, methods, people and north path remain available under current facts. |
-| Shut down the reached unlocked Warden | The remaining or active attempt ends at its actual position | Already committed gate movement or personal work remains real. |
-| Craft from an obtained yoke | Ordinary crafting spends exact materials and later makes one pinned output | Another copy of that yoke, a refill, automatic teaching or guaranteed battle success is not awarded. |
+| Actual change                         | Mechanical consequence                                                                   | What remains independently true                                                                             |
+| ------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Open a connected road gate            | The actual gate admits passage while open                                                | Warden may still select it; no relay severance or yoke reward follows.                                      |
+| Disconnect one relay                  | Its link is permanently severed; its exact yoke is detached; Warden stop control unlocks | Its gate remains at its current endpoint. The other link and gate still have their own current state.       |
+| Disconnect the second before launch   | The one operation is prevented and its charge is unavailable                             | Workshop, ordinary gates, possessions, methods, people and north path remain available under current facts. |
+| Shut down the reached unlocked Warden | The remaining or active attempt ends at its actual position                              | Already committed gate movement or personal work remains real.                                              |
+| Craft from an obtained yoke           | Ordinary crafting spends exact materials and later makes one pinned output               | Another copy of that yoke, a refill, automatic teaching or guaranteed battle success is not awarded.        |
 
 Source/target signals are narrowly mechanical. Their physical connection is authored and inspectable, not a universal world-state subscription or telepathic report. An individual learns from actual permitted inspection, witness or communication through the existing personal evidence path.
 

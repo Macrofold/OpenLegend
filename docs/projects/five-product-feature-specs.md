@@ -1,7 +1,7 @@
 # Five product and behavior specifications
 
-| Status      | Current progress                                                                                                                    | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                                                                       | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Selected continuing-life, attention, shelter and DG12 invention-reuse technical designs are complete; their remaining implementation and qualification stay with the focused trackers. | 2026-10-18   |
 
 **Status: all five researched product proposals and the game-first critique complete, October 3, 2026. Wider technical design and runtime implementation remain open; PX05’s narrow shelter pair is now complete.**
@@ -31,13 +31,13 @@ Mike explicitly requested product and behavior design before technical design in
 
 ## Specifications and progress
 
-| Order | Product specification                                                | Existing work owner                                       | Status                                                                                                             |
-| ----- | -------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| 1     | [Continuing NPC lives](continuing-lives-feature-spec.md)             | PS02–PS03, with explicit PS04–PS06 dependencies           | Attended-life and numerical-reaction design complete; broader unattended design and runtime acceptance remain open |
-| 2     | [Attention, crowds and scenes](attention-and-scenes-feature-spec.md) | PS04 / PS-D02                                             | Exact shared-activity and compact-background design complete; broader crowds and runtime acceptance remain open    |
+| Order | Product specification                                                | Existing work owner                                         | Status                                                                                                                                |
+| ----- | -------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | [Continuing NPC lives](continuing-lives-feature-spec.md)             | PS02–PS03, with explicit PS04–PS06 dependencies             | Attended-life and numerical-reaction design complete; broader unattended design and runtime acceptance remain open                    |
+| 2     | [Attention, crowds and scenes](attention-and-scenes-feature-spec.md) | PS04 / PS-D02                                               | Exact shared-activity and compact-background design complete; broader crowds and runtime acceptance remain open                       |
 | 3     | [Creating a world from a premise](world-creation-feature-spec.md)    | ND01/ND12, INV-4.10/INV-8, EWF11/EWF12; focused LIB01–LIB09 | Supported opening and selected DG12 technical designs complete; broader creation, LIB implementation and remaining qualification open |
-| 4     | [Editable shelters and rain](editable-shelters-feature-spec.md)      | ND07 / focused ND08, INV-6.4, PX05                        | DG13/PX05 complete; narrow flat/slope/lean-to shelter delivered; broader home and qualification remain open        |
-| 5     | [World-authored stats and checks](authored-stats-feature-spec.md)    | ND03/ND04 practical slice, PC and shared EWF/action/state | Product proposal and focused review complete; technical design and runtime work remain open                        |
+| 4     | [Editable shelters and rain](editable-shelters-feature-spec.md)      | ND07 / focused ND08, INV-6.4, PX05                          | DG13/PX05 complete; narrow flat/slope/lean-to shelter delivered; broader home and qualification remain open                           |
+| 5     | [World-authored stats and checks](authored-stats-feature-spec.md)    | ND03/ND04 practical slice, PC and shared EWF/action/state   | Product proposal and focused review complete; technical design and runtime work remain open                                           |
 
 ## Completion criteria
 

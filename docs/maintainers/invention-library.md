@@ -1,8 +1,8 @@
 # Useful invention library and local sharing — implementation tracker
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| Not started | Selected DG12/ND12 design is complete; all LIB implementation and qualification tasks remain open. Existing live invention, method-record learning and OC opening delivery are separate established owners. | 2026-10-18 |
+| Status      | Current progress                                                                                                                                                                                            | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | Selected DG12/ND12 design is complete; all LIB implementation and qualification tasks remain open. Existing live invention, method-record learning and OC opening delivery are separate established owners. | 2026-10-18   |
 
 [Feature specification](../projects/world-creation-feature-spec.md#15-dg12-expansion--a-useful-invention-follows-its-creator) · [Technical design](../projects/world-creation-tech-design.md) · [Bundled rules](../worlds/base/invention-reuse.md) · [Limits](../limits/world-creation.md). This focused tracker is the single selected child of [INV-8.1/8.2](inventions-and-world-evolution.md#inv-8--portable-inventions-and-later-algorithm-extensions) and [EWF11](extensible-world-foundation.md#ewf11--reusable-construct-integration-and-local-portability-proof). It does not replace their broader construct, complete-world inventory, commercial, cross-operator, general rights or live-migration work.
 
@@ -134,4 +134,3 @@ D44/INV-8.3 still owns product-wide free-use contribution terms and complete-pac
 - Behaviour: [world creation §15](../projects/world-creation-feature-spec.md#15-dg12-expansion--a-useful-invention-follows-its-creator); [technical design](../projects/world-creation-tech-design.md); [bundled method sheets](../worlds/base/invention-reuse.md).
 - Constraints: [world creation limits](../limits/world-creation.md), shared [invention limits](../limits/inventions.md), current knowledge/action/object/storage/authority inventories.
 - Parent delivery: [INV-8](inventions-and-world-evolution.md#inv-8--portable-inventions-and-later-algorithm-extensions), [EWF11](extensible-world-foundation.md#ewf11--reusable-construct-integration-and-local-portability-proof), [production data](production-data.md); [OC](parallel-batch-07-playable-world-creation.md) remains the opening owner.
-
