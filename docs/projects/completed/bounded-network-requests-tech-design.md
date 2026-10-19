@@ -502,7 +502,7 @@ Shared-reader cancellation only detaches that reader. End a transfer when its ac
 
 Finite asset HTTP output has a dedicated bootstrap owner capped by `config.capacity.requests`. Asset requests are routed outside the ordinary API active-request pool, so sharing its numerical cap does not mean sharing its admission slots. The output pool retains a slot through source/socket closure and remains separate from API control requests.
 
-Browser asset reads use the same network operation and exact metadata/hash semantics. Local hash/model parse/renderer upload remains owned by the renderer: check current ownership after asynchronous work and destroy late local resources according to its existing rules. Network timeout does not justify destroying a parser still using a registry or returning partial art.
+Browser asset reads use the same network operation and exact metadata/hash semantics. One build-scoped reader owner includes finite FIFO waiting in the original deadline before the existing four-transfer owner. Its allowance is the selected release URL count plus active transfer capacity, as recorded in NET-L05; cancellation removes waiting work without dispatch. Actual transfer-slot retirement wakes pending reads, including late cleanup after timeout. The network primitive itself retains immediate refusal when full and does not retry. Local hash/model parse/renderer upload remains owned by the renderer: check current ownership after asynchronous work and destroy late local resources according to its existing rules. Network timeout does not justify destroying a parser still using a registry or returning partial art.
 
 ## 9. Tooling and generated cloud code
 

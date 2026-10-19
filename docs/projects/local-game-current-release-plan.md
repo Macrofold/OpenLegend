@@ -1,8 +1,8 @@
 # Current local game and artwork
 
-| Status      | Current progress                                                                                                                         | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Artwork delivery and intelligence diagnostics are being repaired before the local development world is refreshed with the installed art. | 2026-10-18   |
+| Status      | Current progress                                                                                                                | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The current opening and artwork are selected; browser model downloads need bounded scheduling before final visual verification. | 2026-10-18   |
 
 ## Scope and selected base
 
@@ -16,12 +16,15 @@ The separate `codex/implement-complete-first-playable` branch remains actively u
 2. Reproduce and repair the intelligence tracker's server error through its existing stored-record reader. Preserve private diagnostic admission and avoid provider dispatch.
 3. Inspect the actual configured development world and reusable content before replacement. Use current supported initialization/selection operations to restore an ordinary live cast and select the installed exact artwork. Preserve credentials, grants, publication/permission records and settled/uncertain spending; do not create a second database writer or change authentication.
 4. Reopen the local server on its existing port and verify actual game presentation, ordinary controls and intelligence records in the signed-in browser. Keep simulation paused during inspection and leave the resulting world paused for handoff.
+5. Schedule the initial browser asset burst through the existing four-transfer owner so legitimate selected models wait instead of becoming permanent sprite fallbacks. Bound pending reads by the finite installed asset set, retain the original total deadline while waiting, and remove canceled queued reads before dispatch. Wake waiting reads only when actual network resources close, including late closure after cancellation; do not raise capacity or retry failed requests.
 
 ## Risk, performance and verification
 
 Expected executable changes are small (initial estimate below 150 logic lines); runtime replacement has material data-loss and authority risk. Old development play progress is intentionally disposable; operational access, asset authority and real accounting are not. Any reset must use the existing semantic owners rather than editing format markers or rebuilding unrelated authority.
 
 Asset work grows with selected bytes, simultaneous requests and cache readers. Reuse the current verified cache and exact release; preserve finite concurrency and cleanup. Diagnostic work grows with retained triggers and stages; reproduce the actual bounded SQL caller and retain its existing pagination and disclosure scope. The full game/browser verifies their consumers, not only isolated helpers.
+
+The browser scheduling fix shares one finite FIFO across selected asset reads and retains the existing per-scene URL deduplication and scene-destruction cancellation. Its work is proportional to queued selected reads, outside the render loop. Verify a burst larger than four, cancellation before dispatch, deadline expiry while waiting and late resource closure without exceeding four occupied transfers; then reload the actual game and inspect the mercenary and scenery.
 
 Use focused existing checks plus a narrow failure reproduction where needed, pinned formatting, relevant TypeScript/build checks, and browser interaction. Record only actual evidence. Provider dispatch is unnecessary and additional task Jev cost remains $0. No complete first-playable, live-character quality or performance-capacity claim follows from this repair.
 

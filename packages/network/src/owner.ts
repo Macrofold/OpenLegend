@@ -27,6 +27,8 @@ export interface NetworkOwner {
   checkDeadlines(): void;
   stop(reason: 'owner_disposed' | 'shutdown'): void;
   snapshot(): NetworkOwnerSnapshot;
+  /** Observe actual free capacity without dispatching or retrying a request. */
+  whenAvailable(): Promise<void>;
   /** Actual lease retirement for an already-stopped service's bounded shutdown owner. */
   whenIdle(): Promise<void>;
   shutdown(
@@ -69,6 +71,13 @@ export function createNetworkOwner(options: NetworkOwnerOptions): NetworkOwner {
   let shutdown: Promise<{ unresolved: number }> | undefined;
   let idle: Promise<void> | undefined;
   let resolveIdle: (() => void) | undefined;
+  let available: Promise<void> | undefined;
+  let resolveAvailable: (() => void) | undefined;
+  const signalAvailable = () => {
+    resolveAvailable?.();
+    available = undefined;
+    resolveAvailable = undefined;
+  };
   const whenIdle = () => {
     if (leases.size === 0) return Promise.resolve();
     idle ??= new Promise<void>((resolve) => {
@@ -81,6 +90,7 @@ export function createNetworkOwner(options: NetworkOwnerOptions): NetworkOwner {
       lease.released = true;
       leases.delete(lease);
       lease.finishParent?.();
+      signalAvailable();
       if (leases.size === 0) {
         resolveIdle?.();
         idle = undefined;
@@ -163,12 +173,22 @@ export function createNetworkOwner(options: NetworkOwnerOptions): NetworkOwner {
     },
     stop() {
       stopped = true;
+      signalAvailable();
       for (const lease of leases) lease.scope?.stop('cancelled');
+    },
+    whenAvailable() {
+      if (stopped) return Promise.reject(new NetworkError('operation_closed', 'admission'));
+      if (leases.size < capacity) return Promise.resolve();
+      available ??= new Promise<void>((resolve) => {
+        resolveAvailable = resolve;
+      });
+      return available;
     },
     whenIdle,
     shutdown(budget, settle) {
       if (shutdown) return shutdown;
       stopped = true;
+      signalAvailable();
       for (const lease of leases) lease.scope?.stop('cancelled');
       if (leases.size === 0 && !settle) return Promise.resolve({ unresolved: 0 });
       // A single service-owned observation is independent of its exhausted admission pool.

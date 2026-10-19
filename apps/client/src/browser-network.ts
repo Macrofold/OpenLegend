@@ -14,6 +14,13 @@ const presence = createNetworkOwner({ role: 'browser-presence', capacity: 1 });
 const subscriptions = createNetworkOwner({ role: 'browser-subscriptions', capacity: 4 });
 export const assetNetwork = createNetworkOwner({ role: 'browser-asset-network', capacity: 4 });
 const owners = [reads, commands, presence, subscriptions, assetNetwork];
+/** One build-scoped read owner includes queued assets in the existing resume
+ * deadline checks and diagnostics. Physical transfers retain their four slots. */
+export function createAssetReadOwner(capacity: number) {
+  const owner = createNetworkOwner({ role: 'browser-asset-readers', capacity });
+  owners.push(owner);
+  return owner;
+}
 /** Read-only, on-demand diagnostics; there is no background sampling or reset. */
 export const browserNetworkSnapshot = () => owners.map((owner) => owner.snapshot());
 const utf8 = new TextEncoder();
