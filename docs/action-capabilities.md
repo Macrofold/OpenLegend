@@ -592,6 +592,14 @@ Simulation time governs movement, work, periodic routines, durations and accepte
 
 Interruption rules include safe boundary, committed costs/effects, retainable progress, released resources, pending dependent work and follow-up evidence. Pausing a cancellable action cannot refund inputs. Cancelling a maintained relation releases its watchers and future movement authority. An empty decision leaves both action and goal state unchanged.
 
+### Selected look, posture and watch composition
+
+**Accepted shared target; not a delivered concurrency extension.** [Stealth-awareness contracts](projects/stealth-awareness-tech-design.md#physical-orientation-posture-and-senses) and [SA](maintainers/stealth-awareness.md) select independent looking while walking where the admitted body supports it, crouch/quiet movement and chosen watch/investigation. They extend the existing physical action, spatial pose and finite activity owners. The current primary lane and ordinary refusal/replace/interrupt rules remain authoritative until these concrete combinations are qualified; a new label, menu or intention cannot create simultaneous work.
+
+Body facing, movement direction and supported head/gaze freedom have distinct meanings within one accepted physical state. Current movement writes `EntitySpatial.heading`, and guard coverage binds to that body heading. The selected extension must reconcile both consumers before admitting independent look. Validate the resulting posture, support, ceiling/obstacle and equipment clearance, then the actual work's body-part constraints, before committing one compatible pose/action transition. A refused stand/look leaves the body and existing work unchanged. Camera movement never writes this state or grants an extra sight check.
+
+Offers, native admission, continuation and restored work consume the same installed body/action rules. Accepted pose changes invalidate relevant reach, clearance, sensory origins, emissions and movement-boundary predictions through [spatial ownership](spatial-world.md#selected-body-oriented-awareness). Actual foot/contact sounds come from admitted motion rather than animation. Watch and investigation retain permitted evidence/region, original stopping conditions and exact active work; only that accepted preparation can be consumed by the [combat contract](projects/stealth-awareness-tech-design.md#threat-preparedness-and-surprise). A goal, selected menu entry or cached historical target grants neither live tracking nor readiness. [Time and lifecycle](projects/stealth-awareness-tech-design.md#time-and-lifecycle) preserve progress and exact actor/life/resource ownership without a second scheduler.
+
 ## 16. Dependency-aware staleness and duplicate suppression
 
 The family supplies mandatory authoritative dependencies; the activity adds evidence, plan and binding dependencies. A model may identify useful concerns but cannot omit reads from the trusted invalidation contract.
@@ -844,3 +852,4 @@ An installed host may add read-only, actor-permitted prerequisite notes after no
 ## Invention integration
 
 [Repertoire foundation](repertoire-foundation.md) binds this action/activity contract to World Agent tools and invention composition. It does not create another activity controller, constraint language, permission service or planner. The current single physical lane remains until a concrete joint/channel family qualifies richer concurrency.
+

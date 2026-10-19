@@ -8,7 +8,7 @@ The base clock converts one real second to one game minute at normal speed. Spee
 
 ## Selected stealth reaction durations
 
-**Selected target, not a delivered bodily-startle mechanism.** The [shared emotion/time contract](../../projects/stealth-awareness-tech-design.md#time-and-lifecycle) keeps this world's 60:1 normal clock. A provisional **three normal-speed-second** startle admits 180 simulation seconds once through the installed clock/effect owner:
+**Selected target, not a delivered bodily-startle mechanism.** The [shared emotion/time contract](../../projects/stealth-awareness-tech-design.md#time-and-lifecycle) keeps this world's 60:1 normal clock. A provisional startle of **three normal-speed seconds** admits 180 simulation seconds once through the installed clock/effect owner:
 
 | Runtime speed | Elapsed real time for an uninterrupted 180-simulation-second episode |
 | --- | ---: |
