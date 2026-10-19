@@ -110,6 +110,8 @@ Existing caller pause and cancellation policies remain controlling. A surviving 
 
 Appending words does not occupy another caption slot or increment missed-caption counts. Existing density, priority, overflow and accessibility rules remain in force. A currently visible open caption does not disappear merely because its first short prefix exhausted its original reading time. Already read text is not repeatedly replayed or announced. Long utterances advance through the existing readable chunks; overflow remains recoverable from Events.
 
+The shared [player-facing language standard](../ui-ux/player-facing-language.md) governs status wording, accessible announcements and the instructions/examples used to generate dialogue. Keep interface explanations natural and truthful, preserve each NPC's voice and permitted knowledge, and leave already accepted quoted words unchanged.
+
 A slow client cannot delay durable acceptance, other listeners or provider settlement. Existing bounded game-delivery queues coalesce replaceable cumulative updates or disconnect/reset a stalled connection. The authoritative audience is never sampled to satisfy a caption or transport limit.
 
 ## Scope and implementation boundaries
@@ -124,7 +126,7 @@ SPK's ordinary speech/evidence/context contracts are the required implementation
 
 The technical design's [qualification matrix](npc-speech-streaming-tech-design.md#qualification-matrix) gives exact fixtures and expected observations. Feature acceptance requires all of these outcomes:
 
-1. **Shared early display:** one provider execution produces one growing occurrence for 10, 20 and 50 entitled connected players, with permitted text visible before a deliberately delayed final provider result on each qualified route.
+1. **Shared early display:** one provider execution produces one growing occurrence for 10, 20 and 50 entitled healthy connected clear-hearing players. An approved first meaningful passage is visible before a deliberately withheld second passage and final provider result on each qualified route. Partial/sound-only observers follow their specified disclosure and lexical delays.
 2. **All public producers:** player-directed, NPC-directed, ambient, overheard and permitted escalation responses share the same owner; private and observe-only outputs never enter it.
 3. **One occurrence:** stable identity, original time/order, one observer account, one history row and one caption per utterance through appends, duplicates and completion.
 4. **Fixed hearing:** initial complete audience and stable listener-specific evidence survive movement, door changes, unrelated events, reconnect and restart; newcomers acquire no suffix.

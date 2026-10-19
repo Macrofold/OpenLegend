@@ -433,6 +433,8 @@ Update source body references with the permitted body; resolve exact original ev
 
 ### Labels and announcements
 
+Apply the shared [player-facing language standard](../ui-ux/player-facing-language.md#authored-generated-and-composed-text) to generation prompts/examples, interface status and accessible announcements. Prompts identify the actual character speaker, intended recipient/perspective and permitted knowledge while retaining that character's voice. System wording describes the player's situation and known outcome; a transport failure cannot become a fictional explanation. This is a writing requirement through existing owners, not an extra generation call, a new filtering service or permission to rewrite accepted literal speech.
+
 Show accepted words immediately after receipt without a typewriter effect. Existing request/progress-indicator delays do not delay speech. Use a restrained open indicator and a neutral `Interrupted`/equivalent status outside quoted words at terminal failure; no fictional apology, lost-provider payload, countdown, percentage or inferred completion length. The requester may see its separately authorized request status. Hearing-only descriptions and unknown attributions retain their existing language.
 
 Do not make every text record an ARIA live announcement or remount/reannounce the entire caption. Announce newly readable permitted passages at the shared caption reader's meaningful boundaries; retain one accessible history entry with current committed text. Respect reduced motion, text scaling, user pause and document visibility. Growing text must not steal focus or require reopening a detail panel.
