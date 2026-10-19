@@ -110,7 +110,7 @@ The researched [participant and world-travel proposal](../projects/participants-
 
 ## Maintained records
 
-- Proposed local campaign detail: [shared campaigns and local opportunities](../projects/shared-campaigns-feature-spec.md), with the [Ash Road profile](../worlds/base/shared-campaigns.md), [PS07 delivery](../maintainers/product-scalability.md#dg34--linked-local-campaign-opportunities) and proposed [PS-L42–PS-L49](../limits/product-scalability.md#ps-l42--first-finite-campaign). The first finite same-world outing preserves the broader canonical-campaign direction without claiming new combat, background service or mass capacity.
+- Selected local campaign design: [shared campaigns and local opportunities](../projects/shared-campaigns-feature-spec.md), [technical counterpart](../projects/shared-campaigns-tech-design.md), [Ash Road profile](../worlds/base/shared-campaigns.md), [PS07 delivery](../maintainers/product-scalability.md#dg34--linked-local-campaign-opportunities) and [PS-L42–PS-L49](../limits/product-scalability.md#ps-l42--first-finite-campaign). Local design is complete; implementation and AR01–AR25 qualification remain open. The useful same-world place/operation is independent of deferred PS07.2 advertised service and preserves the broader canonical-campaign direction without claiming damaging combat, background service or mass capacity.
 - Implementation: [PS01–PS08 delivery tracker](../maintainers/product-scalability.md).
 - Limits and constraints: [Product-scalability inventory](../limits/product-scalability.md).
 - Related design: [Feature specification](../projects/product-scalability-feature-spec.md) and [technical design](../projects/product-scalability-tech-design.md).

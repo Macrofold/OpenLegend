@@ -2,6 +2,8 @@
 
 **Status: accepted campaign direction with proposed mechanics and unresolved tuning.** This page owns product participation and causality across communities, not cross-server deployment or networking. Read [worlds and belonging](worlds-and-belonging.md), [participation](participation-and-protection.md), and [capacity](capacity-and-economics.md) together with it.
 
+**Selected local consumer — October 18: design complete; implementation open.** The [Ash Road feature](../projects/shared-campaigns-feature-spec.md), [technical design](../projects/shared-campaigns-tech-design.md) and [world profile](../worlds/base/shared-campaigns.md) specify useful local alternatives, finite salvage, independent people, two actual source/target links and one optional preventable nonliving operation. [PS07.1/PS07.3–PS07.7](../maintainers/product-scalability.md#dg34--linked-local-campaign-opportunities) deliver that same-world experience independently of PS07.2's advertised service. Forecasts, service windows, mass participation and cross-world fronts below remain broader direction or deferred proposals; they are not implicit prerequisites or operating terms for local Ash Road. A completed local design does not complete the whole campaign suite.
+
 ## 1. The participation promise
 
 Players across many communities should have meaningful ways to oppose a shared adversary without all needing to attack one body in one room. Their participation should remain close enough to their homes, relationships, and institutions that the conflict feels like part of their world rather than a detached matchmaking lobby.

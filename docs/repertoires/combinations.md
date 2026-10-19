@@ -2,7 +2,7 @@
 
 [Library](README.md) · [Labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
-**Original, untested proposal scenes.** These 25 situations combine specific cards into celebrations, discoveries, practical problems, rivalries, battles and turning points in people's lives. The listed methods are examples, not exhaustive solutions or outcomes the narrator may guarantee. Participants act with their own knowledge and priorities. Implementation estimates cover a bounded scene, not a whole world. Stop when the scene's meaningful outcome is reached; do not generate endless emergencies to keep it running. Give the result room to matter: enjoy the occasion, use a discovery, claim a victory, live with a loss or follow a changed relationship.
+**Original, untested proposal scenes.** These 26 situations combine specific cards into celebrations, discoveries, practical problems, rivalries, battles and turning points in people's lives. The listed methods are examples, not exhaustive solutions or outcomes the narrator may guarantee. Participants act with their own knowledge and priorities. Implementation estimates cover a bounded scene, not a whole world. Stop when the scene's meaningful outcome is reached; do not generate endless emergencies to keep it running. Give the result room to matter: enjoy the occasion, use a discovery, claim a victory, live with a loss or follow a changed relationship.
 
 ## The wedding bridge
 
@@ -267,3 +267,17 @@ A returning party has won the objective. One person gained wealth, another lost 
 Celebrate, mourn, distribute spoils, pay debts, pursue romance, tell a self-serving story or quietly return to work. Neither forced catharsis nor a mandatory new disaster is needed. A survivor may forgive, refuse, leave, marry, enlist or remain undecided. Let the victory make something better while keeping its actual costs. Combine the retained [debrief](combat-rescue.md#the-debrief-at-the-kitchen-table), [relationships](relationships.md), [needs](needs.md), [art](arts-leisure.md) and [history](history-myth.md). Research seeds: [Hades](source-atlas.md#g22), [Wildermyth](source-atlas.md#g25), [Fire Emblem](source-atlas.md#g64), [Middle-earth](source-atlas.md#w01).
 
 Selection: Establish the victory, reward and ability to continue before rich domestic aftermath.
+
+## An idea in someone else's hands
+
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: useful supported manufacture, deliberate method disclosure, independent adoption and an evidence-grounded later encounter. The selected [invention reuse](../projects/world-creation-tech-design.md), [experience-shaped people](../projects/experience-shaped-characters-tech-design.md) and [local expedition](../projects/shared-campaigns-tech-design.md) designs supply concrete consumers; their implementation and combined player evidence remain open.
+
+During an outing, the player makes a container that holds a useful complete kit the earlier pouch cannot contain. Loose carrying and another container remain real alternatives; the benefit is handling, lending or exchanging this chosen kit together, not extra bodily carrying strength. A capable rival admires one feature and dislikes another. The player can keep the method private, show the finished object, write a real method sheet, lend the kit or offer an exact trade. These choices disclose and transfer different things.
+
+The rival has a purpose of their own: prepare supplies for a different route, lend equipment to a companion or make one convenient kit for work they already want to do. They may choose to inspect and learn the shared method, gather actual inputs and manufacture it; they can also postpone, prefer their old equipment or decline. If they later propose a supported adaptation, its real material costs, admitted meaning and authorship remain their own. A demonstration does not schedule any of those actions for them.
+
+A later encounter can reveal their actual use, a differently packed kit, an unwelcome but useful criticism or a question about improving the design. The original maker may feel proud, competitive, misunderstood or pleased to have company. The rival may respect the invention while continuing a disagreement. Neither receives a prescribed emotion or promotion. Public presentation uses an actually witnessed action or attributed report; an offscreen story cannot manufacture the missing work.
+
+Combine [WORK-187/WORK-191/WORK-200](work-crafting.md), [LKN-196/198/200](languages-knowledge.md), [AD-271/AD-335](adventure-discovery.md), [PB-285/PB-287](psychology-behavior.md) and [reliable disagreement](relationships.md#the-reliable-disagreement). Operational library retention can separately preserve the definition for another world or an eligible free recipient; it does not transport the kit or teach the recipient's character.
+
+Selection: The reward is seeing a workable idea become part of another person's chosen life, and having something particular to discuss or compete over afterward. Prove that ordinary useful loop before broader creator markets, reputation networks, compulsory apprenticeships or a generalized cultural-evolution simulation. This combined situation is an optional continuation, not a circular prerequisite for the three separate deliveries.

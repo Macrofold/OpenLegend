@@ -6,6 +6,18 @@
 
 The scores are **1 Core, 2 Complete, 3 Depth, 4 Detail, 5 Specialist**, defined in [the policy](gameplay-priorities.md#priority). Rank the smallest stated scope, not the whole domain by its most important member. A missing Core capability outranks another refinement to a working one. A representative weapon does not mean every weapon; a defensible first camp does not mean a city simulator. Existing adequate capabilities need no reimplementation merely because they appear here.
 
+## Selected next design coverage — October 18
+
+The [first-playable pair](../projects/first-playable-world-feature-spec.md) already designs the required survival, natural camp, cast/cooperation and independent roaming loop. Its implementation and integrated acceptance remain open. After reviewing every catalogue entry and the four world proposals, the [next-design record](../projects/next-three-gameplay-design-plan.md) selects the three additions below. Exact catalogue priorities are preserved; a designed consumer does not complete a whole category or qualify its runtime.
+
+| Selected design | Particular Complete experience it advances | What remains separately scoped |
+| --- | --- | --- |
+| [DG12 useful invention reuse](../projects/world-creation-tech-design.md) | Retain a working method, adapt it to an actual local purpose, deliberately share a physical record, and see another person's independent use. One-root same-operator retention/free release serves that concrete journey. | General world compilers, complete-world packs, public/commercial discovery, broad coauthor terms and cross-operator trust. A larger bag organizes a larger transferable kit; it adds no actor carrying strength. |
+| [DG23 experience-shaped people](../projects/experience-shaped-characters-tech-design.md) | Particular companionship, useful rivalry and self-directed pleasure can change later choices. Revisiting an actual earlier event preserves its facts and changes present interpretation. | Numerical personality systems, compulsory growth, dreams/human aid, deliberate coarsening and broad psychological experiments. Initial compelling people remain a first-playable obligation. |
+| [DG34 local Ash Road](../projects/shared-campaigns-tech-design.md) | A useful destination with physical alternate methods, finite desirable salvage, an independently interested rival, a shorter route and lasting prevention. | Advertised service, dynamic flooding, damaging intelligent sieges, broad commissions/escrow and cross-world fronts. INS-273 remains a real client/result/reward consumer, not completed by public salvage. |
+
+These additions preserve other Complete candidates such as enemy variety, richer rescue, magical capabilities, useful services and companion activities. Selecting a method that travels or a person whose experience matters does not require every creator-platform or personality-simulation extension. Likewise, completing the local expedition does not turn the broader campaign suite into an early dependency.
+
 ## 1 Core: close the playable loop
 
 These are interconnected capabilities, not a serial delivery queue. Deliver a thin playable combination rather than finishing one isolated subsystem exhaustively. The source links identify repertoire owners, not claims that their full proposed mechanics exist. The empty-handed opening, basic camp walls/entrance, required character cast and cooperation, and independent roaming conflict are first-playable coverage; broader family-level expansion below cannot demote those selected requirements.
@@ -83,9 +95,9 @@ This matrix covers all **27 non-action catalogues**. Each cell describes a scope
 
 The last column records deferral, not permission to violate protected engine contracts or an assertion that every speculative example is buildable. Experimental accessibility modeling is separate from making the actual game accessible. Personality/agency correctness still applies to selected actors; deferring a richer simulation does not permit fabricated observations or effects.
 
-## All 25 worked situations
+## All 26 worked situations
 
-[Combinations](combinations.md) contains all 25 complete scenes with their current priority and selection boundary beside each description. They combine owned entries; they are not another inventory of required systems. A simpler adaptation can deliver an opening experience without adopting a scene's entire politics, psychology or physics.
+[Combinations](combinations.md) contains 26 complete proposal scenes with their current priority and selection boundary beside each description. The October 18 review retained all 25 prior scenes and added [an idea in someone else's hands](combinations.md#an-idea-in-someone-elses-hands), where a useful creation becomes someone else's chosen method and affects a later encounter. They combine owned entries; they are not another inventory of required systems. A simpler adaptation can deliver an opening experience without adopting a scene's entire politics, psychology or physics.
 
 The [toll tower](combinations.md#the-toll-tower-at-dawn), [recognizable quarry](combinations.md#the-quarry-that-learns), [wedding crossing](combinations.md#the-wedding-bridge), [local predator mystery](combinations.md#the-wolf-at-the-school-gate) and [companion allegiance](combinations.md#the-companion-who-changes-sides) offer different combinations of challenge, invention, knowledge and personal consequence. Pick a coherent small experience rather than implementing this list as a quest queue.
 
