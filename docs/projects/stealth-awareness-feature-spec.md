@@ -16,7 +16,7 @@ The design consumes concrete parts of [ND11](../maintainers/needs-design.md#nd11
 
 ## What exists and what this design adds
 
-Source inspection uses `Macrofold/OpenLegend` at `86a21ce50aa0633d81b38a430b7727c0c543017e`, the starting point of `codex/sneak-perception-design-20261018`. The technical design records exact source owners and inspection limits.
+Source inspection uses `Macrofold/OpenLegend` at `86a21ce50aa0633d81b38a430b7727c0c543017e`, the selected source commit on `codex/sneak-perception-design-20261018` used to create `codex/design-stealth-00-contracts`. The technical design records exact source owners and inspection limits.
 
 The existing game has authoritative spatial bodies and movement, range/obstruction-based sight, listener-specific speech, private event evidence, continuous sighting associations, personal combat encounters, native animal response machinery, interpreted appraisals, status effects, prepared responses and observer-scoped player views. These are useful foundations. They do not establish delivered facing/light/concealment sensing, general non-speech acoustics, persistent learned voice recognition, mechanical surprise, native startle, adaptive emotional reconsideration, or complete historical-character disclosure. Current appraisal/contribution mechanisms also need explicit extensions before they can supply the selected accuracy/evasion effects.
 
@@ -129,7 +129,7 @@ If the pursuit genuinely ends, knowledge becomes historical and active preparati
 
 ### J08 — Recover from shock while remaining afraid
 
-At normal speed, an eligible three-second startle subsides after three elapsed seconds of simulation progress. At 3× it takes one wall second; at 8×, 0.375 wall seconds. A pause partway through preserves the remaining simulation progress. Save/reopen resumes the same episode and never reapplies its onset.
+At normal speed, an eligible three-second startle subsides after three elapsed real seconds at 1×, corresponding to 180 simulation seconds at the selected 60:1 ratio. At 3× it takes one wall second; at 8×, 0.375 wall seconds. A pause partway through preserves the remaining simulation progress. Save/reopen resumes the same episode and never reapplies its onset.
 
 Supported longer-term fear may remain mechanically relevant after startle. The person can continue to flee at the applicable ordinary movement speed. A later private reconsideration can soften or otherwise validly alter their interpretation without inventing a new external cause; repeated unchanged reconsideration reaches a bounded native outcome rather than renewing fear forever. Unavailable AI leaves coherent native effects and the existing feeling's defined continuation. Controlled-player psychological acquisition follows only the eventual SA-D01 selection.
 
@@ -167,7 +167,7 @@ The shared design is ready for specialist work when each specialist has one owne
 - Strong cues reach native sensing at their actual simulation boundary. Weak exposure is accumulated once from supported physical intervals, independently of render/publication frequency.
 - Current perception, retained episode continuity and remembered facts remain distinct through movement, light changes, loss of sight, correction, forgetting, death, replacement bodies and restore.
 - Preparation requires relevant warning or deliberate anticipation plus an actually valid prepared state. Surprise does not arise merely from failed defense or disappear because the impact supplies new evidence.
-- Immediate startle runs without AI; persistent emotion changes affect the selected mechanics through one authoritative combination. Current-impact startle is not applied twice to that incoming outcome.
+- Immediate startle runs without AI; persistent emotion changes affect the selected mechanics through one authoritative combination. Startle created by an impact cannot affect the defense or damage resolution of that same impact; pre-existing effects are sampled at the owning action/outcome boundary.
 - Native animals, autonomous reasoning-capable people and controlled people use their actual different decision mechanisms with the same physical authority and appropriate evidence.
 - Every movement/look/posture/watch/investigate choice uses ordinary discovery, admission, interruption, navigation and completion. A proposal, remembered target or camera pick never grants execution.
 - Current-body and historical-person presentation remain unmistakably different through ordinary controls and all disclosure surfaces, including delayed requests, shadows and cached render objects.
@@ -178,7 +178,7 @@ The shared design is ready for specialist work when each specialist has one owne
 
 Shared contract design is followed by A–G specialist designs, focused implementation slices through existing owners, then whole-journey integration and actual gameplay qualification. [The tracker](../maintainers/stealth-awareness.md) owns this dependency order and exact completion criteria.
 
-This stage does not select a universal probability graph, a replacement event bus/database/scheduler/action system, a new renderer, unrestricted physical acoustics, scent or thermal simulation, complete disguise/impersonation mechanics, every body anatomy, compulsory verbalized emotion, an omniscient detection meter, a new surprise cooldown copied across combat systems, or a ordinary-player speed/creator power. Future supported variants must use the same evidence and authority boundaries; their existence in a repertoire does not install them.
+This stage does not select a universal probability graph, a replacement event bus/database/scheduler/action system, a new renderer, unrestricted physical acoustics, scent or thermal simulation, complete disguise/impersonation mechanics, every body anatomy, compulsory verbalized emotion, an omniscient detection meter, a new surprise cooldown copied across combat systems, or an ordinary-player speed/creator power. Future supported variants must use the same evidence and authority boundaries; their existence in a repertoire does not install them.
 
 Only the final integration agent performs broad reconciliation of central repertoire indexes, coverage and gameplay priorities after A–G return. This shared stage improves directly relevant topical entries and supplies an explicit handoff for that final pass.
 
