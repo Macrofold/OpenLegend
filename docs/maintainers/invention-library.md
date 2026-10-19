@@ -60,7 +60,7 @@ This is a design-only assignment. Future implementation/verification follows the
 - [ ] Expose actual trusted family port metadata for the selected ingredient/reference bindings: interface/version, units, origin, bounds, phase, required/default behaviour and dependencies. No string-name or loose-property equivalence.
 - [ ] Implement one explicit world-owned exact native-alias adapter and contrast a materially changed/unsupported binding. An uploaded package or generated suggestion cannot register that adapter.
 - [ ] Use the existing recipe editor/World Agent for a new adapted draft with retained original/parent artifact, exact revision and actual compiled material/work/capacity differences. Native field edits need no model; optional conversational work follows existing funding.
-- [ ] Complete a bag journey where the new option matters to real finite carrying/outing work, including obtained intermediate material without producer knowledge and preserving the earlier version.
+- [ ] Complete a bag journey where a coherent useful kit exceeds the original container’s capacity but fits the new bag, then actually take/drop/offer that whole kit. Derive capacity/work from admitted quantities, keep loose carriage/another bag viable, and add no actor carry cap or strength. Include obtained intermediate material without producer knowledge and preserve the earlier version.
 
 **Exit:** unchanged reuse, explicit binding, purposeful adaptation and unsupported dependency all work through one admission owner. The useful option is observed through native manufacture/use, not only a comparison card. **Acceptance:** LIB-A02/A04/A10/A17.
 

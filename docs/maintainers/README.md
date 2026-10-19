@@ -10,6 +10,18 @@ Start with [first-playable delivery and validation (FPV01–FPV09)](first-playab
 
 The complete selected design is now in the [integrated pair](../projects/first-playable-world-feature-spec.md). Implementation owners are [FPW shared integration](first-playable-world.md), [SV survival/making](first-playable-survival.md), [SH natural camp](editable-shelters.md), [CP people/cooperation](first-playable-cooperation.md) and [RW wildlife/roaming](first-playable-roaming.md). Required CTR/SPK and existing foundation tasks retain their owners. All runtime and player acceptance remains explicit in those trackers and FPV.
 
+## Next three substantial gameplay designs
+
+[The selection and review record](../projects/next-three-gameplay-design-plan.md) reconciles all 8,257 repertoire entries and the three selected designs following the first playable. **Design is complete; implementation and real gameplay qualification remain open.** These are distinct deliveries with exact prerequisites, not another combined prerequisite for first-playable implementation.
+
+| Experience | Feature and technical owners | Implementation and authored rules |
+| --- | --- | --- |
+| Retain, adapt and deliberately share a useful invention | [World creation and reuse](../projects/world-creation-feature-spec.md) · [Technical design](../projects/world-creation-tech-design.md) | [LIB01–LIB09](invention-library.md), delegated by INV-8/EWF11; [invention reuse profile](../worlds/base/invention-reuse.md) and [WC limits](../limits/world-creation.md). |
+| People whose particular experiences change later choices | [Experience-shaped characters](../projects/experience-shaped-characters-feature-spec.md) · [Technical design](../projects/experience-shaped-characters-tech-design.md) | [EC01–EC04](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection), through existing ACT/CR/CE; [character profile](../worlds/base/experience-shaped-characters.md) and [EC limits](../limits/memory.md#ec-l01--existing-authored-capacity). |
+| An expedition with real alternatives and lasting consequences | [Ash Road](../projects/shared-campaigns-feature-spec.md) · [Technical design](../projects/shared-campaigns-tech-design.md) | [PS07.1/PS07.3–PS07.7](product-scalability.md); [exact Ash Road profile](../worlds/base/shared-campaigns.md) and [PS limits](../limits/product-scalability.md). |
+
+LIB can prove reuse with existing admitted recipes and deliberate record learning; its optional opening attachment consumes OC. EC uses current reflection/action owners and separately requires whichever recognition, outing or coaching behavior an episode claims. Ash Road consumes first-playable installation and SH barriers; library portability and EC changes enrich it independently. Broader pack terms/markets, EC05/EC06 dreams/coarsening and PS07.2 advertised campaign service remain outside these selected deliveries.
+
 ## Game production methods
 
 [Production workflows](../production-workflows/README.md) connect ideas to editable art, working assets, animation, scenes, interfaces, character situations and coordinated feedback. The [research collection](../../archive/02-research/ai-game-development/README.md) explains the evidence and OpenLegend-specific creative opportunities; [remaining preparation](needs-design.md#ai-assisted-game-production-research-and-design-integration) maps choices into existing owners. Art studies, V3D/INV, CE, UIUX and playability work retain their task and acceptance records.
@@ -41,7 +53,7 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 | DG31 — Families                     | [Generations](generations-and-family-life.md), [feature specification](../projects/generations-and-family-life-feature-spec.md) and [childhood/population](../projects/generations-and-family-life/childhood-and-population.md)                                                       |
 | DG32 — Shared equipment             | [Shared-equipment proposal](../projects/shared-equipment-and-institutions-feature-spec.md), [INV-20](inventions-and-world-evolution.md) and [limits](../limits/shared-equipment-and-institutions.md)                                                                                  |
 | DG33 — Afterlife and telepathy      | [Product proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.md), [BW15](base-world.md), [EWF10T](extensible-world-foundation.md), [world profile](../worlds/base/extraordinary-minds-and-afterlife.md) and [limits](../limits/extraordinary-minds-and-afterlife.md) |
-| DG34 — Local campaign opportunities | [Campaign proposal](../projects/shared-campaigns-feature-spec.md), [PS07/PS08](product-scalability.md), [Ash Road](../worlds/base/shared-campaigns.md) and [PS limits](../limits/product-scalability.md)                                                                              |
+| DG34 — Local campaign opportunities | [Selected feature](../projects/shared-campaigns-feature-spec.md), [technical design](../projects/shared-campaigns-tech-design.md), [PS07/PS08](product-scalability.md), [Ash Road](../worlds/base/shared-campaigns.md) and [PS limits](../limits/product-scalability.md). Local design complete; implementation open and advertised service deferred. |
 | DG35 — Platform choice              | [Browser/offline decision](../projects/completed/platform-and-offline-decision-brief.md) and [ND34](needs-design.md#nd34--additional-distribution-platforms-and-offline-play)                                                                                                         |
 
 Adult players, non-explicit presentation with optional sex, and browser delivery are selected. Mechanical tuning, technical delivery and service qualification retain their owners; additional platforms remain conditional.
@@ -62,7 +74,7 @@ Free sharing, paid distribution, visits and a funded program are separately scop
 
 ## Product design groups 11–15
 
-[Group assignment](../projects/completed/product-design-groups-11-15.md). Delivery owners: DG11 [optional connection study](wellbeing-evidence.md); DG12 [world creation](parallel-batch-07-playable-world-creation.md)/[invention reuse](inventions-and-world-evolution.md); DG13 [shelters](editable-shelters.md); DG14 [practical competence](practical-competence.md); DG15 [NC20 story perspective](narration-and-conversations.md).
+[Group assignment](../projects/completed/product-design-groups-11-15.md). Delivery owners: DG11 [optional connection study](wellbeing-evidence.md); DG12 [world creation](parallel-batch-07-playable-world-creation.md)/[invention library and reuse](invention-library.md), delegated by INV-8/EWF11; DG13 [shelters](editable-shelters.md); DG14 [practical competence](practical-competence.md); DG15 [NC20 story perspective](narration-and-conversations.md).
 
 Reuse the [shelter technical design](../projects/editable-shelters-tech-design.md) and [evidence](../verification/editable-shelters.md), and [competence technical design](../projects/authored-stats-tech-design.md) and [evidence](../verification/practical-competence.md). Their selected component evidence does not close larger home or character-quality requirements.
 

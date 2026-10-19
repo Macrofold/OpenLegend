@@ -14,6 +14,8 @@ Adult players, non-explicit presentation with optional sex, and browser-only del
 
 **Selected combat design: complete.** The [combat-response feature specification](../projects/combat-and-threat-responses-feature-spec.md) and [technical design](../projects/combat-and-threat-responses-tech-design.md) complete the selected ND11 direct-PvP/projectile/immediate-response slice and ND13 combat-sensitive Command-click slice. Their disposition is **Done — designed; implementation and acceptance open under CTR01–CTR10**. This is not completion of either whole ND entry, broader ecology, relationship change, rescue, ghost continuity or control customization.
 
+**Next three selected gameplay designs — October 18: Done — designed; implementation and acceptance open.** Following a review of all 8,257 repertoire entries, [the selection and review record](../projects/next-three-gameplay-design-plan.md) completes DG12's useful invention library/reuse/free-release consumer, DG23's specific revisable outlook and older interpretation, and DG34's substantial local Ash Road expedition. Their existing feature owners now have full technical counterparts and focused delivery under [LIB01–LIB09](invention-library.md), [EC01–EC04](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection), and [PS07.1/PS07.3–PS07.7](product-scalability.md). These build on actual earlier capabilities; first-playable implementation stays open. Broader pack rights/markets, dreams/coarsening and advertised campaign service remain separate design or adoption work.
+
 ## How to use and maintain this register
 
 Use the [maintainer index](README.md) for delivery, [open decisions](../../archive/05-project/open-decisions.md) for consequential choices, [research backlog](../../archive/05-project/research-backlog.md) for empirical questions and [policies to revisit](revisitable-policies.md) for reconsideration triggers.
@@ -40,7 +42,7 @@ The supported opening, static discovery, immediate barter, paired outing, open s
 
 Groups organize decisions and dependencies, not a release queue, staffing plan or requirement to finish one band before starting another. Select actual next work using [gameplay priorities](../repertoires/gameplay-priorities.md), [repertoire coverage](../repertoires/coverage.md), implementation gaps and the [prioritization workflow](../../.agents/skills/openlegend-prioritize/SKILL.md).
 
-### Reuse the five existing product proposals
+### Reuse the existing feature owners
 
 | Existing proposal                                                                | Design groups                                          |
 | -------------------------------------------------------------------------------- | ------------------------------------------------------ |
@@ -151,9 +153,9 @@ Conditional ND31: select mutually accepted introductions, a recurring small grou
 
 Reuse [Batch 07](parallel-batch-07-playable-world-creation.md) for supported opening authoring, exact review, native readiness and fresh-host activation. Generated-tool use and complete first-play acceptance retain their own checks. Broader laws, populations and hosts require selected extensions; FPV's main-scenario content does not replace creation transport.
 
-[World creation](../projects/world-creation-feature-spec.md) also supplies the product proposal for retaining a useful invention, reusing it with complete dependencies and rights, and eligible free release to a known recipient. Its library technical/delivery work remains open independently of opening acceptance.
+[World creation](../projects/world-creation-feature-spec.md) and its [technical counterpart](../projects/world-creation-tech-design.md) complete the selected same-operator library, reuse, adaptation and eligible free release to one known account. **Done — designed; implementation and useful round-trip acceptance open under [LIB01–LIB09](invention-library.md).** INV-8/EWF11 delegate that work rather than duplicate it. A real maker-written method sheet and the recipient's deliberate learning make a creation usable in embodied play; installing definitions alone teaches nobody and creates no item.
 
-**Owners/dependencies:** INV-4/INV-8, EWF11/EWF12, host/admission owners and [WC limits](../limits/world-creation.md). Preserve origin, destination bindings, independent knowledge/resources, refusal and update/removal behavior. General stats, public matching and a marketplace are not prerequisites; commercial distribution is DG28.
+**Owners/dependencies:** LIB, INV-4/INV-8, EWF11/EWF12, host/admission owners and [WC limits](../limits/world-creation.md). Preserve exact closure, provenance, destination bindings, independent knowledge/resources, sufficient actual grants, refusal and immutable release/acquisition continuity. Optional OC attachment consumes the opening owner; ordinary library reuse does not wait for complete-world packs, general coauthor terms, public matching, commercial distribution or cross-operator synchronization. Those extensions retain D36/D43/D44 and DG28.
 
 #### DG13 — Editable shelter and useful places
 
@@ -223,9 +225,9 @@ Reuse [authored stats](../projects/authored-stats-feature-spec.md), its [technic
 
 #### DG23 — Characters changed by their experience
 
-[Experience-shaped characters](../projects/experience-shaped-characters-feature-spec.md), its [profile](../worlds/base/experience-shaped-characters.md), [EC](cognition-redesign.md) and [memory limits](../limits/memory.md) propose specific revisable outlooks and older interpretation without changed witnessing. Dreams, human-reviewed suggestions and deliberate coarsening are independent extensions, not a default weekly pass or numerical trait ladder.
+[Experience-shaped characters](../projects/experience-shaped-characters-feature-spec.md), its [technical design](../projects/experience-shaped-characters-tech-design.md) and [profile](../worlds/base/experience-shaped-characters.md) complete **EC01–EC04: Done — designed; implementation and longitudinal quality open**. Actual companionship, rivalry, solitary pleasure and later evidence can change a particular outlook and later independently chosen conduct without changing historical witnessing. [EC](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) and [memory limits](../limits/memory.md#ec-l01--existing-authored-capacity) retain delivery. EC05 dreams/human-reviewed suggestions and EC06 deliberate coarsening remain separately deferred design; neither a weekly pass nor numerical trait ladder is selected.
 
-**Owners/dependencies:** ACT07/ACT08, CR06/CR09, CE and provenance/correction/forgetting. Preserve protected identity, consequential distinctions and obligations; repetition grants no personality points and later choices remain independent. Technical/live-quality qualification remains open. DG02 owns compelling initial people; DG25 changes selected shared history, not recollection alone.
+**Owners/dependencies:** ACT07/ACT08, CR06/CR09/CR13, CE and provenance/correction/forgetting. Reuse existing self-understanding, directional notes, native feelings and goals. Preserve protected identity, consequential distinctions and obligations; repetition grants no personality points and changed prose alone cannot qualify later conduct. SPK recognition/evidence and optional coaching/outing consumers retain their exact prerequisites. DG02 owns compelling initial people; DG25 changes selected shared history, not recollection alone.
 
 #### DG24 — Text messages inside an authored world
 
@@ -299,9 +301,9 @@ ND15, ND14's calls and separately selected ND16 propagation/media families. Sett
 
 #### DG34 — Shared campaigns with local opportunities
 
-[Shared campaigns](../projects/shared-campaigns-feature-spec.md) and [Ash Road](../worlds/base/shared-campaigns.md) propose two useful local outings and a finite nonlethal adversary in the same world, followed by a separately qualified optional operation. [PS07/PS08](product-scalability.md) and [campaign limits](../limits/product-scalability.md) retain adoption/delivery and broader evidence.
+[Shared campaigns](../projects/shared-campaigns-feature-spec.md), its [technical counterpart](../projects/shared-campaigns-tech-design.md) and [Ash Road](../worlds/base/shared-campaigns.md) complete the selected local design: **Done — designed; PS07.1/PS07.3–PS07.7 implementation and AR01–AR25 qualification open**. The optional eastern Main addition supplies a materially shorter route, two real gates/relays, compatible ordinary tools and inventions, finite useful salvage, independent residents and one preventable nonliving operation. Prevention stays achieved and later visitors can use the changed road. [PS](product-scalability.md) and [campaign limits](../limits/product-scalability.md) retain exact ownership.
 
-**Owners/dependencies:** campaign/access/time/data and PS-D05; DG29 only for actual cross-world use. Define notice/revision promises, local participation, time-zone/reconnect access, recognition and one canonical outcome. Local opportunities need not wait for government, generations, unusual minds or a siege system.
+**Owners/dependencies:** first-playable Main/SH installation and barriers, native work, spatial solidity, exact action/definition knowledge, creation/admission and save/lifecycle owners. LIB reuse and EC longitudinal change are optional enriching consumers, not gates for the complete local outing. PS07.2's advertised service remains deferred under PS-D05 with its own notice/revision, timezone, access and operating qualification; DG29 applies only to actual cross-world use. Public salvage does not complete INS-273's client/commission contract. Government, generations, unusual minds, dynamic flooding and siege systems remain independent selections.
 
 ### Band 8 — Insert other expansion only at its trigger
 
@@ -455,7 +457,7 @@ Mike commissioned the paired designs below. The [integration map](intelligent-si
 
 - [x] **Refine retention/retrieval for a concrete later-choice omission.** Specify what must remain available from an apology, fulfilled promise, refusal or quiet act of care, and how a changed interpretation affects later conduct without becoming another person's private truth. Repeated retellings of one rumor must not become independent corroboration. Retained work progress is neither optional autobiographical recall nor proof that its emotional meaning survived. Compare changed and unchanged experience, correction/forgetting, alternative interpretations and the later return; do not mandate friendliness or a particular answer.
 
-**Reuse:** [DG02](#dg02--one-resident-who-follows-through), [DG23](#dg23--characters-changed-by-their-experience), [ND19](#nd19--older-memory-transformation-and-dream-reinterpretation), conditional [ND20](#nd20--a-bounded-richer-memory-retrieval-comparison), [memory architecture](../memory-architecture.md) and CE02–CE05. Existing precise outcomes/perspective and DG23's product proposal need no replacement design. The selected numerical reaction is recorded under [D69](../../archive/05-project/open-decisions.md#d69--multidimensional-character-experience) and the [world-owned profile](../worlds/base/psychological-reactions.md); broader new psychological laws retain their own scope. Research: NPC-L006–L007/L016; society study §1.
+**Reuse:** [DG02](#dg02--one-resident-who-follows-through), [DG23](#dg23--characters-changed-by-their-experience), [ND19](#nd19--older-memory-transformation-and-dream-reinterpretation), conditional [ND20](#nd20--a-bounded-richer-memory-retrieval-comparison), [memory architecture](../memory-architecture.md) and CE02–CE05. Existing precise outcomes/perspective and DG23's completed selected [technical design](../projects/experience-shaped-characters-tech-design.md) need no replacement design; EC01–EC04 retain implementation and later-conduct evidence. The selected numerical reaction is recorded under [D69](../../archive/05-project/open-decisions.md#d69--multidimensional-character-experience) and the [world-owned profile](../worlds/base/psychological-reactions.md); broader new psychological laws retain their own scope. Research: NPC-L006–L007/L016; society study §1.
 
 ### Independent shared activity and readable intentions
 
@@ -513,7 +515,7 @@ Select a useful action/effect beyond the current consumer, then define authoring
 
 ### ND04 — Experience-shaped personality and practical skill growth
 
-**Practical consumer delivered; outlook product proposal prepared.** Use DG14/PC for real practice, observation, coaching/hearsay and finite action effects; generic method learning stays with AE. [Experience-shaped characters](../projects/experience-shaped-characters-feature-spec.md) and [EC](cognition-redesign.md) own the descriptive revisable-outlook proposal and remaining technical/live-quality work.
+**Practical consumer delivered; selected revisable-outlook slice Done — designed, October 18; implementation and quality open.** Use DG14/PC for real practice, observation, coaching/hearsay and finite action effects; generic method learning stays with AE. [Experience-shaped characters](../projects/experience-shaped-characters-feature-spec.md), its [technical design](../projects/experience-shaped-characters-tech-design.md) and [EC01–EC04](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) own descriptive outlook changes through particular lived experience and later independent conduct. Existing native feelings, directional notes, goals and self-understanding remain their respective authorities.
 
 Another competence or personality family needs explicit causes, attribution, uncertainty, reversal and consequences without forcing choices from labels. Protected initial identity, practical learning and historical witnessing remain distinct. Sources: [personality/learning](../../archive/03-design-proposals/agents-and-social-simulation.md), [product baseline](../../archive/01-requirements/product-baseline.md), ACT07/ACT08 and CR.
 
@@ -583,9 +585,9 @@ Preserve per-lot condition through aging, preparation, splitting/combining, tran
 
 ### ND12 — Cross-world invention libraries and usable pack publishing
 
-**Library/free-release product proposal prepared; technical delivery and broader rights decisions open.** Reuse [DG12's library journey](../projects/world-creation-feature-spec.md), INV-8/EWF11, [WC limits](../limits/world-creation.md) and [DG28 publication](../projects/published-packs-and-creator-revenue-feature-spec.md).
+**Selected same-operator one-root library/reuse/free-release consumer: Done — designed, October 18; LIB implementation and qualification open.** Reuse [DG12's feature journey](../projects/world-creation-feature-spec.md), [technical design](../projects/world-creation-tech-design.md), [LIB01–LIB09](invention-library.md), the delegating INV-8/EWF11 parents and [WC limits](../limits/world-creation.md). Complete-world packs, general coauthor mandates, broader platform rights, public/commercial discovery and cross-operator trust remain open under their existing owners; [DG28 publication](../projects/published-packs-and-creator-revenue-feature-spec.md) is separate.
 
-Define complete dependency inventories, retained attribution, private-origin metadata, destination bindings, allowed use/modification/redistribution, compatibility/refusal, updates/removal and access-ending behavior. Preserve accepted ownership/grants through the [invention-governance owner](../../archive/03-design-proposals/invention-governance-and-ownership.md) and [private-world policy](../../archive/06-marketing/open-platform-and-private-worlds.md). Cross-operator identity/disputes/synchronization and commercial rights retain D36/D43/D44; free reuse need not wait for payouts.
+The selected design settles exact dependency closure, retained attribution and private origin, destination binding/adaptation, install-only admission, deliberate physical disclosure/learning, immutable zero-price release and acquisition, removal and source-access loss. Every actual release still requires sufficient existing grants; this does not invent legal terms or settle D44's general policies. Preserve accepted ownership through the [invention-governance owner](../../archive/03-design-proposals/invention-governance-and-ownership.md) and [private-world policy](../../archive/06-marketing/open-platform-and-private-worlds.md). D36/D43/D44 retain broader disputes, synchronization and commercial rights; free reuse needs no payout system.
 
 ### ND13 — Stable action recommendations and complete control customization
 
@@ -657,9 +659,9 @@ A new selected audience/production need must distinguish desktop packaging, repl
 
 ### ND19 — Older-memory transformation and dream reinterpretation
 
-**Semantic product proposal prepared; adoption, technical delivery and quality evidence open.** [DG23](../projects/experience-shaped-characters-feature-spec.md), EC03/EC05/EC06 and [memory architecture](../memory-architecture.md) distinguish older interpretation and dreams from existing faithful consolidation/reflection.
+**Selected older-interpretation slice: Done — designed, October 18; implementation and quality open under EC01–EC04.** The [DG23 feature specification](../projects/experience-shaped-characters-feature-spec.md), [technical design](../projects/experience-shaped-characters-tech-design.md), [EC tracker](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) and [memory architecture](../memory-architecture.md) define revisiting permitted earlier experience, later testimony and changed present inference through existing recall/reflection and later conduct. EC05 dreams/human aid and EC06 deliberate coarsening retain separately deferred technical design.
 
-Preserve actual witnessing, obligations, consequential distinctions, lineage, correction/forgetting and current-format restoration. Select eligible detail change, imagined/factual attribution, cadence and cost before implementation; no proposed weekly pass or lifetime expiry is a default. Sources: D14/D59/R11 and the [retention ledger](../../archive/07-technical-architecture/data-delivery-and-scale.md#retention-decision-ledger).
+Preserve actual witnessing, obligations, consequential distinctions, lineage, correction/forgetting and current-format restoration. The selected interpretation never rewrites an earlier refusal or invents an absent quote. A future dream/coarsening consumer must select eligible detail changes, imagined/factual attribution, cadence and cost before its implementation; no proposed weekly pass or lifetime expiry is a default. Sources: D14/D59/R11 and the [retention ledger](../../archive/07-technical-architecture/data-delivery-and-scale.md#retention-decision-ledger).
 
 ### ND20 — A bounded richer-memory retrieval comparison
 
