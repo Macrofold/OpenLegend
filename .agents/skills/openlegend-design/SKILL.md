@@ -44,7 +44,7 @@ When replacing a fixed world behavior with installed definitions, trace availabi
 
 ## Approval to implementation
 
-Use [root task authorization](../../../AGENTS.md#task-scope-and-authorization). Interpret chat approval of the discussed project plan from context: “approved,” “looks good,” “yes,” “go ahead,” “start work,” “implement” or “do it” can suffice; no repeated spec filenames are needed. GitHub PR approval or a document-status change is not that chat instruction.
+Use [root task authorization](../../../AGENTS.md#task-scope-and-authorization). Interpret chat approval of the discussed project plan from context: “approved,” “looks good,” “yes,” “go ahead,” “start work,” “implement” or “do it” can suffice; no repeated spec filenames are needed. “Continue” is not approval: it resumes the conversation's current design work, not implementation. GitHub PR approval or a document-status change is not that chat instruction.
 
 For a spec/design-only request, deliver the pair, feasible stages and open choices. After chat approval to implement, apply [root startup](../../../AGENTS.md#work-discipline), then [Documentation](../../rules/documentation.md#project-approval-and-current-truth) for pre-implementation tracker/contract reconciliation, and **commence implementation in the same working session**. Planning/tracker updates do not complete an implementation request.
 

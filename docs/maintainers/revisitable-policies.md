@@ -2,9 +2,9 @@
 
 This register tracks accepted decisions likely to change, not unresolved choices or implementation tasks. The linked policy owns current requirements; summaries here are navigation. A review trigger does not expire a rule, increase permissions or authorize its replacement. Read relevant entries when changing the related policy or approaching its trigger, not on every development task.
 
-## RP01 — Implementation spending ceiling
+## RP01 — Per-task spending ceiling
 
-**Current policy:** [Verification — Spending](../../.agents/rules/verification.md#spending); [root summary](../../AGENTS.md#work-discipline). Mike-authorized implementation currently has one $10 aggregate per-task ceiling, including delegates and uncertain commitments. It is not permission for public contributors to charge his accounts.
+**Current policy:** [Verification — Spending](../../.agents/rules/verification.md#spending); [root summary](../../AGENTS.md#work-discipline). Each task Mike assigns currently has one $10 aggregate ceiling, including delegates and uncertain commitments; agents spend within it without asking and ask Mike before exceeding it. It is not permission for public contributors to charge his accounts.
 
 **Why revisit:** The amount is a tunable balance between useful live evidence and controlled development cost, not a permanent architectural invariant.
 
