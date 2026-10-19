@@ -2,7 +2,7 @@
 
 [Feature specification](../projects/npc-speech-streaming-feature-spec.md) · [Technical design](../projects/npc-speech-streaming-tech-design.md) · [Implementation](../maintainers/npc-speech-streaming.md) · [Tracking rules](README.md)
 
-All NST entries are **Proposed — accepted design, implementation/qualification pending**, October 19, 2026. Existing code bounds cited below were source-inspected at `3bbb1ba5bd5ac5186746d7547196d8b86359600b`; they are not new capacity measurements. These choices do not change provider spending, simulation speed, player capacity or production enablement.
+All NST entries are **Proposed — accepted design, implementation/qualification pending**, October 18, 2026. Existing code bounds cited below were source-inspected at `0b1262a597ca718be54c287eea0619b073952f32`; they are not new capacity measurements. These choices do not change provider spending, simulation speed, player capacity or production enablement.
 
 ## NST-L01 — One fixed public occurrence
 
