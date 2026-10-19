@@ -1,5 +1,9 @@
 # Maintainer TODO — cross-cutting work
 
+## Shared NPC speech streaming
+
+The selected immediate-text design is complete. [NST01–NST10](npc-speech-streaming.md) owns its implementation and qualification tasks, with the [paired specification/design](../projects/npc-speech-streaming-feature-spec.md) and [limits](../limits/npc-speech-streaming.md). NC19/ND16's public NPC streaming slice leaves the needs-design queue; remaining private callers, broader acoustics/media and runtime acceptance retain their focused owners. Do not create a second streaming checklist here.
+
 ## Foundation review follow-through
 
 - [x] Complete the prioritized [foundation review tasks](foundation-review-todos.md), starting with private reads, stale private comparison text and observer-specific action facts. That document owns FR01–FR13, implementation instructions and acceptance; do not duplicate task bodies here. The [review](../verification/foundation-review.md) distinguishes reproduced behavior, static traces and existing unfinished work.

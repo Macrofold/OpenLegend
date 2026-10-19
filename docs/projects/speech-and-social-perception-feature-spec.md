@@ -1,8 +1,8 @@
 # Speech and social perception — feature specification
 
-| Status      | Current progress                                                                                      | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The selected behavior is designed; implementation and behavioral qualification remain in SPK01–SPK11. | 2026-10-18   |
+| Status      | Current progress                                                                                                               | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Selected behavior and shared-streaming coordination are designed; SPK01–SPK11 implementation and qualification remain pending. | 2026-10-18   |
 
 ## Purpose and design status
 
@@ -21,6 +21,14 @@ Use the compact Speak/Act composer, world captions and shared perceived Events h
 - Bundled native reaction rules: [Animal acoustic policy](../worlds/base/animal-sound-responses.md), including the CTR03–CTR04 implementation dependency.
 - Limits and constraints: [Narration](../limits/narration.md), [Hearing and speech](../limits/hearing-and-speech.md), [Memory](../limits/memory.md), with existing [Cognition](../limits/cognition.md) and [Native work](../limits/native-work.md) bounds reused.
 - Related work: [Character experience](../maintainers/character-experience.md), [Cognition redesign](../maintainers/cognition-redesign.md), [Attention and scenes](attention-and-scenes-feature-spec.md) and [Continuing lives](continuing-lives-feature-spec.md). A speech event may affect these systems; it does not deliver their whole remaining scope.
+
+## Shared progressive speech integration
+
+The accepted [shared NPC streaming feature specification](npc-speech-streaming-feature-spec.md) and [technical design](npc-speech-streaming-tech-design.md) extend these ordinary speech contracts to immediate accepted text for all public NPC dialogue. The first public prefix fixes one occurrence and its complete hearing audience; later approved words grow the same listener-permitted captions/history without physical speaking duration, new geometry checks or late audience entry. Later listener sleep, incapacity, death, hearing loss, departure or body replacement does not recalculate that historical hearing. Actual removal/forgetting, current access and sensory expiry still govern retained evidence. [NST](../maintainers/npc-speech-streaming.md) owns delivery tasks and [streaming limits](../limits/npc-speech-streaming.md) owns new bounds. Both designs remain runtime work.
+
+Recognition and received addressing are first-publication sensory facts, even when a partial listener has no readable fragment. When native sound reactions are installed, that fixed acoustic cue also takes effect once at first publication; later words, closure and restoration do not repeat it or add a waking rule. Meaning-based consumers wait for complete/interrupted terminal evidence, then receive one ordinary opportunity and only the accepted prefix, subject to the listener's current capability to learn or respond. A self-introduction teaches a name only from that exact terminal observer account's permitted source association and complete actually heard name; neither the generated header nor a hidden/unfinished name grants knowledge. Event-time labels remain frozen after later name learning.
+
+The minimal coordinated baseline is SPK01–SPK06 plus the relevant SPK09/SPK10 presentation, authority and persistence contracts, as ordered in [NST dependencies](../maintainers/npc-speech-streaming.md#dependency-order). They may land with streaming in one coherent implementation cut. SPK07–SPK08 animal controllers, optional media and every broader SPK11 workload are not prerequisites; their own delivery and acceptance stay open.
 
 ## Selected behavior
 

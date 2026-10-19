@@ -133,6 +133,8 @@ Use persistent player-created pins for meaningful goals, not an uncontrolled flo
 
 ## Status, captions and time
 
+**Accepted NST target; implementation pending:** [shared NPC speech streaming](../projects/npc-speech-streaming-feature-spec.md) gives each originally entitled observer one growing committed occurrence, using that observer's permitted text and attribution. Its caption preserves identity, reading progress and queue slot as words append, subject to the existing presentation limits below. Ordinary movement or door changes do not interrupt this text progression, and later arrivals do not acquire the ongoing utterance. Existing authorized caption anchors remain presentation only; never reveal a hidden speaker's live position. The [technical design](../projects/npc-speech-streaming-tech-design.md) and [NST tracker](../maintainers/npc-speech-streaming.md) own delivery and qualification.
+
 Status placement must survive dense scenes, tall entities, camera edges and open panels. Preserve source attribution and avoid covering the action target. When visible caption capacity is exceeded, use the current missed-caption notice and permitted history route; do not silently pretend every utterance was shown.
 
 Visual/audio prominence should track actionable importance and urgency, not how much machinery generated an event. Keep routine updates quiet so a consequential warning remains distinguishable. Do not amplify every new notification to compete with an already noisy scene; reduce or aggregate the low-value competition while retaining meaningful history. Riot's clarity discussion supplies a game-specific rationale. [S19](research.md#s19)

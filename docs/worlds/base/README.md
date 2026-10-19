@@ -32,6 +32,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Player death, corpses and treatable scars](player-death.md)
 - [Lifecycle and inactive protection](lifecycle-and-protection.md)
 - [Knowledge and observer identity](knowledge.md)
+- [Ordinary speech and partial words](speech.md) — selected paired partial-word disclosure and fictional quotation wording; NST implementation and qualification remain pending.
 - [After you left at camp](story-perspectives.md) — proposed optional historical craft glimpse for DG15, with explicitly selected external disclosure; current cutaways remain disabled.
 - [Relationships, feelings and promises](social.md)
 - [Compact personal reactions](psychological-reactions.md) — selected numerical-reaction design, with installation, runtime and behavioral qualification still open.
