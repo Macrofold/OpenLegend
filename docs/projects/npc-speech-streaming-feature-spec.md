@@ -71,6 +71,8 @@ The feature does not turn every generated string into dialogue. Private thoughts
 
 One response can contain more than one utterance and other operations. Each utterance has its own fixed audience snapshot at its own first acceptance. Text cannot jump ahead of an earlier unresolved action or dependency. Such speech waits for that existing admission boundary; progressive display is not permission to claim that an action succeeded. The technical design gives an exact ordered record contract and conservative barrier rule.
 
+The installed world selects the lexical disclosure policy. The bundled [partial-word rule and wording](../worlds/base/speech.md) apply equally to atomic and streamed speech; the engine owns shared text preparation and retained evidence.
+
 ### Word-derived reactions and memory use a closed utterance once
 
 Human captions and Events may display accepted open text. Semantic consumers wait until the utterance closes, then use its complete accepted prefix once. This includes NPC attention/reaction selection, response preparation, recall used in model context, embeddings, summaries, reflection, Narrator selection and other meaning-based consequences.
