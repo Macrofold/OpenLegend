@@ -75,12 +75,12 @@ Player interaction is separately owned by the UI handbook and action contracts. 
 
 ## Complete situations and cross-topic consequences
 
-| Situation | Useful presentation | Failure to avoid |
-| --- | --- | --- |
-| A player crosses a distinctive fallen tree above water | The tree's silhouette and material establish the route before bark/moss detail; open water preserves legibility. | Decorative foliage obscures footing or implies unsupported traversal. |
-| A fire or magical event lights nearby people | Nearby materials share the event's light while retaining distinct responses. | A bright texture claims illumination the world does not provide or exposes hidden facts. |
-| A player prepares and releases an attack | Preparation, release and result each have readable visual/audio cues; any skill interaction corresponds to the actual action. | The input becomes an unrelated overlay, repeats after the decision is solved, or invents success before native admission. |
-| A recognizable person turns around | Body proportions, scar side, clothing asymmetry and held equipment remain coherent. | Mirroring or camera convenience changes the person's persistent identity. |
+| Situation                                              | Useful presentation                                                                                                           | Failure to avoid                                                                                                          |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| A player crosses a distinctive fallen tree above water | The tree's silhouette and material establish the route before bark/moss detail; open water preserves legibility.              | Decorative foliage obscures footing or implies unsupported traversal.                                                     |
+| A fire or magical event lights nearby people           | Nearby materials share the event's light while retaining distinct responses.                                                  | A bright texture claims illumination the world does not provide or exposes hidden facts.                                  |
+| A player prepares and releases an attack               | Preparation, release and result each have readable visual/audio cues; any skill interaction corresponds to the actual action. | The input becomes an unrelated overlay, repeats after the decision is solved, or invents success before native admission. |
+| A recognizable person turns around                     | Body proportions, scar side, clothing asymmetry and held equipment remain coherent.                                           | Mirroring or camera convenience changes the person's persistent identity.                                                 |
 
 ## Open questions and missing evidence
 
@@ -90,7 +90,6 @@ For action execution specifically, the ND38 design separates the selected world'
 
 ## Design subtopics
 
-| Subtopic ID | Intended experience and scope | Research lesson / evidence | Design register entry | Feature specification | Technical design |
-| --- | --- | --- | --- | --- | --- |
-| ND38 | Optional player skill during the execution of an already admitted action, without making every action a timing test. | PRESENT-L003 and the G178 combat/reception evidence. | [ND38 — Done, designed](../../../../docs/maintainers/needs-design.md#nd38--player-skill-during-action-execution) | [Skilled action execution](../../../../docs/projects/action-execution-and-skill-expression-feature-spec.md) | [Authoritative execution, physical contact and fitted items](../../../../docs/projects/action-execution-and-skill-expression-tech-design.md); implementation remains open in ASE. |
-
+| Subtopic ID | Intended experience and scope                                                                                        | Research lesson / evidence                           | Design register entry                                                                                            | Feature specification                                                                                       | Technical design                                                                                                                                                                  |
+| ----------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ND38        | Optional player skill during the execution of an already admitted action, without making every action a timing test. | PRESENT-L003 and the G178 combat/reception evidence. | [ND38 — Done, designed](../../../../docs/maintainers/needs-design.md#nd38--player-skill-during-action-execution) | [Skilled action execution](../../../../docs/projects/action-execution-and-skill-expression-feature-spec.md) | [Authoritative execution, physical contact and fitted items](../../../../docs/projects/action-execution-and-skill-expression-tech-design.md); implementation remains open in ASE. |

@@ -2,11 +2,13 @@
 
 | Status      | Current progress                                               | Last updated |
 | ----------- | -------------------------------------------------------------- | ------------ |
-| In progress | Design complete; implementation and qualification remain open. | 2026-10-17   |
+| In progress | Design complete; implementation and qualification remain open. | 2026-10-19   |
 
 ## Design baseline and integration
 
 The implementation baseline is `Macrofold/OpenLegend` main at `0eb7358f251d1ab706592ccb6e9829e98c729fe9`. The [feature specification](combat-and-threat-responses-feature-spec.md) defines the accepted scope; [repertoire scope](combat-and-threat-responses-repertoire-review.md) relates it to broader possibilities. Implementation crosses domain mechanics, world policy, server cognition and player controls, so delivery requires staged integration and separate runtime qualification.
+
+**Planned ND38 composition; not implemented:** the selected [execution feature](action-execution-and-skill-expression-feature-spec.md) and [physical integration contract](action-execution-and-skill-expression-tech-design.md#3-world-physical-contact-and-the-evasion-reconciliation) add optional input to the existing native attack owner, replace the bundled heading-error law with exact straight shots, install a real shared duck/tuck pose with chronological collision, and add authored launcher recovery through the existing body deadline. Its [exact point-release review](action-execution-and-skill-expression-tech-design.md#15-physical-pointer-aim-consequence-review-and-cancellation) extends the current review owner for the frozen point and permitted indicated subjects. CTR01 still owns release permission, source-independent flight, actual collateral and native contact effects; CTR02 and the existing observation owners retain personal evidence and privacy. These changes compose through the same action, movement, collision, defense, clock and receipt owners. They create no parallel combat executor and do not complete any CTR or ASE qualification gate.
 
 Implementation must measure actual calls, receipts, latency and costs. A faster model alone does not establish faster complete reactions.
 

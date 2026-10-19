@@ -20,24 +20,23 @@ Make actual hunting, confrontation and meaningful craftsmanship fun. A character
 
 Point fire is **not a bypass for consequential violence**. Review covers both an originally intended person and a newly recognized person indicated by the final frozen release ray. Ground-down/person-up input or an omitted subject ID cannot bypass the existing exact lethal review. A changed indicated person or source/permission dependency needs renewed review; the preview checks only permitted recognized bodies and reveals no hidden bystander. An unselected shot carries the visible world-authored warning that **any actual physical interceptor may be injured**, without previewing hidden identities. After release, [CTR01](ranged-counterplay.md#selected-contact-consequences) owns genuine first-impact injury/collateral, and the world does not 'undo' an unintended fatality after a shot commits. Other installed worlds can disable point fire entirely.
 
-
 ## Concentric release interaction
 
 The green/yellow annular target follows the current physical aim pointer while a white concentric radius expands and contracts. Continue tracking moving prey manually. Green means a positive release contribution, yellow ordinary, and outside yellow weaker. A poor score does not guarantee a physical miss, and green cannot create contact.
 
 **This table owns the selected initial input defaults.** They are complete implementation/playtest parameters, not installed behavior or measured optimal values. Other documents refer to this owner; renderers do not install independent constants.
 
-| Input/display rule | Selected initial value | Meaning and qualification |
-| --- | --- | --- |
-| Tap/hold threshold | 150 real milliseconds | Below the threshold is ordinary. At/above it, score only after the exact admitted profile has been displayed; start phase at that later boundary. |
-| Full ring cycle | 900 real milliseconds | One expansion and contraction using the triangle radius `r = 1 - abs(2 × phase - 1)`, with `0 ≤ phase < 1`. |
-| Target radius and bands | Center `0.5`; green half-width `0.06`; ordinary outer half-width `0.15` | The [generic evaluator](../../projects/action-execution-and-skill-expression-tech-design.md#22-deterministic-evaluation-and-presentation) gives signed score. At a zero boundary show ordinary, not a promised improvement. |
-| Ordinary / skip | Exact score `0` | Normal attacks remain useful, including a release before the profile was visible. |
-| Installed character challenge modifiers | None added in this first slice | Existing native competence remains real. Later supported coordination/focus/status rules may change displayed bands/tempo under exact admitted pins; no new mandatory stat is inferred. |
-| Active-input renewal / expiry | Renewal target `100` real ms; server lost-input expiry `250` real ms | Renew only while steering or an early release is still armed. At most ten routine renewals per real second; stop/change messages remain meaningful boundaries. Test latency and loss before accepting these values. |
-| Keyboard physical aim | Arrow movement `16` CSS pixels; Shift+arrow `1` CSS pixel | Reticle is projected through the same physical picker, with no automatic target following. |
-| Step timing | Phase increments `0.01`; Home `0`; End `0.99` | Freeze only local display phase. Explicit Release is required; world movement and native preparation continue. |
-| Keyboard pouch marker | Center start `(60,60)` on indices `0..120`; coarse `10`, fine `1` | Normalize once by `120`; exact fixture midpoints are reachable. See the [fitting rule](#exact-visible-fixture-and-score). |
+| Input/display rule                      | Selected initial value                                                  | Meaning and qualification                                                                                                                                                                                                   |
+| --------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tap/hold threshold                      | 150 real milliseconds                                                   | Below the threshold is ordinary. At/above it, score only after the exact admitted profile has been displayed; start phase at that later boundary.                                                                           |
+| Full ring cycle                         | 900 real milliseconds                                                   | One expansion and contraction using the triangle radius `r = 1 - abs(2 × phase - 1)`, with `0 ≤ phase < 1`.                                                                                                                 |
+| Target radius and bands                 | Center `0.5`; green half-width `0.06`; ordinary outer half-width `0.15` | The [generic evaluator](../../projects/action-execution-and-skill-expression-tech-design.md#22-deterministic-evaluation-and-presentation) gives signed score. At a zero boundary show ordinary, not a promised improvement. |
+| Ordinary / skip                         | Exact score `0`                                                         | Normal attacks remain useful, including a release before the profile was visible.                                                                                                                                           |
+| Installed character challenge modifiers | None added in this first slice                                          | Existing native competence remains real. Later supported coordination/focus/status rules may change displayed bands/tempo under exact admitted pins; no new mandatory stat is inferred.                                     |
+| Active-input renewal / expiry           | Renewal target `100` real ms; server lost-input expiry `250` real ms    | Renew only while steering or an early release is still armed. At most ten routine renewals per real second; stop/change messages remain meaningful boundaries. Test latency and loss before accepting these values.         |
+| Keyboard physical aim                   | Arrow movement `16` CSS pixels; Shift+arrow `1` CSS pixel               | Reticle is projected through the same physical picker, with no automatic target following.                                                                                                                                  |
+| Step timing                             | Phase increments `0.01`; Home `0`; End `0.99`                           | Freeze only local display phase. Explicit Release is required; world movement and native preparation continue.                                                                                                              |
+| Keyboard pouch marker                   | Center start `(60,60)` on indices `0..120`; coarse `10`, fine `1`       | Normalize once by `120`; exact fixture midpoints are reachable. See the [fitting rule](#exact-visible-fixture-and-score).                                                                                                   |
 
 Pointer-down requests native preparation before a tap/hold distinction is known. If the existing exact lethal review is required first, no preparation is admitted yet: end the old gesture, discard its queued release, and let explicit **Prepare attack** confirmation admit only the reviewed preparation. Continue with deliberate controls. A release review preserves one frozen point/sample only in its own valid dialog; explicit **Release attack** confirmation uses fresh current authority. Closing or declining cancels the matching uncommitted attempt and never fires it. An early release retains one immutable intention and waits for legal native readiness only while current foreground input authorization remains valid. Cancel, pause, blur, detected disconnect and control loss disarm automatic release. Restart/Resume never recreates old held input; explicit native Release/Cancel uses the surviving action and current permission. No additional total hold timeout is selected: native interruption, vulnerability, resource claims and cancellation remain effective.
 
@@ -47,13 +46,13 @@ The first green center is `225` real ms after ring origin, so an immediately adm
 
 All values below are **selected initial relative scaling for an excellent score**, still subject to actual playtesting and later authored retuning. These are not current live weapon bonuses, guaranteed outcomes or fixed balance after playtesting. Baseline native statistics (including existing sling practice, applicable bodily conditions and equipped item) are evaluated once before manual scaling.
 
-| Supported installed tool/technique | Excellent release could improve | Poor release could reduce | Unchanged reality |
-| --- | --- | --- | --- |
-| Swing launcher / sling | Base conditional body-contact/evasion resolution by **up to +25% relative** | That same conditional chance by **up to -10% relative** | Mouse-defined exact straight trajectory, finite stock, range, speed, shield, cover and recovery |
-| Flex launcher / bow | Base conditional body-contact chance by **up to +20%** | Conditional chance by **up to -10%** | No leading a moving victim for free; shot never turns in flight |
-| Spear/contact thrust | Conditional contact chance by **up to +15%** and resulting injury by **up to +10%** where both are supported | Both selected channels by up to -10% relative; no penalty on unrelated statistics | Real reach, current target and injury susceptibility; avoid permanent critical formula |
-| Hammer/heavy contact strike | Actual pre-defense injury factor by **up to +25%** | Pre-defense injury factor by **up to -10%** | Actual native connection, armor/shield/guard and recovery; aim isn't a damage button |
-| Tool/family without selected interaction | Nothing | Nothing | Ordinary existing action and outcomes unchanged |
+| Supported installed tool/technique       | Excellent release could improve                                                                              | Poor release could reduce                                                         | Unchanged reality                                                                               |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Swing launcher / sling                   | Base conditional body-contact/evasion resolution by **up to +25% relative**                                  | That same conditional chance by **up to -10% relative**                           | Mouse-defined exact straight trajectory, finite stock, range, speed, shield, cover and recovery |
+| Flex launcher / bow                      | Base conditional body-contact chance by **up to +20%**                                                       | Conditional chance by **up to -10%**                                              | No leading a moving victim for free; shot never turns in flight                                 |
+| Spear/contact thrust                     | Conditional contact chance by **up to +15%** and resulting injury by **up to +10%** where both are supported | Both selected channels by up to -10% relative; no penalty on unrelated statistics | Real reach, current target and injury susceptibility; avoid permanent critical formula          |
+| Hammer/heavy contact strike              | Actual pre-defense injury factor by **up to +25%**                                                           | Pre-defense injury factor by **up to -10%**                                       | Actual native connection, armor/shield/guard and recovery; aim isn't a damage button            |
+| Tool/family without selected interaction | Nothing                                                                                                      | Nothing                                                                           | Ordinary existing action and outcomes unchanged                                                 |
 
 Individual channels are clamped to their installed valid range. The 25% figure is a **barometer for optional skilled expression**, not a universal value for every weapon or a blanket increase to damage, crit and accuracy simultaneously. An authored future critical channel requires an actual supported world combat-crit rule and own unit/trigger; do not add arbitrary critical multipliers from a weapon's visual description.
 
@@ -61,34 +60,34 @@ Individual channels are clamped to their installed valid range. The 25% figure i
 
 The following table distinguishes current ordinary melee definitions from selected additions. Existing knife and spear values are preserved. The current bundled launcher has native shot preparation but **no separate post-release recovery**; this slice adds that missing authored field and integrates it with the existing body-scoped `combatReadyAt` used by strikes and guard. The manual ring never supplies or replaces a native duration.
 
-| Native family/item | Ordinary contact baseline | Native work/windup | Recovery | First-slice status |
-| --- | --- | --- | --- | --- |
-| Knife | Damage `8`, accuracy `.75`, reach `1.3 m`, ordinary approach `0.8 m` | `6` game seconds | Existing `18` game seconds | Preserve ordinary native item/action; no timed profile selected |
-| Lookout spear | Damage `10`, accuracy `.8`, reach `2.2 m`, ordinary approach `1.8 m` | `18` game seconds | Existing `36` game seconds | Preserve native baseline; admit the spear timing contribution in the consequence table |
-| Camp hammer | Damage `14`, accuracy `.75`, reach `1.4 m`, ordinary approach `1.0 m` | `24` game seconds | `48` game seconds | New finite authored item below; optional impact contribution only |
-| Swing launcher / sling | Existing installed launcher/ammunition range, speed, injury and handling; preserve applicable competence | Existing applicable shot preparation, default `18` game seconds | **New `18` game seconds** | One selected shot law/recovery for ordinary, manual, practice/hunt and NPC routes |
-| Flex launcher / bow | Existing installed launcher/ammunition range, speed, injury and handling | Existing applicable shot preparation, default `18` game seconds | **New `24` game seconds** | Same shared shot/recovery owner; no manual bypass |
-| Ordinary Punch | Existing native damage `5`, reach `1.3 m`, biped requirement and ordinary auto-approach | Existing `30` game seconds of unphased work | No separate Punch recovery added | Preserve current native contact action; no timed Punch profile in this slice |
+| Native family/item     | Ordinary contact baseline                                                                                | Native work/windup                                              | Recovery                         | First-slice status                                                                     |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------- |
+| Knife                  | Damage `8`, accuracy `.75`, reach `1.3 m`, ordinary approach `0.8 m`                                     | `6` game seconds                                                | Existing `18` game seconds       | Preserve ordinary native item/action; no timed profile selected                        |
+| Lookout spear          | Damage `10`, accuracy `.8`, reach `2.2 m`, ordinary approach `1.8 m`                                     | `18` game seconds                                               | Existing `36` game seconds       | Preserve native baseline; admit the spear timing contribution in the consequence table |
+| Camp hammer            | Damage `14`, accuracy `.75`, reach `1.4 m`, ordinary approach `1.0 m`                                    | `24` game seconds                                               | `48` game seconds                | New finite authored item below; optional impact contribution only                      |
+| Swing launcher / sling | Existing installed launcher/ammunition range, speed, injury and handling; preserve applicable competence | Existing applicable shot preparation, default `18` game seconds | **New `18` game seconds**        | One selected shot law/recovery for ordinary, manual, practice/hunt and NPC routes      |
+| Flex launcher / bow    | Existing installed launcher/ammunition range, speed, injury and handling                                 | Existing applicable shot preparation, default `18` game seconds | **New `24` game seconds**        | Same shared shot/recovery owner; no manual bypass                                      |
+| Ordinary Punch         | Existing native damage `5`, reach `1.3 m`, biped requirement and ordinary auto-approach                  | Existing `30` game seconds of unphased work                     | No separate Punch recovery added | Preserve current native contact action; no timed Punch profile in this slice           |
 
 All durations are game seconds. The launcher preparation entry describes the existing default, not a replacement for a genuinely installed competence/action override. Authored launcher recovery must be admitted and exposed from its exact definition/family, including invented compatible launchers and current-format recompilation; it must not be a hidden browser delay. On actual shot release at time `T`, the existing body owner sets `combatReadyAt = max(existingDeadline, T + launcher.recoverySeconds)` while ammunition debit and flight creation commit once. Strike/guard recovery continues through the same body owner.
 
-Every subsequent strike, Punch, aim/shot or guard checks the shared deadline. Stop, walking, equipping a different weapon, action replacement and coherent save/reopen preserve it. A cancelled preparation that never releases creates no shot recovery. A committed miss keeps recovery. Flight duration is independent: an arrow still in the air does not prevent the next otherwise lawful shot, and an early impact does not refund recovery.
+Every subsequent strike, Punch, aim/shot or guard checks the shared deadline. Compatible WASD steering remains legal during weapon recovery so the player can retreat; it neither clears the deadline nor adds another physical action. Stop, walking, equipping a different weapon, action replacement and coherent save/reopen preserve it. A cancelled preparation that never releases creates no shot recovery. A committed miss keeps recovery. Flight duration is independent: an arrow still in the air does not prevent the next otherwise lawful shot, and an early impact does not refund recovery.
 
 The new hammer is a first-proof ordinary item through the existing native item and held-equipment contract, with these exact initial authored fields:
 
-| Item field | Selected definition |
-| --- | --- |
-| Identity | `id: hammer`, `version: 1`, name **Camp hammer** |
-| Description | A heavy hammer for close contact strikes. It prepares and recovers slowly; a carefully released blow can improve its impact. |
-| Portability and load | `portable: true`, `packingLoad: 3` |
-| Material/interface properties | `properties: [rigid]`; no invented point, shaft, recipe or general critical capability |
-| Held equipment | Main hand plus off hand, native use `melee`, through the existing equipment admission contract |
-| Melee profile | The hammer row above owns its exact damage/accuracy/reach/approach/windup/recovery values |
-| Disclosed characteristics | Existing native contact characteristics for damage, reach, accuracy, preparation and recovery |
-| Optional execution | Installed timed-release profile; only the hammer pre-defense injury channel in the consequence table, no added contact bonus or critical channel |
-| Obtainable proof | Seed one ordinary physical hammer object beside the existing accessible spear through normal world initialization, with its usual spatial placement and custody; it is picked up/equipped/used through ordinary actions |
+| Item field                    | Selected definition                                                                                                                                                                                                     |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Identity                      | `id: hammer`, `version: 1`, name **Camp hammer**                                                                                                                                                                        |
+| Description                   | A heavy hammer for close contact strikes. It prepares and recovers slowly; a carefully released blow can improve its impact.                                                                                            |
+| Portability and load          | `portable: true`, `packingLoad: 3`                                                                                                                                                                                      |
+| Material/interface properties | `properties: [rigid]`; no invented point, shaft, recipe or general critical capability                                                                                                                                  |
+| Held equipment                | Main hand plus off hand, native use `melee`, through the existing equipment admission contract                                                                                                                          |
+| Melee profile                 | The hammer row above owns its exact damage/accuracy/reach/approach/windup/recovery values                                                                                                                               |
+| Disclosed characteristics     | Existing native contact characteristics for damage, reach, accuracy, preparation and recovery                                                                                                                           |
+| Optional execution            | Installed timed-release profile; only the hammer pre-defense injury channel in the consequence table, no added contact bonus or critical channel                                                                        |
+| Obtainable proof              | Seed one ordinary physical hammer object beside the existing accessible spear through normal world initialization, with its usual spatial placement and custody; it is picked up/equipped/used through ordinary actions |
 
-The hammer is not currently installed. Its definition, ordinary world instance, equipment availability, inspection and ordinary attack route belong to the implementation gate before the hammer/spear experience can be claimed. This task does not require a hammer recipe or an unrestricted melee generator. The knife and ordinary Punch remain usable native baselines; supported timed techniques are explicitly advertised rather than inferred from a weapon's name.
+The hammer is not currently installed. Its definition, ordinary world instance, equipment availability, inspection and ordinary attack route belong to the implementation gate before the hammer/spear experience can be claimed. This task does not require a hammer recipe or an unrestricted melee generator. The knife and ordinary Punch remain usable native baselines: with no optional descriptor, primary input captures the exact ordinary choice on down and invokes it once on up, with no held-ready phase, timing score or repeated action. Supported timed techniques are explicitly advertised rather than inferred from a weapon's name.
 
 At `1×`, the selected default sling release-to-release floor is `(18 + 18) / 60 = 0.6` real seconds and bow floor is `(18 + 24) / 60 = 0.7` real seconds, assuming the next preparation begins immediately when recovery ends. Using the timing profile's first green center instead gives idealized `0.675` and `0.775` seconds. These are arithmetic consequences of the selected laws, not measured player cadence or balance evidence. Native deadlines scale at other world speeds while the human ring does not.
 
@@ -102,17 +101,17 @@ For this installed shot family, replace the current random heading deviation wit
 
 This section owns the complete initial response tuning. All values are selected implementation/playtest defaults, not implemented behavior or physiological measurements.
 
-| Response input or rule | Selected initial value |
-| --- | --- |
-| Ordinary shape | The body's current ordinary radius `r` and height `h`; require a supported grounded tall capsule |
-| Duck shape | `hDuck = max(2 × r + ε, 0.45 × h)`, with the shared spatial numerical tolerance `ε`; require `hDuck < h` |
-| Feet, radius and anchors | Same feet/support placement and radius; multiply ordinary eye, ear and interaction heights by `hDuck / h` |
-| Transition | One atomic native posture contraction at the genuine candidate boundary, admitted only when the new capsule actually clears that crossing and has legal support/clearance |
-| Hold | `12` game seconds from successful pose commitment |
-| Response cooldown | `60` game seconds from each qualified feasible response attempt, whether that contest succeeds or fails; unavailable responses start none |
-| Return | At the hold deadline, restore only with full ordinary-body support/solid/body clearance; otherwise retain the small actual shape as `restore-blocked` and retry on a relevant native change |
-| Travel during pose | Current actual small body for contact/senses; conservative ordinary-body clearance for movement, so this does not grant low-tunnel travel |
-| Candidate context `C` | Exactly `1` in the initial bundled rule; no extra fleeing penalty or undefined avoidance statistic |
+| Response input or rule   | Selected initial value                                                                                                                                                                      |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ordinary shape           | The body's current ordinary radius `r` and height `h`; require a supported grounded tall capsule                                                                                            |
+| Duck shape               | `hDuck = max(2 × r + ε, 0.45 × h)`, with the shared spatial numerical tolerance `ε`; require `hDuck < h`                                                                                    |
+| Feet, radius and anchors | Same feet/support placement and radius; multiply ordinary eye, ear and interaction heights by `hDuck / h`                                                                                   |
+| Transition               | One atomic native posture contraction at the genuine candidate boundary, admitted only when the new capsule actually clears that crossing and has legal support/clearance                   |
+| Hold                     | `12` game seconds from successful pose commitment                                                                                                                                           |
+| Response cooldown        | `60` game seconds from each qualified feasible response attempt, whether that contest succeeds or fails; unavailable responses start none                                                   |
+| Return                   | At the hold deadline, restore only with full ordinary-body support/solid/body clearance; otherwise retain the small actual shape as `restore-blocked` and retry on a relevant native change |
+| Travel during pose       | Current actual small body for contact/senses; conservative ordinary-body clearance for movement, so this does not grant low-tunnel travel                                                   |
+| Candidate context `C`    | Exactly `1` in the initial bundled rule; no extra fleeing penalty or undefined avoidance statistic                                                                                          |
 
 A response requires an alive participating body with native awareness of the actual incoming threat, supported ability and no restraint/unresponsiveness or incompatible chosen guard, attack/craft work or combat recovery. Idle and ordinary ground locomotion may qualify. For this first response, awareness is concretely established by the existing current `visionQuery` seeing the actual incoming point projectile at its candidate position, using the defender's current senses/eye anchor and real solid clearance. The bundled response treats that sensed incoming motion as recognizable danger; it does not require a preexisting generic danger flag, a recognized shooter or combat mode. If that sense test fails, the body cannot react from private collision coordinates. This is the current coarse vision law, not new physiological reflex/FOV modeling. This slice adds no universal Dexterity, Focus or hidden defender proficiency. A body with no feasible useful clearance is an actual interceptor even when the shot's source has low handling. In particular, a low ray can strike a crouched person, and an inert target cannot become intangible through a poor accuracy roll.
 
@@ -180,14 +179,14 @@ C=\lfloor 4p\,f+0.5\rfloor.
 The ordinary base is the family's existing `4p`. The factor is in `[0.90,1.25]` before integer rounding, and neutral work has factor one. Apply the rounding once to the product; do not round the score/factor first or clamp the result at the ordinary family's maximum capacity. The chosen family bounds yield actual fitted capacities from 7 through 40 packing-load units, compared with ordinary capacities from 8 through 32. These are derived bounds for this family, not a global item limit.
 
 | Pouch-material units | Poor endpoint | Ordinary / Finish normally | Best endpoint |
-| --- | --- | --- | --- |
-| 2 | 7 | 8 | 10 |
-| 3 | 11 | 12 | 15 |
-| 4 | 14 | 16 | 20 |
-| 5 | 18 | 20 | 25 |
-| 6 | 22 | 24 | 30 |
-| 7 | 25 | 28 | 35 |
-| 8 | 29 | 32 | 40 |
+| -------------------- | ------------- | -------------------------- | ------------- |
+| 2                    | 7             | 8                          | 10            |
+| 3                    | 11            | 12                         | 15            |
+| 4                    | 14            | 16                         | 20            |
+| 5                    | 18            | 20                         | 25            |
+| 6                    | 22            | 24                         | 30            |
+| 7                    | 25            | 28                         | 35            |
+| 8                    | 29            | 32                         | 40            |
 
 For the six-unit pouch, `24 × 0.90 = 21.6` rounds to 22, and the best fit gives 30. The factor bound is not a promise of at most ten percent loss in the rounded capacity: an eight-unit capacity becoming seven loses one eighth. A small positive score may still give the ordinary integer capacity. **Select no categorical grade initially.** Show actual capacity; do not call an unchanged result an improvement merely because its unrounded score was positive. Optional future descriptive grades must have exact world-owned meanings tied to observable effective properties.
 
@@ -212,11 +211,11 @@ A player may invent a compatible woven-container method under the existing finit
 Human input uses real interactive time. Native movement, work, flight, windup and recovery retain the existing 60 game seconds per real second at 1× and the selected speed multiplier. Neither a held ring nor Ready to finish pauses other actors. Step timing freezes only its displayed phase; it does not give a stationary target or halt physical consequences.
 
 | Selected speed | Game seconds per real second | An 18-game-second preparation | A 36-game-second recovery | A six-unit pouch's 216-game-second work |
-| --- | --- | --- | --- | --- |
-| 0.5× | 30 | 600 ms | 1,200 ms | 7,200 ms |
-| 1× | 60 | 300 ms | 600 ms | 3,600 ms |
-| 3× | 180 | 100 ms | 200 ms | 1,200 ms |
-| 8× | 480 | 37.5 ms | 75 ms | 450 ms |
+| -------------- | ---------------------------- | ----------------------------- | ------------------------- | --------------------------------------- |
+| 0.5×           | 30                           | 600 ms                        | 1,200 ms                  | 7,200 ms                                |
+| 1×             | 60                           | 300 ms                        | 600 ms                    | 3,600 ms                                |
+| 3×             | 180                          | 100 ms                        | 200 ms                    | 1,200 ms                                |
+| 8×             | 480                          | 37.5 ms                       | 75 ms                     | 450 ms                                  |
 
 These are direct clock conversions before latency or extra handling; the specific weapon table owns its actual values. The ring remains a 900-ms real cycle at all these speeds. At 8× a target may move substantially during a single human choice; that is an explicit acceptance risk to measure, not permission to hide a slowdown or change world time. A different combat/calendar clock would require a separate product decision.
 
