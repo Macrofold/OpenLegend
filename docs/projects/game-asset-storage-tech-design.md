@@ -1,8 +1,8 @@
 # Game asset storage, delivery and art studies — technical design
 
-| Status      | Current progress                                                                                                               | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | All asset payloads are external and reviewed implementation fixes are qualified; existing-world owner sign-in remains pending. | 2026-10-18   |
+| Status      | Current progress                                                                                                   | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Curated delivery and current-world owner selection pass; separately gated Git history reclamation remains in AS08. | 2026-10-18   |
 
 **Technical design used for implementation review:** 2026-10-18 04:00:12 UTC. [Actual review evidence](../verification/game-asset-storage.md#implementation-review) remains separate from the design contract.
 
@@ -329,7 +329,7 @@ Build one curated source → verified local fetch → preserved study → game-r
 
 Required scenarios include the existing mercenary/deer source-study chain; two worlds referencing one public tree; a private-reference fixture with identical bytes to a public model but different rights; an engine-owned fallback icon; an audio file; a study reused after its preview expires; a lost publication acknowledgement; conflicting selections; corrupt/partial files; cache eviction while a file is active; revoked access; and restore under newer withdrawal records. Include multipart versus whole-file checksum mismatch, changed input under a repeated operation ID, cancellation before commit, two processes exhausting cache space, a cancelled co-reader, a previously issued private URL after revocation, and unavailable current restrictions during restore. Exercise reference privacy with curated fixtures before generated-art features exist. The [verification report](../verification/game-asset-storage.md) records the exercised scenarios and their limits; these requirements alone do not establish measured capacity.
 
-No unresolved owner decision blocks the accepted curated implementation. Verified project/Region, owned hostname, narrow roles and the completed current-tree migration are configured; the [tracker](../maintainers/game-asset-storage.md) and [evidence](../verification/game-asset-storage.md) retain actual qualification and unfinished acceptance. The existing 31-actor world remains unchanged and has no selected external art; its owner must restart the configured server, complete normal OIDC sign-in and use the supported art-selection control. The AST inventory distinguishes configured policies from measured capacity. No achieved recovery-time or recovery-point objective is inferred from a successful copy. Git history rewriting remains separately authorized and coordinated.
+No unresolved owner decision blocks the accepted curated implementation. Verified project/Region, owned hostname, narrow roles and the completed current-tree migration are configured; the [tracker](../maintainers/game-asset-storage.md) and [evidence](../verification/game-asset-storage.md) retain actual qualification. The current configured world uses the installed exact artwork selected through its normal signed-in owner control. Mike authorized replacing old development progress with the current ordinary opening; authentication, asset authority and accounting remain preserved. The AST inventory distinguishes configured policies from measured capacity. No achieved recovery-time or recovery-point objective is inferred from a successful copy. Git history rewriting remains separately authorized and coordinated.
 
 ## Maintained records
 

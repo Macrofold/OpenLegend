@@ -1,8 +1,8 @@
 # Game asset storage, delivery and art studies — feature specification
 
-| Status      | Current progress                                                                                                               | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | All asset payloads are external and reviewed implementation fixes are qualified; existing-world owner sign-in remains pending. | 2026-10-18   |
+| Status      | Current progress                                                                                                   | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Curated delivery and current-world owner selection pass; separately gated Git history reclamation remains in AS08. | 2026-10-18   |
 
 **Specification reconciled with implementation:** 2026-10-18 04:11 UTC. The [review evidence](../verification/game-asset-storage.md#implementation-review) records the checked scope and limits.
 
@@ -12,7 +12,7 @@
 
 Keep the code repository small while making every approved game asset and every preserved art-study iteration reliably retrievable. A developer should be able to clone the code, fetch only the assets needed for a task, run the game and reproduce a selected study. A player should receive the approved assets needed for their scene without downloading our authoring library or experiments.
 
-The pre-migration baseline at branch revision `18f164d188767fe062b40f3e1b275ba51abc9ba9` contains about 524.7 MiB of client props/alternatives, 329.3 MiB of editable sources/downloads and 301.9 MiB of study archives. Its local `dist/client` occupies about 846 MiB because the asset inspector includes GLBs and editable Blender projects in build output; this is not the initial player download size. The migrated checkout measures about 54.4 MB, compared with about 1.43 GB before cleanup; reachable Git history is unchanged. The post-removal player build passes with three files totaling 3,667,328 bytes. These are checkout/build measurements, not initial player download or rendering-capacity claims. The [AS tracker](../maintainers/game-asset-storage.md) and [verification report](../verification/game-asset-storage.md) record preservation, full isolated restoration and bounded game/study checks. Selecting the installed art in the existing 31-actor world still requires its owner to complete normal sign-in.
+The pre-migration baseline at branch revision `18f164d188767fe062b40f3e1b275ba51abc9ba9` contains about 524.7 MiB of client props/alternatives, 329.3 MiB of editable sources/downloads and 301.9 MiB of study archives. Its local `dist/client` occupies about 846 MiB because the asset inspector includes GLBs and editable Blender projects in build output; this is not the initial player download size. The migrated checkout measures about 54.4 MB, compared with about 1.43 GB before cleanup; reachable Git history is unchanged. The recorded post-removal player build passed with three files totaling 3,667,328 bytes. These are checkout/build measurements, not initial player download or rendering-capacity claims. The [AS tracker](../maintainers/game-asset-storage.md) and [verification report](../verification/game-asset-storage.md) record preservation, full isolated restoration and bounded game/study checks. The signed-in current-world owner selected the installed art after Mike authorized replacing development progress with the current ordinary opening; current browser presentation and persistence/restart pass. This does not qualify the discarded 31-actor save.
 
 Earlier art, licenses, meaningful rejected trials and exact evidence remain preserved externally. Active asset links and retained study entries use verified immutable hosted replacements; original repository paths remain provenance. Git history reclamation requires separate authorization under AS08.
 

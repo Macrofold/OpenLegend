@@ -1,8 +1,8 @@
 # Current local game and artwork
 
-| Status      | Current progress                                                                                                                | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The current opening and artwork are selected; browser model downloads need bounded scheduling before final visual verification. | 2026-10-18   |
+| Status    | Current progress                                                                                                                       | Last updated |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | The fresh current opening, installed artwork, bounded model loading, interface icons and intelligence tracker pass local verification. | 2026-10-18   |
 
 ## Scope and selected base
 
@@ -35,3 +35,7 @@ Use focused existing checks plus a narrow failure reproduction where needed, pin
 - The ordinary local player and expected cast are alive in current-format state after persistence/reopen; any discarded progress is reported.
 - The intelligence tracker loads its stored records through its real authorized route.
 - Relevant documentation, review fixes, checks and local commits are complete, with genuine remaining blockers explicit.
+
+## Completion evidence
+
+The [asset verification record](../../verification/game-asset-storage.md#current-local-game-delivery-repair) records actual server failure cases, focused network ownership checks, the twelve-read scheduling scenario, signed-in browser presentation, current-world replacement and persistence/restart. Seven people remain alive, including the mercenary; exact artwork selection and pause persist. The intelligence tracker loads 25 retained records. TypeScript, production build, the asset-payload guard, affected-diff review and documentation-link checks pass. The full first-playable implementation and separately gated history reclamation remain outside this repair.
