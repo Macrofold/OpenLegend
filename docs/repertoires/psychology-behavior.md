@@ -508,7 +508,7 @@ Seeds and references: [RimWorld](source-atlas.md#g21), [The Sims](source-atlas.m
 
 **ALL · Blend · Moderate/Extend.** Gap: bounded state effects on planning with alternatives and recovery.
 
-An angry craftsperson chooses a walk before negotiating an expensive commission, or asks a trusted colleague to attend. The feeling changes which approach seems worthwhile. Players can support regulation through space, time or company. Do not equate emotion with irrationality or let a hidden mood state override every explicit intention without explanation.
+An angry craftsperson chooses a walk before negotiating an expensive commission, or asks a trusted colleague to attend. The feeling changes which available approach seems worthwhile; it does not remove other feasible choices, grant a capability or compel the decision. The heading concerns the person's chosen method, not a new emotion-based action-permission law. Players can offer space, time or company without controlling the interpretation. Do not equate emotion with irrationality or let a hidden mood state override every explicit intention without explanation.
 
 Related entries: [PB-183](#danger-courage-and-aggression).
 
@@ -607,6 +607,8 @@ At the recorded Group 3 handoff, shared source-atlas navigation and counts still
 [AR]: ../../archive/02-research/game-inspiration/dossiers/ark-survival-evolved.md
 
 ## Selection guidance
+
+The October 18 [experience-shaped character pair](../projects/experience-shaped-characters-feature-spec.md) selects EC01–EC04 using current self-understanding, directional notes, feelings and goals. PB-101/149/161/176/287 are strong Complete material: a particular favor, being surpassed, wanted quiet company, uncomplicated pleasure and choosing a slower companion. They connect interpretation to something a person later actually does. PB-011/022/024/044/054 remain Depth contrasts for borrowed attention, later explanations, different appraisals and qualified counterexamples; selecting their meaning does not promote every psychological nuance. The [technical design](../projects/experience-shaped-characters-tech-design.md) distinguishes the old event, later testimony and current inference, with no per-lesson score or second personality record. All row priorities remain unchanged. Runtime quality is open, and optional dreams/coarsening remain deferred.
 
 The October 17 [combat and threat response design](../projects/combat-and-threat-responses-feature-spec.md) selects a small connected use of PB-003, PB-181–185 and the existing motive/stopping patterns. Relevant context and choices remain complete while a person is busy; interpreted fear can coexist with a real counterattack, and a changed situation can end one finite commitment without erasing the person's larger aim. [The world option catalogue](../worlds/base/threat-response-options.md) supplies reusable purposes, while [source-linked appraisals](../worlds/base/psychological-reactions.md#interpreted-threat-reactions) retain their own owner. This does not install every pattern here, add mandatory psychological bars, or give ordinary animals model cognition.
 
