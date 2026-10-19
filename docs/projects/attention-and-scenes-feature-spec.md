@@ -22,6 +22,12 @@ This should improve everyday play, not merely a stress benchmark. The test is wh
 
 The positive promise is social possibility: company, humor, discovery, persuasion, an awkward disagreement, a warning worth following or a secret worth investigating. Listening can change the player's next choice; it should also be pleasant when no task results. The system does not owe a quest after every conversation. These are design aims to test through the [playability gates](five-product-feature-specs.md#playability-gates), not effects established by attention research alone.
 
+## Shared stealth and investigation contract
+
+The [shared stealth feature](stealth-awareness-feature-spec.md) and [integration contracts](stealth-awareness-tech-design.md#shared-contracts) govern physical detection, uncertain recognition, current gaze and historical freshness. Strong sensory evidence and immediate native startle do not wait for optional semantic attention. A person's focus may favor already permitted evidence; it cannot grant an unseen identity, suppress required bodily evidence or make camera visibility into character sight.
+
+A suspicious sound can make looking, investigating, warning someone or continuing the present work meaningful alternatives. A reasoning-capable person chooses whether to turn; hearing alone does not force a gaze change. An admitted watch, investigation or guard commitment must use the existing agency/action owners, with explicit scope, interruption and ending conditions. Looking can coexist with walking when the body's supported pose and occupied work permit it. Native animals retain their separate native controller, and directly controlled characters retain player choice. SAD-E and the other specialists own the detailed implementations without creating a second attention scheduler.
+
 ## 2. Existing commitments and the new proposal
 
 The [attention-and-scene contract](../product-scalability/attention-and-scenes.md) already separates limited attention, aggregate surroundings, independent agency, completed scene exchanges, exact speech and gist. [Hearing](../hearing-and-speech.md) owns actual linguistic evidence; [timed UI](../timed-ui.md) owns reading time; [ordinary speech and narration](../narration-and-conversations.md) owns permitted exchanges and their presentation. PS04 is still proposed runtime work.
@@ -607,3 +613,4 @@ Completion for this slice requires an understandable exact encounter with indepe
 - Related work: [continuing NPC lives](continuing-lives-feature-spec.md) supplies unattended consumers and the funded-service boundary; ND15 retains future audio-media presentation; ND37 retains reporting and control policy.
 - Technical counterpart: [attention and scenes](attention-and-scenes-tech-design.md) resolves exact shared activity and the selected compact background family. [Continuing-life reactions](continuing-lives-tech-design.md#55-numerical-personal-reactions-without-required-prose) and the [psychological world profile](../worlds/base/psychological-reactions.md#selected-first-profile) retain the numerical mechanism and tuning. Aggregate crowd sound and timed speech remain separately gated; this document implements none of them, closes no runtime PS04 acceptance and approves no new time policy.
 - Research refinement tracking: [intelligent-simulation design coverage](../maintainers/intelligent-simulation.md), with existing DG06/DG18, PS04 and CE implementation owners; shared [constraints](../limits/intelligent-simulation.md) supplement the existing feature inventories.
+

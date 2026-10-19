@@ -2,7 +2,7 @@
 
 ## Status and ownership
 
-**Selected design complete; runtime implementation has not started.** This tracker owns the implementation of ordinary ambient/directed speech, reliable recipient awareness and recognition, complete permitted experience, shared natural presentation, dialogue without membership, uniform freeform AI availability and animal acoustic responses. SPK00 is the completed design milestone. All runtime acceptance remains unchecked until supported by actual evidence.
+**Selected design complete; runtime implementation has not started.** This tracker owns the implementation of ordinary ambient/directed speech, reliable recipient awareness and evidence-dependent recognition, complete permitted experience, shared natural presentation, dialogue without membership, uniform freeform AI availability and animal acoustic responses. SPK00 is the completed design milestone. All runtime acceptance remains unchecked until supported by actual evidence.
 
 Design owners: [feature specification](../projects/speech-and-social-perception-feature-spec.md) and [technical design](../projects/speech-and-social-perception-tech-design.md). [Feature scenarios SP-A01–SP-A28](../projects/speech-and-social-perception-feature-spec.md#acceptance-scenarios) are the behavior acceptance owner; reference them rather than duplicating their scenario table here. Current cross-project contracts remain in [Hearing and speech](../hearing-and-speech.md), [Narration and conversations](../narration-and-conversations.md), [Memory architecture](../memory-architecture.md) and the bundled world's [Knowledge](../worlds/base/knowledge.md) and [native acoustic policy](../worlds/base/animal-sound-responses.md).
 
@@ -20,6 +20,10 @@ The selected ordinary-speech/social-perception slice of [ND16](needs-design.md#n
 - [DG18 / PS04](product-scalability.md#ps04--coherent-scenes-and-limited-attention) consumes ordinary speech without membership. Optional attention/crowd/background mechanisms retain their own designs and implementation status.
 - ND19/DG23's transformation, conditional ND20/DG04 evaluation, remote/private communications, World Agent/provider sessions, independent cooperation and unrelated correction policy are unchanged in scope. Never close them because a shared speech primitive is designed.
 
+## Shared stealth dependency
+
+[SA00 and SAD-A/SAD-C/SAD-E](stealth-awareness.md) own the shared evidence/recognition, generic acoustic and attention contracts; SPK01–SPK03 and SPK07–SPK08 implement their linguistic and animal consumers. The [shared technical design](../projects/stealth-awareness-tech-design.md#shared-contracts) is authoritative for those cross-module meanings. CTR03–CTR04 already has partial native controller implementation; SPK08 extends and jointly qualifies that existing owner. This dependency does not complete SPK runtime work or the remaining CTR acceptance.
+
 ## Execution order
 
 Use the same semantic owner for a mutation, its dependent updates and its derived invalidation. Current producer/consumer/schema changes form one current-format contract; do not publish a mixed interpretation of the old and new target fields. A stage is delivered only when all required callers and storage paths use the selected meaning.
@@ -28,7 +32,7 @@ Use the same semantic owner for a mutation, its dependent updates and its derive
 | ----- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | SPK00 | This design task                                            | Cross-linked selected design, reconciled owners and executable task breakdown.                             |
 | SPK01 | SPK00                                                       | Single-address linguistic evidence and reusable acoustic calculation; memoryless audience waits for SPK07. |
-| SPK02 | SPK01                                                       | Installed direct-address and reliable-recognition rules with separate names.                               |
+| SPK02 | SPK01                                                       | Installed direct-address and shared evidence-dependent recognition rules with separate names.                               |
 | SPK03 | SPK01–SPK02                                                 | Shared participant, speech presentation and complete model-evidence projection.                            |
 | SPK04 | SPK01–SPK03                                                 | Full structured memory, typed lineage, cold recall and faithful consolidation.                             |
 | SPK05 | SPK01–SPK04                                                 | Ordinary dialogue without membership and bounded source-owned preparation.                                 |
@@ -72,12 +76,12 @@ SPK10 is a cross-stage obligation, not permission to postpone serializers or val
 **Owners:** [base knowledge policy](../../packages/domain/src/worlds/base/knowledge.ts), the current authored knowledge definition/configuration, domain perception/knowledge, [entity references](../../apps/server/src/entity-references.ts), [knowledge context](../../apps/server/src/knowledge-context.ts), [recall](../../apps/server/src/recall.ts). Contract: technical design §§2, 4–5; canonical bundled-world knowledge owner.
 
 - [ ] Install the selected simple rule: a linguistic recipient who detects directed speech knows it addresses them without sight or a minimum understood-word requirement. Keep hearing/comprehension/recognition as separate facts. Use technical design §4's explicit bystander table: reveal a third-party recipient only through event-time permitted sight of that recipient, never prior familiarity alone; preserve directed-other when its identity is withheld.
-- [ ] Establish the canonical person association at first supported sight/voice exposure and reuse it later, including first unseen/zero-word human calls, independently of prior familiarity, encounter-token continuity, learned name, nickname, subject note or completed exchange. Reuse current observer knowledge/reference ownership; do not create a second identity registry.
+- [ ] Consume SAD-A's shared recognition contract: first unfamiliar unseen hearing leaves canonical source identity absent; familiarity, evidence quality and the selected Perception policy govern voice recognition. Reuse genuinely acquired observer identity across later supported exposure independently of naming or continuous sight. Keep source-local episodes and tentative beliefs distinct from canonical person associations; no second identity registry.
 - [ ] Keep recognized unnamed individuals distinct in memory, optional recall, summaries and model handles; shared permitted descriptions or local ordinals can disambiguate otherwise identical display labels. Remove name-dependent grouping that collapses different recognized people; duplicate labels must not merge identities.
 - [ ] Learn self-introduction claims only from permitted understood words and the supported source association. A recognized unseen speaker can be associated without a visibility-only rejection; never leak a generated annotation's unheard name or authoritative private name.
 - [ ] Separate a valid speech/communication reference from a currently visible physical-action target. No recognition lookup grants exact hidden position, current possessions or reach. Source disappearance can leave history valid while making a new action invalid.
 - [ ] Preserve correction/forgetting and observer-label behavior through the owning mutation and current-format restore. A later name can improve current presentation without rewriting the original utterance or historical name knowledge.
-- [ ] Exercise SP-A03–SP-A08, SP-A15 and SP-A24 using a returning unnamed person, duplicate names, a known unseen voice and a materially different capability profile.
+- [ ] Exercise SP-A03–SP-A08, SP-A15 and SP-A24 using first unfamiliar hearing, a returning unnamed person, duplicate names, sufficiently familiar and weakly heard unseen voices, cross-sense association and a materially different capability profile. Missing or tentative identity must survive every memory/context/UI hop without an omniscient fallback.
 
 **Exit:** characters can recognize whom they are dealing with and know when they are addressed while remaining ignorant of facts they have not learned. Recognition is a selected world rule consumed consistently, not hard-coded human/world behavior in every layer.
 
@@ -221,3 +225,4 @@ SPK10 is a cross-stage obligation, not permission to postpone serializers or val
 - [ ] Commit all implementation/review/doc changes using the authorized workflow, verify no task-owned edits remain, and report delivered behavior, consequential tradeoffs, actual checks and remaining in-scope blockers honestly.
 
 **Exit:** the selected feature works end to end with faithful memory, readable UI, independent human response, native animal sensing/reaction with zero animal model calls, privacy/recovery and meaningful workload evidence. The relevant CTR03–CTR04 dependency is integrated and qualified. If a required human live-model, running-game/browser or capacity check cannot run, its acceptance remains open and the project is not reported fully qualified.
+

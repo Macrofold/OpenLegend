@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                 | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | PG02's bounded evidence path is qualified and the independent combat-response extension is designed; broader character reliability remains open. | 2026-10-17   |
+| In progress | PG02's bounded evidence path is qualified and shared stealth/emotion integration is designed; broader character reliability remains open. | 2026-10-19   |
 
 [Feature contract](compelling-characters-feature-spec.md#character-authorship-and-changing-personality) · [CE implementation and acceptance](../maintainers/character-experience.md) · [Memory contract](../memory-architecture.md) · [Agency contract](../agent-agency.md).
 
@@ -58,7 +58,7 @@ Extend existing typed facts and shared helpers where they carry the needed meani
 
 The disposition-only Ada independently finished cord work and chose native hare-following for observation; an unchanged opportunity later made no new request. Other trials still stockpiled, including after hunger interrupted work. This is a bounded successful alternative, not reliable whole-life stopping. Hungry/fed and ordinary welcome/refusal controls, rejected requests, unsuccessful frozen-input/prompt variants and all attributable costs are retained in the evidence report. No successful diagnostic biography condition was reinstated.
 
-[October 6 evidence](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) closes the quiet execution gap: ordinary idle reflection completes with corrected content, verified provider persistence and accepted publication, followed by a real greeting and cord preparation. The biography and other personal files remain unchanged; no goals, knowledge or feelings are added. This qualifies the internally scheduled execution/publication/next-decision chain, not lasting content-specific influence. CR12 retains unresolved historical billing; CE/AG12 retains repeatability, lasting inner influence and freely chosen resumption. No new product decision is pending.
+[October 6 evidence](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) closes the quiet execution gap: ordinary idle reflection completes with corrected content, verified provider persistence and accepted publication, followed by a real greeting and cord preparation. The biography and other personal files remain unchanged; no goals, knowledge or feelings are added. This qualifies the internally scheduled execution/publication/next-decision chain, not lasting content-specific influence. CR12 retains unresolved historical billing; CE/AG12 retains repeatability, lasting inner influence and freely chosen resumption. No product decision remains pending for that bounded PG02 delivery.
 
 ## Authorship and personality lifecycle
 
@@ -71,6 +71,16 @@ Personality development should use the existing accepted identity/understanding 
 The [combat technical design](combat-and-threat-responses-tech-design.md) owns the new CTR05–CTR08 changes: complete prospective action transitions while busy, interpreted source-linked fear/anger, two-stage relevance then personal choice, and exact observed-change/finite-purpose reconsideration. Reuse this project's unified required experience and shared personal perspective. Do not duplicate the result narrative or replace the complete identity with a combat prompt. The original PG02 slice's no-additional-call claims describe that delivered slice, not the separately selected two-call threat route.
 
 [Ada's selected baseline](../worlds/base/threat-response-options.md#4-initial-ada-disposition-and-required-behavior) now requires an independently selected and actually begun counterattack in the ordinary able/identified/feasible unprovoked-punch situation. Her assertiveness is authored content with general meaning; native mechanisms remain indifferent to her name. CTR10 retains strict ordinary-path acceptance, unsuccessful cases and separate capability/uncertainty controls. A fixture or forced command proves only admission/physics, and repeated generation until a preferred answer appears cannot qualify the character. Existing PG02 observations remain historical evidence of their exact situations, not combat evidence. Long-term personality/relationship change remains outside this extension.
+
+## Shared stealth and emotional integration
+
+**Accepted shared design; implementation pending.** [Stealth-awareness architecture](stealth-awareness-tech-design.md#emotions-and-reconsideration) owns the distinction between native body-life startle, source-linked private interpretation and a derived mechanical effect. Keep this project’s required personal experience and authorship rules: neither another actor’s hidden state nor a private model explanation can create observation, motivation, knowledge or native effects. Existing appraisal and body/status owners publish their own supported changes; ordinary action owners admit every investigation, turn, defense or escape.
+
+The existing threat route already supports compact fear/anger operations and current intensity in context. Its presence does not establish native startle, numerical accuracy/evasion integration or independently due emotion-specific reconsideration. The latter reuses `ActorWork`, existing bounded execution and exact source/record revisions. Current decaying-appraisal reframing cannot change intensity or restart lifetime; a specialist extension must preserve cause deduplication and finite unchanged-support work. No per-frame emotion check or new biography-driven controller is introduced.
+
+A body effect is bound to the current physical life; personal memory/interpretation has its separately declared continuity. Delayed completion must still pass current control, life, source/privacy and policy checks; a successful provider receipt does not authorize publication. [The common time/lifecycle contract](stealth-awareness-tech-design.md#time-and-lifecycle) owns ordering, normal-speed seconds, restoration and non-replay. The [player disclosure contract](stealth-awareness-tech-design.md#player-information-disclosure) keeps historical identity and private feelings from becoming live position/activity or public motive.
+
+[SA-D01](../../archive/05-project/open-decisions.md) remains open only for acquiring longer-term interpreted fear in directly controlled characters. Shared native startle, NPC interpretation and effect-consumer design proceed independently; no human acquisition option is assumed. [Stealth-awareness tracking](../maintainers/stealth-awareness.md) owns specialist design and integration acceptance, without reopening or claiming completion of the original PG02 evidence.
 
 ## Delivery stages, verification and limits
 
@@ -94,3 +104,4 @@ For comparative work, preserve complete required identity, source-specific permi
 - Implementation: [CE01–CE05](../maintainers/character-experience.md), with [AG06/AG07/AG12](../maintainers/agent-agency.md) and [CR12](../maintainers/cognition-redesign.md); existing DG23 owns broader personality development.
 - Limits and constraints: [CG14 authorship boundary](../limits/cognition.md#cg14--character-authorship-and-personal-evidence), [memory/cognition limits](../limits/cognition.md), [feeling limits](../limits/feelings.md). No new numerical runtime bound is introduced.
 - Evidence: [PG02 report](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices), historical trials remain distinct from the new content and expanded world.
+

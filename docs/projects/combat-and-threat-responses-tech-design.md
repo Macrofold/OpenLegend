@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                            | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Contact, personal danger evidence and prospective work transitions are in progress; complete combat delivery and qualification remain open. | 2026-10-18   |
+| In progress | Contact, personal danger evidence and prospective work transitions are in progress; complete combat delivery and qualification remain open. | 2026-10-19   |
 
 ## Design baseline and integration
 
@@ -243,6 +243,14 @@ geometry, life/control, source/policy revision and original time boundaries.
 Measure actual admission, simulation progress, collision/stop outcomes and
 PostgreSQL continuation, then whole reaction preparation/queue/provider/commit/
 render latency. Existing chosen camp-watch checks remain regression obligations.
+
+## Shared stealth integration
+
+[Shared contracts](stealth-awareness-tech-design.md#shared-contracts) and [threat preparedness and surprise](stealth-awareness-tech-design.md#threat-preparedness-and-surprise) are the authority for cross-module warning, current preparation and attack evidence cuts. Extend the existing combat-encounters owner for personally retained warning and consume current action/guard/finite-plan facts through their owners; do not create a second threat tracker or action system. The short contextual-action grace below is a control preference, not proof of combat preparedness and not a universal surprise timer.
+
+Attacker inputs are fixed at the appropriate irreversible attempt/release boundary. For a released projectile, evaluate each actual contacted victim's own pre-contact evidence and preparation, including an unintended interceptor, before commitContactImpact applies bodily consequences. The impact's own contact observation, native startle or interpreted emotion cannot warn the victim retroactively or penalize that same incoming hit twice. Use canonical occurrence time/order; recordEvent currently assigns some Awareness.sequence values after native callbacks, so an insertion sequence is not an independent proof that evidence preceded an attack. The shared contract defines the required source ordering; implementation must preserve it through all event and stored-evidence consumers.
+
+Known identity and fresh location are independent. The shared recognition owner may retain a person while out of sight, without refreshing point, movement, weapon, activity or threat cause. A warning can concern an unknown direction or region without a canonical attacker. Shared time/lifecycle rules govern any new warning/preparation deadlines and definition pins; the existing CTR state keeps its present behavior until its specialized integration is implemented.
 
 ## Physical attack and contact contract — CTR01
 
@@ -785,3 +793,4 @@ If a required native condition or supported API cannot implement the exact decla
 - Limits: [Combat/threat](../limits/combat-and-threat-responses.md), [base world](../limits/base-world.md), [ranged/evasion](../limits/parallel-batch-06-rivals-and-contested-ground.md), and [interface](../limits/ui-ux.md).
 - Player behavior and scope: [Feature specification](combat-and-threat-responses-feature-spec.md).
 - Shared contracts: [Engine/world boundaries](../engine-and-world-boundaries.md), [targeted actions](../targeted-actions.md), [spatial world](../spatial-world.md), and [save/load](../save-and-load.md).
+

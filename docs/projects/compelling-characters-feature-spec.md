@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                    | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Bounded PG02 behavior is delivered and Ada's independent combat response is designed; broader character qualification remains open. | 2026-10-17   |
+| In progress | Bounded PG02 behavior is delivered; shared stealth/emotion contracts are designed and broader character qualification remains open. | 2026-10-19   |
 
 **Accepted product direction, October 3, 2026; proposed delivery choices.** Mike requires multidimensional characters whose embodied experience, inner life, attention, choices and consequences work together. This is a product-design assignment, not permission to implement or run paid experiments. The October 4 owner clarification is developed in the [scoped technical design](compelling-characters-tech-design.md); broader psychological mechanics remain deferred. Existing implemented foundations and their unfinished acceptance retain their recorded status.
 
@@ -35,6 +35,14 @@ A **goal** is an explicitly represented chosen objective with its existing lifec
 **October 17 selected extension, not runtime evidence.** The [combat and threat response project](combat-and-threat-responses-feature-spec.md) requires the ordinary able, informed Ada to independently begin a physical counterattack after an unprovoked punch. This is a required behavioral acceptance of her coherent authored disposition, actual context and complete choices. It does not permit an Ada-name branch, forced goal, omitted alternative, conditional biography instruction or model-directed strike to pass as voluntary behavior. [The world profile](../worlds/base/threat-response-options.md#4-initial-ada-disposition-and-required-behavior) owns the selected assertiveness and ordinary baseline; [CTR10](../maintainers/combat-and-threat-responses.md) owns its independent qualification and impossible/uncertain counterfactuals. The broader CE flows continue to permit other meaningful choices; that flexibility cannot silently weaken this selected baseline to a speech-only or flee-only pass.
 
 The new route supplies relevant choices while busy, interprets source-linked fear/anger with current personal meaning, and triggers new consideration when the assailant withdraws or a finite commitment ends. Its two Decision API stages reuse the existing evidence, appraisal, action and agency owners. New goals and continued pursuit remain actual choices. Longer-term relationship development stays deferred; a short hostility/control preference is neither a relationship score nor forgiveness. The initial authored changes apply to new world content, not silent resets of accepted saved personalities.
+
+### Startle, interpretation and voluntary response
+
+**Accepted shared design; implementation pending.** The [stealth-awareness feature](stealth-awareness-feature-spec.md) distinguishes an immediate native bodily startle from the person’s longer-lived interpretation of danger. A person can be afraid and still fight, protect someone, investigate, keep working or flee; the feeling influences supported mechanics and choice without prescribing conduct. An animal’s native response and a reasoning inhabitant’s choice retain their actual different control owners. Merely hearing a suspicious sound does not force a reasoning person to turn.
+
+A prior warning and genuine preparedness can prevent surprise even without seeing an attacker. Familiarity alone does not prepare someone for an unexpected betrayal. Source-linked fear may remain after startle ends and be reconsidered through a bounded, potentially unspoken opportunity without inventing a fresh external event. The [shared technical contract](stealth-awareness-tech-design.md#emotions-and-reconsideration) owns the causal, lifecycle and privacy rules. Numerical physiology/trait influence needs an installed mechanical policy; descriptive biography remains descriptive.
+
+The base-world target affects accuracy and evasion without automatically reducing running or fleeing speed. The player keeps direct control; how their character acquires longer-term interpreted fear remains [SA-D01](../../archive/05-project/open-decisions.md). [Shared tracking](../maintainers/stealth-awareness.md) records the independent implementation scope. These accepted targets do not claim clinical psychology, reliable NPC judgment or completed CE qualification.
 
 ### Shared evidence and personal perspective
 
@@ -402,3 +410,4 @@ The selected vocabulary, represented pressures, satisfaction/recovery rules, mix
 - Behavioral evaluation: [AG12](../maintainers/agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized), [CR12](../maintainers/cognition-redesign.md#cr12--acceptance-and-tokenlatency-evidence) and [R24](../../archive/05-project/research-backlog.md#r24--p1--agency-continuity-optionality-and-actor-method-fidelity).
 - Limits and constraints: [CG12](../limits/cognition.md#cg12), [FL19](../limits/feelings.md#fl19), and their existing shared inventories.
 - Related product scope: [Continuing lives](continuing-lives-feature-spec.md), [DG02](../maintainers/needs-design.md#dg02--one-resident-who-follows-through) and [perspective rationale](../../archive/03-design-proposals/character-experience-and-inner-life.md).
+
