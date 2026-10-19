@@ -196,8 +196,14 @@ export async function createAssetDelivery(
                 await adoptedFile?.release?.();
               }
             } catch (error) {
-              output.stop();
-              throw error;
+              if (response.headersSent || response.destroyed) {
+                output.stop();
+                throw error;
+              }
+              // Keep the owned socket open long enough to deliver a preparation
+              // refusal; stopping it first turns this failure into a reset.
+              response.writeHead(503, { 'Cache-Control': 'no-store' });
+              response.end('Asset preparation failed. Pull the selected assets and try again.');
             } finally {
               await output.closed;
             }

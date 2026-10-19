@@ -77,7 +77,9 @@ export async function createAssetResolver(
       return cache.acquire(
         reference,
         async (operation, sink) => {
-          if (options.publicOnly)
+          // Public bytes need no cloud credentials. Runtime/CLI callers retain
+          // current permission admission before and after this exact cache read.
+          if (isPublicDeliveryReference(reference))
             return copyPublicAssetToCache(
               reference,
               sink,
