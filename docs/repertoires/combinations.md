@@ -4,6 +4,8 @@
 
 **Original, untested proposal scenes.** These 25 situations combine specific cards into celebrations, discoveries, practical problems, rivalries, battles and turning points in people's lives. The listed methods are examples, not exhaustive solutions or outcomes the narrator may guarantee. Participants act with their own knowledge and priorities. Implementation estimates cover a bounded scene, not a whole world. Stop when the scene's meaningful outcome is reached; do not generate endless emergencies to keep it running. Give the result room to matter: enjoy the occasion, use a discovery, claim a victory, live with a loss or follow a changed relationship.
 
+The [selected stealth and awareness journeys](../projects/stealth-awareness-feature-spec.md#representative-journeys) connect perception, uncertainty, choice and consequence across these situations. Where those rules are selected, use the [shared contracts](../projects/stealth-awareness-tech-design.md) and [delivery tracker](../maintainers/stealth-awareness.md). A scene's wider ecology, magic or specialist technology remains an optional proposal with its stated dependencies.
+
 ## The wedding bridge
 
 **MD FA · Play · 2 Complete · Moderate/Extend.** Gap: temporary supports, cooperative work and commitments.
@@ -30,6 +32,8 @@ Selection: Thermal meal logistics must not become the first expedition milestone
 
 A wolf keeps approaching a school garden. Tracks suggest a blocked route to water, while a frightened parent suspects deliberate attraction by a neighbor. Observe from safety, move attractants, reopen a path or relocate school activities. Hunting remains a world-selected option, with its own costs. The evidence may support several hypotheses until tested. A good outcome changes the layout and restores confidence without requiring everyone to agree about wildlife forever.
 
+A rustle behind the hedge can leave one parent unsure of the source while a watcher with a clear view sees the wolf. Sharing an actually received warning gives others a reason to prepare or move the class without revealing the animal's hidden route. The wolf's native reaction follows its own local senses and needs; the parent's suspicion about a neighbor is a separate interpretation. Fear can remain after the school is safe; renewed observation and reconsideration can change it without manufacturing another attack.
+
 Combine [wildlife elsewhere](ecology-weather.md#wildlife-with-an-elsewhere), [useful weed](ecology-weather.md#a-useful-weed), [rumor routes](languages-knowledge.md#rumor-with-a-route) and [useful error](adventure-discovery.md#the-mystery-that-permits-useful-error).
 
 Selection: A particular threat, observable clues and several remedies join danger to investigation and local consequences; do not require population ecology.
@@ -49,6 +53,8 @@ Selection: Ingredient texture and festival recipe disputes follow farming and co
 **MO · Play · 5 Specialist · Moderate/Extend.** Gap: schedules, local noise and negotiated shared space.
 
 A band finally has all its members free at midnight, when a neighbor needs sleep before a hospital shift. Use a different room, change instruments, add insulation, rehearse quietly or negotiate a daytime shift swap. The neighbor also loves their music and wants to attend. A failed soundproofing attempt gives usable evidence about leakage. Once solved, the agreement should persist; repeat play comes from the music and relationships, not an endlessly reset noise complaint.
+
+Outside the room, someone may recognize a sufficiently clear familiar singing voice while missing the lyrics and the conversation between songs. Compare listening positions, a closed door and a cloth-lined gap to discover which path carries sound. A successful supported alteration can help with later rehearsals; it changes that acoustic path rather than granting its maker a general stealth bonus. Nobody has to turn away from an urgent task merely because they hear the music.
 
 Combine [quiet hours](materials-resources.md#quiet-hours), [household agreements](relationships.md#household-agreements), [neighborhood sound](arts-leisure.md#the-neighborhood-sound) and [diagnostic work](work-crafting.md#the-diagnostic-profession).
 
@@ -170,12 +176,16 @@ Selection: Magic automation follows worthwhile spell use and an actual recurring
 
 A lord's garrison has seized the crossing that supplies Bellwold. Its commander intends to hold it, its soldiers need food and pay, and a merchant offers a reward for reopening the road. An ambitious knight wants the tower as a personal holding. A player can want the crossing, the money, the knight's favor or the satisfaction of defeating a capable enemy. Reconnaissance reveals a strong front gate, a narrow riverside approach and a disputed relief schedule. These are actual opportunities with risks, not a guarantee of an optimal method.
 
+Dawn light, moving cover and a guard's physical look direction can make a body visible before its face or carried weapon is clear. The scout can keep moving while checking the bank, then share only what was observed. An actually received warning and maintained readiness for that danger can defeat surprise even when the attacker remains unseen; an unready guard may still be surprised by an attack from someone in view. A failed stealth plan can become a readable fight or retreat, and walking behind an engaged opponent does not renew the same surprise advantage.
+
 | Approach                      | What can be gained                                   | Cost or changed situation                                                     |
 | ----------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------- |
 | Assault with a prepared force | Victory, captured equipment and immediate possession | Casualties, damaged defenses, prisoners and a hostile claimant remain         |
 | Infiltrate or suborn a guard  | Access or a momentary advantage                      | Evidence of betrayal, unreliable cooperation or an alarm can change the fight |
 | Bargain from strength         | Passage or withdrawal without taking the walls       | Tribute, recognition or a concession gives the garrison something it wants    |
 | Choose a rival crossing       | Trade continues on another route                     | The lord retains the tower and can pursue a different pressure                |
+
+An optional cargo variation adds a [chiming trophy chest](objects.md#containers-and-road-equipment): keep the prize, abandon another load, enlist a bearer or use [route-specific packing](work-crafting.md#field-trades-cargo-handling-and-dangerous-work). Muffling its clapper trades sound against hands, access and burden. The same successful handling can become a [quiet-cargo service](economy-logistics.md), while releasing the clapper at home turns yesterday's liability into a celebration. Each effect needs supported sound and carrying behavior.
 
 A defeated garrison does not respawn to erase success. Who holds and repairs the tower matters afterward. Combine [construction](settlements-architecture.md), [combat](combat-rescue.md), [logistics](economy-logistics.md) and [diplomacy](diplomacy-conflict.md). Research seeds: [Bannerlord](source-atlas.md#g115), [Battle Brothers](source-atlas.md#g121), [Westeros](source-atlas.md#w10).
 
@@ -197,7 +207,11 @@ Selection: A readable duel can put a small set of personal loyalties at stake wi
 
 The party's best scout loves another member but remains loyal to a faction the player now intends to attack. Earlier conversations, assistance and witnessed conduct establish that allegiance. Recruiting a useful former enemy further strains it. Affection, professional respect and political agreement are separate; sufficient gifts cannot automatically purchase obedience.
 
-The scout might refuse, resign, warn their faction, conceal information or participate under a specific concession. Their choice follows established motives and actual circumstances. The player can alter the objective, accept the departure, conceal their plan at the risk of later discovery, or continue with another scout. A betrayal can be deliberate and harmful without making every companion untrustworthy. Combine [psychology](psychology-behavior.md), [relationships](relationships.md), [knowledge](languages-knowledge.md) and [factions](diplomacy-conflict.md). Research seeds: [Dragon Age: Inquisition](source-atlas.md#g53), [Dragon Age II](source-atlas.md#g52), [Mass Effect 2](source-atlas.md#g102).
+The scout might refuse, resign, warn their faction, conceal information or participate under a specific concession. Their choice follows established motives and actual circumstances. The player can alter the objective, accept the departure, conceal their plan at the risk of later discovery, or continue with another scout.
+
+If the conflict becomes violence, a visible companion's apparently cordial approach can still end in a surprising attack. A credible warning and genuine readiness for that danger can prevent surprise; an earlier disagreement alone does not establish such readiness. Private hostile intent is not a player-visible label, and what becomes evident after contact cannot retroactively warn the victim. The attack, the bodily startle and the survivor's later interpretation remain different parts of the event.
+
+A betrayal can be deliberate and harmful without making every companion untrustworthy. Combine [psychology](psychology-behavior.md), [relationships](relationships.md), [knowledge](languages-knowledge.md) and [factions](diplomacy-conflict.md). Research seeds: [Dragon Age: Inquisition](source-atlas.md#g53), [Dragon Age II](source-atlas.md#g52), [Mass Effect 2](source-atlas.md#g102).
 
 Selection: A useful companion’s discoverable conflicting aim makes trust matter in the next activity; no unexplained betrayal or global approval meter.
 
@@ -244,7 +258,11 @@ Selection: Planetary extraction, atmosphere and charter conflict; its generic co
 
 A powerful predator occupies the route to a valuable ruin. It hunts, rests, avoids some hazards and changes its approach after an actual encounter. Its materials or defeated territory enable a desired advancement. A hunter seeks fame, a trader wants the road and a naturalist wants observations. Their interests can overlap without being identical.
 
-Study traces, prepare a counter, lure it into favorable terrain, challenge it directly, evade it or exploit a rival hunter's attempt. It can injure someone, escape, die or drive the party away. Killing it need not be revealed as a moral mistake; preserving it need not be the easiest or most profitable choice. Record the consequences of the chosen method, including a rival's success if the player delays. Combine [ecology](ecology-weather.md), [bodies](bodies-species.md), [abilities](abilities-progression.md) and [adventure](adventure-discovery.md). Research seeds: [Grounded](source-atlas.md#g142), [The Forest](source-atlas.md#g137), [V Rising](source-atlas.md#g146), [The Witcher 3](source-atlas.md#g72).
+Study traces, prepare a counter, lure it into favorable terrain, challenge it directly, evade it or exploit a rival hunter's attempt.
+
+Different bodies make different plans useful. Rain may hide a hunter's quiet steps from hearing while leaving scent or movement available to a creature that actually has those channels. A rail-borne decoy only reaches a vibration-sensitive body through connected material. The creature can ignore an irrelevant cue or adapt after a witnessed failure; the player's clever description does not choose its response. A last-seen mark remains historical after contact is lost, leaving a real decision about waiting, searching or accepting the escape.
+
+The predator can injure someone, escape, die or drive the party away. Killing it need not be revealed as a moral mistake; preserving it need not be the easiest or most profitable choice. Record the consequences of the chosen method, including a rival's success if the player delays. Combine [ecology](ecology-weather.md), [bodies](bodies-species.md), [abilities](abilities-progression.md) and [adventure](adventure-discovery.md). Research seeds: [Grounded](source-atlas.md#g142), [The Forest](source-atlas.md#g137), [V Rising](source-atlas.md#g146), [The Witcher 3](source-atlas.md#g72).
 
 Selection: A worthwhile dangerous hunt and reward are early; adaptive encounter memory expands the basic predator.
 
@@ -263,6 +281,8 @@ Selection: A dangerous ruin and treasure precede the magical command system and 
 **ALL · Play · 3 Depth · Moderate/Extend.** Gap: remembered events, changed resources, relationships and ordinary activities.
 
 A returning party has won the objective. One person gained wealth, another lost a friend, another enjoyed the fight and wants a military career. A household member is proud and angry about a promise broken during the expedition. There is a meal, an attractive new possession, a real achievement and an absence that cannot be repaired by buying the correct gift.
+
+The immediate bodily shock has passed, yet a frightened survivor may still struggle with the supported consequences of fear while helping prepare the meal. Quietly reconsidering the remembered danger, accepting company or choosing a familiar task can change the aftermath without requiring a new external incident. The memory is not an inexhaustible source of fresh threats. Another survivor may feel relief or pride, and no shared conversation requires everyone to reach the same feeling or decision.
 
 Celebrate, mourn, distribute spoils, pay debts, pursue romance, tell a self-serving story or quietly return to work. Neither forced catharsis nor a mandatory new disaster is needed. A survivor may forgive, refuse, leave, marry, enlist or remain undecided. Let the victory make something better while keeping its actual costs. Combine the retained [debrief](combat-rescue.md#the-debrief-at-the-kitchen-table), [relationships](relationships.md), [needs](needs.md), [art](arts-leisure.md) and [history](history-myth.md). Research seeds: [Hades](source-atlas.md#g22), [Wildermyth](source-atlas.md#g25), [Fire Emblem](source-atlas.md#g64), [Middle-earth](source-atlas.md#w01).
 
