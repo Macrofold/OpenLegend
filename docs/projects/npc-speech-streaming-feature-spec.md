@@ -38,6 +38,7 @@ At the first accepted public text, the native speech owner evaluates the ordinar
 The choice has deliberate, testable consequences:
 
 - An originally eligible person receives the remainder of this utterance even if they later walk away or a door closes.
+- An original listener's later sleep, incapacity, death, loss of hearing, ordinary departure or replacement body likewise does not change this captured occurrence. Their retained historical account can finish; whether they can learn or respond later is a separate current character rule.
 - A person arriving after first acceptance receives none of this utterance merely because they are now nearby. They may hear the next utterance.
 - Movement while the model is still thinking, before any words have been accepted, affects the ordinary first-publication snapshot.
 - A speaker's later motion does not move the historical source, reroll hearing or disclose a hidden live location. Existing authorized visible-speaker caption anchors can still follow the ordinary presentation policy.
@@ -66,17 +67,17 @@ The following producers use the same speech publication owner:
 | Permitted higher-model response               | Same original decision/operation ownership; it cannot race or repeat an already publishing answer. Observe-only evaluation remains private. |
 | Completed generated or authored public speech | The same native speech owner admits the complete text in one transaction; no artificial streaming is added.                                 |
 
-The feature does not turn every generated string into dialogue. Private thoughts, reflections, model reasoning, appraisals, Narrator prose, invention descriptions, World Agent authoring messages and private remote channels retain their separate owners. A current public-speech route that has not passed progressive-output qualification uses the same completed-output admission path. It must not advertise early streaming or use a second paid request to manufacture it.
+The feature does not turn every generated string into dialogue. Private thoughts, reflections, model reasoning, appraisals, Narrator prose, invention descriptions, World Agent authoring messages and private remote channels retain their separate owners. A public-speech route without progressive qualification can use completed-output admission only when that route's required content checks are implemented and qualified; otherwise public generation is unavailable. It must not advertise early streaming or use a second paid request to manufacture it.
 
 One response can contain more than one utterance and other operations. Each utterance has its own fixed audience snapshot at its own first acceptance. Text cannot jump ahead of an earlier unresolved action or dependency. Such speech waits for that existing admission boundary; progressive display is not permission to claim that an action succeeded. The technical design gives an exact ordered record contract and conservative barrier rule.
 
-### Reactions and memory use a closed utterance once
+### Word-derived reactions and memory use a closed utterance once
 
 Human captions and Events may display accepted open text. Semantic consumers wait until the utterance closes, then use its complete accepted prefix once. This includes NPC attention/reaction selection, response preparation, recall used in model context, embeddings, summaries, reflection, Narrator selection and other meaning-based consequences.
 
 An NPC therefore does not reconsider its life every time a few words arrive. A later unrelated event cannot cause an open prefix to leak into opportunistic model context. Closing an older occurrence still makes it newly eligible even if the actor has already considered more recent events. Its original chronological history position does not change.
 
-An interrupted prefix is real retained speech, with an interruption marker available to semantic preparation. Consumers must not invent its missing ending or treat an incomplete promise, condition or negation as a completed assertion. As with ordinary speech, an eligible NPC may respond, defer or remain silent. Native physical hearing/recognition facts captured at the beginning do not repeat per passage. New word-derived naming, commitments or other semantic changes wait for terminal eligible evidence and their existing owners.
+An interrupted prefix is real retained speech, with an interruption marker available to semantic preparation. Consumers must not invent its missing ending or treat an incomplete promise, condition or negation as a completed assertion. As with ordinary speech, an eligible NPC may respond, defer or remain silent. Fixed hearing and recognition are recorded at the beginning. When the installed world has native reactions to sound, that complete acoustic cue also takes effect once at the beginning; later text adds no repeated pulse or waking rule. Understanding the words, learning a spoken name and other word-derived changes wait for terminal evidence and their existing capability rules.
 
 ## Journeys and failure behavior
 
@@ -108,7 +109,7 @@ Existing caller pause and cancellation policies remain controlling. A surviving 
 
 ### A busy or slow display
 
-Appending words does not occupy another caption slot or increment missed-caption counts. Existing density, priority, overflow and accessibility rules remain in force. A currently visible open caption does not disappear merely because its first short prefix exhausted its original reading time. Already read text is not repeatedly replayed or announced. Long utterances advance through the existing readable chunks; overflow remains recoverable from Events.
+Appending words does not occupy another caption slot or increment missed-caption counts. Existing density, priority, overflow and accessibility rules remain in force. A currently visible open caption does not disappear merely because its first short prefix exhausted its original reading time. Already read text is not repeatedly replayed or announced. Newly arriving words receive their own reading time without repeatedly restarting the beginning. The caption owner announces permitted appended content once; full history remains available for deliberate reading. Long utterances advance through the existing readable chunks; overflow remains recoverable from Events.
 
 The shared [player-facing language standard](../ui-ux/player-facing-language.md) governs status wording, accessible announcements and the instructions/examples used to generate dialogue. Keep interface explanations natural and truthful, preserve each NPC's voice and permitted knowledge, and leave already accepted quoted words unchanged.
 
@@ -126,7 +127,7 @@ SPK's ordinary speech/evidence/context contracts are the required implementation
 
 The technical design's [qualification matrix](npc-speech-streaming-tech-design.md#qualification-matrix) gives exact fixtures and expected observations. Feature acceptance requires all of these outcomes:
 
-1. **Shared early display:** one provider execution produces one growing occurrence for 10, 20 and 50 entitled healthy connected clear-hearing players. An approved first meaningful passage is visible before a deliberately withheld second passage and final provider result on each qualified route. Partial/sound-only observers follow their specified disclosure and lexical delays.
+1. **Shared early display:** one generating execution produces one growing occurrence for 10, 20 and 50 entitled healthy connected clear-hearing players. An approved first meaningful passage is visible before a deliberately withheld second passage and final provider result on each qualified route. Partial/sound-only observers follow their specified disclosure and lexical delays.
 2. **All public producers:** player-directed, NPC-directed, ambient, overheard and permitted escalation responses share the same owner; private and observe-only outputs never enter it.
 3. **One occurrence:** stable identity, original time/order, one observer account, one history row and one caption per utterance through appends, duplicates and completion.
 4. **Fixed hearing:** initial complete audience and stable listener-specific evidence survive movement, door changes, unrelated events, reconnect and restart; newcomers acquire no suffix.
@@ -135,7 +136,7 @@ The technical design's [qualification matrix](npc-speech-streaming-tech-design.m
 7. **Exact authority and privacy:** access loss, forgotten evidence, stale timelines, wrong attempts and hidden fragments are handled through the existing owners without disclosure.
 8. **Readable continuity:** caption/Events growth preserves reading position and avoids per-passage narration, new-row notices, accessibility repetition and false missed-caption counts.
 9. **Bounded work:** delivery/storage/parser buffers obey their owning limits, no listener purchases another model call, slow connections do not block the world, and measured results include CPU, storage, network and full provider cost.
-10. **Honest enablement:** required output-admission, provider, persistence and deployment qualification is recorded before player-facing progressive output is enabled. Unqualified routes remain explicitly completed-output-only.
+10. **Honest enablement:** required output-admission, provider, persistence and deployment qualification is recorded before player-facing output is enabled. Distinguish progressive, qualified completed-output-only and unavailable routes. The controlled fan-out fixture proves plumbing; matched live comparisons must establish whether ordinary replies actually yield useful early text, including total generation and screening cost.
 
 ## Design disposition
 
