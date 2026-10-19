@@ -36,7 +36,7 @@ The [feature journeys](../projects/combat-and-threat-responses-feature-spec.md#p
 
 ## Planned real-time movement and skilled attack controls (ND38)
 
-**Selected design; all controls in this section are unimplemented.** [ND38's feature](../projects/action-execution-and-skill-expression-feature-spec.md) and [technical input contract](../projects/action-execution-and-skill-expression-tech-design.md#1-player-input-and-shared-attempt-lifecycle) select the following defaults after inspecting the existing shortcut owners. Current implemented controls elsewhere in this handbook remain current until this work lands.
+**Selected design; all controls in this section are unimplemented.** [ND38's feature](../projects/action-execution-and-skill-expression-feature-spec.md) and [technical input contract](../projects/action-execution-and-skill-expression-tech-design.md#1-player-input-and-shared-attempt-lifecycle) define the following defaults. Current implemented controls elsewhere in this handbook remain current until this work lands.
 
 | Planned default              | Meaning and scope                                                                                                                                 |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
