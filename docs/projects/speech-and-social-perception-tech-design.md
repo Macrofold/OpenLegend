@@ -2,13 +2,15 @@
 
 | Status      | Current progress                                             | Last updated |
 | ----------- | ------------------------------------------------------------ | ------------ |
-| In progress | Detailed design is complete; implementation has not started. | 2026-10-18   |
+| In progress | Detailed design and shared-streaming coordination are complete; runtime implementation remains pending. | 2026-10-18   |
 
 This is the implementation design for the [feature specification](speech-and-social-perception-feature-spec.md). The accepted target changes ordinary speech, recognition, experience preparation and conversation coordination together. It does not describe delivered runtime behavior. Implementation, dependencies and unsatisfied acceptance belong to [SPK00–SPK11](../maintainers/speech-and-social-perception.md), not this document.
 
 This pair selects the ordinary speech, recognition and animal sound-response slice of [ND16 — Hearing and communication beyond direct-path speech](../maintainers/needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech), whose existing source topic is [deliberate hearing extension boundaries](../hearing-and-speech.md#12-deliberate-extension-boundaries). The SPK01–SPK11 modules below implement that selected ND16 slice and its required memory/presentation integration; other registered hearing expansions keep their existing owners and disposition.
 
 The integration extends the compact WorldComposer, captions, perceived Events reader and occurrence-time participant references. Existing verification evidence applies only to its recorded implementation and workload.
+
+The accepted [shared NPC streaming feature specification](npc-speech-streaming-feature-spec.md) and [technical design](npc-speech-streaming-tech-design.md) extend this baseline with append-only public speech. [NST](../maintainers/npc-speech-streaming.md) owns the exact new lifecycle, generated-record, readiness, persistence, transport and UI implementation tasks; [streaming limits](../limits/npc-speech-streaming.md) owns their bounds. Preserve this document's shared source/address/recognition and complete-experience contracts in that implementation; no runtime completion is implied by either design.
 
 ## 1. Design conclusion and source findings
 
@@ -179,6 +181,7 @@ Changes through [base knowledge](../../packages/domain/src/worlds/base/knowledge
 - A spoken self-introduction remains a communicated claim. The selected policy can learn it from actual eligible heard words and a supported source association; the old visibility-only acceptance must not block a recognized unseen voice.
 - Raw player introductions remain ordinary speech available for the listener's existing optional name interpretation. No second paid classifier or fixed English name-pattern parser is introduced.
 - A generated selfIntroduction annotation never exposes words outside the listener's heard spans, the speaker's private authoritative name, or another person's name through a quotation.
+- Under NST, stable recognition/addressing is fixed at first publication, while introduction learning waits for terminal readiness. Resolve the exact observer/event capsule rather than newest awareness or current sight, and require the complete claimed name in actual permitted contiguous heard words. A completely heard accepted-prefix name may teach after later interruption; a hidden or unfinished name and header-only metadata may not. Apply the native knowledge change once and preserve frozen occurrence labels.
 - A known identity does not make every current property knowable. Reference projection still omits hidden position, inventory, body values and private notes.
 - A speech-addressable known voice can be referenced for communication without becoming a currently sighted physical action target. Native action prerequisites still require the relevant permitted contact and geometry.
 - Historical targets may outlive a current entity. Their saved labels and source identity remain history; new physical commands require a valid current target.
@@ -439,11 +442,15 @@ Replace group/generation checks with the actual request dependencies:
 - Source evidence revisions, retained/forgotten status and permitted current actor identity.
 - The current native body/capability, action/plan and response-publication conditions actually needed by the proposed output.
 - Request identity, paid reservation/receipt and response-component ownership.
-- Current listener-specific hearing and attribution for any early visible reply.
+- Current listener-specific hearing and attribution for the retained provisional preview; NST instead freezes authoritative hearing at first publication and continues enforcing current access and generation authority separately.
 
 Cancellation stops the owned pending inference or withdraws provisional text; it does not delete already committed speech or end independent physical cooperation. A new unrelated nearby utterance does not automatically invalidate every in-flight job. Significant changes follow existing urgency/reconsideration rules and source dependency checks.
 
 Preserve the retained backend's conservative preview eligibility: a complete, independently valid first speech operation addressed to the requesting player, clear hearing and currently permitted source attribution, with exact request/timeline/control checks. Replace only membership dependence. The refreshed world-first UI retired its provisional preview row; this project does not restore that row or put provisional words in captions or Events. Any future qualified early-display caller must use the same actual hearing/recognition/disclosure flow and applicable service output gate; final committed heard history remains available under the new ordinary recognition rule regardless.
+
+The selected NST caller is authoritative progressive publication, with its own approved-prefix boundary through this same native speech owner. It covers all public producers, retains one fixed audience and event identity, and preserves accepted words on failure. The paragraph above remains the narrower current private-preview contract; its requesting-player, current-sight and withdrawal conditions must not be copied into public streaming. NST uses conservative Unicode lexical islands and paired partial masking independent of provider chunks. Its decoded whole-utterance model limit remains 1,200 UTF-16 units before native trim; incremental canonicalization preserves native leading/trailing trimming without removing interior whitespace or modifying already published text.
+
+All model/context and meaning-based consumers omit an open utterance, even when another event starts their preparation. Closure supplies one shared-native-order semantic readiness transition, retaining original chronological order and an interrupted-prefix qualification where needed. Existing considered cursors, response work and source indexing consume this transition; they cannot infer completion from first-prefix event sequence. Physical recognition is not repeated per append, and no environmental speaking process or new reaction scheduler is introduced. The [NST technical design](npc-speech-streaming-tech-design.md) owns the executable consumer and schema details.
 
 Any backend provisional text remains scoped to its authorized requesting viewer, non-authoritative and absent from world events, memories and other listeners' inputs. Final admission produces one real utterance. Current input status and committed occurrence reconciliation use request/component/utterance identity, never text matching or membership. Failure or cancellation withdraws pending output and leaves any actual earlier speech intact.
 
@@ -577,9 +584,11 @@ Use the existing serialized WorldService mutation owner. Validate untrusted comm
 
 Speech commitment and the detector records needed to explain its audience are atomic. If required recording cannot be admitted or committed, the operation fails before a partial authoritative utterance is presented as complete. Ordinary persistence failure follows the existing hold/recovery policy rather than allowing lost evidence or half-populated audiences.
 
-An accepted utterance is immutable historical evidence of what was said. Changing a name, moving the speaker, losing sight, changing a draft or canceling generation does not rewrite it. Explicit authorized correction/forgetting preserves the existing distinct source and privacy semantics.
+Accepted speech is immutable historical evidence of the words already said. NST permits only a trusted append to an open occurrence's body and corresponding observer accounts; its identity, first-publication hearing facts and existing prefix remain fixed, and its terminal body is immutable. Changing a name, moving the speaker, losing sight, changing a draft or canceling generation does not rewrite it. Explicit authorized correction/forgetting preserves the existing distinct source and privacy semantics.
 
 Keep recognition/name knowledge, full perceived source bodies, summaries and lineage, sensory retained evidence where applicable, prepared native work and cognition ownership in one coherent save cut. Restore does not rerun hearing, learn introductions again, regenerate summaries, replay speech, consume new randomness or restart uncertain paid work.
+
+For NST, capture includes exact accepted open bodies, frozen observer/mask state, operation progress and semantic readiness through these same owners. Restoration closes captured open prefixes as interrupted under current privacy authority and persists that first terminal transition before publication; it may finalize their first eligible word-derived consequences but does not replay a previously terminal introduction or response. Operational spending remains non-rewindable. The [save/load target](../save-and-load.md#progressive-public-speech--accepted-target) and NST design own this precise boundary.
 
 Current-format validation checks:
 
@@ -645,6 +654,8 @@ Avoid paying once for every detector/event. Ordinary animal detection, response 
 
 The dependency order below defines coherent integration cuts. The tracker owns tasks, checkbox state and completion criteria. The feature specification owns the observable [SP-A01–SP-A28 acceptance scenarios](speech-and-social-perception-feature-spec.md#acceptance-scenarios); the evidence below identifies which technical layers must support them.
 
+For coordinated shared streaming, [NST's dependency order](../maintainers/npc-speech-streaming.md#dependency-order) requires SPK01–SPK06 and the relevant SPK09/SPK10 shared presentation, authority and persistence contracts. Those changes may ship in the same coherent implementation cut as NST. SPK07–SPK08 animal controllers, optional media and completion of all broader SPK11 qualification are not hidden prerequisites. No runtime task is completed by this design reconciliation.
+
 1. **SPK01–SPK04: evidence, world policy, shared presentation and durable memory.** Establish one field meaning and full source transport before adapting model prose. Qualify self, directed, ambient, unheard, unintelligible, unnamed and cold/consolidated records through actual producers and readers.
 2. **SPK05 and SPK10: source-owned dialogue and restoration.** Replace every membership-dependent consumer while preserving compaction, exact actor/source ownership, history, provisional disclosure and independent physical cooperation. Remove obsolete state only with current serializers/validators/callers updated together.
 3. **SPK06 and SPK09: usable player interaction.** Apply uniform freeform AI gating and ordinary optional-address UI through actual menus, composers, shortcuts and HTTP paths. Preserve drafts, explicit send, receipt recovery and accessible direction cues.
@@ -684,3 +695,4 @@ No unresolved product decision is required to implement this selected baseline. 
 - Source registration: [ND16](../maintainers/needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech) and its [hearing extension source topic](../hearing-and-speech.md#12-deliberate-extension-boundaries).
 - Canonical contracts: [Hearing and speech](../hearing-and-speech.md), [Narration and conversations](../narration-and-conversations.md), [Memory architecture](../memory-architecture.md), [Knowledge](../knowledge.md), [Identity](../identity-and-references.md), [Save/load](../save-and-load.md), [Engine/world boundaries](../engine-and-world-boundaries.md) and [Performance](../performance.md).
 - Bundled policy and character integration: [Observer knowledge](../worlds/base/knowledge.md), [Embodied survival](../worlds/base/survival.md), [Character feature specification](compelling-characters-feature-spec.md) and [Character technical design](compelling-characters-tech-design.md).
+

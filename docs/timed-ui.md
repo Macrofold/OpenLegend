@@ -27,6 +27,12 @@ The current lifetime stores a duration and visible-start value on the overlay’
 
 Unknown duration is not a fake countdown. Keep the existing indeterminate AI dots/spinner for unknown provider work. A zero duration is already expired. The current speech-caption caller computes bounded reading durations locally, samples `performance.now()` and starts lifetimes from its own accumulated clock; the pure lifetime helpers consume those trusted values without repeating numeric assertions. If a future consumer accepts durations or clock values from untrusted input, validate them at that input's owner rather than adding checks to every local sample. An intentionally persistent caption has no countdown ring.
 
+### Accepted target: growing committed speech
+
+[Shared NPC speech streaming](projects/npc-speech-streaming-feature-spec.md) is designed but not implemented. A newer permitted revision extends the existing caption entry, preserving its reading/chunk position; it does not restart the whole reading lifetime or occupy another queue slot. A visible open caption must not disappear solely because its first short prefix exhausted its reading budget. Closure gives the final accepted text an ordinary reading opportunity without replaying already read portions. Preserve the existing pause, hidden-tab, density and history-recovery rules.
+
+Unknown remaining generation time has no countdown. An open speech caption's ring may describe only a known local reading interval, never remaining words, provider completion or physical speaking duration. No typewriter or game-time speech timer is added. The [technical design](projects/npc-speech-streaming-tech-design.md) owns revision, reset and accessibility handling; [NST](maintainers/npc-speech-streaming.md) owns delivery and qualification.
+
 ## 2. Explicit clock domains
 
 | Consumer                  | Time authority                               | Consequence of reaching the end                    |
@@ -71,3 +77,4 @@ Speech already shares the pure fraction/ring and lifetime helper. This delivered
 - Limits and constraints: [hearing, captions and perceived history](limits/hearing-and-speech.md).
 - Related contracts: [Hearing captions](hearing-and-speech.md#7-caption-component-and-lifetime).
 - Current integration evidence: [combined verification](verification/hearing-main-integration.md).
+

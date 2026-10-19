@@ -24,6 +24,8 @@ A loading control retains its action identity, accessible name and geometry. Use
 
 Distinguish local input echo from network/storage/model duration. An arbitrary sub-500ms mutation target is not a valid promise for saves or AI work. Performance terminology and proposed local targets are separate in [UXL05](../limits/ui-ux.md#uxl05).
 
+**Accepted NST target; implementation pending:** [shared NPC speech streaming](../projects/npc-speech-streaming-feature-spec.md) displays each approved, durably committed passage as permitted speech. The loading-indicator delay must not delay those accepted words. The selected 250 ms continuation coalescing target is a server batching choice, not a display guarantee, progress percentage or countdown. An interrupted utterance retains its accepted words and a quiet lifecycle marker in Events; technical request failure stays with the originating request's permitted feedback. Never manufacture an NPC error line or retry generation because a caption or connection closed. The [technical design](../projects/npc-speech-streaming-tech-design.md) and [NST tracker](../maintainers/npc-speech-streaming.md) own delivery, recovery and qualification.
+
 ## Search is a scoped read, not a side effect
 
 Use a persistent label/accessibility name, informative placeholder and unambiguous clear utility. Catalogue search differs from choosing a form value. Typing or changing a search query is read-only. Enter follows the named control’s contract: ordinary action search may deliberately execute its selected available action, while unmatched text can open an editable invention draft that still requires explicit Send. A record search or an unmatched query must not silently equip, buy, move, generate or activate anything.
@@ -112,3 +114,4 @@ Future cloud-conflict UI should compare meaningful identities/timestamps, offer 
 Use concrete copy such as **Could not save this world. Your previous save is unchanged. Retry.** only when the backend establishes those facts. Say **Save outcome not confirmed** when uncertain. Avoid a lone **Something went wrong**, raw codes as titles or cheerful wording that minimizes possible loss.
 
 Offer diagnostic details progressively without secrets, private records or unfiltered provider payloads. Keep recovery near the error and retain input rather than sending the player through global Settings to repair a local issue. Alerts should earn their interruption with an important actionable consequence; a common genuinely undoable operation does not need repetitive confirmation. Existing protected approvals remain. [S14](research.md#s14)
+

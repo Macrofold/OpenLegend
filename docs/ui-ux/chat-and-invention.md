@@ -24,7 +24,9 @@ The [screenshot atlas](games/README.md) studies FFXIV, Guild Wars 2, World of Wa
 
 Inventory's **Talk about** prepares a removable chip containing the selected item's permitted name. An explicitly selected available person can remain the recipient; otherwise the words are ordinary ambient speech. Recipient, mode and item-specific drafts never copy words into another person's draft. Removing the chip removes only the spoken prefix. The [world-first presentation](../projects/player-experience-overhaul-feature-spec.md#speaking-and-hearing) supersedes the earlier Talk/Invent split and fixed player transcript layout. The [pinned audit](current-interface-audit.md) remains historical evidence.
 
-Speak uses a bounded growing input and horizontal speech volume. Keep submission/recovery feedback beside the input, while final utterances belong to the world and perceived Events. Invention remains in **Create**; owner authoring keeps its own chat layout.
+Speak uses a bounded growing input and horizontal speech volume. Keep submission/recovery feedback beside the input, while committed utterances belong to the world and perceived Events. Invention remains in **Create**; owner authoring keeps its own chat layout.
+
+**Accepted NST target; implementation pending:** [shared NPC speech streaming](../projects/npc-speech-streaming-feature-spec.md) applies to all public NPC dialogue. Approved, durably accepted words grow one existing world caption and Events occurrence while generation continues. Every originally entitled listener receives their own permitted evidence; the first accepted passage fixes hearing and attribution, with no per-passage movement or door rules. Preserve the compact Speak bar, scoped drafts and separate Events reader. The [technical design](../projects/npc-speech-streaming-tech-design.md) and [NST tracker](../maintainers/npc-speech-streaming.md) own delivery; this does not restore the retired player transcript or show a retractable draft.
 
 ## Make capability and correction discoverable
 
@@ -64,11 +66,13 @@ Events preserves its reading place on hide/show and retains admitted prose while
 
 Streaming needs stable message IDs and a coherent accessible reading strategy, not assertive announcements for each token. Keep code, URLs, tables and long invented names within the layout with access to full content. Selection/copying must not collapse a message or activate the world.
 
+For the accepted NST target, apply a newer permitted revision to the same speech row/caption and preserve the reader's position. A suffix is not a new message, missed-caption notice or repeated announcement of the entire prefix. Complete/interrupted status does not replace accepted words; a lost connection recovers the latest permitted body through the existing game/history readers. Finished historical speech must not replay overhead.
+
 History search is a scoped read with continuation. Take results back to their original context rather than only copying isolated sentences. Server permission governs private conversations and memories.
 
 ## Honest work states without technical clutter
 
-Final NPC words appear only after native speech and listener-specific perception. The compact Speak input owns restrained pending, failure and explicit retry feedback; Events contains actual perceived occurrences, not provider status rows. A failed reply never restores or resends the player's already spoken words. Actor availability and narrative interruption are not automatically technical failures. Disabled sending has a reachable explanation. [Disabled controls](controls.md#disabled-controls-and-reachable-explanations)
+NPC words appear only after native commitment and listener-specific perception. Current captions receive completed admitted utterances; the accepted NST target admits successive approved prefixes. The compact Speak input owns restrained pending, failure and explicit retry feedback; Events contains actual perceived occurrences, not provider status rows. A failed reply never restores or resends the player's already spoken words. Under NST, it also retains the NPC's accepted prefix without inventing an ending or apology. Actor availability and narrative interruption are not automatically technical failures. Disabled sending has a reachable explanation. [Disabled controls](controls.md#disabled-controls-and-reachable-explanations)
 
 The October 16 world-first redesign retires the separate player transcript and its provisional preview row. The earlier [NP05 preview qualification](../verification/npc-reply-preview.md#browser-and-recovery-qualification) remains dated evidence for the backend preview service, not proof that provisional words are now spoken, heard or shown overhead. Creator chat streaming retains its separate owner and does not grant NPC speech disclosure.
 
@@ -117,3 +121,4 @@ Historical transcript-focused component evidence covers explicit person/item ent
 ### Current conversation layout
 
 The ordinary player uses a bounded growing Speak/Act bar with horizontal volume, explicit recipient selection and draft-local submission/recovery feedback. Committed speech appears in the world and Events; invention remains in Create. The earlier fixed Talk/Invent header, transcript and vertical-volume layout is historical. [CV01](../limits/interface.md#cv01--conversation-reading-space) records that earlier reading-space constraint; it is not a requirement to restore the retired player transcript.
+

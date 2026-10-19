@@ -6,7 +6,9 @@ Values below were source-checked on October 3, 2026 against `b50ec6c`; this does
 
 Implementation starting points: [story-selection.ts](../../packages/domain/src/story-selection.ts).
 
-Private NPC preview constraints are owned by [NPV01](interface.md#npv01--private-npc-reply-preview). Provisional Talk text does not enter speech, memory, caption or conversation records; these still require final native admission and actual listener projection. [NP05 evidence](../verification/npc-reply-preview.md) distinguishes private early reading from committed speech. No narration retention or audience policy changed.
+Retained private NPC preview constraints are owned by [NPV01](interface.md#npv01--private-npc-reply-preview). That historical provisional Talk text creates no speech, memory, caption or conversation record; the current player interface displays native admitted speech. [NP05 evidence](../verification/npc-reply-preview.md) qualifies the restricted private-preview slice, not public streaming.
+
+**Accepted progressive public-speech target; implementation pending:** [NPC speech streaming](../projects/npc-speech-streaming-feature-spec.md) admits each approved text batch durably into one appendable occurrence, with hearing and permitted attribution fixed at its first acceptance. Captions and Events may show accepted open text; recall, compaction, NPC reactions and Narrator selection wait for terminal eligible evidence. The selected scope adds no speech clock, per-part hearing or automatic per-part narration/embedding call. New constraints and rationale live once in [NST-L01–NST-L09](npc-speech-streaming.md); [NST01–NST10](../maintainers/npc-speech-streaming.md) own implementation. Existing narration retention, context budgets, disclosure and release gates remain with their owners.
 
 ## SSP-N01 — One optional addressee
 
@@ -18,7 +20,7 @@ Private NPC preview constraints are owned by [NPV01](interface.md#npv01--private
 
 ## SSP-N03 — No semantic reply linkage
 
-**Proposed — accepted SPK target. Restrictiveness: Medium — deliberate simpler meaning.** Do not add semantic `replyTo` or require a conversation ID on every speech occurrence. A response can relate to several remarks, a physical event or a broader context. Retain exact operational source-event/request identity for dispatch ownership, stale-result validation, provenance, preview and duplicate-response prevention; those bindings do not assert a fictional single-parent reply relationship. Optional derived history grouping is rebuildable and never grants awareness or controls ordinary action lifetime. The separately proposed attributed-correction relationship retains its own product authority. [Technical design](../projects/speech-and-social-perception-tech-design.md) and [SPK](../maintainers/speech-and-social-perception.md).
+**Proposed — accepted SPK target. Restrictiveness: Medium — deliberate simpler meaning.** Do not add semantic `replyTo` or require a conversation ID on every speech occurrence. A response can relate to several remarks, a physical event or a broader context. Retain exact operational source-event/request identity for dispatch ownership, stale-result validation, provenance, speech publication and duplicate-response prevention; those bindings do not assert a fictional single-parent reply relationship. Optional derived history grouping is rebuildable and never grants awareness or controls ordinary action lifetime. The separately proposed attributed-correction relationship retains its own product authority. [Technical design](../projects/speech-and-social-perception-tech-design.md) and [SPK](../maintainers/speech-and-social-perception.md).
 
 ## SSP-N04 — Shared player composition availability
 
@@ -291,6 +293,8 @@ Conversation metadata admission retains the existing 8,192-row boundary, and unc
 
 **Accepted SPK integration:** Retain these model/output and complete mandatory-evidence bounds while replacing mandatory social-group selection/cache identity. Automatic context uses bounded pre-hydration selection of exact causes, an existing valid actor summary and recent exact suffix; older relevant sources remain available through scoped recall. The target does not require all retained speech or an all-history summary rebuild per turn. Optional compaction/recall unavailability cannot block an otherwise valid response; missing or oversized mandatory evidence still fails explicitly. No larger model allowance, new lifetime cap or per-utterance paid summary is selected. Structured permitted evidence, including speaker/addressee roles, must survive compaction and remain resolvable under [SSP-M02](memory.md#ssp-m02--structured-experience-is-the-semantic-source); earlier grammatical qualification alone does not establish that stronger end-to-end contract. [SPK](../maintainers/speech-and-social-perception.md) owns this coordinated consumer change. The compulsory full-group failure behavior above remains current-runtime evidence until cutover.
 
+**Accepted NST integration:** open speech is excluded from both automatic context and opportunistic recall/compaction reads. Closure makes the actor's final permitted evidence eligible once, independently of its original occurrence position. Updating an owned open text body must not invalidate an unrelated captured semantic prefix; actual correction, forgetting, authority loss and changed mandatory evidence retain their existing fences. The [technical design](../projects/npc-speech-streaming-tech-design.md) defines this readiness integration without changing LA236's model or preparation allowance. Implementation remains in [NST](../maintainers/npc-speech-streaming.md).
+
 [Canonical behavior](../narration-and-conversations.md#model-facing-conversation-compaction) · [Design](../projects/completed/conversation-compaction-tech-design.md) · [Evidence](../verification/conversation-compaction.md#conversation-compaction) · [NC14–NC17](../maintainers/narration-and-conversations.md).
 
 ## TX-L01 — Selected affordance and correspondents
@@ -360,3 +364,4 @@ The [DG33 proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.m
 ## CA-L06 — Existing paid and private-source owners
 
 **Proposed · Restrictiveness: shared bounded admission.** Two-human call control needs no model; optional dictation/synthesis uses existing spending with actual outstanding and uncertain costs. A future NPC participant needs NC22.6's restricted human-private derivatives, safe human takeover and its existing complete actor budget, without a call-specific paid loop. Current blocks/device revocations, authority and real accounting remain current across supported fictional restore. The first service has no recording archive or all-world presence directory.
+

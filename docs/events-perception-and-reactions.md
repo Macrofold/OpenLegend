@@ -237,6 +237,16 @@ Consume newly relevant awareness through existing durable identities/cursors, no
 
 Keep a small ready set and due-time checks initially. A heap or timing wheel is justified only when scanning eligible tickets is a measured bottleneck. Simulation-time deadlines and wall-time cooldown/provider deadlines must remain distinct. Speed changes and pause/restore cannot silently convert one to the other.
 
+### Progressive speech readiness — accepted target
+
+The [shared NPC streaming feature specification](projects/npc-speech-streaming-feature-spec.md) and [technical design](projects/npc-speech-streaming-tech-design.md) select one growing authoritative speech occurrence with fixed first-publication hearing. [NST](maintainers/npc-speech-streaming.md) owns pending implementation and qualification; [streaming limits](limits/npc-speech-streaming.md) records its bounds. The existing EPR implementation evidence above does not establish this integration.
+
+First acceptance fixes occurrence identity, original time/order, complete listener accounts and permitted physical recognition/addressing. Later approved text amends those same accounts after durable commitment. It does not create another event, acquisition episode, per-part geometry check or reaction opportunity. Human captions and Events can observe accepted open text. Every semantic consumer, including context opportunistically prepared for another event, excludes it until closure.
+
+Native closure as complete or interrupted allocates `semanticReadyOrder` once from the existing saved native order domain. A shared eligibility helper returns no eligible order for open speech, its terminal readiness order for closed progressive speech, and the ordinary sequence for other evidence. Existing actor considered cursors, response refresh, `ActorWork` and downstream source consumers use that eligibility consistently; scanning only original event/awareness order can miss an older utterance closed after a newer event was considered. History remains in original occurrence order. Closure supplies one ordinary opportunity for the retained prefix, preserving the interruption qualification and the actor's choice whether to respond.
+
+Required terminal word-derived changes use exact event-bound observer evidence inside the existing ordered transition; optional paid work waits for its durable mark. Neither append notifications nor unchanged/hidden listener projections create paid work or expose source revisions. Crash recovery uses saved lifecycle/readiness and existing cursor ownership, with no speech broker, new scheduler or independent order clock. Current generation/actor/request cancellation may end pending output while retaining accepted speech; movement and doors add no new physical interruption behavior.
+
 ### Correct coalescing and overload
 
 Coalesce cognition wakeups while preserving distinct accepted speech, effects and evidence in their authoritative stores. The cognition wakeup watermark covers the current opportunity snapshot, including native or unavailable dispositions; it is not evidence of semantic handling. Retained history never becomes a backlog of owed cognition calls. The [memory context contract](memory-architecture.md#4-jev-attention-before-context-inclusion) supplies fresh hard-query and semantic context for each opportunity.
@@ -276,6 +286,7 @@ Classify new state explicitly:
 | Spatial bins, reverse adjacency, ready queues                         | Rebuildable indexes if reconstruction preserves behavior                                   |
 | Active perception/threshold episode and pending simulation deadline   | Save or deterministically reconstruct; cannot be discarded if it changes the next reaction |
 | Accepted occurrence, permitted acquisition, consumed/attempted cursor | Existing durable authority and retention rules                                             |
+| NST open speech body, frozen observer account, mask continuation and terminal readiness | Accepted target: save through the same occurrence/evidence owner; restore closes an open prefix once, with no new occurrence or provider execution |
 | In-flight provider operation                                          | Existing non-rewindable attempt/accounting; never recreate by replaying a wakeup           |
 | Runtime listener handles/timers                                       | Recreate, never serialize                                                                  |
 
@@ -306,3 +317,4 @@ Keep a perceived group distinct from its physical members, their private goals a
 - Implementation: [Events and reactions](maintainers/events-perception-and-reactions.md); cross-feature target integration in [PS04](maintainers/product-scalability.md).
 - Limits and constraints: [Native work](limits/native-work.md) and [cognition](limits/cognition.md) own their existing shared mechanisms; proposed product choices are in [PS-L02/PS-L06/PS-L07](limits/product-scalability.md).
 - Related design: [Memory](memory-architecture.md) and [hearing](hearing-and-speech.md) retain attention/recall and acoustic ownership.
+
