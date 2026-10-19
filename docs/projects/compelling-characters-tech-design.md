@@ -80,7 +80,7 @@ The existing threat route already supports compact fear/anger operations and cur
 
 A body effect is bound to the current physical life; personal memory/interpretation has its separately declared continuity. Delayed completion must still pass current control, life, source/privacy and policy checks; a successful provider receipt does not authorize publication. [The common time/lifecycle contract](stealth-awareness-tech-design.md#time-and-lifecycle) owns ordering, normal-speed seconds, restoration and non-replay. The [player disclosure contract](stealth-awareness-tech-design.md#player-information-disclosure) keeps historical identity and private feelings from becoming live position/activity or public motive.
 
-[SA-D01](../../archive/05-project/open-decisions.md) remains open only for acquiring longer-term interpreted fear in directly controlled characters. Shared native startle, NPC interpretation and effect-consumer design proceed independently; no human acquisition option is assumed. [Stealth-awareness tracking](../maintainers/stealth-awareness.md) owns specialist design and integration acceptance, without reopening or claiming completion of the original PG02 evidence.
+[SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) remains open only for acquiring longer-term interpreted fear in directly controlled characters. Shared native startle, NPC interpretation and effect-consumer design proceed independently; no human acquisition option is assumed. [Stealth-awareness tracking](../maintainers/stealth-awareness.md) owns specialist design and integration acceptance, without reopening or claiming completion of the original PG02 evidence.
 
 ## Delivery stages, verification and limits
 

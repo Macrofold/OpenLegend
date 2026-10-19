@@ -42,7 +42,7 @@ The new route supplies relevant choices while busy, interprets source-linked fea
 
 A prior warning and genuine preparedness can prevent surprise even without seeing an attacker. Familiarity alone does not prepare someone for an unexpected betrayal. Source-linked fear may remain after startle ends and be reconsidered through a bounded, potentially unspoken opportunity without inventing a fresh external event. The [shared technical contract](stealth-awareness-tech-design.md#emotions-and-reconsideration) owns the causal, lifecycle and privacy rules. Numerical physiology/trait influence needs an installed mechanical policy; descriptive biography remains descriptive.
 
-The base-world target affects accuracy and evasion without automatically reducing running or fleeing speed. The player keeps direct control; how their character acquires longer-term interpreted fear remains [SA-D01](../../archive/05-project/open-decisions.md). [Shared tracking](../maintainers/stealth-awareness.md) records the independent implementation scope. These accepted targets do not claim clinical psychology, reliable NPC judgment or completed CE qualification.
+The base-world target affects accuracy and evasion without automatically reducing running or fleeing speed. The player keeps direct control; how their character acquires longer-term interpreted fear remains [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters). [Shared tracking](../maintainers/stealth-awareness.md) records the independent implementation scope. These accepted targets do not claim clinical psychology, reliable NPC judgment or completed CE qualification.
 
 ### Shared evidence and personal perspective
 

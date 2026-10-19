@@ -107,7 +107,7 @@ The selected gameplay outcome is reduced accuracy and evasion effectiveness from
 
 A feeling may remain strong after the short startle ends. Reconsideration can be internally due and unspoken, using the original causal support and existing bounded cognition admission. A feeling’s own notification, repeated recall, elapsed provider time or display read cannot invent a new occurrence, reset a lifetime or indefinitely renew an unchanged feeling. Current reframe restrictions remain the installed baseline; adaptive intensity change needs the shared specialist extension.
 
-Ordinary native animal avoidance retains its native controller; autonomous people keep personal choices using their permitted evidence. Acquisition of longer-term interpreted fear for directly controlled characters remains [SA-D01](../../../archive/05-project/open-decisions.md), with no option adopted. Their native startle and the shared mechanical/lifecycle contracts are independent of that decision. [Shared tracking](../../maintainers/stealth-awareness.md) owns design/implementation separation and complete cross-project acceptance.
+Ordinary native animal avoidance retains its native controller; autonomous people keep personal choices using their permitted evidence. Acquisition of longer-term interpreted fear for directly controlled characters remains [SA-D01](../../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters), with no option adopted. Their native startle and the shared mechanical/lifecycle contracts are independent of that decision. [Shared tracking](../../maintainers/stealth-awareness.md) owns design/implementation separation and complete cross-project acceptance.
 
 ## Installation, vocabulary and removal
 

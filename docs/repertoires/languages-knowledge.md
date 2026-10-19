@@ -10,7 +10,7 @@
 
 ## Selected recognition and evidence boundary
 
-The [shared stealth and awareness contracts](../projects/stealth-awareness-tech-design.md#shared-contracts) distinguish hearing a sound, locating a source, recognizing a familiar voice and understanding words. Reliable voice association needs prior familiarity and sufficient current evidence; the selected base world also uses Perception. First hearing cannot reveal a canonical actor association. A familiar identity and its remembered history do not make old position, equipment or activity observations current. Other worlds can author different senses and recognition rules while preserving the limits of the evidence each observer actually receives. [The shared tracker](../maintainers/stealth-awareness.md) owns delivery.
+The [shared stealth and awareness contracts](../projects/stealth-awareness-tech-design.md#shared-contracts) distinguish hearing a sound, locating a source, recognizing a familiar voice and understanding words. Reliable voice association needs prior familiarity and sufficient current evidence; the selected base world also uses Perception. An unfamiliar first-heard voice alone cannot reveal a canonical actor association. A familiar identity and its remembered history do not make old position, equipment or activity observations current. Other worlds can author different senses and recognition rules while preserving the limits of the evidence each observer actually receives. [The shared tracker](../maintainers/stealth-awareness.md) owns delivery.
 
 ## Coverage to develop
 
