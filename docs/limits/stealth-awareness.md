@@ -26,7 +26,7 @@ This preserves uncertain hearing, meaningful acquaintance and checking a suspect
 
 **Status: Proposed — selected initial scope. Restrictiveness: Safe.** Deliver actual crouch/quiet movement and independent looking while walking for the supported base-world bodies, through existing spatial/action owners. Do not infer arbitrary simultaneous limbs, unrestricted rotation, every sense or complete acoustics from those capabilities. B/C select actual compatible pose freedoms, source/channel laws and authoring bounds; unsupported combinations refuse before effects.
 
-This keeps the first feature implementable without making a human anatomy or a single sense universal. A materially different body/channel must fit the shared message contract, but implementing every repertoire organism is outside this stage. Existing [spatial limits](spatial.md), [action limits](action-capabilities.md) and [hearing limits](hearing-and-speech.md) retain their own current envelopes.
+This keeps the first feature implementable without making a human anatomy or a single sense universal. A materially different body/channel must fit the shared message contract, but implementing every repertoire organism is outside this stage. Existing [spatial limits](spatial.md), [action admission and delivery](../action-capabilities.md) and [hearing limits](hearing-and-speech.md) retain their own current envelopes.
 
 ## SA-L05 — Emotion-specific reconsideration allowance
 
@@ -64,5 +64,5 @@ The applicable SAI row cannot begin with an unowned bound for new recurring work
 ## Shared inventories
 
 - [Hearing and speech](hearing-and-speech.md), [memory](memory.md) and [cognition](cognition.md) own existing retention, context, hearing and scheduling limits.
-- [Combat and threat responses](combat-and-threat-responses.md), [spatial](spatial.md), [native work](native-work.md) and [state contributions](state-contributions.md) own their existing mechanical envelopes.
+- [Combat and threat responses](combat-and-threat-responses.md), [spatial](spatial.md), [native work](native-work.md) and [state effects](state-effects.md) own their existing mechanical envelopes.
 - [SA/SAD/SAI](../maintainers/stealth-awareness.md) owns concrete design and implementation gates; [the shared technical design](../projects/stealth-awareness-tech-design.md) owns correctness and integration semantics.

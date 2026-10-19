@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 19, 2026 — Shared stealth evidence, reactions and preparation contracts
+
+The [shared feature](projects/stealth-awareness-feature-spec.md), [architecture](projects/stealth-awareness-tech-design.md) and [SA00/A–G tracker](maintainers/stealth-awareness.md) select observer-specific evidence with per-fact freshness, familiarity/quality/Perception voice recognition, one physical pose owner, immediate native startle and bounded causal reconsideration. Combat uses actually acquired warning and active preparation at an immutable actual-victim cut; newly caused startle cannot change its own incoming impact. The bundled world authors provisional three-normal-second startle and possible 2× surprise damage through the common simulation clock and existing world-rule owners. Fear can affect accuracy/evasion without automatically slowing escape.
+
+These contracts keep remembered identity separate from hidden current facts and player camera presentation separate from sensing. [Focused repertoire findings](projects/stealth-awareness-repertoire-review.md) preserve useful survival, watch, deception and encounter combinations; specialist designs and final integration retain their explicit work. [SA-D01](../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) leaves only controlled-player psychological acquisition unresolved. This completes shared design, not runtime delivery or gameplay/performance qualification.
+
 ## October 18, 2026 — Lead only personally observed motion at release
 
 Mike approved leading after the early practical bow hunt's observed-point shot
@@ -2391,3 +2397,4 @@ The command-result collection now shares immutable balanced-tree branches, reduc
 The five ordinary full observations are complete; the latest reaches 1.346× and the ten-minute observation deteriorates late. Reader results and the standalone ranked bottleneck report now reflect these failures. The project specification/design record their latest implementation decisions and datetime. The alternative busy-witness trial reduced observed accounts but failed to demonstrate sufficient full-game benefit; its memory-loss rule and unused engine hook were removed. Its trial replaces no current world law. Cloth quality tiers retain close/selected detail and pass selected visual/lifecycle checks. World wording and limits distinguish current behavior from the rejected trial; qualification and gameplay losses stay in the compromise report. [All changed documentation](verification/performance/overhaul-documents.md).
 
 Final retained cloth-only observation: 0.385×, walking confirmation 95% within 9.16 seconds and a 4.7-second drawing gap. All 16 resident work plans are active. The current reader and ranked reports now lead with this failed result; earlier 1.346× ordinary evidence remains historical and no clean causal improvement is claimed. Five ordinary plus two separately authorized compromise observations are complete.
+

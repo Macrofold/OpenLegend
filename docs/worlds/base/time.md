@@ -6,6 +6,20 @@
 
 The base clock converts one real second to one game minute at normal speed. Speed selection scales elapsed game time, not a required count of native updates. The current finite family accepts intervals up to 60 game seconds, shortened by known mechanical deadlines or fidelity bounds. The host usually offers less time at each wake. Partial progress toward that interval boundary survives current-format save/load under the [native interval contract](../../simulation-time.md#native-interval-contract); restoration cannot restart the remaining sampling distance. The finite horizon remains 60 game seconds; the current experimental sensing bound is four metres, as described below. There is no mandatory one-game-second loop for idle scenes, and no 20 FPS render limit.
 
+## Selected stealth reaction durations
+
+**Selected target, not a delivered bodily-startle mechanism.** The [shared emotion/time contract](../../projects/stealth-awareness-tech-design.md#time-and-lifecycle) keeps this world's 60:1 normal clock. A provisional **three normal-speed-second** startle admits 180 simulation seconds once through the installed clock/effect owner:
+
+| Runtime speed | Elapsed real time for an uninterrupted 180-simulation-second episode |
+| --- | ---: |
+| 1× | 3 seconds |
+| 3× | 1 second |
+| 8× | 0.375 seconds |
+
+These conversions assume the simulation makes the corresponding progress; technical delay does not spend unadvanced game time. Pause freezes the remaining episode. A speed change affects subsequent clock advance without restarting or rescaling admitted progress. Restore resumes the same cause/life-bound episode and does not create a second onset. The selected G controls expose acceleration only through current creator/debug authority; their presence in local tooling gives an ordinary player no speed or inspection permission.
+
+D selects supported susceptibility, composition and recovery through the existing status/appraisal owners. Current fear/anger decay remains expressed per game hour; it is not silently converted into the new short reaction unit. Effective fear is a missing accuracy/evasion integration target, with no automatic running/fleeing speed reduction. The [shared tracker](../../maintainers/stealth-awareness.md) owns design and subsequent delivery; this section changes no installed durations, fidelity limits or runtime qualification.
+
 ## Everyday work durations
 
 Fresh bundled worlds use these gathering and preparation times:
@@ -62,3 +76,4 @@ Revisit these bounds when fleeting encounters matter to a mechanic, new movement
 ## Selected first-playable clock consumers
 
 The [integrated design](../../projects/first-playable-world-tech-design.md#time-daylight-needs-and-decision-latency) keeps the current 60:1 clock and physical perception, and selects one installed clock source for renderer daylight and HUD day/night. [FPW03](../../maintainers/first-playable-world.md#fpw03--ordinary-actions-readable-work-and-readiness) owns that correction. Roaming and the selected daily material-rain window use game-time boundaries through their existing native owners, never browser color or wall time. This is designed work, not a current display fix or a new light-sensitive sight rule.
+

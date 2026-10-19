@@ -18,7 +18,7 @@ Repository: `Macrofold/OpenLegend`. Source branch: `codex/sneak-perception-desig
 
 | Existing owner | Verified source behavior | Required extension or boundary |
 | --- | --- | --- |
-| [Perception](../../packages/domain/src/perception.ts), [perception frame](../../packages/domain/src/perception-frame.ts), [base senses](../../packages/domain/src/worlds/base/senses.ts) | Current vision uses range and body-height obstruction samples. Spatial candidate/preparation owners already exist. | B adds actual orientation, light, posture-sensitive receiver geometry and concealment inputs; A separates independently permitted detail. Existing sight does not establish those features. |
+| [Perception](../../packages/domain/src/perception.ts), [perception frame](../../packages/domain/src/perception-frame.ts), [predicted motion/sensory boundaries](../../packages/domain/src/motion-boundaries.ts), [base senses](../../packages/domain/src/worlds/base/senses.ts) | Current vision uses range and body-height obstruction samples. Spatial candidate/preparation owners and predicted sensory-crossing runs already exist. | B adds actual orientation, light, posture-sensitive receiver geometry and concealment inputs; A separates independently permitted detail. Existing sight does not establish those features. |
 | [Events](../../packages/domain/src/events.ts), [event observation](../../packages/domain/src/event-observation.ts), [experience](../../packages/domain/src/experience.ts) | `WorldEvent` and observer `Awareness` retain scoped occurrence accounts. Felt contact can give the victim an account without identifying an unseen performer. | A/C extend the same typed observation path. Native receivers must not depend on writing autobiographical awareness. Required observation remains part of the native transition. |
 | Event ordering in `events.ts` | `recordEvent` assigns `WorldEvent.order` before invoking a native response callback. A non-speech `Awareness.sequence` can be assigned after nested callbacks allocate other IDs; combat observation is also updated before ordinary awareness insertion. | Preserve source occurrence order explicitly and snapshot evidence actually acquired at a cut. Never infer historical readiness from `Awareness.sequence`, event timestamps alone or a later database join. |
 | [Base identity/knowledge](../../packages/domain/src/worlds/base/knowledge.ts), [knowledge contract](../knowledge.md#subject-binding) | `ObserverIdentity`, `recognizesSubject`, `subjectReferenceCurrent` and `rememberSubject` own associations. Authored acquaintances survive episodes; ordinary current associations are predominantly sighting-bound. | A extends this owner for learned cross-exposure recognition/familiarity. Names, subject pads and raw IDs are not recognition evidence. No parallel voice registry. |
@@ -108,14 +108,19 @@ type ActorLifeRef = Readonly<{ actorId: string; physicalLife: number }>;
 type OccurrenceRef = Readonly<{ eventId: string; at: SimTime; order: number }>;
 type EvidenceRef = Readonly<{
   observer: ActorLifeRef;
-  family: 'awareness' | 'memory' | 'action-result' | 'private-condition';
+  family: 'awareness' | 'memory' | 'action-result' | 'private-condition'
+    | 'native-exposure' | 'native-response';
   id: string;
   revision: number;
 }>;
 type ExposureRef = Readonly<{ observer: ActorLifeRef; episodeId: string }>;
 
 // A native snapshot boundary, not a new event counter or a database query.
-type EvidenceCut = Readonly<{ at: SimTime; lastIncludedOrder: number }>;
+type EvidenceCut = Readonly<{
+  at: SimTime;
+  lastIncludedOrder: number;
+  acquiredBoundary: ExistingObserverAcquisitionBoundary;
+}>;
 type Fact<T> = Readonly<{
   value: T;
   asOf: SimTime;
@@ -134,11 +139,17 @@ type SourceAssociation =
   | { kind: 'suspected'; exposure: ExposureRef; rememberedSubject: string }
   | { kind: 'recognized'; exposure: ExposureRef; rememberedSubject: string };
 
+type SensoryOrigin =
+  | { kind: 'occurrence'; occurrence: OccurrenceRef }
+  | { kind: 'exposure'; exposure: ExposureRef;
+      evaluatedFrom: SimTime; evaluatedThrough: SimTime;
+      dependencies: ExistingPhysicalPolicyDependencies };
+
 // A compact result of an existing observation owner. Facts are independently
-// optional; source event metadata and rememberedSubject are server bindings.
+// optional; source metadata and rememberedSubject are server bindings.
 type SensoryEvidence = Readonly<{
   observer: ActorLifeRef;
-  occurrence: OccurrenceRef;
+  origin: SensoryOrigin;
   acquiredAt: SimTime;
   exposure: ExposureRef;
   policy: DefinitionPin;
@@ -156,6 +167,8 @@ type ObservationResult =
 ```
 
 `SupportedDetection`, `SupportedSensoryFact`, `Direction` and `SupportedRegion` denote admitted narrow family types selected by A/B/C, not open dictionaries or a universal graph. Different channels need not populate the same detail fields. `Fact` carries semantic freshness/support rather than a universal confidence percentage. A chooses each family's explicit certainty/classification discriminant; location uncertainty is spatial precision and does not substitute for recognition confidence. Model confidence, measured signal quality and calibrated correctness must not be conflated.
+
+Discrete event evidence carries its original `OccurrenceRef`. Continuous or sampled exposure retains the existing observer exposure identity, evaluated interval and physical/policy dependencies without allocating a synthetic event. Native retained support can reference the existing exposure/controller continuation through the indicated family adapter; it requires neither a human awareness record nor autobiography. A selects the concrete supported family shapes. `ExistingObserverAcquisitionBoundary` means the actual native acquisition boundary or suitable existing owner revision, with immutable captured membership; it is not a proposed global counter.
 
 Stable actor identity plus the exact normalized `physicalLife` identifies a bodily participant. Historical actor references may remain after that life ends; they cannot resolve to a new life for effects or current targeting. An exposure reference is observer-local and cannot be compared across observers to reveal a hidden source. A recorded event may retain its true performer and emitter internally while all observer references omit them. Opaque public/model handles are created through the existing permitted-reference binding, never by serializing this native structure directly.
 
@@ -181,7 +194,7 @@ Strong cues cross the selected detection rule at the native occurrence/meaningfu
 
 Repeated exposure is not necessarily independent evidence. Re-rendering a cue, recalling a record, retransmitting one event or hearing a retelling of the same account cannot count as new physical exposure. Real later footsteps can contribute to continuity without emitting a new awareness record for every frame. Distinct meaningful sounds/outcomes retain their separate occurrences even if optional cognition wakeups coalesce.
 
-Recognition uses the common observer identity owner, familiarity support, current evidence quality and installed ability/condition policy. The base world may use Perception; the reusable engine does not require it. First unfamiliar hearing can establish an anonymous auditory exposure, words, classification or direction, never reliable canonical identity by default. A knows neither a name nor a lasting acquaintance solely from a source ID. Supported cross-sense exposure or later evidence can establish a new association through the same owner.
+Recognition uses the common observer identity owner, familiarity support, current evidence quality and installed ability/condition policy. The selected base-world voice-recognition rule uses familiarity, actual evidence quality and Perception, including applicable condition effects. Other installed worlds choose their supported ability policy; the reusable engine does not require an attribute named Perception. First unfamiliar hearing can establish an anonymous auditory exposure, words, classification or direction, never reliable canonical identity by default. A knows neither a name nor a lasting acquaintance solely from a source ID. Supported cross-sense exposure or later evidence can establish a new association through the same owner.
 
 Keep physical target binding separate from believed identity. A suspected familiar voice can refer to an existing remembered subject as a hypothesis without resolving the current sound to that person's live body or opening their notes as if a new stranger were certainly them. Detailed disguise/false-recognition policy is not selected here. Its future implementation must preserve that separation rather than swap authoritative entities. A recognized but unseen person can remain available for permitted remembered discussion while being unavailable for a direct current-body action.
 
@@ -211,6 +224,8 @@ B owns visibility/light/concealment laws and conservative spatial evaluation. C 
 
 Light is physical input under an installed world rule, not the brightness of the rendered pixel. Sound production uses actual actions/contact/equipment/materials, not an animation footfall loop. Posture and quiet movement can reduce some signals while leaving other channels unaffected. Known missing channels remain unsupported; the generic engine does not silently supply human sight/hearing.
 
+Present sight and predicted sensory crossings must use the same admitted geometry and receiver transform. B/C changes reconcile `visionQuery` with [motion-boundaries.ts](../../packages/domain/src/motion-boundaries.ts)'s `SIGHT_BODY_FRACTIONS`, sight runs, `sensoryCrossingBound`, `BodyCertificate` dependencies and crossing caches. Head-only turns, posture, light, obstacles and capability changes invalidate relevant temporal preparation as well as current evaluation. Incomplete crossing preparation cannot establish absence or justify surprise. This preserves one physical meaning across instantaneous queries and fleeting exposure during chunked movement.
+
 New channels declare: receiver and emitter eligibility; supported propagation/occlusion family; actual occurrence and continuous-interval semantics; relevant dirty causes; detail/precision output; strong-cue boundary and weak-accumulation inputs; same-cause deduplication; retention/native consumers; and incomplete-work behavior. Detailed thresholds, FOV, sample placement, lighting, acoustic curves, gait sounds and disguise rules are B/C/A work rather than competing shared defaults.
 
 ## Emotions and reconsideration
@@ -225,9 +240,12 @@ Effective mechanical emotion is a read-only composition over the exact body's el
 
 ```ts
 // Conceptual extensions of existing effect/appraisal owners, not new stores.
+type CommittedReactionCauseRef =
+  | { kind: 'physical-outcome'; cause: ExistingPhysicalCauseRef }
+  | { kind: 'acquired-occurrence'; cause: OccurrenceRef };
 type BodyReactionInput = Readonly<{
   target: ActorLifeRef;
-  cause: OccurrenceRef;
+  cause: CommittedReactionCauseRef;
   evidence?: EvidenceRef; // Physical contact can qualify without memory.
   policy: DefinitionPin;
 }>;
@@ -239,7 +257,11 @@ type EffectiveMechanics =
   | { kind: 'incomplete'; continuation: ExistingWorkReference };
 ```
 
+The reaction cause identifies the original native physical contact/outcome or original acquired alarming occurrence. The existing trusted producer assigns or binds it before the effect commits. Melee/projectile contact currently supplies an action invocation before the enclosing contact event exists; that event cannot be a prerequisite for bodily response. Consequence records such as guarded, injury, incapacitation and enclosing contact are optional provenance for the same cause, not additional onsets. Deduplicate the qualifying reaction on original cause, reaction definition and exact target life. Preserve distinct actual contact/outcome identities when one action can produce several; neither every event wrapper nor the whole action lifetime is automatically one new shock. Memory or appraisal delivery does not restart the physical reaction.
+
 The supported numeric modifier is a **missing mechanism** to add through the current status/contribution and combat parameter owners. Do not add a second fear field, inverse-delta cleanup, duplicated accuracy formulas or consumer-specific clamp laws. D/F agree on parameter units, saturation and composition once in the selected rule. Opposite or ending effects remove only their own contribution; they never restore an old whole-body snapshot or erase an unrelated wound.
+
+D/F must inventory and reconcile the existing [rangedAccuracy](../../packages/domain/src/ranged-policy.ts) `danger-or-return` target-condition factor before adding effective fear/evasion. It currently reads returning work or an applicable animal episode, not appraisal fear. The selected rule must state whether this represents a distinct physical circumstance or overlaps the new contribution, then combine or retire it accordingly. The same intended alarm/evasion influence cannot be counted again because it arrives through a second owner. Exact formula and tuning remain D/F work.
 
 All active records needed for a native mechanical result remain in its current complete mechanical working set under the existing residency owner. A bounded hot history page is not a complete emotion reading. No synchronous impact performs SQL or waits for a model. If required active state is unavailable, existing required-work preparation/hold preserves a coherent prefix before that outcome; it does not treat missing records as zero. An absent optional installed channel has the neutral behavior declared by that world and differs from failed preparation.
 
@@ -291,8 +313,10 @@ The snapshot is an acquired-state cut, not just a timestamp filter. `WorldEvent.
 type VictimPreparationSnapshot = Readonly<{
   victim: ActorLifeRef;
   cut: EvidenceCut;
+  warning: readonly CapturedWarningFact[];
+  preparation: readonly CapturedPreparationState[];
   acquiredSupport: readonly EvidenceRef[];
-  preparation: readonly ExistingActiveWorkRef[];
+  workSupport: readonly ExistingActiveWorkRef[];
   mechanics: CompleteEffectiveMechanics;
   policy: DefinitionPin;
 }>;
@@ -305,6 +329,8 @@ type SurpriseDecision = Readonly<{
   reason: SupportedNativeSurpriseReason;
 }>;
 ```
+
+At capture, resolve already acquired supports and active work into the minimal immutable warning and preparation values required by the installed rule. `CapturedWarningFact` and `CapturedPreparationState` denote those supported native values, not saved meters or unrestricted maps. Preserve source occurrence order/revision and the actual acquisition boundary or suitable owner revision that produced them. All referenced values needed by the decision are resolved synchronously; source/work references are provenance and the evaluator must not reread their later current state. The occurrence watermark alone neither defines membership nor reconstructs readiness.
 
 These are native decision inputs/results, not client/model DTOs. F retains the compact decision/provenance through the existing action/outcome record as needed for replay/qualification; a historical source pointer is not current attack authority. The public observer receives only permitted result facts, never another actor's readiness, private warnings or an oracle preview of surprise.
 
@@ -370,7 +396,7 @@ Qualification measures complete callers with increasing living density separatel
 
 G consumes A's permitted detail through the existing server `view.ts`/protocol and renderer boundary. A body can be currently visible yet unidentified or partially detailed; hearing-only evidence cannot authorize its live mesh, exact position, equipment or animation. Current physical targeting uses freshly admitted body references, independently of remembered identity.
 
-Define separate projection variants for current permitted body/detail, current or historical directional/region cues, and explicitly historical remembered people. Historical presentation requires readable **Last seen** meaning, original time/precision and source eligibility. It is frozen and uses a historical inspection route; no follow, attack, current tooltip or invisible interpolation attaches to it. The current session ghost cache can remain only as a bounded render optimization of authorized historical data, not another memory store. Region-only evidence cannot become an exact body ghost.
+Define separate projection variants for current permitted body/detail, current or historical directional/region cues, and explicitly historical remembered people. Historical presentation uses source-appropriate wording such as **Last seen** or **Last heard**, preserving the actual observation channel, original time/precision and current source eligibility. A heard cue cannot become a witnessed visual observation. It is frozen and uses a historical inspection route; no follow, attack, current tooltip or invisible interpolation attaches to it. The current session ghost cache can remain only as a bounded render optimization of authorized historical data, not another memory store. Region-only evidence cannot become an exact body ghost.
 
 Known static geometry can remain visible under the world's declared disclosure policy. A map asset being delivered does not justify sending later hidden dynamic changes or actor-derived geometry. Distinguish public immutable scenery, remembered geometry and currently observed changing state through the existing projection owner; the current raw map path is a required G audit. Legitimate physical light/sound from an unseen source can be displayed only at its own permitted detail, without shipping undisclosed actor coordinates for convenience.
 

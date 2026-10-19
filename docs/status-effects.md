@@ -68,6 +68,16 @@ history; an exact retained command receipt still replays without resurrection. N
 commands allocate fresh monotonic episode IDs. Policy maintenance materializes history
 before validating exact pins, including ended contributions.
 
+### Selected bodily shock and effective emotion extension
+
+**Shared design target; the numerical modifier and native startle are not current operations.** [D/F's shared contract](projects/stealth-awareness-tech-design.md#emotions-and-reconsideration) extends this status/contribution owner for life-bound bodily shock and reads applicable private feelings from the existing appraisal owner. The current independent contribution branch supports capability restrictions only; numeric rates/transfers elsewhere do not already supply an effective accuracy/evasion parameter. [The shared tracker](maintainers/stealth-awareness.md) owns specialist design and later delivery.
+
+The extension must retain one status/contribution store and one appraisal store. D supplies a read-only composition from the complete eligible active mechanical set, with exact definitions, source/cause and affected-life references; F consumes it at the declared action/contact boundaries. Missing required preparation is incomplete, not zero fear, and a bounded hot history page is not complete active state. No synchronous impact waits for SQL or AI. The selected base fear rule affects accuracy/evasion without automatically slowing running/fleeing or choosing movement; D/F explicitly reconcile existing combat condition factors before adding another influence.
+
+A trusted actual physical cause can admit bodily startle without memory, identification of the source or AI. Duplicate consequences of that cause on the same life cannot restart onset or duration. Read prior effects before outcome resolution; startle created by the impact cannot affect that impact's own defense or damage. [Normal-speed duration admission](simulation-time.md#selected-stealth-and-emotion-timing) uses the simulation clock once. Fixed shock may outlive its source, while the target's physical-life ending retires its bodily effect. Ending removes only its own contribution, with no inverse delta or old-body restoration.
+
+Private psychological interpretation and bounded reconsideration remain with appraisals and their existing cognition intake, cause revisions and lifetime. A feeling alone grants no public expression or human-controlled AI permission. [Current-format save/restore](save-and-load.md) retains each owner's actual continuation and source eligibility without replay; the implemented operations and qualification below remain the baseline until the new family is delivered.
+
 ## Transitions
 
 `activateStatusEffect`, `deactivateStatusEffect` and `interruptStatusEffects` are the shared mutation boundary. A saved instance contains an active flag, episode ID, elapsed seconds, automatic reactivation deadline and source/target IDs. An occupying actor effect interrupts previous work without refunding consumed inputs, creates one ongoing action tied to its episode, and completes or interrupts the associated plan through the existing owner. Non-occupying effects also work on objects. An occupying effect requires an actor because native plans/actions are currently actor-owned.
@@ -130,3 +140,4 @@ Policy, instances, elapsed time and bindings serialize with the world. Periodic 
 - Implementation: [Feature tasks](maintainers/state-contributions.md).
 - Reviewed removal: [RD01–RD05](maintainers/parallel-batch-09-reviewed-content-removal.md), under [CE01](maintainers/creator-edits.md#ce01--reviewed-explicit-dependency-cascades).
 - Limits and constraints: [Shared state, resources and effects inventory](limits/state-effects.md).
+

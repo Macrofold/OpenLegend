@@ -4,6 +4,8 @@ Use this page to find the owner of work. Focused trackers own task status; speci
 
 ## First playable: survival, a defensible home and independent encounters
 
+[Stealth, awareness and surprise](stealth-awareness.md) owns the completed shared-contract design and the separate A–G specialist design/implementation dependencies. The [feature](../projects/stealth-awareness-feature-spec.md), [architecture](../projects/stealth-awareness-tech-design.md) and [repertoire review](../projects/stealth-awareness-repertoire-review.md) preserve perceived evidence, native startle, preparation and ordinary-player disclosure without marking runtime delivery complete. Controlled-player psychological fear has one [open producer choice](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters).
+
 Start with [first-playable delivery and validation (FPV01–FPV09)](first-playable-validation.md). The [world specification](../worlds/base/playable-openings.md#first-playable-game-target) owns the required survival, camp, character, invention and conflict experience; [gameplay priorities](../repertoires/gameplay-priorities.md) owns selection; the [playtest plan](../projects/first-playable-playtest-plan.md) owns participant-learning procedure. FPV routes missing mechanics to existing subsystem owners and distinguishes useful partial tests from complete acceptance.
 
 [Commercial offers](commercial-offers.md) and the [initial-offer decision brief](../projects/initial-commercial-offer-decision-brief.md) own browser-feasible offer comparison and adoption. Payment is not a prerequisite for ordinary game learning.
@@ -176,3 +178,4 @@ Actual evidence: [continuation](../verification/workshop-continuation.md), [tran
 | Integration and art         | [Macrofold handoff](../macrofold-world-agent-handoff.md), [hybrid art methods](../../archive/03-design-proposals/procedural-art-and-animation.md)                                                                                                                             |
 
 Editable knowledge is tracked in [CR13](cognition-redesign.md#cr13--editable-knowledge-documents); bundled naming and recognition in [BW08–BW09](base-world.md).
+

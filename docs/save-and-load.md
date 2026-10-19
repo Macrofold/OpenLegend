@@ -99,6 +99,16 @@ The exact native arithmetic window is current continuation data in the existing 
 
 External provider attempts, spending/uncertainty and existing source-privacy overlays retain their current owners outside gameplay rewind. Validate new state through real downstream continuation and the supported PostgreSQL adapter, including failed publication, complete capture with cold records, restore and stale callbacks. [Foundation evidence](verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records these integrations; SL's broader autosave, portability, crash and capacity gates remain separate.
 
+## Selected stealth continuation target
+
+**Selected design, not additional delivered save coverage.** The [shared lifecycle contract](projects/stealth-awareness-tech-design.md#time-and-lifecycle) extends the existing owners and current-format capture above; [the shared tracker](maintainers/stealth-awareness.md) owns specialist design and later qualification. It adds no feature save version, parallel history store or compatibility reader.
+
+Preserve any admitted pose/action relationship, exposure accumulation, consumed reaction cause and warning/preparation continuation that affects the next result. Retained observer facts keep their original occurrence and acquisition roles, channel, per-fact observation time, precision, association and source revision through awareness/experience/knowledge records. Learned familiarity and remembered information retain their permitted historical support; restore/rebaselining cannot turn that history into fresh exposure or a current position. Recorded attack/victim cuts retain the evidence actually acquired before their ordered boundary, exact referenced lives, preparation and pinned result inputs. A later awareness insertion, SQL join or model answer cannot backfill the cut.
+
+Native shock retains its trusted original physical cause, exact affected life, admitted definition/clock conversion, remaining progress and duplicate/terminal identity through status/contribution records. A committed fixed effect may outlive its source; ending the affected life retires the bodily episode. Personal appraisals and familiarity follow their separate actor/memory continuity and current source eligibility: historical references may survive a body without transferring its unfinished physical shock or current targeting authority. Reconsideration retains original cause/revisions, due opportunity and the finite allowance for unchanged support under the appraisal/process owner.
+
+Capture required state at one coherent native cut and validate the supported current format, exact definitions and both directions of active owner/work relationships before installation. Restore applies present forgetting, private/control grants and a fresh timeline/generation, rebuilds derived indexes and issues fresh permitted client baselines. Old callbacks, cached historical images and abandoned-future evidence cannot publish into the restored audience. Restore does not replay shock onset, completed impacts, observation/recognition acquisition, random draws or paid interpretation. An incomplete required active mechanical set remains unavailable until prepared; an omitted hot history page cannot supply neutral fear or surprise eligibility. Existing external accounting and current-format refusal remain with their owners above.
+
 ## Active development policy
 
 The binding rule is maintained only in [AGENTS.md — Development save policy](../AGENTS.md#development-save-policy). Consult it before state/storage work. [RP02](maintainers/revisitable-policies.md#rp02--development-state-compatibility) records the future review trigger. Implementation descriptions and historical migration evidence in this document are descriptive, not additional compatibility requirements or exceptions to that rule.
@@ -362,3 +372,4 @@ passage for the same physical life. Navigation answers remain disposable host pr
 proposal, map and current timeline; restoration recomputes them without drawing or
 installing movement. Current validation rejects obsolete steering fields and
 malformed body-life, profile, proposal or active movement relationships.
+

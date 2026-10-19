@@ -93,11 +93,19 @@ Do not force private internal events into a publicly projected world-event array
 
 “A sees the sword” is evidence acquired by A. It does not establish that B sees the sword or even that B observes A noticing it. If A gasps, points, or speaks, that separate outward action may create an external occurrence with its own audience.
 
-Route both external awareness and private acquisition through the central semantic experience mutation boundary. Retain source attribution, permitted detail, time, and acquisition type. Do not claim recognition merely because the server knows an entity's name.
+Route external and private acquisition through the existing native perception/event intake. Memory-capable observations use the central semantic experience mutation boundary; physical reception and native protection do not require autobiography. Retain source attribution only when permitted, detail, time and acquisition type. Do not claim recognition merely because the server knows an entity's name.
 
 ### Event-time evidence versus current action authority
 
 A listener retains legitimate evidence of a shout heard earlier even if the speaker has moved away. Historical audience is evaluated at occurrence time. A later action still checks current range, life state, permissions, and resources. Do not replace either check with the other.
+
+### Selected stealth-awareness integration
+
+**Accepted target; runtime implementation remains separate.** The [shared contracts](projects/stealth-awareness-tech-design.md#shared-contracts) extend this owner for independent detection, localization, source association, recognition and detail. [SA](maintainers/stealth-awareness.md) coordinates the specialist work with EPR/SPK/CTR; their existing implementation and qualification gates remain open as recorded. The current speech receiver and awareness paths still use memory eligibility, while the native animal controller already has a separate permitted attack/contact intake. The selected extension shares physical evaluation and observer evidence meaning without requiring a human-style memory record for native reception or routing it through paid cognition.
+
+Preserve source occurrence time/order separately from actual observer acquisition. In the inspected event producer, `WorldEvent.order` is assigned before native callbacks, while some non-speech `Awareness.sequence` values are assigned after nested callbacks allocate IDs. Copy source order explicitly; neither that mutable sequence nor a timestamp proves that evidence was already acquired. At a [combat evidence cut](projects/stealth-awareness-tech-design.md#threat-preparedness-and-surprise), the observer/encounter owner supplies immutable already-acquired support and the captured warning/preparation values. An inclusive source-order watermark is provenance, not a later history query that can add earlier sources acquired after the cut. The incoming contact's own evidence and new startle follow its defensive resolution.
+
+Continuous exposure can retain its existing episode, evaluated interval and physical dependencies without inventing an event for every sample. Discrete occurrences keep their original event identity; native continuation can retain the minimum permitted support its controller needs. Required acquisition and native effects complete at their native boundary before optional attention. Incomplete required preparation follows the existing hold/backpressure owner and cannot mean no cue, no warning or extra surprise. [Time and lifecycle](projects/stealth-awareness-tech-design.md#time-and-lifecycle) govern saved progress, original deadlines and restoration.
 
 ### Recorded non-speech facts
 
@@ -313,3 +321,4 @@ Keep a perceived group distinct from its physical members, their private goals a
 - Implementation: [Events and reactions](maintainers/events-perception-and-reactions.md); cross-feature target integration in [PS04](maintainers/product-scalability.md).
 - Limits and constraints: [Native work](limits/native-work.md) and [cognition](limits/cognition.md) own their existing shared mechanisms; proposed product choices are in [PS-L02/PS-L06/PS-L07](limits/product-scalability.md).
 - Related design: [Memory](memory-architecture.md) and [hearing](hearing-and-speech.md) retain attention/recall and acoustic ownership.
+

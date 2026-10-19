@@ -8,6 +8,14 @@ Implementation was authorized September 26, 2026 in the [five-project execution 
 
 **Delivered selected shelter consumer:** [PX05’s technical counterpart](../projects/editable-shelters-tech-design.md#6-rain-moisture-actor-knowledge-and-save-lifecycle) uses this foundation for one material-moisture attribute, finite rain intervals and a separately registered drying process. [SH03/SH04/SH06](editable-shelters.md) owns delivered flat-profile interval/placement integration, state-preserving eligible fiber operations and current-format restoration, plus remaining wider qualification. [AV04 evidence](../verification/editable-shelters.md) records finite rain/drying, actual material continuity and bounded work. This adds no fire penalty or model-per-material work and does not reopen completed SC foundation acceptance.
 
+## Selected stealth consumer — design only
+
+The [shared stealth design](../projects/stealth-awareness-tech-design.md#emotions-and-reconsideration) assigns D/F a future bodily-startle and effective accuracy/evasion consumer of this foundation. [SA00, SAD-D/SAD-F and later implementation](stealth-awareness.md) own its progress. Existing SC01–SC08 checkboxes below record the delivered finite foundation; they do not qualify this new consumer.
+
+Current independent status contributions support capability restrictions through `state-contributions.ts` and `status-effects.ts`. The numerical combat modifier is still a missing narrow extension of those owners, with private interpretation retained in `appraisals.ts` and combat consumption in the existing accuracy/evasion owners. Its complete active read must declare units, composition and sampling; reconcile existing combat condition adjustments; preserve unavailable versus neutral; and avoid an extra saved fear total or consumer-specific reducer. The selected fear rule has no automatic running/fleeing speed penalty.
+
+Admission/removal and current-format capture must preserve the trusted original physical cause, exact affected life, pinned definition, admitted simulation progress and duplicate/terminal receipts. Startle needs no memory or AI, cannot alter its own resolved impact and cannot migrate to a replacement body. Fixed effects may outlive their source; ending removes only the owned contribution. Psychological memory/feeling continuity and finite reconsideration retain their separate existing owners. [Status effects](../status-effects.md#selected-bodily-shock-and-effective-emotion-extension), [time](../simulation-time.md#selected-stealth-and-emotion-timing) and [save/load](../save-and-load.md) own these targeted integrations; no runtime authorization or new qualification is recorded here.
+
 ## Execution notes — September 26, 2026
 
 The following owner map and measurements describe the September 26 implementation on `codex/foundations-1-5`, based on `ce7ef555`, now integrated. They are historical evidence, not a second current body-policy contract: [world-configured survival](../worlds/base/survival.md) and [status effects](../status-effects.md) own the subsequently delivered body and effect rules. Current verification uses PostgreSQL only.
@@ -118,3 +126,4 @@ reducing finite supply. Final compound resource/object/authority scenarios, sour
 - [x] Record evidence in Verification, current implementation in Architecture, affected parent status/dependencies and deferred regression tasks here. The original delegated pass deferred automated suites; future check selection follows the current [verification policy](../../.agents/rules/verification.md), with CI mandatory.
 
 **Dependencies:** SC01–SC07. **Exit:** complete scenario evidence and honest remaining limitations. No isolated benchmark, schema or passing compile closes EWF/INV/SL/PF release gates.
+

@@ -24,6 +24,16 @@ Rendering runs independently at the browser/device frame cadence (normally aimin
 
 The [base-world time policy](worlds/base/time.md) owns the current horizon, displacement bounds and coupled-rate fallbacks. Those are revisitable fidelity choices, not requirements for every authored world. A sparse-update implementation must report its actual interval count, elapsed progress and largest blocking slice; changing the clock label or hiding accumulated debt is not a performance improvement.
 
+## Selected stealth and emotion timing
+
+**Selected design; native startle and adaptive reconsideration are not implemented by the existing clock.** The [shared timing/lifecycle contract](projects/stealth-awareness-tech-design.md#time-and-lifecycle) uses this clock and the existing effect/appraisal owners. [SA00 and subsequent specialist/delivery work](maintainers/stealth-awareness.md) track the extension.
+
+Author a player-facing reaction duration in **normal-speed seconds** and admit it once as `duration × installed normal game-seconds-per-real-second`. At the selected base rate of 60:1, three normal-speed seconds are 180 simulation seconds. Runtime speed changes how quickly the shared clock advances, never multiply the admitted duration again. Pause preserves remaining progress and due reconsideration work; a browser timeout, animation completion or provider deadline cannot expire the effect. Current appraisal rates expressed per game hour retain their existing unit until the selected world explicitly changes the policy.
+
+An active effect retains its admitted definition, clock conversion and remaining progress/deadline through its existing owner. A supported definition/clock edit must settle and explicitly rebind affected remaining work; it cannot reinterpret elapsed progress. Required sensing, prior effects and preparation reach the same ordered native boundary before an attack samples them. Startle created by that impact cannot change its own defense or damage resolution. Save/reopen preserves the cause and continuation without replaying onset or optional cognition; [save/load](save-and-load.md) owns integrity and restored authority.
+
+The current time shortcuts above describe existing controls, not a grant to ordinary multiplayer participants. The selected G target confines accelerated-speed and creator inspection controls to their authorized creator/debug audience and reconciles server requests, visible controls and help together. Manual pause follows its existing authority; all mechanical progress follows actual pause state. Revoking private or historical disclosure still takes effect while paused.
+
 ## Native interval contract
 
 A native interval has a start time, a finite elapsed duration and an end time. Resolve currently due native decisions, status transitions and zero-duration action stage changes at the start. Integrate the already-active rates/work over the interval. Commit completions, expiry, body changes and permitted observations at the end, then reconsider before consuming more time. An action created at the end cannot receive the preceding interval's work. A condition that changes at the end cannot retroactively govern that interval.
@@ -75,3 +85,4 @@ See [the integrated sound/elapsed-time record](maintainers/speech-time-integrati
 - Implementation: [Existing subsystem work](maintainers/simulation-time.md); future product integration in [PS01–PS08](maintainers/product-scalability.md).
 - Limits and constraints: [Native-work inventory](limits/native-work.md); proposed product choices in [PS-L01–PS-L18](limits/product-scalability.md).
 - Related design: [Product-scalability suite](product-scalability/README.md) retains strategic scope without replacing current execution.
+

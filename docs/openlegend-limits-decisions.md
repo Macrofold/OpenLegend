@@ -36,10 +36,13 @@ Proposed [extraordinary minds and afterlife](projects/extraordinary-minds-and-af
 
 Selected [combat and threat responses](projects/combat-and-threat-responses-feature-spec.md), October 17: [CTR-L01–CTR-L06](limits/combat-and-threat-responses.md) owns opponent-specific continuity, the finite prepared repertoire, two-stage/two-pipeline decision envelope, finite chosen pursuits, complete evidence growth and strict independent Ada acceptance. [BW12](limits/base-world.md#bw12--remains-and-native-escape), [FL24](limits/feelings.md#fl24--interpreted-threat-reactions) and existing ranged/multiplayer limits retain their own native, appraisal and current-policy restrictions. [CTR01–CTR10](maintainers/combat-and-threat-responses.md) owns implementation; the selected direct-PvP/collateral removals and new tuning are not installed or measured by this documentation change.
 
+Selected [stealth, awareness and surprise](projects/stealth-awareness-feature-spec.md): [SA-L01–SA-L08](limits/stealth-awareness.md) records the provisional three-normal-second startle and authored 2× surprise value, familiarity-based recognition, supported physical scope, bounded reconsideration/preparation, unqualified operational dimensions and the open controlled-player fear producer. [SA00/A–G](maintainers/stealth-awareness.md) separates complete shared design from specialist and runtime delivery. Existing sensing, state, cognition, combat and privacy inventories remain controlling.
+
 ## Feature inventories
 
 | Feature                                                                                               | Inventory                                       | Implementation tasks                                                                                                 |
 | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| [Stealth, awareness and surprise](projects/stealth-awareness-feature-spec.md) | [Limits](limits/stealth-awareness.md) | [Tracker](maintainers/stealth-awareness.md) |
 | [Combat and threat responses](projects/combat-and-threat-responses-feature-spec.md)                   | [Limits](limits/combat-and-threat-responses.md) | [Tracker](maintainers/combat-and-threat-responses.md)                                                                |
 | [Cognition and action selection](agent-agency.md)                                                     | [Limits](limits/cognition.md)                   | [Tracker](maintainers/cognition-redesign.md)                                                                         |
 | [Memory, knowledge and consolidation](memory-architecture.md)                                         | [Limits](limits/memory.md)                      | [Tracker](maintainers/cognition-redesign.md)                                                                         |
@@ -108,3 +111,4 @@ All 238 original numbers are preserved. `LA014` is audit number 14. Most old row
 The [source-review coverage](limits/README.md#growth-path-review-coverage) distinguishes no search/input-work cap from bounded results, batches and pages. New entries: memory MH01–MH07 and KG01, cognition CG01, native work NW10–NW11, and save catalog SV17. The [backlog ranking](maintainers/limits-audit.md#ranking-method) uses near-term permitted gameplay exposure and impact; absence of a cap does not automatically recommend deleting data or adding a fixed content limit.
 
 Hearing, spatial captions and perceived-event history: [HR01–HR08](limits/hearing-and-speech.md).
+

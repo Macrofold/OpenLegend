@@ -6,7 +6,7 @@
 
 The [shared stealth tracker](stealth-awareness.md) owns SA00, the SAD-A–SAD-G specialist designs and their future SAI integration. CTR02 supplies the existing personal encounter owner for warning evidence; CTR01 supplies attempt/release/contact and the actual victim; CTR06–CTR08 consume bodily versus interpreted reactions and current preparation. [Shared preparedness and surprise](../projects/stealth-awareness-tech-design.md#threat-preparedness-and-surprise) is the authority for their cross-module ordering. New surprise implementation and qualification remain with SAI-F and its coordinated dependencies; no CTR checkbox is completed by this design.
 
-Reconcile the shared evidence cut before adding damage or emotional consumers: an incoming attack's own impact cannot retroactively supply its victim's warning, and its newly induced startle cannot penalize the same hit twice. Existing contextual-action grace, current sight, a failed defense or a global enemy label alone cannot prove preparedness or surprise. Preserve all current CTR native, independent-character and playability gates.
+Reconcile the shared evidence cut before adding damage or emotional consumers: an incoming attack's own impact cannot retroactively supply its victim's warning, and startle newly induced by the impact cannot affect that impact's own defense or damage resolution. Existing contextual-action grace, current sight, a failed defense or a global enemy label alone cannot prove preparedness or surprise. Preserve all current CTR native, independent-character and playability gates.
 
 ## Delivery sequence
 
