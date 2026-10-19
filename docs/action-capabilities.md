@@ -822,6 +822,10 @@ Chosen watch control supplies one absolute numeric simulation deadline, a regist
 
 An installed host may add read-only, actor-permitted prerequisite notes after normal preview admission. The generic server returns those notes with the existing preview result; it grants no reservation, plan or execution. The base-world consumer distinguishes current bounded stock proof from uncertain future gathering yield and reads only a selected cache’s current permitted page ([world rules](worlds/base/camp-routines.md#authored-choices-and-bounds)).
 
+## Optional human skilled execution — ND38 (selected design)
+
+[Skilled action execution](projects/action-execution-and-skill-expression-feature-spec.md) is a **future optional execution interaction after a permitted action is selected**, not a second action family, action permission or effect engine. Its narrow reusable gesture/evaluation mechanism permits normal quick attacks, held timed releases for selected weapons, and a separate workpiece-placement finish for a compatible woven-container recipe. The selected installed world/actual native family decide whether an action supports input and how bounded execution quality influences existing attack/physical contact or real item capacity; ordinary actor actions and NPC native skills remain valid without gestures. Client overlays never authorize damage, create inventory, disclose targets or replace receipts. [Technical contract](projects/action-execution-and-skill-expression-tech-design.md), [ASE tasks](maintainers/action-execution-and-skill-expression.md) and [limits](limits/action-execution-and-skill-expression.md) own this **designed but unimplemented** capability, including exact action binding, pause/continuation and competitive input-trust restrictions.
+
 ## Invention integration
 
 [Repertoire foundation](repertoire-foundation.md) binds this action/activity contract to World Agent tools and invention composition. It does not create another activity controller, constraint language, permission service or planner. The current single physical lane remains until a concrete joint/channel family qualifies richer concurrency.

@@ -76,6 +76,10 @@ Release text says a shot was fired; impact text distinguishes observed target in
 
 Visible body condition reports the installed meter's name, projected value and bounds only when its disclosure and current perception permit it. It does not infer death from a displayed zero: an installed meter can use a different range, and its body policy can incapacitate rather than kill. Base-world Health retains its own authored death/return explanation. Evasion readiness uses the installed action label, and client controls use the supplied label rather than copying the world's action name.
 
+## Selected manual-aiming replacement (not yet implemented)
+
+[ND38 skilled execution](skilled-action-execution.md#physical-arrow-and-local-evasion) selects a **future replacement** for the current randomly deviated arrow direction and the current movement-cancels-aim rule described above. A quick click or held manual release aims at the actual final pointer-derived 3D point. Once admitted and released, the projectile follows that ray without random steering. A genuine bodily interception can resolve a world-authorized local duck/twist without a full navigational step, and a successful evasion permits continued travel on the same ray; a separate actual collision or shield can still stop it. A good timing result cannot force physical contact or damage, and a badly timed shot can still hit. Original target intent, source life, current world permission, actual cover/shields and permitted observer evidence remain independent. [ASE05](../../maintainers/action-execution-and-skill-expression.md#ase05--exact-mouse-directed-flight-and-genuine-local-evasion) owns implementation with the [selected CTR01 contact rule](#selected-contact-consequences). The current behavior above remains true until that work is delivered.
+
 ## Maintained records
 
 - Implementation: [CF02/CF03](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md) and [CTR01](../../maintainers/combat-and-threat-responses.md).

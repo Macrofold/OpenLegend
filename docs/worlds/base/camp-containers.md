@@ -43,6 +43,10 @@ Exercise two size choices, unsuitable material, forged effects, capacity overflo
 
 Future preservation needs item age and actual transformation; future fixed storage needs placement/building semantics; future theft protection needs an explicit permission/ownership mechanism; future weight limits need a body/carrying rule and useful player tradeoffs. None is implemented by adding an adjective to this family's description. Expand the finite family through real consumers, not unexplained exceptions.
 
+## Optional fitted quality (selected design, not implemented)
+
+[ND38 skilled execution](skilled-action-execution.md#the-chosen-noncombat-proof-fitted-woven-container) selects a distinct, optional workpiece-placement gesture **during the same admitted woven-container craft**. The current material-derived `4 × p` capacity, quantities, work and creation of one individual item remain the ordinary route. If that specific installed family permits a careful finish, the existing object owner may retain an individual bounded *fit* and derive an actual effective capacity from it; an optional descriptive grade is **not** a second mechanical field. Existing inventory, capacity, access and save behavior retain authority, and ordinary craft stays useful without handwork. The feature creates no universal item-quality ladder, no automatic stronger invented recipe and no extra product or resource source. [ASE08](../../maintainers/action-execution-and-skill-expression.md#ase08--real-quality-producing-noncombat-proof) owns native delivery and real packing/transfer qualification; until delivered, the current capacities above are unchanged.
+
 ## Maintained records
 
 - Implementation: [PW03](../../maintainers/parallel-batch-01-playable-week.md#pw03--craftable-containers-and-camp-supplies), beneath INV/PO/BW/AC ownership.
