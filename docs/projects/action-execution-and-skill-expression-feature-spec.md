@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | ND38's feature design is complete; implementation, browser qualification and uncoached player acceptance remain open under ASE. | 2026-10-18 |
+| In progress | ND38's feature design is complete; implementation, browser qualification and uncoached player acceptance remain open under ASE. | 2026-10-19 |
 
 ## Purpose and product promise
 
@@ -40,6 +40,8 @@ Implemented today: contextual mouse selection and click-to-walk, explicit aim/sh
 6. **Cancel** by deliberately moving the pointer into the character's visible cancellation region, by Escape, by leaving attack mode, or by the ordinary visible Cancel control. Escape goes to the current focused popup first under the normal UI ownership rules. Cancel before commitment does not spend ammunition, grant practice credit, start recovery or create damage. Do not cancel when the character walks underneath a stationary mouse pointer. Clearly distinguish interruption from intentional cancellation; no delayed click on pointer loss, modal opening or reconnection.
 7. **Movement continues during preparation** and should make tracking and positioning fun. Preparation occupies the chosen combat handling/defense capability: a character cannot also actively guard or perform another incompatible hand action. This deliberately replaces the bundled world's current rule that movement cancels held aim. An injury or other installed interruption rule may still cancel preparation. The general concurrency restriction is not removed for unrelated actions.
 8. Losing the selected weapon, actor life/control, physical prerequisites or attack permission makes the gesture invalid. A chosen **subject-specific melee attack** also loses its exact target when recognition/reach rules require it. A **point-directed ranged attack** retains the originally observed intended person, when any, only as historical/review evidence; losing that person's sight does not automatically cancel a legitimately admitted shot at the player's chosen point or reveal a new position. Releasing cannot silently choose a new target, weapon or action. Exact lethal/PvP review and the world's collateral warning still apply at the consequential admission boundary; a gesture or preview is not permission.
+
+If an attack first requires exact lethal review, the old pointer gesture ends without starting work or releasing. **Prepare attack** confirms only the reviewed preparation. If the final release needs review, retain that exact point and input choice only in its owning dialog, and require explicit **Release attack** confirmation under current control. Decline/Escape/close cancels the matching unfinished attempt; no old button-up or focus return fires it.
 
 The mode indicator and cursor should communicate **what will happen on a primary click**. Mode toggling is a reversible player-control choice; whether it stays active after a threat, the player switches it off, disconnects or opens a text editor must be deliberate and comprehensible. The first slice holds manual mode until explicitly toggled and auto-enters only on a new qualifying event; it must not repeatedly override a deliberate off choice because an old hostility window remains open.
 
