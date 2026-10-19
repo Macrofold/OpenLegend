@@ -47,6 +47,8 @@ Report affected files, both intentions, the chosen resolution and rationale. If 
 
 Review the complete staged diff against the recorded destination and run checks selected by reconciliation effects. Fix introduced issues; distinguish baseline failures, reused evidence and unrun checks. Do not convert a merge into broader qualification or net-new work.
 
+For relevant database/save/starting-world changes, complete the [configured development-database readiness check](../../rules/verification.md#rebase-verification) before calling the destination ready. Fresh disposable fixtures alone do not establish local startup readiness.
+
 With no net changes, create no empty commit. Report already-integrated content. A previously created matching squash commit may be pushed after its provenance and publication scope are verified; otherwise do not publish unrelated commits for a no-op merge.
 
 ## Commit the full net change

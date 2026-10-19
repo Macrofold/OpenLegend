@@ -649,7 +649,8 @@ export class SqlGameRepository implements GameRepository {
   private async initialize() {
     await this.db.transaction(async () => {
       // Reject old layouts before any table/index initialization can modify them.
-      // AGENTS.md#development-save-policy: no conversion, reset or deletion.
+      // Runtime never converts or deletes incompatible data. An agent may prepare
+      // replacement development state under AGENTS.md#development-save-policy.
       const existing = await this.db
         .prepare("SELECT to_regclass('open_legend.meta') AS relation")
         .get();
@@ -657,7 +658,7 @@ export class SqlGameRepository implements GameRepository {
         const version = await this.db.prepare('SELECT value FROM meta WHERE key=?').get('schema');
         if (version?.['value'] !== DATABASE_SCHEMA)
           throw new Error(
-            'Unsupported database schema. Existing data was not converted or deleted.',
+            `Unsupported database schema: stored ${String(version?.['value'] ?? 'missing')}, required ${DATABASE_SCHEMA}. Existing data was not changed. Follow README.md's development database recovery guidance; do not edit the stored schema marker.`,
           );
       }
       if (
