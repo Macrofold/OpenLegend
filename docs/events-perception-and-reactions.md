@@ -18,7 +18,7 @@ This document owns **stimulus scope, perception-change identity, and reaction in
 
 | Existing owner                                                                     | Responsibility retained                                                                  |
 | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| [Sensory design](../archive/07-technical-architecture/perception-and-attention.md) | Geometry, hearing, recognition/detail, camera/body exposure, sensory overlays            |
+| [Sensory design](../archive/07-technical-architecture/perception-and-attention.md) | Geometry, hearing, recognition/detail, physical sensory exposure and authorized camera presentation, sensory overlays            |
 | [Memory architecture](memory-architecture.md)                                      | Recall, Jev attention, reasoning levels, reflection, forgetting, mental privacy          |
 | [Performance](performance.md)                                                      | Runtime cadence, work budgets, optional I/O, profiling, scale gates                      |
 | [Narration](narration-and-conversations.md)                                        | Conversation lifecycle, story selection, private prose and transcript behavior           |
