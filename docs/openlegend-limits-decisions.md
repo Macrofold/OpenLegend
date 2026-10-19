@@ -1,5 +1,7 @@
 # OpenLegend limits and decisions
 
+**Selected skilled action-execution design (ND38):** [ASE-L01–ASE-L10](limits/action-execution-and-skill-expression.md) inventories proposed timing/gesture/stat, useful pouch-fit, client work, physical contact and competitive-claim restrictions; [ASE01–ASE12](maintainers/action-execution-and-skill-expression.md) owns implementation and qualification. Current mechanics remain unchanged until delivered.
+
 The synthetic decision benchmark’s [DB01 envelopes](limits/ai-execution.md#db01--standalone-synthetic-decision-evaluation) bound standalone native model calls and durable evaluation journals. These are experimental-tool limits; current game cognition settings are unchanged.
 
 Proposed [intelligent individuals and efficient simulation](maintainers/intelligent-simulation.md): [IS-L01–IS-L07](limits/intelligent-simulation.md) maps chosen-work bounds, private evidence, conditional routing, truthful detail, fair service and complete-cost comparisons to their existing limit owners. The selected targets are exact calculated activity, compact expressive background communication and direct numerical psychological reactions with optional prose; this design work changes no runtime allowance or measured capacity.
