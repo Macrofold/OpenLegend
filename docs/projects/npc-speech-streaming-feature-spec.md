@@ -50,6 +50,8 @@ Current account grants, controlled-character access, forgetting, erasure and tim
 
 Clear listeners and the speaker's permitted self account receive the accepted words. A partial listener receives only the stable permitted fragments and coalesced unintelligible gaps. A listener who detects a sound without understanding language receives their permitted sound evidence, never a manufactured quotation. An observer who cannot detect the occurrence receives no speech item.
 
+The installed world selects the lexical disclosure policy. The bundled [partial-word rule and wording](../worlds/base/speech.md) apply equally to atomic and streamed speech; the engine owns shared text preparation and retained evidence.
+
 Partial hearing must remain consistent as text grows. The current whole-utterance word selection cannot be run again on each prefix because it could reveal or hide earlier words. The technical design selects a deterministic, persisted incremental mask with conservative lexical boundaries. Its small additional buffering affects partial listeners only; it does not promise identical display latency across hearing tiers or writing systems. Provider token boundaries never determine what a character heard.
 
 An initially hidden fragment must not remove an originally eligible partial listener from the audience. Attribution, addressing and physical clarity remain separate from whether the current display contains a readable word. Later text cannot reveal hidden counts, offsets, identity or source position through revision numbers, status labels, accessibility text or repeated empty updates.
@@ -70,8 +72,6 @@ The following producers use the same speech publication owner:
 The feature does not turn every generated string into dialogue. Private thoughts, reflections, model reasoning, appraisals, Narrator prose, invention descriptions, World Agent authoring messages and private remote channels retain their separate owners. A public-speech route without progressive qualification can use completed-output admission only when that route's required content checks are implemented and qualified; otherwise public generation is unavailable. It must not advertise early streaming or use a second paid request to manufacture it.
 
 One response can contain more than one utterance and other operations. Each utterance has its own fixed audience snapshot at its own first acceptance. Text cannot jump ahead of an earlier unresolved action or dependency. Such speech waits for that existing admission boundary; progressive display is not permission to claim that an action succeeded. The technical design gives an exact ordered record contract and conservative barrier rule.
-
-The installed world selects the lexical disclosure policy. The bundled [partial-word rule and wording](../worlds/base/speech.md) apply equally to atomic and streamed speech; the engine owns shared text preparation and retained evidence.
 
 ### Word-derived reactions and memory use a closed utterance once
 
@@ -99,7 +99,7 @@ The client receives a newer cumulative permitted body for the same event. Duplic
 
 ### Generation stops after some words
 
-Only saved, approved words remain. Pending text is discarded. The speech occurrence closes interrupted once, and its existing caption receives an ordinary readable ending. Its history stays available subject to the observer's current access. A late provider result may settle the original cost but cannot reopen the utterance or replace its text. A retry requires the existing explicit/new-decision rules; there is no paid automatic repair of already spoken words.
+Only saved, approved words remain. Pending text is discarded. The speech occurrence closes interrupted once, and its existing caption keeps reading time for the accepted words. Its history stays available subject to the observer's current access. A late provider result may settle the original cost but cannot reopen the utterance or replace its text. The existing retry control cannot regenerate an already accepted prefix. Later ordinary speech may create a new decision under normal admission; it does not repair the original attempt.
 
 If nothing has been accepted, no empty world speech event or fake NPC error line is created. Operational status belongs to the originating request and its authorized operator surfaces. A rejection of one output does not halt unrelated native gameplay.
 
