@@ -12,8 +12,12 @@ The complete main-branch tree and 178-subject roster contained no Sea of Thieves
 
 | Subject | Status | Output and remaining work |
 | --- | --- | --- |
-| G179 — Sea of Thieves | In progress | Intended output: `dossiers/sea-of-thieves.md`. Research mechanics, versioned modes, lore, presentation, production, economics, five substantive written reviews, Steam testimony and conditional modding applicability; write, review and commit the full pass. |
-| G180 — ATLAS | Not started | Intended output: `dossiers/atlas.md`. Begin after G179 is reviewed and committed; apply the same full standard, including official-service history, claims/economy, advertised versus observed scale and modding evidence. |
+| G179 — Sea of Thieves | Completed full pass | [Dossier](dossiers/sea-of-thieves.md), completed and reviewed in [`f1e2eb5`](https://github.com/Macrofold/OpenLegend/commit/f1e2eb508d2e7ffd01fa03e8ad8014c56f37e73d). R01–R14 addressed; R15 uncertain after the documented search. Nine constructed cases, five independent reviews, contrasting Steam bodies, native creation and qualified financial scenarios. |
+| G180 — ATLAS | In progress | Intended output: `dossiers/atlas.md`. The G179 completion gate is now closed. Apply the same full standard, including official-service history, claims/economy, advertised versus observed scale and external modding evidence; research, write, review and commit the full pass. |
+
+### Sea of Thieves review evidence
+
+The integrated manuscript and affected navigation were read and reviewed. Independent cross-reviews checked current modes, payment, ownership, persistence and shared-source limits. Corrections include the Custom Seas seasonal-reward exception, a misplaced alliance citation, the Season 18 launch date and duplicated source annotations. All fifteen requirement anchors and twenty-six production source anchors resolve; 481 relative links across the task documents had no missing paths. The roster contains 180 unique numbered rows. The GitHub comparison confirms only seven research documents changed at this gate; both ARK dossiers are unchanged. Approximately 19,250 words include registers and qualifications, not only substantive analysis. No gameplay or runtime testing is claimed.
 
 ## Completion criteria
 
