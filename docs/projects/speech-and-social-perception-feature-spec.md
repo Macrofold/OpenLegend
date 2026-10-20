@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                      | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The selected behavior is designed; implementation and behavioral qualification remain in SPK01–SPK11. | 2026-10-19   |
+| In progress | Speech behavior and module-A evidence integration are designed; implementation and qualification remain open. | 2026-10-20   |
 
 ## Purpose and design status
 
@@ -18,9 +18,11 @@ Use the compact Speak/Act composer, world captions and shared perceived Events h
 
 The [shared feature contract](stealth-awareness-feature-spec.md) and [integration design](stealth-awareness-tech-design.md#shared-contracts) govern recognition, uncertain source association, historical freshness and bodily versus interpreted reactions. Hearing a suspicious sound may make investigating or turning a useful choice; it does not force a reasoning-capable person to turn. Immediate native startle remains separate from understanding a message, choosing a reply or forming a lasting fear. Generic sound production and hearing use the same evidence boundary as speech; source association never upgrades old words, positions or activities.
 
+The [observer-specific perception feature specification](perspective-perception-feature-spec.md), [technical design](perspective-perception-tech-design.md) and [PP tracker](../maintainers/perspective-perception.md) supply the detailed shared evidence and recognition behavior. Speech contributes the listener's words and addressing through that owner. A voice can sound like Ada while remaining a tentative match; a later familiar voice can refresh only its own observation while a previously seen spear remains historical. Two similar voices, an unnamed source and a disappeared person retain meaningful uncertainty through speech history, memory and later conversation. These are designed requirements, not delivered recognition or player-experience evidence.
+
 ## Maintained records
 
-- Implementation, dependencies and remaining acceptance: [Speech and social perception tasks](../maintainers/speech-and-social-perception.md), SPK00–SPK11. This is the sole owner of new task bodies.
+- Implementation, dependencies and remaining acceptance: [Speech and social perception tasks](../maintainers/speech-and-social-perception.md), SPK00–SPK11, with shared evidence/recognition delivery in [PP01–PP07](../maintainers/perspective-perception.md). Each task remains with its named owner.
 - Mechanism and exact source-owner map: [Technical design](speech-and-social-perception-tech-design.md).
 - Bundled native reaction rules: [Animal acoustic policy](../worlds/base/animal-sound-responses.md), including the CTR03–CTR04 implementation dependency.
 - Limits and constraints: [Narration](../limits/narration.md), [Hearing and speech](../limits/hearing-and-speech.md), [Memory](../limits/memory.md), with existing [Cognition](../limits/cognition.md) and [Native work](../limits/native-work.md) bounds reused.
@@ -205,3 +207,4 @@ The scenarios below are the feature acceptance owner. The implementation tracker
 First establish authoritative speech direction, permitted perception and stable recognition so a direct unseen call has one correct meaning everywhere. Then carry that complete experience through shared presentation, memory and source-linked summaries. Replace ordinary membership only when actor-scoped history, decision preparation, preview ownership and independent commitments have complete replacements. Align player/NPC submissions and all visible surfaces with the same meaning and availability rules.
 
 SPK01 first provides the reusable acoustic calculation and complete linguistic evidence. SPK07 widens memoryless receiver eligibility only when its sound-only records, validators, persistence and presentation ship together; no intermediate release may expose an animal audience whose records still require words. SPK08 then connects those cues to the relevant CTR03–CTR04 native controller and selected acoustic policy. It adds no animal cognition or second escape action. Current-format persistence and authority handling cross every stage. Final integrated qualification exercises all scenarios while preserving unrelated character-life, media and broader population gaps. Exact dependencies and exit criteria remain in [SPK](../maintainers/speech-and-social-perception.md).
+
