@@ -1,6 +1,8 @@
 # G180 — ATLAS
 
-**Integrated research checkpoint — 20 October 2026 UTC. Final review is in progress.** The major research sections, eleven worked cases, five independent original reviews, contrasting Steam testimony, commercial evidence and the external-mod investigation are drafted. Remaining work is the complete source-register integration, independent cross-review, source/consistency corrections, navigation and documentation verification. This is not yet the completed pass. See the [scoped ledger](../research-progress-pirate-games-2026-10-20.md) and [full requirements](../research-requirements.md).
+**Completed full research pass — evidence through 20 October 2026 UTC.** R01–R14 and the economics, enjoyment, lore and creation amendment are covered; the external-mod applicability finding is **yes**, with the full R15 investigation included. The dossier contains eleven constructed situations, five independent original written reviews, two supplementary firsthand accounts, contrasting helpful Steam testimony, dated commercial evidence and an OpenLegend interpretation. The [scoped ledger](../research-progress-pirate-games-2026-10-20.md) records completion and review against the [full requirements](../research-requirements.md).
+
+**Read:** [Actions and objects](#r02) · [Progression and loss](#r04) · [Worked situations](#r05) · [People](#r06) · [Presentation](#r07) · [Lore and spoilers](#r08) · [Production](#r09) · [Marketing](#r10) · [Economics](#r11) · [Reception](#r12) · [Creation](#player-creation) · [External mods](#r15) · [OpenLegend interpretation](#r13) · [Coverage and sources](#r14).
 
 **Product capture:** Steam sells ATLAS for US$29.99 as Early Access, first released 22 December 2018. It credits Grapeshot Games and Instinct Games for development, and Grapeshot Games/Snail Games USA for publishing. Steam warns that the last developer update was over three years ago. Store availability does not establish that the advertised official servers are operating. [Steam page, captured 20 October 2026](https://store.steampowered.com/app/834910/ATLAS/)
 
@@ -186,6 +188,8 @@ A Company builds a Ritual Pedestal, lets it accumulate charge, activates Sacrifi
 
 Companies turn collaboration into permissions and property. The documented governance options distinguish Company-owned tames from personally owned animals that others may ride, as well as personal riding rights. Structure ownership and who may snap new pieces, demolish, unlock or use a PIN are configurable. Leaving a Company can therefore have different consequences for an animal or building according to the ownership rule. This matters before donating a valuable tame or building a communal dock. [Governance](https://atlas.fandom.com/wiki/Governance)
 
+The Company interface handles membership promotion, demotion, removal and ownership transfer. Its crew log records events such as construction, destruction, deaths and tames with locations. That record helps a group reconstruct what happened while members were elsewhere, although it does not itself settle disagreements about responsibility or intent. [Company](https://atlas.fandom.com/wiki/Company)
+
 Alliances provide another relationship between Companies, including cooperation and permitted access to claimed places or structures. An ally is not automatically the owner of another group's stores or ships. These systems let real people negotiate trade, defense, passage and division of labour; they do not supply evidence of authored companion loyalty arcs or an NPC romance system. Human political reputation is chiefly a social outcome, while formal permissions determine what a player can actually use. [Alliance](https://atlas.fandom.com/wiki/Alliance)
 
 Territorial rules have changed repeatedly. Claim Flags support island ownership, Company island-point limits and contesting during applicable combat windows; claimable lawless regions later used Claim Towers for an area of control. Neither should be applied to unclaimable lawless areas. The server's actual claim regime determines whether arriving settlers negotiate taxes and access with an owner, compete for a claim or simply find permissible space. [Claim Flag](https://atlas.fandom.com/wiki/Claim_Flag); [Grapeshot's March 2021 explanation of claimable lawless and trade](https://news.xbox.com/en-us/2021/03/19/atlas-journey-from-the-maelstrom/amp/)
@@ -193,6 +197,12 @@ Territorial rules have changed repeatedly. Claim Flags support island ownership,
 Where settlement claims apply, ownership also requires recurring gold in the Claim Flag: exhaustion can forfeit the claim and stored taxes. This converts territorial expansion into an upkeep commitment. Sea Forts add a different commercial control point: the developer's March 2021 account describes taxing shipments through a region or blocking a Company's use of that trade route. Its proposed future NPC shipment piracy should not be silently promoted to a demonstrated feature. [Claim Flag, upkeep](https://atlas.fandom.com/wiki/Claim_Flag); [Developer's dated trade-system account](https://news.xbox.com/en-us/2021/03/19/atlas-journey-from-the-maelstrom/amp/)
 
 NPCs serve bounded roles: vendors offer transactions, hired sailors operate assigned stations, hostile crews and creatures fight, and specialized quest enemies gate rewards. Player organizations supply the continuing diplomacy and betrayal. The researched sources do not establish a settlement population with individually simulated careers, marriages, civic elections or a fully scheduled daily economy. Creature domestication and crew management are substantial systems without implying those additional social simulations. [NPC role catalogue](https://atlas.fandom.com/wiki/NPCs); [Commodities Vendor](https://atlas.fandom.com/wiki/Commodities_Vendor)
+
+### Native communication and community-specific additions
+
+The official conduct notice expressly covers native text and voice chat, as well as messages conveyed through signs and paintings. Those channels are separate from an external community's communication policy. [Historical official conduct notice, relevant indexed announcement body](https://store.steampowered.com/news/posts/?appids=834910&enddate=1592250616&feed=steam_community_announcements)
+
+Patch 560.3, released on 30 May 2023, reports restoring proximity voice chat while explicitly noting that cross-platform chat is disabled. In that context, cross-platform play should not be treated as a guarantee of cross-platform voice support. This pass did not verify current range, channel-selection or keybinding behavior. Darkside's separate Provo requirement in R15 is a community-specific arrangement. [Official patch 560.3](https://steamcommunity.com/games/834910/announcements/detail/3685678897910144247), with the full relevant body read in the [official Steam archive](https://store.steampowered.com/news/posts/?enddate=1685466940&feed=steam_community_announcements)
 
 <a id="r07"></a>
 
@@ -216,7 +226,7 @@ The same artist separately documents vegetation for the **Low Desert** and **Wes
 
 His **Underwater Trench** page adds a distinct submerged-environment asset contribution and names the extended sculpting/texturing toolchain; it credits another contributor's in-game photographs. A trench asset portfolio does not document water simulation, buoyancy, underwater visibility tuning or the renderer's implementation. No verified primary engineering account of those algorithms was recovered in this pass. [AP11](#ap11)
 
-**Interpretation:** The supported presentation finding is a world assembled from environment-specific asset families, with strong content/tool inheritance and large construction surfaces. We should not infer an art director's intended palette, animation philosophy or silhouette rules from software names. The native ship and building systems in R03/R08 explain what players arrange; the public artist credits explain part of how the supplied visual vocabulary was produced. Detailed art-direction intent, rigging conventions, lighting budgets and character-animation production remain unknown.
+**Interpretation:** The supported presentation finding is a world assembled from environment-specific asset families, with strong content/tool inheritance and large construction surfaces. We should not infer an art director's intended palette, animation philosophy or silhouette rules from software names. The native ship and building systems in R03 explain what players arrange; the public artist credits explain part of how the supplied visual vocabulary was produced. Detailed art-direction intent, rigging conventions, lighting budgets and character-animation production remain unknown.
 
 ### Accessibility evidence is narrower than a current settings audit
 
@@ -343,7 +353,7 @@ The appeal of this promise is broader than steering an already supplied ship. A 
 | ATLAS project costs and current product result | 2025 financial year; 10-K filed **13 March 2026** | Product budget, hosting/support allocation, lifetime net receipts and profit **not disclosed in material recovered** | Primary filing searched; ATLAS remains named in portfolio | Company and ARK metrics cannot supply a game-level allocation | Sustainability cannot be quantified; portfolio inclusion does not verify staffed service. [Snail 10-K](https://www.sec.gov/Archives/edgar/data/1886894/000149315226011617/form10-k.htm) |
 | Independent ATLAS low/base/high and all-platform result | Evidence through **20 October 2026** | **Not defensibly estimable** | Research boundary after publisher and model searches | Compatible unit coverage, realized price history, refunds, taxes and contract/cost allocations missing | Do not manufacture confidence bounds from arbitrary multipliers or equate gross consumer spending with project return. |
 
-The unit-slide text includes the complete cutoff, and its column ordering was cross-checked against a full reproduced text version. The unavailable visual remains a retrieval limitation. Neither the dated milestone nor a later Steam model supplies a safely compatible, all-platform sales series. [Primary indexed presentation](https://investor.snail.com/static-files/17d8af2a-624b-4430-9a50-8e3cec9cfdd7).
+The complete indexed unit-slide text includes its cutoff; the unavailable visual remains a retrieval limitation. Neither the dated milestone nor a later Steam model supplies a safely compatible, all-platform sales series. [Primary indexed presentation](https://investor.snail.com/static-files/17d8af2a-624b-4430-9a50-8e3cec9cfdd7).
 
 ### Third-party Steam estimation and the limits of an independent model
 
@@ -377,17 +387,27 @@ An October 2024 Steam discussion reports official servers had shut down more tha
 
 The five original reviews below concern an Early Access product; they are not five final 1.0 verdicts. Their disagreement over bug tolerance, construction friction and future promise is more informative than an average score. PCWorld and GamesRadar+ are retained as supplementary impressions, with their original article types preserved.
 
-### The Drastik Measure — Connick, review, 12 February 2019
+### 1. The Drastik Measure — Connick, review, 12 February 2019
 
 The reviewer describes an appealing variety of exploration, construction, taming and roleplay, alongside substantial technical failures. Particularly consequential reported bugs left the player floating in a terrainless region or removed the ship when crossing a grid boundary. The article values contextual sound but notes that music can interfere with spoken coordination. Its price criticism is partly a judgment about similarity to ARK and existing customers' expectations; it is not evidence that ATLAS was technically just a copied product. This review concerns the February 2019 Early Access build and cannot establish that those exact faults remain in the current client. [Original review](https://www.thedrastikmeasure.com/2019/02/12/atlas-review/).
 
-### Thumb Culture — Kevin, PC review, 21 January 2019
+### 2. Thumb Culture — Kevin, PC review, 21 January 2019
 
 This first-person account makes onboarding and reliability central. The writer could not finish reading timed instructional text, struggled to discover essential controls and repeatedly encountered freezes or crashes. A disappointing voyage ended with death after returning to a raft without the expected supplies. The reviewer saw the possibility of farming, building an empire and supplying other players, but distinguished that imagined future from a game that was currently dependable enough to recommend. The lack of a confident assessment of the full underlying design is itself disclosed in the article; its title does not turn limited progress into an exhaustive endgame test. [Original review](https://www.thumbculture.co.uk/atlas-review-yo-ho-ho-and-a-barrel-of-rum).
 
-### Opium Pulses — CubertZ, review, 24 May 2019; 5/10
+### 3. Opium Pulses — CubertZ, review, 24 May 2019; 5/10
 
 This mixed but hopeful review identifies building a ship from individual pieces as its favorite activity: accumulated gathering becomes a visible structure, then a vessel the player can color and sail. The writer also enjoyed skill branches and naval fighting, while finding repeated acquisition of the same materials boring and some taming incongruous with the pirate premise. The recommendation is explicitly conditional on tolerance for bugs and faith in future improvement. It is evidence of actual present pleasures plus optimism, not evidence that the hoped-for future arrived. Its approximate world-size calculations and historical server descriptions are not used as current mechanical authority. [Original review](https://www.opiumpulses.com/article/301/atlas-review).
+
+### 4. Roleplay Inn — TheInnkeeper, 11 June 2019; original review, 4/5 ales
+
+This favourable account values custom vessels as floating homes and considers a discounted purchase worthwhile despite login trouble, falling through terrain, equipment loss and awkward ladders. Its judgment is conditional: someone who loves the core activities may absorb these costs, while a lukewarm player will not. It distinguishes relatively cheap routine death from valuable equipment loss. Its nutrition-reset observation is historical; [R03](#r03) gives the later rules. [Original review](https://www.roleplayinn.com/atlas-mmo-review/).
+
+### 5. Bluntly Honest Reviews — Richard Robins; published 25 January 2023, maintained passages refer to February 2025; original Early Access review
+
+The article values exploration, scenery, customization and unofficial communities while criticizing design direction and prolonged uncertainty. Its author especially regrets changes that made obtaining ships feel less personally creative, and recommends only a suitably discounted purchase. The page mixes an older publication date with later observations; its February 2025 passages are not a 2026 field report. Its official-server claim is secondary testimony. Personal PC-performance observations are not reproduced as benchmark results, and unsupported majority-preference assertions are excluded. This fifth original review has substantive value with explicit provenance limits. [Original review](https://bluntlyhonestreviews.com/is-atlas-worth-playing/).
+
+### Supplementary firsthand impressions
 
 ### PCWorld — substantive review impressions, 4 January 2019
 
@@ -396,14 +416,6 @@ Leif Johnson's long firsthand account follows a small crew through resource scar
 ### GamesRadar+ — Xbox hands-on preview, 20 November 2019
 
 Mark Delaney approached ATLAS after extensive Sea of Thieves play. He found its customization and persistent-world possibility attractive, but menus and controls difficult enough that early sessions became time spent watching guides. Frame-rate drops, delayed menus and problems joining crews undermined the intended cooperative experience. He distinguished deeper construction and character specialization from Sea of Thieves' approach, rather than treating the games as interchangeable. His eventual judgment was to wait for better onboarding and performance. This is an explicitly labeled hands-on preview of the Xbox Game Preview product, not a fifth full-release verdict. [Original GamesRadar+ preview](https://www.gamesradar.com/atlas-preview-can-grapeshot-games-pirate-mmo-dethrone-sea-of-thieves-for-swashbuckler-supremacy/).
-
-### Roleplay Inn — TheInnkeeper, 11 June 2019; original review, 4/5 ales
-
-This favourable account values custom vessels as floating homes and considers a discounted purchase worthwhile despite login trouble, falling through terrain, equipment loss and awkward ladders. Its judgment is conditional: someone who loves the core activities may absorb these costs, while a lukewarm player will not. It distinguishes relatively cheap routine death from valuable equipment loss. The historical nutrition-reset observation is not a current rule after later patches. [Original review](https://www.roleplayinn.com/atlas-mmo-review/).
-
-### Bluntly Honest Reviews — Richard Robins; published 25 January 2023, maintained passages refer to February 2025; original Early Access review
-
-The article values exploration, scenery, customization and unofficial communities while criticizing design direction and prolonged uncertainty. Its author especially regrets changes that made obtaining ships feel less personally creative, and recommends only a suitably discounted purchase. The page mixes an older publication date with later observations; its February 2025 passages are not a 2026 field report. Its official-server claim is secondary testimony. Personal PC-performance observations are not reproduced as benchmark results, and unsupported majority-preference assertions are excluded. This fifth original review has substantive value with explicit provenance limits. [Original review](https://bluntlyhonestreviews.com/is-atlas-worth-playing/).
 
 ### Steam player testimony: selected bodies, not prevalence
 
@@ -451,11 +463,11 @@ The developer's **June 2023 Dev Kit 560** notice says the package was updated th
 
 | Layer | What is created | Where its limits lie |
 |---|---|---|
-| Native play | A building or vessel assembled and operated within the game's existing rules | Material costs, skills, ship/component rules, ownership and world persistence; the detailed native sequence is in R03/R08 |
+| Native play | A building or vessel assembled and operated within the game's existing rules | Material costs, skills, ship/component rules, ownership and world persistence; the detailed native sequence is in R03/R04 |
 | Dev Kit content | New or altered assets, item/skill definitions, creatures, maps or broader conversions | Editor-version compatibility, package references and each mod's installation requirements |
 | Grid and community operation | An arrangement of regions and islands, deployment configuration, local rules and supporting services | Server resources, coordinate/spawn consistency, updates, restoration and moderation |
 
-This table is a synthesis of the tools above and the dossier's native-system research. The layers can cooperate, but their outputs are not interchangeable. A player-designed ship is not automatically a distributable Workshop hull; a modded hull still needs players to build and operate it; a server configuration can transform pace and access without adding a new mesh. Native Ship in a Bottle persistence is covered in R04/R08 and should not be mistaken for exporting a Dev Kit project.
+This table is a synthesis of the tools above and the dossier's native-system research. The layers can cooperate, but their outputs are not interchangeable. A player-designed ship is not automatically a distributable Workshop hull; a modded hull still needs players to build and operate it; a server configuration can transform pace and access without adding a new mesh. Native Ship in a Bottle persistence is covered in R04/R05 and should not be mistaken for exporting a Dev Kit project.
 
 ### Worked creation-to-play path
 
@@ -479,19 +491,19 @@ These are research interpretations, not accepted features, implementation instru
 
 ### A vessel can be both a tool and a record of its owners' decisions
 
-The construction and ship systems in [R02–R03](#r02) connect an object's appearance, capabilities, cargo and vulnerability. A player has reasons to care about a vessel before a battle begins because choices and effort have accumulated inside it. A hypothetical OpenLegend expedition wagon could carry the same kind of significance: who built it, what it can carry, which route it can survive and what the group chose to leave behind. The useful pattern is an object whose history changes the player's next decision.
+[R02–R03](#r02) supply the reference cases. **Interpretation:** a hypothetical OpenLegend expedition wagon could gain significance through who built it, what it can carry, which route it can survive and what the group chose to leave behind. The useful pattern to study is an object whose history changes the player's next decision.
 
 The danger is making experimentation too expensive. If discovering that a design is inconvenient means discarding hours of routine collection, players may seek a prescribed optimal design instead of trying their own. A possible study could compare replacing one component with rebuilding the whole object. Neither unlimited free reconstruction nor irreversible construction follows automatically from the desire for meaningful ownership. The cost should be legible before the player commits and should preserve an interesting recovery choice.
 
 ### Resource variety matters when it changes a journey
 
-The blueprint and supply rules in [R03](#r03) make some production depend on obtaining different materials. This can connect a workshop to exploration, transport and exchange. A possible OpenLegend example is a craftsperson who can make a useful ordinary tool locally, while a more specialized commission gives an expedition a concrete reason to visit another place. What matters is the new choice of route, trading partner or risk; simply adding differently named ingredients does not supply that choice.
+See [R03](#r03) for the reference systems. A possible OpenLegend example is a craftsperson who can make a useful ordinary tool locally, while a more specialized commission gives an expedition a concrete reason to visit another place. What matters is the new choice of route, trading partner or risk; simply adding differently named ingredients does not supply that choice.
 
 The alternative is to let knowledge, technique or a relationship unlock a different result using familiar materials. That may fit a world better than a globally distributed collection checklist. Resource specificity can also exclude newcomers from cooperation if all valuable work requires distant supplies. The comparison should ask whether a beginning participant can contribute something immediately and whether the advanced recipe produces a new use rather than only a larger number.
 
 ### Paid crew demonstrate useful assistance with clear limits
 
-The NPC sailors described in [R06](#r06) make it possible for fewer humans to operate more stations, while their wages, food and assignments create continuing decisions. The transferable idea is bounded assistance: a character performs a recognizable task and the player can understand why that task stops. It does not demonstrate a general society of independently motivated people, nor prove that every routine job should require an AI-generated decision.
+See [R06](#r06) for the reference's social boundaries. A possible OpenLegend study would examine bounded assistance: a character performs a recognizable task and the player can understand why that task stops. The study need not assume a generally simulated society or require an AI-generated decision for every routine job.
 
 For a hypothetical OpenLegend companion helping with travel, useful questions include whether the player can see what the companion is doing, what supplies the work consumes and what happens when the companion cannot continue. A fixed arrangement can be dependable but impersonal; richer preferences can make the companion distinctive but harder to predict and support. The research leaves that choice open. A crew member who merely hides busywork and a companion who adds a meaningful relationship serve different purposes.
 
@@ -626,7 +638,7 @@ For OpenLegend, these remain research observations subject to its current root p
 | [R03 — Objects and combinations](#r03) | Tools, blueprints, material varieties, equipment, stations, classic and modular vessels, crew provision and named ship roles |
 | [R04 — Economy, progression and time](#r04) | Gold sources and sinks, trade versus shops, upkeep, automation, personal progression, death, ship loss, logout, decay and reset boundaries |
 | [R05 — Worked situations](#r05) | Eleven constructed cases spanning preparation, crafting, taming, cargo sacrifice, repairs, crew, trade, treasure, quest handoffs, preservation and rituals |
-| [R06 — People and social systems](#r06) | Companies, ownership and access, alliances, claim regimes, hired NPC labor and the limits of simulated individuality |
+| [R06 — People and social systems](#r06) | Companies, ownership and access, alliances, claim regimes, hired NPC labor, communication boundaries and the limits of simulated individuality |
 | [R07 — Presentation and feel](#r07) | Credited environmental asset work, camera/interface evidence, musical publication and playable instruments, feedback fixes and accessibility limits |
 | [R08 — Narrative and lore](#r08) | The Heart, Sundering and Xevos; Pathfinders, Keepers, quest chains, rejuvenation, rituals, guarded knowledge and collective reconstruction; spoilers and unshipped narrative promises distinguished |
 | [R09 — Production](#r09) | Origins and practitioner responsibilities, iteration, tools, regional-world configuration and announced versus demonstrated scale |
@@ -661,7 +673,6 @@ No executable, mod, host configuration or save was installed or tested. No asset
 
 | Source(s) | Date / type and access | What the source supports; limitation |
 | --- | --- | --- |
-| [Steam store](https://store.steampowered.com/app/834910/ATLAS/) | Current store, primary; body read | Mode/promise context; commercial details registered by lead. |
 | [Season 13](https://store.steampowered.com/news/app/834910/view/3665415235990518032) | 22 June 2023, primary; body via official announcement index | Final announced wipe/configuration; present service availability is separately investigated. |
 | [557.6](https://store.steampowered.com/news/app/834910/view/3648517227974037574) | 14 March 2023 announcement; primary body via official index | Nutrition, map visibility and cave changes. |
 | [Food](https://atlas.fandom.com/wiki/Food), [Water](https://atlas.fandom.com/wiki/Water), [Environmental](https://atlas.fandom.com/wiki/Environmental) | Undated community manuals; indexed bodies | Food families, water, weather; older vitamin damage superseded, environmental numbers not adopted. |
@@ -692,12 +703,11 @@ No executable, mod, host configuration or save was installed or tested. No asset
 | [Fishing Net](https://atlas.fandom.com/wiki/Fishing_Net), [Accordion](https://atlas.fandom.com/wiki/Accordion) | Undated community manuals; indexed bodies | Two native minigames and their rewards. |
 | [Simple Bed](https://atlas.fandom.com/wiki/Simple_Bed) | Undated community manual; indexed body | Respawn/fast-travel distinction; inventory stays behind. |
 | [Gold Coin](https://atlas.fandom.com/wiki/Gold_Coin), [Market](https://atlas.fandom.com/wiki/Market), [Player Shop](https://atlas.fandom.com/wiki/Player_Shop) | Undated community economic manuals; indexed bodies | Currency, trade matching and direct listing; no verified current global price series. |
-| [551.2 mirror](https://games-manuals.com/updates-patchnotes/atlas-834910/patch-5512---season-10-patch-and-wipe-4589754330729672191) | 21 September 2022; primary copy, body read | Bottle system. |
-| [551.2 official destination](https://steamcommunity.com/ogg/834910/announcements/detail/3276955039239979552) | Official redirect observed; direct fetch unavailable, body read in Steam index | Same article as preceding mirror. |
+| [551.2 official article](https://steamcommunity.com/ogg/834910/announcements/detail/3276955039239979552) / [mirror](https://games-manuals.com/updates-patchnotes/atlas-834910/patch-5512---season-10-patch-and-wipe-4589754330729672191) | 21 September 2022; primary body read via archive and mirror | Bottle system and controller fixes; one underlying article. |
 | [Gamepressure death guide](https://www.gamepressure.com/atlas/what-happens-when-the-character-dies/z6bef9) | 23 February 2019; original play guide, full body read | Historical death baseline; Freeport exception not revalidated for current private worlds. |
 | [555.2](https://devtrackers.gg/atlas/p/22149084-patch-555-2-season-11-1-patch) | 16 December 2022 announcement, deployment planned for 19 December; primary mirror read | Dated PvE tame-claim timer. |
 | [Server Configuration](https://atlas.fandom.com/wiki/Server_Configuration) | Community configuration reference, dated origin 2019; indexed relevant body | Host-controlled settings; not an audit of any particular server. |
-| [Governance](https://atlas.fandom.com/wiki/Governance), [Alliance](https://atlas.fandom.com/wiki/Alliance), [Claim Flag](https://atlas.fandom.com/wiki/Claim_Flag) | Undated community manuals; indexed bodies | Ownership, cooperation, claim upkeep; historical regimes differ from lawless configuration. |
+| [Company](https://atlas.fandom.com/wiki/Company), [Governance](https://atlas.fandom.com/wiki/Governance), [Alliance](https://atlas.fandom.com/wiki/Alliance), [Claim Flag](https://atlas.fandom.com/wiki/Claim_Flag) | Undated community manuals; indexed bodies | Membership, ownership, cooperation and claim upkeep; historical regimes differ from lawless configuration. |
 | [Journey from the Maelstrom](https://news.xbox.com/en-us/2021/03/19/atlas-journey-from-the-maelstrom/amp/) | 19 March 2021; developer account on Xbox Wire, body read | Claim towers and trade control; future shipment mechanics remain promises. |
 | [NPCs](https://atlas.fandom.com/wiki/NPCs), [Commodities Vendor](https://atlas.fandom.com/wiki/Commodities_Vendor) | Undated community catalogue/manual; indexed bodies | Bounded NPC roles and transactions. |
 | [Power Stone](https://atlas.fandom.com/wiki/Power_Stone), [Kekada](https://atlas.fandom.com/wiki/Kekada) | Undated community quest/creature manuals; indexed bodies | Collection and Keeper identities; obsolete coordinates excluded. |
@@ -705,10 +715,10 @@ No executable, mod, host configuration or save was installed or tested. No asset
 | [Kraken](https://atlas.fandom.com/wiki/Kraken), [Journey of the Gods](https://atlas.fandom.com/wiki/Journey_of_The_Gods), [Quests](https://atlas.fandom.com/wiki/Quests) | Undated community quest manuals; indexed bodies and patch history | Boss phases, progression and unlocks; map and variant prerequisites matter. |
 | [Age](https://atlas.fandom.com/wiki/Age), [Fountain of Youth](https://atlas.fandom.com/wiki/Fountain_of_Youth), [18.84](https://atlas.fandom.com/wiki/18.84) | Community manuals / patch transcription; 18.84 dated 16 February 2019; indexed bodies | Rejuvenation and removal of debuff; old location rotation not reused. |
 | [Ritual Pedestal](https://atlas.fandom.com/wiki/Ritual_Pedestal), [Song Stone](https://atlas.fandom.com/wiki/Army_of_the_Damned_Song_Stone) | Undated community manuals; indexed bodies | Material magic and vulnerable knowledge; timers may be modified. |
-| [Great Temple](https://atlas.fandom.com/wiki/Great_Temple) | Community manual citing 536.3, January 2022; indexed body | Construction and historical reward intent; carryover not reproduced. |
+| [Great Temple](https://atlas.fandom.com/wiki/Great_Temple) | Undated community manual citing 536.3; indexed body | Construction and historical reward intent; carryover not reproduced. |
 | [Industrial Lab](https://atlas.fandom.com/wiki/Industrial_Lab), [Brimstone](https://atlas.fandom.com/wiki/Brimstone), [Industrial Generator](https://atlas.fandom.com/wiki/Industrial_Generator) | Undated community manuals; indexed bodies | Technology, special-resource sites and local conversions; version-sensitive placement. |
-
-**Coverage boundary:** R01–R06 and R08 are covered here; R05 has eleven constructed situations. The integrated dossier supplies the current-service identity check, visual/audio/production, commercial/reception, distribution/governance, R13 synthesis and R15 external-creation study. Native construction here is distinct from that modding investigation. Remaining uncertainty is stated at the relevant rule, particularly current custom-map caps, historical ownership settings, exact decay/timing overrides and the delivery status of proposed narrative systems.
+| [Official conduct notice](https://store.steampowered.com/news/posts/?appids=834910&enddate=1592250616&feed=steam_community_announcements) | Historical primary announcement; relevant indexed body read | Names text, voice and authored signs/paintings; not a current settings audit. |
+| [Patch 560.3](https://steamcommunity.com/games/834910/announcements/detail/3685678897910144247) / [official archive](https://store.steampowered.com/news/posts/?enddate=1685466940&feed=steam_community_announcements) | 30 May 2023; primary archive body read, canonical redirect observed | Proximity-voice fix and cross-platform restriction; no client test. |
 
 ### Presentation, production and creation sources
 
@@ -757,7 +767,6 @@ All sources were accessed **20 October 2026**. Original-body reading includes in
 | [PC Gamer launch delay](https://www.pcgamer.com/thousands-are-watching-twitch-streamers-not-play-atlas-because-its-been-delayed-again/) | 21 Dec 2018; contemporary body read | Scheduling and observed attention; no conversion evidence. |
 | [PCGamesN launch](https://www.pcgamesn.com/atlas/atlas-launch-delay) | 22 Dec 2018; indexed original body | Working-build audience and advertised scale. |
 | [Xbox September announcement](https://news.xbox.com/en-us/2019/09/24/inside-xbox-news-recap-september-2019-2/) | 24 Sep 2019; primary body read | Preview date, cross-play and roadmap intentions. |
-| [Xbox developer launch article](https://news.xbox.com/en-us/2019/10/09/the-future-of-atlas-xbox-game-preview-xbox-one/) | 9 Oct 2019; first-party body | Positioning and feedback channels. |
 | [Captain's Log 19](https://store.steampowered.com/news/posts/?enddate=1548785263&feed=steam_community_announcements) | 29 Jan 2019; official ATLAS archive section read | Developer acknowledgement of group-size access problems. |
 | [Snail S-1/A](https://investor.snail.com/static-files/fee52939-e238-4bfa-b0d8-d8eab4b5343e) | 4 Nov 2022; primary PDF text | Impairment and revenue changes, not project profit. |
 | [Snail investor presentation](https://investor.snail.com/static-files/17d8af2a-624b-4430-9a50-8e3cec9cfdd7) | Dec 2023; complete indexed slide 16 | Dated publisher unit milestone; image retrieval unavailable. |
@@ -767,7 +776,6 @@ All sources were accessed **20 October 2026**. Original-body reading includes in
 | [Steam listing](https://store.steampowered.com/app/834910/ATLAS/) | Current primary listing | Shared identity source; not a service-health test. |
 | [July 2019 promotion](https://store.steampowered.com/news/posts/?appids=834910&enddate=1576803777&feed=steam_community_announcements) | Official indexed archive | Discount, no measured acquisition effect. |
 | [June 2020 map notice](https://store.steampowered.com/news/posts/?appids=834910&enddate=1592512208&feed=steam_community_announcements) | 15 Jun 2020; official indexed body | Particular regional consolidation and reset. |
-| [Season 13](https://store.steampowered.com/news/app/834910/view/3665415235990518032) | 22 Jun 2023; shared primary mechanics source | Dated official reset and private-save boundary. |
 | [Steam closure discussion](https://steamcommunity.com/app/834910/discussions/0/4691153445993825630/?l=danish) | Oct 2024; discussion body | Community closure testimony, not primary confirmation. |
 | [Drastik Measure](https://www.thedrastikmeasure.com/2019/02/12/atlas-review/) | 12 Feb 2019; original review read | Broad appeal and reported technical losses. |
 | [Thumb Culture](https://www.thumbculture.co.uk/atlas-review-yo-ho-ho-and-a-barrel-of-rum) | 21 Jan 2019; original review read | Onboarding; limited endgame reach explicitly retained. |
