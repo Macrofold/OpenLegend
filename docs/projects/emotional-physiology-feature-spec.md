@@ -514,7 +514,7 @@ The surprise designer consumes this module's native shock cause/result, body app
 
 The producer supplies exact committed evidence and target life under the shared contract; it does not assign private fear or create duplicate bodily onsets through outcome wrappers. The body owner applies an installed native rule. Effective fear is read-only and scoped to the later eligible mechanical check. The same surprise can have different later interpretations, and the native animal path never depends on a human-like memory or model request.
 
-The provisional duration remains authored in normal-play time. Fear does not automatically slow running or choose an escape. Existing ranged danger/return-fire and other overlapping penalties must be reconciled by their actual stat owners so the same emotional effect is not applied twice.
+The provisional duration remains authored in normal-play time. Fear does not automatically slow running or choose an escape. The selected base ranged conditionAdjustment: none remains. The optional danger-or-return heuristic reads the target's returning-threat work or applicable animal response episode; it is not a fear measurement. Installing a generalized fear mapping excludes that alternate heuristic under [EP-C06](emotional-physiology-tech-design.md#ep-c06--complete-effective-fear-and-parameter-resolution). A future factor requires a distinct supported physical meaning and an explicit reviewed interaction before it can be combined; the selected integration has no unresolved stacking choice.
 
 ### Integration agent contract
 

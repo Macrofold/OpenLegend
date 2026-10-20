@@ -101,7 +101,7 @@ EP01 supplies compatible definitions and records. EP02–EP04 can then advance a
 
 **Status: Not started.** Dependencies: EP01–EP05 as applicable; existing world manifest/body/trait/personal context owners. Contract: feature specification, EP-C10 and the canonical base psychological policy.
 
-- [ ] Install selected fear/anger review and mechanical mapping, joy and bodily startle profiles; preserve existing source-linked and authored grief, adding independent review only to the explicitly revised source-linked pin, and explicit composure binding with all labels/scales/units sourced from the installed definitions.
+- [ ] Install review policies for fear/anger, mechanical mapping for fear, joy and native startle profiles, and the explicit composure binding. Preserve existing source-linked and authored grief, adding independent review only to the explicitly revised source-linked pin. Source all labels/scales/units from the installed definitions.
 - [ ] Keep courage, sensitivity, temperament, persistence, expression and coping as distinct contextual influences; no personality-word parsing or automatic action script.
 - [ ] Supply personally relevant current feelings, uncertainty, current body/work and exact changed evidence without hidden safety knowledge or a whole action catalog.
 - [ ] Integrate permitted compact owner feedback and useful action consequences through existing presentation. Do not add a universal emotion/needs HUD or infer private feeling from expression.

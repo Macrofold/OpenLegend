@@ -144,6 +144,26 @@ Reaction identity compares the complete canonical tuple of original cause, react
 
 Fresh native contact admission is synchronous because the enclosing producer already proves one new still-unconsumed outcome: a melee attempt transitions out of its strike stage, a live flight commits its terminal contact, or an original acquisition/exposure transition is consumed. Allocate the reaction and its receipt in that same authoritative transition. A later duplicate/retry cannot claim that fresh stage again. For old or externally prepared deliveries, add an exact bounded `contributionOutcomes` lookup analogous to `appraisalOutcomes`; the storage owner prepares the requested identities, full operation bodies and a scoped completeness proof before native publication. Neither path scans all historical contributions or performs SQL at impact.
 
+### Exact instance and definition branches
+
+The native-body instance and definition branches are deliberately strict:
+
+| Field/binding | Canonical bodily contract |
+| --- | --- |
+| Instance discriminator | `contribution.origin.kind = 'native-body-cause'`; current independent source contributions use `source-bound`. Native singleton statuses retain no independent contribution. Update current writers/readers together; omission is not a compatibility alias. |
+| Source | `sourceId: null` only on the bodily branch. Every existing singleton/source-bound branch retains required `sourceId: string`. Never weaken all status sources into a generic optional field. |
+| Recipient | Keep existing `actionTargetId: string`, exactly equal to the containing entity ID. `origin.targetLife` is the exact existing physical-life reference and must match that entity. Add no independently writable target ID. |
+| Admitted outcome | Immutable onset receipt contains the full canonical cause/operation identity, definition/body/modifier/clock pins, captured modifier values, onset simulation time, resolved peak, resolved normal duration, admitted simulation-seconds-per-normal-second and curve/ending. Existing revision/state fields track later native ending separately. |
+| Fixed lifetime | Keep `lifetime = {kind: 'fixed', expiresAt}`. For an admitted effect, expiry equals onsetSim + resolvedDurationNormalSeconds × admitted clock conversion. The definition's durationNormalSeconds is the base for the pinned formula, not the old source-bound constant-seconds ceiling. |
+| No-effect outcome | Inactive canonical row, exact terminal no-effect receipt, no active curve or scheduled work. If the current contribution lifetime field remains required, use fixed expiry equal to onsetSim for this explicitly validated terminal branch. |
+| Definition family | Separate finite native-body contribution validation: non-occupying, producer-admitted and limited to the selected bodily/channel operation. No generic actions, activation/automatic-deactivation predicate, automatic activation, ordinary refresh/reactivation or write to a fear attribute. |
+| Definition references | Use `$subject` and already supported world/clock forms. Reject `$source` and independently bound `$actionTarget` predicates/operations. Do not introduce a new world entity-reference form to express existing clock/world facts. |
+| Applicability versus continuation | Onset resolves receptor/body/condition/trait applicability once. Continuation checks exact life and fixed ending. Generic later requires reevaluation or changed trait/condition text cannot cancel, reshape or restart the fixed reaction. |
+
+Update `status-effects.ts:crossStatusReferences` as well as `effectBindings` and `status-capabilities.ts:sourceBindings`. Bodily bindings expose the real subject/canonical recipient without a source; neither null nor an original historical actor ID becomes a required live dependency. The generic source-bound attach/refresh/remove route refuses a bodily instance. Body-effectiveness checks exclude the wrong/ended life immediately, rather than waiting for cleanup.
+
+The current source-bound admittedLifetime comparison against now plus definition seconds is not valid for this new family. Validate saved bodily peak/duration against **frozen captured inputs and their pinned formula**, never current traits, playback speed or a replacement policy. One base-three-second profile can lawfully produce 3, 1.5 or 2.4 normal seconds under the selected neutral, high-composure or hare inputs; those are 180, 90 or 144 simulation seconds at the base clock. The admitted receipt and lifetime must agree. No second base-duration ceiling or refreshed anchor is added.
+
 ### Stacking and native consequences
 
 Genuinely separate abrupt occurrences can create separate short contributions. The same burst's repeated publication, the same contact's damage event and its personal memory cannot. New causes neither add intensity into a total nor extend an older record: their current applicable values participate in EP-C06's maximum. A fresh strong cause can therefore dominate a fading one, while duplicate delivery has no mechanical effect. A resolved body with no reaction profile contributes nothing; a memoryless reactive body remains fully eligible.
@@ -313,7 +333,7 @@ Startle reaching zero is physical recovery, not proof that the person feels safe
 
 ### Complete bounded preparation and eight finite choices
 
-Select eligible metadata from the existing actor-scoped appraisal index **before** support hydration/formatting. Sort using installed review urgency, oldest eligibility time and stable canonical appraisal identity, preserving shared ticket age. There are three separate new review envelopes:
+Select eligible metadata from the existing actor-scoped appraisal index **before** support hydration/formatting. Sort by oldest eligible simulation time, then stable canonical appraisal identity; the existing actor ticket retains its independent native ordering and aging. Adaptive band intervals make intense episodes eligible sooner without an undeclared per-feeling priority score. There are three separate new review envelopes:
 
 | Bound | Selected meaning |
 | --- | --- |
@@ -343,7 +363,7 @@ Return one result for every **offered** review handle in the dedicated schema. E
 
 ### Permitted snapshot and relevant validity
 
-Prepare the exact current actor identity, physical-life/control authority, installed definitions, accepted personal values/self-understanding relevant to this question, current applicable bodily condition facts, selected feelings' captured current values/lifetimes, original causes and complete supporting/contrary evidence. Include genuine uncertainty and acquisition/source time. A remembered allegation is testimony, a facial presentation is observed conduct, a chosen physical act is an action; none proves anyone's private emotion or intent. No model controls another character's private appraisal from its own output.
+Prepare the exact current actor identity, physical-life/control authority, installed definitions and **complete accepted About me snapshot** under the existing CG09 requirement. Reuse the cached exact accepted snapshot and its revision; emotional review does not introduce an identity excerpt, summary or biography truncation policy. Also supply relevant permitted values/relationships from their existing owners, current applicable bodily condition facts, selected feelings' captured current values/lifetimes, original causes and complete supporting/contrary evidence. If required identity and evidence cannot fit the existing request/byte envelope, the review is incomplete before dispatch. Include genuine uncertainty and acquisition/source time. A remembered allegation is testimony, a facial presentation is observed conduct, a chosen physical act is an action; none proves anyone's private emotion or intent. No model controls another character's private appraisal from its own output.
 
 The review operation receives relevant current work and personally understood alternatives only as context for meaning. It does not receive a complete action menu merely to be emotionally aware that it is travelling or caring for a companion. Harmless progress, elapsed action ticks, unchanged goals and unrelated conversation bookkeeping do not stale its result. Reaching actual acquired safety, a relevant new blow, death/life change, a meaningful bodily transition, corrected evidence or changed private authority can stale it. Bind the specific relevant dependencies instead of comparing every world/actor field or every appraisal container object.
 
@@ -480,7 +500,7 @@ Review of an existing feeling is not automatic acquisition of a new emotion. New
 | --- | --- |
 | Feeling and original support | Exact active appraisal, current analytic amount or qualitative meaning, scale/lifetime, target, original cause and its permitted coverage. Retained memory of an old feeling is distinguished from a currently active one. |
 | Material changed support | Selected acquired occurrences, personally available remembered evidence or trusted current body/condition/commitment transitions allowed by the review policy. Keep the original support as context when newer facts contradict it. |
-| Self and preferences | Current accepted character description, relevant values/beliefs/relationships and explicitly installed traits from existing owners, with subjective uncertainty. No full biography rewrite or unsupported diagnosis. |
+| Self and preferences | Complete accepted About me/identity snapshot and exact revision under [CG09](../limits/cognition.md#cg09), reused from the permitted cached owner; also relevant values/beliefs/relationships and explicitly installed traits from existing owners, with subjective uncertainty. No identity excerpt, truncation, biography rewrite or unsupported diagnosis. Required-context overflow is incomplete before dispatch. |
 | Body and useful ongoing activity | Current permitted bodily conditions, actual commitments/work at stake and available broad alternatives needed for interpretation. Reuse the permitted snapshot projection without enumerating every executable action or generating an action catalog. |
 | Safety, separation and escape | What the character actually experienced or knows: acquired withdrawal, reached shelter, ceased observed pursuit or a real action result. These facts do not assert that all hidden enemies are absent or a speaker is truthful. |
 | Conflicting feelings and causes | Other required current feelings relevant to the question, independent threats and uncertainty. If an indivisible required set cannot fit, report incomplete and retain valid state; do not answer a falsely simplified question. |
