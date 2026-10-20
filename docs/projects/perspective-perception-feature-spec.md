@@ -1,8 +1,8 @@
 # Observer-specific perception, evidence and recognition — feature specification
 
-| Status      | Current progress                                                                                 | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Module A design is complete; runtime implementation and gameplay qualification have not started. | 2026-10-19   |
+| Status      | Current progress                                                                                                | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Module A design is complete and reviewed; PP01–PP07 implementation and gameplay qualification have not started. | 2026-10-19   |
 
 ## Purpose and selected scope
 

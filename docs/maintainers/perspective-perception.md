@@ -2,7 +2,7 @@
 
 ## Status and ownership
 
-**Design draft in progress; final design review pending. Runtime implementation has not started.** PP00 owns completion of the selected module A design. PP01–PP07 are unstarted implementation and qualification work. This assignment creates and reconciles documentation only: no runtime code, executable tests, migrations or implementation are authorized by this design task.
+**Design complete and independently reviewed; runtime implementation has not started.** PP00 records completion of the selected module A design. PP01–PP07 are unstarted implementation and qualification work. This assignment creates and reconciles documentation only: no runtime code, executable tests, migrations or implementation are authorized by this design task.
 
 Design owners: [feature specification](../projects/perspective-perception-feature-spec.md) and [technical design](../projects/perspective-perception-tech-design.md). The technical design owns the complete acceptance matrices, engine algorithms, data shapes and worked examples; [the base policy](../worlds/base/perception-recognition.md) owns world thresholds/learning rules, and [the inventory](../limits/perspective-perception.md) owns limits. Reference those cases from implementation evidence instead of maintaining a second matrix here. The [shared stealth contracts SC01–SC14](../projects/stealth-awareness-tech-design.md#shared-contracts) govern all module interfaces. [SAI-A](stealth-awareness.md#future-implementation-dependency-graph) owns cross-module implementation coordination; PP01–PP07 provide its detailed task breakdown.
 
@@ -12,7 +12,7 @@ The inspected source baseline is `Macrofold/OpenLegend:codex/design-stealth-00-c
 
 ## Design disposition and existing work
 
-This design closes only the observer evidence, recognition and retention slice when PP00's review is complete. It does not complete the broader [ND16](needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech) hearing/communication design, [ND19](needs-design.md#nd19--older-memory-transformation-and-dream-reinterpretation) memory transformation, or their implementation and gameplay acceptance. Central design-register and gameplay-priority reconciliation belongs to the final integration owner.
+This design closes the observer evidence, recognition and retention slice, plus [ND03](needs-design.md#nd03--world-authored-stats-checks-and-their-effects)'s recognition-only Perception consumer. It does not complete broader stat consumers, [ND16](needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech) hearing/communication, [ND19](needs-design.md#nd19--older-memory-transformation-and-dream-reinterpretation) memory transformation, or their implementation and gameplay acceptance. Broad central design-register and gameplay-priority reconciliation belongs to the final integration owner; these named A overlaps are the narrowly closed design slices.
 
 - [EPR](events-perception-and-reactions.md) retains ownership of the sensory/event intake and its existing delivered evidence. PP01–PP02 extend those owners; they do not replace them with another event or observation service.
 - [SPK01–SPK04 and SPK07–SPK08](speech-and-social-perception.md) consume shared recognition, structured experience and memoryless reception. PP03 owns the recognition mechanism; SPK owns speech semantics, addressing and introductions. Reconcile their shared producers and consumers in the same implementation slice without reciprocal whole-project dependencies.
@@ -24,27 +24,29 @@ This design closes only the observer evidence, recognition and retention slice w
 
 A task is complete only when its producers, mutation owner, dependent readers, source validation and current-format persistence agree. PP06 begins with PP01; it is not a final cleanup phase. Introduce the new contract through currently delivered channels first, then connect B/C's new physical inputs and E/F/G's consumers as their narrow interfaces become available.
 
-| Work | Status                              | Dependencies                                                                  | Completion boundary                                                                                               |
-| ---- | ----------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| PP00 | In progress — design review pending | Exact contracts-tip source audit; selected assignment                         | Reviewed feature/technical pair, reconciled documentation, limits, ownership and handoffs.                        |
-| PP01 | Not started                         | PP00; SAI-A interface review; SC02 proposal disposition                       | One native typed observation boundary and exact immutable evidence cuts through existing owners.                  |
-| PP02 | Not started                         | PP01; B/C accepted physical sample and interval contracts                     | Detection, meaningful accumulation, exposure continuity and immediate loss of current permission.                 |
-| PP03 | Not started                         | PP01–PP02; selected profile/attribute installation; SPK introduction contract | Supported local individuals, uncertainty, familiarity, recognition and separate names without omniscient binding. |
-| PP04 | Not started                         | PP01; PP03 association/source semantics                                       | Faithful personal experience, retention, correction, cold retrieval and consolidation.                            |
-| PP05 | Not started                         | PP01–PP04; relevant B/C/E/F/G consumer interfaces                             | Native animals, NPC cognition and authorized player presentation consume the same permitted meaning.              |
-| PP06 | Not started                         | Starts with PP01; completes across PP01–PP05                                  | Same-format save/restore, source/body life separation, invalidation and complete required working set.            |
-| PP07 | Not started                         | PP01–PP06 and required cross-module implementations                           | Whole-path mechanical, privacy, ordering, recovery, performance and human usefulness evidence.                    |
+| Work | Status                  | Dependencies                                                                  | Completion boundary                                                                                               |
+| ---- | ----------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| PP00 | Completed — design only | Exact contracts-tip source audit; selected assignment                         | Reviewed feature/technical pair, reconciled documentation, limits, ownership and handoffs.                        |
+| PP01 | Not started             | PP00; SAI-A interface review; SC02 proposal disposition                       | One native typed observation boundary and exact immutable evidence cuts through existing owners.                  |
+| PP02 | Not started             | PP01; B/C accepted physical sample and interval contracts                     | Detection, meaningful accumulation, exposure continuity and immediate loss of current permission.                 |
+| PP03 | Not started             | PP01–PP02; selected profile/attribute installation; SPK introduction contract | Supported local individuals, uncertainty, familiarity, recognition and separate names without omniscient binding. |
+| PP04 | Not started             | PP01; PP03 association/source semantics                                       | Faithful personal experience, retention, correction, cold retrieval and consolidation.                            |
+| PP05 | Not started             | PP01–PP04; relevant B/C/E/F/G consumer interfaces                             | Native animals, NPC cognition and authorized player presentation consume the same permitted meaning.              |
+| PP06 | Not started             | Starts with PP01; completes across PP01–PP05                                  | Same-format save/restore, source/body life separation, invalidation and complete required working set.            |
+| PP07 | Not started             | PP01–PP06 and required cross-module implementations                           | Whole-path mechanical, privacy, ordering, recovery, performance and human usefulness evidence.                    |
 
 PP04 can proceed against PP01's stable records while PP02–PP03 finish policy work, but may not declare delivery before their final associations and support semantics survive every transformation. PP05 can integrate current-channel consumers before all B/C features exist; complete sound, vision, native-response or player claims still require the corresponding real producer and consumer. A public sensor feature cannot ship while its player projection leaks information.
 
 ## PP00 — Complete the selected design and reconcile its owners
 
 - [x] Inspect the exact contracts tip and actual perception, exposure, event observation, experience, recognition, memory, consolidation, retrieval, cognition, native-controller and restoration owners.
-- [ ] Complete the paired feature/technical design with structured facts, uncertainty, observer-local subjects, source/body life, exact times, deterministic algorithms, bounds, examples and acceptance matrices.
-- [ ] Review recognition and gameplay value against the complete relevant repertoire inventory, retaining uncertain investigation, earned familiarity and useful social knowledge without introducing automatic identity knowledge.
-- [ ] Reconcile directly affected persistent contracts, speech/social specifications, selected design dispositions, limits and implementation ownership; preserve unrelated open work.
-- [ ] Complete independent source/contract/privacy review, resolve in-scope findings and verify all new or changed links and statuses.
-- [ ] Record the exact pushed branch/commit and ensure the authored diff contains documentation only.
+- [x] Complete the paired feature/technical design with structured facts, uncertainty, observer-local subjects, source/body life, exact times, deterministic algorithms, bounds, examples and acceptance matrices.
+- [x] Review recognition and gameplay value against the complete relevant repertoire inventory, retaining uncertain investigation, earned familiarity and useful social knowledge without introducing automatic identity knowledge.
+- [x] Reconcile directly affected persistent contracts, speech/social specifications, selected design dispositions, limits and implementation ownership; preserve unrelated open work.
+- [x] Complete independent source/contract/privacy review, resolve in-scope findings and verify all new or changed links and statuses.
+- [x] Record the exact pushed branch/commit and ensure the authored diff contains documentation only.
+
+**Design review evidence, 2026-10-19:** actual owners were inspected at the exact contracts tip; independent reviewers completed the selected technical design and every affected persistent owner, with complete reading of all 42 repertoire files and the retained changelog. The design contains 55 explicit acceptance cases plus performance and ordinary-usefulness criteria. The 46-file documentation scope passes the repository's pinned Prettier 3.6.2 formatting check and introduced-link/anchor review. Repertoire IDs, table order, priority/level classifications and central navigation remain preserved. Remote comparison confirms the exact contracts-tip ancestry and only intended documentation changes, with both shared specifications unchanged. The pushed branch is `codex/design-stealth-01-perception`; its immutable commits and exact final revision are recorded in Git and the task handoff. These checks establish design/documentation completeness, not runtime or player qualification.
 
 **Exit:** the selected module A design is complete and implementation-ready; the shared revision-type proposal and cross-module handoffs are explicit. Completion of PP00 alone does not check any PP01–PP07 task or claim runtime qualification.
 

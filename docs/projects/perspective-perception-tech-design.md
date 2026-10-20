@@ -1,8 +1,8 @@
 # Observer-specific perception, evidence and recognition — technical design
 
-| Status      | Current progress                                                                                                         | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | The selected module A design is specified; PP00 final review and PP01–PP07 implementation and qualification remain open. | 2026-10-19   |
+| Status      | Current progress                                                                                         | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PP00 design and independent review are complete; PP01–PP07 implementation and qualification remain open. | 2026-10-19   |
 
 ## Authority, scope and implementation boundary
 
