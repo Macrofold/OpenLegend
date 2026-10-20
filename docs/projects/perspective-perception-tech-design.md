@@ -106,9 +106,81 @@ The notation above is the **materialized projection**, not the bytes hashed insi
 
 Required native cuts precede personal serialization. Allocate/acquire the observation through the existing native exposure/observation owner with its own local content revision and stable source/interval identity; that native reference exists synchronously. Its owner revision is not a new global ordering clock. The later Awareness/source body preserves the original native acquisition identity and adds its exact stored-body reference as a projection/source alias, without acquiring again. A cut cannot wait for a personal hash or SQL write. Keep native observation identity, containing personal-source version and facet ordinal distinct throughout restoration and invalidation.
 
+The native source identifies an immutable acquired contribution under its exposure owner, not the latest mutable contents of the entire episode. A later distinct observation creates its own contribution; a source revision changes when that contribution is explicitly corrected. Ending a live lease or acquiring a later voice therefore does not invalidate the earlier spear fact merely by advancing an episode's working-state revision. Persist/compact those original contributions through existing personal/native source owners and exact aliases. Do not add a global fact table or store a new contribution for each identical rendered frame.
+
 The internal `SourceAssociation.rememberedSubject` remains SC02's string: the existing safe serialized subject key resolves to `ObserverSubject` through the identity/knowledge owner. Do not place the union object directly in the shared field. It is not necessarily a canonical entity ID and is never a naked value supplied by a model. A list of tentative candidate associations is represented as multiple supported association facets sharing an exposure and ambiguity group, without changing SC02's single-association variant. `recognized` describes a supported observer association; it is fallible. Native truth about the current emitter is not overwritten by it.
 
 `SupportedSensoryFact` is also a common permitted-memory projection. Physical `SensoryEvidence` itself always requires an actually acquired direct detection; authored and imagined records remain under private experience/knowledge owners and never fabricate one. A direct detection, live location/detail grant or received physical feature requires `role: direct` and observed timing. A source-kind or profile association is an inference with actual sensory support; testimony requires a heard/understood speech source or an already admitted reported account. Authored familiarity uses authored timing and its installation source. An imagined or proposed event may be retained as private interpretation but grants no sensory detection, familiarity credit or body target. The actor's own committed speech/action-result record likewise preserves its existing self-knowledge authority without pretending a deaf speaker heard their own words.
+
+### Concrete first-slice family payloads
+
+The first implementation must bind the placeholder family names above to these admitted records. Reuse existing `Position`, supported regions, `DefinitionPin`, speech segments, event-disclosure payloads and knowledge references; the notation names fields that must survive, not a new plugin framework.
+
+```ts
+type ObservationFrame = Readonly<{
+  positionAtObservation: Position;
+  forwardAtObservation?: Direction; // Only the accepted physical pose, when supplied.
+}>;
+
+type ReceivedFeatureInterval = Readonly<{
+  featureId: string; // A member of the pinned family's finite admitted feature list.
+  lower: number;
+  upper: number;
+}>;
+
+type InstalledReceivedFeatureSample = Readonly<{
+  family: DefinitionPin;
+  modality: 'sight' | 'hearing';
+  features: readonly ReceivedFeatureInterval[];
+  quality:
+    | { kind: 'acoustic'; receivedLevelDbSpl: number; clarityMarginDb: number; identityFidelity: number }
+    | { kind: 'visual'; identityFidelity: number }; // B supplies actual feature loss/intervals.
+}>;
+
+type InstalledVisibleOrFeltDetail =
+  | { kind: 'appearance'; participant: PermittedParticipant; descriptorId: string; valueAsObserved: string }
+  | { kind: 'carried'; participant: PermittedParticipant; itemExposure: ExposureRef; itemKindAsObserved: string }
+  | { kind: 'activity'; participant: PermittedParticipant; actionFamily: DefinitionPin; phase: 'ongoing' | 'outcome' }
+  | { kind: 'contact'; contact: ExposureRef; detail: 'present' | 'moving' }
+  | { kind: 'impact'; contact: ExposureRef; feltOutcome: ExistingPermittedImpactDetail };
+
+type ClaimTime =
+  | { kind: 'unspecified' }
+  | { kind: 'stated-interval'; from: SimTime; through: SimTime; precision: 'exact-as-stated' | 'approximate' }
+  | { kind: 'relative-words'; wordsAsHeard: string; anchor: FactKey };
+
+type SupportedClaim =
+  | { kind: 'danger'; where: LocationEvidence; when: ClaimTime; presence: 'possible' | 'asserted' }
+  | { kind: 'person-detail'; about: PermittedParticipant; detail: ReportedPersonDetail; when: ClaimTime }
+  | { kind: 'location'; about: PermittedParticipant; where: LocationEvidence; when: ClaimTime }
+  | { kind: 'name'; about: PermittedParticipant; nameAsHeard: string }
+  | { kind: 'relationship'; about: readonly [PermittedParticipant, PermittedParticipant]; relationAsHeard: string }
+  | { kind: 'unparsed'; wordsAsHeard: string };
+
+type ReportedPersonDetail =
+  | { kind: 'appearance'; descriptionAsHeard: string }
+  | { kind: 'carried'; itemAsHeard: string }
+  | { kind: 'activity'; activityAsHeard: string };
+
+type AssociationProof =
+  | { kind: 'continuity'; support: readonly FactKey[]; formedAt: SimTime }
+  | { kind: 'cross-sense'; support: readonly FactKey[]; formedAt: SimTime }
+  | { kind: 'profile-match'; support: readonly FactKey[]; formedAt: SimTime; policy: DefinitionPin; abilityValue: number; match: 'recognized' | 'suspected' | 'ambiguous' }
+  | { kind: 'authored'; definition: DefinitionPin; installedAt: SimTime }
+  | { kind: 'attributed-inference'; support: readonly FactKey[]; formedAt: SimTime };
+```
+
+The base voice feature IDs are `pitch-range`, `resonance`, `texture` and `speech-rhythm`, with the ranges/weights in the world owner. B's visual family must declare its finite feature IDs, normalization, weights and actual availability rules before it is installed; passing an arbitrary new ID does not create a visual recognizer. Every feature appears at most once, has ordered finite endpoints within its admitted family range and retains its actual received interval. Native matching may use those features; ordinary outward views generally need only their allowed descriptive/quality result, not a numeric fingerprint.
+
+`InstalledObservationLimit` initially distinguishes unavailable lexical content, unavailable identity features, source unresolved, approximate location and actually obscured admitted detail. B/C may add a narrow physical limit they can substantiate. Do not annotate “behind a wall” simply because the private ray intersected an unseen wall. That relation requires the observer's permitted map/surface knowledge and the received estimate; otherwise disclose only the supported muffled direction/region. A native quality field does not itself entitle the model to know the obstruction's identity.
+
+The current speech adapter preserves `PerceivedSpeech.perception`, `intelligibility`, `segments`, permitted delivery and listener pose/direction. Replace canonical-only speaker/recipient assumptions with the permitted participant binding selected by SPK/A; preserve the original `nameAtTime` presentation where authorized. The `sourceId`, `targetId`, `intendedRecipientId`, `references` and `entityIds` projections must pass the same role admission. A nullable/unbound speaker never triggers a fallback to `WorldEvent.actorId`. Existing word masking stays committed and is not rerolled by recognition, summary or restore. A seen-but-unheard speech movement has no heard words. A self utterance uses its existing self-source, not fake hearing.
+
+The appearance descriptor IDs and `ExistingPermittedImpactDetail` reuse the specific installed event/exposure disclosure fields already allowed by `observeEvent` and the base disclosure owner. Copy one admitted value at acquisition, not a pointer that will dereference the entity later. `carried` is an observed carrying relation, not ownership or a complete inventory; missing slots are unknown. A claim about an unseen spear can use its described participant/item wording without allocating an `itemExposure`: serialize the claim's described detail variant through the testimony owner rather than counterfeiting the direct `carried` variant. The body/detail schema and reported-detail schema share vocabulary, not physical grants.
+
+`SupportedInference` initially covers a source-kind hypothesis, a candidate/recognized individual association, attribution of an old permitted fact to a later learned subject, a region-danger possibility and a later reassessment of one of those claims. It stores explicit supporting keys and formed time through the fact/proof envelope. It does not contain arbitrary executable inference instructions, a universal confidence graph, private intent or a policy to predict hidden current equipment/path. Unsupported richer interpretation stays as labeled private prose under existing memory limits until its actual structured family is selected.
+
+For deterministic facet order, emit detection first, then location, then received features in the pinned family's feature order, observed detail in that producer's declared order, speech, source-kind, association, names and attributed claims. Same-source support uses local ordinals that refer only to earlier facets; later reinterpretation is a new source. Candidate association facets use the completed distinct-individual rank with explicit ties, never global emitter ordering. An explicitly authored record has its installation reference rather than fictional detection/time fields.
 
 ### Facet admission, timestamps and precision
 
