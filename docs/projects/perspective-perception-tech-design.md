@@ -104,7 +104,9 @@ type SupportedSensoryFact = Readonly<{
 
 The notation above is the **materialized projection**, not the bytes hashed inside a personal-source body. Persist source-owned facets with a local `ordinal`; intra-source references use `{ kind: 'local', ordinal }`, while already committed external support uses `{ kind: 'external', key: FactKey }`. Native projection resolves local references within the source. Personal serialization hashes the body without its own containing revision, then the exact-source binder attaches the resulting source revision to the outer `FactKey`. Validate local ordinals and acyclic support; never serialize a record's SHA-256 digest inside the very payload whose digest it is. The current personal-account owner hashes its full canonical payload, so excluding fields by an undocumented hash exception is not an alternative.
 
-Required native cuts precede personal serialization. Allocate/acquire the observation through the existing native exposure/observation owner with its own local content revision and stable source/interval identity; that native reference exists synchronously. Its owner revision is not a new global ordering clock. The later Awareness/source body preserves the original native acquisition identity and adds its exact stored-body reference as a projection/source alias, without acquiring again. A cut cannot wait for a personal hash or SQL write. Keep native observation identity, containing personal-source version and facet ordinal distinct throughout restoration and invalidation.
+Required native cuts precede personal serialization. On one genuinely new acquired contribution, the existing observation/exposure mutation owner calls the existing domain `nextId` allocator once with the non-entity prefix `perception-observation` and installs local content revision `1`. Its idempotency receipt is scoped to the exact observer/life, original occurrence or supplied continuous-source interval, sense/detector and admitted definition pin. An event-path retry, overlapping interval already consumed, memory projection or callback retry reuses that receipt and allocates nothing. A distinct meaningful cue has a new contribution ID; an authorized correction keeps the ID, advances that contribution's local revision once and retains its old immutable version/correction link. This is not a new acquisition or learning credit. Native response evidence instead uses its existing response owner's identity/revision, without an A duplicate response ID.
+
+That native reference exists synchronously and is not a new global ordering clock. The later Awareness/source body preserves the original native acquisition identity and adds its exact stored-body reference as a projection/source alias, without acquiring again. A cut cannot wait for a personal hash or SQL write. Keep native observation identity, containing personal-source version and facet ordinal distinct throughout restoration and invalidation. Adapter bindings retain underlying source role and storage family, including `memory` versus `summary` when their IDs coincide. A source ID can route/deduplicate private work; it cannot prove perceptual continuity or identity.
 
 The native source identifies an immutable acquired contribution under its exposure owner, not the latest mutable contents of the entire episode. A later distinct observation creates its own contribution; a source revision changes when that contribution is explicitly corrected. Ending a live lease or acquiring a later voice therefore does not invalidate the earlier spear fact merely by advancing an episode's working-state revision. Persist/compact those original contributions through existing personal/native source owners and exact aliases. Do not add a global fact table or store a new contribution for each identical rendered frame.
 
@@ -165,9 +167,55 @@ type ReportedPersonDetail =
 type AssociationProof =
   | { kind: 'continuity'; support: readonly FactKey[]; formedAt: SimTime }
   | { kind: 'cross-sense'; support: readonly FactKey[]; formedAt: SimTime }
-  | { kind: 'profile-match'; support: readonly FactKey[]; formedAt: SimTime; policy: DefinitionPin; abilityValue: number; match: 'recognized' | 'suspected' | 'ambiguous' }
+  | { kind: 'profile-match'; support: readonly FactKey[]; formedAt: SimTime; inputs: RecognitionMatchSnapshot; match: 'recognized' | 'suspected' | 'ambiguous' }
+  | { kind: 'seed-promotion'; samples: readonly [FactKey, FactKey]; sampleTimes: readonly [SimTime, SimTime]; formedAt: SimTime; policy: DefinitionPin; comparison: SeedMatchSnapshot }
   | { kind: 'authored'; definition: DefinitionPin; installedAt: SimTime }
   | { kind: 'attributed-inference'; support: readonly FactKey[]; formedAt: SimTime };
+
+type SupportedInference =
+  | { kind: 'source-kind'; hypothesis: InstalledSourceKind; basis: readonly FactKey[] }
+  | { kind: 'individual-association'; association: SourceAssociation; proof: AssociationProof }
+  | { kind: 'historical-attribution'; original: FactKey; subject: ObserverSubject; association: FactKey }
+  | { kind: 'region-danger'; where: LocationEvidence; presence: 'possible'; basis: readonly FactKey[] }
+  | { kind: 'reassessment'; prior: FactKey; disposition: 'withdrawn' | 'weakened' | 'replaced' | 'corroborated'; basis: readonly FactKey[]; replacement?: FactKey };
+
+type RecognitionExemplarRef =
+  | { kind: 'observed'; sample: FactKey }
+  | { kind: 'authored'; subject: ObserverSubject; seedRevision: number; definition: DefinitionPin; exemplarOrdinal: number };
+
+type RecognitionMatchSnapshot = Readonly<{
+  policy: DefinitionPin;
+  abilityValue: number;
+  subject: ObserverSubject;
+  subjectRevision: number;
+  effectiveFamiliarity: number;
+  actualCreditSupport: readonly FactKey[];
+  authoredBaseline?: { seedRevision: number; definition: DefinitionPin; level: 'learned' | 'familiar' };
+  exemplar: RecognitionExemplarRef;
+  originalExemplarQuality: number;
+  receivedSample: FactKey;
+  sharedFeatureIds: readonly string[];
+  pairQuality: number;
+  distance: number;
+  enumeration: CompletedRecognitionEnumeration;
+}>;
+
+type CompletedRecognitionEnumeration = Readonly<{
+  recognitionOwnerRevision: number;
+  complete: true;
+  candidateIndividuals: number;
+  nearestOther?: { subject: ObserverSubject; exemplar: RecognitionExemplarRef; pairQuality: number; distance: number };
+}>;
+
+type SeedMatchSnapshot = Readonly<{
+  sharedFeatureIds: readonly string[];
+  pairQuality: number;
+  distance: number;
+  complete: true;
+  distinctCompetitorCount: number;
+  nearestOtherDistance?: number;
+  priorBinding?: { subject: ObserverSubject; association: FactKey };
+}>;
 ```
 
 The base voice feature IDs are `pitch-range`, `resonance`, `texture` and `speech-rhythm`, with the ranges/weights in the world owner. B's visual family must declare its finite feature IDs, normalization, weights and actual availability rules before it is installed; passing an arbitrary new ID does not create a visual recognizer. Every feature appears at most once, has ordered finite endpoints within its admitted family range and retains its actual received interval. Native matching may use those features; ordinary outward views generally need only their allowed descriptive/quality result, not a numeric fingerprint.
@@ -178,9 +226,11 @@ The current speech adapter preserves `PerceivedSpeech.perception`, `intelligibil
 
 The appearance descriptor IDs and `ExistingPermittedImpactDetail` reuse the specific installed event/exposure disclosure fields already allowed by `observeEvent` and the base disclosure owner. Copy one admitted value at acquisition, not a pointer that will dereference the entity later. `carried` is an observed carrying relation, not ownership or a complete inventory; missing slots are unknown. A claim about an unseen spear can use its described participant/item wording without allocating an `itemExposure`: serialize the claim's described detail variant through the testimony owner rather than counterfeiting the direct `carried` variant. The body/detail schema and reported-detail schema share vocabulary, not physical grants.
 
-`SupportedInference` initially covers a source-kind hypothesis, a candidate/recognized individual association, attribution of an old permitted fact to a later learned subject, a region-danger possibility and a later reassessment of one of those claims. It stores explicit supporting keys and formed time through the fact/proof envelope. It does not contain arbitrary executable inference instructions, a universal confidence graph, private intent or a policy to predict hidden current equipment/path. Unsupported richer interpretation stays as labeled private prose under existing memory limits until its actual structured family is selected.
+`SupportedInference` is the closed union above; its envelope supplies `role: inference`, strength and interpretation time. Historical attribution retains the original fact's time and follows only the admitted association. A reassessment's `prior` and optional `replacement` must resolve to already accepted claims/inferences or their admitted original support; `replacement` is required only for `replaced` and absent for the other dispositions. It cannot recursively embed an arbitrary new proposition or revise a direct event's occurrence. Region danger is a possible inference from the listed permitted basis, not F warning eligibility or proof of a hidden producer. Unsupported richer interpretation stays as labeled private prose under existing memory limits until its actual structured family is selected.
 
-For deterministic facet order, emit detection first, then location, then received features in the pinned family's feature order, observed detail in that producer's declared order, speech, source-kind, association, names and attributed claims. Same-source support uses local ordinals that refer only to earlier facets; later reinterpretation is a new source. Candidate association facets use the completed distinct-individual rank with explicit ties, never global emitter ordering. An explicitly authored record has its installation reference rather than fictional detection/time fields.
+The recognition snapshot preserves the actual pre-learning familiarity, ability, selected exact exemplar, received features and completed competition result. Its bounded credit references describe the retained real supports; authored support has its installation reference instead of fabricated observations. The recognition owner produces the completion receipt only after candidate enumeration and both matching stages finish under one captured dependency revision. `nearestOther` records the minimum other-individual candidate distance used by the margin test, not the first row or presentation preview. Absence is meaningful only with that completed receipt. Retain the chosen result and sufficient supporting capsules through compaction; restoration reuses it rather than attempting to recreate all past eligible profiles from today's index. An original decision need not retain an unbounded snapshot of every rejected candidate. A later intentional reassessment is a new inference with its own completed inputs.
+
+For deterministic facet order, emit detection first, then location, then received features in the pinned family's feature order, observed detail in that producer's declared order, speech, source-kind, association, names and attributed claims. Same-source support uses local ordinals that refer only to earlier facets; later reinterpretation is a new source. When this contribution first recognizes a speaker/carrier, its earlier speech/detail facets bind the permitted exposure; the later association facet relates that exposure to the subject. They cannot point forward to an association that depends on their own features. An already committed eligible prior association may be referenced normally. Candidate association facets use the completed distinct-individual rank with explicit ties, never global emitter ordering. An explicitly authored record has its installation reference rather than fictional detection/time fields.
 
 ### Facet admission, timestamps and precision
 
@@ -195,9 +245,43 @@ For deterministic facet order, emit detection first, then location, then receive
 | Name/label | An actually understood claim, authorized personal label edit or authored starting knowledge. | Proof of a claimed canonical identity, unique name, public rename or stronger recognition. |
 | Testimony/derived claim | Attributed words or an explicitly committed interpretation with valid supporting evidence. | Direct observation of the claimed event or independent corroboration from every repeated account. |
 
-For direct facets, `asOf` is the physical measurement time relevant to the value; continuous current detail uses the last actually evaluated supported instant. `measuredFrom/Through` records the covered interval. `acquiredAt` is when the native owner actually admitted the result. They often coincide for an impulse but are not interchangeable. An old recorded event learned later has an old occurrence time and a later acquisition. A reported claim may describe a separate asserted time/interval; store that inside the claim with its stated precision, while the speech hearing retains its own time. “Recently” in testimony is a quoted/understood relative claim, not a server-supplied exact timestamp.
+For an immutable direct facet, `asOf` is the physical measurement time relevant to that acquired value and never changes under its original `FactKey`. `measuredFrom/Through` records its actually covered interval. `acquiredAt` is when the native owner actually admitted the result. They often coincide for an impulse but are not interchangeable. Continuous current confirmation has the separate lease/snapshot representation below; it does not rewrite the original fact's timestamp on every evaluation. An old recorded event learned later has an old occurrence time and a later acquisition. A reported claim may describe a separate asserted time/interval; store that inside the claim with its stated precision, while the speech hearing retains its own time. “Recently” in testimony is a quoted/understood relative claim, not a server-supplied exact timestamp.
 
 Every current projection checks the fact's live supporting facet lease at the native snapshot. A live lease is derived state under the existing episode owner, scoped to observer life, sense, physical dependencies and the supported detail fields. It is not a new public object or one global `awareOfPerson` Boolean. A remembered fact remains valid historical evidence after its lease ends, until retention or explicit invalidation removes it. Summary coverage end, last record update and last known name revision never serve as `asOf` for unrelated facts.
+
+### Continuous confirmation without rewriting history
+
+The existing exposure owner retains one compact lease for each currently supported direct value/interval. This is its working state, separate from an immutable acquired observation contribution:
+
+```ts
+type LiveFacetSupport = Readonly<{
+  leaseId: string;
+  revision: number;
+  observer: ActorLifeRef;
+  exposure: ExposureRef;
+  original: FactKey;
+  modality: SensoryModality;
+  confirmedFrom: SimTime;
+  confirmedThrough: SimTime;
+  dependencies: ExistingPhysicalPolicyDependencies;
+}>;
+
+type CapturedCurrentFacet = Readonly<{
+  original: FactKey;
+  value: SensoryFacet; // Only the supported direct detection/location/detail/feature variant.
+  confirmedFrom: SimTime;
+  confirmedThrough: SimTime;
+  confirmation: EvidenceRef; // Existing native-exposure adapter, role: facet-confirmation.
+}>;
+```
+
+Allocate a lease once through `nextId('perception-lease')` when that direct facet gains live support, with local revision `1`. Retain its exact original value through the linked admitted fact; never dereference today's hidden body to fill it. Advance `confirmedThrough` and the lease's working revision once only when B/C completes a new actual compatible supported interval. A repeated interval or projection poll changes neither. A changed permitted value, real unsupported gap or incompatible physical dependency ends that lease; a later supported value/return has a new lease. Continuous support must be actual covered physical intervals, not an assumption that no departure event was recorded. Grace can preserve episode correlation while all relevant leases are already ended.
+
+The `native-exposure` adapter distinguishes immutable `observation-contribution` from mutable `facet-confirmation` roles in its private source binding. A contribution revision changes only through its admitted correction; a lease revision records actual confirmation changes. They are not interchangeable. Capture copies the lease's resolved value, actual interval and current confirmation reference into `CapturedCurrentFacet`, without allocating a new ID, source event, acquisition or learning sample. Its `confirmedThrough` supplies current semantic freshness in that snapshot; `original` identifies the unchanged earlier fact. The snapshot is not a rewritten historical fact under that key. Once a cut captures it, subsequent lease advancement cannot modify its value/time/support. No consumer may dereference the lease later to supplement that cut.
+
+At meaningful value change or support loss, finalize the just-ended supported interval once into a compact immutable confirmation contribution through the same native/personal-source owner. It retains the original fact key/value, the actual covered interval, original physical dependencies, `asOf = confirmedThrough` and the actual finalization acquisition time. This is continuation confirmation, not a new signal onset, independent observation witness or familiarity credit. The finalization receipt is the exact lease ID and ended revision. Memory-capable retention keeps this minimal support capsule even when the narrative encounter quota emits no departure story row; memoryless consumers retain only what their current native policy needs. A loss that merely ends current support does not revise or erase the original fact. Apply the ordinary later retention/forgetting policy to both eligible historical capsules.
+
+For example, a spear first seen at time 10 and continuously confirmed through time 25 remains currently supported at a cut at 25, while its original onset fact stays at 10. If the hand becomes obscured at 26 after support through 25, the final capsule makes its last-confirmed time 25 even if the body remains visible through 40. Hearing that person's voice at 42 changes neither spear time 25 nor body time 40. Continuous unchanged exposure requires a bounded active lease, not a durable facet per frame. Persist active leases and the immutable snapshots/final capsules actually retained by their owners; do not retain every intermediate lease version.
 
 `ObservationFrame` retains the original observer position and accepted orientation needed to interpret a bearing. The world direction/region is authoritative; “left” is relative to that saved observation pose. Turning does not rotate a historical ray. Moving cannot redraw the old bearing as though it originated at the current body. If G offers a present-relative reminder, it must derive it from the remembered permitted region/ray, visibly retain its age and uncertainty and not invent distance or a unique point. Store no hidden exact source position alongside an approximate location for UI convenience.
 
@@ -217,7 +301,7 @@ Native classifications and identity matches use explicit `possible`, `supported`
 
 Extend `ObserverIdentity` and its persisted `mind_recognition` representation to support a learned local subject alongside the current canonical variant. Allocate the new observer-local record through the existing domain `nextId` owner with a distinct non-entity prefix; the baseline has no separate learned-individual allocator. Reuse identity revisions, ownership and validation. A local key belongs to the observer's retained mind; its observations still record the observer's exact body life. It cannot be compared between observers, decoded into an emitter, or used in a world entity lookup. No fake Entity, separate voice-address database or second subject-note store is permitted.
 
-The extended record needs the typed subject key, existing names and note association, authored/learned origin, eligible modality profiles, retained familiarity supports, optional evidence-supported canonical association and existing revision/invalidation scope. The base policy defines exact exemplar/credit selection. Store original received intervals and quality, their sample/root identity, original encounter and evidence references. Store only the actor-permitted sample, never the source's full physical signature.
+The extended record needs the typed subject key, existing names and note association, authored/learned origin, eligible modality profiles, retained familiarity supports, optional evidence-supported canonical association and existing revision/invalidation scope. The base policy defines exact exemplar/credit selection. Store original received intervals and quality, their sample/root identity, original encounter and evidence references. Persist the modality's last admitted credit time and its admitted normal-clock conversion/deadline independently of exemplar selection; eviction, correction publication and save/restore cannot reset the rate allowance or bank an early sample. Store only the actor-permitted sample, never the source's full physical signature.
 
 | Reference role | May do | Must independently acquire |
 | --- | --- | --- |
@@ -236,16 +320,19 @@ Implement the [selected base policy](../worlds/base/perception-recognition.md#ma
 2. Build candidate queries from received feature intervals only. Retrieve all potentially eligible local learned individuals through a conservative feature index. A true emitter ID, global name, source asset or unobserved clean feature must not narrow the query.
 3. Compare the current sample against the **pre-acquisition** eligible exemplar set. Evaluate candidate and recognition-stage requirements separately, reduce exemplar results to distinct individuals, then apply the world competitor margin to other individuals. Complete the query before asserting uniqueness; otherwise return `incomplete` under required work or defer an optional later inference.
 4. Acquire a recognized, suspected/ambiguous or unassociated result with explicit proof. A successful match is a fallible belief about a learned individual. It does not resolve the signal to that individual's actual current body.
-5. Only after that result is fixed, admit qualifying learning samples. Initial anonymous learning can compare short retained acoustic seed history across ordinary conversational pauses; current exposure grace is not its history window. Apply the separate world learning criteria and original sample/root receipts. An ambiguous candidate cannot increase familiarity simply by being repeated as a guess.
-6. Update bounded retained credit/exemplar state and its revision. Retain original recognition and learning support, so a later correction can invalidate descendants. Queue a meaningful evidence/association change for E and optional presentation, without directly requesting a model or selecting an action.
+5. Only after that result is fixed, admit qualifying learning samples. Initial anonymous learning compares short retained acoustic seed history across ordinary conversational pauses; current exposure grace is not its history window. Apply the separate world learning criteria and original sample/root receipts. A uniquely compatible sample that is too early for the second credit preserves the earliest eligible seed and records only this hearing/tentative correlation; it does not become a competing seed group solely because of its timing. Do not bank it, merge independently observed producers or transitively fuse similar groups. An ambiguous candidate cannot increase familiarity simply by being repeated as a guess.
+6. On qualifying initial promotion, install the observer-local learned individual (or use the independently admitted subject of a previously sight-bound seed), retain the two original credited samples, and append a separate `seed-promotion` association fact referring to those samples and their original times. This new fact immediately makes that learned voice pattern usable through a permitted local subject handle. It does not rewrite the pre-learning detection/result, rerun familiar recognition using its own new credits, grant a canonical body/name, or award either sample twice. A later compatible voice can provide the second sample of a sight-bound seed without another visible meeting; that seed and its same subject are one competitor, not two. A successful existing-profile recognition uses later learning and does not also create a seed-promoted duplicate individual.
+7. Update bounded retained credit/exemplar state and its revision. Retain original recognition and learning support, so a later correction can invalidate descendants. Queue a meaningful evidence/association change for E and optional presentation, without directly requesting a model or selecting an action.
 
-Prototype records are exact observed exemplars, not averaged secret signatures. The selected short seed-history operation creates a fallible local voice pattern from sufficient distinguishing observations. It does not prove that one producer exists. Identical unknown voices can be misassociated; the engine may not resolve the ambiguity using private source truth. Explicitly authored acquaintances supply supported modality/familiarity seeds, separately from biography/name text.
+Learned prototype records are exact observed exemplars, not averaged secret signatures. The selected short seed-history operation creates a fallible local voice pattern from sufficient distinguishing observations. It does not prove that one producer exists. Identical unknown voices can be misassociated; the engine may not resolve the ambiguity using private source truth.
+
+An explicitly authored modality seed is a distinct existing identity-owner record: subject, installed definition/source and local seed revision, modality, `learned` or `familiar` baseline, up to four authored exact feature exemplars with their declared original quality, and installation time/order. It creates no sensory interval, utterance, learning root or fictional credit. The world computes effective familiarity as the maximum of its explicit authored equivalent and retained real credits, capped at the familiar plateau; it does not add them. Retain at most 12 real credit records plus four authored candidates, with at most four total matching exemplars selected across that union by the world rule. Definition removal and current correction/forgetting overlays govern eligibility; restore cannot reseed revoked acquaintance. A starting name or biography alone grants no voice modality. PP03 must inspect and explicitly author the intended starting acquaintances' modality entries through their current world construction owner.
 
 There is no mandatory note or naming action to become familiar. Ordinary qualifying experience learns natively. Profiles and live body capability are distinct: a face hidden by clothing may prevent face matching without preventing current tracking of a visible moving body. A recognized individual seen in a new location still compares admitted individual features. Clothing, place, a weapon and companions may support a separately labeled contextual hypothesis, not permanent identity by themselves.
 
 ### Association, rebinding, mistakes and correction
 
-An `AssociationProof` is a closed tagged form: permitted within-exposure continuity; simultaneous unambiguous cross-sense correspondence; learned-profile match; authored starting association; or an attributed/inferred hypothesis. It stores supporting fact keys, the original decision time and the admitted policy/ability inputs. It never contains “same private emitter ID” as an epistemic proof. For anonymous sounds lacking enough individual information, a contact can be a broad pattern with unknown producer count.
+An `AssociationProof` is a closed tagged form: permitted within-exposure continuity; simultaneous unambiguous cross-sense correspondence; learned-profile match; conservative two-sample seed promotion; authored starting association; or an attributed/inferred hypothesis. It stores supporting fact keys, the original decision time and the admitted policy/ability inputs. Seed promotion is an explicit new interpretation, never a canonical lookup. It never contains “same private emitter ID” as an epistemic proof. For anonymous sounds lacking enough individual information, a contact can be a broad pattern with unknown producer count.
 
 When later evidence associates an anonymous contact with a learned person, append an association fact. Do not mutate prior detection or assign the new association's time to older details. A view can now say “the person I saw by the gate, later associated with Ada,” linking both the old observation and new association. It must expose a tentative qualifier if the link is tentative. Only facets actually linked by the proof become related; proximity in a transcript or shared words is insufficient.
 
@@ -284,9 +371,11 @@ For a continuous contribution, retain its admitted origin, last consumed through
 
 Correlation uses permitted continuity, compatible observed features and geometric overlap of the permitted estimates in their recorded world frame. It can establish a regional sound pattern without a known producer. It cannot use hidden emitter equality to join two sounds around a corner. If several contact hypotheses are equally compatible, preserve a broad ambiguous contact or separate facts without counting the same contribution twice toward a detection threshold. To avoid transitive chain fusion, each joined contribution must be compatible with the retained hypothesis support envelope, not merely one neighbor in a chain. B/C supplies enough actual path/interval evidence to justify any stronger continuity.
 
-An ongoing signal can update native state without writing a story row per tick. Acquire a new durable facet at meaningful changes: first detection, changed permitted detail/region precision, actual new speech or discrete outcome, association change, or actual support loss where the existing account policy records it. Preserve distinct real occurrences even when the optional wakeup or renderer collapses repeated equivalent presentation. Narrative encounter throttles do not select evidence eligibility or learnable duration.
+An ongoing signal can update native state without writing a story row per tick. Acquire a new durable facet at meaningful changes: first detection, changed permitted detail/region precision, actual new speech or discrete outcome, association change, or final confirmation at actual support loss. The final support capsule is independent of whether the narrative account policy emits a departure story row. Preserve distinct real occurrences even when the optional wakeup or renderer collapses repeated equivalent presentation. Narrative encounter throttles do not select evidence eligibility, last-confirmed time or learnable duration.
 
 Expired idempotency receipts may be compacted only after the existing source/continuation owner proves it cannot redeliver that original input. Active continuous sources keep their consumed prefix; discrete committed sources retain their receipt through the existing acquired source identity/lineage. Do not add an unbounded second global “seen event IDs” set or evict receipts on a UI timer. Historical recall never invokes the acquisition path.
+
+Learning-root eligibility and replay receipts remain in that existing durable personal/native source lineage and its actor-scoped index after exemplar eviction. The active recognition working set loads only the receipt metadata for roots actually entering the current acquisition, together with the bounded retained samples; it does not hydrate all prior observations or keep another ever-growing in-memory ID set. A genuinely new original utterance has a newly allocated original physical root. A future physical recording producer must preserve the original root/sample interval and prepare the observer's indexed receipt metadata through the existing loader before learning becomes a required native dependency. Missing required receipt preparation holds/defer work under that owner; it cannot be treated as an unseen root that earns fresh credit. No SQL lookup occurs inside an already captured cut. Compaction keeps sufficient exact receipt lineage, while actual forgetting/revocation applies its existing source eligibility rule. A still-recognized recorded sample cannot become a fresh meeting merely because its exemplar was replaced. Installing replayable recording families remains C/SPK work; stored-history reading, media preview and synthesis already remain outside physical acquisition.
 
 ### Exact evidence cuts
 
@@ -326,7 +415,7 @@ Physical support, learned recognition and autobiographical recall have separate 
 | Raw actor recall and summaries | Existing personal experience/memory retention and consolidation. | Preserve typed meaning through selected retained records; the current routine window and speech protections remain their owner's policy. |
 | Authorized player's actual-history reading | Existing personal-account history and privacy overlay. | Reading a durable old source can differ from the character's current recall eligibility. Neither grants fresh current facts; actual forgetting/correction fences both where required. |
 
-The inspected active history tail of 256 rows / 1 MiB is a residency bound, not an acquaintance limit or proof that an old fact was forgotten. Existing routine memory retention is six simulation hours, with protection for the newest 512 linguistic speech records; A does not change those values. Existing consolidation batches of 128 sources / 512 KiB remain their owner's envelope. The [memory inventory](../limits/memory.md) owns those restrictions. The new typed payload must fit their exact serialization and preparation paths or cause explicit continuation/rejection under that owner; a limit cannot silently flatten protected evidence.
+The inspected active history tail of 256 rows / 1 MiB is a residency bound, not an acquaintance limit or proof that an old fact was forgotten. Routine raw-memory consolidation eligibility begins after six simulation hours, while the newest 512 linguistic speech records retain their existing protection; neither is a lifetime history or recognition expiry, and A does not change those values. Existing consolidation batches of 128 sources / 512 KiB remain their owner's envelope. The [memory inventory](../limits/memory.md) owns those restrictions. The new typed payload must fit their exact serialization and preparation paths or cause explicit continuation/rejection under that owner; a limit cannot silently flatten protected evidence.
 
 ### Lossless source and memory adaptation
 
@@ -375,6 +464,8 @@ Immediately fence native/UI/model results with the current source/privacy and au
 
 Before publishing an asynchronous summary, embedding, recalled account, name edit or response, recheck its captured source, timeline, observer authority/control and privacy scope. A stale result is discarded or reprepared under the existing owner; it cannot repopulate a forgotten subject. A current audience change also invalidates the binder's cached handles and payloads. No asynchronous worker independently commits knowledge outside the one existing mutation path.
 
+A grants no new administrative operation to rewrite committed speech. The existing D66/open-owner limits on such rewrites remain controlling; these rules apply to already admitted personal-source correction, inference revision and forgetting operations. A spoken retraction is new words with a new occurrence. Any later general speech-edit feature must separately select and qualify its complete propagation policy before using these invalidation adapters.
+
 Forgetting the cause of a committed bodily injury or startle does not reverse that physical result. D/F/other effect owners decide their existing consequences from the original admitted state; A only invalidates future evidence-dependent interpretations or preparation as their contracts require. Retraction does not force trust, apology or forgiveness. A useful social repair requires an actual new communication to the relevant people.
 
 ## Consumer integration and authority
@@ -401,7 +492,7 @@ Retrieval candidates come from this actor's permitted source/subject space. Sele
 
 The current context builders that promote all visible IDs to recognized IDs must instead construct separate sets for visible body targets, recognized individuals, remembered people, anonymous contacts and note-only edits. Keep those sets as projections from one permitted state, not independent writable knowledge stores. `commitActorResponse` and `publishInnerWorld` validate the same typed subject variants. Model-returned reference strings are opaque handles from the prepared scope, never arbitrary canonical IDs or newly invented local subjects.
 
-New observation cannot refresh an old note merely because the note is selected for a prompt. A note about Ada's spear remains a historical claim at its original time; the latest heard voice is a separate fresh fact. If the model proposes “Ada is still carrying it,” native publication can accept it only as an explicitly supported inference when the world permits that form, not as a direct observed field. No selected rule automatically extrapolates the current unseen location, equipment or activity.
+New observation cannot refresh an old note merely because the note is selected for a prompt. A note about Ada's spear remains a historical claim at its original time; the latest heard voice is a separate fresh fact. Arbitrary editable note prose such as “Ada is still carrying it” can remain the actor's attributed authored understanding, including mistakes; native validation does not certify the semantic truth of arbitrary prose. Never parse/promote that sentence into a direct/current field merely because it appears in a note. Any proposed structured fact, association, claim or inference must use the closed native validator through both `commitActorResponse` and `publishInnerWorld`, with the installed form, original support and role. No selected rule automatically extrapolates the current unseen location, equipment or activity.
 
 ### Presentation and privacy
 
@@ -466,8 +557,8 @@ Persist through the existing current-format state and `mind_recognition`, `mind_
 Save the actual needed state:
 
 - Original permitted observations with source-relative facet ordinals, received features, intervals, original interpretation inputs, role/uncertainty and exact support links.
-- Observer-local subjects/names, selected exact exemplars, bounded learning credits and their original root/sample/encounter identities; the sufficient acquisition receipts and source eligibility used by those records.
-- Active channel grants, actual support loss time, grace and weak accumulation progress/consumed prefixes under admitted policy and normal-clock conversion.
+- Observer-local subjects/names, authored modality seeds and revocation eligibility, selected exact exemplars, bounded real learning credits and their original root/sample/encounter identities; the sufficient acquisition receipts, persistent last-credit/deadline state and source eligibility used by those records.
+- Active channel/facet leases with original fact link, local working revision and actual confirmation interval; final retained confirmation capsules, actual support loss time, grace and weak accumulation progress/consumed prefixes under admitted policy and normal-clock conversion.
 - Existing native continuations and immutable evidence cuts with captured membership/value snapshots, exact body life and source-order context.
 - Correction/forgetting overlays, lineage, owner revisions and the existing timeline/privacy authority required to prevent stale disclosures.
 - Instantiated physical recognizability profiles under their physical owner, so restore performs no random regeneration or inference from current assets.

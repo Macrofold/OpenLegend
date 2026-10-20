@@ -66,7 +66,7 @@ Absence is bounded evidence. Looking into a small visible region can establish w
 
 Voice recognition uses personally supported familiarity, the acoustic features actually available now, relevant supporting history and the installed world policy. An explicitly authored prior acquaintance can supply supported starting history; missing history cannot be invented from a name or hidden identifier. The selected base world includes Perception in that policy. Detailed laws and thresholds belong to [Recognition, familiarity and association](perspective-perception-tech-design.md#recognition-familiarity-and-association) and [base-world knowledge](../worlds/base/knowledge.md#identity-and-recognition); this specification does not define a second matching formula.
 
-A first unfamiliar voice alone grants no reliable voice-to-canonical-person association. Sufficient history can instead establish an **observer-local learned individual**: a distinguishable unnamed voice or face, with an optional later canonical association. The same identity/knowledge owner manages that subject. No fake entity, separate voice registry or second note system is introduced. Deliberate notes about such a learned individual use a typed observer-local subject through the existing notepad owner. A momentary anonymous cue does not automatically create a permanent person or notepad. Naming and note-writing are voluntary, not prerequisites for recognition, speech or evidence acquisition.
+A first unfamiliar voice alone grants no reliable voice-to-canonical-person association. Sufficient history can instead establish an **observer-local learned individual**: a distinguishable unnamed voice or face, with an optional later canonical association. When the learning rule establishes such an individual, the qualifying observation has an immediately usable supported association to that local pattern; the character need not wait for another encounter to remember “that same voice.” This grants neither a canonical person identity nor a current body. The same identity/knowledge owner manages that subject. No fake entity, separate voice registry or second note system is introduced. Deliberate notes about such a learned individual use a typed observer-local subject through the existing notepad owner. A momentary anonymous cue does not automatically create a permanent person or notepad. Naming and note-writing are voluntary, not prerequisites for recognition, speech or evidence acquisition.
 
 Supported cross-sense evidence can connect a voice, a visible individual and earlier particular observations. A face can remain hidden while clothing or context supplies only a tentative candidate. A familiar person seen elsewhere need not be treated as a stranger merely because their clothes or role changed, but hidden identifier equality cannot settle weak visible evidence. Where two similar voices cannot be distinguished, the result remains unresolved; the system cannot secretly announce the number of producers from their IDs.
 
@@ -195,44 +195,46 @@ Later gameplay qualification must include uncoached ordinary choices: recognize 
 
 ## Repertoire disposition
 
-The contextual review covers **all 42 Markdown files** under [repertoires](../repertoires/README.md), using the [shared repertoire review](stealth-awareness-repertoire-review.md) and relevant entry/combined-situation inspection. It does not claim a new reading of every source dossier or empirical qualification of every proposal. The 28 catalogues contain 8,257 numbered entries, including 385 actions; worked patterns and combined situations are contextual examples. Their proposal status and selected world scope remain separate from this design's delivery commitments.
+The design review includes the complete text of **all 42 Markdown files** under [repertoires](../repertoires/README.md): every catalogue proposal and rationale, retained pattern, combined situation, world profile, source-atlas entry and historical reading ledger. The [shared repertoire review](stealth-awareness-repertoire-review.md) supplies the common integration context. Full reading of these repository files does not imply reopening their linked source dossiers or a fresh audit of the historical external research they cite. No empirical qualification of a proposal is claimed.
 
-| Repertoire file or group | Selected module A disposition |
-| --- | --- |
-| `abilities-progression.md` | AP-133/135 make notebooks and interviews preserve original circumstances and independent sources. Other abilities remain optional. |
-| `actions.md` | Existing observation, communication, knowledge and memory actions supply ordinary noticing, asking and admitting uncertainty; no duplicate action family. |
-| `adventure-discovery.md` | AD-083/261/170/203 cover useful partial witnesses, corrected identities, intermittent rescue calls and recorded voices. |
-| `arts-leisure.md` | Listening positions, performances and borrowed voices retain their different evidence and authorship. |
-| `automation-creators.md` | Scoped witness tools, memory performances and disguise previews preserve ordinary/creator audience separation. |
-| `bodies-species.md` | Asymmetric and alternate senses, changed voices and separated experience compose with capability-specific evidence. |
-| `characters-backstories.md` | Partial personal histories and ordinary witness contributions remain useful without omniscient biographies. |
-| `combat-rescue.md` | Lost sight, identity-free warnings, surrender evidence and fallible recognition retain specialist response/preparation ownership. |
-| `combinations.md` | School-gate wolf, midnight rehearsal, parcel club, toll tower, betrayal, pressured witness and learning quarry preserve useful uncertain choices. |
-| `diplomacy-conflict.md` | Independent accounts, delayed corrections and limited memory sharing do not transfer private faction knowledge. |
-| `ecology-weather.md` | Symptoms, masking, animal familiarity and environmental sounds retain physical and native-controller ownership. |
-| `economy-logistics.md` | Attestation, rumors and noisy cargo combine evidence with actual goods and practical work. |
-| `faith-ritual.md` | Anonymous visitors, commitments and disputed continuity keep belief distinct from privileged proof. |
-| `history-myth.md` | Limited testimony and corrected attribution preserve original chronology and actual history. |
-| `institutions-politics.md` | Witness availability and legal standing remain distinct from physical recognition and truth. |
-| `languages-knowledge.md` | LKN017/018/129/134/132/178 cover unnamed acquaintances, similar voices, source lineage, fact freshness, correction and sufficient practical evidence. |
-| `magic.md` | Channel-limited relays, altered appearances and memory effects remain explicitly optional world laws. |
-| `materials-resources.md` | Traces, stored impressions and personal associations grant only their supported information. |
-| `mechanics.md` | MEC-083/089/092 select related-cue accumulation, supported old-clue reinterpretation and attributed testimony. |
-| `needs.md` | Comfort, chosen company, familiar voices and introductions remain possible motives without mandatory emotional outcomes. |
-| `objects.md` | Records, custody and participation preserve observation times and channel limits. |
-| `psychology-behavior.md` | PB-042/046/049 preserve missed intervals, revisable namesake errors and expressed rather than private intention. |
-| `relationships.md` | RSH-014/162/205 connect recognition across contexts, actual correction audiences and separate last-seen/last-heard knowledge. |
-| `settlements-architecture.md` | Acoustic layouts and partial views supply real opportunities under vision/acoustics ownership. |
-| `simulation-experiments.md` | SIM-101 specifies matched familiarity/quality conditions, stale facts and corrected association; experiments remain unexecuted proposals. |
-| `technology.md` | Pickups, relays, credentials and recordings preserve origin, receipt and identity distinctions. |
-| `traits.md` | Preferences, memory differences and contextual naming provide variation without bypassing evidence. |
-| `unusual-realities.md` | Copied memories, distinct viewpoints and later-acquired knowledge require explicit alternate-world laws. |
-| `work-crafting.md` | Diagnosis, records and actual assistance make partial information useful in completed work. |
-| `worlds/living-fantasy.md`, `worlds/medieval-survival.md` | Optional world profiles retain bounded magic and cast familiarity grounded in authored or acquired history. |
-| `worlds/modern-life.md`, `worlds/planetary-scifi.md` | Optional witnesses, recordings, relays and alternate bodies use the same limits without selecting their wider worlds. |
-| `README.md`, `coverage.md`, `gameplay-priorities.md` | Reviewed central selection/navigation remains with final integration; module A supports existing independent-cast and witnessed-consequence goals. |
-| `design-foundation.md`, `selection-and-scale.md` | Useful uncertainty, ordinary pleasures and bounded successful experiences remain the creative foundation. |
-| `group-3-reading-progress.md`, `group-6-reading-progress.md`, `group-7-research-progress.md`, `source-atlas.md` | Source ledgers and pins retain their evidence status; this module makes no new research-completion claim. |
+The 28 catalogues retain 8,257 numbered entries, including 385 actions. Their counts, stable IDs, order, priorities and selected world scope remain intact. **Fifteen catalogues have focused module A alignment**; the other thirteen catalogues and fourteen shared, navigation, ledger and world-profile files retain their applicable meanings after full review. “Aligned” below identifies the fifteen catalogue files with explicit evidence requirements. “Retained” records a completed review whose existing proposals already compose with this design. Proposal status remains separate from implementation commitments.
+
+| Repertoire file or group | Treatment | Selected module A disposition |
+| --- | --- | --- |
+| `abilities-progression.md` | Aligned | AP-133/135 make notebooks and interviews preserve original circumstances and independent sources. Other abilities remain optional. |
+| `actions.md` | Aligned | COM-03 preserves strict privacy intent without treating a whisper as proof of private delivery or revealing hidden listeners. COM-06/07 express voluntary engagement and turn-taking without authoritative conversation membership or suppressing permitted overhearing. Existing actions cover noticing, asking and admitting uncertainty. |
+| `adventure-discovery.md` | Aligned | AD-083/261/170/203 cover useful partial witnesses, corrected identities, intermittent rescue calls and recorded voices. |
+| `arts-leisure.md` | Retained | Listening positions, performances and borrowed voices retain their different evidence and authorship. |
+| `automation-creators.md` | Aligned | ACR-271 derives accessible sensory substitutes from the audience's permitted evidence. Scoped witness tools, memory performances and disguise previews preserve ordinary/creator audience separation. |
+| `bodies-species.md` | Retained | Asymmetric and alternate senses, changed voices and separated experience compose with capability-specific evidence. |
+| `characters-backstories.md` | Retained | Partial personal histories and ordinary witness contributions remain useful without omniscient biographies. |
+| `combat-rescue.md` | Retained | Lost sight, identity-free warnings, surrender evidence and fallible recognition retain specialist response/preparation ownership. |
+| `combinations.md` | Retained | School-gate wolf, midnight rehearsal, parcel club, toll tower, betrayal, pressured witness and learning quarry preserve useful uncertain choices. |
+| `diplomacy-conflict.md` | Retained | Independent accounts, delayed corrections and limited memory sharing do not transfer private faction knowledge. |
+| `ecology-weather.md` | Retained | Symptoms, masking, animal familiarity and environmental sounds retain physical and native-controller ownership. |
+| `economy-logistics.md` | Retained | Attestation, rumors and noisy cargo combine evidence with actual goods and practical work. |
+| `faith-ritual.md` | Retained | Anonymous visitors, commitments and disputed continuity keep belief distinct from privileged proof. |
+| `history-myth.md` | Aligned | Traceable evidence and explicit limits support a history even when its witness or producer remains unnamed or unidentified. Limited testimony and corrected attribution preserve original chronology and actual consequences. |
+| `institutions-politics.md` | Retained | Witness availability and legal standing remain distinct from physical recognition and truth. |
+| `languages-knowledge.md` | Aligned | LKN017/018/129/134/132/178 cover unnamed acquaintances, similar voices, source lineage, fact freshness, correction and sufficient practical evidence. |
+| `magic.md` | Aligned | MG-187 masks access to a learned association without erasing it or creating new familiarity on release. Displaced sound keeps apparent origin, learned voice and actual producer separate; shared memories and replays retain the original experiencer and source chain. These remain optional world laws. |
+| `materials-resources.md` | Retained | Traces, stored impressions and personal associations grant only their supported information. |
+| `mechanics.md` | Aligned | MEC-083/089/092 select related-cue accumulation, supported old-clue reinterpretation and attributed testimony. |
+| `needs.md` | Aligned | Familiar voices, warnings and attributed reports can serve desires for comfort or company. Current presence, trust, willingness and restored relationships remain separate questions for needs, appraisal and voluntary behavior. |
+| `objects.md` | Aligned | ITEM-266 changes available clothing cues without erasing retained recognition or memories. Records retain sample times, channel limits and attributed sources; copying or rereading does not refresh unseen facts. |
+| `psychology-behavior.md` | Aligned | PB-042/046/049 preserve missed intervals, revisable namesake errors and expressed rather than private intention. |
+| `relationships.md` | Aligned | RSH-014/162/205 connect recognition across contexts, actual correction audiences and separate last-seen/last-heard knowledge. |
+| `settlements-architecture.md` | Retained | Acoustic layouts and partial views supply real opportunities under vision/acoustics ownership. |
+| `simulation-experiments.md` | Aligned | SIM-101 specifies matched familiarity/quality conditions, stale facts and corrected association; experiments remain unexecuted proposals. |
+| `technology.md` | Aligned | Sensors and relays preserve received samples, acquisition times, source chains and limits. Credential recognition, familiar-individual recognition and access remain separate; a stale or failed device cannot supply a fresh empty reading. Installed classification can run natively. |
+| `traits.md` | Retained | Preferences, memory differences and contextual naming provide variation without bypassing evidence. |
+| `unusual-realities.md` | Retained | Copied memories, distinct viewpoints and later-acquired knowledge require explicit alternate-world laws. |
+| `work-crafting.md` | Aligned | Diagnostic work separates observed sounds, measurements, customer reports and proposed causes. Records retain original sample time and scope; new evidence refreshes only supported facets. Native classification supplies evidence while work owners plan and perform repairs. |
+| `worlds/living-fantasy.md`, `worlds/medieval-survival.md` | Retained | Optional world profiles retain bounded magic and cast familiarity grounded in authored or acquired history. |
+| `worlds/modern-life.md`, `worlds/planetary-scifi.md` | Retained | Optional witnesses, recordings, relays and alternate bodies use the same limits without selecting their wider worlds. |
+| `README.md`, `coverage.md`, `gameplay-priorities.md` | Retained; integration-owned | Central selection/navigation remains with final integration; module A supports existing independent-cast and witnessed-consequence goals. |
+| `design-foundation.md`, `selection-and-scale.md` | Retained | Useful uncertainty, ordinary pleasures and bounded successful experiences remain the creative foundation. |
+| `group-3-reading-progress.md`, `group-6-reading-progress.md`, `group-7-research-progress.md`, `source-atlas.md` | Retained | Complete ledger and source-atlas reading preserves their recorded evidence status without treating historical citations as newly audited external sources. |
 
 The first playable target is ordinary personal continuity and usable clues. Comprehensive detective interfaces, complete disguise systems, supernatural memory transfer, recording media and city institutions remain extension cases. Final central navigation and priority reconciliation belongs to the integration owner; this design does not promote every related repertoire proposal into required implementation.
 
