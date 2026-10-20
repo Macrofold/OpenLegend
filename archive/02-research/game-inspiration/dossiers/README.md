@@ -14,7 +14,7 @@ The [scoped ledger](../research-progress-pirate-games-2026-10-20.md) records the
 | --- | --- |
 | [Sea of Thieves — G179](sea-of-thieves.md) | How do a shared ship, carried treasure, partial information and temporary expedition risk create cooperation, stories and reasons to return? How do protected play and native Custom Seas change that bargain? |
 | [ARK: Survival Evolved — G133](ark-survival-evolved.md) | How do creature roles, taming, breeding, construction and persistent possessions turn preparation into a larger survival project? |
-| ATLAS — G180 | Separately authorized; use the scoped ledger for actual research status. |
+| [ATLAS — G180](atlas.md) | How do built vessels, material variety, NPC crew, territorial ownership and upkeep make a voyage part of a persistent organization? What do external creators and private hosts inherit? |
 
 ## Dungeons & Dragons expansion — 2026-09-27
 
