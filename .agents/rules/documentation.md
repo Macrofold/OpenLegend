@@ -53,7 +53,7 @@ Mark the project **Completed** only when its entire agreed scope, integration, d
 
 For a project authorized under [root task policy](../../AGENTS.md#task-scope-and-authorization), use the [design transition](../skills/openlegend-design/SKILL.md#approval-to-implementation). Before coding, create/update detailed maintainer work referencing both project files and integrate relevant accepted behavior/decisions into their persistent cross-project owners. Mark approved-but-unimplemented capabilities as targets, not current runtime behavior; update those owners and task states as each slice ships. Project docs retain final scope, meaningful design rationale and current acceptance, referencing canonical contracts rather than becoming competing current specifications.
 
-Main documentation must describe current behavior/contracts and clearly labeled remaining targets. Do not add “what I changed/revised” walkthroughs, per-pass status narratives or duplicate intermediate results. Keep superseded narratives only in the changelog or explicitly historical/comparative sections, separate from current guidance. Explain consequential tradeoffs beside the final contract; use Git for editing history. Historical material already retained in archives is not a current contract merely because it exists; do not reorganize unrelated archives for a local project.
+Main documentation states current behavior/contracts and clearly labeled remaining targets. Apply the [current-state documentation rule](../../AGENTS.md#documentation-is-a-maintained-source-of-truth), including its explicit history, status, verification and revision exceptions. Explain consequential tradeoffs beside the final contract; use Git for editing history. Historical material already retained in archives is not a current contract merely because it exists; do not reorganize unrelated archives for a local project.
 
 ## Lightweight decision history
 
@@ -69,7 +69,7 @@ Code/evidence establishes current behavior; accepted requirements establish targ
 
 For conversation capture, extract agreed decisions, requirements, examples, limits, tasks and questions into their owners; compare the diff against that inventory. Keep proposals distinct. Silence means agreement only when explicitly granted for that conversation, never permission for destructive, paid or permission-changing actions.
 
-Before consolidating/deleting, migrate unique current requirements, tasks, facts, criteria, questions and needed references. Preserve IDs, checkbox state, dependencies, blockers and valid exit criteria. Current specs/trackers state current truth, not dated diaries.
+Before consolidating/deleting, migrate unique current requirements, tasks, facts, criteria, questions and needed references. Preserve IDs, checkbox state, dependencies, blockers and valid exit criteria. Keep current contract and task sections up to date; dated records follow the same explicit-purpose or developer-requested exceptions.
 
 Apply the [root preservation rule](../../AGENTS.md#documentation-is-a-maintained-source-of-truth) to every edit. Compare removed or replaced passages against the task's explicit scope; retain useful material outside that scope. Internal agent plans and summaries cannot authorize a reversal. When an authorized change supersedes prior behavior, update its canonical owner and explain the consequential behavior change and tradeoff without retaining a chain of editing passes.
 

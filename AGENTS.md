@@ -164,7 +164,7 @@ When reconciling saved worlds, database/save versions or starting definitions—
 
 ## Documentation is a maintained source of truth
 
-Write ordinary documentation as the current source of truth. Do not add revision notes, before/after narratives or explanations of what changed from a previous version unless recording a comparison, status update or history is the explicit purpose of the task or the specific document (such as a changelog, verification record or ledger). Reconcile useful information in place; keep required decisions, evidence and status in their existing owners without duplicating a revision diary across documents.
+Maintain ordinary documentation as the current source of truth: current behavior, accepted contracts, clearly labeled targets, essential rationale, constraints and unfinished work. Update it in place; omit narration of reviews, revisions and intermediate editing stages. History, dated status, verification and project revision records—including relevant dates and timestamps—belong in documents or sections expressly intended for that purpose, or where explicitly requested by the developer. Keep those records scoped to their purpose and existing owners without repeating them across current guidance.
 
 Follow [Documentation](.agents/rules/documentation.md) before code/design changes and when maintaining docs: it owns canonical sources, tracker discovery and same-change reconciliation, acceptance status and decision history. Never rewrite accepted behavior merely to excuse an implementation defect.
 
