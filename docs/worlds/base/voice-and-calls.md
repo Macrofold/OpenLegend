@@ -8,6 +8,8 @@ The bundled world's present speech emits its full textual utterance at one admit
 
 World hearing still uses authored whisper/normal/shout and actual geometry. Human headset loudness and microphone level do not change the person's fictional voice range. Unrecognized speakers remain unrecognized in media; no recognizable voice is attached merely because the engine knows their identity. Recorded emotional evidence is distinct from private thoughts.
 
+The selected [observer recognition policy](knowledge.md#identity-and-recognition) is designed in [module A](../../projects/perspective-perception-tech-design.md), with implementation open in [PP01–PP07](../../maintainers/perspective-perception.md). Detection, heard words, distinguishable voice, recognized individual and learned name remain independent. Optional media reuses those permitted outcomes; listening to a replay or synthetic reader cannot increase the character's familiarity, refresh unseen body facts or associate an unknown historical speaker. Actual timed acoustic occurrences use their own then-current listener evidence through the same owner.
+
 The selected later timed consumer is a conversation across a real doorway: a person can hear an initial phrase, step beyond the opening or close the door, and miss a later phrase; another person entering late hears only what is actually emitted during their eligible presence. Its exact emission and speed behavior remains with DG26 and PS04, not a caption animation. First delivery does not require propagation around corners, sleep interruption, a voice-familiarity score or language mechanics. A different world may use supported vibrations or private transmitted symbols instead of air speech.
 
 ## A specifically enabled call edition
@@ -56,3 +58,4 @@ There is no arbitrary active-call duration maximum while the people and underlyi
 - Delivery: [HE07](../../maintainers/hearing-and-speech.md#he07--optional-speech-media-and-selected-hearing-extensions), [NC23](../../maintainers/narration-and-conversations.md#nc23--consented-private-slate-calls), and existing [PS04](../../maintainers/product-scalability.md#ps04--coherent-scenes-and-limited-attention).
 - Constraints: [VO](../../limits/hearing-and-speech.md#vo-l01--optional-committed-speech-playback) and [CA](../../limits/narration.md#ca-l01--two-person-call-and-explicit-consent).
 - Existing world content: [Text slates](text-messages.md); existing hearing, participation, privacy and current-format restoration owners remain controlling.
+
