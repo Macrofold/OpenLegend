@@ -63,4 +63,3 @@ A current permitted entity ID may literally be spelled `player` or `ada`. Those 
 - Implementation: [multiplayer authority and private projections](maintainers/multiplayer.md), [cognition and knowledge](maintainers/cognition-redesign.md), and [residual compatibility cleanup](maintainers/production-data.md#df04--retire-residual-compatibility-paths).
 - Limits and constraints: [multiplayer authority](limits/multiplayer.md) and [memory/knowledge references](limits/memory.md).
 - Related contracts: [entity-name grammar](entity-names.md), [knowledge subject binding](knowledge.md#subject-binding) and [narration audiences](narration-and-conversations.md).
-

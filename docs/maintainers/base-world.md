@@ -196,4 +196,3 @@ Mike approved and delivered [the revised encounter](../projects/completed/first-
 ## Complete first-playable design — October 17
 
 The [integrated pair](../projects/first-playable-world-feature-spec.md) completes the selected empty-handed Main design. [FPW](first-playable-world.md) owns shared YAML/authority/initialization; [SV](first-playable-survival.md) owns food/natural manufacture/hearth/recovery; [SH07–SH12](editable-shelters.md) owns natural camp/barriers; [CP](first-playable-cooperation.md) owns four people/cooperation; [RW](first-playable-roaming.md) owns finite wildlife and independent human trips. The [layout](../worlds/base/first-playable-layout.md) preserves existing useful content while changing player endowment, supported extent and distant placements. These are designed additions, not delivered BW acceptance. Existing CTR/SPK dependencies remain open; broader ecology/afterlife/communities are not prerequisites.
-

@@ -36,7 +36,7 @@ This call edition consumes [SPK's ordinary speech without membership](../../proj
 
 ## What the slate transmits
 
-A submitted slate turn conveys its exact private words to the other participating person through the installed magical affordance. It creates no local spoken utterance. Dictation is a real human input method for composing those words, not proof that the fictional person spoke aloud. Incoming synthesis is private presentation, not a world loudspeaker. To initiate ordinary local speech or another active local conversation, the person explicitly hangs up first; the new local utterance then has its normal audience and consequences. Passive nearby hearing continues during the call, and the two histories are never merged.
+A submitted slate turn conveys its exact private words to the other participating person through the installed magical affordance. It creates no local spoken utterance. Dictation is a real human input method for composing those words, not proof that the fictional person spoke aloud. Incoming synthesis is private presentation, not a world loudspeaker. To initiate ordinary local speech, the person explicitly hangs up first; the new local utterance then has its normal audience and consequences. Passive nearby hearing continues during the call, and the two histories are never merged.
 
 Submitted text and reviewed dictation share the same call history and the existing per-contact/total slate allowance. Show the person their own current sending allowance and earliest wait before joining and at the composer, including when prior notes used it; never expose the peer’s remaining allowance. Each turn retains the NC22 text limits; a call is not a rate-limit bypass. Exact per-turn admission and read/evidence results remain separate from playback. Text is visible without waiting for synthesis and a synthetic-voice failure never invents unheard words, repeats an accepted turn or converts it to nearby speech.
 
@@ -58,4 +58,3 @@ There is no arbitrary active-call duration maximum while the people and underlyi
 - Delivery: [HE07](../../maintainers/hearing-and-speech.md#he07--optional-speech-media-and-selected-hearing-extensions), [NC23](../../maintainers/narration-and-conversations.md#nc23--consented-private-slate-calls), and existing [PS04](../../maintainers/product-scalability.md#ps04--coherent-scenes-and-limited-attention).
 - Constraints: [VO](../../limits/hearing-and-speech.md#vo-l01--optional-committed-speech-playback) and [CA](../../limits/narration.md#ca-l01--two-person-call-and-explicit-consent).
 - Existing world content: [Text slates](text-messages.md); existing hearing, participation, privacy and current-format restoration owners remain controlling.
-

@@ -23,4 +23,3 @@ The [module-A design](../projects/perspective-perception-tech-design.md) is comp
 ## Joint qualification
 
 [Current evidence](../verification/hearing-main-integration.md) distinguishes actual combined checks from historical measurements. [SR27–SR31 and HE coverage](TODO.md#elapsed-time-cross-cutting-regression-coverage) retain emission-before/after-motion, status/sleep/visibility changes, geometry/floor boundaries, immutable parent/fork behavior, revocation/restore and 1×/8× caption observations. Independently scheduled speech demand must report lateness and unattempted work. No unpaid/native experiment establishes live-provider quality, full graphical qualification or unrestricted dense-world capacity.
-

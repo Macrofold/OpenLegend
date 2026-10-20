@@ -617,4 +617,3 @@ An advisory scheduling read can fail without changing the world or dispatching a
 ## Action occurrences and learned-method support
 
 Own native action occurrences preserve selected meaning, observed effects, multiple outputs and bounded dependency links in the existing record repository. Explicit inspection pages cold history. Routine residency/compaction preserves lawful acquisition support; authorized forgetting invalidates dependent learning and current privacy overlays survive older checkpoint restoration. [Action records and learned activities](action-experience.md) owns these contracts and their measured bounds.
-

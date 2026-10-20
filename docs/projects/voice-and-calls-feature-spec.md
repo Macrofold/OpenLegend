@@ -316,4 +316,3 @@ Retrieved October 8, 2026. These ten primary sources inform the proposed choices
 - Authored choices: [Optional voice and slate calls](../worlds/base/voice-and-calls.md), consuming [DG24 slates](../worlds/base/text-messages.md).
 - Persistent contracts: [Hearing](../hearing-and-speech.md), [Conversations](../narration-and-conversations.md), [Timed UI](../timed-ui.md), [Simulation time](../simulation-time.md), [Perceived history](../perceived-world-events.md) and [private correspondence](world-text-messages-feature-spec.md).
 - Design register: [DG26](../maintainers/needs-design.md#dg26--voice-calls-and-selected-hearing-extensions); technical counterpart remains explicitly outside this product-only assignment and must be completed before runtime implementation.
-
