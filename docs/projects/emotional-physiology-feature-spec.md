@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | Detailed feature design is specified and pending final review; implementation has not started. | 2026-10-20 |
+| In progress | Detailed feature design is specified and pending final review; implementation has not started. | 2026-10-19 |
 
 ## Purpose and scope
 
@@ -113,8 +113,10 @@ World definitions select the vocabulary, supported causes, value kinds, lifetime
 | --- | --- | --- | --- |
 | Fear | Possible harm, vulnerability, a dangerous person, an uncertain exit or a valued loss | The base profile uses source-linked scaled appraisals with explicit direction/target rules; supported worlds may select other lifetime families | Applicable fear can affect declared accuracy/evasion. The person still chooses through the existing decision owner and can act courageously, continue work or flee at their supported running speed. |
 | Joy | Welcome company, a useful success, a particular performance, beauty or an ordinary activity worth enjoying | A world-supported source-linked positive appraisal with its authored scale and lifetime; the selected joy policy retains its own cause semantics | It can matter to later interest, attention or chosen company. It does not create combat power, consent, loyalty, automatic need fulfilment or a compulsory cheerful expression. |
-| Grief | Continuing meaning of a personally understood loss | A persistent qualitative profile is the meaningfully different third-emotion example where installed; current reminders and relevance determine when it needs attention | The concern can persist through ordinary happiness. No universal sadness meter, fixed recovery deadline, direct combat penalty or periodic model duty is assumed. |
+| Grief | Continuing meaning of a personally understood loss | Existing wilderness:grief v1 is persistent, qualitative and cause-stacked. Its experience/recall-linked reflection creation remains enabled and ordinary decision creation remains disabled; independent review permission and integration are selected pending work. | The concern can persist through ordinary happiness. No universal sadness meter, fixed recovery deadline, direct combat penalty or periodic model duty is assumed. |
 | Anger | Perceived wrong, obstruction, provocation, disregard or another world-supported personal meaning | Preserve the existing independently interpreted fear/anger foundation and its own value, target/cause and lifetime policy | It can influence chosen demands and methods without compelling aggression. Resolve does not certify forgiveness, trust or repair of the underlying harm. |
+
+The [installed base appraisal definitions](../../packages/domain/src/worlds/base/appraisals.ts) already provide grief's distinct representation. The existing wilderness:grief v1 admits perceived-event and remembered causes, with reflection enabled and decision creation disabled. The new independent review permission is separate from both existing flags; it does not create a new ordinary-decision grief producer or create an initial record. The existing wilderness:authored-grief v1 remains the separate authored-only, persistent qualitative cause-stacked definition with decision and reflection disabled. It receives no AI review permission; its authorized authoring path retains ownership. The [world policy](../worlds/base/psychological-reactions.md) and technical pin/installation rules govern the selected extension without reinterpreting retained records.
 
 ### Coexisting meanings
 
@@ -132,7 +134,7 @@ Psychological reassessment concerns the current meaning or amount of supported f
 
 An authored temporary fear reaching zero means that contribution ended. It does not prove courage, safety, forgetting or completion of the encounter. An installed persistent fear can remain mechanically applicable without continuing model work. A temporary feeling cannot silently become a persistent family when a model would prefer more time.
 
-Grief provides a useful counterexample to treating every feeling as an expiring meter. A loss can remain important even when it is not the current focus. A reminder may make it relevant to a decision or a permitted review; it does not require a daily stage of mourning, a new external cause for the original loss or a mandatory unhappy response.
+Grief provides a useful counterexample to treating every feeling as an expiring meter. A loss can remain important even when it is not the current focus. A reminder may make it relevant to permitted cognition or a separately authorized review; relevance does not enable ordinary-decision creation or override the authored-grief restriction. It does not require a daily stage of mourning, a new external cause for the original loss or a mandatory unhappy response.
 
 ### Needs and development
 
@@ -328,6 +330,8 @@ The unresolved decision is narrow: it does not reopen native startle, independen
 
 These scenarios specify observable target behavior. Their physical and social activities must use actually admitted capabilities in the selected world. They are design acceptance material, not evidence that every illustrated capability or model response is implemented.
 
+Unless an approved SA-D01 profile is explicitly under evaluation, interpreted emotions in these scenarios belong to eligible autonomous characters. Grief is an already lawfully admitted record: experience-linked grief uses the supported reflection path, and authored grief uses its authorized authoring path. Independent review revises only an existing definition-permitted record; it does not create grief or modify authored-grief. Descriptions such as relief, worry and exclusion express personal meaning without installing an additional emotion definition or producer.
+
 ### 1. Bring someone home while still afraid
 
 An unexpected attack admits a startle on a rescuer's compatible body. The short bodily contribution begins natively at the correct boundary. A permitted interpretation may follow through the existing threat/appraisal path. The rescuer's values can make helping worthwhile even while their private fear remains high.
@@ -380,6 +384,8 @@ Repertoire anchors: [RSH-303](../repertoires/relationships.md), [PB-195/238/267]
 
 A character believed a traveller dead and grieved on that basis. The traveller appears with enough personally received evidence to support correction. The current belief can change while the previous experience remains historically real.
 
+The independent-review variant uses an existing experience-linked wilderness:grief record with the selected separate review permission. An authored-grief record remains outside AI review, even when the new evidence is compelling.
+
 Joy, embarrassment about a memorial, irritation at poor communication and remaining concern can coexist. The review cannot rewrite the past, make an uncertain identity certain or give the correction to recipients who never acquired it. Actual commitments and other people's memories retain their owners.
 
 A meaningful continuation could be an ordinary meal, a question, a chosen celebration or reluctance to trust another unexplained absence. No one response is scripted, and the scene need not force a full reconciliation.
@@ -390,7 +396,7 @@ Repertoire anchors: [PB-043/272](../repertoires/psychology-behavior.md), [CB-220
 
 ### 6. Two bodies, neither a stereotype
 
-A hare encounters an admitted sudden cue. Native physiology produces the supported reaction while the existing animal controller uses actual routes and its fast body to escape. There is no compulsory model call or autobiographical interpretation. The animal remains useful to observation, hunting and ecology because the same real movement constraints apply.
+A hare acquires an admitted sudden danger cue that also qualifies for its existing native response episode. Native physiology produces the supported reaction while the existing animal controller uses actual routes and its fast body to escape. A harmless abrupt cue can instead startle without requiring flight. There is no compulsory model call or autobiographical interpretation. The animal remains useful to observation, hunting and ecology because the same real movement constraints apply.
 
 A synthetic character may lack that bodily reflex while fearing damage or the loss of a companion through a supported private interpreter. A fan increasing under load provides only the declared bodily evidence. A highly composed human can recover from startle quickly and still care more about a feared consequence than a visibly jumpier companion.
 
@@ -472,6 +478,8 @@ The retained “same event, two appraisals” worked example in psychology suppl
 ### Product acceptance cases
 
 These are future acceptance requirements as design. They have not been executed. The [technical design](emotional-physiology-tech-design.md) owns the EP-C11 lower-level race, source, timing, capability, persistence and scheduling cases; the [maintainer tracker](../maintainers/emotional-physiology.md) owns implementation work and evidence.
+
+Use the scenarios' same producer and permission preconditions: autonomous eligible interpreters, lawfully admitted existing grief and no authored-grief AI review. The two explicitly controlled-character rows remain conditional on an approved SA-D01 policy; they cannot be used to select one implicitly.
 
 | Case | Observable required result |
 | --- | --- |

@@ -36,7 +36,7 @@ EP01 supplies compatible definitions and records. EP02–EP04 can then advance a
 **Status: Not started.** Dependencies: EP00; exact installed module/clock contracts. Owner: domain appraisal/body/status definitions and server world-record schema. Contract: EP-C01–EP-C03 and EP-C09.
 
 - [ ] Add the finite bodily reaction, mechanical-channel mapping and review-policy schemas, exact definition pins, closed reason/outcome fields and validation. Separate world tuning from engine families.
-- [ ] Replace ambiguous appraisal lifetime authoring with explicit normal-play duration/rate units; update current definitions, compilers, writers, readers and validators together. Preserve the installed base fear/anger/discomfort curves by explicit conversion, without a second editable rate or older-format reader.
+- [ ] Replace ambiguous appraisal lifetime authoring with explicit normal-play duration/rate units; update current definitions, compilers, writers, readers and validators together. Preserve the installed base fear/anger/discomfort curves and calm's 30-simulation-second expiry as 0.5 normal seconds by explicit conversion, without a second editable rate or older-format reader.
 - [ ] Extend the existing appraisal record with immutable original-cause horizon and bounded operational review state, separate from its semantic revision. Extend ActorMind's current persisted state with the standalone-review dispatch spacing scalar.
 - [ ] Extend independent contribution origin/parameter representation for source-free fixed bodily causes and exact target life; preserve current live-source contribution behavior.
 - [ ] Include all new metadata in existing allocation/serialized-size/work admission and save integrity; define incomplete/refused results before any partial enrollment.
@@ -101,7 +101,7 @@ EP01 supplies compatible definitions and records. EP02–EP04 can then advance a
 
 **Status: Not started.** Dependencies: EP01–EP05 as applicable; existing world manifest/body/trait/personal context owners. Contract: feature specification, EP-C10 and the canonical base psychological policy.
 
-- [ ] Install selected fear/anger review and mechanical mapping, joy and qualitative persistent grief, bodily startle profiles and explicit composure binding with all labels/scales/units sourced from the installed definitions.
+- [ ] Install selected fear/anger review and mechanical mapping, joy and bodily startle profiles; preserve existing source-linked and authored grief, adding independent review only to the explicitly revised source-linked pin, and explicit composure binding with all labels/scales/units sourced from the installed definitions.
 - [ ] Keep courage, sensitivity, temperament, persistence, expression and coping as distinct contextual influences; no personality-word parsing or automatic action script.
 - [ ] Supply personally relevant current feelings, uncertainty, current body/work and exact changed evidence without hidden safety knowledge or a whole action catalog.
 - [ ] Integrate permitted compact owner feedback and useful action consequences through existing presentation. Do not add a universal emotion/needs HUD or infer private feeling from expression.
