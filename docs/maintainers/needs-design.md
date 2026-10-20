@@ -610,7 +610,9 @@ Preserve committed-word/transcript timing, partial listener eligibility, recogni
 
 ### ND16 — Hearing and communication beyond direct-path speech
 
-**Selected stealth/hearing boundary: Done — shared design.** [SA00](stealth-awareness.md) and [A/C contracts](../projects/stealth-awareness-tech-design.md#shared-contracts) replace reliable unfamiliar-first-hearing identity with familiarity, actual evidence quality and selected base-world Perception. Words, names, association and location remain independent; physical receivers need no autobiography, and source occurrence order differs from actual acquired evidence. A/C specialists and SPK runtime delivery remain open.
+**Selected stealth/hearing boundary: Done — shared design.** [SA00](stealth-awareness.md) and [A/C contracts](../projects/stealth-awareness-tech-design.md#shared-contracts) replace reliable unfamiliar-first-hearing identity with familiarity, actual evidence quality and selected base-world Perception. Words, names, association and location remain independent; physical receivers need no autobiography, and source occurrence order differs from actual acquired evidence. C's physical sound design and SPK runtime delivery remain open.
+
+**Observer evidence and recognition: Done — designed.** The [module A feature](../projects/perspective-perception-feature-spec.md), [technical design](../projects/perspective-perception-tech-design.md) and [world policy](../worlds/base/perception-recognition.md) select structured anonymous/recognized evidence, fallible familiarity, independent names and facts, native memoryless reception, exact acquisition cuts, retention and current-format restoration. [PP01–PP07](perspective-perception.md) owns implementation and qualification; [SA-D02](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation) requires only the shared owner's exact source-revision representation disposition before dependent implementation. This closes the detailed A design slice, not physical propagation, language/media/waking extensions or the ND16 umbrella.
 
 **Selected ordinary-speech/social-perception design complete; broader extensions remain conditional.** Sources: [deliberate hearing extension boundaries](../hearing-and-speech.md#12-deliberate-extension-boundaries), [HE deferred expansion](hearing-and-speech.md#deferred-expansion), and [hearing limits](../limits/hearing-and-speech.md).
 
@@ -647,6 +649,8 @@ A new selected audience/production need must distinguish desktop packaging, repl
 ### ND19 — Older-memory transformation and dream reinterpretation
 
 **Selected stealth/reconsideration boundary: Done — shared design.** [SA00](stealth-awareness.md) defines adaptive, possibly unspoken reconsideration of an existing emotional cause through the current appraisal/work owners, including internally due opportunities, finite unchanged-cause work and no manufactured renewal. It preserves each remembered fact's time, precision and eligibility. D's detailed operation and [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) remain; this does not adopt dream transformation, semantic memory rewriting or a general recall cadence.
+
+**Evidence retention and recognition substrate: Done — designed.** [Module A](../projects/perspective-perception-tech-design.md#retention-correction-and-forgetting) specifies source-relative typed facts, separate observed/reported/inferred meaning, original timestamps, faithful summaries, learned individuals and correction/forgetting through existing memory/knowledge owners. [PP04–PP06](perspective-perception.md) retains delivery. This closes that supporting design requirement only; natural memory decay, dreams, transformed interpretation policy and their quality evidence remain under ND19/DG23.
 
 **Semantic product proposal prepared; adoption, technical delivery and quality evidence open.** [DG23](../projects/experience-shaped-characters-feature-spec.md), EC03/EC05/EC06 and [memory architecture](../memory-architecture.md) distinguish older interpretation and dreams from existing faithful consolidation/reflection.
 
@@ -779,3 +783,4 @@ Test a useful bounded outcome with feedback/debrief or trustworthy scoring, sour
 [Production workflows](../production-workflows/README.md) connect the existing art studies and V3D/INV delivery owners to in-game review. Source rights, useful-asset cost, human review and device qualification remain with those owners.
 
 Use canonical contracts and the actual selected revision's project/tracker evidence over broad statements in older proposals. Research and examples inform selection; they do not adopt features or waive acceptance. [Development save policy](../../AGENTS.md#development-save-policy), privacy/authority and existing verification requirements remain controlling for every selected extension.
+

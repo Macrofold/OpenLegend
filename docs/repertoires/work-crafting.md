@@ -52,6 +52,8 @@ Seeds and references: [Minecraft](source-atlas.md#g20), [Against the Storm](sour
 
 A repairer listens, measures and asks about recent changes before deciding whether a pump needs cleaning or replacement. Different evidence supports different methods. Skilled play is learning what matters, with tools that improve inspection. Avoid fake investigation where every clue merely increments a hidden counter before the only permitted repair button unlocks.
 
+The [observer evidence design](../projects/perspective-perception-tech-design.md) keeps a heard rattle, a measured output, a customer's report and a proposed cause distinct. Test records retain their sample time and scope; a later answer or quieter sound cannot refresh an unseen part's condition. Installed native classifiers can interpret eligible samples without a model request for each cue. Work planning and repair execution remain with their owning systems.
+
 Related entries: [WORK-101](#diagnosis-machinery-utilities-and-technical-service).
 
 Seeds and references: [Project Zomboid](source-atlas.md#g37), [The Witcher 3: Wild Hunt](source-atlas.md#g72), [Prey (2017)](source-atlas.md#g118).
@@ -582,3 +584,4 @@ Peaceful activities also earn Complete: pottery, music, portraits, costume-makin
 The general repair bench (WORK-081), sharpening service (WORK-085), shield refacing (WORK-086), strap replacement (WORK-087), laundry (WORK-141), packing (WORK-161), custody-handoff elaboration (WORK-163), contribution reviews (WORK-185), maintenance contracts (WORK-197) and injured-specialist handoffs (WORK-250) are Detail. WORK-085 and WORK-087 already describe Small bounded operations; keep that scope rather than equating low priority with complexity. Basic item transfer, truthful results, interruption integrity and participation remain required where used. Their correctness does not elevate a new administrative profession into the opening game.
 
 Distinctive commissions and bounded magical work remain Depth where they fit this experience. Industrial infrastructure, separate adult-service settings, unfamiliar reality laws and dedicated experiments are Specialist here. The original source descriptions, safety caveats, build gaps and fictional-world boundaries remain unchanged.
+

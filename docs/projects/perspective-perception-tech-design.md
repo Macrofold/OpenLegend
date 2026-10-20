@@ -477,3 +477,178 @@ Current-format validation belongs at untrusted decode/install/publication bounda
 On restoration, establish current authority/timeline and load the required native working set before advancement; validate/rebuild disposable indexes from saved admitted state; reconnect continuations under existing lifecycle ownership; then project permitted views. Rebuilding an index does not acquire evidence or improve an old recognition with today's profile. Do not synthesize elapsed listening during downtime, rerun committed utterances, advance through an unobserved transient, recharge a familiarity root, retry a provider request automatically or reroll physical profiles.
 
 Same-format save/restore should preserve semantic equality of permitted facts, native progress and next deterministic results. Byte-identical cache layout is not required. Body/control/privacy generations can legitimately invalidate old outward handles while the underlying permitted historical facts remain. G must obtain new valid bindings rather than preserve a stale live handle merely because it has the same printed name.
+
+## Worked traces
+
+These are exact design examples using hypothetical admitted inputs, not measured game results or new physical laws. Times below are simulation times unless explicitly labeled normal-speed seconds. B/C supplies the real physical observations; E/D/F/G choose their outcomes and presentation.
+
+### Ada: old spear, fresh voice, no current position
+
+At `t=100`, observer O has a supported sight of Ada at the gate carrying a spear, with enough visual evidence to associate the person. At `t=130`, O loses all sight. At `t=160`, O receives a voice signal from an approximate region beyond a wall they actually know about; the learned voice match supports Ada, but sight remains unavailable. At `t=170`, O turns around. The same record can support “I heard Ada recently, but I do not know what she is doing now or exactly where she is.”
+
+| Facet | Original time/support | Meaning at t=170 |
+| --- | --- | --- |
+| Person at gate | Direct sight at 100, original permitted point/region and visual association. | Last seen at the gate at 100; no current position supplied. |
+| Carried spear | Direct carried relation at 100, independently supported item exposure. | Spear last observed then; neither voice nor turn updates it. |
+| Visual availability ended | Actual visual support loss at 130. | No live face, equipment, activity or body target from that sighting. Episode grace does not extend them. |
+| Voice received | Direct hearing at 160, original signal quality/limits and exposure. | Recent heard voice, now historical reception. Not a continuously speaking person. |
+| Voice associated with Ada | Supported fallible profile inference formed at 160 using eligible prior familiarity and received features. | “Ada's voice” or qualified recognition, according to result; no native emitter/body resolution. |
+| Bearing/region | Permitted estimate measured at 160 from O's recorded position/orientation. | Same old bearing/region at 170. It does not rotate with O or reveal Ada's present path. |
+
+If the voice only weakly resembles Ada, the same detection/location remain while association is suspected. If it is a recording emitted there, the actual source of the audible signal can be the recording object; voice association alone does not establish Ada's current presence, life or activity. A heard name is a separate name claim. Summary, note retrieval and G's current prompt must reproduce these distinctions from structure without consulting Ada's current entity.
+
+### Ambush and genuinely related weak cues
+
+An unseen mover creates two C-admitted regional weak impulses, each `0.8` support, separated by `0.3` normal-speed seconds. With the selected decay of two units per normal-speed second, the first leaves `0.2` at the second reception; adding `0.8` crosses the threshold exactly. This produces an anonymous sound pattern and permitted direction/region. It may be classified footstep-like, with no assertion that a person definitely exists. If the impulses are `0.4` at the same cadence, the first decays fully before the next and the pair does not cross. Those numeric physical supports are illustrative C inputs; C must supply a justified ordinary-cadence example before claiming the actual footstep feature meets this behavior.
+
+If the second cue belongs to an observed incompatible direction/pattern, do not combine it. Republishing the first cue contributes zero additional support. If one interval is evaluated in multiple steps, integrate only uncovered time. A strong crash admitted as immediate is acquired without waiting for another cue. E can choose to investigate, ignore or prepare from the anonymous cue; A does not require finding a culprit before it is useful. F uses the actual victim's already acquired cut and its own warning/preparation policy. The ambusher's eventual impact cannot provide prior warning for itself.
+
+### A familiar voice behind a wall
+
+The signal arrives with useful direction and identity features but without a visible body. If O has eligible learned voice exemplars and the match passes, record the association with original quality/support. Exact location is unavailable unless C actually provides it. “Behind that wall” additionally depends on O knowing the relevant wall/region; otherwise it is a muffled direction.
+
+Detecting speech, understanding fragments, recognizing the voice, learning an individual pattern and knowing a name are independent. A known voice in an unfamiliar language or a supported nonverbal call can be recognized without words. Current low-margin same-language speech alone does not demonstrate that outcome under the selected quality mapping. An unfamiliar but clearly intelligible speaker remains anonymous. A prior known name can label a matched learned individual; merely hearing “I am Ada” cannot find the canonical Ada.
+
+If the speaker is unbound, O may emit ambient “Who is there?” or use an ordinary permitted look/listen/movement action. No directed addressee, route endpoint or physical target is silently assigned from the private producer ID. A current visible stranger can still be addressed through a legitimate current body reference without needing a name or prior familiarity.
+
+### Two similar-sounding strangers and an ordinary conversation
+
+Two first-time voices are perceived from separately distinguishable source groups. Their received features are equal or too close. Their groups remain competitors; neither “sounds identical” nor private ID inequality/equality proves an individual association. Each hearing retains its fragments, direction and original time. A later high-quality distinguishing feature or unambiguous cross-sense observation can resolve selected facts; do not relabel the entire old transcript as certain.
+
+For an initially unseen single distinguishable voice, retain a qualifying first anonymous exemplar. A second eligible utterance after an ordinary pause, within the world's seed window and at least its minimum learning interval later, can establish a fallible local voice pattern through complete conservative matching. Name and canonical association can remain unknown. Continued genuinely new qualifying samples at the bounded rate can reach familiarity during the same useful conversation. Leaving and returning grants no extra allowance. The character can voluntarily label the learned voice “the helpful stranger,” but naming is not a learning prerequisite.
+
+If an unobserved imitator later matches that pattern and there is no permitted competing evidence, the observer can misrecognize the voice. That is a recorded belief, not the engine swapping the physical person. Subsequent contradiction or evidence can split an association. Existing facts retain their original uncertainty and source; correcting one guess does not delete the sound or make a social apology automatically succeed.
+
+### A person disappears, returns differently, or dies
+
+A clear sight initially supports a body, its actually exposed detail and whatever individual recognition is justified. Passing behind an occluder ends live grants immediately. Return within grace can preserve the episode's continuity but reacquires only newly supported facets. Return after grace can still match eligible learned features; a new place, coat or carried object neither guarantees nor prevents recognition by itself. An obscured face prevents unavailable facial features, while gait/other supported B features may or may not suffice under the declared family.
+
+If the source dies unseen or a new physical life replaces it, O's memory is not updated with that hidden fact. Old-life current target/effect grants end under lifecycle ownership; eligible historical memory persists. A corpse found later requires its own observed association. If a legitimately retained mind recognizes someone from an old life, keep the original observer/body/measurement provenance while issuing only new current-life grants under the current owner.
+
+### A rustle with no identified producer
+
+Wind, an object, a small creature or an unseen person can produce a supported rustle family. O receives a direction with broad spread and no distinguishing individual features. The acquired detection is real; source-kind remains a hypothesis, and producer count/type can remain unknown. Do not create a hidden “unknown person” Entity or a remembered person pad to store it. Existing exposure/native continuation and ordinary personal memory are sufficient.
+
+Repeated related rustles can justify a regional pattern. A danger warning about that area can be independently acquired testimony without a named danger. E may choose a safer route or inspect the region, and G can present a useful cue without a red target silhouette. A completed careful search might later support a bounded negative report under E's actual search contract; merely hearing nothing more does not prove the area safe.
+
+## Acceptance matrices
+
+These are **future implementation/qualification requirements**, not executed tests. PP07 maps the cases to the smallest meaningful existing native/server/storage/browser checks and to actual ordinary play. Keep mechanics, privacy, persistence and human usefulness evidence distinct. Every row requires the stated result through the real producer/consumer path relevant to that row; a serializer fixture alone cannot qualify sensing, and fluent model text alone cannot qualify structured truth.
+
+### Acquisition, recognition and play
+
+| ID | Situation / input | Required result | Work |
+| --- | --- | --- | --- |
+| PP-A01 | Unknown rustle, no producer classification support. | Detected sound with permitted time/sense/location/limits; no person existence, canonical ID or invented name. | PP01–PP02 |
+| PP-A02 | Footstep-like pattern with uncertain source kind. | Native inference stays qualified; useful anonymous contact need not denote one definite producer. | PP01–PP02 |
+| PP-A03 | The accumulating/decaying impulse pairs above, plus C's actual ordinary-cadence case. | Exact crossing only for compatible sufficient input; physically unsupported cadence remains undetected. | PP02, C |
+| PP-A04 | One interval versus partitioned/overlapping/repeated evaluations. | Same progress, crossing time, facts and credits; render/sample frequency gives no advantage. | PP02/PP06 |
+| PP-A05 | Strong immediate cue while optional AI work stalls. | Native detection and required consumer evidence at the actual boundary, no model prerequisite. | PP02/PP05, E |
+| PP-A06 | Real fleeting sight/sound is not experienced. | No reconstructed eyewitness fact; a later report is testimony. Incomplete required evaluation instead holds. | PP02/PP06, B/C |
+| PP-A07 | Clear first unfamiliar speech. | Actual words may be known; voice, individual and name remain separate; no canonical first-voice grant. | PP03, SPK |
+| PP-A08 | Preserved familiar timbre with unavailable language/nonverbal words. | Recognized voice without lexical understanding through a supported producer; current low-margin-only limitation respected. | PP03, C/SPK |
+| PP-A09 | Two ordinary separated unseen utterances qualify for initial learning. | Stable local voice pattern, no canonical identity/name or rapid-submission/repeated-visit requirement. | PP03 |
+| PP-A10 | Sustained conversation versus leaving/returning and duplicate delivery. | New samples learn at the same bounded rate; shared time can reach familiarity; replay/presentation adds no credit. | PP03 |
+| PP-A11 | Similar learned voices, competitor on a later page, equal vectors. | Complete distinct-individual comparison; ties/near candidates stay ambiguous. No private ID tie-break. | PP03/PP07 |
+| PP-A12 | Several exemplars for one individual, including two- and three-feature matches. | A person's exemplars neither compete against themselves nor suppress its valid reliable-stage exemplar. | PP03 |
+| PP-A13 | Broad remembered interval, precise current sample. | Pair quality preserves remembered uncertainty; no narrowing/averaging into a perfect fingerprint. | PP03 |
+| PP-A14 | Unknown imitator matches a familiar pattern. | Fallible association can be wrong; true body/source unchanged, no hidden uniqueness oracle. | PP03/PP05 |
+| PP-A15 | Recognized face in a new context or with a concealed face. | Only B-permitted features support recognition; place/clothing remains separate inference. | PP03, B |
+| PP-A16 | First-seen unnamed person versus unbound heard voice. | Visible stranger has legitimate current address/body roles; unbound voice allows ambient clarification without hidden targetId. | PP03/PP05, SPK/G |
+| PP-A17 | Heard self-introduction and duplicate names. | Name claim/label only; no canonical lookup or subject merge by name. | PP03, SPK |
+| PP-A18 | Player/animal/NPC have equal physical permissions but different capabilities. | Same admitted cue, appropriate capability-specific retention; no human autobiography or AI call required for animals. | PP05, C/E/G |
+
+### Fact time, history and association
+
+| ID | Situation / input | Required result | Work |
+| --- | --- | --- | --- |
+| PP-A19 | Ada gate/spear/voice trace. | Independent original times; hearing does not refresh unseen equipment, activity, location or life. | PP01/PP04/PP05 |
+| PP-A20 | Observer turns/moves; an observed room later rotates or relocates. | Historical world-frame bearing stays at original pose/time, not attached to today's body/room transform. | PP02/PP05, B/G |
+| PP-A21 | Visibility gap inside grace and longer gap outside it. | Immediate live-grant loss in both; correct episode continuity within grace and independent learned identity after either. | PP02–PP03 |
+| PP-A22 | Later identification of a formerly anonymous clue. | Append supported association; preserve original time, limits and uncertainty without wholesale transcript rewrite. | PP03–PP04 |
+| PP-A23 | Wrong association corrected/split; namesakes. | Selected evidence/notes retain provenance; no automatic merge from a guess/name or entity swap. | PP03–PP04 |
+| PP-A24 | Contradictory witnesses, retraction and copied rumor. | Attributed claims coexist; known shared lineage is not independent support, unknown common origin is not magically disclosed. | PP04–PP05 |
+| PP-A25 | Heard assertion, old letter, copied memory or reported clock reading. | Receipt/authenticity proves expression/source experience only; not intent, claim truth or recipient eyewitness history. | PP01/PP04 |
+| PP-A26 | No identified danger, but a permitted regional warning. | Useful identity-free danger belief; E/F choose action/eligibility, no hidden attacker required. | PP05, E/F |
+| PP-A27 | Hot Awareness adaptation and cold hydration of the same source. | Equal typed meaning/source family/revision/times/association, not just equal flattened prose. | PP04 |
+| PP-A28 | Nested summaries plus raw-source aliases. | Original fact deduplication and separate times/contradictions; no extra witnesses/credits from copies. | PP04 |
+| PP-A29 | Source outside resident tail/raw recall window. | Native required state and retained acquaintance correct; actor recall and authorized history keep distinct eligibility. | PP04/PP06 |
+| PP-A30 | Source exceeds existing summary/request envelope. | Retain/continue or explicit supported failure; no silent essential-fact loss or invented completion. | PP04/PP07 |
+| PP-A31 | Perception/profile improves; old observation revisited. | Separately recorded later inference if selected; original acquisition and credits unchanged. | PP03–PP04 |
+| PP-A32 | Familiar recording or optional read-aloud. | Actual supported recording emission may be heard with original learning roots; UI replay/synthesis acquires nothing; neither proves live speaker presence. | PP03–PP05, C/SPK/G |
+
+### Authority, ordering, invalidation and recovery
+
+| ID | Situation / input | Required result | Work |
+| --- | --- | --- | --- |
+| PP-A33 | Source IDs embedded in native episode keys, events or assets. | None leaks through handles/captions/model context or decides individual matching/continuity. | PP01/PP05 |
+| PP-A34 | Partial source/detail visibility and an exact hidden coordinate. | Only allowed fields/precision leave the server; no full-object fallback, hidden point or source-attached bubble. | PP01/PP05, B/C/G |
+| PP-A35 | Nested recordEvent callback and delayed awareness insertion. | One compact acquisition, original order retained, acquired membership exact; no duplicate learning or reordered effects. | PP01/PP06 |
+| PP-A36 | Same-time/sequence cuts and older occurrence acquired later. | Frozen memberships differ correctly; timestamp/order alone never backfills. Due unfinished required work holds. | PP01/PP06, F |
+| PP-A37 | Own impact produces injury/startle evidence. | Evidence enters subsequent cuts only; original pre-impact facts do not include their own effect. | PP01/PP05, D/F |
+| PP-A38 | Forget/correct during summary, recall, note edit or client preparation. | Source aliases and current privacy/authority fence stale completion; no resurrected identity or body grant. | PP04–PP06 |
+| PP-A39 | Prepared outcome loses eligibility/authority before commitment. | Existing owner discards/reprepares; a historical cut is not edited or reused as fresh authority. Committed physical results are not undone. | PP05–PP06, D/F |
+| PP-A40 | Same actor ID/new life, unseen death, unidentified corpse. | Old-life live grants end; old facts retain provenance; private replacement/death/remains link gives no knowledge. | PP03/PP06 |
+| PP-A41 | Save during weak progress, between learning samples or after native acquisition. | Restore preserves progress/receipts/facts, resumes once, does not reacquire or reroll. | PP06 |
+| PP-A42 | Native cut before personal serialization; source-owned local facets. | Synchronous native reference; non-cyclic stored ordinals and external containing revision. | PP01/PP04/PP06 |
+| PP-A43 | Summary/awareness/memory IDs overlap across source families. | Exact kind/ID/revision selects the owner; no hash-to-number coercion or counter substitution. | PP01/PP04 |
+| PP-A44 | Observer/control/timeline change and stale handles. | Fenced projections and operations; no cross-observer local-key joins or restored stale target. | PP05–PP06, G |
+| PP-A45 | Required work exhausted, cold state missing or family unsupported. | Explicit hold/continuation/unsupported result, never absence, zero threat or false unique recognition. | PP02/PP06/PP07 |
+| PP-A46 | Growth workloads in the performance section. | Complete required semantics, bounded resumable work and honest latency/memory evidence; no all-world/all-history hydration per cue. | PP07 |
+
+### Ordinary usefulness and distinctive play
+
+PP07 also requires uncoached human use of the feature's ordinary scenarios: recognize an unnamed returning helper; make a worthwhile choice from a rough cue; compare partial witnesses; respond to an unseen voice; separate recent hearing from older equipment; and repair a mistaken attribution through actual social conduct. Record what the player understood and did, where information helped, and where it produced busywork or false certainty. Do not grade only avoidance of leaks. Partial knowledge should be useful without a detective interface, compulsory notes, constant confirmations or an AI thought for every ambient cue.
+
+Optional repertoire contrasts stay optional laws: exchanged shoe sounds or thrown voices change the emitted signal's apparent locus; sampled atmosphere supports a finding about that sample/method rather than current region safety; familiar smell/music can recall home without proving a resident present; remote viewpoints and memory gifts preserve the original sensing perspective; a recognition-access mask can hide and restore access without destroying/relearning the underlying evidence. An office's common voice mask can identify a performed role without its current holder's identity, and mixed-time supernatural scenes retain each component's actual time. Their repertoire/world owners retain the behavior. A supplies provenance/association seams when those capabilities are selected, not implementation of all those powers.
+
+## Shared contract amendment proposal
+
+**SA-D02 — proposed, not adopted; shared owner disposition required before dependent PP01 representation work.** SC02's conceptual `EvidenceRef.revision: number` cannot directly carry the existing personal-account / `CurrentMemorySource` / `RetrievedMemory` exact source revision, which is a SHA-256 **string**. `ExperienceSummary.revision`'s local integer is a different owner layer and cannot replace that stored-body digest. Coercing a hash, allocating a second universal counter or dropping source kind would break exact-source validation.
+
+Propose this precise correction to SC02's conceptual type, keeping its family names, time/cut meanings and ownership unchanged:
+
+```ts
+type EvidenceRef = {
+  [F in ExistingEvidenceFamily]: Readonly<{
+    observer: ActorLifeRef;
+    family: F;
+    id: string;
+    revision: ExistingEvidenceRevisionByFamily[F];
+  }>
+}[ExistingEvidenceFamily];
+```
+
+`ExistingEvidenceRevisionByFamily` explains each adapter's real owning revision; it is not a new runtime registry or counter. Awareness/personal-memory adapters retain their exact string body revision and the underlying storage kind (`awareness`, `memory` or `summary`) in the bound source tuple. Native/action/condition adapters retain their owning native version; a new exposure contribution's local content revision belongs to that owner and is not an observation clock. A memory adapter's opaque ID binding preserves the underlying family/ID tuple even when the shared family is `memory`; a summary ID and memory ID cannot become one ambiguous lookup.
+
+Proposed sentence immediately after the shared type:
+
+> Revisions retain their source owner's exact type and scope; stored personal bodies use their existing string digest, native state uses its owning version, and an adapter preserves underlying storage family. Revisions from different owners are not numerically comparable or interchangeable. A containing source revision is attached outside its canonical body, with local facet ordinals inside that body.
+
+This changes neither observation permission nor cut ordering. Module A specifies its adapter behavior but does not edit the frozen shared specification files or announce adoption. [SA-D02](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation) owns disposition and the narrow implementation gate. Shared integration must accept this correction or provide an equally exact existing-family representation before dependent code. Unaffected design/specialist work proceeds. SA-D01's controlled-player psychological acquisition remains separate and does not block A.
+
+## Implementation sequence and specialist handoffs
+
+[PP01–PP07](../maintainers/perspective-perception.md) contains the execution checklist and exit conditions. Follow one admitted source end-to-end through current channels rather than adding isolated types while old projections remain active. Begin current-format persistence with the first new owner field. Then add detection/recognition policy, faithful memory/consolidation, consumers and whole-path qualification. Recheck the actual development base before editing: source inspection used the exact contracts commit, not a future merged B/C/E implementation.
+
+| Owner | A hands over | Required return / remaining owned design |
+| --- | --- | --- |
+| B — vision | Facet leases, source/interval refs, received features, recognition capability and original observation frame. | Exact finite visible-feature family/weights, masking/light/occlusion loss, supported detail/precision, interval/loss boundaries and brief visibility. A does not select rays or face visibility. |
+| C — acoustics | Detection/accumulation, anonymous contacts, voice sample/quality, original-root receipts and lexical/identity separation. | Actual emission/receiver coverage, propagation, direction uncertainty, material/fidelity mapping, producer versus cause, ordinary-cadence weak example and genuine continuous duration. No hidden clean profile in A input. |
+| D — fear/startle | Original acquired facts and source/body-life refs. | Actual native effects and supported effective Perception changes through the common attribute owner; no A condition stack or automatic emotion. Forgetting does not reverse committed bodily effects. |
+| E — attention/investigation | Same current/remembered facts for all receptors, meaningful-change intake and incomplete/negative limits. | Cue relevance, native/AI response, ordinary investigation/stopping and honest negative search with actual area/time/opportunity coverage. Useful uncertainty needs no named target. |
+| F — surprise/preparedness | Actual-victim acquired cuts, separate fact times, anonymous region warning and current-body grants. | Warning/preparation relevance, expiry/generalization and surprise. No after-impact warning, hidden attacker or timestamp-only membership. |
+| G — player experience | Audience-scoped facts/roles, original frame/time, live/remembered state and preview completeness. | Readable cue duration/layout, ambiguity, accessible presentation, stale-grant clearing and ordinary actions from allowed direction/region. Camera/admin truth and hidden source attachment remain unavailable. |
+| SPK / voice media | Local/canonical participants, voice versus words/name, exact listener evidence and summary manifest. | Same subject union throughout speech/introductions/captions/memory. Local-contact directed calling, recording/relay and timed phrases need their actual selected command/physical contract. UI synthesis acquires nothing. |
+| Final integration | Required pair/tracker, world policy/limits, existing-doc reconciliation and all repertoire dispositions. | Dispose/adopt SA-D02, reconcile other specialists and central navigation/priorities, keep unrelated open design/delivery gates. This module makes no broad central priority edits. |
+
+No in-scope product question is left for the implementer to guess: ordinary acquisition, familiarity, names, claims, fact freshness, current permission, retention and correction have selected rules. B/C's physical inputs and E/D/F/G choices are explicitly owned dependencies. Initial numerical tuning is selected and revisitable under PP07, not empirically qualified. Source-local directed calling, complete disguise/illusion, natural long-term memory decay, recording/magic media and broader NPC life continuation remain separately selected extensions; contrast examples do not make them A delivery commitments.
+
+## Maintained records
+
+- Feature and repertoire disposition: [feature specification](perspective-perception-feature-spec.md).
+- Implementation and delivery: [PP00–PP07](../maintainers/perspective-perception.md); shared coordination [SAD-A / SAI-A](../maintainers/stealth-awareness.md).
+- World choices and restrictions: [base perception/recognition](../worlds/base/perception-recognition.md), [A limits](../limits/perspective-perception.md), [policy review triggers](../maintainers/revisitable-policies.md).
+- Persistent ownership: [events/perception/reactions](../events-perception-and-reactions.md), [perceived events](../perceived-world-events.md), [memory](../memory-architecture.md), [identity/references](../identity-and-references.md), [knowledge](../knowledge.md), [hearing/speech](../hearing-and-speech.md), [base knowledge](../worlds/base/knowledge.md).
+- Speech integration: [SPK feature](speech-and-social-perception-feature-spec.md), [SPK technical design](speech-and-social-perception-tech-design.md), [SPK work](../maintainers/speech-and-social-perception.md).
+- Exact representation proposal: [SA-D02](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation); unrelated controlled-player psychology remains SA-D01.
