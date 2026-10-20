@@ -4,7 +4,7 @@
 
 ## Start here
 
-- **[Sea of Thieves and ATLAS — G179–G180](research-progress-pirate-games-2026-10-20.md):** scoped full-game research added at Mike's October 19 request; the ledger records actual completion. The existing [ARK: Survival Evolved dossier](dossiers/ark-survival-evolved.md) and [ARK: Survival Ascended dossier](dossiers/ark-survival-ascended.md) retain their independent earlier research.
+- **[Sea of Thieves and ATLAS — G179–G180](research-progress-pirate-games-2026-10-20.md):** scoped full-game research added at Mike's October 19 request; the ledger records actual completion. The [Sea of Thieves dossier](dossiers/sea-of-thieves.md) examines shared ship work, expedition risk, lore, current modes, production, economics, reception and native creation. The existing [ARK: Survival Evolved dossier](dossiers/ark-survival-evolved.md) and [ARK: Survival Ascended dossier](dossiers/ark-survival-ascended.md) retain their independent earlier research.
 
 - **[Sea of Stars — G178](dossiers/sea-of-stars.md):** full-game research, timed combat, lore, production, reception and community. The [illustrated art study](../../../art-direction/research/sea-of-stars/README.md) translates its expressive environmental pixel art into the grounded OpenLegend brief; the [scoped ledger](research-progress-sea-of-stars-2026-10-18.md) records completion and evidence limits.
 - **[Why Umamusume made billions — and what OpenLegend can take forward](essays/mobile-success-failure-and-umamusume.md):** positive experience routes through all ten games, concrete OpenLegend possibilities, commercial interpretation and dated financial evidence. The [OpenLegend section](essays/mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity) connects adventure, invention, independent people, expressive creation and lasting consequences to current project goals.
@@ -206,3 +206,4 @@ The existing engineering, product, and world-design owners remain authoritative 
 ## Supplementary Dungeons & Dragons studies
 
 The [tabletop research hub](games/dungeons-and-dragons.md) distinguishes the [2024 revision](dossiers/dungeons-and-dragons-2024.md), [v.3.5](dossiers/dungeons-and-dragons-3-5.md), [GM adjudication](mechanics/dungeons-and-dragons-adjudication.md), and [complete-SRD systems study](mechanics/dungeons-and-dragons-srd-systems.md). The related [world dossier](../worldbuilding/worlds/29-dungeons-and-dragons.md) and [planes and lived-magic supplement](../worldbuilding/dungeons-and-dragons-planes-and-lived-magic.md) retain setting, edition and source-access distinctions. These additions do not renumber the existing game roster or claim exhaustive source review.
+

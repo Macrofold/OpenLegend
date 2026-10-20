@@ -4,6 +4,15 @@
 
 Use the concrete example to find a study, then read its limitations and counterexamples. Prefer comparing two different solutions to the same design problem over copying the most spectacular isolated feature.
 
+## Shared vessels, vulnerable treasure and repeated expeditions
+
+| Question | Named reference or interaction | Read |
+| --- | --- | --- |
+| Can a shared vehicle make cooperation useful without fixed character classes? | Steering, lookout, navigation, cannons, repair and bailing compete for crew attention | [Sea of Thieves, actions and objects](../dossiers/sea-of-thieves.md#r02) and [damaged-ship situation](../dossiers/sea-of-thieves.md#r05) |
+| What makes finding treasure different from successfully earning it? | Carried cargo, cursed chests, emissary flags, alliance rewards and risky extraction | [Sea of Thieves, economy and loss](../dossiers/sea-of-thieves.md#r04) |
+| What should survive a failed trip or a new session? | Retained pirate identity versus temporary hull, supplies and unsold treasure; persistent survival construction as another reference | [Sea of Thieves, persistence](../dossiers/sea-of-thieves.md#r04) / [ARK: Survival Evolved](../dossiers/ark-survival-evolved.md) |
+| How can players create a repeatable activity from existing actions? | Custom Seas rule Presets, placed-item Layouts, event scores, permissions and creator labor | [Sea of Thieves, native creation](../dossiers/sea-of-thieves.md#player-creation) |
+
 ## Composing items, effects, and reusable constructions
 
 | Question | Named reference or interaction | Read |
@@ -149,3 +158,4 @@ The same word can conceal different promises: a story can be authored, generated
 For broader comparisons, see [what makes these worlds fun](../essays/what-actually-makes-these-worlds-fun.md), [virality and discovery](../essays/virality-and-discovery.md), and [production pitfalls](../essays/production-and-platform-pitfalls.md). For dates, review context, and source limitations, follow the individual studies rather than treating this lookup as an independent evidence source.
 
 [Back to granular studies](README.md) · [Library home](../README.md)
+
