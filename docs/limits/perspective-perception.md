@@ -1,0 +1,83 @@
+# Observer perception and recognition limits
+
+Module A's [feature specification](../projects/perspective-perception-feature-spec.md), [technical design](../projects/perspective-perception-tech-design.md) and [PP00–PP07 tracker](../maintainers/perspective-perception.md) own the selected behavior, implementation and qualification. The [base-world policy](../worlds/base/perception-recognition.md) owns the numerical recognition/detection law. This inventory records its limits, reasons and boundaries without making them universal engine rules.
+
+**Evidence baseline:** documentation and source inspection at contracts tip `a3d40b4d71e29d6504e9f3fcc21e76344a0a284e`, reviewed October 19, 2026 in the maintainer's local timezone. All new A limits below are **Proposed — selected design, unimplemented and unqualified** unless explicitly marked otherwise. No reported throughput, model accuracy or player enjoyment is inferred from a chosen number. Existing hearing, memory and native-controller delivery retain their own measured/historical evidence.
+
+## PP-L01 — Supported sensory and interpretation families
+
+**Proposed; Medium.** The initial A integration supports installed sight, hearing and touch/impact evidence; narrow permitted appearance/equipment/activity fields; committed speech and its actual listener fragments; received voice features; source-kind hypotheses; person/name association; attributed danger/detail/location claims; and explicit later inference. A world must supply a physical detector/profile before its additional sense or transformation works. The engine does not install a general odor system, arbitrary biometric analysis, magic, full disguise simulation, recording media or natural-language truth detector by admitting a generic dictionary.
+
+At an unsupported family, return the explicit unsupported result and preserve any independently supported facets. Do not fabricate a clean signal or silently present the unsupported outcome as a completed negative. This restriction keeps the first implementation executable through real producers and validators while permitting useful anonymous clues. B/C/SPK own physical and speech extensions; PP01–PP03 own the narrow evidence seam. Revisit when an actual selected producer needs another family, not merely because a repertoire mentions it.
+
+## PP-L02 — Base Perception and feature precision
+
+**Proposed; Medium.** Recognition-capable selected base-world people receive Perception in **0–100**, starting at **50** absent another admitted authored value. The selected voice profile has **four** equally weighted physical descriptors, each an integer in **0–1000**; received intervals wider than **400** are unusable. Candidate and reliable recognition require different shared-feature counts and the exact pair-quality/distance criteria in [the world policy](../worlds/base/perception-recognition.md#perceivable-signatures).
+
+These are fictional game descriptors and initial character variation, not measured human or biometric accuracy. B owns its actual finite visible-feature family; A does not invent facial visibility. Missing Perception for an actor whose installed policy requires it is an installation/preparation error. An actor without that capability can still physically detect a cue. Missing features remain absent, not guessed points. No universal attribute, bonus stack, automatic progression or physical hearing-threshold change is introduced.
+
+## PP-L03 — Recognition quality and ambiguity
+
+**Proposed; Safe.** The base quality mapping uses actual acoustic margin, retained interval resolution and identity fidelity; the exact formulas, candidate radius, reliable thresholds and **0.08** distinct-candidate margin are canonical in [matching and association](../worlds/base/perception-recognition.md#matching-and-association). Match separate learned individuals, not each of one person's exemplars as competitors. All threshold boundaries are inclusive as specified there. Scores are not truth probabilities.
+
+Failure to identify preserves detection, direction, words and useful uncertainty. An exact tie stays ambiguous even at maximum ability/familiarity. The selected low-margin direct-speech bands do not currently support reliable recognition when all same-language words are lost; the explicit converse acceptance uses preserved timbre with unavailable lexical comprehension/nonverbal sound, or a later properly supported C/SPK transform. This prevents a false promise while retaining independent speech/voice outcomes. Revisit under PP07 when measured ordinary conversation or similar-voice play shows the selected thresholds are too restrictive or too generous.
+
+## PP-L04 — Learning rate and anonymous seed window
+
+**Proposed; Safe.** Qualifying acoustic seeds remain eligible for automatic initial matching for **30 normal-speed seconds**. Promotion requires two qualifying samples at least **two normal-speed seconds** apart and the world-defined conservative seed/competitor rule. Later familiarity adds at most **one new credit per two normal-speed seconds per perceived individual/modality**, with no banking or exposure-reset bonus. Genuine continuous signal supplies only completed non-overlapping two-second samples; current instantaneous utterances supply one discrete sample and no invented speaking duration.
+
+At the rate boundary, an early sample may remain an ordinary observation but earns no deferred credit. Expired seed history cannot be silently reloaded to identify a new source; deliberate later reconsideration is a separately supported inference. A sustained clear conversation can reach familiarity, and leaving/returning does not accelerate it. Original root/sample receipts suppress retransmission and repeated physical recording credit; UI replay and synthesis create no physical listening. Normal-clock conversion is pinned under SC13; runtime speed is not multiplied twice. Revisit if ordinary interactions fail to create useful acquaintance or reward mechanical repetition.
+
+## PP-L05 — Retained recognition supports and exemplars
+
+**Proposed; Safe.** Retain at most **12 credited samples per modality/individual**, of which at most **four exact exemplars** are selected for matching; the same support slots back both. Two eligible samples establish a learned voice, and six reach the familiarity plateau. Encounter diversity influences deterministic retention, not a compulsory number of meetings. Exact retention/exemplar selection and pair quality are defined once in [learning and familiarity](../worlds/base/perception-recognition.md#learning-and-familiarity).
+
+A newly admitted sample competes with currently retained samples under that ordering. Eviction changes future recognition capability, not historical evidence, and cannot reset the last-credit deadline or forget a replay receipt. No implicit prototype averaging, interval narrowing or unbounded sufficient-support list is allowed. Native support holds exact references rather than recursively embedded histories; existing personal-source lineage owns historical dependencies. Correction can reduce familiarity or invalidate a learned association. This modest representation intentionally does not recognize every costume, illness, age change or imitation. Revisit when a concrete supported context requires additional capacity and the complete recognition workload has been measured.
+
+## PP-L06 — Weak evidence, loss and correlation grace
+
+**Proposed; Safe.** The selected accumulating detector has threshold/max **one support unit**, a full-rate crossing in **0.25 normal-speed seconds**, and gap decay of a full unit over **0.5 normal-speed seconds**. Episode reconnection grace is separately **0.5 normal-speed seconds**, anchored to actual support loss; it is currently **30 simulation seconds** at the installed normal conversion. Immediate physical detections remain immediate. [The world owner](../worlds/base/perception-recognition.md#exposure-and-weak-evidence) defines interval integration and admissible cue correlation.
+
+Zero-rate samples decay and incompatible/uncorrelated cues cannot fill a shared sum. Live grants end immediately at loss; neither grace nor a visible UI cue extends them. B/C must demonstrate a physically justified ordinary-cadence weak cue that accumulates and one that correctly does not. These are initial response/readability choices, not measured stealth balance. Revisit through B/C/A qualification if individually weak ordinary cues always vanish before they can matter, or if unrelated ambient noise combines unfairly.
+
+## PP-L07 — Candidate preview versus complete recognition
+
+**Proposed; Safe for display, no semantic candidate cap.** Ordinary presentation can show up to **two** best tentative learned candidates plus an explicit more-candidates indicator when applicable. This is a preview, not the matching/search cap. The native decision must complete all possibly eligible candidate and competitor comparisons before asserting a unique match. Only the observer's eligible learned individuals are candidates; hidden world beings are not a source of preview counts.
+
+Additional permitted candidates remain available through the existing scoped continuation/inspection path when the consumer needs them. A bounded preview never changes a tentative result into recognized or maps an anonymous cue to an entity. G owns layout and readable wording; A supplies uncertainty and completeness metadata. Revisit display count only for a demonstrated usability need.
+
+## PP-L08 — Work quanta and overload
+
+**Proposed; Safe per slice, total work unqualified.** Initial A continuation slices process **64 physical contributions** or **128 exemplar comparisons**, using the existing native-work owner and actual accounting. These are engineering work quanta; they neither cap physically eligible listeners nor supply simulated time. Retain deterministic continuation position and original dependency scope. Other owner work is charged through its existing rules, not declared free because one comparison fits a batch.
+
+Required incomplete work holds a coherent native prefix before a dependent outcome. Optional interpretation/context/consolidation can defer. No nearest-N observer selection, truncated uniqueness claim or budget-induced invisibility is selected. One expensive operation can still exceed a desired wall-time slice; PP07 must measure it and reconcile the owner before capacity is claimed. Do not install a second queue solely to enforce these values.
+
+## PP-L09 — Total acquaintances, seeds, listeners and history growth
+
+**No limit — selected total-count policy; Too liberal for unqualified growth.** No independent total acquaintance count, physically eligible listener cap or semantic candidate cap is selected. Many distinct encountered beings can grow actor-scoped recognition storage. Many qualifying voices in the seed interval can grow anonymous seed records; many actual observer/source contacts grow the native working set. The time window, per-individual sample/exemplar limits and spatial/feature indexes reduce ordinary work but do not prove an overall memory ceiling.
+
+Keep compact active state, actor-scoped indexes, conservative candidate preparation and resumable complete queries. Prepare required cold state before a native boundary; never scan or hydrate all historical events for each cue. Existing native/save/admission envelopes still apply and can produce an explicit hold/preparation failure. Optional context has its own bounded input selection. If a future recording family can replay arbitrarily old learning roots, its existing source-lineage adapter must prepare exact root-receipt eligibility before required learning; no forever-growing duplicate global seen-ID set is selected. True forgetting and source compaction retain distinct behavior.
+
+PP07 must measure retained bytes, pending work/age and real producer-driven growth under the technical workloads. A total cap would require an explicit supported eviction or overload contract and acceptance; do not silently invent one during implementation. This entry records deliberate completeness and its unqualified cost, not infinite scale.
+
+## PP-L10 — Acquaintance lifetime and correction scope
+
+**No limit on passive acquaintance age; Medium.** Learned recognition has no fixed time-to-live or calendar decay in this slice. Its eligibility follows retained support, explicit correction/forgetting and the mind/lifecycle owner. Short exposure grace, six-hour routine recall, hot history tail and existing animal sensory retention are not acquaintance expiry.
+
+**Proposed conservative invalidation; Very safe.** Until selective dependency coverage is qualified, the existing correction/forgetting owner may clear more affected learned recognition, including all of an observer's learned records when necessary, before recomputing safely. This sacrifices preserved familiarity to avoid retaining revoked knowledge. PP04/PP06 must document the actual shipped scope; fine-grained retention is an improvement only when every relevant source alias/dependency is covered. Authored starting knowledge retains its own explicit installation authority. Broader natural decay/dream reinterpretation remains ND19 work.
+
+## PP-L11 — Existing retention and request envelopes
+
+**Current owners retained; no new A cap.** [Memory limits](memory.md) own the existing active-tail residency, raw-recall window, newest linguistic-speech protection, exact/cold retrieval, summary batches and request limits. [Native work](native-work.md) and [persistence](persistence.md) own their existing working-set, save and continuation envelopes. Existing animal sound/danger scopes also remain in their world/native owners.
+
+A adds typed meaning to those paths; it does not increase the tail, change a speech timer or imply all histories fit a provider request. Required structured support survives faithful transformation or remains retained for later processing. When an optional selection omits records, expose the omission appropriately rather than suggesting all evidence was considered. Raw story residency is never a cap on live sensory permission or learned identity. Reconcile bytes/field projection at PP04/PP06 rather than silently flattening a payload to fit.
+
+## PP-L12 — Superseded first-hearing identity and directed local calling
+
+**Removed — automatic unfamiliar first-voice canonical identity; — (superseded).** A clear first unfamiliar voice can supply words, direction, sound classification and an anonymous exposure; reliable canonical identity requires the selected supported association and familiarity. The removed shortcut was useful for easy references but erased anonymity, mistaken recognition and earned acquaintance. Current implementation paths still require PP03/SPK integration; this entry records the selected contract, not shipped behavior.
+
+**Proposed retained supported-command boundary; Medium.** SPK directed speech requires an admitted canonical addressee or current addressable body under its existing rules. An anonymous contact/local learned voice without that association cannot be resolved to the private producer to fill `targetId`. Ambient speech, ordinary pose/listening, visible interaction and permitted region movement remain useful. A future source-local directed-call command requires explicit SPK/C design and admission; it is not secretly selected by this evidence schema.
+
+## Review ownership
+
+PP00 records design completion; PP01–PP07 remain implementation/qualification work. Numerical values are initial authored choices whose complete source-to-native-to-player behavior must be assessed through ordinary play. The focused policy review trigger is [the maintained policy register](../maintainers/revisitable-policies.md); broader ranking/navigation belongs to the final shared integration owner. Do not add a generic task for every value or modify central gameplay priority scores merely because an inventory now exists.

@@ -27,12 +27,12 @@ Reuse the existing world, timeline, observer, body life, personal-source and ser
 | [Base knowledge](../../packages/domain/src/worlds/base/knowledge.ts), `ObserverIdentity`, `recognizesSubject`, `subjectReferenceCurrent`, `rememberSubject`, `learnSpeechIntroduction` | Canonical-subject records contain a given name, revision, encounter association and authored flag. Authored acquaintances survive episodes; ordinary learned multimodal recognition does not. | Add observer-local learned individuals and support through this owner, with independent names and body references. Do not add a voice registry or infer familiarity from biography alone. |
 | [Knowledge](../../packages/domain/src/knowledge.ts) | Personal subject notes have source evidence/revisions and historical note-only editing; subject keys are presently canonical. | Admit a typed local-individual subject through the same note owner and validators; retain valid canonical subjects. A voice pattern is not a synthetic entity. |
 | [Experience](../../packages/domain/src/experience.ts), `Awareness`, `acquireEventAwareness`, `mutateExperience`, `awarenessMemory` | Awareness can retain richer speech/event data, but the awareness-to-memory adaptation drops information needed here. | One lossless native adapter for resident memory and server hydration; typed support survives every explicit projection. |
-| [Personal accounts](../../packages/domain/src/personal-accounts.ts), `personalEventEvidence` and current-format encode/decode | Stable personal source links and exact body revisions exist, with explicit field allowlists. | Extend the allowlists and validators together. Merely adding a TypeScript property to Awareness will not preserve it through history. |
-| [Memory repository](../../packages/server/src/memory-repository.ts), `sourceRows`, `hydrate`, `current`, `validatePreparation` | Actor-scoped current/historical reads retain source kind, ID and SHA-256 body revision; hydration independently flattens awareness. | Use the common lossless adapter and preserve exact source family/revision through retrieval, correction and asynchronous preparation. |
-| Experience summaries and [server consolidation](../../packages/server/src/memory-consolidation.ts) | Summary text, coverage times, source IDs and entity IDs exist. The SPK design selects structural coverage that is not yet the delivered A facet manifest. | Preserve native fact capsules and precise source coverage outside model-written prose, with each fact's own time, role and association. |
+| [Personal accounts](../../apps/server/src/personal-accounts.ts), `personalEventEvidence` and current-format encode/decode | Stable personal source links and exact body revisions exist, with explicit field allowlists. | Extend the allowlists and validators together. Merely adding a TypeScript property to Awareness will not preserve it through history. |
+| [Memory repository](../../apps/server/src/memory-repository.ts), `sourceRows`, `hydrate`, `current`, `validatePreparation` | Actor-scoped current/historical reads retain source kind, ID and SHA-256 body revision; hydration independently flattens awareness. | Use the common lossless adapter and preserve exact source family/revision through retrieval, correction and asynchronous preparation. |
+| Experience summaries and [server consolidation](../../apps/server/src/memory-consolidation.ts) | Summary text, coverage times, source IDs and entity IDs exist. The SPK design selects structural coverage that is not yet the delivered A facet manifest. | Preserve native fact capsules and precise source coverage outside model-written prose, with each fact's own time, role and association. |
 | [Response](../../packages/domain/src/response.ts), `commitActorResponse`; experience `publishInnerWorld` | Response and independent reflection publication can update knowledge through separate valid entrypoints. | Both use the same subject/claim authority and stale-source checks. Fixing only response parsing leaves a bypass. |
-| [Entity references](../../packages/server/src/entity-references.ts), [knowledge context](../../packages/server/src/knowledge-context.ts), [response context](../../packages/server/src/response-context.ts) | Current reference construction and `responseReferences` can prepare world-wide entity handles or treat visible IDs as recognized. | Build bindings from the admitted participant/facet set; visibility, identity, memory and physical targeting remain independent grants. |
-| [Cognition](../../packages/server/src/cognition.ts), [decision context](../../packages/server/src/decision-context.ts), existing ActorWork intake | One intake and coalesced reasons exist; a reason is not the complete sensory evidence. | Pass permitted facts and exact dependency scope to the existing intake. E decides whether native action, AI work, player notification or no response is useful. |
+| [Entity references](../../apps/server/src/entity-references.ts), [knowledge context](../../apps/server/src/knowledge-context.ts), [response context](../../apps/server/src/response-context.ts) | Current reference construction and `responseReferences` can prepare world-wide entity handles or treat visible IDs as recognized. | Build bindings from the admitted participant/facet set; visibility, identity, memory and physical targeting remain independent grants. |
+| [Cognition](../../apps/server/src/cognition.ts), [decision context](../../apps/server/src/decision-context.ts), existing ActorWork intake | One intake and coalesced reasons exist; a reason is not the complete sensory evidence. | Pass permitted facts and exact dependency scope to the existing intake. E decides whether native action, AI work, player notification or no response is useful. |
 | Existing native danger/controller and body-life owners | Native animals already respond to contact or sight-supported danger without human autobiographies; body life separates replacement from prior bodies. | Add the admitted sensory variants to existing native retention/response inputs. Do not label the whole controller missing or make every animal a linguistic memory actor. |
 | Experience invalidation, recognition/knowledge persistence and save/load | Corrections/forgetting expand source aliases and can conservatively clear derived identity/knowledge. Existing `mind_*` storage and same-format restoration exist. | Extend those same owners, exact source dependencies and current-format validators; no compatibility bridge, historical migration or second knowledge database. |
 
@@ -51,17 +51,16 @@ type SensoryModality = 'sight' | 'hearing' | 'touch';
 type EvidenceRole = 'direct' | 'testimony' | 'inference' | 'authored' | 'imagined';
 type InferenceStrength = 'possible' | 'supported' | 'ambiguous';
 
-// Owned by one exact existing personal/native source, not a global fact table.
+// Materialized outer reference; never embed a source body's own hash inside it.
 type FactKey = Readonly<{
   source: EvidenceRef;
   ordinal: number; // Immutable field ordinal within this source projection.
 }>;
 
-type EvidenceTiming = Readonly<{
-  measuredFrom: SimTime;
-  measuredThrough: SimTime;
-  acquiredAt: SimTime;
-}>;
+type EvidenceTiming =
+  | { kind: 'observed'; measuredFrom: SimTime; measuredThrough: SimTime; acquiredAt: SimTime }
+  | { kind: 'interpreted'; formedAt: SimTime; recordedAt: SimTime }
+  | { kind: 'authored'; installedAt: SimTime }; // No fabricated sensory interval.
 
 type SupportedDetection = Readonly<{
   modality: SensoryModality;
@@ -101,9 +100,15 @@ type SupportedSensoryFact = Readonly<{
 
 `Installed*` names are closed admitted family variants validated by their existing world/observation owner, not arbitrary dictionaries or model-defined code. The first delivered integration needs current visual permitted descriptors, touch/impact, speech fragments, voice features supplied by C, native footstep-like/rustle classification supplied by a physical family, permitted locations and the claim forms below. An unsupported odor, magical aura, acoustic transform or visual feature is `unsupported`; it does not become a fabricated generic observation. A world may later install a narrow additional family through the existing boundary.
 
-`FactKey.ordinal` is assigned from the source producer's fixed facet order, not from prose order or retrieval rank. A correction changes the source revision and explicitly relates replacement facets to the old keys; it does not mutate an old immutable key. A summary references original keys and their support. A native-memoryless fact uses its existing native-exposure/response source adapter; it need not create an Awareness row merely to obtain a key. Server binding IDs can encode these native tuples privately but cannot expose canonical source data in an anonymous handle.
+`FactKey.ordinal` is assigned from the source producer's fixed facet order, not from prose order or retrieval rank. A correction changes the source revision and explicitly relates replacement facets to the old keys; it does not mutate an old immutable key. A summary references original keys and their support. A native-memoryless fact uses the native-exposure/response adapter under its existing owner; it need not create an Awareness row merely to obtain a key. Server binding IDs can encode these native tuples privately but cannot expose canonical source data in an anonymous handle.
 
-The internal `SourceAssociation.rememberedSubject` binds to the typed existing knowledge/identity subject owner. It is not necessarily a canonical entity ID and is never a naked value supplied by a model. A list of tentative candidate associations is represented as multiple supported association facets sharing an exposure and ambiguity group, without changing SC02's single-association variant. `recognized` describes a supported observer association; it is fallible. Native truth about the current emitter is not overwritten by it.
+The notation above is the **materialized projection**, not the bytes hashed inside a personal-source body. Persist source-owned facets with a local `ordinal`; intra-source references use `{ kind: 'local', ordinal }`, while already committed external support uses `{ kind: 'external', key: FactKey }`. Native projection resolves local references within the source. Personal serialization hashes the body without its own containing revision, then the exact-source binder attaches the resulting source revision to the outer `FactKey`. Validate local ordinals and acyclic support; never serialize a record's SHA-256 digest inside the very payload whose digest it is. The current personal-account owner hashes its full canonical payload, so excluding fields by an undocumented hash exception is not an alternative.
+
+Required native cuts precede personal serialization. Allocate/acquire the observation through the existing native exposure/observation owner with its own local content revision and stable source/interval identity; that native reference exists synchronously. Its owner revision is not a new global ordering clock. The later Awareness/source body preserves the original native acquisition identity and adds its exact stored-body reference as a projection/source alias, without acquiring again. A cut cannot wait for a personal hash or SQL write. Keep native observation identity, containing personal-source version and facet ordinal distinct throughout restoration and invalidation.
+
+The internal `SourceAssociation.rememberedSubject` remains SC02's string: the existing safe serialized subject key resolves to `ObserverSubject` through the identity/knowledge owner. Do not place the union object directly in the shared field. It is not necessarily a canonical entity ID and is never a naked value supplied by a model. A list of tentative candidate associations is represented as multiple supported association facets sharing an exposure and ambiguity group, without changing SC02's single-association variant. `recognized` describes a supported observer association; it is fallible. Native truth about the current emitter is not overwritten by it.
+
+`SupportedSensoryFact` is also a common permitted-memory projection. Physical `SensoryEvidence` itself always requires an actually acquired direct detection; authored and imagined records remain under private experience/knowledge owners and never fabricate one. A direct detection, live location/detail grant or received physical feature requires `role: direct` and observed timing. A source-kind or profile association is an inference with actual sensory support; testimony requires a heard/understood speech source or an already admitted reported account. Authored familiarity uses authored timing and its installation source. An imagined or proposed event may be retained as private interpretation but grants no sensory detection, familiarity credit or body target. The actor's own committed speech/action-result record likewise preserves its existing self-knowledge authority without pretending a deaf speaker heard their own words.
 
 ### Facet admission, timestamps and precision
 
@@ -138,7 +143,7 @@ Native classifications and identity matches use explicit `possible`, `supported`
 
 ### One identity owner, four distinct reference roles
 
-Extend `ObserverIdentity` and its persisted `mind_recognition` representation to support a learned local subject alongside the current canonical variant. Use the existing identity ID allocation, revisions, ownership and validation. A local key belongs to the observer's retained mind; its observations still record the observer's exact body life. It cannot be compared between observers, decoded into an emitter, or used in a world entity lookup. No fake Entity, separate voice-address database or second subject-note store is permitted.
+Extend `ObserverIdentity` and its persisted `mind_recognition` representation to support a learned local subject alongside the current canonical variant. Allocate the new observer-local record through the existing domain `nextId` owner with a distinct non-entity prefix; the baseline has no separate learned-individual allocator. Reuse identity revisions, ownership and validation. A local key belongs to the observer's retained mind; its observations still record the observer's exact body life. It cannot be compared between observers, decoded into an emitter, or used in a world entity lookup. No fake Entity, separate voice-address database or second subject-note store is permitted.
 
 The extended record needs the typed subject key, existing names and note association, authored/learned origin, eligible modality profiles, retained familiarity supports, optional evidence-supported canonical association and existing revision/invalidation scope. The base policy defines exact exemplar/credit selection. Store original received intervals and quality, their sample/root identity, original encounter and evidence references. Store only the actor-permitted sample, never the source's full physical signature.
 
@@ -219,7 +224,7 @@ At capture, copy the relevant eligible facts, their observation/association qual
 
 | Same transition example | Acquired membership | Consequence |
 | --- | --- | --- |
-| Source event 41 exists; its receiver evaluation is unfinished. Cut X is captured. | Event 41 contributes no acquired fact to X. | It cannot supply prior warning merely because 41 is old. |
+| Source event 41 exists; its receiver evaluation is unfinished and is not required to complete before this outcome. Cut X is captured. | Event 41 contributes no acquired fact to X. | It cannot supply prior warning merely because 41 is old. If its required physical interval is due before the outcome, hold the outcome and do not finalize a usable cut. |
 | Event 42 is observed and acquired; native work captures cut Y. | Y includes the acquired event 42 facts, regardless of later awareness insertion. | Native response can use exactly those facts. |
 | Receiver evaluation of 41 completes after Y; cut Z is captured. | Z can include 41 and 42; X and Y remain unchanged. | Do not backfill 41 into earlier cuts or sort it into prior warning. |
 | An attack's impact creates event 43 after the pre-impact cut. | Its injury/startle evidence belongs to subsequent cuts only. | It cannot defeat surprise for the impact that created it; F chooses actual eligibility. |
@@ -233,3 +238,170 @@ Continuous exposure support carries its actual covered interval and native sourc
 An `incomplete` required result retains the existing continuation and holds advancement past the dependent native boundary. It cannot produce invisibility, zero threat, no sound or surprise eligibility. An optional delayed interpretation may remain pending without blocking physical acquisition that is already complete; its uncertainty remains explicit.
 
 If a transient never reached a capable observer, was below threshold or fell in an actually unobserved interval, it is missed. Later entering the area, restoring a save, reading a source event or receiving a full transcript does not reconstruct direct experience. B/C must evaluate real swept/temporal intervals needed by their laws before advancing; A cannot compensate for a producer that silently skipped a required transient by fabricating a later sighting. A heard report about that missed event is new testimony.
+
+## Retention, correction and forgetting
+
+### Three lifetimes, preserved meaning
+
+Physical support, learned recognition and autobiographical recall have separate owners and lifetimes. The existing brief episode grace preserves correlation, not live observation. A learned individual can remain recognizable after that grace or the routine raw-recall window. The native working set required for current acquisition and outcomes must be complete even when the corresponding Awareness row is outside the resident personal-history tail.
+
+| State | Retention owner and behavior | Boundary behavior |
+| --- | --- | --- |
+| Active physical exposure, loss/return grace, accumulation and consumed prefix | Existing perception/encounter/contact owners; exact admitted progress and physical dependencies. | End current facet grants immediately on actual loss; retain only the configured continuity/accumulation state. |
+| Anonymous learning seeds | Existing recognition owner, from permitted qualifying samples and the world's short history window. | Expiry removes automatic seed matching eligibility, without deleting the historical sound or proving another producer. No replay extends the window. |
+| Learned individual, exemplars and familiarity | Existing identity owner and retained source support. | No fixed acquaintance expiry is selected. Bounded support replacement, correction and explicit forgetting change future recognition; raw-history residency does not. |
+| Current native warning/contact continuation | Existing native exposure/response/preparation owner with actual life/region scope. | Retain exactly what the installed native policy needs. A does not extend animal danger timers or define F warning eligibility. |
+| Raw actor recall and summaries | Existing personal experience/memory retention and consolidation. | Preserve typed meaning through selected retained records; the current routine window and speech protections remain their owner's policy. |
+| Authorized player's actual-history reading | Existing personal-account history and privacy overlay. | Reading a durable old source can differ from the character's current recall eligibility. Neither grants fresh current facts; actual forgetting/correction fences both where required. |
+
+The inspected active history tail of 256 rows / 1 MiB is a residency bound, not an acquaintance limit or proof that an old fact was forgotten. Existing routine memory retention is six simulation hours, with protection for the newest 512 linguistic speech records; A does not change those values. Existing consolidation batches of 128 sources / 512 KiB remain their owner's envelope. The [memory inventory](../limits/memory.md) owns those restrictions. The new typed payload must fit their exact serialization and preparation paths or cause explicit continuation/rejection under that owner; a limit cannot silently flatten protected evidence.
+
+### Lossless source and memory adaptation
+
+Implement one native conversion for an acquired personal observation's structured body. Both `experience.ts:awarenessMemory` and the server `MemoryRepository.hydrate` route through it. Keep the source's existing kind, exact ID/revision and original event link rather than manufacturing a fresh acquisition from prose. Update the whole explicit projection chain together:
+
+1. The observation and event-disclosure family creates only permitted facts.
+2. Awareness stores their source-relative structured form and original acquisition metadata.
+3. `speech.ts:EventEvidence`, `projectEventEvidence` and `validateEventEvidence` preserve supported speech and facet/participant meaning.
+4. `personal-accounts.ts:personalEventEvidence`, codecs and current-format validation preserve the same admitted structure and original provenance.
+5. Repository source rows, hydration, current/historical source validation and native memory adaptation preserve all supported fields.
+6. Summary preparation/acceptance, retrieval and cognition context keep a structural manifest and exact source references independent of prose.
+7. Client/history/prompt binders project only the requested audience's eligible values and role-specific handles after privacy/control revalidation.
+
+A source link alone is insufficient if the reachable stored body has already lost who heard what, when, from which region, with what certainty. Conversely, do not copy the global event payload in order to become lossless. Losslessness is relative to the original observer-permitted record. Apply one supported projection definition across the memory paths; independently curated allowlists must agree and be covered by future PP04 whole-path acceptance.
+
+Keep storage source kind distinct from epistemic role. `awareness`, `memory`, `summary` and personal account `perspective` are storage concepts; `direct`, `testimony` and `inference` describe meaning. A heard claim in an Awareness row remains testimony about its subject. A deliberate reflection can directly record the actor's own interpretation without becoming direct sensory evidence of an unseen event.
+
+### Summary manifest and interpretation
+
+Extend the existing `ExperienceSummary`/SPK structural coverage owner with native fact capsules. A summary body has its existing text and source coverage plus a deterministic manifest of the retained original facets, participants, original semantic times, precision, role, association proofs and correction eligibility. The model may propose concise interpretation; it cannot rewrite that manifest or supply omitted facts from its general knowledge.
+
+For each selected source, construct the source-relative manifest before the provider request. The provider receives only the permitted text and structured fields needed for its task. Native acceptance verifies exact source preparation revisions and installs a manifest derived from those selected sources, not from parsing the returned summary prose. If essential facts cannot fit the permitted input/output or batch, continue in another admitted batch, retain those sources or use the existing non-provider fallback; do not publish a fluent but materially lossy replacement.
+
+Deduplicate exact original fact keys and known aliases across raw observations and prior summaries. Do not turn one utterance repeated by several summaries into several independent supports. Keep incompatible testimony as attributed claims; optional prose can say they conflict. Coverage `from/to` describes the summarized span, not a replacement observation time. The summary “Ada was at the gate earlier and I heard her voice later” must still expose the old spear timestamp, later voice timestamp and current lack of visual location independently.
+
+Retained fact capsules are not a second universal knowledge graph. They are the structural body of the already selected memory/summary records and the bounded native sufficient support needed by existing recognition/controller owners. Do not store every world state snapshot, full hidden signature or every rendered sensory frame. Where raw recall is deliberately condensed, preserve the minimum typed facets and source lineage needed for a retained claim/recognition. If a selected memory policy actually drops a fact, make that fact unavailable rather than reconstructing it from the source's current world object.
+
+Consolidation is not a new learning opportunity. Its output time, imported alias, summary revision or embedding cannot add a detection, familiarity credit or independent witness. Source compaction and true forgetting are different operations: compacted support can continue through faithful retained capsules; explicitly forgotten support cannot.
+
+### Correction, contradiction, revocation and deletion
+
+Use the existing `invalidateExperience` and knowledge/recognition invalidation entrypoints. Expand original event/source aliases, action/result links, summary sources and correction relationships exactly as current ownership requires, then include the new fact/association/credit dependencies. Invalidate both `memory.id` and `memory.eventId` routes where either can reach the same experience. Existing source families can legitimately share an ID; invalidation and lookup always retain family, observer/world scope and exact version.
+
+Different operations have different effects:
+
+| Operation | Selected effect |
+| --- | --- |
+| New contradictory testimony | Add an attributed claim; retain prior direct observations and prior testimony. No automatic canonical history correction. |
+| Actor revises an inference or withdraws an accusation | Add a later interpretation/correction relationship under existing private experience/knowledge authority. Old expressed belief remains attributable where eligible. Other listeners do not automatically receive the correction. |
+| Authorized correction of an existing personal source | Preserve original source/correction identity, retire or supersede affected facts, invalidate dependent associations/notes/recall preparations and recompute supported current projections. |
+| Explicit forgetting/revocation | Remove eligibility through the existing overlay and clear affected learned recognition, claims, notes, preparations, embeddings/search results and pending projections. Do not revive a forgotten source through an older archived body or alias. |
+| Storage compaction/summary | Preserve eligible typed support and original times; no new event, independent evidence, familiarity or privacy grant. |
+| Source entity removed or life replaced | Retire current body/source bindings according to physical/lifecycle owners; retain eligible historical observer experience without exposing hidden removal facts. |
+
+Immediately fence native/UI/model results with the current source/privacy and authority generations when an invalidation commits. A future selective recomputation may preserve unaffected records only when dependency coverage is proven. Until then, the existing conservative clear of affected or all learned observer recognition is the safe selected implementation fallback; authored starting knowledge follows its explicit owner rather than accidentally masquerading as unrevocable learned evidence. Wider loss is visible loss of learned capability, not proof that the original event never happened. PP04/PP06 must record which conservative scope actually ships.
+
+Before publishing an asynchronous summary, embedding, recalled account, name edit or response, recheck its captured source, timeline, observer authority/control and privacy scope. A stale result is discarded or reprepared under the existing owner; it cannot repopulate a forgotten subject. A current audience change also invalidates the binder's cached handles and payloads. No asynchronous worker independently commits knowledge outside the one existing mutation path.
+
+Forgetting the cause of a committed bodily injury or startle does not reverse that physical result. D/F/other effect owners decide their existing consequences from the original admitted state; A only invalidates future evidence-dependent interpretations or preparation as their contracts require. Retraction does not force trust, apology or forgiveness. A useful social repair requires an actual new communication to the relevant people.
+
+## Consumer integration and authority
+
+### One permitted evidence boundary, different capabilities
+
+Declare physical sensing, lexical understanding, individual recognition, durable personal memory, native response and reasoning capability separately. An animal without human notes can receive the same permitted sound bearing/quality as a reasoning actor at the same physical conditions. It may keep only an existing native contact/danger continuation. A human without comprehension can hear words as an unintelligible voice; a hearing-impaired actor can miss them while still seeing a body. Being the controlled player does not itself grant stronger sensory information.
+
+| Consumer | Input from A | Responsibility outside A |
+| --- | --- | --- |
+| NPC cognition / private reflection | Selected permitted facts with individual times, modality, role, source support, current/remembered status and hypotheses; valid remembered/current reference roles. | E and existing cognition decide salience, thought, investigation, speech or voluntary action. A notification is not a command to reason. |
+| Native animal/controller | Required compact detected cue, permitted location/quality, local contact/association where that animal's capability supports it and exact acquired support. | E selects its native response; D and F own condition/eligibility effects. No automatic language comprehension, named-human registry or autobiographical model call. |
+| Player current presentation | Same permitted current facets and eligible remembered reminders with audience-safe handles. | G selects useful display duration, layout and controls while preserving time, precision and uncertainty. A marker or camera cannot disclose an unseen body. |
+| Player actual-history view | Authorized exact personal source and its correction/forgetting overlay, with typed original evidence. | Existing history/control authority decides which person's account can be read; viewing it does not give another in-world actor that knowledge. |
+| Physical action admission | A current permitted body/contact/location grant of the correct life and action role. | Action, geometry and reach owners decide if the chosen action is possible. Believed identity does not replace the physical target. |
+
+Use the same allowed underlying values, not a requirement to show identical text, have identical memory capacity or perform identical cognition. Native deterministic classification produces ordinary structured cues; prose and optional AI explain them. Tests must compare admitted semantic fields across consumers rather than expecting an animal to output a human sentence.
+
+### Cognition, retrieval and notes
+
+Extend the existing decision context and ActorWork dependency capture with meaningful A changes: a new detected signal, actually changed current detail, a supported association, source loss that affects a current action, a material corrected claim or a due native dependency. Coalesce repeated reason hints without collapsing the distinct acquired occurrences. E decides whether an innocuous rustle deserves no work, a native orientation response, a thought or an investigation. A does not automatically cancel an activity, turn every reasoning actor or wake an AI for every cue.
+
+Retrieval candidates come from this actor's permitted source/subject space. Selecting relevant notes must not start by enumerating all canonical entities. Use existing actor-scoped subject and source indexes, then selected allowed handles. A name in a quoted utterance does not resolve an unseen person's notes by global lookup. A suspected match can refer to an already known person as a hypothesis; it cannot merge the new contact into that person's note as a certain encounter.
+
+The current context builders that promote all visible IDs to recognized IDs must instead construct separate sets for visible body targets, recognized individuals, remembered people, anonymous contacts and note-only edits. Keep those sets as projections from one permitted state, not independent writable knowledge stores. `commitActorResponse` and `publishInnerWorld` validate the same typed subject variants. Model-returned reference strings are opaque handles from the prepared scope, never arbitrary canonical IDs or newly invented local subjects.
+
+New observation cannot refresh an old note merely because the note is selected for a prompt. A note about Ada's spear remains a historical claim at its original time; the latest heard voice is a separate fresh fact. If the model proposes “Ada is still carrying it,” native publication can accept it only as an explicitly supported inference when the world permits that form, not as a direct observed field. No selected rule automatically extrapolates the current unseen location, equipment or activity.
+
+### Presentation and privacy
+
+Treat every outward projection as an allowlist. The A-native record's provenance refs are server-side bindings, not a JSON payload for a browser. Do not expose true producer/event actor IDs, hidden physical life, exact coordinates behind a permitted region, unseen inventory, physical signature values or source object hashes through labels, keys, URLs, ordering explanations, tool arguments, caption grouping or error messages.
+
+G can show a short anonymous cue such as a left-side rustle, a known-name recognition qualifier and distinct last-seen/last-heard details. The data must let G show “Ada? Voice heard recently; last seen at the gate with a spear earlier” without using the newest timestamp for every chip. Candidate count/ambiguity is about this observer's considered learned candidates, not how many hidden people the backend knows exist. A bounded preview explicitly says more permitted candidates exist where relevant; it does not disclose their hidden identities.
+
+An anonymous caption groups only through its permitted exposure/local-individual association. `PublicEvent.actorId`, source asset identity and equality of a private emitter cannot join captions. A speech bubble attached to a body requires a current admitted body/role relationship, separately from recognizing the voice. A transient display can remain readable after reception, but becomes a historical cue; its animation cannot preserve live hearing, tracking or an unseen speaker's activity.
+
+Prepare only the role-specific handles actually needed for a permitted projection. Reuse the existing server binder and its world/timeline/control/audience/privacy fences. Revalidate after async work and before transmission/commit. Switching controlled bodies, observer timeline, authority or spectator scope retires inappropriate bindings and cached data. Authorized developer/world inspection is a different authority; it never silently feeds an ordinary actor's cognition or player controls.
+
+## Scheduling, bounds and performance criteria
+
+### Work and invalidation ownership
+
+Extend existing physical/encounter preparation and ActorWork scheduling. No per-actor polling loop, new sensory message bus, universal graph traversal or separate AI scheduler is selected. Share immutable physical source/geometry preparation where B/C proves equality; keep each observer's reception, prior knowledge, recognition and current grants separate.
+
+Invalidate only relevant work: physical source pose/profile/emission, observer pose/sense capability, B/C material/light/acoustic dependencies, source/observer body life, installed detector definition, selected Perception, eligible learned profiles and privacy/source changes. A name edit changes permitted presentation/subject revision, not sound propagation. An association correction changes recognition/notes, not original received signal level. A physical obstruction change can invalidate receiver samples, but a fresh summary need not recompute sight.
+
+Retain active native sufficient state and indexes before a dependent transition advances. Cold actor activation/restoration can prepare it through the existing bounded loader. A native cut cannot issue a synchronous history query or interpret a cache miss as no warning. Optional context/retrieval/consolidation is interruptible and can wait; required sensory/order work holds a coherent prefix when its existing native budget is exhausted.
+
+Initial A work quanta are **64 physical contributions** per existing continuation slice and **128 exemplar comparisons** per recognition slice. These are proposed engineering scheduling sizes, not observed throughput, simulated time, listener caps or limits on an evidence set. Charge other operations through existing native accounting as their owners require. A slice retains original query/dependency scope and deterministic position; no partial candidate page establishes a unique identity. Do not install a second queue to enforce these quanta. If the existing owner cannot express the required continuation, extend that owner in PP02/PP06 and preserve an explicit required-work hold until available.
+
+The [A limits inventory](../limits/perspective-perception.md) owns these quanta, bounded exemplars/credits, learning windows and candidate previews. Existing memory/history and native-work limits remain their owners. No total acquaintance count or total physically eligible listener cap is selected; that is an explicit growth dimension to qualify, not a claim of infinite capacity. Use conservative indexes and bounded resumable work, not a nearest-N rule that changes who could hear a sound.
+
+### Conservative feature indexing
+
+Store each observer's eligible exact exemplars under modality/family and usable feature masks in the existing recognition preparation/cache owner. A conservative numeric feature index may use interval/bucket ranges to find all candidates that could pass the world's maximum candidate distance. It may return false positives, never omit a potential best match or competitor. Filtering must consider the weighted mean over the actual mutually available dimensions; applying an all-dimensions distance rule before missing-feature handling can incorrectly exclude a valid match.
+
+The initial correct fallback iterates that observer's bounded-per-individual exemplars in deterministic pages. It never scans all world beings, source assets or historical event bodies. Cache candidate preparation only under the exact observer identity/profile revision, received feature pattern, policy/ability inputs and privacy scope. Changing a name need not rebuild numeric physical features; changing profile support or forgetting does. Avoid caching a final “this source is Ada” result by hidden emitter ID.
+
+Do not silently truncate candidate enumeration to the display preview. Continue matching until all possible competing local individuals are considered. Dense ambiguity can be returned as an explicit broad tentative result only if the completed computation actually establishes that result; incomplete work is not a guess. Required native consumers need only the completed A fields relevant to them; E may defer an optional expensive remembered-person inference while retaining an already completed anonymous detection, when no dependent rule requires identity at that boundary.
+
+### Qualification workloads and pass criteria
+
+PP07 records actual measured revision, environment, instrumentation and failures. The following are future workloads and operational criteria, not tests executed by this design task:
+
+| Workload | Required observation |
+| --- | --- |
+| Same source/observer interval as one advance, several smaller advances and repeated publication | Same detection crossing, acquired facets, source support, learning credits and final native state; only permitted optional presentation batching may differ. |
+| Strong cue while cognition/consolidation is delayed | Native detection and required outcome inputs are available at the actual boundary without waiting for a provider; no extra reasoning request merely to classify. |
+| 16, 64 and 256 sensing observers near 32 active emitters | Count physical candidates, acquisitions, continuation slices, comparisons, queued optional work and p50/p95/tail delays; every eligible receiver remains represented or required work explicitly holds. No false-negative cap. |
+| One observer with 32, 256 and 4,096 learned exemplars; ties at page boundaries | Complete candidate/competitor result, deterministic order and bounded per-slice work; do not declare uniqueness from an early page. Report total work growth. |
+| Add 1,000 then 100,000 irrelevant distant inert entities | A's recognition/handle work does not enumerate them. B/C owns and separately measures conservative spatial selection. |
+| Grow cold eligible personal history from 1,000 to 1,000,000 source records | Routine native acquisition and evidence cuts use compact active state without hydrating that history. Exceptional correction/recall work is measured separately and remains fenced. |
+| Dense repeated equivalent cues versus distinct utterances | Publication/render frequency adds no evidence or familiarity; legitimate distinct outcomes are not dropped by wakeup coalescing. |
+| Cold activation/restore with active weak accumulation and source loss | Required native state becomes complete before advancing; same progress, grants, learning supports and outstanding continuations resume once. |
+| Correction/forgetting during retrieval, consolidation and client projection | Stale outputs cannot disclose or recommit revoked evidence; report invalidation cost and recovery behavior. |
+
+A native slice size does not prove wall-clock preemption or whole-world frame rate. Record the actual most expensive single physical evaluation and comparison, queue age/bytes and retained native/identity bytes. If the required working set cannot be admitted within existing memory/native limits, surface the existing explicit preparation/hold failure. Do not simulate an unaware actor to hide overload. Once correctness and the stated growth risks are sufficiently qualified, stop optional stress expansion and integrate the useful gameplay cases.
+
+## Body life, save and same-format restoration
+
+Use SC02's `ActorLifeRef` at every bodily participant/cut/grant. The historical observer can retain experiences from an older physical life when the existing mind/control owner preserves that continuity. It does not follow that the old body can receive a new signal, carry a new condition or act on a current target. Replacement with the same actor ID but a different normalized `physicalLife` retires live body grants, active source/receiver exposure and old-life native continuations according to their owners.
+
+A source death/removal can end emission and current bindings without becoming observer knowledge of death. A released impact or independent object can continue producing a physical effect after its actor dies. Its actual emitting object/location and original cause remain private; an observer learns the cause only through admitted evidence. A corpse's `remains.sourceId` is not sufficient recognition. Observed appearance, authored supported acquaintance or explicit later evidence may support a body association; otherwise preserve an unidentified body.
+
+Historical “Ada was at the gate” may remain after Ada's body or entity disappears. A current remembered subject reference must not look up whatever new body currently has the same actor ID and return its hidden coordinates. Reincarnation/mind continuation applies only to the existing admitted player/body transitions; A does not broaden it to all NPCs or create afterlife rules.
+
+Persist through the existing current-format state and `mind_recognition`, `mind_exposure_owners`, `mind_exposure`, `mind_awareness`, summary, correction/forgotten and source-version/summary-source owners. These tables are integration locations, not a mandate for an independent table for every notation type. The implementer chooses narrow columns/bodies through those current owners and updates their one schema/codec/validator path. No runtime migration, compatibility alias format or old-save converter is selected.
+
+Save the actual needed state:
+
+- Original permitted observations with source-relative facet ordinals, received features, intervals, original interpretation inputs, role/uncertainty and exact support links.
+- Observer-local subjects/names, selected exact exemplars, bounded learning credits and their original root/sample/encounter identities; the sufficient acquisition receipts and source eligibility used by those records.
+- Active channel grants, actual support loss time, grace and weak accumulation progress/consumed prefixes under admitted policy and normal-clock conversion.
+- Existing native continuations and immutable evidence cuts with captured membership/value snapshots, exact body life and source-order context.
+- Correction/forgetting overlays, lineage, owner revisions and the existing timeline/privacy authority required to prevent stale disclosures.
+- Instantiated physical recognizability profiles under their physical owner, so restore performs no random regeneration or inference from current assets.
+
+Current-format validation belongs at untrusted decode/install/publication boundaries, not repeated assertions in every trusted inner loop. Reject foreign-observer/world references, invalid subject variants, nonfinite/out-of-range profile fields or times, reversed intervals, nonexistent local ordinals, invalid family pins and impossible life/continuation relationships. Validate intra-source references without a self-hash and preserve exact external source kind/revision. A remembered facet may outlive its producer, but an active body grant must bind the currently valid life/support. Source-independent historical validity is not a reason to reject an otherwise valid saved memory of a removed person.
+
+On restoration, establish current authority/timeline and load the required native working set before advancement; validate/rebuild disposable indexes from saved admitted state; reconnect continuations under existing lifecycle ownership; then project permitted views. Rebuilding an index does not acquire evidence or improve an old recognition with today's profile. Do not synthesize elapsed listening during downtime, rerun committed utterances, advance through an unobserved transient, recharge a familiarity root, retry a provider request automatically or reroll physical profiles.
+
+Same-format save/restore should preserve semantic equality of permitted facts, native progress and next deterministic results. Byte-identical cache layout is not required. Body/control/privacy generations can legitimately invalidate old outward handles while the underlying permitted historical facts remain. G must obtain new valid bindings rather than preserve a stale live handle merely because it has the same printed name.

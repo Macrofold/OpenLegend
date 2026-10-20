@@ -107,14 +107,14 @@ When adding or promoting an example, retain its ID and capture: aliases; initiat
 
 | ID     | Example intent                                  | Seed worlds | Priority   | Level | Related mechanics and entities       | Distinction to preserve                                        |
 | ------ | ----------------------------------------------- | ----------- | ---------- | ----- | ------------------------------------ | -------------------------------------------------------------- |
-| COM-07 | Leave the conversation but stay nearby.         | ALL         | 1 Core     | U     | conversation-membership, proximity   | Leaving membership need not suppress overhearing.              |
+| COM-07 | Leave the conversation but stay nearby. | ALL | 1 Core | U | voluntary-engagement, proximity | Ending engagement does not suppress otherwise permitted overhearing or require an authoritative membership mutation. |
 | COM-01 | Tell Ada what I actually saw.                   | ALL         | 2 Complete | U     | speech, memory-provenance            | Report preserves observation versus inference.                 |
 | COM-02 | Ask the stranger their name.                    | ALL         | 2 Complete | U     | conversation, identity               | The reply may be absent, false, or misunderstood.              |
 | COM-04 | Shout for help.                                 | ALL         | 2 Complete | U     | vocalization, hearing                | Audible range and actual listeners belong to perception.       |
 | COM-05 | Ask Ada to follow me.                           | ALL         | 2 Complete | U     | request, conversation, agency        | A request cannot directly start Ada's movement.                |
 | COM-12 | Warn everyone I can currently reach.            | ALL         | 2 Complete | C     | audience-selection, communication    | Scoped finite audience, not a global broadcast by wish.        |
-| COM-03 | Whisper this warning only to Ada.               | ALL         | 3 Depth    | U     | acoustic-channel, privacy            | Do not downgrade to audible public speech.                     |
-| COM-06 | Join their conversation without interrupting.   | ALL         | 3 Depth    | C     | conversation-membership, turn-taking | Joining grants no earlier private transcript.                  |
+| COM-03 | Whisper this warning only to Ada. | ALL | 3 Depth | U | acoustic-channel, privacy | Whispering can be overheard. Preserve strict privacy intent through supported delivery or an explicit inability/uncertainty result; never reveal hidden listeners or silently substitute public delivery. |
+| COM-06 | Join their conversation without interrupting. | ALL | 3 Depth | C | voluntary-engagement, turn-taking | Participation remains voluntary; ordinary engagement grants no earlier private transcript or authoritative group membership. |
 | COM-09 | Flash the lantern to signal the boat.           | MD MO FA    | 3 Depth    | C     | light, device-control, visibility    | No radio-like delivery guarantee.                              |
 | COM-10 | Write a note and leave it where Ada will look.  | ALL         | 3 Depth    | C     | writing, placement, beliefs          | Her future attention is not known or controllable.             |
 | COM-08 | Knock three times as our agreed signal.         | ALL         | 4 Detail   | C     | impact, acoustics, shared-convention | Sound production and interpreting the convention are separate. |
@@ -700,3 +700,4 @@ The exact intent matters. FLU-01's precise halfway fill is optional granularity;
 Existing inventory, bags, equipment and consumables are the starting point for expedition supplies. No additional “prepare supplies” feature is implied by this ranking. Preservation is Depth, not a reason to delay enemies, rewards or simple water access. CBT-13 supplies an ordinary melee-strike example. Its catalogue presence does not establish runtime support, a complete encounter or closed acceptance; use the action tracker and actual player-path evidence.
 
 Low priority never weakens privacy, authority, consent, resource accounting, safe interruption or persistence requirements when a feature is enabled. Alternate-world entries are not forbidden; Specialist means a different world or product commitment needs an explicit contextual rerank. These scores assert no new implementation or playtest evidence.
+
