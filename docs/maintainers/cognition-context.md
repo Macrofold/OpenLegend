@@ -9,7 +9,7 @@
 - Supplied request, measurements, source findings and every conversation decision: [Evidence and decisions](../projects/situation-aware-cognition-context-evidence-and-decisions.md).
 - All-repertoire coverage and selected positive gameplay cases: [Repertoire review](../projects/situation-aware-cognition-context-repertoire-review.md).
 - Limits and policy decisions: [SCX01–SCX08](../limits/cognition.md#situation-aware-context-selection), alongside existing CG08/CG09 and source-specific bounds.
-- Existing acceptance owners: [CR](cognition-redesign.md), [CE](character-experience.md), [IS](intelligent-simulation.md), [SPK](speech-and-social-perception.md), [CTR](combat-and-threat-responses.md), [PF](performance.md), [action experience](action-experience.md) and [agency](agent-agency.md).
+- Existing acceptance owners: [CR](cognition-redesign.md), [CE](character-experience.md), [IS](intelligent-simulation.md), [SPK](speech-and-social-perception.md), [NST](npc-speech-streaming.md), [CTR](combat-and-threat-responses.md), [PF](performance.md), [action experience](action-experience.md) and [agency](agent-agency.md).
 
 ## Selected scope and execution order
 
@@ -30,7 +30,7 @@ The selected change preserves complete accepted identity, all required actor-per
 | Reconcile and release | SC10–SC11 | SC10 runs with every stage; SC11 consumes all applicable exits and preserves broader existing gates. |
 | Consider local schema factoring | Conditional portion of SC12 | Only after sparsity measurements; retaining inline definitions is the selected default when benefit/support is unproved. |
 
-Implementation follows the repository verification policy: prefer relevant existing fixtures/caller checks and representative ad-hoc verification; add regression coverage when it protects a consequential uncovered contract. This tracker does not mandate a new broad test suite, a paid comparison without authorization, or runtime work during this design-only assignment.
+Implementation follows the repository verification policy: prefer relevant existing fixtures/caller checks and representative ad-hoc verification; add new automated tests only when Mike asks. Acceptance cases specify behavior to demonstrate, not authorization to create test infrastructure. Paid qualification remains under the standing account authorization and per-task ceiling. This design-only assignment performs no runtime implementation or paid comparison.
 
 ## SC01 — Capture one preparation and the complete request
 
@@ -48,6 +48,7 @@ Implementation follows the repository verification policy: prefer relevant exist
 **Owner:** the focused `decision-context-selection.ts` module and existing recall/attention/perception/work owners. **Design:** technical §§4–6. **Dependencies:** SC01; CR03/CR04 and CE03 remain semantic owners.
 
 - [ ] Collect independent actor-permitted situation signals and union their required facts. Preserve current identity/body/work/obligation/stimulus contracts, required personal outcomes, corrections and source-family identity.
+- [ ] Apply NST terminal readiness before speech discovery, ranking, byte/row admission, exact required reads, hydration and every semantic derivative. Closure of an older occurrence makes its permitted completed/interrupted evidence newly eligible once without rewriting chronology. Preserve its frozen historical hearing and current disclosure/forgetting/timeline fences.
 - [ ] Close required dependencies and test earliest reliable feasibility before optional hydration/attention/compaction. Missing required sources and genuine required overflow stop the affected generation; optional failure cannot demote them.
 - [ ] Preserve existing bounded discovery/hard-query fallback and source-specific relevance. Apply the exact deterministic ordering and incremental dependency-accounting algorithm in technical §6, including shared dependencies, cycles, nonfitting candidates and stable ties. Before activation, implement technical §13.1's request-local compiler meter and finalized required fallback; the guard is part of SC02 delivery, not postponed until the later performance comparison.
 - [ ] Include supporting and contrary evidence, competing resource uses, personal interests and positive/quiet opportunities. Preserve partial/not-requested/unavailable/stale/forbidden distinctions; only a complete scoped query can establish scoped absence.
@@ -70,10 +71,10 @@ Implementation follows the repository verification policy: prefer relevant exist
 
 **Owner:** `cognition-contracts.ts`, `navigation-contracts.ts`, exported payload schemas and `packages/domain/src/response.ts` with all current producers/consumers. **Design:** technical §9. **Dependencies:** SC01; integrate with SC03/SC06/SC07.
 
-- [ ] Preserve the strict root object and ordered `operations` array, common metadata and all eight enabled kinds. Each branch declares only its active payload and required common fields; preserve genuine null meanings.
+- [ ] Preserve all eight logical operation kinds and common metadata. Compose the final strict provider contract with NST's sole `records` root: speech start/text/end records and seven sparse flattened non-speech alternatives, with no inactive `talk: null` or sibling payloads. Keep genuine declared null meanings. An operations-root stage is allowed only before NST's coordinated cutover; no dual generation reader remains afterward.
 - [ ] Implement exact nested known/expression/proposal/invoke, goal, plan and appraisal alternatives. Bind installed family and its own parameters in one closed alternative. Preserve `interrupt`, actual prior-step outputs and distinct purposes/work modes.
 - [ ] Replace envelope `.shape.*` assumptions with shared exported payload schemas. Update native-known responses, reflection reuse, response resolution/admission, escalation/reconsideration, fixtures and diagnostic labels together; retain no old padded parser.
-- [ ] Confirm multiple and repeated operations, deliberate empty responses where allowed, earlier-only admission dependencies and independent partial receipts. A talk+appraise entry must fail both final validation and preview.
+- [ ] Confirm multiple and repeated logical operations, deliberate empty responses, earlier-only admission dependencies and independent partial receipts through NST's exact record parser, normalization and publication barriers. Reject a mixed payload and preserve full validation for generated non-speech response operations. The inspected private-preview talk+appraise rejection remains an earlier-stage qualification; it is not the final public speech protocol.
 
 **Exit:** every enabled current operation passes the real schema/serialization/parser/reference/native path with the intended effects/refusals; the first sparse delivery retains existing revision fields. Provider dialect is qualified separately from local schema calculations. No talk-only shortcut based on a speech trigger removes valid actions.
 
@@ -93,6 +94,7 @@ Implementation follows the repository verification policy: prefer relevant exist
 **Owner:** AI director/budget and current `packages/ai`/Macrofold adapters. **Design:** technical §11. **Dependencies:** SC01/SC03/SC04; selected SC02/SC05 representations.
 
 - [ ] Measure/admit the complete finalized input, output allowance, schema and transport under existing limits. Include embeddings, attention, compaction, selected threat stages and configured reconsideration in complete cost reporting through existing owners.
+- [ ] Include NST's record wrapper, complete generated document, independently bounded normalized logical response and every actual screening execution in their existing size/cost owners. Qualify the exact request-bound records path and the answered/reason-null `q0` gate where applicable. Listener fan-out is not a separate generation; unknown screening/provider cost remains explicit.
 - [ ] Preserve exact frozen schema/request bytes across asynchronous calls and local validation. Remove adapter-added duplicate prose or envelopes; verify each real API wrapper without substituting a newer vendor API.
 - [ ] Arrange genuinely stable instructions before dynamic evidence where supported; preserve exact scoped reference enums initially. Report actual cache usage rather than predicting hits from a stable first paragraph.
 - [ ] Integrate direct OpenAI, Macrofold direct generation, supported full-generation callers, native/fixture generated values and decision reconsideration. Preserve route-specific parameter forwarding, refusals, uncertainty and no automatic paid repair.
@@ -104,8 +106,8 @@ Implementation follows the repository verification policy: prefer relevant exist
 **Owner:** existing decision/publication/admission, identity, speech-preview, evidence and save/load owners. **Design:** technical §12. **Dependencies:** SC01/SC04; integrate SC06. First qualify the sparse-stage lifecycle to enable SC12, then rerun the affected boundaries after SC12 for the final integrated exit. This avoids treating SC07 and SC12 as circular prerequisites.
 
 - [ ] Revalidate exact affected sources/authority after asynchronous preparation and before disclosure/each native operation. Preserve historical time; unrelated changes do not invalidate everything, while correction/forgetting/revocation/restore cannot reuse stale snippets.
-- [ ] Parse the complete strict independent talk branch for private preview, including rejection of appraise/any second payload. Preserve actual listener/hearing/attribution/content checks and current UI scope; do not restore the retired preview row.
-- [ ] Preserve per-component effects and receipts when a later independent operation fails. No action from partial JSON, no preview as world evidence, no repeated speech/output/resource spending after retry or restore.
+- [ ] Preserve the inspected private-preview stage's complete strict independent talk checks and retired UI scope. At NST cutover, replace its public NPC attachment with the sole shared speech owner, exact closed-record parsing, screening, ordered barriers and per-utterance frozen hearing; do not restore or keep a competing public preview reader.
+- [ ] Preserve per-component effects and receipts when a later independent operation fails. Unvalidated strings and private preview create no world speech; generated non-speech response operations await complete typed validation. Already screened and durably accepted NST words survive as interrupted speech. Speech progress fences replacement/reconsideration/escalation before the whole-response receipt exists; retries/restore cannot repeat accepted speech, output or spending.
 - [ ] Keep compiler/manifest/cache state derived. Same-version restoration preserves actual identity, chosen work, obligations and outcomes while fencing old timeline results and preserving real external spending uncertainty.
 
 **Exit:** meaningful source changes, benign changes, mixed independent refusals, late cancellation and restoration exercise the real caller boundary. Native work continues under its owner when an AI preparation fails. No new scheduler, replay authority or legacy-save adapter is created.
@@ -138,7 +140,7 @@ Implementation follows the repository verification policy: prefer relevant exist
 **Owner:** implementation author with canonical CR/CE/IS/action/identity/provider/world owners. **Design:** technical §14.1 and feature §14. **Dependencies:** continuous with each stage; final closure after applicable runtime exits.
 
 - [ ] Search all current operation/context/schema consumers before each contract change; update them coherently rather than retaining an old reader. Distinguish historical evidence from actual current behavior.
-- [ ] Keep memory, identity, actions, provider, limits and focused trackers consistent. Preserve exact existing scope of SPK and CTR, including two stages only for the selected threat route and all required post-appraisal evidence.
+- [ ] Keep memory, identity, actions, provider, limits and focused trackers consistent. Preserve SPK's structured evidence, NST's sole final record/publication/readiness owner and CTR's exact selected scope, including two stages only for its threat route and all required post-appraisal evidence. Coordinate NST's operation-record row with the sparse payload owner so it does not require inactive padding.
 - [ ] Record delivery/evidence only when demonstrated; retain unrelated open CR/CE/ND/PF tasks. Update relevant fixtures, inspector labels, instructions version and significant changelog decisions with their actual scope.
 
 **Exit:** no maintained document tells an implementer both to preserve and remove the same runtime field without a clearly labeled stage. Design-only completion never checks an unrun runtime or player gate. The repertoire remains design inspiration, not injected prompt content or an alternate action registry.
