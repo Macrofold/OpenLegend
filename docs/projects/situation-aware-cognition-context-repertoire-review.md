@@ -52,6 +52,8 @@ For each row, the complete entry ID/title inventory and every heading were asses
 
 Each filename below is under `docs/repertoires/`. The detailed-ID lists identify complete relevant row reads; the complete item and section inventories cover every entry, including rows absent from those lists.
 
+The mechanics introduction, coverage and all ten worked patterns were read in full: *Borrowed purpose*, *Promises that occupy tomorrow*, *Pressure becomes opportunity*, *Leave a way back*, *Tools teach their users*, *A useful refusal*, *Change the problem’s topology*, *Retire a successful solution*, *Failure leaves useful fragments* and *Rules as playable objects*. The objects introduction, playable-foundation/equipment-family guidance and five worked patterns were also read: *The mended kettle*, *Surveyor’s folding frame*, *The honest empty box*, *Festival cloth* and *Witness lamp*. Additional complete patterns were *A creator’s attention budget*, *Memory and disagreement over time*, *Weather makes appointments*, *Touch-mapped citizen* and *The battlefield was a workplace*. Other pattern headings were inventoried; their complete prose is not claimed here.
+
 | Catalogue | All entries inventoried | Complete relevant rows | Changes | Deliberately retained strengths |
 | --- | ---: | ---: | --- | --- |
 | [adventure-discovery.md](../repertoires/adventure-discovery.md) | 336 | 14 | AD-036, AD-083, AD-138 | Discovery from partial evidence, worthwhile detours, mysteries, rival purposes and alternate routes. |

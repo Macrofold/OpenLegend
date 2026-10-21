@@ -14,7 +14,7 @@ Three baselines must remain distinct:
 2. **Inspected source:** `Macrofold/OpenLegend`, `main` at commit `0b1262a597ca718be54c287eea0619b073952f32`. The source findings below describe that revision. They do not assert that it generated the supplied export or that the selected design has been implemented.
 3. **Selected target:** the paired feature/technical documents on `design/situation-aware-cognition-context`. They specify coordinated changes to existing owners. Completion of design work does not close implementation, independent model behavior, performance or human playtest gates.
 
-The artifact's SHA-256 is `f2b3f680758769648f0cac001b625bf1e547123f98fc57cc79b0964972c9a74b`. The measurements below were recomputed from it without a model call. The design work made **no paid OpenLegend/Jev/provider calls; additional Jev cost was $0**. No token receipt, cache receipt, matched model comparison, latency benchmark or human playtest was produced by this audit. The attachment's configured price ceilings are request settings, not a bill or a verified current provider tariff.
+The artifact's SHA-256 is `f2b3f680758769648f0cac001b625bf1e547123f98fc57cc79b0964972c9a74b`. The measurements below were recomputed from it without a model call. The design work made **no paid OpenLegend/Jev/provider calls; additional Jev cost and cumulative Jev cost for this task were both $0**. No token receipt, cache receipt, matched model comparison, latency benchmark or human playtest was produced by this audit. The attachment's configured price ceilings are request settings, not a bill or a verified current provider tariff.
 
 ## 2. Why the supplied request is so large
 
