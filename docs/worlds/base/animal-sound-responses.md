@@ -1,31 +1,33 @@
 # Animal reactions to sound
 
-**Selected design, runtime pending — 2026-10-17.** This is the bundled world's acoustic policy for [speech and social perception](../../projects/speech-and-social-perception-feature-spec.md). Ordinary animals use native rules and saved randomness. They require no Decision API, thought, reflection, narration-generation or memory-consolidation calls.
+**Selected acoustic design, runtime pending — 2026-10-21.** This is the bundled world's shared native response policy for [speech and social perception](../../projects/speech-and-social-perception-feature-spec.md) and the selected [general physical-sound design](../../projects/acoustic-stealth-feature-spec.md). Ordinary animals use native rules and saved randomness. They require no Decision API, thought, reflection, narration-generation or memory-consolidation calls.
 
 ## One existing animal controller
 
-This extends the selected [native animal response owner](animal-responses.md) and its [CTR03–CTR04 execution design](../../projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04). Those designs are documented here; their native controller remains an implementation dependency, not integrated runtime. The generic-noise exclusion in that design is narrowed here: personally detected ordinary speech now supplies a selected native alarm input. Other noises require an actual admitted emitter; this does not silently enable footsteps or impact sound.
+This extends the selected [native animal response owner](animal-responses.md) and its [CTR03–CTR04 execution design](../../projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04). Native alarm/escape, blocked/settling behavior and ordinary movement admission already exist in part; acoustic intake, its profile/pattern additions and remaining integration/qualification are pending. Personally detected ordinary speech supplies a selected native alarm input. Supported nonlinguistic sounds additionally follow the [physical-sound response filter](physical-sound.md). Every sound still requires an actual admitted emitter; this target does not claim that footsteps or impact sound already run.
 
-SPK08 depends on the relevant CTR03–CTR04 installed controller, perception, movement, species-profile and continuation seams. If that implementation is unavailable, the acoustic adapter remains pending. Do not introduce temporary duplicate escape state or import unrelated combat/PvP/appraisal work to satisfy the dependency.
+SPK08 and the acoustic implementation depend on the relevant CTR03–CTR04 installed controller, perception, movement, species-profile and continuation seams. Extend and jointly qualify those existing seams before claiming acoustic integration complete. Do not introduce temporary duplicate escape state or import unrelated combat/PvP/appraisal work to satisfy the dependency.
 
 The installed native response profile remains the single policy selection. Its controller owns routine, escaping, settling and blocked behavior, permitted danger estimates, current cue/cause, refuge, pending proposal generation and exact movement reference. Navigation, flight, body, status and lifecycle keep their existing authority. This acoustic extension adds no second controller, action family, path, fear meter or model scheduler.
 
 ## Initial outcomes and deliberate simplification
 
-An animal either continues its current behavior or enters/updates that shared alarm. Alarm produces actual escape movement, alert settling or a truthful blocked condition. A skittish deer can flee when it hears you; a calmer animal can continue. Sound does not automatically classify its speaker as an attacker, change relationships or supply a psychological feeling.
+An animal either continues its current behavior or enters/updates that shared alarm. Alarm produces actual escape movement, alert settling or a truthful blocked condition. A skittish deer can flee when it hears a qualifying cue; a calmer animal can continue. Detecting a routine physical noise does not by itself establish alarm eligibility. Sound does not automatically classify its speaker as an attacker, change relationships or supply a psychological feeling.
 
 Distinct curiosity approaches, deliberate listening holds, hiding, richer instincts and exceptional cognitive creatures remain future repertoire. Ordinary alert settling provides a stationary aftermath without another timed hold action. Continued activity must not be described as an investigation that never happened.
 
 ## Profile values and consumers
 
-Extend the animal's existing installed response profile with `soundAlarmMinimumBand`, a nonnegative integer or null. Null means the animal can hear but this acoustic policy does not initiate alarm. A threshold selects native reaction only; the installed hearing sense independently determines detection.
+Extend the animal's existing installed response profile with `soundAlarmMinimumBand`, a nonnegative integer or null. Null means the animal can hear but this acoustic policy does not initiate alarm. The table below preserves ordinary-speech reaction bindings; the installed hearing sense independently determines detection. The selected nonlinguistic source filter is owned by [physical sound](physical-sound.md) and runs before this same response-pattern/alarm intake.
 
 | Authored binding                      | Initial value | Meaning                                                                               |
 | ------------------------------------- | ------------- | ------------------------------------------------------------------------------------- |
-| Ordinary hare, deer and bird          | 0             | Any actually detected external sound can startle a skittish animal.                   |
+| Ordinary hare, deer and bird          | 0             | Any actually detected external speech can startle a skittish animal.                   |
 | Ordinary wolf and bear                | 2             | Modest detected sound can be ignored; a sufficiently stronger cue can startle.        |
 | Territorial stag                      | null          | Hearing does not replace the existing territorial warning/attack/withdrawal decision. |
 | Explicit nonreactive contrast fixture | null          | Detection remains independent of whether a native response is installed.              |
+
+For nonlinguistic physical sources, independently detected quiet routine locomotion and low rough rustle do not automatically alarm the animal. Sufficiently intense abrupt impacts and received sharp/ringing patterns can qualify under the physical-sound policy. Its filter uses the listener's permitted acoustic evidence, never private emitter species IDs. Nearby animals acquire actual emitted sounds independently; no group-alarm broadcast or automatic shared knowledge is introduced. Speech retains the thresholds above.
 
 Use `acousticChangeBandDb = 6`, `sensoryLifetimeSeconds = 900` and `acousticPatternIdleSeconds = 900` as the initial authored acoustic values. Raw evidence lifetime and pattern idle lifetime are separate meanings even though their initial durations match. Starting species retain the current 0 dB SPL hearing floor and applicable 28-metre sight baseline through their actual sense definitions. These are provisional game settings, not biological calibration.
 
@@ -33,7 +35,7 @@ Starting-world creation, creator spawning, body/profile construction, world-defi
 
 ## Evidence and intensity
 
-The native input is the observer's exact permitted sound experience: occurrence identity/order/time, receiver physical life, listener pose, received level/margin, supported coarse bearing/elevation or null, and a visible-source observation association only when actually acquired. It contains no words, addressee, proper human name, hidden source identity/coordinates, inferred source distance or guessed emitted volume. The physical emitter being the receiver's own body is known self-acquisition; historical authorship of a detached impact does not make that impact a self-emitted voice.
+The native input is the observer's exact permitted sound experience: occurrence identity/order/time, receiver physical life, listener pose, received level/margin, supported coarse bearing/elevation or null, acoustic descriptors/patterns disclosed by the perspective owner, and a visible-source observation association only when actually acquired. It contains no words, addressee, proper human name, hidden source identity/coordinates, inferred source distance or guessed emitted volume. The physical emitter being the receiver's own body is known self-acquisition; historical authorship of a detached impact does not make that impact a self-emitted voice.
 
 Reuse the shared direction projection under [hearing localization](../../limits/hearing-and-speech.md#hr05--localization-and-association); do not give animals a second direction algorithm. A null bearing remains unknown.
 
@@ -47,11 +49,11 @@ Use the native clarity margin, with no extra rounding, inferred distance or lang
 
 Every actual eligible exposure receives its own sensory record before response selection. Self, subthreshold and nonreactive-profile records are not erased merely because they cause no startle. Raw event expiry is fixed at acquisition plus the sensory lifetime; a later repetition never extends an older event.
 
-Keep a small acoustic-pattern map on the one native response owner. Its canonical key is `(permitted visible-source observation episode or anonymous, permitted direction/elevation or unlocalized, band)`. Include the complete permitted association identity using the shared structured-key encoder. Never distinguish anonymous keys using hidden emitter IDs. A map value needs only its absolute idle expiry and latest exact permitted cue reference. Count/first-seen history, paid opportunity revisions, considered watermarks and a second transcript are unnecessary. The map survives return to routine until its entries expire; ending an alarm must not reset repeat suppression. Controller removal or a new body life retires the map through that same owner without replaying old observations.
+Keep a small acoustic-pattern map on the one native response owner. Its ordinary-speech canonical key is `(permitted visible-source observation episode or anonymous, permitted direction/elevation or unlocalized, band)`. The [general acoustic design](../../projects/acoustic-stealth-tech-design.md) supplies physical-pattern equivalence and permitted descriptor handling through this same response owner; do not create a separate physical-sound pattern store. Include the complete permitted association identity using the shared structured-key encoder. Never distinguish anonymous keys using hidden emitter IDs. A map value needs only its absolute idle expiry and latest exact permitted cue reference. Count/first-seen history, paid opportunity revisions, considered watermarks and a second transcript are unnecessary. The map survives return to routine until its entries expire; ending an alarm must not reset repeat suppression. Controller removal or a new body life retires the map through that same owner without replaying old observations.
 
-Process each newly committed sound once in canonical native occurrence order:
+Process each newly acquired sound once in canonical native acquisition order, retaining source occurrence order separately:
 
-1. Record the exact permitted exposure through the shared awareness owner. If acquisition is self, the selected threshold is null, or the detected band is below the threshold, stop response processing **before inserting or refreshing a pattern**. Hearing/life/perception ineligibility already prevents acquisition.
+1. Record the exact permitted exposure through the shared observation owner; native sensory retention does not require autobiographical `Awareness`. If acquisition is self, the selected threshold is null, the detected band is below the threshold, or a nonlinguistic cue fails the physical-sound filter, stop response processing **before inserting or refreshing a pattern**. Hearing/life/perception ineligibility already prevents acquisition.
 2. Remove expired patterns whose idle expiry is at or before this acquisition time. Expiry itself starts no reaction.
 3. Compute the qualifying pattern. If already active, refresh its latest cue and idle expiry to acquisition plus the profile's idle duration, then stop. Do not reset safe time, replace movement, request a new refuge, consume randomness or emit another alarm-start event.
 4. For an absent qualifying pattern, insert it with that expiry and pass this exact cue once to the existing alarm intake. The same domain transition owns the record, map change and alarm consequence; no SQL callback or display read may replay intake.
@@ -77,7 +79,7 @@ The shared refuge selector owns candidates, visual planning scope, support, full
 3. For a new selection with a heard bearing, compute `awayProgressMetres = dot(candidateDestination - currentAnimalPosition, awayUnitVector)`. Keep the greatest value, comparing equality with the existing spatial tolerance. For null bearing, omit this rank.
 4. Apply the existing saved weighted tie selection to remaining interchangeable candidates. No new tuning constant, random stream or path search is introduced.
 
-The most recent qualifying acoustic cue in native occurrence order supplies this optional preference. Real observed dangers always constrain safety, including a second human on the away side. This first policy does not reconstruct several unseen sources from competing sound bearings; richer acoustic source reasoning is deferred.
+The most recently acquired qualifying acoustic cue in native acquisition order supplies this optional preference. Real observed dangers always constrain safety, including a second human on the away side. This first policy does not reconstruct several unseen sources from competing sound bearings; richer acoustic source reasoning is deferred.
 
 With no locatable danger, entering escaping still chooses one ordinary finite local refuge leg. On reaching its supported destination, the controller can begin settling against the currently known danger set. It does not certify that an unseen sound source is harmless or far away. A reached unsafe refuge leads to another ordinary leg. Unsupported terrain/flight preparation remains explicit; absence of a route is not successful escape.
 
@@ -101,6 +103,7 @@ Distinct listening/curiosity/hiding choices, richer animal recognition, learning
 
 ## Maintained records
 
-- Implementation and dependencies: [SPK07–SPK08](../../maintainers/speech-and-social-perception.md) and the [CTR03–CTR04 tracker](../../maintainers/combat-and-threat-responses.md#ctr03--one-native-animal-response-owner).
-- Limits: [hearing and animal response inventory](../../limits/hearing-and-speech.md#ssp-h02--sound-reactions-without-autobiographical-memory).
+- Implementation and dependencies: [SPK07–SPK08](../../maintainers/speech-and-social-perception.md), [ACS](../../maintainers/acoustic-stealth.md) and the [CTR03–CTR04 tracker](../../maintainers/combat-and-threat-responses.md#ctr03--one-native-animal-response-owner).
+- Limits: [hearing and animal response inventory](../../limits/hearing-and-speech.md#ssp-h02--sound-reactions-without-autobiographical-memory) and [physical-sound constraints](../../limits/acoustic-stealth.md).
+- Physical-sound target: [feature specification](../../projects/acoustic-stealth-feature-spec.md), [technical design](../../projects/acoustic-stealth-tech-design.md) and [bundled policy](physical-sound.md).
 - Integration: [speech technical design](../../projects/speech-and-social-perception-tech-design.md#10-animal-sound-and-cognition-integration) and [hearing contract](../../hearing-and-speech.md#selected-animal-hearing-and-choices--accepted-target).
