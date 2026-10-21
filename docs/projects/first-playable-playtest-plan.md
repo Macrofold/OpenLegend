@@ -62,7 +62,7 @@ Choose group size and session duration for the question and operator capacity. S
 
 Do not require every person to experience every outcome. Labeled scenario checks can establish uncommon branches; ordinary sessions establish their exposure and practical value. Record no-contact sessions honestly. Distinguish deliberate avoidance or changed circumstances from broken travel, unreadable danger or pacing that leaves the world uneventful. Improve world opportunities and behavior rather than secretly forcing a visit.
 
-For the intended approaches offered in the selected session, examine the [selection questions](../repertoires/gameplay-priorities.md#keep-play-worthwhile-as-players-learn-and-return) through observed choices. Where progression matters, does the participant recognize a wanted improvement and use it while it remains relevant? What changes when they choose a different method, and does an apparently optional choice conceal a prerequisite for a capability already promised at that stage? Record the distinction from intentional learning or specialization. Discovery, expression, a finished creation or company can be sufficient outcomes; this adds no per-playstyle reward quota or requirement to complete every route.
+Where progression matters, observe whether players recognize a wanted improvement and use it while it remains relevant. Use the [selection questions](../repertoires/gameplay-priorities.md#keep-play-worthwhile-as-players-learn-and-return) to examine what changes when they choose another offered method.
 
 Record both time spent and what happened during it. Long play can reflect enjoyment, confusion, waiting or compulsory chores. A requested QA revisit tests continuation; an optional return provides different evidence about interest.
 
