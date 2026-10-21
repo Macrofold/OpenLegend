@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                           | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Continuation and compact reaction contracts include the shared stealth/emotion extension; broader implementation and behavioral qualification remain open. | 2026-10-19   |
+| In progress | Continuation and compact reaction contracts include the shared stealth/emotion extension; broader implementation and behavioral qualification remain open. | 2026-10-20   |
 
 [Feature specification](continuing-lives-feature-spec.md) · [Research design follow-up](../maintainers/needs-design.md#intelligent-individuals-and-efficient-simulation-research-derived-design-follow-up) · [Design/delivery mapping](../maintainers/intelligent-simulation.md).
 

@@ -196,7 +196,7 @@ The selected saved cognition policy supplies the reasons, consideration question
 
 Attention is reevaluated on meaningful changes in stimulus, intent or evidence. Cache only with valid dependencies. Record omitted candidates for diagnostics outside the reasoning prompt. During an unavailable Jev route or exhausted budget, preserve native reactions and explicitly record unavailable semantic work rather than passing the whole world/history to another model. The [perception proposal](../archive/07-technical-architecture/perception-and-attention.md) governs sensory detail; the accepted [EPR contract](events-perception-and-reactions.md) owns the delivered finite perception-change intake and its explicitly remaining targets, while semantic interest selection remains here.
 
-### Event and intent decisions retain their structured cause
+### Every semantic decision uses an event or intent sentence
 
 The sentence is a useful retrieval/presentation form of a structured permitted cause. Under the accepted SPK target, it is never the sole retained account or the only consolidation input: preserve the underlying participant roles, quantities, source links and uncertainty through the shared [experience contract](#structured-permitted-experience). Different model adapters may format those same facts for their task without independently inferring missing fields from colloquial prose.
 

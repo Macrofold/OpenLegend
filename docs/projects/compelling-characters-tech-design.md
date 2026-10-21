@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                          | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PG02's bounded evidence path is qualified and shared stealth/emotion integration is designed; broader character reliability remains open. | 2026-10-19   |
+| In progress | PG02's bounded evidence path is qualified and shared stealth/emotion integration is designed; broader character reliability remains open. | 2026-10-20   |
 
 [Feature contract](compelling-characters-feature-spec.md#character-authorship-and-changing-personality) · [CE implementation and acceptance](../maintainers/character-experience.md) · [Memory contract](../memory-architecture.md) · [Agency contract](../agent-agency.md).
 

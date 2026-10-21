@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                    | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared contracts and source audit are complete; specialist designs, runtime delivery and qualification remain open. | 2026-10-19   |
+| In progress | Shared contracts and source audit are complete; specialist designs, runtime delivery and qualification remain open. | 2026-10-20   |
 
 ## Authority and scope
 

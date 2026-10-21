@@ -2,7 +2,7 @@
 
 ## Status and ownership
 
-**Design in progress; implementation not started.** This tracker owns the new emotional-physiology slices of SAD-D/SAI-D. It extends delivered ACT07/ACT08 and coordinates CE02/CE03/CE05, continuing-lives, CTR06–CTR10 and existing cognition work without reopening their completed foundations or duplicating their remaining acceptance.
+**Design complete; implementation not started.** This tracker owns the new emotional-physiology slices of SAD-D/SAI-D. It extends delivered ACT07/ACT08 and coordinates CE02/CE03/CE05, continuing-lives, CTR06–CTR10 and existing cognition work without reopening their completed foundations or duplicating their remaining acceptance.
 
 The [feature specification](../projects/emotional-physiology-feature-spec.md) and [technical design](../projects/emotional-physiology-tech-design.md) describe target behavior. [Feelings limits](../limits/feelings.md) and [world policy](../worlds/base/psychological-reactions.md) own tuning and bounds. No implementation or executable tests are authorized by this assignment.
 
@@ -10,11 +10,11 @@ The [feature specification](../projects/emotional-physiology-feature-spec.md) an
 
 - [x] Read the exact requested base, binding shared contracts and existing appraisal/cognition owners.
 - [x] Separate native bodily reactions, private interpretation and derived mechanical state.
-- [ ] Complete policy schemas, reassessment algebra, operation scheduling, source/receipt integrity, lifecycle, acceptance scenarios and specialist handoffs.
-- [ ] Reconcile affected specifications, repertoires, limits and design TODOs; preserve the unresolved controlled-character interpretation decision.
-- [ ] Review and push the complete documentation-only change.
+- [x] Complete policy schemas, reassessment algebra, operation scheduling, source/receipt integrity, lifecycle, acceptance scenarios and specialist handoffs.
+- [x] Reconcile affected specifications, repertoires, limits and design TODOs; preserve the unresolved controlled-character interpretation decision.
+- [x] Review and push the complete documentation-only change.
 
-**Exit:** SAD-D is fully specified for independent implementation except the explicitly gated SA-D01 controlled-character producer. A checked design item never means runtime delivery or player qualification.
+**Exit:** SAD-D is fully specified for independent implementation except the explicitly gated SA-D01 controlled-character producer/application choice. A checked design item never means runtime delivery or player qualification.
 
 ## Implementation order and existing ownership
 
@@ -88,20 +88,20 @@ EP01 supplies compatible definitions and records. EP02–EP04 can then advance a
 **Status: Not started.** Dependencies: EP01/EP04; existing ActorWork, cognitive execution, DecisionLedger and request journal. Owner: existing director/preparation/execution/maintenance coordination. Contract: EP-C08.
 
 - [ ] Select emotional-review before full deliberate action preparation. Reuse the permitted actor snapshot/evidence projection while omitting mandatory thoughts, speech, goals, files and physical actions.
-- [ ] Add exact internal-review cause/reason/acknowledgement shapes and one coalesced actor ticket. Extend current appraisal deadlines/affected-actor inputs without an AppraisalProcess enrollment, new queue or per-frame population scan.
+- [ ] Add exact cognition-opportunity internal-review reason/acknowledgement shapes, preserving the existing AppraisalCause union and one coalesced actor ticket. Extend current appraisal deadlines/affected-actor inputs with separate individual cadence and complete-channel band witnesses, without an AppraisalProcess enrollment, new queue or per-frame population scan.
 - [ ] Implement finite support epochs, material-change classification, intervals, threshold stabilization, per-record/per-character spacing and dormancy. Only genuine eligible independent support can reset allowance.
 - [ ] Batch complete independent feeling questions under the component/source/option/byte envelopes. One standalone review uses at most one finite judgment request and existing optional capacity/funding/headroom.
 - [ ] Keep capacity/provider/funding waits on the same bounded opportunity and real availability signals. Persist claims before submission; submitted failures/uncertainty have no automatic paid retry or fallback.
 - [ ] Reuse eligible components in an already authorized threat first stage or compatible ordinary request without a duplicate call. Preserve the ordinary evidence watermark and independent urgency/action pipeline.
 - [ ] Generalize anti-loop suppression only for exact trusted accepted appraisal receipts/derived publications. Real later action results and new external evidence remain eligible.
 
-**Exit:** A19–A30/A40 demonstrate quiet zero-periodic-work episodes, bounded intense review, no swallowed ordinary causes, continued useful action, shared spending and exact recovery.
+**Exit:** A19–A30/A40–A41 demonstrate quiet zero-periodic-work episodes, bounded intense review, no swallowed ordinary causes, continued useful action, shared spending and exact recovery.
 
 ## EP06 — Authored emotion profiles and meaningful character context
 
 **Status: Not started.** Dependencies: EP01–EP05 as applicable; existing world manifest/body/trait/personal context owners. Contract: feature specification, EP-C10 and the canonical base psychological policy.
 
-- [ ] Install review policies for fear/anger, mechanical mapping for fear, joy and native startle profiles, and the explicit composure binding. Preserve existing source-linked and authored grief, adding independent review only to the explicitly revised source-linked pin. Source all labels/scales/units from the installed definitions.
+- [ ] Install fear/anger review policies, fear’s mechanical mapping, the joy profile, native startle profiles, and the explicit composure binding. Preserve existing source-linked and authored grief, adding independent review only to the explicitly revised source-linked pin. Source all labels/scales/units from the installed definitions.
 - [ ] Keep courage, sensitivity, temperament, persistence, expression and coping as distinct contextual influences; no personality-word parsing or automatic action script.
 - [ ] Supply personally relevant current feelings, uncertainty, current body/work and exact changed evidence without hidden safety knowledge or a whole action catalog.
 - [ ] Integrate permitted compact owner feedback and useful action consequences through existing presentation. Do not add a universal emotion/needs HUD or infer private feeling from expression.
@@ -138,7 +138,7 @@ EP01 supplies compatible definitions and records. EP02–EP04 can then advance a
 
 **Status: Not started.** Dependencies: applicable EP01–EP08. Owner: existing domain/server/storage/provider acceptance plus CE/CTR/SAI-I whole-episode and player qualification.
 
-- [ ] Implement meaningful checks for EP-C11 A01–A40 through actual affected callers. Preserve relevant delivered appraisal/social-continuity and action/cognition gates.
+- [ ] Implement meaningful checks for EP-C11 A01–A41 through actual affected callers. Preserve relevant delivered appraisal/social-continuity and action/cognition gates.
 - [ ] Separately record deterministic correctness, independently selected character behavior and uncoached player usefulness/enjoyment. Fixtures and arithmetic checks cannot establish believable independent character choice.
 - [ ] Qualify rescue while afraid, joy alongside grief, useful recovery during ongoing work, differing individuals, native animals and real successful escape. Label unsupported content scenarios as future opportunities rather than passed scenes.
 - [ ] Measure actual preparation/native work, source completeness, coalesced tickets, threshold churn, requests/cost, latency/staleness and save/recovery under concentrated combat and many quiet actors. No zero-cost or population-scale claim without evidence.

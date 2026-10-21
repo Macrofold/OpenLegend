@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | Detailed feature design is specified and pending final review; implementation has not started. | 2026-10-19 |
+| In progress | Feature design is complete; EP01–EP09 implementation and qualification remain open, with SA-D01 explicitly unresolved. | 2026-10-20 |
 
 ## Purpose and scope
 
@@ -534,4 +534,4 @@ The unresolved SA-D01 producer remains blocked or explicitly configured and auth
 - Related owners: [agent agency](../agent-agency.md), [compelling characters](compelling-characters-feature-spec.md), [continuing lives](continuing-lives-tech-design.md) and [combat/threat responses](combat-and-threat-responses-tech-design.md).
 - Cross-specialist integration: [stealth-awareness tracker](../maintainers/stealth-awareness.md) and [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters).
 
-The selected design can complete its explicit emotion slices of broader “needs design” items without marking their unrelated scope complete. This feature's status remains in progress until final review and reconciliation finish. Completing that design is distinct from implementation, executable acceptance, performance qualification or proof of player enjoyment. SA-D01 remains clearly open until Mike selects the player interpretation policy.
+The selected design can complete its explicit emotion slices of broader “needs design” items without marking their unrelated scope complete. The selected general emotion design is complete. This project remains In progress while implementation and qualification remain outstanding. Completing that design is distinct from implementation, executable acceptance, performance qualification or proof of player enjoyment. SA-D01 remains clearly open until Mike selects the player interpretation policy.

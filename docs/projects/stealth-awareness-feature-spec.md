@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                      | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared design is complete; specialist designs, implementation and gameplay qualification remain open. | 2026-10-19   |
+| In progress | Shared design is complete; specialist designs, implementation and gameplay qualification remain open. | 2026-10-20   |
 
 ## Purpose and selected scope
 

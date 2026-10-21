@@ -210,7 +210,7 @@ The complete source/definition retirement audit, actual two-human payload races,
 
 ## Integrated character experience
 
-[CE02/CE05](character-experience.md) applies the delivered ACT07/ACT08 foundations to the [multidimensional resident target](../projects/compelling-characters-feature-spec.md). The selected fear/joy/grief/anger lifetime, review and mechanical subset is specified by EP, with final review under EP00. Broader psychological concerns, satisfaction, competing motives and actual whole-life effects still require their existing design and qualification. Existing persistent feelings and relationship text are foundations; their implementation does not establish live emotional expression or a compelling whole life. ACT09 remains a conditional authoring UI slice, not a prerequisite for every early character experiment.
+[CE02/CE05](character-experience.md) applies the delivered ACT07/ACT08 foundations to the [multidimensional resident target](../projects/compelling-characters-feature-spec.md). The selected fear/joy/grief/anger lifetime, review and mechanical subset is fully designed under EP00; EP01–EP09 implementation and qualification remain open. Broader psychological concerns, satisfaction, competing motives and actual whole-life effects still require their existing design and qualification. Existing persistent feelings and relationship text are foundations; their implementation does not establish live emotional expression or a compelling whole life. ACT09 remains a conditional authoring UI slice, not a prerequisite for every early character experiment.
 
 ## ACT09 — Internal feeling process authoring
 

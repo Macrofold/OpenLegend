@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                             | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Continuing activity, compact reactions and shared stealth/emotion contracts are designed; broader life/service implementation and qualification remain open. | 2026-10-19   |
+| In progress | Continuing activity, compact reactions and shared stealth/emotion contracts are designed; broader life/service implementation and qualification remain open. | 2026-10-20   |
 
 **Status: detailed design, expanded October 15, 2026.** This specification expands the accepted continuing-world direction into reviewable product behavior, including the selected compact numerical-reaction contract in §16.6. It does not claim the behavior is implemented, approve paid execution, change the bundled world's human protection, or settle commercial prices. The requested [technical design](continuing-lives-tech-design.md) maps continuation, attention, evidence and personal-reaction refinements to existing owners; service adoption remains separate.
 

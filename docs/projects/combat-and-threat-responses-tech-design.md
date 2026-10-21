@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                            | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Contact, personal danger evidence and prospective work transitions are in progress; complete combat delivery and qualification remain open. | 2026-10-19   |
+| In progress | Contact, personal danger evidence and prospective work transitions are in progress; complete combat delivery and qualification remain open. | 2026-10-20   |
 
 ## Design baseline and integration
 

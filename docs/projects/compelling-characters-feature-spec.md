@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                    | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Bounded PG02 behavior is delivered; shared stealth/emotion contracts are designed and broader character qualification remains open. | 2026-10-19   |
+| In progress | Bounded PG02 behavior is delivered; shared stealth/emotion contracts are designed and broader character qualification remains open. | 2026-10-20   |
 
 **Accepted product direction, October 3, 2026; proposed delivery choices.** Mike requires multidimensional characters whose embodied experience, inner life, attention, choices and consequences work together. This is a product-design assignment, not permission to implement or run paid experiments. The authorship clarification is developed in the [scoped technical design](compelling-characters-tech-design.md). [Emotional physiology and adaptive reappraisal](emotional-physiology-feature-spec.md) specifies the selected general emotion system; broader psychological-needs mechanics and automatic personality development remain separately scoped. Existing implemented foundations and their unfinished acceptance retain their recorded status.
 
