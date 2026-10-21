@@ -16,6 +16,8 @@ Repository baseline: `Macrofold/OpenLegend@a612eecf43d225b5f9087287573ec3e054641
 
 **Voice contributes much of the apparent liveliness.** Streaming phrases, cached conditioning and overlapping stages can improve experience without deeper cognition. Breeze's downloadable weights and self-hosted outputs carry non-commercial restrictions despite Apache-licensed code. Qwen3-TTS, Pocket TTS and Kokoro are comparison candidates, not measured winners. [Voice and serving](05-realtime-voice-and-serving.md)
 
+**Community adoption is broader than Kevin's stack.** Application-specific OpenRouter traffic, NPC-mod setup guidance and exact Hugging Face artifact downloads identify additional hosted and local candidates. Popularity, user reports and measured NPC quality remain distinct. [Current adoption survey and expanded comparison roster](08-community-adoption-and-model-shortlist.md)
+
 ## Documents
 
 | Document | Coverage |
@@ -27,11 +29,12 @@ Repository baseline: `Macrofold/OpenLegend@a612eecf43d225b5f9087287573ec3e054641
 | [05 — Real-time voice and serving](05-realtime-voice-and-serving.md) | Cascaded versus full-duplex speech, expression, mode-specific controls, streaming, interruption, hardware contention and listener privacy. |
 | [06 — OpenLegend applications and experiments](06-openlegend-applications-and-experiments.md) | Useful situations, matched comparisons, evidence to collect, rejection criteria and existing empirical owners. All experiments are unrun. |
 | [07 — Source register and unresolved evidence](07-source-register-and-open-questions.md) | Pinned code, reading depth, source types, negative searches, limitations and specific further investigations. |
+| [08 — Community adoption and model shortlist](08-community-adoption-and-model-shortlist.md) | Current hosted roleplay usage, NPC-mod defaults, local fine-tune download signals, mixed firsthand reports and an expanded proposed comparison roster. |
 
 [Design-preparation map](../../../docs/maintainers/npc-cognition-research-needs-design.md) routes the remaining questions to existing DG/CE/CR/AG/CTR/SPK/NST/HE owners. It is not a new implementation backlog or a full feature/technical design pair.
 
 ## Recommended first comparisons
 
-Our recommendation is to begin with actual input-to-action traces and valid native continuation, then a same-context Kev comparison and a voice-free stock-versus-modified character-model comparison. Improve perception/own-action evidence before blaming a model for an omitted fact. Add richer memory only for a demonstrated omission, and optional voice only through the selected media and disclosure boundaries. Pixels, full-duplex speech and learned motor policies remain selective candidates rather than prerequisites.
+Our recommendation is to begin with actual input-to-action traces and valid native continuation, then a same-context bounded-decision comparison and a voice-free dialogue screen spanning [hosted usage leaders, stock models and roleplay fine-tunes](08-community-adoption-and-model-shortlist.md#7-proposed-openlegend-comparison-roster). Keep stock-versus-modified pairs to isolate tuning effects; these recommendations select candidates, not production defaults. Improve perception/own-action evidence before blaming a model for an omitted fact. Add richer memory only for a demonstrated omission, and optional voice only through the selected media and disclosure boundaries. Pixels, full-duplex speech and learned motor policies remain selective candidates rather than prerequisites.
 
 A candidate graduates through useful independent behavior, exact admitted outcomes, privacy/currentness, whole-episode latency/cost and deployable rights—not a compelling clip, benchmark headline or “uncensored” label. Existing [research questions](../../05-project/research-backlog.md) and maintained subsystem acceptance remain authoritative. No model/provider, new NPC policy, runtime code, paid experiment or release setting changed in this work.
