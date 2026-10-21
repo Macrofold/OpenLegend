@@ -10,7 +10,7 @@ The shared [SC01–SC14 contracts](../projects/stealth-awareness-tech-design.md#
 
 ## Source baseline, dependencies and design disposition
 
-The exact source base is `Macrofold/OpenLegend:codex/design-stealth-00-contracts` at `a3d40b4d71e29d6504e9f3fcc21e76344a0a284e`. The acoustic branch is `codex/design-stealth-04-acoustics`, created from that tip. Read module A at the completed `codex/design-stealth-01-perception` commit `40805523c4a19ab7c6cc455d49d51e4a122ecae0`: [feature][a-feature], [technical design][a-tech], [world recognition policy][a-policy] and [PP00–PP07 tracker][a-work]. These pinned references are design dependencies, not claims that A's runtime or branch was merged here.
+The [technical baseline](../projects/acoustic-stealth-tech-design.md#authority-and-inspected-baseline) records the exact common-contract and completed A branch pins used by `codex/design-stealth-04-acoustics`. A's [feature][a-feature], [technical contract][a-tech], [world policy][a-policy] and [PP tracker][a-work] are design dependencies; their runtime/history is not merged here.
 
 The available vision boundary is [SC06](../projects/stealth-awareness-tech-design.md#sc06--one-accepted-pose-and-physical-action-owner) and [SC07](../projects/stealth-awareness-tech-design.md#sc07--physical-channels-and-prompt-cues). Specialist vision work is neither awaited nor merged. Before implementation, reconcile any subsequently completed B design against those shared physical pose, receiver-transform, clearance and temporal-invalidation meanings. Recheck callers that changed after the pinned source; a later implementation base must not be assumed identical.
 
