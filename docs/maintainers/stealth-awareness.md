@@ -82,7 +82,7 @@ The source audit inventories all **42** files under `docs/repertoires/`, totalin
 
 The nine topical documents reconcile actual selected relationships: mechanics, actions, psychology, traits, bodies/species, combat/rescue, languages/knowledge, ecology/weather and combinations. Existing catalogue IDs, ordering, priorities, levels and scene headings remain. The [repertoire review](../projects/stealth-awareness-repertoire-review.md) owns the detailed coverage and concrete connections; it is not a second gameplay-priority register.
 
-Module A's [complete repertoire review and disposition](../projects/perspective-perception-feature-spec.md#repertoire-disposition) additionally reads all 42 files in full and aligns 15 relevant catalogues with useful partial evidence, earned familiarity, attributed knowledge and the existing unique worlds. It preserves catalogue counts, IDs, order and priorities. This full-text A review does not recast SA00's narrower historical review as a full read or claim fresh verification of the catalogues' external sources. Final integration uses both scopes and owns central navigation/priority reconciliation.
+Module A's [repertoire scope](../projects/perspective-perception-feature-spec.md#repertoire-scope) connects useful partial evidence, earned familiarity and attributed knowledge to the existing worlds. [PP00](perspective-perception.md#pp00--complete-the-selected-design-and-reconcile-its-owners) records its review evidence. Final integration owns central navigation and priority reconciliation.
 
 The final integration agent must:
 

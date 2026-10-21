@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                              | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Speech behavior and module-A evidence integration are designed; implementation and qualification remain open. | 2026-10-20   |
+| In progress | Speech behavior and module-A evidence integration are designed; implementation and qualification remain open. | 2026-10-21   |
 
 ## Purpose and design status
 
