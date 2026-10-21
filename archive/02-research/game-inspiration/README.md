@@ -54,7 +54,7 @@ These independent per-game passes supplement the original chapters and mechanics
 
 **Final Fantasy, G81–G93:** [IV](dossiers/final-fantasy-iv.md) · [V](dossiers/final-fantasy-v.md) · [VI](dossiers/final-fantasy-vi.md) · [VII](dossiers/final-fantasy-vii.md) · [VIII](dossiers/final-fantasy-viii.md) · [IX](dossiers/final-fantasy-ix.md) · [X](dossiers/final-fantasy-x.md) · [XI](dossiers/final-fantasy-xi.md) · [XII](dossiers/final-fantasy-xii.md) · [XIII](dossiers/final-fantasy-xiii.md) · [XIV](dossiers/final-fantasy-xiv.md) · [XV](dossiers/final-fantasy-xv.md) · [XVI](dossiers/final-fantasy-xvi.md).
 
-**Warcraft, G94–G97:** [Orcs & Humans](dossiers/warcraft-orcs-and-humans.md) · [II](dossiers/warcraft-ii.md) · [III](dossiers/warcraft-iii.md) · [World of Warcraft](dossiers/world-of-warcraft.md).
+**Warcraft, G94–G97:** [Orcs & Humans](dossiers/warcraft-orcs-and-humans.md) · [II](dossiers/warcraft-ii.md) · [III](dossiers/warcraft-iii.md) · [World of Warcraft](dossiers/world-of-warcraft.md). See also [WoW Forever: early rewards and meaningful choices](references/wow-forever-video-lessons.md).
 
 **Assassin's Creed, G98–G100:** [IV: Black Flag](dossiers/assassins-creed-iv-black-flag.md) · [III](dossiers/assassins-creed-iii.md) · [Valhalla](dossiers/assassins-creed-valhalla.md).
 

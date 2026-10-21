@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                                | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Complete selected world/subsystem design and implementation tasks are specified. Runtime integration, actual-build readiness and player acceptance remain open. | 2026-10-18   |
+| In progress | Complete selected world/subsystem design and implementation tasks are specified. Runtime integration, actual-build readiness and player acceptance remain open. | 2026-10-20   |
 
 **Start here:** [complete design map](../projects/first-playable-world-feature-spec.md#complete-design-map) → [required scenario](../worlds/base/playable-openings.md#first-playable-game-target) → [playtest plan](../projects/first-playable-playtest-plan.md) → the tasks below. This is the coordination owner for **DG03 / ND26**. The world document owns the experience; [gameplay priorities](../repertoires/gameplay-priorities.md) owns selection; subsystem trackers own detailed delivery. [CO01](commercial-offers.md) owns commercial adoption independently of ordinary playtesting.
 
@@ -78,7 +78,7 @@ Local `main` and `origin/main` at `0543f9ec61301240c5c4ec3cd007063f4f1c25d6` in 
 
 ## FPV06 — Observe survival, building and character choice
 
-- [ ] Observe the selected journey without unrecorded coaching: expectations, confusion, meaningful choices, effort/payoff, food/tool/camp progress and stopping reasons.
+- [ ] Observe the selected journey without unrecorded coaching, using the [plan's observation questions](../projects/first-playable-playtest-plan.md#step-4--observe-distinct-player-journeys): expectations, confusion, meaningful choices, effort/payoff, food/tool/camp progress and stopping reasons.
 - [ ] Observe character preferences and useful voluntary cooperation; distinguish independent refusal from broken service or expired requests.
 - [ ] Record failed/unsupported invention, waits, cost and interventions alongside successful activity and enjoyment.
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                            | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Build qualification, participant sessions and findings remain open in the delivery tracker. | 2026-10-17   |
+| In progress | Build qualification, participant sessions and findings remain open in the delivery tracker. | 2026-10-20   |
 
 **Design origin:** [DG03 / ND26](../maintainers/needs-design.md#dg03--a-useful-demo-and-early-audience-learning). **Work owner:** [FPV01–FPV09](../maintainers/first-playable-validation.md). The [world specification](../worlds/base/playable-openings.md#first-playable-game-target) owns the required game, [gameplay priorities](../repertoires/gameplay-priorities.md) owns selection, and this plan owns how to learn from a named build. Applicable authorization, [verification/spending rules](../../.agents/rules/verification.md) and service requirements govern execution.
 
@@ -61,6 +61,8 @@ Choose group size and session duration for the question and operator capacity. S
 | Continuing consequence     | Coherent camp/stock, useful rewards and improvements, remembered interactions, and another freely chosen activity or session.                                                              |
 
 Do not require every person to experience every outcome. Labeled scenario checks can establish uncommon branches; ordinary sessions establish their exposure and practical value. Record no-contact sessions honestly. Distinguish deliberate avoidance or changed circumstances from broken travel, unreadable danger or pacing that leaves the world uneventful. Improve world opportunities and behavior rather than secretly forcing a visit.
+
+Where progression matters, observe whether players recognize a wanted improvement and use it while it remains relevant. Use the [selection questions](../repertoires/gameplay-priorities.md#keep-play-worthwhile-as-players-learn-and-return) to examine what changes when they choose another offered method.
 
 Record both time spent and what happened during it. Long play can reflect enjoyment, confusion, waiting or compulsory chores. A requested QA revisit tests continuation; an optional return provides different evidence about interest.
 
