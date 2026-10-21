@@ -1,8 +1,10 @@
 # G179 — Sea of Thieves
 
-**Research date: 20 October 2026 UTC. Status: completed full research pass, with the evidence limits below.** This independent dossier follows the [full research requirements](../research-requirements.md) and the [economics, enjoyment, lore and creation amendment](../research-economics-engagement-and-creation.md). The [scoped progress ledger](../research-progress-pirate-games-2026-10-20.md) records completion and commits. Historical accounts retain their dates; current rules are checked through Season 21. The lore section contains spoilers.
+**Evidence checked through 20 October 2026 (America/New_York). Status: completed full research pass, with the evidence limits below.** This independent dossier follows the [full research requirements](../research-requirements.md) and the [economics, enjoyment, lore and creation amendment](../research-economics-engagement-and-creation.md). The [scoped progress ledger](../research-progress-pirate-games-2026-10-20.md) records completion and commits. Historical accounts retain their dates; current rules are checked through Season 21. The lore section contains spoilers.
 
 **Research judgment:** the strongest reference is the way a shared vessel, vulnerable cargo, incomplete information and ordinary tools create understandable reasons to cooperate, improvise and take risks. Its limits are equally useful: people differ in whether uncertainty feels exciting, whether repetition remains satisfying, and whether cosmetic achievement supplies a meaningful next goal. The mechanical evidence and conflicting reviews below support that interpretation; it is not an accepted OpenLegend feature specification or a measured explanation of commercial success.
+
+**Steam English reception — 20 October 2026 (America/New_York): Very Positive, 88% positive across 147,899 reviews.** This is recommendation context, not a causal explanation. [Steam](https://store.steampowered.com/app/1172620/Sea_of_Thieves_2026_Edition/)
 
 This is a written-source investigation. It includes original developer testimony and technical papers, official rules and patch notes, community mechanics references, five independent written reviews and actual contrasting Steam review bodies. Constructed situations are explicitly labeled. No gameplay, accessibility trial, code audit, audio audition or viewing of uninspected footage is claimed. Source access limits and missing private financial data remain visible.
 
@@ -267,8 +269,6 @@ The Shores of Gold sequence uses journals, maps, relics and remembered people to
 
 Time-limited **Adventures** such as Return of the Damned differ from permanent Tall Tales: their historical participation windows closed, while consequences survive in the setting. Official novels broaden that setting but are separate delivered works. *Athena's Fortune* follows Ramsey and Larinna across two periods; *Heart of Fire* contrasts crews drawn to exploration and warfare, including Eli Slate's Morningstar. This dossier uses their official descriptions and author discussion, not a claim to have read the complete novels. The chronology retains unresolved motives and identities instead of turning fan theories into canon. [Return of the Damned schedule and stakes](https://www.seaofthieves.com/news/return-of-the-damned); [Athena's Fortune audiobook announcement](https://www.seaofthieves.com/news/sot-audiobook); [Heart of Fire author account](https://www.seaofthieves.com/news/heart-of-fire-novel)
 
-**Contribution boundary:** production, reception, commercial modelling and OpenLegend synthesis are supplied by the other research contributions.
-
 <a id="r09"></a>
 
 ## R09 — Production, tools, iteration and live operation
@@ -336,17 +336,17 @@ The marketing promise should consequently be separated into **pirate place**, **
 
 Sources: [2018 Xbox report](https://news.xbox.com/en-us/2018/03/28/community-thank-you-sea-of-thieves/), [2020 Xbox report](https://news.xbox.com/en-us/2020/07/20/sea-of-thieves-passes-15-million-players-since-launch/), [2021 Rare Steam sales announcement, officially syndicated](https://store.steampowered.com/news/posts/?appids=1172620&enddate=1642181758&feed=steam_community_announcements), [2024 Rare reach announcement, officially syndicated](https://store.steampowered.com/news/posts/?appids=1172620&enddate=1714046717&feed=steam_community_announcements), [Sony's May 2024 chart](https://blog.playstation.com/2024/06/13/playstation-store-may-2024s-top-downloads/). Counts in the table and prose repeat the same disclosures; they are not independent corroborations.
 
-### A bounded revenue sensitivity calculation
+### Illustrative spending sensitivity
 
-No disclosed product-wide lifetime revenue or profit total was established in the primary financial, developer and publisher material searched for this pass. A partial-market calculation is possible because the five-million Steam milestone concerns **paid units**, unlike the much larger player count. The following scenarios cover exactly the first five million reported Steam units through December 2021. They estimate consumer-spending equivalents; they are **hypothetical sensitivity scenarios, not reported accounts, a statistical confidence interval or guaranteed upper and lower bounds**.
+No disclosed product-wide lifetime revenue or profit total was established in the primary financial, developer and publisher material searched for this pass. A partial-market calculation is possible because the five-million Steam milestone concerns **paid units**, unlike the much larger player count. For exactly the first five million reported Steam units through December 2021, units × assumed average price gives the following **illustrative spending equivalents, not estimated actual revenue or confidence bounds**. The figures do not support the commercial verdict.
 
-| Input or result, expressed in US dollars | Low scenario | Base scenario | High scenario |
+| Input or result, expressed in US dollars | $15 assumed average | $22 assumed average | $30 assumed average |
 | --- | ---: | ---: | ---: |
 | Modeled paid Steam units | 5,000,000 | 5,000,000 | 5,000,000 |
 | Assumed weighted realized purchase price | $15 | $22 | $30 |
 | Units × assumed price | **$75 million** | **$110 million** | **$150 million** |
 
-The known US launch price was $39.99. Official announcements document substantial 2021 promotions, including 25% and 40% reductions. The selected average-price assumptions allow for a mix of discounted, regional and full-price purchases; their exact weighting is unavailable. No historical exchange-rate conversion was performed. Non-US transactions are represented by the assumed dollar-equivalent average, not reconstructed receipts. Different purchase mix assumptions can move results outside this illustrative range. [Original Steam price announcement](https://news.xbox.com/en-us/2020/05/21/sea-of-thieves-coming-to-steam-on-june-3/); [official 2021 sale and paid-unit archive](https://store.steampowered.com/news/posts/?appids=1172620&enddate=1642181758&feed=steam_community_announcements).
+The known US launch price was $39.99. Official announcements document substantial 2021 promotions, including 25% and 40% reductions. These assumed averages illustrate different purchase mixes; no measured sales mix favors the middle value. No historical exchange-rate conversion was performed. Non-US transactions are represented by the assumed dollar-equivalent average, not reconstructed receipts. Different purchase mix assumptions can move results outside this illustrative range. [Original Steam price announcement](https://news.xbox.com/en-us/2020/05/21/sea-of-thieves-coming-to-steam-on-june-3/); [official 2021 sale and paid-unit archive](https://store.steampowered.com/news/posts/?appids=1172620&enddate=1642181758&feed=steam_community_announcements).
 
 Tax-inclusive versus tax-exclusive regional display prices, refunds, returns, external keys and the publisher's unit-accounting rules are not separately reconciled. Storefront fees have **not** been deducted. This is not developer receipts, recognized revenue, bookings or profit. It excludes Steam sales after that milestone, Xbox/Windows purchases, PS5 purchases, other later storefronts, edition premiums, Ancient Coin spending and any allocation of subscription revenue. The arithmetic is transparent; confidence in the actual average price is low. Applying $39.99 to forty million players would be invalid because access, period and price definitions would all be mixed.
 
@@ -404,7 +404,7 @@ These are five distinct editorial judgments, not a meta-analysis or a claim of c
 | Koubles; positive; 1,777 hours; “12 October” | Dislikes update pace; values newcomer content and social uncertainty. |
 | Zarethin; positive; 120.8 hours; “7 October” | Describes strangers repairing a mistaken sinking through treasure recovery and sharing. |
 
-[Actual Steam helpful-week review bodies](https://steamcommunity.com/app/1172620/reviews/). Experience claims are unverified.
+[Captured Steam helpful-week collection](https://steamcommunity.com/app/1172620/reviews/). Individual permalinks were not recovered and rankings change; the recorded sample is not a claim about today's displayed accounts. Experience claims are unverified.
 
 ### Why the loop can work
 
@@ -469,7 +469,13 @@ Rare's guidelines permit limited sales of original handcrafted fan creations und
 
 ## R13 — transferable inspiration and limits for OpenLegend
 
-These are research interpretations and possible play studies, not accepted features or implementation instructions. The [project's playable-game priorities](../../../../docs/repertoires/gameplay-priorities.md) and [root engine/world boundaries](../../../../AGENTS.md#engine-and-bundled-world-separation) remain authoritative. Sea of Thieves supplies evidence about a particular adventure game; it does not establish the right business model, population, art style or rules for OpenLegend.
+These interpretations do not change the [playable-game priorities](../../../../docs/repertoires/gameplay-priorities.md) or [engine/world boundaries](../../../../AGENTS.md#engine-and-bundled-world-separation).
+
+| Basis | Judgment and confidence |
+| --- | --- |
+| Player experience — [R12](#r12) | Multiple accounts support the appeal of shared ship work; preferences for PvP, loss and cosmetic progression differ. This is qualitative evidence, not a measured retention effect. |
+| Interpretation | Readable contributions and manageable recovery may help cooperation. The effect of each individual mechanic has not been isolated. |
+| OpenLegend possibilities below | Illustrative play studies and documented native authoring capabilities remain untested transfers. They do not validate creator income, a business model, world population, AI economics or an art direction. |
 
 ### Shared objects can give people reasons to cooperate
 
@@ -565,7 +571,7 @@ All accessed **20 October 2026 UTC**. These supplement the mechanics, production
 
 | Source and date | Type, use and access |
 | --- | --- |
-| [Current Steam product page](https://store.steampowered.com/app/1172620/Sea_of_Thieves_2026_Edition/) | Official storefront body read: developer, publisher, continuing edition and Steam release. It is marketing copy, not independent reception. |
+| [Current Steam product page](https://store.steampowered.com/app/1172620/Sea_of_Thieves_2026_Edition/) | Official storefront read: identity, editions, release and dated English recommendation aggregate. Publisher copy and user recommendations are distinct evidence. |
 | [Xbox Wire launch announcement, 20 March 2018](https://news.xbox.com/en-us/2018/03/20/sea-thieves-now-available-worldwide/) | Joe Neate's substantive written launch account read. Release/platform boundary; linked video not watched. |
 | [Rare PS5 announcement, 21 February 2024](https://www.seaofthieves.com/news/sea-of-thieves-ps5) | Substantive official indexed body read. Dated launch and cross-play announcement, not a current server-capacity measurement. |
 | [Rare PS5 FAQ, 4 April 2024](https://www.seaofthieves.com/news/ps5-faq) | Substantive official indexed body read, with localized indexed text for the explicit online-service qualification. Platform progress, access and cosmetic exceptions. |
@@ -693,7 +699,7 @@ All accessed **20 October 2026**. “Read” below means substantive text was re
 
 ### Evidence boundaries still material
 
-Product-level revenue/profit, actual marketing spend, true average transaction value, premium-spending distribution, subscription allocation, complete ongoing costs and representative retention/quit data were not disclosed in the sources obtained. These are explicit evidence limits after a real search, not omitted research categories. The partial Steam calculation answers a narrower question transparently. Contemporary service statements document issues and responses, not independently verified fixes. Reviews and player testimony establish experiences and disagreements, not population-wide causal findings.
+Product-level revenue/profit, actual marketing spend, true average transaction value, premium-spending distribution, subscription allocation, complete ongoing costs and representative retention/quit data were not disclosed in the sources obtained. These are explicit evidence limits after a real search, not omitted research categories. The Steam calculation illustrates arithmetic under assumed prices; it is not an estimate of actual receipts. Contemporary service statements document issues and responses, not independently verified fixes. Reviews and player testimony establish experiences and disagreements, not population-wide causal findings. A current-mode comparison would need a broader recent sample identified by play stage and server/mode; the helpful-week sample's missing individual permalinks limit reproducibility.
 
 ### Fan-commerce source
 

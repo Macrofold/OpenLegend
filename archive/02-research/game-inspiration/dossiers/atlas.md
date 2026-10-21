@@ -1,10 +1,12 @@
 # G180 — ATLAS
 
-**Completed full research pass — evidence through 20 October 2026 UTC.** R01–R14 and the economics, enjoyment, lore and creation amendment are covered; the external-mod applicability finding is **yes**, with the full R15 investigation included. The dossier contains eleven constructed situations, five independent original written reviews, two supplementary firsthand accounts, contrasting helpful Steam testimony, dated commercial evidence and an OpenLegend interpretation. The [scoped ledger](../research-progress-pirate-games-2026-10-20.md) records completion and review against the [full requirements](../research-requirements.md).
+**Completed full research pass — evidence through 20 October 2026 (America/New_York).** R01–R14 and the economics, enjoyment, lore and creation amendment are covered; the external-mod applicability finding is **yes**, with the full R15 investigation included. The dossier contains eleven constructed situations, five independent original written reviews, two supplementary firsthand accounts, contrasting helpful Steam testimony, dated commercial evidence and an OpenLegend interpretation. The [scoped ledger](../research-progress-pirate-games-2026-10-20.md) records completion and review against the [full requirements](../research-requirements.md).
 
 **Read:** [Actions and objects](#r02) · [Progression and loss](#r04) · [Worked situations](#r05) · [People](#r06) · [Presentation](#r07) · [Lore and spoilers](#r08) · [Production](#r09) · [Marketing](#r10) · [Economics](#r11) · [Reception](#r12) · [Creation](#player-creation) · [External mods](#r15) · [OpenLegend interpretation](#r13) · [Coverage and sources](#r14).
 
-**Product capture:** Steam sells ATLAS for US$29.99 as Early Access, first released 22 December 2018. It credits Grapeshot Games and Instinct Games for development, and Grapeshot Games/Snail Games USA for publishing. Steam warns that the last developer update was over three years ago. Store availability does not establish that the advertised official servers are operating. [Steam page, captured 20 October 2026](https://store.steampowered.com/app/834910/ATLAS/)
+**Product and reception capture — 20 October 2026 (America/New_York):** ATLAS is paid Early Access, released 22 December 2018; the recorded US price is $29.99. Steam credits Grapeshot Games and Instinct Games as developers, and Grapeshot Games/Snail Games USA as publishers, warns of no developer update for over three years, and reports **Mixed: 46% positive across 19,980 English reviews**. Store availability does not establish official-server operation. [Steam](https://store.steampowered.com/app/834910/ATLAS/)
+
+**Research judgment:** the [reception evidence](#r12) makes ATLAS useful as a cautionary comparison: attachment to a project can coexist with costly repetition and pressure to protect it. A documented dependency is not evidence of enjoyable play. Read the [OpenLegend interpretation](#r13) alongside the mechanics; the review sample mainly describes earlier versions.
 
 <a id="r01"></a>
 
@@ -14,7 +16,7 @@ ATLAS combines persistent survival, character development, settlement constructi
 
 **Interpretation:** the main unit of investment is a growing expedition organization: a survivor acquires tools, those tools produce a foothold, the foothold equips a ship, and the ship brings back resources or gains territory. The player can improve the means of undertaking the next voyage, but must also maintain and defend what has already been built. A naval defeat can therefore reach backward into days of preparation. How strongly that pressure operates depends on the chosen server rules and whether other players can damage the investment.
 
-These are documented systems, with present service availability investigated separately. The final official wipe was announced for 30 June 2023 without a patch, excluding unofficial, non-dedicated and singleplayer worlds. Its PvE configuration became entirely unclaimable lawless. [Grapeshot, Season 13, 22 June 2023](https://store.steampowered.com/news/app/834910/view/3665415235990518032)
+These are documented systems, with present service availability investigated separately. The last official wipe documented here was announced for 30 June 2023 without a patch, excluding unofficial, non-dedicated and singleplayer worlds. Its PvE configuration became entirely unclaimable lawless. [Grapeshot, Season 13, 22 June 2023](https://store.steampowered.com/news/app/834910/view/3665415235990518032)
 
 <a id="r02"></a>
 
@@ -140,7 +142,7 @@ These are analytical examples constructed from the cited rules, not claimed reco
 
 ### 1. A stocked stomach is not a stocked expedition
 
-A new sailor loads easily gathered fruit, fills a Waterskin and sets out for an unfamiliar shore. The water container creates time away from a freshwater source, but fruit alone does not provide all four vitamin groups. Before extending the trip, the player needs a varied food plan and a way to replenish water. **Counterexample:** repeatedly eating the largest available stack solves neither balanced nutrition nor finite carrying capacity. The interesting decision is whether to pause for preparation or accept a shorter trip, not which inventory stack looks fullest. [Food](https://atlas.fandom.com/wiki/Food); [Water](https://atlas.fandom.com/wiki/Water)
+A new sailor loads easily gathered fruit, fills a Waterskin and sets out for an unfamiliar shore. The water container creates time away from a freshwater source, but fruit alone does not provide all four vitamin groups. Before extending the trip, the player needs a varied food plan and a way to replenish water. **Counterexample:** repeatedly eating the largest available stack solves neither balanced nutrition nor finite carrying capacity. The choice is whether to prepare or shorten the trip; its enjoyment depends on whether provisioning adds a worthwhile decision or repeats a chore. [Food](https://atlas.fandom.com/wiki/Food); [Water](https://atlas.fandom.com/wiki/Water)
 
 ### 2. A rare blueprint makes the map economically meaningful
 
@@ -156,7 +158,7 @@ A classic trading ship fits Cargo Racks to move dense resources. The racks reduc
 
 ### 5. Familiar repair supplies fail on a different construction system
 
-A Company equips a modular vessel after months using a classic ship. During damage control, the repairer discovers that the relevant part requires the modular tool-and-kit combination rather than the classic maintenance procedure. A disciplined departure check identifies the hull, its modules, the compatible repair equipment and enough consumables. **Counterexample:** a crate labelled “ship supplies” is not a guarantee that its contents can fix this ship. The meaningful preparation is matching materials to actual failure points, particularly where armour and underlying structure have different repair requirements. [Modular Ships](https://atlas.fandom.com/wiki/Modular_Ships); [Repair Hammer](https://atlas.fandom.com/wiki/Repair_Hammer)
+A Company equips a modular vessel after months using a classic ship. During damage control, the repairer discovers that the relevant part requires the modular tool-and-kit combination rather than the classic maintenance procedure. A disciplined departure check identifies the hull, its modules, the compatible repair equipment and enough consumables. **Counterexample:** a crate labelled “ship supplies” is not a guarantee that its contents can fix this ship. Matching supplies to failure points is required; whether the incompatibility adds a worthwhile choice or only a memory burden remains a design question. [Modular Ships](https://atlas.fandom.com/wiki/Modular_Ships); [Repair Hammer](https://atlas.fandom.com/wiki/Repair_Hammer)
 
 ### 6. A solo captain can operate a crewed workplace
 
@@ -180,7 +182,7 @@ A shipbuilder brings an anchored/scaffolded vessel to the equipped shipyard and 
 
 ### 11. Necromancy is a production chain with a limited output
 
-A Company builds a Ritual Pedestal, lets it accumulate charge, activates Sacrifice Collection and gathers hearts from ensuing kills. A later Raise the Dead ritual converts the required charge and hearts into commanded Army of the Damned warriors. Participation affects how many appear. **Counterexample:** the warriors are temporary pets that cannot be healed, so treating them as an indefinitely sustainable replacement for every sailor or combat tame defeats the system's actual limits. The magical effect is powerful because it is prepared, consumed and timed. [Ritual Pedestal](https://atlas.fandom.com/wiki/Ritual_Pedestal)
+A Company builds a Ritual Pedestal, lets it accumulate charge, activates Sacrifice Collection and gathers hearts from ensuing kills. A later Raise the Dead ritual converts the required charge and hearts into commanded Army of the Damned warriors. Participation affects how many appear. **Counterexample:** the warriors are temporary pets that cannot be healed, so treating them as an indefinitely sustainable replacement for every sailor or combat tame defeats the system's actual limits. These rules limit availability and duration; they do not establish enjoyable pacing or good balance. [Ritual Pedestal](https://atlas.fandom.com/wiki/Ritual_Pedestal)
 
 <a id="r06"></a>
 
@@ -361,8 +363,6 @@ The VGI direct page requires JavaScript; its indexed body was read. That body in
 
 The vendor's published 2024 methodology describes units estimated using actual-sales reference data and review-count modelling. Full-game revenue combines estimated sales with historical prices, accounting for currencies, discounts and returns; its gross measure includes the platform share and excludes DLC and microtransactions. This defines the estimate's scope without independently validating ATLAS's result or exposing all historical inputs. [VG Insights 2024 market report, glossary, PDF p. 24](https://vginsights.com/assets/reports/VGI_Global_PC_Games_Market_Report_2024.pdf).
 
-Dividing the displayed estimates gives approximately **US$19.92 per paid Steam unit**. That is arithmetic on rounded model outputs, not a disclosed realized price. It should not be extrapolated across Xbox sales or publisher-wide installs, and does not establish net developer receipts or profit. [Underlying Steam estimates](https://app.sensortower.com/vgi/game/atlas).
-
 The useful economic conclusion is bounded: there is evidence of meaningful paid distribution, adverse commercial revisions and an uncertain Steam scale estimate, but no complete project outcome. A stronger estimate would require a verified platform-specific unit history, actual historical selling prices, and game-level receipts and costs. Neither accumulated playtime nor consumer spending alone answers whether the developer earned an adequate return.
 
 ### What customers and hosts pay for
@@ -385,7 +385,7 @@ An October 2024 Steam discussion reports official servers had shut down more tha
 
 ## R12 — Five original reviews and two additional firsthand accounts
 
-The five original reviews below concern an Early Access product; they are not five final 1.0 verdicts. Their disagreement over bug tolerance, construction friction and future promise is more informative than an average score. PCWorld and GamesRadar+ are retained as supplementary impressions, with their original article types preserved.
+The five original reviews concern Early Access: four date from 2019, and one has a 2023 byline with 2025 passages. Their disagreement explains historical experiences, not reception of every later mechanic or present server configuration. PCWorld and GamesRadar+ remain supplementary impressions. The opening Steam aggregate supplies recommendation context, not a cause of satisfaction or abandonment.
 
 ### 1. The Drastik Measure — Connick, review, 12 February 2019
 
@@ -419,7 +419,7 @@ Mark Delaney approached ATLAS after extensive Sea of Thieves play. He found its 
 
 ### Steam player testimony: selected bodies, not prevalence
 
-The English **Most Helpful (All Time)** view was read on 20 October 2026. Displayed hours and helpful votes are capture-time totals. **NiceSushi**, negative, 31 March 2019, 236.9 hours, 1,223 helpful votes, values a small home, custom boat and exploration but finds investment vulnerable to destructive interference. **Malice**, negative, 31 May 2021, 1,793.9 hours, 258 helpful votes, recalls trading and supporting expeditions, then associates wipes and later direction with group dissolution. **DaxterM89**, positive, 26 December 2019, 42.1 hours, 445 helpful votes, offers an elaborate, possibly comic captivity-and-mutiny story and welcomes another attempt. That narrative is unverified testimony, not an event log. The contrast separates possessions, a social role, and pleasure in a disastrous story. Helpful ranking privileges memorable and older accounts; it is not a representative survey or current bug verification. [Actual Steam review bodies](https://steamcommunity.com/app/834910/reviews/?browsefilter=toprated).
+The English **Most Helpful (All Time)** view was read on 20 October 2026. Displayed hours and helpful votes are capture-time totals. **[NiceSushi](https://steamcommunity.com/id/rawhidekobayashi/recommended/834910/)**, negative, 31 March 2019, 236.9 hours, 1,223 helpful votes, values a small home, custom boat and exploration but finds investment vulnerable to destructive interference. **[Malice](https://steamcommunity.com/profiles/76561198015292475/recommended/834910/)**, negative, 31 May 2021, 1,793.9 hours, 258 helpful votes, recalls trading and supporting expeditions, then associates wipes and later direction with group dissolution. **DaxterM89**, positive, 26 December 2019, 42.1 hours, 445 helpful votes, offers an elaborate, possibly comic captivity-and-mutiny story and welcomes another attempt. That narrative is unverified testimony, not an event log. The contrast separates possessions, a social role, and pleasure in a disastrous story. Helpful ranking privileges memorable and older accounts; it is not a representative survey or current bug verification. [Captured Steam review collection](https://steamcommunity.com/app/834910/reviews/?browsefilter=toprated). DaxterM89's individual permalink was not recovered; collection order can change.
 
 ### Enjoyment, returning and abandoning — interpretation of the evidence
 
@@ -487,7 +487,13 @@ No recovered creator account documents AI assistance in making these representat
 
 ## R13 — transferable inspiration and limits for OpenLegend
 
-These are research interpretations, not accepted features, implementation instructions or changes to the [engine and bundled-world boundary](../../../../AGENTS.md#engine-and-bundled-world-separation). ATLAS is especially useful as a comparison with [Sea of Thieves](sea-of-thieves.md) and the existing [ARK: Survival Evolved study](ark-survival-evolved.md): all can make a dangerous expedition memorable, but they place different amounts of preparation, ownership and continuing obligation behind that expedition. The question is which consequences create interesting choices in an authored world, not which game's entire ruleset to adopt.
+These interpretations do not change the [playable-game priorities](../../../../docs/repertoires/gameplay-priorities.md) or [engine/world boundary](../../../../AGENTS.md#engine-and-bundled-world-separation). Compare [Sea of Thieves](sea-of-thieves.md) and [ARK: Survival Evolved](ark-survival-evolved.md) for different preparation, ownership and continuing obligations.
+
+| Basis | Judgment and confidence |
+| --- | --- |
+| Player experience — [R12](#r12) | Qualitative support for both attachment to constructed projects and frustration with recovery or obligation; chiefly historical, with no prevalence estimate. |
+| Interpretation | Preparation is valuable when it changes a worthwhile choice. More prerequisites, upkeep or incompatibilities do not establish that value. |
+| OpenLegend possibilities below | Commissions, companions, property, lore and creator workflows remain untested applications. They establish no feature priority, population target, AI architecture or business model. |
 
 ### A vessel can be both a tool and a record of its owners' decisions
 
@@ -627,7 +633,7 @@ For OpenLegend, these remain research observations subject to its current root p
 
 ## R14 — Coverage, reading routes and evidence limits
 
-**Evidence date: 20 October 2026 UTC.** This is a written-source research dossier. It combines dated developer announcements, public tool documentation, practitioner accounts, community mechanic references, original criticism, direct player testimony and separately qualified commercial records. Sources describing plans, old official worlds, current storefronts and community configurations are not treated as interchangeable evidence of the present playable service.
+**Evidence checked through 20 October 2026 (America/New_York).** This is a written-source research dossier. It combines dated developer announcements, public tool documentation, practitioner accounts, community mechanic references, original criticism, direct player testimony and separately qualified commercial records. Sources describing plans, old official worlds, current storefronts and community configurations are not treated as interchangeable evidence of the present playable service.
 
 ### Coverage map
 
@@ -653,7 +659,7 @@ The [economics, engagement, lore and creation amendment](../research-economics-e
 
 ### A useful order for reading
 
-Begin with R01–R04 to understand what a player actually invests in a voyage. Read R05 next to see how those systems interact and where seemingly sensible actions fail. R06 and R08 explain how ownership and the setting turn the voyage into a longer organizational story. The reception section then tests that attractive description against what different players actually praised or struggled with.
+Start with the opening judgment and R12–R13, then use R01–R05 for the rules, investment and constructed interactions behind those reactions. R06 and R08 connect ownership and setting to the longer organizational story. A rule-based example explains what happens; the reception evidence addresses whether that experience was valued.
 
 For production and authoring, read R09, the player-creation section and R15 together. The official editor/configuration references and the individual creator records provide different kinds of evidence. A tool's feature list does not establish that a particular community package remains supported, and a mod's subscriber count does not establish successful present installations. Financial observations should be read with their definitions in R11 before making a comparison with another game.
 
@@ -665,6 +671,8 @@ The [current Steam page](https://store.steampowered.com/app/834910/ATLAS/) is a 
 
 The records support a detailed study of the game's documented systems and their development, with source-specific qualifications. They do not establish a verified current official-server inventory, the successful installation of a 2026 mod collection, exact present accessibility behavior, a complete proprietary engineering pipeline, a full audio-production credit list, confidential project costs, all-platform lifetime profit or causal retention measurements. Where older rules conflict with later official changes, the later dated change is stated explicitly. Where promised systems or transitions could not be confirmed as delivered, they remain promises.
 
+A present-play comparison would need recent positive and negative accounts identified by mode, version and play stage. Historical testimony does not settle reception of later changes; unrecovered review permalinks limit reproducibility.
+
 No executable, mod, host configuration or save was installed or tested. No assets were copied into OpenLegend and no gameplay or architecture was changed. The [scoped completion ledger](../research-progress-pirate-games-2026-10-20.md) records the actual manuscript and documentation review; the source registers below distinguish complete relevant text, indexed bodies, mirrored developer posts and unavailable destinations.
 
 ### Mechanics, people and lore sources
@@ -673,7 +681,7 @@ No executable, mod, host configuration or save was installed or tested. No asset
 
 | Source(s) | Date / type and access | What the source supports; limitation |
 | --- | --- | --- |
-| [Season 13](https://store.steampowered.com/news/app/834910/view/3665415235990518032) | 22 June 2023, primary; body via official announcement index | Final announced wipe/configuration; present service availability is separately investigated. |
+| [Season 13](https://store.steampowered.com/news/app/834910/view/3665415235990518032) | 22 June 2023, primary; body via official announcement index | Last wipe/configuration documented here; present service availability is separately investigated. |
 | [557.6](https://store.steampowered.com/news/app/834910/view/3648517227974037574) | 14 March 2023 announcement; primary body via official index | Nutrition, map visibility and cave changes. |
 | [Food](https://atlas.fandom.com/wiki/Food), [Water](https://atlas.fandom.com/wiki/Water), [Environmental](https://atlas.fandom.com/wiki/Environmental) | Undated community manuals; indexed bodies | Food families, water, weather; older vitamin damage superseded, environmental numbers not adopted. |
 | [Tools](https://atlas.fandom.com/wiki/Tools), [Climbing Pick](https://atlas.fandom.com/wiki/Climbing_Pick) | Undated community catalogue/manual; indexed bodies | Useful object families and traversal; individual item statistics not comprehensively audited. |
