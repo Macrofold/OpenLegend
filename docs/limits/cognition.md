@@ -732,3 +732,88 @@ CF04 adds permitted exact combat-help terms and explicit helping alternatives be
 **Current — world/engine boundary correction, October 14, 2026 · Restrictiveness: Low.** The selected saved cognition policy owns action reasons, the consideration and selection questions, and both selection criteria. Each nonempty prose field is bounded to **2,000 characters** to keep per-candidate question growth within the existing serialized provider admission. Completed-action and private-observation importance defaults are finite values in **[0,10]**, matching the existing event scoring domain. The bundled policy supplies the previous guidance and scores (6 each); another supported policy can choose different reasons and scores.
 
 **Reason / tradeoff:** Localize meaning without adding executable prose or a new provider path. Longer authored wording must be rewritten or the bound reconsidered for a demonstrated useful requirement; the existing complete request-size check still owns admission. Guidance cannot add choices, disclose private evidence, grant execution/permissions or raise spending. Owner: [cognition policy](../../packages/domain/src/cognition-policy.ts), [memory contract](../memory-architecture.md#4-jev-attention-before-context-inclusion), CR13/CE03; this correction supplies no live model-quality evidence.
+
+## Situation-aware context selection
+
+**Selected design — October 19, 2026; implementation and qualification remain open.** The [feature specification](../projects/situation-aware-cognition-context-feature-spec.md) and [technical design](../projects/situation-aware-cognition-context-tech-design.md) define the coordinated change; [SC01–SC12](../maintainers/cognition-context.md) owns its delivery. These entries record its discretionary, removed and deliberately unchanged constraints. They do not relabel historical CG measurements as new results or create a second table of budget constants.
+
+### SCX01 — Required meaning takes precedence over a size target
+
+**Designed · Restrictiveness: Safe for evidence; potentially restrictive at the existing request boundary.** Preserve the complete accepted About me under CG09, current required body/work/goal/obligation/stimulus/outcome facts, required corrections/withdrawals/uncertainty, and the full dependency/reference closure of every required meaning. Current actor permission and source eligibility control what can be supplied. No new identity excerpt length, generic fact count or target greeting-token ceiling is selected.
+
+**Reason / tradeoff:** An apparently cheap answer based on a different person, missing promise or erased alternative is a product regression. Complete identity can still make a greeting large, and required context can exceed existing allowances. The present design accepts that explicit limitation rather than silently changing identity or inventing a new quota; any future identity projection/quota choice remains at D55/CG09.
+
+**Overflow:** Close and measure the required set as early as feasible, before optional work or spending where its failure is already provable. First remove duplicate representation and use a shorter deterministic form only when it preserves the complete required meaning. If the exact required set cannot fit or a required source cannot be obtained, refuse/defer the affected generation through existing `context-exceeded` or unavailable/stale dispositions with internal detail. Do not increase budgets, truncate identity/quotes or force abandonment of native work. An independent existing route may proceed only with its own complete evidence and current authorization.
+
+**Evidence / owner:** [Technical §§4–6](../projects/situation-aware-cognition-context-tech-design.md#4-typed-preparation-model), CR01/CR03/CR04 and SC01/SC02. Attachment character counts are [local representation evidence](../projects/situation-aware-cognition-context-evidence-and-decisions.md), not provider-token or quality qualification.
+
+### SCX02 — Concurrent relevance and honest discovery coverage
+
+**Designed · Restrictiveness: Safe for authority; no new per-family quota.** Situation signals combine rather than choosing one exclusive mode. Existing bounded actor-permitted discovery and relevance remain the source of optional candidates, with exact deterministic ordering and complete dependency closure. Current hard-query baselines preserve discovery/fallback coverage; they do not require rendering every baseline row's full body/schema. Required evidence cannot be demoted by attention or a fit algorithm.
+
+**Reason / tradeoff:** Goals and urgency alone erase useful disagreement, quiet pleasures, old clues and inventive uses. Preserve actual personal interest, competing purposes, contrary evidence and discoverable possibilities without a mandatory number of “fun” facts or scripted choices. Repertoire implementation Priority/Level/world suitability never becomes runtime relevance. No finite selector is claimed to anticipate every possible meaningful association.
+
+**Coverage / overflow:** Only a complete scoped query establishes absence in that scope. Partial, not-requested, unavailable, stale and forbidden are distinct; a missing result is not an empty world. Stale/forbidden snippets cannot remain usable. Remove optional roots in the specified order, retaining dependencies still supported by required or other selected roots. If the selected threat route requires a complete eligible choice set, generic optional selection cannot trim it; use its existing incomplete-preparation outcome.
+
+**Evidence / owner:** [Technical §§5–6](../projects/situation-aware-cognition-context-tech-design.md#5-situation-detection-without-an-exclusive-classifier), CR04/CE03/IS02 and SC02/SC09. Existing thresholds are not newly calibrated by this design; actual omission and episode comparisons remain open.
+
+### SCX03 — Bound discovery and hydration before final rendering
+
+**Designed mitigation of current growth · Restrictiveness: Medium at inherited preparation bounds.** Preserve existing source/query/character/byte/request limits, including CG01 and applicable memory/SPK preparation bounds. No new arbitrary maximum world population, inventory, learned-method library, context-profile count or retained life-history quota is introduced. Select permitted IDs and source sizes before loading bodies; build references only for selected permitted dependencies; reuse exact immutable definition/native-check work where its owner can prove validity.
+
+**Reachable growth / consequence:** Current first-use observer handle preparation hashes every world entity, and observation can load a full inventory before page selection. Candidate × tool × target preparation, cold memory hydration, many simultaneous real obligations and dependency fan-out can also grow before a final short prompt is produced. The final schema/transport gate does not bound all that earlier work. A small returned list or SQL `LIMIT` does not prove a bounded query plan.
+
+**Overflow / work accounting:** Charge metadata visits, dependency edges, hydrated bytes, reference generation, schema fragments and native checks to their current operation/preparation owner. Record partial/failed coverage without scanning omitted data to calculate a decorative exact count. Each candidate is considered at most once in the selected pass; shared/cyclic dependency support and encoded sizes update incrementally, rather than repeatedly rebuilding whole prompts. Required exhaustion refuses the affected decision; optional exhaustion preserves valid required/fallback context. Required evidence is never silently dropped to meet a benchmark.
+
+**Evidence / owner:** [Technical §13](../projects/situation-aware-cognition-context-tech-design.md#13-performance-and-preparation-work), SC08, PF09/PF14 and C17. This is a source-grounded design for known work growth, not a measured latency or production-capacity improvement.
+
+### SCX04 — Count the complete request and preserve current budgets
+
+**Designed accounting correction · Restrictiveness: Existing admission bounds unchanged.** Retain CG08's separate message/context, schema, visible-output, request-count, tool-round and financial constraints and the current complete serialized transport gate. Include all actual instructions/context/reference text, response schema/tool definitions/results and output allowance in complete diagnostics/admission analysis. Keep component bytes distinct from total transport bytes to avoid double counting. Existing final schema/context checks already exist; the identified preparation metric estimates prompt-only input, not a wholly unbounded pipeline.
+
+**Reason / tradeoff:** Minifying a pretty HTTP export, moving a manual to tools, or changing a cache hit can alter different costs. Report actual provider input/output/cached/reasoning usage when available, labeled estimator/model/basis otherwise. Do not treat a character count as exact tokens or a missing receipt as zero cost. A smaller final request can lose if it causes more retrieval, inspection or generation work.
+
+**Overflow / financial behavior:** All selected preparatory attention, embeddings, existing compaction, threat stages, generation and configured reconsideration remain charged through current owners. No new paid counting request, summarizer or repair is automatic. Early required-context refusal preserves any real earlier receipts. Current schema/output/body limits continue to refuse at their actual owner; a caller cannot increase one silently to compensate for duplicated context.
+
+**Evidence / owner:** [Technical §11](../projects/situation-aware-cognition-context-tech-design.md#11-complete-request-accounting-and-cache-behavior), SC01/SC06 and current AI/budget owners. The supplied request's local savings estimates remain qualified in the evidence record; actual token/latency/financial improvement is unmeasured.
+
+### SCX05 — Remove padding without limiting compatible choices
+
+**Selected removal · Restrictiveness: No new response-count limit; existing native bounds retained.** Replace padded operation alternatives with the same ordered operations array and common metadata plus one active payload per entry. Retain all eight actually enabled kinds, repeated operations, empty output where permitted, genuine nulls, admission dependencies, native plan-output dependencies and `interrupt`. No “one operation per reply,” “speech requires idleness” or talk-only classifier shortcut is selected.
+
+**Reason / tradeoff:** Inactive null fields and duplicate structural manuals add size and drift without helping a decision. Sparse nested closed alternatives can preserve the contract with less input/output scaffolding. Family and parameter shape must be paired. Concise shared semantic instructions remain necessary for admission versus completion, work transitions, references, goals and silence. All current parsers/producers/preview/native consumers must change together; no legacy response reader is retained.
+
+**Boundary:** The generative sparse schema does not replace a native route's existing bound-choice/composition contract. In particular, the selected threat route retains its required two stages and exact eligible/relevant/uncertain choices under CTR. Simultaneous speech/action there requires an actually supported compatible composition; no third generator or arbitrary generated action is added.
+
+**Evidence / owner:** [Technical §9](../projects/situation-aware-cognition-context-tech-design.md#9-compact-response-contract), SC03/SC04, AG01 and existing response/admission owners. Local sparse-schema character calculations do not establish provider compatibility or character behavior.
+
+### SCX06 — Keep necessary detail up front; no new automatic tool round
+
+**Designed · Restrictiveness: Existing immediate tool/call limits retained.** Full useful capability detail is required when it materially affects the current choice. A concise discovery description may replace optional form detail only with useful meaning and a current exact permitted inspection/proposal route, under the rules in technical §8. Immediate generative levels keep CG08's zero tool rounds. Native inspection remains an actual supported action with its current timing, access, page and spending consequences.
+
+**Reason / tradeoff:** Sending every form is wasteful; repeatedly asking for obvious or urgent facts makes play slow and weakens decisions. Retain the initial detail if the route is unavailable, requires guessing, cannot supply a necessary parameter or imposes a material tactical/ordinary-play burden. A missing target in partial discovery is not proof that the world lacks it. UI field/button removal must preserve any unique meaning; References remains necessary.
+
+**Extension gate:** A demonstrated consequential omission or excessive inspection burden may justify separately designing a bounded read-only within-job tool through CR04/CR08/CH01/conditional ND20. First compare corrected initial selection and existing native detail access. This gate neither postpones required current selection fixes nor selects an external memory system, automatic second generation, ninth operation or unbounded search loop.
+
+**Evidence / owner:** [Technical §8](../projects/situation-aware-cognition-context-tech-design.md#8-detail-access-without-a-mandatory-second-generation), SC05/SC09. Actual extra-turn/friction and quality comparisons remain open.
+
+### SCX07 — Request-owned reuse, exact scopes and bounded diagnostics
+
+**Designed · Restrictiveness: Safe for privacy and current authority.** Default reuse is request-scoped. Longer-lived definition/schema/source caches use existing bounded owners with exact semantic dependency/version/disclosure keys, eviction and invalidation; this project selects no new unbounded private-context cache or duplicated transcript/memory store. Derived units, dependency graphs and reference maps are not saved as another authoritative mind.
+
+**Reason / tradeoff:** Stable prefix and local shared preparation can reduce repeated work, but stale meaning or cross-character data cannot be reused for a cache hit. Provider cache eligibility depends on its actual rendered context/settings; keep exact request-specific reference constraints initially. Handle text may legitimately change across requests while entity identity/recognition remains stable; only the captured binding is authority.
+
+**Lifecycle / overflow:** Correction, forgetting, changed grants/control, relevant custody/geometry/definitions and timeline restore invalidate affected reuse. Keep borrowed mutable state out of retained preparation. Diagnostics retain bounded counters/selected manifests under existing capture/retention policy; full private text requires authorized inspection and is not copied per poll. An unavailable cache falls back to the ordinary permitted read or explicit failure; it never returns another scope's value. Old results cannot publish after restore even if IDs recur.
+
+**Evidence / owner:** [Technical §§11–13](../projects/situation-aware-cognition-context-tech-design.md#11-complete-request-accounting-and-cache-behavior), SC06–SC08, current identity/data/save/trace owners and existing CG03 cache limits. No new cache-hit, retained-memory or population qualification is claimed.
+
+### SCX08 — Selected revision binding and conditional local references
+
+**Designed later stage · Restrictiveness: Native write safety retained; local schema references disabled by default.** After sparse consumers qualify, remove derivable model revision echoes and a request field explicitly declared to duplicate the same work transition. Retain exact captured revision/existence/read bindings server-side. A same-reply later write can consume an accepted new revision only through an explicit dependency on the last accepted writer for that target. Independent stale writes refuse. Full replacement of a nonempty note requires its full current text; absent/unread is not empty or revision zero by default.
+
+**Reason / tradeoff:** The model should choose meaning, not copy server-known revision counters. Moving those fields across the trust boundary requires precise target and same-reply semantics, all specified in technical §10; it does not relax optimistic concurrency or create an old-wire adapter. Independent mode-like parameters keep their meanings.
+
+**Separate conditional removal:** `$defs/$ref` factoring is not required for sparse delivery. The current validator rejects references. If measured benefit and configured adapters justify it, enable only the captured-schema local nonrecursive subset from technical §9.5, with strict traversal/admission and explicit rejection of external, missing, cyclic or dynamic reference forms. Otherwise retain inline definitions. No external schema resolver, recursive support, paid fallback or alternate old-format reader is selected.
+
+**Evidence / owner:** [Technical §§9.5–10](../projects/situation-aware-cognition-context-tech-design.md#95-ref-is-a-separate-gated-refinement), SC12 and existing mutation/receipt/schema owners. Vendor support and earlier illustrative size transformations are not local/protocol qualification. No runtime revision-binding or reference-validator change has been made by this design task.
+

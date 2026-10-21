@@ -22,6 +22,8 @@ Current narrative context uses English. Its References section identifies permit
 
 Generate the reference table and response binding together. Reserve required reference bytes before optional recall; recheck the full refreshed prompt before dispatch. Never silently remove required mappings to fit a budget. The provider schema and local parser constrain reference fields to the same permitted handles. The server resolves structured fields and explicit reference annotations before persistence, and reprojects stored annotations for later permitted context. Quotes and ordinary names are not rewritten by substring guesses. Domain admission independently checks current state; component outcomes explain an invalid field or prerequisite while retaining any independently accepted components.
 
+**Selected situation-aware target; implementation pending.** The [feature specification](projects/situation-aware-cognition-context-feature-spec.md) and [technical reference design](projects/situation-aware-cognition-context-tech-design.md#73-exact-name-to-id-mappings-remain) select the permitted dependency closure before reference construction and keep every necessary name/description-to-exact-handle mapping. References initially remain; later inline consolidation requires proven coverage, including inventory-only tokens, inspected contents and namespace/recognition distinctions. UI form decoration supplies no substitute for this meaning. [SC01–SC12](maintainers/cognition-context.md) owns the coordinated change. Its selected later revision-binding stage removes model-echoed revisions while retaining captured native concurrency checks and explicit same-reply dependent writes; it must never resolve a stale operation by adopting the newest record silently. This changes request presentation, not stored identity or disclosure authority.
+
 ## Control and projection
 
 Authenticated accounts already have server-owned world grants and character bindings. Each request carries its account/session, world/timeline, grant revision, audience and current control generation; final publication rechecks the required authority after asynchronous work. Human ownership, sessions, grants and control generations live outside gameplay checkpoints, so loading an earlier world cannot restore revoked access or another tab's former control. Characterless operators and spectators receive only granted operations, never an inferred player character.
@@ -47,5 +49,7 @@ A current permitted entity ID may literally be spelled `player` or `ada`. Those 
 ## Maintained records
 
 - Implementation: [multiplayer authority and private projections](maintainers/multiplayer.md), [cognition and knowledge](maintainers/cognition-redesign.md), and [residual compatibility cleanup](maintainers/production-data.md#df04--retire-residual-compatibility-paths).
+- Selected context/reference integration: [SC01–SC12](maintainers/cognition-context.md) and [situation-aware context limits](limits/cognition.md#situation-aware-context-selection).
 - Limits and constraints: [multiplayer authority](limits/multiplayer.md) and [memory/knowledge references](limits/memory.md).
 - Related contracts: [entity-name grammar](entity-names.md), [knowledge subject binding](knowledge.md#subject-binding) and [narration audiences](narration-and-conversations.md).
+

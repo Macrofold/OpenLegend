@@ -5,6 +5,7 @@ Characters record their own attempted actions, notice their actual results, and 
 ## Maintained records
 
 - Implementation and acceptance: [AE01–AE10](maintainers/action-experience.md).
+- Selected situation-aware projection integration: [SC01–SC12](maintainers/cognition-context.md) and [context-selection limits](limits/cognition.md#situation-aware-context-selection); existing AE delivery and acceptance retain their own status.
 - Operating bounds and unsupported extensions: [AEL01–AEL09](limits/action-experience.md).
 - Project history and accepted scenarios: [project](projects/action-experience.md), [feature specification](projects/action-experience-feature-spec.md), [technical design](projects/action-experience-tech-design.md).
 - Measured evidence, exact model inputs and costs: [verification](verification/action-experience.md).
@@ -21,6 +22,8 @@ A choice states the current straight-line target distance and the configured sto
 Known facts use templates or readable labels. Critical nested details without a template use narrow, readable JSON; ordinary actions have no duplicate JSON representation. Projection tracks covered facts. Optional information may be omitted explicitly, but required information that cannot fit prevents dispatch. Collapsed layout still carries critical descendant facts with their enclosing action names.
 
 Shared decision context supplies body state, goals, feelings and active commitments. A method adds its remaining steps, future prerequisites, actual or still-unproduced materials, aggregate consumption and supported shortages. These summaries follow the supplied finite structure; they do not search for every plan or simulate a future world. Known blockers, unknown facts and incomplete preparation remain distinct. Other options remain available and replace or interrupt current work through ordinary agency admission.
+
+**Selected situation-aware target; implementation pending.** The [feature specification](projects/situation-aware-cognition-context-feature-spec.md) and [technical design](projects/situation-aware-cognition-context-tech-design.md) select these source-owned facts by the current situation and its dependencies before optional description work. Actual personal outcomes remain required evidence; known methods, useful material properties, exact costs/qualifiers and current/paused work remain when they can change an informed choice. The final decision retains exact object/method bindings and References even though an occurrence's English narrative omits a reference table. Installed activity meaning is projected once, without duplicate UI form metadata. Inspection continues through the existing bounded private history/method owners; it is not a mandatory extra model round. Suggestions remain assistance, supporting creative alternatives and compatible speech during work. This is NPC-context implementation in SC02–SC05, distinct from the delivered player-menu presentation and native execution below.
 
 ## Ordinary player action discovery
 
@@ -115,3 +118,4 @@ This delivery does not add new multi-target combat, robotics, general cooperativ
 [Voluntary outings](worlds/base/social.md#voluntary-outings) add exact pair/destination consent beside the installed activity requests. Acceptance starts two separately owned finite movement activities; it never makes another character a step in the inviter's plan. Ordinary movement receipts establish progress and arrival. Private invitation/arrival/separation/ending evidence enters the same personal memory and reconsideration path. Plan outcomes reference that existing evidence rather than duplicating it. Replaying or learning one's walk cannot replay the companion's consent.
 
 Ending the trip removes live consent and stops only its exact remaining activities, preserving unrelated replacement work and already completed effects. Current-format storage retains active consent independently of both plans, verifies their linkage, and stores terminal outcomes as ordinary experience. [AEL10](limits/action-experience.md#ael10--outing-consent-and-own-movement) owns the extension boundary; [PX04 evidence](verification/voluntary-outings.md) separates mechanical checks from voluntary choices.
+
