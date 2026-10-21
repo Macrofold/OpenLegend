@@ -594,7 +594,7 @@ Interruption rules include safe boundary, committed costs/effects, retainable pr
 
 ### Selected look, posture and watch composition
 
-**Accepted shared target; not a delivered concurrency extension.** [Stealth-awareness contracts](projects/stealth-awareness-tech-design.md#physical-orientation-posture-and-senses) and [SA](maintainers/stealth-awareness.md) select independent looking while walking where the admitted body supports it, crouch/quiet movement and chosen watch/investigation. They extend the existing physical action, spatial pose and finite activity owners. The current primary lane and ordinary refusal/replace/interrupt rules remain authoritative until these concrete combinations are qualified; a new label, menu or intention cannot create simultaneous work.
+**Selected physical-gaze design; not a delivered concurrency extension.** [Vision and gaze](projects/vision-and-gaze-feature-spec.md), its [technical design](projects/vision-and-gaze-tech-design.md) and [VG02](maintainers/vision-and-gaze.md#vg02--looking-through-the-existing-action-owner) specify supported idle looking and looking while moving under the [shared contract](projects/stealth-awareness-tech-design.md#physical-orientation-posture-and-senses). C owns crouch/quiet movement and E owns choosing watch/investigation. All extend the existing physical action, spatial pose and finite activity owners. The current primary lane and ordinary refusal/replace/interrupt rules remain authoritative until these concrete combinations are qualified; a new label, menu or intention cannot create simultaneous work.
 
 Body facing, movement direction and supported head/gaze freedom have distinct meanings within one accepted physical state. Current movement writes `EntitySpatial.heading`, and guard coverage binds to that body heading. The selected extension must reconcile both consumers before admitting independent look. Validate the resulting posture, support, ceiling/obstacle and equipment clearance, then the actual work's body-part constraints, before committing one compatible pose/action transition. A refused stand/look leaves the body and existing work unchanged. Camera movement never writes this state or grants an extra sight check.
 
@@ -852,3 +852,4 @@ An installed host may add read-only, actor-permitted prerequisite notes after no
 ## Invention integration
 
 [Repertoire foundation](repertoire-foundation.md) binds this action/activity contract to World Agent tools and invention composition. It does not create another activity controller, constraint language, permission service or planner. The current single physical lane remains until a concrete joint/channel family qualifies richer concurrency.
+

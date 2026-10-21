@@ -51,6 +51,8 @@ Ordinary wandering’s running timer is now an absolute game-time deadline where
 
 The [certified reuse contract](../../simulation-time.md#native-interval-contract) retains only already-covered, certain sight/contact paths across unrelated mechanical rebuilds. It changes no base-world range, sample height, horizon, displacement bound, linger window or event timing. Hover, wait, landing and wandering deadlines still constrain certainty through their existing movement owners; unsupported or changed paths recompute.
 
+**Selected future visual coverage; not implemented:** [Vision and gaze](../../projects/vision-and-gaze-tech-design.md) requires complete supported exposure/quality intervals across actual motion, head/body turns and light changes, including narrow openings between samples. [VG05–VG07](../../maintainers/vision-and-gaze.md#vg05--as-visual-producer-and-complete-temporal-coverage) owns the necessary trajectory, temporal preparation and restore changes. The current four-metre bound is a displacement/sampling compromise, not a sight range or a guarantee of continuous visual evidence. Its current nonvisual owners remain in force; the future B guarantee cannot rely on it or on wall-clock/frame frequency.
+
 ## Physiology and effects
 
 Food and energy boundaries come from the installed schema bounds, condition descriptions and predicates in the authored status definitions. Their behavior/rates remain owned by [survival](survival.md), the status-effect definitions and the attribute owners. The old fixed threshold list, including unused energy level 5, is removed. An interval stops at depletion or death before charging a subsequent period of starvation or exhaustion. Work beginning on arrival receives no pre-arrival duration.
@@ -76,3 +78,6 @@ Revisit these bounds when fleeting encounters matter to a mechanic, new movement
 ## Selected first-playable clock consumers
 
 The [integrated design](../../projects/first-playable-world-tech-design.md#time-daylight-needs-and-decision-latency) keeps the current 60:1 clock and physical perception, and selects one installed clock source for renderer daylight and HUD day/night. [FPW03](../../maintainers/first-playable-world.md#fpw03--ordinary-actions-readable-work-and-readiness) owns that correction. Roaming and the selected daily material-rain window use game-time boundaries through their existing native owners, never browser color or wall time. This is designed work, not a current display fix or a new light-sensitive sight rule.
+
+The separate selected [vision/light profile](vision-and-gaze.md) uses that same world clock for authoritative illumination and its [VG04](../../maintainers/vision-and-gaze.md#vg04--authoritative-light-and-consistent-appearance) implementation. FPW03's display correction alone does not deliver light-sensitive sight or the complete visual time coverage above.
+

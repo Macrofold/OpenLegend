@@ -504,6 +504,8 @@ Select discoverable information, recommendations/new-community offers, joining a
 
 ### ND03 — World-authored stats, checks and their effects
 
+**Selected visual Perception consumer: Done — designed.** [VG](vision-and-gaze.md) specifies improvement of genuinely available weak visual evidence and precision, bounded by actual field, range, geometry and light. Runtime remains open; broader stats/check consumers retain this owner's scope.
+
 **Selected sling design delivered; additional consumers need scoped design.** Reuse the [stats pair](../projects/authored-stats-tech-design.md), [PC](practical-competence.md), EWF02/EWF04 and shared state. PC06 appreciation remains qualification.
 
 Select a useful action/effect beyond the current consumer, then define authoring, ranges/defaults, modifiers, randomness or deterministic checks, interpretation and allowed effects. A displayed trait is not an enforceable rule; generic dice are not required. [The product specification](../projects/authored-stats-feature-spec.md), [limits](../limits/authored-stats.md) and [world-module contract](../../archive/07-technical-architecture/world-module-runtime.md) retain the candidate and extension boundaries.
@@ -516,11 +518,15 @@ Another competence or personality family needs explicit causes, attribution, unc
 
 ### ND05 — Richer bodies, illness and care
 
+**Selected visual body/receiver scope: Done — designed.** [VG](vision-and-gaze.md) specifies authored head/eye freedoms, physical turn rates and exposed body-part geometry through the existing spatial/action owners. Runtime, C's posture work, illness/care and unsupported anatomy families remain open.
+
 **Recovery/care product proposal prepared; adoption and technical delivery open.** Reuse [recovery and care](../projects/recovery-and-care-feature-spec.md), its [tracker](recovery-and-care.md), ACT/BW and [survival](../worlds/base/survival.md). New illness, anatomy or treatment families remain conditional beyond the selected recovery journey.
 
 For a selected extension define causes, observable/uncertain symptoms, severity/time, actual treatment/resources, actor knowledge and death/save consequences. Neither body-state examples nor generic attributes implement biology. Sources: [physical-state proposal](../../archive/03-design-proposals/agents-and-social-simulation.md), F03 and EWF10.
 
 ### ND06 — Ecology, aging and generations
+
+**Selected animal visual differences: Done — designed.** [VG](vision-and-gaze.md) specifies finite body/species fields and central/peripheral quality, including lateral-vision animals. Actual animal choices retain attention/native-behavior owners; runtime and broader ecology/lifecycle work remain open.
 
 **Selected first-playable wildlife: Done — designed.** The [roaming feature specification](../projects/first-playable-roaming-feature-spec.md), [technical design](../projects/first-playable-roaming-tech-design.md) and [authored wildlife profile](../worlds/base/first-playable-roaming.md) settle finite feeding, ordinary habitat movement, locally perceived wolf-pack hunting, bear danger and independent human opportunity inputs. [RW01–RW06](first-playable-roaming.md) owns runtime/encounter qualification and consumes [native animal escape](../worlds/base/animal-responses.md) under CTR03–CTR04. This settles the selected local pack behavior; it does not complete renewal, full food webs, offspring, aging, reproduction or DG19/DG31.
 
@@ -535,6 +541,8 @@ For broader ecology/lifecycle work, choose a concrete loop with observable scarc
 Explain the useful defensive and home activity, not merely the assembly. Broader household membership, large structures and general structural simulation remain separately selected. Sources: [construction proposal](../../archive/03-design-proposals/evolving-materials-and-construction.md), D31/R21, INV-6/PO/SW and [the world target](../worlds/base/playable-openings.md#a-camp-the-player-can-defend-and-call-home).
 
 ### ND08 — Material, weather, heat and fire interactions beyond campfires
+
+**Selected optical material/light scope: Done — designed.** [VG](vision-and-gaze.md) specifies world-owned light, surface contrast and independent visual/light transmission versus collision/attack obstruction. Runtime remains open; this does not adopt heat transfer, ignition/spread or broader weather/material families.
 
 **Selected rain/moisture consumer delivered; heat product proposal prepared, technical/expanded families open.** Reuse [shelter evidence](../verification/editable-shelters.md), BW19 campfire care and shared state. [Heat and materials](../projects/heat-and-materials-feature-spec.md), [HM](heat-and-materials.md) and INV-6/BW26 own selected thermal stages.
 
@@ -588,7 +596,7 @@ Define complete dependency inventories, retained attribution, private-origin met
 
 ### ND13 — Stable action recommendations and complete control customization
 
-**Selected stealth/control boundary: Done — shared design.** [SA00](stealth-awareness.md) selects independent physical looking while moving through one accepted pose/action owner, voluntary sound investigation, deliberate posture/watch intentions, camera-only presentation and per-fact current/historical disclosure. G and B/C/E retain detailed bindings, supported admission and UI acceptance; ranking, remapping and broader device scope remain open.
+**Selected stealth/control boundary: Done — shared design; physical gaze scope: Done — designed.** [SA00](stealth-awareness.md) selects independent looking, voluntary investigation, deliberate posture/watch intentions and per-fact disclosure. [VG](vision-and-gaze.md) specifies physical looking while moving through the existing action owner and keeps camera direction separate. Runtime, C's posture policy, E's voluntary choices and G's bindings/UI acceptance remain open; ranking, remapping and broader device scope are unchanged.
 
 **Combat-sensitive Command-click slice: Done — designed, October 17; implementation open.** The already delivered Command shortcut is the baseline. The [combat-response feature specification](../projects/combat-and-threat-responses-feature-spec.md) and [technical design](../projects/combat-and-threat-responses-tech-design.md) specify harmless selection, per-opponent current/recent evidence and own offensive intent, exact method/target preview, simulation-time grace, deliberate Speak/Stop controls, stable gestures and real recovery/staleness. [CTR02/CTR09/CTR10](combat-and-threat-responses.md) owns delivery; the [COMBAT ND13 synthesis](../../archive/02-research/game-inspiration/synthesis/combat-and-encounters.md#nd13--predictable-opponent-specific-quick-actions) owns its source discussion. Counting/ranking, revision grouping, arbitrary remapping and other device/input extensions below remain open.
 
@@ -610,7 +618,9 @@ Preserve committed-word/transcript timing, partial listener eligibility, recogni
 
 ### ND16 — Hearing and communication beyond direct-path speech
 
-**Selected stealth/hearing boundary: Done — shared design.** [SA00](stealth-awareness.md) and [A/C contracts](../projects/stealth-awareness-tech-design.md#shared-contracts) replace reliable unfamiliar-first-hearing identity with familiarity, actual evidence quality and selected base-world Perception. Words, names, association and location remain independent; physical receivers need no autobiography, and source occurrence order differs from actual acquired evidence. A/C specialists and SPK runtime delivery remain open.
+**Selected visual evidence producer: Done — designed.** [VG](vision-and-gaze.md) specifies only physically available visual facets and their actual support times for A. A retains recognition, accumulation and remembered knowledge; B supplies no unseen equipment/face update through a current voice. Runtime and the hearing/communication remainder remain open.
+
+**Selected stealth/hearing boundary: Done — shared design.** [SA00](stealth-awareness.md) and [A/C contracts](../projects/stealth-awareness-tech-design.md#shared-contracts) replace reliable unfamiliar-first-hearing identity with familiarity, actual evidence quality and selected base-world Perception. Words, names, association and location remain independent; physical receivers need no autobiography, and source occurrence order differs from actual acquired evidence. A's completed remote design is [pinned as a reference](vision-and-gaze.md#scope-and-status); C's detailed scope and A/C/SPK runtime retain their owners.
 
 **Selected ordinary-speech/social-perception design complete; broader extensions remain conditional.** Sources: [deliberate hearing extension boundaries](../hearing-and-speech.md#12-deliberate-extension-boundaries), [HE deferred expansion](hearing-and-speech.md#deferred-expansion), and [hearing limits](../limits/hearing-and-speech.md).
 
@@ -779,3 +789,4 @@ Test a useful bounded outcome with feedback/debrief or trustworthy scoring, sour
 [Production workflows](../production-workflows/README.md) connect the existing art studies and V3D/INV delivery owners to in-game review. Source rights, useful-asset cost, human review and device qualification remain with those owners.
 
 Use canonical contracts and the actual selected revision's project/tracker evidence over broad statements in older proposals. Research and examples inform selection; they do not adopt features or waive acceptance. [Development save policy](../../AGENTS.md#development-save-policy), privacy/authority and existing verification requirements remain controlling for every selected extension.
+
