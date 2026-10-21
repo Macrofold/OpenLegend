@@ -1,6 +1,6 @@
 # What roleplay and NPC communities actually use
 
-**Checked October 20, 2026. Status: desk research and proposed comparisons; no model execution, adoption or runtime changes.** This supplements the [technical model catalogue](04-models-local-hosted-openrouter.md) with Mike's requested evidence about current popularity and actual use. The original catalogue included alternatives to Kev but was not a sufficient adoption survey. This document owns the additional popularity snapshot; the [existing experiment dossier](06-openlegend-applications-and-experiments.md) and [design-preparation map](../../../docs/maintainers/npc-cognition-research-needs-design.md) retain evaluation and design ownership.
+**Checked October 20, 2026. Status: desk research and proposed comparisons; no model execution, adoption or runtime changes.** This supplements the [technical model catalogue](04-models-local-hosted-openrouter.md) with dated evidence about popularity and actual use. The [experiment dossier](06-openlegend-applications-and-experiments.md) and [design-preparation map](../../../docs/maintainers/npc-cognition-research-needs-design.md) own evaluation and design follow-ups.
 
 ## 1. What the evidence measures
 
@@ -68,7 +68,7 @@ Additional useful candidates and evidence boundaries:
 - **Euryale/Stheno and Magnum:** [Sao10K's catalogue](https://huggingface.co/Sao10K) and [Magnum v4 12B](https://huggingface.co/anthracite-org/magnum-v4-12b) remain useful references to earlier roleplay-focused families. Their existence and continuing downloads should not be presented as proof that they lead October 2026 adoption.
 - **Emerging NPC/writing adaptations:** [Gemma4NPC E4B GGUF](https://huggingface.co/chimbiwide/Gemma4NPC-E4B-GGUF) describes NPC-context tuning and showed 236 monthly downloads; [GarnetV3 31B](https://huggingface.co/ConicCat/Gemma4-GarnetV3-31B) describes preference training for writing/roleplay and showed 348. They are research watchlist candidates, not established popular winners. Neither was tested here.
 
-This evidence expands the earlier Qwen/Gemma/Hermes/Nemotron shortlist; it does not prove those earlier alternatives are bad. Check each exact artifact's terms, training provenance and runtime requirements before commercial deployment. “Open-weight,” “uncensored,” “roleplay” and “commercially deployable” are not synonyms.
+Check each exact artifact's terms, training provenance and runtime requirements before commercial deployment. “Open-weight,” “uncensored,” “roleplay” and “commercially deployable” are not synonyms.
 
 ## 5. What users report: strengths and problems together
 

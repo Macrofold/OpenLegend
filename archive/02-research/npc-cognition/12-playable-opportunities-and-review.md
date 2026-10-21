@@ -4,6 +4,8 @@
 
 OpenLegend's opportunity is more than unlimited dialogue: freely expressed intentions, independent people and practical invention can have understandable, lasting consequences in a physical world. Technical reliability supports that promise but does not establish enjoyment. Pleasant company, humor and a beautiful shared experience can also matter without a mechanical reward.
 
+<a id="2-positive-opportunities-to-carry-forward"></a>
+
 ## Opportunities to investigate
 
 These are hypothetical experience families, not scripted outcomes or additions to first-playable scope. Use supported mechanics for early studies and identify missing dependencies explicitly.
@@ -33,6 +35,8 @@ A small connected activity can test several of these benefits without a new fram
 **Make freedom usable and expression worthwhile.** Natural language should not require elaborate prompt-writing for ordinary play. Familiar controls, readable consequences and intelligible alternatives can coexist with open speech. Brief exchanges suit danger; sought-out stories can be longer. Voice, humor and comfortable silence have value independent of reasoning quality. Isolate components for diagnosis, then judge the whole encounter, retaining useful text-only play.
 
 **Make surprises intelligible without forcing drama.** Initiative is valuable when it reveals an interest, changes an activity or broadens a choice the player can respond to. Random obstruction and effect-free novelty are not durable depth. Success and peace need not trigger manufactured setbacks. Consider repeat value after the player learns an efficient approach, not only the first surprising exchange.
+
+<a id="4-additional-primary-evidence-opportunities-as-well-as-warnings"></a>
 
 ## Primary evidence and limits
 
