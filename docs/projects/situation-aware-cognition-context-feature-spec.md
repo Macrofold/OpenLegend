@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | Selected behavior and delivery stages are specified; cross-document review is underway. Runtime implementation and qualification remain open. | 2026-10-19 |
+| In progress | Design complete. Runtime implementation and qualification have not started. | 2026-10-19 |
 
 ## 1. Purpose and intended experience
 
