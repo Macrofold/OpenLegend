@@ -79,6 +79,8 @@ The server produces a small, coherent decision view using existing semantic owne
 
 Only a complete query over a stated permitted scope can establish absence in that scope. A partial, not-requested, unavailable, stale or forbidden result cannot. Stale or forbidden text cannot be retained as a useful snippet; an explanation of missing information must itself be permitted. The [technical design](situation-aware-cognition-context-tech-design.md) specifies data types, ordering, admission, lifecycle, algorithms and callers. This sequence is a coordinated use of existing owners, not a second memory system or a new agent framework.
 
+Preparation itself has an enforcing bound: [technical §13.1](situation-aware-cognition-context-tech-design.md#131-explicit-compiler-work-admission) applies the existing generic work ceilings to a request-local compiler meter, with checks before allocating or traversing source/dependency structures. It prepares a complete required fallback and protects the finite work needed to seal it before spending remaining capacity on optional exploration. Optional exhaustion can use that still-current fallback; new required evidence invalidates it. These counters do not charge fictional actions or pause the world, and they do not replace actual query, memory and latency qualification.
+
 ## 5. Dynamic situations and information needs
 
 These are representative combinations, not mutually exclusive modes or keyword rules. Installed world capabilities determine actual meanings. Signal collection does not decide what the person should choose.
@@ -206,7 +208,7 @@ Use whole activities and their later consequences, with controls for what the ch
 | A former guard grows a garden | A familiar and an unfamiliar problem can use genuinely retained expertise; current equipment/authority differs from the old job. | Transferable knowledge enables invention without forcing a return to an old role or granting old privileges. |
 | A spare lid becomes a signal | The useful shape/material is present but the exact use is absent from suggestions. | An informed unlisted proposal is possible; the compiler does not supply the answer or promise unsupported effects. |
 | One stock supports two purposes | Immediate survival or camp work competes with a personally valued future project. | Both known uses and commitments survive; the model can choose a real sacrifice or an alternative. |
-| An old shower explains a clue | A mundane old observation becomes relevant after new evidence. | Existing permitted evidence can be recalled with its uncertainty; the absent face or solution is not invented. |
+| An old rain shower explains a clue | A mundane old observation becomes relevant after new evidence. | Existing permitted evidence can be recalled with its uncertainty; the absent face or solution is not invented. |
 | A cheap mug is worth keeping | Practical properties are unchanged, but the person's permitted history and current preference differ. | Sentimental value can affect a decision without a full object biography or automatic affection reward. |
 | A shared joke has a later limit | A real shared joke, a new audience and a later request to stop. | Select the fond memory and limiting evidence together; humor remains possible without erasing boundaries. |
 | Success frees an afternoon | Provisioning is incomplete in one case and actually complete in another; a pleasant opportunity is unchanged. | Completion is recognized. Work, company, rest, solitude or pleasure remain legitimate choices; no compulsory replacement chore. |
