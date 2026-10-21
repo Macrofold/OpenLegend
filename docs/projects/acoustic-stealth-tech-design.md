@@ -1,8 +1,8 @@
 # Physical sound and acoustic stealth — technical design
 
-| Project status | Completed through | Outstanding |
+| Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | Selected design and source/repertoire review; no runtime delivery claimed | ACS01–ACS08 implementation, mechanical/scale qualification and uncoached play; shared SA-D02 disposition |
+| In progress | Design complete; ACS01–ACS08 implementation/qualification and shared SA-D02 disposition remain open | 2026-10-21 |
 
 ## Authority and inspected baseline
 
@@ -28,7 +28,7 @@ All paths in this table refer to the inspected base. New names below describe fi
 | [event-observation.ts](../../packages/domain/src/event-observation.ts): `observeEvent`; [speech.ts](../../packages/domain/src/speech.ts): `perceiveSpeech`, `EventEvidence`, validation/projection | Visual/felt non-speech details; speech's hearing also rejects no-memory actors; speech payload expects words | Add permitted nonlinguistic hearing facets and sound-only speech reception. Fix both memory gates. Never fall back to raw event roles or text when words/identity were not acquired. |
 | [kernel.ts](../../packages/domain/src/kernel.ts): `moveAlongPath`, `advanceAction` | Actual accepted piecewise traversal, collision/partial stops; evasion/follow/travel/escape | Produce contacts from accepted pieces and persistent body phase. Prediction/admission use the same gait/posture speed. Do not hook generic position assignment. |
 | [spatial-state.ts](../../packages/domain/src/spatial-state.ts): `setSpatialPosition`, `bodyProfile`, `bodySpace`; [base/spatial-definitions.ts](../../packages/domain/src/worlds/base/spatial-definitions.ts) | Numeric body/support/headings; rest approximation; no admitted crouch or gait | Add posture/locomotion to the existing body life and pose authority. Keep standing construction geometry and current accepted variant coherent; no camera-only crouch. |
-| [base/actions.ts](../../packages/domain/src/worlds/base/actions.ts): `nativeMovementSpeed`, `canHandleItems`; [evasion.ts](../../packages/domain/src/evasion.ts) | Movement rate affects execution/prediction; item handling recognizes `person`; committed evasion has fixed speed/end | Preserve body capability identity through posture. Refuse pace/posture changes during committed evasion; do not cap its saved speed and violate its timing/length invariant. |
+| [base/actions.ts](../../packages/domain/src/worlds/base/actions.ts): `nativeMovementSpeed`; [item-handling.ts](../../packages/domain/src/item-handling.ts): `canHandleItems`, [base item binding](../../packages/domain/src/worlds/base/item-handling.ts); [evasion.ts](../../packages/domain/src/evasion.ts) | Movement rate affects execution/prediction; item handling recognizes `person`; committed evasion has fixed speed/end | Preserve body capability identity through posture. Refuse pace/posture changes during committed evasion; do not cap its saved speed and violate its timing/length invariant. |
 | [flight.ts](../../packages/domain/src/flight.ts): `advanceFlight`, `landingDue`, `admittedLanding`, `flightTracks` | Real takeoff/landing/fall with captured contact; visual events | Add landing sound at actual support using pre-clear relative impact velocity. No footfalls in air. Wing sounds require their own admitted profile. |
 | [ranged.ts](../../packages/domain/src/ranged.ts): `advanceProjectiles`; kernel `commitContactImpact`, `struck` | Real projectile/body/terrain impact and living-target strike | Emit at actual contact even after the causal actor disappears. A missed swing has no impact sound. A future swish is a separate authored producer. General strike-stone/destruction actions are not thereby implemented. |
 | Kernel `startWork`, working-stage `advanceAction`, `completeAction` | Actual preparation/manufacture and analytic stationary work | First sustained work adapter is admitted Clean fibers; source covers its actual working stage. An authored beat uses real work progress/cadence, never number of update callbacks. |
@@ -75,7 +75,7 @@ For each accepted traversal piece:
 
 The first world uses grouped human/animal contacts, including a hare's bound and the small bird's ground travel. Additional legs do not imply one sound per human foot. Contact profiles can share signatures; the listener cannot identify a species from a private body key. Existing `.4 m` native wandering is processed through the same actual-distance phase, including the case where several short wanders eventually cross one contact.
 
-Quiet pace and crouch follow the selected world law. Ordinary speed remains the underlying current effective rate; speed constraints use the most restrictive cap. Evasion's committed speed/end is pinned: changing pace/posture during that action is refused, and it keeps its admitted contact profile. Another action that locks stance supplies its own normal refusal/interruption. New posture uses the current person's capability identity, not a new incompatible body ID. Construction stores the standing living profile; accepted variant geometry is derived/validated under the same body owner and must agree on restore. Do not let repeated crouch/stand multiply already-crouched dimensions.
+Quiet pace and crouch follow the selected world law. Ordinary speed remains the underlying current effective rate; speed constraints use the most restrictive cap. Evasion's committed speed/end is pinned: changing pace/posture during that action is refused, and it keeps its admitted contact profile. The quiet preference does not slow a newly admitted evade; its actual evasion rate determines contact noise. An evade requiring an unsupported crouched stance is refused by ordinary admission rather than silently standing. Another action that locks stance supplies its own normal refusal/interruption. New posture uses the current person's capability identity, not a new incompatible body ID. Construction stores the standing living profile; accepted variant geometry is derived/validated under the same body owner and must agree on restore. Do not let repeated crouch/stand multiply already-crouched dimensions.
 
 Posture work occupies the ordinary physical action lane. The old body remains authoritative until completion, when support/clearance and existing equipment compatibility are revalidated atomically. Refusal/cancellation retains the old posture. Actual accepted geometry invalidates route, reach, sight/ear anchors and source predictions together. C owns the posture, B the gaze/visibility consequences; preserve or clamp accepted gaze through the joint pose owner, not a camera writer. Current equipment ports have no local coordinates: accurate long-item extension clearance is not claimed by this slice.
 
@@ -131,11 +131,139 @@ Both `receiverIndex` and `perceiveSpeech` must stop using autobiography as a phy
 
 ## Continuous reception, mixing and bounded work
 
-The first implementation's numerical schedule, phase transaction and verification contract follow below. They are required for complete delivery; a per-event scalar helper alone is insufficient.
+### Scene preparation and complete energy accounting
+
+Prepare active source owners, eligible hearing receivers and conservative spatial/dependency indexes once per valid native physical phase. Use the existing native order for equal work keys. A source occurrence's free-field reach is a conservative **individual** candidate bound including weak reception; actual barriers and competition only reduce it. It is not a cutoff for energy that might mask another source or participate in a mixture. Swept source/receiver bounds cover the whole admitted motion segment, not just its endpoints.
+
+For each listener requiring evaluation, compute each contributing group's transfer once and cache it under actual origin/track, receiver ear/body life, medium, geometry and definition pins. Construct ambient energy and the stable group-energy sequence. Derive all leave-one-group-out competition sums with prefix/suffix maximum-offset energy summaries. Never subtract a huge candidate from a nearly equal total to obtain a tiny complement. Components in one group do not mask each other. A separate simultaneous source by the same actor does compete. Add the receptor's floor by the selected `max(floor, ambient plus competitors)` rule, not as another physical sound.
+
+Individual strong opportunities use their own received energy against all other groups. Then evaluate unresolved external residual energy as one mixture against ambient and the resolved groups. Preserve the residual's actual support roots and conservative direction union, unknown producer count, and no individual/voice-identity features. Each original contribution is allocated to the mixture or its individual weak route exactly once for that coverage. Known self components may mask external sounds, but do not become an external mixture. Ambient alone is not a new source or event. This source separation rule is deterministic; it does not progressively remove loud sources and rerun weaker detection until everything becomes separable.
+
+The first implementation uses complete exact accounting for the considered acoustic scene. An energy-bound spatial hierarchy may avoid entire regions only when its aggregate remainder proves **every requested decision** unchanged, including weak/mixture acquisition, words, feature/identity quality, localization, response and earliest deadline. At an acquired sample that promises exact numeric quality, finish its required exact sum. A nearest-N, top-K, individual-weak-reach or fixed-decibel omission is not an allowed fallback. If no useful proof exists, traverse all relevant active sources; cost is charged and may remain incomplete. No spectral rendering, browser audio device or waveform extraction is involved.
+
+Persistent unchanged source/receiver/geometry combinations reuse prepared transfer and intervals. Dirty notices include old and new influence regions and the source's previous bound. Adding a source can invalidate other sounds through masking; removing one can uncover a sound without that sound moving. If a finite affected-region bound cannot be proven, invalidate the complete receptor scene conservatively. A name or familiarity change invalidates A's interpretation, not unchanged geometry. Cache eviction recomputes; it never removes recipients.
+
+### Constant-rate weak intervals and canonical boundaries
+
+The world's **continuous** weak law deliberately uses four duration-sensitivity bands, while its discrete impulse law stays linear. Supply A rates 1, 2, 3 and 4 support units per normal-speed second for `delta` in `[-6,-4.5)`, `[-4.5,-3)`, `[-3,-1.5)` and `[-1.5,0)` respectively. Equivalently pass normalized strengths .25, .50, .75 and 1 to A's scale of four. Below −6 is a zero-rate gap; `delta >= 0` enters immediate strong reception without waiting .25 seconds. A integrates only uncovered constant-rate spans and applies its existing decay in unsupported gaps. This is selected world behavior, not an approximation secretly dependent on host sampling.
+
+The existing temporal/motion owner takes the earliest of:
+
+- Actual contact, source start/end, action working-stage/cadence or material/vegetation overlap transition.
+- Actual path/support/track segment end; source/receiver pose, hearing/life, level/fidelity, geometry, ambient or relevant masker change.
+- A direct-path transmission/fidelity topology change, the `.25 m` distance-floor boundary, weak/strong threshold, word band, feature-quality bin, bearing/elevation precision boundary or native response baseline crossing.
+- A's first weak-detection crossing, eligible continuous learning sample deadline (if that voice producer is installed), actual evidence-cut demand, expiry or meaningful confirmation boundary.
+
+Only the current interval up to the earliest certified boundary is available. A host's smaller requested advance may consume a prefix of an already certified span, but cannot invent a new acoustic sample, reset the span anchor or move a deadline. For a changing live value, retain the latest physical measurement under A's lease; use a required cut or actual semantic change to freeze history. E/G polling reads that lease and never schedules a measurement merely to strengthen recognition.
+
+For recognition-capable continuous producers, A supplies any current finite quality thresholds and required measurement instants implied by its admitted comparison/learning state to this same dependency query. C supplies actual received quality there. It cannot keep a stale optimistic quality until the next renderer call. The initial voice producer is instantaneous, so these duration/learning obligations are exercised by an explicit contrast fixture rather than guessed from text length.
+
+### Selected terminating numerical procedure
+
+The installed first provider accepts piecewise-affine actual source/ear tracks, piecewise-constant source power/background, and the existing finite direct-path shape family. Split at all real track/profile changes. Spatial queries must supply complete crossing intervals of the moving ray with their actual supported shape primitives, including grazing/parallel cases; this extends the existing geometry owner, not a second acoustic map. Source/receiver tracking that cannot supply this supported family is `unsupported` at admission, not silently endpoint-sampled.
+
+Within one fixed-transmission span, normalized linear energy from source `j` is `c_j / q_j(t)`, where `c_j` is its fixed source/transfer power and `q_j` is squared source-ear distance, clamped below by `.25²`. On an affine track the unclamped `q_j` is a quadratic. Its extrema and floor crossings are directly calculable. For a threshold `h` relative to listener detection, compare source energy to `10^((D+h)/10)` times the competing-energy/floor expression. Split the floor-versus-competition switch as another comparison. Multiplying by positive denominators converts each comparison into a finite polynomial sign query; no logarithmic quadrature is required.
+
+Use this ordered solver:
+
+1. Handle constant/identically-equal spans directly. Handle a single varying squared distance with constant competition by its quadratic roots. Use conservative interval bounds from squared-distance extrema to certify whole spans that cannot cross a requested boundary.
+2. For unresolved moving multi-source comparisons, construct the polynomial with positive denominators after distance-floor splits. Pin the finite binary64 coefficients produced by the admitted power/distance calculation; treat those stored coefficients as exact binary rationals for sign/root certification. Do not mix different floating-point evaluation orders between scheduling and point sampling.
+3. Use square-free factorization (`gcd(p,p')`) and a rational Sturm root count to isolate all distinct real roots in the original physical span. Rational bisection is deterministic, left before right. Repeated roots remain boundary candidates; derivative/sign checks on both sides distinguish a tangent from a real band transition. Constant zero is a plateau, not endless subdivision. This is the required terminating fallback, not a heuristic max-depth midpoint choice.
+4. Spatial topology roots use the same certified polynomial predicate approach for the provider's supported moving-segment/plane, polygon-edge and solid-boundary tests. Partition denominator/sign changes before testing containment; include exact-on-plane/grazing cases. Static rays use the existing ordered crossing visitor. An unsupported primitive requires a provider extension, not a guessed visibility blocker.
+5. Convert a real root to the earliest representable simulation time at or after it, using the existing numeric-time owner. Retain the isolated root/side and original segment anchor in required preparation so a shorter host call does not select a different rounding. Reevaluate the admitted right-hand band there. Use the existing `TIME_EPSILON` only as a numeric progress guard, not a sensing tick or permission to discard a possible crossing. If two outcome-relevant roots cannot be represented distinctly by the current clock, return an explicit numeric-representability failure through the native work owner; do not merge away a consequential interval. Constant-state and exact endpoint cases must still terminate without that failure.
+6. Equality belongs to the higher band. An isolated tangent touch has zero duration and does not create a continuous onset unless a nonempty right-hand interval is eligible. A touch from above does not end/restart the exposure. A threshold plateau uses the higher band over its actual duration. Discrete impulses separately use their instantaneous inclusive rule. A source ending at the boundary is absent under `[start,end)`.
+
+Exact-rational polynomial work can be expensive in a dense moving scene. Meter coefficient construction, coefficient bits/bytes, sign operations, roots and pending brackets under the existing required-work budgets; cancellation and reuse are dependency-aware. The algorithm is selected for a complete deterministic fallback, not a capacity claim. Certified simple spans avoid it in ordinary unchanged scenes. ACS07 must measure whole-caller cost, including geometry/root preparation; an implementation that exhausts required work on the target scene has not delivered the performance gate.
+
+### Work units, growth and incomplete results
+
+Use resumable deterministic chunks under [work-budget.ts](../../packages/domain/src/work-budget.ts): at most **128 source/receiver transfer candidates**, **256 source-component contributions**, or **32 root-isolation/sign work steps** before yielding control to that existing owner. These are responsiveness quanta, not valid-world limits, replenished global allowances or permission to truncate recipients. A retains its own 64-contribution/128-exemplar quanta; do not copy those accumulators into C. One polynomial step must itself charge coefficient operation/byte growth so a high-degree expression cannot hide unbounded synchronous work.
+
+Let `S` be active physical sources, `R` eligible receivers, `K` components changed in equipment/source preparation, `P` complete candidate transfers and `B` certified interval/boundary work. One valid phase prepares indexes once, processes changed components in `O(K)`, visits candidates in `O(P)`, and constructs per-listener competition complements in `O(number of received groups)` rather than another per-candidate scan of all groups. Polynomial/shape work is charged separately as `B`, including degree/bit growth. In a genuinely dense all-audible scene `P` can be `S × R`; the design does not promise subquadratic physical work for arbitrary simultaneous sources. It prevents a separate per-frame all-world propagation loop and repeated whole-index rebuild per step.
+
+No nearest-N audience or arbitrary acoustic radius is installed. Existing global/actor/module work and retained-byte bounds remain containment, not a newly qualified acoustic capacity. Their present 2M-candidate, 4M-test and 64 MB input/output group limits must not be advertised as how many moving animals fit. Retained source/receiver preparation and unfinished mixed-root work reserve their real bytes under those owners. Overflow returns incomplete/required-work failure with the coherent prefix and owed work; it is never completed `not-detected`.
+
+Prepared current carrier profiles and source/receiver scene entries are disposable derived state. They use the existing bounded work/cache owner with exact fallback, not a permanently growing per-pair world table. Active producer state is proportional to actual active activities/bodies; retained A/native evidence follows its own actual obligations. Under high density, optional thought/presentation can coalesce but required acquisition cannot. Record queue age, owed simulation time and complete state size as well as local helper duration.
 
 ## Simulator ordering and atomic acquisition
 
+### Physical phases within the existing native boundary
+
+The current kernel advances approaching bodies, routine wander and flight before flushing deferred flight events under a stable audience, then handles endpoint work/projectiles/statuses/arrivals. Keep that causal structure and extend it; an acoustic callback inside the first actor's `setSpatialPosition` would observe mixed-time listeners.
+
+A **sealed physical phase** means independent source occurrences established by the same existing mechanical stage after all relevant source/receiver poses are synchronized. It is not a new global sequence number. Sharing a timestamp alone does not put causally dependent sounds in the same phase. Use existing occurrence order and stable native producer order only after independence has been established.
+
+| Step | Required operation | What becomes eligible |
+| --- | --- | --- |
+| 1. Resolve prior due work | Complete already-due ordinary admission/physical changes and prepare exact current native evidence; settle any old continuous coverage before changing its dependencies | Previously acquired facts remain available; no future motion or work is granted |
+| 2. Choose next boundary | Compose mechanical, motion, contact, source, reception and A deadlines; prepare certified tracks/source schedule to that point | Pure predicted preparation only; no source occurrence or hearing yet |
+| 3. Prepare one physical phase | In the existing world draft, advance all affected bodies/receivers, capture actual accepted contacts/source changes and complete eligible reception/masking against their synchronized poses | Source proof is staged; no callback or externally visible partial state |
+| 4. Seal source occurrence set | Allocate ordinary event IDs/orders once in existing causal order; capture original poses and complete private support for this independent phase | Actual sources exist in the committed phase; independent impulses mutually compete under the selected peak rule |
+| 5. Acquire | End sources whose coverage ends at T; include intervals genuinely starting in this phase at T; settle old A intervals, then acquire exact strong/weak evidence and immutable contributions in stable observer/source order | Compact native evidence becomes available before any consumer needing it; A source receipts prevent duplicate acquisition |
+| 6. Consume | Invoke existing native response/outcome callbacks with their actual acquired cuts; select at most one route review for the phase's eligible cue set | A callback may create the next causal phase at the same T; it cannot retroactively mask or precede earlier acquisition |
+| 7. Retain and notify | Materialize allowed personal capsules/story rows and meaningful ActorWork/projection dependencies from frozen A results | Storage order may be later; it cannot change hearing/learning/warning time |
+| 8. Continue | Run the next existing endpoint stage, due action or newly caused source phase, then choose the next positive interval | A newly admitted action consumes no time from the interval that just ended |
+
+An interval whose owner ends at T is absent from impulses at T; do not keep it as a masker until a delayed caption disappears. A source created by an endpoint completion participates only in its actual subsequent causal phase. An impulse's words/visual/felt facets share its original occurrence but preserve independently acquired support. A native response to one movement cue cannot force later independent sources to have been emitted from the response's newly chosen action in the elapsed interval.
+
+Before a hit/projectile/contact outcome, F captures the actual victim's immutable A cut. A prior movement contact acquired in an earlier phase at the same T may be in that cut; a sound made by the hit itself is acquired afterward and cannot warn against that hit. Event `order` constrains occurrence causality but is insufficient without the acquired membership. Current `Awareness.sequence` may be allocated after nested callbacks and is never the warning cutoff clock.
+
+### Coherent work suspension and saves
+
+Do required physical preparation in the existing draft/transaction boundary before exposing its effects. A draft may hold predicted movement, source descriptors, root brackets and the staged `nextId` allocation, but neither callbacks, personal insertion nor client projection sees it until required acquisition can commit. No provider/model call occurs inside this physical transaction.
+
+If required scene/root/A preparation yields, keep the last committed coherent world cut and the existing owed native interval/work reference. Resume the same deterministic preparation with its original anchor and dependency versions. A superseding authorized mutation invalidates stale scratch and recomputes from that committed cut; it does not commit half the movement. Do not spin a second acoustic retry queue. Exhausting the owner's total allowance reports its typed failure/backpressure; a yield does not replenish the allowance or turn the same failure into silence.
+
+An export at this point saves the coherent committed prefix, owed requested advance and the existing admitted action/continuation facts sufficient to reproduce the pending phase. Derived geometry/index/polynomial scratch can be rebuilt on reload in the same native order; its uncommitted event IDs were never public. Do not save a post-movement body with unrepresented owed hearing, or a new alarm without the evidence that justified it. A save after phase acquisition saves those committed receipts, so restoring cannot emit the contact again.
+
+This phase preparation is an extension of the existing native draft/work boundary. It is not a second world transaction coordinator or a scheduler that waits for personal memory or AI. ACS01/ACS03 must wire the complete caller; a helper returning an array of sound effects without coherent kernel commit semantics does not satisfy the contract.
+
 ## Native animals, attention and warning handoffs
+
+### One acquired-cue intake in the existing controller
+
+Extend `native-response-controller.ts` with one acoustic intake beside `acquireNativeResponseEvent`. It consumes A's committed native-exposure facts, not a second detector or an `Awareness` insertion callback. Input is the exact observer/life, acquired `FactKey` and permitted signal/proof defined above. Private source proof verifies causality; it cannot select a species, person, danger point or response.
+
+[The animal policy](../worlds/base/animal-sound-responses.md) owns ordinary-speech thresholds, repetition and native continuation. [The physical-sound policy](../worlds/base/physical-sound.md#nonlinguistic-animal-response-eligibility) owns nonlinguistic eligibility.
+
+Extend the existing cause union as design notation:
+
+```ts
+type NativeResponseCause =
+  | ExistingNativeResponseCause // Preserve the existing event/action variants exactly.
+  | { kind: 'acoustic'; evidence: FactKey; at: SimTime };
+```
+
+For an acoustic cause, `at` is actual acquisition time; its fact retains original measurement/occurrence times. Keep its owner-specific revision type under SA-D02; never substitute `proposalGeneration`. A fresh episode follows the existing cause-derived identity convention using the native acquisition identifier. A mixture needs no fabricated world event or entity. Update every cause reader and strict `validateNativeResponses` fields/union in the same current-format cut. Retain the minimal immutable cue/support needed by an active episode after optional sensory history expires.
+
+### Eligibility, repetition and physical phase
+
+Preserve life, participation, installed hearing and perception-capability gates while removing autobiography as an acoustic prerequisite. Base restorative rest blocks perception through `sensesFor`; sleeping bodies acquire no sound. Acoustic intake must also pass nonwaking cause semantics through the shared alarm helper: it never calls `interruptStatusEffects(..., profile.wake.reason)`. Existing danger waking is unchanged. Revalidate body/controller before deferred continuation; an old cue cannot wake a later sleeping body.
+
+Process the complete sealed independent acoustic cohort in A's canonical acquisition order:
+
+1. Preserve each acquired fact and receipt once. Self, null-response-profile and otherwise ineligible cues remain legitimate acquisitions but create no response pattern or alarm. Apply the physical filter only to nonlinguistic cues; never inspect unheard words.
+2. Close actual lost presence and settle qualifying level crossings. Key persistent presence by A-justified `ExposureRef` continuity, not hidden emitter equality. The first eligible onset stores its acquired delta. A rise compares against that retained baseline and replaces it only when qualifying. Routine refresh, publication, yield, restore and private source-ID change do not move it.
+3. Prune idle-expired response patterns. For each qualifying cue, derive the world-defined permitted class/association-or-anonymous/direction/band key. An active matching key refreshes only its latest cue and absolute idle expiry. A/B/A/B introduces two keys, then refreshes them. No repeat resets safe time, draws RNG, requests navigation or restarts movement. Equality at expiry permits a new occurrence; expiry itself causes no response.
+4. A new qualifying key records its cue and requests one shared alarm transition. After the complete cohort, perform at most one route review for this animal using the final eligible cue set and ordinary dependency checks. Distinct bodily dangers retain their existing intake.
+
+Store repeat patterns and observed-envelope presence/change baselines on the existing `NativeResponseState`, outside its optional alarm episode. Returning to routine must not erase suppression or invent a new onset for uninterrupted sound. Each presence entry retains its envelope/life/policy binding, actual present/lost state, qualifying baseline or absence, baseline fact and settled coverage boundary. Actual loss closes presence; a later eligible onset still passes repeat suppression. Evidence expiry, pattern idle expiry and presence coverage remain distinct. These maps do not duplicate A's accumulator or history.
+
+### Phase-aware alarm and one actual refuge leg
+
+Current `beginNativeAlarm` always switches to escaping, clears proposal/block state and can interrupt rest. Add acoustic cause semantics in that shared owner rather than calling it unchanged. Fresh qualifying sound can enter alarm; settling can resume escaping. An escaping animal keeps its admitted movement until ordinary review selects a valid change. While blocked, update the permitted cause and due-review request but retain the truthful block/reason. A cue cannot clear a physical block. Preserve a valid pending proposal until its geometry/danger/away-preference dependencies change; a new occurrence ID is insufficient.
+
+An unseen sound supplies no geometric danger, so the current empty-danger `clear` shortcut would otherwise settle immediately. Extend the same episode with `pendingAcousticLeg`: the initiating `FactKey` plus either no admitted movement yet or the existing movement kind/ID and proposal generation. Set it when qualifying sound starts/resumes alarm without an outstanding acoustic leg; bind an already owned escape leg or leave it unbound. Further cues review one obligation. New leg admission supplies its binding. Clear it only on that bound leg's actual supported arrival, or explicit episode retirement/cancellation; cancellation is not successful escape. Interruption before arrival clears its movement binding and keeps the obligation pending. Save/restore retains it exactly. The clear-to-settling shortcut must wait while it is outstanding; a trapped animal remains blocked.
+
+Use the existing complete perceived danger set, body/support clearance, reachable refuge candidates, route bounds, species speeds, interruption rules and continuous-safe settling. Never insert a ray endpoint, listener-centered attacker or guessed region for unseen sound. Apply the policy's away-bearing preference after all real-danger/geometry safety comparisons, preserve an admissible unchanged route, and use existing saved tie randomness only for a new interchangeable choice. Unknown bearing omits that preference. Movement emits through the common adapter; resulting consequences form a later causal cohort and cannot remask earlier acquisition.
+
+### E, F and D consume evidence, not an acoustic command
+
+Pass E the same A-acquired references, individual fact times, hypotheses, permitted historical location and meaningful-change dependencies through existing ActorWork/intake. E owns salience, voluntary look/listen/investigate/watch, finite stopping and ordinary admission. Hearing is not an instruction to turn, cancel work or call a model. Coalesce optional reason hints while preserving distinct consequential evidence. Investigation uses the permitted bearing/region and current route availability, never a hidden live entity target. Ordinary animals retain native control; cognitive creatures need their own capability.
+
+F consumes the actual victim's immutable acquired-evidence cut under [the shared warning contract](stealth-awareness-tech-design.md#threat-preparedness-and-surprise) and [A's acquisition rules][a-tech]. Evidence must actually belong to that cut: an earlier source timestamp, later history insertion or delayed interpretation cannot backfill warning. F decides relevance, preparation and surprise. The incoming impact and its caused sound cannot warn against that same outcome. Required unfinished acquisition holds the dependent transition coherently rather than pretending no warning existed.
+
+D alone supplies emotional mechanics. Native alarm, intensity, recognition and investigation do not themselves grant fear, hostility or damage modifiers. No acoustic-owned emotion, surprise score, fleeing process or paid-work scheduler is introduced.
 
 ## Retention, save/load and invalidation
 
@@ -146,7 +274,7 @@ The first implementation's numerical schedule, phase transaction and verificatio
 ## Maintained records
 
 - [Feature](acoustic-stealth-feature-spec.md), [world policy](../worlds/base/physical-sound.md), [ACS delivery](../maintainers/acoustic-stealth.md), [limits](../limits/acoustic-stealth.md).
-- Existing owners: [hearing/speech](../hearing-and-speech.md), [animal response](../worlds/base/animal-sound-responses.md), [spatial world](../spatial-world.md), [simulation time](../simulation-time.md), [events/perception/reactions](events-perception-and-reactions-tech-design.md).
+- Existing owners: [hearing/speech](../hearing-and-speech.md), [animal response](../worlds/base/animal-sound-responses.md), [spatial world](../spatial-world.md), [simulation time](../simulation-time.md), [events/perception/reactions](../events-perception-and-reactions.md).
 - Shared [stealth design](stealth-awareness-tech-design.md), [coordination](../maintainers/stealth-awareness.md), pinned [A technical contract][a-tech] and [A world law][a-policy].
 
 [a-feature]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/projects/perspective-perception-feature-spec.md
