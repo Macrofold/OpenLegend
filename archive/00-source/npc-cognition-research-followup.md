@@ -17,8 +17,16 @@ Explain how the characters perceive the world, what context they receive, how qu
 
 Derive tangible applications for OpenLegend's cognition, perception, memory, character consistency and economical execution. Include promising techniques and contrary evidence; identify what is demonstrated, inferred, vendor-reported and untested. A compelling video is not evidence that every mechanism should become a product priority.
 
+## Follow-up scope: broader models and fictional freedom
+
+Mike asked whether the research covered models beyond Kev and emphasized understanding what people actually use and what is currently popular for this use case. The archive therefore distinguishes hosted application traffic, NPC-mod maintainer guidance, exact local-artifact downloads, firsthand experience and controlled evidence rather than presenting a list of technical model specifications as an adoption survey.
+
+He then emphasized the importance of the “uncensored” question. The research must treat unnecessary refusals and quiet sanitization of permitted fictional behavior as core selection concerns, while distinguishing authentic character disagreement, native action limits and the existing operated-service content boundary. The request does not select a particular permissive checkpoint or make every character obey the player.
+
+His final instruction was to document the architecture and model discussion, research remaining useful questions, create a branch, and record what still needs fleshing out or testing in needs-design. The [combined evaluation brief](../02-research/npc-cognition/11-evaluation-and-research-gates.md) and [focused preparation map](../../docs/maintainers/npc-cognition-research-needs-design.md) capture that scope. They do not turn proposed experiments into completed evidence or silently change current model defaults.
+
 ## Requested deliverables and boundary
 
 Create comprehensive research documents in the archive. Record follow-up design needs and further research, linking them to the archive and existing subsystem owners. Full feature/technical designs will be commissioned separately. Do not install models, change runtime behavior, enable a new inference provider, run paid experiments or relax the service's content/privacy rules merely to reproduce the demonstrations.
 
-The resulting [research library](../02-research/npc-cognition/README.md) and [design-preparation map](../../docs/maintainers/npc-cognition-research-needs-design.md) preserve this distinction. Repository baseline: `Macrofold/OpenLegend` main at `a612eecf43d225b5f9087287573ec3e054641cf9`; documentation branch: `research/npc-cognition-2026-10-20`.
+The resulting [research library](../02-research/npc-cognition/README.md) and design-preparation map preserve this distinction. Repository baseline: `Macrofold/OpenLegend` main at `a612eecf43d225b5f9087287573ec3e054641cf9`. Initial documentation and adoption survey: `research/npc-cognition-2026-10-20` through `4acdabdd98279c24bd27a4933a5a09facbd866b8`. The expanded model/architecture record is on `research/npc-models-and-architecture-2026-10-20`, branched from that published work so the earlier dossiers remain included.
