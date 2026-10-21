@@ -100,6 +100,8 @@ These are representative combinations, not mutually exclusive modes or keyword r
 
 Signals combine. During a threat, a person may still care about a companion or a valued tool, know a workplace exit, call for help and continue an already chosen escape. During peaceful work, a joke may matter and speaking may be compatible. A quiet scene has no requirement to produce a new goal, speech or reflection.
 
+The separately selected CTR native threat strategy retains the complete eligible purpose/action set for its required relevance/appraisal call, then the relevant and uncertain exact instances for independent choice. Ordinary optional fit/ranking cannot trim that required set. Its second call selects one already bound native response or composition; it does not use the new generative operation schema to invent additional actions. Speech plus action on that route requires an actually supported compatible composition, with no third speech generator. Other ordinary routes retain their existing call structure.
+
 ## 6. Capability discovery without hiding possibilities
 
 ### 6.1 One source of capability meaning
@@ -149,11 +151,15 @@ Field names, null-padding examples and every enum do not need to be repeated in 
 
 Keep current revision/concurrency fields in the first sparse-shape delivery. The technical design separately specifies a later stage binding derivable revisions from retained preparation, including multiple dependent edits in one reply. All current callers change together; no permanent old-format reader or dual public response API is selected. `$defs/$ref` factoring is also a separate evidence-gated refinement because the current local validator rejects references. Provider documentation alone does not make it a drop-in change.
 
+Replacing a nonempty note requires its complete current text in retained preparation; creating or replacing an empty note requires captured authoritative absence/empty state. A missing document binding is not permission to overwrite it. In the later revision-binding stage, a same-reply edit uses a prior accepted new revision only through an explicit dependency on the last accepted writer of that target. A separate concurrent edit is refused when stale, rather than silently rereading and overwriting unseen changes.
+
 ## 8. References, identity and readable context
 
 References remains a distinct recognizable section or equivalently explicit mapping. It is not disposable UI decoration. Each selected reference has one permitted label/description and one opaque token bound by the captured request. Keep inventory mappings even when compact inventory prose omits repeated IDs; keep same-name objects and people distinguishable; preserve species/anonymous wording and legitimately learned names.
 
 Create references from the final selected dependency closure. Do not hash every world entity merely to name the few things this observer may use. Preserve stable identity and deterministic collision handling through the existing identity owner; do not invent a second writable handle registry or shorten tokens until collisions silently alias objects.
+
+Stable entity identity and legitimate recognition are distinct from the spelling of a request-local handle. When the selected set changes, deterministic collision lengthening can change a token's text. Only the current captured binding is authoritative; matching an earlier request's token does not grant access or preserve its old meaning.
 
 The mapping must cover every reference in supplied evidence, active operation parameters, exact action choices, goals/notes/intentions and relevant inspection handles. Conversely, a token in a broad unused schema must not become a reason to expose otherwise unnecessary private state. The selection, schema and reference map must agree before dispatch. An unbound, ambiguous, wrong-scope or stale reference fails through the native owner.
 
@@ -226,6 +232,10 @@ Do not make every paired case require different prose or a particular emotion. Q
 - Large-state preparation does not scan/hydrate the entire world or inventory merely to emit a small result. Measure the actual complete caller, candidate coverage and all pre-selection work through PF owners.
 - Current serialization, response resolution, native-known responses, reflection payload reuse, reconsideration, previews and direct/provider adapters share the revised contract. Current-format save/load and late-result behavior remain coherent.
 
+Preview qualification requires a complete independently valid talk-only branch, including rejection of an additional `appraise` payload, with current listener/hearing/source/control guards. Provisional words create no world event or memory and execute no other operation. The current retired preview UI is not restored by this project.
+
+A conservative upper size estimate above the allowance does not itself justify refusal if bounded exact measurement of the required encoding fits. Use safe lower/upper/exact bounds as the technical design specifies, preserve actual hard limits, and distinguish a real overflow from an unavailable measurement. Token estimates remain labeled diagnostics under the existing admission policy.
+
 ### 12.2 Comparisons and evidence
 
 Separate four claims: **less text**, **less preparation/inference cost**, **equally informed decisions**, and **better playable experience**. No one metric establishes the others.
@@ -243,9 +253,9 @@ No universal token target or percentage reduction is selected. The supplied requ
 | A — Make the current request explainable | Shared preparation/manifest, source attribution, full input accounting and exact supplied-export reproduction. | Current request components and current limitations can be measured without hiding schema or prep work. |
 | B — Remove structural duplication | One semantic activity projection, concise response guidance, empty/duplicate cleanup, sparse operations and all current consumers. | Required meanings and every legal operation remain available; strict local/provider dialect compatibility is established for the selected routes. |
 | C — Select detail for the situation | Nonexclusive signals, source discovery, mandatory dependency closure, concise optional representations, References closure and usable inspection. | Mixed and quiet situations preserve meaningful choices; coverage/overflow and current permissions are explicit. |
-| D — Make preparation scale with relevant work | Scoped ID/size selection before hydration, reusable source projections, exact invalidation and bounded complete-path performance. | Real large-state callers demonstrate the intended workload and preserved candidate/evidence coverage. |
-| E — Qualify and enable the complete path | Native invariants, route/provider integration, whole episodes, later-return comparisons and complete costs. | SC exits and applicable CR/CE/SPK/CTR/IS/PF evidence are satisfied for the enabled scope. |
-| F — Remove derivable metadata | Implement the selected later revision-binding and single work-mode stage under the exact technical contract, after sparse consumers are qualified. | Same-reply dependent writes use actual accepted revisions; stale independent writes refuse; unseen text is never replaced; every current caller changes coherently. This stage precedes final whole-path qualification. |
+| D — Complete adapters and lifecycle | Final accounting, exact serialization, private preview, source/authority checks and all current provider/reconsideration consumers. | Complete requests fit current gates; meaningful changes invalidate affected results; benign changes preserve valid preparation and real receipts. |
+| E — Remove derivable metadata | Implement the selected later revision-binding and single work-mode stage under the exact technical contract, after sparse consumers are qualified. | Same-reply dependent writes use actual accepted revisions; stale independent writes refuse; unseen text is never replaced; every current caller changes coherently. |
+| F — Qualify preparation, decisions and play | Scoped preparation and cache/performance comparisons, native invariants, route/provider integration, whole episodes, later return and complete costs. | Real active large-state callers demonstrate preserved coverage; SC exits and applicable CR/CE/SPK/CTR/IS/PF evidence are satisfied for the enabled scope. |
 | Conditional refinement — Factor repeated schema definitions | Evaluate local, nonrecursive schema references after sparse-schema measurements. | Adopt only when measured savings justify the validator change and all configured adapter, preview and local-validation paths qualify; otherwise retain inline definitions. |
 
 These are implementation dependencies, not six independent public formats. Land coherent changes through existing owners. Do not keep a legacy parallel response API. Evaluation can compare retained baseline artifacts or an isolated baseline revision; it does not require a permanent compatibility path in the shipped game.

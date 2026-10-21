@@ -39,7 +39,7 @@ Implementation follows the repository verification policy: prefer relevant exist
 - [ ] Introduce the retained immutable actor/world/timeline/source/definition preparation and selected-source manifest. Preserve current behavior while recording required reasons, dependency keys, actual query coverage and exact bindings. Do not retain mutable world/draft/cache references across waits.
 - [ ] Incorporate late appraisal and invention additions into the same finalized manifest before rendering, schema compilation and dispatch. Make diagnostics distinguish prepared, submitted, validated and committed states.
 - [ ] Measure the current complete request by component, including instructions, response schema, References and any tool definitions/results. Keep UTF-8 bytes, transport bytes, local token estimates and provider usage separate.
-- [ ] Reproduce the supplied artifact through the actual export/serializer path and compare the exact submitted body before classifying its `type: null` discrepancy. Do not fix a display/export anomaly by weakening the live validator.
+- [ ] Trace one current attempt through its generated, captured, exported and provider-bound representations and compare exact bodies before classifying the supplied artifact's `type: null` discrepancy. Investigate the historical artifact's origin/revision; if it cannot be reproduced, record that limit rather than manufacturing malformed output or making unknown historical provenance a permanent release blocker. Do not fix a display/export anomaly by weakening the live validator.
 
 **Exit:** a greeting, supplies decision, promise and hazard have traceable required sources, exact request/binding agreement and honest missing measurement fields. Existing final schema/context/transport bounds remain intact. No additional generation or automatic paid repair is introduced.
 
@@ -81,7 +81,7 @@ Implementation follows the repository verification policy: prefer relevant exist
 
 **Owner:** installed request/known-method/inspection owners, `navigation-contracts.ts`, action choice/preparation and existing native inspection. **Design:** technical §8 and §9.3. **Dependencies:** SC01/SC02; consume SC03/SC04.
 
-- [ ] Produce current full invocation details where a capability may materially affect the decision; otherwise use a concise useful description with a real exact inspection/proposal route where omission is allowed.
+- [ ] Produce current full invocation details where a capability may materially affect the decision; otherwise use a concise useful description with a real exact detail-returning route where omission is allowed. A generic proposal or information-needed result is not a detail-fetch route. Proposal grounding may replace optional invocation syntax only when initial facts already support an informed exact intention and the resolver preserves every material qualifier.
 - [ ] Preserve required parameters, meanings, units, deadlines, tradeoffs, exact resource references and native purpose/work transitions. Exclude form layout/button metadata only after preserving any unique semantic label.
 - [ ] Preserve own-inventory, inspected-container and learned-activity continuation scope, current access, nested-container guards, source revisions and actual cost/time. A partial page is not the whole inventory/history.
 - [ ] Keep necessary detail in the first request whenever inspection is unavailable, would require guessing, or would create a material tactical/ordinary-play burden. Preserve the unlisted attempt and actual unsupported/information-needed outcomes.
@@ -101,7 +101,7 @@ Implementation follows the repository verification policy: prefer relevant exist
 
 ## SC07 — Preserve freshness, previews, receipts and restoration
 
-**Owner:** existing decision/publication/admission, identity, speech-preview, evidence and save/load owners. **Design:** technical §12. **Dependencies:** SC01/SC04; integrate SC06 and selected SC12.
+**Owner:** existing decision/publication/admission, identity, speech-preview, evidence and save/load owners. **Design:** technical §12. **Dependencies:** SC01/SC04; integrate SC06. First qualify the sparse-stage lifecycle to enable SC12, then rerun the affected boundaries after SC12 for the final integrated exit. This avoids treating SC07 and SC12 as circular prerequisites.
 
 - [ ] Revalidate exact affected sources/authority after asynchronous preparation and before disclosure/each native operation. Preserve historical time; unrelated changes do not invalidate everything, while correction/forgetting/revocation/restore cannot reuse stale snippets.
 - [ ] Parse the complete strict independent talk branch for private preview, including rejection of appraise/any second payload. Preserve actual listener/hearing/attribution/content checks and current UI scope; do not restore the retired preview row.
@@ -154,7 +154,7 @@ Implementation follows the repository verification policy: prefer relevant exist
 
 ## SC12 — Bind derivable metadata; optionally factor local schemas
 
-**Owner:** prepared response bindings, native mutation/receipt owners, installed-request definitions and AI schema validator. **Design:** technical §§9.5–10. **Dependencies:** SC04/SC07 qualification; integrate all current callers through SC06/SC10.
+**Owner:** prepared response bindings, native mutation/receipt owners, installed-request definitions and AI schema validator. **Design:** technical §§9.5–10. **Dependencies:** SC04 and SC07's sparse-stage lifecycle qualification, followed by affected SC07 requalification after this stage; integrate all current callers through SC06/SC10.
 
 ### Selected later stage: revisions and one work mode
 

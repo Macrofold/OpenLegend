@@ -289,7 +289,7 @@ The [qualification commands](../scripts/decision-benchmark/README.md#decision-es
 
 ## Maintained records
 
-- Current cognition/reconsideration delivery: [cognition redesign and escalation](maintainers/cognition-redesign.md); remaining Worker qualification: [MW01–MW04](maintainers/macrofold-worker-api.md).
+- Current cognition/reconsideration delivery: [cognition redesign and escalation](maintainers/cognition-redesign.md); Macrofold Worker delivery and qualification: [maintainer record](maintainers/macrofold-worker-api.md).
 - Selected context/schema integration: [SC01–SC12](maintainers/cognition-context.md), [feature specification](projects/situation-aware-cognition-context-feature-spec.md) and [technical design](projects/situation-aware-cognition-context-tech-design.md).
 - Limits and constraints: [AI execution](limits/ai-execution.md) and [situation-aware context selection](limits/cognition.md#situation-aware-context-selection).
 

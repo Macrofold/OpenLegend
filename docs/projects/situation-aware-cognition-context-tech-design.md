@@ -235,7 +235,7 @@ An omitted optional detail must satisfy all of these conditions:
 
 1. Its absence does not remove required meaning or a material urgent alternative.
 2. The initial context retains the capability's useful meaning, so the character can recognize that the option exists.
-3. A current exact permitted inspection action/continuation handle can obtain the relevant detail, or the available unlisted-attempt route can preserve the intended request without guessing a target or parameter.
+3. Where decision-relevant information is omitted, a current exact permitted inspection/detail handle can actually obtain it. The open-proposal route may instead avoid loading optional invocation syntax only when the initial facts already support an informed exact intention and its existing grounding preserves every specified reference, amount and qualifier. Merely allowing a proposal that returns information-needed is not a way to retrieve missing knowledge.
 4. The result's true scope, current availability, meaningful time/action consequence and coverage are understandable.
 5. If no supported route can obtain the information when needed, the initial request includes the detail instead. A conceptual future inspection feature cannot justify deletion today.
 
@@ -412,7 +412,7 @@ Produce the following measurements from the actual prepared request:
 | `estimatedInputTokens` | An explicitly labeled estimate for the **complete** input, with estimator/model/version/basis; include schema/tool overhead conservatively or mark that component unavailable. Do not relabel prompt bytes divided by three as total measured usage. |
 | `maxOutputTokens` and `visibleOutputBytes` | The actual selected provider output allowance and local output envelope limit. Reasoning tokens follow the configured adapter's reported semantics. |
 | `providerUsage` | Actual input/output/cached-input/reasoning counts when supplied by a provider receipt, with missing/uncertain fields preserved. |
-| `preparationWork` | Metadata/source rows visited, bytes hydrated/rendered, definitions compiled, references generated, exact native checks, cache results and elapsed/CPU work at each relevant stage. |
+| `preparationWork` | Metadata/source rows visited, dependency edges visited, candidate-closure fit checks, retained graph bytes, bytes hydrated/rendered, definitions compiled, references generated, exact native checks, cache results and elapsed/CPU work at each relevant stage. |
 
 Avoid double counting: schema text included inside `transportBytes` is reported as a component of that total, not added to it again. Input text encoded twice by an adapter is real duplication to remove. Pretty-print indentation in an exported HTTP JSON view can inflate displayed lines without proving the same tokens were sent; stored message-string whitespace is different. The attachment measurements and all discussion decisions live in the [evidence record](situation-aware-cognition-context-evidence-and-decisions.md).
 
@@ -484,7 +484,7 @@ The four design answers are:
 | What invalidates reuse? | Actual definition/source/privacy/recognition/body/work/geometry/custody/authority dependencies, meaningful clock boundaries and timeline restore. A generic global world revision is insufficiently selective, while an unchanged outer object is insufficient proof of nested immutability. |
 | How is the whole operation measured? | Through actual decision/inspection/generation-preparation/publication callers, with metadata rows, bodies/bytes, candidate/reference/definition/physical-check counts, cold/warm timing, retained memory, request usage and later admitted behavior. A formatter microbenchmark does not qualify the pipeline. |
 
-The pure closure visits each admitted unit/edge at most once per closure pass; optional ordering operates on the already bounded candidate set. Source metadata estimates reject provably oversized complete construction before copies/string assembly. Do not use an input character ceiling as permission to build an arbitrarily large object first.
+The pure closure visits each admitted unit/edge at most once per closure pass; optional ordering operates on the already bounded candidate set. For `V` admitted units, `E` dependency edges and `C` optional roots, graph construction/cycle condensation is `O(V + E)` and ordinary sorting is at most `O(V log V)`. Monotone component activation and removal update only affected support. Exact marginal-closure fit checks can nevertheless revisit a shared inactive subgraph for different rejected roots: their worst case is `O(C × (V + E))`, not a whole-pipeline linear guarantee. Count those edge visits against the existing preparation work owner and exercise this case before qualification; bounded returned rows alone do not make it cheap. Request-scoped metadata reuse may reduce repeated checks, but do not precompute an unbounded all-roots transitive-closure matrix. Source-size lower bounds can reject provably oversized construction before copies/string assembly; uncertain upper estimates follow section 6's bounded exact-measure rule. Do not use an input character ceiling as permission to build an arbitrarily large object first.
 
 Address these concrete current growth points in their existing owners:
 

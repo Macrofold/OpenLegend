@@ -203,6 +203,7 @@ The latest design additions cover [world locks and invention ownership](archive/
 - [Real-time multiplayer synchronization](archive/07-technical-architecture/realtime-synchronization.md) — batching, prediction, replication and future improvements
 - [Production data model](archive/07-technical-architecture/production-data-model.md), [world-agent queries](archive/07-technical-architecture/data-queries-and-mcp.md), and [migration/scale design](archive/07-technical-architecture/data-delivery-and-scale.md) — target design, with active phases in the [production-data tracker](docs/maintainers/production-data.md)
 - [Cognition redesign](docs/memory-architecture.md) and [build tasks CR01–CR12](docs/maintainers/cognition-redesign.md) — implemented compact context, attention, cleanup and background reflection, with remaining acceptance tracked explicitly
+- [Situation-aware context design](docs/projects/situation-aware-cognition-context-feature-spec.md), [technical contract](docs/projects/situation-aware-cognition-context-tech-design.md) and [SC01–SC12](docs/maintainers/cognition-context.md) — selected design for smaller situation-specific requests with complete necessary evidence, exact references and compatible speech/action; runtime implementation and qualification remain open
 - [Project decisions](archive/05-project/open-decisions.md) and [implementation status](archive/05-project/implementation-status.md)
 - [First playable MVP agreement](archive/05-project/first-playable-mvp.md)
 - [Art direction and reference board](art-direction/README.md)
@@ -227,3 +228,4 @@ With local god/owner mode enabled, **Create → Inspect world** includes demand-
 ### Unified World Agent authoring
 
 In owner mode, **Create → World authoring** offers one conversation for investigation and supported authoring. Choose **New conversation**, explicitly authorize the displayed session ceiling (default $5), then send. Session opening and history reads make no model calls. Configure the writable MCP connection and Macrofold first; the panel explains missing configuration rather than substituting tool-less chat. Exact draft reviews show native coverage and full payloads; Approve and Apply remain distinct from crafting or world resume. Stop this turn cancels only its active run; End session retains history. **Create → Your workshop** retains the finite recipe workflow without the full harness. See [setup and supported scope](docs/world-agent-mcp.md) and [current evidence](docs/verification/invention-foundation.md#unified-authoring-interface-and-native-write-journey).
+
