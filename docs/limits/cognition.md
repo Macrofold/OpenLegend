@@ -735,7 +735,7 @@ CF04 adds permitted exact combat-help terms and explicit helping alternatives be
 
 ## Situation-aware context selection
 
-**Selected design — October 19, 2026; implementation and qualification remain open.** The [feature specification](../projects/situation-aware-cognition-context-feature-spec.md) and [technical design](../projects/situation-aware-cognition-context-tech-design.md) define the coordinated change; [SC01–SC12](../maintainers/cognition-context.md) owns its delivery. These entries record its discretionary, removed and deliberately unchanged constraints. They do not relabel historical CG measurements as new results or create a second table of budget constants.
+**Selected design — updated October 20, 2026; implementation and qualification remain open.** The [feature specification](../projects/situation-aware-cognition-context-feature-spec.md) and [technical design](../projects/situation-aware-cognition-context-tech-design.md) define the coordinated change; [SC01–SC11](../maintainers/cognition-context.md) owns core delivery and SC12 is a deferred optional refinement. These entries record its discretionary, removed and deliberately unchanged constraints. They do not relabel historical CG measurements as new results or create a second table of budget constants.
 
 ### SCX01 — Required meaning takes precedence over a size target
 
@@ -819,7 +819,7 @@ Where NST is installed, its first accepted nonempty speech prefix creates a prog
 
 **Evidence / owner:** [Technical §§11–13](../projects/situation-aware-cognition-context-tech-design.md#11-complete-request-accounting-and-cache-behavior), SC06–SC08, current identity/data/save/trace owners and existing CG03 cache limits. No new cache-hit, retained-memory or population qualification is claimed.
 
-### SCX08 — Selected revision binding and conditional local references
+### SCX08 — Optional revision binding and local references
 
 **Designed, deferred optional follow-up · Restrictiveness: Current native write safety retained; local schema references disabled by default.** Core SC retains current revision and meaningful work-mode fields. SC12's server-bound metadata change is outside core release dependencies and need not be implemented or evaluated to complete the general builder. If separately selected, after sparse consumers qualify it removes only derivable echoes and explicitly identical work transitions, retaining captured revision/existence/read bindings. A later same-reply write consumes an accepted new revision only through an explicit dependency on the last accepted writer; independent stale writes refuse. Full note replacement requires full current text; absent/unread is not empty or revision zero.
 

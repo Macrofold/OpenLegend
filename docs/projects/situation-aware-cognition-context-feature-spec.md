@@ -156,7 +156,7 @@ An earlier sparse implementation may use an `operations` root only before NST's 
 
 Use one authoritative schema/contract definition with a closed alternative for each valid shape. Family and parameter shape belong together: a request for one activity family must not structurally accept another family's parameters. Keep required fields of the chosen alternative required. NST owns exact record parsing, screening, durable speech publication and the ordered barrier after the first non-speech or unresolved operation; never reorder the reply for faster speech. Complete typed validation still gates all generated non-speech response operations. Native validation still checks actor capabilities, current state, references, resources, permissions and cross-operation dependencies. A schema is not execution authority.
 
-Do not select a talk-only response shape just because the latest trigger is speech. A greeting can occur during useful work or a new hazard. Shape specialization may remove an operation only when the established route/capability contract makes it unavailable for that whole decision, not when a classifier predicts it is unlikely. Empty `records` remains a legitimate choice where the existing route permits an empty logical reply.
+Do not select a talk-only response shape just because the latest trigger is speech. A greeting can occur during useful work or a new hazard. Shape specialization may remove an operation only when the established route/capability contract makes it unavailable for that whole decision, not when a classifier predicts it is unlikely. An empty logical response remains legitimate where the existing route permits it: `operations: []` in today's envelope or `records: []` when NST is installed.
 
 The remaining short semantic guidance must explain:
 
@@ -171,7 +171,7 @@ Field names, null-padding examples and every enum do not need to be repeated in 
 
 Keep current revision/concurrency and meaningful work-mode fields in core delivery. The technical design retains SC12's fully specified revision-binding refinement as a deferred optional follow-up, including multiple dependent edits in one reply; it is not a core prerequisite. All callers of whichever change is delivered must change together, without a permanent old-format reader. `$defs/$ref` factoring is also optional and evidence-gated because the current local validator rejects references. Core delivery is complete with inline sparse definitions; evaluating either refinement is not required merely to close SC.
 
-Replacing a nonempty note requires its complete current text in retained preparation; creating or replacing an empty note requires captured authoritative absence/empty state. A missing document binding is not permission to overwrite it. In the later revision-binding stage, a same-reply edit uses a prior accepted new revision only through an explicit dependency on the last accepted writer of that target. A separate concurrent edit is refused when stale, rather than silently rereading and overwriting unseen changes.
+If the optional SC12 revision-binding refinement is later selected, replacing a nonempty note requires its complete current text in retained preparation; creating or replacing an empty note requires captured authoritative absence/empty state. A missing document binding is not permission to overwrite it. A same-reply edit then uses a prior accepted new revision only through an explicit dependency on the last accepted writer of that target. A separate concurrent edit is refused when stale, rather than silently rereading and overwriting unseen changes. Core SC preserves the installed note-admission contract without requiring this refinement.
 
 ## 8. References, identity and readable context
 
@@ -292,7 +292,7 @@ The newer [NST design](npc-speech-streaming-tech-design.md) owns shared NPC spee
 
 | Question | Selected handling and owner |
 | --- | --- |
-| What exact omission/representation ordering performs best? | Use the deterministic baseline specified in the technical design, preserving required closure and existing attention. Tune only from held-out omission and whole-episode evidence under SC02/SC09. |
+| What exact omission/representation ordering performs best? | Use the deterministic baseline specified in the technical design, preserving required closure and existing attention. Tune from held-out omission and supported-decision comparisons under SC02/SC09. Reuse relevant existing episode evidence where available; broader whole-life/enjoyment qualification remains with its own owner. |
 | How are later metadata and schema refinements delivered? | SC12 retains their detailed designs as optional follow-ups, outside core release dependencies. Current revisions, meaningful modes and inline sparse definitions are sufficient for core completion. A later selected change must meet its own concurrency or compatibility requirements. |
 | Is native inspection too costly for relevant detail? | Include necessary detail up front whenever there is no adequate timely route. Record concrete friction; a new model detail tool remains a separate conditional extension. |
 | Does the supplied export match the exact submitted provider body? | SC01 compares the exact artifact path and validator/transport serialization before classifying the observed null-schema discrepancy as a runtime defect. |

@@ -4,8 +4,8 @@
 
 ## Maintained records
 
-- [Situation-aware context feature](../projects/situation-aware-cognition-context-feature-spec.md) / [technical design](../projects/situation-aware-cognition-context-tech-design.md), with focused [SC01–SC12 delivery](cognition-context.md).
-- Its [evidence and decisions](../projects/situation-aware-cognition-context-evidence-and-decisions.md) and [repertoire review](../projects/situation-aware-cognition-context-repertoire-review.md) preserve the context-specific comparisons and opportunity cases.
+- [Situation-aware context feature](../projects/situation-aware-cognition-context-feature-spec.md) / [technical design](../projects/situation-aware-cognition-context-tech-design.md), with focused [SC01–SC11 core delivery](cognition-context.md) and deferred optional SC12 refinements.
+- Its [evidence and decisions](../projects/situation-aware-cognition-context-evidence-and-decisions.md) and [repertoire review](../projects/situation-aware-cognition-context-repertoire-review.md) preserve general context comparisons and illustrative opportunities. Core SC uses supported decisions; these examples do not add mechanics or make IS's broader episode/enjoyment qualification a prerequisite for the context constructor.
 
 - [Design completion plan](../projects/completed/intelligent-simulation-design-plan.md), including selected base, risks, resolved developer choices and review criteria.
 - [Continuing lives feature](../projects/continuing-lives-feature-spec.md) / [technical design](../projects/continuing-lives-tech-design.md).

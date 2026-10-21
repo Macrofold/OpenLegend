@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | All 42 repertoire files reviewed at the documented coverage; selected refinements and design complete. Runtime implementation and gameplay qualification remain open. | 2026-10-19 |
+| In progress | All 42 repertoire files reviewed at the documented coverage; selected refinements and design complete. Runtime implementation and gameplay qualification remain open with their respective owners. | 2026-10-20 |
 
 ## 1. Scope, method and result
 
@@ -15,6 +15,8 @@ This is a complete structured review with targeted deeper reading, **not a claim
 The final repertoire changes are **15 tailored guidance/pattern paragraphs across 14 people catalogues; 21 existing behavior/payoff cells across eight world/action catalogues; two world-proposal passages; and two shared-guide integration paragraphs**. No numbered catalogue entry was added, removed, renamed or reranked. Counts, stable IDs, native headings, category ownership, source references and world applicability remain intact. Six catalogues, two worlds and eight shared files were deliberately retained unchanged. This design does not select all these proposals as first-release mechanics.
 
 The missing connection was how economical AI context preserves good ideas already here. A larger catalogue would not fix a character who never receives the clue, relevant memory, alternative material or changed agreement needed to choose intelligently. The selected design makes those information needs and their qualification explicit while preserving the complete survival-adventure target.
+
+**Delivery boundary clarified October 20, 2026:** these catalogue connections and worked situations illustrate the meanings a general context constructor must preserve when supported by actual data. They do not define compiler scene branches, universal information-family priorities, mandatory feature implementations or a required suite of these fictional episodes. Core SC qualifies general construction and informed decisions using installed data and existing benchmark examples. Broader gameplay and enjoyment remain with CE/CR/IS and the selected feature owners; SC12's metadata refinements are deferred optional work.
 
 ## 2. Product conclusions adopted in the design
 
@@ -207,13 +209,13 @@ The two shared changes place the central rule at its proper owner: [README](../r
 
 The source atlas and three historical research ledgers remain unchanged. Their earlier completed research is not outstanding cognition design work, and this pass does not reopen or recertify those external sources. Optional worlds retain their own adoption questions, audience, metaphysics and scope; the science-fiction proposal still excludes playable piloting, space navigation and dogfighting. No new universal anatomy, need, emotional rule, automatic loyalty, material capability or first-playable cast is installed by these edits.
 
-**Open owner decisions for the selected repertoire refinements: none.** The feature/technical pair settles their context implications. Actual informed choices and enjoyment remain implementation/qualification under SC09/SC11 and CE/CR/IS. Examples requiring unimplemented optional mechanics are projection/design contrasts until that mechanic is deliberately selected. CTR's required independent physical counterattack remains separate from general comparisons permitting several coherent choices.
+**Open owner decisions for the selected repertoire refinements: none.** The feature/technical pair settles their context implications. SC09/SC11 qualifies complete, economical construction and informed choices on supported decisions. Broader gameplay and enjoyment remain under CE/CR/IS. Examples requiring unimplemented mechanics are optional projection/design contrasts until that mechanic is deliberately selected; they are not core SC release requirements. CTR's required independent physical counterattack remains with CTR, separate from general context comparisons permitting several coherent choices.
 
 Focused baseline comparisons verify unchanged catalogue IDs/order/headings/metadata and the exact scoped edits. This is documentation verification, not a runtime capability audit, new automated game test, provider trial, source-population study or player result. No paid OpenLegend/Jev/provider calls were made: additional Jev cost $0; cumulative task Jev cost $0.
 
 ## Maintained records
 
-- Implementation and unsatisfied acceptance: [SC01–SC12](../maintainers/cognition-context.md), with existing [CR](../maintainers/cognition-redesign.md), [CE](../maintainers/character-experience.md) and [IS](../maintainers/intelligent-simulation.md) owners.
+- Core context implementation and unsatisfied acceptance: [SC01–SC11](../maintainers/cognition-context.md); SC12 is deferred optional work. Broader gameplay remains with existing [CR](../maintainers/cognition-redesign.md), [CE](../maintainers/character-experience.md) and [IS](../maintainers/intelligent-simulation.md) owners.
 - Limits and preserved/no-limit choices: [SCX constraints](../limits/cognition.md#situation-aware-context-selection).
 - Selected behavior and scenarios: [Feature specification](situation-aware-cognition-context-feature-spec.md).
 - Mechanism and concrete acceptance: [Technical design](situation-aware-cognition-context-tech-design.md).
