@@ -14,16 +14,16 @@ The [accepted content/companion policy](../agent-content-and-companion-safety.md
 
 ## Preparation dispositions
 
-| Topic | What is still needed | What would close this preparation need |
+| Topic | What is still needed | Resolution to pursue through the existing owner |
 | --- | --- | --- |
-| Candidate models and low-refusal behavior | Scoped comparison and quality criteria, not a new world mechanic | Exact runnable panel, frozen assessment and evidence supporting adoption or retention of the baseline. |
+| Candidate models and low-refusal behavior | Scoped comparison and quality criteria, not a new world mechanic | Prepare an exact runnable panel and frozen assessment; actual results are then needed for an adoption or baseline-retention decision. |
 | Evidence/context, ordinary continuation and current combat | Diagnosis and existing implementation/qualification | Actual supported behavior and attributable failures through the current owners; no duplicate redesign. |
 | More than one strike per combat choice | Explicit product choice and scoped design only if selected | Clear purpose, allowed continuation and stopping/currentness authority, followed by ordinary delivery work. |
 | New visual evidence, direct audio or auto-submitted voice | Selected use case and disclosure/publication design | Exact perception, hearing and input authority compatible with current contracts. |
 | Local/provider deployment and shared computation | Capability, rights, complete cost and workload qualification | Identified runtime/provider configuration and justified adapter/deployment changes, without shared private minds. |
 | Richer memory, routines or weight training | Demonstrated omission or limitation first | Matched evidence justifying a narrow extension, or an explicit result that the current approach is adequate. |
 
-No row is completed by merely listing a promising model. The detailed source material and unrun test protocol stay in the archive; implementation and acceptance stay with the existing owners below.
+The table distinguishes preparation, implementation and actual evaluation; completing one does not complete the others. The detailed source material and unrun test protocol stay in the archive; implementation and acceptance stay with the existing owners below.
 
 ## 1. A bounded local decision-provider comparison
 
