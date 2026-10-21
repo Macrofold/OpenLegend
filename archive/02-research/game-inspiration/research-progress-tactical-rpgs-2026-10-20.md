@@ -8,13 +8,13 @@
 
 ## Completion
 
-| Subject | Dossier | Current evidence and remaining work |
-| --- | --- | --- |
-| G121 Battle Brothers | [Dossier](dossiers/battle-brothers.md) | Research and author review complete; coordinated integration review pending. Earlier mechanics, examples and reviews retained; commercial evidence, experiential character development and R15 expanded. |
-| G179 Solasta: Crown of the Magister | [Dossier](dossiers/solasta-crown-of-the-magister.md) | Research and author review complete; coordinated integration review pending. |
-| G180 Colony Ship | [Dossier](dossiers/colony-ship.md) | Research and author review complete; coordinated integration review pending. |
-| G181 Battle Chasers: Nightwar | [Dossier](dossiers/battle-chasers-nightwar.md) | Research and author review complete; coordinated integration review pending. |
-| G182 Dark Deity | [Dossier](dossiers/dark-deity.md) | Research and author review complete; coordinated integration review pending. |
+| Subject                             | Dossier                                              | Current evidence and remaining work                                                                                                                                                                      |
+| ----------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G121 Battle Brothers                | [Dossier](dossiers/battle-brothers.md)               | Research and author review complete; coordinated integration review pending. Earlier mechanics, examples and reviews retained; commercial evidence, experiential character development and R15 expanded. |
+| G179 Solasta: Crown of the Magister | [Dossier](dossiers/solasta-crown-of-the-magister.md) | Research and author review complete; coordinated integration review pending.                                                                                                                             |
+| G180 Colony Ship                    | [Dossier](dossiers/colony-ship.md)                   | Research and author review complete; coordinated integration review pending.                                                                                                                             |
+| G181 Battle Chasers: Nightwar       | [Dossier](dossiers/battle-chasers-nightwar.md)       | Research and author review complete; coordinated integration review pending.                                                                                                                             |
+| G182 Dark Deity                     | [Dossier](dossiers/dark-deity.md)                    | Research and author review complete; coordinated integration review pending.                                                                                                                             |
 
 Each dossier maps R01–R14 and the economics/enjoyment/lore amendment to substantive coverage, includes five independent written reviews and a contrasting accessible Steam player sample, and records the conditional R15 result. Sources and retrieval limitations stay with the game they support.
 
@@ -29,4 +29,3 @@ Each dossier maps R01–R14 and the economics/enjoyment/lore amendment to substa
 The supplied transcript was read; direct YouTube retrieval failed. No footage was watched and no timestamps are inferred. This is source research, not a report of firsthand gameplay, installed mods or executed authoring workflows.
 
 Published sales disclosures, publisher reach claims, crowdfunding, modeled Steam spending, studio receipts and profit remain distinct. Unknown costs and contracts prevent many profitability conclusions. Player samples establish specific experiences and disagreements, not their prevalence or causal effects on sales.
-

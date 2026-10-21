@@ -250,7 +250,6 @@ Each subject receives an independent R01–R14 pass and conditional R15 screen. 
 
 [D&D 2024](dossiers/dungeons-and-dragons-2024.md) and [D&D v.3.5](dossiers/dungeons-and-dragons-3-5.md) are distinct additional tabletop subjects, tracked by the [D&D research hub](games/dungeons-and-dragons.md#evidence-and-completion-status). They do not replace or renumber the existing G01–G167 slots. Related adjudication, SRD and worldbuilding studies are supporting material with their own evidence limits.
 
-
 ## October 20 tactical RPG and character-history study
 
 Mike requested full research into the five games suggested by the supplied RPG video: existing **G121 Battle Brothers**, plus **G179–G182**. Battle Brothers retains its identity and earlier material; it is not counted twice. The four additions bring the inventory to **182 subjects**. The [scoped ledger](research-progress-tactical-rpgs-2026-10-20.md) owns completed coverage and evidence limits; the [comparison](essays/tactical-rpgs-character-histories-and-commercial-outcomes.md) connects the findings to OpenLegend's independent people, useful progression and playable adventure. These are research hypotheses, not approved new gameplay contracts. Other video subjects remain contextual leads, and the unrelated G150–G166 queue remains unchanged.

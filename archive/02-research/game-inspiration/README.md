@@ -37,7 +37,7 @@
 
 ## Expanded per-game dossiers
 
-The dossiers supplement the original chapters and granular studies rather than replacing them. Use the [earlier progress ledger](research-progress.md) and [expansion ledger](research-progress-expansion-2026-10-13.md) for their respective completion states and commit references; the [roster](research-roster.md) remains the owner of numbering and edition boundaries. These reading routes cover canonical G40–G60 without implying that the entire current 177-subject roster or packet-wide preservation audit is finished.
+The dossiers supplement the original chapters and granular studies rather than replacing them. Use the [earlier progress ledger](research-progress.md) and [expansion ledger](research-progress-expansion-2026-10-13.md) for their respective completion states and commit references; the [roster](research-roster.md) remains the owner of numbering and edition boundaries. These reading routes cover canonical G40–G60 without implying that the entire current 182-subject roster or packet-wide preservation audit is finished.
 
 **September 27, 2026 scoped resolution:** all recorded G40–G60 manuscript-audit findings now have committed remedies. Seventeen subjects required corrections or additional research; four had no major gap identified. The [original matrix](references/games-40-60-coverage-audit.md) and [later-game findings](references/games-51-60-coverage-audit.md) remain historical baseline evidence, not competing current task trackers. Their pending labels are superseded by the ledger's per-game remedy records. Declared source/access/version limits remain, rather than being relabelled as successful reading or testing.
 
@@ -205,4 +205,3 @@ The existing engineering, product, and world-design owners remain authoritative 
 ## Supplementary Dungeons & Dragons studies
 
 The [tabletop research hub](games/dungeons-and-dragons.md) distinguishes the [2024 revision](dossiers/dungeons-and-dragons-2024.md), [v.3.5](dossiers/dungeons-and-dragons-3-5.md), [GM adjudication](mechanics/dungeons-and-dragons-adjudication.md), and [complete-SRD systems study](mechanics/dungeons-and-dragons-srd-systems.md). The related [world dossier](../worldbuilding/worlds/29-dungeons-and-dragons.md) and [planes and lived-magic supplement](../worldbuilding/dungeons-and-dragons-planes-and-lived-magic.md) retain setting, edition and source-access distinctions. These additions do not renumber the existing game roster or claim exhaustive source review.
-
