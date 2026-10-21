@@ -83,9 +83,9 @@ A model saying “I see no chickens” is therefore not evidence of deep resista
 
 ### The dialogue/physics disagreement
 
-The transcript contains an especially valuable failure: the character denies attacking while native combat continues. That is a failure of alignment between action state and speech, not a desirable way to preserve characterization. A coherent reply requires current own-action state and recent actual outcomes. A polite “let us stop” cannot stop a combat package unless the action is actually admitted and executed.
+The transcript contains a useful diagnostic case: a character denies attacking while native combat continues. Without the actual model context and evidence of intended deception, the transcript alone cannot establish whether this is missing or stale own-action evidence, model error or a deliberate lie. A coherent character needs permitted current own-action state and recent actual outcomes; that does not require every spoken claim to be honest. Do not invent deceptive intent afterward to excuse a grounding error. Saying “let us stop” cannot stop a combat package unless the change is actually admitted and executed.
 
-For OpenLegend, include own ongoing action, requested-but-unaccepted changes, completed outcomes and relevant transition failures in the required evidence path. Make refusal, incapacity, service failure and native rejection distinguishable. Do not paper over contradictions with more dramatic prose.
+For OpenLegend, include own ongoing action, requested-but-unaccepted changes, completed outcomes and relevant transition failures in the required evidence path. Keep world facts, personal belief and chosen speech distinct. Refusal, incapacity, service failure and native rejection must not silently become a different character motivation. Do not paper over contradictions with more dramatic prose, or erase legitimate fictional deception to make every utterance factually correct.
 
 ## 8. Voice and latency lessons
 
@@ -117,7 +117,7 @@ These observations come from the inspected `README.md`, bridge guide, `orchestra
 
 **Do not copy without a new decision:** shared private multi-character prompts, obligatory replies, trust by conversation count, dropping required identity on overflow, player-camera omniscience, fixed-time task completion, or broad offscreen-memory assumptions.
 
-The strongest next investigation is not another amusing conversation. It is a controlled set of disagreements between player assertions and actual permitted evidence: claimed gift without transfer, transferred item with exact count, hidden transformation, witnessed attack, a withdrawn instruction, an identical-looking stranger, and an NPC returning after an unheard exchange. Record the actual prompt and native outcomes. The [experiment dossier](06-openlegend-applications-and-experiments.md) extends existing CE/CR/SPK owners rather than creating a separate acceptance program.
+Pair entertaining, useful interactions with controlled grounding comparisons. Test disagreements between player assertions and actual permitted evidence: a claimed gift without transfer, a transferred item with exact count, a hidden transformation, a witnessed attack, a withdrawn instruction, an identical-looking stranger and an NPC returning after an unheard exchange. Record the actual prompt and native outcomes rather than diagnosing from eloquence alone. Also test whether successful cooperation, humor, discovery or meaningful disagreement improves an activity the player cares about. The [experiment dossier](06-openlegend-applications-and-experiments.md) and [playable-opportunity review](12-playable-opportunities-and-review.md) connect technical and player evidence through existing CE/CR/SPK and first-playable owners rather than creating a separate acceptance program.
 
 ## Primary sources and access limits
 
