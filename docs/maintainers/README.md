@@ -180,4 +180,3 @@ Actual evidence: [continuation](../verification/workshop-continuation.md), [tran
 | Integration and art         | [Macrofold handoff](../macrofold-world-agent-handoff.md), [hybrid art methods](../../archive/03-design-proposals/procedural-art-and-animation.md)                                                                                                                             |
 
 Editable knowledge is tracked in [CR13](cognition-redesign.md#cr13--editable-knowledge-documents); bundled naming and recognition in [BW08–BW09](base-world.md).
-

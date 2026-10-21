@@ -376,4 +376,3 @@ Broader automated regression qualification remains SR16–SR20 in [TODO](TODO.md
 ## Eight-times integration priority
 
 [PF12](performance.md#pf12--eight-times-spatial-and-sensory-execution) owns the cross-system budget/order. SW17 retains geometry/navigation work and SW18 retains rendering work; do not duplicate task bodies. The main rebase preserves fully camera-facing assets alongside horizontal status-effect poses, item handling/strikes and follow-camera controls. Use the current-format startup/load and placement owners, not a fresh-directory cutover or old-save conversion; the [development compatibility policy](../../AGENTS.md#development-save-policy) controls later work. Thresholded acoustic rejection is implemented for the finite attenuation-only family; complete transmission retains ordered numeric semantics. Dense 8x remains unqualified.
-

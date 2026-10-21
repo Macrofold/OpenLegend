@@ -243,4 +243,3 @@ Canvas filtering and borrowed imported-character filtering have separate control
 - Implementation: [SW18](maintainers/spatial-world.md#sw18--world-presentation-delivery).
 - Limits and constraints: [VP01](limits/interface.md#vp01).
 - Related design: [Shadow-quality feature](projects/shadow-quality-feature-spec.md) and [technical design](projects/shadow-quality-tech-design.md).
-

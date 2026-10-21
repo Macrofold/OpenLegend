@@ -852,4 +852,3 @@ An installed host may add read-only, actor-permitted prerequisite notes after no
 ## Invention integration
 
 [Repertoire foundation](repertoire-foundation.md) binds this action/activity contract to World Agent tools and invention composition. It does not create another activity controller, constraint language, permission service or planner. The current single physical lane remains until a concrete joint/channel family qualifies richer concurrency.
-

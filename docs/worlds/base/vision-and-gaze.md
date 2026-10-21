@@ -6,7 +6,7 @@
 
 The spatial/action owner admits body heading, motion and supported head/eye movement. Vision reads their actual transforms. Attention chooses whether to glance, watch, inspect or investigate. A camera changes none of them. Head-only looking does not turn a shield, change a guard cone or rotate the feet. Body turning during another action must satisfy that action's actual compatibility rules. A separately owned recognition/knowledge policy records what the observer acquired; this policy never remembers a hidden person's equipment or decides surprise.
 
-Angles below are degrees; implementation converts once to radians. Distances and represented areas are metres and square metres. Angular velocity and turn speeds use **normal-speed seconds**. Convert admitted durations once using the installed world clock: the current base clock has 60 simulation seconds per normal-speed second. Changing runtime speed to 3× or 8× changes wall time, not these laws. Pause freezes admitted progress. `[a,b)` includes its lower boundary and excludes its upper; hard range and field boundaries include equality, except an exactly zero-duration contact supplies no accumulated weak evidence.
+Angles below are degrees; implementation converts once to radians. Distances and represented areas are metres and square metres. Angular velocity and turn speeds use **normal-speed seconds**. Convert admitted durations once using the installed world clock: the current base clock has 60 simulation seconds per normal-speed second. Changing runtime speed to 3× or 8× changes wall time, not these laws. Pause freezes admitted progress. `[a,b)` includes its lower boundary and excludes its upper; hard range and field boundaries include equality, except an exactly zero-duration contact supplies neither weak accumulation nor an immediately obvious opportunity.
 
 Read Perception through the settled attribute owner. For the selected capable people its authored range is 0–100 and default is 50, as designed by module A. The visual extension selects `g(P) = 0.75 + 0.005 P`; a physical quality of zero stays zero. Apply this gain to the detection and fine-detail qualities below after actual geometric, receptor, material and illumination support. A separately applies its recognition law to acquired features. This is an explicit extension of the upstream recognition-only applicability, requiring reconciliation when installing the combined world. Missing a required attribute is invalid preparation, not a hidden zero. Bodies without this attribute can explicitly select `g = 1`; do not infer a human statistic for animals or machines.
 
@@ -14,17 +14,17 @@ Read Perception through the settled attribute owner. For the selected capable pe
 
 Preserve the existing **28 m** base sight range for the selected profiles. Range is evaluated from each admitted receptor to each actual target sample, not between feet or body centres. An exposed spear tip can therefore enter range before its bearer; it does not establish a visible hand or carrying relation. The experimental **4 m** sensing displacement is an integration/fidelity value, never a sight radius.
 
-| Policy | Person | Lateral grazer fixture | Fixed-eye machine fixture |
-| --- | --- | --- | --- |
-| Receptors | Two linked forward eyes on the actual pupil landmarks; default horizontal offsets ±0.032 m | Two eyes on the actual head sphere, yaw axes −70°/+70° | One fixed receptor at its authored physical mount |
-| Per-receptor full horizontal/vertical field | 190° / 120° | 190° / 100° | 90° / 60° |
-| Central horizontal/vertical field | 50° / 40° | 40° / 30°, centred on each receptor axis | 30° / 20° |
-| Eye yaw/pitch relative to head | ±15° / ±10° | Fixed relative to head | Fixed |
-| Head yaw/pitch relative to body | ±80° / [−55°,65°] | ±65° / [−70°,45°] | Fixed |
-| Maximum body yaw turn | 180°/s | 120°/s | 90°/s when chassis turn is otherwise admitted |
-| Maximum head yaw/pitch turn | 240°/s | 180°/s | None |
-| Maximum eye yaw/pitch turn | 480°/s | None | None |
-| Full-quality surface brightness, detection/detail | 0.05 / 0.06 | 0.02 / 0.05 | 0.05 / 0.06 |
+| Policy                                            | Person                                                                                     | Lateral grazer fixture                                 | Fixed-eye machine fixture                         |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------ | ------------------------------------------------- |
+| Receptors                                         | Two linked forward eyes on the actual pupil landmarks; default horizontal offsets ±0.032 m | Two eyes on the actual head sphere, yaw axes −70°/+70° | One fixed receptor at its authored physical mount |
+| Per-receptor full horizontal/vertical field       | 190° / 120°                                                                                | 190° / 100°                                            | 90° / 60°                                         |
+| Central horizontal/vertical field                 | 50° / 40°                                                                                  | 40° / 30°, centred on each receptor axis               | 30° / 20°                                         |
+| Eye yaw/pitch relative to head                    | ±15° / ±10°                                                                                | Fixed relative to head                                 | Fixed                                             |
+| Head yaw/pitch relative to body                   | ±80° / [−55°,65°]                                                                          | ±65° / [−70°,45°]                                      | Fixed                                             |
+| Maximum body yaw turn                             | 180°/s                                                                                     | 120°/s                                                 | 90°/s when chassis turn is otherwise admitted     |
+| Maximum head yaw/pitch turn                       | 240°/s                                                                                     | 180°/s                                                 | None                                              |
+| Maximum eye yaw/pitch turn                        | 480°/s                                                                                     | None                                                   | None                                              |
+| Full-quality surface brightness, detection/detail | 0.05 / 0.06                                                                                | 0.02 / 0.05                                            | 0.05 / 0.06                                       |
 
 The existing person profile remains radius 0.28 m, height 1.75 m and eye height 1.58 m. Its head/eye anchor follows the actual body pose. Other bodies retain their own existing physical height and anchor definitions; do not move an animal's eyes to human eye height. The grazer's neutral combined horizontal field is 330°, with a 30° rear blind sector before self-occlusion; its fine-detail lobes are lateral. It can notice a side approach that a person misses while needing an appropriate head turn for detail. The fixed-eye machine must turn its chassis to reorient the receptor. These contrasting fixtures establish semantics, not an assertion that all deer or machines share them.
 
@@ -49,18 +49,20 @@ For the selected fixed-eye lateral group, solve the rest mount directly rather t
 
 All admitted joints start together at their own rate limit, stopping at their selected goal. Eye axes pivot at their actual receiver mount; turning the eyes does not move the pupils around the head. Head rotation moves the head volume, face landmarks and eye mounts together. Relative neutral roll is fixed; this slice adds no roll or general skeleton solver. Capabilities/offers expose this installed allocation family, including a refusal that distinguishes its unsupported precise goal from an absent physical receptor.
 
-A fixed relative goal needs only its admitted start, completion and limit boundaries. Tracking a moving A-permitted target or maintaining a literal world-point direction while the observer moves selects **30 orientation-control ticks per normal-speed second**, anchored to the directive's original admission time; under the current clock each tick spans **2 simulation seconds**. At each due tick, resolve the currently permitted target point or literal world point, allocate the bounded joint goals, then execute rate-limited piecewise-linear turns until the next tick or earlier completion/limit. These are native control boundaries, not render updates. Do not sample a hidden target. Loss ends tracking or retains the last actually observed literal point according to the admitted request; it never follows an unseen target's new coordinates. Suspend unnecessary ticks when both the selected goal and receptor frame are fixed. Save the anchor, tick ordinal, accepted goals and residual turn so pause, speed changes or restore do not phase-shift the servo. The controller's finite cadence is deliberate; temporal sensing still evaluates the complete resulting admitted turns.
+A fixed relative goal needs only its admitted start, completion and limit boundaries. Tracking a moving A-permitted target or maintaining a literal world-point direction while the observer moves selects **30 orientation-control ticks per normal-speed second**, anchored to the directive's original admission time; under the current clock each tick spans **2 simulation seconds**. At each due tick, resolve the currently permitted target point or literal world point, allocate the bounded joint goals, then execute rate-limited piecewise-linear turns until the next tick or earlier completion/limit. These are native control boundaries, not render updates. Do not sample a hidden target. Loss ends tracking or retains the last actually observed literal point according to the admitted request; it never follows an unseen target's new coordinates. Keep checks on the original tick phase while relevant receiver/goal motion continues, even when currently aligned; skip unnecessary goal recomputation rather than the next check. Suspend ticks only when both the selected goal and all relevant receptor transforms are fixed; an admitted dependency change wakes the next tick on that same phase. Save the anchor, tick ordinal, accepted goals and residual turn so pause, speed changes or restore do not phase-shift the servo. The controller's finite cadence is deliberate; temporal sensing still evaluates the complete resulting admitted turns.
+
+For a literal world point or currently permitted tracked point, report **reached** when the angle from the actual current receptor axis to that point is at most **0.5°**. This is an alignment/completion tolerance only; it changes no field, light, occlusion, detail or actual pose. On orient-once completion, stop its remaining joint segment atomically at the accepted pose. A fixed relative-angle directive instead finishes its admitted joint goals exactly. World-point/tracking durations are estimates until actually aligned. Orient-once point pursuit ends at its explicitly admitted earlier deadline or, by default, **2 normal-speed seconds** after admission (**120 simulation seconds** at the selected clock); expiry reports alignment unreached and retains the actual pose. This handles a moving or near-origin goal that cannot converge. Maintained action/deadline directives keep their own finite extent. Reached alignment never satisfies a separate view-required work constraint by itself.
 
 ### Defaults through the existing action owner
 
-| Accepted transition | Selected physical default |
-| --- | --- |
-| Finish/stop a turn, finish an orient-once directive | Retain the last accepted body/head/eye pose; no automatic target choice, scan or return turn |
-| Enter idle/wait | Retain pose; no ongoing tracking servo unless an explicitly admitted finite maintained directive remains valid |
-| Begin an ordinary route without an explicit compatible look | Set body-heading goal to the current actual route tangent and head/eye goals to neutral, all at real admitted rates; no snap |
-| Amend the same existing movement with a compatible look | Preserve route and body-heading intent unless body assistance is explicitly requested and admitted; move supported head/eyes only |
-| Begin work with a view-required phase | Resolve bounded gaze to that action's admitted work point; the phase proceeds only after its actual view constraint is satisfied. A compatible optional glance is allowed only where that phase permits it |
-| Replace an action | End its old maintained orientation directive. Transfer a finite goal only if explicitly requested and readmitted with the replacement; never implicitly carry hidden-target tracking into new work |
+| Accepted transition                                         | Selected physical default                                                                                                                                                                                  |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Finish/stop a turn, finish an orient-once directive         | Retain the last accepted body/head/eye pose; no automatic target choice, scan or return turn                                                                                                               |
+| Enter idle/wait                                             | Retain pose; no ongoing tracking servo unless an explicitly admitted finite maintained directive remains valid                                                                                             |
+| Begin an ordinary route without an explicit compatible look | Set body-heading goal to the current actual route tangent and head/eye goals to neutral, all at real admitted rates; no snap                                                                               |
+| Amend the same existing movement with a compatible look     | Preserve route and body-heading intent unless body assistance is explicitly requested and admitted; move supported head/eyes only                                                                          |
+| Begin work with a view-required phase                       | Resolve bounded gaze to that action's admitted work point; the phase proceeds only after its actual view constraint is satisfied. A compatible optional glance is allowed only where that phase permits it |
+| Replace an action                                           | End its old maintained orientation directive. Transfer a finite goal only if explicitly requested and readmitted with the replacement; never implicitly carry hidden-target tracking into new work         |
 
 These are physical admission defaults for already selected actions. Attention remains the owner of deciding which action, doorway, person or investigation to select. A turn back after a glance is an explicit phase/goal when wanted; the engine does not invent it on expiration.
 
@@ -76,15 +78,15 @@ The selected optical occluder family supports boxes through native convex-plane 
 
 The neutral upright person uses the following support-local optical shapes. +Y is up and +Z is body forward. Ranges are inclusive metres; mirrored rows instantiate both sides.
 
-| Part | Shape and local bounds | Body quadrature |
-| --- | --- | --- |
-| Torso | Box `x=[−.22,.22], y=[.60,1.40], z=[−.16,.16]` | Four vertical face centres |
-| Hips | Box `x=[−.22,.22], y=[.42,.80], z=[−.15,.15]` | Four vertical face centres |
-| Legs | Boxes `x=[−.20,−.02]` and `[.02,.20]`, `y=[0,.65], z=[−.12,.12]` | Four vertical face centres each |
-| Arms | Boxes `x=[−.275,−.22]` and `[.22,.275]`, `y=[.65,1.36], z=[−.05,.05]` | Four vertical face centres each |
-| Hands | Same arm x/z bounds, `y=[.56,.65]` | Four vertical face centres each |
-| Neck | Box `x=[−.07,.07], y=[1.35,1.45], z=[−.065,.065]` | Four vertical face centres |
-| Head | Sphere radius **.17**, centre/pivot `(0,1.58,0)` | Six axial surface points, normals ±X/±Y/±Z |
+| Part  | Shape and local bounds                                                | Body quadrature                            |
+| ----- | --------------------------------------------------------------------- | ------------------------------------------ |
+| Torso | Box `x=[−.22,.22], y=[.60,1.40], z=[−.16,.16]`                        | Four vertical face centres                 |
+| Hips  | Box `x=[−.22,.22], y=[.42,.80], z=[−.15,.15]`                         | Four vertical face centres                 |
+| Legs  | Boxes `x=[−.20,−.02]` and `[.02,.20]`, `y=[0,.65], z=[−.12,.12]`      | Four vertical face centres each            |
+| Arms  | Boxes `x=[−.275,−.22]` and `[.22,.275]`, `y=[.65,1.36], z=[−.05,.05]` | Four vertical face centres each            |
+| Hands | Same arm x/z bounds, `y=[.56,.65]`                                    | Four vertical face centres each            |
+| Neck  | Box `x=[−.07,.07], y=[1.35,1.45], z=[−.065,.065]`                     | Four vertical face centres                 |
+| Head  | Sphere radius **.17**, centre/pivot `(0,1.58,0)`                      | Six axial surface points, normals ±X/±Y/±Z |
 
 Each box face sample represents that actual face's area. Each head sample represents `4π(.17)²/6`. These **42 body samples** have their actual part tags; hand and head presence can be evaluated separately. Internal faces hidden by overlapping own parts are excluded from intrinsic projected area before external coverage is measured. The omitted top/bottom box samples are a finite approximation, while head top/bottom remain present for overhead views. Poses must transform or replace these actual parts through their admitted owner; no generic crouch-height multiplier is selected. A body whose shape does not support this fixture authors a different finite representation.
 
@@ -116,13 +118,13 @@ Surface illumination at patch `i` is `E_i = skyIntensity×K_i + sunIntensity×T_
 
 The base fire fixture selects intensity **2.8**, radius **8 m**, and emission origin **0.8 m above its support anchor** when that is the actual authored flame location. This origin lies inside its authored **non-occluding flame volume**; the solid fuel/support geometry is separate and can block appropriate directions. A lamp emits from its actual emissive boundary/open aperture, and its own solid housing continues to block backward rays. A carried light attaches to its real hand/tool transform; do not reuse a ground-fire offset on it or skip the whole carrier assembly during light queries. The visibly luminous flame patch has intrinsic luminance **2.8**. Seeing that patch is possible within ordinary 28 m sight range even beyond the 8 m radius in which it illuminates other objects. Fuel, extinguishing, admission and attachment remain owned by their existing object/fire actions. No delayed remembered fire continues to emit world light.
 
-| Material family | Optical rule | Separate physical rule |
-| --- | --- | --- |
-| Solid wall, closed opaque door, solid terrain/slope | `T=0` for positive interior penetration | Existing shape governs movement and attacks |
-| Clear glass fixture | `T=0.85` once per positive-length traversal through one exact pane volume; pair its entry/exit, and deduplicate duplicate skins of the same pane | Can block traversal/weapon passage despite admitting sight; two independent panes transmit `0.85²` |
-| Leafy volume | `T=exp(−κℓ)` with authored density coefficient `κ` and actual path length `ℓ`; base sparse/dense foliage **0.8 / 2.0 m⁻¹** | Leaves may admit movement; branches/trunks keep their own collision and attack geometry |
-| Open air/open gap | `T=1` | Clearance still uses the moving body/tool shape |
-| Opaque cloth/mask | `T=0` through its actual covered volume | Does not become a wall merely because it covers a face |
+| Material family                                     | Optical rule                                                                                                                                     | Separate physical rule                                                                             |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| Solid wall, closed opaque door, solid terrain/slope | `T=0` for positive interior penetration                                                                                                          | Existing shape governs movement and attacks                                                        |
+| Clear glass fixture                                 | `T=0.85` once per positive-length traversal through one exact pane volume; pair its entry/exit, and deduplicate duplicate skins of the same pane | Can block traversal/weapon passage despite admitting sight; two independent panes transmit `0.85²` |
+| Leafy volume                                        | `T=exp(−κℓ)` with authored density coefficient `κ` and actual path length `ℓ`; base sparse/dense foliage **0.8 / 2.0 m⁻¹**                       | Leaves may admit movement; branches/trunks keep their own collision and attack geometry            |
+| Open air/open gap                                   | `T=1`                                                                                                                                            | Clearance still uses the moving body/tool shape                                                    |
+| Opaque cloth/mask                                   | `T=0` through its actual covered volume                                                                                                          | Does not become a wall merely because it covers a face                                             |
 
 Moving through foliage changes the actual path and possibly authored geometry through its owner; it does not automatically toggle an invisibility state. A tiny peep gap may admit a ray but refuse a hand or arrow shaft. Sloping terrain uses actual volumes and heights, without a special rule that all uphill targets are hidden. This first family has direct sun/sky and finite point/spot emitters; it has **no reflected bounce light, mirrors, refraction, volumetric smoke, diffraction or global dark adaptation**. A world asking for one must install and qualify its physical family before claiming corresponding evidence.
 
@@ -134,27 +136,27 @@ For each actual patch position `p_i` and receiver position `e`, let `u_i=(p_i−
 
 Let `W_i` be the patch's detection angular weight and `Q_signal = Σ(a_i T_i W_i max(L_i,H_i)M_i)/V`, zero when `V=0`. The per-receptor physical quality is `q_raw=sqrt(x)×S×Q_signal`; use `q=clamp(g(P)×q_raw,0,1)`. Take the maximum supported receptor quality for one physical opportunity, never sum duplicate eye observations. Illumination, field and occlusion remain per actual patch throughout.
 
-| Instantaneous `q` band | Supplied visual opportunity | A's selected rate, support units/normal-speed second |
-| --- | --- | ---: |
-| `[0,0.10)` | Completed no-opportunity; zero visual support | 0 |
-| `[0.10,0.25)` | Weak, multiplier 0.125 | 0.5 |
-| `[0.25,0.45)` | Weak, multiplier 0.25 | 1 |
-| `[0.45,0.70)` | Weak, multiplier 0.5 | 2 |
-| `[0.70,0.85)` | Weak, multiplier 0.75 | 3 |
-| `[0.85,1]` | Immediately obvious opportunity at its physical onset | Immediate |
+| Instantaneous `q` band | Supplied visual opportunity                           | A's selected rate, support units/normal-speed second |
+| ---------------------- | ----------------------------------------------------- | ---------------------------------------------------: |
+| `[0,0.10)`             | Completed no-opportunity; zero visual support         |                                                    0 |
+| `[0.10,0.25)`          | Weak, multiplier 0.125                                |                                                  0.5 |
+| `[0.25,0.45)`          | Weak, multiplier 0.25                                 |                                                    1 |
+| `[0.45,0.70)`          | Weak, multiplier 0.5                                  |                                                    2 |
+| `[0.70,0.85)`          | Weak, multiplier 0.75                                 |                                                    3 |
+| `[0.85,1]`             | Immediately obvious opportunity at its physical onset |                                            Immediate |
 
 These bands provide **constant rates over certified band intervals**. The technical solver isolates every quality crossing; it never samples a continuously changing rate at an arbitrary midpoint. A alone integrates, stores progress and solves acquisition: threshold/max **1**, full-strength rate **4/s**, unsupported-gap decay **2/s** and episode correlation grace **0.5 s**. Consequently uninterrupted rate 0.5 needs two normal-speed seconds from empty, rate 1 needs one, rate 2 needs half a second and rate 3 needs one third. A may have prior legitimate progress; B does not duplicate it. Immediate live loss occurs at actual support loss even when A retains correlation or historical equipment knowledge. Brief strongly lit exposure through a narrow gap can acquire immediately; brief weak exposure may remain below threshold and never become knowledge.
 
 ### Location precision
 
-Location describes the actual signal-received patch cluster, never a hidden body/support anchor. Before aggregate reduction, admit a patch to that cluster only if its local received-signal quality `s_i=clamp(g(P)√T_i W_i max(L_i,H_i)M_i,0,1)` is at least **0.10**, after its real range/field/occlusion/light gates. The square root matches the selected exposure law; a geometrically clear but dark patch supplies no location extent. Use the receptor whose supported quality wins, with authored receptor order breaking a tie. The cluster centroid weights these admitted patches by `a_iT_i`; cluster radius is their maximum distance from that unrounded centroid. Grid origin is the world's spatial origin, with world-axis alignment. Nearest-grid exact halfway cases round in the positive direction.
+Location describes the actual signal-received patch cluster, never a hidden body/support anchor. Before aggregate reduction, admit a patch to that cluster only if its projected represented area `a_i` is strictly positive and its local received-signal quality `s_i=clamp(g(P)√T_i W_i max(L_i,H_i)M_i,0,1)` is at least **0.10**, after its real range/field/occlusion/light gates. The square root matches the selected exposure law; a geometrically clear but dark patch supplies no location extent. Use the receptor whose supported quality wins, with authored receptor order breaking a tie. The cluster centroid weights these admitted patches by `a_iT_i`; cluster radius is their maximum distance from that unrounded centroid. Grid origin is the world's spatial origin, with world-axis alignment. Nearest-grid exact halfway cases round in the positive direction.
 
-| Acquired detection quality | Supplied location |
-| --- | --- |
-| Below 0.25 | Bearing only: centre yaw/pitch on a 5° grid, with angular spread enclosing the received cluster about its unrounded direction plus **3.536°** for the diagonal half-cell; round spread upward to a **5°** grid and cap it at 180° |
-| `[0.25,0.45)` | World-axis bounding region enclosing the actual visible cluster; round each minimum outward/down and maximum outward/up to a **2 m** grid |
-| `[0.45,0.70)` | Received centroid rounded to a **0.5 m** grid; error radius `clusterRadius+sqrt(3)×0.25 m`, rounded upward to **0.5 m** |
-| At least 0.70 | Received centroid rounded to a **0.1 m** grid; error radius `clusterRadius+sqrt(3)×0.05 m`, rounded upward to **0.1 m** |
+| Acquired detection quality | Supplied location                                                                                                                                                                                                                 |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Below 0.25                 | Bearing only: centre yaw/pitch on a 5° grid, with angular spread enclosing the received cluster about its unrounded direction plus **3.536°** for the diagonal half-cell; round spread upward to a **5°** grid and cap it at 180° |
+| `[0.25,0.45)`              | World-axis bounding region enclosing the actual visible cluster; round each minimum outward/down and maximum outward/up to a **2 m** grid                                                                                         |
+| `[0.45,0.70)`              | Received centroid rounded to a **0.5 m** grid; error radius `clusterRadius+sqrt(3)×0.25 m`, rounded upward to **0.5 m**                                                                                                           |
+| At least 0.70              | Received centroid rounded to a **0.1 m** grid; error radius `clusterRadius+sqrt(3)×0.05 m`, rounded upward to **0.1 m**                                                                                                           |
 
 Below-threshold accumulated support is still A's private progress and supplies no location knowledge. A current target reference can carry one of these scoped locations without exposing an exact hidden anchor. Quality and location-grid crossings are native measurement boundaries. A's measured-value interval records when that value was measured; continued availability of a moving body does not claim its latest centroid was stationary throughout the interval.
 
@@ -168,22 +170,22 @@ The selected person appearance family supplies four physical proportions with eq
 
 The single default face above is a QA fixture, not the whole population's appearance. Ordinary authorized creation takes **four independent draws** from the existing saved world RNG in fixed feature-table order, each integer `k` uniformly chosen from **0 through 50 inclusive**, and sets `ratio=min+(max−min)k/50`. Instantiate and save the actual ratios and resulting landmarks once; restore and sensing never reroll them. Do not retry to make faces unique. Explicitly authored cast members supply varied physical values through the same ranges instead; an existing acquaintance seed remains A's separate authored knowledge. Similar or identical faces are permitted and can remain ambiguous. These are real native appearance distinctions that G must depict at the supported level, including coarse summaries if its art cannot show precise proportions; a renderer's inability to display a subtle distinction cannot turn these values into a private identity code available only to recognition.
 
-| Feature ID | Measured ratio | Admitted physical range | Required landmarks |
-| --- | --- | --- | --- |
-| `eye-spacing` | Pupil separation / cheek width | `[0.22,0.46]` | Both pupils and both cheeks |
-| `nose-width` | Nose-wing separation / cheek width | `[0.12,0.28]` | Both nose wings and both cheeks |
-| `face-length` | Brow-to-chin distance / cheek width | `[0.70,1.20]` | Brow, chin and both cheeks |
-| `jaw-width` | Jaw-point separation / cheek width | `[0.55,0.95]` | Both jaw points and both cheeks |
+| Feature ID    | Measured ratio                      | Admitted physical range | Required landmarks              |
+| ------------- | ----------------------------------- | ----------------------- | ------------------------------- |
+| `eye-spacing` | Pupil separation / cheek width      | `[0.22,0.46]`           | Both pupils and both cheeks     |
+| `nose-width`  | Nose-wing separation / cheek width  | `[0.12,0.28]`           | Both nose wings and both cheeks |
+| `face-length` | Brow-to-chin distance / cheek width | `[0.70,1.20]`           | Brow, chin and both cheeks      |
+| `jaw-width`   | Jaw-point separation / cheek width  | `[0.55,0.95]`           | Both jaw points and both cheeks |
 
 Validate an authored ratio against its range; invalid content fails installation rather than clipping an impossible face into another profile. Normalize `z=1000(value−min)/(max−min)`; choose the nearest multiple of **20** as centre, with exact halfway cases rounded upward. Send the integer interval `[max(0,floor(centre−w)),min(1000,ceil(centre+w))]`. The widening below already exceeds the 10-unit maximum centre rounding error. Pose changes quality/availability, not the underlying admitted proportion. No hidden profile values appear in an absent dimension.
 
-| Feature quality | Interval half-width `w` | Band fidelity |
-| --- | ---: | ---: |
-| Below 0.25 or a failed physical gate | Dimension absent | 0 |
-| `[0.25,0.45)` | 220 | 0.35 |
-| `[0.45,0.70)` | 160 | 0.55 |
-| `[0.70,0.85)` | 80 | 0.80 |
-| `[0.85,1]` | 30 | 0.95 |
+| Feature quality                      | Interval half-width `w` | Band fidelity |
+| ------------------------------------ | ----------------------: | ------------: |
+| Below 0.25 or a failed physical gate |        Dimension absent |             0 |
+| `[0.25,0.45)`                        |                     220 |          0.35 |
+| `[0.45,0.70)`                        |                     160 |          0.55 |
+| `[0.70,0.85)`                        |                      80 |          0.80 |
+| `[0.85,1]`                           |                      30 |          0.95 |
 
 Supply `identityFidelity` as the equally weighted mean band fidelity over supplied dimensions whose **actual transmitted interval width is at most 400**, or zero if none qualify. A owns the width rule, shared-dimension comparison, learning and recognition: two mutually usable dimensions for a candidate, three for reliable recognition, and its own quality requirements. An interval clipped at an authored range boundary can be usable; this is real range knowledge, not permission to invent absent features. The smallest identity tier still reveals only these bounded proportions. Per-facet body/equipment evidence can exist with no identity dimensions. Masks, a turned face, foliage and low surface light remove or widen only physically affected dimensions; neither recognition nor a last-seen spear refreshes current hidden hands.
 
