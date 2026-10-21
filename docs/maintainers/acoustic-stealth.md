@@ -70,7 +70,7 @@ Dependencies below refer to the narrow implemented interface each slice needs, n
 
 **Primary integration:** `spatial-state.ts`, `kernel.ts` movement/action owners, base action/body definitions, `motion-boundaries.ts`, `temporal-boundaries.ts` and B's accepted pose.
 
-- [ ] Install the selected supported posture/gait definitions through ordinary action admission. Validate the resulting body, support, clearance and equipped attachments before a posture transition; a refused stand changes no pose, resources, contact phase or random state.
+- [ ] Install the selected supported posture/gait definitions through ordinary action admission. Validate the resulting body/support and actually supported equipment compatibility before a posture transition; refused admission changes no pose, resources, contact phase or random state. Revalidate at completion, preserve body capability identity, and keep committed evasion speed/end pinned. Accurate long-equipment extension clearance is outside current port geometry.
 - [ ] Reconcile movement speed, route availability, body/receiver origins, prediction and held-action constraints through one owner. Independent supported looking and posture compose with movement; camera or animation updates are not physical writers.
 - [ ] Generate contacts from accepted path segments, their actual distance/time and support/material crossings. Cover ordinary travel, follow, evasion, native wander/escape and supported landings. Attempted budget, blocked remainder, editor relocation, teleportation, endpoint chord distance and render ticks create no steps.
 - [ ] Retain gait/contact phase by exact body life across compatible interruptions, partitioned native intervals and save/reload. Preserve existing movement-fidelity progress as a separate quantity.
@@ -84,10 +84,11 @@ Dependencies below refer to the narrow implemented interface each slice needs, n
 **Primary integration:** actual strike/contact, projectile, flight/landing, working/activity and installed environmental producer owners, plus shared native interval selection.
 
 - [ ] Attach the designed source adapter to real supported impacts, equipment movement, foliage contact and work occurrences. Specify unsupported breaking/destruction instances honestly instead of introducing a full damage/physics subsystem by implication.
-- [ ] Install persistent producer start/change/stop and finite pulse spans with their own committed lifecycle and meaningful boundaries. Do not convert speech captions, provider tokens, text length, rendering or ordinary publication delay into physical sound duration.
+- [ ] Install persistent producer start/change/stop and actual finite interval spans with their own committed lifecycle and meaningful boundaries. Do not convert speech captions, provider tokens, text length, rendering or ordinary publication delay into physical sound duration.
 - [ ] Collect the complete source batch and synchronized receiver state at the agreed simulator boundary. Settle the old interval before changed policy/geometry/producer state applies, preserving half-open endpoints and the declared same-time phase order.
 - [ ] Mix actually overlapping sound in linear energy under the selected policy, excluding the candidate's own contribution where required. Preserve distinct consequential occurrences while sharing valid listener-local masking work and uncertainty.
 - [ ] Retain all contributing weak maskers under conservative bounds; a fixed loudest-N list or late source cannot erase a legitimate earlier cue. Moving sources/receivers and entry/exit boundaries must produce actual covered intervals.
+- [ ] Implement the technical design's exact constant-rate interval law, canonical physical boundaries and terminating constant/quadratic/polynomial root procedure, including tangencies, half-open endpoints and explicit representability failures. Point admission and scheduling share pinned primitive predicates.
 - [ ] Use existing required-work continuations, allowances and owed-time/backpressure. If exact work cannot finish, hold dependent progress or apply the specified coherent failure boundary; incomplete work is not silence and legitimate recipients are not truncated.
 
 **Exit:** a physical impact, an active work/environment source and a moving group can overlap coherently without a separate per-frame all-pairs propagation loop.
@@ -110,7 +111,8 @@ Dependencies below refer to the narrow implemented interface each slice needs, n
 **Primary integration:** existing `native-response-controller.ts`, refuge/navigation owners, native reception policy, E's ordinary work intake and F's actual-victim evidence cuts.
 
 - [ ] Add the compact permitted acoustic intake to the existing native controller and selected species bindings. Keep independent recipients, current eligibility, cause/repetition support and actual route/refuge constraints; no human memory or provider call is required for the animal.
-- [ ] Apply the physical-sound-specific eligibility policy so ordinary herd contacts do not automatically create a self-sustaining universal alarm cascade. Any secondary alarm/movement is a new actual producer that other bodies must independently receive.
+- [ ] Select voice response bands only from A-acquired voice-like classification or understood speech; route indistinct utterances through the same general filter as other identical received sounds. Apply the physical-sound-specific eligibility policy so ordinary herd contacts do not automatically create a self-sustaining universal alarm cascade. Any secondary alarm/movement is a new actual producer that other bodies must independently receive.
+- [ ] Preserve blocked/proposal truth and nonwaking semantics in the shared alarm helper. Save the single pending acoustic refuge-leg obligation and retire it only through actual bound arrival/cancellation; empty known danger alone cannot settle the animal. Keep presence/rise baselines outside the optional alarm episode.
 - [ ] Suppress redundant response/intake work by the exact permitted cause/pattern and meaningful change rules while preserving distinct consequences and occurrences. Expired or invalid support cannot keep a response eligible after restore.
 - [ ] Hand E a permitted historical bearing/region, quality and relevant change, allowing ignore, listen, investigate or another ordinary choice. Do not force every person to turn or route them to a live hidden entity.
 - [ ] Hand F already-acquired facts and immutable support before its dependent cut. Preserve warning just before an attack, incomplete required work, nested callbacks and the exclusion of the same impact as its own advance warning.
@@ -123,6 +125,7 @@ Dependencies below refer to the narrow implemented interface each slice needs, n
 **Primary integration:** existing source/body/activity encoders and validators; A's PP06; personal accounts, memory hydration, snapshots/patches/history and G's presentation.
 
 - [ ] Save exact physical source/life, instantiated profiles, contact phase, producer state, consumed interval/sample roots, current policy pins and absolute simulation deadlines through their existing owners. Implement the current format together; add no legacy compatibility store or parallel acoustic autobiography.
+- [ ] Separate compact actual-occurrence retention from audience-driven full narrative append. Preserve every acquired animal cue's own sensory lifetime and exact root, while A/native episodes/cuts retain required minimal support; a mixture adds no world event and an interval adds no row per evaluation.
 - [ ] Restore without replaying old utterances/contacts, rerolling profiles or masks, accruing downtime hearing, resetting weak-learning eligibility, extending controller deadlines or attaching an old source life to a replacement body.
 - [ ] Rebuild derived indexes from saved authority without acquiring evidence. Complete native cold working sets before dependent cuts; historical source facts can survive the emitter's later removal.
 - [ ] Reconcile explicit dependency writers and draft-audit coverage for pose, material, equipment/containment, producer state, hearing capability, source/receiver motion, geometry, background and policy. Settle old intervals first; unknown coverage conservatively rebuilds. Recognition/name edits invalidate interpretation without needlessly repeating unchanged propagation.
@@ -202,7 +205,7 @@ Before implementing, read the paired design, installed physical-sound policy, ac
 - Product behavior and scenarios: [acoustic feature specification](../projects/acoustic-stealth-feature-spec.md).
 - Technical contracts and verification cases: [acoustic technical design](../projects/acoustic-stealth-tech-design.md).
 - Selected world behavior: [physical sound](../worlds/base/physical-sound.md), [animal sound responses](../worlds/base/animal-sound-responses.md), [A recognition policy][a-policy].
-- Limits: [acoustic inventory](../limits/acoustic-stealth.md), unchanged [hearing inventory](../limits/hearing-and-speech.md), shared [stealth inventory](../limits/stealth-awareness.md).
+- Limits: [acoustic inventory](../limits/acoustic-stealth.md), existing [hearing inventory](../limits/hearing-and-speech.md), shared [stealth inventory](../limits/stealth-awareness.md).
 - Cross-project work: [SAD-C / SAI-C / SAD-I](stealth-awareness.md), [PP00–PP07][a-work], [SPK](speech-and-social-perception.md), [HE](hearing-and-speech.md), [CTR](combat-and-threat-responses.md).
 - Shared representation dependency: [SA-D02][sa-d02].
 
