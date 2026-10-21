@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | The design is being completed; runtime implementation and qualification have not started. | 2026-10-19 |
+| In progress | Design complete. Runtime implementation and qualification have not started. | 2026-10-19 |
 
 ## 1. Scope, baseline and controlling contracts
 
@@ -37,6 +37,7 @@ The hard guarantee is mechanically checkable coverage of declared required sourc
 | `apps/server/src/entity-references.ts` | Allocates observer handles and resolves model fields/explicit annotations; first `entityHandles` use currently hashes the entire entity collection. | Build only the selected permitted reference closure at this existing owner; avoid whole-world hashing; preserve opaque scoped identity and deterministic collisions. |
 | `apps/server/src/cognition-contracts.ts` | Defines immediate operations and reused reflection payloads; current provider alternatives carry inactive null fields. | Export focused payload schemas and one sparse operation union, shared with local parsing; build request-specific reference and capability constraints without null padding. |
 | `apps/server/src/navigation-contracts.ts` | Defines navigation and installed-request shapes, with independently selected family and parameter alternatives. | Pair each family with its exact parameter shape; derive model descriptions from installed semantic definitions, excluding form layout/button metadata. |
+| `apps/server/src/appraisal-context.ts` | Binds exact decision/reflection sources, definitions and private feelings; decision appraisals already retain revisions server-side. | Add required appraisal evidence/values to the same finalized manifest; preserve source/scale pairing and current guards without duplicating a second context or changing feelings through formatting. |
 | `apps/server/src/ai-director.ts` | Chooses routes, adds appraisal/invention context and schema, dispatches, previews and publishes. | Consume the finalized preparation; count additions before paid dispatch; preserve ordinary route selection and the separately selected threat strategy; use the same sparse parser for preview and final validation. |
 | `apps/server/src/decision-preparation.ts`, `decision-escalator.ts` | Reprepare a configured higher-model reconsideration using native/cached evidence. | Use the same selector and sparse contract with existing no-paid-preparation restrictions; do not serialize a second raw character envelope or invent a retry. |
 | `apps/server/src/activity-request-choice.ts`, `action-response.ts`, `action-grounding.ts`, `typed-actions.ts` | Build and ground known/invoked/proposed responses. | Preserve exact mode, purpose, quantities and references through the sparse shape; selected descriptions do not replace native meaning. |
@@ -136,10 +137,12 @@ Run the following sequence once for an admitted decision opportunity, reusing ex
 8. **Choose complete optional units within remaining space.** Rank with the existing source-specific relevance/recency ordering, then stable source key for otherwise equal candidates. First include optional sources directly required to interpret another retained optional choice/account. Where independent source families compete, visit nonempty families in a deterministic cycle using the existing configured candidate order; include the next fitting complete unit plus its full dependency closure. Deduplicate repeated sources. Do not fill a budget with repetitive negative memories while ignoring available social, positive or exploratory candidates. No mandatory number of “fun” facts or extra personality database is introduced.
 9. **Hydrate only selected bodies and required dependencies.** Charge all visited rows, source bytes, native checks and dependent queries to the same preparation. If an optional body is unavailable or larger than its bound, remove that optional unit and its uniquely needed dependencies, record the coverage and continue. If a required body is unavailable/oversized, use section 6.3; never downgrade it to a generic summary. A bounded extra metadata record may establish continuation without computing the full omitted population.
 10. **Refresh changed current facts after asynchronous preparation.** Preserve source-time history. Refresh only the exact affected current observations/body/work/definition facts through their owners, retaining the original actor/audience/source scope. Recompute any newly required closure. If an observation/recognition/source guard fails, discard that preparation; do not keep a stale semantic fallback. New facts must not inherit old source timestamps.
-11. **Create references and schema from the finalized manifest.** Build all visible labels/handles, action bindings and knowledge references together. Include current relevant appraisal/invention context through this same step. Compile the sparse request schema, render instructions and context, and measure the actual UTF-8 bytes. Remove only optional units if final encoding exceeds an allowance, repeating closure/reference/schema finalization after each removal.
+11. **Create references and schema from the finalized manifest.** Build all visible labels/handles, action bindings and knowledge references together. Include current relevant appraisal/invention context through this same step. Account for encoded unit fragments, reference entries, schema fragments and structural delimiters before assembling complete strings. If the total exceeds an allowance, remove optional roots in reverse selection priority, update their supported closure and affected reference/schema fragments, and then render the complete final request. Measure its actual UTF-8 bytes; a remaining required overflow refuses dispatch.
 12. **Freeze and admit the exact request.** Retain the prepared bytes/schema/manifest and their digest for dispatch, local validation, diagnostics and source checks. Run normal spending/execution admission once. No adapter may silently append a manual, full activity catalog, old conversation or raw world object.
 
-A deterministic retry of local formatting after removing an optional unit is unpaid preparation, not a provider retry. The preparation loop is bounded by the admitted finite candidate set: each iteration either adds one previously unvisited unit, removes an optional unit, finishes, or returns a coded failure. Do not repeatedly render every prefix after each character or grow speculative variants before size admission.
+A deterministic correction of local encoding after removing an optional unit is unpaid preparation, not a provider retry. The preparation loop is bounded by the admitted finite candidate set: each iteration either considers one previously unvisited candidate, removes an optional root, finishes, or returns a coded failure. Do not repeatedly materialize the entire prompt/schema after every removal or grow speculative variants before size admission.
+
+Maintain the selected dependency graph and its accounting incrementally. At graph construction, collapse dependency cycles into components; the resulting component graph is acyclic. Each selected component holds protected-root support, optional-root support and support from selected incoming components. Activating a previously inactive component activates its dependencies; removing a root propagates deactivation only when no root or selected incoming component still supports it. A component containing required support cannot be removed. This handles a shared tool/reference or a cycle without deleting another retained choice's meaning or retaining an unreachable optional cycle forever. Cache each admitted fragment's encoded length, including escaping; update counts and affected bound reference/enum fragments without copying unchanged bodies. Candidate-closure traversal and retained graph bytes are charged to the same preparation workload; consider a rejected candidate once and do not repeatedly scan unselected source bodies. Sorting, cycle detection and accounting remain pure functions in the focused selection module, not a new graph service.
 
 ### 6.2 Dependency rules that prevent misleading brevity
 
@@ -285,7 +288,7 @@ Goal alternatives are: create with `operation`, `objective`, nullable `parentId`
 
 Plan alternatives are: cancel with `mode: cancel` and `expectedRevision`; enqueue/replace/interrupt each with `mode`, `expectedRevision`, nullable `goalId`, and `steps`. Cancellation has no new steps or goal. Each step is either `{actionId}` or `{itemFromStep, useItemAs}`. `itemFromStep` must be an earlier zero-based index within this submitted frontier; `useItemAs` uses the currently supported equip/eat roles. A prior step must actually support one item output receipt of the required meaning. No array order, local goal dependency or proposed action creates a future item identity. Continuation consumes actual receipts, stops/reports failure through the agency owner, rechecks current prerequisites and does not replay already committed outputs after save/load.
 
-Appraisal alternatives reuse `bindDecisionAppraisals`: create with an exact supplied definition/source, nullable supported target, and that definition's qualitative/scaled value; reframe with exact existing appraisal/source and its supported value; resolve with the exact supplied appraisal. Pair the definition with the correct value shape and limits rather than allowing any definition alongside any numeric/qualitative branch. The server retains the source/definition/record revision binding and native source-cause rules. A qualitative value contains no invented number; an unavailable feeling is not numeric zero. Appraisal remains absent only when the selected world/body/route genuinely provides no admitted decision appraisal, not because an optional relevance rule thought emotion unlikely.
+Appraisal alternatives reuse `bindDecisionAppraisals`: create is exactly `{kind: create, definition, source, target, value}` with a nullable supported target; reframe is exactly `{kind: reframe, appraisal, source, value}`; resolve is exactly `{kind: resolve, appraisal}`. `value` is either `{kind: qualitative}` or `{kind: scaled, value}`. Bind each definition/existing feeling handle to its actual value kind and scale bounds; do not allow any definition alongside any numeric/qualitative branch. The source, target and appraisal fields use only their corresponding supplied exact bindings. Decision appraisal output already omits expected revisions: its current binder supplies captured record revisions. Preserve that precedent and its native source-cause rules; reflection's different payload is not a reason to repad decision output. A qualitative value contains no invented number; an unavailable feeling is not numeric zero. Appraisal remains absent only when the selected world/body/route genuinely provides no admitted decision appraisal, not because an optional relevance rule thought emotion unlikely.
 
 ### 9.3 Action alternatives
 
@@ -353,6 +356,243 @@ Sparse `anyOf` alternatives need no `$ref` support and ship first. The current l
 If complete-schema measurements show worthwhile repeated entity/action definitions after sparsity, SC12 may enable **local, nonrecursive references within the captured schema only**. Resolve an exact `#/$defs/<escaped-key>` or the chosen equivalent single local namespace; reject external URI, missing target, cycle, dynamic/recursive reference and unsupported reference form before provider dispatch. Retain strict object/all-declared-properties checks when traversing referenced definitions, bound traversal by admitted schema nodes/bytes, and compile only the frozen captured schema. Memoize visited definitions for validation, not authority. Update every configured provider/preview path and exact schema validation before activation. Do not add an external schema loader or recursive grammar support merely because the vendor supports it.
 
 This is a measured optimization gate, not an unresolved product choice: retain inline definitions if the net encoded/token/latency benefit is absent or the configured route cannot qualify the subset. Both outcomes preserve one current schema generator; no alternate old-format parser remains.
+
+## 10. Later refinement: server-bound revisions and one work mode
+
+SC12 removes revision echoing after the sparse contract and its consumers are qualified. This is a selected later stage within this project, not permission to weaken optimistic concurrency. The server already knows which exact revision it showed the character; asking the model to copy that number adds tokens and can create avoidable validation failures. Native mutation still receives and checks the exact expected revision.
+
+### 10.1 Binding and model shape
+
+Extend the existing prepared response binding with a read-only `revisionBindings` map keyed by the complete world/timeline/actor/record-kind/target identity. Each entry retains the expected revision, whether the target existed, required source/content coverage, and the owner's read dependencies. Use exact keys/typed records; an entity reference and a knowledge-document reference are different namespaces.
+
+Remove `expectedRevision` from model-facing goal updates, plans, note edits and name edits. Remove model-only `noteRevision`, `nameRevision` and comparable fields from References when no remaining decision consumer needs them. Do not remove a meaningful current plan status, actual amount, time remaining or correction because it also has a revision. The server supplies native expected revisions from the retained binding immediately before each operation's existing mutation owner runs.
+
+A full replacement of a nonempty knowledge note requires the exact current note text in that operation's prepared read set; a note's label/revision alone is insufficient to preserve information. A newly created/empty note instead requires a captured authoritative absence/empty state. The initial selector includes material relevant note text and keeps the note capability discoverable. An omitted nonempty document is not a prepared replacement target. Obtain its detail through a current supported route or a later properly prepared decision; do not invent an inspection API or silently replace unseen text. Independently permitted operations continue under their usual rules. The same principle applies to revising an unseen goal objective or naming an unresolved subject.
+
+For absent targets, distinguish a captured known absence from a missing binding. Revision zero may represent the owner's current absent-record convention; it never means “ignore revision checks.” Creating a goal uses the native allocator and returns its actual ID in that component receipt; a model-provided `$localId` is only an accepted same-reply alias.
+
+### 10.2 Same-reply write semantics
+
+Maintain a small response-local table of the last **accepted** writer and resulting revision for each target. It is derived while the existing serialized response commit runs, not a persisted second state store. Apply these rules in operation order:
+
+1. With no earlier accepted write to the target, compare its current owner revision with the captured binding. A mismatch refuses that component as stale; never reread the newest record and silently adopt it.
+2. If an earlier accepted operation in this reply wrote that target, a later write may use the resulting revision only when `requiresAccepted` explicitly includes that last accepted writer's local ID. Otherwise the later write still expects the captured revision and is refused after the conflicting change.
+3. A dependency on an older writer is insufficient if a later accepted write to the same target intervened. Require the current last writer, avoiding accidental overwrite of a sibling operation's accepted edit.
+4. A failed/skipped writer changes neither the target nor the table. A dependent operation receives the existing dependency-rejected outcome; independent operations remain eligible.
+5. Target creation through a valid earlier local alias uses the created ID/revision only with the required accepted dependency. No alias can refer to a future operation, another request, or a nonmatching receipt kind.
+6. Read dependencies remain protected too. For example, a child goal depending on the displayed parent purpose must not silently bind a changed unrelated parent objective. Exact owner guards determine whether a changed record matters.
+
+The native owner returns the affected target/revision information needed for this table as internal typed commit metadata. Do not infer mutation from text, increment revisions manually in a transport adapter, or assume every accepted operation writes the same record. Existing command/result facts, accounting and component receipts remain authoritative. A dependent write is based on an explicit prior proposed effect and its accepted receipt; no new model call is required.
+
+Perform the model-to-native binding once at the existing admission boundary using the retained request. The native `ActorResponse`/command representation can include revision metadata the model never sees. This is a current trust-boundary projection with distinct responsibilities, not compatibility with the retired padded JSON shape. Update every current producer/parser/caller and the diagnostic schema label in that stage; no old schema remains accepted.
+
+### 10.3 Transition mode appears once
+
+For an installed request whose declared mode field is the same work transition as `act.mode`, derive that field from the single selected `act.mode` at native binding. Its installed definition explicitly identifies the shared role. Keep independent mode-like fields if their meanings differ. A known prepared choice's allowed transition remains part of the exact binding and must match the selected mode; no default overrides it.
+
+This removes repeated form metadata without changing enqueue/replace/interrupt semantics. Qualification must show an exact replacement with lost work/resources, a legitimate temporary interruption with supported resumption, an independent social withdrawal that starts no physical work, and a mismatched unsupported transition refused before costs.
+
+## 11. Complete request accounting and cache behavior
+
+### 11.1 Measurements and existing limits
+
+Current generative levels enforce a message/context byte allowance and a separate schema allowance; the transport additionally bounds its fully serialized request. They also have their own output/reasoning/request/spend controls. Keep their exact values, rationale and status in [the existing limits inventory](../limits/cognition.md#cg08), not a second independent constants table here. Immediate levels retain zero tool rounds. The existing conversation-compaction and source-preparation bounds remain at the SPK/memory/narration owners.
+
+Produce the following measurements from the actual prepared request:
+
+| Measurement | Definition |
+| --- | --- |
+| `instructionsBytes` | UTF-8 bytes of actual trusted system/developer instruction strings sent by the adapter. |
+| `contextBytes` | UTF-8 bytes of the final model-facing facts, conditional guidance and reference text. |
+| `schemaBytes` | UTF-8 bytes of the compact actual response schema passed to the adapter, including descriptions/enums/local definitions. |
+| `toolDefinitionBytes` and `toolResultBytes` | Actual separately supplied tool definitions/results on a route that supports them; zero for immediate v1 cognition, not an implicit free allowance. |
+| `transportBytes` | Bytes of the exact serialized provider request, including its wrapper, role/message structure and fields. This is the transport gate and is not itself a billed-token count. |
+| `estimatedInputTokens` | An explicitly labeled estimate for the **complete** input, with estimator/model/version/basis; include schema/tool overhead conservatively or mark that component unavailable. Do not relabel prompt bytes divided by three as total measured usage. |
+| `maxOutputTokens` and `visibleOutputBytes` | The actual selected provider output allowance and local output envelope limit. Reasoning tokens follow the configured adapter's reported semantics. |
+| `providerUsage` | Actual input/output/cached-input/reasoning counts when supplied by a provider receipt, with missing/uncertain fields preserved. |
+| `preparationWork` | Metadata/source rows visited, bytes hydrated/rendered, definitions compiled, references generated, exact native checks, cache results and elapsed/CPU work at each relevant stage. |
+
+Avoid double counting: schema text included inside `transportBytes` is reported as a component of that total, not added to it again. Input text encoded twice by an adapter is real duplication to remove. Pretty-print indentation in an exported HTTP JSON view can inflate displayed lines without proving the same tokens were sent; stored message-string whitespace is different. The attachment measurements and all discussion decisions live in the [evidence record](situation-aware-cognition-context-evidence-and-decisions.md).
+
+At final admission, satisfy the existing message, schema, serialized-body and selected model-context/output limits together. Do not raise one silently to accommodate duplicated content. Use the configured/pinned adapter capability, not assumptions about a newer model sharing a product name. Exact local provider tokenization may be unavailable; retain the conservative byte gates, disclose estimate limits and compare with actual provider receipts rather than purchasing a counting request automatically. `maxOutputTokens` controls potential output; lowering it does not remove input context and can create truncated replies.
+
+Count all separately admitted work for the decision: semantic retrieval/query embeddings, attention, any existing optional summary, threat relevance/appraisal and choice, generation, interpretation and configured reconsideration. A smaller final GPT request can still be a more expensive pipeline if extra calls were added. A no-dispatch preparation refusal reports no generation spend but retains any already incurred preparation costs. Missing usage is not zero spending.
+
+### 11.2 Stable prefix without stale meaning
+
+Place the trusted shared instructions and genuinely stable selected-world semantics before actor-specific and current-event material where the configured adapter permits that arrangement. Keep schema names stable for a contract shape rather than embedding a job ID. Canonicalize only fields whose ordering is semantically irrelevant; preserve chronological evidence, operation order, action-choice insertion/tie semantics and selected priorities.
+
+Cache eligibility depends on the actual provider-rendered prefix and applicable settings, including tools/schema where that adapter uses them. Per-request entity enums or capability sets can change the schema and prevent reuse even if the first system paragraph is identical. Record actual cached-input usage; do not promise a cache hit from rearranging prose. Dynamic context selection and provider prefix caching are distinct optimizations.
+
+Keep request-scoped entity enums in the first delivery because they prevent invalid references before paid output arrives. A globally static unconstrained reference schema is not selected merely to improve caching. Shared local definitions can later reduce repeated enums without changing the exact permitted set. Measure whether prefix reuse outweighs schema variation on the actual selected model/route; never retain stale facts, drop needed alternatives or expose another character's context to obtain a larger cache hit.
+
+### 11.3 All transport and generated-value paths
+
+The same finalized model contract must reach direct OpenAI generation in `packages/ai/src/client.ts`, Macrofold direct generation in `packages/ai/src/macrofold-decision.ts`, any currently supported full-generation path in `apps/server/src/macrofold.ts`, native/fixture generated-value callers, decision reconsideration and the private first-speech parser. Their actual API wrapper names may differ; their semantic payload and binding do not. Do not copy an example from a later vendor API into the pinned adapter without checking its current request shape.
+
+The package boundary already captures/freeze-validates a schema for local decoding. Retain those exact schema bytes across the provider wait and reuse them at final parse; a caller mutation cannot change what was requested. Diagnostics may project a compact summary, but an authorized exact request inspection must correspond to what was actually dispatched. Trace coverage must distinguish a prepared request, an accepted remote request, final output validation and committed operations.
+
+The [dated provider research](situation-aware-cognition-context-evidence-and-decisions.md) supports nested closed alternatives, describes schema/tool input overhead and explains exact-prefix caching. It does not establish compatibility or savings for the configured OpenLegend route; actual adapter qualification remains required before activation.
+
+## 12. Freshness, authority, publication and persistence
+
+### 12.1 Boundary-by-boundary checks
+
+| Boundary | Required retained/current checks |
+| --- | --- |
+| Before metadata/source selection | Actor/world/timeline/audience/control, permitted source family/query, body eligibility and current definition scope. |
+| After asynchronous memory/inspection/relevance work | Source family/ID/revision, forgetting/correction/privacy, actor recognition/exposure and read scope; discard old text before any newly permitted disclosure. |
+| Before paid generation | Complete finalized required closure, current actor/job/authority, latest permitted required-outcome boundary, exact schema/reference agreement, all size and spending gates. |
+| Before first private speech preview | Complete talk-only operation under the final request schema, no admission dependency, exact permitted requesting addressee, current source attribution/hearing and request/control/timeline checks; applicable pre-display content checks remain required. |
+| Before each native operation | Current actual prerequisite/authority, body/target life, installed definition, exact resource/consent/work transition and relevant revision/source binding. An earlier preview or relevance result grants no permission. |
+| After commit | Record exact independent receipts/effects, accepted source cut and already committed costs; new personal outcomes enter the shared experience owner once. |
+
+Distinguish invalidated evidence from newer additive evidence. Corrected/forgotten support, changed target identity/life, revoked authority or replaced work can invalidate dependent operations. Unrelated world changes do not. Current feasibility must be checked even when a retained historical observation remains valid. A later utterance or ordinary meter decay does not automatically make every in-flight response stale; apply the current route's meaningful-change/urgent-refresh policy and retain the original source time. Never claim the generated decision considered events after its captured cut.
+
+The existing urgent-refresh/supersession owner decides when a genuinely material new cause replaces an in-flight decision. This design neither adds unlimited retries nor suppresses later assaults/action outcomes to protect a cache. The selected threat strategy's whole-job refresh and bounded concurrency are owned by CTR08. A native already released effect can continue even if its source dies or stops participating; that fact grants no new observation rights to the departed source.
+
+### 12.2 Preview and independent operation safety
+
+`previewSpeechOperation` must positively parse the exact talk branch, not merely check that a remembered list of other fields is null. In particular, the current helper's manually enumerated exclusion list omits `appraise`; the sparse closed talk branch must reject any second payload, including a feeling proposal. Validate `requiresAccepted` is empty and perform current listener-specific disclosure checks before exposing words. A partially parsed text property is insufficient until the complete independently valid operation is closed.
+
+Keep the current backend preview private, provisional and absent from memories/world events/other listeners. Do not restore the retired world-first preview row. Failure, cancellation or stale scope withdraws provisional text; final admission emits at most one actual utterance through the ordinary speech owner. Native event/request/component identity reconciles it, not matching text. A preview never starts a walk, writes a note, accepts a goal or changes a feeling.
+
+A later independent malformed/refused action cannot retroactively turn a committed permitted utterance into something unsaid. Conversely, no preview acceptance authorizes the final action. Validate root syntax/envelope integrity at the common boundary and report individual semantic/native refusals through existing component receipts. Retain distinct provider failure, refusal, invalid output, unavailability, uncertain completion, stale evidence and deliberate quiet continuation.
+
+### 12.3 Save/load and reproducibility
+
+Context units, selection graphs, rendered prompts, prepared reference maps and local cache entries are derived operational state. Do not serialize them into the authoritative world as a second mind. Persist only the existing accepted character/world/source state, durable request/accounting/receipt data and the minimum diagnostic manifest under their current owners. Follow the current data-format policy; no old-save reader or compatibility fixture is authorized.
+
+Same-version save/load must retain accepted identity, goals/obligations, actual source-linked outcomes, method/output bindings, exact work progress and native random sequence. Rebuild derived selection/indexes against the restored world/source cut, without creation hooks, new rewards, new random draws or replayed paid calls. A restore changes timeline/authority generation, so an old in-flight result cannot publish even if its entity/source IDs recur. Current account grants and privacy overlays remain outside rewindable game state.
+
+The selector uses no world RNG. With identical permitted source snapshot, installed policy, source-specific relevance results and configuration, its selected units/order/aliases/schema are deterministic. Future live model replies are not promised to reproduce; use recorded accepted decisions for native replay. A cached derived summary retains exact source coverage and becomes unavailable after a relevant correction/forgetting/restore, rather than silently feeding abandoned-future experience into the restored character.
+
+If some operations already committed before failure or a separately admitted later stage failed, preserve those real effects and their costs. Do not replay speech, consume an item twice, recreate a method output or roll back a private feeling merely because later action generation did not finish. Unknown external completion retains the existing financial/execution uncertainty; context optimization adds no retry authority.
+
+## 13. Performance and preparation work
+
+The four design answers are:
+
+| Question | Answer |
+| --- | --- |
+| What grows? | Admitted decisions per actor, nearby density, possessions, known methods/definitions, retained personal evidence, simultaneously required commitments/threat choices, and dependency fan-out. Multiplying actors × every world entity or definitions × every item × every target is the principal risk. |
+| What preparation is shared? | Immutable installed definition meanings, actor-independent schema fragments, one actor/snapshot observation/access preparation, one memory read cache, exact source metadata, native tool prerequisites and physical checks shared by different purposes. |
+| What invalidates reuse? | Actual definition/source/privacy/recognition/body/work/geometry/custody/authority dependencies, meaningful clock boundaries and timeline restore. A generic global world revision is insufficiently selective, while an unchanged outer object is insufficient proof of nested immutability. |
+| How is the whole operation measured? | Through actual decision/inspection/generation-preparation/publication callers, with metadata rows, bodies/bytes, candidate/reference/definition/physical-check counts, cold/warm timing, retained memory, request usage and later admitted behavior. A formatter microbenchmark does not qualify the pipeline. |
+
+The pure closure visits each admitted unit/edge at most once per closure pass; optional ordering operates on the already bounded candidate set. Source metadata estimates reject provably oversized complete construction before copies/string assembly. Do not use an input character ceiling as permission to build an arbitrarily large object first.
+
+Address these concrete current growth points in their existing owners:
+
+- Select permitted reference IDs before hashing/formatting them; no whole-world entity map for one small request.
+- Select required possessions and a permitted inventory page before expanding the whole inventory. Keep equipped items and exact tools/ammunition already bound to current/paused work.
+- Reuse target-independent native capability/equipment/recovery checks before evaluating remaining tool/target combinations. Distinct purposes can reuse one physical check but retain distinct semantic identities.
+- Select complete source keys/sizes before cold SQL hydration; batch related permitted reads in one compatible snapshot and verify the actual database plan. A `LIMIT` on returned rows is not proof that the database did bounded work.
+- Compile immutable installed request descriptions/schema fragments once per exact definition pin, then bind only the actor-specific references/choices needed now. Do not recompile a full family for each item or actor if its immutable meaning is identical.
+- Keep public supports and learned methods paged/selected through existing query owners; a broad catalog's public status is not a reason to serialize it for every greeting.
+- Diagnostics use counters/reason enums and bounded selected manifests first. Full private text is loaded only for an authorized explicit inspection; context logging does not create a second full transcript store per poll.
+
+Use request-scoped reuse by default. A longer-lived cache needs an existing owner, explicit dependencies, bounded retention and disposal on source correction, grant/control changes and restore. Do not store another actor's private prepared text under a shared world-only key. Dynamic schema compilation caches, if justified, key the exact immutable schema digest and dialect, not merely its schema name. Missing invalidation coverage requires rebuilding, not a speculative cache.
+
+Qualification compares the small quiet scene, ordinary busy conversation, mixed speech/threat, many simultaneous local actors, large possession/method sets, cold retained memory and a large irrelevant world separately. Increase unrelated distant entities while holding the selected local scene fixed; the selected request/reference work should remain independent of that irrelevant population. Increase genuinely relevant local density separately to expose necessary growth. Include uneven cooperation graphs, changed containers/definitions, clock-only meaningful changes and restore, rather than reporting only a warm idle snapshot.
+
+No arbitrary new per-character fact count, personality excerpt length, fixed context profile count, tool quota or generic target-token number is introduced. Existing workload ceilings remain in the limits inventory. Savings are measured against matched requests; absolute latency/population targets retain their existing project owners and unqualified status. A timeout/exhausted query remains incomplete evidence.
+
+## 14. Implementation stages and release gates
+
+Detailed checkboxes/status belong in [SC01–SC12](../maintainers/cognition-context.md); this table defines order and integration boundaries.
+
+| Stage / tasks | Required implementation | Gate before proceeding/activation |
+| --- | --- | --- |
+| 1. Capture and account — SC01 | Add the typed retained manifest at `prepareDecision`; include late appraisal/invention additions and complete request metrics; preserve existing behavior while making required/optional coverage inspectable. | The exact sent context/schema/reference binding agrees with the manifest on ordinary and reconsideration paths; no new paid call or whole-world disclosure. |
+| 2. Remove mechanical repetition — SC03/SC04 | Remove duplicate activity catalog/UI metadata/manual; export shared payload schemas; implement sparse root/nested alternatives and native/current caller changes. | All enabled operation kinds and independent speech/action behavior pass through actual adapter serialization, parser, reference resolution, native admission and private preview. No old padded reader remains. |
+| 3. Dynamic informed selection — SC02/SC05 | Add nonexclusive signals, required closure, short world-derived capability views, optional selection/diversity and exact existing inspection continuations. | Required sources and material urgent alternatives survive; mixed situations do not become a single exclusive prompt; unavailable optional data cannot become absence; cold/large-source boundaries are exercised. |
+| 4. Complete provider and lifecycle integration — SC06/SC07/SC10 | Apply final accounting/prefix layout to every provider/reconsideration path; finish late-data, privacy, revision and preview guards; reconcile the persistent contracts and current implementation summaries. | Exact complete requests fit all applicable gates; current source/authority changes reject dependent publication, benign changes preserve valid preparation, and accounting remains correct under failures. |
+| 5. Remove echoed metadata — selected SC12 revision work | Bind model-free expected revisions, same-reply dependent writes and duplicate installed-request mode through section 10. Update current shapes/consumers together. | Same-target independent writes refuse, explicitly dependent writes succeed using actual accepted revisions, unseen note replacement is unavailable, and stale external edits cannot be overwritten. |
+| 6. Performance and character qualification — SC08/SC09/SC11 | Compare matched representative snapshots and ordinary complete gameplay episodes; qualify all configured production paths and documented failure modes. | Clear request/preparation savings without a required-context regression; independent informed behavior, uncertainty, creative opportunities and actual gameplay consequences are assessed separately from structural validity. |
+| Conditional refinement — SC12 local references | Enable the bounded local nonrecursive schema-reference subset only if the measured duplication and actual configured adapters justify it. Otherwise record the supported inline result. | Same semantic schema/coverage with a net measured benefit and provider/local/preview qualification; no external schema resolution or fallback paid call. |
+
+Each stage is an end-to-end change to the current contract, not two production versions kept for backward compatibility. For a running deployment, use the existing job/cancellation/receipt owner to stop admitting old-contract work and fence its uncommitted results before enabling the new contract; preserve accepted effects and unresolved real spending. Do not wait indefinitely for remote cancellation or replay an interrupted call. Fresh current-format development state is allowed only under the root development policy; same-version restore remains required.
+
+Use previous-revision disposable checkouts or captured permitted fixtures for comparisons. Do not leave an old runtime implementation solely for comparison. An unpaid shadow compilation may compare selected manifests during controlled verification; it must not make an extra model call, mutate a character, consume world randomness or become a second authority. No production rollout or paid evaluation is authorized by this documentation-only task.
+
+### 14.1 Cross-project coordination
+
+| Existing owner | What this design supplies; what remains there |
+| --- | --- |
+| CR01/CR03/CR04 | Complete compact preparation, metadata separation and required/optional source coverage. Existing retrieval/scoping/attention owners remain; this design does not create another memory selector. |
+| CR08/CH01 | Existing explicit inspection and evidence for an omitted-detail problem. New multi-turn private recall/planning remains behind its existing demonstrated-need and execution gates. |
+| SPK | Shared structured permitted speech/experience, source-linked summaries, stable recognition and membership-free exchange context through the same preparation. Its accepted contracts replace current group/episode assumptions when implemented; compact wording cannot weaken them. |
+| CTR05–CTR08 | Complete actor-permitted threat snapshot and preserved exact purpose/action bindings. Keep the selected threat route's mandatory relevance/appraisal stage followed by independent choice; do not add that route to every ordinary greeting or remove either stage to save tokens. |
+| CE03/CE05/CR12/AG12 | Context that preserves individual voice, actual needs, meaningful positive/negative/ambivalent experience, independent choices and later consequences. These owners retain full character-quality and enjoyment acceptance; schema checks do not close them. |
+| Existing action/identity/save/provider owners | Current authority, exact references, physical outcomes, continuation and real accounting. Only the context representation and explicitly selected revision projection change here. |
+
+CTR's stage-one accepted appraisal is deliberately included in stage two's postcommit snapshot. Refresh only that job's proven changed dependencies; retain original cause/source/privacy guards. Its own consumed appraisal receipt must not retrigger the same pipeline, while a later real blow, withdrawal or physical result remains new evidence. Ordinary context selection must not trim a complete-required strategy set or convert unavailable relevance into deliberate nonviolence. Broader noncombat route behavior stays at its existing owner.
+
+## 15. Acceptance scenarios and implementation checklist
+
+The following are required observable cases, not evidence that they have run. Prefer existing focused fixtures, caller scenarios and actual provider smoke paths under repository verification policy; add a focused regression test only where needed to protect a consequential uncovered contract. Do not write a suite that merely reproduces formatter output or impose unrequested broad testing on unrelated systems.
+
+### 15.1 Context coverage and privacy
+
+| Case | Required result |
+| --- | --- |
+| Watchpost-style arrival with identity, supplies, Orin, animals and no currently relevant fire activity | Full accepted identity/body/goals and the actual arrival/source/outcome meaning survive; exact references remain. The repeated activity catalog and UI form metadata appear zero times as duplicates. A visible wolf is not automatically labeled an attacker; a materially relevant remembered fire or promise would reactivate its necessary detail. |
+| Ordinary directed greeting while an actor carries out chosen work | Actual current utterance and useful exchange, personality, current purpose and meaningful needs remain; unrelated detailed method/form manuals are absent. The character can speak while retaining work or choose a warranted independent change. |
+| Warning and physical assault in the same admitted causes | Social, threat, body, work and relevant material/feeling sources are unioned; neither a last-event speech template nor an all-combat persona replaces them. |
+| Required feeling lies beyond the convenience projection's first page | Exact required subject/source lookup or continued pages obtains it; zero/absence is never fabricated. Incomplete required lookup defers the affected strategy. |
+| Partial inventory with useful equipment outside the ordinary page | Already-bound/equipped tools survive through exact lookups; optional unsearched stock is explicitly incomplete and remains inspectable. No “I have none” claim comes from the first page. |
+| Visible bag with hidden contents or unread inscription | Outer description grants no contents/text. A deliberately permitted inspected page exposes only its exact items/text, with correct provenance and nested/access restrictions. |
+| Two same-named actors, unseen remembered speaker, or changed exposure | Exact permitted mappings/roles are preserved without fuzzy matching; history does not disclose hidden current position or upgrade recognition outside its owner. |
+| Same source ID in observation and another record family | Required checks/hydration use complete keys; one family's supplied source does not accidentally satisfy, overwrite or revoke the other. |
+| Two optional choices share a tool/reference, and one optional dependency cycle is removed for size | Retained choices keep every shared dependency; a required root is never removed; an unsupported optional cycle is removed completely. Encoded accounting changes without rebuilding every complete prompt prefix or rereading source bodies. |
+| Contradictory testimony, corrected source and an ambiguous “yes” | Preserve attribution/contradiction or explicit ambiguity; no summary converts it to verified agreement or consensus. |
+| Optional retrieval/compaction unavailable or index lagging | Required evidence remains; actual partial coverage is truthful; no full dump, fabricated empty result or automatic paid retry. |
+| Required identity/source/reference closure over budget | Refuse affected dispatch before optional paid work where overflow is already provable; no truncation. The actor's current native work and unrelated world simulation continue. |
+| Hidden distant entities or another actor's private notes are changed | A request with the same permitted selected evidence remains unchanged; private data influences neither snippets, counts, relevance ranks nor handle collision preparation. |
+
+### 15.2 Structured response and admission
+
+| Case | Required result |
+| --- | --- |
+| Empty operations | Valid deliberate continuation; no forced thought, action, goal, appraisal or speech. Distinguish it from invalid/unavailable output. |
+| Repeated talk/think operations plus one action | All supported entries remain independently admissible in order; speech and action can coexist; physical completion is not inferred from a preceding entry. |
+| Two payload keys in one entry, including talk plus appraise | Rejected by both the strict provider/local contract and preview parser; no provisional leakage. |
+| Every enabled kind and legitimate null | Talk introduction, general note target, untargeted supported appraisal, optional proposal slot and supported navigation default retain their meanings. No unused operation/variant null fields are generated. |
+| Known action when no shortlist exists | No fabricated action handle. Generic supported invocation, goal changes and open proposals remain available under their actual route rules. |
+| Installed family paired with another family's fields | Structurally invalid before native admission; native definition/reference/prerequisite checks remain in force. |
+| Same physical action with two purposes or work modes | Both distinct choices retain exact purpose/control consequences; their shared physical preparation does not collapse semantic identity. |
+| Native plan uses earlier produced item | Wait for actual earlier completion and exact supported output receipt; reject a forward index, missing output, wrong role or invented future item ID. Restore continues once without replaying production. |
+| Goal create followed by plan using `$localId` | Requires the accepted earlier goal dependency. Status changes contain no irrelevant objective, cancellation no steps, and `interrupt` remains a valid supported plan mode. |
+| Known/proposal/invoked action fails after independent speech | Preserve actual admitted speech and truthful failed action receipt; no imaginary completed work or paid repair. |
+| Stale goal/note/name/plan revision | Refuse the affected edit. After SC12, server-bound revisions yield the same outcome without model echo. Explicit same-reply dependencies use actual accepted writer revisions; independent sibling writes do not silently overwrite. |
+| Preview starts before later payload completes, followed by cancellation/revocation | No text before a complete valid talk operation and required output/disclosure checks; later cancellation withdraws provisional text and creates no world memory. |
+| Local schema reference refinement | Missing/external/cyclic reference rejects locally before dispatch; admitted local definitions yield the same allowed outputs, references and privacy as inline schema. |
+
+### 15.3 Fun, informed choice and complete cost
+
+Run matched whole episodes through the existing [compelling-character evaluation](compelling-characters-feature-spec.md#production-route-and-creative-comparisons), keeping required identity, source conditions, actual available actions and provider settings fixed. Do not grade against one desired action. A grounded refusal, hesitation, joke, curious detour, offer of help or continued solitary work can all be valid if supported by the actor's perspective and actual constraints.
+
+Required contrasts include a practical supply decision; a social request while busy; an inviting optional discovery; a pleasant or playful encounter; a private concern conflicting with the immediate goal; a mistaken belief challenged by new evidence; a sudden danger; and a later choice reflecting an earlier accepted experience. Include the ordinary route an NPC could take without the optional mechanic, so extra inspection/reading is not mistaken for a richer experience by itself.
+
+Assess separately:
+
+- Whether the context contained every declared required source and material alternative.
+- Whether the character understood quantities, people, timing, uncertainty and work consequences.
+- Whether the character retained its own voice, autonomy and a range of supported practical/noninstrumental options.
+- Whether an actual later action/conversation changed meaningfully, rather than only producing a fluent private sentence.
+- End-to-end response and preparation latency, refusal/defer rate, input/output/cached tokens, all auxiliary calls and real/uncertain cost.
+- Human-assessed readability, distinctiveness and uncoached enjoyment. Engineer judgment or fixture success cannot close this gate.
+
+A quality miss must record which required or optional source/meaning was missing, why selection omitted it and whether initial selection or a useful inspection fixes it. Prefer correcting the source/selection/description at its owner to expanding every prompt or adding another model. Record contrary examples, invalid responses and unfinished calls; do not select only the successful run. Paid qualification requires the existing account-owner authorization and task cap and is not performed by this design-only work.
+
+## 16. Decisions and remaining uncertainty
+
+**Selected design decisions:** one deterministic actor-scoped preparation/manifest; nonexclusive situation signals; complete required meaning and dependency closure; distinct partial/unavailable/absent states; full accepted About me; optional broad opportunities; compact descriptions from installed meanings; preserved References; sparse eight-kind operation arrays with shared semantic ownership; no mandatory new tool/model round; exact current reference enums first; later explicit server-bound revision/mode removal; and evidence-gated local-only schema references.
+
+**Open owner decisions needed to start the specified implementation: none.** The conditional schema-reference gate has an explicit default: retain inline definitions when evidence/support does not justify activation. New multi-turn recall tools remain at their existing demonstrated-need owner and are not required to implement this scope. This design does not answer unrelated world-policy tuning, model choice, companion-release eligibility or broader population/economics questions.
+
+**Unmeasured acceptance:** actual schema-dialect compatibility on every configured route; token/cache/latency savings; cold/large-world preparation cost; stale/privacy/save integration; and character quality/enjoyment. These are required implementation/qualification work, not completed findings or excuses to omit context. Design completion does not mark SC runtime tasks, CR12, CE05, SPK or CTR acceptance complete.
 
 ## Maintained records
 
