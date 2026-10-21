@@ -6,6 +6,16 @@
 
 Each dossier owns its mechanics, worked interactions, source annotations, edition boundaries, review disagreements and access limitations. Read those qualifications before extracting a pattern.
 
+## Shared crews and persistent survival — October 2026 addition
+
+The [scoped ledger](../research-progress-pirate-games-2026-10-20.md) records the separately authorized Sea of Thieves and ATLAS passes and their completion commits. The earlier ARK research retains its own edition boundaries and audit history.
+
+| Dossier | Useful starting question |
+| --- | --- |
+| [Sea of Thieves — G179](sea-of-thieves.md) | How do a shared ship, carried treasure, partial information and temporary expedition risk create cooperation, stories and reasons to return? How do protected play and native Custom Seas change that bargain? |
+| [ARK: Survival Evolved — G133](ark-survival-evolved.md) | How do creature roles, taming, breeding, construction and persistent possessions turn preparation into a larger survival project? |
+| [ATLAS — G180](atlas.md) | How do built vessels, material variety, NPC crew, territorial ownership and upkeep make a voyage part of a persistent organization? What do external creators and private hosts inherit? |
+
 ## Dungeons & Dragons expansion — 2026-09-27
 
 These are two distinct tabletop subjects, not replacements for Baldur's Gate, Pathfinder, or any existing numbered game. Their [research hub](../games/dungeons-and-dragons.md) records this expansion's scope and evidence status without renumbering or certifying the unrelated roster.

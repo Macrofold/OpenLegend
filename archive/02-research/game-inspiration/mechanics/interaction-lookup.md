@@ -4,6 +4,18 @@
 
 Use the concrete example to find a study, then read its limitations and counterexamples. Prefer comparing two different solutions to the same design problem over copying the most spectacular isolated feature.
 
+## Shared vessels, vulnerable treasure and repeated expeditions
+
+| Question | Named reference or interaction | Read |
+| --- | --- | --- |
+| Can a shared vehicle make cooperation useful without fixed character classes? | Steering, lookout, navigation, cannons, repair and bailing compete for crew attention | [Sea of Thieves, actions and objects](../dossiers/sea-of-thieves.md#r02) and [damaged-ship situation](../dossiers/sea-of-thieves.md#r05) |
+| What makes finding treasure different from successfully earning it? | Carried cargo, cursed chests, emissary flags, alliance rewards and risky extraction | [Sea of Thieves, economy and loss](../dossiers/sea-of-thieves.md#r04) |
+| What should survive a failed trip or a new session? | Retained pirate identity versus temporary hull, supplies and unsold treasure; persistent survival construction as another reference | [Sea of Thieves, persistence](../dossiers/sea-of-thieves.md#r04) / [ATLAS, property and recovery](../dossiers/atlas.md#r04) / [ARK: Survival Evolved](../dossiers/ark-survival-evolved.md) |
+| How can players create a repeatable activity from existing actions? | Custom Seas rule Presets, placed-item Layouts, event scores, permissions and creator labor | [Sea of Thieves, native creation](../dossiers/sea-of-thieves.md#player-creation) |
+| When does crafting give trade and travel a purpose? | A rare blueprint requires complementary material varieties; Markets and Player Shops support different exchanges | [ATLAS, items](../dossiers/atlas.md#r03) and [trade situations](../dossiers/atlas.md#r05) |
+| Can hired help reduce the human crew requirement while keeping responsibilities clear? | Assigned NPC stations, wages, food and return supplies | [ATLAS, crew and social systems](../dossiers/atlas.md#r06) and [solo-captain case](../dossiers/atlas.md#r05) |
+| What separates a built ship, a published hull and an operated community world? | Native construction, Dev Kit packages, grid configuration, dependency failures and server-specific overhauls | [ATLAS, creation layers](../dossiers/atlas.md#player-creation) and [external modifications](../dossiers/atlas.md#r15) |
+
 ## Composing items, effects, and reusable constructions
 
 | Question | Named reference or interaction | Read |
