@@ -29,6 +29,8 @@ These domains orient the expanded inventory. The ten retained patterns illustrat
 
 A settlement keeps old river names, newer guild surnames and affectionate household nicknames. The layers imply movement and history without requiring a complete invented language. Players can ask who uses each name and choose their own. Keep pronunciation guides and aliases accessible; depth should not depend on memorizing dozens of near-identical apostrophe-heavy proper nouns.
 
+Compact cognition still needs the mapping from a permitted description or name to the exact person, object or remembered subject it identifies. These references are meaningful information, unlike button captions or form decoration. Test two bakers called Red (LKN018), an unnamed recognized person and a familiar nickname used by only one observer. The necessary distinctions survive consolidation; a short reference neither reveals an unknown true name nor makes a remembered subject currently visible. Clarification should concern real uncertainty, not a mapping that the context builder threw away.
+
 Seeds and references: [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Middle-earth](source-atlas.md#w01), [The Elder Scrolls](source-atlas.md#w27).
 
 ## Translation leaves a question
@@ -568,3 +570,4 @@ Useful guides, rival teachers, forgery investigations, warning signs, animal com
 Repair-language interpretation (LKN004), hinge sketches (LKN049), repeated repair diagnosis (LKN098/108/199), receipts (LKN130), shift handoffs (LKN193), assigning people to observe and report (LKN194), contribution credit (LKN204) and reading-stop administration (LKN232) are Detail as their full additions. They may remain Small. Basic truthful communication, interrupted work and party interaction must still work; correctness is not a reason to prioritize every related workflow.
 
 Nuanced registers, private meanings and richer knowledge transmission follow as Depth. Copied libraries, temporal speech, industrial habitat lessons and unfamiliar collective senses are Specialist for this survival-adventure. These are fictional selections, not prescriptions about real languages or people. Access, private knowledge, consent and accurate uncertainty remain constraints wherever relevant, irrespective of an optional example's priority. Preserve the exact unhyphenated IDs LKN001–LKN280.
+

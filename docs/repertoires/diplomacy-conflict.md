@@ -496,6 +496,8 @@ Seeds and references: [Old School RuneScape](source-atlas.md#g49), [Mount & Blad
 
 Before a major accord, factions agree to return lost animals or maintain a warning bell. Keeping that promise creates evidence of reliability; failure may reveal inability rather than bad faith. A mediator investigates the difference. Avoid one numerical trust meter for all issues; competence at deliveries does not establish honesty about borders or willingness to share sacred sites.
 
+An informed next negotiation needs the exact relevant terms, the delegate's own mandate, what was actually performed and any communicated change. A compressed label such as allied cannot replace a disputed deadline, partial delivery or limited authority. Include contrary evidence the negotiator actually knows as well as evidence favoring their preferred account. A compact scene can therefore support a narrower bargain, an ingenious exchange, a principled refusal or a betrayal without disclosing the other side's private objectives or requiring agreement as the successful outcome.
+
 Related entries: [DIP-017](#promises-treaties-and-guarantees), [DIP-021](#promises-treaties-and-guarantees).
 
 Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Mass Effect 3](source-atlas.md#g103), [A Song of Ice and Fire](source-atlas.md#w10), [Promises](#promises-treaties-and-guarantees).
@@ -561,3 +563,4 @@ Useful allies, scouts, escorts, duels, surrender, rescue and rival expeditions a
 Commerce, festivals, concerts, shared spaces and a genuine peaceful ending can also provide worthwhile play. The full watershed arrangement (DIP-033) is Depth, not a prerequisite for a hostile group. Returning strays to establish reliability (DIP-017), inspection meals (DIP-024), repair-centered neutrality (DIP-193/197), trophy accounting (DIP-172), reparations schedules (DIP-212), post-victory vouchers (DIP-277) and homekeeper reward attribution (DIP-278) are Detail. Their bounded implementation can be Small; their lower priority does not imply complexity. Basic neutral trade, actual transfers and honest outcomes still work whenever selected.
 
 More intricate allegiances, postwar interests and representation follow as Depth. Collective, temporal, cross-world and unfamiliar infrastructure premises are Specialist here, not a ranking of real political choices. The original fictional scenarios, research, agency and evidence limits remain preserved. Choosing an agreement still requires valid authority, current participation, scoped disclosure and actual performance; those requirements do not make all diplomatic administration an opening-game feature.
+

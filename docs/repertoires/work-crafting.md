@@ -42,6 +42,8 @@ Seeds and references: [Factorio](source-atlas.md#g27), [Final Fantasy XII](sourc
 
 After a shipment fails, a town builds festival lanterns from tins and colored cloth. The resulting style may become a tradition. Players solve constraints while creating something visually distinctive. A substitute should have real differences and acceptable compromises; do not punish every deviation from the original blueprint with an inferior-quality label.
 
+The maker needs the wanted function, any volunteered aesthetic preferences, the actual shortage, useful properties of accessible alternatives and relevant retained methods. Selecting only items named in the original recipe would remove the possibility of invention before the character could consider it. Keep those facts and a way to inspect further without supplying every recipe or the lantern solution itself. A useful comparison changes the missing input or the client's preference: it should support a different viable proposal, a changed scope or an honest inability, with completed work and actual trial results still available to the next decision.
+
 Related entries: [WORK-183](#commissioning-workshop-organization-and-learning-through-work).
 
 Seeds and references: [Minecraft](source-atlas.md#g20), [Against the Storm](source-atlas.md#g45), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
@@ -582,3 +584,4 @@ Peaceful activities also earn Complete: pottery, music, portraits, costume-makin
 The general repair bench (WORK-081), sharpening service (WORK-085), shield refacing (WORK-086), strap replacement (WORK-087), laundry (WORK-141), packing (WORK-161), custody-handoff elaboration (WORK-163), contribution reviews (WORK-185), maintenance contracts (WORK-197) and injured-specialist handoffs (WORK-250) are Detail. WORK-085 and WORK-087 already describe Small bounded operations; keep that scope rather than equating low priority with complexity. Basic item transfer, truthful results, interruption integrity and participation remain required where used. Their correctness does not elevate a new administrative profession into the opening game.
 
 Distinctive commissions and bounded magical work remain Depth where they fit this experience. Industrial infrastructure, separate adult-service settings, unfamiliar reality laws and dedicated experiments are Specialist here. The original source descriptions, safety caveats, build gaps and fictional-world boundaries remain unchanged.
+

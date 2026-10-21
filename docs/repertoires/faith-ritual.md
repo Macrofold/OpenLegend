@@ -85,6 +85,8 @@ Seeds and references: [Black Myth: Wukong](source-atlas.md#g76), [The Elder Scro
 
 A choir organizer no longer shares the literal doctrine but loves the music, friendships and care network. They may speak honestly, remain private or help a newcomer find their own relationship to it. Belonging has more than one dimension. Avoid forcing every doubt into exposure, exile or conversion; a community can make room for unresolved questions.
 
+For a selected rehearsal or feast, the person's own doubt, attachment to particular people and pleasure in the music can all inform the choice. Other participants know those reasons only when they have acquired them. A role label or single belief score would lose the tension that makes staying, changing the ceremony, joking or leaving meaningful. Preserve the relevant occasion and lived associations without sending the whole theology; an observed miracle and an interpretation of it remain distinct, and neither prescribes the character's next allegiance.
+
 Seeds and references: [Disco Elysium](source-atlas.md#g66), [Earthsea](source-atlas.md#w11), [Austen’s social worlds](source-atlas.md#w23).
 
 ## Divinity with a jurisdiction
@@ -539,3 +541,4 @@ The pilgrim's homecoming (FTH082), completion feast (FTH017), empty ward after a
 Blessing a repair (FTH006), blankets taken for seasonal cleaning (FTH024), repair-counting beads (FTH043), road-mending observance (FTH092), shrine expense reports (FTH116), sacred-hat fit (FTH229), flame-relay attribution (FTH252), blessing-allocation administration (FTH257) and the gods' laundry celebration (FTH267) are Detail as their full additions. Their modest form can be Small; low importance does not imply high complexity. Actual healing, usable shelter, reliable transfers and clear promises still work wherever selected.
 
 Richer traditions, disputed interpretation and divine relationships follow as Depth. Cross-time congregations, separate industrial or alien bodies, cosmic endings and dedicated unfamiliar metaphysics are Specialist for this survival-adventure. A real deity or supernatural afterlife remains an explicitly selected fictional premise, never a fact established by ranking a rite. Source meanings, historical evidence, privacy, valid participation and actual authority remain distinct; none of these product scores judges real faiths or their adherents.
+

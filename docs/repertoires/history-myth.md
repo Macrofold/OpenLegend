@@ -87,6 +87,8 @@ Seeds and references: [Pathfinder: Wrath of the Righteous](source-atlas.md#g59),
 
 An ordinary spade used in a rescue becomes a community emblem, then returns to useful work when someone argues it should not sit behind glass. Players choose display, use, copies or retirement. The object need not gain supernatural damage. Its meaning can differ among people, and a replacement can carry a new story without erasing the old one.
 
+Select the object's useful current properties together with the relevant history that this observer actually knows. A rescue veteran, someone who heard the story and an uninformed visitor can meet the same spade with different evidence; physical similarity does not give a replacement its predecessor's experiences. A brief attributed reminder can reconnect the object to a person or worthwhile occasion without inserting a complete chronicle into every decision. Preserve the exact underlying occurrence and distinguish a later appraisal from a fact the object itself proves.
+
 Seeds and references: [Dwarf Fortress](source-atlas.md#g23), [Wildermyth](source-atlas.md#g25), [Middle-earth: Shadow of War](source-atlas.md#g116).
 
 ## A villain's ordinary constituency
@@ -561,3 +563,4 @@ Inhabited ruins, material clues, useful old designs, route information and bound
 The defense that really succeeded (HMY053), a tyrant's genuine defeat (HMY088), a victory feast without a new emergency (HMY118), a joyful homecoming (HMY158) and a cure that ends a heroic institution's necessity (HMY257) are Complete. Progress can resolve a problem; history need not reveal every achievement as fraudulent or every enemy as misunderstood. Music, games, recovered recipes and creative reconstruction remain enjoyable reasons to engage with the past.
 
 Signed repairs (HMY015), maintenance-credit reconstruction (HMY043), the return ledger (HMY217), summiter contribution records (HMY219), homecomings dated by repairs (HMY225) and inherited fuel tallies (HMY254) are Detail. Their small authored form need not be complex. Deeply layered family and civic interpretations follow as Depth; alternate timelines, copied towns and setting-specific industrial or alien histories remain Specialist. Historical authored rulesets are not permission to add legacy runtime compatibility. Source attribution, disclosure boundaries and the distinction between observed events and later interpretation remain intact.
+

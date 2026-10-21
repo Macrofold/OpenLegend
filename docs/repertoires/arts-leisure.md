@@ -101,6 +101,8 @@ Seeds and references: [Hades I](source-atlas.md#g22), [Stardew Valley](source-at
 
 Friends rig a fountain to play a tune when the mayor sits nearby, then decide whether to reveal the trick. Clever harmless mischief offers comedy beyond combat. Establish the playful tone and make the prank’s actual effects legible. The mayor may laugh, retaliate socially or demand restitution; the target retains agency. A harmless fountain trick should not secretly execute destructive effects, while a deliberately cruel prank belongs to a different, consequential choice.
 
+Personal comedy needs the relevant shared occasion, understood signal, current audience and actual available props. Those details can matter more than a long catalogue of performance verbs. Different participants may understand different parts of the trick; the mayor's private reaction is not information the pranksters receive automatically. For a changed scene, vary who is present, what each person witnessed or an expressed boundary, and allow a different joke, an explanation, silence or abandoning the prank. Preserve the actual surprise and reception instead of awarding enjoyment because an action was labeled playful.
+
 Seeds and references: [Garry's Mod](source-atlas.md#g35), [Lethal Company](source-atlas.md#g38), [Discworld](source-atlas.md#w12).
 
 ## Specific inventory
@@ -569,3 +571,4 @@ The champion's victory lap (ARL257), a trophy worth displaying (ARL253), a homec
 Repair-based monuments and clothing (ARL044/137), potluck attribution (ARL062), detailed seating and texture refinements (ARL070/071), repair-cup curation (ARL154), contribution-credit administration (ARL188) and a portrait's lighting complaints (ARL226) are Detail as their full additions. They can be Small or Moderate. Ordinary pleasant surroundings and basic display controls do not require those systems, and art should not become another reason to prioritize maintenance.
 
 Nuanced artistic interpretation and bounded magical performances follow as Depth. Separate industrial venues, highly specialized sensory constitutions, copied performers and pocket-universe concerts are Specialist for this game. Ordinary romance, friendship, adult humor and peaceful company are not automatically Specialist; a focused erotic venue is a different selected experience. All actual participants retain privacy, valid consent, working exits and the ability to stop. Fair declared game rules and honest outcomes remain mandatory whenever a game is selected.
+
