@@ -1,6 +1,6 @@
 # G182 — Colony Ship: A Post-Earth Role Playing Game
 
-**Full R01–R14 research pass, economics/enjoyment amendment, and R15 applicability screen.** Research: October 20–21, 2026. Scope: Iron Tower Studio's released PC game, with Early Access history distinguished from later rules and reviews. This is source-based reference research, not a playtest or an accepted OpenLegend design. **Spoilers:** faction histories, companion-development choices and some consequences of character specialization; major ending revelations are not reproduced. Standards: [research requirements](../research-requirements.md), [economics, enjoyment and creation amendment](../research-economics-engagement-and-creation.md), and [roster](../research-roster.md).
+**Full R01–R14 research pass, economics/enjoyment amendment, and R15 applicability screen.** Research: October 20, 2026. Scope: Iron Tower Studio's released PC game, with Early Access history distinguished from later rules and reviews. This is source-based reference research, not a playtest or an accepted OpenLegend design. **Spoilers:** faction histories, companion-development choices and some consequences of character specialization; major ending revelations are not reproduced. Standards: [research requirements](../research-requirements.md), [economics, enjoyment and creation amendment](../research-economics-engagement-and-creation.md), and [roster](../research-roster.md).
 
 Colony Ship is especially relevant to the requested question about **people acquiring a history through what happens to them and what they repeatedly do**. Practice, habitual conduct, survival and companionship can all change later capabilities. [S03, S06, S07] These systems make a character's past consequential, but their scope differs: a relationship bonus, an authored conversation choice and an autonomous change of personality are separate achievements. The distinctions below matter as much as the successful examples.
 
@@ -184,7 +184,7 @@ The plausible commercial strength is differentiation for players underserved by 
 | Historical studio funding, calendar 2019 | Approximately **US$115,000 from Age of Decadence and Dungeon Rats** | Earlier catalog income discussed in the 2020 business diary. This is neither Colony Ship revenue nor its complete budget. [S22] |
 | Colony Ship funding and sequel expectations, February 25, 2024 | AoD had paid roughly **50% of Colony Ship's budget**; a larger sequel was expected to require about **25% more budget** | Direct developer post. No absolute budget was disclosed. Forecasts of stronger future sales and contribution to the next budget were expectations, not achieved totals. [S23] |
 | Comparative performance, December 25, 2025 | Developer said Colony Ship outsold AoD in EA and its first two full-release years | An unaudited relative result. It does not identify lifetime Colony units, receipts or profit. [S24] |
-| Steam base game, GamesBerry snapshot October 21, 2026 | Approximately **166,000 modeled units**; modeled gross spending **US$2.5m low / US$5.1m base / US$12.6m high** | Third-party review-based estimate, not reported sales. Scope is Steam; the adjacent GOG listing adds no modeled GOG receipts. Low confidence for actual money. [S26] |
+| Steam base game, GamesBerry snapshot October 20, 2026 | Approximately **166,000 modeled units**; modeled gross spending **US$2.5m low / US$5.1m base / US$12.6m high** | Third-party review-based estimate, not reported sales. Scope is Steam; the adjacent GOG listing adds no modeled GOG receipts. Low confidence for actual money. [S26] |
 | Entire product and studio return | **Actual lifetime receipts, total development cost and profit: not estimable from available evidence** | No verified absolute accounts or complete storefront/channel breakdown found. Gross modeled spending cannot resolve profitability. |
 
 ### What the estimate actually means
@@ -230,7 +230,7 @@ An additional substantial community review, **u/Blurzerker on r/patientgamers in
 
 ### Helpful Steam sample
 
-The English Most Helpful all-time surface was inspected October 20–21, 2026:
+The English Most Helpful all-time surface was inspected October 20, 2026:
 
 - **Mr. Fancy Pants**, October 15, 2023 EA: recommended the difficult choices, setting and combat options.
 - **Tamaster**, May 8, 2024: praised pacing and replay value; criticized weapon balance, unreliable-feeling stealth, thin endings and technical interruptions.
@@ -271,7 +271,7 @@ Compared with [Battle Brothers](battle-brothers.md), Colony Ship offers more exp
 
 ## R15 — Modding applicability and creation boundary
 
-**Applicability: uncertain, PC, October 21, 2026.** The accessible Nexus top-file surface showed a small set of entries, including visual toggles, several translations and an item-stat proof of concept. That confirms community work, but the retrieved surface did not establish a popular, sustained ecosystem through adoption figures or substantial campaign authorship. The deep conditional R15 investigation is therefore not claimed complete or required on the basis of these examples alone. [S29]
+**Applicability: uncertain, PC, October 20, 2026.** The accessible Nexus top-file surface showed a small set of entries, including visual toggles, several translations and an item-stat proof of concept. That confirms community work, but the retrieved surface did not establish a popular, sustained ecosystem through adoption figures or substantial campaign authorship. The deep conditional R15 investigation is therefore not claimed complete or required on the basis of these examples alone. [S29]
 
 The creation boundary is still informative. Ordinary play supplies character and party configuration, not a documented native campaign editor. DrStalker's September 2025 proof of concept demonstrates replacing game assets through a packaged .pak using Unreal Asset Editor; its author explicitly calls this more limited than a proper modding interface. The documented workflow extracts assets, changes values, packages replacements and places the file in the game's Mods directory. This was inspected, not executed. It does not establish support for arbitrary new quests or a publisher-operated content marketplace. [S30]
 
@@ -281,7 +281,7 @@ Community localization also appears in the developer's 2026 testing updates. [S2
 
 ### Annotated source register
 
-All sources below were retrieved October 20–21, 2026. Full review bodies were read; for long guides and forum threads, only relevant sections/posts were inspected. Figures retain their measurement date. No paid database or claimed hands-on playtest is involved.
+All sources below were retrieved October 20, 2026. Full review bodies were read; for long guides and forum threads, only relevant sections/posts were inspected. Figures retain their measurement date. No paid database or claimed hands-on playtest is involved.
 
 - **S01 — Iron Tower, [Steam product page](https://store.steampowered.com/app/648410/Colony_Ship_A_PostEarth_Role_Playing_Game/).** Primary current product scope, release dates, world/factions and language-specific review snapshot.
 - **S02 — Vince, [FAQ 2.0](https://steamcommunity.com/app/648410/discussions/0/3077621988062610529/).** Developer post, April 6, 2021, edited November 3, 2023; supported routes, systems, omissions and historical aspirations.
@@ -308,7 +308,7 @@ All sources below were retrieved October 20–21, 2026. Full review bodies were 
 - **S23 — Vince, [C.O.R.E. Colony Ship forum, page 15](https://core-rpg.net/forum/305-2854-15).** February 25, 2024, especially post 731; direct developer funding history and explicitly prospective sequel forecasts.
 - **S24 — Vince, [C.O.R.E. Heralds forum, page 2](https://core-rpg.net/forum/300-4694-2).** December 25–26, 2025, especially posts 66–73; relative sales and concrete planned-scope costs. Later Heralds plans evolved.
 - **S25 — Iron Tower, [official news archive](https://store.steampowered.com/oldnews/?appgroupname=Colony+Ship%3A+A+Post-Earth+Role+Playing+Game&appids=648410&feed=steam_community_announcements&l=english).** February/April 2025 and 2026 updates, including August funding/progress statement. Individual news pages sometimes rendered only images; archive bodies were readable.
-- **S26 — [GamesBerry Colony Ship estimates](https://gamesberry.app/game/colony-ship-a-post-earth-role-playing-game).** October 21, 2026 snapshot. Modeled Steam units and gross spending; no studio disclosure.
+- **S26 — [GamesBerry Colony Ship estimates](https://gamesberry.app/game/colony-ship-a-post-earth-role-playing-game).** October 20, 2026 snapshot. Modeled Steam units and gross spending; no studio disclosure.
 - **S27 — [GamesBerry methodology](https://gamesberry.app/methodology).** Review-based ownership and realized-price assumptions; its stated validation and uncertainty are provider claims, not independent audit.
 - **S28 — Pladio, [Vince D. Weller interview, RPGWatch](https://indie.rpgwatch.com/developers/iron-tower-studio-4/articles/vince-d-weller-interview-552.html).** July 19, 2026; relevant death-system and branching-cost passages read. Later refresh returned 403.
 - **S29 — [Nexus top files](https://www.nexusmods.com/colonyshipapostearthrpg/mods/top).** Current visible catalog sample; many adoption values were hidden, so popularity was not inferred.
