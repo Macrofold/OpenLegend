@@ -1,8 +1,8 @@
 # NPC cognition research — scoped design-preparation map
 
-**October 20, 2026. Status: research follow-up and design/test needs recorded; full designs, adoption, implementation and experiments remain separate work.** Mike asked for comprehensive archived architecture/model research, including actual community use and low-refusal characterization, with full feature/technical designs to be created separately.
+**October 20, 2026. Status: research follow-up and design/test needs recorded; full designs, adoption, implementation and experiments remain separate work.** Mike asked for comprehensive archived architecture/model research, including actual community use, low-refusal characterization and compelling play, with full feature/technical designs to be created separately.
 
-Start with the [research library](../../archive/02-research/npc-cognition/README.md), [applications and E1–E8 experiments](../../archive/02-research/npc-cognition/06-openlegend-applications-and-experiments.md), [combined model/evaluation brief](../../archive/02-research/npc-cognition/11-evaluation-and-research-gates.md) and [source audit](../../archive/02-research/npc-cognition/07-source-register-and-open-questions.md). [The existing design register](needs-design.md) and [maintainer index](README.md) retain prioritization, stable identifiers and delivery ownership. The numbered headings here are preparation questions, not a competing task-number series.
+Start with the [playable opportunities and critical review](../../archive/02-research/npc-cognition/12-playable-opportunities-and-review.md), [research library](../../archive/02-research/npc-cognition/README.md), [applications and E1–E8 experiments](../../archive/02-research/npc-cognition/06-openlegend-applications-and-experiments.md), [combined model/evaluation brief](../../archive/02-research/npc-cognition/11-evaluation-and-research-gates.md) and [source audit](../../archive/02-research/npc-cognition/07-source-register-and-open-questions.md). [The existing design register](needs-design.md) and [maintainer index](README.md) retain prioritization, stable identifiers and delivery ownership. The numbered headings here are preparation questions, not a competing task-number series.
 
 ## What the research does not reopen
 
@@ -10,7 +10,7 @@ Start with the [research library](../../archive/02-research/npc-cognition/README
 
 Ordinary continuation, required recent outcomes, independent character choices, complete permitted evidence and fresh native admission are existing requirements. First diagnose failures through those owners. Do not create another nervous-system service, scheduler, plan store, memory truth, dialogue controller or per-frame model loop to implement the same responsibility twice.
 
-The [accepted content/companion policy](../agent-content-and-companion-safety.md) remains unchanged. Low unnecessary refusal is a core model-quality concern within permitted fiction, not permission to weaken the service boundary. A resident's authentic disagreement is not a failed model refusal.
+The [accepted content/companion policy](../agent-content-and-companion-safety.md) remains unchanged. Low unnecessary refusal is a core model-quality concern within permitted fiction, not permission to weaken the service boundary. A resident's authentic disagreement is not a failed model refusal. A concrete player opportunity can justify exploratory preparation even without a defect; this does not waive existing selected adoption gates or approve an extension.
 
 ## Preparation dispositions
 
@@ -22,6 +22,7 @@ The [accepted content/companion policy](../agent-content-and-companion-safety.md
 | New visual evidence, direct audio or auto-submitted voice | Selected use case and disclosure/publication design | Exact perception, hearing and input authority compatible with current contracts. |
 | Local/provider deployment and shared computation | Capability, rights, complete cost and workload qualification | Identified runtime/provider configuration and justified adapter/deployment changes, without shared private minds. |
 | Richer memory, routines or weight training | Demonstrated omission or limitation first | Matched evidence justifying a narrow extension, or an explicit result that the current approach is adequate. |
+| Compelling player experience | A selected opportunity and an economical play comparison, not only defect testing | Identify player choices, NPC contribution, stakes or pleasure, later consequence and repeat value; collect actual player evidence. |
 
 The table distinguishes preparation, implementation and actual evaluation; completing one does not complete the others. The detailed source material and unrun test protocol stay in the archive; implementation and acceptance stay with the existing owners below.
 
@@ -53,23 +54,23 @@ First compare complete actor-permitted structured projection with current input.
 
 ## 4. Character coherence, own-action truth and belief revision
 
-**Potential benefit:** distinct residents can disagree or change their minds without denying their actual conduct or accepting a player's unsupported assertion as observation. Mantella's impressive dialogue and visible grounding failures motivate this combined test.
+**Potential benefit:** distinct residents can disagree, lie or change their minds while actual conduct, permitted evidence, belief and chosen speech remain distinguishable. Mantella's impressive dialogue and possible dialogue/physics contradictions motivate this combined test; a false utterance alone does not identify the cause.
 
-No new psychology schema is yet justified. Preserve actual own work and outcomes, attributed testimony, accepted biography and independent interpretation through the existing experience path. Compare stock, creative and explicitly low-refusal models on text-only whole episodes before adding expressive voice. Do not equate more profanity, compliance or dramatic self-report with character depth.
+No new psychology schema is yet justified. Preserve actual own work and outcomes, attributed testimony, accepted biography and independent interpretation through the existing experience path. Compare stock, creative and explicitly low-refusal models on text-only whole episodes before adding expressive voice. Do not equate more profanity, compliance or dramatic self-report with character depth. Test intentional deception without inventing it afterward to excuse a model's mistake; distinguish supported character growth from unexplained drift.
 
-A future prompt/context refinement must state what evidence remains required, what can be selected, how uncertainty is represented and which whole episodes should improve. Existing complete About me inclusion cannot be silently dropped to imitate Mantella's overflow policy. Keep an issued request distinct from a completed or denied action in later dialogue and memory.
+A future prompt/context refinement must state what evidence remains required, what can be selected, how uncertainty is represented and which whole episodes should improve. Existing complete About me inclusion cannot be silently dropped to imitate Mantella's overflow policy. Keep an issued request distinct from a completed or denied action in later evidence and memory, even when the character chooses to describe it dishonestly to someone else.
 
-**Next evidence:** E3/E4 and the existing CE flows, extended by the [original-character and longitudinal protocol](../../archive/02-research/npc-cognition/11-evaluation-and-research-gates.md). **Owners:** DG02/CE05, CR12/AG12, R10/R24; DG23/ND19 only for lasting outlook reinterpretation, not ordinary initial fidelity. Shared service instructions and output admission remain unchanged.
+**Next evidence:** E3/E4 and the existing CE flows, extended by the [original-character and longitudinal protocol](../../archive/02-research/npc-cognition/11-evaluation-and-research-gates.md). **Owners:** DG02/CE05, CR12/AG12, R10/R24; DG23/ND19 only for lasting outlook reinterpretation, not ordinary initial fidelity. Shared service instructions and output admission remain unchanged. General allowance for plausible alternatives does not weaken an explicitly selected behavioral acceptance such as CTR's Ada baseline.
 
 ## 5. Optional expression and truly interactive voice
 
-**Potential benefit:** a useful reply can be heard earlier and delivered in a recognizable, context-sensitive voice. This is separate from better reasoning. The [voice dossier](../../archive/02-research/npc-cognition/05-realtime-voice-and-serving.md) and [additional direct-audio candidates](../../archive/02-research/npc-cognition/10-architecture-composition-and-serving.md#6-speech-component-quality-and-semantic-timing-are-different-questions) record deployment and rights considerations.
+**Potential benefit:** a useful reply can be heard earlier and delivered in a recognizable, context-sensitive voice. This is separate from better reasoning and can itself be a source of enjoyment. The [voice dossier](../../archive/02-research/npc-cognition/05-realtime-voice-and-serving.md) and [additional direct-audio candidates](../../archive/02-research/npc-cognition/10-architecture-composition-and-serving.md#6-speech-component-quality-and-semantic-timing-are-different-questions) record deployment and rights considerations.
 
 **Reuse:** NST owns growing committed public text, not physical speech duration. HE07 owns optional speech media and microphone composition. Its current private editable unsent draft is not Kevin's direct speech-to-action behavior.
 
 **Questions for a selected extension:** exact committed words versus delivery directions; generated, played and actually heard audio; voice identity and unknown speakers; permitted partial fragments; interruption and late chunks; output checks before audio exposure; cold/warm/concurrent serving; lawful reference voices; text-only equivalence; and whether direct voice submission is actually wanted. Timed hearing and direct/full-duplex voice require their own perception/authority decisions rather than being hidden inside a TTS adapter.
 
-**Next evidence:** E6, including extended interaction and separate semantic/vocal emotion scoring. Compare a cascade before investing in a direct-audio design. **Owners:** DG26/ND16, HE07, applicable NST/NC/PS and release/content/privacy owners. No commercial self-hosting of Breeze is assumed from its code license. No always-listening microphone or audio model is enabled here.
+**Next evidence:** E6, including extended interaction, separate semantic/vocal emotion scoring and an integrated player-experience comparison. Compare a cascade before investing in a direct-audio design. **Owners:** DG26/ND16, HE07, applicable NST/NC/PS and release/content/privacy owners. No commercial self-hosting of Breeze is assumed from its code license. No always-listening microphone or audio model is enabled here.
 
 ## 6. Useful recall and shared computation without shared private minds
 
@@ -117,9 +118,21 @@ Before selecting fine-tuning or distillation, identify the repeatable failure, b
 
 **Needs preparation:** freeze the scoped panel, exact configuration manifest, original-character episodes, allowed alternative outcomes, held-out family splits, assessment rubric, human-review process, sample exposure and task budget. Reuse the existing [benchmark fairness contract](../../scripts/decision-benchmark/README.md#grading-and-fairness); old synthetic results are not independent natural-game validation. Keep failed/unattempted coverage, provider refusals, severe incidents and subjective scores visible separately.
 
-**Needs execution later:** voice-free input replay, supported native whole episodes and later recall; then selected audio/resource comparisons. Report time to first meaningful drift with exposure length, useful action and expression latency separately, and every attempt/uncertain charge. Model judges cannot substitute for human assessment of character authenticity or turn model agreement into psychological truth.
+**Needs execution later:** voice-free input replay, supported native whole episodes and later recall; then selected audio/resource comparisons. Report time to first meaningful drift with exposure length, useful action and expression latency separately, and every attempt/uncertain charge. Model judges cannot substitute for human assessment of character authenticity or turn model agreement into psychological truth. A narrow play study can run alongside model screening where its actual prerequisites and release controls permit it.
 
 **Exit from preparation:** a reviewable, runnable, budgeted experiment through existing tooling and owners, with known capability blockers and unresolved thresholds explicit. That closes preparation only; actual quality/capacity requires execution evidence. **Owners:** CE05/CR12/AG12, R24 and the existing benchmark/verification owners, with PD07/HE/NST for their respective release and media gates.
+
+## 11. Cognition that produces distinctive and enjoyable play
+
+**Potential benefit:** the architecture enables meaningful player choices, useful companions, invention, discovery, humor and remembered consequences rather than merely fluent conversations. The [positive opportunity portfolio](../../archive/02-research/npc-cognition/12-playable-opportunities-and-review.md#2-positive-opportunities-to-carry-forward) connects these possibilities to current project goals without selecting every idea for delivery.
+
+**Needs preparation:** select one worthwhile activity and identify the player's role, actual NPC contribution, available alternatives, stakes or pleasure, visible consequence and useful stopping point. State which mechanics already exist and which need design. Author coherent people and opportunities, not a required successful action sequence. Include constructive refusal and a different way to proceed; player freedom does not require every request to succeed.
+
+**Needs testing:** compare the ordinary supported experience with the candidate and a strong simple/authored diagnostic baseline where useful. Observe meaningful choice, understandable consequences, person-specific recall, enjoyment, wording effort, frustration, voluntary preference to interact again and value after the novelty wears off. Test creative proposals beyond offered-option selection through the existing invention boundary where supported. Assess integrated presentation after isolated model/voice comparisons. Natural-language freedom must not become compulsory prompt-writing, and capable NPCs must not remove the player's interesting work.
+
+**Design questions only where a selected gap exists:** how a novel supported proposal becomes a real option; how an initiative is made intelligible without exposing private thoughts; which communication or presentation cues help; and whether any new activity authority is needed. Intentional deception, coherent mistaken belief and experience-supported growth must remain distinct from fabricated engine outcomes or arbitrary drift. Existing selected acceptance remains binding.
+
+**Owners:** DG02/CE, DG03/FPV, R10/R24, AG/CR, the existing invention/cooperation owners, and DG26/HE for selected media. Use [gameplay priorities](../repertoires/gameplay-priorities.md) and the [first-playable playtest plan](../projects/first-playable-playtest-plan.md); do not create a separate game roadmap, omniscient drama manager or universal fun score. Preparation closes with a scoped reviewable play study; player-value acceptance needs actual evidence. All new studies here remain unrun.
 
 ## Design-session handoff
 
