@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                      | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG21 product proposal complete; adoption, technical design and runtime qualification remain open under CARE01–CARE05. | 2026-10-16   |
+| In progress | DG21 product proposal complete; adoption, technical design and runtime qualification remain open under CARE01–CARE05. | 2026-10-20   |
 
 This specifies the product behavior for DG21 and the first selected ND05 care loop. It is a proposal, not a change to installed physiology. The [world profile](../worlds/base/recovery-and-care.md) owns the proposed wilderness values and applicability; [CARE01–CARE05](../maintainers/recovery-and-care.md) owns staged delivery. This assignment deliberately contains no technical design.
 
@@ -156,7 +156,11 @@ CARE01 qualifies the complete first human camp journey. CARE02 carries readable 
 
 ## 11. Research and its limits
 
-All sources below are primary developer/rules publications retrieved October 6, 2026. Historical notes establish the stated design at publication, not its current balance or universal player approval. Each inference is this proposal's judgment.
+CARE-R01–CARE-R08 are primary developer/rules publications retrieved October 6, 2026. Historical notes establish the stated design at publication, not its current balance or universal player approval. Each inference is this proposal's judgment.
+
+### Tactical RPGs and worthwhile continuation
+
+Use the [five-game comparison](../../archive/02-research/game-inspiration/essays/tactical-rpgs-character-histories-and-commercial-outcomes.md) when qualifying the whole care episode: afterward, what wanted activity is available to this same person? Keeping a character present and wanting to continue with them are distinct outcomes. Returning to a former goal, adapting a method, accepting willing help or staying with valued company can each be worthwhile. A lasting limitation need not grant a compensating bonus or mandate a new occupation. This supports the existing CARE acceptance questions without adopting permanent injuries or changing the proposed recovery rules.
 
 ### CARE-R01 — Credible self-care
 

@@ -2,9 +2,9 @@
 
 [Library](README.md) · [Roster](research-roster.md) · [Requirements](research-requirements.md) · [Cross-game synthesis](essays/tactical-rpgs-character-histories-and-commercial-outcomes.md)
 
-**Status: research completed; design-integration review in progress — October 20, 2026.** Mike's request, prompted by [the supplied video](https://www.youtube.com/watch?v=Kb9QxBxN5sg) and its attached transcript, covers existing G121 Battle Brothers and new G181–G184. Other video subjects are comparison leads, not additional commissioned dossiers. This research does not change gameplay contracts, reprioritize implementation or reopen the earlier whole-library audit.
+**Status: research and design integration completed — October 20, 2026.** Mike's request, prompted by [the supplied video](https://www.youtube.com/watch?v=Kb9QxBxN5sg) and its attached transcript, covers existing G121 Battle Brothers and new G181–G184. Other video subjects are comparison leads, not additional commissioned dossiers. This research does not change gameplay contracts, reprioritize implementation or reopen the earlier whole-library audit.
 
-**Original research:** `research/rpg-character-stories-20261020`, based on GitHub `Macrofold/OpenLegend` `refs/heads/main` at `a612eecf43d225b5f9087287573ec3e054641cf9`. The five-dossier checkpoint is [`c4ddc5a`](https://github.com/Macrofold/OpenLegend/commit/c4ddc5a08628a8c1e73e047081e8a518a3616324); the integrated synthesis and navigation are in [`e860f3d`](https://github.com/Macrofold/OpenLegend/commit/e860f3d58c9339f355d5367a2ce5a03c066aa0ed); reviewed corrections and formatting are in [`7c49c2d`](https://github.com/Macrofold/OpenLegend/commit/7c49c2d7c777f1f4eaaa43a38816472f54df7c49). This completion record accompanies the final verification and estimate-date clarification.
+**Original research:** `research/rpg-character-stories-20261020`, based on GitHub `Macrofold/OpenLegend` `refs/heads/main` at `a612eecf43d225b5f9087287573ec3e054641cf9`. The five-dossier checkpoint is [`c4ddc5a`](https://github.com/Macrofold/OpenLegend/commit/c4ddc5a08628a8c1e73e047081e8a518a3616324); the integrated synthesis and navigation are in [`e860f3d`](https://github.com/Macrofold/OpenLegend/commit/e860f3d58c9339f355d5367a2ce5a03c066aa0ed); reviewed corrections and formatting are in [`7c49c2d`](https://github.com/Macrofold/OpenLegend/commit/7c49c2d7c777f1f4eaaa43a38816472f54df7c49). The original research was completed at [`52ddfc8`](https://github.com/Macrofold/OpenLegend/commit/52ddfc89ca3d6094d3b61e26e083f8c2f93205ac), including final verification and the estimate-date clarification.
 
 **Current branch:** `research/rpg-design-integration-20261020`, based on `main` at `ba413e717c28ae5947c289f0f8f0bec72b40da40`. The four original research commits were replayed in order, ending at [`3453ddb`](https://github.com/Macrofold/OpenLegend/commit/3453ddb96ec3277c2bef5a9783ea84d20a5c31f6). Concurrent Sea of Thieves/ATLAS research and the WoW Forever reading route are retained. G179–G180 remain the pirate-game subjects; the four RPG additions are G181–G184. The original branch remains available.
 
@@ -39,6 +39,14 @@ The design work belongs to existing DG14, DG21 and DG23, with their current depe
 
 **Conversation capture:** the preceding research response's substantive conclusions were already represented in the dossiers and synthesis, including the commercial uncertainty, Battle Brothers/Colony Ship distinction, rescue example, positive experiences, independent agency, affordable experimentation and finite-adventure satisfaction. The new positive episode, review qualifications and design-owner/application guidance are now recorded here and in the linked owners. No useful conclusion is intentionally left as chat-only guidance.
 
+### Design-integration verification
+
+- Reviewed the integration diff independently for positive player value, owner fit, status accuracy, source scope and preservation. The synthesis retains its earlier text and adds the positive episode, material-circumstance perspective and owner crosswalk; the two dossier qualifications are explicit.
+- Preserved all 180 upstream subject mappings, including Sea of Thieves and ATLAS, and the concurrent WoW Forever navigation. Confirmed 184 distinct consecutive roster IDs, with G181–G184 matching the four new dossiers and scoped records.
+- Checked all 23 newly introduced relative links and heading anchors; all resolve. Reviewed the existing DG14/DG21/DG23 entries and the two feature-owner additions without closing their adoption, technical or gameplay-quality work.
+- Applied the repository-pinned Prettier 3.6.2 to the changed research text and checked the nine files changed during this integration review. Earlier dossier/source and preservation checks remain applicable; this review introduces no new external financial claims or runtime changes.
+- Recorded the review's useful conclusions and conversation guidance in the synthesis, gameplay priorities, feature research sections and existing needs-design entries. The implementation and gameplay evidence remain with their established owners.
+
 ## Evidence limits
 
 The complete supplied transcript was read; direct YouTube retrieval failed. No footage was watched and no timestamps are inferred. This is source research, not a report of firsthand gameplay, installed mods or executed authoring workflows.
@@ -47,4 +55,4 @@ Published sales disclosures, publisher reach claims, crowdfunding, modeled Steam
 
 ## Remaining agreed work
 
-Complete the focused owner integration, review the resulting diff and links, apply pinned formatting, and commit the reviewed result. Merging the research branch is a separate action.
+None. The five dossiers, comparison, design-owner integration, needs-design references and conversation capture are complete and committed. Merging the research branch and delivering or qualifying the proposed gameplay are separate actions.
