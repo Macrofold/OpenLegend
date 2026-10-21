@@ -6,11 +6,11 @@
 
 ## Purpose and scope
 
-People and creatures should respond to a lived world in ways that make useful activity, danger, companionship, recovery and remembered loss matter. A composed person can flinch, remain afraid and still defend someone. A rescued person can enjoy coming home while grieving a loss. A hare can startle and escape without language, autobiographical memory or a model request. These are target experiences, not claims of qualified current gameplay.
+People and creatures should respond to useful activity, danger, companionship, recovery and remembered loss. A person can flinch, remain afraid and still defend someone; a rescued companion can enjoy coming home while grieving; a hare can startle and escape without memory or AI. These are design targets, not qualified gameplay.
 
-This is a general emotion-system design. It specifies specialist SAD-D's product contract under the binding [stealth-awareness feature specification](stealth-awareness-feature-spec.md) and [technical contracts](stealth-awareness-tech-design.md#emotions-and-reconsideration). It extends the existing private appraisal/social-continuity foundation and reuses the [continuing-lives](continuing-lives-tech-design.md) and [combat/threat-response](combat-and-threat-responses-tech-design.md) owners. It does not establish a parallel mind, action selector, global mood record or work queue.
+This general emotion system supplies specialist SAD-D's product contract under the binding [stealth feature](stealth-awareness-feature-spec.md) and [technical contracts](stealth-awareness-tech-design.md#emotions-and-reconsideration). It extends existing private appraisals and reuses [continuing lives](continuing-lives-tech-design.md), [combat/threat response](combat-and-threat-responses-tech-design.md) and cognition. It adds no parallel mind, action selector, mood store or work queue.
 
-The source-reviewed baseline is Macrofold/OpenLegend at exact pushed commit a3d40b4d71e29d6504e9f3fcc21e76344a0a284e on codex/design-stealth-00-contracts. This assignment is documentation only. Implementation, executable acceptance, provider quality, operational capacity and player enjoyment remain unqualified. The [technical design](emotional-physiology-tech-design.md) owns schemas, algorithms, ordering and authoritative lifecycle. [Base psychological reactions](../worlds/base/psychological-reactions.md) owns selected vocabulary, scales, coefficients, curves and review tuning. This feature document owns the promised experience, product boundaries and observable acceptance.
+The inspected base is Macrofold/OpenLegend `a3d40b4d71e29d6504e9f3fcc21e76344a0a284e` on `codex/design-stealth-00-contracts`. The [technical design](emotional-physiology-tech-design.md) owns schemas, algorithms, ordering and lifecycle; [base psychological reactions](../worlds/base/psychological-reactions.md) owns vocabulary and tuning. This document owns experience and observable acceptance. Implementation, model quality, capacity and enjoyment remain unqualified.
 
 ### Navigation
 
@@ -27,304 +27,232 @@ The source-reviewed baseline is Macrofold/OpenLegend at exact pushed commit a3d4
 
 ## The experience worth building
 
-Open Legend can make a dangerous expedition, a useful invention and the return to ordinary life part of the same remembered world. Particular people can want different outcomes, interpret the same occurrence differently and keep doing useful things while their feelings change. A person worth protecting can later invite company, refuse another expedition, admire a practical solution or remember a particular joke. Those continuations give the player's choices meaning beyond completing the immediate task.
+A dangerous expedition, useful invention and return to ordinary life should belong to the same remembered world. People can interpret the day differently, keep doing useful things while feelings change, and later invite company, refuse another expedition or remember a particular joke. These continuations give player choices meaning beyond immediate task completion.
 
-The [gameplay priorities](../repertoires/gameplay-priorities.md) remain the selection authority: an understandable survival start, useful making, a defensible camp, differentiated people, actual cooperation and refusal, local animal and human danger, useful invention, worthwhile exploration and remembered consequences. The emotion foundation must help complete that playable loop. Its value should be visible in an escape that works, a companion who acts for a personal reason, a good evening that feels earned, and a place the player voluntarily returns to.
+The [gameplay priorities](../repertoires/gameplay-priorities.md) remain authoritative: an understandable survival start, useful making, a defensible camp, differentiated people, cooperation and refusal, local danger, invention, exploration and remembered consequences. Emotion should make that loop more worthwhile without becoming another management burden.
 
 ### Selected payoffs
 
-| Payoff | What makes it playable | What the emotion module contributes |
-| --- | --- | --- |
-| Courage becomes legible | Someone can undertake a meaningful risk with real capabilities while afraid | Fear can remain true without removing the existing choices; bodily composure and willingness to help are independent |
-| Practical care matters | Opening a route, giving cover, sharing food or completing a watch handoff changes actual circumstances | Personally available safety, bodily recovery and help can support reassessment; useful work has an emotional consequence without becoming a guaranteed cure |
-| Different people remember the same day differently | A shared expedition can be joyful, frightening, disappointing and worthwhile to different participants | Each person retains their own sources, values, meanings and private interpretation |
-| Returning home has a payoff | The camp is safer, a useful reward is available and the group can choose an ordinary evening | Joy, relief and persistent concerns can coexist during cooking, repair, conversation or rest |
-| Sensitivity can be enjoyable | Beauty, welcome, music, anticipation and chosen frightening entertainment can matter to particular people | Appraisal is broader than threat; sensitivity does not mean a universal disadvantage |
-| Success can remain successful | A defeated threat stays defeated and a solved recurring burden frees attention | Emotional continuity does not manufacture fresh danger, obligatory grief or another maintenance task to keep the world moving |
-| Familiar activities remain worthwhile | Mastery, execution, expression, company and remembered associations can change the meaning of a repeated activity | Enjoyment need not depend on constant novelty, a hidden stat reward or endless relationship progression |
-
-These are opportunities created by composing selected existing owners. This module does not itself implement cooking, music, physical rescue, a new ritual system, housing, a complete animal ecology or every activity used in an example. A future implementation must use actually admitted capabilities in its qualification scene and label unavailable supporting activities as separate work.
+| Payoff | Playable contribution |
+| --- | --- |
+| Courage becomes legible | Someone can take a meaningful risk while afraid; composure and willingness to help remain independent. |
+| Practical care matters | Cover, an open route, food or a watch handoff changes real circumstances and may support reassessment without guaranteeing a cure. |
+| A shared day has several meanings | Participants retain their own evidence, values and interpretations. |
+| Returning home has a payoff | Joy, relief and unresolved concerns can coexist during cooking, repair, conversation or rest. |
+| Sensitivity can be enjoyable | Beauty, welcome, anticipation, music and chosen frightening entertainment can matter more to particular people. |
+| Success remains successful | A defeated threat or solved burden need not be replaced with fresh danger, obligatory grief or emotional chores. |
+| Familiar activities remain worthwhile | Mastery, expression, company and association can sustain enjoyment without constant novelty, stat rewards or endless relationship progression. |
 
 ### Player burden and tradeoffs
 
-The player should be able to continue playing while a companion's feelings remain unresolved. A frightened person need not demand repeated reassurance. Someone grieving can welcome an invitation, decline it or enjoy ordinary company; the game need not assign the player a recovery checklist. Quiet feelings can remain meaningful without periodic model requests, public monologues or a dashboard of declining needs.
+A frightened companion need not demand repeated reassurance; someone grieving may welcome company, decline it or enjoy an ordinary evening. Quiet feelings need no public monologue or dashboard of declining needs. Player feedback explains authorized bodily/mechanical consequences without revealing hidden people or claiming the human feels afraid.
 
-The selected maximum rule for mechanical fear is intentionally transparent. Several small causes do not automatically overpower one serious concern by arithmetic accumulation. This sacrifices a general cumulative-stress model, which is outside the selected scope. Direction, context and exact source identity still distinguish the concerns, and distinct new danger can support a new interpretation through the existing appraisal owner.
-
-Numerical fear gives supported mechanical consumers a usable amount. It does not make joy, grief, affection or courage require the same scale or effect. Joy's payoff can be voluntary enjoyment and later interest. Grief's payoff can be meaningful continuity. Their absence of a general combat bonus or penalty is intentional.
-
-Player feedback must explain an applicable bodily or selected mechanical condition without revealing hidden people, motives or feelings. A player can understand that a brief startle currently affects precision; that feedback need not name an unseen attacker or claim the human feels afraid. Any proposed player interpretation policy requires the explicit [SA-D01 decision](#directly-controlled-characters-sa-d01).
+The transparent maximum rule deliberately omits cumulative stress: many small causes do not arithmetically overwhelm one serious concern. Their separate meanings remain available. Joy and grief have worthwhile consequences without a general combat bonus or penalty.
 
 ### Foundation and delivery scope
 
-| Scope | Status and owner | This feature's obligation |
-| --- | --- | --- |
-| Private, source-linked appraisals | Existing domain foundation with definition pins, source/cause identity, qualitative/scaled values, stacking and lifetime semantics | Preserve these owners and their delivered authority; extend them for legitimate bounded reassessment |
-| Cognition preparation and publication | Existing actor opportunities, snapshots, accounting and serialized publication | Add an independently selectable emotional-review operation using those owners |
-| Immediate native bodily reaction | Selected design requiring implementation on body/status contributions | Support applicable exact-life reactions without an appraisal or model requirement |
-| Effective emotional mechanics | Selected design requiring integration with actual parameter/effect consumers | Derive complete applicable fear under one installed rule; reconcile existing overlapping threat penalties |
-| Emotional vocabulary and tuning | Authored world policy, installed through current capability/definition ownership | Select supported families explicitly; prose labels do not install mechanics |
-| Joy, grief, coping and social scenarios | Product examples using the selected foundation and separately admitted activities | Demonstrate distinct meanings and useful continuation; do not claim every example is already playable |
-| Broad needs simulation, automatic personality development and unusual affect laws | Separate selected projects or repertoire options | Preserve extension boundaries without making them dependencies of this foundation |
+Existing appraisals already supply exact sources, identities, stacking, qualitative/scaled values and varied lifetimes. Existing cognition owns preparation, accounting and publication. This design adds native bodily contributions, complete effective mechanics and independent bounded review through those owners.
+
+World definitions select emotion vocabulary and policy; prose grants no mechanics. Cooking, music, rescue, rituals, housing and other example activities require their own admitted capabilities. Broad needs simulation, automatic personality development, unusual affect laws and complete animal ecology retain their separate scope. Qualification must use actually available activities and identify missing supporting work.
 
 ## Three meanings with three owners
 
-| Meaning | Authoritative owner | Inputs and required behavior | Boundary |
-| --- | --- | --- | --- |
-| Native bodily reaction | Existing body/status/state-contribution owners | An exact eligible committed cause can produce a short reaction on an applicable body. Installed physiology, conditions and mechanical traits can change magnitude, recovery or supported effects. No AI or episodic memory is required. | A bodily reaction is not a belief, a private appraisal or a chosen action. A model cannot extend or erase it by saying the person has calmed down. |
-| Interpreted emotion | Existing private appraisal owner | The character interprets their own permitted experiences, memories, values and beliefs under an installed definition. Original cause, source binding, meaning, value and lifetime remain explicit. | Another person's intention, speech or performance cannot set this state. Reinterpretation cannot invent a new historical occurrence. |
-| Effective mechanical state | Read-only composition through existing effect/parameter owners | Query active eligible bodily and appraised contributions for a declared mechanical context, then resolve the installed channel and modifiers. | The result is not another independently writable emotion. A consumer cannot choose a private interpretation or apply its own competing aggregate. |
+| Meaning | Authoritative owner | Contract |
+| --- | --- | --- |
+| Native bodily reaction | Existing body/status/state-contribution owners | An exact committed cause can produce a short reaction on an applicable body, modified by installed physiology, conditions or mechanical traits. No AI or episodic memory is required. A model's declaration of calm cannot erase or extend it. |
+| Interpreted emotion | Existing private appraisal owner | The character interprets permitted experience, memories, values and beliefs under an installed definition. Cause, sources, meaning, value and lifetime remain explicit. Another person's intent or performance cannot set it. |
+| Effective mechanical state | Read-only effect/parameter composition | Supported consumers derive effects from the complete applicable bodily/appraised contributions. There is no independently writable global emotion or consumer-specific competing aggregate. |
 
-The same attack can legitimately support both a bodily startle and a later interpreted fear. They remain separate contributions because they mean different things and have different owners. The mechanical composition rule prevents accidental additive double-counting. An actor can have an applicable body without an interpreter, an interpreter without a mammalian startle response, or both.
+One attack may support both bodily startle and later interpreted fear. The maximum composition rule avoids additive double counting. A body can react without an interpreter, and an interpreter can feel fear without a mammalian startle response.
 
 ### Native onset and bodily recovery
 
-A sudden unexpected assault can produce an immediate short reaction from an applicable body. The surprise producer owns deciding whether its exact evidence and pre-contact circumstances satisfy the agreed shock contract. An ordinary failed defence, rear angle or the attacker's desire to surprise does not by itself establish that contract. Native admission binds the committed original cause and target life; equivalent contact, guard, injury or occurrence wrappers do not produce repeated onsets from the same original cause.
+The surprise producer determines whether exact evidence and pre-contact circumstances satisfy the [shock contract](emotional-physiology-tech-design.md#ep-c05--native-bodily-reaction-admission-and-receipts). Failed defence, rear angle or the attacker's intention alone does not qualify. Admission binds the original cause and affected life; contact, guard, injury and occurrence wrappers cannot repeat onset.
 
-The bodily contribution begins at the agreed committed transition. A startle created by an impact cannot worsen defence against that same impact after its outcome has already been determined. It can affect later eligible checks while active. Existing injury, discomfort, impaired limbs, travel constraints and action commitments retain their own causes and effects.
-
-A highly composed compatible body may have a smaller or shorter reaction. That does not reveal an unseen threat, make the character fearless, erase pain or choose a response. The selected base effect does not create paralysis, involuntary turning, an automatic destination or mandatory flight. If a world later selects a distinct involuntary motor effect, it needs an explicit supported bodily capability and a separately reviewed contract.
+Shock caused by an impact begins after that impact's defence/damage outcome and can affect later eligible checks. Injury, discomfort, impaired limbs and action commitments retain their separate effects. Installed composure may change a compatible body's reaction without revealing threats, choosing an action, erasing pain or settling private fear. The selected effect does not paralyse, turn or send the character fleeing; a future involuntary motor effect needs its own supported capability.
 
 ### Effective fear
 
-The selected initial aggregation family is **the strongest applicable contribution**. Keep the independent active sources; determine which sources apply to the current consumer and context; normalize them under the installed channel; take their maximum. The [world policy](../worlds/base/psychological-reactions.md) and [technical design](emotional-physiology-tech-design.md) own the exact query and coefficient contracts.
+Initial effective fear is **the strongest applicable contribution**, normalized under one installed channel. The [world policy](../worlds/base/psychological-reactions.md) and [technical query/parameter contract](emotional-physiology-tech-design.md#ep-c06--complete-effective-fear-and-parameter-resolution) own its calculation and coefficients.
 
-The underlying records distinguish a general bodily reaction, a targetless concern and fear directed toward a personally identified subject. Escaping one pursuer does not resolve fear of another. The selected base mechanical projection includes all mapped active fear applicable to the current body and control policy; a target label does not restrict the penalty to attacks against that target. There is no hidden distance-to-threat or optional cognitive-relevance filter. Future applicability rules require an explicit supported world/channel contract rather than a model's retrospective choice of whichever number produces a dramatic outcome.
+Bodily, targetless and independently directed concerns retain their identities. Escaping one pursuer does not resolve another concern. The base projection includes all mapped active fear applicable to the body/control policy; a target label does not confine the penalty to attacking that target. No hidden distance or optional language-context filter decides mechanical relevance. Persistent fear may remain high after startle ends; native startle need not imply a private fear interpretation.
 
-Persistent applicable appraised fear can keep the mechanically effective fear high after startle ends. Conversely, a person can be physically startled without an interpreted fear record. The channel name “fear” does not turn a memoryless animal's bodily contribution into a claim about its private human-like interpretation.
+Fear affects supported accuracy and evasive effectiveness. **It does not automatically lower running or fleeing speed.** Preview, offered choices and admission use the same maximum new evasion distance; an excessive endpoint is refused before cost, not shortened. A legal admitted evasion keeps its endpoint, path and duration through later fear changes, without an extra dodge roll. Ordinary movement keeps its body, route, load, injury and action rules.
 
-The initial base mechanical consumers are accuracy and evasive effectiveness. **Fear does not automatically lower ordinary running or fleeing speed.** The selected evasion effect reduces maximum newly offered/admitted distance. Preview, offered choices and admission use the same limit; an endpoint outside it is refused before cost rather than silently shortened. Once a legal evasion is admitted, its endpoint, path and duration remain fixed under the existing action owner: later fear cannot slow it, move it or add a dodge roll. Ordinary movement retains the speed established by the body, travel mode, route, load, injury and current action. The emotion channel cannot choose movement, turn the character, reduce all action capabilities or duplicate an existing physical penalty.
-
-Mechanical reads require the complete applicable working set. A short display/reflection page is not proof that additional relevant fear is absent. Missing required preparation is an explicit incomplete/deferred condition under the technical contract; consumers cannot treat it as zero fear or wait for a paid interpretation inside an impact.
-
-The effective amount can fall natively as a bodily or decaying contribution falls. A threshold crossing can make review eligible under policy, but the crossing itself is neither an external event nor a mandatory paid call. Hysteresis and bounded support accounting prevent repeated oscillation from buying repeated reconsideration.
+Mechanical reads require every applicable contribution. An incomplete read is unavailable, not zero fear; impact cannot wait for paid interpretation. Native curves change continuously. Thresholds may make review eligible under bounded policy, but are neither external causes nor mandatory calls.
 
 ### Time that players can understand
 
-Newly authored player-facing durations use **normal-play seconds**. A provisional three-second startle means three normal-speed wall seconds at 1×, one wall second at 3× and 0.375 wall seconds at 8×. Authoring and saving preserve this meaning; the existing simulation clock owns converted authoritative progress and expiry.
+Author player-facing durations in **normal-play seconds**. Three seconds means three wall seconds at 1×, one at 3× and 0.375 at 8×. The shared simulation clock owns converted progress and expiry; speed is never applied twice.
 
-Pause freezes simulation progress. Saving halfway through a reaction and reopening resumes the remaining portion, rather than creating a new onset or applying offline wall-clock recovery. Speed changes accelerate the same simulation interval and do not multiply a duration twice. A provider request's elapsed wall time does not decide emotional recovery. Exact appraisal decay values and their explicit unit conversion belong in [base psychological reactions](../worlds/base/psychological-reactions.md), not duplicated numbers in this feature document.
+Pause freezes progress. Saving halfway and reopening retains the remaining half without onset replay, offline recovery or catch-up reviews. Provider wall time cannot set lifetime. Exact appraisal rates and conversions belong to [base psychological reactions](../worlds/base/psychological-reactions.md).
 
 ## Fear, joy, grief and anger
 
-World definitions select the vocabulary, supported causes, value kinds, lifetime families, review policy and any mechanical channel. These are fictional authored rules, not diagnoses or empirical claims about universal human psychology. A definition omitted from a world grants no operation and no fallback emotion.
+World definitions select vocabulary, causes, representations, lifetimes, review permission and any mechanical mapping. These are authored fictional laws, not diagnoses or universal psychology. Omitted definitions grant no fallback emotion.
 
-| Emotion | Personally meaningful interpretation | Selected or illustrative representation | Consequence and intentional limit |
-| --- | --- | --- | --- |
-| Fear | Possible harm, vulnerability, a dangerous person, an uncertain exit or a valued loss | The base profile uses source-linked scaled appraisals with explicit direction/target rules; supported worlds may select other lifetime families | Applicable fear can affect declared accuracy/evasion. The person still chooses through the existing decision owner and can act courageously, continue work or flee at their supported running speed. |
-| Joy | Welcome company, a useful success, a particular performance, beauty or an ordinary activity worth enjoying | A world-supported source-linked positive appraisal with its authored scale and lifetime; the selected joy policy retains its own cause semantics | It can matter to later interest, attention or chosen company. It does not create combat power, consent, loyalty, automatic need fulfilment or a compulsory cheerful expression. |
-| Grief | Continuing meaning of a personally understood loss | Existing wilderness:grief v1 is persistent, qualitative and cause-stacked. Its experience/recall-linked reflection creation remains enabled and ordinary decision creation remains disabled; independent review permission and integration are selected pending work. | The concern can persist through ordinary happiness. No universal sadness meter, fixed recovery deadline, direct combat penalty or periodic model duty is assumed. |
-| Anger | Perceived wrong, obstruction, provocation, disregard or another world-supported personal meaning | Preserve the existing independently interpreted fear/anger foundation and its own value, target/cause and lifetime policy | It can influence chosen demands and methods without compelling aggression. Resolve does not certify forgiveness, trust or repair of the underlying harm. |
+| Emotion | Meaning and representation | Consequence |
+| --- | --- | --- |
+| Fear | Personally understood harm, vulnerability, danger, uncertain escape or valued loss; source-linked scaled base appraisals with explicit direction/target rules | Declared accuracy/evasion effects can coexist with courage, useful work or full supported running speed. Other worlds may select supported lifetimes. |
+| Joy | Welcome company, useful success, beauty, performance or ordinary enjoyment; source-linked positive appraisal with its own scale and lifetime | Can inform later interest, attention and chosen company. It grants no combat power, consent, loyalty, need fulfilment or compulsory expression. |
+| Grief | Continuing meaning of a personally understood loss; existing persistent qualitative, cause-stacked representation | May coexist with happiness and useful work. No universal sadness meter, recovery deadline, direct combat penalty or periodic model duty. |
+| Anger | A perceived wrong, obstruction, provocation or disregard; existing independently interpreted appraisal with its own source and lifetime | May inform demands or methods without compelling aggression. Resolution does not certify forgiveness, trust or repair. |
 
-The [installed base appraisal definitions](../../packages/domain/src/worlds/base/appraisals.ts) already provide grief's distinct representation. The existing wilderness:grief v1 admits perceived-event and remembered causes, with reflection enabled and decision creation disabled. The new independent review permission is separate from both existing flags; it does not create a new ordinary-decision grief producer or create an initial record. The existing wilderness:authored-grief v1 remains the separate authored-only, persistent qualitative cause-stacked definition with decision and reflection disabled. It receives no AI review permission; its authorized authoring path retains ownership. The [world policy](../worlds/base/psychological-reactions.md) and technical pin/installation rules govern the selected extension without reinterpreting retained records.
+The [installed definitions](../../packages/domain/src/worlds/base/appraisals.ts) already distinguish experience-linked `wilderness:grief` from `wilderness:authored-grief`. Source-linked grief permits perceived/remembered causes and reflection creation, but not ordinary decision creation. Its selected independent review permission applies only to existing lawful records. Authored grief remains authored-only, with decision/reflection and AI review disabled. Exact installation/pin rules remain in the [world policy](../worlds/base/psychological-reactions.md) and technical design.
 
 ### Coexisting meanings
 
-A rescue can create relief, gratitude, fear of pursuit and grief for a lost possession. A successful apprentice can feel joy and worry about new expectations. Someone can admire an enemy's performance while remaining opposed to them. These meanings retain their own support instead of being reduced to a positive-versus-negative balance.
+Relief, fear of pursuit and grief can coexist after a rescue; joy and worry can coexist after an apprentice's success. Admiring an enemy need not end opposition. Joy does not subtract from fear or grief, and laughter does not establish indifference.
 
-Joy does not subtract from fear or grief. Grief does not forbid real pleasure. A character laughing during relief does not thereby feel indifferent to a loss. When a mechanical check needs fear, it reads the declared applicable fear channel; it does not average every emotion into mood.
-
-For several causes within an existing appraisal family, preserve the family's established stacking semantics. A distinct new source may use the existing creation path and, for target stacking, supersede the prior active interpretation while preserving its historical outcome. An internal reassessment revises the exact supplied existing record. A batch cannot create several differently named copies of one cause or make question order decide a shared record's final value.
+Keep existing stacking semantics: a distinct eligible occurrence can create a new appraisal and supersede the prior target-stacked interpretation with history intact; reassessment revises the supplied existing record. Aliases and question ordering cannot create copies or competing writes.
 
 ### Native continuation and psychological change
 
-A body can recover from its short reaction without any psychological conclusion. A decaying appraisal follows its authored curve between admitted changes. A persistent or condition-dependent appraisal follows its selected lifetime family; absence of periodic review does not mean its intensity must decline.
+Bodily recovery needs no psychological conclusion. Decaying appraisals follow authored curves; persistent and condition-dependent appraisals retain their own ending rules. Reaching zero ends that contribution without proving safety, courage, forgetting or encounter completion. A temporary feeling cannot silently become persistent.
 
-Psychological reassessment concerns the current meaning or amount of supported feelings. Learning that an exit works, reaching a credible refuge, recovering from hunger or recognizing what an earlier event meant can support change. None of those circumstances guarantees a particular emotional answer. Food can remove bodily strain while an insult remains an insult. A safe place can exist before the character knows or trusts it. Feeling calm is not proof that danger has ended.
-
-An authored temporary fear reaching zero means that contribution ended. It does not prove courage, safety, forgetting or completion of the encounter. An installed persistent fear can remain mechanically applicable without continuing model work. A temporary feeling cannot silently become a persistent family when a model would prefer more time.
-
-Grief provides a useful counterexample to treating every feeling as an expiring meter. A loss can remain important even when it is not the current focus. A reminder may make it relevant to permitted cognition or a separately authorized review; relevance does not enable ordinary-decision creation or override the authored-grief restriction. It does not require a daily stage of mourning, a new external cause for the original loss or a mandatory unhappy response.
+Acquired evidence that an exit works, credible refuge, bodily recovery or changed understanding can support reassessment without guaranteeing its answer. Food may remove strain while an insult remains meaningful; objective safety may be unknown or distrusted. Grief may remain relevant without current attention, a new cause, a mandatory unhappy response or a scheduled mourning stage. Mere relevance changes no creation/review permission.
 
 ### Needs and development
 
-The [needs catalogue](../repertoires/needs.md) owns desired conditions, while the [character design](compelling-characters-feature-spec.md) distinguishes needs/body signals, appraisal, values, intention, plan, action and outcome. This feature preserves those boundaries. Protection, a usable exit, food, privacy and company are conditions or affordances; their actual fulfilment and a person's interpretation are separate.
+The [needs catalogue](../repertoires/needs.md) owns desired conditions; [character design](compelling-characters-feature-spec.md) distinguishes body signals, appraisal, values, intention, plan, action and outcome. Food, protection, privacy and company can be available or fulfilled without prescribing their personal meaning. A meal need not satisfy every attachment, and a funeral can finish while grief continues.
 
-A joyful meal need not satisfy every attachment. A private hour can be welcome without solving a relationship. A funeral can finish while grief continues. Neither a universal needs dashboard nor a hidden emotional optimization target is required.
-
-Meaningful experiences may inform later confidence, interests or self-understanding under existing memory, belief and character authorship. Automatic personality development, permanent trait progression and broad needs simulation remain separate work. Repeatedly frightening a character must not become a shortcut to universal courage, and surviving harm does not require a moral lesson or a predetermined growth arc.
+Experience may inform confidence, interests or self-understanding through existing memory, belief and character authorship. Automatic trait progression, permanent personality development and broad needs simulation remain separate. Neither an emotion dashboard nor hidden optimization target is required. Repeated fear is not courage training, and harm need not impose growth or a moral lesson.
 
 ## People and bodies can differ
 
-Descriptions of personality should make an individual understandable without becoming a decision procedure. This follows [compelling characters](compelling-characters-feature-spec.md), [agent agency](../agent-agency.md) and the [traits catalogue](../repertoires/traits.md). Select contextual tendencies, present interests and values; do not require hardcoded labels such as one global brave, cowardly, angry or cheerful type.
+Personality should explain a particular person without scripting decisions. Follow [character authorship](compelling-characters-feature-spec.md), [agent agency](../agent-agency.md) and the [traits catalogue](../repertoires/traits.md); contextual tendencies, interests and values do not require global brave/cowardly/angry/cheerful types.
 
-| Dimension | Ownership and useful variation | Independence to preserve |
-| --- | --- | --- |
-| Bodily composure | Installed body or mechanical trait definitions may alter native reaction magnitude, recovery and explicitly supported effects | It does not improve perception, settle private fear or decide willingness to risk something |
-| Courage and risk willingness | Values, beliefs, actual stakes, capabilities and the existing choice owner can make one risk worthwhile and another pointless | A character can shake while helping; fear, physical strength and obedience are different |
-| Appraisal sensitivity | Personal context can make beauty, welcome, pain, injustice, danger or embarrassment matter differently | Sensitivity does not grant sensory acuity, hidden information or a universally negative outlook |
-| Temperament and persistence | Authored tendencies can support quick irritation, slow recovery, strong anticipation, warm enthusiasm or restrained interest | Prose alone installs no numerical multiplier, forced response or infinite lifetime |
-| Expression | Supported bodily cues and separately chosen speech/presentation can be open, restrained, practised, misleading or uncertain | An outward signal does not prove its corresponding private feeling, truth or consent |
-| Coping | Available work, walking, company, privacy, humour, music, preparation or practical repair can be chosen according to the person and situation | An action's actual outcome supplies evidence; no one coping activity guarantees relief or becomes the universal best action |
-| Development | Authorized changes to beliefs, tastes and self-understanding can follow particular experience through their existing owners | The emotion module does not edit biography, award personality XP or require trauma for an interesting person |
+| Dimension | Useful variation and boundary |
+| --- | --- |
+| Bodily composure | Installed body/trait rules can alter native magnitude, recovery or supported effects; they cannot improve perception, settle fear or choose risk. |
+| Courage and risk willingness | Values, beliefs, stakes and capabilities can make one risk worthwhile and another pointless. Shaking, strength and obedience are different. |
+| Appraisal sensitivity | Beauty, welcome, pain, injustice or embarrassment may matter differently; sensitivity grants neither sensory acuity nor a uniformly negative outlook. |
+| Temperament and persistence | Quick irritation, slow recovery, enthusiasm or restraint can inform interpretation; prose installs no multiplier, forced action or infinite lifetime. |
+| Expression | Native cues and chosen presentation can be open, restrained, practised or misleading; they prove neither feeling nor consent. |
+| Coping | Work, walking, company, privacy, humour, music or repair can supply experience. Actual outcomes matter; no activity guarantees relief or becomes universally optimal. |
+| Development | Authorized changes to beliefs, tastes and self-understanding use their existing owners; this module awards no personality XP and requires no trauma. |
 
-A calm voice can belong to someone frightened. A demonstrative character can show joy that a quieter friend feels just as strongly. Someone may tolerate injury and fear dependence, prepare carefully for danger yet dislike ceremonial attention, or enjoy frightening entertainment while refusing an unnecessary real risk. These combinations are coherent without custom scripts for each personality.
-
-Positive specificity matters. A cook who enjoys familiar company, an amateur who likes making imperfect music, a person satisfied with a modest local life and someone who notices beautiful weather can create meaningful invitations and continuations. They need not be supplied with a hidden wound or an unresolved deficiency to remain interesting.
+A calm voice can belong to someone afraid; quiet and demonstrative friends can feel equal joy. Someone may tolerate injury but fear dependence, prepare carefully for danger but dislike ceremonial attention, or enjoy fictional fright while refusing real risk. Familiar company, imperfect music, beautiful weather and satisfaction with a modest life offer positive specificity without a hidden wound.
 
 ### Native memoryless animals
 
-A compatible animal can startle from an admitted native cause without language, an episodic memory record or a model call. Its existing native behaviour owner continues to own avoidance, orientation, escape, pursuit and route choices. The emotion feature supplies the body contribution and its supported mechanical query, not a new animal decision pipeline.
+A compatible animal can startle without language, episodic memory or a model. Its existing controller still owns orientation, avoidance, pursuit, escape and route choices. A hare's actual speed and routes enable native flight; startle ending does not end that choice, and fear does not slow running. Sensing, approaching, ranged hunting, burrowing, injury and locomotion retain their separate capabilities; no reflex identifies an unseen attacker.
 
-For the hare example, sudden danger can produce native startle while its real body and controller use rapid running and narrow routes. The end of startle does not automatically end flight, and active fear does not lower running speed. Approaching, hunting from range, burrowing, injury and locomotion must use their separately admitted capabilities. An animal's knowledge is still limited by actual acquired cues; the native reaction does not identify an unseen attacker.
-
-A horse's applicable reaction and response remain separate from a rider's supported control, handling, space, rest, water and pain. Soothing intent cannot directly set the horse's private fear or erase a physical condition. Learned handling or familiarity can matter only through actually selected native or learned capabilities.
+A horse's reactions remain distinct from rider control, handling, space, rest, water and pain. Soothing intent cannot erase a condition or assign private calm; familiarity and learned handling matter only through supported capabilities.
 
 ### Synthetic and unfamiliar bodies
 
-A character with a synthetic body may lack mammalian startle while having a supported private interpretation of fear, joy or loss. A separately installed synthetic reflex may have its own declared applicability and physical response. The label “synthetic” neither requires emotional absence nor installs an equivalent human reaction.
+A synthetic character may lack mammalian startle while privately interpreting fear, joy or loss. Any synthetic reflex needs its own installed rule. A fan responding to exertion is bodily evidence, not a reliable anxiety display; a coloured mantle can combine native and deliberate signals without exposing private values.
 
-A chassis fan increasing under exertion is an observable body fact if that body declares it, not a reliable anxiety display. A coloured mantle can mix deliberate signals with native bodily changes under a world's explicit rules; familiarity can support uncertain interpretation without providing direct access to private values.
-
-Body shape, species, culture, controller and personal disposition are separate. Horns do not establish anger, prey morphology does not establish cowardice, and mechanical composure does not imply superior character. Worlds select compatible physiology and supported affect laws through installed definitions.
+Body shape, species, culture, controller and disposition remain separate. Horns do not imply anger, prey morphology does not imply cowardice, and composure does not establish superior character.
 
 ## Emotional review during ordinary life
 
-**Emotional review is an independently selectable operation.** It reconsiders supported feelings without requiring a deliberate thought, new speech act, goal selection, plan revision or physical action. The character can keep walking, preparing a meal, working, resting or waiting for an answer while a permitted review changes a private interpretation.
+**Emotional review is independently selectable.** It reconsiders supported feelings while the character continues walking, working, resting or waiting, without requiring a thought, speech, goal, plan revision or physical action. Requiring reflection to narrate the change would not satisfy this contract.
 
-The operation shares actor snapshots, exact evidence bindings, model execution accounting, budgets and publication authority with existing cognition. Its distinct output contract is emotion-only. It must not be implemented by requiring the ordinary reflection operation to produce a thought that merely narrates the desired change. A model's sentence “I feel safer now” is not itself an admitted state change, external event or chosen speech.
+The [operation contract](emotional-physiology-tech-design.md#ep-c08--independently-selectable-emotional-review) reuses existing permitted snapshots/evidence, model accounting, budgets and publication. Its output changes only authorized emotion records; saying “I feel safer” is neither an admitted change nor chosen speech.
 
 ### A useful end-to-end flow
 
-| Step | Product behavior | Required boundary |
-| --- | --- | --- |
-| A real cause is experienced | A bodily response may occur natively; an eligible person may interpret permitted evidence through the existing appraisal path | Native progress does not wait for AI, and the interpretation remains private and individually supported |
-| The character continues | Existing physical actions, plans and invitations remain owned by their current systems | A strong emotion does not automatically stop useful work or select a new goal |
-| A permitted reason becomes eligible | Important evidence, bodily change, changed perceived safety, successful escape, separation, an admitted threshold or bounded recovery interval can matter | Eligibility is not a model call and is not proof of the emotion's eventual answer |
-| Existing cognition admits an opportunity | Multiple compatible feelings can share a bounded character review and reuse an already admitted cognition opportunity | No second queue, per-frame actor scan or mandatory third threat-response call |
-| The model considers the supplied feelings | It can retain, reduce, resolve or otherwise validly reassess each supplied feeling, including uncertainty | It cannot invent sources, set another character's feelings, rewrite a goal or increase its own allowance |
-| Native authority validates publication | Exact source, life, controller, policy, appraisal and review authority determine whether each component is still valid | A delayed result cannot overwrite changed circumstances or retroactively affect an earlier physical outcome |
-| The character continues with accepted state | Later authorized cognition and mechanics use the actual admitted result and its lifetime | No-change, failure or delay does not fabricate calm, action, speech or a new emotional occurrence |
+| Step | Required behavior |
+| --- | --- |
+| Experience | Native reactions proceed without AI; an eligible interpreter may appraise its own permitted evidence. |
+| Continue | Existing work, goals and invitations keep their owners while feelings persist. |
+| Become eligible | Material evidence, bodily/context change or an authored finite recovery/threshold opportunity can justify review, without determining its answer. |
+| Admit and consider | Existing cognition can batch compatible feelings or reuse an already admitted request. The model chooses only supported outcomes for supplied feelings. |
+| Publish and continue | Current authority and exact dependencies admit valid components; subsequent cognition/mechanics consume the accepted result. Delay or failure invents no emotion or action. |
 
 ### Eligibility without a maintenance loop
 
-Review policy is world-configurable through supported native families. The authored policy specifies material eligibility reasons, intervals where appropriate, urgency, positive spacing, cooldown/hysteresis, bounded work and how several feelings share a character opportunity. Exact selected values belong to [base psychological reactions](../worlds/base/psychological-reactions.md).
+World policy selects supported triggers, adaptive intervals, urgency, spacing, hysteresis and bounded batching. Intense episodes may qualify sooner; important events, known safety, escape, separation, bodily changes and new evidence can matter. These are personally available changes or subscribed native boundaries, not an omniscient actor scan.
 
-An intense episode may warrant more frequent review than a quiet one. Mechanically significant band changes can make review eligible. Important new events, changed safety, altered bodily conditions, separation, successful escape, elapsed recovery and new evidence can also warrant it. These triggers use the character's permitted context and subscribed native boundaries, not an omniscient global scan.
+Quiet joy/grief needs no periodic work, and an omitted review policy enrolls nothing. Existing cognition limits apply to complete mandatory context, request size, budget and capacity. Overflow remains explicit; no required evidence is silently dropped and no separate queue, per-tick paid check or unbounded retry is created.
 
-Stable joy or a dormant grief concern needs little or no periodic model work. A feeling with no independent review policy is not automatically enrolled. A scheduled interval is finite work associated with exact support; it does not require checking the same emotion forever because time still passes.
-
-The review remains within existing bounded cognition admission. Multiple feelings can share one request, with a complete mandatory context set and explicit handling for work that does not fit. Budget denial, missing capability or incomplete evidence cannot be repaired by opening another queue, silently dropping required concerns or buying an unbounded retry.
-
-An existing threat opportunity can incorporate compatible due emotion work in its already selected appraisal stage. There is no new compulsory appraisal stage before the existing threat decision. A standalone review acknowledges only its captured emotional opportunity; it must not consume an unanswered invitation, advance the ordinary evidence-consumption position or make an unhandled threat disappear.
+A threat's existing appraisal stage can include compatible due reviews without a third required call. Standalone review acknowledges only its emotional opportunity, leaving unanswered invitations, questions and threats available to their ordinary decision owner.
 
 ### Legitimate reassessment of the same cause
 
-The existing decaying-appraisal reframe restriction is preserved: an ordinary same-cause reframe cannot change intensity or restart a lifetime. This feature selects a distinct, admitted reassessment operation on the existing owner.
+Ordinary same-cause reframe still cannot change a decaying value or restart its lifetime. The distinct reassessment operation preserves appraisal identity, original cause/source, family, target/stack and lifetime authority. Within the fixed original-cause horizon, a changed understanding may increase or reduce current intensity without inventing another attack. An unchanged answer renews nothing.
 
-A reassessment keeps the exact appraisal, original cause, source binding, family, target/stack identity and original lifetime authority. It may revise the current amount or meaning only within the offered policy and captured support. For a decaying family, the original-cause horizon remains fixed. A later understanding of an existing danger can increase supported fear within that envelope without pretending that a second attack occurred. An unchanged answer does not quietly renew the curve.
-
-A distinct new eligible occurrence still uses the existing creation path and stacking semantics. A successful escape or new report can supply new evidence with its own actual provenance. An internal review is not a new external cause. A renamed threat, new request ID, rephrased summary, repeated recall or self-authored emotional notification cannot manufacture a fresh occurrence.
-
-This distinction permits delayed fear after a rescue and changing irritation after bodily recovery. It also prevents unchanged concern from surviving indefinitely through repeated paraphrase. A persistent family remains persistent because the world explicitly selected that family, not because an AI kept refreshing a temporary one.
+A real new occurrence uses existing creation/stacking semantics; escape or received testimony may provide additional exact support. A recall, paraphrase, renamed threat, request ID or self-authored notification is not a new external cause. Persistent feelings persist by explicit world definition, not repeated renewal of a temporary one.
 
 ### Anti-loop and no-change behavior
 
-Each admitted support set and opportunity has finite work. Submitted attempts, including uncertain or unsuccessful attempts, follow the policy's accounting. A model cannot extend that allowance, select its own urgency or create a new support epoch by describing the same situation differently.
+Each admitted support set has finite work; submitted failures and uncertain attempts count. A model cannot change its allowance or urgency. Review results, their receipts, derived notifications and subsequent reuse cannot purchase another review; a later real assault or independent evidence remains eligible.
 
-The exact receipt and emotional notification produced by a review cannot make the same review newly eligible. Suppression is scoped to those derived receipts; it must not suppress a later actual assault, newly received evidence or another independently relevant event. Reusing the result in an existing threat or ordinary decision does not buy another review.
+Retain preserves emotional meaning, value, sources, lifetime and creation time without a new occurrence or spoken justification. Unknown and incomplete evidence are distinct outcomes. Under the selected base policy, retain, uncertainty or submitted failure makes unchanged support dormant immediately. Only accepted meaningful change can earn the next allowed timed follow-up. Expected recovery, decay crossings and timers cannot awaken that dormant support.
 
-No-change is a successful meaningful answer when supported. It preserves emotional value, source, lifetime, creation time and meaning; only the appropriate operation bookkeeping changes. It does not emit a fresh emotional occurrence, alter unrelated decisions or require a spoken justification. “I cannot tell” and insufficient evidence remain distinguishable from successful retention.
-
-Under the selected base policy, retain, uncertainty or a submitted failure makes that unchanged support dormant immediately, even if a numerical attempt cap has not been reached. Only a meaningfully changed accepted result can use the next permitted unchanged-support timed follow-up. A later timer, expected recovery of the same startle, native decay crossing or derived notification cannot wake that dormant support. Material independent evidence or a separately experienced bodily/context transition still uses the exact bounded eligibility rule.
-
-When the finite unchanged-support allowance is exhausted, the feeling can continue under its native lifetime with review dormant. A material new permitted support set can justify another bounded opportunity if the installed policy allows it. It cannot extend the original-cause horizon of a decaying appraisal. Continuing actual danger can support distinct new occurrences; simulated time, aliases and self-notifications cannot substitute for them.
+After exhaustion, native lifetime continues. Independently material evidence may permit another bounded support set without extending a decaying feeling's original horizon. Time, aliases and self-notifications never replenish it.
 
 ### Delay, failure and cancellation
 
-Native bodily progress and admitted lifetimes continue coherently while model work is delayed or unavailable. Lack of funds, capacity limits, provider failure, malformed output, lost authority, stale evidence, uncertainty or a no-change answer cannot create calm, fear, a goal or physical action. A paid request retains its actual accounting even if publication is refused.
+Native curves continue while requests are delayed, unaffordable, unavailable, malformed or refused. A late proposed value ages from its captured assessment time; callback arrival cannot restore its earlier amount. Exact life, control, source and relevant changes fence publication. Paid attempts retain their actual accounting even when refused.
 
-Independent valid feeling components may be admitted under the technical batch contract while stale or unsupported components receive explicit dispositions. A committed private feeling does not imply that a later action-selection stage succeeded. Conversely, a failed emotion-only review cannot swallow unrelated ordinary work.
-
-Publication uses the current actor life, controller authority, definition pins, exact source and relevant semantic revisions. Progress of a native curve is handled by the authoritative time contract; a late provider result does not restore its earlier proposed amount at the later wall-clock completion time. Saving, pausing, reloading or reclaiming work does not replenish opportunities or create catch-up calls.
+Valid independent components can succeed when another is stale. A later action-stage failure does not erase an accepted feeling, and failed review does not consume unrelated work. Pause, load and recovery preserve remaining lifetime and allowance without catch-up calls.
 
 ## Knowledge, privacy and continuity
 
 ### Current relevance is personal
 
-A character can respond only to permitted personally experienced circumstances, memories, beliefs and body context. An exit being objectively clear is different from the character having acquired evidence that it is clear. An unheard reassurance is unavailable. A known route can be remembered while its current safety remains uncertain.
+Personally experienced circumstances, memory, beliefs and body context constrain interpretation. A clear exit may be unknown; unheard reassurance is unavailable; a remembered route may have uncertain current safety. Observation, testimony, inference and recollection remain distinguishable. Intense fear does not prove a threat exists, and anger does not validate an accusation.
 
-Emotion can be intense despite uncertainty. Fear of a possible threat is not proof that the threat exists, and anger based on a mistaken report does not make the accusation true. A private interpretation must preserve the relevant distinction between observation, testimony, inference, recollection and uncertainty.
-
-Several sources can contribute to current meaning. The actor can remember the original attack, have actually reached cover, know an ally is nearby and remain uncertain about pursuit. A bounded review supplies the permitted relevant set with exact bindings. It does not manufacture a synthetic combined event or use a distant observer's hidden knowledge to complete the story.
-
-Current-context relevance is not deletion. A grief concern can be durable while absent from a practical local question, and a directed fear need not enter every unrelated language question. That cognitive selection does not remove mapped active fear from the selected mechanical projection. Mechanical consumers require the complete body/control-applicable set independently, and ordinary cognition must receive its own relevant admitted meanings rather than a convenience page being treated as completeness.
+Several exact sources can support one current meaning: the original attack, reached cover, a nearby ally and uncertain pursuit. Preparation cannot invent a combined event or borrow another observer's hidden knowledge. Cognitive relevance does not delete a durable concern or remove mapped active fear from the complete mechanical query; required relevant context cannot be replaced by a convenient display page.
 
 ### No mind reading or cross-character emotional writes
 
-Physical action, speech, facial presentation, silence, a chosen smile or a model explanation never proves a corresponding private feeling. An attack does not prove anger; retreat does not prove fear; laughter does not prove joy or indifference; accepting practical help does not prove trust or consent.
+Attack, retreat, smile, laughter, silence and accepting help prove neither private feeling nor consent. Comfort, persuasion, intimidation, deception and performance operate through supported actions and actual received evidence. Recipients interpret independently; the initiator's intention cannot write their emotions.
 
-The initiating actor can attempt comfort, persuasion, intimidation, deception or an enjoyable performance only through actually supported actions. Recipients acquire the real words, events and outward cues that their senses disclose, then interpret them independently. The speaker's intention cannot write their private appraisals.
-
-A model can propose emotional changes only for the exact character whose authorized private snapshot and bound evidence were supplied. Audience and publication rules apply to prompts, receipts, logs and inspection as well as final prose. A private amount or source does not become visible to bystanders because a mechanical effect exists.
-
-Other worlds may select explicit magical or technological effects on feeling. Those require a separately admitted capability, exact effect authority, observability and lifecycle. A description such as “soothing voice,” “fear spell,” “emotional weather” or “happiness device” alone is not such a capability and does not grant private writes to the initiating model.
+A model may propose changes only for its authorized character and supplied exact evidence. Privacy applies to prompts, receipts, logs and inspection as well as prose. A visible mechanical consequence exposes no private amount or source. Magical/technological affect requires a separately admitted capability with exact authority, observability and lifecycle; a “fear spell” or “soothing voice” description grants none.
 
 ### Action choices preserve emotional continuity
 
-Continuing an action does not mean an emotion has ended. Choosing an attack does not create anger automatically. Fleeing does not force a fear record, and stopping a threat does not automatically forgive its source. A brave action can occur during strong fear, and a quiet character can enjoy company without expressing delight.
+Continuing work does not resolve feeling, attacking does not create anger, and defeating a threat does not forgive its source. Coping produces an actual experience—food, rest, a crossed barrier or an answer—that may support later interpretation without choosing it.
 
-A coping choice creates an actual result that may later be relevant. Completing a meal, resting a sore body, successfully crossing a barrier or receiving an answer can support a changed interpretation. The action does not claim that interpretation on the actor's behalf.
-
-Emotional review may change a private amount while the same goal, plan and action continue. If the resulting feeling later becomes relevant to a new choice, the existing decision owner receives it as context and chooses freely. Review itself has no authority to create that new choice.
+Review can change a feeling while the same goal and action continue. The ordinary decision owner may later use that feeling as context; review itself cannot choose a new action.
 
 ### Persistence, correction and forgetting
 
-Current-format persistence retains canonical appraisals, source lineage, interpretation authority, native lifetime progress, review disposition and durable receipts under their existing owners. Loading continues the accepted state; it does not replay an attack, refresh joy, clear grief, restart a startle or grant a fresh review allowance.
+[Technical lifecycle](emotional-physiology-tech-design.md#ep-c09--persistence-recovery-and-correction) retains appraisals, permitted provenance, lifetime progress, review disposition and durable outcomes. Load continues them without replaying attacks, renewing joy, clearing grief or granting new review work.
 
-Source correction and forgetting follow the existing appraisal/experience privacy and invalidation policies. Review must not narrow those policies, reconstruct erased evidence from hidden shared history or treat loss of detailed recollection as a new cause. Exact retained authorized lineage can support only what the owner permits.
-
-A correction can change current meaning without rewriting an actual past occurrence. If a traveller believed dead returns, received evidence may change the belief and current grief, while the historically experienced loss remains part of what occurred unless an authorized owner separately corrects or removes its records. Other people do not receive the correction merely because one person did.
-
-World definition changes retain immutable meaning and current installation constraints. Resolving an active feeling does not by itself free a retained historical pin to be silently reinterpreted. A new scale cannot be applied to old amounts by relabelling a definition. The [technical design](emotional-physiology-tech-design.md) and [feelings limits](../limits/feelings.md) own these lifecycle requirements.
+Existing correction/forgetting rules still govern invalidation and disclosure. Erased evidence cannot be reconstructed from hidden history, and lost detail is not a new cause. New testimony can change current meaning without rewriting actual past experience or informing people who never received it. Retained exact definitions cannot be silently relabelled or reinterpreted, even after active feelings end.
 
 ### Presentation and observability
 
-Ordinary play should communicate supported consequences and opportunities in familiar terms. The affected player can see an authorized bodily condition and its relevant mechanical effect without an obligatory emotion dashboard. Another actor sees only acquired outward evidence. A separate deliberate expression can communicate a feeling, conceal it or be misunderstood.
+Use familiar language for authorized bodily effects and useful choices, without requiring an emotion dashboard. Others receive actual outward cues, which may communicate, conceal or misrepresent feeling.
 
-An unconscious emotional review does not require a public animation, thought bubble, speech turn or action log entry. Separately authorized inspection can expose its current record, support and lifecycle for diagnosis or creation. Operational failures belong in appropriate existing diagnostics; they should not become fictional evidence that a character had a thought or changed their mind.
-
-Player understanding, native correctness, model behavior and cost are separate qualification questions. A fluent explanation is not proof that a value changed, and a correct internal receipt is not proof that the scene is enjoyable.
+Unconscious review needs no animation, thought bubble, speech turn or public action entry. Authorized inspection may expose its support and lifetime; operational failures remain diagnostics, not fictional thoughts. Player comprehension, native correctness, model quality, cost and enjoyment require separate evidence. Fluent narration proves none of them.
 
 ## Directly controlled characters: SA-D01
 
-**Unresolved product decision requiring Mike's approval.** The existing [SA-D01 record](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) covers longer-lasting interpreted fear for directly controlled characters. This general design makes its consequences for other supported interpreted feelings explicit. No option is silently adopted by this document.
+**Unresolved; requires Mike's product decision.** [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) covers longer-lasting interpreted fear during direct human control; the same authority question applies to other interpreted feelings. No option is adopted here.
 
-Native applicable bodily startle and physical conditions apply equally to player-controlled and autonomous actors. The issue is who may author or maintain the fictional character's longer-lasting interpretation while a human directly controls them. No background model may silently decide the human player's subjective fear, joy, anger, grief, desire or intended roleplay.
+Native bodily startle and physical conditions apply equally to controlled and autonomous characters. A background model must not silently decide the human player's subjective fear, joy, anger, grief, desire or roleplay.
 
 ### Alternatives and recommended initial choice
 
-| Alternative | Precise conditional product | Advantages | Costs and implementation consequences |
-| --- | --- | --- | --- |
-| A. Native body only during direct control | Native bodily/physical reactions apply. Autonomous creation and reassessment of the controlled character's private interpreted feelings are disabled. Appraised-emotion contributions are excluded from that character's effective emotional mechanics during direct control. | Keeps immediate embodied stakes and preserves the human's interpretive freedom with the least additional interface or model burden | Player and NPC interpreted mechanics differ. Existing appraisals require explicit masking during control, continued native lifetime handling and visible transition feedback. This option does not provide persistent interpreted player fear. |
-| B. Deterministic authored interpretation | Explicitly selected native world rules create/reassess supported appraisals from the controlled character's own admitted evidence, through the same appraisal authority. No autonomous model supplies those interpretations. | Makes authored longer-lasting player fear and its mechanical consequences predictable and available without a paid psychological call | The world imposes a fictional emotional condition. The rule, scope and mechanical consequences must be clear to the player. Rules need exact evidence, control and source admission; a label cannot stand in for an implemented producer. Broad freeform personality interpretation is unavailable. |
-| C. Explicitly opted-in model interpretation | The player grants bounded model interpretation for named supported families and consequences under the existing controller/consent owner. Reviews still obey the same source, budget, lifetime and publication rules. | Supports an AI-interpreted roleplaying character with more individual contextual meaning | Requires explicit consent, clear revocation and control-transfer semantics, authorized private context and acceptance of model uncertainty/cost. Opt-in must not be inferred from ordinary movement, dialogue or enabling unrelated AI assistance. |
+| Alternative | Conditional product and tradeoff |
+| --- | --- |
+| A. Native body only during direct control | Native effects apply; autonomous interpreted-emotion creation/review is disabled and appraised-emotion mechanics are masked. This preserves subjective freedom with little extra interface/model burden, but player/NPC interpretation differs and retained-state transitions need truthful feedback. It supplies no persistent interpreted player fear. |
+| B. Deterministic authored interpretation | Explicit native world rules create/reassess selected emotions from the character's own admitted evidence through existing appraisal authority. This supplies predictable persistent player mechanics without paid interpretation, but imposes a fictional condition that must be explained. Exact rules cannot be replaced by a label or freeform personality inference. |
+| C. Explicitly opted-in model interpretation | The active player grants bounded interpretation for named families/consequences, using the same source, budget, lifetime and publication rules. This supports contextual roleplay, with explicit private-context consent, cost/uncertainty, revocation and transfer requirements. Movement, dialogue or unrelated AI assistance is not opt-in. |
 
-**Recommended initial choice: A, native body only during direct control.** It establishes common bodily stakes while the player keeps subjective roleplay authority, and allows the native/NPC foundation to be implemented independently. This is a recommendation pending approval.
-
-The shared contract's conditional recommendation remains: **if Mike selects persistent interpreted fear as part of ordinary player mechanics, prefer B, deterministic authored interpretation, over silently enabling autonomous model appraisal.** C remains an explicit optional product alternative, not a fallback when B lacks a rule.
-
-Choosing B or C for fear does not automatically authorize interpreted joy, grief, anger or a universal needs model. The selected families, user-facing meaning, consequences and grants must be explicit. A fictional authored condition must not be presented as an inference about the real human's psychology.
+**Recommend A initially**, pending approval. If persistent interpreted fear is selected for ordinary player mechanics, **prefer B over silent autonomous model appraisal**. C is an explicit alternative, not a fallback for a missing native rule. Choosing fear does not authorize joy, grief, anger or a needs simulation; selected families, consequences and grants must be explicit. Fictional conditions are not claims about the real human's psychology.
 
 ### Control transfer and retained state
 
-Control changes invalidate in-flight private operations whose actor/control authority no longer matches. Native bodily reactions already admitted for the same physical life continue on their coherent simulation timeline. A transfer cannot erase an injury, repeat a shock cause or retroactively change a completed outcome.
+Transfer invalidates private operations with stale actor/control authority. Same-life native bodily effects continue without erasing injury, replaying shock or altering completed outcomes.
 
-For conditional option A, existing NPC appraisals retain their canonical identity, provenance and historical outcomes. Their native lifetime continues while the character is directly controlled, but their emotional mechanical projection is masked and no autonomous emotional review runs. Authorized inspection may identify them as the character's preceding appraisals; it must not relabel them as a new human-selected feeling.
+Under conditional A, preceding NPC appraisals retain identity, provenance, history and native lifetime, while their emotional mechanics are masked and autonomous review stops. Authorized inspection may identify them as preceding appraisals, not new human-selected feelings. Masking/unmasking may immediately change effective fear and requires truthful visible feedback; it does not resolve, renew, recreate or extend the records.
 
-Masking at takeover and unmasking at return to autonomy can change the effective mechanical fear even when the underlying record did not change. That is a deliberate consequence of this option and requires visible, truthful control-transition feedback. The transition does not delete, resolve, renew, re-create or extend the records. It creates no free review epoch and does not reset the original-cause horizon or attempt allowance.
+On return to autonomy, surviving records apply at their naturally progressed values; ended records stay ended. Only a policy-permitted materially supported current opportunity can justify review. Transfers grant no fresh allowance or extended horizon, and repeated control toggling cannot buy indefinite reassessment.
 
-On return to autonomy, retained live appraisals can again be applicable under the selected autonomous policy, using their current naturally progressed value. Ended records stay ended. A material exact current-context/control-authority opportunity may support a bounded review only if the installed world policy permits it. Time alone continues native curves; repeated control toggling cannot purchase indefinite reassessment.
-
-For B, the newly controlling policy admits only its selected deterministic producer and families. Existing compatible records retain their meanings and lifetimes; any inclusion/exclusion of a family at transfer must be declared, rather than silently recasting an NPC's interpretation. For C, opt-in belongs to the active human/controller grant and does not transfer automatically from a previous controller. Losing or revoking that grant refuses pending model publication; the explicitly selected post-revocation profile determines projection while retaining record and lifetime integrity.
-
-The eventual decision must settle producer authority, selected families, applicable mechanical projection, human authorship, display, revocation and transfer together. The native bodily, autonomous-character, animal and shared mechanical contracts can be completed without selecting the player psychological producer.
+Under B, declare the permitted native producer/families and how compatible retained appraisals apply without recasting their meaning or lifetime. Under C, consent belongs to the active controller and does not transfer automatically. Loss/revocation refuses pending publication; the selected post-revocation policy determines mechanical projection while preserving record integrity.
 
 ### Implementation gate
 
-The integration agent can implement the producer-independent bodily and mechanical contracts. Player-appraisal acquisition/review remains blocked until the decision is accepted, or must be available only through an explicitly configured and authorized policy whose selection is visible. An omitted policy never silently means model interpretation. No provider fallback, default prompt or save restoration may adopt A, B or C on Mike's behalf.
+The decision must settle producer authority, families, mechanical application, human authorship, display, revocation and transfer together. Player interpretation remains blocked or available only under an explicitly selected authorized policy; omitted policy, prompts, fallback and restoration adopt no option.
 
-The unresolved decision is narrow: it does not reopen native startle, independently interpreted NPC feelings, maximum applicable fear composition, time semantics, the existing threat decision owner or bounded emotional review. Their designs and implementation TODOs can proceed independently.
+Native body mechanics, autonomous interpretations, animals, maximum fear composition, time rules and bounded review can proceed independently. SA-D01 does not reopen those contracts.
 
 ## Six complete experience scenarios
 
@@ -510,19 +438,15 @@ Native deterministic acceptance establishes actual state, ordering and effects. 
 
 ### Surprise designer contract
 
-The surprise designer consumes this module's native shock cause/result, body applicability, derived effective fear query, stat-modifier resolution, time ordering and animal support, as fully specified in the [technical design](emotional-physiology-tech-design.md) and its EP-C12 handoff.
+Consume [EP-C05–EP-C07 and EP-C12](emotional-physiology-tech-design.md#ep-c12--implementation-and-specialist-handoff): exact shock cause/result and target life, body applicability, complete effective fear, parameter resolution, ordered timing and native animal support. The producer supplies committed evidence; it cannot assign private fear or duplicate onset through outcome wrappers. Newly caused shock affects later eligible checks, never its own impact.
 
-The producer supplies exact committed evidence and target life under the shared contract; it does not assign private fear or create duplicate bodily onsets through outcome wrappers. The body owner applies an installed native rule. Effective fear is read-only and scoped to the later eligible mechanical check. The same surprise can have different later interpretations, and the native animal path never depends on a human-like memory or model request.
-
-The provisional duration remains authored in normal-play time. Fear does not automatically slow running or choose an escape. The selected base ranged conditionAdjustment: none remains. The optional danger-or-return heuristic reads the target's returning-threat work or applicable animal response episode; it is not a fear measurement. Installing a generalized fear mapping excludes that alternate heuristic under [EP-C06](emotional-physiology-tech-design.md#ep-c06--complete-effective-fear-and-parameter-resolution). A future factor requires a distinct supported physical meaning and an explicit reviewed interaction before it can be combined; the selected integration has no unresolved stacking choice.
+Keep authored normal-play duration and unrestricted running speed. [EP-C06](emotional-physiology-tech-design.md#ep-c06--complete-effective-fear-and-parameter-resolution) owns the exact ranged integration and excludes the alternate target-danger heuristic from simultaneous generalized fear mapping; there is no unresolved stacking choice.
 
 ### Integration agent contract
 
-Final integration reconciles the canonical feature/technical/world/limits/tracker links, shared ND11/ND19 selected scope, current cognition/continuing-life/threat consumers and the broader repertoire indexes. It must preserve source-linked appraisal creation/reframe/resolve semantics while adding the distinct reassessment operation and its durable authority.
+Reconcile this pair, world policy, limits, trackers, shared ND11/ND19 scope, existing cognition/continuing-life/threat consumers and the broader repertoire indexes. Preserve one private appraisal owner, one actor-work owner and one threat decision pipeline. New reassessment reuses exact sources, existing operations and durable authority.
 
-There is one existing threat decision pipeline, one coalesced actor work owner and one private appraisal owner. Emotional review reuses compatible opportunities and accounting while retaining its own operation acknowledgement. Integration must preserve actual accepted emotional changes when a later action stage fails and preserve unrelated work when an emotion-only operation completes.
-
-The unresolved SA-D01 producer remains blocked or explicitly configured and authorized. It cannot be decided accidentally by a default prompt, a missing producer, a control transfer or save restoration. The producer-independent native and mechanical foundation does not depend on that decision.
+A later action-stage failure must preserve accepted emotion; emotion-only completion must preserve unrelated work. Keep SA-D01 blocked or explicitly selected and authorized through control transfer and restore. The producer-independent foundation can proceed separately. Detailed consumer responsibilities belong to [EP-C12](emotional-physiology-tech-design.md#ep-c12--implementation-and-specialist-handoff).
 
 ### Maintained records and scope completion
 
@@ -534,4 +458,4 @@ The unresolved SA-D01 producer remains blocked or explicitly configured and auth
 - Related owners: [agent agency](../agent-agency.md), [compelling characters](compelling-characters-feature-spec.md), [continuing lives](continuing-lives-tech-design.md) and [combat/threat responses](combat-and-threat-responses-tech-design.md).
 - Cross-specialist integration: [stealth-awareness tracker](../maintainers/stealth-awareness.md) and [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters).
 
-The selected design can complete its explicit emotion slices of broader “needs design” items without marking their unrelated scope complete. The selected general emotion design is complete. This project remains In progress while implementation and qualification remain outstanding. Completing that design is distinct from implementation, executable acceptance, performance qualification or proof of player enjoyment. SA-D01 remains clearly open until Mike selects the player interpretation policy.
+The selected general-emotion design is complete; broader needs-design items retain their unrelated scope. The project remains In progress while implementation, executable/performance qualification and player evidence are outstanding. SA-D01 remains open until Mike selects the player interpretation policy.

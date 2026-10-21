@@ -18,7 +18,7 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 
 ## General emotions, bodily reactions and adaptive review
 
-[Emotional physiology (EP00–EP09)](emotional-physiology.md) owns the general native reaction, private appraisal, complete effective mechanics and independently selectable review design/delivery. Its [feature](../projects/emotional-physiology-feature-spec.md) and [technical design](../projects/emotional-physiology-tech-design.md) preserve delivered ACT07/ACT08, share CTR's existing threat pipeline and reuse existing cognition. Fear affects precision/new evasive reach without slowing escape; joy and persistent qualitative grief have distinct meanings without a universal mood meter. [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) remains the explicit controlled-character interpretation choice. EP00’s selected design is complete; EP01–EP09 implementation and qualification remain open.
+[Emotional physiology (EP00–EP09)](emotional-physiology.md) owns native bodily reactions, source-linked appraisal, derived mechanics and independent emotional review. [Feature](../projects/emotional-physiology-feature-spec.md) and [technical design](../projects/emotional-physiology-tech-design.md) are complete; implementation/qualification remain open. [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) retains the controlled-character interpretation choice.
 
 ## Combat and immediate threat responses
 
