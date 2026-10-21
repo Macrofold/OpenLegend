@@ -483,6 +483,8 @@ Seeds and references: [Path of Exile](source-atlas.md#g10), [Noita](source-atlas
 
 A former city guard becomes a gardener but retains spear technique, first aid and crowd-calming experience; they can take up arms again when danger returns. Their old badge no longer grants restricted access. Players can change lives without discarding history or retaining inappropriate authority. Meaningful training should transfer where applicable; avoid resetting all competence on a role change or allowing remembered procedure to stand in for current authorization.
 
+For a selected scene, make the actually retained relevant method available when the perceived problem gives it a use. A job title alone supplies neither technique nor current equipment. In a quiet garden scene, unrelated martial instructions can be absent while the accepted personal history remains. Compare a familiar application with a useful application outside its original profession: the surprise should come from the person's transferable knowledge and choice, not an injected instruction to resume their former role.
+
 Seeds and references: [Final Fantasy V](source-atlas.md#g82), [Final Fantasy IX](source-atlas.md#g86), [Star Wars: Knights of the Old Republic II — The Sith Lords](source-atlas.md#g110).
 
 ## The signature move with two lives
@@ -646,3 +648,4 @@ Coherent knight, scout, medic, artisan, duelist, investigator and troubadour pat
 Kitchen precision, load-packing judgment, darning, household scheduling, tool-edge judgment (AP-086), emergency reporting (AP-071), incident handover (AP-080) and focus upkeep (AP-168) are Detail. The minimum edge-judgment version can be Small when an observable condition already exists; missing condition support is a separate dependency, not a reason to build elaborate wear simulation. These are not foundations simply because the original catalogue called them Basics.
 
 Broader social fluency, generalized adaptive practice, specialized curricula and detailed careers remain Depth; selected practical teaching and witnessed rival study can be Complete. No refusal, boundary or control right depends on a character having learned a social skill. Other bodies, dream curricula, transferred skills and new magical schools remain Specialist; Level D is not itself the reason for a low gameplay priority. The ranking does not adopt any particular class system, spell tradition, biological law or skill-decay rule as current runtime behavior.
+

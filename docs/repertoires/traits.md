@@ -516,6 +516,8 @@ Seeds and references: [Stardew Valley](source-atlas.md#g30), [Persona 5 Royal](s
 
 A scrupulously fair organizer makes an exception for a sibling, then must answer the people affected. The contradiction emerges from loyalties and circumstances, not a random hypocrisy event. Players can defend, expose or help repair the decision. Keep the person capable of change and ordinary goodness; a trait combination must not predetermine betrayal or a villain arc.
 
+When preparing the situation, preserve the accepted person, the actual family association and the competing concern rather than selecting whichever single trait predicts the desired act. The organizer can uphold the rule, bend it, ask someone else to judge or propose another arrangement. Compare the same choice for a stranger, a sibling and an openly changed circumstance without changing the biography to force a result. Particular tastes and humor deserve the same treatment: an elegant lover of trashy art (TR-177) remains more than whichever preference matched the latest scene.
+
 Related entries: [TR-203](#values-contradictions-and-unpleasant-choices).
 
 Seeds and references: [Dragon Age II](source-atlas.md#g52), [Crusader Kings III](source-atlas.md#g126), [The Sopranos](source-atlas.md#w22).
@@ -559,3 +561,4 @@ Music, comedy, art, food, conversation, playful courtship and peaceful enterpris
 Reserve keeping (TR-022), exact loan returns (TR-024), pride in patches (TR-042), fixing every wobble (TR-048), repairing rather than replacing (TR-054), cleaning boots (TR-183), rearranging chairs (TR-192), household checklists (TR-193) and handoff rehearsals (TR-241) are Detail. Their authored expression may be Small. Do not build upkeep or administrative machinery to give these tendencies something to react to before the first adventure works.
 
 Most unfamiliar tastes are still ordinary Depth, even in a magical creature. Specialist is reserved here for separate synthetic/copying or reality-law premises and focused adult experiences outside the current game's foundation. Scores are not moral judgments, diagnoses or real-world political rankings. No disposition grants another person's participation, reveals private thoughts or bypasses a clear refusal; these remain constraints on every selected feature, not optional personality bonuses.
+
