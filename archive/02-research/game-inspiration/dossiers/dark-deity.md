@@ -1,6 +1,6 @@
 # G182 — Dark Deity
 
-Research accessed October 20–21, 2026. This dossier covers **the original 2021 Dark Deity**, including relevant patches, its Switch port and separately identified DLC. Dark Deity II's redesigned rules are not attributed to the original. It follows [R01–R14](../research-requirements.md), the [economics/enjoyment amendment](../research-economics-engagement-and-creation.md), and the conditional R15 screen. Open Legend comparisons refer to the [current gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md) and remain research hypotheses.
+Research accessed October 20, 2026. This dossier covers **the original 2021 Dark Deity**, including relevant patches, its Switch port and separately identified DLC. Dark Deity II's redesigned rules are not attributed to the original. It follows [R01–R14](../research-requirements.md), the [economics/enjoyment amendment](../research-economics-engagement-and-creation.md), and the conditional R15 screen. Open Legend comparisons refer to the [current gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md) and remain research hypotheses.
 
 **Finding:** Dark Deity is particularly useful for studying the difference between preserving a character and preserving a worthwhile future for that character. Its Grave Wounds allow survival with lasting penalties, but some players still reload or abandon the injured person. Its builds and relationships attract affection; opaque rules, weak maps and technical friction can interrupt that attachment. Commercially, calling it a flop is unsupported: a reported publisher/developer announcement celebrated more than 100,000 copies sold, while project profitability remains undisclosed.
 
@@ -176,7 +176,7 @@ Ordinary players can configure a campaign and create builds. They cannot use an 
 
 The launch used a recognizable classic-SRPG proposition, crowdfunding community, the Freedom Games E3 showcase and GameSpot's Play for All, culminating in a surprise release. These channels are documented; their individual conversion rates are not. [S02, S05]
 
-The product subsequently reached Switch, the Epic Games Store and GOG, sold additional content and participated in deeper discounts. The Steam page's October 21, 2026 capture showed US$24.99 list price and a temporary US$4.99 sale; neither price is a lifetime weighted average. [S01, S08, S17, S22] An April 2026 publisher announcement also named the franchise in an Indie Pass subscription plan, with payments tied to time played. This establishes the announced mechanism, not a verified original-game subscriber count or receipt. [S30]
+The product subsequently reached Switch, the Epic Games Store and GOG, sold additional content and participated in deeper discounts. The Steam page's October 20, 2026 capture showed US$24.99 list price and a temporary US$4.99 sale; neither price is a lifetime weighted average. [S01, S08, S17, S22] An April 2026 publisher announcement also named the franchise in an Indie Pass subscription plan, with payments tied to time played. This establishes the announced mechanism, not a verified original-game subscriber count or receipt. [S30]
 
 ### Commercial evidence record
 
@@ -219,7 +219,7 @@ The disagreement about story is substantive. A player can find an overarching wa
 
 ### Helpful Steam review sample
 
-The all-time helpful English review page was sampled on October 20–21, 2026. It contained positive and negative accounts; a separate negative-only request was unavailable. Helpfulness favors older visible reviews, and displayed current hours are not the hours at original publication.
+The all-time helpful English review page was sampled on October 20, 2026. It contained positive and negative accounts; a separate negative-only request was unavailable. Helpfulness favors older visible reviews, and displayed current hours are not the hours at original publication.
 
 - **Mach, Recommended, June 15, 2021:** welcomes a Fire Emblem-like experience on PC and its audiovisual presentation, while raising menu and save complaints. A later edit acknowledges a loading-indicator fix. [S14]
 - **Pap, Not Recommended, June 20, 2021:** feels finite experience and strong incoming recruits reward replacement more than developing a personally chosen army. [S14]
@@ -270,11 +270,11 @@ The author reports fixes for movement and crash problems; no patch was executed 
 
 ### Source register
 
-Access dates are October 20–21, 2026 unless otherwise identified. Developer statements establish intent, self-reported history or announced changes. Professional reviews and community testimony describe particular experiences. Statements derived from each source are paraphrased; no long review or interview passages are reproduced.
+Access dates are October 20, 2026 unless otherwise identified. Developer statements establish intent, self-reported history or announced changes. Professional reviews and community testimony describe particular experiences. Statements derived from each source are paraphrased; no long review or interview passages are reproduced.
 
 | ID | Source, date and purpose |
 | --- | --- |
-| S01 | [Steam original product](https://store.steampowered.com/app/1374840/Dark_Deity/), captured October 20–21, 2026: release identity, scale, current price presentation and English review snapshot. User tags are not authoritative mechanics. |
+| S01 | [Steam original product](https://store.steampowered.com/app/1374840/Dark_Deity/), captured October 20, 2026: release identity, scale, current price presentation and English review snapshot. User tags are not authoritative mechanics. |
 | S02 | [Kickstarter campaign](https://www.kickstarter.com/projects/darkdeity/dark-deity), August 12–September 11, 2020: pledged amount, backers and funding goal. |
 | S03 | [Graham Russell interviewing Chip Moore, Siliconera](https://www.siliconera.com/interview-dark-deity-creator-on-making-a-new-old-strategy-rpg/), June 15, 2021: Grave Wounds intent and rule, production origin, presentation choices. |
 | S04 | [Retroware interview with Moore and Dylan Takeyama](https://articles.retroware.com/2021/04/05/retroware-sit-downs-dark-deity-a-classic-srpg-with-new-ideas/), April 5, 2021: class identity, growth, small-team choices and voice production. |
@@ -287,22 +287,22 @@ Access dates are October 20–21, 2026 unless otherwise identified. Developer st
 | S11 | [Stuart Gipp, Nintendo Life review](https://www.nintendolife.com/reviews/switch-eshop/dark-deity), March 31, 2022, Switch: complete independent review, pacing, presentation and controls. |
 | S12 | [Alex de Freitas, Nintendo World Report review](https://nintendoworldreport.com/review/59940/dark-deity-switch-review), March 20, 2022, Switch: complete independent review, actual builds, matchups and map criticism. |
 | S13 | [Sam Wachter, RPGamer review](https://rpgamer.com/review/dark-deity-review/), April 11, 2022, Switch: complete independent review, relationships, identity and technical friction. |
-| S14 | [Steam all-time helpful reviews](https://steamcommunity.com/app/1374840/reviews/?browsefilter=toprated), captured October 20–21, 2026: named positive and negative accounts. Ordering and displayed hours can change. |
+| S14 | [Steam all-time helpful reviews](https://steamcommunity.com/app/1374840/reviews/?browsefilter=toprated), captured October 20, 2026: named positive and negative accounts. Ordering and displayed hours can change. |
 | S15 | [Steam Grave Wounds discussion](https://steamcommunity.com/app/1374840/discussions/0/3053986690334270827/), July 2021 onward: permanent penalties, compensation and opposing views on forced absence. |
 | S16 | [Steam discussion of disabling Grave Wounds](https://steamcommunity.com/app/1374840/discussions/0/3808405159041895430/), June 2023–October 2024: restarting, sunk investment, continuity and contrasting player preferences. |
 | S17 | [Final Weapon's sales announcement report](https://finalweapon.net/2022/11/18/dark-deity-epic-games-store/), November 18, 2022: publisher/developer-attributed 100,000-copy milestone, Moore's expectations and Epic promotion. Original company announcement not recovered. |
 | S18 | [indie.io sequel release-date announcement](https://www.indie.io/news/dark-deity-2-announces-official-release-date/), February 26, 2025: six-million-player claim about the original and explicit sequel boundary. Marketing language is not a sales audit. |
 | S19 | [GameRevenueData original-game estimate](https://gamerevenuedata.com/games/dark-deity/), revenue observation March 15, 2026: modeled Steam gross/net and owner range. September export and October access dates do not update the observation. |
-| S20 | [GameRevenueData methodology](https://gamerevenuedata.com/methodology/), accessed October 21, 2026: review-ratio model, net definition, scope and limitations. |
+| S20 | [GameRevenueData methodology](https://gamerevenuedata.com/methodology/), accessed October 20, 2026: review-ratio model, net definition, scope and limitations. |
 | S21 | [Suns Out, Swords Out Steam product](https://store.steampowered.com/app/2024880/Dark_Deity_Suns_Out_Swords_Out/), July 25, 2022 release: seven levels, additional perspectives and portraits. Not counted as an independent review. |
 | S22 | [GOG Complete Edition](https://www.gog.com/en/game/dark_deity_complete_edition), live product capture: bundle contents, Windows distribution and setting introduction. |
 | S23 | [L. P. Cowling, MGN player manual](https://mgn.gg/dark-deity-game-manual-player-guide-and-more), July 3, 2021, updated April 20, 2022: selected weapon, stat, artifact and item sections read. Publisher-network affiliation and potentially older formulas mean this is not one of the five independent reviews. |
-| S24 | [Community stats reference](https://darkdeity.fandom.com/wiki/Stats) and [Grave Wounds](https://darkdeity.wiki.gg/wiki/Grave_Wounds), indexed text accessed October 21, 2026: attribute families and next-chapter return. Full community wiki browsing was restricted; no exhaustive current formula audit claimed. |
+| S24 | [Community stats reference](https://darkdeity.fandom.com/wiki/Stats) and [Grave Wounds](https://darkdeity.wiki.gg/wiki/Grave_Wounds), indexed text accessed October 20, 2026: attribute families and next-chapter return. Full community wiki browsing was restricted; no exhaustive current formula audit claimed. |
 | S25 | Indexed community chapter references: [Enter the Eternals](https://darkdeity.wiki.gg/wiki/Chapter_10%3A_Enter_the_Eternals), [Akmenos](https://darkdeity.wiki.gg/wiki/Akmenos), [March on Sojourn](https://darkdeity.wiki.gg/wiki/Chapter_24%3A_March_on_Sojourn), [The Darkest Hour](https://darkdeity.fandom.com/wiki/Chapter_27%3A_The_Darkest_Hour), [The Edge of Ascension](https://darkdeity.wiki.gg/wiki/Chapter_28%3A_The_Edge_of_Ascension). Indexed excerpts only; full-page requests returned access errors. |
 | S26 | [Steam “Dark Deity 1 Plot” discussion](https://steamcommunity.com/app/2446600/discussions/0/604151850481061933/), March 28, 2025: Pirate's attributed recap of the original, despite placement in the sequel forum. Not treated as developer canon or firsthand viewing by this researcher. |
 | S27 | [Developer response on mod support](https://steamcommunity.com/app/1374840/discussions/0/5624408883148749344/), June 14, 2021: no planned support, built-in randomizer and campaign settings. |
 | S28 | [Developer's June 7, 2023 letter in the Steam announcement feed](https://store.steampowered.com/news/posts/?enddate=1686157224&feed=steam_community_announcements): original-game retrospective and sequel design intentions; full relevant announcement read. |
-| S29 | [Dark Deity Community Patch repository](https://github.com/HadleyTheGreat/DarkDeityCommunityPatch), [releases](https://github.com/HadleyTheGreat/DarkDeityCommunityPatch/releases) and [Windows installation documentation](https://github.com/HadleyTheGreat/DarkDeityCommunityPatch/blob/main/docs/install-windows.html), inspected October 21, 2026 through GitHub read APIs: version history, downloads, declared coverage and external workflow. No executable downloaded or run. |
+| S29 | [Dark Deity Community Patch repository](https://github.com/HadleyTheGreat/DarkDeityCommunityPatch), [releases](https://github.com/HadleyTheGreat/DarkDeityCommunityPatch/releases) and [Windows installation documentation](https://github.com/HadleyTheGreat/DarkDeityCommunityPatch/blob/main/docs/install-windows.html), inspected October 20, 2026 through GitHub read APIs: version history, downloads, declared coverage and external workflow. No executable downloaded or run. |
 | S30 | [indie.io Indie Pass announcement](https://www.indie.io/news/indie-io-unveils-indie-pass-a-subscription-platform-dedicated-to-elevating-indie-games-exclusively/), April 2, 2026: announced franchise participation and subscription-revenue mechanism, not verified title-level receipts. |
 
 ### Reading and viewing route

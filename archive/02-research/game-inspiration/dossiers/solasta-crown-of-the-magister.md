@@ -1,6 +1,6 @@
 # G179 — Solasta: Crown of the Magister
 
-**Full R01–R14 research pass, economics/enjoyment amendment, and applicable R15 investigation.** Research: October 20–21, 2026. Scope: the original game and its expansions; **Solasta II is a separate product**. This is source-based reference research, not a playtest or an accepted OpenLegend mechanic. **Spoilers:** the setting's historical disaster, the main threat, and expansion premises. Standards: [research requirements](../research-requirements.md), [economics, enjoyment and creation amendment](../research-economics-engagement-and-creation.md), and [roster](../research-roster.md).
+**Full R01–R14 research pass, economics/enjoyment amendment, and applicable R15 investigation.** Research: October 20, 2026. Scope: the original game and its expansions; **Solasta II is a separate product**. This is source-based reference research, not a playtest or an accepted OpenLegend mechanic. **Spoilers:** the setting's historical disaster, the main threat, and expansion premises. Standards: [research requirements](../research-requirements.md), [economics, enjoyment and creation amendment](../research-economics-engagement-and-creation.md), and [roster](../research-roster.md).
 
 ## R01 — Identity, versions and the player promise
 
@@ -137,7 +137,7 @@ Pricing and updates were deliberate distribution choices. In March 2021 the deve
 | --- | --- | --- | --- |
 | 2019 Kickstarter | Approximately **US$270,000** from **6,000 supporters** | Rounded official retrospective; primary, unaudited. [S03] | Complete budget, net proceeds, or postlaunch sales. Reward delivery and fees are not itemized. |
 | Original Solasta, through December 12, 2024 | **More than 1.5 million players** | Developer announcement; strong evidence for what was claimed, with no paid/access-channel breakdown. [S02] | 1.5 million paid copies, full-price purchases, or developer revenue. |
-| Steam original base game, provider snapshot September 25, 2026; retrieved October 21 | Approximately **0.57 million modeled units** and **US$10.3 million modeled gross spending** | Raijin, third-party estimate; its own label is medium confidence. Treat as low-confidence order-of-magnitude evidence, not audited sales. [S20] | DLC, other stores, consoles, subscription arrangements, receipts or profit. |
+| Steam original base game, provider snapshot September 25, 2026; retrieved October 20 | Approximately **0.57 million modeled units** and **US$10.3 million modeled gross spending** | Raijin, third-party estimate; its own label is medium confidence. Treat as low-confidence order-of-magnitude evidence, not audited sales. [S20] | DLC, other stores, consoles, subscription arrangements, receipts or profit. |
 | Original game's entire lifetime business | **Not estimable from available evidence** | No all-platform paid-unit split, realized prices, licensing/subscription receipts or complete cost account found. | A defensible profit figure or all-platform low/base/high range. |
 
 Raijin describes a review-based model adjusted by genre and purchase signals, checked against sampled ownership and disclosed sales. Its revenue method applies a price-bracket discount factor to modeled units and US pricing; it is not a reconstruction of Solasta's actual transactions. Its gross measure excludes deductions for storefront share, refunds, taxes and regional-price differences. Approximately 573,000 modeled units at an implied US$18 realized-price assumption produces its roughly US$10.3 million result. That arithmetic explains the model, **not actual cash received**. No independently validated error interval was available, so a fabricated low/high band would add false confidence. [S20, S21]
@@ -168,7 +168,7 @@ These reviews describe the original game's early period. Statements about absent
 
 ### Accessible helpful Steam sample
 
-The top-rated English surface was inspected October 20–21, 2026. Selected substantive accounts include **Oak** (originally October 2020), who valued enemy combinations, light and tactical preparation while criticizing story and limited variety; **Entreri42** (May 16, 2021, Early Access), who recommended the game despite save/crafting problems; and **Krave** (May 29, 2021), who reported finishing the story in 37 hours, praised combat and music, but found little attachment to the custom party and disabled burdensome rules. These are dated accounts, not proof those bugs or launch limitations persist. **GaulGallant** (April 2022) particularly valued the feeling of a homemade tabletop adventure with friends. [S13]
+The top-rated English surface was inspected October 20, 2026. Selected substantive accounts include **Oak** (originally October 2020), who valued enemy combinations, light and tactical preparation while criticizing story and limited variety; **Entreri42** (May 16, 2021, Early Access), who recommended the game despite save/crafting problems; and **Krave** (May 29, 2021), who reported finishing the story in 37 hours, praised combat and music, but found little attachment to the custom party and disabled burdensome rules. These are dated accounts, not proof those bugs or launch limitations persist. **GaulGallant** (April 2022) particularly valued the feeling of a homemade tabletop adventure with friends. [S13]
 
 The separate negative-only endpoint was inaccessible during retrieval. The accessible helpful sample nonetheless includes specific criticism inside recommendations; it should not be mislabeled a balanced random sample of positive and negative recommendations. The store snapshot showed **87% positive among 13,827 English reviews**, with **72% among 224 recent reviews**. These changing, language-specific counts establish broad recommendation sentiment, not the prevalence of each complaint or an explanation for recent changes. [S01]
 
@@ -237,7 +237,7 @@ The user's supplied recommendation video is a discovery prompt, not the source o
 
 ### Annotated source register
 
-All links were retrieved October 20–21, 2026; historical publication dates remain the measurement/version dates. Counts are snapshots. Direct quotations are avoided; interpretations are separated from source claims.
+All links were retrieved October 20, 2026; historical publication dates remain the measurement/version dates. Counts are snapshots. Direct quotations are avoided; interpretations are separated from source claims.
 
 | ID | Source, date and evidential use |
 | --- | --- |

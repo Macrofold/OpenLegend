@@ -1,6 +1,6 @@
 # G181 — Battle Chasers: Nightwar
 
-Research accessed October 20–21, 2026. This dossier covers Airship Syndicate's original game, separates launch criticism from later patches and ports, and evaluates design lessons against [Open Legend's gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md). It follows [R01–R14](../research-requirements.md), the [economics/enjoyment amendment](../research-economics-engagement-and-creation.md), and the conditional R15 screen. Recommendations are research hypotheses, not accepted implementation decisions.
+Research accessed October 20, 2026. This dossier covers Airship Syndicate's original game, separates launch criticism from later patches and ports, and evaluates design lessons against [Open Legend's gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md). It follows [R01–R14](../research-requirements.md), the [economics/enjoyment amendment](../research-economics-engagement-and-creation.md), and the conditional R15 screen. Recommendations are research hypotheses, not accepted implementation decisions.
 
 **Finding:** this is a strong reference for expressive party roles, temporary resources that encourage experimentation, and the tension between an excellent combat system and an exhausting campaign rhythm. It is a weaker reference for people whose lives evolve independently: its cast and relationships are authored. The available evidence does **not** establish a commercial failure. A developer describes meaningful platform demand, but project profit remains undisclosed.
 
@@ -158,7 +158,7 @@ Ordinary players select builds and navigate existing content; they do not receiv
 | --- | --- | --- |
 | Kickstarter | Campaign September 8–October 10, 2015: **US$856,354 pledged by 14,175 backers**, against a $500,000 goal. [S02] | Demonstrated pre-release willingness to fund this project. Pledges include reward obligations and are neither retail unit sales nor profit. |
 | Developer's platform comparison | Ryan Stefanelli interview published November 23, 2019: PC sold most copies; Switch exceeded PS4 and Xbox One despite arriving later. [S16] | Useful first-person ordering, without absolute units, realized prices or platform margins. It cannot establish lifetime totals through 2026. |
-| Third-party Steam estimate | GameRevenueData observation **March 4, 2026**, accessed October 21: approximately **$8.0 million gross spending**, **$4.7 million modeled net receipts**, and **340,900–389,000 owners**. [S17] | Model output for Steam, not disclosed sales. Ownership can include free accounts; net is not verified developer payout or profit. |
+| Third-party Steam estimate | GameRevenueData observation **March 4, 2026**, accessed October 20: approximately **$8.0 million gross spending**, **$4.7 million modeled net receipts**, and **340,900–389,000 owners**. [S17] | Model output for Steam, not disclosed sales. Ownership can include free accounts; net is not verified developer payout or profit. |
 | Publisher financial reporting | THQ Nordic's 2017 report lists the product among releases, but provides no isolated game profit or sales total used here. [S19] | Group revenue and statements about other titles must not be assigned to Nightwar. |
 | Costs and contracts | Small-team scale and publisher involvement are documented; total development, marketing, porting, reward fulfillment and support costs, revenue split and recoupment terms are not. [S03, S26] | **Project profit and developer/publisher return are not estimable from available evidence.** |
 
@@ -192,7 +192,7 @@ Two apparent conflicts are productive. Wilde's sense of a compulsory defensive p
 
 ### Helpful Steam samples and counterevidence
 
-The all-time helpful English review page was sampled alongside its negative-only counterpart, accessed October 20–21, 2026. Helpfulness rankings favor older and more visible accounts; displayed total hours can include play after the original review. These examples establish experiences, not prevalence.
+The all-time helpful English review page was sampled alongside its negative-only counterpart, accessed October 20, 2026. Helpfulness rankings favor older and more visible accounts; displayed total hours can include play after the original review. These examples establish experiences, not prevalence.
 
 - **Excuritas, Recommended, December 21, 2017:** initially stopped because of pacing, then returned using an external speed adjustment. Enjoyed builds and combat but objected to repetitive animation, thin story and the overhead of individual crafting. This is not a recommendation to install that workaround. [S14]
 - **Alzorath, Recommended, October 3, 2017:** praised the cast, art, controls and side content while finding complexity and explanation less impressive than the strongest professional reviews suggest. [S14]
@@ -232,7 +232,7 @@ A separate community guide describes a combat-log and party-shuffling modificati
 
 ### Source register
 
-Sources were accessed October 20–21, 2026 unless a narrower observation date is given above. Developer explanations establish intent and reported experience, not independent causal proof. Community guides and forum reports are attributed and version-sensitive. Source wording is paraphrased; no long passages are reproduced.
+Sources were accessed October 20, 2026 unless a narrower observation date is given above. Developer explanations establish intent and reported experience, not independent causal proof. Community guides and forum reports are attributed and version-sensitive. Source wording is paraphrased; no long passages are reproduced.
 
 | ID | Source, date and role |
 | --- | --- |
@@ -249,16 +249,16 @@ Sources were accessed October 20–21, 2026 unless a narrower observation date i
 | S11 | [Greg Delmage, RPGFan review](https://www.rpgfan.com/review/battle-chasers-nightwar/), November 28, 2018: later PS4 assessment, progression and audiovisual detail. |
 | S12 | [Thomas Wilde, WorthPlaying review](https://www.worthplaying.com/article/2017/10/20/reviews/105748-pc-review-battle-chasers-nightwar/), October 20, 2017: explicitly unfinished PC experience, timing, balance and crafting criticism. |
 | S13 | [Gavin Lane, Nintendo Life review](https://www.nintendolife.com/reviews/nintendo-switch/battle_chasers_nightwar), May 14, 2018: Switch performance, pacing, perks and party attachment. |
-| S14 | [Steam all-time helpful review page](https://steamcommunity.com/app/451020/reviews/?browsefilter=toprated), captured October 20–21, 2026: Excuritas, Alzorath and Dolyngwen accounts. Dynamic ordering and hours are not longitudinal data. |
+| S14 | [Steam all-time helpful review page](https://steamcommunity.com/app/451020/reviews/?browsefilter=toprated), captured October 20, 2026: Excuritas, Alzorath and Dolyngwen accounts. Dynamic ordering and hours are not longitudinal data. |
 | S15 | [Steam helpful negative reviews](https://steamcommunity.com/app/451020/negativereviews/?browsefilter=toprated), same capture: knarflook's September 18, 2019 account. |
 | S16 | [Ryan Stefanelli interview excerpt, Nintendo Everything](https://nintendoeverything.com/battle-chasers-nightwar-console-sales-were-the-best-on-switch-raced-past-ps4-and-xbox-one/), November 23, 2019: attributable platform sales ordering and patch interpretation; no absolute units. |
 | S17 | [GameRevenueData product estimate](https://gamerevenuedata.com/games/battle-chasers-nightwar/), revenue observation March 4, 2026: modeled Steam gross/net and owners. September export date is not its measurement date. |
-| S18 | [GameRevenueData methodology](https://gamerevenuedata.com/methodology/), accessed October 21, 2026: model assumptions and limitations. |
+| S18 | [GameRevenueData methodology](https://gamerevenuedata.com/methodology/), accessed October 20, 2026: model assumptions and limitations. |
 | S19 | [THQ Nordic 2017 financial report](https://embracer.com/wp-content/uploads/2022/09/THQ-Nordic-AB-publ-publishes-Q4-2017-180214.pdf), February 14, 2018: checked for title-level evidence; no isolated total used. |
 | S20 | [Steam New Game Plus discussion](https://steamcommunity.com/app/451020/discussions/0/1484358860935899701/), October 11–12, 2017: firsthand player descriptions of reset boundaries; exact exceptions not independently retested. |
 | S21 | [Supersven's review and story synopsis](https://reviewsbysupersven.com/battle-chasers-nightwar-review/), May 28, 2020: attributed campaign and character account, used cautiously for the narrative sequence. |
 | S22 | [Inactive Party Exp, Nexus Mods](https://www.nexusmods.com/battlechasersnightwar/mods/2), July 30, 2021: mod description, BepInEx dependency, tested build and permissions. |
-| S23 | [Community crafting article](https://battlechasersnightwar.fandom.com/wiki/Crafting) and [crafting-guide catalog](https://battlechasersnightwar.fandom.com/wiki/Crafting_Guides), indexed text retrieved October 21, 2026: recipe families and ingredient choices. Full page opening failed; not claimed as fully browsed. |
+| S23 | [Community crafting article](https://battlechasersnightwar.fandom.com/wiki/Crafting) and [crafting-guide catalog](https://battlechasersnightwar.fandom.com/wiki/Crafting_Guides), indexed text retrieved October 20, 2026: recipe families and ingredient choices. Full page opening failed; not claimed as fully browsed. |
 | S24 | [peddroelm's mechanics guide](https://steamcommunity.com/sharedfiles/filedetails/?id=1245581326), posted December 26, 2017, identifies build 23577: attribute families, reverse-engineering context and external diagnostic mod. Not a current numerical audit. |
 | S25 | [GamingBolt developer interview](https://gamingbolt.com/battle-chasers-nightwar-interview-arcanepunk-meets-jrpg), February 24, 2017: primary account of mana, initiative, Overcharge and Burst design. Pre-release statements about loss and difficulty are not used to override release evidence. |
 | S26 | [PlayStation Blog interview](https://blog.playstation.com/2016/11/16/making-classic-rpgs-modern-with-battle-chasers-nightwar-on-ps4/), November 16, 2016: small-team collaboration, contractors and personal investment. |
