@@ -1,6 +1,6 @@
 # Situation-aware cognition context — implementation and qualification
 
-**Status: Done — designed; runtime implementation and qualification open · October 19, 2026.** The feature and technical specifications complete the commissioned context-reduction design. This tracker owns its coordinated implementation stages, not a replacement memory, action, perception, identity, provider or evaluation subsystem. No runtime checkbox below is satisfied by the design or by character-count calculations.
+**Status: Done — designed; core runtime implementation and qualification open · October 20, 2026.** The feature and technical specifications complete the commissioned context-construction design. This tracker owns its coordinated implementation stages, not a replacement memory, action, perception, identity, provider or evaluation subsystem. No runtime checkbox below is satisfied by the design or by character-count calculations.
 
 ## Maintained records
 
@@ -15,20 +15,21 @@
 
 The selected change preserves complete accepted identity, all required actor-permitted evidence and exact name/description-to-ID references. It removes duplicate catalogs/manuals, inactive null payloads and irrelevant detail; discovers context from concurrent situations; closes selected dependencies; and avoids loading all state before choosing a small result. Speech and action can coexist. Suggestions never define the complete allowed action set. A rare implemented capability or low-priority repertoire idea may be essential evidence now.
 
+**Core scope is SC01–SC11 on currently installed behavior.** The shared builder consumes the admitted decision's question/purpose, source-owned facts/dependencies and captured relevance policy. It has no fixed scenario taxonomy, category-turn allocation or benchmark-specific branch. Worked scenes demonstrate general information invariants and do not require their gameplay to be implemented. Preserve NST/CTR/SPK interfaces when separately installed; delivering those projects or their broader character/player gates is not a prerequisite. SC12 retains optional follow-up designs outside the core release dependency graph. Current revision fields, meaningful work modes and inline sparse definitions are sufficient for core completion.
+
 - [x] Complete the feature/technical pair, recorded decisions, limits, source analysis, whole-repertoire review and concrete implementation breakdown.
 - [ ] Implement the stages below through existing semantic owners, reconciling actual source before each change.
-- [ ] Qualify the integrated route and meaningful gameplay, then update current-contract statements and release evidence. No native, live-provider or player result is claimed by this documentation.
+- [ ] Qualify the general builder through actual configured routes, current supported decisions and context invariants, then update current-contract statements and scoped release evidence. No broader gameplay or player result is claimed by this documentation.
 
 | Stage | Work IDs | Start/finish relationship |
 | --- | --- | --- |
 | Capture the current complete request | SC01 | Foundation for measured implementation; no behavior-selection change needed to establish the baseline. |
 | Remove structural duplication | SC03–SC04 | After SC01; integrate all current response consumers together. |
-| Select detail from concurrent situations | SC02/SC05 | Build against SC01; activate only when required closure, References and usable inspection are complete. |
+| Select detail from decision requirements | SC02/SC05 | Build against SC01; activate only when required closure, References and adequate existing detail access are complete. |
 | Complete adapters and lifecycle | SC06–SC07 | Integrate changed contracts from SC02–SC05 and every current route. |
-| Remove derivable revision/mode echoes | Selected portion of SC12 | After sparse response/lifecycle qualification, before final integrated acceptance. |
-| Measure actual preparation and play | SC08–SC09 | Baseline planning starts with SC01; final comparisons use the integrated enabled stages, including selected SC12 metadata binding. |
+| Measure preparation and supported decisions | SC08–SC09 | Baseline planning starts with SC01; final comparisons use core SC02–SC08 on currently supported data. |
 | Reconcile and release | SC10–SC11 | SC10 runs with every stage; SC11 consumes all applicable exits and preserves broader existing gates. |
-| Consider local schema factoring | Conditional portion of SC12 | Only after sparsity measurements; retaining inline definitions is the selected default when benefit/support is unproved. |
+| Optional follow-up: revision/mode echoes and local factoring | SC12 | Outside core release dependencies. If separately selected later, apply its concurrency/compatibility gates after the core sparse contract qualifies. |
 
 Implementation follows the repository verification policy: prefer relevant existing fixtures/caller checks and representative ad-hoc verification; add new automated tests only when Mike asks. Acceptance cases specify behavior to demonstrate, not authorization to create test infrastructure. Paid qualification remains under the standing account authorization and per-task ceiling. This design-only assignment performs no runtime implementation or paid comparison.
 
@@ -41,20 +42,20 @@ Implementation follows the repository verification policy: prefer relevant exist
 - [ ] Measure the current complete request by component, including instructions, response schema, References and any tool definitions/results. Keep UTF-8 bytes, transport bytes, local token estimates and provider usage separate.
 - [ ] Trace one current attempt through its generated, captured, exported and provider-bound representations and compare exact bodies before classifying the supplied artifact's `type: null` discrepancy. Investigate the historical artifact's origin/revision; if it cannot be reproduced, record that limit rather than manufacturing malformed output or making unknown historical provenance a permanent release blocker. Do not fix a display/export anomaly by weakening the live validator.
 
-**Exit:** a greeting, supplies decision, promise and hazard have traceable required sources, exact request/binding agreement and honest missing measurement fields. Existing final schema/context/transport bounds remain intact. No additional generation or automatic paid repair is introduced.
+**Exit:** representative existing decisions have traceable required sources, exact request/binding agreement and honest missing measurement fields. Use supported data, not a mandatory named scene list. Existing final schema/context/transport bounds remain intact. No additional generation or automatic paid repair is introduced.
 
-## SC02 — Select concurrent situations and complete dependencies
+## SC02 — Compose decision requirements and complete dependencies
 
 **Owner:** the focused `decision-context-selection.ts` module and existing recall/attention/perception/work owners. **Design:** technical §§4–6. **Dependencies:** SC01; CR03/CR04 and CE03 remain semantic owners.
 
-- [ ] Collect independent actor-permitted situation signals and union their required facts. Preserve current identity/body/work/obligation/stimulus contracts, required personal outcomes, corrections and source-family identity.
-- [ ] Apply NST terminal readiness before speech discovery, ranking, byte/row admission, exact required reads, hydration and every semantic derivative. Closure of an older occurrence makes its permitted completed/interrupted evidence newly eligible once without rewriting chronology. Preserve its frozen historical hearing and current disclosure/forgetting/timeline fences.
+- [ ] Compose caller-, rule- and source-owned decision requirements from permitted data; union required facts and supported discovery cues without a fixed scene classifier. Preserve current identity/body/work/obligation/stimulus contracts, required outcomes, corrections and source-family identity. Installing content through existing definitions must not need a new scene-name branch.
+- [ ] Preserve each installed source's eligibility before discovery, ranking, byte/row admission, exact required reads and hydration. If NST is separately installed, consume its terminal-readiness and frozen-hearing/current-authority contract, including an older occurrence becoming newly eligible on closure. Do not implement that subsystem to close SC02.
 - [ ] Close required dependencies and test earliest reliable feasibility before optional hydration/attention/compaction. Missing required sources and genuine required overflow stop the affected generation; optional failure cannot demote them.
-- [ ] Preserve existing bounded discovery/hard-query fallback and source-specific relevance. Apply the exact deterministic ordering and incremental dependency-accounting algorithm in technical §6, including shared dependencies, cycles, nonfitting candidates and stable ties. Before activation, implement technical §13.1's request-local compiler meter and finalized required fallback; the guard is part of SC02 delivery, not postponed until the later performance comparison.
+- [ ] Preserve bounded discovery/hard-query fallback and supported relevance under the captured cognition/world policy. Apply technical §6's deterministic selection and dependency accounting, including shared dependencies, cycles, nonfitting candidates and stable ties. Do not cycle fixed source families or treat unrelated raw scores as comparable. Admit only justified optional information and stop when none remains, even if space is free. Before activation implement §13.1's compiler meter and required fallback.
 - [ ] Include supporting and contrary evidence, competing resource uses, personal interests and positive/quiet opportunities. Preserve partial/not-requested/unavailable/stale/forbidden distinctions; only a complete scoped query can establish scoped absence.
 - [ ] Record actual examined coverage and omission reasons. Do not infer that a low score or an unexamined source proves irrelevance, or use repertoire Priority/Level/seed-world labels as attention scores.
 
-**Exit:** mixed speech/work/threat contexts retain all required meaning; quiet and creative cases retain useful discovery. Omission of one optional root cannot remove a dependency of another retained root. Hidden-state changes do not change a request whose permitted evidence is unchanged.
+**Exit:** combined requirements retain their required meaning, and new installed content needs no new scene template. Omission of one optional root cannot remove another retained root's dependency. Hidden-state changes do not change a request whose permitted evidence is unchanged. Qualify these invariants using existing sources and supported examples, not new gameplay.
 
 ## SC03 — Render meaning once and preserve References
 
@@ -62,6 +63,7 @@ Implementation follows the repository verification policy: prefer relevant exist
 
 - [ ] Remove the exact duplicate installed activity catalog while retaining separate situation-specific choices. Derive concise semantic descriptions from installed definitions; exclude only UI fields that add no unique meaning.
 - [ ] Replace the independently maintained field-by-field response manual with shared concise semantic instructions. Preserve eight operation meanings, admission versus completion, plan interruption, subjective goals, silence, exact references and compatible speech/action.
+- [ ] Apply the benchmark-informed general rendering contract: separate the question/task from evidence, supply current native facts directly, and preserve relevant units, time, applicability, provenance, uncertainty and conditions with the fact or capability they qualify. Keep expected answers, grader rationale and scene labels outside model input; do not copy the benchmark's fixed scene fields or hypothetical rules.
 - [ ] Remove redundant empty/null scaffolding and repeated source accounts while retaining meaningful absence, uncertainty, correction, quantities and participant roles. Use existing clock/precision owners rather than arbitrary formatter rounding.
 - [ ] Build the complete selected reference closure before schema compilation. Preserve inventory-only mappings, same-name distinctions, remembered/current roles and every used namespace. Select permitted IDs before hashing; collisions cannot alias subjects or require a world scan.
 
@@ -71,10 +73,10 @@ Implementation follows the repository verification policy: prefer relevant exist
 
 **Owner:** `cognition-contracts.ts`, `navigation-contracts.ts`, exported payload schemas and `packages/domain/src/response.ts` with all current producers/consumers. **Design:** technical §9. **Dependencies:** SC01; integrate with SC03/SC06/SC07.
 
-- [ ] Preserve all eight logical operation kinds and common metadata. Compose the final strict provider contract with NST's sole `records` root: speech start/text/end records and seven sparse flattened non-speech alternatives, with no inactive `talk: null` or sibling payloads. Keep genuine declared null meanings. An operations-root stage is allowed only before NST's coordinated cutover; no dual generation reader remains afterward.
+- [ ] Preserve all eight logical operation kinds and common metadata in the actual installed envelope. Core SC can ship the sparse `operations` contract with current revision/mode fields. If NST is separately delivered, compose its sole `records` root with sparse non-speech payloads and no inactive `talk: null`. Keep genuine null meanings; no dual generation reader remains after that independent cutover.
 - [ ] Implement exact nested known/expression/proposal/invoke, goal, plan and appraisal alternatives. Bind installed family and its own parameters in one closed alternative. Preserve `interrupt`, actual prior-step outputs and distinct purposes/work modes.
 - [ ] Replace envelope `.shape.*` assumptions with shared exported payload schemas. Update native-known responses, reflection reuse, response resolution/admission, escalation/reconsideration, fixtures and diagnostic labels together; retain no old padded parser.
-- [ ] Confirm multiple and repeated logical operations, deliberate empty responses, earlier-only admission dependencies and independent partial receipts through NST's exact record parser, normalization and publication barriers. Reject a mixed payload and preserve full validation for generated non-speech response operations. The inspected private-preview talk+appraise rejection remains an earlier-stage qualification; it is not the final public speech protocol.
+- [ ] Confirm multiple/repeated operations, empty responses, earlier-only admission dependencies and independent partial receipts through current parsers and native callers. Reject mixed payloads, including talk+appraise in the current private preview. When NST is installed, preserve its exact parser/normalization/publication barriers without turning their separate delivery into an SC prerequisite.
 
 **Exit:** every enabled current operation passes the real schema/serialization/parser/reference/native path with the intended effects/refusals; the first sparse delivery retains existing revision fields. Provider dialect is qualified separately from local schema calculations. No talk-only shortcut based on a speech trigger removes valid actions.
 
@@ -94,7 +96,7 @@ Implementation follows the repository verification policy: prefer relevant exist
 **Owner:** AI director/budget and current `packages/ai`/Macrofold adapters. **Design:** technical §11. **Dependencies:** SC01/SC03/SC04; selected SC02/SC05 representations.
 
 - [ ] Measure/admit the complete finalized input, output allowance, schema and transport under existing limits. Include embeddings, attention, compaction, selected threat stages and configured reconsideration in complete cost reporting through existing owners.
-- [ ] Include NST's record wrapper, complete generated document, independently bounded normalized logical response and every actual screening execution in their existing size/cost owners. Qualify the exact request-bound records path and the answered/reason-null `q0` gate where applicable. Listener fan-out is not a separate generation; unknown screening/provider cost remains explicit.
+- [ ] When NST is installed, include its record wrapper, complete generated document, independently bounded normalized logical response and actual screening executions through their existing owners. Qualify its exact records path and answered/reason-null `q0` gate where applicable. Listener fan-out is not generation; unknown costs remain explicit. Do not add screening or streaming delivery to this task.
 - [ ] Preserve exact frozen schema/request bytes across asynchronous calls and local validation. Remove adapter-added duplicate prose or envelopes; verify each real API wrapper without substituting a newer vendor API.
 - [ ] Arrange genuinely stable instructions before dynamic evidence where supported; preserve exact scoped reference enums initially. Report actual cache usage rather than predicting hits from a stable first paragraph.
 - [ ] Integrate direct OpenAI, Macrofold direct generation, supported full-generation callers, native/fixture generated values and decision reconsideration. Preserve route-specific parameter forwarding, refusals, uncertainty and no automatic paid repair.
@@ -103,11 +105,11 @@ Implementation follows the repository verification policy: prefer relevant exist
 
 ## SC07 — Preserve freshness, previews, receipts and restoration
 
-**Owner:** existing decision/publication/admission, identity, speech-preview, evidence and save/load owners. **Design:** technical §12. **Dependencies:** SC01/SC04; integrate SC06. First qualify the sparse-stage lifecycle to enable SC12, then rerun the affected boundaries after SC12 for the final integrated exit. This avoids treating SC07 and SC12 as circular prerequisites.
+**Owner:** existing decision/publication/admission, identity, speech-preview, evidence and save/load owners. **Design:** technical §12. **Dependencies:** SC01/SC04; integrate SC06. Core qualification preserves current revision/mode behavior. Optional SC12 has its own affected requalification if separately selected later; it is not an SC07 prerequisite.
 
 - [ ] Revalidate exact affected sources/authority after asynchronous preparation and before disclosure/each native operation. Preserve historical time; unrelated changes do not invalidate everything, while correction/forgetting/revocation/restore cannot reuse stale snippets.
-- [ ] Preserve the inspected private-preview stage's complete strict independent talk checks and retired UI scope. At NST cutover, replace its public NPC attachment with the sole shared speech owner, exact closed-record parsing, screening, ordered barriers and per-utterance frozen hearing; do not restore or keep a competing public preview reader.
-- [ ] Preserve per-component effects and receipts when a later independent operation fails. Unvalidated strings and private preview create no world speech; generated non-speech response operations await complete typed validation. Already screened and durably accepted NST words survive as interrupted speech. Speech progress fences replacement/reconsideration/escalation before the whole-response receipt exists; retries/restore cannot repeat accepted speech, output or spending.
+- [ ] Preserve the current private-preview contract and retired UI scope. When NST is separately installed, consume its replacement public speech owner and exact parsing, screening, barriers and frozen hearing; do not restore or keep a competing reader. NST owns implementing that cutover.
+- [ ] Preserve per-component effects and receipts when a later independent operation fails. Unvalidated strings/private preview create no world speech; generated non-speech operations require complete typed validation. Where NST is installed, retain its accepted interrupted prefixes and progress fence against replacement/reconsideration/escalation. Retry/restore cannot repeat accepted effects or spending under either installed contract.
 - [ ] Keep compiler/manifest/cache state derived. Same-version restoration preserves actual identity, chosen work, obligations and outcomes while fencing old timeline results and preserving real external spending uncertainty.
 
 **Exit:** meaningful source changes, benign changes, mixed independent refusals, late cancellation and restoration exercise the real caller boundary. Native work continues under its owner when an AI preparation fails. No new scheduler, replay authority or legacy-save adapter is created.
@@ -124,16 +126,16 @@ Implementation follows the repository verification policy: prefer relevant exist
 
 **Exit:** demonstrated unnecessary preparation growth is removed without losing required or discoverable meaning. Remaining necessary growth/refusal/coverage is explicit; no arbitrary new item/goal/personality cap is introduced to make a benchmark pass.
 
-## SC09 — Qualify informed decisions and enjoyable complete activities
+## SC09 — Qualify informed decisions on supported data
 
-**Owner:** CR12/CE05/AG12/IS09 and existing evaluation specifications. **Design:** feature §§11–12, technical §15 and repertoire review. **Dependencies:** baseline with SC01; final comparison after integrated SC02–SC08 and selected SC12.
+**Owner:** existing CR12/AG12 evaluation mechanisms, with CE05/IS09 retaining broader character/player work. **Design:** feature §12, technical §15 and the benchmark evidence record. **Dependencies:** baseline with SC01; final comparison after core SC02–SC08. No SC12, unimplemented scene or adjacent-project release prerequisite.
 
-- [ ] Use matched permitted snapshots/whole episodes with the same identity, model/effort, installed rules and clock conditions. Capture baseline and revised requests, actual evidence availability and full operating costs.
-- [ ] Exercise ordinary greeting/work, supply/making, conflict, promises/withdrawal, old clues, creative substitutions, personal keepsakes, leisure after success, independent detours and quiet continuation.
+- [ ] Use matched permitted snapshots of existing supported decisions with the same identity, model/effort, installed rules and clock conditions. Capture baseline/revised requests, actual evidence availability and complete operating costs. Reuse recorded successful benchmark cases where informative, distinguishing synthetic input from real-source preparation.
+- [ ] Exercise required closure, combined independent requirements, materially conflicting facts, units/time/reference meaning, incomplete coverage, irrelevant-data growth and installed-operation preservation. Use current data or clearly labeled synthetic units; do not implement the repertoire scenes to satisfy this checkbox.
 - [ ] Record required-context omissions, incorrect identities/quantities/uncertainty, lost alternatives, unnecessary inspection burden, failed/abandoned decisions and later consequences. Preserve contrary results and unfinished/uncertain calls.
-- [ ] Evaluate coherent individual choices and readable/fun play separately from schema/native correctness. General comparisons permit several valid choices; CTR's specifically required independently chosen Ada physical counterattack remains a separate required acceptance case.
+- [ ] Compare factual/constraint correctness and supported decision quality separately from schema validity and subjective tone. Keep original references, failures and post-run amendments visible; never feed expected answers to the model. Permit several valid open-ended choices. CTR's Ada counterattack and broader human-enjoyment acceptance remain in their owning projects, not SC release gates.
 
-**Exit:** required coverage invariants pass and existing quality/episode owners have actual evidence for the enabled scope, including useful later outcomes. No percentage/token/latency/enjoyment claim is made solely from synthetic schema size. Paid qualification uses existing explicit account authorization and task ceilings.
+**Exit:** generic coverage/meaning invariants pass and revised context preserves known supported decisions with evidence for the enabled scope. Record omissions or material regressions as builder defects. Synthetic successes do not prove real retrieval completeness or player enjoyment. No token/latency/cost benefit is inferred from formatting alone; paid comparisons retain existing account authorization and task ceilings.
 
 ## SC10 — Reconcile current consumers and documentation at each stage
 
@@ -147,7 +149,7 @@ Implementation follows the repository verification policy: prefer relevant exist
 
 ## SC11 — Enable a coherent current contract after qualification
 
-**Owner:** existing release, job/admission, provider and verification owners. **Design:** technical §14. **Dependencies:** all applicable SC exits, including selected SC12 metadata work; broader current CI/release gates remain.
+**Owner:** existing release, job/admission, provider and verification owners. **Design:** technical §14. **Dependencies:** applicable core SC01–SC10 exits on currently installed behavior. SC12 and unimplemented NST/CTR/SPK/gameplay work are not prerequisites; existing CI and actual release requirements remain.
 
 - [ ] Qualify the actual configured routes and retained request/response shapes in a bounded enabled scope. Do not infer direct-provider/full-harness compatibility from a Macrofold fixture.
 - [ ] Use existing admission/cancellation/receipt semantics to stop old-contract job admission and fence uncommitted old results before enabling the new contract. Preserve accepted effects, liabilities and uncertain external work; no indefinite wait or replayed paid request.
@@ -157,9 +159,11 @@ Implementation follows the repository verification policy: prefer relevant exist
 
 ## SC12 — Bind derivable metadata; optionally factor local schemas
 
-**Owner:** prepared response bindings, native mutation/receipt owners, installed-request definitions and AI schema validator. **Design:** technical §§9.5–10. **Dependencies:** SC04 and SC07's sparse-stage lifecycle qualification, followed by affected SC07 requalification after this stage; integrate all current callers through SC06/SC10.
+**Status: Designed, deferred optional follow-up; outside core SC delivery.** Current expected revisions, meaningful mode fields and inline sparse schemas are the core contract. No item in SC12 must be implemented or evaluated to close SC11.
 
-### Selected later stage: revisions and one work mode
+**Owner:** prepared response bindings, native mutation/receipt owners, installed-request definitions and AI schema validator. **Design:** technical §§9.5–10. **Dependencies if separately selected:** qualified SC04/SC07, followed by affected lifecycle requalification; integrate current callers through SC06/SC10.
+
+### Optional follow-up: revisions and one work mode
 
 - [ ] Capture exact target existence/revision/read dependencies, then remove echoed expected revisions from model-facing goal/plan/note/name operations and redundant reference fields. Native mutations still receive and check captured expected revisions; current decision appraisals already have their own server-bound precedent.
 - [ ] Require full current text or authoritative absence for a replacement note, sufficient current objective for a goal revision, and a legitimately resolved subject for naming. A missing binding never means revision zero or permission to overwrite unseen state.
@@ -178,7 +182,7 @@ Implementation follows the repository verification policy: prefer relevant exist
 
 ## Design disposition and evidence boundary
 
-The selected context design is **Done — designed**. The design-specific gaps underlying duplicated forms/manuals, sparse responses, dynamic source/detail selection, required closure, exact reference preservation, source-bound metadata and complete accounting now have an implementation contract. Existing CR01/CR03/CR04/CR12, CE03–CE05, IS02/IS06/IS09 and PF/C17 work retains its own broader acceptance.
+The selected core context design is **Done — designed**. Duplicate forms/manuals, sparse current responses, general source/detail selection, required closure, exact References and complete accounting have an implementation contract. SC12 preserves optional metadata/schema ideas without expanding core delivery. Existing CR01/CR03/CR04/CR12, CE03–CE05, IS02/IS06/IS09 and PF/C17 work retains its own broader acceptance; the repertoire scenes are illustrative.
 
 The ordinary-context portion related to ND20/DG04 is designed here; optional richer retrieval, immediate model detail tools, long-term personality/older-memory transformation, broader hearing, rescue/afterlife, control customization, world economics and service scale remain under their actual conditional/selected owners. This tracker neither reopens already designed SPK/CTR work nor closes an ND umbrella.
 
