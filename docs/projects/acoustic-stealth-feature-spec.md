@@ -88,7 +88,7 @@ Animals use the existing native controller. Detection is independent of memory, 
 
 Acoustics supplies neither fear nor surprise. Emotional effects belong to D. F receives prior acquired evidence and decides whether it provided relevant warning at the actual victim's immutable pre-outcome cut. A hit cannot warn against itself, and later hearing cannot be backdated into an earlier decision.
 
-An animal response rule is selected from acquired sound character. An A-classified voice or actually understood speech can use the preserved voice response bands; a masked, indistinct utterance follows the general indistinct-noise rule. The hidden fact that an event was authored as speech cannot make an otherwise identical sound more alarming. This is a deliberate narrowing of the earlier unimplemented speech-only target.
+An animal response rule is selected from acquired sound character. An A-classified voice or actually understood speech can use the preserved voice response bands; a masked, indistinct utterance follows the general indistinct-noise rule. The hidden fact that an event was authored as speech cannot make an otherwise identical sound more alarming.
 
 ## Compared gameplay journeys
 
@@ -123,7 +123,7 @@ Initial levels, gait speeds, feature precision and animal response thresholds ar
 
 ## Maintained records
 
-- Implementation and complete repertoire disposition: [ACS00–ACS08](../maintainers/acoustic-stealth.md).
+- Implementation and repertoire relationships: [ACS00–ACS08](../maintainers/acoustic-stealth.md).
 - Contracts, source audit, ordering and handoffs: [Technical design](acoustic-stealth-tech-design.md).
 - Selected world rules: [Physical sound](../worlds/base/physical-sound.md); unchanged speech semantics: [Hearing and speech](../hearing-and-speech.md).
 - Limits, rationale and unqualified growth: [Acoustic inventory](../limits/acoustic-stealth.md).

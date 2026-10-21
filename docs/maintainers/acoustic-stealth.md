@@ -48,7 +48,7 @@ Dependencies below refer to the narrow implemented interface each slice needs, n
 - [x] Trace current hearing/speech, actual action/movement/pose, event observation, native animal response, clock, dependency and persistence owners; distinguish delivered foundations from absent physical emissions.
 - [x] Define one reusable source/reception path, body-aware physical contacts, permitted C→A evidence, deterministic ordering, meaningful invalidation and bounded complete work.
 - [x] Compare quiet hare approach, armored pursuit, sound behind a wall, mistaken footsteps, a familiar unseen voice, simultaneous sources, dense animals and fleeing prey on noisy terrain.
-- [x] Review all 42 repertoire files in context and improve the focused opportunities recorded below while preserving existing IDs, priority metadata and source provenance.
+- [x] Review all 42 repertoire files in context and improve the focused opportunities linked below while preserving existing IDs, priority metadata and source provenance.
 - [x] Record implementation slices, future verification, current-format lifecycle, cross-module interfaces, selected limits and the SA-D02 implementation dependency.
 
 **Exit:** the selected acoustic design is concrete enough for implementation against its owning contracts. None of these checks establishes runtime correctness, physiological calibration, capacity, usability or enjoyment. Final branch/doc/link review and the pushed commit are delivery evidence for this documentation assignment; ACS01–ACS08 remain open.
@@ -159,40 +159,23 @@ Dependencies below refer to the narrow implemented interface each slice needs, n
 
 **Exit:** players find worthwhile choices and recoverable uncertainty in the selected scenarios, with an acceptable ordinary-play burden. Remaining balance or accessibility limitations stay open even if all mechanical cases pass.
 
-## Repertoire review and selected improvements
+## Repertoire relationships
 
-All **42 files under `docs/repertoires/`** were reviewed at the exact common base: catalog scope/structure, relevant entries and surrounding sections, all 25 combination scenes, four optional world profiles and supporting provenance/index files. This is a contextual design review, not a reread of every unrelated proposal or every historical source cited in the study ledgers.
+The contextual review covers all 42 repertoire files. These existing opportunities connect the acoustic design to the broader game; catalogue entries remain proposals until their own delivery is selected.
 
-Nine topical files contain fourteen revised existing entries, four introductory/link passages and one existing combination paragraph. IDs, ordering, worlds, use/priority/level fields, sources and scene headings are preserved. AP-044 alone changes its title from “Silent armor movement” to “Quiet armor movement.” No catalog entries were added.
-
-| Changed repertoire | Relevant entries | Preserved opportunity and selected clarification |
+| Repertoire | Relevant entries | Design relationship |
 | --- | --- | --- |
-| [Abilities/progression](../repertoires/abilities-progression.md) | AP-022, AP-044 | Footing, route/range and patient wind-aware positioning compete with gear and time. Skill reduces avoidable armor rattle; acoustics/perception own sound/detection, Combat hunting/tactical use. |
-| [Actions](../repertoires/actions.md) | REL-12, OBS-02, COM-08 | Actual admitted travel changes contacts; only supported channels respond to wind. Rhythms can remain ambiguously footsteps or machinery, and an agreed knock pattern does not prove identity or compel a turn. |
-| [Adventure/discovery](../repertoires/adventure-discovery.md) | AD-046, AD-051 | Quiet-route/load choices support a real household hunt. A wounded quarry's new rustles can guide a listening/vantage choice while it seeks refuge; old sight is not live tracking. |
-| [Bodies/species](../repertoires/bodies-species.md) | BSP-260; movement anatomy | Contact patterns fit walking, hopping, crawling or wing motion. The fleeing hare produces its own incomplete clues; native response remains a separate owner. |
-| [Ecology/weather](../repertoires/ecology-weather.md) | ECW-027, ECW-102 | Seasonal waterfowl mask one another and receive alarms independently. Scree changes footing and sound for walkers or fleeing prey, including the route later travelers inherit. |
-| [Materials/resources](../repertoires/materials-resources.md) | MAT-049, MAT-255 | Felt lining reduces supported rattle using space/fitting. Hobnails trade hard-surface quietness for traction; neither choice grants universal safety or silence. |
-| [Objects](../repertoires/objects.md) | ITEM-231 | The actual jostled clapper makes carrying, securing, help and loot choices matter; its sound can celebrate the prize at home. |
-| [Work/crafting](../repertoires/work-crafting.md) | WORK-084 | Compatible armor fit can reduce avoidable rattle while preserving coverage and real carried weight. |
-| [Combinations](../repertoires/combinations.md) | “The quarry that learns” | The quarry's brush/scree sounds can renew a broad clue or disturb wildlife; listening, changing vantage and accepting escape remain choices. All 25 scene purposes remain. |
+| [Abilities/progression](../repertoires/abilities-progression.md) | AP-022, AP-044 | Quiet approach and armor technique make footing, fit, route, range and time useful choices; movement/acoustics and perception retain sound/detection ownership. |
+| [Actions](../repertoires/actions.md) | REL-12, OBS-02, COM-08 | Supported movement changes actual contacts. Ambiguous rhythms and agreed knocks provide evidence without proving identity or choosing another person's response. |
+| [Adventure/discovery](../repertoires/adventure-discovery.md) | AD-046, AD-051 | Route/load choices serve a household hunt; a fleeing quarry's fresh rustles can renew a broad clue after sight is lost. |
+| [Bodies/species](../repertoires/bodies-species.md) | BSP-260; movement anatomy | Walking, hopping, crawling and wing motion need their actual supported contact patterns; a hare produces its own clues during escape. |
+| [Ecology/weather](../repertoires/ecology-weather.md) | ECW-027, ECW-102 | Congregating waterfowl receive and mask sounds independently; noisy scree affects walkers, prey and subsequent routes. |
+| [Materials/resources](../repertoires/materials-resources.md) | MAT-049, MAT-255 | Supported lining and hobnails connect quietness to fitting, space and traction, without a universally superior material. |
+| [Objects](../repertoires/objects.md) | ITEM-231 | A jostled clapper makes cargo choices matter during escape and can celebrate the prize at home. |
+| [Work/crafting](../repertoires/work-crafting.md) | WORK-084 | Compatible armor fitting can reduce avoidable rattle while preserving real coverage and carried weight. |
+| [Combinations](../repertoires/combinations.md) | “The quarry that learns” | The quarry's new brush/scree sounds support listening, changing vantage or accepting escape rather than live hidden tracking. |
 
-The other **33 files** are explicitly retained below. Grouping reflects their common disposition, not omitted review.
-
-| Retained files | Reviewed relationship and reason to retain |
-| --- | --- |
-| [arts-leisure.md](../repertoires/arts-leisure.md), [languages-knowledge.md](../repertoires/languages-knowledge.md), [relationships.md](../repertoires/relationships.md), [needs.md](../repertoires/needs.md) | ARL-006/217/245, LKN-071/225/274, RSH-026/230/295 and ND-061/064/071 already connect sound, different bodies, voices, dated knowledge, companionship and sensory comfort. These purposes need no stealth-first rewrite or duplicate recognition rule. |
-| [mechanics.md](../repertoires/mechanics.md), [psychology-behavior.md](../repertoires/psychology-behavior.md), [history-myth.md](../repertoires/history-myth.md), [traits.md](../repertoires/traits.md) | MEC-046/087/094/095/204 already cover rhythms, silence, decoys and fast/quiet choices; PB-002/010/083/241/325, HMY-086/124/145 and TR-145 preserve fallible interpretation, habituation, curiosity, historical meaning and patient conduct. No new stealth score or automatic emotion. |
-| [combat-rescue.md](../repertoires/combat-rescue.md), [diplomacy-conflict.md](../repertoires/diplomacy-conflict.md), [institutions-politics.md](../repertoires/institutions-politics.md) | CR-077/079/084/168/256, DIP-021 and INS-173 already distinguish local cues, warnings, rescue, evidence and institutional authority. Combat and political response do not own physical hearing; institutional “hearings” do not justify acoustic edits. |
-| [technology.md](../repertoires/technology.md), [magic.md](../repertoires/magic.md), [unusual-realities.md](../repertoires/unusual-realities.md) | TE-066/123/153/158/160/189/190/253/275, MG-025/035/122/123/253/285 and UNR-024/062/063/067/134 preserve directional/assistive sensing, tactile media, decoys, recording, hushing and alternate world laws. These remain explicitly supported extensions, not accidental initial implementation promises. |
-| [settlements-architecture.md](../repertoires/settlements-architecture.md), [economy-logistics.md](../repertoires/economy-logistics.md) | ARC-006/014/058/179/239 already support spatial sound and overhearing; ECON-250 already makes quiet packing/cargo a useful service. Do not duplicate those entries or require detailed room simulation. |
-| [automation-creators.md](../repertoires/automation-creators.md), [simulation-experiments.md](../repertoires/simulation-experiments.md) | ACR-093/147/151/271 separate sensing, automation purpose and action; SIM-072/094/149/206 already propose discriminating multimodal/silence/simultaneous-source comparisons. Their proposals are not measured results. |
-| [characters-backstories.md](../repertoires/characters-backstories.md), [faith-ritual.md](../repertoires/faith-ritual.md) | CB-003/088/169/277 and FTH-046/227 give hunting, familiar gait, acoustic restoration, vigilance and a newly quiet place personal meaning. Biography or belief grants no mechanical identity/detection authority. |
-| [README.md](../repertoires/README.md), [coverage.md](../repertoires/coverage.md), [design-foundation.md](../repertoires/design-foundation.md), [gameplay-priorities.md](../repertoires/gameplay-priorities.md), [selection-and-scale.md](../repertoires/selection-and-scale.md) | Whole-game priorities, existing counts and ownership remain useful. Shared SAD-I owns broad navigation/coverage/priority reconciliation after all specialists; acoustic design does not replace survival, camp, invention, cooperation or a persistent cast. |
-| [source-atlas.md](../repertoires/source-atlas.md), [group-3-reading-progress.md](../repertoires/group-3-reading-progress.md), [group-6-reading-progress.md](../repertoires/group-6-reading-progress.md), [group-7-research-progress.md](../repertoires/group-7-research-progress.md) | Reviewed as supporting provenance and source-study ledgers. Historical read/checkmark state is unchanged; no original-source reread or new external research is claimed. |
-| [worlds/living-fantasy.md](../repertoires/worlds/living-fantasy.md), [worlds/medieval-survival.md](../repertoires/worlds/medieval-survival.md), [worlds/modern-life.md](../repertoires/worlds/modern-life.md), [worlds/planetary-scifi.md](../repertoires/worlds/planetary-scifi.md) | All four remain optional profiles. Fantasy hearing accommodation and bounded charms, medieval hunting/households, modern rehearsal/nightlife/quiet needs, and sci-fi Hushmesh/body/sensor differences retain their scope. No new lore, space-audio rule or world adoption follows from this review. |
-
-**Shared-integration follow-through:** SAD-I reconciles the central navigation, coverage and priorities when the A–G designs are combined. Preserve the reviewed source ledgers and optional profiles unless that integration makes a specific authored choice. This review closes the acoustic repertoire-design slice, not the broad shared reconciliation.
+SAD-I owns the broader repertoire navigation, coverage and priority synthesis when the A–G designs are combined. Existing source ledgers and optional world profiles retain their scope.
 
 ## Handoff and evidence requirements
 

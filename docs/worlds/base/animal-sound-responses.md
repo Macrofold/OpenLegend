@@ -8,8 +8,6 @@ This extends the selected [native animal response owner](animal-responses.md) an
 
 SPK08 and the acoustic implementation depend on the relevant CTR03–CTR04 installed controller, perception, movement, species-profile and continuation seams. Extend and jointly qualify those existing seams before claiming acoustic integration complete. Do not introduce temporary duplicate escape state or import unrelated combat/PvP/appraisal work to satisfy the dependency.
 
-The selected received-evidence rule narrows the prior, unimplemented speech-only target: a detected occurrence authored as speech no longer receives privileged alarm eligibility merely because of its private type. Speech propagation, word thresholds and the existing voice reaction bands remain unchanged; their use now requires the corresponding acquired evidence.
-
 The installed native response profile remains the single policy selection. Its controller owns routine, escaping, settling and blocked behavior, permitted danger estimates, current cue/cause, refuge, pending proposal generation and exact movement reference. Navigation, flight, body, status and lifecycle keep their existing authority. This acoustic extension adds no second controller, action family, path, fear meter or model scheduler.
 
 ## Initial outcomes and deliberate simplification
