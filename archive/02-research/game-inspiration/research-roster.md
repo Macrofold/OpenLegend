@@ -252,7 +252,6 @@ Each subject receives an independent R01–R14 pass and conditional R15 screen. 
 
 [D&D 2024](dossiers/dungeons-and-dragons-2024.md) and [D&D v.3.5](dossiers/dungeons-and-dragons-3-5.md) are distinct additional tabletop subjects, tracked by the [D&D research hub](games/dungeons-and-dragons.md#evidence-and-completion-status). They do not replace or renumber the existing G01–G167 slots. Related adjudication, SRD and worldbuilding studies are supporting material with their own evidence limits.
 
-
 ## October 19 pirate-game additions
 
 G179 Sea of Thieves and G180 ATLAS are newly authorized full-game subjects. Apply R01–R14, the economics/enjoyment/lore/creation amendment and the conditional R15 screen. The [scoped ledger](research-progress-pirate-games-2026-10-20.md) owns execution and evidence limits. ARK: Survival Evolved remains G133 with its existing September 27 dossier and recorded audit; ARK: Survival Ascended remains the separate G134. These additions do not recertify those earlier studies against later amendments or reopen unrelated queued subjects and whole-library gates.

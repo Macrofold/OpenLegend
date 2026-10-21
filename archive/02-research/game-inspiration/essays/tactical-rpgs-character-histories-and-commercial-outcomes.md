@@ -10,13 +10,13 @@ Mike supplied [this RPG compilation](https://www.youtube.com/watch?v=Kb9QxBxN5sg
 
 The useful common thread is that one result creates another wanted decision: keeping a valued survivor alive, using a new capability, reconsidering the party, investigating another place or returning with a different approach. Calling these games addictive does not explain which decisions remain enjoyable after the novelty wears off.
 
-| Video emphasis | What the research establishes | Useful qualification |
-| --- | --- | --- |
-| Battle Brothers: an ordinary recruit becomes a valued, injured veteran | Recruitment, equipment, chosen advancement, survival and persistent consequences can make a particular person matter. | Attribute/perk advancement is largely chosen at level-up; this is not a general skill-by-use or autonomous personality-development system. |
-| Solasta: readable tactical rules, vertical spaces and scavengers | Spatial conditions and clear feedback support learning; delegated loot handling can remove repeated hauling. | The original uses the licensed SRD ruleset and its own content, not every D&D option. Fixed personality flags and authored banter are different from evolving personality. |
-| Colony Ship: learning through use and several routes through problems | Relevant practice, earned conduct-based feats, near-death traits and faction decisions can change later possibilities. | Finite opportunities and hidden thresholds can make a plausible roleplaying idea difficult to sustain; not every mechanical bond produces new narrative content. |
-| Battle Chasers: Overcharge and complementary characters | Giving ordinary attacks a route to stronger abilities supports an engaging resource rhythm. | Attractive combinations still need affordable experimentation; repeated leveling and slow encounters can undermine the invitation. |
-| Dark Deity: injury instead of deleting the character | Grave Wounds preserves the person while imposing a continuing cost. | Some players still reload. Survival and a future the player wants are separate outcomes. |
+| Video emphasis                                                         | What the research establishes                                                                                          | Useful qualification                                                                                                                                                       |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Battle Brothers: an ordinary recruit becomes a valued, injured veteran | Recruitment, equipment, chosen advancement, survival and persistent consequences can make a particular person matter.  | Attribute/perk advancement is largely chosen at level-up; this is not a general skill-by-use or autonomous personality-development system.                                 |
+| Solasta: readable tactical rules, vertical spaces and scavengers       | Spatial conditions and clear feedback support learning; delegated loot handling can remove repeated hauling.           | The original uses the licensed SRD ruleset and its own content, not every D&D option. Fixed personality flags and authored banter are different from evolving personality. |
+| Colony Ship: learning through use and several routes through problems  | Relevant practice, earned conduct-based feats, near-death traits and faction decisions can change later possibilities. | Finite opportunities and hidden thresholds can make a plausible roleplaying idea difficult to sustain; not every mechanical bond produces new narrative content.           |
+| Battle Chasers: Overcharge and complementary characters                | Giving ordinary attacks a route to stronger abilities supports an engaging resource rhythm.                            | Attractive combinations still need affordable experimentation; repeated leveling and slow encounters can undermine the invitation.                                         |
+| Dark Deity: injury instead of deleting the character                   | Grave Wounds preserves the person while imposing a continuing cost.                                                    | Some players still reload. Survival and a future the player wants are separate outcomes.                                                                                   |
 
 The source and version qualifications for each row are in the linked dossier. None of the games demonstrates all of OpenLegend's intended independent character behavior.
 
@@ -28,13 +28,13 @@ The Battle Brothers developers explicitly connected permanent injuries with reta
 
 A useful distinction for future design discussions is:
 
-| What changes | What can make it meaningful | How it can disappoint |
-| --- | --- | --- |
-| Capability | An experience changes what the person can attempt or how they approach it. | An unexplained numerical loss makes the person simply less useful. |
-| Knowledge | The person learns something usable in another situation. | A decorative diary entry never influences a decision. |
-| Relationships | People who experienced or learned of an event may interpret it differently. | Everyone somehow knows, or one universal relationship score replaces distinct reasons. |
-| Responsibilities | New circumstances create credible opportunities to help, withdraw, teach, explore or pursue another aim. | The game automatically assigns a new occupation or reduces the person to compulsory camp work. |
-| Self-understanding | The person can reconsider their experience in light of values and later events. | One wound mechanically installs cowardice, revenge or gratitude. |
+| What changes       | What can make it meaningful                                                                              | How it can disappoint                                                                          |
+| ------------------ | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Capability         | An experience changes what the person can attempt or how they approach it.                               | An unexplained numerical loss makes the person simply less useful.                             |
+| Knowledge          | The person learns something usable in another situation.                                                 | A decorative diary entry never influences a decision.                                          |
+| Relationships      | People who experienced or learned of an event may interpret it differently.                              | Everyone somehow knows, or one universal relationship score replaces distinct reasons.         |
+| Responsibilities   | New circumstances create credible opportunities to help, withdraw, teach, explore or pursue another aim. | The game automatically assigns a new occupation or reduces the person to compulsory camp work. |
+| Self-understanding | The person can reconsider their experience in light of values and later events.                          | One wound mechanically installs cowardice, revenge or gratitude.                               |
 
 These are analytical distinctions, not a proposal for five new stored systems. Existing OpenLegend owners already distinguish [authored identity, lived experience and changing personality](../../../../docs/projects/compelling-characters-feature-spec.md#character-authorship-and-changing-personality). The research should help evaluate their delivered play, not create a second character-history mechanism.
 
@@ -56,13 +56,13 @@ Colony Ship's companion evidence is particularly useful here. Its documented bon
 
 The five games suggest complementary strengths rather than a common template to clone.
 
-| Question for an actual OpenLegend activity | Supporting comparison | What would count against the idea |
-| --- | --- | --- |
-| Can the player see why an approach succeeded or failed? | Solasta makes spatial and rules interactions central to learning. | Information arrives after an irreversible commitment, or presentation reveals facts the character could not know. |
-| Does an improvement enable a wanted action? | Battle Chasers and Dark Deity make a new combination or promotion an immediate reason to try another encounter. | The improvement only compensates for rising upkeep or another compulsory grind. |
-| Can a specialist contribute without becoming universally competent? | Colony Ship allows party members and alternative approaches to cover different needs. | One character must maximize every skill, or every choice has one dominant solution disguised by wording. |
-| Does repetition retain a decision after the player learns an efficient method? | Changing mercenaries and encounters can renew Battle Brothers; reviews of Nightwar show how familiar encounters can instead become delay. | More procedural rearrangement leaves the same answer and more walking. |
-| Does convenience preserve the interesting constraint? | Solasta's scavenging and Nightwar's later rebalancing distinguish logistics or grind from tactical challenge. | Automation removes the expedition's meaningful risk, or realism adds chores without payoff. |
+| Question for an actual OpenLegend activity                                     | Supporting comparison                                                                                                                     | What would count against the idea                                                                                 |
+| ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Can the player see why an approach succeeded or failed?                        | Solasta makes spatial and rules interactions central to learning.                                                                         | Information arrives after an irreversible commitment, or presentation reveals facts the character could not know. |
+| Does an improvement enable a wanted action?                                    | Battle Chasers and Dark Deity make a new combination or promotion an immediate reason to try another encounter.                           | The improvement only compensates for rising upkeep or another compulsory grind.                                   |
+| Can a specialist contribute without becoming universally competent?            | Colony Ship allows party members and alternative approaches to cover different needs.                                                     | One character must maximize every skill, or every choice has one dominant solution disguised by wording.          |
+| Does repetition retain a decision after the player learns an efficient method? | Changing mercenaries and encounters can renew Battle Brothers; reviews of Nightwar show how familiar encounters can instead become delay. | More procedural rearrangement leaves the same answer and more walking.                                            |
+| Does convenience preserve the interesting constraint?                          | Solasta's scavenging and Nightwar's later rebalancing distinguish logistics or grind from tactical challenge.                             | Automation removes the expedition's meaningful risk, or realism adds chores without payoff.                       |
 
 These questions connect to the existing [playable-game priorities](../../../../docs/repertoires/gameplay-priorities.md), which already require useful invention, independent people, challenge, recovery and reasons to continue. They do not promote elaborate injury simulation, universal classes, hundreds of traits or a new maintenance system into prerequisites.
 
@@ -72,13 +72,13 @@ The positive opportunity is a small number of activities whose consequences cros
 
 The research does **not** establish that these five games are commercial failures. It establishes different audiences, different financial visibility and, for Colony Ship, an explicit shortfall against the desired scale of the next project.
 
-| Game | Strongest relevant reported evidence | Appropriate conclusion |
-| --- | --- | --- |
-| Battle Brothers | Early Access enabled the small team to work full time; subsequent expansions, ports and publishing support show continued product investment. | A durable specialist product. Lifetime profit and studio receipts remain undisclosed. |
-| Solasta | Tactical Adventures reported more than **1.5 million players** in December 2024. | Substantial reach; players are not a disclosed paid-copy total. |
-| Colony Ship | The developer says sales were good for its niche but could not fund the larger planetfall sequel. | Product demand and desired studio expansion diverged. This is a concrete funding constraint, not proof that the whole game lost money. |
-| Battle Chasers | Its director reported PC leading copies and the later Switch version exceeding the other consoles. | Evidence of an audience across platforms; no disclosed total or profit result. |
-| Dark Deity | A publisher/developer announcement reported more than **100,000 copies** by November 2022, beyond the director's initial expectations. | A real paying audience and favorable comparison with stated early expectations. Later player-reach claims do not multiply those sales. |
+| Game            | Strongest relevant reported evidence                                                                                                          | Appropriate conclusion                                                                                                                 |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Battle Brothers | Early Access enabled the small team to work full time; subsequent expansions, ports and publishing support show continued product investment. | A durable specialist product. Lifetime profit and studio receipts remain undisclosed.                                                  |
+| Solasta         | Tactical Adventures reported more than **1.5 million players** in December 2024.                                                              | Substantial reach; players are not a disclosed paid-copy total.                                                                        |
+| Colony Ship     | The developer says sales were good for its niche but could not fund the larger planetfall sequel.                                             | Product demand and desired studio expansion diverged. This is a concrete funding constraint, not proof that the whole game lost money. |
+| Battle Chasers  | Its director reported PC leading copies and the later Switch version exceeding the other consoles.                                            | Evidence of an audience across platforms; no disclosed total or profit result.                                                         |
+| Dark Deity      | A publisher/developer announcement reported more than **100,000 copies** by November 2022, beyond the director's initial expectations.        | A real paying audience and favorable comparison with stated early expectations. Later player-reach claims do not multiply those sales. |
 
 The dossiers preserve source dates, attribution and scope. For direct reading: [Solasta's studio account](https://www.solasta-game.com/news/180-meet-the-tactical-adventures-team), [Colony Ship's February 2025 plans](https://store.steampowered.com/oldnews/?appgroupname=Colony+Ship%3A+A+Post-Earth+Role+Playing+Game&appids=648410&feed=steam_community_announcements&l=english), [Nightwar's director interview](https://nintendoeverything.com/battle-chasers-nightwar-console-sales-were-the-best-on-switch-raced-past-ps4-and-xbox-one/) and [Dark Deity's attributed sales announcement](https://finalweapon.net/2022/11/18/dark-deity-epic-games-store/).
 
@@ -101,4 +101,3 @@ The supplied video's explicit below-expectations example, **SteamWorld Heist II*
 **A completed adventure can be successful.** Some players want to finish a finite campaign and leave satisfied; others want a fresh company, a different build or another community campaign. Returning after a setback, restarting and continuing forever are different experiences. None should be inferred from a high review score or the narrator's late-night enthusiasm.
 
 The main research question to retain is practical: **after an important event, does this particular person have understandable, worthwhile things to do—and does their history meaningfully affect those possibilities?** The answer should be observable in play, with room for both continuity and change.
-
