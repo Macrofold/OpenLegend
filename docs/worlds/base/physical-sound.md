@@ -33,7 +33,7 @@ Posture is selected only for a body with an admitted posture family. The human s
 
 The transition keeps the old accepted body until its completion boundary. Completion atomically changes posture/profile and related geometry; there is no partially blended mechanical body. Interrupted/refused transitions keep the old posture. An accepted posture change can produce the handling contact below; a request or failed availability check cannot. Preserve gaze's accepted relative transform where the new body supports it; otherwise the joint pose owner applies B's admitted clamp/refusal once. Standing does not reset body life, learned identity, guard recovery or stride phase.
 
-Quiet pace is a movement constraint carried by the body's admitted locomotion policy and the ordinary movement action. Changing it while compatible travel continues settles the travelled prefix, validates the new constraint and invalidates future speed/prediction; it does not create another action lane. Resting, falling, airborne travel, incapacity and actions that lock the relevant stance use their existing refusal/interruption policy. Pace/posture changes are refused during committed evasion, whose speed/end remain pinned. Quiet preference does not slow a newly admitted evade; an unsupported crouched evade is refused rather than silently standing. A posture action can replace ordinary travel through normal admission; attack/guard work is not silently canceled by a UI toggle. Offers explain the actual interruption. No new crouch stamina drain, trained stealth statistic or chance roll is selected.
+Quiet pace is a movement constraint carried by the body's admitted locomotion policy and the ordinary movement action. Changing it while compatible travel continues settles the travelled prefix, validates the new constraint and invalidates future speed/prediction; it does not create another action lane. Resting, falling, airborne travel, incapacity and actions that lock the relevant stance use their existing refusal/interruption policy. Pace/posture changes are refused during committed evasion, whose speed/end remain pinned. Quiet preference does not slow a newly admitted standing human evade, which uses the ordinary 2.20-metre travel cycle at its actual pinned speed; crouched evade is initially unsupported and refuses rather than silently standing. A posture action can replace ordinary travel through normal admission; attack/guard work is not silently canceled by a UI toggle. Offers explain the actual interruption. No new crouch stamina drain, trained stealth statistic or chance roll is selected.
 
 ## Contact cycles and physical production
 
@@ -43,7 +43,7 @@ For the initial profiles below, one cycle has one contact group at its end. A ha
 
 | Body | Travel cycle metres | Quiet cycle metres | Crouched cycle metres | Escape cycle metres | Bare body contact level at ordinary reference speed |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Human | 2.20 | .66 | .50 | Uses separately admitted fast profile | 52 dB SPL at 1 m |
+| Human | 2.20 | .66 | .50 | Standing evade uses 2.20; another fast profile requires separate admission | 52 dB SPL at 1 m |
 | Hare | .55 | Not installed | Not installed | 1.80 | 30 |
 | Deer | 1.20 | Not installed | Not installed | 2.40 | 46 |
 | Wolf | .90 | Not installed | Not installed | 1.80 | 42 |
@@ -85,7 +85,7 @@ An accepted human posture transition emits one clothing/body handling contact at
 
 | Physical owner/profile | Selected sound rule and occurrence |
 | --- | --- |
-| Actual body/tool impact | Material-specific authored contact: soft body 52, wood 60, stone 68, metal 72 dB SPL at 1 m; one actual contact group, including a real shield interception. Missing contact emits no impact. |
+| Actual body/tool impact | Material-specific authored contact: soft body 52, wood 60, stone 68, metal 72 dB SPL at 1 m; one actual contact group, including a real shield interception. Current melee uses the contacted body's accepted position plus half its accepted height as its source anchor, captured before mutation; no exact limb/shield mesh point is claimed. Actual projectile contact uses its swept contact position. Missing contact emits no impact. |
 | Supported landing/fall | `56 + bodyOffset + 10 log10(1 + vImpact² / (4 m²/normal-second²)) + surfaceAdjustment`, clamped to `[24, 96]` dB SPL; `bodyOffset = Lbody − 52`. Here `vImpact` is the nonnegative closing component of body velocity **relative to the contacted support, along its contact normal**, converted to metres per normal-speed second exactly once. Capture it before clearing fall state. This adds sound, not damage. |
 | Moving through short grass contact volume | Real moving-overlap interval at 32 dB SPL at 1 m plus body offset and movement adjustment. |
 | Moving through dry brush contact volume | Same supported interval at 46 plus body offset and movement adjustment; stops on actual overlap loss or no displacement. |

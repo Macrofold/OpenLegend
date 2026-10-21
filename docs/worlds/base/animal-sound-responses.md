@@ -39,7 +39,7 @@ Starting-world creation, creator spawning, body/profile construction, world-defi
 
 The native input is the observer's exact permitted sound experience: occurrence identity/order/time, receiver physical life, listener pose, received level/margin, supported coarse bearing/elevation or null, acoustic descriptors/patterns disclosed by the perspective owner, and a visible-source observation association only when actually acquired. It contains no words, addressee, proper human name, hidden source identity/coordinates, inferred source distance or guessed emitted volume. The physical emitter being the receiver's own body is known self-acquisition; historical authorship of a detached impact does not make that impact a self-emitted voice.
 
-Reuse the shared direction projection under [hearing localization](../../limits/hearing-and-speech.md#hr05--localization-and-association); do not give animals a second direction algorithm. A null bearing remains unknown.
+The eight-sector/fixed two-metre elevation projection described by [hearing localization](../../limits/hearing-and-speech.md#hr05--localization-and-association) is the current speech-runtime baseline. The selected [physical-sound policy](physical-sound.md) and [general acoustic design](../../projects/acoustic-stealth-tech-design.md) own the replacement quality-dependent bearing, angular uncertainty and elevation facets shared by speech and physical sound. Consume the actually acquired facets; do not give animals a second direction algorithm, narrow uncertainty or recompute hidden source geometry. Historical evidence keeps its original precision, and a null bearing remains unknown.
 
 For a **strong** acquired finite acoustic result, compute:
 
