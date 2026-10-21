@@ -167,6 +167,8 @@ Reuse the [shelter feature specification](../projects/editable-shelters-feature-
 
 Reuse [authored stats](../projects/authored-stats-feature-spec.md), its [technical design](../projects/authored-stats-tech-design.md), [practical-competence profile](../worlds/base/practical-competence.md), [PC](practical-competence.md) and [evidence](../verification/practical-competence.md). The selected finite sling-practice/coaching consumer has delivery evidence; PC06 human appreciation is qualification, not missing design.
 
+**Research application:** The [tactical RPG comparison](../../archive/02-research/game-inspiration/essays/tactical-rpgs-character-histories-and-commercial-outcomes.md) suggests judging practice by a later wanted use: can the learner recognize what improved and use it in an actual encounter or contribution? Use this in the delivered practice/coaching episode's existing PC06 qualification; the comparison alone does not justify more skill families. Equipment, preparation and willing collaboration can remain alternative ways to reach the goal.
+
 **Owners/dependencies:** EWF02/EWF04, INV, AC/AE and shared state. Select an additional useful action/check consumer before generalizing. Preserve actual practice, observation, coaching and hearsay meanings, costs and uncertainty; the optional roof/dice example does not make routine actions random. Personality change remains DG23.
 
 #### DG15 — An optional story perspective
@@ -213,6 +215,8 @@ Reuse [authored stats](../projects/authored-stats-feature-spec.md), its [technic
 
 [Recovery and care](../projects/recovery-and-care-feature-spec.md), its [profile](../worlds/base/recovery-and-care.md), [tracker](recovery-and-care.md) and [limits](../limits/recovery-and-care.md) propose awake material-free camp recovery followed by independently selectable field dressing and willing help. Preserve needs, scars, current death and actual danger.
 
+**Research application:** [The care comparison](../projects/recovery-and-care-feature-spec.md#tactical-rpgs-and-worthwhile-continuation) makes a worthwhile next activity the useful question after harm. Treatment, adaptation, willing company or returning to the former goal can preserve continuity without a compensating bonus or forced new role. Use this in the existing CARE proposal and qualification; it does not select a broader permanent-injury system.
+
 **Owners/dependencies:** ACT/BW, actions, state and lifecycle; DG07 for affected human outcomes. Adoption, technical delivery and qualification remain open. A new illness requires its own useful cause/symptom/uncertainty/treatment/resolution loop; deep anatomy, fire and NPC ghosts are not prerequisites for ordinary recovery.
 
 #### DG22 — Durable agreements and a small world economy
@@ -224,6 +228,8 @@ Reuse [authored stats](../projects/authored-stats-feature-spec.md), its [technic
 #### DG23 — Characters changed by their experience
 
 [Experience-shaped characters](../projects/experience-shaped-characters-feature-spec.md), its [profile](../worlds/base/experience-shaped-characters.md), [EC](cognition-redesign.md) and [memory limits](../limits/memory.md) propose specific revisable outlooks and older interpretation without changed witnessing. Dreams, human-reviewed suggestions and deliberate coarsening are independent extensions, not a default weekly pass or numerical trait ladder.
+
+**Research application:** [The character comparison](../projects/experience-shaped-characters-feature-spec.md#tactical-rpgs-and-recognizable-development) brings ordinary achievement and shared contribution into the question about later choices. Can this resident recognize a useful opportunity because of their particular experience, then decide whether it matters to them? Preserve the possibility of no change, disagreement or a familiar preference. The existing EC quality work owns that question; another biography or trait system is not implied.
 
 **Owners/dependencies:** ACT07/ACT08, CR06/CR09, CE and provenance/correction/forgetting. Preserve protected identity, consequential distinctions and obligations; repetition grants no personality points and later choices remain independent. Technical/live-quality qualification remains open. DG02 owns compelling initial people; DG25 changes selected shared history, not recollection alone.
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                            | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The DG23 product proposal is complete; its ACT/CR extensions, technical design, implementation and live gameplay qualification remain open. | 2026-10-16   |
+| In progress | The DG23 product proposal is complete; its ACT/CR extensions, technical design, implementation and live gameplay qualification remain open. | 2026-10-20   |
 
 This is the product and behavior specification for DG23, the personality portion of ND04 and the older-recollection/dream portion of ND19. The [world profile](../worlds/base/experience-shaped-characters.md) supplies a concrete first experience. Existing ACT, CE and CR owners retain delivery, evidence and limits. Practical skill remains DG14 and the native learning owner. This assignment contains no technical design.
 
@@ -174,7 +174,11 @@ The remaining questions are developmental evidence, not missing product permissi
 
 ## 12. Research
 
-These primary records distinguish documented behavior and study findings from the product inference drawn for Open Legend. Historical announcements establish the design described at that date, not current tuning or measured enjoyment. Human studies do not validate an AI personality model. All sources were retrieved on **2026-10-06**; material access limitations are identified below.
+EC-R01–EC-R10 distinguish documented behavior and study findings from the product inference drawn for Open Legend. Historical announcements establish the design described at that date, not current tuning or measured enjoyment. Human studies do not validate an AI personality model. Those primary sources were retrieved on **2026-10-06**; material access limitations are identified below.
+
+### Tactical RPGs and recognizable development
+
+The [five-game comparison](../../archive/02-research/game-inspiration/essays/tactical-rpgs-character-histories-and-commercial-outcomes.md) sharpens this proposal's question about later opportunities: can an ordinary achievement, discovery or piece of shared work matter to what this particular person chooses next? For example, someone who helped prepare a useful tool might later recognize a fitting task, offer its owner help, or choose another interest. Attachment through repeated contribution, practical proficiency and a revised outlook remain distinct outcomes; none guarantees the others. Use the existing scenarios for later choices to examine that connection, including a worthwhile unchanged preference. These games supply reference evidence, not validation of Open Legend's autonomous growth or adoption of new behavior.
 
 ### EC-R01 — Experience can change a character after creation
 
