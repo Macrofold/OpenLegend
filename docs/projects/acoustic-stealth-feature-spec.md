@@ -128,4 +128,4 @@ Initial levels, gait speeds, feature precision and animal response thresholds ar
 - Shared ownership and final integration: [Shared technical contract](stealth-awareness-tech-design.md), [SAD-C/SAI-C](../maintainers/stealth-awareness.md), [animal sound responses](../worlds/base/animal-sound-responses.md).
 
 [a-tech]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/projects/perspective-perception-tech-design.md
-[sa-d02]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/archive/05-project/open-decisions.md#sa-d02--typed-evidence-revisions-and-source-family-preservation
+[sa-d02]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation
