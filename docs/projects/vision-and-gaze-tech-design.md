@@ -1,8 +1,8 @@
 # Physically coherent vision and independent gaze — technical design
 
-| Status      | Current progress                                                                                                           | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The physical producer, owner integration and implementation requirements are being specified; no runtime work has started. | 2026-10-21   |
+| Status      | Current progress                                                                                                | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Design complete and reviewed; VG01–VG08 implementation, runtime qualification and playtesting have not started. | 2026-10-21   |
 
 ## 1. Authority, dependencies and completion boundary
 
@@ -524,3 +524,11 @@ The complete source collection was reviewed for this feature: **42 files**, comp
 The resulting changes strengthen **32 existing entries across 15 category files**, preserving their IDs, priorities and optional scope. Useful play includes side-looking wildlife observation, mutual lamp/screen assistance, silhouette lookouts, visually readable hand signals when a future language/detail family supports them, rescue through partial cover, shield peep gaps, partial witnesses and meaningful masks. Existing proposals carry those ideas without adding duplicate mechanics or a generic stealth checklist. Central navigation/count/priority updates remain SAD-I's integration task because no new category or entry count was introduced.
 
 The selected visual parts of ND03/ND05/ND06/ND08/ND13/ND16 are designed and linked to this owner; broader body, action, attention, presentation and world-authoring work remains open under those owners. The shared stealth tracker records B's actual pair and implementation handoff. Spatial, action, base time/world, presentation and limits navigation now link the selected design while retaining truthful current-code descriptions. The documentation changelog records the consequential design once. All future runtime checkboxes remain open.
+
+## Maintained records
+
+- Player experience and required scenarios: [feature specification](vision-and-gaze-feature-spec.md).
+- Design completion and future delivery: [VG00–VG08](../maintainers/vision-and-gaze.md).
+- Selected numerical rules and physical fixtures: [base-world policy](../worlds/base/vision-and-gaze.md).
+- Limits, unsupported cases and revisit triggers: [vision inventory](../limits/vision-and-gaze.md).
+- Shared contracts and cross-specialist integration: [shared technical design](stealth-awareness-tech-design.md) and [SA tracker](../maintainers/stealth-awareness.md).

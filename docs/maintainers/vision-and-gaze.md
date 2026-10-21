@@ -4,22 +4,24 @@
 
 This tracker owns the detailed work for [physical vision and independent gaze](../projects/vision-and-gaze-feature-spec.md) and its [technical design](../projects/vision-and-gaze-tech-design.md), specialist **B** under [SAD-B / SAI-B](stealth-awareness.md). The selected design lets a character walk while looking elsewhere, see only physically exposed detail, use light and cover, and notice a fleeting opportunity through actual simulation time. It does not own remembered knowledge or recognition (A), voluntary attention (E), surprise eligibility (F), psychological feelings (D), or player controls and disclosure (G).
 
-**Design specified; VG00 final review pending. Implementation and qualification have not started.** This branch is documentation only. Every implementation and runtime-acceptance item below remains unchecked. A completed specification is not evidence that current radius-and-obstruction sight has changed.
+**Design complete and reviewed (VG00). Implementation and qualification have not started.** This branch is documentation only. Every implementation and runtime-acceptance item below remains unchecked. A completed specification is not evidence that current radius-and-obstruction sight has changed.
 
 The inspected implementation is `Macrofold/OpenLegend` at `codex/design-stealth-00-contracts`, commit `a3d40b4d71e29d6504e9f3fcc21e76344a0a284e`. The completed A design was read at `codex/design-stealth-01-perception`, commit `40805523c4a19ab7c6cc455d49d51e4a122ecae0`; it is a pinned external design dependency, not a merged branch or delivered runtime. Its [feature specification](https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/projects/perspective-perception-feature-spec.md) and [technical design](https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/projects/perspective-perception-tech-design.md) remain A's owners.
 
 ## VG00 — Complete the physical-vision design
 
-**Status: In progress — final consistency and branch review pending.** Dependencies: shared contracts, actual source inspection, the completed A design, the selected world profile and directly affected owners.
+**Status: Done — design complete and reviewed; no runtime delivered.** Dependencies: shared contracts, actual source inspection, the completed A design, the selected world profile and directly affected owners.
 
 - [x] Specify the player/NPC benefit, independent motion/body/gaze/camera meanings, authored body freedoms, ordinary action composition, geometry, light, evidence precision and complete scenarios in the paired documents.
 - [x] Inspect the current sensing, spatial, action, temporal and presentation paths; distinguish existing capabilities from required source changes.
 - [x] Review the complete repertoire collection for applicable ideas and preserve useful existing entries, priorities and optional scope.
 - [x] Assign implementation slices, dependency exits and specialist handoffs without closing runtime work.
-- [ ] Complete the full design diff, source-reference, link, status and cross-owner review; reconcile the selected world values and limits with the technical model.
-- [ ] Commit and push all task-owned documentation; confirm the final branch contains documentation only and preserves the exact contracts base without merging A.
+- [x] Complete the full design diff, source-reference, link, status and cross-owner review; reconcile the selected world values and limits with the technical model.
+- [x] Commit and push all task-owned documentation; confirm the final branch contains documentation only and preserves the exact contracts base without merging A.
 
 **Exit:** B's internal design is complete and reviewable; its physical input/output and temporal guarantees match the unchanged shared contracts or identify an explicit amendment. The bounded A source-revision proposal below remains a named integration dependency, not an implicit contract change. No runtime or human-play qualification is inferred.
+
+**Documentation review:** the full affected content/diff and producer boundaries were reviewed; local link targets/anchors and repository-pinned Prettier 3.6.2 were checked. Semantic repertoire comparison confirms 32 changed rows in 15 files with no added/deleted IDs. The branch comparison retains the exact contracts merge base and only documentation changes; the shared technical document remains byte-identical. No runtime, executable test, performance or player qualification is claimed.
 
 ## Implementation sequence
 
@@ -64,6 +66,7 @@ Implement through the existing spatial, action, observation, clock and view owne
 
 - [ ] Replace coarse exposed-height assumptions for the selected visual model with the specified receiver and target part/surface geometry, projected exposure, range, motion and detail precision. Use the same predicate in current queries and future interval preparation.
 - [ ] Add independent authored vision/light transmission, physical collision and attack-obstruction properties through existing geometry/material definitions. Validate walls, foliage, slopes, low roofs and small openings without inferring solidity from opacity.
+- [ ] Require actual action/part-owned preparation transforms before exposing a visual weapon/limb preparation cue; a hidden action stage is not a physical pose.
 - [ ] Resolve each visible facet independently: body location, face, hands, markings, clothing and equipment cannot inherit one another's permission. A protruding object can be visible without proving its hidden carrier's identity or held relation.
 - [ ] Admit supported pose changes only after support and resulting body/equipment clearance. Sample the actual physical part and height, never the client's animation or an unsupported posture intention.
 

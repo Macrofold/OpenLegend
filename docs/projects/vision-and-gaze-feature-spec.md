@@ -1,8 +1,8 @@
 # Physically coherent vision and independent gaze — feature specification
 
-| Status      | Current progress                                                                                          | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The vision design is being specified; runtime implementation and gameplay qualification have not started. | 2026-10-21   |
+| Status      | Current progress                                                                                                | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Design complete and reviewed; VG01–VG08 implementation, runtime qualification and playtesting have not started. | 2026-10-21   |
 
 ## Purpose and ownership
 
