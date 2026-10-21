@@ -93,9 +93,7 @@ Street names preserve industry and landscape—**Kiln Row, Willow Steps, Morrow 
 
 ## Fifteen people to meet
 
-**Cast defaults: Play, High, Small/Compose** for authored life histories; **Moderate/Extend** for executing schedules, commitments, selective memory and relationship changes. Their histories and ordinary pleasures give context to what they want and how they treat one another.
-
-**Cast defaults: Play, High, Small/Compose** for authored life histories; **Moderate/Extend** for executing schedules, commitments, selective memory and relationship changes. These are people encountered partway through their lives. Four already shape Linden Reach well beyond their own households: Iona through office, Tomas through ownership, Leon through criminal power and Lian through a nationally recognized body of work. Other reputations have narrower but real constituencies. Their resources give them specific capabilities, not command over every institution.
+**Cast defaults: Play, High, Small/Compose** for authored life histories; **Moderate/Extend** for executing schedules, commitments, selective memory and relationship changes. These are people encountered partway through their lives. Their histories and ordinary pleasures give context to what they want and how they treat one another. Four already shape Linden Reach well beyond their own households: Iona through office, Tomas through ownership, Leon through criminal power and Lian through a nationally recognized body of work. Other reputations have narrower but real constituencies. Their resources give them specific capabilities, not command over every institution.
 
 The histories below are proposed authored facts; explicitly identified stories, boasts and rumors need not be true. An embodied player learns them through encounters, records, places and people who have different reasons to speak. Select a handful for an opening, with the others available through later relationships and locations. They do not all wait in one courtyard for the player to arrive.
 

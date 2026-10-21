@@ -85,6 +85,8 @@ Seeds and references: [Black Myth: Wukong](source-atlas.md#g76), [The Elder Scro
 
 A choir organizer no longer shares the literal doctrine but loves the music, friendships and care network. They may speak honestly, remain private or help a newcomer find their own relationship to it. Belonging has more than one dimension. Avoid forcing every doubt into exposure, exile or conversion; a community can make room for unresolved questions.
 
+For a selected rehearsal or feast, the person's own doubt, attachment to particular people and pleasure in the music can all inform the choice. Other participants know those reasons only when they have acquired them. A role label or single belief score would lose the tension that makes staying, changing the ceremony, joking or leaving meaningful. Preserve the relevant occasion and lived associations without sending the whole theology; an observed miracle and an interpretation of it remain distinct, and neither prescribes the character's next allegiance.
+
 Seeds and references: [Disco Elysium](source-atlas.md#g66), [Earthsea](source-atlas.md#w11), [Austen’s social worlds](source-atlas.md#w23).
 
 ## Divinity with a jurisdiction

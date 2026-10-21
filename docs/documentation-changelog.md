@@ -1,5 +1,21 @@
 # Documentation changelog
 
+## October 20, 2026 — Generalize context construction and bound delivery
+
+The [context design](projects/situation-aware-cognition-context-tech-design.md#5-situation-detection-without-an-exclusive-classifier) composes the actual decision with typed requirements, supported relevance and dependencies from existing source/world owners. Scene names, family quotas and benchmark templates do not determine relevance; unused capacity does not justify optional information. Faithful projection retains current facts, units, time, scope, attribution, uncertainty and exact References.
+
+[SC01–SC11](maintainers/cognition-context.md) defines core delivery on installed behavior. SC12’s revision/work-mode binding is optional, superseding its earlier inclusion in the required delivery sequence; schema factoring retains its separate evidence gate. Existing revisions, meaningful modes and inline sparse definitions suffice. Worked scenes and separately owned NST/SPK/CTR or whole-life/enjoyment qualification do not become core prerequisites. This keeps the general builder useful without expanding it into unrelated gameplay.
+
+The [synthetic benchmark record](projects/situation-aware-cognition-context-evidence-and-decisions.md#73-lessons-from-the-recorded-synthetic-benchmark) supplies representation lessons, with recorded successes, amended grading and no-context controls kept distinct. It does not prove a causal formatting improvement, real retrieval completeness or player enjoyment. Runtime implementation and qualification remain open.
+
+## October 19, 2026 — Design situation-aware cognition context
+
+The [feature specification](projects/situation-aware-cognition-context-feature-spec.md), [technical design](projects/situation-aware-cognition-context-tech-design.md), [SC tracker](maintainers/cognition-context.md) and [SCX limits](limits/cognition.md#situation-aware-context-selection) define actor-permitted preparation, complete required dependencies, exact References, sparse responses and full-request accounting. Selection precedes unnecessary loading; bounded preparation protects a complete required fallback. Full accepted identity and necessary evidence remain protected even when they make a request large or unable to fit. Speech and action remain compatible, and necessary capability detail stays up front when existing inspection cannot provide it adequately.
+
+[Speech coordination](projects/situation-aware-cognition-context-tech-design.md#96-composition-with-the-selected-public-speech-record-contract) retains NST’s sole publication/lifecycle owner and composes sparse payloads at its cutover. The [evidence record](projects/situation-aware-cognition-context-evidence-and-decisions.md) preserves the request measurements, exact source baseline, References clarification and unresolved export anomaly; character counts do not establish token, cost or quality gains.
+
+The [42-file repertoire review](projects/situation-aware-cognition-context-repertoire-review.md) preserves entry identities/priorities and useful existing scope while strengthening ordinary-object invention, old evidence, competing purposes, personal humor and voluntary interpretation. Catalogue priority is independent of runtime relevance. The selected ND20/DG04 and C17 preparation design is complete; implementation and broader acceptance remain with their existing owners. No runtime/test code or paid provider work was delivered; additional and cumulative task Jev cost **$0**.
+
 ## October 18, 2026 — Design shared progressive NPC speech
 
 Mike selected immediate display of arriving approved text for **all public NPC dialogue**, without naturally paced speaking or environmental progression. The [feature specification](projects/npc-speech-streaming-feature-spec.md), [technical design](projects/npc-speech-streaming-tech-design.md), [NST00–NST10 tracker](maintainers/npc-speech-streaming.md) and [NST limits](limits/npc-speech-streaming.md) define one authoritative append-only occurrence, fixed first-publication hearing/identity, durable prefixes, stream-stable partial fragments, one terminal semantic readiness and the existing game SSE/caption/Events delivery path.

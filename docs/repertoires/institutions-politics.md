@@ -482,6 +482,8 @@ Seeds and references: [Pathfinder: Kingmaker](source-atlas.md#g58), [Crusader Ki
 
 Becoming a guild steward grants workshop access and responsibility for apprentices, not instant mastery of every craft. The player can improve training, delegate inspections, award contracts to allies or resign. A military office may instead grant command over a company whose wages and loyalties must be sustained. Status becomes practical rather than a title ladder. Duties should be bounded and negotiable, with a useful ordinary-member experience so promotion is not mandatory for basic participation.
 
+For a concrete decision, present the relevant duty, available resources, affected people and actual limits the character knows; unrelated constitutional detail can remain outside that scene. Keep the office separate from the individual who occupies it. A steward may share a joke with an apprentice at supper and still decline a request to use the shared stock, or favor a friend at a real cost to others. Compare an ordinary member, current steward and resigned steward: changed authority must not erase learned skill, personal history or the independent purposes that make the encounter worth having.
+
 Related entries: [INS-101](#guilds-standards-and-professions).
 
 Seeds and references: [Fire Emblem: Three Houses](source-atlas.md#g64), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Wizarding World](source-atlas.md#w02), [Guilds](#guilds-standards-and-professions).

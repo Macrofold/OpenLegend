@@ -500,6 +500,8 @@ Seeds and references: [Dragon Age II](source-atlas.md#g52), [Mass Effect 2](sour
 
 A resident balancing a deadline and a promised meal misses a minor greeting but notices smoke. Others may misread the omission until they talk. Attention creates plausible limits without making people incompetent. Persist interrupted work and provide clear critical signals; simulated distraction should not become an excuse for silently dropping commitments or ignoring obvious danger indefinitely.
 
+Keep fictional inattention distinct from incomplete preparation of an AI decision. Select the actual concerns, unfinished work, current outcomes and permitted event evidence before considering optional associations; do not manufacture this scene by discarding required speech or promises. Positive associations deserve consideration too: a familiar tune, a friend's arrival or an odd shell can matter without an emergency. Compare an urgent interruption, a resolved interruption and an unchanged quiet opportunity. The evidence should change with the situation, while continuing work, curiosity, silence and mixed feelings remain available choices rather than prescribed reactions.
+
 Related entries: [PB-005](#attention-and-what-gets-noticed).
 
 Seeds and references: [RimWorld](source-atlas.md#g21), [The Sims](source-atlas.md#g24), [Final Fantasy XII](source-atlas.md#g89).

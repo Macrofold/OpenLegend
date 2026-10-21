@@ -483,6 +483,8 @@ Seeds and references: [Path of Exile](source-atlas.md#g10), [Noita](source-atlas
 
 A former city guard becomes a gardener but retains spear technique, first aid and crowd-calming experience; they can take up arms again when danger returns. Their old badge no longer grants restricted access. Players can change lives without discarding history or retaining inappropriate authority. Meaningful training should transfer where applicable; avoid resetting all competence on a role change or allowing remembered procedure to stand in for current authorization.
 
+For a selected scene, make the actually retained relevant method available when the perceived problem gives it a use. A job title alone supplies neither technique nor current equipment. In a quiet garden scene, unrelated martial instructions can be absent while the accepted personal history remains. Compare a familiar application with a useful application outside its original profession: the surprise should come from the person's transferable knowledge and choice, not an injected instruction to resume their former role.
+
 Seeds and references: [Final Fantasy V](source-atlas.md#g82), [Final Fantasy IX](source-atlas.md#g86), [Star Wars: Knights of the Old Republic II — The Sith Lords](source-atlas.md#g110).
 
 ## The signature move with two lives

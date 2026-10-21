@@ -535,6 +535,8 @@ A useful role can bring people together without defining everything they value i
 
 Two companions argue about opening a road through woodland but reliably come when the other needs help. A player can seek a survey, alternate route or temporary agreement. This sustains interesting company after initial friendship. Do not make every disagreement reduce a global relationship score, or make affection silently erase a person's substantive concerns.
 
+The decision needs the person's known issue, relevant shared experience and actual request, not just a label such as friend or rival. Preserve the reason this disagreement matters and evidence of cooperation that survives it; disclose the other person's reasons only through permitted experience. A comparison can change the road proposal while keeping the friendship, or introduce a new invitation while the dispute remains unresolved. The resulting choice can be useful, affectionate, funny or firm without requiring unanimous agreement or a speech explaining every feeling.
+
 Related entries: [RSH-003](#everyday-friendship).
 
 Seeds and references: [Dragon Age II](source-atlas.md#g52), [Baldur's Gate 3](source-atlas.md#g26), [Star Trek](source-atlas.md#w04), [Everyday friendship](#everyday-friendship).
@@ -582,6 +584,8 @@ Seeds and references: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [
 **ALL · Play · Moderate/Extend.** Gap: provenance-aware appraisal rather than fixed gift tables.
 
 A cheap mug from a first expedition matters more than a luxury replacement, unless the recipient resents being reminded of that trip. Ask, listen or choose a shared activity instead. Gifts become expressions of understanding. Avoid secret exact-item puzzles and repeated affection farming; a gracious response need not imply a changed relationship.
+
+Select the particular object's permitted history and the person's relevant current taste together. Low market value must not remove the mug from a decision about gifts, selling supplies or leaving possessions behind. A later refusal or changed preference remains part of the same account; a fond memory does not reset it. Shared jokes similarly need their real occasion and any later request to stop (RSH-007), not an invented recollection that makes two strangers seem close.
 
 Related entries: [RSH-231](#shared-pleasures-and-futures).
 

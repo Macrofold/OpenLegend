@@ -496,6 +496,8 @@ Seeds and references: [Old School RuneScape](source-atlas.md#g49), [Mount & Blad
 
 Before a major accord, factions agree to return lost animals or maintain a warning bell. Keeping that promise creates evidence of reliability; failure may reveal inability rather than bad faith. A mediator investigates the difference. Avoid one numerical trust meter for all issues; competence at deliveries does not establish honesty about borders or willingness to share sacred sites.
 
+An informed next negotiation needs the exact relevant terms, the delegate's own mandate, what was actually performed and any communicated change. A compressed label such as allied cannot replace a disputed deadline, partial delivery or limited authority. Include relevant contrary evidence the negotiator actually knows as well as evidence favoring their preferred account. A compact scene can therefore support a narrower bargain, an ingenious exchange, a principled refusal or a betrayal without disclosing the other side's private objectives or requiring agreement as the successful outcome.
+
 Related entries: [DIP-017](#promises-treaties-and-guarantees), [DIP-021](#promises-treaties-and-guarantees).
 
 Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Mass Effect 3](source-atlas.md#g103), [A Song of Ice and Fire](source-atlas.md#w10), [Promises](#promises-treaties-and-guarantees).

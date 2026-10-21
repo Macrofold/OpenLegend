@@ -61,6 +61,8 @@ Use [world tone and scope](design-foundation.md#world-tone-and-scope) for subjec
 
 ## Complexity budgets that protect the experience
 
+Catalogue Priority selects what to build; Level describes how the proposed behavior is realized. Neither ranks which of a character's existing facts may matter now. An old observation, a personally valued object, a compatible learned technique or an ordinary pleasure can be necessary to an informed present choice even when its optional supporting feature was originally Detail or Specialist. The [situation-aware cognition design](../projects/situation-aware-cognition-context-feature-spec.md) selects from the person's actual situation, permitted knowledge, commitments and discoverable opportunities, preserving the evidence needed to recognize alternatives and their costs. It does not send unused catalogue text, grant a capability because a proposal exists, or require a matching goal before something interesting can be noticed.
+
 The figures here remain **illustrative prototype bounds**, not measured capacities or accepted product limits. A first scene might use 3–8 named people, 3–5 interacting families, one locality and a finite objective. Do not treat those counts as requirements for every encounter. Expand when added scope creates an observable, worthwhile decision.
 
 | Kind of complexity         | Pay for it when                                                   | Contain it by                                                             | Warning sign                                                            |

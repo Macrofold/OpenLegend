@@ -484,6 +484,8 @@ Seeds and references: [Dwarf Fortress](source-atlas.md#g23), [Middle-earth: Shad
 
 A tired resident wants to see migrating lights from a hill or hear an unfamiliar instrument. Players can arrange a visit, bring a recording or leave the experience for another season. Anticipation matters as much as acquisition. Repetition need not always diminish value; do not reduce beauty to a consumable novelty meter that demands constant procedural content.
 
+An informed choice needs the perceived occasion, the person's actual interest and any relevant competing commitment, alongside current bodily conditions. Quiet or pleasant opportunities must not disappear merely because they have no danger score or productivity benefit. Compare the same scene before and after a pressing need has been relieved: the character should receive the real change and still be able to choose work, company, the view or rest. Neither visiting the lights nor announcing delight is a required outcome, and a return to a familiar pleasure need not trigger a new ambition.
+
 Related entries: [ND-164](#play-stimulation-and-wonder).
 
 Seeds and references: [No Man's Sky](source-atlas.md#g17), [Outer Wilds](source-atlas.md#g34), [Pokémon](source-atlas.md#w08).

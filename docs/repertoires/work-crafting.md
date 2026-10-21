@@ -42,6 +42,8 @@ Seeds and references: [Factorio](source-atlas.md#g27), [Final Fantasy XII](sourc
 
 After a shipment fails, a town builds festival lanterns from tins and colored cloth. The resulting style may become a tradition. Players solve constraints while creating something visually distinctive. A substitute should have real differences and acceptable compromises; do not punish every deviation from the original blueprint with an inferior-quality label.
 
+The maker needs the wanted function, any volunteered aesthetic preferences, the actual shortage, useful properties of accessible alternatives and relevant retained methods. Selecting only items named in the original recipe would remove the possibility of invention before the character could consider it. Keep those facts and a way to inspect further without supplying every recipe or the lantern solution itself. A useful comparison changes the missing input or the client's preference: it should support a different viable proposal, a changed scope or an honest inability, with completed work and actual trial results still available to the next decision.
+
 Related entries: [WORK-183](#commissioning-workshop-organization-and-learning-through-work).
 
 Seeds and references: [Minecraft](source-atlas.md#g20), [Against the Storm](source-atlas.md#g45), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).

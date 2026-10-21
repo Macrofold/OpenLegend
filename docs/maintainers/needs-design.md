@@ -14,6 +14,8 @@ Adult players, non-explicit presentation with optional sex, and browser-only del
 
 **Selected combat design: complete.** The [combat-response feature specification](../projects/combat-and-threat-responses-feature-spec.md) and [technical design](../projects/combat-and-threat-responses-tech-design.md) complete the selected ND11 direct-PvP/projectile/immediate-response slice and ND13 combat-sensitive Command-click slice. Their disposition is **Done — designed; implementation and acceptance open under CTR01–CTR10**. This is not completion of either whole ND entry, broader ecology, relationship change, rescue, ghost continuity or control customization.
 
+**Selected situation-aware context: Done — designed; implementation and acceptance open.** The [feature specification](../projects/situation-aware-cognition-context-feature-spec.md), [technical design](../projects/situation-aware-cognition-context-tech-design.md) and [evidence/decisions](../projects/situation-aware-cognition-context-evidence-and-decisions.md) settle dynamic initial preparation, concise response structure, complete required evidence/References and the matched omission/quality comparison. [SC01–SC11](cognition-context.md) owns core delivery through existing CR/CE/IS/PF owners; SC12 is optional. This closes that selected ND20/DG04 preparation slice; richer retrieval remains conditional, and ND04/ND19 personality/history transformation, broader ND16 hearing, ND11 recovery/afterlife and ND13 controls keep their own scope. Preserve SPK, NST and CTR contracts when installed; their separate delivery is not a core SC prerequisite.
+
 ## How to use and maintain this register
 
 Use the [maintainer index](README.md) for delivery, [open decisions](../../archive/05-project/open-decisions.md) for consequential choices, [research backlog](../../archive/05-project/research-backlog.md) for empirical questions and [policies to revisit](revisitable-policies.md) for reconsideration triggers.
@@ -91,9 +93,11 @@ Reuse bounded PG02 and [investigation](parallel-batch-08-the-missing-belonging.m
 
 #### DG04 — A specific recall problem
 
-Conditional ND20: establish a consequential repeatable omission, then compare current recall, a modest native improvement and optional richer retrieval on matched histories. Include source eligibility, correction/forgetting, isolation, restore, latency and cost; stop if the current approach is adequate.
+**Ordinary initial-context selection and omission comparison: Done — designed.** The [situation-aware context pair](../projects/situation-aware-cognition-context-feature-spec.md#14-overlap-open-decisions-and-maintained-records) and [SC01–SC11](cognition-context.md) specify required evidence/dependency closure, existing native discovery/inspection, compact representations, explicit partial/overflow behavior and matched supported-decision/omission comparisons. Broader episode and enjoyment qualification remains with CE/CR. Reuse that design instead of commissioning another general context-selection plan; implementation and evidence remain open.
 
-**Owners/dependencies:** CR12/CR13, R11/R19 and memory owners. No canonical-memory replacement or external dependency is selected. This can run beside a relevant gameplay need without DG23 transformations.
+**Richer retrieval remains conditional ND20.** Establish a consequential repeatable omission before comparing current recall, a modest native improvement and optional richer retrieval on matched histories. Include source eligibility, correction/forgetting, isolation, restore, latency and cost; stop if the current approach is adequate. Duplicate prompt text alone does not establish a need for a new memory service or tool loop.
+
+**Owners/dependencies:** CR12/CR13, R11/R19 and memory owners retain the conditional experiment; SC owns the selected initial-context delivery. No canonical-memory replacement or external dependency is selected. This can run beside a relevant gameplay need without DG23 transformations.
 
 #### DG05 — Ending and returning to a session
 
@@ -361,7 +365,7 @@ Each ND entry retains one preparation description below. Multiple DGs indicate d
 | ND17 | DG25             | Attributed correction versus administrative retcon                                                                                                        |
 | ND18 | DG01             | Static discovery versus broader place/narration families                                                                                                  |
 | ND19 | DG23             | Older interpretation and optional dreams                                                                                                                  |
-| ND20 | DG04             | Conditional retrieval comparison                                                                                                                          |
+| ND20 | DG04             | Ordinary initial-context design complete under SC; richer retrieval comparison remains conditional                                                        |
 | ND21 | DG33             | Deliberate telepathy versus broader mental families                                                                                                       |
 | ND22 | DG27             | Offer adoption and customer lifecycle                                                                                                                     |
 | ND23 | DG28             | Allocation, marketplace rights and payouts                                                                                                                |
@@ -446,6 +450,8 @@ Mike commissioned the paired designs below. The [integration map](intelligent-si
 **Reuse:** [DG02](#dg02--one-resident-who-follows-through), [PS02](product-scalability.md#ps02--one-interruptible-life), [agency](agent-agency.md) and [AE09](action-experience.md#ae09--execute-chosen-nested-methods-through-existing-agency). Existing execution is not missing design; broader personally appropriate stopping/resumption remains [CE04–CE05](character-experience.md#ce04--a-complete-life-episode-with-continued-activity). Research: NPC-L001–L003/L015; simulation study §§2–3.
 
 ### Personally meaningful attention, quiet initiative and interruption
+
+The October 19 [situation-aware context design](../projects/situation-aware-cognition-context-feature-spec.md) completes the representation/preparation follow-through for this already designed attention scope, shared computation and episode comparison ([IS02/IS06/IS09](intelligent-simulation.md)). [SC](cognition-context.md) owns implementation and [the repertoire review](../projects/situation-aware-cognition-context-repertoire-review.md) supplies quiet, inventive, social and dangerous counterexamples; existing design checkmarks below are preserved, with runtime quality still open.
 
 - [x] **Specify the overlooked situation before changing attention.** Decide how chosen interests, promises and supporting assumptions bring relevant changes into consideration, including quiet invitations, unfamiliar meaning and contrary evidence outside the current focus. Define delayed reconsideration, quiet initiative and burst handling without polling every possible concern or assuming inexpensive predicates recognize all personal significance. Distinguish not noticing, choosing to ignore, and unavailable cognition. Preserve relevant evidence arriving during another decision and avoid replacing a valid purpose merely because something changed.
 
@@ -669,9 +675,9 @@ Preserve actual witnessing, obligations, consequential distinctions, lineage, co
 
 ### ND20 — A bounded richer-memory retrieval comparison
 
-**Conditional experiment; no new dependency selected.** SPK preserves structured sources and useful bounded exchange context through existing retrieval/compaction owners; it does not select this experiment, a new retrieval service or a semantic conversation graph. Source: [Hindsight evaluation](../../archive/02-research/hindsight-memory-evaluation.md), especially its recommendation, integration boundary, matched evaluation and resumption sections.
+**Selected ordinary preparation: Done — designed; runtime and qualification open.** [SC01–SC11](cognition-context.md), the [situation-aware feature specification](../projects/situation-aware-cognition-context-feature-spec.md) and [technical detail-access contract](../projects/situation-aware-cognition-context-tech-design.md#8-detail-access-without-a-mandatory-second-generation) complete initial-context selection, dependency closure, current inspection and a concrete omitted-evidence comparison. Preserve complete accepted About me and required personally available evidence; this does not select a replacement memory system or close the ND20 umbrella.
 
-**Conditional experiment; no new dependency selected.** Establish a consequential repeatable omission before using the [Hindsight evaluation](../../archive/02-research/hindsight-memory-evaluation.md) to compare current recall, a modest native change and optional richer retrieval on matched histories.
+**Richer-memory experiment remains conditional; no new dependency selected.** Establish a consequential repeatable omission before using the [Hindsight evaluation](../../archive/02-research/hindsight-memory-evaluation.md), especially its recommendation, integration boundary, matched evaluation and resumption sections, to compare current recall, a modest native change and optional richer retrieval on matched histories. SPK supplies structured sources and useful bounded exchange context through existing retrieval/compaction owners; neither it nor context compression requires a new retrieval service, semantic conversation graph or mandatory tool loop.
 
 CR12/CR13 and R11/R19 retain actor isolation, canonical-source mapping, eligibility, correction/forgetting/restore, fallback and total latency/cost. Use the smallest authorized investigator that answers the question; do not replace canonical memories or promise a deployment from research alone.
 

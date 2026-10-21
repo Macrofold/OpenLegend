@@ -516,6 +516,8 @@ Seeds and references: [Stardew Valley](source-atlas.md#g30), [Persona 5 Royal](s
 
 A scrupulously fair organizer makes an exception for a sibling, then must answer the people affected. The contradiction emerges from loyalties and circumstances, not a random hypocrisy event. Players can defend, expose or help repair the decision. Keep the person capable of change and ordinary goodness; a trait combination must not predetermine betrayal or a villain arc.
 
+When preparing the situation, preserve the accepted person, the actual family association and the competing concern rather than selecting whichever single trait predicts the desired act. The organizer can uphold the rule, bend it, ask someone else to judge or propose another arrangement. Compare the same choice for a stranger, a sibling and an openly changed circumstance without changing the biography to force a result. Particular tastes and humor deserve the same treatment: an elegant lover of trashy art (TR-177) remains more than whichever preference matched the latest scene.
+
 Related entries: [TR-203](#values-contradictions-and-unpleasant-choices).
 
 Seeds and references: [Dragon Age II](source-atlas.md#g52), [Crusader Kings III](source-atlas.md#g126), [The Sopranos](source-atlas.md#w22).
