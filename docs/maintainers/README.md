@@ -70,6 +70,8 @@ Reuse the [shelter technical design](../projects/editable-shelters-tech-design.m
 
 [The design register](needs-design.md) distinguishes remaining decisions/design from implementation and verification. Start with [dispositions](needs-design.md#current-design-dispositions), [design groups](needs-design.md#ordered-design-groups) and [dependencies](needs-design.md#order-and-parallel-opportunities). Actual work selection follows gameplay priorities and the available build, not group numbering.
 
+[NPC cognition research follow-up map](npc-cognition-research-needs-design.md) tracks model comparisons, low-refusal characterization, architecture questions and player-value tests through existing owners.
+
 ## Five researched product specifications
 
 [Five product specifications](../projects/five-product-feature-specs.md) links continuing lives, attention/scenes, world creation, shelters/rain and authored stats. Its [game-first sequence](../projects/five-product-feature-specs.md#game-first-delivery-sequence) distinguishes useful attended play from optional broader systems. The respective PS, INV, SH and PC owners retain delivery and limits.
