@@ -348,4 +348,4 @@ The store trailer/screenshots and developer-linked gameplay route in the FAQ pro
 | R14         | Annotated sources, access limits, reading routes and preservation.                                                                              |
 | R15         | Popularity uncertain; concrete creation boundary inspected without claiming a full popular-ecosystem investigation.                             |
 
-No earlier Colony Ship chapter or standalone dossier was found in the available research snapshot; the only local mention at the preservation check was the newly written Solasta cross-link. This adds a new subject without replacing earlier evidence. The parent research task owns roster, index and ledger integration. The individual economic result remains qualified because private financial data is unavailable, not because the applicable research categories were skipped.
+Private financial data is unavailable, so the game's actual receipts, complete costs and profitability remain unknown. Other game studies retain their independent evidence and completion status.
