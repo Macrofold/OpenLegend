@@ -4,7 +4,7 @@
 
 Colony Ship is especially relevant to the requested question about **people acquiring a history through what happens to them and what they repeatedly do**. Practice, habitual conduct, survival and companionship can all change later capabilities. [S03, S06, S07] These systems make a character's past consequential, but their scope differs: a relationship bonus, an authored conversation choice and an autonomous change of personality are separate achievements. The distinctions below matter as much as the successful examples.
 
-Commercially, the strongest finding is **better sales than its predecessor, insufficient funding for the studio's intended increase in scope**. Available evidence does not establish a lifetime financial loss or a simple commercial flop. Its developer described both relative commercial progress and continuing production constraints. [S23, S24] R11 separates those statements from modeled Steam spending.
+Commercially, the strongest finding is **stronger sales than Age of Decadence during Early Access and the first two full-release years, but insufficient funding for the studio's intended increase in scope**. Available evidence does not establish a lifetime financial loss or a simple commercial flop. Its developer described both relative commercial progress and continuing production constraints. [S23, S24] R11 separates those statements from modeled Steam spending.
 
 ## R01 — Identity, versions and the player promise
 
