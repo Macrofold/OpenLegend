@@ -1,0 +1,317 @@
+# G184 — Dark Deity
+
+Research accessed October 20–21, 2026. This dossier covers **the original 2021 Dark Deity**, including relevant patches, its Switch port and separately identified DLC. Dark Deity II's redesigned rules are not attributed to the original. It follows [R01–R14](../research-requirements.md), the [economics/enjoyment amendment](../research-economics-engagement-and-creation.md), and the conditional R15 screen. Open Legend comparisons refer to the [current gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md) and remain research hypotheses.
+
+**Finding:** Dark Deity is particularly useful for studying the difference between preserving a character and preserving a worthwhile future for that character. Its Grave Wounds allow survival with lasting penalties, but some players still reload or abandon the injured person. Its builds and relationships attract affection; opaque rules, weak maps and technical friction can interrupt that attachment. Commercially, calling it a flop is unsupported: a reported publisher/developer announcement celebrated more than 100,000 copies sold, while project profitability remains undisclosed.
+
+## R01 — Identity, scope and player promise
+
+Sword & Axe's single-player tactical RPG launched for Windows on June 15, 2021. Freedom Games was the launch publisher; the present Steam listing uses indie.io. The original advertises 30 playable characters, 54 classes and 28 chapters. The player commands an authored cast through grid battles, preparation screens and relationship scenes. There is no native cooperative campaign. [S01, S05]
+
+| Product or period | Boundary that matters |
+| --- | --- |
+| Original Windows launch, June 2021 | The two highly favorable PC reviews below describe the launch period, including its initial balance and technical issues. [S09, S10] |
+| Recurve update 1.5, October 13, 2021 | A substantial rebalance intended to improve weaker choices and restrain dominating combinations; not merely a bug patch. [S07] |
+| Switch release and PC update 1.53, March 17, 2022 | The update redrew maps and revised several chapters. The later Switch reviews still report platform-specific friction. [S08, S11–S13] |
+| Suns Out, Swords Out, July 25, 2022 on Steam | Paid DLC adds seven levels, further stories and additional playable figures, alongside beach portraits. It is not only a cosmetic pack. [S21] |
+| Complete Edition | GOG bundles the original, DLC, artbook and soundtrack as a Windows product. This is not a separate remake. [S22] |
+| Dark Deity II | A separate adventure announced for March 24, 2025, set 25 years later. Its smaller cast, changed combat systems and narrative promises cannot be used to repair the original game's description. [S18, S28] |
+
+The promise is to develop a personally chosen army while getting to know its members. Early play asks the player to learn the combat vocabulary; established play adds branching promotions, artifacts and relationships. A completed campaign can be satisfying without indefinite activity afterward. Different builds and campaign settings offer voluntary replay, rather than an endless world that continues evolving between sessions.
+
+## R02 — Actions, attributes and tactical decisions
+
+### What a turn asks of the player
+
+The player prepares a roster, examines enemies and objectives, moves units, chooses attacks or support actions, manages possessions and ends the player phase. Enemy responses make reach, exposure and the order of friendly actions consequential. Objectives can include escape or reaching a location, changing the value of stopping to fight. [S12]
+
+The useful recurring sequence is: identify a mission constraint → choose who can solve it → position and spend actions → observe hits, misses and losses → allocate scarce advancement → decide how the next formation should differ. Enjoyment depends on those decisions remaining consequential. Repeatedly moving an already dominant unit across an empty area advances the battle without renewing the problem.
+
+### Main systems
+
+| System | Decision and limitation |
+| --- | --- |
+| Character identity | Fixed people have their own starting attributes, growth aptitudes and personal abilities. The player develops them; it does not generate their childhoods, values or independent life plans. [S01, S04] |
+| Attribute families | HP, physical and magical power, physical and magical defenses, accuracy/critical-related attributes, speed, luck and movement interact. Movement describes grid reach; it is not the same quantity as attack speed. [S24] |
+| Class families | Warrior, Ranger, Cleric, Mage, Rogue and Adept supply branching advancement. Character and class both influence growth probabilities, so the same class need not produce identical people. [S04, S23] |
+| Promotions | At levels 10 and 30, the player selects among four options in the character's family. Earlier class abilities carry forward. These are consequential commitments rather than unrestricted respecialization whenever a map changes. [S10] |
+| Weapons | Four permanent tracks—Power, Finesse, Focus and Balance—emphasize different combinations of damage, critical potential, accuracy and weight. Weapons do not break, so using a good one does not consume durability. [S10, S13] |
+| Damage and protection | Nine damage types interact with four armor categories: plate, chain, leather and cloak. This creates more matchups than a simple triangle, but also more information to learn. [S11, S12] |
+| Items and artifacts | Consumables support survival or permanent improvement; an active Eternal Aspect can alter a person's build. Equipment sharing offers some flexibility around committed class paths. [S23] |
+| Relationship scenes | Shared activity unlocks authored bonds; story gates constrain later conversations. [S13, S14] |
+| Campaign configuration | New-run settings and a randomizer alter the existing campaign. They are not a map editor, new-quest authoring system or persistent simulated society. [S27] |
+
+The important distinctions are between **knowing a rule**, **predicting its result** and **choosing a desirable outcome**. A large matchup table supplies possibilities; it does not guarantee that the player can understand why an apparently favorable attack disappoints. Conversely, reducing all comparisons to a universal green arrow would make action legible while potentially obscuring the underlying reason. These are design questions raised by the conflicting reception below, not claims about a tested Open Legend interface.
+
+No general construction, crafting production chain, farming, economic automation, social stealth, diplomacy simulation or open-world traversal was evidenced. The absence matters: people have rich authored identities, but the player's ordinary way of changing their material future is military progression.
+
+## R03 — Possessions, builds and combinations
+
+Generic tokens upgrade weapons; expensive stat items provide another use for money. [S10] Weight lowers effective speed, which is distinct from tile movement. [S23] **Interpretation:** preparation and immediate weapon selection solve different problems. A durable upgrade can be useful for many battles while the appropriate attack still depends on the present enemy.
+
+The manual describes **Innileth's Scale** exchanging Strength and Defense, **Shamac's Tide** healing on a dodge, **Pelagiel's Flash** improving a second attack, and **Faine's Judgment** drawing power from nearby bonds. An active Eternal Aspect occupies the first item slot and can be reassigned. Healing supplies and permanent stat food serve different timescales. [S23]
+
+These are dated examples, not certified current optimal builds or exact post-patch formulas. They nevertheless illustrate two distinctions: an artifact can change a rule rather than merely increase a total, and a reversible equipment decision can sit around a committed class choice. Faine's Judgment also qualifies the simpler claim that relationships never affect combat. No player market, productive labor system or fluctuating supply economy was evidenced.
+
+**Attributed play account:** Nintendo World Report's Alex de Freitas describes making an evasive, self-healing rogue, a mounted critical attacker and a fast ranger whose follow-up attack can finish enemies. His pleasure comes from assembling interactions, rather than from a class label alone. [S12]
+
+**Interpretation:** a build becomes expressive when one choice changes the usefulness of another. The same interaction can reduce variety if it removes enough danger that alternative people and tactics become unnecessary. An impressive combination is therefore evidence of a possibility, not automatically evidence of balanced choice.
+
+There is a documented example of that tension. Recurve 1.5 targeted extreme dodge builds and the interaction between Vosh's Sanguination and Guga Steak, alongside improvements to weaker options. A player following an older guide can be optimizing a different version. The patch team's concern was broader viable choice, not proof that every unusual combination should be eliminated. [S07]
+
+## R04 — Progression, resources, loss and return
+
+### Scarcity within a finite campaign
+
+Dark Deity's Kickstarter FAQ describes a fully linear game without a separate grinding mechanic. Experience opportunities therefore have a finite campaign context, rather than an indefinitely repeatable training field. [S06]
+
+Faster mission completion increases gold; additional combat can supply experience. [S09] **Interpretation:** these incentives can disagree. Developing a weaker favorite may favor additional fighting, while needing equipment favors an earlier finish. Recurve adjusted rewards so the speed bonus decayed more slowly, demonstrating tunable pressure. [S07]
+
+The opening concentrates attention on a few familiar people. Recruitment then broadens the roster, while promotions and artifacts increase the value of earlier investment. Toward the end, accumulated advantages can either express a carefully built army or make less-developed people difficult to justify using. This is a structural interpretation of the conflicting player reports in R12, not a claim that all players converge on one strategy.
+
+### Grave Wounds: the intended compromise
+
+In Chip Moore's release interview, a defeated unit survives but loses **10% of one attribute**, selected by the damage type that defeated it. He presents the rule as a middle course between consequence-free retreat and permanent character death, allowing difficult battles without making every casualty a reason to repeat a long map. Some reviews describe the selection imprecisely as random or a single point; the explicit developer explanation is used here for the rule. [S03]
+
+That compromise preserves the person and their place in the authored story. It does not guarantee that continuing to deploy them remains attractive. A penalty to an irrelevant attribute can barely affect a build; one to a crucial attribute can compound the loss of experience from leaving the current battle. Players can also value a numerically intact favorite regardless of the penalty's actual size. These are different reasons for accepting or rejecting the same outcome.
+
+| Boundary | What persists, and what changes |
+| --- | --- |
+| Unit defeated in battle | The unit leaves that fight and returns for the next chapter with a lasting attribute penalty. It is not ordinary permadeath. The precise chapter boundary comes from indexed community documentation. [S03, S24] |
+| Continuing after a casualty | The army and campaign can proceed, but the injured character may be less effective. Repeated penalties and missed opportunities can deepen that gap. [S15, S16] |
+| Compensating for a penalty | Stat-enhancing items can offset a numerical deficit. This is a resource cost, not evidence of a general wound-healing, rehabilitation or new-career system. [S15] |
+| Reloading a mission | The player avoids accepting the new outcome at the cost of repeating played turns. Nintendo Life's Switch review specifically reports the lack of a mid-battle save; this is a historical observation, not an audited claim about every current build. [S11] |
+| Starting a new campaign | Configurable difficulty, rewards and randomization can change the challenge. What certainly carries over is player knowledge; this dossier does not claim a verified possessions-and-relationships New Game Plus transfer. [S10, S27] |
+| Finishing | Completion is a legitimate endpoint. Additional builds, bonds and optional settings can motivate another run, but no sourced retention or completion cohort establishes how often they do. |
+
+A proposed temporary recovery absence is not automatically kinder. In the 2021 discussion, some players prefer sitting out a mission to permanent degradation, while others point out that missed experience would deepen the bench problem. Recovery must be evaluated against the available activities and advancement system, not just the visible severity of its penalty. [S15]
+
+## R05 — Concrete situations and their limits
+
+These are **constructed illustrations of documented rules**, except where a named player's experience is explicitly attributed. They are not claims of personally playing the game.
+
+### 1. Accepting an injury without losing the person
+
+**Intention:** finish a difficult battle without replaying the entire approach. **Conditions:** a valued unit has been defeated, but the remaining army can complete the objective. **Action:** accept the wound and continue. **Interaction:** character continuity survives while a particular capability declines. **Result:** the next chapter has a changed planning problem. **Next decision:** continue investing, compensate with resources, alter deployment or reload instead. **Limit:** none of these choices automatically creates a new profession, personality or responsive relationship.
+
+**Actual example:** RPGFan's Audra Bowling reports Irving losing a finger and Dexterity. She found the consequence memorable without feeling excessively punished. That demonstrates one player's attachment to a specific mishap; it does not demonstrate a simulation of rehabilitation. [S09]
+
+### 2. Choosing between mission rewards
+
+**Intention:** strengthen a preferred recruit. **Conditions:** the objective can be completed now, but another reachable enemy offers experience. **Action:** compare the additional fight with the reward for a quicker finish. **Interaction:** personal development and army purchasing power compete. **Result:** a numerically modest encounter acquires long-term significance. **Next decision:** choose who receives that opportunity. **Limit:** when the favorite is too far behind, the choice may become exposure to disproportionate danger rather than a satisfying investment. This example interprets the finite-experience and speed-reward rules described above.
+
+### 3. Revising a role around an artifact
+
+**Intention:** make a vulnerable person useful in a different formation. **Conditions:** class commitments constrain available changes, but an artifact can move between people. **Action:** compare a stat exchange or conditional effect with the present build. **Interaction:** equipment can change the value of earlier growth. **Result:** the same character may solve a different combat problem. **Next decision:** judge who loses out when the artifact is reassigned. **Limit:** a theoretical alternative is not a viable future unless it can actually meet upcoming challenges. This is an illustration of R03's documented composition rules, not a verified optimal injury-recovery build.
+
+### 4. Learning a relationship through shared activity
+
+**Intention:** see how two companions understand each other. **Conditions:** both need battlefield time and later conversations depend on story progress. **Action:** deploy them together and view the unlocked scene. **Interaction:** tactical preferences determine which authored relationships receive attention. **Result:** a numerical unit becomes a more particular person to the player. **Next decision:** continue the pairing or make room for another companion. **Limit:** shared deployment is not evidence that the conversation remembers a specific injury, rescue or tactical disagreement.
+
+### 5. Making a known campaign unfamiliar
+
+**Intention:** revisit the game after completing a familiar formation. **Conditions:** built-in randomization and campaign parameters are available. **Action:** change the recruitment or enemy configuration and reward assumptions. **Interaction:** knowledge remains useful while some previously reliable sequences no longer apply. **Result:** the player must reconsider builds and resource allocation. **Next decision:** accept the new constraints or tune another run. **Limit:** the authored world and objectives still constrain the possible story; randomized inputs do not create autonomous motives. [S27]
+
+## R06 — People, relationships and agency
+
+Moore describes building the world from its characters, emphasizing how backgrounds, vulnerabilities and ideals shape motivation. That is an account of the writing process. It does not establish that the shipped characters evaluate new life goals independently. [S05]
+
+Bowling describes friendships, family relationships and romantic implications, with ten possible partners and three conversation levels per character. A single ordinary campaign cannot complete them all. [S09] **Interpretation:** attention creates narrative variety: choosing whom to deploy also influences whose personal story the player gets to know.
+
+RPGamer observes that viewing bonds does not ordinarily supply the standard permanent combat boost associated with similar games. [S13] The artifact exception in R03 matters, but does not turn every conversation into a mandatory efficiency reward. **Interpretation:** people can be worth knowing because the player cares about them. Open Legend should not infer that every relationship requires a stat bonus to justify its existence.
+
+The army has authored factions and loyalties; enemies act within tactical encounters. Neither is evidence of an independent economy, daily routines, political bargaining or people choosing to leave military life. The player chooses deployment, equipment and class progression for the controllable cast. A character can be numerically changed by experience while their authored conversation remains unchanged.
+
+No native multiplayer entry, shared human inventory, human-versus-human negotiation or cooperative continuity problem was found in the studied product. Its social value is primarily between player and fictional people. Its lesson for independent Open Legend inhabitants is therefore bounded: recognizable identity, continuity and opportunities for attention matter, but autonomous adaptation requires additional systems.
+
+## R07 — Art, sound, interface and feel
+
+The developer chose expressive 2D work partly because it was achievable for a small team and personally resonant with Game Boy Advance-era games. He also describes reusing attack animation across weapon variants while varying magical effects, a concrete scope decision rather than evidence of universally cheap pixel production. Battle animation can be disabled or individually skipped. [S03]
+
+Voice direction was an added opportunity rather than an original certainty. Retroware's interview describes Molly Zhang proposing voice work and blind casting, while the team assessed what it could afford. [S04] Short vocal performances can establish a recognizable person without voicing every line.
+
+The presentation is not equally successful in every layer. RPGamer notices generic enemy appearances and class sprites that can conflict with a character's identity, along with tiny handheld text and awkward item-exchange presentation. [S13] Nintendo Life likes the character art but describes comparatively plain battle backgrounds, control oversensitivity and menu latency on Switch. [S11]
+
+Siliconera identifies a different accessibility issue: a color-dependent portal sequence. [S10] This is distinct from a player disliking the style. Likewise, a unit that cannot move because of a bug is not a sophisticated tactical constraint.
+
+**Interpretation:** portrait identity, battlefield silhouette and displayed state should agree sufficiently for the player to recognize the person and understand the action. Long-term character attachment becomes harder when the interface repeatedly makes the player manage mismatched representations. The presentation can remain expressive while allowing familiar actions to resolve promptly.
+
+## R08 — Lore, history and delivered narrative
+
+**Major story spoilers follow.** Terrazael's present kingdoms live among the remnants of civilizations destroyed by the Calamity. King Varic of Delia breaks a thousand-year treaty and drafts the Brookstead Military Academy's students. Irving, Garrick, Maren and Alden begin as young people caught in a ruler's war, rather than heroes freely choosing a grand expedition. [S01, S22]
+
+| Layer of history | Connection to the playable story |
+| --- | --- |
+| Calamity and inherited power | Eternal Aspects are remnants of the older world, joining the plot's dangerous past to artifacts the player equips. [S01, S25] |
+| Military institutions | Brookstead turns education into conscription; Delia's conflict with Aramor gives early battles a political context. [S22, S26] |
+| Sacred and scholarly institutions | The Order of Eternals and Mystic Council preserve distinct relationships to older knowledge. The Temple of Faine, associated with the God of Oaths, gives a named religious setting to the conflict. These details are corroborated by indexed chapter references, whose full wiki pages were unavailable. [S25] |
+| Conspiracy and rebellion | A player-written recap describes the protagonists becoming enemies of Varic, traveling to the Order in Verroa, and returning to help overthrow him. This is an attributed synopsis, not a newly watched playthrough. [S26] |
+| Deeper antagonist | The necromancer Akmenos pursues the Aspects; Empyrean's attempted ascension connects the immediate conflict to the earlier catastrophe. The final chapters concern preventing another disastrous rite. [S25, S26] |
+
+The useful dramatic relationship is between inherited institutions and particular young people's loyalties. A class, school or kingdom gives someone an expected place, while events force allegiance and self-understanding to change. Those changes are authored into the campaign; a player's unusual build or injury is not shown to rewrite the political sequence.
+
+Relationships supply everyday scale through teasing, vulnerability, friendship and family connections. The source evidence supports those personal conversations more clearly than a detailed simulation of religious practice, production, civic law or ordinary households. No complete creation cosmology or fully reconciled historical chronology is invented here.
+
+Suns Out, Swords Out adds earlier and later episodes involving Empyrean, Varic, Alastair and Sterling. Its perspectives can extend context, but this research did not complete a separate review pass of all seven DLC scenarios. [S21]
+
+**Interpretation:** an artifact can carry history and alter an immediate decision at the same time. That is more actionable for Open Legend than importing named gods or an encyclopedia of lore. A remembered object might matter because of who made it, what happened around it and what it now enables. Dark Deity demonstrates authored connection between lore and capability; independently changing social meaning remains an additional hypothesis.
+
+## R09 — Production, iteration and authoring boundaries
+
+Moore began development in late 2018 while studying economics and learning to code. [S03] Thread of Souls identifies a five-person core: Moore on the game, Dylan Takeyama on business, Sam Huss on music, Jonathan Kinda on map art and Nick Solari on narrative. GameMaker Studio 2 was the development tool, and the publisher agreement came about three months before launch. [S05]
+
+The team combined Fire Emblem-style campaigning with an interest in distinctive class identities associated with MMO play. Retroware's interview stresses character/class growth and carried abilities as ways to make promotion paths matter. [S04] The Kickstarter happened well into development; its proceeds cannot stand in for the total time and cost already invested. [S06]
+
+Patches provide more useful evidence than an undifferentiated claim of continuous improvement. Recurve revised balance and added languages. Update 1.53 redrew all 28 maps, adjusted the chapter 14 starting position to remove empty walking, reduced chapter 25's space, reworked chapter 19 and addressed loading and crashes. These are documented changes, not proof that later PC or Switch copies have no defects. [S07, S08]
+
+### A candid retrospective
+
+In the June 7, 2023 sequel announcement, the developer explicitly acknowledges several original-game problems: weak maps without a terrain-bonus system, difficult-to-maintain first-project code, opaque percentage and advantage calculations, large strength differences between builds, and the ease of relying on very few powerful units. He also says the commitment to 30 characters and more than 400 conversations diluted attention to important writing moments. Rebuilding the sequel's code added more than a year to its schedule. This is primary retrospective testimony, not independent measurement of how much each issue reduced sales. [S28]
+
+The implication is specific: option count, cast size and output volume can outrun the team's ability to make choices clear, distinct and dependable. The original still found an audience. The lesson is to understand the carrying cost of each additional system or person, not to infer that small projects must have small ambitions.
+
+Ordinary players can configure a campaign and create builds. They cannot use an evidenced native editor to publish new maps, reusable characters or scripted adventures. A developer explicitly said in June 2021 that mod support was not planned. [S27] External repair work exists, as R15 records; it should not be described as a supported content-authoring platform.
+
+## R10–R11 — Promotion, distribution and commercial interpretation
+
+The launch used a recognizable classic-SRPG proposition, crowdfunding community, the Freedom Games E3 showcase and GameSpot's Play for All, culminating in a surprise release. These channels are documented; their individual conversion rates are not. [S02, S05]
+
+The product subsequently reached Switch, the Epic Games Store and GOG, sold additional content and participated in deeper discounts. The Steam page's October 21, 2026 capture showed US$24.99 list price and a temporary US$4.99 sale; neither price is a lifetime weighted average. [S01, S08, S17, S22] An April 2026 publisher announcement also named the franchise in an Indie Pass subscription plan, with payments tied to time played. This establishes the announced mechanism, not a verified original-game subscriber count or receipt. [S30]
+
+### Commercial evidence record
+
+| Scope and period | Metric and evidence | Interpretation and confidence |
+| --- | --- | --- |
+| Kickstarter, August 12–September 11, 2020 | **US$74,383 pledged by 2,394 backers**, against a US$12,000 goal. [S02] | High confidence in displayed campaign totals. Pledges are funding commitments with fees and obligations, not project profit or 2,394 ordinary retail purchases. |
+| Original game, PC and Switch, announced November 18, 2022 | **More than 100,000 copies sold**, attributed to Freedom Games and Sword & Axe by Final Weapon. Moore described this as far beyond what he initially imagined for the first game. [S17] | Strong attributed milestone, not audited accounts. Platform split, realized prices and treatment of bundles/keys are not disclosed. |
+| Epic promotion, November 2022 | Free availability through November 24, alongside the sales celebration. [S17] | Free claims must be separated from paid copies. The promotion's contract and developer compensation were not disclosed. |
+| Original game reach, publisher statement February 26, 2025 | **More than 6 million players since 2021.** [S18] | Primary marketing claim with an undefined player/ownership methodology. It does not establish six million paid sales, active users or completed campaigns. |
+| Steam base-game model, observation March 15, 2026 | GameRevenueData estimates **US$2.9 million lifetime gross**, **US$1.7 million modeled net receipts**, and **143,700–176,300 owners**. [S19] | Low-confidence partial-market estimate for this dossier. Ownership includes free accounts; the model is not an audited sales ledger, verified payment or profit statement. |
+| All-platform lifetime receipts, costs and profit | **Not estimable from available evidence.** | Missing realized prices, platform mix, free-promotion fees, DLC separation, tax/refund details, publisher recoupment/share, salaries, outsourcing and marketing costs. |
+
+The commercial milestone and the reach claim answer different questions. The former supports a real paying audience; the latter supports broad distribution under an unspecified counting method. The later Steam estimate is neither a second measurement of the 2022 all-platform milestone nor a reason to replace it. Their time periods and definitions differ.
+
+### Estimation method and economic judgment
+
+The third-party estimate uses review-to-sales modeling with a variable ratio and pricing/discount assumptions. Its gross-to-net adjustment includes platform share and modeled deductions; DLC and other stores are excluded. The provider warns that free access, keys and bundles can distort estimates. Its confidence percentage is not a probability of accuracy. [S20] Underlying title-specific price and purchase-mix inputs were not available for independent reconstruction.
+
+A defensible all-platform low/base/high range cannot be derived by multiplying either six million players or 100,000 historical copies by the present list price. The available Steam model is retained as a bounded **scope**, with an ownership range, rather than a fabricated certainty range for the entire business. Public developer interviews, publisher announcements, crowdfunding records and commercial estimates were searched; no usable full budget, marketing spend, contract or audited title-level return was found.
+
+**Judgment:** audience acquisition exceeded the director's stated initial expectations. Continued series development is consistent with a valuable audience and working relationships, but does not disclose the original project's profit or publisher return. “Commercial failure” is unsupported.
+
+The plausible demand mechanism is a familiar tactical-RPG promise available to PC players, reinforced by extensive build choices and a cast worth discussing. Steam testimony supports that appeal. The plausible constraints are reliability, unclear rules and mission pacing that interrupt satisfying investment. These are evidence-based causal hypotheses, not a measured sales decomposition. The free promotion, ports, discounts and bundled distribution also create alternative explanations for growing reach. Revenue attributable to each channel remains unknown.
+
+## R12 — What critics and players valued or rejected
+
+### Five substantive independent written reviews
+
+The complete article bodies were read, not only their scores. Platform and timing differences prevent a simple conclusion that later reviews measure improvement or deterioration in the same product conditions.
+
+| Review and context | What worked for that reviewer | What limited the experience |
+| --- | --- | --- |
+| **Audra Bowling, RPGFan, June 15, 2021; Windows; 91/100** [S09] | Engaging builds, varied objectives and a cast that became more interesting than its initial tropes. | Weak onboarding, occasional loading/crash trouble, repeated sprites and uneven visual consistency. |
+| **Graham Russell, Siliconera, June 15, 2021; PC; 8/10** [S10] | Enjoyable customization and freedom from weapon-durability anxiety; survival supports character continuity. | Insufficient explanation before consequential promotion choices, uneven maps, menu/controller problems and accessibility concerns. |
+| **Stuart Gipp, Nintendo Life, March 31, 2022; Switch; 7/10** [S11] | The cycle of battling, leveling and getting to know people remains compelling. | Excessive empty movement, awkward controls, loading and interface latency; the homage lacks a sufficiently distinctive identity for him. |
+| **Alex de Freitas, Nintendo World Report, March 20, 2022; Switch; 6.5/10** [S12] | Experimentation with classes, weapons and Aspects, plus concise relationship conversations. | Crowded central storytelling, overwhelming matchup information, inconsistent map quality and disruptive bugs. |
+| **Sam Wachter, RPGamer, April 11, 2022; Switch; 3/5** [S13] | Build development and banter keep the tactical loop attractive. | A generic main plot, slow operation, misleading interface states and small text. The historical verdict recommends waiting for fixes, not abandoning the game's underlying ideas. |
+
+The disagreement about story is substantive. A player can find an overarching war plot familiar while caring about individual relationships; a large amount of dialogue can help one and overwhelm another. Similarly, one person's satisfying build freedom can coexist with another's dependence on an unexplained advantage indicator. The evidence supports different experiences, not a consensus that every feature works or fails.
+
+### Helpful Steam review sample
+
+The all-time helpful English review page was sampled on October 20–21, 2026. It contained positive and negative accounts; a separate negative-only request was unavailable. Helpfulness favors older visible reviews, and displayed current hours are not the hours at original publication.
+
+- **Mach, Recommended, June 15, 2021:** welcomes a Fire Emblem-like experience on PC and its audiovisual presentation, while raising menu and save complaints. A later edit acknowledges a loading-indicator fix. [S14]
+- **Pap, Not Recommended, June 20, 2021:** feels finite experience and strong incoming recruits reward replacement more than developing a personally chosen army. [S14]
+- **MidniteGanker, Recommended, July 7, 2021, explicitly discussing patch 1.0.7:** enjoys builds and growth information, accepts recruitment changes and appreciates story-gated bonds. [S14]
+- **ReysonTheNoble, Not Recommended, July 9, 2022:** enjoyed the intended game, but movement errors, displaced units and stuck interface states forced interruptions and restarts. [S14]
+
+The captured storefront reported **75% positive among 1,907 English reviews**. This is a language-specific snapshot, not the provider's older all-language aggregate or a measure of the share who finished. [S01]
+
+### Direct disagreement about lasting injury
+
+In a 2023 discussion, **KageTrips** says permanent losses and missed experience still make restarting long maps preferable. **JohnHadley** emphasizes the weapon and stat investment already committed to a favorite. **Mochan** prefers losing an attribute to losing the whole character; **Bobucles**, writing in 2024, values being able to continue after mistakes and accepts replacement when necessary. A different commenter explicitly had not played; that speculative opinion is not counted as firsthand evidence. [S16]
+
+The earlier discussion adds another distinction: **Hy5dra** would prefer temporary absence, while other players argue that losing a mission's experience can make someone harder to bring back. Some consider damage to an irrelevant attribute minor. [S15] These are concrete opposing preferences, not evidence of which view is statistically dominant.
+
+### Why people continue, finish or leave
+
+The supported attractions are choosing a distinctive build, seeing it work, growing attached to companions and anticipating another promotion or conversation. Friction takes several forms: confusing calculations hinder prediction; empty movement delays a decision; technical faults destroy trust; finite advancement can make experimentation expensive; permanent loss can threaten an imagined ideal army.
+
+That last concern is especially relevant to Open Legend. A player may reload because they want the person's future, not because they reject all meaningful consequences. No retrieved cohort separates these motives quantitatively. A finished, enjoyed campaign also should not be counted as a retention failure merely because the player stops.
+
+## R13 — Open Legend hypotheses and limits
+
+| Hypothesis | Prerequisites and a concrete evaluation | Failure case |
+| --- | --- | --- |
+| Surviving failure can preserve attachment. | Test whether players willingly continue with someone whose situation has changed, and ask what future they imagine for that person. | A persistent portrait with steadily declining usefulness can feel like deferred deletion. |
+| Consequences need viable next activities. | An injured explorer might contribute through preparation, repair, guidance or a changed exploration role, if those activities are useful and actually available. | Simply renaming a penalty “growth” or handing out an unrelated bonus does not create believable development. |
+| Recovery should preserve meaningful participation. | Examine what the person can choose and accomplish while recovering, including social and practical contributions. | Forced idle time can combine punishment with lost advancement and make return harder. |
+| Relationships can be valuable without mandatory bonuses. | Observe whether shared events and recognizable motives make players choose time with someone. | Rewarding every relationship numerically can turn attention into compulsory optimization. Conversely, opaque optional benefits can mislead players about stakes. |
+| Combine committed history with adjustable possibilities. | Let some consequences endure while equipment, collaborators or available work open alternatives. Test whether those alternatives are legible before failure. | Unlimited reversal can erase consequence; inaccessible alternatives can make commitment feel like a trap. |
+| More options require clearer consequences and stronger situations. | Measure whether players can explain their choice and predict its important effects. Give each map or activity a reason for the selected capabilities. | A large taxonomy or map can increase reading and walking without adding a wanted decision. |
+| Scope characters around meaningful attention. | Establish which interactions make each person memorable and how events alter later choices. | A high conversation count can dilute causal detail and strain production without creating independent lives. |
+
+These are conditional design proposals, not evidence that Dark Deity already produces the desired emergent life stories. Its wound can give the player a memorable incident; making that incident reshape priorities, relationships and chosen activities requires more than reducing an attribute.
+
+The better question is not whether every injury rewards the player. It is whether a consequence leaves intelligible, worthwhile possibilities, and whether the person can participate in choosing among them. Some losses can remain painful. The research does not justify making permanent injury compulsory, copying a percentage penalty, or requiring every experience to produce a trait.
+
+Do not carry over the 30-person army, fixed campaign, class tree, fantasy names, command authority or military economy as Open Legend requirements. The relevant transfer is the interaction among attachment, investment, credible consequence and accessible futures.
+
+## R15 — Modding applicability screen
+
+**Gate: uncertain popularity; identifiable external maintenance verified.** The original lacks evidenced native mod support, while its built-in randomizer changes allowed campaign parameters rather than authoring new content. [S27]
+
+HadleyTheGreat's **Dark Deity Community Patch** is a concrete external example. Its repository and release records were inspected through read-only GitHub access. Version 3.0.0 was published July 24, 2026; the two release archives showed 13 Linux and 66 Windows downloads at capture, which are download events, not unique active users. Current installation documentation names Steam, Epic and GOG. Earlier notes explain GameMaker DATA.WIN modification through UndertaleModCLI, version checks and restoration by reinstalling original data. [S29]
+
+The author reports fixes for movement and crash problems; no patch was executed or independently validated here. Source availability is not proof of universal compatibility or a broad creator economy. One maintained repair project and modest release activity do not establish a popular modding ecosystem. A full ecosystem investigation is therefore not claimed. The useful observation is that players invested effort in preserving a game whose ideas they valued despite technical friction.
+
+## R14 — Sources, coverage and evidence limits
+
+### Source register
+
+Access dates are October 20–21, 2026 unless otherwise identified. Developer statements establish intent, self-reported history or announced changes. Professional reviews and community testimony describe particular experiences. Statements derived from each source are paraphrased; no long review or interview passages are reproduced.
+
+| ID | Source, date and purpose |
+| --- | --- |
+| S01 | [Steam original product](https://store.steampowered.com/app/1374840/Dark_Deity/), captured October 20–21, 2026: release identity, scale, current price presentation and English review snapshot. User tags are not authoritative mechanics. |
+| S02 | [Kickstarter campaign](https://www.kickstarter.com/projects/darkdeity/dark-deity), August 12–September 11, 2020: pledged amount, backers and funding goal. |
+| S03 | [Graham Russell interviewing Chip Moore, Siliconera](https://www.siliconera.com/interview-dark-deity-creator-on-making-a-new-old-strategy-rpg/), June 15, 2021: Grave Wounds intent and rule, production origin, presentation choices. |
+| S04 | [Retroware interview with Moore and Dylan Takeyama](https://articles.retroware.com/2021/04/05/retroware-sit-downs-dark-deity-a-classic-srpg-with-new-ideas/), April 5, 2021: class identity, growth, small-team choices and voice production. |
+| S05 | [Thread of Souls developer interview](https://threadofsouls.com/2021/06/16/diving-into-the-development-of-dark-deity/), June 16, 2021, page updated September 15, 2023: core team, GameMaker, character-first writing and launch promotion. |
+| S06 | [Kickstarter FAQ](https://www.kickstarter.com/projects/darkdeity/dark-deity/faqs), September 2020 answers: linear campaign, lack of repeatable grinding and advanced development before crowdfunding. |
+| S07 | [Recurve 1.5 developer notes, SteamDB mirror](https://steamdb.info/patchnotes/7524714/), October 13, 2021: balance, gold rewards and localization changes. |
+| S08 | [Update 1.53 developer notes, SteamDB mirror](https://steamdb.info/patchnotes/8009812/), March 17, 2022: Switch release, maps, pacing revisions and technical changes. |
+| S09 | [Audra Bowling, RPGFan review](https://www.rpgfan.com/review/dark-deity/), June 15, 2021, Windows: complete independent review, specific injury, bonds and mission incentives. |
+| S10 | [Graham Russell, Siliconera review](https://www.siliconera.com/review-dark-deity-wants-to-rekindle-strategy-rpgs-fire/), June 15, 2021, PC: complete independent review, promotions, weapons, replay and usability. |
+| S11 | [Stuart Gipp, Nintendo Life review](https://www.nintendolife.com/reviews/switch-eshop/dark-deity), March 31, 2022, Switch: complete independent review, pacing, presentation and controls. |
+| S12 | [Alex de Freitas, Nintendo World Report review](https://nintendoworldreport.com/review/59940/dark-deity-switch-review), March 20, 2022, Switch: complete independent review, actual builds, matchups and map criticism. |
+| S13 | [Sam Wachter, RPGamer review](https://rpgamer.com/review/dark-deity-review/), April 11, 2022, Switch: complete independent review, relationships, identity and technical friction. |
+| S14 | [Steam all-time helpful reviews](https://steamcommunity.com/app/1374840/reviews/?browsefilter=toprated), captured October 20–21, 2026: named positive and negative accounts. Ordering and displayed hours can change. |
+| S15 | [Steam Grave Wounds discussion](https://steamcommunity.com/app/1374840/discussions/0/3053986690334270827/), July 2021 onward: permanent penalties, compensation and opposing views on forced absence. |
+| S16 | [Steam discussion of disabling Grave Wounds](https://steamcommunity.com/app/1374840/discussions/0/3808405159041895430/), June 2023–October 2024: restarting, sunk investment, continuity and contrasting player preferences. |
+| S17 | [Final Weapon's sales announcement report](https://finalweapon.net/2022/11/18/dark-deity-epic-games-store/), November 18, 2022: publisher/developer-attributed 100,000-copy milestone, Moore's expectations and Epic promotion. Original company announcement not recovered. |
+| S18 | [indie.io sequel release-date announcement](https://www.indie.io/news/dark-deity-2-announces-official-release-date/), February 26, 2025: six-million-player claim about the original and explicit sequel boundary. Marketing language is not a sales audit. |
+| S19 | [GameRevenueData original-game estimate](https://gamerevenuedata.com/games/dark-deity/), revenue observation March 15, 2026: modeled Steam gross/net and owner range. September export and October access dates do not update the observation. |
+| S20 | [GameRevenueData methodology](https://gamerevenuedata.com/methodology/), accessed October 21, 2026: review-ratio model, net definition, scope and limitations. |
+| S21 | [Suns Out, Swords Out Steam product](https://store.steampowered.com/app/2024880/Dark_Deity_Suns_Out_Swords_Out/), July 25, 2022 release: seven levels, additional perspectives and portraits. Not counted as an independent review. |
+| S22 | [GOG Complete Edition](https://www.gog.com/en/game/dark_deity_complete_edition), live product capture: bundle contents, Windows distribution and setting introduction. |
+| S23 | [L. P. Cowling, MGN player manual](https://mgn.gg/dark-deity-game-manual-player-guide-and-more), July 3, 2021, updated April 20, 2022: selected weapon, stat, artifact and item sections read. Publisher-network affiliation and potentially older formulas mean this is not one of the five independent reviews. |
+| S24 | [Community stats reference](https://darkdeity.fandom.com/wiki/Stats) and [Grave Wounds](https://darkdeity.wiki.gg/wiki/Grave_Wounds), indexed text accessed October 21, 2026: attribute families and next-chapter return. Full community wiki browsing was restricted; no exhaustive current formula audit claimed. |
+| S25 | Indexed community chapter references: [Enter the Eternals](https://darkdeity.wiki.gg/wiki/Chapter_10%3A_Enter_the_Eternals), [Akmenos](https://darkdeity.wiki.gg/wiki/Akmenos), [March on Sojourn](https://darkdeity.wiki.gg/wiki/Chapter_24%3A_March_on_Sojourn), [The Darkest Hour](https://darkdeity.fandom.com/wiki/Chapter_27%3A_The_Darkest_Hour), [The Edge of Ascension](https://darkdeity.wiki.gg/wiki/Chapter_28%3A_The_Edge_of_Ascension). Indexed excerpts only; full-page requests returned access errors. |
+| S26 | [Steam “Dark Deity 1 Plot” discussion](https://steamcommunity.com/app/2446600/discussions/0/604151850481061933/), March 28, 2025: Pirate's attributed recap of the original, despite placement in the sequel forum. Not treated as developer canon or firsthand viewing by this researcher. |
+| S27 | [Developer response on mod support](https://steamcommunity.com/app/1374840/discussions/0/5624408883148749344/), June 14, 2021: no planned support, built-in randomizer and campaign settings. |
+| S28 | [Developer's June 7, 2023 letter in the Steam announcement feed](https://store.steampowered.com/news/posts/?enddate=1686157224&feed=steam_community_announcements): original-game retrospective and sequel design intentions; full relevant announcement read. |
+| S29 | [Dark Deity Community Patch repository](https://github.com/HadleyTheGreat/DarkDeityCommunityPatch), [releases](https://github.com/HadleyTheGreat/DarkDeityCommunityPatch/releases) and [Windows installation documentation](https://github.com/HadleyTheGreat/DarkDeityCommunityPatch/blob/main/docs/install-windows.html), inspected October 21, 2026 through GitHub read APIs: version history, downloads, declared coverage and external workflow. No executable downloaded or run. |
+| S30 | [indie.io Indie Pass announcement](https://www.indie.io/news/indie-io-unveils-indie-pass-a-subscription-platform-dedicated-to-elevating-indie-games-exclusively/), April 2, 2026: announced franchise participation and subscription-revenue mechanism, not verified title-level receipts. |
+
+### Reading and viewing route
+
+Read S03 for the injury design intent, S09 and S15–S16 for why players respond differently, S04/S23 for build composition, S28 for the candid retrospective, and S17–S20 for commercial boundaries. S01 and the [official site](https://darkdeitygame.com/) provide public trailer and visual routes; the site now covers sequels, so select the original explicitly. No newly watched playthrough, direct game session or inspection of the user's linked video is claimed by this dossier.
+
+### Coverage and preservation
+
+R01 → identity/version table; R02 → actions and system inventory; R03 → possessions and combinations; R04 → finite resources, wounds and reset boundaries; R05 → five constructed situations and attributed actual injury; R06 → bonds, agency and multiplayer absence; R07 → production, readability and feel; R08 → history, institutions, artifacts and authored narrative; R09 → origins, iteration and creation boundaries; R10–R11 → promotion, funding, paid copies, reach and partial-market estimate; R12 → five reviews, opposing Steam testimony and enjoyment/abandonment mechanisms; R13 → conditional transfer; R14 → source/access register; R15 → explicit popularity screen and verified external repair example. The economics amendment is covered across R03–R04 and R08–R15.
+
+This is a new G184 dossier. It preserves prior research owners and does not certify older whole-library gates, private financial outcomes or an exhaustive audit of every patch and DLC encounter. No Open Legend engine, world or gameplay behavior changed as part of this research.
+
