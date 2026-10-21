@@ -63,6 +63,8 @@ The existing [content and companion-safety contract](../../../docs/agent-content
 
 Do not choose a checkpoint solely on an “uncensored” label. Prefer the one that preserves character intent, evidence and legitimate freedom most reliably at the actual whole cost. A same-family controlled comparison is much more informative than comparing one weak stock model with an unrelated larger fine-tune.
 
+<a id="firsthand-community-evidence"></a>
+
 ## 6. Firsthand community evidence
 
 These are reports by implementers/users, not controlled independent benchmarks or a representative consensus. Their dates and caveats matter.
