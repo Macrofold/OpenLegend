@@ -1,8 +1,8 @@
 # Custom models — implementation plan
 
-| Status      | Current progress                                                                                                                                                         | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Production routing, shared inference and benchmark extensions are being implemented against the approved Macrofold contract; real-server acceptance follows integration. | 2026-10-22   |
+| Status      | Current progress                                                                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Production routing, shared inference and benchmark extensions are implemented; actual Macrofold API verification and final operating evidence are being reconciled. | 2026-10-22   |
 
 ## Scope and completion
 
@@ -10,7 +10,7 @@ Implement [the approved feature](custom-models-feature-spec.md) and [technical d
 
 The implementation branch is `feat/production-custom-models`. Its preserved design base is `05d2bb034cea0f717c54efedee019f74906849c6`, descending from verified `Macrofold/OpenLegend` `origin/main` `27c6fb8152ec58c34334e74ba91a9d5bec6a30ff`. Only `/Users/mzw/.codex/worktrees/7370/OpenLegend` receives implementation edits. Preserve unrelated checkouts and work.
 
-Expected scope is approximately 1,000–1,800 changed logic lines across the AI transport, server configuration and existing execution/accounting owners, and benchmark tools. Reassess after inspecting the implemented upstream API. The consequential risks are wrong-purpose routing, accepting stale world authority, duplicate dispatch/settlement, inaccurate hosting attribution, and incompatible generated request types.
+Initial estimate was approximately 1,000–1,800 changed logic lines. Integrated scope is approximately 2,100 added/changed logic lines across shared AI preparation, strict server configuration, capability caching, existing execution/accounting owners and thin benchmark tools. The larger scope retains these existing owners; no second executor or new test infrastructure was introduced. The consequential risks are wrong-purpose routing, accepting stale world authority, duplicate dispatch/settlement, inaccurate hosting attribution, and incompatible generated request types.
 
 ## Sequence and owners
 

@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 22, 2026 — Deliver production custom-model selection
+
+Ordinary fast and complex NPC replies can select an existing Macrofold deployment through trusted server configuration. The [setup guide](live-ai-setup.md#use-an-existing-model-deployment-for-ordinary-npc-replies) documents deployment selection, optional revision pins and output policy. Shared capability preparation chooses supported structured output before the existing spending reservation; the existing inference, recovery, cancellation, local validation and native publication owners retain authority. No experiment manifest, hosting credentials or deployment management enters gameplay saves. Missing configuration preserves existing models.
+
+The [provider contract](ai-providers.md), [MX tracker](maintainers/custom-models.md), [limits](limits/custom-models.md) and [verification record](verification/custom-models.md) distinguish implementation from operating acceptance. Actual admitted deployment revisions and explicit request fees survive recovery independently of missing token usage or shared hosting invoices. Optional benchmark plans and reports reuse the production configuration and executor, with study controls confined to tools. No model winner or new default is selected. Focused injected-HTTP and native-gameplay evidence is recorded separately from actual Macrofold API checks and the remaining live hosted-model qualification. Additional Jev cost and cumulative task spending are $0.
+
 ## October 22, 2026 — Production custom-model deployment design
 
 The [custom-model pair](projects/custom-models-feature-spec.md), [MX tracker](maintainers/custom-models.md) and [limit inventory](limits/custom-models.md) specify ordinary production NPC generation through stable Macrofold deployments, optional model-revision pins, capability-aware output and existing local/world authority. [Macrofold's contract](https://github.com/Macrofold/Macrofold/blob/design/huggingface-model-deployments-2026-10-22/docs/projects/hugging-face-model-deployments-contract.md) owns hosting, automatic recovery, deliberate revision updates and shared infrastructure costs; RunPod/vLLM is the first managed adapter, alongside operator-trusted compatible endpoints.

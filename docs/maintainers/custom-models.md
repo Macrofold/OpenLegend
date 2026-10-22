@@ -7,7 +7,7 @@
 - Behavior: [Feature specification](../projects/custom-models-feature-spec.md).
 - Implementation and optional evaluation: [Technical design](../projects/custom-models-tech-design.md).
 - Authorized delivery sequence: [Implementation plan](../projects/custom-models-implementation-plan.md).
-- Current evidence and compatible-build blocker: [Verification](../verification/custom-models.md).
+- Current evidence and remaining operating qualification: [Verification](../verification/custom-models.md).
 - Constraints: [MX-L01–MX-L08](../limits/custom-models.md).
 - Wire protocol: [Macrofold deployment contract](https://github.com/Macrofold/Macrofold/blob/design/huggingface-model-deployments-2026-10-22/docs/projects/hugging-face-model-deployments-contract.md).
 - Existing owners: [AI providers](../ai-providers.md), [cognition](cognition-redesign.md), [character experience](character-experience.md), [agency](agent-agency.md), [public speech](npc-speech-streaming.md), [production deployment](production-deployment.md).
@@ -18,7 +18,8 @@
 - [x] Specify stable production deployment selection, optional model-revision pins, automatic serving recovery, capability-aware output and existing world/financial ownership.
 - [x] Specify optional comparison tooling that reuses the production target without changing runtime admission or service lifetime.
 - [ ] Deliver production work MX01 → MX02 → MX03 → MX06 → MX08.
-- [ ] Deliver optional tooling MX04 → MX05 and separately selected comparative work MX07 when needed; these do not block the production sequence.
+- [x] Deliver optional tooling MX04 → MX05; these do not block the production sequence.
+- [ ] Run separately selected comparative work MX07 when needed; no campaign is selected by this implementation.
 
 Production implementation and MX04/MX05 tooling are authorized; MX07 comparative research and selecting a new default model are outside this assignment. Use relevant existing checks/ad-hoc cases under repository verification policy, without new automated tests. Any live execution uses its existing authorization and bounded budget.
 
@@ -106,7 +107,7 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
 **Owner:** this tracker, provider docs and applicable existing PD/CE/CR/AG/NST/PF/PS owners. **Dependencies:** MX01–MX03 and MX06.
 
 - [ ] Document installed setup, target selection, automatic recovery, updates/pins, useful diagnostics, costs and measured operating limits through existing guides.
-- [ ] Verify that no experimental gate, hosting-session reference or worker-identity equality remains in ordinary runtime selection/publication.
-- [ ] Record the supported production scope and outstanding existing release/privacy/content/capacity requirements. Configure any new default deliberately; implementation merge alone does not choose the game's model.
+- [x] Verify that no experimental gate, hosting-session reference or worker-identity equality remains in ordinary runtime selection/publication.
+- [x] Record the supported production scope and outstanding existing release/privacy/content/capacity requirements. Configure any new default deliberately; implementation merge alone does not choose the game's model.
 
 **Exit:** production capability and its remaining release obligations are accurately documented. Optional comparison work retains independent status.

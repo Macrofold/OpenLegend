@@ -264,17 +264,29 @@ function captureEmbeddedInferenceUsage(
           },
         })
       : undefined;
+  // Deployment request fees are fixed independently of token metering. The
+  // gateway's provisional flag can describe missing usage even when its exact
+  // matched deployment attribution and all request-fee fields establish zero.
+  // Uncertain execution still retains its original reservation.
+  const fixedDeploymentFee =
+    billingMode === 'byok' &&
+    !receipt.completionUncertain &&
+    receipt.macrofoldRequestedDeployment !== undefined &&
+    receipt.macrofoldDeployment !== undefined &&
+    receipt.macrofoldCostAttribution?.basis === 'deployment' &&
+    receipt.macrofoldCostAttribution.deploymentId === receipt.macrofoldDeployment.deploymentId &&
+    receipt.macrofoldCostAttribution.infrastructureCostIncluded === false &&
+    microUsdToUsd(billing['charged_micro_usd']) === 0 &&
+    microUsdToUsd(billing['reported_micro_usd']) === 0 &&
+    microUsdToUsd(billing['budget_cost_micro_usd']) === 0;
   const estimatedCostUsd =
     billingMode === 'managed'
       ? microUsdToUsd(billing['charged_micro_usd'])
-      : billingMode === 'byok' &&
-          billing['provisional'] === false &&
-          (embeddedUsage ||
-            (receipt.macrofoldDeployment &&
-              microUsdToUsd(billing['charged_micro_usd']) === 0 &&
-              microUsdToUsd(billing['reported_micro_usd']) === 0))
-        ? microUsdToUsd(billing['reported_micro_usd'])
-        : undefined;
+      : fixedDeploymentFee
+        ? 0
+        : billingMode === 'byok' && billing['provisional'] === false && embeddedUsage
+          ? microUsdToUsd(billing['reported_micro_usd'])
+          : undefined;
   const reported = billing['provider_reported_cost_usd'];
   const providerReportedCostUsd =
     billing['provider_reported_cost_status'] === 'reported' &&

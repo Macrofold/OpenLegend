@@ -2246,12 +2246,7 @@ export class MacrofoldBackend implements AiClient {
             ),
           );
           if (status['kind'] === 'inference') {
-            const inference = captureMacrofoldInferenceReceipt(
-              receipt.providerRequestId!,
-              status,
-              result,
-              receipt,
-            );
+            captureMacrofoldInferenceReceipt(receipt.providerRequestId!, status, result, receipt);
           } else {
             await this.captureNativeReceipt(
               receipt.providerRequestId!,
