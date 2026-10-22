@@ -14,7 +14,7 @@ Performance, functional model choice and reusable provider integration are the p
 
 ## 2. Ownership and existing behavior
 
-The inspected baseline is `Macrofold/OpenLegend` `main` at `27c6fb8152ec58c34334e74ba91a9d5bec6a30ff`. Macrofold generation already uses `/v1/inferences`, durable Run identity, local structured-output validation and per-request accounting. Two callers currently hardcode OpenRouter. [AI providers](../ai-providers.md) owns that installed behavior; this document specifies a target, not a shipped feature.
+The implementation extends `Macrofold/OpenLegend` `main` at `27c6fb8152ec58c34334e74ba91a9d5bec6a30ff`. Macrofold generation uses `/v1/inferences`, durable Run identity, local structured-output validation and per-request accounting. Ordinary fast and complex NPC replies can select existing deployments; omitted purposes retain their provider settings. [AI providers](../ai-providers.md) owns installed routing, while [MX06](../maintainers/custom-models.md#mx06--production-contract-recovery-and-operating-acceptance) identifies the remaining operating qualification.
 
 The canonical [Macrofold deployment contract](https://github.com/Macrofold/Macrofold/blob/design/huggingface-model-deployments-2026-10-22/docs/projects/hugging-face-model-deployments-contract.md) owns hosting, source/runtime configuration, current deployment selection, permissions, readiness, recovery, capacity and infrastructure costs. OpenLegend owns model selection for each game purpose, actor-permitted context, local response validation, native action admission and publication. The game receives a restricted deployment reference, not Hugging Face or hosting credentials.
 

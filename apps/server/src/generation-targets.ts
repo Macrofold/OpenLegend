@@ -9,6 +9,7 @@ import {
   type MacrofoldTransport,
 } from '@open-legend/ai';
 import type { NetworkOperation } from '@open-legend/network';
+import { NetworkError } from '@open-legend/network';
 
 const positiveInteger = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
 const capabilitiesSchema = z.object({
@@ -126,7 +127,10 @@ type DescriptionReader = (
 ) => Promise<MacrofoldDeploymentDescription>;
 type Entry = {
   description?: MacrofoldDeploymentDescription;
-  pending?: Promise<MacrofoldDeploymentDescription>;
+  pending?: {
+    operation: NetworkOperation;
+    result: Promise<MacrofoldDeploymentDescription>;
+  };
   stale: boolean;
   generation: number;
   retryAfterMs: number;
@@ -232,11 +236,12 @@ export class ModelTargetPreparation {
     target: MacrofoldDeploymentTarget,
     entry: Entry,
     operation: NetworkOperation,
+    retryInterruptedRead = true,
   ): Promise<MacrofoldDeploymentDescription> {
     operation.throwIfStopped();
     if (!entry.pending) {
       const generation = entry.generation;
-      entry.pending = this.describe(target, operation)
+      const result = this.describe(target, operation)
         .then(
           (description) => {
             entry.description = description;
@@ -255,18 +260,34 @@ export class ModelTargetPreparation {
         .finally(() => {
           entry.pending = undefined;
         });
+      entry.pending = { operation, result };
     }
     const pending = entry.pending;
     // Waiting callers keep their own cancellation/deadline, while an ordinary descriptor
     // refusal keeps its canonical HTTP code instead of becoming a generic callback failure.
     const observed = await operation.wait('callback', async () => {
       try {
-        return { description: await pending };
+        return { description: await pending.result };
       } catch (error) {
         return { error };
       }
     });
-    if ('error' in observed) throw observed.error;
+    if ('error' in observed) {
+      const stopped = pending.operation.signal.reason;
+      if (
+        retryInterruptedRead &&
+        pending.operation !== operation &&
+        stopped instanceof NetworkError &&
+        (stopped.kind === 'cancelled' || stopped.kind === 'deadline_exceeded')
+      ) {
+        // A shared read belongs to its first caller. A surviving waiter may replace
+        // that interrupted read once, using only its own remaining original budget.
+        // A service refusal is never retried, and inference is never submitted here.
+        operation.throwIfStopped();
+        return this.refresh(target, entry, operation, false);
+      }
+      throw observed.error;
+    }
     return observed.description;
   }
 
@@ -387,6 +408,11 @@ export class ModelTargetPreparation {
     if (entry) {
       entry.stale = true;
       entry.generation++;
+      // Remote admission can reject capabilities that its descriptor still advertises.
+      // Repeated refusals must not turn every real request into a management read, or
+      // extend the cooldown forever while requests continue arriving.
+      const now = this.now();
+      if (entry.retryAfterMs <= now) entry.retryAfterMs = now + 30_000;
     }
   }
 
