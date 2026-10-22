@@ -4,12 +4,13 @@ Open Legend's stories should give players people to care about, situations worth
 
 The [characters and play workflow](../production-workflows/characters-and-play.md) owns turning an idea into playable content. [Player-facing language](../ui-ux/player-facing-language.md) owns clear, appropriate expression; [narration's truth boundaries](../narration-and-conversations.md#2-three-kinds-of-truth) own what a telling may establish.
 
-[Authored worlds and personal discovery](authored-worlds-and-personal-discovery.md) develops the complementary direction for emotional weight across a whole world: nonlinear lore discovery, gods guiding personal journeys, region access, dangerous frontiers, underground exploration and meaningful needs.
+[Authored worlds and personal discovery](authored-worlds-and-personal-discovery.md) develops the complementary direction for emotional weight across a whole world: nonlinear lore discovery, bards spreading player legends and world news, gods guiding personal journeys, region access, dangerous frontiers, underground exploration and meaningful needs. [Gods, death and personal mythology](gods-death-and-personal-mythology.md) develops original divine personalities, relationships shaped by play, gifts and encounters after death, religion, and a personal Beyond alongside the changing shared world.
 
 Reference studies:
 
 - [ROCKBEASTS](case-studies/rockbeasts.md) — character, dark humor, acting and a coherent fictional world.
 - [Trailblazers: Into the March](case-studies/trailblazers-into-the-march.md) — a home in the wilderness, mysterious people, practical care and an emotional journey.
+- [Curse of Resthaven](case-studies/curse-of-resthaven.md) — return, divine gifts with tradeoffs, investigation and continuing story; includes the relevant Hades comparison.
 
 ## Give someone a specific want
 

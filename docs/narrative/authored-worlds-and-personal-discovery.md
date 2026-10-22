@@ -2,7 +2,7 @@
 
 **Creative direction and candidate game ideas — October 22, 2026.** Mike wants Open Legend's generative, procedural play to carry emotional weight and enough authored substance that players can follow a compelling story while choosing their own paths. The [Trailblazers reference study](case-studies/trailblazers-into-the-march.md) prompted this note. The goals below are endorsed preferences; the proposed gods, gates and procedural sites still need selection and design before becoming gameplay claims.
 
-This note owns the combined narrative idea. [Character and humor guidance](README.md) owns scene craft; the linked repertoires and existing designs retain their respective mechanics and examples. These possibilities belong to selected worlds, with different worlds free to choose different histories, supernatural laws and progression.
+This note owns the combined narrative idea. [Character and humor guidance](README.md) owns scene craft; [gods, death and personal mythology](gods-death-and-personal-mythology.md) develops divine relationships and a possible personal realm beyond the shared world. The linked repertoires and existing designs retain their respective mechanics and examples. These possibilities belong to selected worlds, with different worlds free to choose different histories, supernatural laws and progression.
 
 ## The experience Mike wants
 
@@ -41,6 +41,20 @@ A god could recognize a level, a learned skill, an expedition, a fulfilled commi
 Make the god a particular being with interests, relationships and a perspective on the world's past. Its invitation can mean something beyond an automatic reward notification. A player can bargain, hesitate, refuse, ask a different question or pursue another concern; a world may still reserve particular revelations or places for those who satisfy their conditions. The amount and timing of guidance should leave room to explore.
 
 The existing [shared-campaign direction](../product-scalability/shared-campaigns.md#5-manifestations-aspects-and-distributed-embodiment) already considers connected manifestations of one being. It is a useful design foundation, not proof that thousands of simultaneous personal conversations are implemented or qualified. A world's divine rules must settle what the being knows, what its manifestations share and what it can actually change. Fictional divinity does not grant access to human-private notes or messages. See also [divinity with a jurisdiction](../repertoires/faith-ritual.md#divinity-with-a-jurisdiction) and [pilgrimage by useful stages](../repertoires/faith-ritual.md#pilgrimage-by-useful-stages).
+
+Mike also wants different gods to give different buffs and to change their relationships with the player according to how that person plays. The [focused divine narrative note](gods-death-and-personal-mythology.md) owns this expansion, including original personalities, unscripted reactions, encounters after death, religions, discovering gods and personal late-game outcomes in the Beyond.
+
+## Bards carry player legends and world news
+
+Mike wants bards to spread legends in both directions: players can inspire songs about their own deeds, and they can hear about notable world events through songs, stories and gossip. An evolving mythology can emerge from people retelling what happened as the shared world changes. Authored old lore and newly created player history can reach someone through the same enjoyable encounter.
+
+A rescue, expedition, discovery, public failure, act of kindness or extraordinary piece of work could give a bard material. Recognition need not be reserved for combat victories or the most powerful players. A song heard far from home might reveal that someone has told the player's story; another verse might introduce an unfamiliar person, ruined place or event worth investigating. News becomes part of social life, with a teller and a reason to listen.
+
+Keep the actual event, the account reaching the bard and the performed version distinct. Bards can hear testimony, encounter witnesses, reinterpret an old song or add an embellishment. A song can be funny, partisan, mistaken or exaggerated without changing what really happened. Local versions and delayed news can give information geography. Hearing a song establishes knowledge of that account, not personal experience of the original event or automatic knowledge of a private divine encounter.
+
+A hypothetical example: a player holds a crossing long enough for travelers to escape a flood. A witness tells a performer, who later sings about the rescue in another settlement. The player hears their deed attributed to an exaggerated heroic name, while another listener learns that the crossing has been damaged. The song provides recognition, imperfect news and a new lead at once. These are possible outcomes rather than prescribed bard decisions.
+
+Related ideas were already present as proposals: [a play about recent shared history](../repertoires/arts-leisure.md#the-play-about-last-winter), ARL047's tavern tall tale and ARL051's competing storytellers in [stories, poetry and comedy](../repertoires/arts-leisure.md#stories-poetry-and-comedy), HMY087's combined heroic identity in [famous lives](../repertoires/history-myth.md#famous-lives), HMY139's changing travelers' legend in [folk explanations](../repertoires/history-myth.md#legends-and-folk-explanations), and [rumor traveling through real sources](../repertoires/languages-knowledge.md#rumor-with-a-route). This section records the complete player-deed, bard-performance and world-news connection explicitly; it does not claim the loop is implemented.
 
 ## Make different kinds of access feel meaningful
 
@@ -86,10 +100,10 @@ The attraction is the connection between practical care and emotional life. A de
 
 ## Additional ideas to explore
 
-These are new suggestions inspired by this discussion, rather than selected mechanics:
+Mike explicitly endorsed the first three ideas as creative direction. Their exact mechanics remain unselected; the remaining ideas are suggestions to explore:
 
 1. **A history with several entrances.** A funeral song, damaged observatory and disputed family name lead toward the same authored event. Each offers a useful smaller discovery. Comparing them changes the player's understanding without rewriting the past to match their theory.
-2. **Different divine invitations to the same frontier.** An explorer is asked to find a lost sanctuary, a craftsperson to understand its failing mechanism, and a mediator to meet its inhabitants. They can travel together while having different reasons to care and different personal revelations.
+2. **Different divine invitations to the same frontier.** An explorer is asked to find a lost sanctuary, a craftsperson to understand its failing mechanism, and a mediator to meet its inhabitants. They can travel together while having different reasons to care and different personal revelations. Different blessings and changing divine relationships can follow how each person plays; the [divine narrative note](gods-death-and-personal-mythology.md#relationships-follow-how-the-player-lives) develops that direction.
 3. **A familiar place acquires new meaning.** A learned language or way of perceiving sound reveals that the wind in a familiar ruin carries a damaged message. Another route to the same discovery might involve repair, an old record or a willing teacher.
 4. **Waystations make progress tangible.** Restoring a shelter, well or crossing makes a distant journey practical. Players gradually create a route into the wilderness; its usefulness persists and gives other people a reason to visit or contribute.
 5. **A stranger's small habit becomes a clue.** Someone quietly repairs broken bells with an unusual technique. A much older record uses the same method. Their identity becomes an intriguing possibility, while what they want now can be quite different from what the player wants to learn.
