@@ -33,7 +33,7 @@ Implement in dependency order below. Use relevant existing checks and representa
 **Owner:** `packages/ai/src/types.ts`, `macrofold-decision.ts`, narrow target/request preparation module; server direct-inference decoder. **Design:** technical §3. **Dependency:** matching Macrofold deployment API and canonical contract.
 
 - [ ] Add the exact three-UUID binding alternative and provenance/accounting receipt fields; reject mixed provider/deployment shapes. Preserve native decision model restrictions and the existing provider branch.
-- [ ] Reuse the current executor/Run owner for both standalone generation and server direct inference. Omit `input.model`, OpenRouter routing and OpenRouter reasoning parameters in the custom branch.
+- [ ] Share target/request preparation while retaining each caller's existing executor, Run recovery and accounting owner. Omit `input.model`, OpenRouter routing and OpenRouter reasoning parameters in the custom branch.
 - [ ] Decode native completed ChatCompletion values with the existing local schema validator. Match pinned source/runtime/qualification/activation identity before publishing a usable answer; retain cost and accepted Run even on an invalid value.
 - [ ] Map canonical pre-admission rejection and accepted/uncertain outcomes precisely. Unknown network/HTTP errors do not imply no dispatch; no automatic paid retry or fallback.
 
@@ -45,7 +45,7 @@ Implement in dependency order below. Use relevant existing checks and representa
 
 - [ ] Parse/freeze the strict startup profile, authorized Macrofold workspace, exact target, optional output reduction and profile digest. Reject invalid supplied configuration; absence preserves baseline configuration.
 - [ ] Add explicit `npc_response_fast`/`npc_response_complex` at the existing NPC producer. Disable the retained private-preview opt-in on the custom completed-output branch. Do not infer purpose from `fast`/`complex` or model equality; action interpretation, player expression and consolidation remain on their own routes.
-- [ ] Perform bounded descriptor preflight with the same trusted workspace in GET queries and inference body; capture immutable revision evidence and activation accepted funding terms. Require verified manifest identity, actual schema dialect/keywords and complete context capability for gameplay; record all provenance/trust limits. No read triggers provisioning, activation or renewal.
+- [ ] Perform bounded descriptor preflight with the same trusted workspace in GET queries and inference body; capture immutable revision evidence and activation accepted funding terms. Require verified manifest identity, actual schema dialect/keywords and complete context capability for gameplay; record all provenance/trust limits. The activation fixes its qualified boot/certificate; observed replacement closes admission and needs an explicit new activation/profile. No read triggers provisioning, activation or renewal.
 - [ ] Carry one effective record through allowance, meter/reservation, serialization and receipt. Preserve `AI_JEV_ONLY`, fixture/no-call controls, zero-budget behavior and configured escalation separation.
 
 **Exit:** a single-purpose override changes only its named NPC producer; invalid/missing capability fails visibly, and no-dispatch modes make no external model calls even when GPU capacity is prepaid.
@@ -65,7 +65,7 @@ Implement in dependency order below. Use relevant existing checks and representa
 
 **Owner:** `scripts/decision-benchmark` arm resolution, execution, journal, recovery and grading; existing private artifact permissions. **Design:** technical §§8–9. **Dependencies:** MX01–MX03.
 
-- [ ] Add the proposed `--model-experiment` input and strict manifest-supplied custom generation targets and explicit `json_schema`/offline `text` mode without changing the historical seven-arm set. Keep gameplay schema required; expose offline raw text only through the standalone same-executor `generateText` method. Use the existing structured generation question compiler when applicable; generated scores remain estimates, not native probabilities.
+- [ ] Add the proposed `--model-experiment` input, manifest-supplied custom targets and a `configured_purpose` baseline resolved from trusted ordinary settings with experiment overrides disabled. Preserve the historical seven-arm set and explicit `json_schema`/offline `text` mode. Keep gameplay schema required; expose offline raw text only through the standalone same-executor `generateText` method. Use the existing structured generation question compiler when applicable; generated scores remain estimates, not native probabilities.
 - [ ] Freeze targets, source/runtime evidence, corpus families/splits, original inputs/references, co-models/escalation, exact finite work list, context/schema identities, request bounds, authorized total cost and stop conditions before dispatch.
 - [ ] Reuse single-writer journaling, retained first attempts, source/request/financial fingerprints and exact-Run recovery. Dry preparation submits no inference and does no hosting mutation; passive remote reads require explicit online preflight. Start the first finite screen with the specified inspected pair, retaining all selected/unattempted work.
 - [ ] Record every selected combination, including unattempted/unknown/refused/invalid outcomes and non-overlapping financial obligations. No best-of retry, hidden output repair or post-hoc expected-answer edit.
@@ -87,7 +87,7 @@ Implement in dependency order below. Use relevant existing checks and representa
 
 **Owner:** the current provider/benchmark verification paths and Macrofold capability evidence. **Design:** technical §11. **Dependencies:** MX01–MX05; actual installed shared API for live phase.
 
-- [ ] Demonstrate role isolation, strict schema rejection, receipt mismatch, unknown submit/accepted Run recovery, cancellation, zero-budget/no-call mode, current deadline policy, allocation expiry/capacity and once-only settlement with existing checks or focused ad-hoc inputs.
+- [ ] Demonstrate role isolation, ordinary configured-purpose baseline resolution, replaced-boot rejection before generation, strict schema rejection, receipt mismatch, unknown submit/accepted Run recovery, cancellation, zero-budget/no-call mode, current deadline policy, allocation expiry/capacity and once-only settlement with existing checks or focused ad-hoc inputs.
 - [ ] After separate execution authorization, run the smallest finite exact-artifact schema, provenance, latency, usage, cancellation and cost probes needed to qualify that runtime. A probe is not a model-quality study.
 - [ ] Keep imported endpoint operator-declared provenance visibly distinct from managed verified manifests; qualify authenticated reachability rather than treating cloud localhost as a player machine.
 

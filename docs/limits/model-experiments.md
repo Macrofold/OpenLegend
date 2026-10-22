@@ -26,11 +26,11 @@ All entries below are **proposed by the October 22, 2026 design, not implemented
 
 ## MX-L03 — Immutable process profile and capability preflight
 
-**Proposed · Restrictiveness: Safe.** One profile snapshot is active per process. Profile changes use controlled restart, not hot reload. Preflight obtains exact activation/revision/qualification metadata once per explicit preparation; normal requests use the retained immutable identity and Macrofold's dynamic admission checks. The game has read/use and owned-Run rights, no model-deployment write/activation rights.
+**Proposed · Restrictiveness: Safe.** One profile snapshot is active per process. Profile changes use controlled restart, not hot reload. Online preflight obtains exact activation/revision/qualification metadata once per explicit preparation; local dry preparation performs no remote reads. An activation fixes one qualified boot/certificate. Normal requests use that retained identity and Macrofold's dynamic admission checks. The game has read/use and owned-Run rights, no model-deployment write/activation rights.
 
 **Reason / tradeoff:** This avoids a model-discovery call per NPC tick, mutable aliases during admitted work and unreviewed new allocation budgets. It does not cache revocation or ready state as permanent authority.
 
-**Overflow / failure:** Invalid/stale/unready/expired bindings fail the affected preparation/admission. An accepted old request keeps its original identity and cannot publish into a replaced timeline. No provisioning, renewal, endpoint discovery or automatic warmup occurs.
+**Overflow / failure:** Invalid/stale/unready/expired bindings fail the affected preparation/admission. A changed qualified boot, serving identity or bound credential generation closes admission; a new operator-funded activation/profile is required. An accepted old request keeps its original identity and cannot publish into a replaced timeline. No provisioning, renewal, endpoint discovery or automatic warmup occurs.
 
 **Extension trigger:** Hot changes require a designed versioned admission fence, retirement/reconciliation and UI before adding them; ordinary model comparison needs only a new cohort/restart.
 
