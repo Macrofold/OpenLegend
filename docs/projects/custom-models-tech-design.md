@@ -2,7 +2,7 @@
 
 | Status  | Current progress                                                                                                                       | Last updated |
 | ------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Blocked | The offline configuration owner is implemented; transport integration awaits the actual compatible Macrofold server and generated API. | 2026-10-22   |
+| In progress | Shared inference, ordinary NPC routing and benchmark extensions are being implemented against the canonical deployment contract; actual server acceptance remains open. | 2026-10-22 |
 
 ## 1. Scope and delivery order
 

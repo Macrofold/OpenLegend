@@ -2,7 +2,7 @@
 
 | Status  | Current progress                                                                                                                | Last updated |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Blocked | Offline configuration parsing is implemented; production routing and acceptance await the implemented Macrofold deployment API. | 2026-10-22   |
+| In progress | Offline configuration parsing is implemented; production routing and optional benchmark integration are underway, with joint live acceptance still open. | 2026-10-22 |
 
 ## 1. Purpose and selected outcome
 

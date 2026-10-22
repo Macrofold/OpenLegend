@@ -1,4 +1,4 @@
-import type { TokenPrices } from '../../packages/ai/src/index.js';
+import type { GenerateRequest, TokenPrices } from '../../packages/ai/src/index.js';
 
 export const benchmarkArms = [
   {
@@ -74,8 +74,23 @@ export const experimentalArms = [
     outputRate: 0.5,
   },
 ] as const;
-export type BenchmarkArm = (typeof benchmarkArms)[number] | (typeof experimentalArms)[number];
-export type BenchmarkArmId = BenchmarkArm['id'];
+export interface BenchmarkArm {
+  id: string;
+  alias: string;
+  model: string;
+  transport: 'macrofold-decision' | 'openai-decision' | 'openai-response' | 'macrofold-generation';
+  inputRate: number;
+  outputRate: number;
+  effort?: GenerateRequest['reasoningEffort'];
+  prices?: TokenPrices;
+  maxOutputTokens?: number;
+  reservationUsd?: number;
+  macrofoldDeployment?: GenerateRequest['macrofoldDeployment'];
+  structuredOutput?: 'auto' | 'json_schema' | 'json_object' | 'prompted_json';
+  originalArm?: string;
+  replicate?: number;
+}
+export type BenchmarkArmId = string;
 export const armById = new Map<string, BenchmarkArm>(
   [...benchmarkArms, ...experimentalArms].map((a) => [a.id, a]),
 );
@@ -94,6 +109,7 @@ export const lunaPrices: TokenPrices = {
  * A 1.25 input premium covers Responses cache writes; long-context premiums apply conservatively.
  */
 export function reservationUsd(arm: BenchmarkArm, inputBytes: number): number {
+  if (arm.reservationUsd !== undefined) return arm.reservationUsd;
   const upperInput = inputBytes + 4096;
   const long = upperInput > 272_000;
   const inputRate =
@@ -102,7 +118,7 @@ export function reservationUsd(arm: BenchmarkArm, inputBytes: number): number {
     (arm.transport.startsWith('openai') && long ? 2 : 1);
   const outputRate = arm.outputRate * (arm.transport === 'openai-response' && long ? 1.5 : 1);
   return (
-    Math.ceil(((upperInput * inputRate + outputTokens * outputRate + 100) / 1_000_000) * 1e6) / 1e6
+    Math.ceil(((upperInput * inputRate + (arm.maxOutputTokens ?? outputTokens) * outputRate + 100) / 1_000_000) * 1e6) / 1e6
   );
 }
 

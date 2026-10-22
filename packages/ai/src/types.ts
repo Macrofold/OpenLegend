@@ -1,4 +1,8 @@
 import type { NetworkOwner } from '@open-legend/network';
+import type {
+  MacrofoldDeploymentTarget,
+  MacrofoldOutputMode,
+} from './macrofold-inference-target.js';
 export type JsonValue =
   | null
   | boolean
@@ -59,6 +63,10 @@ export interface GenerateRequest extends RequestControl {
   /** Private execution progress, never serialized into a model request. */
   onProgress?: (progress: GenerationProgress) => void;
   model?: string;
+  /** Trusted deployment selected by the producer before reservation; never hosting credentials. */
+  macrofoldDeployment?: MacrofoldDeploymentTarget;
+  /** Resolved once from configured policy and deployment capabilities before reservation. */
+  macrofoldOutputMode?: MacrofoldOutputMode;
   reasoningEffort?: 'none' | 'low' | 'medium' | 'high';
   actorScope?: string;
   execution?: 'fast' | 'complex' | 'full';
@@ -119,6 +127,13 @@ export interface AiReceipt {
   providerRequestId?: string;
   /** Macrofold billing admitted for this exact request, retained across configuration changes. */
   macrofoldBillingMode?: 'managed' | 'byok';
+  /** Actual immutable revision admitted for this Run, independent of current hosting status. */
+  macrofoldDeployment?: { deploymentId: string; deploymentRevisionId: string };
+  macrofoldCostAttribution?: {
+    basis: 'deployment';
+    deploymentId: string;
+    infrastructureCostIncluded: false;
+  };
   contextDigest: string;
   providerRequestDigest?: string;
   startedAt: string;
