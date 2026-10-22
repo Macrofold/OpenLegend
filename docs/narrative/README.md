@@ -2,7 +2,14 @@
 
 Open Legend's stories should give players people to care about, situations worth entering and consequences they want to see. Use this guide when developing characters, authored situations, dialogue examples, lore and the telling of actual play. Each world chooses its own [tone and scope](../repertoires/design-foundation.md#world-tone-and-scope).
 
-The [characters and play workflow](../production-workflows/characters-and-play.md) owns turning an idea into playable content. [Player-facing language](../ui-ux/player-facing-language.md) owns clear, appropriate expression; [narration's truth boundaries](../narration-and-conversations.md#2-three-kinds-of-truth) own what a telling may establish. The [ROCKBEASTS case study](case-studies/rockbeasts.md) records a particular reference and its possible applications.
+The [characters and play workflow](../production-workflows/characters-and-play.md) owns turning an idea into playable content. [Player-facing language](../ui-ux/player-facing-language.md) owns clear, appropriate expression; [narration's truth boundaries](../narration-and-conversations.md#2-three-kinds-of-truth) own what a telling may establish.
+
+[Authored worlds and personal discovery](authored-worlds-and-personal-discovery.md) develops the complementary direction for emotional weight across a whole world: nonlinear lore discovery, gods guiding personal journeys, region access, dangerous frontiers, underground exploration and meaningful needs.
+
+Reference studies:
+
+- [ROCKBEASTS](case-studies/rockbeasts.md) — character, dark humor, acting and a coherent fictional world.
+- [Trailblazers: Into the March](case-studies/trailblazers-into-the-march.md) — a home in the wilderness, mysterious people, practical care and an emotional journey.
 
 ## Give someone a specific want
 
