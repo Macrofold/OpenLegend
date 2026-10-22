@@ -109,7 +109,7 @@ type AttentionTerms = Readonly<{
 
 PermittedSpatialBasis is exactly one existing actor-authorized spatial selection/known-place observation, A FactKey for received location, or own accepted pose captured for a relative selection. It carries the original frame/time and source eligibility; it contains no hidden emitter pointer. Use existing SupportedRegion, Position and Direction representations, not proxy entities or a new geometry language. A historical received bearing and a one-time relative spatial selection stay fixed to their captured frame. A maintained travel-relative instruction is separately typed below; it never rotates historical acoustic evidence.
 
-ExistingPermittedPhysicalTarget is the ordinary admitted current-body/object/surface reference with its exact life/observation binding. A current exposure or an ObserverSubject by itself is not that target. Each concern is an anonymous exposure, observer-local individual, supported known person or attributed description under A's PermittedParticipant. Up to eight selected concern references can share one or several foci, independently of the eight-focus envelope; they are permitted associations, not a general belief graph or limit on encountered dangers. Deduplicate only identical typed bindings with the same association support, preserving observer/life scope. Do not join different exposures, rival associations or local individuals through hidden entity equality or display names. An arrivals predicate can match newly observed visitors without appending each to the terms.
+ExistingPermittedPhysicalTarget is the ordinary admitted current-body/object/surface reference with its exact life/observation binding. A current exposure or an ObserverSubject by itself is not that target. Each concern is an anonymous exposure, observer-local individual, supported known person or attributed description under A's PermittedParticipant. Selected concerns can share one or several foci; [ATI-L03](../limits/attention-and-investigation.md#ati-l03--selected-input-and-composition-envelope) bounds the two lists independently. These permitted associations do not form a belief graph or cap encountered dangers. Deduplicate only identical typed bindings with the same association support, preserving observer/life scope. Do not join different exposures, rival associations or local individuals through hidden entity equality or display names. An arrivals predicate can match newly observed visitors without appending each to the terms.
 
 A method has at most one predicate, in its event or level trigger. Validate the predicate's registered kind; incompatible kinds/operands refuse. The same predicate can end the facet through stopOnMatch/stopOn; there is no second hidden termination predicate. Unknown cannot satisfy false. Named clock endings resolve to the original deadline. A method without a predicate still records its actual scoped observation/result.
 
@@ -139,7 +139,7 @@ For several danger hypotheses, retain each original support and uncertainty in A
 
 1. Resolve the exact actor, normalized physical life, controller and current work through ProspectiveWork.expected. Resolve permitted terms against the current observation/identity owner; validate installed method/predicate/definition pins and finite original bounds. Scan/visual watch needs a nonempty admitted focus list; an ambient listening hold may have none and then supplies no directional anticipation. Anticipation requires at least one valid active-focus ordinal and installed danger family. Reject duplicate/out-of-range ordinals and nonfinite geometry/time rather than broadening scope.
 2. Determine the chosen continue/enqueue/replace/interrupt operation. Explain lost work, committed costs, suspended-plan consequences and recovery using the existing prospective-work owner. Selection is not acceptance.
-3. Run the same read-only prerequisite calculation for menus, exact player requests, NPC offers, interpreted proposals and plan dispatch: scope access, sense/body, allowed pose, tool/part/reach, real work claims, supported simultaneous combination and parameter/work-envelope limits.
+3. Run the same read-only prerequisite calculation for menus, exact player requests, NPC offers, interpreted proposals and plan dispatch: scope access, sense/body, action-local pose/part/view requirements, tool/reach and existing consumable reservations, supported simultaneous combination and parameter/work-envelope limits.
 4. Prepare required geometry/current facets through existing owners. Technical preparation is not elapsed fictional inspection and cannot inspect hidden truth for cognition. Incomplete work leaves admission pending or unavailable, without replacing existing work.
 5. Recheck changed authority/work/source/policy after waits. Commit the selected activity/action and B directive together, or refuse atomically. No costs, RNG, events, IDs or interruption occur during preview.
 6. Derive subscriptions from accepted work. Begin attention timing at actual admission; begin each method's **fulfilled physical interval** only when its required action phase/pose/senses are actually satisfied. Orientation/approach time is real but is not falsely reported as completed examination.
@@ -149,7 +149,7 @@ A compatible orientation amendment uses B's scoped amendment revision; it must n
 
 ### 3.2 Narrow simultaneous combinations
 
-Use B's one optional action orientation record, with at most one directive per installed independently steerable gaze group. It owns goal, group/lead receptor, head-only or explicit body assist, action/activity binding, original progress, finite extent and loss. The E control owns inquiry/notification/facet-local deadline. An action with a composed inquiry points to its exact plan/step/activity control; an amended direct action owns the same shape inline. Both use the exclusive ownership rules above.
+Use B's one optional action orientation record, with at most one directive per installed independently steerable gaze group. It owns goal, group/lead receptor, head-only or explicit body assist, action/activity binding, original progress, finite extent and loss. The E control owns inquiry/notification/facet-local deadline. An action with a composed inquiry points to its exact plan/step/activity control; an amended direct action owns the same shape inline. Both use the exclusive ownership rules above. Initial E methods direct one selected focus at a time; installed independent receptor groups may jointly serve it. Concurrent distinct-focus methods require a later qualified family.
 
 A walking action can carry the selected observation facet if its descriptor permits it. A stationary observe action occupies the primary lane. Finite scans are ordinary sequence/observation phases; walking scans use the same move action's qualified orientation facet and finite progress, not two concurrently executing activity nodes. Do not add a general parallel combinator.
 
@@ -163,6 +163,8 @@ A walking action can carry the selected observation facet if its descriptor perm
 | Repeated work with safe observation breaks | Compose work step → look/observe → next work step. Partial steps follow that family's real restart/spending semantics; no fractional-progress preservation is assumed. |
 | Speech during observation | Preserve current speech rules. Instantaneous speech is a real acoustic occurrence, not a fabricated continuing voice lock. |
 | Unsupported producer or body freedom | Return unsupported capability; no new sensing, material test, limb or stamina law from the action's name. |
+
+Bind the control to the exact B directive/amendment and whether E installed it or only borrows an already compatible action-required directive. A borrowed directive keeps its existing owner and lifetime. On facet termination, remove maintenance only if the current directive is still owned by that exact E control/amendment; never cancel a borrowed or subsequently replaced directive. Shared admission must explicitly end/replace an incompatible E facet before accepting a conflicting later look, preserving compatible base work. These are bindings in the existing records, not a lease store or stacked executor.
 
 B's orient-once completion leaves achieved pose. Maintained directives stop at their containing action or original extent. Lost tracking follows the explicitly accepted stop/hold rule; restoring old terms does not reacquire a hidden body. Eye/head-only look has no additional effort tax selected here. Fatigue, injury and fear alter compatibility only through their actual installed effects.
 
@@ -180,7 +182,7 @@ B's orient-once completion leaves achieved pose. Maintained directives stop at t
 
 ### 4.1 Event and level subscriptions
 
-Subscribe through EPR/derived interests/ActorWork, scoped to the exact active owner. A subscription is a disposable dependency index, never evidence or continuation authority.
+Required method, coverage and stop predicates run at the existing domain action, acquisition and temporal boundary. Derived EPR/interests/ActorWork subscriptions notify optional semantic reconsideration; they do not gate native completion or expiration. Scope subscriptions to the exact active owner; they are disposable dependency indexes, never evidence or continuation authority.
 
 | Dependency | Producer and handling |
 | --- | --- |
@@ -244,13 +246,13 @@ Personality describes the person, not “when noise X, do Y.” Familiarity/expe
 
 ## 6. Native animal methods
 
-Use the single installed native-response controller. Physical acquisition, retention, language capability and controller selection remain independent. Acoustics C owns sound classification eligibility, its pattern map, persistent-source onset and absolute idle expiry. A memoryless animal does not require human history or paid intake.
+Use the single installed native-response controller. Physical acquisition, retention, language capability and controller selection remain independent. A owns acquired sound classification; C owns acoustic alarm eligibility and its pattern/presence policy. A memoryless animal does not require human history or paid intake.
 
 Priority is the existing required body/lifecycle and territorial/alarm arbitration, then an already accepted compatible curiosity continuation, then a newly eligible optional curiosity method, then ordinary routine. At a sealed physical boundary, complete required cue/danger intake and its alarm arbitration before starting optional curiosity. With no higher-priority work and no active curiosity, choose the first eligible new acoustic cue in canonical acquisition order. Other eligible cues receive a considered-busy curiosity disposition through the same slot/result owner; they do not queue approaches or replace the selected episode. An already active compatible curiosity similarly continues without resetting its original cue/deadline. A qualifying alarm preempts curiosity before optional approach; danger never waits for a curiosity dwell to finish. Preserve the existing complete locally perceived danger set, route safety and motion ownership. No nearest-danger cutoff is introduced.
 
 Add mutually exclusive curiosity modes to the existing NativeResponseEpisode: curious-observing and curious-approaching. Their typed payload contains the installed curiosity method, exact acquired cue/retained immutable contribution, historical scope, original end/check limits, current stage and exact ordinary movement/action reference. Alarm modes retain their existing data. Transition to alarm ends curiosity terms and observation coverage in the same owner; there are not two active episodes moving one animal.
 
-The selected method is: one short observation hold; one safe ground approach if an eligible candidate exists; one final hold; end. It consumes real time/motion and uses actual receptor orientation where the body supports it. An unlocalized cue selects observation-only. No admissible vantage or a physically refused route records that specific blocked/partial result and ends the approach stage. Only unfinished required calculation is incomplete and retains its continuation. None supplies a hidden source location or forces escape. On completion, use the existing routine-return owner once, without replaying its RNG scheduling.
+The selected method is: one short observation hold; one safe ground approach if an eligible candidate exists; one final hold; end. It consumes real time/motion and uses actual receptor orientation where the body supports it. An unlocalized cue selects observation-only. If no candidate is eligible, finish with the completed first hold's observation-only result. A route that is physically refused or lost after movement admission records blocked/partial. Only unfinished required calculation remains incomplete and retains its continuation. None supplies a hidden source location or forces escape. On completion, use the existing routine-return owner once, without replaying its RNG scheduling.
 
 Extend **the same NativeResponseState acoustic-pattern value**, preserving C's key and alarm semantics, with two independent optional slots: alarm { latestCue, idleExpiry } and curiosity { latestCue, idleExpiry }. The existing alarm fields map to the alarm slot; no second map, result diary or new source key exists. C tests only its alarm slot. E tests only its curiosity slot. A curiosity-only entry cannot suppress a later alarm. Evaluate C alarm eligibility first: a cue meeting it is never a curiosity candidate, even when its alarm transition is repeat-suppressed. Actual bodily/territorial danger and newly qualifying alarm preempt curiosity through the existing episode/action cancellation owner.
 
@@ -264,7 +266,7 @@ An active episode may retain the minimal immutable cue needed after optional sen
 
 ### 7.1 Boundary and types
 
-F retains SC12 VictimPreparationSnapshot and SurpriseDecision. E supplies **CapturedPreparationState** and **ExistingActiveWorkRef** below; it does not replace the envelope, select CapturedWarningFact, decide surprise or define damage. Shared EvidenceRef, FactKey, EvidenceCut, CapturedCurrentFacet, DefinitionPin and spatial types retain their existing/A/B meanings. Names prefixed Existing in the notation are imports/aliases for the owning family's complete immutable value type, not a second schema to invent.
+F retains SC12 VictimPreparationSnapshot and SurpriseDecision. E supplies **CapturedPreparationState** and **ExistingActiveWorkRef** below; it does not replace the envelope, select CapturedWarningFact, decide surprise or define damage. Shared EvidenceRef, FactKey, EvidenceCut, CapturedCurrentFacet, DefinitionPin and spatial types retain their existing/A/B meanings. Names prefixed Existing denote immutable projections supplied by the named canonical owner, not a claim that identically named exported types already exist. Reuse exact current types where applicable; otherwise implement the narrow projection listed below within that owner's integration, without new state or registration owners.
 
 ~~~ts
 type ExistingActiveWorkRef =
@@ -314,14 +316,16 @@ type CapturedAttentionScope =
   | Readonly<{
       kind: 'observed-subject';
       target: ExistingPermittedPhysicalTarget;
-      current: CapturedCurrentFacet;
+      current: CapturedCurrentFacet & {
+        value: Extract<SensoryFacet, { kind: 'location' }>;
+      };
     }>;
 
 type PreparationTermination =
   | Readonly<{ kind: 'deadline'; at: SimTime }>
   | Readonly<{
-      kind: 'existing-condition';
-      owner: 'held-aim' | 'native-response';
+      kind: 'existing-owner';
+      owner: 'action' | 'native-response';
     }>;
 
 type PreparationRemaining =
@@ -358,8 +362,7 @@ type CapturedOwnPreparationBody = Readonly<{
   bodyHeading: number;
   pose: ExistingResolvedOwnBodyAndReceptorPose;
   posture: ExistingAdmittedPosture;
-  occupiedClaims: readonly ExistingWorkClaim[];
-  requiredClaims: readonly ExistingWorkClaim[];
+  poseRequirements: ExistingCapturedPosePartAndViewRequirements;
   restrictions: readonly ExistingPhysicalWorkRestriction[];
 }>;
 
@@ -396,8 +399,10 @@ type CapturedPreparationPhysical =
   | Readonly<{
       family: 'strike';
       body: CapturedOwnPreparationBody;
+      strikeDefinition: { id: string; version: number };
+      weapon: ExistingAdmittedItemReference | null;
       actionStage: 'approaching' | 'working';
-      strikePhase: ExistingStrikePhase;
+      strikePhase: ExistingStrikePhase | null; // Null: ordinary unphased timed work.
       remainingPhaseSeconds: number;
       totalPhaseSeconds: number;
       target: ExistingPermittedPhysicalTarget | null;
@@ -424,7 +429,6 @@ type CapturedPreparationPhysical =
 
 type CapturedPreparationState = Readonly<{
   work: ExistingActiveWorkRef;
-  method: DefinitionPin; // Preparation/capture family pin; see identity rule below.
   kind:
     | 'observation' | 'anticipation' | 'defensive-action'
     | 'committed-combat-work' | 'native-alert';
@@ -456,44 +460,50 @@ type PreparationCapture =
 declare function capturePreparation(
   actor: ActorLifeRef,
   cut: EvidenceCut,
-  admittedPreparationFamilies: readonly DefinitionPin[],
+  admittedPreparationFamilies: readonly CapturedPreparationPhysical['family'][],
 ): PreparationCapture;
 ~~~
 
-The synchronous producer query is **capturePreparation(actor, cut, admittedPreparationFamilies)**. Arguments contain no attacker to discover and no global threat search. admittedPreparationFamilies is the validated installed/pinned adapter set, not a caller-selected filter for omitting applicable required families. Reject a mismatched set through existing admission; missing required support cannot become an empty contribution. F can match the complete immutable contribution to its actual outcome under F's policy. An absent optional family yields a complete empty contribution; required physical/effect/evidence preparation still unfinished yields incomplete and holds the dependent outcome. Invalid current-format state fails through owning validation; never return empty to disguise it.
+The synchronous producer query is **capturePreparation(actor, cut, admittedPreparationFamilies)**. Arguments contain no attacker to discover and no global threat search. admittedPreparationFamilies is the complete validated family set derived from the installed action/observation/native descriptors, not a caller-selected filter for omitting applicable required families. Reject a mismatched set through existing admission; missing required support cannot become an empty contribution. F can match the complete immutable contribution to its actual outcome under F's policy. An absent optional family yields a complete empty contribution; required physical/effect/evidence preparation still unfinished yields incomplete and holds the dependent outcome. Invalid current-format state fails through owning validation; never return empty to disguise it.
 
-**Identity and chronology rules.** The top-level method pin identifies the registered preparation/capture family. It does not pretend every underlying profile already has a DefinitionPin: EvasionState.profile, for example, is the existing contentLabel string. Preserve each family's real identifiers inside its arm and resolve/pin the actual adapter definition normally. An Action has no general revision or admission timestamp; the new scoped attentionRevision is explicitly E-owned, and initial adapter implementation must record missing **admission, current-method start, continuous fulfillment and latest break timestamps within that existing action/preparation/native owner**. Reuse existing semantically identical times where present. Never derive elapsed preparation from Action duration, native episode.startedAt, navigation proposalGeneration or an arbitrary last tick. Native mode changes and physical loss/recovery establish real boundaries; current-format restore requires those selected fields rather than inventing a historical interval.
+**Identity and chronology rules.** physical.family selects trusted projection code; it is not a new authored world definition. Preserve actual method/profile/definition identity in each family arm, including EvasionState.profile's existing contentLabel string. Required adapters come from the existing installed family descriptors; no capture-definition registry is added. An Action has no general revision or admission timestamp; the new scoped attentionRevision is explicitly E-owned, and initial adapter implementation must record missing **admission, current-method start, continuous fulfillment and latest break timestamps within that existing action/preparation/native owner**. Reuse existing semantically identical times where present. Never derive elapsed preparation from Action duration, native episode.startedAt, navigation proposalGeneration or an arbitrary last tick. Native mode changes and physical loss/recovery establish real boundaries; current-format restore requires those selected fields rather than inventing a historical interval.
 
-PreparationRemaining.seconds is finite, nonnegative **simulation duration**, not an absolute time or authored normal-speed duration. An exact guard/phase deadline can produce exact remaining time; moving/tracked B goals can have only an estimate or unknown. Estimates confer no earned fulfillment. E watches/curiosity always use deadline termination. Existing manually held aim and condition-governed native alarm keep their owner-condition termination, whose actual prerequisites/settling/review values are copied in the corresponding arm. This design neither imposes a new timeout on held aim nor permits infinite new E watches.
+PreparationRemaining.seconds is finite, nonnegative **simulation duration**, not an absolute time or authored normal-speed duration. An exact guard/phase deadline can produce exact remaining time; moving/tracked B goals can have only an estimate or unknown. Estimates confer no earned fulfillment. E watches/curiosity always use deadline termination. Existing guard, ranged preparation and strike retain action-owner completion/cancellation/prerequisite rules, including approaches whose completion time is unknown; condition-governed native alarm retains its native owner. Evasion can use its actual endsAt. Phase timing remains separate from work lifetime: guard.expiresAt ends protection and starts recovery, while its action may continue until recoveryUntil. The corresponding physical arm carries those dates/prerequisites. This neither imposes new timeouts on existing actions nor permits infinite new E watches.
 
 **Exact owner payload requirements:**
 
 | Payload | Required values and source |
 | --- | --- |
 | CapturedSpatialBasis | Copied admitted spatial selection or original A location facet; its FactKey when evidential, original measurement/acquisition/frame and uncertainty. Own/known-terrain selection needs no invented warning. |
-| Own body / orientation / provider coverage | B/C's actual own body, joint/receptor pose, accepted directive and achieved progress; actual occupied/required work claims and restrictions; A/B/C's completed evaluated interval/scope/fidelity, including unsupported/unavailable sense distinctions. Desired pose is separate from achieved pose; no new E measurement or negative-certainty certificate. |
+| Own body / orientation / provider coverage | B/C's actual own body, joint/receptor pose, accepted directive and achieved progress; B/action-local pose, part and view requirements plus actual physical restrictions; A/B/C's completed evaluated interval/scope/fidelity, including unsupported/unavailable sense distinctions. Desired pose is separate from achieved pose; no new E measurement or negative-certainty certificate. |
 | GuardState | Exact existing phase, profile, physicalLife, facing, readyAt, expiresAt and recoveryUntil when present; actual admitted shield coverage/equipment compatibility. Preserve guard authority independently of head observation. |
-| AimState | Exact sourceLife, tool, ammunition, reservationId, manual/ready and permitted observedMotion when present. Copy current work preparation, target authorization and required tool/ammunition/view/capability facts; no manufactured start timestamp or hidden target repair. |
-| Strike / evasion | Actual action stage/strike phase and remaining/total phase timing; body's combatReadyAt; actual admitted target or null. Evasion copies sourceLife, profile content label, startedAt, endsAt, repeatAt, speed and actual trajectory. None automatically implies defensive readiness. |
+| AimState | Exact sourceLife, tool, ammunition, reservationId, manual/ready and permitted observedMotion when present. Copy current work preparation, target authorization and required tool/ammunition/view/capability facts, including action.rangedPolicyPin and its resolved eligibility where that family uses it. No extra damage/flight-policy snapshot, manufactured start timestamp or hidden target repair. |
+| Strike / evasion | Strike copies its nonnull definition id/version, weapon reference or null, actual action stage, strikePhase or null, remaining/total phase or unphased work timing, combatReadyAt and permitted target or null. Natural strikes still have an exact definition; null phase means ordinary timed work, not invented windup/recovery. Evasion copies sourceLife, profile content label, startedAt, endsAt, repeatAt, speed and actual trajectory. None automatically implies defensive readiness. |
 | Native movement | Null for legitimate stationary alert; ground carries the exact ordinary Action reference and trajectory plus episode support; flight carries its actual existing flight reference/progress. Do not fabricate an action for settling or stationary blocked behavior. |
 | Native alert constraints/dangers | Installed method's actual consciousness, required sense/body eligibility and relevant pose/movement restrictions, separately from controller mode/route block. Dangers are the complete **observer-permitted** estimates with their original observations/confirmations and uncertainty, not all nearby world bodies or refreshed hidden positions. |
 | PreparationBreakReason | Existing terminal/interruption reasons plus coverage loss, changed focus/terms, missing travel frame, lost capability, expiry and explicit stop. Preserve voluntary, automatic and technical causes; no invented choice to stop. |
 | Facts/current confirmations | Exact immutable A-permitted values acquired within this cut, with their original support. Measured value intervals and confirmed-availability intervals are distinct and both survive capture. |
 
+B's pose/part/view compatibility evaluator remains authoritative; this capture adds no body-resource claim scheduler. Existing consumable reservations remain in the families that use them, such as ranged aim.
+
 The initial closed adapters are observation, shield guard, ranged aim, strike, evasion and native alert; no arbitrary flags map or inferred action-name semantics is allowed. Register an adapter only after its producer can supply all required current values. Internal own-body state is legitimate native input, never permission to fetch an enemy's hidden state or publish private work.
 
 **Current scope, not the plan.** An observation record contains only the actually active focus and its fulfilled/being-prepared scope. For anticipation, intersect that active ordinal with anticipation.focusOrdinals; omitted/unvisited/previous scan foci grant no current coverage. Relevant expectedDangerKinds apply only to that selected active anticipation; an ordinary observation record has an empty list. Changing focus closes that directional interval and begins another only at real fulfillment. A previously checked doorway stays historical support, not current vigilance. A desired travel-relative direction or watched region is paired with actual pose/coverage/fulfillment and cannot be mistaken for physically achieved coverage.
 
-One guard action with a compatible head watch may produce **both guard and observation records**, each with its own actual method/scope/continuity. Deduplicate workSupport identities and repeated projections of the same family, not distinct family evidence merely sharing actionId. Sort capture deterministically by existing work identity and registered family identity. Between activity steps, plan intent without actual observe work supplies no preparation record; an explicitly supported native stationary method can supply one with an episode-only reference even when actor.action is null. Blocked locomotion neither proves nor disproves actual sensory alert; evaluate its installed method constraints separately. Any real animal gaze turn still goes through B's action/orientation owner.
+One guard action with a compatible head watch may produce **both guard and observation records**, each with its own actual method/scope/continuity. Deduplicate workSupport identities and repeated projections of the same family, not distinct family evidence merely sharing actionId. Sort capture deterministically by existing work identity and the closed physical.family order declared above. Between activity steps, plan intent without actual observe work supplies no preparation record; an explicitly supported native stationary method can supply one with an episode-only reference even when actor.action is null. Blocked locomotion neither proves nor disproves actual sensory alert; evaluate its installed method constraints separately. Any real animal gaze turn still goes through B's action/orientation owner.
 
-Copy/freeze the resolved native values once. Mutable action/lease/episode/pose pointers or later reacquisition violate the cut, even if their IDs match.
+Resolve observed-subject scope through the same admission/capture focus resolver: require an A location facet bound to the exact permitted target and physical life. A detection/detail facet or location alone cannot grant target authorization.
+
+Copy/freeze the resolved native values once. Mutable action/directive/episode/pose pointers or later reacquisition violate the cut, even if their IDs match.
 
 ### 7.2 Capture algorithm and temporal boundaries
 
-1. Advance already admitted movement, turns, effects and observation through the common pre-outcome boundary. Complete all required A/B/C work that canonically precedes the outcome.
+Steps 1–2 belong to the existing outcome coordinator; steps 3–6 are the read-only capture query; step 7 is F's consumer. capturePreparation and its family adapters never advance the world, expire work or acquire evidence.
+
+1. The coordinator settles admitted movement, turns, due effects, action transitions/expiry and observation through the common pre-outcome boundary. Complete required A/B/C work once through their canonical owners before capture.
 2. Obtain A's exact acquired membership and resolved values for EvidenceCut. lastIncludedOrder is not a membership filter; an earlier event acquired later is absent.
 3. Resolve this life/controller's current action and relevant active plan/native episode through existing identity lookups. A suspended, finished, cancelled, expired or unmatched reference is not active work. Legitimate stationary native methods use their episode directly; do not require actor.action merely to include them.
-4. Evaluate original deadlines and work transitions in canonical order. Finite active intervals are half-open: **[start, deadline)**. At equality the finite watch/guard has ended; settle due expiry before a same-time outcome. Existing condition-held aim/native work follows its actual owner condition, not an invented deadline. A newly accepted same-time action contributes zero elapsed preparation.
+4. Read the already-settled lifetimes and phases. Finite active intervals are half-open: **[start, deadline)**. At equality a finite watch has ended; at guard.expiresAt protection has ended and the recovery action may remain as unfulfilled physical-recovery work. Existing action/native lifetimes follow their owners, not an invented deadline. A newly accepted same-time action contributes zero elapsed preparation.
 5. Derive fulfilled physical method intervals from actual execution. Copy current scope, selected anticipation, physical values, evidence and last genuine break once. Deduplicate identical work references/repeated family projection while retaining independent guard/observation contributions from the same action.
 6. Return complete immutable values, including currently preparing/unfulfilled active work where useful to F. Ended/suspended work is absent; its historical result may still support F's independently owned warning history.
 7. F combines this contribution with its warning facts, complete D mechanics and pinned surprise policy in SC12. It evaluates and records the actual outcome without rereading later mutable work. The hit's interruption, sound, injury, startle and new fear occur afterward.
@@ -545,15 +555,13 @@ Own activity inspection can show accepted terms, progress, actual remaining work
 
 ## 9. Scaling and failure bounds
 
-The [limits inventory](../limits/attention-and-investigation.md) selects actual initial envelopes. One active control belongs exclusively to the current activity, compatible direct Action or native episode; the existing one suspended plan remains intent only. At most eight explicitly selected focus bindings, eight concern bindings and one predicate per selected method are admitted; this is an input/work envelope, not a limit on passive perceptions or threats.
-
-Search retains at most one page of sixteen prepared units, sixty-four checked-unit references per invocation and its original deadline; reaching the check allowance ends with a partial result. Native continuation uses the current activity frontier and native-work accounting. Process at most sixty-four cheap subscription/predicate updates before yielding at the existing continuation boundary; never omit required observations to meet that quantum.
+[ATI-L03–ATI-L05](../limits/attention-and-investigation.md#ati-l03--selected-input-and-composition-envelope) owns input limits, search pages/check allowances, continuation quanta and retention. Apply them to each exclusively owned active control; a suspended plan remains intent only. Exhausting a search allowance returns partial coverage. Yielding required work preserves its native continuation rather than dropping observations.
 
 | Growing work | Shared preparation / selection | Invalidation / overflow |
 | --- | --- | --- |
 | Active actors and focused work | Existing active-owner membership and due indexes; visit only changed dependencies or due boundaries. | Whole population remains a real growth dimension; no all-history scan per watch/tick. |
 | Relevant evidence notifications | A's exact actor-local sources and EPR coalesced wake; no separate source copying. | Required facts preserved; optional reconsideration coalesces and exposes pending/attempted status. |
-| Search candidate enumeration | Select scoped IDs before metadata/geometry hydration; page sixteen, finite checked allowance. | Continue incomplete technical work or end selected partial search; never silently claim complete coverage. |
+| Search candidate enumeration | Select scoped IDs before metadata/geometry hydration within ATI-L04's page and checked-work allowances. | Continue incomplete technical work or end selected partial search; never silently claim complete coverage. |
 | Pose/sensory computation | B/C/A canonical evaluation/dirty scopes, same-phase immutable preparation. | Their native coherent-prefix hold; no extra attention sampling loop. |
 | Snapshot capture | Exact current action/plan/native lookup plus already prepared pertinent support. | Linear in actual active methods and required acquired support; no top-N threat truncation. |
 | Retained search/action history | Existing paged action/experience storage and actual retention/correction rules. | No new total-history cap selected; accumulated history remains a storage-growth dimension, not per-cue hydration. |
@@ -565,18 +573,7 @@ Measure the real caller from action offering/admission through native execution,
 
 ## 10. Delivery modules and paper acceptance
 
-Implementation changes zero lines of application logic in this assignment. Future work spans domain actions/agency/observations, server subscriptions/choice context and protocol/player consumers; its cross-owner authority, persistence and disclosure risks require the durable staged plan here. Implement ATI01–ATI08 in order with separately authorized runtime work.
-
-| Module | Parent work | Required slice |
-| --- | --- | --- |
-| ATI01 | SAD-E / AC07 / ND13–ND16 | Exact methods/terms, same read-only admission, ordinary finite observe/monitor and actual results. |
-| ATI02 | AC08 / SAI-B/C/E | Qualified walking/guard/work compatibility through B/C, actual intervals and refusal. |
-| ATI03 | AC07 / DG02 | Bounded search/frontier, supported inquiry, correct partial/negative evidence and stop. |
-| ATI04 | AG06–AG07 / EPR / DG02 | Subscriptions, meaningful opportunities, purpose/context and no repeated investigation loop. |
-| ATI05 | CTR / SPK / ND16 | Native cue consumers and narrowly installed curiosity through one controller. |
-| ATI06 | SAI-E/F / ND11 consumer | Immutable preparation adapter/capture with exact actual-victim cut and no decision of surprise. |
-| ATI07 | AG09 / AC10 / G | Current-format lifecycle, private/public projection and truthful ordinary use. |
-| ATI08 | Existing quality/scale owners | End-to-end integration, measured work and uncoached usefulness with actual evidence. |
+[ATI01–ATI08](../maintainers/attention-and-investigation.md) owns the implementation sequence, dependencies, parent work and exit criteria. The paper cases below must remain covered during implementation.
 
 Paper traces must cover AJ01–AJ13 and these precise cuts:
 

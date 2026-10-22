@@ -135,11 +135,9 @@ Audio, non-audio cues, history and action descriptions must agree on uncertainty
 
 ## Staged delivery and unanswered matters
 
-Deliver one finite observe/monitor activity and its exact result/persistence first; then search and compatible work; then autonomous/native integration and immutable preparation capture. Each slice includes ordinary discovery, current admission, interruption and truthful information. [The tracker](../maintainers/attention-and-investigation.md) owns exact dependencies, acceptance and all unperformed runtime/player qualification.
+[ATI01–ATI08](../maintainers/attention-and-investigation.md) owns staged delivery and unperformed runtime/player qualification. Each slice includes ordinary discovery, admission, interruption, persistence and truthful results.
 
-**No E product choice requires Mike's answer before this design can be handed off.** The selected initial listening method uses the existing physical provider. The selected animal curiosity scope is deliberately finite. Implementation remains gated by common-owner resolution of A's evidence revision representation, joint B/C physical integration, and F's own preparedness/surprise predicates. Player psychological fear acquisition remains the separate SA-D01 decision; E assumes no answer.
-
-The technical document records those precise integration questions and the Prompt 6 interface. Tuning and human value remain empirical qualification, not missing semantic definitions. No external psychological theory is claimed as a validated simulation model.
+**No E product choice requires Mike's answer before handoff.** The [technical integration notes](attention-and-investigation-tech-design.md#11-open-semantic-questions-and-integration-notes) identify the bounded A/B/C/D/F/G dependencies, including unresolved SA-D01 and SA-D02. Initial tuning and useful, enjoyable play remain empirical qualification.
 
 ## Repertoire coverage
 

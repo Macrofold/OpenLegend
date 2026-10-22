@@ -4,11 +4,7 @@
 
 ## Baseline and dependencies
 
-Design branch: **codex/design-stealth-05-attention**, from exact pushed contracts tip **a3d40b4d71e29d6504e9f3fcc21e76344a0a284e**. No sibling merge, runtime source change or executable test belongs to this assignment.
-
-The complete feature/technical designs were read through remote refs before E design: perception **40805523c4a19ab7c6cc455d49d51e4a122ecae0**, vision/gaze **5837c5b30c90dbb30bd26530d196197aa311b35d**, acoustics **b242bee437f9e13801bfee77030efd309d88a35d**. [The pinned links and source audit](../projects/attention-and-investigation-tech-design.md#1-authority-baseline-and-dependency-reads) are the integration baseline; they are not merged delivery.
-
-Actual action/plan identity, source acquisition, physical lane, native controller and ordinary continuation already exist. The selected B/C physical extensions and E methods/adapters do not. Recheck affected source after integrating the specialist branches, keeping current owners and stable work IDs. Do not copy a new threat table, attention memory, scheduler or animal controller to bypass a missing dependency.
+[The pinned baseline and source audit](../projects/attention-and-investigation-tech-design.md#1-authority-baseline-and-dependency-reads) records the exact contracts tip, remote A/B/C reads and existing owners. Recheck affected owners on the implementation base before ATI01; completed specialist design does not establish runtime delivery.
 
 ## ATI00 — Complete specialist design
 
@@ -30,7 +26,7 @@ Parent: **SAD-E**; selected **DG02, ND13 and ND16**, with ND11/ND19 consumers.
 
 Dependencies: A acquired evidence/identity; B orientation; AC07; existing prospective-work/activity/action-experience owners. Parent modules: **DG02, ND13, ND16**.
 
-- [ ] Add the closed observation/anticipation terms, installed method/predicate definitions and one finite control in its exclusive existing activity, direct-action or native ownership, with scoped terms revision. Reuse exact life, plan/step/activity and action identities.
+- [ ] Add the closed observation/anticipation terms, installed method/predicate definitions and one finite control in its exclusive existing activity, direct-action or native ownership, with scoped terms revision. Reuse exact life, plan/step/activity and action identities. Add current-format serialization with each new owner field; ATI07 completes cross-owner restoration and lifecycle qualification.
 - [ ] Give menu offers, explicit requests, interpretation/NPC proposals and plan dispatch the same read-only availability and atomic admission. Fence changes during waits; preserve current work when refused/pending.
 - [ ] Implement stationary observe/scan/listen/exterior-inspect/monitor methods and actual results. Delegate existing record/container/instrument methods; never reveal unsupported internals.
 - [ ] Track actual alignment/view fulfillment separately from accepted intent and original deadline. Only achieved intervals support preparation.
@@ -43,7 +39,7 @@ Dependencies: A acquired evidence/identity; B orientation; AC07; existing prospe
 Dependencies: ATI01; B/C reconciled pose/locomotion accounting; **AC08, SAI-B/C/E**.
 
 - [ ] Add the qualified observation facet to compatible movement/guard actions without a parallel activity combinator or second physical lane.
-- [ ] Preserve route, cooperative task, costs, original guard deadline and scoped orientation amendment. An attached facet's expiry removes only its maintenance; it never cancels the underlying move/guard via whole-plan finite control. Body assistance uses B/C exactly once.
+- [ ] Preserve route, cooperative task, costs, original guard deadline and scoped orientation amendment. Bind exact E-installed versus borrowed B directives. Facet expiry removes only still-owned maintenance, preserving newer/borrowed directives and underlying move/guard work; a conflicting later look explicitly ends/replaces the old facet. Body assistance uses B/C exactly once.
 - [ ] Refuse incompatible precise tool/aim/body-facing requirements; explicit replacement and ordinary interruption preserve their actual consequences.
 - [ ] Support safe work-step/check/work-step sequences and truthful restart/lost-progress semantics.
 - [ ] Handle focus switches, current-only scan scope, independent shield/head direction and lost-subject hold/end.
@@ -66,7 +62,7 @@ Dependencies: ATI01–ATI02; existing navigation, scoped queries, observation/ac
 
 Dependencies: ATI01/ATI03; A/EPR durable sources, ActorWork, decision validity and existing funding/urgency. Parent: **AG06–AG07, EPR, DG02**.
 
-- [ ] Derive event/level subscriptions from active work and reconstruct them without replay. Bind exact actor/life/source/work references.
+- [ ] Run required coverage/stop predicates at native action/acquisition/time boundaries, independently of optional cognition. Derive event/level notifications from active work and reconstruct them without replay; bind exact actor/life/source/work references.
 - [ ] Preserve unknown versus false, initial-level policy, authored predicate hysteresis and source-linked dispositions.
 - [ ] Feed mandatory new evidence/results/corrections plus actual goal/work consequences into existing optional decisions. Keep quiet/unfamiliar meanings eligible.
 - [ ] Distinguish continue/decline, accepted work, blocked, unavailable/unfunded and stale attempts; acknowledge only the captured cause set.
@@ -81,7 +77,7 @@ Dependencies: ATI01 evaluator; completed C acoustic intake and existing CTR03–
 - [ ] Keep current alarm/escape/settling/blocked and territorial/flight/lifecycle priority, complete danger set and actual movement ownership.
 - [ ] Add optional finite curiosity modes and the installed acoustic-triggered ground-curious contrast profile; default species behavior remains explicitly unchanged until deliberately authored.
 - [ ] Integrate E's independent curiosity slot into C's single pattern/presence owner. Preserve C alarm eligibility/key/expiry and persistent-onset identity; curiosity cannot suppress alarm.
-- [ ] Execute one hold/optional safe ground approach/final hold with exact finite deadline, route refusal and no hidden-source destination.
+- [ ] Execute one hold/optional safe ground approach/final hold with exact finite deadline and no hidden-source destination. No eligible candidate ends observation-only; failure of admitted movement is blocked/partial.
 - [ ] Persist exact cue/profile/mode/movement/progress and slot timing. Qualify active/expired slots, no-route, unlocalized input, alarm preemption and restoration.
 
 **Exit:** ignore, curiosity and escape differ physically; no ordinary animal uses human cognition, language, autobiographical memory or model calls.
@@ -90,8 +86,8 @@ Dependencies: ATI01 evaluator; completed C acoustic intake and existing CTR03–
 
 Dependencies: ATI01–ATI02; A exact acquired cut, B physical values, C timing, existing guard/offense/native work; F owns consumer integration. Parent: **SAI-E/F, ND11**.
 
-- [ ] Implement section 7's closed family adapters and capturePreparation on the existing owner. Resolve all current values once; preserve exact work/source provenance.
-- [ ] Capture original deadlines, actual active scope, uncertainty, current continuous fulfillment/latest break, supported danger family and genuine physical restrictions.
+- [ ] Implement section 7's closed family adapters and read-only capturePreparation after the existing coordinator settles due physical/evidence work. Resolve current values once; preserve exact work/source and actual authored-method provenance without a capture-definition registry.
+- [ ] Capture original deadlines or existing-owner lifetimes, actual phases/active scope, uncertainty, continuous fulfillment/latest break, supported danger family and action-local physical requirements. Preserve guard recovery and ordinary unphased strikes.
 - [ ] Hold the dependent outcome when required preparation is incomplete. Complete empty and technical incomplete are different results.
 - [ ] Integrate into SC12 VictimPreparationSnapshot without replacing it or deciding surprise inside E.
 - [ ] Qualify after-occurrence/later-acquisition exclusion, expiry/same-time ordering, moving focus, stationary native alerts, actual-victim redirects and same-hit fear exclusion.
@@ -125,13 +121,7 @@ Dependencies: ATI01–ATI07 and the required A/B/C/D/F/G slices; shared **SAD-I*
 
 ## Bounded external gates
 
-- **SA-D02:** common owner must settle exact EvidenceRef revision representation before dependent source adapters. Consume the pinned A proposal opaquely; do not coerce SHA-256 personal-source revisions to numbers.
-- **B/C:** reconcile actual orientation/movement modifiers and qualified producer combinations through their owners; unsupported combinations refuse.
-- **F:** choose minimum lead time, method/danger/approach matching, uncertainty, continued-fight/disengagement and warning retention, then consume the exact producer contract. E does not decide those semantics.
-- **D:** SA-D01 remains the controlled-player longer-term fear producer question. Prior supported conditions can influence choices; new hit fear cannot alter that hit's cut.
-- **G:** ordinary controls/accessibility/reconnect and public projection remain its design/integration responsibility.
-- **Preparation visibility:** an action-stage label is not an observed attack pose. A warning from visible preparation requires actual physical producer support.
-- **Final repertoire integration:** SAD-I retains central coverage/navigation/priorities/counts. E reconciles topical owners only; it does not claim new source-reading research.
+[Technical §11](../projects/attention-and-investigation-tech-design.md#11-open-semantic-questions-and-integration-notes) owns the bounded integration gates. ATI01–ATI08 identifies the affected work; shared decisions remain with their named owners. SAD-I retains central repertoire coverage, navigation, priorities and counts.
 
 ## Maintained records
 
