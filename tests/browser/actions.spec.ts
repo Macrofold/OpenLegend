@@ -4,6 +4,7 @@ import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { PLAYER_ID } from '@open-legend/domain';
 import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
+import { projectView } from '../../apps/server/src/view.js';
 import { readConfig } from '../fixtures/database.js';
 test('scoped React action search, contextual facts and known unavailable choices (native fixture)', async ({
   page,
@@ -57,6 +58,8 @@ test('scoped React action search, contextual facts and known unavailable choices
     ).toHaveCount(0);
     await search.fill('gather');
     await expect(gather).toHaveAttribute('aria-disabled', 'true');
+    // The complete catalogue also contains berry and branch gathering choices.
+    await search.fill('gather river reeds');
     await search.press('ArrowDown');
     await expect(gather).toBeFocused();
     await expect(tip).toContainText('Resume the world');
@@ -73,9 +76,9 @@ test('scoped React action search, contextual facts and known unavailable choices
     await expect(gather).toHaveAttribute('aria-disabled', 'true');
     await page.keyboard.press('Escape');
     await page.locator('#world').click({ button: 'right', position: { x: 900, y: 700 } });
-    await expect(menu.locator('.ol-picker-head strong')).toHaveText(
-      game.service.world.presentation!.locationName,
-    );
+    // Bare ground uses the player's current perceived place, not the opening heading.
+    const view = await projectView(game.service);
+    await expect(menu.locator('.ol-picker-head strong')).toHaveText(view.presentation.locationName);
     await search.fill('walk');
     await expect(menu.getByRole('button', { name: /Walk here/ })).toHaveCount(0);
     // Walking belongs to primary click. Evade remains a native action but is
