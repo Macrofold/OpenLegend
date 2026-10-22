@@ -183,6 +183,9 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
         other.waitForEvent('close', { timeout: 5000 }),
         other.close({ runBeforeUnload: true }),
       ]);
+      // Restore the foreground tab before evaluating its synthetic focus event;
+      // background page scheduling can otherwise delay that evaluation.
+      await page.bringToFront();
       await focus(true);
       await enterGame(page); // The selected page is gone; one surviving tab needs no Resume.
       const logoutTab = await page.context().newPage();
