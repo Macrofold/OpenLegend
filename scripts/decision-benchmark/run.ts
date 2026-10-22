@@ -299,13 +299,6 @@ export async function runBenchmark(
   const onlinePreflight = options.get('online-preflight') === 'true';
   if (command === 'report' && onlinePreflight)
     throw new Error('Reports are offline; use prepare --online-preflight=true for passive checks.');
-  if ((command === 'run' && options.get('live') === 'true') || onlinePreflight) {
-    const prepare = benchmarkDeploymentPreparation(manifest);
-    for (const task of selectedTasks) {
-      const prepared = await prepare(task.arm, task.task);
-      if (prepared) preparedDeployments.set(task.key, prepared);
-    }
-  }
   if (recovery) {
     if (manifest.capUsd !== recovery.capUsd || selectedTasks.length !== recoveryKeys!.size)
       throw new Error('Recovery task selection or aggregate cap changed.');
@@ -325,6 +318,18 @@ export async function runBenchmark(
       throw new Error('Journal invalid; never retry uncertain admissions.', { cause: e });
   }
   const accounting = new BenchmarkAccounting(manifest.priorCommitmentUsd, events);
+  const attempted = new Set(events.filter((e) => e.event === 'admitted').map((e) => e.key));
+  if ((command === 'run' && options.get('live') === 'true') || onlinePreflight) {
+    if ((process.env['MACROFOLD_BASE_URL'] ?? 'http://localhost:3210') !== manifest.baseUrl)
+      throw new Error('Cannot change Macrofold host on resume.');
+    const prepare = benchmarkDeploymentPreparation(manifest);
+    for (const task of selectedTasks) {
+      if (attempted.has(task.key)) continue;
+      const prepared = await prepare(task.arm, task.task);
+      if (prepared) preparedDeployments.set(task.key, prepared);
+    }
+  }
+
   const rateGate = manifest.models.some((model) =>
     availableArms.get(model)!.transport.startsWith('openai'),
   )
@@ -391,7 +396,9 @@ export async function runBenchmark(
       ).length,
       ...comparison,
       ...(experiment
-        ? { modelExperiment: experimentReport(experiment, allRecords, selectedTasks.length) }
+        ? {
+            modelExperiment: experimentReport(experiment, allRecords, selectedTasks.length, events),
+          }
         : {}),
       ...(rateGate
         ? {
@@ -513,7 +520,6 @@ export async function runBenchmark(
     !process.env['OPENAI_API_KEY']?.trim()
   )
     throw new Error('Missing OpenAI key.');
-  const attempted = new Set(events.filter((e) => e.event === 'admitted').map((e) => e.key));
   const tasks = selectedTasks.filter((t) => !attempted.has(t.key));
   tasks.splice(Number(options.get('max-new') ?? tasks.length));
   console.log(
@@ -639,11 +645,18 @@ export async function runBenchmark(
   let next = 0,
     inFlightMicro = 0;
   const blockedArms = new Set<string>();
+  const resourceKey = (arm: (typeof selectedTasks)[number]['arm']) =>
+    JSON.stringify([
+      arm.transport,
+      arm.macrofoldDeployment ?? arm.model,
+      arm.billingMode ?? manifest.billingMode,
+      arm.providerConnectionId ?? manifest.providerConnectionId ?? null,
+    ]);
   const worker = async () => {
     taskLoop: while (!cancellation.signal.aborted) {
       const task = tasks[next++];
       if (!task) return;
-      if (blockedArms.has(task.arm.id)) continue;
+      if (blockedArms.has(resourceKey(task.arm))) continue;
       if (rateGate?.stopReason && task.arm.transport.startsWith('openai')) {
         rateStopReason = rateGate.stopReason;
         continue;
@@ -738,7 +751,7 @@ export async function runBenchmark(
         at: new Date().toISOString(),
       });
       if ([401, 402, 403, 404].includes(record.result.receipt.httpStatus ?? 0))
-        blockedArms.add(task.arm.id);
+        blockedArms.add(resourceKey(task.arm));
       const count = accounting.completedCalls;
       if (count % 10 === 0 || record.result.outcome !== 'value')
         console.log(

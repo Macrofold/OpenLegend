@@ -37,6 +37,7 @@ import {
   prepareMacrofoldGenerationInput,
   decodeMacrofoldGeneration,
   captureMacrofoldDeploymentReceipt,
+  captureMacrofoldDeploymentTarget,
   type PreparedSchema,
   type AiClient,
   type AiReceipt,
@@ -45,6 +46,7 @@ import {
   type JudgeRequest,
   type JudgeValue,
   type JsonValue,
+  type MacrofoldDeploymentTarget,
 } from '@open-legend/ai';
 import type { WorldService } from './world-service.js';
 import { digest } from './store.js';
@@ -180,6 +182,7 @@ function failureResult<T>(
     return { outcome: error.outcome, reason: error.reason, receipt };
   if (error instanceof MacrofoldHttpError) {
     receipt.httpStatus = error.status;
+    if (/^[\w.:-]{1,128}$/.test(error.code)) receipt.providerErrorCode = error.code;
     if (error.admissionRejected && !receipt.providerRequestId) {
       receipt.dispatched = false;
       receipt.completionUncertain = false;
@@ -216,7 +219,9 @@ function failureResult<T>(
       : error instanceof MacrofoldAdmissionStopped
         ? 'The request stopped before dispatch.'
         : rejected
-          ? `The AI service rejected the request (HTTP ${error.status}).`
+          ? receipt.requestedModel.startsWith('deployment:') && receipt.providerErrorCode
+            ? receipt.providerErrorCode
+            : `The AI service rejected the request (HTTP ${error.status}).`
           : invalid
             ? 'The AI service returned invalid data or the request schema was invalid.'
             : error instanceof MacrofoldUnavailable
@@ -287,7 +292,10 @@ export class MacrofoldBackend implements AiClient {
   private api: MacrofoldTransport;
   private privateApi: Pick<MacrofoldTransport, 'request'>;
   private readonly deploymentPreparation: ModelTargetPreparation;
-  private readonly deploymentSchemas = new WeakMap<GenerateRequest['schema'], PreparedSchema>();
+  private readonly deploymentSchemas = new WeakMap<
+    GenerateRequest['schema'],
+    { schema: PreparedSchema; expiresAt: number; validateSource?: () => Promise<void> }
+  >();
   // A restored world starts fresh provider context; old operation records remain auditable.
   private readonly timeline: string;
   readonly provisioner: MacrofoldProvisioner;
@@ -1509,8 +1517,12 @@ export class MacrofoldBackend implements AiClient {
       request.context,
     );
     if (request.macrofoldDeployment) {
-      receipt.requestedModel = receipt.model = `deployment:${request.macrofoldDeployment.modelBinding.deployment_id}`;
+      receipt.requestedModel =
+        receipt.model = `deployment:${request.macrofoldDeployment.modelBinding.deployment_id}`;
       receipt.macrofoldBillingMode = 'byok';
+      receipt.macrofoldRequestedDeployment = captureMacrofoldDeploymentTarget(
+        request.macrofoldDeployment,
+      );
     }
     const control = requestSignal(
       request,
@@ -1519,6 +1531,12 @@ export class MacrofoldBackend implements AiClient {
         : this.service.config.macrofoldTimeoutSeconds * 1000,
     );
     const signal = control.signal;
+    const preparation = this.deploymentSchemas.get(request.schema);
+    if (preparation) {
+      const remainingMs = preparation.expiresAt - performance.now();
+      control.timeoutMs = Math.min(control.timeoutMs, Math.max(1, remainingMs));
+      control.deadlineAtMs = Math.min(control.deadlineAtMs, Date.now() + remainingMs);
+    }
     try {
       if (control.invalid) throw new InvalidData('invalid_request_deadline');
       if (
@@ -1534,8 +1552,12 @@ export class MacrofoldBackend implements AiClient {
             throw new MacrofoldUnavailable('The AI service is not configured.');
           signal.throwIfAborted();
           // Validate caller contracts before spending, including schema-keyword field names.
-          const preparedSchema = this.deploymentSchemas.get(request.schema) ?? prepareSchema(request.schema, 500_000);
-          if (request.macrofoldDeployment || request.execution === 'fast' || request.execution === 'complex')
+          const preparedSchema = preparation?.schema ?? prepareSchema(request.schema, 500_000);
+          if (
+            request.macrofoldDeployment ||
+            request.execution === 'fast' ||
+            request.execution === 'complex'
+          )
             return await this.singleInference<T>(request, receipt, signal, preparedSchema);
           // Fresh history for each bounded inference; only explicitly permitted context
           // enters the call. Compute is reusable without accumulating private memories.
@@ -1568,8 +1590,11 @@ export class MacrofoldBackend implements AiClient {
         },
       );
     } catch (error) {
-      if (request.macrofoldDeployment && error instanceof MacrofoldHttpError &&
-        ['deployment_binding_stale', 'unsupported_model_capability'].includes(error.code))
+      if (
+        request.macrofoldDeployment &&
+        error instanceof MacrofoldHttpError &&
+        ['deployment_binding_stale', 'unsupported_model_capability'].includes(error.code)
+      )
         this.deploymentPreparation.invalidate(request.macrofoldDeployment);
       return failureResult(error, receipt, control.cancelled(), signal.aborted);
     } finally {
@@ -1583,26 +1608,34 @@ export class MacrofoldBackend implements AiClient {
     request: Omit<GenerateRequest, 'requestId' | 'signal'>,
     outputPolicy: 'auto' | 'json_schema' | 'json_object' | 'prompted_json',
     signal: AbortSignal,
+    validateSource?: () => Promise<void>,
   ): Promise<Omit<GenerateRequest, 'requestId' | 'signal'>> {
     const target = request.macrofoldDeployment;
     if (!target) return request;
     const config = this.service.config;
     if (config.jevOnly || config.budgetUsd <= 0)
       throw new MacrofoldUnavailable('Generation is unavailable with the current usage settings.');
-    const deadlineMs = Math.min(request.deadlineMs ?? Infinity, Date.now() + config.aiTimeoutMs, Date.now() + 240_000);
+    const deadlineMs = Math.min(
+      request.deadlineMs ?? Infinity,
+      Date.now() + config.aiTimeoutMs,
+      Date.now() + 240_000,
+    );
+    const expiresAt = performance.now() + Math.max(0, deadlineMs - Date.now());
     const schema = prepareSchema(request.schema, 500_000);
     const prepared = await this.api.run(
       { timeoutMs: config.aiTimeoutMs, deadlineAtMs: deadlineMs, signal },
-      (operation) => this.deploymentPreparation.prepare({
-        target,
-        outputPolicy,
-        schema: schema.schema,
-        maxOutputTokens: request.maxOutputTokens ?? cognitionOutputTokens(request.execution),
-        stream: request.onProgress ? undefined : false,
-        operation,
-      }),
+      (operation) =>
+        this.deploymentPreparation.prepare({
+          target,
+          outputPolicy,
+          schema: schema.schema,
+          maxOutputTokens: request.maxOutputTokens ?? cognitionOutputTokens(request.execution),
+          stream: request.onProgress ? undefined : false,
+          operation,
+        }),
     );
-    this.deploymentSchemas.set(schema.schema, schema);
+    await validateSource?.();
+    this.deploymentSchemas.set(schema.schema, { schema, expiresAt, validateSource });
     return Object.freeze({
       ...request,
       macrofoldDeployment: prepared.macrofoldDeployment,
@@ -1624,32 +1657,52 @@ export class MacrofoldBackend implements AiClient {
     const target = request.macrofoldDeployment;
     if (Boolean(target) !== Boolean(request.macrofoldOutputMode))
       throw new InvalidData('invalid_deployment_output_mode');
-    const model = target ? `deployment:${target.modelBinding.deployment_id}` : request.model ?? config.macrofoldModel;
+    const model = target
+      ? `deployment:${target.modelBinding.deployment_id}`
+      : (request.model ?? config.macrofoldModel);
     receipt.model = model;
     receipt.requestedModel = model;
     const limits = {
       max_cost_micro_usd: microdollarLimit(config.macrofoldRunUsd),
       max_output_tokens: request.maxOutputTokens ?? cognitionOutputTokens(request.execution),
-      timeout_seconds: Math.min(240, Math.max(1, Math.ceil(((request.deadlineMs ?? Date.now() + config.aiTimeoutMs) - Date.now()) / 1000))),
+      timeout_seconds: Math.min(
+        240,
+        Math.max(
+          1,
+          Math.ceil(((request.deadlineMs ?? Date.now() + config.aiTimeoutMs) - Date.now()) / 1000),
+        ),
+      ),
     };
     signal.throwIfAborted();
     const accepted = await this.mutation(
       `single:${request.requestId}`,
       '/v1/inferences',
       {
-        ...(target ? macrofoldDeploymentRequestFields(target) : { model_binding: {
-          provider,
-          model,
-          billing_mode: receipt.macrofoldBillingMode,
-          ...(config.macrofoldProviderConnectionId
-            ? { provider_connection_id: config.macrofoldProviderConnectionId }
-            : {}),
-        } }),
+        ...(target
+          ? macrofoldDeploymentRequestFields(target)
+          : {
+              model_binding: {
+                provider,
+                model,
+                billing_mode: receipt.macrofoldBillingMode,
+                ...(config.macrofoldProviderConnectionId
+                  ? { provider_connection_id: config.macrofoldProviderConnectionId }
+                  : {}),
+              },
+            }),
         // Macrofold forwards the native OpenRouter body. Instructions and actor
         // evidence occupy distinct messages; authority bindings never enter either.
         input: {
           ...(!target ? macrofoldModelParameters(request.execution) : {}),
-          ...prepareMacrofoldGenerationInput({ ...request, schemaName: request.schemaName ?? 'decision', maxOutputTokens: limits.max_output_tokens }, preparedSchema, request.macrofoldOutputMode),
+          ...prepareMacrofoldGenerationInput(
+            {
+              ...request,
+              schemaName: request.schemaName ?? 'decision',
+              maxOutputTokens: limits.max_output_tokens,
+            },
+            preparedSchema,
+            request.macrofoldOutputMode,
+          ),
         },
         limits,
         ...(request.onProgress ? { stream: true } : {}),
@@ -1657,7 +1710,7 @@ export class MacrofoldBackend implements AiClient {
       signal,
       undefined,
       false,
-      undefined,
+      this.deploymentSchemas.get(request.schema)?.validateSource,
       () => {
         receipt.dispatched = true;
         receipt.completionUncertain = true;
@@ -1666,12 +1719,10 @@ export class MacrofoldBackend implements AiClient {
     );
     const run = string(accepted['run_id']);
     try {
-      const inference = await this.inferenceResult(accepted, receipt, signal);
+      const inference = await this.inferenceResult(accepted, receipt, signal, target);
       signal.throwIfAborted();
       const failure = inferenceFailure<T>(inference, receipt);
       if (failure) return failure;
-      captureMacrofoldDeploymentReceipt(inference, receipt, target);
-      if (target) this.deploymentPreparation.observeReceipt(target, receipt);
       const decoded = decodeMacrofoldGeneration<T>(inference['value'], preparedSchema);
       if ('refused' in decoded)
         return { outcome: 'refused', reason: 'Model refused this request.', receipt };
@@ -1778,6 +1829,7 @@ export class MacrofoldBackend implements AiClient {
     accepted: Record<string, unknown>,
     receipt: AiReceipt,
     signal: AbortSignal,
+    expectedDeployment?: MacrofoldDeploymentTarget,
   ) {
     const run = string(accepted['run_id']);
     receipt.providerRequestId = run;
@@ -1791,6 +1843,10 @@ export class MacrofoldBackend implements AiClient {
       resolved.result,
       receipt,
     );
+    if (expectedDeployment) {
+      captureMacrofoldDeploymentReceipt(inference, receipt, expectedDeployment);
+      this.deploymentPreparation.observeReceipt(expectedDeployment, receipt);
+    }
     if (
       !receipt.completionUncertain &&
       ['cancelled', 'timed_out'].includes(String(resolved.status['status']))
@@ -2191,7 +2247,12 @@ export class MacrofoldBackend implements AiClient {
             ),
           );
           if (status['kind'] === 'inference') {
-            captureMacrofoldInferenceReceipt(receipt.providerRequestId!, status, result, receipt);
+            const inference = captureMacrofoldInferenceReceipt(
+              receipt.providerRequestId!,
+              status,
+              result,
+              receipt,
+            );
           } else {
             await this.captureNativeReceipt(
               receipt.providerRequestId!,

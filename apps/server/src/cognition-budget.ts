@@ -198,6 +198,8 @@ export interface LedgerEntry {
   reservedUsd: number;
   providerRequestId?: string;
   macrofoldBillingMode?: AiReceipt['macrofoldBillingMode'];
+  macrofoldDeployment?: AiReceipt['macrofoldDeployment'];
+  macrofoldCostAttribution?: AiReceipt['macrofoldCostAttribution'];
   dispatched?: boolean;
   /** Known price is separate from the possibly larger conservative spending hold. */
   estimatedCostUsd?: number;
@@ -269,6 +271,9 @@ export class DecisionLedger {
     entry.settledUsd = settledUsd;
     entry.providerRequestId = receipt.providerRequestId;
     entry.macrofoldBillingMode = receipt.macrofoldBillingMode;
+    entry.macrofoldDeployment = receipt.macrofoldDeployment ?? entry.macrofoldDeployment;
+    entry.macrofoldCostAttribution =
+      receipt.macrofoldCostAttribution ?? entry.macrofoldCostAttribution;
     entry.dispatched = receipt.dispatched;
     entry.estimatedCostUsd = charge === undefined ? undefined : receipt.estimatedCostUsd;
     entry.uncertain = uncertain;
@@ -307,7 +312,7 @@ export class DecisionLedger {
       inputTokens: entries.reduce((s, e) => s + (e.usage?.inputTokens ?? 0), 0),
       outputTokens: entries.reduce((s, e) => s + (e.usage?.outputTokens ?? 0), 0),
       reasoningTokens: entries.reduce((s, e) => s + (e.usage?.reasoningOutputTokens ?? 0), 0),
-      usageMissing: entries.some((e) => e.usage === undefined && e.settledUsd !== 0),
+      usageMissing: entries.some((e) => e.usage === undefined && e.dispatched),
       reservedUsd: amountUsd(entries, false),
       settledUsd: amountUsd(entries, true),
       uncertain: entries.some((e) => e.uncertain || e.settledUsd === undefined),

@@ -54,6 +54,8 @@ These are selected production design targets, **not installed in gameplay**. The
 
 **Reason / boundary:** Reuse the benchmark's journal, original attempts, bounded transport and private artifact ownership. No unbounded model-search loop, duplicated ledger or per-turn study-history scan is added. Preserve unattempted cases on interruption; larger selected reports can process their chosen cohort incrementally. Production requests perform none of this optional preparation when study collection is off.
 
+**Implemented preparation bound:** The benchmark reuses its 20 MB private evidence envelope for model-plan files and resolved arm metadata. It checks safe request-count arithmetic and rejects provably oversized repeated arm metadata before constructing the repetitions. This bounds retained local preparation; it does not impose a fixed model or corpus count, authorize spending, or truncate selected work.
+
 ## MX-L08 — Evidence scope
 
 **Proposed · Restrictiveness: Medium.** Production acceptance covers usable NPC output, actual authority boundaries, service recovery, cancellation, costs and measured performance. Model quality and player suitability use evidence appropriate to the selected role and existing release owners. No model winner, universal refusal-rate threshold or automatic default selection follows from this design.

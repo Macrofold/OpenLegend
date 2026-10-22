@@ -11,7 +11,16 @@ export interface AttemptBudgetSnapshot {
 /** Later evidence cannot move an admitted obligation to another execution or funding mode. */
 export function assertAttemptReceiptContinuity(
   prior:
-    | Partial<Pick<AiReceipt, 'dispatched' | 'providerRequestId' | 'macrofoldBillingMode'>>
+    | Partial<
+        Pick<
+          AiReceipt,
+          | 'dispatched'
+          | 'providerRequestId'
+          | 'macrofoldBillingMode'
+          | 'macrofoldDeployment'
+          | 'macrofoldRequestedDeployment'
+        >
+      >
     | undefined,
   receipt: AiReceipt,
 ): void {
@@ -21,6 +30,24 @@ export function assertAttemptReceiptContinuity(
     throw new Error('Spending receipt changed its external request identity.');
   if (prior?.macrofoldBillingMode && prior.macrofoldBillingMode !== receipt.macrofoldBillingMode)
     throw new Error('Spending receipt changed its original billing mode.');
+  if (
+    prior?.macrofoldDeployment &&
+    receipt.macrofoldDeployment &&
+    (prior.macrofoldDeployment.deploymentId !== receipt.macrofoldDeployment.deploymentId ||
+      prior.macrofoldDeployment.deploymentRevisionId !==
+        receipt.macrofoldDeployment.deploymentRevisionId)
+  )
+    throw new Error('Spending receipt changed its admitted deployment revision.');
+  const original = prior?.macrofoldRequestedDeployment;
+  const observed = receipt.macrofoldRequestedDeployment;
+  if (
+    original &&
+    observed &&
+    (original.workspaceId !== observed.workspaceId ||
+      original.modelBinding.deployment_id !== observed.modelBinding.deployment_id ||
+      original.modelBinding.deployment_revision_id !== observed.modelBinding.deployment_revision_id)
+  )
+    throw new Error('Spending receipt changed its originally requested deployment.');
 }
 
 /** After matching attempt/Run identities, preserve known pricing independently of

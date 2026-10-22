@@ -154,6 +154,63 @@ Neither zero answer points nor a detected clear error proves that the real engin
 
 ## Spending, records and interruption
 
+### Custom generation experiments
+
+`--model-experiment=/absolute/private/plan.json` selects a finite generation comparison through the same deployment configuration, capability preparation, inference executor and receipt decoder used by production. It supports an existing generation arm, either configured NPC purpose, or an explicit Macrofold deployment. Native decision-only arms are rejected. These tools never create, start or stop hosting, and production does not import experiment metadata.
+
+An example plan is below. Replace the workspace/deployment UUIDs with an existing authorized deployment; the example does not identify a running service. The baseline uses the ordinary configured fast NPC target, including its prices and output allowance. A study output limit can reduce that allowance. Explicit provider model aliases retain their configured pricing.
+
+```json
+{
+  "schema_version": 1,
+  "id": "first_screen",
+  "question": "Does this deployment preserve the selected response contract?",
+  "cases": ["generate-practical-hare-hunter"],
+  "replicates": 1,
+  "arms": [
+    {
+      "id": "baseline",
+      "source": { "kind": "purpose", "purpose": "npc_response_fast" }
+    },
+    {
+      "id": "candidate",
+      "source": {
+        "kind": "deployment",
+        "workspace_id": "44444444-4444-4444-8444-444444444444",
+        "model_binding": {
+          "deployment_id": "11111111-1111-4111-8111-111111111111"
+        },
+        "structured_output": "auto"
+      }
+    }
+  ],
+  "limits": {
+    "cap_usd": 1,
+    "per_call_usd": 0.25,
+    "timeout_ms": 35000,
+    "concurrency": 1,
+    "max_output_tokens": 1024
+  },
+  "prior_commitment_usd": 0,
+  "hosting_cost": { "basis": "already-funded-shared" }
+}
+```
+
+An existing arm uses `source: {"kind":"existing","arm":"spark-contributor"}`; a pinned deployment adds `deployment_revision_id` inside `model_binding`. Output policies are `auto`, `json_schema`, `json_object` and explicitly chosen `prompted_json`. The complete local JSON schema remains mandatory in every mode. `auto` is resolved from actual capabilities only during explicit passive preflight or live execution.
+
+```sh
+node --env-file-if-exists=.env --import tsx scripts/decision-benchmark/main.ts prepare --model-experiment=/absolute/private/plan.json --out=/absolute/private/comparison
+node --env-file-if-exists=.env --import tsx scripts/decision-benchmark/main.ts prepare --model-experiment=/absolute/private/plan.json --out=/absolute/private/comparison --online-preflight=true
+node --env-file-if-exists=.env --import tsx scripts/decision-benchmark/main.ts run --model-experiment=/absolute/private/plan.json --out=/absolute/private/comparison --live=true
+node --env-file-if-exists=.env --import tsx scripts/decision-benchmark/main.ts report --model-experiment=/absolute/private/plan.json --out=/absolute/private/comparison
+```
+
+Ordinary `prepare` and `report` are offline. Passive preflight reads deployment capabilities through the shared production owner; it submits no inference. `run` still requires `--live=true` and existing spending authorization. `--models` conflicts with an experiment plan; duplicate budget, deadline, concurrency and output flags must agree with the plan after checked conversion. Unknown fields, unknown tasks and native decision sources fail locally. Plan files and resolved arm metadata share the existing 20 MB private evidence envelope; provably oversized repetitions fail before expansion, without a fixed case/model-count limit.
+
+The manifest freezes the resolved baseline, plan/reference fingerprints and explicit replicate identities. Resuming requires the same plan, input contract and baseline settings. Each replicate preserves its original corpus/task IDs and has a distinct arm ID, so grading cannot overwrite a preceding answer. Existing writer locks, admissions, accepted Run identities and uncertain holds prevent redispatch after interruption; authentication/funding stops apply to subsequent repetitions of the same target and funding configuration. These synthetic tasks propose values for evaluation and never publish game actions.
+
+Reports retain selected/admitted/accepted/answered coverage, each replicate's actual revisions/output modes, existing completion latency and explicit failures. First useful permitted speech latency remains unavailable in this harness. Assistant refusal, quiet sanitization and independent character choice require human review; native rejection and committed effects require gameplay evidence. A missing shared hosting bill is `null`, and a supplied `hosting_cost.cost_usd` is an operator-reported study-window amount shown once, separate from request fees. It is not a provider invoice or a per-request hosting charge. Missing token usage retains request reservations unless the exact deployment receipt independently establishes its request fee; a known zero request fee does not mean free hosting. Directory changes grant no new spending allowance.
+
 Only explicitly live execution makes model calls; export, audit, analysis and ordinary report commands are offline. Mike explicitly increased this experiment's aggregate ceiling to **$100 on October 16**, superseding $50. The current manifest validator allows at most $100; an existing $50 manifest keeps its original cap, and a new directory does not grant a new allowance. Revised-run preparation carries every prior charge and uncertain reservation into the next ledger; the ordinary fresh-run default prior amount is not sufficient for continuing this task.
 
 Before POST, each call syncs its admission and credible reservation to an append-only journal. Macrofold receives that exact provider cap. Direct OpenAI reservations use a conservative UTF-8-byte token upper bound, schema/instruction/framing overhead, verified rates including cache writes and applicable long-context premiums, and the hard output-token allowance. `--per-call-usd` defaults to a $0.10 safety ceiling; oversized reservations are rejected. Reservations are not predicted charges.

@@ -1,6 +1,12 @@
 import { isAbsolute } from 'node:path';
-import { readFile } from 'node:fs/promises';
-import { usdToMicroUsd } from '../../packages/ai/src/index.js';
+import { readFile, stat } from 'node:fs/promises';
+import {
+  captureMacrofoldDeploymentTarget,
+  captureModelPrices,
+  modelTokenPrices,
+  usdToMicroUsd,
+} from '../../packages/ai/src/index.js';
+import { PRIVATE_BENCHMARK_EVIDENCE_BYTES } from './evidence-limits.js';
 import {
   readGenerationConfig,
   readModelTargetsConfig,
@@ -9,7 +15,7 @@ import {
 } from '../../apps/server/src/generation-config.js';
 import { armById, outputTokens, resolveArm, type BenchmarkArm } from './arms.js';
 import { sha256 } from './corpus.js';
-import type { BenchmarkManifest } from './journal.js';
+import type { BenchmarkManifest, BenchmarkJournalEvent } from './journal.js';
 import type { RunRecord } from './evaluate.js';
 
 type OutputPolicy = NonNullable<BenchmarkArm['structuredOutput']>;
@@ -84,10 +90,10 @@ function deployment(source: Record<string, unknown>) {
     }),
   );
   if (!parsed?.purposes.npc_response_fast) throw new Error('Missing deployment target.');
-  return {
+  return captureMacrofoldDeploymentTarget({
     workspaceId: parsed.workspace_id,
     modelBinding: parsed.purposes.npc_response_fast.model_binding,
-  };
+  });
 }
 /** Local study admission shares deployment setting validation and makes no provider calls. */
 export function parseModelExperiment(value: unknown): ModelExperimentPlan {
@@ -209,7 +215,12 @@ export function parseModelExperiment(value: unknown): ModelExperimentPlan {
 export async function readModelExperiment(path: string): Promise<ModelExperimentPlan> {
   if (!isAbsolute(path))
     throw new Error('--model-experiment requires an absolute private plan path.');
-  return parseModelExperiment(JSON.parse(await readFile(path, 'utf8')));
+  if ((await stat(path)).size > PRIVATE_BENCHMARK_EVIDENCE_BYTES)
+    throw new Error('Model experiment exceeds the 20MB private evidence envelope.');
+  const source = await readFile(path, 'utf8');
+  if (Buffer.byteLength(source) > PRIVATE_BENCHMARK_EVIDENCE_BYTES)
+    throw new Error('Model experiment exceeds the 20MB private evidence envelope.');
+  return parseModelExperiment(JSON.parse(source));
 }
 export function applyExperimentOptions(
   plan: ModelExperimentPlan,
@@ -242,6 +253,9 @@ export function resolveModelExperiment(
     ? readGenerationConfig(env)
     : undefined;
   const arms: BenchmarkArm[] = [];
+  let retainedBytes = Buffer.byteLength(JSON.stringify(plan));
+  if (!Number.isSafeInteger(plan.cases.length * plan.arms.length * plan.replicates))
+    throw new Error('Planned request count exceeds safe arithmetic.');
   for (const entry of plan.arms) {
     let base: BenchmarkArm;
     if (entry.source.kind === 'existing') {
@@ -264,6 +278,15 @@ export function resolveModelExperiment(
         inputRate: prices?.inputUsdPerMillion ?? 0,
         outputRate: prices?.outputUsdPerMillion ?? 0,
         prices,
+        ...(selected.transport === 'openai'
+          ? {
+              modelPrices: config.llmModelPrices.filter(
+                (entry) =>
+                  entry.model === selected.model ||
+                  entry.reportedAliases?.includes(selected.model ?? ''),
+              ),
+            }
+          : {}),
         maxOutputTokens: selected.maxOutputTokens,
         effort: selected.reasoningEffort,
         billingMode: selected.billingMode,
@@ -273,7 +296,11 @@ export function resolveModelExperiment(
         ...(selected.transport === 'macrofold' ? { reservationUsd: config.macrofoldRunUsd } : {}),
       };
     } else {
-      const target = deployment(entry.source as unknown as Record<string, unknown>);
+      const target = deployment({
+        workspace_id: entry.source.workspace_id,
+        model_binding: entry.source.model_binding,
+        structured_output: entry.source.structured_output,
+      });
       base = {
         id: entry.id,
         alias: entry.id,
@@ -286,6 +313,27 @@ export function resolveModelExperiment(
         structuredOutput: entry.source.structured_output ?? 'auto',
       };
     }
+    const maxOutputTokens = Math.min(
+      base.maxOutputTokens ?? outputTokens,
+      plan.limits.max_output_tokens,
+    );
+    const bytesPerArm =
+      Buffer.byteLength(
+        JSON.stringify({
+          ...base,
+          id: `experiment/${entry.id}/replicate-${plan.replicates}`,
+          alias: entry.id,
+          originalArm: entry.id,
+          replicate: plan.replicates,
+          maxOutputTokens,
+        }),
+      ) + 1;
+    const bytes = bytesPerArm * plan.replicates;
+    if (!Number.isSafeInteger(bytes) || retainedBytes + bytes > PRIVATE_BENCHMARK_EVIDENCE_BYTES)
+      throw new Error(
+        'Resolved model experiment metadata exceeds the 20MB private evidence envelope before expansion.',
+      );
+    retainedBytes += bytes;
     for (let replicate = 1; replicate <= plan.replicates; replicate++)
       arms.push({
         ...base,
@@ -293,10 +341,7 @@ export function resolveModelExperiment(
         alias: entry.id,
         originalArm: entry.id,
         replicate,
-        maxOutputTokens: Math.min(
-          base.maxOutputTokens ?? outputTokens,
-          plan.limits.max_output_tokens,
-        ),
+        maxOutputTokens,
       });
   }
   return { plan, planDigest: sha256(plan), arms, referenceDigest: sha256(reference) };
@@ -312,6 +357,7 @@ export function experimentReport(
   experiment: ResolvedModelExperiment,
   records: RunRecord[],
   planned: number,
+  events: readonly BenchmarkJournalEvent[] = [],
 ) {
   return {
     id: experiment.plan.id,
@@ -320,6 +366,8 @@ export function experimentReport(
     referenceDigest: experiment.referenceDigest,
     coverage: {
       planned,
+      admitted: events.filter((event) => event.event === 'admitted').length,
+      accepted: events.filter((event) => event.event === 'accepted').length,
       returned: records.length,
       answered: records.filter((r) => r.result.outcome === 'value').length,
       unattemptedOrPending: planned - records.length,
@@ -333,6 +381,7 @@ export function experimentReport(
         .filter((r) => r.model === arm.id)
         .map((r) => ({
           deployment: r.result.receipt.macrofoldDeployment ?? null,
+          outputMode: r.outputMode ?? null,
           model: r.result.receipt.model,
           modelVersionStatus: r.result.receipt.modelVersionStatus,
         })),
@@ -381,11 +430,10 @@ export function validateResolvedModelExperiment(
     throw new Error('Saved model experiment fingerprints changed.');
   if (!Array.isArray(e.arms) || e.arms.length !== plan.arms.length * plan.replicates)
     throw new Error('Saved model experiment arm count changed.');
-  const expected = new Set(
-    plan.arms.flatMap((a) =>
-      Array.from({ length: plan.replicates }, (_, i) => `experiment/${a.id}/replicate-${i + 1}`),
-    ),
-  );
+  if (Buffer.byteLength(JSON.stringify(e.arms)) > PRIVATE_BENCHMARK_EVIDENCE_BYTES)
+    throw new Error('Saved model experiment exceeds the 20MB private evidence envelope.');
+  const originalArms = new Set(plan.arms.map((arm) => arm.id));
+  const seen = new Set<string>();
   for (const value of e.arms) {
     const a = record(
       value,
@@ -398,6 +446,7 @@ export function validateResolvedModelExperiment(
         'outputRate',
         'effort',
         'prices',
+        'modelPrices',
         'billingMode',
         'providerConnectionId',
         'maxOutputTokens',
@@ -411,10 +460,15 @@ export function validateResolvedModelExperiment(
     );
     if (
       typeof a.id !== 'string' ||
-      !expected.delete(a.id) ||
+      seen.has(a.id) ||
+      !originalArms.has(String(a.originalArm)) ||
+      !Number.isSafeInteger(a.replicate) ||
+      Number(a.replicate) < 1 ||
+      Number(a.replicate) > plan.replicates ||
       a.id !== `experiment/${a.originalArm}/replicate-${a.replicate}`
     )
       throw new Error('Saved model experiment arm identity changed.');
+    seen.add(a.id);
     text(a.model, 'Saved arm model');
     if (!['macrofold-generation', 'openai-response'].includes(String(a.transport)))
       throw new Error('Saved model experiment must use generation.');
@@ -436,6 +490,74 @@ export function validateResolvedModelExperiment(
       money(prices.outputUsdPerMillion, 'output price', false);
       for (const field of ['cachedInputUsdPerMillion', 'cacheWriteInputUsdPerMillion'])
         if (prices[field] !== undefined) money(prices[field], field, false);
+    }
+    if (a.modelPrices !== undefined) {
+      if (!Array.isArray(a.modelPrices)) throw new Error('Saved model prices must be a catalogue.');
+      const catalogue = a.modelPrices.map((raw) => {
+        const entry = record(
+          raw,
+          ['model', 'prices', 'reportedAliases'],
+          'Saved model price entry',
+        );
+        const prices = record(
+          entry.prices,
+          [
+            'inputUsdPerMillion',
+            'outputUsdPerMillion',
+            'cachedInputUsdPerMillion',
+            'cacheWriteInputUsdPerMillion',
+          ],
+          'Saved entry prices',
+        );
+        if (entry.reportedAliases !== undefined && !Array.isArray(entry.reportedAliases))
+          throw new Error('Saved aliases must be an array.');
+        return {
+          model: text(entry.model, 'Saved priced model'),
+          prices: {
+            inputUsdPerMillion: money(prices.inputUsdPerMillion, 'input price', false),
+            outputUsdPerMillion: money(prices.outputUsdPerMillion, 'output price', false),
+            ...(prices.cachedInputUsdPerMillion === undefined
+              ? {}
+              : {
+                  cachedInputUsdPerMillion: money(
+                    prices.cachedInputUsdPerMillion,
+                    'cached price',
+                    false,
+                  ),
+                }),
+            ...(prices.cacheWriteInputUsdPerMillion === undefined
+              ? {}
+              : {
+                  cacheWriteInputUsdPerMillion: money(
+                    prices.cacheWriteInputUsdPerMillion,
+                    'cache write price',
+                    false,
+                  ),
+                }),
+          },
+          ...(entry.reportedAliases === undefined
+            ? {}
+            : {
+                reportedAliases: entry.reportedAliases.map((alias) =>
+                  text(alias, 'Saved model alias'),
+                ),
+              }),
+        };
+      });
+      const selected = modelTokenPrices(captureModelPrices(catalogue), String(a.model));
+      const prices = a.prices;
+      if (
+        !selected ||
+        !prices ||
+        typeof prices !== 'object' ||
+        ![
+          'inputUsdPerMillion',
+          'outputUsdPerMillion',
+          'cachedInputUsdPerMillion',
+          'cacheWriteInputUsdPerMillion',
+        ].every((field) => Reflect.get(selected, field) === Reflect.get(prices, field))
+      )
+        throw new Error('Saved model catalogue does not match its selected rates.');
     }
     if (a.effort !== undefined && !['none', 'low', 'medium', 'high'].includes(String(a.effort)))
       throw new Error('Invalid saved reasoning effort.');

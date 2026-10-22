@@ -127,6 +127,8 @@ export interface AiReceipt {
   providerRequestId?: string;
   /** Macrofold billing admitted for this exact request, retained across configuration changes. */
   macrofoldBillingMode?: 'managed' | 'byok';
+  /** Original local target and deliberate pin, retained for recovery outside gameplay rewind. */
+  macrofoldRequestedDeployment?: MacrofoldDeploymentTarget;
   /** Actual immutable revision admitted for this Run, independent of current hosting status. */
   macrofoldDeployment?: { deploymentId: string; deploymentRevisionId: string };
   macrofoldCostAttribution?: {

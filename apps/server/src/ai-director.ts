@@ -1950,7 +1950,17 @@ export class AiDirector {
           // An adapter may report a dispatched, unknown completion as failed; the receipt decides.
           result.outcome !== 'cancelled' && result.receipt.completionUncertain
             ? 'uncertain'
-            : result.outcome,
+            : ((
+                {
+                  deployment_capacity: 'capacity',
+                  deployment_budget_exhausted: 'budget-exhausted',
+                  unsupported_model_capability: 'unsupported',
+                  context_length_exceeded: 'context-exceeded',
+                  deployment_binding_stale: 'resource-unavailable',
+                  deployment_not_ready: 'resource-unavailable',
+                  deployment_unavailable: 'resource-unavailable',
+                } as Record<string, string>
+              )[result.receipt.providerErrorCode ?? ''] ?? result.outcome),
         );
       if (provider === 'openai') run.generatedBy = result.receipt.model;
       return result.value;
@@ -2020,7 +2030,7 @@ export class AiDirector {
         ...meter,
         model: request.macrofoldDeployment
           ? `deployment:${request.macrofoldDeployment.modelBinding.deployment_id}`
-          : request.model ?? this.service.config.llmModel,
+          : (request.model ?? this.service.config.llmModel),
         size: {
           instructions: textBytes(request.instructions),
           context: textBytes(request.context),
@@ -2780,27 +2790,37 @@ export class AiDirector {
           },
         );
         let generationRequest: Omit<GenerateRequest, 'requestId' | 'signal'> = {
-            task: 'npc_response',
-            actorScope: actorId,
-            execution: level === 2 ? 'fast' : 'complex',
-            ...('macrofoldDeployment' in selected
-              ? { macrofoldDeployment: selected.macrofoldDeployment }
-              : { model: selected.model, reasoningEffort: selected.reasoningEffort }),
-            maxOutputTokens: selected.maxOutputTokens,
-            instructions,
-            context,
-            schema: responseSchema,
-            ...(preview ? { onProgress: preview.progress } : {}),
+          task: 'npc_response',
+          actorScope: actorId,
+          execution: level === 2 ? 'fast' : 'complex',
+          ...('macrofoldDeployment' in selected
+            ? { macrofoldDeployment: selected.macrofoldDeployment }
+            : { model: selected.model, reasoningEffort: selected.reasoningEffort }),
+          maxOutputTokens: selected.maxOutputTokens,
+          instructions,
+          context,
+          schema: responseSchema,
+          ...(preview ? { onProgress: preview.progress } : {}),
         };
         if (generationRequest.macrofoldDeployment && !c.jevOnly && c.budgetUsd > 0) {
           try {
             generationRequest = await this.macrofold.prepareDeploymentGeneration(
-              generationRequest, selected.structuredOutput, run.controller.signal,
+              generationRequest,
+              selected.structuredOutput,
+              run.controller.signal,
+              async () => {
+                await prepared.validateConversation();
+                this.current(run);
+              },
             );
             this.current(run);
           } catch (error) {
             if (error instanceof ModelTargetPreparationError)
-              throw new StopJob('failed', 'The selected character model is unavailable for this reply.', error.outcome);
+              throw new StopJob(
+                'failed',
+                'The selected character model is unavailable for this reply.',
+                error.outcome,
+              );
             throw error;
           }
         }

@@ -153,6 +153,7 @@ export async function executeArm(
             apiKey: process.env['OPENAI_API_KEY'] ?? '',
             model: arm.model,
             prices: arm.prices ?? lunaPrices,
+            modelPrices: arm.modelPrices,
           },
           timeoutMs: manifest.timeoutMs,
           maxRequestBytes: 500_000,

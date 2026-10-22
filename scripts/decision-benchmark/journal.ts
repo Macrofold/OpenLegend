@@ -2,6 +2,7 @@ import {
   usdToMicroUsd,
   sumSafeIntegers,
   type MacrofoldBillingMode,
+  type AiReceipt,
 } from '../../packages/ai/src/index.js';
 import type { RunRecord } from './evaluate.js';
 import { armById, type BenchmarkArm, type BenchmarkArmId } from './arms.js';
@@ -39,6 +40,20 @@ export interface BenchmarkJournalEvent {
   runId?: string;
   record?: RunRecord;
   at: string;
+}
+/** A separately known deployment request fee is independent of token telemetry. */
+function deploymentRequestPrice(receipt: AiReceipt): boolean {
+  const deployment = receipt.macrofoldDeployment,
+    attribution = receipt.macrofoldCostAttribution;
+  return (
+    receipt.provider === 'macrofold' &&
+    receipt.macrofoldBillingMode === 'byok' &&
+    deployment !== undefined &&
+    attribution?.basis === 'deployment' &&
+    attribution.deploymentId === deployment.deploymentId &&
+    attribution.infrastructureCostIncluded === false &&
+    receipt.requestedModel === `deployment:${deployment.deploymentId}`
+  );
 }
 
 const micro = (value: number) => {
@@ -82,7 +97,7 @@ export class BenchmarkAccounting {
         micro(receipt.providerReportedCostUsd ?? 0),
       );
       const settled =
-        (receipt.usage || receipt.macrofoldCostAttribution?.basis === 'deployment') &&
+        (receipt.usage || deploymentRequestPrice(receipt)) &&
         receipt.estimatedCostUsd !== undefined &&
         !receipt.completionUncertain
           ? known
@@ -256,14 +271,31 @@ export function assertBenchmarkRecord(
   );
   if (receipt.macrofoldDeployment !== undefined) {
     object(receipt.macrofoldDeployment);
+    const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
     requireValue(
       arm.macrofoldDeployment !== undefined &&
+        typeof receipt.macrofoldDeployment.deploymentRevisionId === 'string' &&
+        uuid.test(receipt.macrofoldDeployment.deploymentRevisionId) &&
         receipt.macrofoldDeployment.deploymentId ===
           arm.macrofoldDeployment.modelBinding.deployment_id &&
         (arm.macrofoldDeployment.modelBinding.deployment_revision_id === undefined ||
           receipt.macrofoldDeployment.deploymentRevisionId ===
             arm.macrofoldDeployment.modelBinding.deployment_revision_id),
       'deployment receipt binding',
+    );
+  }
+  if (receipt.macrofoldCostAttribution !== undefined) {
+    object(receipt.macrofoldCostAttribution);
+    object(receipt.macrofoldDeployment);
+    const attribution = receipt.macrofoldCostAttribution;
+    requireValue(
+      arm.macrofoldDeployment !== undefined &&
+        receipt.macrofoldBillingMode === 'byok' &&
+        attribution.basis === 'deployment' &&
+        attribution.infrastructureCostIncluded === false &&
+        attribution.deploymentId === arm.macrofoldDeployment.modelBinding.deployment_id &&
+        receipt.macrofoldDeployment?.deploymentId === attribution.deploymentId,
+      'deployment cost attribution',
     );
   }
   requireValue(

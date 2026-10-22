@@ -1,4 +1,8 @@
-import type { GenerateRequest, TokenPrices } from '../../packages/ai/src/index.js';
+import type {
+  GenerateRequest,
+  ModelTokenPrices,
+  TokenPrices,
+} from '../../packages/ai/src/index.js';
 
 export const benchmarkArms = [
   {
@@ -83,6 +87,7 @@ export interface BenchmarkArm {
   outputRate: number;
   effort?: GenerateRequest['reasoningEffort'];
   prices?: TokenPrices;
+  modelPrices?: readonly ModelTokenPrices[];
   billingMode?: 'managed' | 'byok';
   providerConnectionId?: string;
   maxOutputTokens?: number;
@@ -115,8 +120,13 @@ export function reservationUsd(arm: BenchmarkArm, inputBytes: number): number {
   const upperInput = inputBytes + 4096;
   const long = upperInput > 272_000;
   const inputRate =
-    arm.inputRate *
-    (arm.transport === 'openai-response' ? 1.25 : 1) *
+    (arm.prices
+      ? Math.max(
+          arm.prices.inputUsdPerMillion,
+          arm.prices.cachedInputUsdPerMillion ?? 0,
+          arm.prices.cacheWriteInputUsdPerMillion ?? 0,
+        )
+      : arm.inputRate * (arm.transport === 'openai-response' ? 1.25 : 1)) *
     (arm.transport.startsWith('openai') && long ? 2 : 1);
   const outputRate = arm.outputRate * (arm.transport === 'openai-response' && long ? 1.5 : 1);
   return (

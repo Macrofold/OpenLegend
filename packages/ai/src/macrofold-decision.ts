@@ -129,7 +129,7 @@ export function captureMacrofoldInferenceReceipt(
 ): Record<string, unknown> {
   receipt.completionUncertain = macrofoldInferenceEvidence(run, status, result).completionUncertain;
   const inference = object(result['inference']);
-  captureMacrofoldDeploymentReceipt(inference, receipt);
+  captureMacrofoldDeploymentReceipt(inference, receipt, receipt.macrofoldRequestedDeployment);
   const admittedMode = receipt.macrofoldBillingMode;
   const reportedMode = record(inference['billing'])
     ? inference['billing']['billing_mode']
@@ -452,6 +452,7 @@ function createMacrofoldExecutor(
       requestId: request.requestId,
       provider: 'macrofold',
       macrofoldBillingMode: billingMode,
+      ...(deployment ? { macrofoldRequestedDeployment: deployment } : {}),
       requestedModel: model,
       model,
       modelVersionStatus: 'unavailable',
@@ -593,7 +594,6 @@ function createMacrofoldExecutor(
           const result =
             embeddedResult ?? (await readRun(`/v1/runs/${encodeURIComponent(run)}/result`));
           const inference = captureMacrofoldInferenceReceipt(run, status, result, receipt);
-          if (deployment) captureMacrofoldDeploymentReceipt(inference, receipt, deployment);
           const raw = inference['value'];
           // Caller cancellation during acceptance persistence or recovery still
           // withdraws the answer; no paid request is retried.
