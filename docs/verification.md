@@ -1,6 +1,6 @@
 # Verification
 
-- [Custom model configuration](verification/custom-models.md) — offline configuration checks and exact upstream compatibility blocker; no deployment inference or gameplay acceptance is established.
+- [Production custom models](verification/custom-models.md) — implemented NPC routing, shared inference and benchmark support; configuration, actual Macrofold API and native gameplay fixture evidence are distinguished from remaining live hosted-model operating acceptance.
 
 [Macrofold efficiency follow-through](verification/macrofold-efficiency-followup.md) records shared inference receipts, bounded diagnostics, narrow PostgreSQL reads and authoring revision checks, including requested-review fixes and the integrated private-inspection ordering correction.
 

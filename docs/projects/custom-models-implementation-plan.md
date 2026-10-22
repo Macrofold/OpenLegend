@@ -1,8 +1,8 @@
 # Custom models — implementation plan
 
-| Status      | Current progress                                                                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Production routing, shared inference and benchmark extensions are implemented; actual Macrofold API verification and final operating evidence are being reconciled. | 2026-10-22   |
+| Status      | Current progress                                                                                                                                                                               | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Production routing, shared inference and benchmark extensions are implemented; actual Macrofold HTTP compatibility is demonstrated, while live hosted-model operating acceptance remains open. | 2026-10-22   |
 
 ## Scope and completion
 

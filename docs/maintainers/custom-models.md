@@ -85,7 +85,10 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
 
 **Owner:** provider/gameplay verification through existing owners and Macrofold integration. **Design:** technical §7. **Dependencies:** MX01–MX03 and matching installed Macrofold API; **no dependency on MX04–MX05/MX07**.
 
-- [ ] Verify target/role isolation, actual NPC response admission, output mode/local validation, optional streaming, no-call controls and unchanged native judgment/escalation.
+- [x] Verify target/role isolation, actual NPC response admission, output mode/local validation, optional streaming, no-call controls and unchanged native judgment/escalation.
+
+  Actual Macrofold HTTP compatibility and native gameplay with synthetic model answers are evidenced separately; this does not close live hosted-model reliability/quality below.
+
 - [ ] Verify automatic same-revision host recovery, current-revision update for new requests, optional pins and valid completion of earlier admitted work. Interrupted/unknown requests are never replayed. Include an upgrade that makes a formerly unsupported request valid: stale local capability rejection refreshes once before refusal, repeated unsupported work respects the shared negative-cache cooldown, and a new revision in a successful receipt invalidates only later preparation.
 - [ ] Exercise unavailable/capacity/context/revocation/deadline/cancellation cases, accepted-Run recovery, request settlement and missing usage/hosting-cost evidence.
 - [ ] Under the existing spending authority, establish actual supported runtime and warm/concurrent/recovery behavior. Record tested versions, input/output limits, useful latency, throughput and costs; static/fixture success is not live acceptance.
@@ -106,7 +109,7 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
 
 **Owner:** this tracker, provider docs and applicable existing PD/CE/CR/AG/NST/PF/PS owners. **Dependencies:** MX01–MX03 and MX06.
 
-- [ ] Document installed setup, target selection, automatic recovery, updates/pins, useful diagnostics, costs and measured operating limits through existing guides.
+- [x] Document installed setup, target selection, automatic recovery, updates/pins, useful diagnostics, costs and measured operating limits through existing guides. Local/API measurements and unmeasured hosted limits are distinguished explicitly.
 - [x] Verify that no experimental gate, hosting-session reference or worker-identity equality remains in ordinary runtime selection/publication.
 - [x] Record the supported production scope and outstanding existing release/privacy/content/capacity requirements. Configure any new default deliberately; implementation merge alone does not choose the game's model.
 

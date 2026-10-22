@@ -1,8 +1,8 @@
 # Custom model deployments — feature specification
 
-| Status      | Current progress                                                                                                                                         | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Offline configuration parsing is implemented; production routing and optional benchmark integration are underway, with joint live acceptance still open. | 2026-10-22   |
+| Status      | Current progress                                                                                                                          | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Production routing, shared inference and optional benchmark support are implemented; live hosted-model operating acceptance remains open. | 2026-10-22   |
 
 ## 1. Purpose and selected outcome
 
