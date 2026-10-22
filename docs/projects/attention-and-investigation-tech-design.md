@@ -43,7 +43,7 @@ Current PersonalEncounter.watch is automatic stabilized observation bookkeeping,
 
 Use **one optional finite attention control nested in its existing accepted-work owner**: ActivityExecution for a composed or standalone inquiry; the current Action for a compatible direct-action amendment with no activity; or NativeResponseEpisode for a memoryless animal. It is never stored in two places. A direct standalone watch can compile into a one-node finite activity without inventing an ActorGoal. Orient-once remains B's ordinary action/amendment and need not create an E control.
 
-An action either owns the inline control or references its exact activity/episode control; it cannot do both. A compatible direct move/guard amendment preserves the existing action ID, route, progress, purpose, work generation and cooperation. It neither wraps/restarts that action nor creates a plan. A new scoped attentionRevision starts at admission and increments only on accepted terms/extent/focus-policy changes; it is not a per-tick counter, evidence revision or replacement for B's separate orientation amendment. Existing plan/step/activity identity still fences activity-owned work.
+An action either owns the inline control or references its exact activity/episode control; it cannot do both. A compatible direct move/guard amendment preserves the existing action ID, route, progress, purpose, work generation and cooperation. It neither wraps/restarts that action nor creates a plan. The scoped attentionRevision is monotonic for the containing Action, ActorPlan/activity or NativeResponseEpisode lifetime. Real installation, accepted terms/extent/focus-policy change and removal (including expiry) advance it; ordinary progress does not. Preserve it on that existing owner while its optional control is absent; reinstalling on the same owner cannot reset it. A genuinely new owner identity can begin a new sequence. It is not an evidence revision, per-tick counter or replacement for B's separate orientation amendment. Existing plan/step/activity identity still fences activity-owned work.
 
 **Facet lifetime is distinct from whole-plan lifetime.** The existing ActivityExecution.control deadline can cancel its plan; do not install an attached watch's shorter deadline there. Expiry/removal of an attached attention facet closes only its coverage, subscriptions and E-requested B maintenance, leaving the underlying move/guard/work action running. Its achieved pose remains unless another actually admitted operation changes it. Standalone observation can finish its own action/activity normally. The earlier of underlying work end, existing whole-plan termination or E's original deadline bounds the facet; none extends the others. Explicit across-step investigation retains its single activity-owned inquiry, with each step's actual coverage and gaps. Ordinary enqueue/replacement never silently promotes action-owned terms into a plan; explicit readmission is required and a continuing commitment retains its original deadline.
 
@@ -83,12 +83,21 @@ type AttentionTerms = Readonly<{
   method: DefinitionPin;
   foci: readonly AttentionFocus[];
   concerns: readonly PermittedParticipant[];
-  predicate?: RegisteredObservationPredicate;
-  notification: 'event' | 'level';
-  initialLevel: 'report-current' | 'changes-only';
+  trigger:
+    | { kind: 'none' }
+    | {
+        kind: 'event';
+        predicate: RegisteredObservationPredicate;
+        stopOnMatch: boolean;
+      }
+    | {
+        kind: 'level';
+        predicate: RegisteredObservationPredicate;
+        initial: 'report-current' | 'changes-only';
+        stopOn: 'never' | 'true' | 'false';
+      };
   stop: {
     deadline: SimTime;
-    condition?: RegisteredObservationPredicate;
     maximumChecks?: number;
   };
   anticipation?: {
@@ -101,6 +110,8 @@ type AttentionTerms = Readonly<{
 PermittedSpatialBasis is exactly one existing actor-authorized spatial selection/known-place observation, A FactKey for received location, or own accepted pose captured for a relative selection. It carries the original frame/time and source eligibility; it contains no hidden emitter pointer. Use existing SupportedRegion, Position and Direction representations, not proxy entities or a new geometry language. A historical received bearing and a one-time relative spatial selection stay fixed to their captured frame. A maintained travel-relative instruction is separately typed below; it never rotates historical acoustic evidence.
 
 ExistingPermittedPhysicalTarget is the ordinary admitted current-body/object/surface reference with its exact life/observation binding. A current exposure or an ObserverSubject by itself is not that target. Each concern is an anonymous exposure, observer-local individual, supported known person or attributed description under A's PermittedParticipant. Up to eight selected concern references can share one or several foci, independently of the eight-focus envelope; they are permitted associations, not a general belief graph or limit on encountered dangers. Deduplicate only identical typed bindings with the same association support, preserving observer/life scope. Do not join different exposures, rival associations or local individuals through hidden entity equality or display names. An arrivals predicate can match newly observed visitors without appending each to the terms.
+
+A method has at most one predicate, in its event or level trigger. Validate the predicate's registered kind; incompatible kinds/operands refuse. The same predicate can end the facet through stopOnMatch/stopOn; there is no second hidden termination predicate. Unknown cannot satisfy false. Named clock endings resolve to the original deadline. A method without a predicate still records its actual scoped observation/result.
 
 Anticipation is an **accepted instruction to maintain a supported method**, not a factual claim that danger exists. Its registered danger-family pins and focus ordinals are explicit; no arbitrary prose “anything, anywhere” predicate is executable. Omitted anticipation means ordinary observation. A supported physical guard/offense/native-alarm method can supply preparation from its own accepted owner even without AttentionTerms.
 
@@ -126,7 +137,7 @@ For several danger hypotheses, retain each original support and uncertainty in A
 
 ### 3.1 One admission transaction
 
-1. Resolve the exact actor, normalized physical life, controller and current work through ProspectiveWork.expected. Resolve permitted terms against the current observation/identity owner; validate installed method/predicate/definition pins and finite original bounds.
+1. Resolve the exact actor, normalized physical life, controller and current work through ProspectiveWork.expected. Resolve permitted terms against the current observation/identity owner; validate installed method/predicate/definition pins and finite original bounds. Scan/visual watch needs a nonempty admitted focus list; an ambient listening hold may have none and then supplies no directional anticipation. Anticipation requires at least one valid active-focus ordinal and installed danger family. Reject duplicate/out-of-range ordinals and nonfinite geometry/time rather than broadening scope.
 2. Determine the chosen continue/enqueue/replace/interrupt operation. Explain lost work, committed costs, suspended-plan consequences and recovery using the existing prospective-work owner. Selection is not acceptance.
 3. Run the same read-only prerequisite calculation for menus, exact player requests, NPC offers, interpreted proposals and plan dispatch: scope access, sense/body, allowed pose, tool/part/reach, real work claims, supported simultaneous combination and parameter/work-envelope limits.
 4. Prepare required geometry/current facets through existing owners. Technical preparation is not elapsed fictional inspection and cannot inspect hidden truth for cognition. Incomplete work leaves admission pending or unavailable, without replacing existing work.
@@ -181,7 +192,7 @@ Subscribe through EPR/derived interests/ActorWork, scoped to the exact active ow
 | Dwell, original deadline, actual condition crossing or native episode review | Existing simulation boundary/due owner; no wall-clock or browser timer. |
 | Life/control/timeline/definition change | Existing lifecycle/authority transition invalidates affected work and derived subscriptions. |
 
-Event watches act on a new acquired contribution once, using its actual identity. Level watches retain only their last completed truth, last qualified interval and emitted transition/disposition in the existing activity control. The installed predicate provides hysteresis/dwell where needed; E does not add universal salience thresholds. Initial true levels follow the admitted report-current/changes-only choice. Unknown or incomplete supplies no false/clear interval. Losing support ends fulfilled coverage immediately and resets continuous dwell; later true support is a coverage recovery, not invented new physical occurrence.
+Event watches act on a new acquired contribution once, using its actual identity. Level watches retain only their last completed truth, last qualified interval and emitted transition/disposition in the existing activity control. The installed predicate provides hysteresis/dwell where needed; E does not add universal salience thresholds. Initial true levels follow the admitted report-current/changes-only choice for both reporting and predicate-driven stopping. Changes-only establishes its first complete baseline without reporting or stopping; later true/false transitions can qualify. After a coverage gap, a supported recovery result may say now-observed, never invent an unobserved crossing. Unknown or incomplete supplies no false/clear interval. Losing support ends fulfilled coverage immediately and resets continuous dwell; later true support is a coverage recovery, not invented new physical occurrence.
 
 Unchanged level evaluations emit no result/event/decision. A change may create an actor-private observation result or satisfy an already admitted branch. It never authorizes an unselected attack, another person's reply or new material spending. Exiting an activity unregisters its future dependencies; retained history remains with action experience.
 
@@ -189,7 +200,11 @@ Unchanged level evaluations emit no result/event/decision. A change may create a
 
 Use the existing activity frontier plus a bounded selected-search payload: exact admitted region/method/query, current page cursor, checked work-unit references, remaining original time/check allowance and emitted terminal disposition. Do not maintain an indefinitely growing live investigation diary.
 
-A work unit is one actually reachable, permitted object/part/surface or supported subregion and observation method. Enumerate before hydration through current scoped spatial/container/knowledge queries. Candidate positions are **chosen vantage points**, never estimates silently treated as the hidden source. Do not query an invisible emitter's route. Method-specific spatial enumeration has a finite step allowance, deterministic continuation and a truthful incomplete outcome; a geometric refusal cannot reveal the hidden obstruction.
+The initial search families are (1) current permitted exterior-object observations, (2) accessible container/record inspection through their existing query/action owners, and (3) an explicitly selected finite sequence of permitted vantages with actual scan/listen checks. Each uses the owning query's stable cursor/order; exterior candidates come from A's current permitted exposure scope, ordered by existing typed reference order, never a new hidden-world object query. Do not invent a region grid or certify full-room absence. A request for unsupported complete area coverage returns its available partial method for acceptance or refuses unchanged.
+
+A work unit is one actually reachable, permitted object/part/surface or a subregion whose existing observation provider supports the claimed coverage, plus its observation method. Enumerate before hydration through current scoped spatial/container/knowledge queries. Candidate positions are **chosen vantage points**, never estimates silently treated as the hidden source. Do not query an invisible emitter's route. Method-specific spatial enumeration has a finite step allowance, deterministic continuation and a truthful incomplete outcome; a geometric refusal cannot reveal the hidden obstruction.
+
+A check allowance is consumed once when a physical observation attempt is admitted, including a later real blocked/interrupted outcome. Preview, duplicate receipts and unfinished technical preparation consume no extra check; they cannot grant results or reset the original deadline. Rechecks are new admitted attempts within the same original allowance.
 
 For each unit:
 
@@ -231,7 +246,7 @@ Personality describes the person, not “when noise X, do Y.” Familiarity/expe
 
 Use the single installed native-response controller. Physical acquisition, retention, language capability and controller selection remain independent. Acoustics C owns sound classification eligibility, its pattern map, persistent-source onset and absolute idle expiry. A memoryless animal does not require human history or paid intake.
 
-Priority is the existing required body/lifecycle and territorial/alarm arbitration, then an already accepted compatible curiosity continuation, then a newly eligible optional curiosity method, then ordinary routine. A qualifying alarm preempts curiosity before optional approach; danger never waits for a curiosity dwell to finish. Preserve the existing complete locally perceived danger set, route safety and motion ownership. No nearest-danger cutoff is introduced.
+Priority is the existing required body/lifecycle and territorial/alarm arbitration, then an already accepted compatible curiosity continuation, then a newly eligible optional curiosity method, then ordinary routine. At a sealed physical boundary, complete required cue/danger intake and its alarm arbitration before starting optional curiosity. With no higher-priority work and no active curiosity, choose the first eligible new acoustic cue in canonical acquisition order. Other eligible cues receive a considered-busy curiosity disposition through the same slot/result owner; they do not queue approaches or replace the selected episode. An already active compatible curiosity similarly continues without resetting its original cue/deadline. A qualifying alarm preempts curiosity before optional approach; danger never waits for a curiosity dwell to finish. Preserve the existing complete locally perceived danger set, route safety and motion ownership. No nearest-danger cutoff is introduced.
 
 Add mutually exclusive curiosity modes to the existing NativeResponseEpisode: curious-observing and curious-approaching. Their typed payload contains the installed curiosity method, exact acquired cue/retained immutable contribution, historical scope, original end/check limits, current stage and exact ordinary movement/action reference. Alarm modes retain their existing data. Transition to alarm ends curiosity terms and observation coverage in the same owner; there are not two active episodes moving one animal.
 
@@ -239,7 +254,7 @@ The selected method is: one short observation hold; one safe ground approach if 
 
 Extend **the same NativeResponseState acoustic-pattern value**, preserving C's key and alarm semantics, with two independent optional slots: alarm { latestCue, idleExpiry } and curiosity { latestCue, idleExpiry }. The existing alarm fields map to the alarm slot; no second map, result diary or new source key exists. C tests only its alarm slot. E tests only its curiosity slot. A curiosity-only entry cannot suppress a later alarm. Evaluate C alarm eligibility first: a cue meeting it is never a curiosity candidate, even when its alarm transition is repeat-suppressed. Actual bodily/territorial danger and newly qualifying alarm preempt curiosity through the existing episode/action cancellation owner.
 
-Curiosity considers only a newly acquired discrete occurrence or genuinely new absent-to-present observed-envelope onset allowed by its installed profile. Confirmation, reclassification, query, expiry, routine return and restore create no onset. Keep the consumed-curiosity-onset receipt alongside C's existing per-ExposureRef presence/native acquisition record until actual loss; do not add a presence map. A real later absence-to-presence transition may qualify, subject to a still-live curiosity slot.
+The first curiosity profile is acoustic-triggered only. It considers a newly acquired acoustic occurrence or genuinely new absent-to-present hearing-envelope onset allowed by its installed profile. A current visible object may guide a vantage only if A legitimately associates it with that same triggering cue; standalone visual-object curiosity needs a later supported onset/disposition adapter. Confirmation, reclassification, query, expiry, routine return and restore create no onset. Keep the consumed-curiosity-onset receipt alongside C's existing per-ExposureRef presence/native acquisition record until actual loss; do not add a presence map. A real later absence-to-presence transition may qualify, subject to a still-live curiosity slot.
 
 Prune each slot independently at idleExpiry <= acquisition time; expiry itself schedules no behavior, and remove a key only when both slots are absent. A repeat updates only its own slot's latest cue and absolute idle expiry, never the episode deadline, route, safe-settling clock or RNG. The world separately pins curiosity's idle duration. Retain an active episode's minimal cue independently. Save exact keys, slots and presence receipts; count the additional bytes in C/native retained-work reservations. No top-N eviction may rearm evidence. Required admission/preparation exhaustion remains incomplete before mutation, not a harmless/ignored finding. This additive C/E adapter is an integration obligation on the existing owner, not a redefinition of C's shared physical/acquisition contract.
 

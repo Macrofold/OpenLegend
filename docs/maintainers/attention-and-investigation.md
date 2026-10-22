@@ -77,7 +77,7 @@ Dependencies: ATI01/ATI03; A/EPR durable sources, ActorWork, decision validity a
 Dependencies: ATI01 evaluator; completed C acoustic intake and existing CTR03–CTR04/SPK08 owner. Parent: **ND16**.
 
 - [ ] Keep current alarm/escape/settling/blocked and territorial/flight/lifecycle priority, complete danger set and actual movement ownership.
-- [ ] Add optional finite curiosity modes and the installed ground-curious contrast profile; default species behavior remains explicitly unchanged until deliberately authored.
+- [ ] Add optional finite curiosity modes and the installed acoustic-triggered ground-curious contrast profile; default species behavior remains explicitly unchanged until deliberately authored.
 - [ ] Integrate E's independent curiosity slot into C's single pattern/presence owner. Preserve C alarm eligibility/key/expiry and persistent-onset identity; curiosity cannot suppress alarm.
 - [ ] Execute one hold/optional safe ground approach/final hold with exact finite deadline, route refusal and no hidden-source destination.
 - [ ] Persist exact cue/profile/mode/movement/progress and slot timing. Qualify active/expired slots, no-route, unlocalized input, alarm preemption and restoration.
@@ -100,7 +100,7 @@ Dependencies: ATI01–ATI02; A exact acquired cut, B physical values, C timing, 
 
 Dependencies: ATI01–ATI06; current save/load, authority/lifecycle and G presentation. Parent: **AG09, AC10, SAI-G**.
 
-- [ ] Persist selected terms/pins and minimal progress with their current owners; rebuild derived subscriptions once and validate both sides of exact work references.
+- [ ] Persist selected terms/pins, monotonic owner-scoped attentionRevision even while its facet is absent, and minimal progress with current owners; rebuild derived subscriptions once and validate both sides of exact work references.
 - [ ] Preserve original deadlines through pause/load; reset uninterrupted fulfillment at genuine breaks. Suspended work grants no active coverage.
 - [ ] Handle attack interruption/recovery, compatible continuation, target loss, owner death/body replacement, controller/definition changes and stale late results.
 - [ ] Show own accepted/pending/refused work and actual partial results. Public physical stance does not disclose concerns, warning history or private belief.
