@@ -78,7 +78,7 @@ Use relevant existing checks/ad-hoc cases under repository verification policy. 
 **Owner:** provider/gameplay verification through existing owners and Macrofold integration. **Design:** technical §7. **Dependencies:** MX01–MX03 and matching installed Macrofold API; **no dependency on MX04–MX05/MX07**.
 
 - [ ] Verify target/role isolation, actual NPC response admission, output mode/local validation, optional streaming, no-call controls and unchanged native judgment/escalation.
-- [ ] Verify automatic same-revision host recovery, current-revision update for new requests, optional pins and valid completion of earlier admitted work. Interrupted/unknown requests are never replayed.
+- [ ] Verify automatic same-revision host recovery, current-revision update for new requests, optional pins and valid completion of earlier admitted work. Interrupted/unknown requests are never replayed. Include an upgrade that makes a formerly unsupported request valid: stale local capability rejection refreshes once before refusal, repeated unsupported work respects the shared negative-cache cooldown, and a new revision in a successful receipt invalidates only later preparation.
 - [ ] Exercise unavailable/capacity/context/revocation/deadline/cancellation cases, accepted-Run recovery, request settlement and missing usage/hosting-cost evidence.
 - [ ] Under the existing spending authority, establish actual supported runtime and warm/concurrent/recovery behavior. Record tested versions, input/output limits, useful latency, throughput and costs; static/fixture success is not live acceptance.
 
