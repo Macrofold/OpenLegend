@@ -56,11 +56,11 @@ All entries below are **proposed by the October 22, 2026 design, not implemented
 
 ## MX-L06 — Request reservations and allocation liability
 
-**Proposed · Restrictiveness: Safe.** Preserve current positive finite per-call configuration, actor/task ceilings and no-call/zero-budget controls. A verified custom receipt may settle request charge to literal zero while `infrastructure_cost_included` is false. The separate activation must have a finite authorized commitment/lifetime; a study holds it once together with other model charges and unresolved obligations against its one task ceiling.
+**Proposed · Restrictiveness: Safe.** Preserve current positive finite per-call configuration, actor/task ceilings and no-call/zero-budget controls. A verified custom receipt may settle request charge to literal zero while `infrastructure_cost_included` is false. The separate activation's canonical `accepted_terms` must establish a finite authorized commitment/lifetime; a study holds it once together with other model charges and unresolved obligations against its one task ceiling.
 
 **Reason / tradeoff:** Hosting costs startup, busy/idle time and potentially storage independently of request tokens. Concurrent requests cannot each claim a whole allocation bill, and free request accounting does not erase GPU cost. An already funded host is not permission to call externally in fixture/zero-budget mode.
 
-**Overflow / failure:** Stop new admissions when the owning ceiling is unavailable/exhausted. The canonical `external_cap_guaranteed:false` warning remains explicit: a finite authorization is not a provider-enforced absolute dollar cap. Keep uncertain startup/termination/provider charges outstanding until reconciled; no fabricated zero token price or per-request GPU invoice.
+**Overflow / failure:** Stop new admissions when the owning ceiling is unavailable/exhausted. The canonical `external_cap_guaranteed:false` warning remains explicit: a finite authorization is not a provider-enforced absolute dollar cap. A study with `cost_requirement:"hard_external_cap"` rejects this mode; `planning_bound` holds the accepted maximum and disclosed residual liability. Keep uncertain startup/termination/provider charges outstanding until reconciled; no fabricated zero token price or per-request GPU invoice.
 
 **Extension trigger:** Additional pricing modes or shared-allocation attribution require the canonical Macrofold accounting policy and explicit non-overlap rules. OpenLegend does not create a second provider ledger.
 

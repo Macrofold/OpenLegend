@@ -60,7 +60,7 @@ Past speech, actions and memories remain the accepted records produced at the ti
 
 The developer stops new experiment admissions and reconciles already accepted Runs. The experiment's operator then stops its separately owned allocation through Macrofold. Game shutdown cancels only the game's known work; it does not destroy capacity shared with another caller.
 
-The report separates per-request charges, deployment startup/busy/idle/storage cost, other model calls, and remaining uncertain obligations. A zero request charge is compatible with a nonzero GPU bill. A stopped UI or timed-out request is not proof that compute billing stopped. The full-cost comparison uses one allocation total once, not a full GPU charge duplicated for every concurrent character.
+The report separates per-request charges, deployment startup/busy/idle/storage cost, other model calls, and remaining uncertain obligations. A zero request charge is compatible with a nonzero GPU bill. A stopped UI or timed-out request is not proof that compute billing stopped. A finite RunPod allocation is a planning budget with disclosed residual shutdown/billing risk, not a provider-guaranteed absolute dollar cap; a study requiring that hard guarantee cannot select this mode. The full-cost comparison uses one allocation total once, not a full GPU charge duplicated for every concurrent character.
 
 ## 4. First delivered capability and explicit extension seams
 

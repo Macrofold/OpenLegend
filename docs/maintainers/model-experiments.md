@@ -44,8 +44,8 @@ Implement in dependency order below. Use relevant existing checks and representa
 **Owner:** `apps/server/src/config.ts`, `ai-director.ts`, `macrofold-model.ts`; existing benchmark options/manifest owner. **Design:** technical §§4–5. **Dependency:** MX01.
 
 - [ ] Parse/freeze the strict startup profile, authorized Macrofold workspace, exact target, optional output reduction and profile digest. Reject invalid supplied configuration; absence preserves baseline configuration.
-- [ ] Add explicit `npc_response_fast`/`npc_response_complex` at the existing NPC producer. Do not infer purpose from `fast`/`complex` or model equality; action interpretation, player expression and consolidation remain on their own routes.
-- [ ] Perform bounded authorized descriptor preflight. Require verified manifest identity, actual schema dialect/keywords and complete context capability for gameplay; record all provenance/trust limits. No read triggers provisioning, activation or renewal.
+- [ ] Add explicit `npc_response_fast`/`npc_response_complex` at the existing NPC producer. Disable the retained private-preview opt-in on the custom completed-output branch. Do not infer purpose from `fast`/`complex` or model equality; action interpretation, player expression and consolidation remain on their own routes.
+- [ ] Perform bounded descriptor preflight with the same trusted workspace in GET queries and inference body; capture immutable revision evidence and activation accepted funding terms. Require verified manifest identity, actual schema dialect/keywords and complete context capability for gameplay; record all provenance/trust limits. No read triggers provisioning, activation or renewal.
 - [ ] Carry one effective record through allowance, meter/reservation, serialization and receipt. Preserve `AI_JEV_ONLY`, fixture/no-call controls, zero-budget behavior and configured escalation separation.
 
 **Exit:** a single-purpose override changes only its named NPC producer; invalid/missing capability fails visibly, and no-dispatch modes make no external model calls even when GPU capacity is prepaid.
@@ -54,7 +54,7 @@ Implement in dependency order below. Use relevant existing checks and representa
 
 **Owner:** `macrofold.ts`, `cognition-budget.ts`, `attempt-budget.ts`, existing operational journal/accounting/save owners. **Design:** technical §§6–7. **Dependencies:** MX01–MX02.
 
-- [ ] Preserve positive configured per-call ceilings and actor/task admission. Settle explicit verified zero request charge separately from activation liabilities; never fake a zero token rate or double-count one allocation across calls.
+- [ ] Preserve positive configured per-call ceilings and actor/task admission. Settle explicit verified zero request charge separately from activation liabilities; never fake a zero token rate or double-count one allocation across calls. Reject RunPod BYOK when a study requires a guaranteed external hard cap; otherwise preserve the accepted planning commitment and residual shutdown liability.
 - [ ] Preserve write-before-dispatch, accepted Run persistence, exact-Run observation/cancellation, original deadlines and uncertainty holds. Classify host expiry/capacity independently from output quality.
 - [ ] Recheck actor life, observer permission, source/timeline freshness and native operation prerequisites before publication. Switching a profile or restoring a world cannot relabel/republish earlier requests.
 - [ ] Keep profile/credentials/remote authority outside gameplay saves. Reconfiguration is controlled restart; no hot alias, host wake or automatic lifecycle command from gameplay.
