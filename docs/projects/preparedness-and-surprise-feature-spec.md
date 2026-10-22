@@ -74,7 +74,7 @@ Seeing a person is likewise not enough to prevent surprise. Their readable physi
 | Irreversible melee attempt or projectile release | Attack-side damage/profile/permission facts are fixed at their existing boundary. Victim surprise is not permanently decided at release. |
 | Projectile flight | Personally acquired flight, a real emitted travel cue or a received warning may allow registration. The shooter may remain unknown. |
 | Immediately before actual outcome | Settle due native work, capture this actual victim's prior evidence and preparation, then evaluate surprise separately from defense. |
-| Miss, block, interception or hit | Preserve the physical result. Only the selected direct-damage outcome can consume amplification; a miss does not become damage. |
+| Miss, block, interception or hit | Preserve the physical result. The first designated outcome spends its amplification opportunity, including a miss, block or zero-damage contact; it cannot create damage or reserve the bonus for a later hit. |
 | Contact, injury and new startle | Commit through existing owners. This contact's own evidence and shock cannot alter its own earlier classification or mechanics. |
 | Later attacks | They may use genuinely earlier acquired warning and effects, with the required elapsed registration time. |
 
@@ -92,7 +92,7 @@ A ready shield can still reduce surprising contact where its actual coverage all
 
 The inspected pipeline has no separate general armor stage. Existing protection/susceptibility remains authoritative. A later armor family must declare its placement within the same damage calculation; this design does not implement armor.
 
-One native attack execution owns its eligible direct-damage slot. The technical design defines first-attempt/contact consumption and multi-contact/burst extension requirements. Replaying contact, publishing injury or replacing an action cannot apply the modifier again. Independent attacks have independent damage outcomes; an exactly simultaneous volley is not collapsed into one attack.
+One native attack execution owns its eligible direct-damage slot per actual victim physical life. The technical design defines first-attempt/contact consumption and multi-contact/burst extension requirements. Replaying contact, publishing injury or replacing an action cannot apply the modifier again. Independent attacks have independent damage outcomes; an exactly simultaneous volley is not collapsed into one attack.
 
 ### Startle and emotion
 
