@@ -34,7 +34,7 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 
 ## Custom model deployments
 
-[Custom models (MX01–MX08)](custom-models.md) owns the [feature specification](../projects/custom-models-feature-spec.md), [technical design](../projects/custom-models-tech-design.md) and [limits](../limits/custom-models.md). The production target is ordinary NPC generation through Macrofold-managed or trusted imported endpoints, with stable deployment references, automatic serving recovery and existing game authority. Optional benchmark work is independent of production delivery. Runtime integration and live acceptance remain open; [research items 8–10](npc-cognition-research-needs-design.md#8-low-refusal-characterization-without-loss-of-agency) retain unrun comparisons.
+[Custom models (MX01–MX08)](custom-models.md) owns the [feature specification](../projects/custom-models-feature-spec.md), [technical design](../projects/custom-models-tech-design.md) and [limits](../limits/custom-models.md). The production target is ordinary NPC generation through Macrofold-managed or trusted imported endpoints, with stable deployment references, automatic serving recovery and existing game authority. Optional benchmark work is independent of production delivery. Production integration and thin benchmark/report support are implemented; MX06 retains live operating acceptance, while [research items 8–10](npc-cognition-research-needs-design.md#8-low-refusal-characterization-without-loss-of-agency) retain unrun comparisons.
 
 ## October 14 foundation review
 
