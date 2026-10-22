@@ -2,6 +2,8 @@
 
 **Creative direction and research candidates — October 22, 2026.** Mike wants Open Legend to have satisfying real-time combat while remaining a game about inhabiting, exploring and changing a world. Combat should enrich that life; it should not become the compulsory center of every activity. These notes capture that preference and ideas inspired by Emberville and Diablo. They do not select new runtime mechanics, timing values or implementation work.
 
+Open Legend is not intended to be a hack-and-slash game. Mike admires Diablo's craft in that genre and wants to learn which aspects of enjoyable real-time combat could serve Open Legend's broader ambitions.
+
 ## Existing work to build on
 
 The [skilled action execution design](https://github.com/Macrofold/OpenLegend/blob/2b2e375fcdd14fc864d697c7aac452905fdb37a4/docs/projects/action-execution-and-skill-expression-feature-spec.md) already explores WASD, visible attack mode, ordinary tap attacks, optional held timing, manual physical aiming, movement during preparation and distinct weapons. It also applies optional skill to crafting. Its [delivery tracker](https://github.com/Macrofold/OpenLegend/blob/2b2e375fcdd14fc864d697c7aac452905fdb37a4/docs/maintainers/action-execution-and-skill-expression.md) records completed design with implementation and player qualification unstarted. Both links identify `codex/action-execution-skill-design-20261018` at `2b2e375fcdd14fc864d697c7aac452905fdb37a4`; they are a separate branch, not features installed by this note.

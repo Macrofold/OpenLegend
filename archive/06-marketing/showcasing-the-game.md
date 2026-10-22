@@ -16,6 +16,8 @@ For Open Legend, connect an attractive activity with a distinctive consequence: 
 
 The [Outcast Tales demo trailer](https://store.steampowered.com/app/5111950/Outcast_Tales_Demo/) demonstrates the technique through a reckless charge that ends in defeat, companions moving between affection and hostility, dangerous encounters and a narrator questioning a route choice. A [transcript on Asher Grace's third-party repost](https://www.dailymotion.com/video/xb6twam) supplies narration context for the short visual sequence; the repost is not an official developer source.
 
+Mike recalled the examples as “they all charged forward and... died”, “are you sure you want to go that way?” and “they faced danger, moral decisions, more danger”. These are his remembered examples, not a verified verbatim transcript. Preserve what makes them work: death as a comic reversal, a route choice as an invitation to imagine playing, and moral decisions framed within the repeated rhythm of danger.
+
 Battles, relationships and consequential decisions become understandable through situations. The narration creates anticipation, reversal and humor while the footage shows what happens. This is a presentation reference; Open Legend can use its own tone, including wonder, warmth, tension and satisfaction.
 
 ## Build a small story around a choice

@@ -2,6 +2,8 @@
 
 Reference study — October 22, 2026. Mike selected this game for its connection between failure, divine intervention and a changed next attempt. The Open Legend ideas it inspired are recorded in [Gods, death and personal mythology](../gods-death-and-personal-mythology.md); this page records the reference evidence and the distinction between the two games.
 
+When he shared it, Mike said there were no reviews yet. That records his observation at the time; it is not a verified current review count.
+
 ## Material inspected
 
 The [official Steam page](https://store.steampowered.com/app/3796150/Curse_of_Resthaven/) currently lists two videos: **Developer Game Overview**, Steam movie **257458454**, approximately **87.91 seconds**; and **CoR Demo Trailer**, movie **257347708**, approximately **91.85 seconds**. Both were inspected through one frame per second across their complete runtimes, with a full-resolution close-up of the overview's boon selection at 01:00. The review establishes visible sequences and readable text, not audio performance, hands-on play or the finished game's quality. Timestamps below are approximate.

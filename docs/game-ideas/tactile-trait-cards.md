@@ -6,6 +6,8 @@
 
 Make discovering something meaningful about a character feel like receiving an object worth keeping and inspecting. A trait could have a dimensional card with a distinctive frame, layered illustration or small sculptural detail, convincing lighting and a surface that catches the light when tilted or turned.
 
+Mike's original possibility is a distinct special card for every gained trait. That scope remains a candidate for design, rather than a selected requirement for all traits.
+
 The reference is [OPERATIVES: Revolve](https://store.steampowered.com/app/4286480/OPERATIVES_Revolve_Demo/). Mike describes cards with three-dimensional structure that rotate in play, with compelling lighting, shine and holographic effects. The attached image was unavailable for inspection; these visual preferences come from his description. The [developer's explanation](https://enigma-equation.itch.io/operatives-revolve/devlog/1178108/demo-launched) explicitly connects physical-feeling 3D cards with timing, weight, anticipation and rendering.
 
 The aim is tactile pleasure, recognition and attachment: the player wants to turn the card over and keep looking. A small playable comparison should test whether that attention adds enjoyment while keeping ordinary play fluent.
