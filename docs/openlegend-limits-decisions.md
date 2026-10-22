@@ -38,7 +38,7 @@ Selected [combat and threat responses](projects/combat-and-threat-responses-feat
 
 ## Feature inventories
 
-Designed, runtime pending: [Hugging Face model experiments](projects/model-experiments-feature-spec.md) have [MX-L01–MX-L08](limits/model-experiments.md) for purpose-scoped use, finite deployment activation, actual model/context capabilities, completed-output validation and explicit evidence/cost boundaries. [MX01–MX08](maintainers/model-experiments.md) owns delivery; these targets do not change installed model defaults or qualify a candidate.
+Designed, runtime pending: [Custom model deployments](projects/custom-models-feature-spec.md) have [MX-L01–MX-L08](limits/custom-models.md) for production purpose selection, optional revision pins, capability-aware output and existing cost/authority bounds. [MX01–MX08](maintainers/custom-models.md) separates production delivery from optional studies; boot identity and experiment completion do not gate normal use.
 
 Accepted design, runtime pending: [Shared NPC speech streaming](projects/npc-speech-streaming-feature-spec.md) has [NST-L01–NST-L09](limits/npc-speech-streaming.md) for fixed occurrence/audience, aggregate record bounds, 250 ms durable continuation coalescing, stable partial evidence, terminal readiness, active-reference growth and reused delivery/display limits. [NST01–NST10](maintainers/npc-speech-streaming.md) owns implementation. Ten/twenty/fifty listeners are qualification workloads, not a new audience cap or measured capacity.
 
