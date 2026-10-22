@@ -96,10 +96,18 @@ export class BenchmarkAccounting {
         micro(receipt.estimatedCostUsd ?? 0),
         micro(receipt.providerReportedCostUsd ?? 0),
       );
-      const settled =
-        (receipt.usage || deploymentRequestPrice(receipt)) &&
-        receipt.estimatedCostUsd !== undefined &&
-        !receipt.completionUncertain
+      // Macrofold rejection with no Run proves no admission. Direct provider trace IDs
+      // retain their existing conservative accounting when usage is unavailable.
+      const notAdmitted =
+        receipt.provider === 'macrofold' &&
+        receipt.dispatched === false &&
+        receipt.completionUncertain === false &&
+        receipt.providerRequestId === undefined;
+      const settled = notAdmitted
+        ? known
+        : (receipt.usage || deploymentRequestPrice(receipt)) &&
+            receipt.estimatedCostUsd !== undefined &&
+            !receipt.completionUncertain
           ? known
           : Math.max(reserved, known);
       total = sumSafeIntegers([this.committedMicroUsd - reserved, settled]);
@@ -263,6 +271,7 @@ export function assertBenchmarkRecord(
     'generation delivery mode',
   );
   const macrofold = arm.transport.startsWith('macrofold');
+  if (arm.macrofoldDeployment && result.outcome === 'value') object(receipt.macrofoldDeployment);
   requireValue(
     value.outputMode === undefined ||
       (arm.macrofoldDeployment !== undefined &&

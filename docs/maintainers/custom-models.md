@@ -1,6 +1,6 @@
 # Custom models — implementation and acceptance
 
-**Status: Blocked — offline configuration checkpoint delivered; production integration awaits the implemented Macrofold deployment API · October 22, 2026.** This tracker owns OpenLegend's production use of Macrofold custom deployments. Optional experiments consume that capability. Configuration preparation does not establish runtime delivery, hosting reliability or model quality.
+**Status: In progress — production routing and thin benchmark/report integration implemented; joint operating acceptance remains open · October 22, 2026.** This tracker owns OpenLegend's production use of Macrofold custom deployments. Optional experiments consume that capability. Passing local and synthetic checks does not establish hosted-model reliability or character quality.
 
 ## Maintained records
 
@@ -22,16 +22,16 @@
 
 Production implementation and MX04/MX05 tooling are authorized; MX07 comparative research and selecting a new default model are outside this assignment. Use relevant existing checks/ad-hoc cases under repository verification policy, without new automated tests. Any live execution uses its existing authorization and bounded budget.
 
-The independent `generation-config.ts` owner implements strict offline parsing, immutable settings, explicit fast/complex NPC-purpose lookup and per-caller output reductions. Startup and the NPC producer do not import it yet: supplied settings cannot be advertised as usable while the compatible execution path is absent. MX01–MX03, MX04/MX05 and MX06/MX08 acceptance remain open. The inspected upstream build and the missing generated deployment binding are recorded in the verification report; a matching branch name is not a compatible API build.
+Ordinary NPC replies now resolve explicit fast/complex deployment targets before their existing spending reservation. Shared immutable capability preparation and the existing inference executor retain original deadlines, permitted context, accepted Run identity, local validation and once-only settlement. The existing benchmark consumes the same target and request preparation. [Verification](../verification/custom-models.md) distinguishes static, injected-HTTP, native-gameplay and actual Macrofold evidence; MX06 owns operating acceptance.
 
 ## MX01 — Shared production deployment target
 
 **Owner:** `packages/ai` target/request preparation, generation adapter and receipt types; server direct-inference consumer. **Design:** technical §§2–3. **Dependency:** matching Macrofold contract/API.
 
-- [ ] Add required deployment ID and optional revision pin as the exclusive alternative to existing provider binding; no activation, boot, certificate or experiment ID.
-- [ ] Share request preparation while keeping each caller's established executor, Run recovery and accounting owner. Preserve native decision restrictions and omit unsupported provider-only parameters.
-- [ ] Decode actual admitted deployment/revision and request-only cost attribution. Match an explicit pin, not a cached mutable current revision. Diagnostic identity changes never independently reject an otherwise valid answer.
-- [ ] Reuse local schema validation for native JSON-schema, JSON-object and explicitly prompted-JSON modes; reuse supported streaming through existing progress/publication contracts. No post-failure downgrade, paid repair or second parser.
+- [x] Add required deployment ID and optional revision pin as the exclusive alternative to existing provider binding; no activation, boot, certificate or experiment ID.
+- [x] Share request preparation while keeping each caller's established executor, Run recovery and accounting owner. Preserve native decision restrictions and omit unsupported provider-only parameters.
+- [x] Decode actual admitted deployment/revision and request-only cost attribution. Match an explicit pin, not a cached mutable current revision. Diagnostic identity changes never independently reject an otherwise valid answer.
+- [x] Reuse local schema validation for native JSON-schema, JSON-object and explicitly prompted-JSON modes; reuse supported streaming through existing progress/publication contracts. No post-failure downgrade, paid repair or second parser.
 
 **Exit:** both repositories accept the same examples; provider/native decision behavior remains distinct, and usable same-target answers survive benign process changes.
 
@@ -39,13 +39,13 @@ The independent `generation-config.ts` owner implements strict offline parsing, 
 
 **Owner:** server config/pure generation configuration, NPC response producer and provider parameter preparation. **Design:** technical §§3.2–4. **Dependency:** MX01.
 
-- [ ] Parse `OPENLEGEND_MODEL_TARGETS_JSON` with workspace, explicit fast/complex NPC targets, optional revision pins/output reductions and output policy. Absence preserves defaults; malformed supplied values fail locally.
+- [x] Parse `OPENLEGEND_MODEL_TARGETS_JSON` with workspace, explicit fast/complex NPC targets, optional revision pins/output reductions and output policy. Absence preserves defaults; malformed supplied values fail locally.
 
-  Offline parsing and immutable explicit-purpose/output helpers are implemented in `apps/server/src/generation-config.ts`; startup wiring remains dependent on MX01. Focused offline checks pass, but this checkbox requires the configured ordinary gameplay path.
+  Startup and the actual NPC producer use the shared pure configuration owner. Injected-HTTP gameplay verifies fast/native-schema and complex/JSON-object replies through native speech publication; actual hosted-model acceptance remains in MX06.
 
-- [ ] Resolve the target before allowance/reservation using the actual producer purpose, not execution label or model-name equality. Preserve unrelated callers and configured decision escalation.
-- [ ] Cache immutable capabilities and coalesce bounded metadata preparation. Temporary remote unavailability affects that generator and can recover on later new requests; no whole-game startup dependency or per-NPC management polling.
-- [ ] Accept operator-trusted external endpoints under their honest capability/provenance limits. Keep hosting credentials/management outside the game and preserve fixture, Jev-only and zero-budget no-call controls.
+- [x] Resolve the target before allowance/reservation using the actual producer purpose, not execution label or model-name equality. Preserve unrelated callers and configured decision escalation.
+- [x] Cache immutable capabilities and coalesce bounded metadata preparation. Temporary remote unavailability affects that generator and can recover on later new requests; no whole-game startup dependency or per-NPC management polling.
+- [x] Accept operator-trusted external endpoints under their honest capability/provenance limits. Keep hosting credentials/management outside the game and preserve fixture, Jev-only and zero-budget no-call controls.
 
 **Exit:** normal game configuration can select either or both NPC generators without a study manifest; metadata and output modes are compatible with the actual request.
 
@@ -53,10 +53,10 @@ The independent `generation-config.ts` owner implements strict offline parsing, 
 
 **Owner:** server Macrofold transport, cognition/attempt budgets and durable operational/save owners. **Design:** technical §§3.4–6. **Dependencies:** MX01–MX02.
 
-- [ ] Persist the selected target/body and accepted Run through existing write-before-dispatch/recovery. Retain original deadlines, uncertainty and once-only settlement; no automatic inference replay.
-- [ ] Let stable deployment references survive same-revision recovery and deliberate deployment updates. Preserve each admitted revision; do not invalidate valid replies solely because current serving configuration moved on.
-- [ ] Settle explicit request fees independently of shared hosting costs. Missing usage or invoice finality is not a model-output failure; monthly/per-call limits do not claim to cap an externally funded GPU host.
-- [ ] Preserve current actor, observer, source and timeline checks before effects. Keep deployment config/credentials outside gameplay saves; restore cannot replay calls or rewind money. Game shutdown never destroys shared hosting.
+- [x] Persist the selected target/body and accepted Run through existing write-before-dispatch/recovery. Retain original deadlines, uncertainty and once-only settlement; no automatic inference replay.
+- [x] Let stable deployment references survive same-revision recovery and deliberate deployment updates. Preserve each admitted revision; do not invalidate valid replies solely because current serving configuration moved on.
+- [x] Settle explicit request fees independently of shared hosting costs. Missing usage or invoice finality is not a model-output failure; monthly/per-call limits do not claim to cap an externally funded GPU host.
+- [x] Preserve current actor, observer, source and timeline checks before effects. Keep deployment config/credentials outside gameplay saves; restore cannot replay calls or rewind money. Game shutdown never destroys shared hosting.
 
 **Exit:** normal service recovery needs no experiment/profile reset; stale-world or uncertain requests retain existing protection and actual accounting.
 
@@ -64,9 +64,9 @@ The independent `generation-config.ts` owner implements strict offline parsing, 
 
 **Owner:** benchmark preparation, arm resolution, execution and journals. **Design:** technical §8. **Dependency:** MX01–MX03; not a production dependency.
 
-- [ ] Accept the proposed explicit plan option with existing arms, ordinary configured-purpose baselines or custom deployment targets and optional pins. Resolve defaults through the shared pure configuration owner without database/server startup.
-- [ ] Reuse finite plans, single-writer journal, source/request fingerprints, original answers and exact-Run recovery. Local preparation is offline; online reads/live execution remain explicit.
-- [ ] Keep study IDs, frozen cases/references/co-models and spending controls in tools. Optional raw-text generation reuses the same executor and cannot publish or qualify gameplay actions.
+- [x] Accept the proposed explicit plan option with existing arms, ordinary configured-purpose baselines or custom deployment targets and optional pins. Resolve defaults through the shared pure configuration owner without database/server startup.
+- [x] Reuse finite plans, single-writer journal, source/request fingerprints, original answers and exact-Run recovery. Local preparation is offline; online reads/live execution remain explicit.
+- [x] Keep study IDs, frozen cases/references/co-models and spending controls in tools. Optional raw-text generation reuses the same executor and cannot publish or qualify gameplay actions.
 
 **Exit:** optional tools can compare the production target without an alternate provider path or changed historical cohorts.
 
@@ -74,9 +74,9 @@ The independent `generation-config.ts` owner implements strict offline parsing, 
 
 **Owner:** existing benchmark reports and private diagnostics. **Design:** technical §8. **Dependency:** MX04; not a production dependency.
 
-- [ ] Report selected/attempted/answered/completed coverage alongside conditional quality, first useful output and full latency.
-- [ ] Keep character disagreement, uncertainty, assistant refusal, sanitization, service withholding, invalid output and native rejection/actual effects distinct.
-- [ ] Record actual revisions and unknown provenance/cost honestly. Attribute shared deployment cost once over the selected window; unallocatable host costs limit the comparison, not production inference.
+- [x] Report selected/attempted/answered/completed coverage alongside conditional quality, first useful output and full latency.
+- [x] Keep character disagreement, uncertainty, assistant refusal, sanitization, service withholding, invalid output and native rejection/actual effects distinct.
+- [x] Record actual revisions and unknown provenance/cost honestly. Attribute shared deployment cost once over the selected window; unallocatable host costs limit the comparison, not production inference.
 
 **Exit:** comparisons preserve first attempts/severe errors and private artifact rules without introducing a second billing ledger.
 

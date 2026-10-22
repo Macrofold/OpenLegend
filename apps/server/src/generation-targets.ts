@@ -140,15 +140,6 @@ function targetKey(target: MacrofoldDeploymentTarget): string {
 /** Property names and enum/example values are data, not JSON-schema keywords. */
 function schemaKeywords(schema: JsonSchema): Set<string> {
   const found = new Set<string>();
-  const annotations = new Set([
-    '$schema',
-    '$id',
-    '$comment',
-    'title',
-    'description',
-    'default',
-    'examples',
-  ]);
   const maps = new Set([
     'properties',
     'patternProperties',
@@ -164,11 +155,28 @@ function schemaKeywords(schema: JsonSchema): Set<string> {
     }
     if (!value || typeof value !== 'object') return;
     for (const [key, child] of Object.entries(value)) {
-      if (annotations.has(key)) continue;
       found.add(key);
       if (maps.has(key) && child && typeof child === 'object' && !Array.isArray(child))
         Object.values(child).forEach(visit);
-      else if (!['enum', 'const', 'required', 'dependentRequired'].includes(key)) visit(child);
+      else if (
+        [
+          'items',
+          'contains',
+          'additionalProperties',
+          'propertyNames',
+          'not',
+          'if',
+          'then',
+          'else',
+          'unevaluatedProperties',
+          'unevaluatedItems',
+          'allOf',
+          'anyOf',
+          'oneOf',
+          'prefixItems',
+        ].includes(key)
+      )
+        visit(child);
     }
   }
   visit(schema);
@@ -258,13 +266,8 @@ export class ModelTargetPreparation {
         'unsupported_model_capability',
         'The selected deployment does not support text chat generation.',
       );
-    const parameters = new Set(capability.accepted_parameters);
-    if (!parameters.has('messages') || !parameters.has('max_tokens'))
-      throw new ModelTargetPreparationError(
-        'unsupported',
-        'unsupported_model_capability',
-        'The selected deployment does not accept the required messages and max_tokens parameters.',
-      );
+    // Macrofold's protocol admits structural chat fields separately from optional parameters.
+    // A missing optional-parameter declaration must not reject required messages/token bounds.
     const supportedKeywords = new Set(capability.schema_keywords);
     const requestedDialect = knownDialect(schema['$schema']);
     const declaredDialect = knownDialect(capability.schema_dialect);
@@ -274,21 +277,20 @@ export class ModelTargetPreparation {
       requestedDialect === declaredDialect;
     const nativeSchema =
       capability.json_schema &&
-      parameters.has('response_format') &&
       compatibleDialect &&
       [...schemaKeywords(schema)].every((keyword) => supportedKeywords.has(keyword));
     const mode =
       outputPolicy === 'auto'
         ? nativeSchema
           ? 'json_schema'
-          : capability.json_object && parameters.has('response_format')
+          : capability.json_object
             ? 'json_object'
             : undefined
         : outputPolicy;
     if (
       mode === undefined ||
       (mode === 'json_schema' && !nativeSchema) ||
-      (mode === 'json_object' && (!capability.json_object || !parameters.has('response_format')))
+      (mode === 'json_object' && !capability.json_object)
     )
       throw new ModelTargetPreparationError(
         'unsupported',

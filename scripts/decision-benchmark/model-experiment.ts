@@ -153,11 +153,6 @@ export function parseModelExperiment(value: unknown): ModelExperimentPlan {
       `arms.${index}.source`,
     );
     const target = deployment(s);
-    if (
-      s.structured_output !== undefined &&
-      !['auto', 'json_schema', 'json_object', 'prompted_json'].includes(String(s.structured_output))
-    )
-      throw new Error('Unsupported structured_output.');
     return {
       id,
       source: {
@@ -254,8 +249,18 @@ export function resolveModelExperiment(
     : undefined;
   const arms: BenchmarkArm[] = [];
   let retainedBytes = Buffer.byteLength(JSON.stringify(plan));
-  if (!Number.isSafeInteger(plan.cases.length * plan.arms.length * plan.replicates))
+  const plannedCalls = plan.cases.length * plan.arms.length * plan.replicates;
+  if (!Number.isSafeInteger(plannedCalls))
     throw new Error('Planned request count exceeds safe arithmetic.');
+  // Every retained request needs its key, 64-character digest and reservation. Reject a
+  // provably oversized grid before constructing either repeated arms or per-request records.
+  const minimumRequestBytes = Buffer.byteLength(
+    JSON.stringify({ key: ':', digest: '0'.repeat(64), reserve: 0 }),
+  );
+  if (plannedCalls * minimumRequestBytes > PRIVATE_BENCHMARK_EVIDENCE_BYTES)
+    throw new Error(
+      'Resolved model experiment request metadata exceeds the 20MB private evidence envelope before expansion.',
+    );
   for (const entry of plan.arms) {
     let base: BenchmarkArm;
     if (entry.source.kind === 'existing') {
@@ -584,7 +589,8 @@ export function validateResolvedModelExperiment(
         a.transport !== 'macrofold-generation' ||
         a.model !== `deployment:${captured.modelBinding.deployment_id}` ||
         a.effort !== undefined ||
-        a.prices !== undefined
+        a.prices !== undefined ||
+        a.modelPrices !== undefined
       )
         throw new Error('Saved deployment has mixed provider settings.');
     }

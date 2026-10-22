@@ -1534,8 +1534,8 @@ export class MacrofoldBackend implements AiClient {
     const preparation = this.deploymentSchemas.get(request.schema);
     if (preparation) {
       const remainingMs = preparation.expiresAt - performance.now();
-      control.timeoutMs = Math.min(control.timeoutMs, Math.max(1, remainingMs));
-      control.deadlineAtMs = Math.min(control.deadlineAtMs, Date.now() + remainingMs);
+      control.timeoutMs = Math.min(control.timeoutMs, Math.max(1, Math.floor(remainingMs)));
+      control.deadlineAtMs = Math.min(control.deadlineAtMs, Date.now() + Math.floor(remainingMs));
     }
     try {
       if (control.invalid) throw new InvalidData('invalid_request_deadline');
@@ -1690,7 +1690,7 @@ export class MacrofoldBackend implements AiClient {
                   : {}),
               },
             }),
-        // Macrofold forwards the native OpenRouter body. Instructions and actor
+        // Macrofold forwards the native chat body. Instructions and actor
         // evidence occupy distinct messages; authority bindings never enter either.
         input: {
           ...(!target ? macrofoldModelParameters(request.execution) : {}),

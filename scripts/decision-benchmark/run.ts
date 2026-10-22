@@ -4,7 +4,6 @@ import { access, open, readFile, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { usdToMicroUsd, type AiReceipt } from '../../packages/ai/src/index.js';
 import {
-  armById,
   benchmarkArms,
   experimentalArms,
   outputTokens,
