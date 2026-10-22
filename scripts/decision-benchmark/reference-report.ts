@@ -1,6 +1,6 @@
 import { episodes } from './complex-scenes.js';
 import { sha256 } from './corpus.js';
-import { summarize, type RunRecord } from './evaluate.js';
+import { groupByModel, summarize, type RunRecord } from './evaluate.js';
 import {
   gradeGeneratedReviewed,
   reviewedGenerationReferences,
@@ -50,6 +50,7 @@ export function reviewedReferenceReport(
       : {}),
   }));
   const generationAmendments = generationReview.amendments;
+  const generationRowsByModel = groupByModel(generationRows);
   const comparison = summarize(
     [...review.scenes],
     records.filter((record) => !record.sceneId.startsWith('generate-')),
@@ -69,7 +70,7 @@ export function reviewedReferenceReport(
       referenceAmendments: generationAmendments,
       rows: generationRows,
       models: models.map((model) => {
-        const rows = generationRows.filter((row) => row.model === model);
+        const rows = generationRowsByModel.get(model) ?? [];
         return {
           model,
           submitted: rows.length,

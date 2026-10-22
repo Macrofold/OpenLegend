@@ -46,6 +46,9 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
 
 - [x] Resolve the target before allowance/reservation using the actual producer purpose, not execution label or model-name equality. Preserve unrelated callers and configured decision escalation.
 - [x] Cache immutable capabilities and coalesce bounded metadata preparation. Temporary remote unavailability affects that generator and can recover on later new requests; no whole-game startup dependency or per-NPC management polling.
+
+  Remote unsupported-capability refusals share the existing non-extending cooldown. A still-active caller can replace a coalesced read interrupted by its first caller, using only its own remaining deadline; no inference retry is introduced.
+
 - [x] Accept operator-trusted external endpoints under their honest capability/provenance limits. Keep hosting credentials/management outside the game and preserve fixture, Jev-only and zero-budget no-call controls.
 
 **Exit:** normal game configuration can select either or both NPC generators without a study manifest; metadata and output modes are compatible with the actual request.
@@ -55,6 +58,9 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
 **Owner:** server Macrofold transport, cognition/attempt budgets and durable operational/save owners. **Design:** technical §§3.4–6. **Dependencies:** MX01–MX02.
 
 - [x] Persist the selected target/body and accepted Run through existing write-before-dispatch/recovery. Retain original deadlines, uncertainty and once-only settlement; no automatic inference replay.
+
+  Source validation after metadata stays within the original operation. The shared mutation owner rechecks expiry after journal/source waits before recording dispatch, including callers without a source callback; a late local completion cannot change an already-returned receipt to dispatched.
+
 - [x] Let stable deployment references survive same-revision recovery and deliberate deployment updates. Preserve each admitted revision; do not invalidate valid replies solely because current serving configuration moved on.
 - [x] Settle explicit request fees independently of shared hosting costs. Missing usage or invoice finality is not a model-output failure; monthly/per-call limits do not claim to cap an externally funded GPU host.
 - [x] Preserve current actor, observer, source and timeline checks before effects. Keep deployment config/credentials outside gameplay saves; restore cannot replay calls or rewind money. Game shutdown never destroys shared hosting.
@@ -65,7 +71,7 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
 
 **Owner:** benchmark preparation, arm resolution, execution and journals. **Design:** technical §8. **Dependency:** MX01–MX03; not a production dependency.
 
-- [x] Accept the proposed explicit plan option with existing arms, ordinary configured-purpose baselines or custom deployment targets and optional pins. Resolve defaults through the shared pure configuration owner without database/server startup.
+- [x] Accept the explicit plan option with existing arms, ordinary configured-purpose baselines or custom deployment targets and optional pins. Resolve defaults through the shared pure configuration owner without database/server startup.
 - [x] Reuse finite plans, single-writer journal, source/request fingerprints, original answers and exact-Run recovery. Local preparation is offline; online reads/live execution remain explicit.
 - [x] Keep study IDs, frozen cases/references/co-models and spending controls in tools. Optional raw-text generation reuses the same executor and cannot publish or qualify gameplay actions.
 

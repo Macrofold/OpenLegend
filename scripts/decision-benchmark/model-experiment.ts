@@ -6,7 +6,7 @@ import {
   modelTokenPrices,
   usdToMicroUsd,
 } from '../../packages/ai/src/index.js';
-import { PRIVATE_BENCHMARK_EVIDENCE_BYTES } from './evidence-limits.js';
+import { PRIVATE_BENCHMARK_EVIDENCE_BYTES, assertPairwiseReportFits } from './evidence-limits.js';
 import {
   readGenerationConfig,
   readModelTargetsConfig,
@@ -17,6 +17,7 @@ import { armById, outputTokens, resolveArm, type BenchmarkArm } from './arms.js'
 import { sha256 } from './corpus.js';
 import type { BenchmarkManifest, BenchmarkJournalEvent } from './journal.js';
 import type { RunRecord } from './evaluate.js';
+import { groupByModel } from './evaluate.js';
 
 type OutputPolicy = NonNullable<BenchmarkArm['structuredOutput']>;
 type ArmSource =
@@ -252,12 +253,14 @@ export function resolveModelExperiment(
   const plannedCalls = plan.cases.length * plan.arms.length * plan.replicates;
   if (!Number.isSafeInteger(plannedCalls))
     throw new Error('Planned request count exceeds safe arithmetic.');
+  assertPairwiseReportFits(plan.arms.length * plan.replicates);
   // Every retained request needs its key, 64-character digest and reservation. Reject a
   // provably oversized grid before constructing either repeated arms or per-request records.
   const minimumRequestBytes = Buffer.byteLength(
     JSON.stringify({ key: ':', digest: '0'.repeat(64), reserve: 0 }),
   );
-  if (plannedCalls * minimumRequestBytes > PRIVATE_BENCHMARK_EVIDENCE_BYTES)
+  retainedBytes += plannedCalls * minimumRequestBytes;
+  if (retainedBytes > PRIVATE_BENCHMARK_EVIDENCE_BYTES)
     throw new Error(
       'Resolved model experiment request metadata exceeds the 20MB private evidence envelope before expansion.',
     );
@@ -322,17 +325,16 @@ export function resolveModelExperiment(
       base.maxOutputTokens ?? outputTokens,
       plan.limits.max_output_tokens,
     );
-    const bytesPerArm =
-      Buffer.byteLength(
-        JSON.stringify({
-          ...base,
-          id: `experiment/${entry.id}/replicate-${plan.replicates}`,
-          alias: entry.id,
-          originalArm: entry.id,
-          replicate: plan.replicates,
-          maxOutputTokens,
-        }),
-      ) + 1;
+    const bytesPerArm = Buffer.byteLength(
+      JSON.stringify({
+        ...base,
+        id: `experiment/${entry.id}/replicate-1`,
+        alias: entry.id,
+        originalArm: entry.id,
+        replicate: 1,
+        maxOutputTokens,
+      }),
+    );
     const bytes = bytesPerArm * plan.replicates;
     if (!Number.isSafeInteger(bytes) || retainedBytes + bytes > PRIVATE_BENCHMARK_EVIDENCE_BYTES)
       throw new Error(
@@ -349,6 +351,10 @@ export function resolveModelExperiment(
         maxOutputTokens,
       });
   }
+  assertPairwiseReportFits(
+    arms.length,
+    arms.reduce((bytes, arm) => bytes + Buffer.byteLength(JSON.stringify(arm.id)) - 2, 0),
+  );
   return { plan, planDigest: sha256(plan), arms, referenceDigest: sha256(reference) };
 }
 export function experimentArms(
@@ -364,6 +370,7 @@ export function experimentReport(
   planned: number,
   events: readonly BenchmarkJournalEvent[] = [],
 ) {
+  const recordsByModel = groupByModel(records);
   return {
     id: experiment.plan.id,
     question: experiment.plan.question,
@@ -382,14 +389,12 @@ export function experimentReport(
       originalArm: arm.originalArm,
       replicate: arm.replicate,
       target: arm.macrofoldDeployment ?? { model: arm.model },
-      actualRevisions: records
-        .filter((r) => r.model === arm.id)
-        .map((r) => ({
-          deployment: r.result.receipt.macrofoldDeployment ?? null,
-          outputMode: r.outputMode ?? null,
-          model: r.result.receipt.model,
-          modelVersionStatus: r.result.receipt.modelVersionStatus,
-        })),
+      actualRevisions: (recordsByModel.get(arm.id) ?? []).map((r) => ({
+        deployment: r.result.receipt.macrofoldDeployment ?? null,
+        outputMode: r.outputMode ?? null,
+        model: r.result.receipt.model,
+        modelVersionStatus: r.result.receipt.modelVersionStatus,
+      })),
     })),
     hosting: {
       basis: experiment.plan.hosting_cost.basis,

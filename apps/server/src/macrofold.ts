@@ -385,9 +385,18 @@ export class MacrofoldBackend implements AiClient {
     // Local serialization must fail before transport marks possible dispatch.
     const preparedBody = new PreparedJson(body, 500_000);
     const fingerprint = digest({ path, body });
-    // The existing operation journal owns the exact inference body needed for recovery.
-    // This is operational data outside gameplay rewind, never authority to replay it.
+    // Retain the exact inference only while its admission is unknown. An accepted
+    // Run or definite refusal keeps its fingerprint/replay fence without retaining
+    // another complete private prompt for every settled character decision.
     const retained = path === '/v1/inferences' ? { request: body } : {};
+    const saveResponse = async (response: Record<string, unknown>) => {
+      const accepted = typeof response['run_id'] === 'string' && response['run_id'].length > 0;
+      await this.save(`operation:${name}`, {
+        ...(!accepted ? retained : {}),
+        fingerprint,
+        response,
+      });
+    };
     const previous = await this.load<{
       fingerprint: string;
       response?: Record<string, unknown>;
@@ -415,21 +424,23 @@ export class MacrofoldBackend implements AiClient {
     await this.save(`operation:${name}`, { ...retained, fingerprint });
     // Check after the last journal await, immediately before HTTP dispatch. Once
     // sent, keep observing acceptance so closure can cancel the returned Run ID.
-    if (beforeDispatch) {
-      try {
-        await beforeDispatch();
-      } catch (error) {
-        // No HTTP admission occurred. Keep this refusal distinct from an accepted
-        // or ambiguous POST; recovery must not hold a known-unsubmitted charge.
-        await this.save(`operation:${name}`, { ...retained, fingerprint, rejected: true });
-        throw new MacrofoldAdmissionStopped(
-          'World Agent authorization could not be confirmed before dispatch.',
-          { cause: error },
-        );
-      }
+    try {
+      await beforeDispatch?.();
+      // Journal writes and source validation may outlive the caller's operation.
+      // Refuse before dispatch evidence can mutate an already-returned receipt.
+      this.api.currentOperation()?.throwIfStopped();
+    } catch (error) {
+      // No HTTP admission occurred. Keep this refusal distinct from an accepted
+      // or ambiguous POST; recovery must not hold a known-unsubmitted charge.
+      await this.save(`operation:${name}`, { fingerprint, rejected: true });
+      if (error instanceof NetworkError) throw error;
+      throw new MacrofoldAdmissionStopped(
+        'World Agent authorization could not be confirmed before dispatch.',
+        { cause: error },
+      );
     }
     if (admissionSignal?.aborted || signal?.aborted) {
-      await this.save(`operation:${name}`, { ...retained, fingerprint, rejected: true });
+      await this.save(`operation:${name}`, { fingerprint, rejected: true });
       if (signal?.aborted) signal.throwIfAborted();
       throw new MacrofoldAdmissionStopped('Macrofold request cancelled before dispatch.');
     }
@@ -446,14 +457,12 @@ export class MacrofoldBackend implements AiClient {
             onProgress
               ? {
                   text: onProgress,
-                  accepted: async (response) => {
-                    await this.save(`operation:${name}`, { ...retained, fingerprint, response });
-                  },
+                  accepted: saveResponse,
                 }
               : undefined,
           ),
         );
-        await this.save(`operation:${name}`, { ...retained, fingerprint, response: result });
+        await saveResponse(result);
         return result;
       };
       if (!admissionSignal) return await observe();
@@ -473,7 +482,6 @@ export class MacrofoldBackend implements AiClient {
     } catch (error) {
       if (admissionRejected(error, path)) {
         await this.save(`operation:${name}`, {
-          ...retained,
           fingerprint,
           rejected: true,
           status: error.status,
@@ -1623,17 +1631,20 @@ export class MacrofoldBackend implements AiClient {
     const schema = prepareSchema(request.schema, 500_000);
     const prepared = await this.api.run(
       { timeoutMs: config.aiTimeoutMs, deadlineAtMs: deadlineMs, signal },
-      (operation) =>
-        this.deploymentPreparation.prepare({
+      async (operation) => {
+        const prepared = await this.deploymentPreparation.prepare({
           target,
           outputPolicy,
           schema: schema.schema,
           maxOutputTokens: request.maxOutputTokens ?? cognitionOutputTokens(request.execution),
           stream: request.onProgress ? undefined : false,
           operation,
-        }),
+        });
+        await validateSource?.();
+        operation.throwIfStopped();
+        return prepared;
+      },
     );
-    await validateSource?.();
     this.deploymentSchemas.set(schema.schema, { schema, expiresAt, validateSource });
     return Object.freeze({
       ...request,

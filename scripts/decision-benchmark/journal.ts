@@ -278,6 +278,11 @@ export function assertBenchmarkRecord(
         ['json_schema', 'json_object', 'prompted_json'].includes(String(value.outputMode))),
     'output mode',
   );
+  requireValue(
+    value.attemptLatencyMs === undefined ||
+      (finite(value.attemptLatencyMs) && value.attemptLatencyMs >= 0),
+    'attempt timing',
+  );
   if (receipt.macrofoldDeployment !== undefined) {
     object(receipt.macrofoldDeployment);
     const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
@@ -495,11 +500,15 @@ export function validateJournal(
     const key = event.key;
     const expectedDigest = expectedInputs.get(key);
     requireValue(expectedDigest !== undefined && hash(expectedDigest), 'unknown model or scene');
-    const model = manifest.models.find((model) => key.startsWith(`${model}:`));
-    requireValue(model !== undefined, 'unselected model');
+    const modelIndex = Number(event.requestId.slice(event.requestId.lastIndexOf(':') + 1));
+    const model = manifest.models[modelIndex];
+    requireValue(
+      Number.isSafeInteger(modelIndex) && model !== undefined && key.startsWith(`${model}:`),
+      'unselected model',
+    );
     const scene = event.key.slice(model.length + 1);
     requireValue(
-      event.requestId === `olbench:${manifest.runId}:${scene}:${manifest.models.indexOf(model)}`,
+      event.requestId === `olbench:${manifest.runId}:${scene}:${modelIndex}`,
       'request binding',
     );
     if (event.event === 'admitted') {

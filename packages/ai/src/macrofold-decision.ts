@@ -653,7 +653,10 @@ function createMacrofoldExecutor(
           /* Original reservation remains uncertain. */
         }
       }
-      if (error instanceof MacrofoldHttpError) receipt.httpStatus = error.status;
+      if (error instanceof MacrofoldHttpError) {
+        receipt.httpStatus = error.status;
+        if (/^[a-z][a-z0-9_]{0,127}$/.test(error.code)) receipt.providerErrorCode = error.code;
+      }
       const outcome = stopped
         ? callerCancelled
           ? 'cancelled'

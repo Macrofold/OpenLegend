@@ -54,6 +54,7 @@ export class ModelTargetPreparationError extends Error {
     readonly outcome: 'unsupported' | 'resource-unavailable',
     readonly code: string,
     message: string,
+    readonly httpStatus?: number,
   ) {
     super(message);
   }
@@ -85,6 +86,7 @@ export async function describeMacrofoldDeployment(
         ? error.code
         : 'deployment_unavailable',
       'The selected deployment capabilities could not be read. No inference was submitted.',
+      error instanceof MacrofoldHttpError ? error.status : undefined,
     );
   }
   operation.throwIfStopped();

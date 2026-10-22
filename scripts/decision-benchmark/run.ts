@@ -11,12 +11,13 @@ import {
   resolveArm,
 } from './arms.js';
 import { modelInput, sha256, corpusVersion } from './corpus.js';
-import { summarize, type RunRecord } from './evaluate.js';
+import { groupByModel, summarize, type RunRecord } from './evaluate.js';
 import {
   armSupportsTask,
   executeArm,
   preparedArmInput,
   benchmarkDeploymentPreparation,
+  deploymentPreparationFailure,
   type PreparedDeploymentArm,
   type PreparedTask,
 } from './execute.js';
@@ -42,6 +43,7 @@ import {
 import type { BenchmarkRecoveryPlan } from './recovery.js';
 import { prepareReferenceReport, reviewedReferenceReport } from './reference-report.js';
 import { OpenAiRateGate } from '../../packages/ai/src/rate-gate.js';
+import { PRIVATE_BENCHMARK_EVIDENCE_BYTES } from './evidence-limits.js';
 
 /** A complete new experiment after an integration repair, retaining the paid
  * predecessor and its uncertain holds. This asserts no never-invoked proof.
@@ -273,6 +275,7 @@ export async function runBenchmark(
     await writeFile(manifestPath, json(manifest), { flag: 'wx', mode: 0o600 });
   }
   const availableArms = experimentArms(manifest);
+  const modelIndexes = new Map(manifest.models.map((model, index) => [model, index]));
   const recoveryKeys = recovery && new Set(recovery.selections.map((selection) => selection.key));
   const selectedTasks = [...taskById.values()].flatMap((task, index) => {
     const order = [
@@ -295,6 +298,17 @@ export async function runBenchmark(
       });
   });
   const preparedDeployments = new Map<string, PreparedDeploymentArm>();
+  if (experiment) {
+    const metadataBytes = selectedTasks.reduce(
+      (bytes, { key, digest, reserve }, index) =>
+        bytes + Buffer.byteLength(JSON.stringify({ key, digest, reserve })) + (index > 0 ? 1 : 0),
+      Buffer.byteLength(JSON.stringify(experiment)) + 2,
+    );
+    if (metadataBytes > PRIVATE_BENCHMARK_EVIDENCE_BYTES)
+      throw new Error(
+        'Resolved model experiment metadata exceeds the 20MB private evidence envelope.',
+      );
+  }
   const onlinePreflight = options.get('online-preflight') === 'true';
   if (command === 'report' && onlinePreflight)
     throw new Error('Reports are offline; use prepare --online-preflight=true for passive checks.');
@@ -318,15 +332,19 @@ export async function runBenchmark(
   }
   const accounting = new BenchmarkAccounting(manifest.priorCommitmentUsd, events);
   const attempted = new Set(events.filter((e) => e.event === 'admitted').map((e) => e.key));
-  if ((command === 'run' && options.get('live') === 'true') || onlinePreflight) {
+  const deploymentPreparation =
+    (command === 'run' && options.get('live') === 'true') || onlinePreflight
+      ? benchmarkDeploymentPreparation(manifest)
+      : undefined;
+  if (deploymentPreparation) {
     if ((process.env['MACROFOLD_BASE_URL'] ?? 'http://localhost:3210') !== manifest.baseUrl)
       throw new Error('Cannot change Macrofold host on resume.');
-    const prepare = benchmarkDeploymentPreparation(manifest);
-    for (const task of selectedTasks) {
-      if (attempted.has(task.key)) continue;
-      const prepared = await prepare(task.arm, task.task);
-      if (prepared) preparedDeployments.set(task.key, prepared);
-    }
+    if (command === 'prepare')
+      for (const task of selectedTasks) {
+        if (attempted.has(task.key)) continue;
+        const prepared = await deploymentPreparation.prepare(task.arm, task.task);
+        if (prepared) preparedDeployments.set(task.key, prepared);
+      }
   }
 
   const rateGate = manifest.models.some((model) =>
@@ -358,6 +376,8 @@ export async function runBenchmark(
           ? gradeGenerated(episodeById.get(r.sceneId.slice(9))!, r.generation)
           : {}),
       }));
+    const recordsByModel = groupByModel(allRecords);
+    const generationRowsByModel = groupByModel(generationRows);
     const output = {
       executionPhases: await readFile(join(directory, 'execution-phases.jsonl'), 'utf8')
         .then((text) =>
@@ -418,9 +438,9 @@ export async function runBenchmark(
         planned: generationTasks.length,
         rows: generationRows,
         models: manifest.models.map((model) => {
-          const rows = generationRows.filter((r) => r.model === model);
-          const runs = allRecords.filter(
-            (r) => r.model === model && r.sceneId.startsWith('generate-'),
+          const rows = generationRowsByModel.get(model) ?? [];
+          const runs = (recordsByModel.get(model) ?? []).filter((r) =>
+            r.sceneId.startsWith('generate-'),
           );
           const times = runs.map((r) => r.result.receipt.latencyMs).sort((a, b) => a - b);
           return {
@@ -660,13 +680,18 @@ export async function runBenchmark(
         rateStopReason = rateGate.stopReason;
         continue;
       }
-      const requestId = `olbench:${manifest.runId}:${task.task.id}:${manifest.models.indexOf(task.arm.id)}`;
+      const requestId = `olbench:${manifest.runId}:${task.task.id}:${modelIndexes.get(task.arm.id)}`;
+      const stopped = () =>
+        cancellation.signal.aborted ||
+        blockedArms.has(resourceKey(task.arm)) ||
+        (task.arm.transport.startsWith('openai') && rateGate?.stopReason !== undefined);
       const reserved = micro(task.reserve);
       if (task.reserve > manifest.maxCostUsd)
         throw new Error(`Credible reservation exceeds per-call ceiling: ${task.task.id}`);
       const hasHeadroom = () =>
         accounting.committedMicroUsd + inFlightMicro + reserved <= micro(manifest.capUsd);
-      if (!hasHeadroom()) return;
+      if (!hasHeadroom() || cancellation.signal.aborted) return;
+      if (stopped()) continue taskLoop;
       if (rateGate && task.arm.transport.startsWith('openai')) {
         // Rate capacity includes the complete Responses output allowance, while
         // native decisions consume only input tokens. Reuse this bound while waiting.
@@ -677,7 +702,8 @@ export async function runBenchmark(
         for (;;) {
           // Budget can change during a cooldown. Never claim rate capacity for
           // a request that will immediately stop for lack of funded headroom.
-          if (!hasHeadroom()) return;
+          if (!hasHeadroom() || cancellation.signal.aborted) return;
+          if (stopped()) continue taskLoop;
           const admission = rateGate.beforeNext(tokenUpperBound, Date.now(), requestId);
           if (admission.blockedReason) {
             rateStopReason = admission.blockedReason;
@@ -697,6 +723,29 @@ export async function runBenchmark(
           if (cancellation.signal.aborted) return;
         }
       }
+      // Resolve only selected new work. Later requests can refresh after an actual
+      // revision/unsupported receipt; in-flight and already admitted attempts keep theirs.
+      const started = Date.now(),
+        monotonicStart = performance.now();
+      const deadlineMs = started + manifest.timeoutMs;
+      let prepared: PreparedDeploymentArm | undefined;
+      let preparationFailure: ReturnType<typeof deploymentPreparationFailure> | undefined;
+      try {
+        prepared = await deploymentPreparation?.prepare(task.arm, task.task, {
+          signal: cancellation.signal,
+          deadlineMs,
+        });
+      } catch (error) {
+        preparationFailure = deploymentPreparationFailure(
+          error,
+          task.arm,
+          task.task,
+          requestId,
+          started,
+        );
+      }
+      if (!hasHeadroom() || cancellation.signal.aborted) return;
+      if (stopped()) continue taskLoop;
       // Claim headroom synchronously before awaiting the serialized journal write.
       inFlightMicro += reserved;
       await append({
@@ -707,24 +756,32 @@ export async function runBenchmark(
         at: new Date().toISOString(),
       });
       inFlightMicro -= reserved;
-      const result = await executeArm(
-        task.arm,
-        task.task,
-        manifest,
-        requestId,
-        task.reserve,
-        cancellation.signal,
-        async (runId) => {
-          await append({
-            event: 'accepted',
-            key: task.key,
-            requestId,
-            runId,
-            at: new Date().toISOString(),
-          });
-        },
-        preparedDeployments.get(task.key),
-      );
+      const remainingMs = Math.max(0, manifest.timeoutMs - (performance.now() - monotonicStart));
+      const result =
+        preparationFailure ??
+        (await executeArm(
+          task.arm,
+          task.task,
+          manifest,
+          requestId,
+          task.reserve,
+          stopped() ? AbortSignal.abort() : cancellation.signal,
+          async (runId) => {
+            await append({
+              event: 'accepted',
+              key: task.key,
+              requestId,
+              runId,
+              at: new Date().toISOString(),
+            });
+          },
+          prepared,
+          {
+            deadlineMs: Math.min(deadlineMs, Date.now() + remainingMs),
+            timeoutMs: Math.max(1, Math.floor(remainingMs)),
+          },
+        ));
+      deploymentPreparation?.observeReceipt(task.arm, result.result.receipt);
       adapter?.decode(task.task, result);
       if (rateGate && task.arm.transport.startsWith('openai'))
         rateGate.observe(result.result.receipt, Date.now());
@@ -734,9 +791,8 @@ export async function runBenchmark(
         model: task.arm.id,
         requestId,
         inputDigest: task.digest,
-        ...(preparedDeployments.get(task.key)
-          ? { outputMode: preparedDeployments.get(task.key)?.macrofoldOutputMode }
-          : {}),
+        attemptLatencyMs: performance.now() - monotonicStart,
+        ...(prepared ? { outputMode: prepared.macrofoldOutputMode } : {}),
         ...(manifest.streamGeneration && task.arm.transport === 'macrofold-generation'
           ? { stream: true }
           : {}),
