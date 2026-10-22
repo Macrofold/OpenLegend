@@ -43,7 +43,7 @@ Implement through the existing spatial, action, observation, clock and view owne
 **Status: Not started.** Owns SAI-B's physical rig and authored-policy portion.
 
 - [ ] Add the selected body heading and bounded head/eye receiver state through the existing spatial owner; retain distinct actual motion direction and presentation-only camera direction. Audit every current movement-heading and guard-facing consumer.
-- [ ] Install and validate world/species/body policy for receiver placement, gaze limits and rates, finite fields, central/peripheral quality, finite range, surface/part samples and supported sense families. Define explicit refusal for malformed or unsupported installations.
+- [ ] Install and validate world/species/body policy for receiver placement, gaze limits and rates, finite fields, central/peripheral quality, finite range, surface/part samples and supported sense families. Distinguish an absent optional sense, a valid disabled receptor and missing required physical data under technical §5.1; valid blindness must not stall simulation.
 - [ ] Connect the selected Perception/stat/trait policy to available weak evidence and precision, preserving all hard geometry, field, range and darkness gates. Presentation-only trait labels confer no mechanic.
 - [ ] Exercise a frontal person and a contrasting lateral-vision animal, including a body with multiple receivers, through the same supported policy family. Distinct head freedom must not create extra action owners or omnidirectional fine detail.
 
@@ -67,7 +67,7 @@ Implement through the existing spatial, action, observation, clock and view owne
 - [ ] Replace coarse exposed-height assumptions for the selected visual model with the specified receiver and target part/surface geometry, projected exposure, range, motion and detail precision. Use the same predicate in current queries and future interval preparation.
 - [ ] Add independent authored vision/light transmission, physical collision and attack-obstruction properties through existing geometry/material definitions. Validate walls, foliage, slopes, low roofs and small openings without inferring solidity from opacity.
 - [ ] Require actual action/part-owned preparation transforms before exposing a visual weapon/limb preparation cue; a hidden action stage is not a physical pose.
-- [ ] Resolve each visible facet independently: body location, face, hands, markings, clothing and equipment cannot inherit one another's permission. A protruding object can be visible without proving its hidden carrier's identity or held relation.
+- [ ] Resolve each visible facet independently: body location, face, hands, markings, clothing and equipment cannot inherit one another's permission. A protruding object can be visible without proving its hidden carrier's identity or held relation. Remove the self-ID shortcut from optical evidence while preserving separately authorized self-knowledge and presentation.
 - [ ] Admit supported pose changes only after support and resulting body/equipment clearance. Sample the actual physical part and height, never the client's animation or an unsupported posture intention.
 
 **Exit:** mask, foliage, wall and partial-cover cases yield the specified physical evidence without a global hidden flag, seeing through collision geometry, or transferring visibility to concealed parts.
@@ -77,8 +77,8 @@ Implement through the existing spatial, action, observation, clock and view owne
 **Status: Not started.** Coordinate [base-world vision](../worlds/base/vision-and-gaze.md), [FPW03](first-playable-world.md#fpw03--ordinary-actions-readable-work-and-readiness), and G's projection.
 
 - [ ] Install the selected day/night, ambient, direct-light and finite local-source policies under the world clock and geometry owner. Evaluate light transmission, exposed surface illumination and local background contrast independently of GPU shadows or client quality settings.
-- [ ] Distinguish seeing a light source, seeing an illuminated surface and seeing a silhouette. An unseen lamp may light a wall without disclosing the lamp's entity, coordinates, holder or hidden movement.
-- [ ] Supply G with the permitted physical lighting meaning and source-free visible effects needed to render consistently. Remove reliance on remembered or nearest-rendered-fire approximations for detection; preserve actual current behavior until the complete replacement is delivered.
+- [ ] Distinguish seeing a light source, seeing an illuminated surface and seeing a silhouette. Install the finite emissive flame shape and background-radiance rules, including non-occluding emitters and intervening blockers. An unseen lamp may light a wall without disclosing the lamp's entity, coordinates, holder or hidden movement.
+- [ ] Supply G with the permitted physical lighting meaning and source-free visible effects needed to render consistently. Keep remembered/nearest-rendered-fire approximations out of detection and replace conflicting rendered-light behavior through G; preserve actual current behavior until the complete replacement is delivered.
 - [ ] Validate unsupported light/material families explicitly and keep the declared first-release approximation honest. Do not silently introduce reflected/refracted light, photorealistic global illumination or thermal sensing.
 
 **Exit:** moving a lamp or screen produces the same material visibility consequence for native sensing and ordinary presentation, within the authored approximation; graphics settings and camera cutaways cannot change observation.
@@ -87,7 +87,7 @@ Implement through the existing spatial, action, observation, clock and view owne
 
 **Status: Not started.** Depends on A's adopted physical-input shapes, evidence-accumulation semantics and SA-D02 disposition.
 
-- [ ] Produce only actual visual evidence at the supported feature/facet precision, quality and time. Supply A's source/life/receiver provenance and identity fidelity; leave recognition, weak-evidence storage, decay, episode ownership and remembered facts with A.
+- [ ] Produce only actual visual evidence at the supported feature/facet precision, quality and time. Supply A's source/life/receiver provenance, identity fidelity and the technical design's unique-witness continuity certificate; overlapping figures cannot retain tracking by private ID. Leave recognition, weak-evidence storage, decay, episode ownership and remembered facts with A.
 - [ ] Implement the technical design's complete interval preparation for moving observer and target, head/body turns, changing posture, light/source motion and changing occlusion. Derive it from the same current-query model, using actual admitted paths and canonical time anchors.
 - [ ] Partition at all required field, geometry, range, light, quality and action boundaries. Deliver obvious evidence promptly and weak evidence over its real duration; let A calculate its first threshold crossing. Equal endpoint samples or a midpoint alone cannot prove that a narrow opening was never visible.
 - [ ] Reconcile all currently sampled motion families, including target/resource/item approaches, falls and wandering impulses. Required trajectory changes are source work; do not infer an unadmitted continuous path through an old instantaneous move.
