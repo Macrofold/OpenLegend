@@ -2,15 +2,15 @@
 
 | Status      | Current progress                                                                                                | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Design complete and reviewed; VG01–VG08 implementation, runtime qualification and playtesting have not started. | 2026-10-21   |
+| In progress | Design complete and reviewed; VG01–VG08 implementation, runtime qualification and playtesting have not started. | 2026-10-22   |
 
 ## Purpose and ownership
 
 A character can walk toward home while looking at the animal beside the path, watch an entrance without staring at their feet, lose a face in shadow while still seeing a silhouette, or notice a spear protruding beyond cover without seeing its carrier. Their body, surroundings and actual visual exposure determine the available information. The player camera does not.
 
-This is **module B — vision and orientation** in the [shared stealth contracts](stealth-awareness-tech-design.md#physical-orientation-posture-and-senses). The branch assignment number `03` is not a new module name. The [technical design](vision-and-gaze-tech-design.md) specifies the producer and integration; [VG00–VG08](../maintainers/vision-and-gaze.md) own design and future delivery. The selected scope completes the visual/physical-orientation portion of [ND13](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization), with sensory/body/stat/light connections to ND03, ND05, ND06, ND08 and ND16; it does not close those broader programmes.
+This is **module B — vision and orientation** in the [shared stealth contracts](stealth-awareness-tech-design.md#physical-orientation-posture-and-senses). The [technical design](vision-and-gaze-tech-design.md) specifies the producer and integration; [VG00–VG08](../maintainers/vision-and-gaze.md) own design and future delivery. The selected scope completes the visual/physical-orientation portion of [ND13](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization), with sensory/body/stat/light connections to ND03, ND05, ND06, ND08 and ND16; it does not close those broader programmes.
 
-Before this design, the completed remote perception [feature specification](https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/projects/perspective-perception-feature-spec.md) and [technical design](https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/projects/perspective-perception-tech-design.md) were read at their pinned revision. That branch is a dependency reference, not merged content. A owns noticing, evidence accumulation and storage, recognition, names, independent fact freshness and remembered knowledge. B supplies actual visible opportunities, detail and physical orientation. C owns posture, locomotion/contact policy and sound. E chooses whether and where to look, inspect, watch or investigate. F decides preparedness and surprise. G owns controls, camera privacy and presentation using A's permitted results.
+A owns noticing, evidence accumulation and storage, recognition, names, independent fact freshness and remembered knowledge. B supplies actual visible opportunities, detail and physical orientation. C owns posture, locomotion/contact policy and sound. E chooses whether and where to look, inspect, watch or investigate. F decides preparedness and surprise. G owns controls, camera privacy and presentation using A's permitted results.
 
 The existing `docs/projects/stealth-awareness-tech-design.md` remains unchanged and authoritative. This feature creates no second action channel, knowledge store, attention scheduler, awareness flag or hidden/visible switch on an actor.
 
@@ -118,13 +118,9 @@ The existing action owner needs a narrow composition extension, not a general co
 
 The release does not require general smoke simulation, disguise authoring, mirror optics, free leaning, binocular equipment, magical sight, a day/night survival rebalance or a new stealth UI. Existing repertoire examples for those capabilities remain extension opportunities. A supported blind or nonvisual creature continues through its own senses; no visual fallback is invented.
 
-## Repertoire review and integration
+## Fit with the broader game
 
-The complete collection's 42 file scopes and entry inventories were reviewed, with full applicable visual/light/body/trait/action rows and surrounding context. This is not a claim to reread every word of every unrelated proposal or repeat the historical source-game research. Existing relevant entries already contain useful gameplay, so the design strengthens them in place rather than adding duplicate catalogue IDs.
-
-The reviewed scope includes all 28 topical catalogues; the README, coverage, foundations, gameplay priorities, selection/scale and combinations; the source atlas and three reading/research ledgers; and all four optional world profiles. Physical rows cover turning, peeking, watch, peripheral vision, multiple viewpoints, foliage, shadows, inspection lights, pavises and defensive facing. Social/work rows cover birdwatching, light arrangement, signed communication, witnesses, towers, signaling balconies, experiments and visible marks. [VG00's coverage record](../maintainers/vision-and-gaze.md#complete-repertoire-review-coverage) lists the complete file groups and integration disposition.
-
-Catalogue proposals remain proposals. Central priority/count/navigation changes remain with SAD-I, as required by the shared tracker. Ordinary survival, a defensible home, differentiated inhabitants, cooperation and practical invention remain the selected game; vision gives those activities more meaningful physical choices.
+Vision supports the existing priorities of survival, a defensible home, differentiated inhabitants, cooperation and practical invention. Related [repertoire entries](../repertoires/README.md) remain proposals at their existing priorities; they do not automatically enlarge this release. [VG00's coverage record](../maintainers/vision-and-gaze.md#complete-repertoire-review-coverage) owns review scope and shared integration responsibilities.
 
 ## Decisions and handoff
 
