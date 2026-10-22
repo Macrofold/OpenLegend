@@ -41,13 +41,13 @@ The source baseline and five specialist pins are recorded in the technical desig
 
 **Status: Not started.** Owner: combat-encounters and existing acquisition/native-exposure adapters. Dependencies: SUR01, SAI-A, relevant B/C acquisition and A/SPK meaning.
 
-- [ ] Extend current known-pair/anonymous records with compact exact warning support and registration/retention/settling deadlines. Do not use sight-gated personalEncounter as the mechanical query or create another threat collection.
+- [ ] Extend current known-pair/anonymous records with compact exact warning support, clock/conversion binding and registration/retention/settling deadlines. Do not use sight-gated personalEncounter as the mechanical query or create another threat collection.
 - [ ] Route actual directed preparation/release/attempt, felt contact and the required incoming-projectile detail through observer-permitted acquisition. Raw weak progress, hidden action labels and future collider facts cannot warn.
 - [ ] Implement B/A's actual observed incoming-motion adapter and reuse native projectile-passage producer/deduplication only where it supplies permitted proof.
 - [ ] Demonstrate A/SPK's ordinary understood current scoped warning producer; raw “Look out!” text, intelligibility or unparsed relative time alone cannot become F authority.
 - [ ] Implement native registration independent of model/memory/action availability, using exact supported general-perception/life/participation predicate and original acquisition boundary.
-- [ ] Implement six-plus-two authored continuation, true fresh renewal, complete continuous confirmation and scoped preparation postponement. Broad self-assault continuation is never prolonged by deliberate work alone.
-- [ ] Reconcile correction, independent support, life/block transitions, wake/reacquisition, exact duplicate causes and pruning through existing nextAt/history owners. Native animals use compact existing references.
+- [ ] Implement six-plus-two authored continuation, true fresh renewal, complete continuous confirmation and scoped preparation postponement. Broad self-assault continuation is never prolonged by deliberate work alone. Preserve narrow exact-source continuity, actual own committed offense through recovery and mature scoped confirmation when a real attack consumes a guard; ending unused work supplies none.
+- [ ] Reconcile correction, independent support, life/block transitions, wake/reacquisition, exact duplicate causes, consumed root lineage and pruning through existing nextAt/history owners. Preserve valid warning when current pairFor/re-exposure replaces its UI/recognition pair; never rebind historical source life. Native animals use compact existing references.
 
 **Exit:** real permitted warning can become finite preparedness without AI, and complete expiration/reset cannot be bypassed by source/weapon/control changes, repeated publication or unrelated work.
 
@@ -97,7 +97,7 @@ The source baseline and five specialist pins are recorded in the technical desig
 **Status: Not started.** Owner: existing serialization/validation/world-record, temporal-boundary and participant continuation owners. Dependencies: SUR02–05.
 
 - [ ] Update all current-format writers/readers/validators together for encounter warning, actual method start, bound flight and committed outcome/receipt fields.
-- [ ] Persist original acquired/ready/retention/settling times, life/policy/source pins and flight release origin; rebuild only derived indexes.
+- [ ] Persist original acquired/ready/retention/settling times, admitted normal-clock conversion/durations, life/policy/source pins and flight release origin; rebuild only derived indexes.
 - [ ] Include required registration and expiry boundaries in existing nearest-deadline accounting, with normal-speed-second conversion exactly once.
 - [ ] Make partial contact/save/retry recover one coherent pre-contact or committed state, including nested acquisition and D terminal results.
 - [ ] Reject stale resumed body/source/policy/work results; preserve already released flight semantics and no cross-life continuation.
@@ -122,7 +122,7 @@ The source baseline and five specialist pins are recorded in the technical desig
 
 **Status: Not started.** Owner: affected existing test/verification owners; SA/CTR coordinate cross-project gates. Dependencies: SUR01–07 and actual integrated producer/consumer paths.
 
-- [ ] Turn [T01–T24](../projects/preparedness-and-surprise-tech-design.md#deterministic-chronology-examples) and [SUR-T01–64](../projects/preparedness-and-surprise-tech-design.md#acceptance-scenarios) into meaningful native/server/storage checks at real callers.
+- [ ] Turn [T01–T28](../projects/preparedness-and-surprise-tech-design.md#deterministic-chronology-examples) and [SUR-T01–68](../projects/preparedness-and-surprise-tech-design.md#acceptance-scenarios) into meaningful native/server/storage checks at real callers.
 - [ ] Cover exact cut membership, same timestamp order, correction, stale/incomplete work, future-family admission refusal, current shield/evasion timing and raw-versus-final damage arithmetic.
 - [ ] Cover all actual body/controller/native animal/PvP/collateral/lifecycle cases, including rest, fatal contact, replaced life and released source loss.
 - [ ] Prove ordinary understood warning and actual observed flight paths; a hand-built warning fixture alone is insufficient.

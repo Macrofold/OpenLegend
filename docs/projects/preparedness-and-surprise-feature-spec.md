@@ -56,7 +56,7 @@ The [world policy](../worlds/base/combat.md#preparedness-policy) selects the ini
 
 Directly received evidence of an attack against oneself supports short-lived expectation of ordinary physical assault, including another attacker. This prevents a crowd from obtaining a fresh surprise bonus simply by changing attacker identity. It is personal, evidence-backed and finite, not a global combat state. A mere stranger, general reputation for danger, nearby unrelated combat, fear, or a declaration of permanent vigilance does not establish it.
 
-My own attack initially prepares me only for its relevant opponent/approach. A hunter aiming at a deer does not thereby become prepared for an ally's betrayal. Merely witnessing somebody attack someone else is not a directed attack against me. It can support a deliberately chosen precaution or a subsequently admitted scoped danger interpretation.
+My own attack prepares me only for its relevant opponent/approach. Once a real mature attempt/release commits, that narrow anticipation can persist through recovery; losing the ability to defend does not make its immediate counterattack unexpected. A hunter aiming at a deer does not thereby become prepared for an ally's betrayal. Merely witnessing somebody attack someone else is not a directed attack against me. It can support a deliberately chosen precaution or a subsequently admitted scoped danger interpretation.
 
 ### What does not establish surprise
 
@@ -108,7 +108,9 @@ Relevant attack expectation persists briefly after the last genuinely fresh supp
 
 Stop ends current guard/watch work immediately. It does not erase registered attack evidence. Changing the preferred action to Speak, briefly hiding, turning a camera, changing weapons, crossing an exposure boundary, reconnecting or replaying a command cannot reset an encounter.
 
-Evidence-free watch coverage ends with its actual method. Past scan directions cannot be accumulated into an all-direction shield against surprise. A real prior warning can continue independently of the ended watch, under its own finite terms. Moving or rotating does not rotate an old sound bearing or refresh its observation time.
+Actual acquired attack evidence can preserve the already mature matching scope when a guard is consumed, without charging that same anticipation another registration interval. Newly learned broader danger still needs its own lead. A known opponent also has narrow source continuity, so a long anticipated fight does not become a new ambush merely when they briefly pass out of view.
+
+Evidence-free watch coverage ends with its actual method. Unused ended methods create no residual warning. Past scan directions cannot be accumulated into an all-direction shield against surprise. A real prior warning can continue independently of the ended watch, under its own finite terms. Moving or rotating does not rotate an old sound bearing or refresh its observation time.
 
 A genuinely quiet return can be surprising again after continuity and settling end. Leaving and returning is not itself proof of reset: the defender may still maintain a relevant method or have received a new warning. Conversely, lifelong acquaintance or an old grudge supplies no permanent physical readiness.
 

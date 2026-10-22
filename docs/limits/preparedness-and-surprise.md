@@ -16,7 +16,9 @@ These intervals preserve a meaningful early/late warning distinction without mak
 
 ## SUR-L03 — Retained expectation and genuine unwary return
 
-**Restrictiveness: Medium.** The world table selects finite warning retention and a separate quiet-settling interval. They belong to personally supported encounter evidence, not CTR's contextual-action grace. No stale observation, repeated command, rendering, model prose, repeated visibility of the same unchanged commitment or source alias refreshes them.
+**Restrictiveness: Medium.** The world table selects finite warning retention and a separate quiet-settling interval. They belong to personally supported encounter evidence, not CTR's contextual-action grace. No stale observation, repeated command, rendering, model prose, republication of stale visibility of the same commitment or source alias refreshes them.
+
+Genuine continuous threat confirmation can hold its actual supported scope; this is fresh observation, not republication. Actual acquired attack evidence or a real own committed offense can retain already mature matching anticipation, including through guard consumption or recovery. Broad and narrow source continuation remain distinct; unrelated work cannot preserve broad readiness.
 
 Evidence-free watch has no residual coverage. This prevents scanning/guard cycling from accumulating all-direction immunity. Actual directed attack evidence can establish finite ordinary-physical-assault expectation; general danger, mere identity and one's unrelated hunting action cannot. Other scopes remain source/region/approach-specific. SUR09 assesses whether the selected reset is understandable and whether it supports both escape and later ambush.
 
