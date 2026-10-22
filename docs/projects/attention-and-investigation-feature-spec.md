@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | Behavior and implementation scope are selected; technical integration and design review are in progress, with no runtime delivery. | 2026-10-22 |
+| In progress | Specialist design and documentation review are complete; ATI01–ATI08 implementation and gameplay qualification remain open. | 2026-10-22 |
 
 ## Purpose and scope
 
@@ -10,7 +10,7 @@ An inhabitant should be able to spend attention on something worth understanding
 
 This is **SAD-E**, the attention, investigation and active-preparation specialty of the [shared stealth design](stealth-awareness-tech-design.md#shared-contracts). It owns accepted observation work and its continuation through existing action, agency, native-controller and decision-intake owners. The [technical counterpart](attention-and-investigation-tech-design.md) specifies fields, transitions, subscriptions, temporal cuts and implementation order. Perception A owns evidence and recognition; B/C own physical sight, orientation and hearing; D owns bodily shock/private emotion; F owns warning interpretation and final surprise; G owns detailed controls and disclosure.
 
-This pair completes the selected attention portions of [DG02](../maintainers/needs-design.md#band-1--improve-the-current-personal-game), [ND13](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization) and [ND16](../maintainers/needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech). It does not complete whole-life behavior, crowd/gist scenes, control customization or wider hearing.
+This pair completes the selected attention portions of [DG02](../maintainers/needs-design.md#dg02--one-resident-who-follows-through), [ND13](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization) and [ND16](../maintainers/needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech). It does not complete whole-life behavior, crowd/gist scenes, control customization or wider hearing.
 
 **Design only.** Finite activity execution, goals, action results, interruption, actor intake and native animal alarm already provide foundations. General observation actions, selected simultaneous work, the preparation projection and their complete integration remain implementation work in [ATI01–ATI08](../maintainers/attention-and-investigation.md). No application change, executable test, measured capacity, model-quality result or demonstrated enjoyment is claimed.
 
@@ -56,7 +56,7 @@ These are ordinary capabilities offered through the same action discovery, exact
 
 Investigation is a purpose expressed by existing finite activities, not a new planner. An already admitted conditional method may react natively to a supported condition; a novel destination, a new accusation or an attack still requires the appropriate new choice. Freeform “find out everything” must be narrowed to an executable scope, with the unresolved question retained honestly.
 
-The [world profile](../worlds/base/attention-and-investigation.md) owns initial durations, observation methods, focus sequence size and native curiosity policy. The [limits inventory](../limits/attention-and-investigation.md) distinguishes play choices from work quanta and retention. Another world can choose different bodies, senses, methods and deadlines through the same trusted families.
+The [world profile](../worlds/base/attention-and-investigation.md) owns initial durations, observation methods and native curiosity policy. The [limits inventory](../limits/attention-and-investigation.md) distinguishes play choices from work quanta and retention. Another world can choose different bodies, senses, methods and deadlines through the same trusted families.
 
 ## What is being watched
 

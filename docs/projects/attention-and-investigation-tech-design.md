@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | Owner contracts and detailed execution are selected; integration review remains in progress and runtime implementation has not started. | 2026-10-22 |
+| In progress | Specialist design and preparation interfaces are complete; implementation and the named cross-project integration gates remain open. | 2026-10-22 |
 
 ## 1. Authority, baseline and dependency reads
 
@@ -452,9 +452,15 @@ type PreparationCapture =
       kind: 'incomplete';
       continuation: ExistingWorkReference;
     }>;
+
+declare function capturePreparation(
+  actor: ActorLifeRef,
+  cut: EvidenceCut,
+  admittedPreparationFamilies: readonly DefinitionPin[],
+): PreparationCapture;
 ~~~
 
-The synchronous producer query is **capturePreparation(actor, cut, admittedPreparationFamilies)**. Arguments contain no attacker to discover and no global threat search. F can match the complete immutable contribution to its actual outcome under F's policy. An absent optional family yields a complete empty contribution; required physical/effect/evidence preparation still unfinished yields incomplete and holds the dependent outcome. Invalid current-format state fails through owning validation; never return empty to disguise it.
+The synchronous producer query is **capturePreparation(actor, cut, admittedPreparationFamilies)**. Arguments contain no attacker to discover and no global threat search. admittedPreparationFamilies is the validated installed/pinned adapter set, not a caller-selected filter for omitting applicable required families. Reject a mismatched set through existing admission; missing required support cannot become an empty contribution. F can match the complete immutable contribution to its actual outcome under F's policy. An absent optional family yields a complete empty contribution; required physical/effect/evidence preparation still unfinished yields incomplete and holds the dependent outcome. Invalid current-format state fails through owning validation; never return empty to disguise it.
 
 **Identity and chronology rules.** The top-level method pin identifies the registered preparation/capture family. It does not pretend every underlying profile already has a DefinitionPin: EvasionState.profile, for example, is the existing contentLabel string. Preserve each family's real identifiers inside its arm and resolve/pin the actual adapter definition normally. An Action has no general revision or admission timestamp; the new scoped attentionRevision is explicitly E-owned, and initial adapter implementation must record missing **admission, current-method start, continuous fulfillment and latest break timestamps within that existing action/preparation/native owner**. Reuse existing semantically identical times where present. Never derive elapsed preparation from Action duration, native episode.startedAt, navigation proposalGeneration or an arbitrary last tick. Native mode changes and physical loss/recovery establish real boundaries; current-format restore requires those selected fields rather than inventing a historical interval.
 

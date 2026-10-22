@@ -1,6 +1,6 @@
 # Attention and investigation — implementation work
 
-**Design review in progress; runtime implementation not started.** This tracker owns SAD-E's selected attention methods, accepted work, native extension and preparation-evidence producer. [Feature](../projects/attention-and-investigation-feature-spec.md), [technical design](../projects/attention-and-investigation-tech-design.md), [world policy](../worlds/base/attention-and-investigation.md) and [limits](../limits/attention-and-investigation.md) are its canonical inputs. The parent [stealth tracker](stealth-awareness.md) keeps shared integration and SAI-E/F; AC, AG, EPR, CTR and SPK keep their broader tasks.
+**Design complete; runtime implementation and qualification remain open.** This tracker owns SAD-E's selected attention methods, accepted work, native extension and preparation-evidence producer. [Feature](../projects/attention-and-investigation-feature-spec.md), [technical design](../projects/attention-and-investigation-tech-design.md), [world policy](../worlds/base/attention-and-investigation.md) and [limits](../limits/attention-and-investigation.md) are its canonical inputs. The parent [stealth tracker](stealth-awareness.md) keeps shared integration and SAI-E/F; AC, AG, EPR, CTR and SPK keep their broader tasks.
 
 ## Baseline and dependencies
 
@@ -12,6 +12,8 @@ Actual action/plan identity, source acquisition, physical lane, native controlle
 
 ## ATI00 — Complete specialist design
 
+**Completed — design and documentation only, 2026-10-22.**
+
 Parent: **SAD-E**; selected **DG02, ND13 and ND16**, with ND11/ND19 consumers.
 
 - [x] Read root rules, actual owners and complete remote A/B/C feature/technical designs without merging them.
@@ -19,8 +21,8 @@ Parent: **SAD-E**; selected **DG02, ND13 and ND16**, with ND11/ND19 consumers.
 - [x] Select small accepted-work state, exact action composition, finite lifecycle, acquisition boundaries and no circular fear/surprise dependency.
 - [x] Publish typed E preparation evidence for Prompt 6 while preserving F's surprise decision and A's evidence authority.
 - [x] Specify world methods, operational bounds, subscriptions, persistence and truthful failure.
-- [ ] Resolve adversarial contract review findings and reconcile affected owners/repertoires/statuses.
-- [ ] Verify changed Markdown targets/anchors, documentation-only diff and exact branch ancestry; commit/push all owned changes.
+- [x] Resolve adversarial contract review findings and reconcile affected owners/repertoires/statuses.
+- [x] Verify changed Markdown targets/anchors, documentation-only diff and exact branch ancestry; commit/push all owned changes.
 
 **Exit:** feature/technical pair plus tasks and canonical summaries agree; all selected E semantics are executable without an implementer inventing product behavior. External gates below stay explicit. Design checks cannot satisfy ATI01–ATI08.
 
