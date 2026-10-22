@@ -1,8 +1,8 @@
 # Custom models — implementation plan
 
-| Status  | Current progress                                                                                                                                | Last updated |
-| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Production routing, shared inference and benchmark extensions are being implemented against the approved Macrofold contract; real-server acceptance follows integration. | 2026-10-22 |
+| Status      | Current progress                                                                                                                                                         | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Production routing, shared inference and benchmark extensions are being implemented against the approved Macrofold contract; real-server acceptance follows integration. | 2026-10-22   |
 
 ## Scope and completion
 

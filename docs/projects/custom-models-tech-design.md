@@ -1,8 +1,8 @@
 # Custom model deployments — technical design
 
-| Status  | Current progress                                                                                                                       | Last updated |
-| ------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared inference, ordinary NPC routing and benchmark extensions are being implemented against the canonical deployment contract; actual server acceptance remains open. | 2026-10-22 |
+| Status      | Current progress                                                                                                                                                        | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Shared inference, ordinary NPC routing and benchmark extensions are being implemented against the canonical deployment contract; actual server acceptance remains open. | 2026-10-22   |
 
 ## 1. Scope and delivery order
 

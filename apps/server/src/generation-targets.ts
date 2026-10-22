@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   captureMacrofoldDeploymentTarget,
+  MacrofoldHttpError,
   type AiReceipt,
   type JsonSchema,
   type MacrofoldDeploymentTarget,
@@ -66,13 +67,25 @@ export async function describeMacrofoldDeployment(
 ): Promise<MacrofoldDeploymentDescription> {
   const captured = captureMacrofoldDeploymentTarget(target);
   operation.throwIfStopped();
-  const raw = await api.request(
-    `/v1/model-deployments/${encodeURIComponent(captured.modelBinding.deployment_id)}?workspace_id=${encodeURIComponent(captured.workspaceId)}`,
-    undefined,
-    undefined,
-    operation.signal,
-    65_536,
-  );
+  let raw: unknown;
+  try {
+    raw = await api.request(
+      `/v1/model-deployments/${encodeURIComponent(captured.modelBinding.deployment_id)}?workspace_id=${encodeURIComponent(captured.workspaceId)}`,
+      undefined,
+      undefined,
+      operation.signal,
+      65_536,
+    );
+  } catch (error) {
+    operation.throwIfStopped();
+    throw new ModelTargetPreparationError(
+      'resource-unavailable',
+      error instanceof MacrofoldHttpError && /^[\w.:-]{1,128}$/.test(error.code)
+        ? error.code
+        : 'deployment_unavailable',
+      'The selected deployment capabilities could not be read. No inference was submitted.',
+    );
+  }
   operation.throwIfStopped();
   const parsed = projectionSchema.safeParse(raw);
   if (
@@ -244,7 +257,17 @@ export class ModelTargetPreparation {
         });
     }
     const pending = entry.pending;
-    return operation.wait('callback', async () => await pending);
+    // Waiting callers keep their own cancellation/deadline, while an ordinary descriptor
+    // refusal keeps its canonical HTTP code instead of becoming a generic callback failure.
+    const observed = await operation.wait('callback', async () => {
+      try {
+        return { description: await pending };
+      } catch (error) {
+        return { error };
+      }
+    });
+    if ('error' in observed) throw observed.error;
+    return observed.description;
   }
 
   private choose(request: Preparation, description: MacrofoldDeploymentDescription) {

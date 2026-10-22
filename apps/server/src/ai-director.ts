@@ -2815,12 +2815,19 @@ export class AiDirector {
             );
             this.current(run);
           } catch (error) {
-            if (error instanceof ModelTargetPreparationError)
+            if (error instanceof ModelTargetPreparationError) {
+              await this.log.record(
+                `${run.job.id}:attempt:${attempt}:deployment-preparation`,
+                'Model preparation',
+                { purpose: level === 2 ? 'npc_response_fast' : 'npc_response_complex' },
+                { outcome: error.outcome, code: error.code },
+              );
               throw new StopJob(
                 'failed',
                 'The selected character model is unavailable for this reply.',
                 error.outcome,
               );
+            }
             throw error;
           }
         }

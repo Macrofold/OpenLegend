@@ -36,7 +36,6 @@ import {
   macrofoldDeploymentRequestFields,
   prepareMacrofoldGenerationInput,
   decodeMacrofoldGeneration,
-  captureMacrofoldDeploymentReceipt,
   captureMacrofoldDeploymentTarget,
   type PreparedSchema,
   type AiClient,
@@ -1844,7 +1843,7 @@ export class MacrofoldBackend implements AiClient {
       receipt,
     );
     if (expectedDeployment) {
-      captureMacrofoldDeploymentReceipt(inference, receipt, expectedDeployment);
+      // The shared decoder already checked the receipt's retained original target/pin.
       this.deploymentPreparation.observeReceipt(expectedDeployment, receipt);
     }
     if (
