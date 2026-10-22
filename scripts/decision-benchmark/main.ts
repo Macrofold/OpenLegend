@@ -59,6 +59,9 @@ for (const key of options.keys())
       'workers',
       'source',
       'prior-commitment-usd',
+      'model-experiment',
+      'online-preflight',
+      'max-output-tokens',
     ].includes(key)
   )
     throw new Error(`Unknown argument: --${key}`);
@@ -391,7 +394,7 @@ if (command === 'validate' || command === 'audit') {
       mode: 0o600,
     });
     console.log(json(output));
-  } else if (command === 'report' || command === 'run') {
+  } else if (command === 'report' || command === 'run' || command === 'prepare') {
     await runBenchmark(command, directory, options, scenes, describe);
   } else if (command === 'recover-budget') {
     await recoverBudgetAdmissions(directory, options, scenes, describe);

@@ -34,9 +34,15 @@ export function captureMacrofoldDeploymentTarget(
     )
   )
     throw new InvalidData('invalid_deployment_binding');
+  // PostgreSQL/API projections use canonical UUID spelling; casing cannot select a different service.
   return Object.freeze({
-    workspaceId: target.workspaceId,
-    modelBinding: Object.freeze({ ...target.modelBinding }),
+    workspaceId: target.workspaceId.toLowerCase(),
+    modelBinding: Object.freeze({
+      deployment_id: target.modelBinding.deployment_id.toLowerCase(),
+      ...(target.modelBinding.deployment_revision_id === undefined
+        ? {}
+        : { deployment_revision_id: target.modelBinding.deployment_revision_id.toLowerCase() }),
+    }),
   });
 }
 
@@ -145,14 +151,16 @@ export function captureMacrofoldDeploymentReceipt(
       typeof deployment['deployment_revision_id'] !== 'string' ||
       !uuid.test(deployment['deployment_revision_id']) ||
       (expected !== undefined &&
-        (deployment['deployment_id'] !== expected.modelBinding.deployment_id ||
+        (deployment['deployment_id'].toLowerCase() !==
+          expected.modelBinding.deployment_id.toLowerCase() ||
           (expected.modelBinding.deployment_revision_id !== undefined &&
-            deployment['deployment_revision_id'] !== expected.modelBinding.deployment_revision_id)))
+            deployment['deployment_revision_id'].toLowerCase() !==
+              expected.modelBinding.deployment_revision_id.toLowerCase())))
     )
       throw new InvalidData('macrofold_deployment_identity_invalid');
     receipt.macrofoldDeployment = {
-      deploymentId: deployment['deployment_id'],
-      deploymentRevisionId: deployment['deployment_revision_id'],
+      deploymentId: deployment['deployment_id'].toLowerCase(),
+      deploymentRevisionId: deployment['deployment_revision_id'].toLowerCase(),
     };
   }
   const attribution = inference['cost_attribution'];
@@ -161,7 +169,8 @@ export function captureMacrofoldDeploymentReceipt(
     admitted &&
     record(attribution) &&
     attribution['basis'] === 'deployment' &&
-    attribution['deployment_id'] === admitted.deploymentId &&
+    typeof attribution['deployment_id'] === 'string' &&
+    attribution['deployment_id'].toLowerCase() === admitted.deploymentId &&
     attribution['infrastructure_cost_included'] === false
   )
     receipt.macrofoldCostAttribution = {

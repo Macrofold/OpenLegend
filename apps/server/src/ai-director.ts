@@ -115,6 +115,8 @@ import {
 import { captureActionTargets, unseenExperiences, commitActorResponse } from '@open-legend/domain';
 import { IntelligenceLog } from './intelligence-log.js';
 import { cognitionOutputTokens } from './macrofold-model.js';
+import { resolveNpcGenerationConfig } from './generation-config.js';
+import { ModelTargetPreparationError } from './generation-targets.js';
 import { z } from 'zod';
 import { MacrofoldBackend } from './macrofold.js';
 import { randomUUID } from 'node:crypto';
@@ -2016,7 +2018,9 @@ export class AiDirector {
         }),
       {
         ...meter,
-        model: request.model ?? this.service.config.llmModel,
+        model: request.macrofoldDeployment
+          ? `deployment:${request.macrofoldDeployment.modelBinding.deployment_id}`
+          : request.model ?? this.service.config.llmModel,
         size: {
           instructions: textBytes(request.instructions),
           context: textBytes(request.context),
@@ -2763,28 +2767,46 @@ export class AiDirector {
           throw new ContextBudgetError(
             `The level ${level} response schema exceeds its ${levelLimit.schemaBytes}-byte allowance; this request was not sent.`,
           );
-        value = await this.generate<unknown>(
-          run,
+        // Select by this producer's purpose before spending admission. Other fast generation
+        // callers, including player expression, retain their own provider configuration.
+        const selected = resolveNpcGenerationConfig(
+          this.executionSource === 'live-model' ? c : { ...c, modelTargets: undefined },
+          level === 2 ? 'npc_response_fast' : 'npc_response_complex',
           {
-            task: 'npc_response',
-            actorScope: actorId,
-            execution: level === 2 ? 'fast' : 'complex',
-            model: c.macrofoldKey
-              ? level === 2
-                ? c.macrofoldMiniModel
-                : c.macrofoldComplexModel
-              : level === 2
-                ? c.miniModel
-                : c.complexModel,
-            reasoningEffort: limits.effort,
             maxOutputTokens: actorInvention.enabled
               ? Math.max(1800, limits.outputTokens)
               : limits.outputTokens,
+            reasoningEffort: limits.effort,
+          },
+        );
+        let generationRequest: Omit<GenerateRequest, 'requestId' | 'signal'> = {
+            task: 'npc_response',
+            actorScope: actorId,
+            execution: level === 2 ? 'fast' : 'complex',
+            ...('macrofoldDeployment' in selected
+              ? { macrofoldDeployment: selected.macrofoldDeployment }
+              : { model: selected.model, reasoningEffort: selected.reasoningEffort }),
+            maxOutputTokens: selected.maxOutputTokens,
             instructions,
             context,
             schema: responseSchema,
             ...(preview ? { onProgress: preview.progress } : {}),
-          },
+        };
+        if (generationRequest.macrofoldDeployment && !c.jevOnly && c.budgetUsd > 0) {
+          try {
+            generationRequest = await this.macrofold.prepareDeploymentGeneration(
+              generationRequest, selected.structuredOutput, run.controller.signal,
+            );
+            this.current(run);
+          } catch (error) {
+            if (error instanceof ModelTargetPreparationError)
+              throw new StopJob('failed', 'The selected character model is unavailable for this reply.', error.outcome);
+            throw error;
+          }
+        }
+        value = await this.generate<unknown>(
+          run,
+          generationRequest,
           `attempt:${attempt}:generate`,
           { category: 'level', level },
         );

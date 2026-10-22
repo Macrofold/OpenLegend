@@ -69,121 +69,402 @@ function money(value: unknown, field: string, positive: boolean): number {
   return Number(value);
 }
 function deployment(source: Record<string, unknown>) {
-  const parsed = readModelTargetsConfig(JSON.stringify({
-    schema_version: 1,
-    workspace_id: source.workspace_id,
-    purposes: { npc_response_fast: {
-      model_binding: source.model_binding,
-      ...(source.structured_output === undefined ? {} : { structured_output: source.structured_output }),
-    } },
-  }));
+  const parsed = readModelTargetsConfig(
+    JSON.stringify({
+      schema_version: 1,
+      workspace_id: source.workspace_id,
+      purposes: {
+        npc_response_fast: {
+          model_binding: source.model_binding,
+          ...(source.structured_output === undefined
+            ? {}
+            : { structured_output: source.structured_output }),
+        },
+      },
+    }),
+  );
   if (!parsed?.purposes.npc_response_fast) throw new Error('Missing deployment target.');
-  return { workspaceId: parsed.workspace_id, modelBinding: parsed.purposes.npc_response_fast.model_binding };
+  return {
+    workspaceId: parsed.workspace_id,
+    modelBinding: parsed.purposes.npc_response_fast.model_binding,
+  };
 }
 /** Local study admission shares deployment setting validation and makes no provider calls. */
 export function parseModelExperiment(value: unknown): ModelExperimentPlan {
-  const p = record(value, ['schema_version','id','question','cases','replicates','arms','limits','prior_commitment_usd','hosting_cost'], 'Model experiment');
+  const p = record(
+    value,
+    [
+      'schema_version',
+      'id',
+      'question',
+      'cases',
+      'replicates',
+      'arms',
+      'limits',
+      'prior_commitment_usd',
+      'hosting_cost',
+    ],
+    'Model experiment',
+  );
   if (p.schema_version !== 1) throw new Error('Model experiment schema_version must be 1.');
   const id = text(p.id, 'id');
   if (!/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(id)) throw new Error('id must be a plain study identifier.');
-  if (!Array.isArray(p.cases) || !p.cases.length || p.cases.some((id) => typeof id !== 'string' || !id) || new Set(p.cases).size !== p.cases.length)
+  if (
+    !Array.isArray(p.cases) ||
+    !p.cases.length ||
+    p.cases.some((id) => typeof id !== 'string' || !id) ||
+    new Set(p.cases).size !== p.cases.length
+  )
     throw new Error('cases must contain unique existing task IDs.');
   if (!Array.isArray(p.arms) || !p.arms.length) throw new Error('arms must be nonempty.');
   const arms = p.arms.map((value, index): ModelExperimentPlan['arms'][number] => {
-    const a = record(value, ['id','source'], `arms.${index}`);
+    const a = record(value, ['id', 'source'], `arms.${index}`);
     const id = text(a.id, `arms.${index}.id`);
     if (!/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(id)) throw new Error('Arm IDs must be plain identifiers.');
-    const s = record(a.source, ['kind','arm','purpose','workspace_id','model_binding','structured_output'], `arms.${index}.source`);
+    const s = record(
+      a.source,
+      ['kind', 'arm', 'purpose', 'workspace_id', 'model_binding', 'structured_output'],
+      `arms.${index}.source`,
+    );
     if (s.kind === 'existing') {
-      record(s, ['kind','arm'], `arms.${index}.source`);
+      record(s, ['kind', 'arm'], `arms.${index}.source`);
       const arm = resolveArm(text(s.arm, 'source.arm'));
-      if (!arm || armById.get(arm)?.transport.endsWith('decision')) throw new Error('An experiment generation arm needs an existing generation model.');
+      if (!arm || armById.get(arm)?.transport.endsWith('decision'))
+        throw new Error('An experiment generation arm needs an existing generation model.');
       return { id, source: { kind: 'existing', arm } };
     }
     if (s.kind === 'purpose') {
-      record(s, ['kind','purpose'], `arms.${index}.source`);
-      if (s.purpose !== 'npc_response_fast' && s.purpose !== 'npc_response_complex') throw new Error('source.purpose must identify fast or complex NPC responses.');
+      record(s, ['kind', 'purpose'], `arms.${index}.source`);
+      if (s.purpose !== 'npc_response_fast' && s.purpose !== 'npc_response_complex')
+        throw new Error('source.purpose must identify fast or complex NPC responses.');
       return { id, source: { kind: 'purpose', purpose: s.purpose } };
     }
-    if (s.kind !== 'deployment') throw new Error('source.kind must be existing, purpose or deployment.');
-    record(s, ['kind','workspace_id','model_binding','structured_output'], `arms.${index}.source`);
+    if (s.kind !== 'deployment')
+      throw new Error('source.kind must be existing, purpose or deployment.');
+    record(
+      s,
+      ['kind', 'workspace_id', 'model_binding', 'structured_output'],
+      `arms.${index}.source`,
+    );
     const target = deployment(s);
-    if (s.structured_output !== undefined && !['auto','json_schema','json_object','prompted_json'].includes(String(s.structured_output))) throw new Error('Unsupported structured_output.');
-    return { id, source: { kind: 'deployment', workspace_id: target.workspaceId, model_binding: target.modelBinding, structured_output: (s.structured_output ?? 'auto') as OutputPolicy } };
+    if (
+      s.structured_output !== undefined &&
+      !['auto', 'json_schema', 'json_object', 'prompted_json'].includes(String(s.structured_output))
+    )
+      throw new Error('Unsupported structured_output.');
+    return {
+      id,
+      source: {
+        kind: 'deployment',
+        workspace_id: target.workspaceId,
+        model_binding: target.modelBinding,
+        structured_output: (s.structured_output ?? 'auto') as OutputPolicy,
+      },
+    };
   });
-  if (new Set(arms.map((arm) => arm.id)).size !== arms.length) throw new Error('Arm IDs must be unique.');
-  const l = record(p.limits, ['cap_usd','per_call_usd','timeout_ms','concurrency','max_output_tokens'], 'limits');
+  if (new Set(arms.map((arm) => arm.id)).size !== arms.length)
+    throw new Error('Arm IDs must be unique.');
+  const l = record(
+    p.limits,
+    ['cap_usd', 'per_call_usd', 'timeout_ms', 'concurrency', 'max_output_tokens'],
+    'limits',
+  );
   const limits = {
-    cap_usd: money(l.cap_usd,'limits.cap_usd',true),
-    per_call_usd: money(l.per_call_usd,'limits.per_call_usd',true),
-    timeout_ms: integer(l.timeout_ms,'limits.timeout_ms',300000),
-    concurrency: integer(l.concurrency,'limits.concurrency',4),
-    max_output_tokens: integer(l.max_output_tokens,'limits.max_output_tokens',16384),
+    cap_usd: money(l.cap_usd, 'limits.cap_usd', true),
+    per_call_usd: money(l.per_call_usd, 'limits.per_call_usd', true),
+    timeout_ms: integer(l.timeout_ms, 'limits.timeout_ms', 300000),
+    concurrency: integer(l.concurrency, 'limits.concurrency', 4),
+    max_output_tokens: integer(l.max_output_tokens, 'limits.max_output_tokens', 16384),
   };
-  const prior = money(p.prior_commitment_usd,'prior_commitment_usd',false);
-  if (limits.cap_usd > 100 || limits.per_call_usd > limits.cap_usd || prior > limits.cap_usd || limits.timeout_ms < 1000) throw new Error('Study limits exceed the existing benchmark budget or deadline envelope.');
-  const h = record(p.hosting_cost, ['basis','cost_usd'], 'hosting_cost');
-  if (h.basis !== 'already-funded-shared') throw new Error('Hosting must already be funded outside this study; this tool never starts hosting.');
+  const prior = money(p.prior_commitment_usd, 'prior_commitment_usd', false);
+  if (
+    limits.cap_usd > 100 ||
+    limits.per_call_usd > limits.cap_usd ||
+    prior > limits.cap_usd ||
+    limits.timeout_ms < 1000
+  )
+    throw new Error('Study limits exceed the existing benchmark budget or deadline envelope.');
+  const h = record(p.hosting_cost, ['basis', 'cost_usd'], 'hosting_cost');
+  if (h.basis !== 'already-funded-shared')
+    throw new Error(
+      'Hosting must already be funded outside this study; this tool never starts hosting.',
+    );
   return {
-    schema_version:1,id,question:text(p.question,'question'),cases:p.cases as string[],replicates:integer(p.replicates,'replicates'),arms,limits,prior_commitment_usd:prior,
-    hosting_cost:{ basis:'already-funded-shared', ...(h.cost_usd === undefined ? {} : {cost_usd:money(h.cost_usd,'hosting_cost.cost_usd',false)}) },
+    schema_version: 1,
+    id,
+    question: text(p.question, 'question'),
+    cases: p.cases as string[],
+    replicates: integer(p.replicates, 'replicates'),
+    arms,
+    limits,
+    prior_commitment_usd: prior,
+    hosting_cost: {
+      basis: 'already-funded-shared',
+      ...(h.cost_usd === undefined
+        ? {}
+        : { cost_usd: money(h.cost_usd, 'hosting_cost.cost_usd', false) }),
+    },
   };
 }
 export async function readModelExperiment(path: string): Promise<ModelExperimentPlan> {
-  if (!isAbsolute(path)) throw new Error('--model-experiment requires an absolute private plan path.');
-  return parseModelExperiment(JSON.parse(await readFile(path,'utf8')));
+  if (!isAbsolute(path))
+    throw new Error('--model-experiment requires an absolute private plan path.');
+  return parseModelExperiment(JSON.parse(await readFile(path, 'utf8')));
 }
-export function applyExperimentOptions(plan: ModelExperimentPlan, options: Map<string,string>): void {
+export function applyExperimentOptions(
+  plan: ModelExperimentPlan,
+  options: Map<string, string>,
+): void {
   if (options.has('models')) throw new Error('--models conflicts with --model-experiment.');
-  for (const [flag,value] of [
-    ['cap-usd',plan.limits.cap_usd],['per-call-usd',plan.limits.per_call_usd],['timeout-ms',plan.limits.timeout_ms],['concurrency',plan.limits.concurrency],['max-output-tokens',plan.limits.max_output_tokens],['prior-commitment-usd',plan.prior_commitment_usd],
+  for (const [flag, value] of [
+    ['cap-usd', plan.limits.cap_usd],
+    ['per-call-usd', plan.limits.per_call_usd],
+    ['timeout-ms', plan.limits.timeout_ms],
+    ['concurrency', plan.limits.concurrency],
+    ['max-output-tokens', plan.limits.max_output_tokens],
+    ['prior-commitment-usd', plan.prior_commitment_usd],
   ] as const) {
     const previous = options.get(flag);
-    const same = flag.endsWith('usd') ? usdToMicroUsd(Number(previous)) === usdToMicroUsd(value) : Number(previous) === value;
-    if (previous !== undefined && !same) throw new Error(`--${flag} conflicts with the model experiment.`);
-    options.set(flag,String(value));
+    const same = flag.endsWith('usd')
+      ? usdToMicroUsd(Number(previous)) === usdToMicroUsd(value)
+      : Number(previous) === value;
+    if (previous !== undefined && !same)
+      throw new Error(`--${flag} conflicts with the model experiment.`);
+    options.set(flag, String(value));
   }
 }
-export function resolveModelExperiment(plan: ModelExperimentPlan, reference: unknown, env: NodeJS.ProcessEnv = process.env): ResolvedModelExperiment {
-  const config = plan.arms.some((arm) => arm.source.kind === 'purpose') ? readGenerationConfig(env) : undefined;
+export function resolveModelExperiment(
+  plan: ModelExperimentPlan,
+  reference: unknown,
+  env: NodeJS.ProcessEnv = process.env,
+): ResolvedModelExperiment {
+  const config = plan.arms.some((arm) => arm.source.kind === 'purpose')
+    ? readGenerationConfig(env)
+    : undefined;
   const arms: BenchmarkArm[] = [];
   for (const entry of plan.arms) {
     let base: BenchmarkArm;
     if (entry.source.kind === 'existing') {
       const selected = armById.get(entry.source.arm);
       if (!selected) throw new Error('Unknown generation arm.');
-      base = {...selected};
+      base = { ...selected };
     } else if (entry.source.kind === 'purpose') {
       if (!config) throw new Error('Missing generation configuration.');
-      const selected = resolveNpcGenerationConfig(config,entry.source.purpose);
+      const selected = resolveNpcGenerationConfig(config, entry.source.purpose);
       const prices = selected.prices;
-      if (selected.transport === 'openai' && !prices) throw new Error('Configured direct model has no exact price entry.');
+      if (selected.transport === 'openai' && !prices)
+        throw new Error('Configured direct model has no exact price entry.');
       base = {
-        id:entry.id,alias:entry.id,model:selected.model ?? `deployment:${selected.macrofoldDeployment?.modelBinding.deployment_id}`,
-        transport:selected.transport === 'macrofold' ? 'macrofold-generation' : 'openai-response',
-        inputRate:prices?.inputUsdPerMillion ?? 0,outputRate:prices?.outputUsdPerMillion ?? 0,
-        prices,maxOutputTokens:selected.maxOutputTokens,effort:selected.reasoningEffort,
-        macrofoldDeployment:selected.macrofoldDeployment,structuredOutput:selected.structuredOutput,
-        ...(selected.transport === 'macrofold' ? {reservationUsd:config.macrofoldRunUsd} : {}),
+        id: entry.id,
+        alias: entry.id,
+        model:
+          selected.model ??
+          `deployment:${selected.macrofoldDeployment?.modelBinding.deployment_id}`,
+        transport: selected.transport === 'macrofold' ? 'macrofold-generation' : 'openai-response',
+        inputRate: prices?.inputUsdPerMillion ?? 0,
+        outputRate: prices?.outputUsdPerMillion ?? 0,
+        prices,
+        maxOutputTokens: selected.maxOutputTokens,
+        effort: selected.reasoningEffort,
+        billingMode: selected.billingMode,
+        providerConnectionId: selected.providerConnectionId,
+        macrofoldDeployment: selected.macrofoldDeployment,
+        structuredOutput: selected.structuredOutput,
+        ...(selected.transport === 'macrofold' ? { reservationUsd: config.macrofoldRunUsd } : {}),
       };
     } else {
-      const target = deployment(entry.source as unknown as Record<string,unknown>);
-      base = {id:entry.id,alias:entry.id,model:`deployment:${target.modelBinding.deployment_id}`,transport:'macrofold-generation',inputRate:0,outputRate:0,reservationUsd:plan.limits.per_call_usd,macrofoldDeployment:target,structuredOutput:entry.source.structured_output ?? 'auto'};
+      const target = deployment(entry.source as unknown as Record<string, unknown>);
+      base = {
+        id: entry.id,
+        alias: entry.id,
+        model: `deployment:${target.modelBinding.deployment_id}`,
+        transport: 'macrofold-generation',
+        inputRate: 0,
+        outputRate: 0,
+        reservationUsd: plan.limits.per_call_usd,
+        macrofoldDeployment: target,
+        structuredOutput: entry.source.structured_output ?? 'auto',
+      };
     }
-    for (let replicate=1;replicate<=plan.replicates;replicate++) arms.push({...base,id:`experiment/${entry.id}/replicate-${replicate}`,alias:entry.id,originalArm:entry.id,replicate,maxOutputTokens:Math.min(base.maxOutputTokens ?? outputTokens,plan.limits.max_output_tokens)});
+    for (let replicate = 1; replicate <= plan.replicates; replicate++)
+      arms.push({
+        ...base,
+        id: `experiment/${entry.id}/replicate-${replicate}`,
+        alias: entry.id,
+        originalArm: entry.id,
+        replicate,
+        maxOutputTokens: Math.min(
+          base.maxOutputTokens ?? outputTokens,
+          plan.limits.max_output_tokens,
+        ),
+      });
   }
-  return {plan,planDigest:sha256(plan),arms,referenceDigest:sha256(reference)};
+  return { plan, planDigest: sha256(plan), arms, referenceDigest: sha256(reference) };
 }
-export function experimentArms(manifest: Pick<BenchmarkManifest,'modelExperiment'>): ReadonlyMap<string,BenchmarkArm> {
-  return manifest.modelExperiment ? new Map(manifest.modelExperiment.arms.map((arm) => [arm.id,arm])) : armById;
+export function experimentArms(
+  manifest: Pick<BenchmarkManifest, 'modelExperiment'>,
+): ReadonlyMap<string, BenchmarkArm> {
+  return manifest.modelExperiment
+    ? new Map(manifest.modelExperiment.arms.map((arm) => [arm.id, arm]))
+    : armById;
 }
-export function experimentReport(experiment: ResolvedModelExperiment, records: RunRecord[], planned: number) {
+export function experimentReport(
+  experiment: ResolvedModelExperiment,
+  records: RunRecord[],
+  planned: number,
+) {
   return {
-    id:experiment.plan.id,question:experiment.plan.question,planDigest:experiment.planDigest,referenceDigest:experiment.referenceDigest,
-    coverage:{planned,returned:records.length,answered:records.filter((r)=>r.result.outcome==='value').length,unattemptedOrPending:planned-records.length},
-    arms:experiment.arms.map((arm)=>({id:arm.id,originalArm:arm.originalArm,replicate:arm.replicate,target:arm.macrofoldDeployment ?? {model:arm.model},actualRevisions:records.filter((r)=>r.model===arm.id).map((r)=>({deployment:r.result.receipt.macrofoldDeployment ?? null,model:r.result.receipt.model,modelVersionStatus:r.result.receipt.modelVersionStatus}))})),
-    hosting:{basis:experiment.plan.hosting_cost.basis,sharedCostUsd:experiment.plan.hosting_cost.cost_usd ?? null,attribution:'Declared once for this study window; never multiplied by requests.',qualification:experiment.plan.hosting_cost.cost_usd===undefined?'unqualified-shared-cost':'operator-reported-window-cost'},
-    interpretation:{assistantRefusal:'Human review required; provider refusal outcomes are reported separately.',quietSanitization:'Human review required.',independentCharacterChoice:'Human review required.',nativeRejectionAndCommittedEffects:'Not established by offline model outputs.',firstUsefulPermittedOutputLatencyMs:null},
-    failures:records.filter((r)=>r.result.outcome!=='value').map((r)=>({arm:r.model,case:r.sceneId,outcome:r.result.outcome,reason:r.result.outcome==='value'?null:r.result.reason})),
+    id: experiment.plan.id,
+    question: experiment.plan.question,
+    planDigest: experiment.planDigest,
+    referenceDigest: experiment.referenceDigest,
+    coverage: {
+      planned,
+      returned: records.length,
+      answered: records.filter((r) => r.result.outcome === 'value').length,
+      unattemptedOrPending: planned - records.length,
+    },
+    arms: experiment.arms.map((arm) => ({
+      id: arm.id,
+      originalArm: arm.originalArm,
+      replicate: arm.replicate,
+      target: arm.macrofoldDeployment ?? { model: arm.model },
+      actualRevisions: records
+        .filter((r) => r.model === arm.id)
+        .map((r) => ({
+          deployment: r.result.receipt.macrofoldDeployment ?? null,
+          model: r.result.receipt.model,
+          modelVersionStatus: r.result.receipt.modelVersionStatus,
+        })),
+    })),
+    hosting: {
+      basis: experiment.plan.hosting_cost.basis,
+      sharedCostUsd: experiment.plan.hosting_cost.cost_usd ?? null,
+      attribution: 'Declared once for this study window; never multiplied by requests.',
+      qualification:
+        experiment.plan.hosting_cost.cost_usd === undefined
+          ? 'unqualified-shared-cost'
+          : 'operator-reported-window-cost',
+    },
+    interpretation: {
+      assistantRefusal: 'Human review required; provider refusal outcomes are reported separately.',
+      quietSanitization: 'Human review required.',
+      independentCharacterChoice: 'Human review required.',
+      nativeRejectionAndCommittedEffects: 'Not established by offline model outputs.',
+      firstUsefulPermittedOutputLatencyMs: null,
+    },
+    failures: records
+      .filter((r) => r.result.outcome !== 'value')
+      .map((r) => ({
+        arm: r.model,
+        case: r.sceneId,
+        outcome: r.result.outcome,
+        reason: r.result.outcome === 'value' ? null : r.result.reason,
+      })),
   };
+}
+/** Current saved study records are executable funding inputs, not unvalidated report metadata. */
+export function validateResolvedModelExperiment(
+  value: unknown,
+): asserts value is ResolvedModelExperiment {
+  const e = record(
+    value,
+    ['plan', 'planDigest', 'arms', 'referenceDigest'],
+    'Saved model experiment',
+  );
+  const plan = parseModelExperiment(e.plan);
+  if (
+    e.planDigest !== sha256(plan) ||
+    typeof e.referenceDigest !== 'string' ||
+    !/^[a-f0-9]{64}$/.test(e.referenceDigest)
+  )
+    throw new Error('Saved model experiment fingerprints changed.');
+  if (!Array.isArray(e.arms) || e.arms.length !== plan.arms.length * plan.replicates)
+    throw new Error('Saved model experiment arm count changed.');
+  const expected = new Set(
+    plan.arms.flatMap((a) =>
+      Array.from({ length: plan.replicates }, (_, i) => `experiment/${a.id}/replicate-${i + 1}`),
+    ),
+  );
+  for (const value of e.arms) {
+    const a = record(
+      value,
+      [
+        'id',
+        'alias',
+        'model',
+        'transport',
+        'inputRate',
+        'outputRate',
+        'effort',
+        'prices',
+        'billingMode',
+        'providerConnectionId',
+        'maxOutputTokens',
+        'reservationUsd',
+        'macrofoldDeployment',
+        'structuredOutput',
+        'originalArm',
+        'replicate',
+      ],
+      'Saved arm',
+    );
+    if (
+      typeof a.id !== 'string' ||
+      !expected.delete(a.id) ||
+      a.id !== `experiment/${a.originalArm}/replicate-${a.replicate}`
+    )
+      throw new Error('Saved model experiment arm identity changed.');
+    text(a.model, 'Saved arm model');
+    if (!['macrofold-generation', 'openai-response'].includes(String(a.transport)))
+      throw new Error('Saved model experiment must use generation.');
+    integer(a.maxOutputTokens, 'Saved output limit', plan.limits.max_output_tokens);
+    if (a.reservationUsd !== undefined) money(a.reservationUsd, 'Saved reservation', true);
+    for (const field of ['inputRate', 'outputRate']) money(a[field], `Saved ${field}`, false);
+    if (a.prices !== undefined) {
+      const prices = record(
+        a.prices,
+        [
+          'inputUsdPerMillion',
+          'outputUsdPerMillion',
+          'cachedInputUsdPerMillion',
+          'cacheWriteInputUsdPerMillion',
+        ],
+        'Saved model prices',
+      );
+      money(prices.inputUsdPerMillion, 'input price', false);
+      money(prices.outputUsdPerMillion, 'output price', false);
+      for (const field of ['cachedInputUsdPerMillion', 'cacheWriteInputUsdPerMillion'])
+        if (prices[field] !== undefined) money(prices[field], field, false);
+    }
+    if (a.effort !== undefined && !['none', 'low', 'medium', 'high'].includes(String(a.effort)))
+      throw new Error('Invalid saved reasoning effort.');
+    if (a.billingMode !== undefined && !['managed', 'byok'].includes(String(a.billingMode)))
+      throw new Error('Invalid saved billing mode.');
+    if (a.providerConnectionId !== undefined)
+      text(a.providerConnectionId, 'Saved provider connection');
+    if (
+      a.structuredOutput !== undefined &&
+      !['auto', 'json_schema', 'json_object', 'prompted_json'].includes(String(a.structuredOutput))
+    )
+      throw new Error('Invalid saved output policy.');
+    if (a.macrofoldDeployment !== undefined) {
+      const target = record(
+        a.macrofoldDeployment,
+        ['workspaceId', 'modelBinding'],
+        'Saved deployment',
+      );
+      const captured = deployment({
+        workspace_id: target.workspaceId,
+        model_binding: target.modelBinding,
+      });
+      if (
+        a.transport !== 'macrofold-generation' ||
+        a.model !== `deployment:${captured.modelBinding.deployment_id}` ||
+        a.effort !== undefined ||
+        a.prices !== undefined
+      )
+        throw new Error('Saved deployment has mixed provider settings.');
+    }
+  }
 }

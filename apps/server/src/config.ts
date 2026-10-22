@@ -1,7 +1,4 @@
-import {
-  decisionEscalationConfigSchema,
-  defaultDecisionEscalation,
-} from './decision-state.js';
+import { decisionEscalationConfigSchema, defaultDecisionEscalation } from './decision-state.js';
 import { z } from 'zod';
 import { accountBindingSchema } from './authority.js';
 import { readMcpConfig } from './mcp-config.js';
@@ -201,7 +198,6 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     jevReserveUsd: numberSetting(env, 'JEV_CALL_RESERVE_USD', 0.005, 0.000001, 1),
     llmReserveUsd: numberSetting(env, 'LLM_CALL_RESERVE_USD', 0.08, 0.000001, 10),
     aiTimeoutMs: numberSetting(env, 'AI_TIMEOUT_SECONDS', 35, 5, 120) * 1000,
-    // Connection IDs select credentials already stored in Macrofold, not raw keys.
     macrofoldJevModel,
     macrofoldJevConnectionId:
       env['MACROFOLD_JEV_CONNECTION_ID'] || env['MACROFOLD_PROVIDER_CONNECTION_ID'] || '',
@@ -224,7 +220,6 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
       inputUsdPerMillion: numberSetting(env, 'JEV_INPUT_USD_PER_MILLION', 0.042, 0, 1000),
       outputUsdPerMillion: 0,
     },
-    // Explicit estimates; operators must set rates for a different model. No claim of invoice totals.
   };
 }
 

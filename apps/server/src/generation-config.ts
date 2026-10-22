@@ -1,6 +1,14 @@
 import { z } from 'zod';
-import { captureModelPrices, captureMacrofoldDeploymentTarget, modelTokenPrices,
-  type MacrofoldBillingMode, type ModelTokenPrices, type TokenPrices, type GenerateRequest } from '@open-legend/ai';
+import {
+  captureModelPrices,
+  captureMacrofoldDeploymentTarget,
+  modelTokenPrices,
+  type MacrofoldBillingMode,
+  type ModelTokenPrices,
+  type TokenPrices,
+  type GenerateRequest,
+  type MacrofoldDeploymentTarget,
+} from '@open-legend/ai';
 import { DECISION_MODEL } from './decision-state.js';
 import { LEVEL_LIMITS } from './cognition-contracts.js';
 import { DEFAULT_MACROFOLD_MODEL } from './macrofold-model.js';
@@ -161,7 +169,6 @@ export function numberSetting(
   return value;
 }
 
-
 /** Shared trusted generation settings; reading them never starts a server or opens a database. */
 export function readGenerationConfig(env: NodeJS.ProcessEnv = process.env) {
   const macrofoldKey = env['MACROFOLD_API_KEY'] ?? '';
@@ -171,7 +178,9 @@ export function readGenerationConfig(env: NodeJS.ProcessEnv = process.env) {
   const macrofoldBillingMode: MacrofoldBillingMode = configuredBillingMode;
   const modelTargets = readModelTargetsConfig(env['OPENLEGEND_MODEL_TARGETS_JSON']);
   if (modelTargets && !macrofoldKey)
-    throw new Error('OPENLEGEND_MODEL_TARGETS_JSON requires the configured Macrofold generation adapter (MACROFOLD_API_KEY).');
+    throw new Error(
+      'OPENLEGEND_MODEL_TARGETS_JSON requires the configured Macrofold generation adapter (MACROFOLD_API_KEY).',
+    );
   if (
     env['OPENAI_MODEL'] &&
     env['OPENAI_MODEL'] !== 'gpt-5.6-luna' &&
@@ -246,6 +255,7 @@ export function readGenerationConfig(env: NodeJS.ProcessEnv = process.env) {
     macrofoldKey,
     macrofoldUrl: env['MACROFOLD_BASE_URL'] ?? 'http://localhost:3210',
     macrofoldBillingMode,
+    // Connection IDs select credentials already stored in Macrofold, not raw keys.
     macrofoldProviderConnectionId: env['MACROFOLD_PROVIDER_CONNECTION_ID'] ?? '',
     macrofoldModel: env['MACROFOLD_MODEL'] ?? DEFAULT_MACROFOLD_MODEL,
     macrofoldRunUsd: numberSetting(env, 'MACROFOLD_RUN_MAX_USD', 0.25, 0.000001, 10),
@@ -257,6 +267,7 @@ export function readGenerationConfig(env: NodeJS.ProcessEnv = process.env) {
     summaryModel: env['COGNITION_SUMMARY_MODEL'] ?? 'gpt-5-nano',
     llmKey: env['OPENAI_API_KEY'] ?? '',
     llmModel,
+    // Explicit operator estimates; no claim of invoice totals.
     llmPrices,
     llmModelPrices,
     embeddingModelPrices,
@@ -265,13 +276,38 @@ export function readGenerationConfig(env: NodeJS.ProcessEnv = process.env) {
 
 export type GenerationConfig = ReturnType<typeof readGenerationConfig>;
 
+export type ResolvedNpcGenerationConfig = Readonly<
+  { maxOutputTokens: number } & (
+    | {
+        transport: 'macrofold';
+        macrofoldDeployment: MacrofoldDeploymentTarget;
+        structuredOutput: ConfiguredNpcGenerationTarget['structured_output'];
+        billingMode: 'byok';
+        model?: never;
+        reasoningEffort?: never;
+        providerConnectionId?: never;
+        prices?: never;
+      }
+    | {
+        transport: 'macrofold' | 'openai';
+        model: string;
+        structuredOutput: 'json_schema';
+        reasoningEffort: GenerateRequest['reasoningEffort'];
+        billingMode?: MacrofoldBillingMode;
+        providerConnectionId?: string;
+        prices?: TokenPrices;
+        macrofoldDeployment?: never;
+      }
+  )
+>;
+
 /** Select by the actual NPC purpose. Callers supply their current output allowance when it differs
  * from the ordinary level-two/three envelope; the optional study consumes this same baseline. */
 export function resolveNpcGenerationConfig(
   config: GenerationConfig,
   purpose: NpcGenerationPurpose,
   options: { maxOutputTokens?: number; reasoningEffort?: GenerateRequest['reasoningEffort'] } = {},
-) {
+): ResolvedNpcGenerationConfig {
   const fast = purpose === 'npc_response_fast';
   const allowance = options.maxOutputTokens ?? LEVEL_LIMITS[fast ? 2 : 3].outputTokens;
   const target = npcGenerationTarget(config.modelTargets, purpose);
@@ -287,10 +323,15 @@ export function resolveNpcGenerationConfig(
       billingMode: 'byok' as const,
     });
   }
-  const transport = config.macrofoldKey ? 'macrofold' as const : 'openai' as const;
-  const model = transport === 'macrofold'
-    ? fast ? config.macrofoldMiniModel : config.macrofoldComplexModel
-    : fast ? config.miniModel : config.complexModel;
+  const transport = config.macrofoldKey ? ('macrofold' as const) : ('openai' as const);
+  const model =
+    transport === 'macrofold'
+      ? fast
+        ? config.macrofoldMiniModel
+        : config.macrofoldComplexModel
+      : fast
+        ? config.miniModel
+        : config.complexModel;
   return Object.freeze({
     transport,
     model,
@@ -298,7 +339,10 @@ export function resolveNpcGenerationConfig(
     maxOutputTokens: allowance,
     reasoningEffort: options.reasoningEffort ?? LEVEL_LIMITS[fast ? 2 : 3].effort,
     ...(transport === 'macrofold'
-      ? { billingMode: config.macrofoldBillingMode, providerConnectionId: config.macrofoldProviderConnectionId }
+      ? {
+          billingMode: config.macrofoldBillingMode,
+          providerConnectionId: config.macrofoldProviderConnectionId,
+        }
       : { prices: modelTokenPrices(config.llmModelPrices, model) }),
   });
 }

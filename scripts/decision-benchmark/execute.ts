@@ -9,7 +9,13 @@ import {
   type JsonValue,
   type MacrofoldDecisionModel,
   type TypedQuestionMap,
+  MacrofoldTransport,
+  type MacrofoldOutputMode,
 } from '../../packages/ai/src/index.js';
+import {
+  ModelTargetPreparation,
+  describeMacrofoldDeployment,
+} from '../../apps/server/src/generation-targets.js';
 import {
   decisionGenerationRequest,
   decodeGeneratedDecision,
@@ -44,6 +50,42 @@ export function preparedArmInput(arm: BenchmarkArm, task: PreparedTask) {
     };
   return arm.transport.endsWith('decision') ? task.input : decisionGenerationRequest(task.input);
 }
+export type PreparedDeploymentArm = {
+  macrofoldOutputMode: MacrofoldOutputMode;
+  maxOutputTokens: number;
+  stream: boolean;
+};
+/** Passive online preparation is explicit and uses the production capability owner. */
+export function benchmarkDeploymentPreparation(manifest: BenchmarkManifest) {
+  const api = new MacrofoldTransport(manifest.baseUrl, process.env['MACROFOLD_API_KEY'] ?? '');
+  const preparation = new ModelTargetPreparation((target, operation) =>
+    describeMacrofoldDeployment(api, target, operation),
+  );
+  return async (
+    arm: BenchmarkArm,
+    task: PreparedTask,
+  ): Promise<PreparedDeploymentArm | undefined> => {
+    const target = arm.macrofoldDeployment;
+    if (!target) return undefined;
+    const input = preparedArmInput(arm, task) as ReturnType<typeof decisionGenerationRequest>;
+    return api.run({ timeoutMs: manifest.timeoutMs }, async (operation) =>
+      preparation.prepare({
+        target,
+        outputPolicy: arm.structuredOutput ?? 'auto',
+        schema: input.schema,
+        maxOutputTokens: arm.maxOutputTokens ?? outputTokens,
+        stream: manifest.streamGeneration === true,
+        operation,
+      }),
+    );
+  };
+}
+function deploymentMode(arm: BenchmarkArm, prepared?: PreparedDeploymentArm): MacrofoldOutputMode {
+  if (prepared) return prepared.macrofoldOutputMode;
+  if (!arm.structuredOutput || arm.structuredOutput === 'auto')
+    throw new Error('Resolve deployment capabilities before live execution.');
+  return arm.structuredOutput;
+}
 export async function executeArm(
   arm: BenchmarkArm,
   task: PreparedTask,
@@ -52,14 +94,15 @@ export async function executeArm(
   reserve: number,
   signal: AbortSignal,
   onAccepted: (id: string) => Promise<void>,
+  deployment?: PreparedDeploymentArm,
 ): Promise<{ result: AiResult<JudgeValue>; generation?: JsonValue }> {
   const input = preparedArmInput(arm, task);
   const macrofold = {
     baseUrl: manifest.baseUrl,
     apiKey: process.env['MACROFOLD_API_KEY'] ?? '',
     model: arm.model,
-    billingMode: manifest.billingMode,
-    providerConnectionId: manifest.providerConnectionId,
+    billingMode: arm.billingMode ?? manifest.billingMode,
+    providerConnectionId: arm.providerConnectionId ?? manifest.providerConnectionId,
     maxCostUsd: reserve,
     timeoutMs: manifest.timeoutMs,
   };
@@ -85,12 +128,23 @@ export async function executeArm(
     instructions: generated.instructions,
     context: generated.input,
     schema: generated.schema,
-    maxOutputTokens: outputTokens,
+    maxOutputTokens: deployment?.maxOutputTokens ?? arm.maxOutputTokens ?? outputTokens,
     reasoningEffort: arm.effort,
   };
   const result: AiResult<JsonValue> =
     arm.transport === 'macrofold-generation'
-      ? await createMacrofoldGenerationClient(macrofold).generate<JsonValue>({
+      ? await createMacrofoldGenerationClient(
+          arm.macrofoldDeployment
+            ? {
+                baseUrl: macrofold.baseUrl,
+                apiKey: macrofold.apiKey,
+                maxCostUsd: reserve,
+                timeoutMs: manifest.timeoutMs,
+                macrofoldDeployment: arm.macrofoldDeployment,
+                macrofoldOutputMode: deploymentMode(arm, deployment),
+              }
+            : macrofold,
+        ).generate<JsonValue>({
           ...request,
           ...(manifest.streamGeneration ? { stream: true } : {}),
         })
@@ -98,7 +152,7 @@ export async function executeArm(
           openai: {
             apiKey: process.env['OPENAI_API_KEY'] ?? '',
             model: arm.model,
-            prices: lunaPrices,
+            prices: arm.prices ?? lunaPrices,
           },
           timeoutMs: manifest.timeoutMs,
           maxRequestBytes: 500_000,
@@ -107,6 +161,7 @@ export async function executeArm(
         }).generate<JsonValue>(request);
   if (
     arm.transport === 'openai-response' &&
+    !arm.prices &&
     result.receipt.usage &&
     result.receipt.model === arm.model
   ) {

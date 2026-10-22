@@ -83,6 +83,8 @@ export interface BenchmarkArm {
   outputRate: number;
   effort?: GenerateRequest['reasoningEffort'];
   prices?: TokenPrices;
+  billingMode?: 'managed' | 'byok';
+  providerConnectionId?: string;
   maxOutputTokens?: number;
   reservationUsd?: number;
   macrofoldDeployment?: GenerateRequest['macrofoldDeployment'];
@@ -118,7 +120,11 @@ export function reservationUsd(arm: BenchmarkArm, inputBytes: number): number {
     (arm.transport.startsWith('openai') && long ? 2 : 1);
   const outputRate = arm.outputRate * (arm.transport === 'openai-response' && long ? 1.5 : 1);
   return (
-    Math.ceil(((upperInput * inputRate + (arm.maxOutputTokens ?? outputTokens) * outputRate + 100) / 1_000_000) * 1e6) / 1e6
+    Math.ceil(
+      ((upperInput * inputRate + (arm.maxOutputTokens ?? outputTokens) * outputRate + 100) /
+        1_000_000) *
+        1e6,
+    ) / 1e6
   );
 }
 

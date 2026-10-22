@@ -8,6 +8,7 @@ import {
 } from './reference-review.js';
 import type { BenchmarkScene } from './types.js';
 import { compileQualityPolicy, summarizeQuality } from './quality.js';
+import { armById, type BenchmarkArm } from './arms.js';
 
 /** Prepare before paid admission, then retain through reporting. A new offered
  * choice without a reviewed points policy must fail before any model is called.
@@ -26,6 +27,7 @@ export function reviewedReferenceReport(
   records: RunRecord[],
   models: string[],
   prepared = prepareReferenceReport(scenes),
+  availableArms: ReadonlyMap<string, BenchmarkArm> = armById,
 ) {
   const { review, qualityPolicy } = prepared;
   const generationRecords = records.filter((record) => record.sceneId.startsWith('generate-'));
@@ -53,6 +55,7 @@ export function reviewedReferenceReport(
     records.filter((record) => !record.sceneId.startsWith('generate-')),
     models,
     new Set(review.excludedIds),
+    availableArms,
   );
   return {
     postRunReview: true,

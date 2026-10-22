@@ -9,7 +9,7 @@ import {
 import type { BenchmarkCase, BenchmarkScene } from './types.js';
 import { decodeAnswer } from './options.js';
 import { permittedReaction } from './reaction-policy.js';
-import { armById } from './arms.js';
+import { armById, type BenchmarkArm } from './arms.js';
 import { nearestOfferedCategory } from './numeric-interpretation.js';
 
 export interface GradedCase {
@@ -140,6 +140,7 @@ export interface RunRecord {
   stream?: true;
   result: AiResult<JudgeValue>;
   generation?: JsonValue;
+  outputMode?: 'json_schema' | 'json_object' | 'prompted_json';
   executionPhase?: string;
 }
 const mean = (values: number[]) =>
@@ -174,6 +175,7 @@ export function summarize(
   records: RunRecord[],
   models: string[],
   excludedIds: ReadonlySet<string> = new Set(),
+  availableArms: ReadonlyMap<string, BenchmarkArm> = armById,
 ) {
   // Keep the complete original scene when decoding: memory-order choice handles
   // depend on the original question position. Exclusion changes grading only.
@@ -211,8 +213,8 @@ export function summarize(
     return {
       model,
       probabilitySource:
-        armById.get(model)?.transport.includes('generation') ||
-        armById.get(model)?.transport === 'openai-response'
+        availableArms.get(model)?.transport.includes('generation') ||
+        availableArms.get(model)?.transport === 'openai-response'
           ? 'llm-self-reported'
           : 'native-decision',
       reportedModels: [...new Set(runs.map((r) => r.result.receipt.model))].map((reported) => ({
