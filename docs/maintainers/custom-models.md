@@ -87,14 +87,19 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
 
 - [x] Verify target/role isolation, actual NPC response admission, output mode/local validation, optional streaming, no-call controls and unchanged native judgment/escalation.
 
-  Actual Macrofold HTTP compatibility and native gameplay with synthetic model answers are evidenced separately; this does not close live hosted-model reliability/quality below.
+  Actual Macrofold HTTP compatibility and native gameplay with synthetic model answers are evidenced separately. The live external model reached both configured NPC purposes but omitted a schema-required field, so both replies were rejected before speech publication. Its obsolete prompt example is corrected without relaxing validation; successful live native publication remains open below.
 
 - [ ] Verify automatic same-revision host recovery, current-revision update for new requests, optional pins and valid completion of earlier admitted work. Interrupted/unknown requests are never replayed. Include an upgrade that makes a formerly unsupported request valid: stale local capability rejection refreshes once before refusal, repeated unsupported work respects the shared negative-cache cooldown, and a new revision in a successful receipt invalidates only later preparation.
+
+  Live external inference verifies a same-model output-capacity revision, new unpinned selection, stale-pin refusal and original-Run observation after that change with no new provider call. Capability refresh/cooldown is covered by injected scenarios. A managed-worker restart remains unverified: the selected external worker is opaque, no RunPod credential was found, and the approved live setup excludes GPU launch.
+
 - [x] Exercise unavailable/capacity/context/revocation/deadline/cancellation cases, accepted-Run recovery, request settlement and missing usage/hosting-cost evidence.
 
   Actual HTTP probes verify these safe boundaries; the current Macrofold adapter reports upstream context/service errors as generic provider failure. Real hosted recovery/load and actual hosting invoices remain open below.
 
 - [ ] Under the existing spending authority, establish actual supported runtime and warm/concurrent/recovery behavior. Record tested versions, input/output limits, useful latency, throughput and costs; static/fixture success is not live acceptance.
+
+  Four live Qwen 2.5 7B JSON-object calls returned validated values, including two concurrent requests and streaming. [Evidence](../verification/custom-models.md#live-external-model-checks) records their limits/timings, initial NPC validation failures and separate provider/request fees. This bounded workload does not establish sustained GPU capacity or successful ordinary live speech yet. Final bounded NPC verification, cleanup and current-head CI remain in progress.
 
 **Exit:** the production capability works through ordinary gameplay and supported failures with measured operating limits. A comparative study or model winner is not required.
 
