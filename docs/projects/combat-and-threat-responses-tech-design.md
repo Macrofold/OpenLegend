@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                            | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Contact, personal danger evidence and prospective work transitions are in progress; complete combat delivery and qualification remain open. | 2026-10-19   |
+| In progress | Contact, personal danger evidence and prospective work transitions are in progress; complete combat delivery and qualification remain open. | 2026-10-22   |
 
 ## Design baseline and integration
 
@@ -251,6 +251,8 @@ render latency. Existing chosen camp-watch checks remain regression obligations.
 Attacker inputs are fixed at the appropriate irreversible attempt/release boundary. For a released projectile, evaluate each actual contacted victim's own pre-contact evidence and preparation, including an unintended interceptor, before commitContactImpact applies bodily consequences. The impact's own contact observation, native startle or interpreted emotion cannot warn the victim retroactively or affect that incoming impact's own defense or damage resolution. Use canonical occurrence time/order; recordEvent currently assigns some Awareness.sequence values after native callbacks, so an insertion sequence is not an independent proof that evidence preceded an attack. The shared contract defines the required source ordering; implementation must preserve it through all event and stored-evidence consumers.
 
 Known identity and fresh location are independent. The shared recognition owner may retain a person while out of sight, without refreshing point, movement, weapon, activity or threat cause. A warning can concern an unknown direction or region without a canonical attacker. Shared time/lifecycle rules govern any new warning/preparation deadlines and definition pins; the existing CTR state keeps its present behavior until its specialized integration is implemented.
+
+The completed [F technical design](preparedness-and-surprise-tech-design.md) specifies native registration, narrow opponent/own-offense continuity, complete current E preparation, actual flight warning and the designated first-outcome rule. [SUR01–SUR09](../maintainers/preparedness-and-surprise.md) owns the coordinated delta. Apply its eligible factor to nominal contact injury before current shield/body arithmetic, and include possible amplification in precommit lethal review without reading private preparedness. Since commitBodyEffects currently emits/acquires nested consequences synchronously, F requires local staging/publication fencing inside the existing contact transaction, including the exact fatal-contact no-effect reaction receipt; a callback appended after contact is insufficient. Preserve released policy and actual collider, and preserve valid warning across ordinary pair replacement. Proposed SA-D02/SA-D03 remain explicit shared-integration gates.
 
 ## Physical attack and contact contract — CTR01
 

@@ -88,10 +88,31 @@ type PreparednessTimingBinding = Readonly<{
   settlingDuration: SimDuration;
 }>;
 
+type ResolvedPreparationCoverage = Readonly<{
+  observer: ActorLifeRef;
+  danger: DefinitionPin;
+  capturedAt: SimTime;
+  scope:
+    | Readonly<{
+        kind: 'known-source';
+        sourceLife: ActorLifeRef;
+        association: EvidenceRef;
+      }>
+    | Readonly<{
+        kind: 'approach';
+        location: LocationEvidence;
+      }>;
+  physical: CapturedPreparationState['physical'];
+}>;
+
 type PreparednessCredit = Readonly<{
   work: ExistingActiveWorkRef;
   cut: EvidenceCut;
   matureAt: SimTime;
+  confirmingFact: FactKey;
+  confirmingAcquisition: ExistingObserverAcquisitionBoundary;
+  confirmingCause: ExistingPhysicalCauseRef | null;
+  timing: PreparednessTimingBinding;
   covered: ResolvedPreparationCoverage;
   support: readonly EvidenceRef[];
 }>;
@@ -177,7 +198,9 @@ type CapturedWarningFact = Readonly<{
 }>;
 ~~~
 
-PreparednessTimingBinding copies the existing admitted normal-clock binding and the four already converted simulation durations. SimDuration denotes the existing simulation-duration numeric type, not wall time. Preserve that binding through renewal, deferred settling and restore; do not convert again using the then-current speed/rate. Any supported normal-clock/policy edit follows SC13's explicit settle/revalidate/rebind path. PreparednessCredit is a copied proof of mature relevant work at an earlier cut, never a pointer to reread mutable work.
+PreparednessTimingBinding copies the existing admitted normal-clock binding and the four already converted simulation durations. SimDuration denotes the existing simulation-duration numeric type, not wall time. Preserve that binding through renewal, deferred settling and restore; do not convert again using the then-current speed/rate. Any supported normal-clock/policy edit follows SC13's explicit settle/revalidate/rebind path. ResolvedPreparationCoverage is closed: a permitted exact source or an approach using frozen SC02 bearing/region/point geometry. It copies E's actual physical arm, including own achieved body/receptor pose, guard facing or provider coverage/constraints; those are immutable values, not future queries. Region/bearing scopes keep their actual admitted geometry. Own-motion-relative becomes a fixed bearing in the achieved frame at capturedAt; an observed subject becomes a known-source only with a permitted exact physical binding, otherwise its actually permitted location. A guard uses its captured body position/facing and native coverage cone (the initial 120-degree full cone is 60 degrees on either side), with existing vertical/contact rules. Use the intersection of the selected scope and fulfilled physical/provider coverage, never desired pose, unvisited scan regions or a broader region inferred from its bounding box. A known-source continuation supplies expectation of that source, without granting a live position/target or retaining physical shield coverage.
+
+PreparednessCredit is a copied proof of mature relevant work at its designated confirming cut, never a pointer to reread mutable work.
 
 WarningKey uses a structured tuple/owning encoder, never delimiter concatenation. Ordinals select real admitted facets/coverage from one source, not extra warning onsets. These records extend the relevant known pair or anonymous entry under PersonalEncounters; they do not create a second top-level collection. Store only reduced values needed for continuation plus exact lineage, not another copy of all personal sensory history.
 
@@ -347,7 +370,9 @@ A current threat actually re-observed after waking may begin new registration wi
 
 A real attack interaction can preserve already earned relevant anticipation when a method ends. Ending an unused method alone never creates evidence or residual coverage.
 
-**Prepared-scope confirmation.** When actual attack evidence is acquired, the contact/observation adapter may attach PreparednessCredit only if its pre-consequence cut proves a mature, fulfilled method covered that exact threat. Copy its scope/frame and actual maturity; do not query a guard already consumed by the hit. The new warning is immediately registered **only within that copied scope**, because that anticipation already existed. Its acquiredAt remains the real new acquisition; this is no backdating and cannot reclassify the confirming impact.
+**Prepared-scope confirmation.** When actual attack evidence is acquired, the contact/observation adapter may attach PreparednessCredit only if its pre-consequence cut proves a mature, fulfilled method covered that exact threat. Copy its scope/frame and actual maturity; do not query a guard already consumed by the hit. Credit is allowed only for actual directed preparation/release/attempt, incoming-projectile, felt-contact or own-committed-offense meanings; testimony, inference, recall and wrappers cannot mint it. Validate exact same observer life, confirming FactKey/cause and acquisition transition, bound policy/timing, matureAt <= cut.at, fulfilled matching scope at that cut, and uninterrupted body eligibility through acquisition. Reject an arbitrarily older mature snapshot. Felt-contact credit comes from that actual victim's SC12 precontact snapshot; own-offense credit comes from its actor's precommit snapshot; an earlier observed attack cue uses the recipient's acquisition-local preparation cut. The adapter binds the immutable staged proof to the exact fact it actually acquires.
+
+The new warning is immediately registered **only within that copied scope**, because that anticipation already existed. Its acquiredAt remains the real new acquisition; this is no backdating and cannot reclassify the confirming impact.
 
 An evidence-free entrance guard therefore prevents surprise on its first covered blow. That contact consumes the physical guard but supplies a real retained-prepared-approach warning for the already anticipated entrance. A second same-approach blow 0.10 seconds later is expected even though it is no longer shielded. New broader self-assault coverage still needs normal registration; an unrelated rear threat before that completes is separately evaluated. If the guard expired before the first cut, or the contact was not actually acquired, no mature confirmation credit exists.
 
@@ -399,14 +424,14 @@ The coordinator preserves existing canonical native order. It does not replace i
 
 1. **Admission / revalidation.** Existing attack owners check permission, exact lives/tools, work/recovery, geometry and lethal review. A proposal or refusal emits no invented attack warning. The review uses maximum permissible surprise harm independently of private readiness.
 2. **Actual preparation.** The action/pose owner exposes supported physical wind-up/aim/weapon trajectories to B/C. A acquires the observer-permitted result; CTR may register it. Never read a hidden action stage and label it a visible cue. Until a real physical producer exists, it supplies no such warning.
-3. **Release / irreversible melee attempt.** Freeze attack-side damage, source/intended life, policy, committed origin, group/carrier and relevant mechanical values. Melee uses D attacker accuracy at this one attempt. A ranged shot uses D shooter steadiness once at release; save the resulting flight, not a victim-surprise Boolean.
+3. **Release / irreversible melee attempt.** Freeze attack-side damage, source/intended life, policy, committed origin, group/carrier and relevant mechanical values. Capture/stage any own-offense preparation credit before release or the attempt→recovery transition mutates that work. Melee uses D attacker accuracy at this one attempt. A ranged shot uses D shooter steadiness once at release; save the resulting flight, not a victim-surprise Boolean.
 4. **Advance to a physical outcome boundary.** Settle already admitted motion/turns, due effect ending, preparation changes, warning ready/retention/settling deadlines and legitimately due sensing. Complete A/B/C and required mechanical/reaction preparation. A previously admitted turn may have earned warning; a new same-time turn has no elapsed completion.
-5. **Capture before mutation.** For the actual victim, obtain A's immutable acquired membership and values, CTR warning continuation, E complete current preparation and complete relevant D inputs. Take SC12 EvidenceCut before commitContactImpact or any nested body/guard result. An earlier event not acquired within the cut is absent.
+5. **Capture before mutation.** For the actual victim, obtain A's immutable acquired membership and values, CTR warning continuation, E complete current preparation and complete relevant D inputs. Take SC12 EvidenceCut before commitContactImpact or any nested body/guard result. An earlier event not acquired within the cut is absent. Stage any contact confirmation credit from this exact captured mature preparation; it cannot be reconstructed from the consumed/interrupted method afterward.
 6. **Evaluate expectedness.** For each applicable basis, match scope and exact life; then require registered warning/retained expectation or fulfilled current preparation with earned lead. If any valid basis passes, surprised=false. With complete inputs and none passing, surprised=true. Unsupported/incomplete required work never becomes an empty list.
 7. **Resolve the ordinary physical outcome.** Existing reach/accuracy/flight collision/guard code determines miss or actual contact. Surprise does not reroll, guarantee contact or bypass recovery. A melee intended miss can have an internal classification if a real eligible attempt exists; missing/retired targets or refused attacks do not create victim outcomes. A projectile is evaluated for the actual body contacted, not every possible intended-target miss.
 8. **Consume the designated slot and calculate injury.** Determine applicable shield/protection using current geometry, multiply the eligible nominal direct injury once, execute mitigation, then call the ordinary body owner. Record the slot, arithmetic and actual result in the same native transaction.
 9. **Commit new reaction.** For qualifying unexpected actual contact, commit D's already prepared cause/receipt after this contact's mechanical inputs were fixed. Injury/guard/body wrappers share its cause. Required reaction preparation failure holds before step 8; damage cannot commit while silently discarding selected shock.
-10. **Acquire consequences.** Publish/acquire actual contact/attempt sound and observer evidence, update CTR's warning continuation, and notify optional cognition. Its new warning starts now, never before the original cut. Later ordered outcomes see only genuinely committed preceding facts/effects.
+10. **Acquire consequences.** Publish/acquire actual contact/attempt sound and observer evidence, update CTR's warning continuation, and notify optional cognition. Its new warning starts now, never before the original cut. Consume only the already staged exact confirming credit; do not call capturePreparation again to manufacture credit from changed work. Later ordered outcomes see only genuinely committed preceding facts/effects.
 11. **Publish and save coherently.** Existing outcome receipts, committed costs, consumed stages, effects and required observer evidence form one coherent continuation. A retry recovers that outcome without re-execution.
 
 The existing kernel executes its ordered action effects and then captured flights, whose owner sorts by flight ID; collision ties use that owner's ordering. Preserve these choices unless the owning project explicitly changes them. Same numeric timestamp does not remove this order. A first contact's shock can affect a later melee attacker's accuracy only if that attacker is the shocked actor and its own attempt occurs later; it cannot alter a previously released projectile or an already admitted evasion.
@@ -494,10 +519,10 @@ All **t** values below are normal-speed seconds for readability. Implementation 
 | T24 — work not complete | Contact boundary needs a due acquisition, preparation capture or D resolution that returns incomplete. | Do not commit a guessed ordinary/2× hit. Hold the required native continuation at its coherent prefix and resume with the same cut/identity rules. |
 | T25 — guard consumed, expectation retained | Mature entrance guard; covered contact and its acquired evidence at 5.00 consume guard; second same-approach contact 5.10. | Both expected. Only first receives physical guard reduction. New opposite-direction danger before broad registration at 5.20 needs its own basis. |
 | T26 — immediate counterattack | Mature strike against A commits 5.00, own result acquired and recovery begins; A counters 5.10. | Finite own-offense expectation makes the counter expected; recovery may prevent defense. Unrelated B can still surprise without another warning. |
-| T27 — prolonged fight then brief occlusion | A's directed attack acquired 0.00 establishes broad and permitted exact-source support; mature work toward A continues through 10.00, then breaks as A passes behind; A contacts 10.10. | Broad support may have expired at 8.00; narrow A support's settling starts at 10.00 and ends 12.00. Same A is still expected without current sight. |
+| T27 — prolonged fight then brief occlusion | A's directed attack acquired 0.00 establishes broad and permitted exact-source support; mature maintained aim toward A continues through 10.00 without another committed attempt/release, then breaks as A passes behind; A contacts 10.10. | Broad support may have expired at 8.00; narrow A support's settling starts at 10.00 and ends 12.00. Same A is still expected without current sight. |
 | T28 — repeated inference from one rustle | First current danger meaning admitted 1.00 from root R; its continuation ends 9.00. A new equivalent inference over R is admitted 10.00. | No renewed/reopened warning. New wrapper/time/region wording is not fresh physical support; a real new cue or deliberate current method can still matter. |
 
-A cue acquired at exactly the contact timestamp can belong to the cut only if its real native acquisition is earlier in the canonical order. With the selected positive lead, new receipt at that timestamp still supplies no matured warning. A genuinely pre-existing registered scope can renew at that boundary. Paused UI/provider work cannot create elapsed simulated time, and delayed optional cognition does not postpone native registration.
+A cue acquired at exactly the contact timestamp can belong to the cut only if its real native acquisition is earlier in the canonical order. With the selected positive lead, a new uncredited warning at that timestamp still supplies no matured warning. A genuinely pre-existing registered scope can renew at that boundary. Paused UI/provider work cannot create elapsed simulated time, and delayed optional cognition does not postpone native registration.
 
 ## Save, invalidation and correction
 
