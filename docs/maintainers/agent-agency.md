@@ -115,6 +115,8 @@ PW03/PW10 preserve AG04's existing admission owner: explicit activity parameters
 
 ### AG06 — Goal/plan-aware context and derived interests
 
+[ATI04](attention-and-investigation.md#ati04--intake-initiative-and-meaningful-opportunities) is the designed, unimplemented attention consumer: exact current work/purpose, acquired cue/result subscriptions and quiet semantic opportunities through existing context/intake. It adds no private awareness table, per-tick model loop or complete semantic-attention claim.
+
 - [x] PX04 supplies exact own outing terms/progress and permitted companion visibility in ordinary decision/activity context, without the companion’s private work or hidden location. Current reply candidates share native prerequisites.
 - [x] [Batch 08 (`MY02`/`MY03`)](parallel-batch-08-the-missing-belonging.md) supplies observer-permitted inspection place/holder/readable-text facts, source-labeled subject/general knowledge notes (`prepareKnowledgeContext`), and whole-bag gift offer/outcome evidence in ordinary decision and conversation context ([verification](../verification/parallel-batch-08-the-missing-belonging.md)).
 
@@ -138,6 +140,8 @@ PW03/PW10 add a narrow AG06 inspection consumer: one currently accessible select
 **Exit evidence:** a newly adopted need for a known material can attend to a currently visible resource that was absent from the preceding selected-object list. Goal changes expire the old cue; unchanged goals do not rebuild every context. Relevant contrary evidence and danger survive focused planning; mandatory context overflow fails before paid dispatch.
 
 ### AG07 — Meaningful feedback, survival and bounded reconsideration
+
+The [attention design](../projects/attention-and-investigation-tech-design.md#5-decision-opportunities-and-personality) and [ATI04/ATI07](attention-and-investigation.md) specify voluntary inquiry/watch outcomes, unchanged-cue dispositions, ordinary continuation and original deadlines. Runtime integration remains open; blocked, unavailable and deliberately declined work retain different meanings.
 
 **October 17 selected combat consumer — design complete, runtime/qualification open:** [CTR05–CTR08](combat-and-threat-responses.md) reuse AG03/AG06/AG07's actual plan/frontier, prospective work transitions and intake. A personally chosen purpose is metadata on admitted work, not a second combat goal or global aggression state. The [world catalogue](../worlds/base/threat-response-options.md) selects one-strike responses, finite pursuit/last-seen/hold commitments, explicit limits and independent reconsideration after real results, withdrawal, lost sight and changed conditions. No hidden repeat attack, automatic pursuit, cost refund or unsupported pause may repair delayed cognition. Required context and relevant choices survive ongoing work; exact native outcomes remain distinct from the pipeline's own appraisal notifications. Implementation and behavioral qualification stay in CTR and retain this tracker's wider exits. The canonical [shared deliberation contract](../../archive/07-technical-architecture/agent-agency-runtime.md#25-shared-deliberation-and-prepared-choices) extends AG01/AG06/AG07 for compatible task, speech and threat decisions. CTR delivers this shared extension and its [noncombat consumer checks](combat-and-threat-responses.md#shared-contract-qualification); it does not own a second planner or impose its two-call strategy on ordinary decisions.
 

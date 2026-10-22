@@ -594,6 +594,8 @@ Interruption rules include safe boundary, committed costs/effects, retainable pr
 
 ### Selected look, posture and watch composition
 
+The [attention technical design](projects/attention-and-investigation-tech-design.md#3-admission-and-physical-execution) selects exact observation methods, compatible work, finite search and preparation adapters; [ATI01–ATI08](maintainers/attention-and-investigation.md) owns delivery. This is complete specialist design, not implemented concurrency.
+
 **Accepted shared target; not a delivered concurrency extension.** [Stealth-awareness contracts](projects/stealth-awareness-tech-design.md#physical-orientation-posture-and-senses) and [SA](maintainers/stealth-awareness.md) select independent looking while walking where the admitted body supports it, crouch/quiet movement and chosen watch/investigation. They extend the existing physical action, spatial pose and finite activity owners. The current primary lane and ordinary refusal/replace/interrupt rules remain authoritative until these concrete combinations are qualified; a new label, menu or intention cannot create simultaneous work.
 
 Body facing, movement direction and supported head/gaze freedom have distinct meanings within one accepted physical state. Current movement writes `EntitySpatial.heading`, and guard coverage binds to that body heading. The selected extension must reconcile both consumers before admitting independent look. Validate the resulting posture, support, ceiling/obstacle and equipment clearance, then the actual work's body-part constraints, before committing one compatible pose/action transition. A refused stand/look leaves the body and existing work unchanged. Camera movement never writes this state or grants an extra sight check.

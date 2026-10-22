@@ -40,6 +40,8 @@ Selected [stealth, awareness and surprise](projects/stealth-awareness-feature-sp
 
 ## Feature inventories
 
+[Attention and investigation](projects/attention-and-investigation-feature-spec.md) has a selected [ATI-L01–ATI-L07 inventory](limits/attention-and-investigation.md) and [ATI delivery tracker](maintainers/attention-and-investigation.md), with runtime and player qualification open.
+
 | Feature                                                                                               | Inventory                                       | Implementation tasks                                                                                                 |
 | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | [Stealth, awareness and surprise](projects/stealth-awareness-feature-spec.md)                         | [Limits](limits/stealth-awareness.md)           | [Tracker](maintainers/stealth-awareness.md)                                                                          |

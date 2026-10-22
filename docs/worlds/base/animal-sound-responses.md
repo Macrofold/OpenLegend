@@ -4,7 +4,7 @@
 
 ## One existing animal controller
 
-This extends the selected [native animal response owner](animal-responses.md) and its [CTR03–CTR04 execution design](../../projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04). Those designs are documented here; their native controller remains an implementation dependency, not integrated runtime. The generic-noise exclusion in that design is narrowed here: personally detected ordinary speech now supplies a selected native alarm input. Other noises require an actual admitted emitter; this does not silently enable footsteps or impact sound.
+This extends the selected [native animal response owner](animal-responses.md) and its [CTR03–CTR04 execution design](../../projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04). The native alarm/escape controller exists in the inspected contracts source; this acoustic extension still requires its integration and qualification. The generic-noise exclusion in that design is narrowed here: personally detected ordinary speech now supplies a selected native alarm input. Other noises require an actual admitted emitter; this does not silently enable footsteps or impact sound.
 
 SPK08 depends on the relevant CTR03–CTR04 installed controller, perception, movement, species-profile and continuation seams. If that implementation is unavailable, the acoustic adapter remains pending. Do not introduce temporary duplicate escape state or import unrelated combat/PvP/appraisal work to satisfy the dependency.
 
@@ -14,7 +14,7 @@ The installed native response profile remains the single policy selection. Its c
 
 An animal either continues its current behavior or enters/updates that shared alarm. Alarm produces actual escape movement, alert settling or a truthful blocked condition. A skittish deer can flee when it hears you; a calmer animal can continue. Sound does not automatically classify its speaker as an attacker, change relationships or supply a psychological feeling.
 
-Distinct curiosity approaches, deliberate listening holds, hiding, richer instincts and exceptional cognitive creatures remain future repertoire. Ordinary alert settling provides a stationary aftermath without another timed hold action. Continued activity must not be described as an investigation that never happened.
+The [attention design](../../projects/attention-and-investigation-tech-design.md#6-native-animal-methods) selects an opt-in finite observation/ground-curiosity extension under this same controller, with independent alarm/curiosity dispositions and no hidden source pursuit; [ATI05](../../maintainers/attention-and-investigation.md#ati05--native-choices-through-one-controller) owns its unimplemented delivery. Hiding, richer instincts and exceptional cognitive creatures remain future repertoire. Ordinary alert settling provides a stationary aftermath without another timed hold action. Continued activity must not be described as an investigation that never happened.
 
 ## Profile values and consumers
 
@@ -97,7 +97,7 @@ Provider availability has no bearing on native reactions to already committed so
 
 SPK07–SPK08 must show actual acoustic acquisition, both threshold outcomes, text/addressee invariance, unseen/null-bearing privacy, real away preference with second-human safety, repeat/expiry behavior, movement/flight/territorial priority, safe-duration completion, trapped behavior and save/load with unchanged RNG. Measure detection/recording and native route preparation through dense real callers; no audible recipient may be dropped to make a benchmark pass. Zero animal model calls is a required result, not a native CPU capacity claim.
 
-Distinct listening/curiosity/hiding choices, richer animal recognition, learning, offspring, packs, scent, tone and language remain future native repertoire. A rare deliberately selected cognitive creature would require separate capability design and spending admission; naming an ordinary animal does not enable it.
+Beyond the selected finite ATI05 method, hiding, richer animal recognition, learning, offspring, packs, scent, tone and language remain future native repertoire. A rare deliberately selected cognitive creature would require separate capability design and spending admission; naming an ordinary animal does not enable it.
 
 ## Maintained records
 

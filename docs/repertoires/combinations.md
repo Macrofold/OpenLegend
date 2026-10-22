@@ -10,7 +10,7 @@ The [selected stealth and awareness journeys](../projects/stealth-awareness-feat
 
 **MD FA · Play · 2 Complete · Moderate/Extend.** Gap: temporary supports, cooperative work and commitments.
 
-A bridge fails before a wedding joining two river communities. The host has promised both safety and a ceremony at the ancestral orchard. Move the feast, build a limited crossing, arrange boats or split the ceremony between banks. A rival carpenter offers help but wants credit for an earlier unrecognized repair. The player can satisfy the practical need without settling every grievance. A failed crossing attempt should expose load or anchoring problems before anyone is forced into danger. The successful workaround may become next year's tradition.
+A bridge fails before a wedding joining two river communities. The host has promised both safety and a ceremony at the ancestral orchard. Move the feast, build a limited crossing, arrange boats or split the ceremony between banks. A rival carpenter offers help but wants credit for an earlier unrecognized repair. The player can satisfy the practical need without settling every grievance. A willing lookout can watch for arriving helpers and boats while the carpenter works; arrivals become shared information only when a call is actually heard. A failed crossing attempt should expose load or anchoring problems before anyone is forced into danger. The successful workaround may become next year's tradition.
 
 Combine [expandable shelter](settlements-architecture.md#the-expandable-first-shelter), [shared credit](work-crafting.md#work-worth-sharing-credit-for), [promises](mechanics.md#promises-that-occupy-tomorrow) and [festival cloth](objects.md#festival-cloth).
 

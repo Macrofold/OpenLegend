@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 22, 2026 — Accepted attention work and scoped preparation
+
+The [attention feature](projects/attention-and-investigation-feature-spec.md) and [technical design](projects/attention-and-investigation-tech-design.md) select finite observation, investigation and compatible watch through existing action/activity ownership, with voluntary human choices and a narrow opt-in native curiosity method. Physical fulfillment, current scope and immutable acquired support supply [Prompt 6's preparation evidence](projects/attention-and-investigation-tech-design.md#7-exact-preparedness-evidence-interface-for-prompt-6); the encounter owner still decides surprise. Heard identity, private fear and stated intention confer no hidden targeting or universal readiness.
+
+The design makes attention useful for watch relief, workshop inquiry, arrivals, companion search and quiet discovery while preserving real time, work conflicts and uncertainty. One native controller retains separate alarm/curiosity dispositions so curiosity cannot swallow a later alarm. [World methods](worlds/base/attention-and-investigation.md), [limits](limits/attention-and-investigation.md) and [ATI00–ATI08](maintainers/attention-and-investigation.md) keep tuning, growth and implementation separate. SAD-E and the selected DG02/ND13/ND16 design slices are complete; runtime delivery, F policy and joint specialist qualification remain open.
+
 ## October 19, 2026 — Shared stealth evidence, reactions and preparation contracts
 
 The [shared feature](projects/stealth-awareness-feature-spec.md), [architecture](projects/stealth-awareness-tech-design.md) and [SA00/A–G tracker](maintainers/stealth-awareness.md) select observer-specific evidence with per-fact freshness, familiarity/quality/Perception voice recognition, one physical pose owner, immediate native startle and bounded causal reconsideration. Combat uses actually acquired warning and active preparation at an immutable actual-victim cut; newly caused startle cannot change its own incoming impact. The bundled world authors provisional three-normal-second startle and possible 2× surprise damage through the common simulation clock and existing world-rule owners. Fear can affect accuracy/evasion without automatically slowing escape.
