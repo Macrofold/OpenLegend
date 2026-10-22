@@ -76,7 +76,11 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     expect(await page.evaluate(() => sessionStorage.getItem('open-legend:tab-id'))).toBe(identity);
     await settings.click();
     await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeChecked();
-    await page.screenshot({ path: info.outputPath('time-settings.png') });
+    // These images document time controls; full WebGL viewport readbacks can
+    // consume this journey's 60-second deadline without testing more controls.
+    const desktopTimeBounds = await page.locator('.ol-time-settings').boundingBox();
+    expect(desktopTimeBounds).not.toBeNull();
+    await page.screenshot({ path: info.outputPath('time-settings.png'), clip: desktopTimeBounds! });
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(page.locator('.ol-hud')).toHaveAttribute('data-narrow', 'true');
     const panelBounds = await page.locator('.ol-time-settings').boundingBox();
@@ -85,7 +89,10 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     await expect(
       page.getByText('Leaving this tab pauses your play.', { exact: false }),
     ).toBeVisible();
-    await page.screenshot({ path: info.outputPath('time-settings-narrow.png') });
+    await page.screenshot({
+      path: info.outputPath('time-settings-narrow.png'),
+      clip: panelBounds!,
+    });
     await page.setViewportSize({ width: 1440, height: 960 });
 
     const actorId = game.service.controlledEntityId;
@@ -159,10 +166,11 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
       await expect(other.getByRole('dialog')).toBeHidden();
       await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
       await page.setViewportSize({ width: 390, height: 844 });
-      await page.screenshot({ path: info.outputPath('tab-resume-narrow.png') });
+      await expect(page.locator('.ol-hud')).toHaveAttribute('data-narrow', 'true');
       const bounds = await page.getByRole('dialog').boundingBox();
       expect(bounds!.x).toBeGreaterThanOrEqual(0);
       expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390);
+      await page.screenshot({ path: info.outputPath('tab-resume-narrow.png'), clip: bounds! });
       await page.getByRole('button', { name: 'Resume Here', exact: true }).click();
       await expect(page.getByRole('dialog')).toBeHidden();
       await expect(other.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
