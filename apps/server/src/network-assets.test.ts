@@ -1,5 +1,7 @@
-import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { Readable, Writable } from 'node:stream';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
@@ -258,7 +260,7 @@ describe('owned exact asset transfers', () => {
           }),
       };
     });
-    const root = '/private/tmp/openlegend-network-handoff-' + randomUUID();
+    const root = await mkdtemp(join(tmpdir(), 'openlegend-network-handoff-'));
     roots.push(root);
     const cache = new AssetCache({ root, maxBytes: 1024, maxEntries: 2, maxConcurrent: 1 });
     caches.push(cache);
@@ -392,9 +394,8 @@ describe('owned exact asset transfers', () => {
         return { response: { statusCode: 200, headers: {}, body: Readable.from([]) } };
       },
     );
-    const root = '/private/tmp/openlegend-network-upload-' + randomUUID();
+    const root = await mkdtemp(join(tmpdir(), 'openlegend-network-upload-'));
     roots.push(root);
-    await mkdir(root, { mode: 0o700 });
     const source = root + '/input';
     await writeFile(source, bytes);
     await expect(storage().upload(reference, source)).resolves.toMatchObject(reference);
@@ -422,9 +423,8 @@ describe('owned exact asset transfers', () => {
   });
 
   it('shares one exact transfer while a cancelled reader detaches and another receives verified bytes', async () => {
-    const root = '/private/tmp/openlegend-network-cache-' + randomUUID();
+    const root = await mkdtemp(join(tmpdir(), 'openlegend-network-cache-'));
     roots.push(root);
-    await mkdir(root, { mode: 0o700 });
     const cache = new AssetCache({ root, maxBytes: 1024, maxEntries: 8, maxConcurrent: 1 });
     caches.push(cache);
     let ready: (() => void) | undefined;
@@ -456,9 +456,8 @@ describe('owned exact asset transfers', () => {
   });
 
   it('keeps a timed-out public transfer reserved until ignored headers arrive, then uses a fresh temporary identity', async () => {
-    const root = '/private/tmp/openlegend-network-cache-' + randomUUID();
+    const root = await mkdtemp(join(tmpdir(), 'openlegend-network-cache-'));
     roots.push(root);
-    await mkdir(root, { mode: 0o700 });
     const cache = new AssetCache({
       root,
       maxBytes: 1024,
@@ -516,9 +515,8 @@ describe('owned exact asset transfers', () => {
   });
 
   it('expires a queued cache subscriber without a caller signal while physical transfer admission stays occupied', async () => {
-    const root = '/private/tmp/openlegend-network-queued-cache-' + randomUUID();
+    const root = await mkdtemp(join(tmpdir(), 'openlegend-network-queued-cache-'));
     roots.push(root);
-    await mkdir(root, { mode: 0o700 });
     const cache = new AssetCache({
       root,
       maxBytes: 1024,
