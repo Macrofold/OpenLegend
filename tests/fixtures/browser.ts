@@ -16,11 +16,11 @@ export async function enterGame(page: Page): Promise<void> {
   // These journeys exercise active play. Another browser window can own focus
   // on a local host, legitimately pausing this page before its first assertion.
   await page.bringToFront();
+  // Finish cold 3D allocation before checking controls; software rendering can
+  // exceed a generic assertion deadline. Interaction deadlines remain unchanged.
+  await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true', { timeout: 30_000 });
   await expect(page.getByRole('button', { name: 'Time settings', exact: true })).toBeEnabled();
   await expect(page.locator('.ol-entry')).toBeHidden();
   await expect(page.getByRole('dialog', { name: 'Game is paused.', exact: true })).toBeHidden();
   await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeHidden();
-  // Cold 3D allocation on software-rendered hosts can exceed a generic assertion
-  // deadline. This only waits for startup; interaction deadlines remain unchanged.
-  await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true', { timeout: 30_000 });
 }
