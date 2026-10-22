@@ -73,6 +73,9 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
 
 - [x] Accept the explicit plan option with existing arms, ordinary configured-purpose baselines or custom deployment targets and optional pins. Resolve defaults through the shared pure configuration owner without database/server startup.
 - [x] Reuse finite plans, single-writer journal, source/request fingerprints, original answers and exact-Run recovery. Local preparation is offline; online reads/live execution remain explicit.
+
+  Live capability preparation runs only for selected unattempted work and observes actual receipts for later revision/unsupported refresh. Metadata and admission persistence consume the original inference deadline; stopped resources and aggregate spending are checked again before dispatch. A stopped target does not discard independent target work.
+
 - [x] Keep study IDs, frozen cases/references/co-models and spending controls in tools. Optional raw-text generation reuses the same executor and cannot publish or qualify gameplay actions.
 
 **Exit:** optional tools can compare the production target without an alternate provider path or changed historical cohorts.
@@ -84,6 +87,8 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
 - [x] Report selected/attempted/answered/completed coverage alongside conditional quality, first useful output and full latency.
 - [x] Keep character disagreement, uncertainty, assistant refusal, sanitization, service withholding, invalid output and native rejection/actual effects distinct.
 - [x] Record actual revisions and unknown provenance/cost honestly. Attribute shared deployment cost once over the selected window; unallocatable host costs limit the comparison, not production inference.
+
+  Reports preserve separate full-attempt and adapter timings, reuse per-arm indexes and reject provably oversized required comparisons before funding. Combined retained metadata has an exact byte check. [DB01](cognition-redesign.md#db01--synthetic-decision-api-comparison) retains the existing eager corpus/report growth limit; no heap or hosted-capacity qualification follows from these bounds.
 
 **Exit:** comparisons preserve first attempts/severe errors and private artifact rules without introducing a second billing ledger.
 

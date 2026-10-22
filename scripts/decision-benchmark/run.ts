@@ -28,6 +28,7 @@ import {
   BenchmarkAccounting,
   parseJournal,
   validateJournal,
+  knownReceiptMicroUsd,
   type BenchmarkManifest,
   type BenchmarkJournalEvent,
 } from './journal.js';
@@ -443,6 +444,9 @@ export async function runBenchmark(
             r.sceneId.startsWith('generate-'),
           );
           const times = runs.map((r) => r.result.receipt.latencyMs).sort((a, b) => a - b);
+          const attemptTimes = runs
+            .flatMap((r) => (r.attemptLatencyMs === undefined ? [] : [r.attemptLatencyMs]))
+            .sort((a, b) => a - b);
           return {
             model,
             supported: !availableArms.get(model)!.transport.endsWith('decision'),
@@ -466,6 +470,10 @@ export async function runBenchmark(
             proseReviewRequired: rows.filter((r) => r.proseReview === 'required').length,
             p50LatencyMs: times[Math.max(0, Math.ceil(times.length * 0.5) - 1)] ?? null,
             p95LatencyMs: times[Math.max(0, Math.ceil(times.length * 0.95) - 1)] ?? null,
+            p50AttemptLatencyMs:
+              attemptTimes[Math.max(0, Math.ceil(attemptTimes.length * 0.5) - 1)] ?? null,
+            p95AttemptLatencyMs:
+              attemptTimes[Math.max(0, Math.ceil(attemptTimes.length * 0.95) - 1)] ?? null,
             usageBasedEstimatedCostUsd: runs.reduce(
               (n, r) => n + (r.result.receipt.estimatedCostUsd ?? 0),
               0,
@@ -765,7 +773,11 @@ export async function runBenchmark(
           manifest,
           requestId,
           task.reserve,
-          stopped() ? AbortSignal.abort() : cancellation.signal,
+          // The synced admission already includes this reserve. Another worker may
+          // have settled above its reserve during that await; do not fund a new call.
+          stopped() || accounting.committedMicroUsd + inFlightMicro > micro(manifest.capUsd)
+            ? AbortSignal.abort()
+            : cancellation.signal,
           async (runId) => {
             await append({
               event: 'accepted',
@@ -798,15 +810,23 @@ export async function runBenchmark(
           : {}),
         ...result,
       };
-      await append({
-        event: 'result',
-        key: task.key,
-        requestId,
-        record,
-        at: new Date().toISOString(),
-      });
       if ([401, 402, 403, 404].includes(record.result.receipt.httpStatus ?? 0))
         blockedArms.add(resourceKey(task.arm));
+      // A sibling may be waiting for admission persistence ahead of this result.
+      // Preserve newly known excess cost immediately; release no headroom until synced.
+      const excess = Math.max(0, knownReceiptMicroUsd(record.result.receipt) - reserved);
+      inFlightMicro += excess;
+      try {
+        await append({
+          event: 'result',
+          key: task.key,
+          requestId,
+          record,
+          at: new Date().toISOString(),
+        });
+      } finally {
+        inFlightMicro -= excess;
+      }
       const count = accounting.completedCalls;
       if (count % 10 === 0 || record.result.outcome !== 'value')
         console.log(

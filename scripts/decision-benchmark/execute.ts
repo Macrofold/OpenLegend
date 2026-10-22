@@ -17,7 +17,7 @@ import {
   ModelTargetPreparationError,
   describeMacrofoldDeployment,
 } from '../../apps/server/src/generation-targets.js';
-import { NetworkError } from '../../packages/network/src/index.js';
+import { NetworkError } from '@open-legend/network';
 import {
   decisionGenerationRequest,
   decodeGeneratedDecision,

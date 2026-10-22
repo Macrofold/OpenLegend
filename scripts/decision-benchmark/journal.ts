@@ -62,6 +62,14 @@ const micro = (value: number) => {
   return amount;
 };
 
+/** Known request evidence also constrains live admission while its journal write waits. */
+export function knownReceiptMicroUsd(receipt: AiReceipt): number {
+  return Math.max(
+    micro(receipt.estimatedCostUsd ?? 0),
+    micro(receipt.providerReportedCostUsd ?? 0),
+  );
+}
+
 /** Derived from validated events, or updated after a live event is durably synced.
  * Completed history never needs rescanning to admit the next call. Only unfinished
  * reservations remain indexed; the append-only journal retains every actual attempt.
@@ -92,10 +100,7 @@ export class BenchmarkAccounting {
       requireValue(admission, 'result without a pending reservation');
       const reserved = micro(admission.reservedUsd!);
       const receipt = event.record!.result.receipt;
-      const known = Math.max(
-        micro(receipt.estimatedCostUsd ?? 0),
-        micro(receipt.providerReportedCostUsd ?? 0),
-      );
+      const known = knownReceiptMicroUsd(receipt);
       // Macrofold rejection with no Run proves no admission. Direct provider trace IDs
       // retain their existing conservative accounting when usage is unavailable.
       const notAdmitted =
