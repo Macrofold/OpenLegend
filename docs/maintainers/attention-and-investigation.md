@@ -28,7 +28,7 @@ Parent: **SAD-E**; selected **DG02, ND13 and ND16**, with ND11/ND19 consumers.
 
 Dependencies: A acquired evidence/identity; B orientation; AC07; existing prospective-work/activity/action-experience owners. Parent modules: **DG02, ND13, ND16**.
 
-- [ ] Add the closed observation/anticipation terms, installed method/predicate definitions and one finite control in existing activity ownership. Reuse exact life, plan/step/activity and action identities.
+- [ ] Add the closed observation/anticipation terms, installed method/predicate definitions and one finite control in its exclusive existing activity, direct-action or native ownership, with scoped terms revision. Reuse exact life, plan/step/activity and action identities.
 - [ ] Give menu offers, explicit requests, interpretation/NPC proposals and plan dispatch the same read-only availability and atomic admission. Fence changes during waits; preserve current work when refused/pending.
 - [ ] Implement stationary observe/scan/listen/exterior-inspect/monitor methods and actual results. Delegate existing record/container/instrument methods; never reveal unsupported internals.
 - [ ] Track actual alignment/view fulfillment separately from accepted intent and original deadline. Only achieved intervals support preparation.
@@ -41,7 +41,7 @@ Dependencies: A acquired evidence/identity; B orientation; AC07; existing prospe
 Dependencies: ATI01; B/C reconciled pose/locomotion accounting; **AC08, SAI-B/C/E**.
 
 - [ ] Add the qualified observation facet to compatible movement/guard actions without a parallel activity combinator or second physical lane.
-- [ ] Preserve route, cooperative task, costs, original guard deadline and scoped orientation amendment. Body assistance uses B/C exactly once.
+- [ ] Preserve route, cooperative task, costs, original guard deadline and scoped orientation amendment. An attached facet's expiry removes only its maintenance; it never cancels the underlying move/guard via whole-plan finite control. Body assistance uses B/C exactly once.
 - [ ] Refuse incompatible precise tool/aim/body-facing requirements; explicit replacement and ordinary interruption preserve their actual consequences.
 - [ ] Support safe work-step/check/work-step sequences and truthful restart/lost-progress semantics.
 - [ ] Handle focus switches, current-only scan scope, independent shield/head direction and lost-subject hold/end.
@@ -112,7 +112,7 @@ Dependencies: ATI01–ATI06; current save/load, authority/lifecycle and G presen
 
 Dependencies: ATI01–ATI07 and the required A/B/C/D/F/G slices; shared **SAD-I** reconciliation before claiming end-to-end readiness.
 
-- [ ] Qualify AJ01–AJ13 and the technical adversarial cuts through real ordinary callers, including a contrasting body/native profile and meaningful failures.
+- [ ] Qualify AJ01–AJ13 and the technical adversarial cuts through real ordinary callers, including a contrasting body/native profile, direct-action and activity-owned facets, travel-relative rear watch through corners/stops, and meaningful failures.
 - [ ] Measure candidate work before selection, physical evaluations, resident/hydrated bytes, notifications, pending age and cold restore under dense live observers and relevant dependency changes.
 - [ ] Preserve complete required evidence/victim work under load through native accounting; optional decisions follow existing spending/urgency admission.
 - [ ] Verify ordinary controls/disclosure and actual autonomous alternatives with the applicable fixture/native/database/browser/live-provider evidence, clearly separated.

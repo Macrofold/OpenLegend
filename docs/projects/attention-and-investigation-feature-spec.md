@@ -64,13 +64,13 @@ The [world profile](../worlds/base/attention-and-investigation.md) owns initial 
 
 A character who suspects Ada is behind a wall can investigate the historical bearing, watch a known doorway, call out or ask a companion. They cannot bind an invisible Ada as a moving destination or read her current activity. If a watched person disappears, the selected loss rule either ends subject tracking or keeps a fixed last-permitted point/bearing until the original finite end. It does not follow private coordinates or silently reacquire an indistinguishable person.
 
-Each focus has its own supported source, observation time and uncertainty. Several concerns may share one watch region; several regions can be checked sequentially. Neither multiple concerns nor an old warning multiplies physical gaze. A body with independently steerable sense groups uses only its installed capabilities; human anatomy is not an engine law.
+Each focus has its own supported source, observation time and uncertainty. Several selected concerns may share one watch region; several regions can be checked sequentially. Only the actual current focus supplies maintained scope; past/future scan positions remain historical/planned. Neither multiple concerns nor an old warning multiplies physical gaze. A body with independently steerable sense groups uses only its installed capabilities; human anatomy is not an engine law.
 
 Anonymous danger is valid. “Watch the north doorway for a physical attack” needs no attacker identity. “Watch for Ada” can retain a permitted remembered association while the spatial coverage remains independently defined. “Watch arriving workers” is peaceful monitoring and creates no assumed combat preparation.
 
 ## Work, movement and interruption
 
-The activity uses the current primary physical action. B's compatible orientation amendment supplies limited looking during that action; there is no free background lookout or general parallel-plan executor.
+Accepted observation uses the current primary physical action. A composed inquiry owns its finite control in the activity; a compatible amendment to a direct move/guard can keep the same control on that action without creating or restarting a plan. B supplies actual limited orientation. There is no free background lookout or general parallel-plan executor.
 
 | Ongoing work | Selected coexistence |
 | --- | --- |
@@ -85,7 +85,7 @@ Starting observation does not refund materials, elapsed time or attack recovery.
 
 Being attacked is not an unconditional “stop watching” rule. The actual contact/effect/work owner determines whether the method remains feasible. End coverage that truly loses its required body resources; retain a compatible commitment. The incoming outcome uses its already captured preparation before any impact-induced interruption or fear.
 
-Expiration releases future maintenance; it does not automatically turn the head back, renew the guard, choose a successor or infer safety. Death/body replacement ends old-life physical commitments. Save/load preserves original deadlines, work, gaps and results without new sensing, new choice or renewed time.
+An attached watch's expiry releases only its future maintenance and leaves compatible walking/guard/work running. It must not use a whole-plan deadline that cancels that other work. Expiration does not automatically turn the head back, renew the guard, choose a successor or infer safety. Death/body replacement ends old-life physical commitments. Save/load preserves original deadlines, work, gaps and results without new sensing, new choice or renewed time.
 
 ## Choosing a response without repetitive thinking
 
@@ -101,9 +101,9 @@ Repeated equivalent cues can remain real observations while their optional recon
 
 Ordinary animals receive compact sensory evidence without language, autobiography or a model. Their installed controller can ignore a harmless cue, orient, hold a brief listening/observation posture, enter its existing alarm, escape, remain blocked, settle, or use a specifically installed curiosity method.
 
-Alarm, refuge selection and territorial priority remain the current native-response owners. C's sound-pattern suppression remains authoritative; E does not create another animal danger map. A sound with only a bearing can bias a legal vantage or escape preference, not disclose an emitter point.
+Alarm, refuge selection and territorial priority remain the current native-response owners. C's alarm-pattern suppression remains authoritative; E's separate curiosity disposition extends that same owner without suppressing later alarm or creating another map. A sound with only a bearing can bias a legal vantage or escape preference, not disclose an emitter point.
 
-E adds a small optional curiosity method: one admitted observation hold and, for a capable ground body, at most one bounded approach to a personally available vantage, followed by a final hold. Actual danger preempts it through the same controller. The initially selected optional profile and its limitations are in the world document; existing prey/territorial profiles do not automatically become curious. New calls, pack communication, scent, animal language and arbitrary flight searching remain unsupported.
+E adds a small optional curiosity method: one admitted observation hold and, for a capable ground body, at most one bounded approach to a personally available vantage, followed by a final hold. Actual danger preempts it through the same controller. Unlocalized cues can end in observation-only; an impossible route is a physical block, while only unfinished required calculation remains technically incomplete. The initially selected optional profile and its limitations are in the world document; existing prey/territorial profiles do not automatically become curious. New calls, pack communication, scent, animal language and arbitrary flight searching remain unsupported.
 
 ## Actor-scoped journeys and acceptance
 
@@ -113,7 +113,7 @@ These are design acceptance cases, not instructions requiring one chosen respons
 | --- | --- | --- |
 | AJ01 — Footsteps beyond a wall | Mira hears several footstep-like sounds with a historical bearing. She is making cord. Continue, call out, stop and listen, check the doorway, prepare, tell a listener or leave. | Only an accepted choice changes work. If she investigates, she uses permitted space; she cannot follow the hidden emitter. Similar sounds may remain unresolved without repeated forced investigations. |
 | AJ02 — Guard an unknown approach | A person deliberately anticipates attack through a known door without a named adversary. | The maintained method provides bounded approach/type evidence. It does not reveal attackers or cover a separate unobserved entrance. F alone determines surprise. |
-| AJ03 — Travel while looking behind | A traveler selects a finite rearward check while following an actual route. | Gaze/body constraints can require slower or changed movement, or refusal. Preserve the destination when compatible; no camera-driven sight or fabricated all-direction coverage. |
+| AJ03 — Travel while keeping watch behind | A traveler accepts a finite maintained rearward watch while following a supported ground route. | Use actual travel direction, distinct from body facing and historical sound bearings. Corners require real turning and can create gaps; a temporary stop retains only the last travel direction. Body assistance/costs require compatible admission. Watch expiry preserves walking; route completion ends its facet. |
 | AJ04 — Ada may be nearby | Earlier sight of Ada with a spear; later uncertain familiar voice beyond a wall. | The concern may mention Ada, but the old spear/location stay historical. A doorway watch is independent of person tracking. A later stranger cannot silently inherit Ada's binding. |
 | AJ05 — Maker and arriving workers | A builder chooses brief checks between safe work phases or asks a willing lookout to watch the approach. | Record real work and actual observation intervals. The partner's observations arrive only through communication. No danger flag is required, no blanket witness-memory loss occurs, and no attendance reward is automatic. |
 | AJ06 — Relieve the lookout | One person requests relief, the recipient may accept or refuse, and the first person decides when to leave. | Request, acceptance, started coverage and received acknowledgment are separate. A gap or overlap is real. No transfer of private suspicions; an unreceived acknowledgment cannot assure the first watcher. |

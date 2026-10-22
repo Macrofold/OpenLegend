@@ -2,6 +2,8 @@
 
 **Selected design, runtime pending — 2026-10-17.** This is the bundled world's acoustic policy for [speech and social perception](../../projects/speech-and-social-perception-feature-spec.md). Ordinary animals use native rules and saved randomness. They require no Decision API, thought, reflection, narration-generation or memory-consolidation calls.
 
+The completed [acoustic specialist design](https://github.com/Macrofold/OpenLegend/blob/b242bee437f9e13801bfee77030efd309d88a35d/docs/worlds/base/animal-sound-responses.md) owns the subsequent selected physical/onset policy. It was read through its remote ref without merging; the alarm details below are the contracts-branch baseline. E's narrow curiosity extension composes with that pinned C owner, and SAD-I must reconcile the files before runtime delivery.
+
 ## One existing animal controller
 
 This extends the selected [native animal response owner](animal-responses.md) and its [CTR03–CTR04 execution design](../../projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04). The native alarm/escape controller exists in the inspected contracts source; this acoustic extension still requires its integration and qualification. The generic-noise exclusion in that design is narrowed here: personally detected ordinary speech now supplies a selected native alarm input. Other noises require an actual admitted emitter; this does not silently enable footsteps or impact sound.
