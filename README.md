@@ -207,6 +207,7 @@ The latest design additions cover [world locks and invention ownership](archive/
 - [Project decisions](archive/05-project/open-decisions.md) and [implementation status](archive/05-project/implementation-status.md)
 - [First playable MVP agreement](archive/05-project/first-playable-mvp.md)
 - [Art direction and reference board](art-direction/README.md)
+- [Game ideas to explore](docs/game-ideas/README.md)
 - [Marketing and creator ecosystem](archive/06-marketing/README.md)
 - [Patrons, contributors, and world history](archive/06-marketing/patrons-contributors-and-world-history.md)
 

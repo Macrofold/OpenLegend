@@ -281,6 +281,9 @@ ND15, ND14's calls and separately selected ND16 propagation/media families. Sett
 
 **Owners/dependencies:** PS05–PS08, MP/access, transfer/data/time/performance and [PS limits](../limits/product-scalability.md). Consume actual offered activities and applicable protection/entry/definition-rights decisions. Use DG17/DG18/DG25 only when their capabilities are offered. A visit need not require unattended communities, crowds, a marketplace or campaigns; technical integration and supported capacity remain open.
 
+- [ ] Develop connected repertoire entries for [official-world relic collections](../game-ideas/official-world-relics.md), using Objects for the relic, Adventure/discovery for finding it, Abilities/progression for supported capabilities, and Economy/logistics for exchange. Include rarities, world/location-specific discoveries, useful purposes beyond numerical bonuses, and varied routes through exploration, ingenuity, social play and conquest. Preserve assignment to any character the player creates in any official world.
+- [ ] Design the account collection, character assignment, return and player-trade experience for those relics. Resolve world-specific expression, simultaneous assignments, ownership/custody, death/loss, retirement, rarity/supply and new-character balance, plus recovery without duplicated awards or ownership. Keep account records, characters and in-world objects distinct; preserve existing travel, rights and exchange owners and the restricted first travel proof. Currency and commercial terms remain unselected.
+
 #### DG30 — A creator fund and contributor governance
 
 [The creator-fund proposal](../projects/creator-fund-and-contributor-governance-feature-spec.md), [FUND](creator-fund-and-contributor-governance.md) and [limits](../limits/creator-fund-and-contributor-governance.md) define a conditional finite manual round, applicant/grantee journeys, rights, milestone payments, partial work, conflict review and closure.
@@ -528,6 +531,8 @@ Select a useful action/effect beyond the current consumer, then define authoring
 **Practical consumer delivered; outlook product proposal prepared.** Use DG14/PC for real practice, observation, coaching/hearsay and finite action effects; generic method learning stays with AE. [Experience-shaped characters](../projects/experience-shaped-characters-feature-spec.md) and [EC](cognition-redesign.md) own the descriptive revisable-outlook proposal and remaining technical/live-quality work.
 
 Another competence or personality family needs explicit causes, attribution, uncertainty, reversal and consequences without forcing choices from labels. Protected initial identity, practical learning and historical witnessing remain distinct. Sources: [personality/learning](../../archive/03-design-proposals/agents-and-social-simulation.md), [product baseline](../../archive/01-requirements/product-baseline.md), ACT07/ACT08 and CR.
+
+- [ ] Develop the [tactile trait-card idea](../game-ideas/tactile-trait-cards.md) into repertoire examples and a readable inspection/reveal proposal. Define which actual character changes merit a card, the useful front-face explanation and permitted personal history on its reverse, reusing existing trait, ability, knowledge and character-history owners. Preserve changeable dispositions and independent choices; presentation creates no mechanical effect or tradable personality. Visual treatment, accessibility and runtime delivery still need design.
 
 ### ND05 — Richer bodies, illness and care
 
