@@ -59,7 +59,7 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
 
 - [x] Persist the selected target/body and accepted Run through existing write-before-dispatch/recovery. Retain original deadlines, uncertainty and once-only settlement; no automatic inference replay.
 
-  Source validation after metadata stays within the original operation. The shared mutation owner rechecks expiry after journal/source waits before recording dispatch, including callers without a source callback; a late local completion cannot change an already-returned receipt to dispatched.
+  Accepted operation records preserve the compact original workspace/model binding before final receipt persistence, while releasing duplicate prompt/schema bodies. Source validation after metadata stays within the original operation. The shared mutation owner rechecks expiry after journal/source waits before recording dispatch, including callers without a source callback; late journal/source completion cannot cause a new HTTP dispatch after expiry.
 
 - [x] Let stable deployment references survive same-revision recovery and deliberate deployment updates. Preserve each admitted revision; do not invalidate valid replies solely because current serving configuration moved on.
 - [x] Settle explicit request fees independently of shared hosting costs. Missing usage or invoice finality is not a model-output failure; monthly/per-call limits do not claim to cap an externally funded GPU host.
@@ -74,7 +74,7 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
 - [x] Accept the explicit plan option with existing arms, ordinary configured-purpose baselines or custom deployment targets and optional pins. Resolve defaults through the shared pure configuration owner without database/server startup.
 - [x] Reuse finite plans, single-writer journal, source/request fingerprints, original answers and exact-Run recovery. Local preparation is offline; online reads/live execution remain explicit.
 
-  Live capability preparation runs only for selected unattempted work and observes actual receipts for later revision/unsupported refresh. Metadata and admission persistence consume the original inference deadline; stopped resources and aggregate spending are checked again before dispatch. A stopped target does not discard independent target work.
+  Live capability preparation runs only for selected unattempted work and observes actual receipts for later revision/unsupported refresh. Metadata and admission persistence consume the original inference deadline; stopped resources and aggregate spending are checked again before dispatch. Deployment access/funding stops apply across aliases and pins using the same actual workspace/deployment, regardless of unused catalogue billing settings. A stopped target does not discard independent target work.
 
 - [x] Keep study IDs, frozen cases/references/co-models and spending controls in tools. Optional raw-text generation reuses the same executor and cannot publish or qualify gameplay actions.
 

@@ -385,14 +385,23 @@ export class MacrofoldBackend implements AiClient {
     // Local serialization must fail before transport marks possible dispatch.
     const preparedBody = new PreparedJson(body, 500_000);
     const fingerprint = digest({ path, body });
-    // Retain the exact inference only while its admission is unknown. An accepted
-    // Run or definite refusal keeps its fingerprint/replay fence without retaining
-    // another complete private prompt for every settled character decision.
-    const retained = path === '/v1/inferences' ? { request: body } : {};
+    // Unknown admission retains the exact inference. Once a Run is accepted,
+    // retain its original serialized binding until the final receipt can persist
+    // it, without keeping another complete private prompt for every decision.
+    const inferenceBody = path === '/v1/inferences' ? object(body) : undefined;
+    const retained = inferenceBody ? { request: body } : {};
+    const admittedBinding = inferenceBody
+      ? {
+          request: {
+            workspace_id: inferenceBody['workspace_id'],
+            model_binding: inferenceBody['model_binding'],
+          },
+        }
+      : {};
     const saveResponse = async (response: Record<string, unknown>) => {
       const accepted = typeof response['run_id'] === 'string' && response['run_id'].length > 0;
       await this.save(`operation:${name}`, {
-        ...(!accepted ? retained : {}),
+        ...(accepted ? admittedBinding : retained),
         fingerprint,
         response,
       });

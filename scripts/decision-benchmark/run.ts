@@ -672,13 +672,23 @@ export async function runBenchmark(
   let next = 0,
     inFlightMicro = 0;
   const blockedArms = new Set<string>();
-  const resourceKey = (arm: (typeof selectedTasks)[number]['arm']) =>
-    JSON.stringify([
-      arm.transport,
-      arm.macrofoldDeployment ?? arm.model,
-      arm.billingMode ?? manifest.billingMode,
-      arm.providerConnectionId ?? manifest.providerConnectionId ?? null,
-    ]);
+  const resourceKey = (arm: (typeof selectedTasks)[number]['arm']) => {
+    const deployment = arm.macrofoldDeployment;
+    // Deployment authorization and funding belong to the workspace/service, regardless
+    // of an arm's revision pin or unused catalog billing/connection defaults.
+    return deployment
+      ? JSON.stringify([
+          'macrofold-deployment',
+          deployment.workspaceId,
+          deployment.modelBinding.deployment_id,
+        ])
+      : JSON.stringify([
+          arm.transport,
+          arm.model,
+          arm.billingMode ?? manifest.billingMode,
+          arm.providerConnectionId ?? manifest.providerConnectionId ?? null,
+        ]);
+  };
   const worker = async () => {
     taskLoop: while (!cancellation.signal.aborted) {
       const task = tasks[next++];
