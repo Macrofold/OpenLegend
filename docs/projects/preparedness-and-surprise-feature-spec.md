@@ -51,7 +51,7 @@ The [world policy](../worlds/base/combat.md#preparedness-policy) selects the ini
 
 ### Two ways to be prepared
 
-1. **Registered relevant warning.** A perceived directed attack, an actually understood scoped warning, admitted danger interpretation or felt attack supplies supported expectation after registration. The scope and original uncertainty remain intact.
+1. **Registered relevant expectation.** A perceived directed attack, an actually understood scoped warning, admitted danger interpretation or felt attack supplies supported expectation after registration. Actual confirming attack evidence or a real committed offense can preserve anticipation already earned for that same scope. The scope and original uncertainty remain intact.
 2. **Maintained relevant preparation.** A finite accepted watch, ready guard or another supported physical method can anticipate a specified threat without any prior attacker sighting. Actual fulfillment, coverage and lead time matter; a proposal or ordinary glance does not suffice.
 
 Directly received evidence of an attack against oneself supports short-lived expectation of ordinary physical assault, including another attacker. This prevents a crowd from obtaining a fresh surprise bonus simply by changing attacker identity. It is personal, evidence-backed and finite, not a global combat state. A mere stranger, general reputation for danger, nearby unrelated combat, fear, or a declaration of permanent vigilance does not establish it.
@@ -116,7 +116,7 @@ A genuinely quiet return can be surprising again after continuity and settling e
 
 Ordinary rest currently blocks perception. Its capability restriction prevents new registration and current watch fulfillment; injury waking happens after the waking contact. No sound-triggered waking, dream awareness or new unconsciousness mechanic is added. Incapacity or immobility alone is not a sensory blackout: use actual installed restrictions, not an invented requirement to move or act.
 
-Correction/forgetting removes future support through the existing encounter/evidence owner. It does not reverse committed harm or shock. A new body/life receives no old bodily preparation or pending registration. Same-life control transfer preserves physical consequences and already registered personal evidence while retiring controller-owned pending choices under their ordinary rules.
+Correction/forgetting removes future support through the existing encounter/evidence owner. It does not reverse committed harm or shock. A new body/life receives no old bodily preparation or pending registration. Same-life control transfer preserves physical consequences and valid registered personal evidence while retiring controller-owned pending choices under their ordinary rules. Transport reconnect alone does not change bodily participation; an actual fully inactive/perception-blocking transition follows its own explicit invalidation rules.
 
 ## Required experience scenarios
 

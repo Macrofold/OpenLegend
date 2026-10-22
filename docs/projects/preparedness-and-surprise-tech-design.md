@@ -292,6 +292,14 @@ type ResolvedThreatGeometry = Readonly<{
   frame: ExistingResolvedSpatialFrame;
 }>;
 
+type CapturedMethodTiming = Readonly<{
+  work: ExistingActiveWorkRef;
+  cut: EvidenceCut;
+  timing: PreparednessTimingBinding;
+  methodStartedAt: SimTime | null;
+  eligibleAt: SimTime | null;
+}>;
+
 type ActualAttackOutcome = Readonly<{
   attack: AttackSurpriseBinding;
   cause: ExistingPhysicalCauseRef;
@@ -300,6 +308,7 @@ type ActualAttackOutcome = Readonly<{
   cut: EvidenceCut;
   geometry: ResolvedThreatGeometry;
   timing: PreparednessTimingBinding;
+  methodTiming: readonly CapturedMethodTiming[];
   result:
     | 'miss'
     | 'contact'
@@ -336,7 +345,7 @@ type SurpriseDamageApplication = Readonly<{
 }>;
 ~~~
 
-ResolvedThreatGeometry copies the existing spatial/contact owner's already resolved finite segments, direction, endpoint, relevant body extents and frame at the outcome boundary. A current straight projectile uses its actual traversed release-to-terminal segment; melee uses its real resolved finite attempt/contact approach, including a miss's attempted endpoint. It is not an infinite ray or a new collision solver. Required geometry missing from the owner is incomplete, never reread later through a cause reference or mutable flight. Future curved/piercing families must supply their real ordered finite segments. Geometry is private native comparison input, not an acquired observation or client payload. Outcome timing supplies the installed admitted binding for the capture; per-warning and per-method bindings retain their own exact admission conversion.
+ResolvedThreatGeometry copies the existing spatial/contact owner's already resolved finite segments, direction, endpoint, relevant body extents and frame at the outcome boundary. A current straight projectile uses its actual traversed release-to-terminal segment; melee uses its real resolved finite attempt/contact approach, including a miss's attempted endpoint. It is not an infinite ray or a new collision solver. Required geometry missing from the owner is incomplete, never reread later through a cause reference or mutable flight. Future curved/piercing families must supply their real ordered finite segments. Geometry is private native comparison input, not an acquired observation or client payload. Outcome timing supplies the installed admitted binding for the capture; per-warning and per-method bindings retain their own exact admission conversion. At each actual method's selected lead anchor, bind its F policy and admitted clock/durations in that existing work continuation. During the coherent capture, F resolves CapturedMethodTiming for every applicable E work reference from those owner values and the proposed SA-D03 start; it computes eligibleAt using the family-specific rule, with null when no eligible method exists. Work/cut/revision must match the E capture. This is immutable consumer input alongside the unchanged SC12 snapshot, not a second preparation store or a post-capture lookup. Missing required timing returns incomplete.
 
 Attack/action/flight/cause references reuse their exact existing owner bindings. outcomeGroupOrdinal and outcomeOrdinal distinguish real native components where the current single-contact family uses zero; do not allocate a second global counter. A high-level plan ID is not an attack execution. The body/cause fields are native, never raw protocol DTOs.
 
@@ -360,9 +369,9 @@ A shield owned by someone else intercepting the projectile changes the actual vi
 
 The observation owner hands off a qualifying acquired warning synchronously before dependent attack resolution. CTR records its exact source/coverage and original acquiredAt, sets readyAt = acquiredAt + its bound registrationDuration, except that validated mature same-scope credit makes readyAt = acquiredAt, and schedules only the new nearest relevant deadline.
 
-At readyAt, native advancement verifies the registration predicate held for the entire required interval; the immediate credited case also requires the body remains eligible at acquisition and the captured work genuinely earned maturity before it. Source visibility is not required after acquisition. A new warning whose scope is not already registered starts its own interval. A genuinely fresh matching warning received while equivalent supported expectation is still registered may renew that expectation without an artificial new gap; it retains each source's original acquisition and does not rewrite old evidence dates.
+At readyAt, native advancement verifies the registration predicate held for the entire required interval; the immediate credited case also requires the body remains eligible at acquisition and the captured work genuinely earned maturity before it. Source visibility is not required after acquisition. A new uncredited warning whose scope is not already registered starts its own interval. A genuinely fresh matching warning received while equivalent supported expectation is still registered may renew that expectation without an artificial new gap; it retains each source's original acquisition and does not rewrite old evidence dates.
 
-At a general perception block, life end or participation ending, retire pending registration and registered bodily preparedness for that affected life through the encounter owner. Mere inability to act/move and channel-specific loss after valid acquisition are not this transition. No old record silently matures across sleep. Waking/restoring perception needs **new post-wake acquired/confirmed threat support or a newly fulfilled deliberate method**; unexpired pre-sleep preparedness does not resume. Memories/CTR social preferences retain their own lifetimes. Receiving an impact while asleep does not create a backdated interval before injury wakes the body.
+At a general perception block, life end or participation ending, retire pending registration and registered bodily preparedness for that affected life through the encounter owner. Mere inability to act/move and channel-specific loss after valid acquisition are not this transition. No old record silently matures across sleep. Waking/restoring perception needs **new post-wake acquired/confirmed threat support or a newly fulfilled deliberate method**; unexpired pre-sleep preparedness does not resume. Memories/CTR social preferences retain their own lifetimes. An ordinary transport reconnect is not a bodily participation transition. Actual fully inactive participation follows its existing owner and retires this bodily continuation; a subsequent return needs fresh supported registration/preparation rather than rewinding a timer. Same-life control transfer preserves valid bodily warning only while no real life/perception/participation-ending transition has occurred. Receiving an impact while asleep does not create a backdated interval before injury wakes the body.
 
 A current threat actually re-observed after waking may begin new registration without falsely becoming a new hostile occurrence or a second startle from a replayed source. Use A's real post-wake acquisition/confirmation and CTR's existing dedupe meanings separately.
 
@@ -413,6 +422,8 @@ Prune expired live derived fields through CTR nextAt/reconciliation. Canonical e
 ### Freshness without inference replay
 
 Before admitting or renewing a warning meaning, the existing source/CTR adapter resolves its original supporting roots through claim/inference/summary/publication wrappers. Use original native acquisition/confirmation identity plus facet lineage, observer life and supported danger meaning; keep exact current source revisions separately for validity. A new hash/revision/interpretation ID alone is not a new physical root.
+
+Derive the complete permitted coverage set for one actual acquisition before marking its roots consumed. One freshness decision admits its authored broad/narrow/credited sibling records atomically with stable coverage ordinals. Do not reject a legitimate sibling as a replay because the preceding sibling consumed the shared root, and do not treat adding another sibling later as a fresh occurrence.
 
 The first actually admitted supported danger meaning may register at its real admission time. Repeating an equivalent meaning over the same consumed roots cannot advance lastQualifiedAt or reopen an expired continuation. Rewording, coverage jitter/broadening/narrowing or a new inference wrapper does not turn those same roots fresh: changed scope may reduce/correct future eligibility, never restart its clock. A genuinely newly acquired relevant root, an actual newly heard warning, or a real post-break current confirmation can establish fresh support under its own acquisition boundary.
 
@@ -568,7 +579,7 @@ Policy editing during play is not a new feature of this module. The pin rules de
 
 Surprise is native and deterministic. It never awaits a model to decide whether an acquired directed attack matters. Optional interpretations can create later scoped support only after actual admission. API/provider delay therefore cannot consume or supply simulated registration time by itself.
 
-All required acquisition, current preparation and D mechanics must be complete at the contact boundary. Use existing coherent-prefix work/hold accounting, including a stable continuation reference and source/body/policy revisions. A stale resumed result is rejected and refreshed at the proper boundary; it cannot be patched into an older cut. If the action became invalid, follow its existing cancellation/revalidation outcome rather than completing stale harm.
+All required acquisition, current preparation and D mechanics must be complete at the contact boundary. Use existing coherent-prefix work/hold accounting, including a stable continuation reference and source/body/policy revisions. A stale resumed result is rejected and refreshed at the proper boundary; it cannot be patched into an older cut. If the action became invalid, follow its existing cancellation/revalidation outcome rather than completing stale harm. Complete required surprise/reaction preparation before an irreversible accuracy draw or other spending. If an existing native owner has already committed a sampled attempt/release before a later continuation hold, preserve that sampled result and its stage receipt; resume without rerolling or rolling back its saved randomness. Revalidation can cancel invalid future work, not manufacture another draw.
 
 Evaluate only the actual victim's relevant existing encounter warning entries and complete active-work set, plus native candidate evidence already required by A/B/C. Do not enumerate all characters, query hidden attackers, replay full memory, scan all projectiles for each victim or add a second SQL/indexed threat authority. Use existing pair/anonymous retention and nextAt to prune expired derived fields, while retaining source owners' required causal receipts.
 

@@ -47,7 +47,7 @@ The source baseline and five specialist pins are recorded in the technical desig
 - [ ] Demonstrate A/SPK's ordinary understood current scoped warning producer; raw “Look out!” text, intelligibility or unparsed relative time alone cannot become F authority.
 - [ ] Implement native registration independent of model/memory/action availability, using exact supported general-perception/life/participation predicate and original acquisition boundary.
 - [ ] Implement six-plus-two authored continuation, true fresh renewal, complete continuous confirmation and scoped preparation postponement. Broad self-assault continuation is never prolonged by deliberate work alone. Preserve narrow exact-source continuity, actual own committed offense through recovery and mature scoped confirmation when a real attack consumes a guard; ending unused work supplies none.
-- [ ] Reconcile correction, independent support, life/block transitions, wake/reacquisition, exact duplicate causes, consumed root lineage and pruning through existing nextAt/history owners. Preserve valid warning when current pairFor/re-exposure replaces its UI/recognition pair; never rebind historical source life. Native animals use compact existing references.
+- [ ] Reconcile correction, independent support, life/block transitions, wake/reacquisition, exact duplicate causes, atomic broad/narrow sibling admission, consumed root lineage and pruning through existing nextAt/history owners. Preserve valid warning when current pairFor/re-exposure replaces its UI/recognition pair; never rebind historical source life. Native animals use compact existing references.
 
 **Exit:** real permitted warning can become finite preparedness without AI, and complete expiration/reset cannot be bypassed by source/weapon/control changes, repeated publication or unrelated work.
 
@@ -56,7 +56,7 @@ The source baseline and five specialist pins are recorded in the technical desig
 **Status: Not started.** Owner: E and existing observation/guard/aim/strike/evasion/native-alert action/controller adapters. Dependencies: SUR01, SAI-E, relevant B/C, accepted SA-D03 disposition.
 
 - [ ] Supply complete immutable capture for all six installed families, with actual work identity, current fulfillment, scope, danger and source support.
-- [ ] Expose actual method start across native preparing→maintaining transition; preserve genuine breaks and ignore harmless plan revisions.
+- [ ] Expose actual method start across native preparing→maintaining transition; preserve genuine breaks and ignore harmless plan revisions. Bind the method's F policy/normal-clock durations in its existing continuation and copy complete per-method timing into F's immutable consumer input.
 - [ ] Apply exact lead anchors: physical method start plus native readiness for shield/aim/strike/evasion; achieved fulfillment for observation/native-alert. Guard readiness is the later of its native boundary and F lead, not two successive delays.
 - [ ] Match original source/region/approach/own-motion scopes against actual contact geometry using existing spatial predicates; preserve height, uncertainty and original frames.
 - [ ] End dependent coverage at Stop/expiry/replacement/actual break; forbid stored scan sectors and invented residual alertness. Blocked locomotion is not automatically blocked native alertness.

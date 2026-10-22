@@ -4,7 +4,7 @@
 
 **Shared design and specialist F design complete; final design integration and runtime implementation remain open.** A–E's completed designs are studied at the pinned specialist revisions linked below; their files are not merged into this branch. This tracker owns the cross-project dependency graph and acceptance state for [the feature specification](../projects/stealth-awareness-feature-spec.md) and [shared technical design](../projects/stealth-awareness-tech-design.md). It does not duplicate SPK speech, CTR combat, CE character experience, EPR observation, CL continuing-lives, action, clock or save tasks.
 
-This assignment is **design-only**. The branch is `Macrofold/OpenLegend:codex/design-stealth-00-contracts`, based exactly on source commit `86a21ce50aa0633d81b38a430b7727c0c543017e` from `codex/sneak-perception-design-20261018`. No application code, executable tests, deployment or runtime qualification is part of SA00. New inherited source behavior remains part of the inspected base, not a deliverable of this task.
+The shared SA00 baseline is **design-only** on `Macrofold/OpenLegend:codex/design-stealth-00-contracts`, based exactly on source commit `86a21ce50aa0633d81b38a430b7727c0c543017e` from `codex/sneak-perception-design-20261018`. No application code, executable tests, deployment or runtime qualification is part of SA00. New inherited source behavior remains part of the inspected base, not a deliverable of this task.
 
 The shared scope completes only selected architecture within [ND11](needs-design.md#nd11--human-conflictrecovery-and-npc-ghost-continuity), [ND13](needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization), [ND16](needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech) and [ND19](needs-design.md#nd19--older-memory-transformation-and-dream-reinterpretation). Their broader designs and delivery remain with those owners. Checked design work never closes a runtime or player-acceptance checkbox.
 
@@ -25,7 +25,7 @@ The shared scope completes only selected architecture within [ND11](needs-design
 - [x] Review the full resulting documentation diff; resolve cross-module inconsistencies and verify new/changed links and status.
 - [x] Commit every task-owned documentation change to the remote branch and confirm that the branch contains only documentation changes relative to the selected base.
 
-**Exit:** shared meanings are complete, internally consistent, assigned and reviewable; every downstream specialist can start design with one contract for each shared responsibility. No unresolved cross-module contract blocker remains other than the explicitly bounded SA-D01 producer choice. Runtime design, implementation, measurements and play acceptance remain open below.
+**Exit:** shared meanings are complete, internally consistent, assigned and reviewable; every downstream specialist can start design with one contract for each shared responsibility. SA-D01 remains the explicitly bounded product choice; any later concrete specialist amendment is recorded in the integration-gate section below rather than silently changing the frozen contracts. Runtime design, implementation, measurements and play acceptance remain open below.
 
 ## Specialist design ownership
 
