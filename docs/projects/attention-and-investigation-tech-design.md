@@ -399,10 +399,10 @@ type CapturedPreparationPhysical =
   | Readonly<{
       family: 'strike';
       body: CapturedOwnPreparationBody;
-      strikeDefinition: { id: string; version: number };
+      strikeDefinition: Readonly<{ id: string; version: number }>;
       weapon: ExistingAdmittedItemReference | null;
       actionStage: 'approaching' | 'working';
-      strikePhase: ExistingStrikePhase | null; // Null: ordinary unphased timed work.
+      strikePhase: 'windup' | 'recovery' | null; // Null: ordinary unphased timed work.
       remainingPhaseSeconds: number;
       totalPhaseSeconds: number;
       target: ExistingPermittedPhysicalTarget | null;
@@ -601,8 +601,6 @@ Source/document review can establish contract coherence only. Later fixture/nati
 5. **Physical observability of preparation.** B's facets do not reveal private action-stage labels. Any NPC warning based on seeing an attack preparation requires actual admitted limb/weapon pose/trajectory and A-acquired evidence. Keep it unknown until the action producer supplies that physical support.
 6. **G ordinary surfaces.** Supply accepted/pending/refused work, actual scope/time and privacy-safe outcomes. G must finish input/accessibility/patch/history presentation; no camera or selection callback may create sensing or commitment.
 7. **Listening fidelity and animal scope.** Selected listening deliberately retains C's provider fidelity; stronger sampling is a future physical-family design, not a hidden E bonus. Curiosity here is E's narrow new native extension; C's alarm-only baseline remains accurately described.
-
-The feature's scope and repertoire review record all selected positive opportunities and boundaries. The tracker owns unfinished implementation; the existing shared decision register owns SA-D01, while SA-D02 remains linked to its actual remote proposal. No duplicate question register, diary or claim of implementation is added.
 
 ## Maintained records
 
