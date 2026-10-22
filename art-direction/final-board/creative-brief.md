@@ -38,6 +38,16 @@ This is a **design vignette, not a claim of implemented behavior or a mandate th
 
 ## Favorites and their contributions
 
+### Emberville — A varied world with room for action and ordinary life
+
+**Mike's preference:** Beautiful pixel art and a wide variety of two-dimensional places, with real-time combat worth studying. The character proportions are too cartoony for OpenLegend; the Stardew Valley resemblance is a reference association, not a selected style.
+
+**Visual reading:** Misty streets, warm timber interiors, luminous laboratory equipment, webbed caves, open desert and cultivated land create distinct places through layout, material, light and apparent use. The trailers also contrast damaged and furnished interiors, construction and fighting.
+
+**Creative translation:** Develop meaningful differences among regions and everyday places while keeping believable anatomy, practical construction and the current dimensional pixel-art direction. Let changing conditions or actual repairs make familiar places feel different. Preserve quiet space and readable threats where combat occurs, alongside attractive places for peaceful activity.
+
+**Context:** The [illustrated study](../research/emberville/README.md) includes four official screenshot references and timestamped visual observations. The [Emberville and Diablo combat note](../../docs/game-ideas/real-time-combat-feel.md) owns the separate gameplay lessons. Promotional imagery does not establish input responsiveness, a chosen camera or a renderer technique.
+
 ### ROCKBEASTS — Character acting and a world expressed through its menus
 
 **Mike's preference:** Beautiful art, color, lighting and animation, plus menus creatively styled to fit the game's theme. He explicitly recognizes it as a nonpixel reference.
