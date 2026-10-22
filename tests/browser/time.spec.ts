@@ -177,12 +177,20 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
       await other.getByRole('button', { name: 'Resume Here', exact: true }).click();
       await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
       await enterGame(other);
+      const otherControls = () =>
+        game.service.controlsElsewhere({
+          ...game.service.localScope,
+          connectionId: identity!,
+        });
+      expect(otherControls()).toBe(true);
       // Ordinary close runs pagehide/release. Default Playwright close skips unload;
-      // abrupt loss and its heartbeat expiry are exercised separately below.
+      // abrupt loss and subsequent elapsed-time reconciliation are checked below.
       await Promise.all([
         other.waitForEvent('close', { timeout: 5000 }),
         other.close({ runBeforeUnload: true }),
       ]);
+      // Closing the document is not an acknowledgement of queued server cleanup.
+      await expect.poll(otherControls).toBe(false);
       // Restore the foreground tab before evaluating its synthetic focus event;
       // background page scheduling can otherwise delay that evaluation.
       await page.bringToFront();
@@ -226,9 +234,12 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     expect(await game.service.store.recentJobs()).toEqual([]);
     const beforeClose = game.service.world.simTime;
     await page.close();
+    await expect
+      .poll(() => entityGet(game.service.world.entities, actorId)?.actor?.participation?.phase)
+      .toBe('exiting');
     clock.now += 12_001;
-    // This fixture has no timer: reconcile native disconnect/heartbeat expiry,
-    // then spend the authored exposure before expecting the absent-world pause.
+    // Advance only after native disconnect has begun departure. Elapsed real time
+    // must not renew its original game-time deadline or skip the authored exposure.
     await game.service.tick(0);
     await expect
       .poll(() => game.service.world.exitExposures?.[actorId])
