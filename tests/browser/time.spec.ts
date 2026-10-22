@@ -5,6 +5,10 @@ import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
 import { readConfig } from '../fixtures/database.js';
 
+// Time/control checks need desktop layout, while scene journeys cover larger frames.
+const desktopViewport = { width: 1024, height: 720 };
+test.use({ viewport: desktopViewport });
+
 test('time settings persist with sole-tab entry, explicit transfer, logout and manual world pause', async ({
   page,
 }, info) => {
@@ -93,7 +97,7 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
       path: info.outputPath('time-settings-narrow.png'),
       clip: panelBounds!,
     });
-    await page.setViewportSize({ width: 1440, height: 960 });
+    await page.setViewportSize(desktopViewport);
 
     const actorId = game.service.controlledEntityId;
     const exposure = game.service.world.participationPolicy!.exitExposureSeconds!;
