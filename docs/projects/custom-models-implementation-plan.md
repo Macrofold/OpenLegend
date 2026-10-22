@@ -1,0 +1,35 @@
+# Custom models — implementation plan
+
+| Status      | Current progress                                                                                                         | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Production implementation is authorized; configuration can proceed while the compatible Macrofold API is being delivered. | 2026-10-22   |
+
+## Scope and completion
+
+Implement [the approved feature](custom-models-feature-spec.md) and [technical design](custom-models-tech-design.md), including production MX01–MX03/MX06/MX08 and thin benchmark/report extensions MX04–MX05. MX07 research and changing the default model are excluded. [MX](../maintainers/custom-models.md) owns task status and acceptance; this file owns the implementation sequence.
+
+The implementation branch is `feat/production-custom-models`. Its preserved design base is `05d2bb034cea0f717c54efedee019f74906849c6`, descending from verified `Macrofold/OpenLegend` `origin/main` `27c6fb8152ec58c34334e74ba91a9d5bec6a30ff`. Only `/Users/mzw/.codex/worktrees/7370/OpenLegend` receives implementation edits. Preserve unrelated checkouts and work.
+
+Expected scope is approximately 1,000–1,800 changed logic lines across the AI transport, server configuration and existing execution/accounting owners, and benchmark tools. Reassess after inspecting the implemented upstream API. The consequential risks are wrong-purpose routing, accepting stale world authority, duplicate dispatch/settlement, inaccurate hosting attribution, and incompatible generated request types.
+
+## Sequence and owners
+
+1. **Trusted configuration:** add the pure server generation configuration owner, strict `OPENLEGEND_MODEL_TARGETS_JSON` admission, unchanged default selection and explicit NPC-purpose resolution. This local configuration work does not depend on remote deployment execution.
+2. **Shared target and capabilities (MX01/MX02):** consume the actual compatible Macrofold generated types; add shared preparation to the existing AI entrypoint. Resolve output format and reduced output bounds before reservation. Cache immutable revision facts and coalesce bounded descriptor reads; apply the design's stale/negative-cache behavior.
+3. **Ordinary gameplay (MX02/MX03):** select only the actual fast/complex NPC producer, then reuse its existing context/schema, request allowance, attempt reservation, Macrofold single inference, streaming, durable Run observation and local decoder. Preserve unrelated generation, native judgment, escalation, no-call controls, and final native action admission.
+4. **Recovery and charges (MX03):** retain the selected target/body and accepted Run through existing operational records. Decode actual admitted revision and separate request fees from hosting. Keep original deadlines, cancellation and once-only settlement; no new executor, replay or host management.
+5. **Production acceptance (MX06):** exercise real serializer/decoder HTTP requests against the exact compatible Macrofold build, then normal NPC preparation through native publication. Cover both purposes and unconfigured callers, supported output/streaming modes, permissions, no-call controls, cancellation, capacity/unavailability, accepted-Run recovery, updates/pins and same-revision worker recovery. Record warm/concurrent/recovery measurements and actual known/unknown costs.
+6. **Thin tools (MX04/MX05):** extend existing finite benchmark plans, journals and reports using the same production target/executor. Keep study metadata, reproducibility and raw-text output in tools; none becomes a gameplay dependency or bypasses gameplay validation.
+7. **Reconcile and finish (MX08):** update affected provider/setup docs, specs, limits, architecture and tracker in place; inspect the full affected diff and fix in-scope review findings. Run selected existing checks, commit all task changes, and open a reviewable PR without merging main.
+
+## Performance and verification
+
+Work grows with admitted generation count, request/schema bytes and concurrent demand. Share immutable capability/schema preparation and identical in-flight descriptor reads. Target changes, remotely reported capability failures and newly observed admitted revisions invalidate only later preparation; cached permission/readiness never authorizes inference. Compatible warm requests add no hosting, pricing, Hugging Face or experiment reads.
+
+Measure the complete ordinary NPC request and publication path, including preparation reads, bytes, first useful permitted output, completion, concurrency and recovery. Separate local configuration/static/fixture evidence from actual hosted/game acceptance. No new automated tests are authorized; use existing focused checks and small suitable ad-hoc scenarios. Required checks include changed-file pinned formatting, TypeScript checking, production build and relevant current checks after inspecting their effects.
+
+All paid work shares the existing $10 task ceiling. Dispatch only with bounded outstanding commitments and authorized credentials. Record settled/estimated/unknown request and hosting costs separately. Do not start or stop a borrowed Macrofold service or leave newly started paid hosting running without its applicable authorization.
+
+## Current external dependency
+
+At initial inspection, `Macrofold/Macrofold` `feat/production-model-deployments` equals documentation-only `e79a2c066584037e369d80e626810de86aefe611`; the generated `InferenceCreate.model_binding` still accepts only `DecisionBinding`. The upstream implementation chat is active, but there is no completed compatible server/client build or handoff. The canonical contract remains authoritative as a target; do not invent replacement wire types/endpoints or claim integration acceptance from it. Complete independent local work, then integrate only after the actual API is available. Keep the corresponding MX acceptance boxes open until evidenced.
