@@ -4,6 +4,8 @@
 
 [Production workflows](README.md) · [Research principles](../../archive/02-research/ai-game-development/09-openlegend-principles.md) · [Task-specific research examples](../../archive/02-research/ai-game-development/10-openlegend-workflows.md)
 
+[Narrative and writing](../narrative/README.md) supplies complementary craft guidance for specific people, creative situations, humor, voice and consequence. This workflow owns turning that creative intention into playable content and evaluating the result.
+
 Use this route to turn an idea into a place, person or situation that somebody wants to engage with, then follow their choices into consequences worth discovering. It applies to a new authored encounter, an improvement to an existing resident, a supported invented object used in play, or a comparison between creative models. It also applies when the intended pleasure is quiet company, curiosity, observation or making something beautiful.
 
 The work can begin with a mechanical idea, a striking image, a person, a location or a player observation. Creative exploration can move between them. The final result still has to join actual world behavior, permitted knowledge and appropriate presentation. The [gameplay priorities](../repertoires/gameplay-priorities.md) choose the worthwhile activity; this route explains how to develop it.

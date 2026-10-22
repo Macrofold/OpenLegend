@@ -38,6 +38,16 @@ This is a **design vignette, not a claim of implemented behavior or a mandate th
 
 ## Favorites and their contributions
 
+### ROCKBEASTS — Character acting and a world expressed through its menus
+
+**Mike's preference:** Beautiful art, color, lighting and animation, plus menus creatively styled to fit the game's theme. He explicitly recognizes it as a nonpixel reference.
+
+**Visual reading:** Violet night scenes organize warm windows and neon into clear focal areas. Amber performance light shapes faces and instruments. Notebooks, calendars, clippings, photographs and contracts carry the same music-world identity into everyday decisions. Selected trailer sequences use posture, hands, eye direction and held reactions to communicate personality.
+
+**Creative translation:** Carry purposeful palette and light through places, people and interfaces. Make gestures and reactions readable within believable anatomy. Choose interface materials that fit the current world and task, such as a field journal or workshop notebook, while keeping text, navigation and action results clear.
+
+**Context:** These are observations of official promotional footage and images, not a playthrough or renderer analysis. Their craft informs OpenLegend's dimensional pixel art; the cartoon proportions and music-industry setting are outside the selected scope. See the [illustrated study and frame references](../research/rockbeasts/README.md) and [narrative case study](../../docs/narrative/case-studies/rockbeasts.md).
+
 ### Sea of Stars — Expressive environments in a grounded world
 
 **Mike's preference:** The beauty of its expressive pixel art, environmental detail and novelty, varied colors and lighting. OpenLegend should retain a more real, believable world and people; the cartoon JRPG character treatment is outside the target.
