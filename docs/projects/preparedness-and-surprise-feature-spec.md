@@ -127,9 +127,9 @@ Correction/forgetting removes future support through the existing encounter/evid
 | **Prepared interceptor** | A companion takes the actual projectile contact using their own warning and shield. Their choice can save someone without learning the archer's name. |
 | **Two attackers** | Independent attacks arriving before any warning can register may both qualify. Once actual attack evidence has registered, changing attacker identity alone does not renew the bonus. |
 | **Break contact and escape** | Losing sight ends live targeting. A quick return does not erase expectation; a genuinely quiet later return may qualify. The player can instead leave with their objective. |
-| **Noisy diversion** | A real noise can attract a chosen investigation or abrupt startle. It does not delete other warnings, physically turn every person, or prove an enemy exists. |
+| **Noisy diversion** | A real noise can attract a chosen investigation or abrupt startle. If actually registered as danger, it may also prepare the listener: the diversion can open an escape route while sacrificing surprise damage. Noise alone does not prove an enemy exists, erase other warnings or turn every person. |
 | **Wary animal** | Actual animal sensing/alert work can prevent surprise without memory or an AI call. A missed ambush can become flight and a choice to abandon pursuit. |
-| **Rest and replacement life** | A sleeping body's waking impact uses its pre-wake state. A later revived/replaced life does not inherit its predecessor's surprise receipts or unfinished bodily work. |
+| **Rest and replacement life** | A resting body's first injuring contact uses its pre-wake state. A later revived/replaced life does not inherit its predecessor's surprise receipts or unfinished bodily work. |
 | **Pause and speed** | The same simulated chronology has the same result at 1×/3×/8×, across pause and same-format save/reload. No wall-time latency creates warning or spends reaction time. |
 | **Fair shared play** | Private readiness never appears in attack previews. Existing harmful-action permissions and potentially lethal confirmation include the possible amplified harm without becoming an awareness oracle. |
 
@@ -142,8 +142,8 @@ The review covered all **42** files under `docs/repertoires/` at the frozen base
 | Existing material | Selected connection |
 | --- | --- |
 | [Combat/rescue](../repertoires/combat-rescue.md): CR-050/051/058/064/065/069/077/078/084/244/248/253/256 | Real facing and escape lanes, voluntary interposition, bounded entrance defense, warning without identity, recoverable ambush, burst and simultaneous-contact chronology |
-| [Abilities](../repertoires/abilities-progression.md): AP-049–052/245/255/261 | Competence stays distinct from anticipation; acknowledged watch handoff; no immunity between intermittent checks |
-| [Mechanics](../repertoires/mechanics.md): MEC-012/018/083/094/247/252/263–268/270 | Setup/release, actual decoys, replay and recovery integrity, busy actors with choices, affection/readiness/allegiance separated |
+| [Abilities](../repertoires/abilities-progression.md): AP-049–052/245/255/261 | Competence stays distinct from anticipation; acknowledged watch handoff; intermittent checks preserve uncertainty rather than continuous sight |
+| [Mechanics](../repertoires/mechanics.md): MEC-012/018/083/094/247/252/263–266/268/270 | Setup/release, actual decoys, replay and recovery integrity, busy actors with choices, affection/readiness/allegiance separated |
 | [Traits](../repertoires/traits.md): TR-006/141–147/151–156/158–159; [psychology](../repertoires/psychology-behavior.md): PB-008/010/181/188/195 | Contextual calm, courage and attention; no trait-text immunity, invented confidence score or forced fear |
 | [Relationships](../repertoires/relationships.md): RSH-146/162/166/172–176/278/282/284 | Actual warning/handoff, harmless surprise, betrayal and protective disagreement without forced trust effects |
 | [Adventure](../repertoires/adventure-discovery.md): AD-046/051/058/254/311–312; [bodies](../repertoires/bodies-species.md): BSP-044–046/056/260 | Complete hunting reward, real refuge, identity uncertainty, differing senses and native animals |
