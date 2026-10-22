@@ -20,13 +20,13 @@
 
 Implement in dependency order below. Use relevant existing checks and representative ad-hoc scenarios under repository verification policy; this assignment does not authorize new automated test infrastructure or any paid execution. Model execution and GPU activation remain separate explicit, finite, funded operations.
 
-| Stage | Work | Dependencies and exit |
-| --- | --- | --- |
-| Shared target and contract | MX01 | Macrofold canonical contract and consumer types agree; ordinary/native routes remain distinct. |
-| Purpose and admission | MX02–MX03 | MX01; same frozen target reaches selection, financial admission, request and receipt. |
-| Evaluation and records | MX04–MX05 | MX01–MX03; dry preparation and complete truthful reporting work without model calls. |
+| Stage                                | Work      | Dependencies and exit                                                                               |
+| ------------------------------------ | --------- | --------------------------------------------------------------------------------------------------- |
+| Shared target and contract           | MX01      | Macrofold canonical contract and consumer types agree; ordinary/native routes remain distinct.      |
+| Purpose and admission                | MX02–MX03 | MX01; same frozen target reaches selection, financial admission, request and receipt.               |
+| Evaluation and records               | MX04–MX05 | MX01–MX03; dry preparation and complete truthful reporting work without model calls.                |
 | Transport and gameplay qualification | MX06–MX07 | Installed Macrofold capability and prior stages; actual narrow live evidence is labeled separately. |
-| Review and reconciliation | MX08 | Applicable preceding evidence; no implicit promotion or broad gate closure. |
+| Review and reconciliation            | MX08      | Applicable preceding evidence; no implicit promotion or broad gate closure.                         |
 
 ## MX01 — Implement the shared custom-target branch
 

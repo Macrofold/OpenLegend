@@ -1,8 +1,8 @@
 # Hugging Face model experiments — feature specification
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | The deployment and experiment design is specified; implementation, model execution and adoption remain open. | 2026-10-22 |
+| Status      | Current progress                                                                                             | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | The deployment and experiment design is specified; implementation, model execution and adoption remain open. | 2026-10-22   |
 
 ## 1. Purpose and selected outcome
 
@@ -66,16 +66,16 @@ The report separates per-request charges, deployment startup/busy/idle/storage c
 
 ## 4. First delivered capability and explicit extension seams
 
-| Capability | Selected first delivery |
-| --- | --- |
-| Hugging Face source | Macrofold accepts a model reference for assessment and pins actual compatible artifacts/runtime; OpenLegend does not download weights. |
-| Generation | Strict JSON-schema generation for gameplay and structured benchmarks; explicitly labeled raw-text generation for offline expression review only, through the existing immediate inference endpoint. |
-| OpenLegend selection | Explicit server-owned fast/complex NPC response purposes and standalone benchmark generation. |
-| Deployment hosting | RunPod load-balanced Serverless REST v2 with a pinned vLLM recipe first, plus explicitly configured and qualified imported endpoints; the caller uses the same provider-independent binding. |
-| Completion | Completed, validated output first; transport streaming can be measured privately only when declared and qualified. |
-| Context | Existing installed context/schema, including complete required identity/evidence and permitted references. |
-| Low-refusal research | Permitted-fiction expression, character agency, grounding and service boundary measured separately. |
-| Promotion | Explicit operator decision after the applicable model, gameplay and release qualification; never automatic. |
+| Capability           | Selected first delivery                                                                                                                                                                             |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hugging Face source  | Macrofold accepts a model reference for assessment and pins actual compatible artifacts/runtime; OpenLegend does not download weights.                                                              |
+| Generation           | Strict JSON-schema generation for gameplay and structured benchmarks; explicitly labeled raw-text generation for offline expression review only, through the existing immediate inference endpoint. |
+| OpenLegend selection | Explicit server-owned fast/complex NPC response purposes and standalone benchmark generation.                                                                                                       |
+| Deployment hosting   | RunPod load-balanced Serverless REST v2 with a pinned vLLM recipe first, plus explicitly configured and qualified imported endpoints; the caller uses the same provider-independent binding.        |
+| Completion           | Completed, validated output first; transport streaming can be measured privately only when declared and qualified.                                                                                  |
+| Context              | Existing installed context/schema, including complete required identity/evidence and permitted references.                                                                                          |
+| Low-refusal research | Permitted-fiction expression, character agency, grounding and service boundary measured separately.                                                                                                 |
+| Promotion            | Explicit operator decision after the applicable model, gameplay and release qualification; never automatic.                                                                                         |
 
 An imported local llama.cpp endpoint is possible only when the selected Macrofold instance can reach its explicitly authenticated address: local Macrofold can serve a local endpoint, while cloud Macrofold cannot interpret its own localhost as the player's laptop. Publicly exposing a local runtime is not an automatic setup step. GGUF and other artifact formats require their own qualified runtime recipe; they are not accepted by relabeling them as a vLLM deployment.
 
@@ -87,19 +87,19 @@ The [situation-aware context project](situation-aware-cognition-context-tech-des
 
 ## 5. Behavior on failure
 
-| Failure or condition | Required visible/developer result |
-| --- | --- |
-| Invalid or unauthorized deployment binding | Reject the profile/request before model dispatch; no baseline substitution. |
-| Ready model becomes unavailable, allocation expires or capacity is full | Return the distinct unavailable/capacity outcome within the original deadline; independently admitted native work continues. |
-| Required character context exceeds the model's qualified window | Record a context-capability failure; do not remove identity, evidence or references to make a small model appear successful. |
-| Unsupported strict schema, tools or reasoning option | Refuse the incompatible request; do not drop the option or silently change decoding mode. |
-| Invalid, truncated or invented action output | Record model/transport failure separately from native rejection; publish no unadmitted effects and perform no paid repair. |
-| Deliberate character disagreement or uncertainty | Retain as a possible successful character response; not automatically counted as censorship. |
-| Explicit assistant refusal or quiet sanitization on permitted fiction | Preserve the first answer and flag for the frozen review rubric; do not retry it with weaker instructions. |
-| Provider/service output withholding | Classify separately from the character's own choice; do not write it as a fictional experience. |
-| Timeout/cancellation/lost acceptance | Retain exact accepted Run or dispatch uncertainty, original deadline and financial holds; never resubmit unknown work. |
-| Observer permission, source evidence, actor life or world generation changes | Existing authority and freshness checks prevent stale disclosure/effects; accounting still reconciles. |
-| Cost cannot be established or host shutdown is uncertain | Preserve the obligation and stop new funded admissions as the budget owner requires; never report free execution. |
+| Failure or condition                                                         | Required visible/developer result                                                                                            |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Invalid or unauthorized deployment binding                                   | Reject the profile/request before model dispatch; no baseline substitution.                                                  |
+| Ready model becomes unavailable, allocation expires or capacity is full      | Return the distinct unavailable/capacity outcome within the original deadline; independently admitted native work continues. |
+| Required character context exceeds the model's qualified window              | Record a context-capability failure; do not remove identity, evidence or references to make a small model appear successful. |
+| Unsupported strict schema, tools or reasoning option                         | Refuse the incompatible request; do not drop the option or silently change decoding mode.                                    |
+| Invalid, truncated or invented action output                                 | Record model/transport failure separately from native rejection; publish no unadmitted effects and perform no paid repair.   |
+| Deliberate character disagreement or uncertainty                             | Retain as a possible successful character response; not automatically counted as censorship.                                 |
+| Explicit assistant refusal or quiet sanitization on permitted fiction        | Preserve the first answer and flag for the frozen review rubric; do not retry it with weaker instructions.                   |
+| Provider/service output withholding                                          | Classify separately from the character's own choice; do not write it as a fictional experience.                              |
+| Timeout/cancellation/lost acceptance                                         | Retain exact accepted Run or dispatch uncertainty, original deadline and financial holds; never resubmit unknown work.       |
+| Observer permission, source evidence, actor life or world generation changes | Existing authority and freshness checks prevent stale disclosure/effects; accounting still reconciles.                       |
+| Cost cannot be established or host shutdown is uncertain                     | Preserve the obligation and stop new funded admissions as the budget owner requires; never report free execution.            |
 
 ## 6. Qualification and adoption
 
