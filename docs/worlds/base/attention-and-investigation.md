@@ -1,0 +1,62 @@
+# Attention and investigation in the base world
+
+**Selected design; runtime pending — 2026-10-22.** This profile supplies authored methods and starting values for [attention and investigation](../../projects/attention-and-investigation-feature-spec.md). The [technical design](../../projects/attention-and-investigation-tech-design.md) owns admission, physical fulfillment, subscriptions and immutable preparation. These are game settings awaiting qualification, not biological measurements or universal engine laws.
+
+The separate [attention experiment](attention.md) remains a rejected experiment. Ordinary eligible perception/history is not suppressed merely because a worker is busy.
+
+## Methods and time
+
+Use the existing clock: **60 game seconds per normal-speed second**. Author the durations below in normal-speed seconds; resolve them once to simulation durations at admission and save the resulting original deadline and definition pin. Pause freezes them, speed changes advance the shared clock once, and restoration preserves the deadline. User-facing feedback explains the selected game-time duration; it does not promise wall time during pause or another speed.
+
+| Registered method | Starting policy | Physical result and stopping rule |
+| --- | --- | --- |
+| Orient once | B's orientation family owns deadline, turn rates and constraints. | Achieved body/head/eye pose only; no attention timer or preparation bonus. |
+| Visual scan | Ordered admitted foci; **0.5 normal-speed second** dwell per focus after actual alignment and required view. Default overall deadline **5 normal-speed seconds**. | Real intervals at each visited focus. An unfinished list is partial; no coverage of unvisited or previously visited foci is implied at the current cut. |
+| Listening hold | Default **2 normal-speed seconds**. | Existing C/A hearing during the interval, including its original fidelity. No increased range, new samples, instant silence proof or compulsory reaction. |
+| Exterior visual examination | **1 normal-speed second** after required alignment/view; default overall deadline **5 normal-speed seconds**. | Only the admitted exterior observation family. Reading, container access, instruments and experiments retain their own reach, time, disclosure and costs. |
+| Maintain a watch | Default finite deadline **15 normal-speed seconds**. Explicit shorter/longer duration or supported condition is allowed, always with a hard deadline. | Continue current compatible work and chosen focus while actual requirements hold. Expiry gives a normal result; it does not silently renew or necessarily buy another decision. |
+| Search/investigate | Default **30 normal-speed seconds**, with at most the admitted check allowance. | Ordinary selected movement, observation and inquiry. Stop on answer, selected condition, exhausted scope, deadline, check allowance or real failure/interruption. Partial findings remain useful. |
+
+For E methods, an explicit deadline may be at most **one game day from admission**. This is a base-world choice that supports a named shift or “until dawn” without permanent unattended guards; use the existing clock's day and named-boundary resolution. If the requested boundary is farther away, present the supported shorter scope and require its acceptance; never silently shorten it. A longer shift requires a later explicit accepted continuation. No automatic renewal, repeated model call, or immunity follows from reaching the deadline. Native alarm/settling and existing combat actions keep their own condition/deadline policies.
+
+The world chooses these durations to make small looks cheap and sustained attention a noticeable use of time. They are starting points: ATI08 must compare a real scan/listen/search with ordinary looking, continuing work and asking a companion. Exact dwell correctness alone does not show that the added wait is useful or enjoyable. Preserve actual results when a player stops early; do not gate all information behind completion.
+
+The initial focus/condition/scan/check envelopes are in [ATI-L03–ATI-L04](../../limits/attention-and-investigation.md#ati-l03--selected-input-and-composition-envelope). Walking plus watching uses qualified action composition, not another concurrent activity node. Eyes/head motion adds no new effort tax. Physical body turns, locomotion, tools, guard and existing fatigue costs stay with their own families.
+
+## Conditions, attention and preparedness
+
+The initial trusted conditions are: a new actually acquired cue matching an admitted sensory class; a currently observed permitted person/object in a selected region; an acquired observed change to a selected object/part; an actual action-family result; and the method's deadline/check completion. Bind exact supported typed selectors during admission. Free text can propose these conditions but cannot install an executable predicate or inspect hidden truth.
+
+For a level watch, initial truth defaults to **report-current**; an explicit changes-only choice is available. Report-current reports existing support without inventing an arrival. A transition from unknown to observed inside a region says “now observed here,” not “crossed the boundary,” unless actual acquired crossing support exists. Identity-, class- and result-based conditions use exact equality/owner result semantics. Conditions that need a numerical threshold, hysteresis or dwell must provide those in their installed observation-family definition; this first profile adds no generic proximity/noise threshold, and missing policy is unsupported rather than guessed. Multiple clauses may be represented by one admitted closed predicate expression only if its family explicitly supports them; no arbitrary expression evaluator is introduced.
+
+One anticipation instruction selects relevant **physical-attack approach** danger families and admitted spatial foci, with an optional list of permitted source concerns. The initial family covers an approaching bodily/melee or projectile threat only to the extent its registered method and physical support allow; it is not preparation for poison, falling objects, weather, magic or every possible harm. F selects exact matching and surprise consequences. Additional dangers require authored families and matching physical methods, not broader wording.
+
+Watching for workers, an animal or a mechanical change defaults to observation with **no anticipation**. A visual watch can cover an anonymous doorway; it never requires a named enemy. A defensive guard can anticipate that approach while the doorway is dark, but darkness can still remove visual observation. Turning the head to another focus affects actual coverage without rotating a shield's independently maintained facing. Selected foci are intentions; current physical scope determines what is being maintained.
+
+No fear, vigilance, curiosity or trust number grants a sense, a direction or preparation. Familiarity and expertise can change supported interpretation, method availability or authored decision context. Existing Perception/sense/body and condition owners supply their actual effects once. Disposition and emotion can make ignoring, asking, retreating, investigating or maintaining watch attractive without forcing a universal response. A visible guard stance discloses physical pose only, not its private concerns or warning history.
+
+## Native policy and the curiosity contrast
+
+Ordinary installed animals retain [their existing alarm/escape controller](animal-responses.md) and C's [acoustic policy](https://github.com/Macrofold/OpenLegend/blob/b242bee437f9e13801bfee77030efd309d88a35d/docs/worlds/base/animal-sound-responses.md). This design does not retune shipped species' alarm thresholds or grant language, human memory, paid cognition, flight search, scent or sound waking.
+
+Add a separately installed **ground-curious contrast profile** to qualify a materially different native choice. It requires actual ground navigation, a usable installed sense/rig and the existing native response controller. Its creation/spawn/inspection/save paths bind the same profile pin; the engine never switches on a species name. Opted-in world authors may associate it with appropriate creatures. Existing hare/deer/bird/territorial/flight profiles do not acquire curiosity merely by having those names.
+
+The profile admits curiosity only for an actually acquired external, non-alarming, supported cue with a permitted class/bearing or current visible object. Self-acquisition, bodily danger, alarm/territorial priority, unsupported class, lack of suitable body capability or incomplete required preparation cannot be reclassified as curiosity. “Non-alarming” means this installed policy did not select alarm; it is not proof that the source is harmless.
+
+A single episode has an original **8 normal-speed second** deadline:
+
+1. Observe/listen for **1 normal-speed second**, using the body's actual supported orientation and existing senses. Known alarm/danger preempts immediately.
+2. If the cue provides a usable permitted direction or currently observed object, optionally select **one** safe ground vantage. Generate up to **four** candidates no farther than **4 metres** from the current position at bearings offset 0, −45, +45 and 180 degrees from that permitted direction. Resolve them through existing support and navigation; the complete route and endpoint must remain within currently permitted visible terrain. A hidden sound source is never the destination.
+3. Reject candidates that violate the existing complete-danger and route safety rules, including a worse known danger margin. Prefer the first eligible candidate in the authored order; no new random stream. Adopt at most one ordinary movement request. No route or no localizable cue leaves an observation-only result; it does not force a search or disclose hidden obstacles.
+4. At arrival, observe/listen for **1 normal-speed second**, then return through ordinary routine arbitration. At the original deadline, interruption, lost capability or new alarm, stop or transition through the existing owner. No retry/second approach is inferred from failure or repeated sound.
+
+The four positions are exploratory vantage choices, not distance estimates or claimed acoustic improvements. Existing refuge selection remains authoritative for escape; curiosity never substitutes this small candidate set for its safer all-danger algorithm. An unlocalized cue can prompt the first hold, but no directional approach. Route loss ends the approach truthfully; no teleport, extra flight/climb ability or unpaid navigation loop.
+
+The [single-owner C/E pattern extension](../../projects/attention-and-investigation-tech-design.md#6-native-animal-methods) keeps alarm and curiosity dispositions independent. A curious reaction must not consume an alarm's eligibility; repetition or expiry alone cannot restart a persistent cue. All native policy runs without model calls. Inspection and ordinary visible behavior should make calm continuation, finite curiosity and actual escape distinguishable without exposing private raw sound/source data.
+
+## Maintained records
+
+- Implementation and qualification: [ATI01–ATI08](../../maintainers/attention-and-investigation.md).
+- Limits, rationale and growth: [Attention inventory](../../limits/attention-and-investigation.md).
+- Behavior and mechanism: [Feature](../../projects/attention-and-investigation-feature-spec.md) · [Technical design](../../projects/attention-and-investigation-tech-design.md).
+- Existing time and animals: [Time](time.md) · [Native animal response](animal-responses.md).
