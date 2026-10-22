@@ -32,6 +32,10 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 
 [Context implementation and qualification (SC01–SC12)](cognition-context.md) coordinates the [feature specification](../projects/situation-aware-cognition-context-feature-spec.md), [technical design](../projects/situation-aware-cognition-context-tech-design.md), [supplied-request evidence and conversation decisions](../projects/situation-aware-cognition-context-evidence-and-decisions.md), [complete repertoire review](../projects/situation-aware-cognition-context-repertoire-review.md) and [SCX constraints](../limits/cognition.md#situation-aware-context-selection). The selected design is complete; runtime and gameplay qualification remain open. CR/CE/IS/PF retain their existing semantic and acceptance owners, including full accepted identity, required evidence, exact References, compatible speech/action and distinct SPK/CTR scope.
 
+## Hugging Face and low-refusal model experiments
+
+[Model experiments (MX01–MX08)](model-experiments.md) owns the selected [feature specification](../projects/model-experiments-feature-spec.md), [technical design](../projects/model-experiments-tech-design.md) and [limits](../limits/model-experiments.md). The design uses Macrofold-hosted or qualified imported model endpoints through the existing inference path, with exact model/session identity, explicit NPC-purpose selection and whole experiment cost. Runtime integration, provider qualification and model adoption remain open; [research follow-up items 8–10](npc-cognition-research-needs-design.md#8-low-refusal-characterization-without-loss-of-agency) distinguish completed preparation from unrun comparisons.
+
 ## October 14 foundation review
 
 [Foundation evidence](../verification/foundation-review.md) · [Focused follow-up tasks](foundation-review-todos.md) · [Foundational tests](foundational-tests.md) · [Hardening evidence](../verification/foundation-hardening.md). These reports distinguish inspected code, executed checks and remaining qualification.

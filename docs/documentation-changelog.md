@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 22, 2026 — Design Hugging Face model hosting and NPC experiments
+
+The [model-experiment pair](projects/model-experiments-feature-spec.md), [MX implementation tracker](maintainers/model-experiments.md) and [limit inventory](limits/model-experiments.md) specify exact model/revision/activation bindings, selected NPC reply purposes, preserved context/action authority and reproducible low-refusal comparisons. [Macrofold's shared contract](https://github.com/Macrofold/Macrofold/blob/design/huggingface-model-deployments-2026-10-22/docs/projects/hugging-face-model-deployments-contract.md) owns hosting and the wire protocol, with RunPod load balancing as the first proposed managed adapter and qualified imported endpoints for other runtimes.
+
+Infrastructure startup/idle/cleanup costs remain separate from per-call token metrics. Cold endpoints, changed identities and unsupported capabilities fail explicitly; no silent model substitution, paid repair or wider role override is introduced. Research follow-up items 8–10 have their selected design preparation completed while implementation, provider behavior, character quality and public release gates remain open. The design does not select a production model or replace the native decision/simulation architecture.
+
 ## October 20, 2026 — Generalize context construction and bound delivery
 
 The [context design](projects/situation-aware-cognition-context-tech-design.md#5-situation-detection-without-an-exclusive-classifier) composes the actual decision with typed requirements, supported relevance and dependencies from existing source/world owners. Scene names, family quotas and benchmark templates do not determine relevance; unused capacity does not justify optional information. Faithful projection retains current facts, units, time, scope, attribution, uncertainty and exact References.

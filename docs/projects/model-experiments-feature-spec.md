@@ -42,7 +42,7 @@ Offline evaluation establishes model behavior on the supplied inputs. It does no
 
 ### J3 — Try the candidate through ordinary NPC decisions
 
-After transport qualification, a developer selects a trusted experiment profile for a disposable world and names the supported NPC response purposes to override. Each new applicable request resolves one exact deployment revision before funding admission; the ordinary character context and game response schema remain unchanged. The completed answer travels through the same reference resolution, current-state validation and native admission as the baseline.
+After transport qualification, a developer selects a trusted experiment profile for a disposable world and names the supported NPC response purposes to override. Each new applicable request resolves one exact deployment revision before funding admission; the ordinary character context and game response schema remain unchanged. In-game use initially requires a verified manifest and qualified exact schema. Imported endpoints with operator-declared identity remain labeled offline diagnostics until their identity can be verified. The completed answer travels through the same reference resolution, current-state validation and native admission as the baseline.
 
 The initial profile can select fast and complex NPC response generation independently. These are explicit caller purposes, not every request labeled `fast` or a string match on a model name. Player expression, native action interpretation and memory consolidation also use fast execution today and must retain their own selected models. Native judgment, embeddings, reflection, World Agent, full harness and direct stronger-model reconsideration do not inherit the experimental generator accidentally.
 

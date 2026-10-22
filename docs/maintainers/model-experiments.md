@@ -43,9 +43,9 @@ Implement in dependency order below. Use relevant existing checks and representa
 
 **Owner:** `apps/server/src/config.ts`, `ai-director.ts`, `macrofold-model.ts`; existing benchmark options/manifest owner. **Design:** technical §§4–5. **Dependency:** MX01.
 
-- [ ] Parse/freeze the strict startup profile, exact target, optional output reduction and profile digest. Reject invalid supplied configuration; absence preserves baseline configuration.
+- [ ] Parse/freeze the strict startup profile, authorized Macrofold workspace, exact target, optional output reduction and profile digest. Reject invalid supplied configuration; absence preserves baseline configuration.
 - [ ] Add explicit `npc_response_fast`/`npc_response_complex` at the existing NPC producer. Do not infer purpose from `fast`/`complex` or model equality; action interpretation, player expression and consolidation remain on their own routes.
-- [ ] Perform bounded authorized descriptor preflight. Require actual strict schema and complete context capability for gameplay; record all provenance/trust limits. No read triggers provisioning, activation or renewal.
+- [ ] Perform bounded authorized descriptor preflight. Require verified manifest identity, actual schema dialect/keywords and complete context capability for gameplay; record all provenance/trust limits. No read triggers provisioning, activation or renewal.
 - [ ] Carry one effective record through allowance, meter/reservation, serialization and receipt. Preserve `AI_JEV_ONLY`, fixture/no-call controls, zero-budget behavior and configured escalation separation.
 
 **Exit:** a single-purpose override changes only its named NPC producer; invalid/missing capability fails visibly, and no-dispatch modes make no external model calls even when GPU capacity is prepaid.
@@ -65,9 +65,9 @@ Implement in dependency order below. Use relevant existing checks and representa
 
 **Owner:** `scripts/decision-benchmark` arm resolution, execution, journal, recovery and grading; existing private artifact permissions. **Design:** technical §§8–9. **Dependencies:** MX01–MX03.
 
-- [ ] Add strict manifest-supplied custom generation targets and explicit `json_schema`/offline `text` mode without changing the historical seven-arm set. Use the existing structured generation question compiler when applicable; generated scores remain estimates, not native probabilities.
+- [ ] Add the proposed `--model-experiment` input and strict manifest-supplied custom generation targets and explicit `json_schema`/offline `text` mode without changing the historical seven-arm set. Keep gameplay schema required; expose offline raw text only through the standalone same-executor `generateText` method. Use the existing structured generation question compiler when applicable; generated scores remain estimates, not native probabilities.
 - [ ] Freeze targets, source/runtime evidence, corpus families/splits, original inputs/references, co-models/escalation, exact finite work list, context/schema identities, request bounds, authorized total cost and stop conditions before dispatch.
-- [ ] Reuse single-writer journaling, retained first attempts, source/request/financial fingerprints and exact-Run recovery. Dry preparation submits no inference and does no hosting mutation.
+- [ ] Reuse single-writer journaling, retained first attempts, source/request/financial fingerprints and exact-Run recovery. Dry preparation submits no inference and does no hosting mutation; passive remote reads require explicit online preflight. Start the first finite screen with the specified inspected pair, retaining all selected/unattempted work.
 - [ ] Record every selected combination, including unattempted/unknown/refused/invalid outcomes and non-overlapping financial obligations. No best-of retry, hidden output repair or post-hoc expected-answer edit.
 
 **Exit:** a dry prepared custom cohort is reproducible; raw-text outputs cannot enter gameplay or structured-action scores, and existing historical reports remain unchanged.

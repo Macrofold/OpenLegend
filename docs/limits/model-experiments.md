@@ -6,7 +6,7 @@ All entries below are **proposed by the October 22, 2026 design, not implemented
 
 ## MX-L01 — Supported caller purposes and output modes
 
-**Proposed · Restrictiveness: Medium.** Gameplay overrides cover exactly two producer purposes: `npc_response_fast` and `npc_response_complex`, independently selected. Standalone `benchmark_generation` consumes the same target type under its own manifest. Gameplay requires qualified strict JSON-schema generation; offline tools may explicitly select raw text and cannot publish it or count it as structured-action success.
+**Proposed · Restrictiveness: Medium.** Gameplay overrides cover exactly two producer purposes: `npc_response_fast` and `npc_response_complex`, independently selected. Standalone `benchmark_generation` consumes the same target type under its own manifest. Gameplay requires verified manifest identity and qualified strict JSON-schema generation; offline tools may explicitly select raw text and cannot publish it or count it as structured-action success.
 
 **Reason / tradeoff:** The execution label `fast` also covers unrelated action interpretation, player expression and consolidation. Explicit purposes prevent accidental rerouting and misleading experimental attribution. Native decisions, embeddings, full harness, reflection and public streaming remain with their qualified owners.
 
@@ -16,7 +16,7 @@ All entries below are **proposed by the October 22, 2026 design, not implemented
 
 ## MX-L02 — Profile identity and cardinality
 
-**Proposed · Restrictiveness: Very safe.** Profile schema version is literal `1`; experiment ID is 1–64 ASCII letters, digits, dot, underscore or hyphen and starts with a letter/digit. `purposes` contains 1–2 of MX-L01's gameplay keys. All objects reject unknown properties. Each target is exactly the deployment/revision/activation UUID triple. The profile does not contain prompts, endpoints or credentials.
+**Proposed · Restrictiveness: Very safe.** Profile schema version is literal `1`; experiment ID is 1–64 ASCII letters, digits, dot, underscore or hyphen and starts with a letter/digit. `purposes` contains 1–2 of MX-L01's gameplay keys. All objects reject unknown properties. The required `workspace_id` is a Macrofold workspace UUID; each target is exactly the deployment/revision/activation UUID triple. The profile does not contain prompts, endpoints or credentials.
 
 **Reason / tradeoff:** This small closed configuration needs no free-form registry, arbitrary role list or unbounded nesting. The display ID is not an identity/authorization substitute; the retained canonical profile SHA-256 identifies its exact contents.
 
@@ -60,13 +60,13 @@ All entries below are **proposed by the October 22, 2026 design, not implemented
 
 **Reason / tradeoff:** Hosting costs startup, busy/idle time and potentially storage independently of request tokens. Concurrent requests cannot each claim a whole allocation bill, and free request accounting does not erase GPU cost. An already funded host is not permission to call externally in fixture/zero-budget mode.
 
-**Overflow / failure:** Stop new admissions when the owning ceiling is unavailable/exhausted. Keep uncertain startup/termination/provider charges outstanding until reconciled; no fabricated zero token price or per-request GPU invoice.
+**Overflow / failure:** Stop new admissions when the owning ceiling is unavailable/exhausted. The canonical `external_cap_guaranteed:false` warning remains explicit: a finite authorization is not a provider-enforced absolute dollar cap. Keep uncertain startup/termination/provider charges outstanding until reconciled; no fabricated zero token price or per-request GPU invoice.
 
 **Extension trigger:** Additional pricing modes or shared-allocation attribution require the canonical Macrofold accounting policy and explicit non-overlap rules. OpenLegend does not create a second provider ledger.
 
 ## MX-L07 — Finite experiment growth and retention
 
-**Proposed · Restrictiveness: Safe.** A live study has a frozen finite selected case × arm × replicate/episode-turn work list, explicit request/output-byte/time/cost allowances and stop conditions. There is no design-wide fixed corpus-size or model-count ceiling. Current transport/JSON limits bound each record; existing benchmark journal/permission/retention owners hold raw private artifacts outside Git.
+**Proposed · Restrictiveness: Safe.** A live study has a frozen finite selected case × arm × replicate/episode-turn work list, explicit request/output-byte/time/cost allowances and stop conditions. The first-screen preparation template is two arms × twenty contrasting cases × one replicate, at most forty new inferences, beginning with one inspected pair; it is unrun and insufficient for adoption. There is no design-wide fixed corpus-size or model-count ceiling. Current transport/JSON limits bound each record; existing benchmark journal/permission/retention owners hold raw private artifacts outside Git.
 
 **Reason / tradeoff:** Work and allocation wall time, including co-models, grow with the actual plan. Explicit study bounds support small probes and larger justified cohorts without arbitrary truncation or an unbounded “try models until one wins” loop. Full report generation may read its chosen cohort once; admission must not repeatedly rescan all history.
 
