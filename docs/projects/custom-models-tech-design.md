@@ -1,8 +1,8 @@
 # Custom model deployments — technical design
 
-| Status      | Current progress                                                                                                                          | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Production routing, shared inference and optional benchmark support are implemented; live hosted-model operating acceptance remains open. | 2026-10-22   |
+| Status      | Current progress                                                                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Production routing and tooling are implemented; live external-model gameplay, revision and bounded-load checks are evidenced; managed-worker recovery remains open. | 2026-10-22   |
 
 ## 1. Scope and delivery order
 

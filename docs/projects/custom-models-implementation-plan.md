@@ -1,8 +1,8 @@
 # Custom models — implementation plan
 
-| Status      | Current progress                                                                                                                                                                               | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Production routing, shared inference and benchmark extensions are implemented; actual Macrofold HTTP compatibility is demonstrated, while live hosted-model operating acceptance remains open. | 2026-10-22   |
+| Status      | Current progress                                                                                                                                       | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Production routing and tools are implemented; actual API and bounded live external-model gameplay are evidenced; managed-worker recovery remains open. | 2026-10-22   |
 
 ## Scope and completion
 
@@ -30,6 +30,8 @@ Measure the complete ordinary NPC request and publication path, including prepar
 
 All paid work shares the existing $10 task ceiling. Dispatch only with bounded outstanding commitments and authorized credentials. Record settled/estimated/unknown request and hosting costs separately. Do not start or stop a borrowed Macrofold service or leave newly started paid hosting running without its applicable authorization.
 
-## Current external dependency
+## Remaining operating qualification
 
-Implement against the approved canonical Macrofold contract using its deployment binding, descriptor and receipt projections through the existing HTTP transport. The shared contract remains authoritative; no competing complete wire schema is introduced. A compatible implemented server/generated client is needed for final joint acceptance, rather than prerequisite to the OpenLegend implementation. Reconcile actual upstream differences before claiming integration success. [Verification](../verification/custom-models.md) retains exact inspected versions and evidence limits. Keep the corresponding MX acceptance boxes open until evidenced.
+Actual Macrofold HTTP and live external-model checks use the canonical deployment binding, descriptor and receipt projections through the existing transport. The server and generated-client source fingerprints, one ordinary live NPC speech publication, invalid replies, revision/pin recovery and bounded warm/concurrent measurements are retained in [verification](../verification/custom-models.md). No competing complete wire schema or permissive gameplay parser was introduced.
+
+The external model worker is opaque to this installation. Managed-worker restart/replacement, broader GPU workload capacity and final hosting invoices remain unevidenced; no RunPod credential was found and the authorized live setup excludes GPU launch. Keep those MX06 criteria open. The compatible upstream implementation is a fingerprinted local snapshot rather than a published immutable release; ship its matching API, migration and client together. Optional MX07 research is outside this task.

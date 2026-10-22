@@ -87,7 +87,7 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
 
 - [x] Verify target/role isolation, actual NPC response admission, output mode/local validation, optional streaming, no-call controls and unchanged native judgment/escalation.
 
-  Actual Macrofold HTTP compatibility and native gameplay with synthetic model answers are evidenced separately. The live external model reached both configured NPC purposes but omitted a schema-required field, so both replies were rejected before speech publication. Its obsolete prompt example is corrected without relaxing validation; successful live native publication remains open below.
+  Actual Macrofold HTTP compatibility and native gameplay with synthetic model answers are evidenced separately. Both live configured NPC purposes reached the selected model. A corrected obsolete speech example preserves the unchanged schema: a later complex reply committed actual speech to the player; the fast reply was rejected for an invented operation dependency. No repair call or weaker parser was introduced.
 
 - [ ] Verify automatic same-revision host recovery, current-revision update for new requests, optional pins and valid completion of earlier admitted work. Interrupted/unknown requests are never replayed. Include an upgrade that makes a formerly unsupported request valid: stale local capability rejection refreshes once before refusal, repeated unsupported work respects the shared negative-cache cooldown, and a new revision in a successful receipt invalidates only later preparation.
 
@@ -99,7 +99,7 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
 
 - [ ] Under the existing spending authority, establish actual supported runtime and warm/concurrent/recovery behavior. Record tested versions, input/output limits, useful latency, throughput and costs; static/fixture success is not live acceptance.
 
-  Four live Qwen 2.5 7B JSON-object calls returned validated values, including two concurrent requests and streaming. [Evidence](../verification/custom-models.md#live-external-model-checks) records their limits/timings, initial NPC validation failures and separate provider/request fees. This bounded workload does not establish sustained GPU capacity or successful ordinary live speech yet. Final bounded NPC verification, cleanup and current-head CI remain in progress.
+  Four live Qwen 2.5 7B JSON-object API calls returned validated values, including two concurrent requests and streaming; the ordinary complex NPC path published live speech. [Evidence](../verification/custom-models.md#live-external-model-checks) retains all four NPC attempts, measured limits/timings, native fast-reply rejection, separate provider/request fees and verified cleanup preserving accounting. This bounded workload does not establish sustained GPU capacity, reliable character quality or managed-worker recovery. Required current-head CI is reported with the implementation PR.
 
 **Exit:** the production capability works through ordinary gameplay and supported failures with measured operating limits. A comparative study or model winner is not required.
 
