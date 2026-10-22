@@ -14,6 +14,8 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 
 [Production workflows](../production-workflows/README.md) connect ideas to editable art, working assets, animation, scenes, interfaces, character situations and coordinated feedback. The [research collection](../../archive/02-research/ai-game-development/README.md) explains the evidence and OpenLegend-specific creative opportunities; [remaining preparation](needs-design.md#ai-assisted-game-production-research-and-design-integration) maps choices into existing owners. Art studies, V3D/INV, CE, UIUX and playability work retain their task and acceptance records.
 
+The [focused game-reference map](../../archive/02-research/game-inspiration/README.md#player-stories-authored-worlds-and-personal-meaning) routes narrative, collectible, art and marketing learnings to their existing design and production owners. Its concrete follow-up lives in ND01, ND04, ND30, ND38 and DG29/DG33/DG34 in [Future work needing design](needs-design.md); it is not another implementation queue.
+
 ## Combat and immediate threat responses
 
 [Combat and threat responses (CTR01–CTR10)](combat-and-threat-responses.md) owns delivery of the [feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire scope](../projects/combat-and-threat-responses-repertoire-review.md) and [limits](../limits/combat-and-threat-responses.md). Selected ND11/ND13 design is complete; runtime and independent acceptance remain open in CTR.

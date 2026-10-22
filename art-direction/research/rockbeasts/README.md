@@ -64,8 +64,10 @@ The stage plan keeps the musicians visible; the social choice keeps a person and
 
 ## Applying the reference
 
-For a future OpenLegend comparison, ask whether the palette directs attention, lighting situates the people, motion communicates intention, and the interface belongs to the same world while remaining easy to use. Evaluate those qualities in the existing dimensional pixel-art treatment with believable proportions.
+For a future OpenLegend comparison, ask whether the palette directs attention, lighting situates the people, motion communicates intention, and the interface belongs to the same world while remaining easy to use. Evaluate those qualities in the existing dimensional pixel-art treatment with believable proportions. Use the existing [scene and interface production workflow](../../../docs/production-workflows/scenes-and-interfaces.md) to turn a selected quality into a place brief or a complete screen built around the player's decision.
 
 ## Media handling and rights
 
-Embedded screenshots remain at their official third-party origins. Selected trailer frames and strips have been prepared separately for Mike; **publication to OpenLegend study storage remains pending** under the [asset workflow](../../../docs/asset-workflow.md). This document claims no completed S3 preservation and includes no temporary capture links. Git retains notes and metadata only. Copyright remains with the respective creators; this is reference material, and public availability grants no production reuse rights.
+Embedded screenshots remain at their official third-party origins. The selected frames, motion strips, official screenshots, contact sheet and provenance are preserved in [ROCKBEASTS-reference-pack.zip](https://chatgpt.com/api/library/files/libfile_998bd5ae95888191947ce01e8d27ef80/download), an authenticated reference archive requiring access to the saved file. The archive contains **8,070,153 bytes** and has SHA-256 **`c5a32c787dbbdf2b33f1f543c43e296f9df96d6618c35650ee88d71c584f3bd5`**. Its 15 manifest-listed images and strips match their recorded byte lengths and hashes.
+
+The saved archive is separate from OpenLegend project study hosting; no completed S3 publication is claimed. Any later project publication follows the [asset workflow](../../../docs/asset-workflow.md). Git retains notes and metadata only. Copyright remains with the respective creators; this is reference material, and public availability grants no production reuse rights.

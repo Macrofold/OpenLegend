@@ -57,6 +57,8 @@ Follow [character authorship and changing personality](../projects/compelling-ch
 
 When two authored people already know one another, use their existing personal knowledge and recognition owners as well as the prose. A name mentioned in a biography does not itself bind a perceived person. Preserve each participant's separate view of the relationship.
 
+For a situation involving an authored past, use [discoverable history](../narrative/authoring-discoverable-history.md) to give each surviving trace an immediate value, connect several possible entry orders, and develop what present action can change for later visitors. Its worked example remains hypothetical; this workflow still owns rehearsal and playable delivery.
+
 An author may inspect permitted design and world information that a resident should not receive. Supply runtime cognition with that resident's own allowed evidence. Shared [agent-content requirements](../agent-content-and-companion-safety.md) continue to govern generated characters and player-facing expression; a new persona or model does not replace them.
 
 **Useful output:** a concise, editable situation and person, with genuine current facts separated from possible responses. Keep illustrative dialogue as an authoring aid; it is not a script of what an autonomous character must say.

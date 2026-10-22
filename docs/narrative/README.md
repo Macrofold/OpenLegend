@@ -6,6 +6,8 @@ The [characters and play workflow](../production-workflows/characters-and-play.m
 
 [Authored worlds and personal discovery](authored-worlds-and-personal-discovery.md) develops the complementary direction for emotional weight across a whole world: nonlinear lore discovery, bards spreading player legends and world news, gods guiding personal journeys, region access, dangerous frontiers, underground exploration and meaningful needs. [Gods, death and personal mythology](gods-death-and-personal-mythology.md) develops original divine personalities, relationships shaped by play, gifts and encounters after death, religion, and a personal Beyond alongside the changing shared world.
 
+[Authoring discoverable history](authoring-discoverable-history.md) turns that direction into a compact authoring method and a worked hypothetical example: several worthwhile entrances, different discovery orders, present choices and an aftermath later visitors can encounter.
+
 Reference studies:
 
 - [ROCKBEASTS](case-studies/rockbeasts.md) — character, dark humor, acting and a coherent fictional world.

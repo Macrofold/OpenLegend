@@ -32,6 +32,8 @@ Each route should provide a satisfying discovery and understandable further ques
 
 This supports a shared world with different personal journeys. The same ruin can matter to a historian, an explorer, someone trying to help a friend, and a player who simply needs shelter. Their present actions create new history. Use [inspectable ruins](../repertoires/history-myth.md#a-ruin-older-than-the-explanation), [competing historical accounts](../repertoires/history-myth.md#the-flood-with-three-anniversaries) and [mysteries with consistent evidence](../repertoires/adventure-discovery.md#mysteries-and-investigations) as starting material.
 
+The [worked history-authoring guide](authoring-discoverable-history.md) develops this flood example into useful partial discoveries, three possible entry sequences, a present undertaking and its lasting aftermath. It supplies a method for developing selected content without making the example a chosen world or storyline.
+
 ## Gods can connect personal journeys to a larger story
 
 Mike especially likes gods as a believable way to provide personal guidance in a world with many simultaneous players. A deity could speak through dreams, shrines, voices, visions or several manifestations. Different people can encounter the same being at different moments without requiring copies of one ordinary person standing in incompatible places.

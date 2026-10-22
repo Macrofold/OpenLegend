@@ -6,7 +6,7 @@
 
 Make discovering something meaningful about a character feel like receiving an object worth keeping and inspecting. A trait could have a dimensional card with a distinctive frame, layered illustration or small sculptural detail, convincing lighting and a surface that catches the light when tilted or turned.
 
-The reference is [OPERATIVES: Revolve](https://store.steampowered.com/app/4286480/OPERATIVES_Revolve_Demo/). Mike's supplied screenshot shows a thick framed card, raised machinery beyond its outline and a reflective, holographic-looking face; he particularly likes its rotation and changing shine in play. The [developer's explanation](https://enigma-equation.itch.io/operatives-revolve/devlog/1178108/demo-launched) explicitly connects physical-feeling 3D cards with timing, weight, anticipation and rendering.
+The reference is [OPERATIVES: Revolve](https://store.steampowered.com/app/4286480/OPERATIVES_Revolve_Demo/). Mike describes cards with three-dimensional structure that rotate in play, with compelling lighting, shine and holographic effects. The attached image was unavailable for inspection; these visual preferences come from his description. The [developer's explanation](https://enigma-equation.itch.io/operatives-revolve/devlog/1178108/demo-launched) explicitly connects physical-feeling 3D cards with timing, weight, anticipation and rendering.
 
 The aim is tactile pleasure, recognition and attachment: the player wants to turn the card over and keep looking. A small playable comparison should test whether that attention adds enjoyment while keeping ordinary play fluent.
 
@@ -34,7 +34,7 @@ The card presents the underlying character; it is not another source of traits o
 ## Related possibilities
 
 - **A personal visual history:** a changing inscription, material detail or small illustration recalls a significant known event. The same trait can feel personal without acquiring additional power.
-- **Meaningful keepsakes:** use related inspection treatment for a gift, first successful craft or repaired favorite object, including ordinary objects with strong personal significance.
+- **Meaningful keepsakes:** use related inspection treatment for a gift, first successful craft or repaired favorite object, including ordinary objects with strong personal significance. The [special-item cabinet](special-item-cabinet.md) develops this into player-chosen account keepsakes with personal notes and remembered moments.
 - **A reveal with a story:** briefly connect a newly recognized change to its relevant moment, then let the player inspect or continue. A card can prompt recollection without replaying or inventing private events.
 
 The [relic idea](official-world-relics.md) applies related presentation to account collectibles. Trading belongs to that separate proposal; a character-earned trait card does not make personality tradable. Repertoire examples and a small visual/usability comparison remain in ND04.

@@ -6,7 +6,7 @@
   "retrieved_on": "2026-10-22",
   "source_page": "https://store.steampowered.com/app/4182460/ROCKBEASTS_Demo/",
   "source_metadata_url": "https://store.steampowered.com/api/appdetails?appids=4182460&l=english",
-  "storage_boundary": "Git contains notes and metadata only. Official images are embedded from their original Steam URLs. Selected captures are delivered separately as ROCKBEASTS-reference-pack.zip; permanent OpenLegend study-storage publication is pending because the approved publisher and database configuration were not available in this session.",
+  "storage_boundary": "Git contains notes and metadata only. Official images are embedded from their original Steam URLs. Selected captures are preserved in the authenticated reference archive identified below; no OpenLegend project study-storage publication is claimed.",
   "repository_payload": "metadata_only",
   "rights": "Copyright remains with the respective creators.",
   "rights_note": "Third-party reference material for study; public availability does not grant production reuse rights. No license to reuse game art is asserted.",
@@ -297,5 +297,16 @@
       "media_type": "image/jpeg",
       "capture_note": "Requested extraction positions in the downloaded MP4 timeline; selected images were visually checked against timestamped contact sheets. Times are source references, not measurements of animation timing. JPEG full frames retain 1920x1080; strips contain resized frames and time labels. Source footage and store images may represent different builds."
     }
-  ]
+  ],
+  "reference_archive": {
+    "name": "ROCKBEASTS-reference-pack.zip",
+    "url": "https://chatgpt.com/api/library/files/libfile_998bd5ae95888191947ce01e8d27ef80/download",
+    "storage_boundary": "Authenticated saved reference archive, separate from OpenLegend project asset storage",
+    "access_note": "Requires access to the saved file; this link does not grant access or publish the archive publicly.",
+    "bytes": 8070153,
+    "sha256": "c5a32c787dbbdf2b33f1f543c43e296f9df96d6618c35650ee88d71c584f3bd5",
+    "media_type": "application/zip",
+    "verified_on": "2026-10-22",
+    "verification": "The saved-file record matches the local archive identity and byte length. All 15 manifest-listed images and strips in the archive match their recorded byte lengths and SHA-256 values."
+  }
 }

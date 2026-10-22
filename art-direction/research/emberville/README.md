@@ -56,7 +56,7 @@ Choose a place's ecology, materials, use and history, then develop its palette a
 
 Blizzard's [March 2022 environment account](https://news.blizzard.com/en-us/article/23788294/diablo-iv-quarterly-updatemarch-2022) offers a complementary authored approach: regional weather, materials, construction and history inform place identity, while camera-aware detail supports navigation and combat. This is a useful production principle, not an endorsement of Diablo's full visual tone.
 
-Review a scene at ordinary gameplay distance and in motion. Can someone recognize the location, find a route and understand its use? Do the same physical objects remain recognizable when weather or lighting changes? Does an important action remain legible? This reference adds no camera, renderer or combat-density decision.
+Review a scene at ordinary gameplay distance and in motion. Can someone recognize the location, find a route and understand its use? Do the same physical objects remain recognizable when weather or lighting changes? Does an important action remain legible? The existing [place, material and lighting workflow](../../../docs/production-workflows/scenes-and-interfaces.md#places-materials-and-lighting) turns these questions into a place brief, traversable composition and moving-scene review. This reference adds no camera, renderer or combat-density decision.
 
 ## Sources and rights
 

@@ -14,7 +14,7 @@ For Open Legend, connect an attractive activity with a distinctive consequence: 
 
 ### Reference: Outcast Tales
 
-The [Outcast Tales demo trailer](https://store.steampowered.com/app/5111950/Outcast_Tales_Demo/) demonstrates the technique through a reckless charge that ends in defeat, companions moving between affection and hostility, dangerous encounters and a narrator questioning a route choice. Its [narration transcript](https://www.dailymotion.com/video/xb6twam) supplies context for the short visual sequence.
+The [Outcast Tales demo trailer](https://store.steampowered.com/app/5111950/Outcast_Tales_Demo/) demonstrates the technique through a reckless charge that ends in defeat, companions moving between affection and hostility, dangerous encounters and a narrator questioning a route choice. A [transcript on Asher Grace's third-party repost](https://www.dailymotion.com/video/xb6twam) supplies narration context for the short visual sequence; the repost is not an official developer source.
 
 Battles, relationships and consequential decisions become understandable through situations. The narration creates anticipation, reversal and humor while the footage shows what happens. This is a presentation reference; Open Legend can use its own tone, including wonder, warmth, tension and satisfaction.
 

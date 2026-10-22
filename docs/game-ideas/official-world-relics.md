@@ -1,6 +1,6 @@
 # Relics across official Open Legend worlds
 
-**Status:** Proposed collection direction; detailed design and implementation are future work. [Follow-up: DG29](../maintainers/needs-design.md#dg29--more-participants-and-travel-between-worlds).
+**Status:** Endorsed creative direction; detailed design and implementation are future work. World-specific interpretations and the four connected ideas below are part of that direction. [Follow-up: DG29](../maintainers/needs-design.md#dg29--more-participants-and-travel-between-worlds).
 
 ## The player promise
 
@@ -31,9 +31,11 @@ These are directions for repertoire entries, not new rules for all objects or wo
 
 ## Preserve the portability goal through coherent world rules
 
-Official worlds provide a controlled place to make this collection work. Their official status alone does not establish that they share laws, equipment assumptions or power scales. A common official relic standard, or a world-authored manifestation of each relic, are candidate ways to deliver the all-official-world goal.
+The preferred direction is **different worlds interpreting and expressing the same relic differently**. Preserve its recognizable identity and collection history while letting each official world author its local meaning, appearance and useful behavior. The all-official-world assignment goal does not require identical effects, shared statistics or a universally balanced cross-world power system.
 
-For example, one enduring relic might have a recognizable identity across settings while its material, local lore and supported use fit each world. That is a design possibility, not permission for a display description to invent an effect. [World boundaries](../engine-and-world-boundaries.md) continue to govern actual behavior.
+For example, a wayfinding relic might be understood as a shrine charm in one world, a navigator's instrument in another and a salvaged beacon in a third. A recurring mark or purpose lets the player recognize it, while each world gives it a fitting story and supported use. These are illustrative possibilities, not established content. Local cultures can disagree about its origin without requiring all their beliefs to be true.
+
+Coherence comes from that enduring identity and each world's own rules. Capabilities and tradeoffs still need to work well within the destination world, and the player should be able to understand its local expression before assigning it. A display description cannot invent an effect; [world boundaries](../engine-and-world-boundaries.md) continue to govern actual behavior.
 
 Keep account ownership, assignment to a character and the actual in-world object distinct. Account collection does not transfer a former character's personality, skills, relationships or private memories. Existing [participants and world travel](../projects/participants-and-world-travel-feature-spec.md) separately governs transporting the same person and possessions; its restricted first visit remains unchanged. Reusing a published definition or owning a content pack is also different from owning a collectible.
 
@@ -48,14 +50,16 @@ Keep account ownership, assignment to a character and the actual in-world object
 
 These questions belong to future design. This note does not choose slot counts, drop probabilities, automatic power scaling, loss rules or a marketplace architecture.
 
-## Further ideas inspired by the concept
+## Endorsed directions to develop
 
-**Objects that accumulate a visible story.** Repairs, inscriptions or other meaningful marks can reflect actual significant use. Two specimens of the same relic can feel different without needing different power. A permitted account of that history could accompany a trade.
+All four directions below are endorsed for further design. Their detailed rules and content remain open.
 
-**Different worlds interpret the same object differently.** The player gradually recognizes a recurring symbol, origin or purpose across settings. Local interpretations can add mystery and cultural character while keeping established facts and competing beliefs distinct.
+**Objects that accumulate a visible story.** Repairs, inscriptions or other meaningful marks can reflect actual significant use. Two specimens of the same relic can feel different without needing different power. The [special-item cabinet](special-item-cabinet.md) develops this beyond surface markings into a personal time capsule of the object's remembered moments. A permitted account of its history could accompany a trade.
+
+**Different worlds interpret the same object differently.** This is the preferred approach to coherence across worlds, as described above. Recognizing a familiar object through another culture's stories, rituals and practical uses becomes part of the discovery. The player can piece together connections while established facts and competing beliefs remain distinct.
 
 **Relic trails between worlds.** A find could contain a clue to a related object or place in another official world. Each stop should offer its own enjoyable discovery and useful payoff, so a larger collection is an invitation rather than a requirement to finish every world.
 
-**Keepsakes worth passing on.** A modest object used in a memorable rescue, expedition or collaborative creation could become desirable because of its story. Player exchange can carry social meaning alongside rarity and utility, with private information kept private.
+**Keepsakes worth passing on.** A modest object used in a memorable rescue, expedition or collaborative creation could become desirable because of its story. Player exchange can carry social meaning alongside rarity and utility, with private information kept private. Passing on the object need not erase the former owner's personal time capsule; the recipient's future experiences can give it another chapter.
 
 [Tactile cards](tactile-trait-cards.md) supply the presentation inspiration. The collection and its connected world content remain optional future work under existing [gameplay priorities](../repertoires/gameplay-priorities.md).
