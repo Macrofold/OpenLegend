@@ -1,8 +1,8 @@
 # Custom model deployments — feature specification
 
-| Status      | Current progress                                                                                               | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Production model routing and optional evaluation are designed; implementation and live acceptance remain open. | 2026-10-22   |
+| Status  | Current progress                                                                                                                | Last updated |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Blocked | Offline configuration parsing is implemented; production routing and acceptance await the implemented Macrofold deployment API. | 2026-10-22   |
 
 ## 1. Purpose and selected outcome
 
@@ -95,6 +95,7 @@ Existing [content/privacy and companion requirements](../agent-content-and-compa
 ## Maintained records
 
 - Implementation and acceptance: [MX — custom models](../maintainers/custom-models.md).
+- Authorized delivery sequence: [Implementation plan](custom-models-implementation-plan.md).
 - Technical counterpart: [Custom models technical design](custom-models-tech-design.md).
 - Limits: [MX-L01–MX-L08](../limits/custom-models.md), [AI execution](../limits/ai-execution.md), [cognition](../limits/cognition.md).
 - Research preparation: [NPC research design map](../maintainers/npc-cognition-research-needs-design.md).

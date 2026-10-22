@@ -2,7 +2,7 @@
 
 [Feature specification](../projects/custom-models-feature-spec.md) · [Technical design](../projects/custom-models-tech-design.md) · [Implementation tracker](../maintainers/custom-models.md) · [Inventory rules](README.md)
 
-These are selected design targets, **not implemented**, against `Macrofold/OpenLegend` `27c6fb8152ec58c34334e74ba91a9d5bec6a30ff`, reviewed October 22, 2026. Existing [AI execution](ai-execution.md), [cognition](cognition.md), world/privacy and financial integrity remain with their owners. Stable MX IDs are retained.
+These are selected production design targets, **not installed in gameplay**. The independent offline configuration parser is implemented; startup routing and the compatible Macrofold API remain unavailable in the [inspected builds](../verification/custom-models.md). Existing [AI execution](ai-execution.md), [cognition](cognition.md), world/privacy and financial integrity remain with their owners. Stable MX IDs are retained.
 
 ## MX-L01 — Caller and output support
 

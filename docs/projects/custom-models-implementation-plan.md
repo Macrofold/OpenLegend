@@ -1,8 +1,8 @@
 # Custom models — implementation plan
 
-| Status      | Current progress                                                                                                         | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Production implementation is authorized; configuration can proceed while the compatible Macrofold API is being delivered. | 2026-10-22   |
+| Status  | Current progress                                                                                                                                | Last updated |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Blocked | Offline configuration preparation passes its checks; the remaining production and tooling work awaits the implemented Macrofold deployment API. | 2026-10-22   |
 
 ## Scope and completion
 
@@ -32,4 +32,4 @@ All paid work shares the existing $10 task ceiling. Dispatch only with bounded o
 
 ## Current external dependency
 
-At initial inspection, `Macrofold/Macrofold` `feat/production-model-deployments` equals documentation-only `e79a2c066584037e369d80e626810de86aefe611`; the generated `InferenceCreate.model_binding` still accepts only `DecisionBinding`. The upstream implementation chat is active, but there is no completed compatible server/client build or handoff. The canonical contract remains authoritative as a target; do not invent replacement wire types/endpoints or claim integration acceptance from it. Complete independent local work, then integrate only after the actual API is available. Keep the corresponding MX acceptance boxes open until evidenced.
+The inspected `Macrofold/Macrofold` `feat/production-model-deployments` head is `2dcf34bffbb9519b6fedac6175ea93cd7d7c4404`, containing only documentation changes after its design base. Its generated `InferenceCreate.model_binding` still accepts only `DecisionBinding`. The upstream implementation chat is active, but no completed compatible server/client build or handoff is available. The canonical contract remains authoritative as a target; do not invent replacement wire types/endpoints or claim integration acceptance from it. The independent offline configuration owner is implemented and reviewed, but deliberately not connected to startup or gameplay while execution is unavailable. [Verification](../verification/custom-models.md) records the exact inspected versions and remaining gap. Keep the corresponding MX acceptance boxes open until evidenced.

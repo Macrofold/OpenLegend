@@ -1,5 +1,7 @@
 # Verification
 
+- [Custom model configuration](verification/custom-models.md) — offline configuration checks and exact upstream compatibility blocker; no deployment inference or gameplay acceptance is established.
+
 [Macrofold efficiency follow-through](verification/macrofold-efficiency-followup.md) records shared inference receipts, bounded diagnostics, narrow PostgreSQL reads and authoring revision checks, including requested-review fixes and the integrated private-inspection ordering correction.
 
 - [Network request waiting](verification/bounded-network-requests.md) — shared lifetime and resource ownership, actual browser journeys, pinned SDK fixtures, generated cloud source and anonymous public-asset verification; the requested review corrections pass all 937 repository tests and the complete check/build chain; NET01–NET11 is complete.

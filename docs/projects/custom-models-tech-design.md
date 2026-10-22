@@ -1,8 +1,8 @@
 # Custom model deployments — technical design
 
-| Status      | Current progress                                                                                                               | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | The production integration and compatible Macrofold interface are specified; runtime delivery and live acceptance remain open. | 2026-10-22   |
+| Status  | Current progress                                                                                                                       | Last updated |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Blocked | The offline configuration owner is implemented; transport integration awaits the actual compatible Macrofold server and generated API. | 2026-10-22   |
 
 ## 1. Scope and delivery order
 
@@ -243,6 +243,7 @@ Classify assistant refusal, quiet sanitization, independent character choice, un
 Production service use is the selected scope. Stable deployment selection, optional revision pins, automatic host recovery, capability-aware output, local validation and existing financial/world owners are settled. No developer answer blocks implementation. Concrete model, hardware, capacity, service budget and rollout selections are operator configuration; actual runtime compatibility, latency, costs and player suitability need measured evidence. This design does not select a model winner.
 
 - Implementation: [MX — custom models](../maintainers/custom-models.md).
+- Delivery sequence and upstream dependency: [Implementation plan](custom-models-implementation-plan.md).
 - Feature counterpart: [Behavior and journeys](custom-models-feature-spec.md).
 - Limits: [Custom models](../limits/custom-models.md), [AI execution](../limits/ai-execution.md), [cognition](../limits/cognition.md).
 - Existing authority: [AI providers](../ai-providers.md), [save/load](../save-and-load.md#continuation-and-identity), [identity](../identity-and-references.md), [content/privacy](../agent-content-and-companion-safety.md).

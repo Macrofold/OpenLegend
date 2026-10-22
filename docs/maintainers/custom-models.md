@@ -1,11 +1,13 @@
 # Custom models — implementation and acceptance
 
-**Status: Done — designed; production implementation and live acceptance open · October 22, 2026.** This tracker owns OpenLegend's production use of Macrofold custom deployments. Optional experiments consume that capability. Design completion does not establish runtime delivery, hosting reliability or model quality.
+**Status: Blocked — offline configuration checkpoint delivered; production integration awaits the implemented Macrofold deployment API · October 22, 2026.** This tracker owns OpenLegend's production use of Macrofold custom deployments. Optional experiments consume that capability. Configuration preparation does not establish runtime delivery, hosting reliability or model quality.
 
 ## Maintained records
 
 - Behavior: [Feature specification](../projects/custom-models-feature-spec.md).
 - Implementation and optional evaluation: [Technical design](../projects/custom-models-tech-design.md).
+- Authorized delivery sequence: [Implementation plan](../projects/custom-models-implementation-plan.md).
+- Current evidence and compatible-build blocker: [Verification](../verification/custom-models.md).
 - Constraints: [MX-L01–MX-L08](../limits/custom-models.md).
 - Wire protocol: [Macrofold deployment contract](https://github.com/Macrofold/Macrofold/blob/design/huggingface-model-deployments-2026-10-22/docs/projects/hugging-face-model-deployments-contract.md).
 - Existing owners: [AI providers](../ai-providers.md), [cognition](cognition-redesign.md), [character experience](character-experience.md), [agency](agent-agency.md), [public speech](npc-speech-streaming.md), [production deployment](production-deployment.md).
@@ -18,7 +20,9 @@
 - [ ] Deliver production work MX01 → MX02 → MX03 → MX06 → MX08.
 - [ ] Deliver optional tooling MX04 → MX05 and separately selected comparative work MX07 when needed; these do not block the production sequence.
 
-Use relevant existing checks/ad-hoc cases under repository verification policy. Runtime implementation, paid hosting and model execution are not performed by this design assignment. Any live execution uses its existing authorization and bounded budget.
+Production implementation and MX04/MX05 tooling are authorized; MX07 comparative research and selecting a new default model are outside this assignment. Use relevant existing checks/ad-hoc cases under repository verification policy, without new automated tests. Any live execution uses its existing authorization and bounded budget.
+
+The independent `generation-config.ts` owner implements strict offline parsing, immutable settings, explicit fast/complex NPC-purpose lookup and per-caller output reductions. Startup and the NPC producer do not import it yet: supplied settings cannot be advertised as usable while the compatible execution path is absent. MX01–MX03, MX04/MX05 and MX06/MX08 acceptance remain open. The inspected upstream build and the missing generated deployment binding are recorded in the verification report; a matching branch name is not a compatible API build.
 
 ## MX01 — Shared production deployment target
 
@@ -36,6 +40,9 @@ Use relevant existing checks/ad-hoc cases under repository verification policy. 
 **Owner:** server config/pure generation configuration, NPC response producer and provider parameter preparation. **Design:** technical §§3.2–4. **Dependency:** MX01.
 
 - [ ] Parse `OPENLEGEND_MODEL_TARGETS_JSON` with workspace, explicit fast/complex NPC targets, optional revision pins/output reductions and output policy. Absence preserves defaults; malformed supplied values fail locally.
+
+  Offline parsing and immutable explicit-purpose/output helpers are implemented in `apps/server/src/generation-config.ts`; startup wiring remains dependent on MX01. Focused offline checks pass, but this checkbox requires the configured ordinary gameplay path.
+
 - [ ] Resolve the target before allowance/reservation using the actual producer purpose, not execution label or model-name equality. Preserve unrelated callers and configured decision escalation.
 - [ ] Cache immutable capabilities and coalesce bounded metadata preparation. Temporary remote unavailability affects that generator and can recover on later new requests; no whole-game startup dependency or per-NPC management polling.
 - [ ] Accept operator-trusted external endpoints under their honest capability/provenance limits. Keep hosting credentials/management outside the game and preserve fixture, Jev-only and zero-budget no-call controls.
