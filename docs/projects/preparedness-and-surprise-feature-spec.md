@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | Specialist design is complete; coordinated implementation and gameplay qualification remain open in PS01–PS09. | 2026-10-22 |
+| In progress | Specialist design is complete; coordinated implementation and gameplay qualification remain open in SUR01–SUR09. | 2026-10-22 |
 
 ## Purpose and scope
 
@@ -104,7 +104,7 @@ A new shock from this contact cannot affect this same contact. An earlier abrupt
 
 ## Continuity, uncertainty and reset
 
-Relevant attack expectation persists briefly after the last genuinely fresh supporting occurrence or the end of a continuously confirmed threat. The world then requires a quiet interval without relevant warning or matched preparation before returning to an unwary state. Source and scope remain personal; no hidden opponent position is tracked.
+Relevant attack expectation persists briefly after the last genuinely fresh supporting occurrence or the end of a continuously confirmed threat. The world then requires a quiet settling interval. A method can postpone a source/region/approach warning's settling only when it covers that entire same scope. Deliberate work never prolongs broad self-assault expectation; it supplies its own current coverage instead. Source and scope remain personal; no hidden opponent position is tracked.
 
 Stop ends current guard/watch work immediately. It does not erase registered attack evidence. Changing the preferred action to Speak, briefly hiding, turning a camera, changing weapons, crossing an exposure boundary, reconnecting or replaying a command cannot reset an encounter.
 
@@ -133,7 +133,7 @@ Correction/forgetting removes future support through the existing encounter/evid
 | **Pause and speed** | The same simulated chronology has the same result at 1×/3×/8×, across pause and same-format save/reload. No wall-time latency creates warning or spends reaction time. |
 | **Fair shared play** | Private readiness never appears in attack previews. Existing harmful-action permissions and potentially lethal confirmation include the possible amplified harm without becoming an awareness oracle. |
 
-The [technical acceptance matrix](preparedness-and-surprise-tech-design.md#acceptance-scenarios) expands positive, negative and adversarial cuts, including exact equality, duplicate causes and incomplete work. PS09 retains real gameplay and performance evidence; these scenarios are not reported test passes.
+The [technical acceptance matrix](preparedness-and-surprise-tech-design.md#acceptance-scenarios) expands positive, negative and adversarial cuts, including exact equality, duplicate causes and incomplete work. SUR09 retains real gameplay and performance evidence; these scenarios are not reported test passes.
 
 ## Repertoire integration
 
@@ -159,11 +159,11 @@ Prompt 7 consumes the [typed disclosure contract](preparedness-and-surprise-tech
 
 A supplies exact acquired facts and correction. B/C supply actual physical preparation/flight cues and achieved coverage. E supplies its existing immutable preparation port. D supplies native reaction receipts and effective parameters. CTR retains encounter/contact/permissions and independent character acceptance. All current-format readers/writers must change together before enabling the world policy.
 
-**Unresolved product decision:** [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters), controlled-character interpreted emotion, remains with D. It does not block native surprise/startle or select whether retained NPC appraisals affect a newly human-controlled character. **Integration gate:** A's proposed family-specific evidence revision amendment SA-D02 must be resolved in shared integration; F preserves the frozen EvidenceRef contract and does not silently install that change. There is no additional unresolved F product choice. Numerical tuning and uncoached enjoyment remain unqualified, with adjustment points and delivery tasks recorded.
+**Unresolved product decision:** [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters), controlled-character interpreted emotion, remains with D. It does not block native surprise/startle or select whether retained NPC appraisals affect a newly human-controlled character. **Integration gate:** A's proposed family-specific evidence revision amendment SA-D02 and F's proposed E current-method-start extension SA-D03 must be resolved in shared integration. F preserves the frozen EvidenceRef and preparation contracts and records both proposals explicitly. B/A's permitted incoming-flight producer and A/SPK's ordinary understood current-warning producer are required implementation handoffs. There is no additional unresolved F product choice. Numerical tuning and uncoached enjoyment remain unqualified, with adjustment points and delivery tasks recorded.
 
 ## Maintained records
 
-- Implementation and acceptance: [PS01–PS09](../maintainers/preparedness-and-surprise.md).
+- Implementation and acceptance: [SUR01–SUR09](../maintainers/preparedness-and-surprise.md).
 - Limits and tradeoffs: [Preparedness and surprise inventory](../limits/preparedness-and-surprise.md).
 - Mechanism, source pins and exact paper cases: [Technical design](preparedness-and-surprise-tech-design.md).
 - Authored rules: [Base combat](../worlds/base/combat.md#preparedness-policy).

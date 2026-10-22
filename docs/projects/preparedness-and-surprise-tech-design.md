@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | F's contracts, algorithms and paper acceptance are designed; PS01–PS09 implementation and integration qualification remain open. | 2026-10-22 |
+| In progress | F's contracts, algorithms and paper acceptance are designed; SUR01–SUR09 implementation and integration qualification remain open. | 2026-10-22 |
 
 ## Authority and delivery boundary
 
@@ -45,7 +45,7 @@ PersonalEncounter.episode is an observer recognition/exposure association, **not
 
 The inspected source already has world-enabled human PvP and actual vulnerable-collider injury. Broader CTR delivery/qualification remains open. Existing guaranteed-accuracy strike RNG behavior also differs from its accepted one-draw contract (AC09.6); F adds no random draws and does not claim to repair or qualify that separate gap.
 
-## PS-C01 — World policy and protected mechanism
+## SUR-C01 — World policy and protected mechanism
 
 The world owns qualification families, registration/lead durations, warning scope/retention, quiet settling and multiplier. Engine integrity owns exact life/reference validity, permitted evidence, native ordering, complete preparation, harm permission and once-only effects.
 
@@ -70,7 +70,7 @@ The current body approximation for registration is explicit: exact current physi
 
 No module installed means no surprise damage/reaction contribution from F. An installed but incomplete/invalid policy is not absence. A materially different supported world must qualify with, for example, touch-acquired warning, no psychological fear, a different multiplier/lead and an omitted surprise rule—not just renamed humans.
 
-## PS-C02 — Producer and consumer contracts
+## SUR-C02 — Producer and consumer contracts
 
 Shared SC02 ActorLifeRef, SimTime, OccurrenceRef, EvidenceRef, EvidenceCut, LocationEvidence and DefinitionPin retain their frozen meanings. A supplies FactKey, SupportedSensoryFact, CapturedCurrentFacet, permitted participants and exact acquisition. E supplies its complete [CapturedPreparationState / capturePreparation port](https://github.com/Macrofold/OpenLegend/blob/b8ee4a99d6b82b9146cd5cf86a15a69b857ab2b5/docs/projects/attention-and-investigation-tech-design.md#7-exact-preparedness-evidence-interface-for-prompt-6) unchanged. D supplies complete mechanics and its cause/receipt port. The following defines F-owned meanings; imported owner types are references to those contracts, not instructions to invent replacement schemas.
 
@@ -284,7 +284,7 @@ Call D's **admitBodilyReaction(world, preparedCause, preparedBody, at)** through
 
 A shield owned by someone else intercepting the projectile changes the actual victim; the protected intended person gets no phantom contact shock. Armor or zero-injury actual body/own-shield contact can still qualify. Miss, range expiry and an unseen environmental collision cannot be passed as unexpected-attack-contact. A/C may independently deliver a real personally acquired abrupt cue/near miss. No new noncontact F stimulus family is proposed.
 
-## PS-C03 — Warning lifecycle and finite expectation
+## SUR-C03 — Warning lifecycle and finite expectation
 
 ### Registration
 
@@ -303,16 +303,16 @@ For each registered matching support:
 - lastQualifiedAt is the last **genuinely fresh matching warning acquisition** or the last actually confirmed boundary of its ongoing directed threat. It is never now merely because a read occurred.
 - retentionUntil = lastQualifiedAt + converted warningRetentionSeconds.
 - Before retentionUntil, the support retains its registered scope.
-- Settling can begin only at or after retentionUntil, with complete required perception, no currently confirmed matching threat and no relevant fulfilled preparation.
+- Settling can begin only at or after retentionUntil, with complete required perception, no currently confirmed matching threat and no qualifying same-scope fulfilled preparation under the rule below.
 - If there is no interruption, unwaryAt = settlingFrom + converted unwarySettleSeconds. At cut.at >= unwaryAt, that support no longer qualifies.
-- A matched maintained method beginning during settling clears settlingFrom; once it actually ends, settling can start again at max(retentionUntil, method end). An unrelated method does nothing.
-- A fresh matching threat updates its own support/retention and clears settling. A new unrelated warning cannot refresh another scope.
+- For a source/region/approach warning, a maintained method can postpone settling only if its current fulfilled scope contains that warning's entire supported scope, the danger family agrees, and its source association (if any) is the same permitted exact source. A merely intersecting sector is insufficient. CTR resolves this proof into the captured settling state after E's complete work capture; the pure evaluator follows no mutable support. On that method's actual end, settling starts at max(retentionUntil, method end).
+- A broad self-assault warning is never prolonged by deliberate work alone: only fresh acquired matching attack evidence or genuinely continuous directed-threat confirmation renews it. An unrelated deer aim, a generic watch or an attack on the original source cannot keep all-direction readiness alive indefinitely. Those methods still supply their own actual current scope. A fresh matching threat updates its own support/retention and clears settling. A new unrelated warning cannot refresh another scope.
 - For the ordinary no-further-work case, a warning last acquired at 10.00 normal seconds remains relevant until 18.00: six seconds retained, followed by two settled seconds. This is deliberately **six plus two**, not max(six elapsed, two quiet).
 - Distinct independent supports are evaluated independently. Correcting one does not remove an independently supported other warning. Coalesce equivalent projection only when the complete eligibility/renewal lineage remains recoverable.
 
 Continuous live confirmation comes from A's actual captured confirmation interval, not the hidden attack's continued existence. A release or source departure does not supply a hidden continuation. Current E work is captured independently; it cannot fabricate a fresh warning. For known-opponent work, relevance follows the actual source/approach binding; unrelated hunting, crafting or generic movement cannot delay settling of an old encounter.
 
-There is no surprise-use counter on the victim. Repeated independent attacks can qualify before registration completes, or after a genuine unwary return. Their actual evidence then has its ordinary chance to register. No attacker ID/weapon swap, backward step, exposure replacement, Speak shortcut, Stop/restart, refund or reconnect clears another character's evidence.
+There is no surprise-use counter on the victim. Repeated independent attacks can qualify before registration completes, or after a genuine unwary return. Their actual evidence then has its ordinary chance to register. Readiness is queried per incoming threat; there is no global unwary Boolean that a single narrow method can keep true for every direction. No attacker ID/weapon swap, backward step, exposure replacement, Speak shortcut, Stop/restart, refund or reconnect clears another character's evidence.
 
 ### Storage and episode identity
 
@@ -411,7 +411,7 @@ All **t** values below are normal-speed seconds for readability. Implementation 
 | T12 — finite watch | Fulfilled anticipation of the entrance begins 1.00, lead completes 1.20, work ends 3.00. No warning was ever acquired. | Covered contact 2.99 is expected. At exactly 3.00 the ended watch contributes nothing. Looking elsewhere earlier does not bank another sector. |
 | T13 — changed active focus | Watch A fulfilled from 1.00; at 2.00 a real focus change breaks it and new focus B begins. Contact from A at 2.10, with no warning. | Old A coverage is gone and B has not earned lead. If existing B/E semantics permit a continuous compatible refinement, they must prove it, not assume it from label similarity. |
 | T14 — retained attack | Last fresh directed warning 10.00, registration complete 10.20, no more threat or preparation. | Retained until 16.00, then settling until 18.00. Cut 17.99 expected; cut exactly 18.00 unwary. |
-| T15 — preparation interrupts settling | T14, but relevant maintained guard/watch exists 17.00–19.00. | Settling restarts at 19.00 and ends 21.00. Unrelated crafting or hunting another source cannot delay it. |
+| T15 — scoped preparation interrupts settling | A scoped entrance warning last qualified at 10.00; a maintained method covering that entire same entrance scope exists 17.00–19.00. | Settling restarts at 19.00 and ends 21.00. Broad self-assault warning is not extended by work; unrelated hunting or a merely overlapping sector cannot delay it. |
 | T16 — new matching warning | T14, plus a genuinely fresh matching attack warning at 17.50 while expectation remains registered. | Renewal has no artificial registration gap; lastQualifiedAt becomes 17.50, final quiet reset 25.50 if nothing else happens. Original source dates remain unchanged. |
 | T17 — warning after full expiry | T14, new warning acquired 18.10; contact 18.20. | Earlier continuation has ended; new registration is not ready until 18.30. Contact is surprising absent another method. |
 | T18 — simultaneous attackers | Two independent actual contacts at 5.00, ordered by native owners, with no prior warning/preparation. | Both may qualify; first impact has zero elapsed time to prepare for the second. Death/one-use guard/interruption still resolve in order. |
@@ -472,9 +472,9 @@ All required acquisition, current preparation and D mechanics must be complete a
 
 Evaluate only the actual victim's relevant existing encounter warning entries and complete active-work set, plus native candidate evidence already required by A/B/C. Do not enumerate all characters, query hidden attackers, replay full memory, scan all projectiles for each victim or add a second SQL/indexed threat authority. Use existing pair/anonymous retention and nextAt to prune expired derived fields, while retaining source owners' required causal receipts.
 
-There is no new arbitrary top-N warning truncation or hard-coded combat capacity in this design. If existing admitted work cannot finish, report/hold the required continuation; do not silently drop the oldest or least convenient warning. [PS-L05](../limits/preparedness-and-surprise.md#ps-l05--complete-local-work-and-retention) owns the tradeoff. Bound active work through existing admission/retention and complete indexes, not by false perception.
+There is no new arbitrary top-N warning truncation or hard-coded combat capacity in this design. If existing admitted work cannot finish, report/hold the required continuation; do not silently drop the oldest or least convenient warning. [SUR-L05](../limits/preparedness-and-surprise.md#sur-l05--growing-work-retention-and-overload) owns the tradeoff. Bound active work through existing admission/retention and complete indexes, not by false perception.
 
-PS08/PS09 must record warmed and cold-path costs for one victim, many independent pairs, many attackers against one victim, crowded shared contacts, anonymous warnings, repeated correction, long-running retention and save/restore. Measure candidate warnings visited, active methods captured, source validation work, scheduled deadlines, serialized bytes and allocation/time distributions through the actual contact path. Verify no new random draw and no unbounded retained expired support. No benchmark, measured capacity, provider run or acceptance result is claimed by these paper designs.
+SUR08/SUR09 must record warmed and cold-path costs for one victim, many independent pairs, many attackers against one victim, crowded shared contacts, anonymous warnings, repeated correction, long-running retention and save/restore. Measure candidate warnings visited, active methods captured, source validation work, scheduled deadlines, serialized bytes and allocation/time distributions through the actual contact path. Verify no new random draw and no unbounded retained expired support. No benchmark, measured capacity, provider run or acceptance result is claimed by these paper designs.
 
 ## Prompt 7 interface
 
@@ -541,88 +541,155 @@ These are **specifications for future executable and gameplay qualification**, n
 
 | ID | Scenario | Required assertion |
 | --- | --- | --- |
-| PS-T01 | No relevant warning/preparation; real direct hit | Surprised; one eligible 2× raw contact application; ordinary mitigation/body result and eligible D cause. |
-| PS-T02 | Rear strike during registered anticipated fight | No new surprise solely from angle/current sight loss. Directional shield can still fail. |
-| PS-T03 | Known friendly person attacks without prior readable cue | Familiarity does not prevent surprise. Do not require an enemy label or combat initiation flag. |
-| PS-T04 | Stranger visibly winds up with sufficient acquired lead | Expected despite unfamiliar identity; preserve uncertainty about motive/name. |
-| PS-T05 | Guarded unknown doorway | Matching maintained preparation prevents surprise without a source association. Uncovered height/direction/path does not inherit protection. |
-| PS-T06 | Guard only proposed/approaching/preparing | No completed preparation until actual method/ready/lead conditions hold. Other registered warning can independently suffice. |
-| PS-T07 | Guard becomes ready then expires/consumes | Exact half-open timing and one-use physical guard hold; registered warning can outlast it without another shield reduction. |
-| PS-T08 | Turn head while shield faces elsewhere | Permitted vision can change; shield geometry does not rotate with head/camera. |
-| PS-T09 | Footsteps remain subthreshold | No warning, identity or startle fabricated from raw progress. |
-| PS-T10 | Weak cue crosses actual acquisition threshold | Admit only A's achieved fact; no fabricated hostility. Later scoped danger interpretation or chosen anticipation can matter. |
-| PS-T11 | Understood current scoped false alarm | Actual registration/preparation can prevent surprise within its scope without declaring the claim true. |
-| PS-T12 | Unintelligible/partial warning | Unsupported meaning cannot count. A fully supported admitted meaning from heard fragments can count; F does not parse or inspect private full speech. |
-| PS-T13 | General anxiety, old grudge or old reputation | No unbounded all-direction preparedness. D can affect its own mechanical parameters separately. |
-| PS-T14 | Cue early enough to register, too late to dodge | Expected ordinary hit; inadequate movement does not become informational surprise. |
-| PS-T15 | Cue received less than registration lead before contact | Surprising even if visually obvious at the final instant. |
-| PS-T16 | Exact lead completion, expiry and work break | Match T03/T11/T12/T21 without tick-size-dependent off-by-one or guessed method-start time. |
-| PS-T17 | Ordinary glance versus accepted anticipation | Observation alone grants no declared threat coverage. A genuinely acquired warning can still register. |
-| PS-T18 | Cycle watch through many directions | Only current active coverage qualifies; past sectors never accumulate. Registered real warning has its independent finite scope. |
-| PS-T19 | Immobilized/occupied/cognition-blocked but aware | Native registration can complete. Physical defense/method fulfillment follows its actual constraints. |
-| PS-T20 | Rest with general perception block | Pending and registered bodily continuation retire; no sound-wake or old-warning auto-resume; waking contact cannot warn itself. |
+| SUR-T01 | No relevant warning/preparation; real direct hit | Surprised; one eligible 2× raw contact application; ordinary mitigation/body result and eligible D cause. |
+| SUR-T02 | Rear strike during registered anticipated fight | No new surprise solely from angle/current sight loss. Directional shield can still fail. |
+| SUR-T03 | Known friendly person attacks without prior readable cue | Familiarity does not prevent surprise. Do not require an enemy label or combat initiation flag. |
+| SUR-T04 | Stranger visibly winds up with sufficient acquired lead | Expected despite unfamiliar identity; preserve uncertainty about motive/name. |
+| SUR-T05 | Guarded unknown doorway | Matching maintained preparation prevents surprise without a source association. Uncovered height/direction/path does not inherit protection. |
+| SUR-T06 | Guard only proposed/approaching/preparing | No completed preparation until actual method/ready/lead conditions hold. Other registered warning can independently suffice. |
+| SUR-T07 | Guard becomes ready then expires/consumes | Exact half-open timing and one-use physical guard hold; registered warning can outlast it without another shield reduction. |
+| SUR-T08 | Turn head while shield faces elsewhere | Permitted vision can change; shield geometry does not rotate with head/camera. |
+| SUR-T09 | Footsteps remain subthreshold | No warning, identity or startle fabricated from raw progress. |
+| SUR-T10 | Weak cue crosses actual acquisition threshold | Admit only A's achieved fact; no fabricated hostility. Later scoped danger interpretation or chosen anticipation can matter. |
+| SUR-T11 | Understood current scoped false alarm | Actual registration/preparation can prevent surprise within its scope without declaring the claim true. |
+| SUR-T12 | Unintelligible/partial warning | Unsupported meaning cannot count. A fully supported admitted meaning from heard fragments can count; F does not parse or inspect private full speech. |
+| SUR-T13 | General anxiety, old grudge or old reputation | No unbounded all-direction preparedness. D can affect its own mechanical parameters separately. |
+| SUR-T14 | Cue early enough to register, too late to dodge | Expected ordinary hit; inadequate movement does not become informational surprise. |
+| SUR-T15 | Cue received less than registration lead before contact | Surprising even if visually obvious at the final instant. |
+| SUR-T16 | Exact lead completion, expiry and work break | Match T03/T11/T12/T21 without tick-size-dependent off-by-one or guessed method-start time. |
+| SUR-T17 | Ordinary glance versus accepted anticipation | Observation alone grants no declared threat coverage. A genuinely acquired warning can still register. |
+| SUR-T18 | Cycle watch through many directions | Only current active coverage qualifies; past sectors never accumulate. Registered real warning has its independent finite scope. |
+| SUR-T19 | Immobilized/occupied/cognition-blocked but aware | Native registration can complete. Physical defense/method fulfillment follows its actual constraints. |
+| SUR-T20 | Rest with general perception block | Pending and registered bodily continuation retire; no sound-wake or old-warning auto-resume; waking contact cannot warn itself. |
 
 ### Projectile and contact arithmetic
 
 | ID | Scenario | Required assertion |
 | --- | --- | --- |
-| PS-T21 | Flight acquired, archer/release unseen | Actual supported incoming-flight cue can register; no source identity or hidden intended-target inference. |
-| PS-T22 | Archer seen but actual attack preparation hidden | Mere presence/weapon/name does not count as a readable attack cue. |
-| PS-T23 | Early release sound versus nonexistent whoosh | Only an implemented authored cue actually acquired can warn. No automatic generic flight sound or sound-propagation delay is invented. |
-| PS-T24 | Prepared intended target, unwary collateral victim | Actual collider's cut governs. Intended readiness is neither copied nor shared. |
-| PS-T25 | Unwary intended target, prepared interceptor | Actual interceptor can avoid multiplier using their own work/evidence and real shield. No phantom contact shock on the protected person. |
-| PS-T26 | Shooter dies/leaves/transfers control in flight | Release pins/source life/trajectory/contact policy persist; no current shooter re-read or second confirmation. |
-| PS-T27 | Source origin versus advancing projectile position | Origin-region warning matches immutable release origin; approach warning uses actually traversed supported path. Save/reload preserves the difference. |
-| PS-T28 | First designated melee miss then repeated contact callback | Miss spends opportunity but deals no damage; replay cannot produce a later amplified hit or shock. |
-| PS-T29 | Zero nominal injury / full body mitigation / health cap | Slot spending, raw amplified amount, applied flag and final body health loss remain distinct and consistent. |
-| PS-T30 | Shielded qualifying contact | Multiply raw eligible component before existing shield reduction; shield consumption/recovery unchanged. Zero health loss can still have an unexpected-contact cause. |
-| PS-T31 | Multi-component contact | Eligible bundle amplified once; no total-plus-component duplication or amplification of later poison/burning/bleeding. |
-| PS-T32 | Future sweep/burst/piercing owner | Family stays unenabled until complete stable group/carrier/per-life receipts and aggregate permission review exist. Later carrier/group/re-entry cannot bank/mint another opportunity. |
-| PS-T33 | Independent simultaneous volley | Independent qualifying attacks can each amplify before any warning matures; ordinary deterministic collider/death/guard ordering remains. |
-| PS-T34 | Terrain stop, range expiry or wholly unseen miss | No fictitious damage, contact startle, victim warning or enemy identity. Actual audible/visible cue follows A/C separately. |
+| SUR-T21 | Flight acquired, archer/release unseen | Actual supported incoming-flight cue can register; no source identity or hidden intended-target inference. |
+| SUR-T22 | Archer seen but actual attack preparation hidden | Mere presence/weapon/name does not count as a readable attack cue. |
+| SUR-T23 | Early release sound versus nonexistent whoosh | Only an implemented authored cue actually acquired can warn. No automatic generic flight sound or sound-propagation delay is invented. |
+| SUR-T24 | Prepared intended target, unwary collateral victim | Actual collider's cut governs. Intended readiness is neither copied nor shared. |
+| SUR-T25 | Unwary intended target, prepared interceptor | Actual interceptor can avoid multiplier using their own work/evidence and real shield. No phantom contact shock on the protected person. |
+| SUR-T26 | Shooter dies/leaves/transfers control in flight | Release pins/source life/trajectory/contact policy persist; no current shooter re-read or second confirmation. |
+| SUR-T27 | Source origin versus advancing projectile position | Origin-region warning matches immutable release origin; approach warning uses actually traversed supported path. Save/reload preserves the difference. |
+| SUR-T28 | First designated melee miss then repeated contact callback | Miss spends opportunity but deals no damage; replay cannot produce a later amplified hit or shock. |
+| SUR-T29 | Zero nominal injury / full body mitigation / health cap | Slot spending, raw amplified amount, applied flag and final body health loss remain distinct and consistent. |
+| SUR-T30 | Shielded qualifying contact | Multiply raw eligible component before existing shield reduction; shield consumption/recovery unchanged. Zero health loss can still have an unexpected-contact cause. |
+| SUR-T31 | Multi-component contact | Eligible bundle amplified once; no total-plus-component duplication or amplification of later poison/burning/bleeding. |
+| SUR-T32 | Future sweep/burst/piercing owner | Family stays unenabled until complete stable group/carrier/per-life receipts and aggregate permission review exist. Later carrier/group/re-entry cannot bank/mint another opportunity. |
+| SUR-T33 | Independent simultaneous volley | Independent qualifying attacks can each amplify before any warning matures; ordinary deterministic collider/death/guard ordering remains. |
+| SUR-T34 | Terrain stop, range expiry or wholly unseen miss | No fictitious damage, contact startle, victim warning or enemy identity. Actual audible/visible cue follows A/C separately. |
 
 ### Continuity, emotion and agency
 
 | ID | Scenario | Required assertion |
 | --- | --- | --- |
-| PS-T35 | Changing attackers after self-assault registration | Finite ordinary-assault expectation covers ordinary third-party intervention without naming/targeting them. |
-| PS-T36 | Betrayal while already braced for ordinary assault | No guaranteed fresh physical multiplier from changing allegiance; later emotional/social interpretation remains independent. |
-| PS-T37 | Hunter aiming at quarry, ally attacks | Own scoped offensive work does not grant universal preparedness. Actual relevant warning/preparation alone can prevent surprise. |
-| PS-T38 | Brief hide/return, camera turn, weapon swap, Speak/Stop | None erases registered warning; stopping real preparation removes only its current coverage. |
-| PS-T39 | Genuine unwary return | Six-second retention plus two quiet seconds expire exactly, unless actually matched support/preparation delays them. New warning then needs a fresh lead. |
-| PS-T40 | Matching new warning / unrelated new warning | First can renew registered matching scope; second cannot refresh other evidence or backdate acquisition. |
-| PS-T41 | Correction of one of several supports | Only dependent future support invalidates; independent warning still works; committed injury/startle remains. |
-| PS-T42 | Current warning replayed as memory/reflection/event wrapper | No new registration, retention renewal, hostile occurrence or bodily onset. |
-| PS-T43 | Unexpected contact plus earlier abrupt cue | D handles real distinct causes and maximum aggregation. F adds no fear factor or same-impact feedback. |
-| PS-T44 | Contact shock, same-timestamp later attack | It cannot alter its own completed mechanics or an earlier released shot/evasion; it may affect a genuinely later appropriate sampling boundary. |
-| PS-T45 | Generalized fear with ranged danger heuristic | Selected conditionAdjustment none prevents accidental double penalty. Walking/running speed remains unchanged by F/D fear. |
-| PS-T46 | Fatal surprising contact | Original life receives terminal no-effect D receipt, no active shock on dead/new body; harm and outcome remain coherent without retries. |
-| PS-T47 | Native memoryless animal | Same fair warning/cut rule, compact existing CTR/native references, no AI/cognition/memory prerequisite or second danger map. |
-| PS-T48 | Autonomous human accepts/refuses warning response | Registration remains native; choices remain independent. No forced guard/flee/attack or interpreted emotion outside the owning accepted producer. |
-| PS-T49 | Deliberate noisy diversion | Actual investigation may open an escape route; registered scoped danger may remove surprise within that scope. No forced facing or erased warning. |
-| PS-T50 | Voluntary watch handoff | Incoming watcher must actually accept/fulfill/earn lead. Outgoing work ends on its own boundary; a promise does not transfer readiness to another body. |
+| SUR-T35 | Changing attackers after self-assault registration | Finite ordinary-assault expectation covers ordinary third-party intervention without naming/targeting them. |
+| SUR-T36 | Betrayal while already braced for ordinary assault | No guaranteed fresh physical multiplier from changing allegiance; later emotional/social interpretation remains independent. |
+| SUR-T37 | Hunter aiming at quarry, ally attacks | Own scoped offensive work does not grant universal preparedness. Actual relevant warning/preparation alone can prevent surprise. |
+| SUR-T38 | Brief hide/return, camera turn, weapon swap, Speak/Stop | None erases registered warning; stopping real preparation removes only its current coverage. |
+| SUR-T39 | Genuine unwary return | Six-second retention plus two quiet seconds expire exactly, unless actually matched support/preparation delays them. New warning then needs a fresh lead. |
+| SUR-T40 | Matching new warning / unrelated new warning | First can renew registered matching scope; second cannot refresh other evidence or backdate acquisition. |
+| SUR-T41 | Correction of one of several supports | Only dependent future support invalidates; independent warning still works; committed injury/startle remains. |
+| SUR-T42 | Current warning replayed as memory/reflection/event wrapper | No new registration, retention renewal, hostile occurrence or bodily onset. |
+| SUR-T43 | Unexpected contact plus earlier abrupt cue | D handles real distinct causes and maximum aggregation. F adds no fear factor or same-impact feedback. |
+| SUR-T44 | Contact shock, same-timestamp later attack | It cannot alter its own completed mechanics or an earlier released shot/evasion; it may affect a genuinely later appropriate sampling boundary. |
+| SUR-T45 | Generalized fear with ranged danger heuristic | Selected conditionAdjustment none prevents accidental double penalty. Walking/running speed remains unchanged by F/D fear. |
+| SUR-T46 | Fatal surprising contact | Original life receives terminal no-effect D receipt, no active shock on dead/new body; harm and outcome remain coherent without retries. |
+| SUR-T47 | Native memoryless animal | Same fair warning/cut rule, compact existing CTR/native references, no AI/cognition/memory prerequisite or second danger map. |
+| SUR-T48 | Autonomous human accepts/refuses warning response | Registration remains native; choices remain independent. No forced guard/flee/attack or interpreted emotion outside the owning accepted producer. |
+| SUR-T49 | Deliberate noisy diversion | Actual investigation may open an escape route; registered scoped danger may remove surprise within that scope. No forced facing or erased warning. |
+| SUR-T50 | Voluntary watch handoff | Incoming watcher must actually accept/fulfill/earn lead. Outgoing work ends on its own boundary; a promise does not transfer readiness to another body. |
 
 ### Persistence, fairness and adversarial work
 
 | ID | Scenario | Required assertion |
 | --- | --- | --- |
-| PS-T51 | 1×/3×/8×, pause and different native step subdivisions | Equivalent simulated chronology yields identical qualification, slot use, harm and effect timing. No wall-clock/provider latency substitution. |
-| PS-T52 | Save during registration/settling/flight | Restore original deadlines, release origin, pins and continuation; no extra warning time, fresh launch or slot reset. |
-| PS-T53 | Save/retry around body mutation and nested events | Recover exactly pre-contact or committed coherent state; never damage twice or let saved impact warn itself. |
-| PS-T54 | Incomplete A/E/D or stale resumed work | Hold/reject through existing native work path; no missing-evidence-as-empty, zero fear or automatic 2×/1× fallback. |
-| PS-T55 | Observer/body/source/controller identity substitution | Exact life and owner revisions reject cross-life reuse. Same-life control transfer preserves physical history without inheriting another observer's private state. |
-| PS-T56 | Policy/equipment/body pins change before commitment | Existing revalidation/review invalidates stale work. After release, flight remains bound to valid committed policy. |
-| PS-T57 | Forged multiplier/preparedness/claim/target IDs from client/model | Only trusted native producers can create bindings and warning/preparation outcomes; invalid input is not silently normalized. |
-| PS-T58 | Same source/different wrappers or delimiter-collision keys | Structured exact tuples deduplicate true repeats while preserving distinct real contacts. |
-| PS-T59 | PvP lethal confirmation toggled against hidden readiness | Prompt/risk basis remains the same maximum authorized harm; no awareness oracle, forgotten 2× bound or contact-time re-prompt. |
-| PS-T60 | Many attackers/anonymous warnings/long-running corrections | Complete local traversal and bounded existing retention; no hidden global scan or silent warning truncation. Measure real hot path, not only helper complexity. |
-| PS-T61 | Full/patch/history/reconnect/tooltip/audio/creator transition | Private victim readiness and hidden source geometry never leak through any projection or stale cache. |
-| PS-T62 | World omits F or changes supported senses/coefficients | Clean omission gives ordinary combat; installed invalid/incomplete policy does not masquerade as omission. Alternate-body warning remains actual. |
-| PS-T63 | Consent refusal/cancel before attack | No invented attack consequence. Actual previously observed physical preparation remains valid evidence of what occurred. |
-| PS-T64 | Spatial uncertainty / vertical separation / cone apex | Original frame/uncertainty retained; no infinite-ray/wall shortcut or all-direction cone match at the victim's contact point. |
+| SUR-T51 | 1×/3×/8×, pause and different native step subdivisions | Equivalent simulated chronology yields identical qualification, slot use, harm and effect timing. No wall-clock/provider latency substitution. |
+| SUR-T52 | Save during registration/settling/flight | Restore original deadlines, release origin, pins and continuation; no extra warning time, fresh launch or slot reset. |
+| SUR-T53 | Save/retry around body mutation and nested events | Recover exactly pre-contact or committed coherent state; never damage twice or let saved impact warn itself. |
+| SUR-T54 | Incomplete A/E/D or stale resumed work | Hold/reject through existing native work path; no missing-evidence-as-empty, zero fear or automatic 2×/1× fallback. |
+| SUR-T55 | Observer/body/source/controller identity substitution | Exact life and owner revisions reject cross-life reuse. Same-life control transfer preserves physical history without inheriting another observer's private state. |
+| SUR-T56 | Policy/equipment/body pins change before commitment | Existing revalidation/review invalidates stale work. After release, flight remains bound to valid committed policy. |
+| SUR-T57 | Forged multiplier/preparedness/claim/target IDs from client/model | Only trusted native producers can create bindings and warning/preparation outcomes; invalid input is not silently normalized. |
+| SUR-T58 | Same source/different wrappers or delimiter-collision keys | Structured exact tuples deduplicate true repeats while preserving distinct real contacts. |
+| SUR-T59 | PvP lethal confirmation toggled against hidden readiness | Prompt/risk basis remains the same maximum authorized harm; no awareness oracle, forgotten 2× bound or contact-time re-prompt. |
+| SUR-T60 | Many attackers/anonymous warnings/long-running corrections | Complete local traversal and bounded existing retention; no hidden global scan or silent warning truncation. Measure real hot path, not only helper complexity. |
+| SUR-T61 | Full/patch/history/reconnect/tooltip/audio/creator transition | Private victim readiness and hidden source geometry never leak through any projection or stale cache. |
+| SUR-T62 | World omits F or changes supported senses/coefficients | Clean omission gives ordinary combat; installed invalid/incomplete policy does not masquerade as omission. Alternate-body warning remains actual. |
+| SUR-T63 | Consent refusal/cancel before attack | No invented attack consequence. Actual previously observed physical preparation remains valid evidence of what occurred. |
+| SUR-T64 | Spatial uncertainty / vertical separation / cone apex | Original frame/uncertainty retained; no infinite-ray/wall shortcut or all-direction cone match at the victim's contact point. |
 
 ### Playability gates beyond correctness
 
-PS09 must observe an uncoached player using a warning, finite entrance watch, defensive handoff/interception, failed ambush-to-escape and a native-animal hunt with an ordinary useful outcome. Compare preparation's actual attention cost with the ordinary route; a useful plan is allowed to succeed decisively. Record whether players understand “expected but unavoidable” and “readiness ended,” whether repeated waiting/retargeting is burdensome, and whether recovery permits a meaningful escape.
+SUR09 must observe an uncoached player using a warning, finite entrance watch, defensive handoff/interception, failed ambush-to-escape and a native-animal hunt with an ordinary useful outcome. Compare preparation's actual attention cost with the ordinary route; a useful plan is allowed to succeed decisively. Record whether players understand “expected but unavoidable” and “readiness ended,” whether repeated waiting/retargeting is burdensome, and whether recovery permits a meaningful escape.
 
 Run **The toll tower at dawn**, **The companion who changes sides**, **The quarry that learns**, **The wolf at the school gate**, and **The household after the victory** from the repertoire as composing scenarios where their prerequisites exist. Include a refused or missed warning, an uncovered path, and an encounter that ends peacefully or by leaving with the objective. Mechanical correctness alone does not prove that 2× or the initial lead/retention is fun or fair. Tuning changes go through the authored policy/limits owner and rerun the affected boundary/scenario acceptance.
+
+## Cross-project integration requirements
+
+### Incoming-flight producer
+
+B/A must install a narrow **observed incoming-projectile detail** inside their existing observed-detail/perceived-feature families. This is a required F implementation dependency, not a claim that generic location facts or the current code already supply it. It uses B's existing coarse-motion quality/precision rules; F adds no second perception threshold.
+
+The native physical adapter needs two actually received positions at ordered measurement times under the same permitted exposure, or B's equivalent certified observed-motion interval. Preserve both location uncertainty volumes, original measurement/acquisition boundaries and the observer's own actual body poses. Require:
+
+1. Valid received continuity without a gap, teleport or hidden canonical-identity join.
+2. Conservative closing: the greatest possible current separation under the received uncertainty is smaller than the least possible previous separation.
+3. At least one positive forward continuation of the **received relative-displacement cone** intersects the observer's current own-body envelope.
+
+This establishes a personally supported **possible incoming threat**, not a prediction that a collision will actually occur. Use only received displacement and existing spatial geometry; do not read hidden intendedTarget, private canonical velocity, future path/turns or the later collider. If uncertainty cannot establish closing/continuity, produce no automatic incoming-projectile warning; an actually chosen scoped E precaution can still use the ambiguous cue. Existing spatial comparisons own tolerances. Do not add an arbitrary confidence percentage, reaction distance or F-specific motion sampling cadence.
+
+A acquires the resulting typed detail with its real supporting FactKeys, original uncertainty and acquisition boundary. The warning's registration begins only when that complete permitted detail has actually been acquired. Fast/briefly seen flight may therefore be too late to prevent surprise. An arrow that later misses or strikes a wall can still have been a reasonable perceived threat; it does not create false hostility attribution.
+
+Current ranged projectilePassage already stops at real visible pre-contact passage for eligible native animals and uses nearPassObservedLives for duplicate consumption. Reuse that producer/ordinal where it supplies the actual permitted support, but that map is not an A evidence cut or a human warning fact. Current event velocity components are not automatically fine observer knowledge. Earlier general human/animal flight warning requires this B/A adapter and complete integration.
+
+### Ordinary spoken warning producer
+
+A/SPK must demonstrate a real ordinary warning journey: one character speaks a supported current scoped warning, another actually hears and understands its complete relevant meaning, A admits the claim/current supported interpretation, and F starts registration at that actual boundary. The semantic producer must lawfully supply current meaning; F cannot turn raw relative words or “Look out!” into an invented exact interval.
+
+An unqualified intelligible utterance is not promised automatic readiness. Unknown words, a missed recipient, an incomplete fragment or an unsupported time/scope remain inadequate. The same person can still choose explicit E preparation. This dependency is part of the selected user-facing warning feature and must be closed before claiming that ordinary warnings work; a hand-built native warning record alone is insufficient acceptance.
+
+### Other required handoffs
+
+| Dependency | Required agreement / implementation gate |
+| --- | --- |
+| A and SC02 | Preserve exact source family revisions, acquisition boundary and immutable values. Resolve proposed SA-D02 before joint current-format cutover; no digest-to-number coercion. |
+| B/C | Actual visible preparation/flight detail, received pose and real authored sound; no hidden action metadata, speculative travel sound or current-position overwrite of remembered geometry. |
+| E and SC10 | Adopt or explicitly resolve SA-D03's missing current-method-start port; preserve current maintaining/coverage, exact break times and lead semantics. Full six-family capture remains complete. |
+| CTR | Extend existing known/anonymous encounter records, not personalEncounter's sight-gated view. Keep recognition episode, contextual grace, native animal danger selection and surprise continuation distinct. |
+| D and SC12 | Complete mechanics at existing sampling boundaries; exact unexpected-contact causes and no-effect receipts; selected conditionAdjustment none; local contact transaction fences nested acquisition, including fatal contact. |
+| Current combat | Both melee paths, actual projectile collider, consent upper bound, one designated opportunity, immutable release origin, existing mitigation and recovery. Unsupported future contact families remain gated. |
+| Save/work | Current authoritative readers/writers/validators and continuation indexes change together. Required incomplete work holds before harm. No compatibility schema or second scheduler. |
+| G / Prompt 7 | Own method/received-warning/allowed aftermath semantics only, all full/patch/history surfaces and accessibility/reconnect. No private readiness oracle. |
+| Final integration SAD-I | Reconcile actual A–G paths, proposed amendments, owner schemas and central repertoire pointers in one combined review. This branch studies dependencies without merging them. |
+
+## Implementation decomposition and completion boundary
+
+The [focused tracker](../maintainers/preparedness-and-surprise.md) owns checkboxes, acceptance and current status. This allocation keeps one implementation owner per responsibility:
+
+| Task | Existing owners / concrete deliverable | Dependencies |
+| --- | --- | --- |
+| SUR01 — Authored policy and exact typed bindings | Base combat/encounter world policy; domain policy/ref validation; accepted danger mappings, one outcome rule and maximum harm facts. Resolve SA-D02/03 at shared integration. | SAD-I and exact A/E ports |
+| SUR02 — Warning registration and continuity | combat-encounters plus A/native exposure adapters; compact known/anonymous support, exact acquisition, four deadlines, scoped hysteresis and correction. | SUR01; SAI-A; B/A flight and A/SPK warning producers |
+| SUR03 — Preparation capture | E existing action/guard/strike/aim/evasion/native-alert adapters, method starts, fulfillment, coverage and pause/save; no second preparation store. | SUR01; SAI-E; relevant B/C |
+| SUR04 — Attack/contact and permission | combat-consent, both kernel melee paths, strikes, ranged, contact-defense, living; bound attack, actual victim cut, receipt, arithmetic and publication fence. | SUR01–03; complete D interfaces |
+| SUR05 — Native emotion handoff | D status/contribution/effective-parameter owners; exact cause/no-effect receipt, fatal case, no same-impact feedback/double fear. | SUR04 with SAI-D |
+| SUR06 — Persistence and deterministic continuation | Existing world record/serialization/validation, temporal boundaries, encounters/actions/flights/outcomes; original pins/deadlines and coherent retry. | SUR02–05 |
+| SUR07 — Permitted player feedback | Server view/protocol/client existing action/history feedback, G DTO mapping, disclosure/accessibility/reconnect. | SUR02–06; SAD-G/SAI-G |
+| SUR08 — Integration and adversarial correctness | Existing domain/server/storage/native progression suites; source-world omission/alternate-body cases; SUR-T01–64 and T01–24 at real callers; complete work measurements. | SUR01–07; required SA integration |
+| SUR09 — Gameplay, PvP and performance qualification | Existing independent CTR character/player/browser gates; actual warnings, watch, interception, hunt, betrayal/escape, no-provider animals; policy tuning evidence. | SUR08 plus complete composing prerequisites |
+
+Implement useful complete paths, not disconnected state records. One natural strike and one ranged flight must each exercise real acquisition → registration/preparation → actual victim cut → permissions → shared contact → D → save/view before broader acceptance is claimed. Current source may advance after the frozen baseline; recheck affected owners before coding without redesigning settled rules silently.
+
+No unresolved F product choice remains. **SA-D01** is the separate controlled-character psychological producer decision. **SA-D02** is A's proposed exact revision correction; **SA-D03** is F's proposed E method-start extension. Both technical proposals require shared adoption/disposition before their dependent implementation, while frozen contracts remain unchanged on this branch. Initial tuning and usefulness remain unqualified delivery work, not hidden design questions.
+
+## Maintained records
+
+- Behavior, player journeys and repertoire findings: [Feature specification](preparedness-and-surprise-feature-spec.md).
+- Implementation/qualification tasks: [SUR01–SUR09](../maintainers/preparedness-and-surprise.md).
+- Authored values and policy: [Base combat](../worlds/base/combat.md#preparedness-policy).
+- Limits and adjustment tradeoffs: [Preparedness inventory](../limits/preparedness-and-surprise.md).
+- Cross-project integration: [SA/SAD-F/SAI-F](../maintainers/stealth-awareness.md), [CTR](../maintainers/combat-and-threat-responses.md).
+- Explicit unresolved decisions/amendments: [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters), [SA-D02](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation), [SA-D03](../../archive/05-project/open-decisions.md#sa-d03--preparation-lead-after-native-phase-transition).
