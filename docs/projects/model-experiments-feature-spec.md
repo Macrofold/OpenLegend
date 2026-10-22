@@ -10,7 +10,7 @@ An operator can choose a Hugging Face model, have Macrofold prepare an accountab
 
 “Any Hugging Face model” means any repository can be submitted for compatibility assessment. It does not promise that every artifact is generative, downloadable, legally usable, compatible with a selected runtime, or small enough for the available hardware. Unsupported architectures, task types, missing weights and required unreviewed code receive a specific capability result. The operator can choose another supported artifact or request a reviewed runtime recipe; the platform must not silently substitute a different model.
 
-The canonical [Macrofold deployment contract](https://github.com/Macrofold/Macrofold/blob/design/huggingface-model-deployments-2026-10-22/docs/projects/hugging-face-model-deployments-contract.md) owns the shared wire format; this repository consumes it. Macrofold owns source resolution, artifact/runtime pinning, host provisioning, deployment permissions, readiness, capability verification, allocation costs and shutdown. OpenLegend owns the experiment, role selection, character context, response validation, gameplay authority, publication and comparison. The game receives a deployment reference and restricted use access; it receives no Hugging Face, hosting or deployment-management credentials.
+The canonical [Macrofold deployment contract](https://github.com/Macrofold/Macrofold/blob/design/huggingface-model-deployments-2026-10-22/docs/projects/hugging-face-model-deployments-contract.md) owns the shared wire format; this repository consumes it. Macrofold owns source resolution, artifact/runtime pinning, deployment permissions, readiness, capability verification and allocation accounting; it also owns provisioning/shutdown for managed hosting. Imported-host lifecycle remains with its external owner. OpenLegend owns the experiment, role selection, character context, response validation, gameplay authority, publication and comparison. The game receives a deployment reference and restricted use access; it receives no Hugging Face, hosting or deployment-management credentials.
 
 ## 2. Current baseline and boundaries
 
@@ -25,6 +25,8 @@ The engine/world boundary does not change. Model output proposes existing operat
 ### J1 — Prepare an exact experimental deployment
 
 The operator gives Macrofold a Hugging Face repository or model URL. Macrofold resolves the revision and artifacts, identifies a supported recipe, checks access/terms prerequisites and presents the selected hardware, effective limits, quoted rate and finite funded lifetime. A metadata check is not a paid launch. Starting the prepared deployment requires the existing authenticated operator's spending authority for that exact configuration.
+
+Before obtaining the quote/activation, the owner grants read/use to the exact game principal or API key and trusted Macrofold workspace. Even owner inference needs an explicit use grant. Adding a recipient after activation applies to a new activation; revocation immediately blocks future use. The game cannot create its own grant.
 
 When deployment and capability qualification finish, the operator receives an immutable deployment binding, source/runtime provenance, actual capability and limit description, and the associated allocation authorization. They place only the restricted Macrofold reference and experiment configuration in trusted server-side settings. OpenLegend does not create, wake, resize, renew, stop or delete the model host in response to game activity.
 
@@ -58,7 +60,7 @@ Past speech, actions and memories remain the accepted records produced at the ti
 
 ### J5 — End an experiment and see its actual cost
 
-The developer stops new experiment admissions and reconciles already accepted Runs. The experiment's operator then stops its separately owned allocation through Macrofold. Game shutdown cancels only the game's known work; it does not destroy capacity shared with another caller.
+The developer stops new experiment admissions and reconciles already accepted Runs. The experiment's operator then stops its separately owned managed allocation through Macrofold. For an imported endpoint, Macrofold stop closes use and cancels its requests; the external owner separately stops the host and controls its bill. Game shutdown cancels only the game's known work; it does not destroy capacity shared with another caller.
 
 The report separates per-request charges, deployment startup/busy/idle/storage cost, other model calls, and remaining uncertain obligations. A zero request charge is compatible with a nonzero GPU bill. A stopped UI or timed-out request is not proof that compute billing stopped. A finite RunPod allocation is a planning budget with disclosed residual shutdown/billing risk, not a provider-guaranteed absolute dollar cap; a study requiring that hard guarantee cannot select this mode. The full-cost comparison uses one allocation total once, not a full GPU charge duplicated for every concurrent character.
 
